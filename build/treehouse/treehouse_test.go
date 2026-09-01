@@ -8,7 +8,7 @@ import (
 
 func TestReadStatusReturnsStructuredWorkspaceAndProcessData(t *testing.T) {
 	rt := newFakeRuntime(t)
-	entry := withFields(LEASED, map[string]any{
+	entry := withFields(leasedEntry, map[string]any{
 		"processes": []any{map[string]any{"pid": 123, "command": "idea"}},
 	})
 	rt.push(jsonResult([]any{entry}))
@@ -50,33 +50,33 @@ func TestReadStatusRejectsMalformedJSON(t *testing.T) {
 
 func TestWriteAcquireWritesItsReceiptIntoTheWorkspace(t *testing.T) {
 	rt := newFakeRuntime(t)
-	prepareAcquire(rt, LEASED, SOURCE_HEAD)
+	prepareAcquire(rt, leasedEntry, testSourceHead)
 
 	data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
 	output := requireSuccess(t, data, err)
 
-	assertCommand(t, rt, 4, "treehouse", "get", "--lease", "--json", "--lease-holder", "agent-session")
+	assertCommand(t, rt, 4, "treehouse", "get", "--lease", "--json", "--no-fetch", "--lease-holder", "agent-session")
 	assertSubset(t, output, map[string]any{
-		"path":          WORKSPACE,
+		"path":          testWorkspace,
 		"lease_id":      "lease-1",
 		"lease_holder":  "agent-session",
-		"source_head":   SOURCE_HEAD,
-		"prepared_head": SOURCE_HEAD,
-		"receipt_path":  RECEIPT_PATH,
+		"source_head":   testSourceHead,
+		"prepared_head": testSourceHead,
+		"receipt_path":  testReceiptPath,
 	})
-	assertJSON(t, fromJSON(t, rt.files[RECEIPT_PATH]), mustJSON(map[string]any{
+	assertJSON(t, fromJSON(t, rt.files[testReceiptPath]), mustJSON(map[string]any{
 		"schema_version": 2,
-		"path":           WORKSPACE,
+		"path":           testWorkspace,
 		"lease_id":       "lease-1",
 		"lease_holder":   "agent-session",
 		"acquired_at":    "2026-08-06T10:00:00.000Z",
-		"source_head":    SOURCE_HEAD,
+		"source_head":    testSourceHead,
 	}))
 	if !contains(rt.call(0).command, "core.fsmonitor=false") {
 		t.Fatalf("spawn 0 does not disable the file-system monitor: %v", rt.call(0).command)
 	}
 	for index, command := range rt.commands() {
-		if contains(command, "status") && contains(command, ROOT) {
+		if contains(command, "status") && contains(command, testRoot) {
 			t.Fatalf("spawn %d runs a status of the source root: %v", index, command)
 		}
 		if contains(command, "checkout") {
@@ -88,14 +88,14 @@ func TestWriteAcquireWritesItsReceiptIntoTheWorkspace(t *testing.T) {
 
 func TestWriteAcquireDetachesACleanWorkspaceAtTheSourceHead(t *testing.T) {
 	rt := newFakeRuntime(t)
-	prepareAcquire(rt, LEASED, NATIVE_HEAD)
+	prepareAcquire(rt, leasedEntry, testNativeHead)
 
 	data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
 	requireSuccess(t, data, err)
 
 	expected := []string{
-		"git", "-c", "core.fsmonitor=false", "-C", WORKSPACE,
-		"checkout", "--force", "--detach", SOURCE_HEAD,
+		"git", "-c", "core.fsmonitor=false", "-C", testWorkspace,
+		"checkout", "--force", "--detach", testSourceHead,
 	}
 	if !hasCommand(rt, expected) {
 		t.Fatalf("no spawn detaches at the source HEAD: %v", rt.commands())
@@ -109,7 +109,7 @@ func TestWriteAcquireDetachesACleanWorkspaceAtTheSourceHead(t *testing.T) {
 // still never receives `--force`.
 func TestWriteAcquireForcesTheDetachButNeverForcesTheCLI(t *testing.T) {
 	rt := newFakeRuntime(t)
-	prepareAcquire(rt, LEASED, NATIVE_HEAD)
+	prepareAcquire(rt, leasedEntry, testNativeHead)
 
 	data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
 	requireSuccess(t, data, err)
@@ -126,7 +126,7 @@ func TestWriteAcquireForcesTheDetachButNeverForcesTheCLI(t *testing.T) {
 	if !contains(detach, "--force") {
 		t.Fatalf("the detach does not carry --force: %v", detach)
 	}
-	if !contains(detach, "checkout") || detach[len(detach)-1] != SOURCE_HEAD {
+	if !contains(detach, "checkout") || detach[len(detach)-1] != testSourceHead {
 		t.Fatalf("the detach does not check out the source HEAD: %v", detach)
 	}
 	assertNoForce(t, rt)
@@ -136,7 +136,7 @@ func TestWriteAcquireForcesTheDetachButNeverForcesTheCLI(t *testing.T) {
 func TestWriteAcquireUsesTheHolderEnvironmentVariable(t *testing.T) {
 	rt := newFakeRuntime(t)
 	rt.env["TREEHOUSE_LEASE_HOLDER"] = "environment-session"
-	prepareAcquire(rt, withFields(LEASED, map[string]any{"lease_holder": "environment-session"}), SOURCE_HEAD)
+	prepareAcquire(rt, withFields(leasedEntry, map[string]any{"lease_holder": "environment-session"}), testSourceHead)
 
 	data, err := execute([]string{"write", "acquire"}, rt)
 	requireSuccess(t, data, err)
@@ -149,7 +149,7 @@ func TestWriteAcquireUsesTheHolderEnvironmentVariable(t *testing.T) {
 
 func TestWriteAcquireGeneratesAStableHolder(t *testing.T) {
 	rt := newFakeRuntime(t)
-	prepareAcquire(rt, withFields(LEASED, map[string]any{"lease_holder": "agent-generated-uuid"}), SOURCE_HEAD)
+	prepareAcquire(rt, withFields(leasedEntry, map[string]any{"lease_holder": "agent-generated-uuid"}), testSourceHead)
 
 	data, err := execute([]string{"write", "acquire"}, rt)
 	requireSuccess(t, data, err)
@@ -158,16 +158,16 @@ func TestWriteAcquireGeneratesAStableHolder(t *testing.T) {
 	if last := command[len(command)-1]; last != "agent-generated-uuid" {
 		t.Fatalf("the requested holder is %q, but %q was expected", last, "agent-generated-uuid")
 	}
-	assertSubset(t, fromJSON(t, rt.files[RECEIPT_PATH]), map[string]any{"lease_holder": "agent-generated-uuid"})
+	assertSubset(t, fromJSON(t, rt.files[testReceiptPath]), map[string]any{"lease_holder": "agent-generated-uuid"})
 }
 
 func TestWriteAcquireRefusesAnAlreadyLeasedWorkspace(t *testing.T) {
 	rt := newFakeRuntime(t)
 	rt.push(
-		result(ROOT+"\n", 0, ""),
-		result(SOURCE_HEAD+"\n", 0, ""),
-		result(COMMON_DIR+"\n", 0, ""),
-		jsonResult([]any{withFields(LEASED, map[string]any{"path": ROOT})}),
+		result(testRoot+"\n", 0, ""),
+		result(testSourceHead+"\n", 0, ""),
+		result(testCommonDir+"\n", 0, ""),
+		jsonResult([]any{withFields(leasedEntry, map[string]any{"path": testRoot})}),
 	)
 
 	data, err := execute([]string{"write", "acquire"}, rt)
@@ -182,14 +182,14 @@ func TestWriteAcquireReturnsTheLeaseWhenReceiptWritingFails(t *testing.T) {
 	rt := newFakeRuntime(t)
 	prepareFailedReceiptWrite(rt)
 	// The rollback return, then the live check of rollbackAcquire.
-	rt.push(result("", 0, ""), jsonResult([]any{AVAILABLE}))
+	rt.push(result("", 0, ""), jsonResult([]any{availableEntry}))
 
 	data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
 	failure := requireFailure(t, data, err)
 
 	assertMessage(t, failure, "workspace was returned")
 	assertCommand(t, rt, 5,
-		"treehouse", "return", WORKSPACE,
+		"treehouse", "return", testWorkspace,
 		"--if-lease-id", "lease-1",
 		"--if-lease-holder", "agent-session",
 	)
@@ -200,18 +200,18 @@ func TestWriteAcquireReturnsTheLeaseWhenExactHeadPreparationFails(t *testing.T) 
 	rt := newFakeRuntime(t)
 	prepareFailedPreparation(rt)
 	// The rollback return, then the live check of rollbackAcquire.
-	rt.push(result("", 0, ""), jsonResult([]any{AVAILABLE}))
+	rt.push(result("", 0, ""), jsonResult([]any{availableEntry}))
 
 	data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
 	failure := requireFailure(t, data, err)
 
 	assertMessage(t, failure, "lease was returned")
-	assertSubset(t, failure.details, map[string]any{"source_head": SOURCE_HEAD, "receipt_removed": true})
-	if _, present := rt.files[RECEIPT_PATH]; present {
+	assertSubset(t, failure.details, map[string]any{"source_head": testSourceHead, "receipt_removed": true})
+	if _, present := rt.files[testReceiptPath]; present {
 		t.Fatalf("the receipt survived a completed rollback")
 	}
 	if !hasCommand(rt, returnCommand(LeaseIdentity{
-		Path: WORKSPACE, LeaseID: "lease-1", LeaseHolder: "agent-session",
+		Path: testWorkspace, LeaseID: "lease-1", LeaseHolder: "agent-session",
 	})) {
 		t.Fatalf("no spawn returns the lease: %v", rt.commands())
 	}
@@ -220,12 +220,12 @@ func TestWriteAcquireReturnsTheLeaseWhenExactHeadPreparationFails(t *testing.T) 
 
 func TestWriteAcquireReturnsTheLeaseWhenItsLiveIdentityChanges(t *testing.T) {
 	rt := newFakeRuntime(t)
-	prepareAcquireStart(rt, LEASED)
+	prepareAcquireStart(rt, leasedEntry)
 	rt.push(
-		jsonResult([]any{withFields(LEASED, map[string]any{"lease_id": "different-lease"})}),
+		jsonResult([]any{withFields(leasedEntry, map[string]any{"lease_id": "different-lease"})}),
 		// The rollback return, then the live check of rollbackAcquire.
 		result("", 0, ""),
-		jsonResult([]any{AVAILABLE}),
+		jsonResult([]any{availableEntry}),
 	)
 
 	data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
@@ -244,10 +244,10 @@ func TestWriteAcquireReturnsTheLeaseWhenItsLiveIdentityChanges(t *testing.T) {
 
 func TestWriteAcquireRetainsTheReceiptWhenRollbackFails(t *testing.T) {
 	rt := newFakeRuntime(t)
-	prepareAcquireStart(rt, LEASED)
+	prepareAcquireStart(rt, leasedEntry)
 	rt.push(
-		jsonResult([]any{LEASED}),
-		result(WORKSPACE+"\n", 0, ""),
+		jsonResult([]any{leasedEntry}),
+		result(testWorkspace+"\n", 0, ""),
 		result("/different/.git\n", 0, ""),
 		result("", 4, "lease changed"),
 	)
@@ -257,48 +257,48 @@ func TestWriteAcquireRetainsTheReceiptWhenRollbackFails(t *testing.T) {
 
 	assertMessage(t, failure, "retain this lease identity")
 	assertSubset(t, failure.details, map[string]any{
-		"path":               WORKSPACE,
+		"path":               testWorkspace,
 		"lease_id":           "lease-1",
 		"rollback_exit_code": 4,
 		"receipt_removed":    false,
 	})
-	assertSubset(t, fromJSON(t, rt.files[RECEIPT_PATH]), map[string]any{
+	assertSubset(t, fromJSON(t, rt.files[testReceiptPath]), map[string]any{
 		"schema_version": 2,
-		"source_head":    SOURCE_HEAD,
+		"source_head":    testSourceHead,
 	})
 }
 
 func TestWriteAcquireRecoversALeaseAfterMalformedOutput(t *testing.T) {
 	rt := newFakeRuntime(t)
 	rt.push(
-		result(ROOT+"\n", 0, ""),
-		result(SOURCE_HEAD+"\n", 0, ""),
-		result(COMMON_DIR+"\n", 0, ""),
-		jsonResult([]any{AVAILABLE}),
+		result(testRoot+"\n", 0, ""),
+		result(testSourceHead+"\n", 0, ""),
+		result(testCommonDir+"\n", 0, ""),
+		jsonResult([]any{availableEntry}),
 		result("not-json", 0, ""),
-		jsonResult([]any{LEASED}),
+		jsonResult([]any{leasedEntry}),
 		// The rollback return, then the live check of rollbackAcquire.
 		result("", 0, ""),
-		jsonResult([]any{AVAILABLE}),
+		jsonResult([]any{availableEntry}),
 	)
 
 	data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
 	failure := requireFailure(t, data, err)
 
 	assertMessage(t, failure, "recovered lease was returned")
-	assertJSON(t, rt.call(6).command[0:3], mustJSON([]string{"treehouse", "return", WORKSPACE}))
+	assertJSON(t, rt.call(6).command[0:3], mustJSON([]string{"treehouse", "return", testWorkspace}))
 	assertQueueDrained(t, rt)
 }
 
 func TestWriteAcquireReportsTheRecoveredIdentityWhenRollbackFails(t *testing.T) {
 	rt := newFakeRuntime(t)
 	rt.push(
-		result(ROOT+"\n", 0, ""),
-		result(SOURCE_HEAD+"\n", 0, ""),
-		result(COMMON_DIR+"\n", 0, ""),
-		jsonResult([]any{AVAILABLE}),
+		result(testRoot+"\n", 0, ""),
+		result(testSourceHead+"\n", 0, ""),
+		result(testCommonDir+"\n", 0, ""),
+		jsonResult([]any{availableEntry}),
 		result("not-json", 0, ""),
-		jsonResult([]any{LEASED}),
+		jsonResult([]any{leasedEntry}),
 		result("", 4, "lease changed"),
 	)
 
@@ -307,7 +307,7 @@ func TestWriteAcquireReportsTheRecoveredIdentityWhenRollbackFails(t *testing.T) 
 
 	assertMessage(t, failure, "retain this lease identity")
 	assertSubset(t, failure.details, map[string]any{
-		"path":               WORKSPACE,
+		"path":               testWorkspace,
 		"lease_id":           "lease-1",
 		"lease_holder":       "agent-session",
 		"rollback_exit_code": 4,
@@ -320,13 +320,13 @@ func TestWriteReturnReturnsACleanWorkspaceWithBothLeaseGuards(t *testing.T) {
 	rt := newFakeRuntime(t)
 	prepareReturn(rt, "")
 	// The return call, then the live check of verifyReturned.
-	rt.push(result("", 0, ""), jsonResult([]any{AVAILABLE}))
+	rt.push(result("", 0, ""), jsonResult([]any{availableEntry}))
 
-	data, err := execute([]string{"write", "return", "--workspace", WORKSPACE}, rt)
+	data, err := execute([]string{"write", "return", "--workspace", testWorkspace}, rt)
 	output := requireSuccess(t, data, err)
 
 	assertCommand(t, rt, 3,
-		"treehouse", "return", WORKSPACE,
+		"treehouse", "return", testWorkspace,
 		"--if-lease-id", "lease-1",
 		"--if-lease-holder", "agent-session",
 	)
@@ -337,20 +337,20 @@ func TestWriteReturnReturnsACleanWorkspaceWithBothLeaseGuards(t *testing.T) {
 	if !contains(rt.call(2).command, "core.fsmonitor=false") {
 		t.Fatalf("spawn 2 does not disable the file-system monitor: %v", rt.call(2).command)
 	}
-	assertJSON(t, rt.removed, mustJSON([]string{RECEIPT_PATH}))
+	assertJSON(t, rt.removed, mustJSON([]string{testReceiptPath}))
 	assertSubset(t, output, map[string]any{"returned": true, "dirty": false, "receipt_removed": true})
 	assertQueueDrained(t, rt)
 }
 
 func TestWriteReturnRefusesAReceiptThatDoesNotMatchTheLiveLease(t *testing.T) {
 	rt := newFakeRuntime(t)
-	rt.files[RECEIPT_PATH] = receipt(nil)
+	rt.files[testReceiptPath] = receipt(nil)
 	rt.push(
-		result(WORKSPACE+"\n", 0, ""),
-		jsonResult([]any{withFields(LEASED, map[string]any{"lease_id": "different-lease"})}),
+		result(testWorkspace+"\n", 0, ""),
+		jsonResult([]any{withFields(leasedEntry, map[string]any{"lease_id": "different-lease"})}),
 	)
 
-	data, err := execute([]string{"write", "return", "--workspace", WORKSPACE}, rt)
+	data, err := execute([]string{"write", "return", "--workspace", testWorkspace}, rt)
 	failure := requireFailure(t, data, err)
 
 	assertMessage(t, failure, "does not match")
@@ -362,13 +362,13 @@ func TestWriteReturnRequiresPreservationConfirmationForADirtyWorkspace(t *testin
 	rt := newFakeRuntime(t)
 	prepareReturn(rt, " M changed.kt\n?? new.kt\n")
 
-	data, err := execute([]string{"write", "return", "--workspace", WORKSPACE}, rt)
+	data, err := execute([]string{"write", "return", "--workspace", testWorkspace}, rt)
 	failure := requireFailure(t, data, err)
 
 	assertMessage(t, failure, "--confirm-preserved")
 	assertExitCode(t, failure, 2)
 	assertSubset(t, failure.details, map[string]any{"changes": []string{"M changed.kt", "?? new.kt"}})
-	if _, present := rt.files[RECEIPT_PATH]; !present {
+	if _, present := rt.files[testReceiptPath]; !present {
 		t.Fatalf("the receipt was removed although the return was refused")
 	}
 }
@@ -379,10 +379,10 @@ func TestWriteReturnAnswersThePromptOfAConfirmedDirtyReturn(t *testing.T) {
 	rt := newFakeRuntime(t)
 	prepareReturn(rt, " M changed.kt\n")
 	// The return call, then the live check of verifyReturned.
-	rt.push(result("", 0, ""), jsonResult([]any{AVAILABLE}))
+	rt.push(result("", 0, ""), jsonResult([]any{availableEntry}))
 
 	data, err := execute([]string{
-		"write", "return", "--workspace", WORKSPACE, "--confirm-preserved",
+		"write", "return", "--workspace", testWorkspace, "--confirm-preserved",
 	}, rt)
 	output := requireSuccess(t, data, err)
 
@@ -399,25 +399,39 @@ func TestWriteReturnRetainsTheReceiptWhenTreehouseFails(t *testing.T) {
 	prepareReturn(rt, "")
 	rt.push(result("", 4, "lease changed"))
 
-	data, err := execute([]string{"write", "return", "--workspace", WORKSPACE}, rt)
+	data, err := execute([]string{"write", "return", "--workspace", testWorkspace}, rt)
 	failure := requireFailure(t, data, err)
 
 	assertSubset(t, failure.details, map[string]any{
-		"path":         WORKSPACE,
+		"path":         testWorkspace,
 		"lease_id":     "lease-1",
 		"lease_holder": "agent-session",
 	})
-	if _, present := rt.files[RECEIPT_PATH]; !present {
+	if _, present := rt.files[testReceiptPath]; !present {
 		t.Fatalf("the receipt was removed although the return failed")
 	}
 	assertJSON(t, rt.removed, "[]")
 }
 
+// A schema-version-1 receipt came from the retired Bun script. The wrapper rejects it before
+// any spawn, so the lease stays untouched and the error names the version.
+func TestWriteReturnRejectsAVersionOneReceipt(t *testing.T) {
+	rt := newFakeRuntime(t)
+	rt.files[testReceiptPath] = receipt(map[string]any{"schema_version": 1})
+
+	data, err := execute([]string{"write", "return", "--workspace", testWorkspace}, rt)
+	failure := requireFailure(t, data, err)
+
+	assertMessage(t, failure, "unsupported schema version")
+	assertExitCode(t, failure, 2)
+	assertSpawnCount(t, rt, 0)
+}
+
 func TestWriteReturnRefusesAReceiptCopiedFromAnotherWorkspace(t *testing.T) {
 	rt := newFakeRuntime(t)
-	rt.files[RECEIPT_PATH] = receipt(map[string]any{"path": ROOT})
+	rt.files[testReceiptPath] = receipt(map[string]any{"path": testRoot})
 
-	data, err := execute([]string{"write", "return", "--workspace", WORKSPACE}, rt)
+	data, err := execute([]string{"write", "return", "--workspace", testWorkspace}, rt)
 	failure := requireFailure(t, data, err)
 
 	assertMessage(t, failure, "different workspace")
@@ -427,9 +441,9 @@ func TestWriteReturnRefusesAReceiptCopiedFromAnotherWorkspace(t *testing.T) {
 
 func TestWriteReturnRefusesToRunFromInsideTheLeasedWorkspace(t *testing.T) {
 	rt := newFakeRuntime(t)
-	rt.cwd = WORKSPACE + "/plugins"
+	rt.cwd = testWorkspace + "/plugins"
 
-	data, err := execute([]string{"write", "return", "--workspace", WORKSPACE}, rt)
+	data, err := execute([]string{"write", "return", "--workspace", testWorkspace}, rt)
 	failure := requireFailure(t, data, err)
 
 	assertMessage(t, failure, "outside the leased workspace")
@@ -439,15 +453,15 @@ func TestWriteReturnRefusesToRunFromInsideTheLeasedWorkspace(t *testing.T) {
 
 func TestWriteReturnRefusesAWorkspaceWithLiveProcesses(t *testing.T) {
 	rt := newFakeRuntime(t)
-	rt.files[RECEIPT_PATH] = receiptV2(nil)
+	rt.files[testReceiptPath] = receipt(nil)
 	rt.push(
-		result(WORKSPACE+"\n", 0, ""),
-		jsonResult([]any{withFields(LEASED, map[string]any{
+		result(testWorkspace+"\n", 0, ""),
+		jsonResult([]any{withFields(leasedEntry, map[string]any{
 			"processes": []any{map[string]any{"pid": 42, "name": "bazel"}},
 		})}),
 	)
 
-	data, err := execute([]string{"write", "return", "--workspace", WORKSPACE}, rt)
+	data, err := execute([]string{"write", "return", "--workspace", testWorkspace}, rt)
 	failure := requireFailure(t, data, err)
 
 	assertMessage(t, failure, "live processes")
@@ -467,7 +481,7 @@ func TestCommandSurfaceRejectsDestructiveOperationsAndForce(t *testing.T) {
 		argv []string
 	}{
 		{"an unknown write action", []string{"write", "destroy"}},
-		{"a force option", []string{"write", "return", "--workspace", WORKSPACE, "--force"}},
+		{"a force option", []string{"write", "return", "--workspace", testWorkspace, "--force"}},
 		{"a missing workspace", []string{"write", "return"}},
 	}
 	for _, item := range cases {
@@ -479,22 +493,22 @@ func TestCommandSurfaceRejectsDestructiveOperationsAndForce(t *testing.T) {
 	assertSpawnCount(t, rt, 0)
 }
 
-// --- the aborted-return check, which the wrapper added on top of the TypeScript ---
+// --- the aborted-return check ---
 
 func TestWriteReturnFailsWhenTheLeaseSurvivesASuccessfulExit(t *testing.T) {
 	rt := newFakeRuntime(t)
 	prepareReturn(rt, "")
 	// The CLI aborts its own dirty-return prompt and still exits 0.
-	rt.push(result("", 0, "Aborted."), jsonResult([]any{LEASED}))
+	rt.push(result("", 0, "Aborted."), jsonResult([]any{leasedEntry}))
 
-	data, err := execute([]string{"write", "return", "--workspace", WORKSPACE}, rt)
+	data, err := execute([]string{"write", "return", "--workspace", testWorkspace}, rt)
 	failure := requireFailure(t, data, err)
 
 	assertExitCode(t, failure, 1)
 	assertMessage(t, failure, "still leased")
 	assertMessage(t, failure, "Retain this lease identity")
 	assertSubset(t, failure.details, map[string]any{
-		"path":             WORKSPACE,
+		"path":             testWorkspace,
 		"lease_id":         "lease-1",
 		"lease_holder":     "agent-session",
 		"receipt_removed":  false,
@@ -502,7 +516,7 @@ func TestWriteReturnFailsWhenTheLeaseSurvivesASuccessfulExit(t *testing.T) {
 		"native_stderr":    "Aborted.",
 		"live_status":      "leased",
 	})
-	if _, present := rt.files[RECEIPT_PATH]; !present {
+	if _, present := rt.files[testReceiptPath]; !present {
 		t.Fatalf("the receipt was removed although the lease survived")
 	}
 	assertJSON(t, rt.removed, "[]")
@@ -514,9 +528,9 @@ func TestWriteReturnSucceedsWhenTheLeaseIsGone(t *testing.T) {
 		name string
 		live []any
 	}{
-		{"the entry became available", []any{AVAILABLE}},
+		{"the entry became available", []any{availableEntry}},
 		{"the entry is absent", []any{}},
-		{"another holder took the slot", []any{withFields(LEASED, map[string]any{
+		{"another holder took the slot", []any{withFields(leasedEntry, map[string]any{
 			"lease_id":     "lease-2",
 			"lease_holder": "other-session",
 		})}},
@@ -527,12 +541,12 @@ func TestWriteReturnSucceedsWhenTheLeaseIsGone(t *testing.T) {
 			prepareReturn(rt, "")
 			rt.push(result("", 0, ""), jsonResult(item.live))
 
-			data, err := execute([]string{"write", "return", "--workspace", WORKSPACE}, rt)
+			data, err := execute([]string{"write", "return", "--workspace", testWorkspace}, rt)
 			output := requireSuccess(t, data, err)
 
 			assertSubset(t, output, map[string]any{"returned": true, "receipt_removed": true})
-			assertJSON(t, rt.removed, mustJSON([]string{RECEIPT_PATH}))
-			if _, present := rt.files[RECEIPT_PATH]; present {
+			assertJSON(t, rt.removed, mustJSON([]string{testReceiptPath}))
+			if _, present := rt.files[testReceiptPath]; present {
 				t.Fatalf("the receipt survived a completed return")
 			}
 			assertQueueDrained(t, rt)
@@ -571,7 +585,7 @@ func TestWriteAcquireRollbackRemovesTheReceiptWhenTheLeaseIsGone(t *testing.T) {
 		t.Run(trigger.name, func(t *testing.T) {
 			rt := newFakeRuntime(t)
 			trigger.prepare(rt)
-			rt.push(result("", 0, ""), jsonResult([]any{AVAILABLE}))
+			rt.push(result("", 0, ""), jsonResult([]any{availableEntry}))
 
 			data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
 			failure := requireFailure(t, data, err)
@@ -584,9 +598,9 @@ func TestWriteAcquireRollbackRemovesTheReceiptWhenTheLeaseIsGone(t *testing.T) {
 			})
 			if trigger.writesReceipt {
 				assertSubset(t, failure.details, map[string]any{"receipt_removed": true})
-				assertJSON(t, rt.removed, mustJSON([]string{RECEIPT_PATH}))
+				assertJSON(t, rt.removed, mustJSON([]string{testReceiptPath}))
 			}
-			if _, present := rt.files[RECEIPT_PATH]; present {
+			if _, present := rt.files[testReceiptPath]; present {
 				t.Fatalf("the receipt survived a confirmed rollback")
 			}
 			assertQueueDrained(t, rt)
@@ -602,7 +616,7 @@ func TestWriteAcquireRollbackAnswersTheReturnPrompt(t *testing.T) {
 			rt := newFakeRuntime(t)
 			trigger.prepare(rt)
 			// The rollback return, then the live check that confirms it.
-			rt.push(result("", 0, ""), jsonResult([]any{AVAILABLE}))
+			rt.push(result("", 0, ""), jsonResult([]any{availableEntry}))
 
 			data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
 			requireFailure(t, data, err)
@@ -632,7 +646,7 @@ func TestWriteAcquireRollbackKeepsTheReceiptWhenTheLeaseSurvivesASuccessfulExit(
 			rt := newFakeRuntime(t)
 			trigger.prepare(rt)
 			// The CLI aborts its own dirty-return prompt and still exits 0.
-			rt.push(result("", 0, "Aborted."), jsonResult([]any{LEASED}))
+			rt.push(result("", 0, "Aborted."), jsonResult([]any{leasedEntry}))
 
 			data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
 			failure := requireFailure(t, data, err)
@@ -640,7 +654,7 @@ func TestWriteAcquireRollbackKeepsTheReceiptWhenTheLeaseSurvivesASuccessfulExit(
 			assertExitCode(t, failure, 1)
 			assertMessage(t, failure, "could not be returned; retain this lease identity")
 			assertSubset(t, failure.details, map[string]any{
-				"path":                 WORKSPACE,
+				"path":                 testWorkspace,
 				"lease_id":             "lease-1",
 				"lease_holder":         "agent-session",
 				"rollback_exit_code":   0,
@@ -650,7 +664,7 @@ func TestWriteAcquireRollbackKeepsTheReceiptWhenTheLeaseSurvivesASuccessfulExit(
 			})
 			if trigger.writesReceipt {
 				assertSubset(t, failure.details, map[string]any{"receipt_removed": false})
-				if _, present := rt.files[RECEIPT_PATH]; !present {
+				if _, present := rt.files[testReceiptPath]; !present {
 					t.Fatalf("the receipt was removed although the lease survived")
 				}
 			}
@@ -673,7 +687,7 @@ func TestWriteAcquireRollbackKeepsTheReceiptWhenTheLiveStateCannotBeRead(t *test
 			assertExitCode(t, failure, 1)
 			assertMessage(t, failure, "could not be confirmed; retain this lease identity")
 			assertSubset(t, failure.details, map[string]any{
-				"path":               WORKSPACE,
+				"path":               testWorkspace,
 				"lease_id":           "lease-1",
 				"lease_holder":       "agent-session",
 				"rollback_exit_code": 0,
@@ -686,7 +700,7 @@ func TestWriteAcquireRollbackKeepsTheReceiptWhenTheLiveStateCannotBeRead(t *test
 			assertJSON(t, statusError["message"], mustJSON("Treehouse status failed: pool unreachable"))
 			if trigger.writesReceipt {
 				assertSubset(t, failure.details, map[string]any{"receipt_removed": false})
-				if _, present := rt.files[RECEIPT_PATH]; !present {
+				if _, present := rt.files[testReceiptPath]; !present {
 					t.Fatalf("the receipt was removed although the live state is unknown")
 				}
 			}
@@ -709,7 +723,7 @@ func TestWriteAcquireRollbackKeepsTheReceiptWhenTheReturnFails(t *testing.T) {
 			assertExitCode(t, failure, 1)
 			assertMessage(t, failure, "could not be returned; retain this lease identity")
 			assertSubset(t, failure.details, map[string]any{
-				"path":               WORKSPACE,
+				"path":               testWorkspace,
 				"lease_id":           "lease-1",
 				"lease_holder":       "agent-session",
 				"rollback_exit_code": 4,
@@ -718,7 +732,7 @@ func TestWriteAcquireRollbackKeepsTheReceiptWhenTheReturnFails(t *testing.T) {
 			})
 			if trigger.writesReceipt {
 				assertSubset(t, failure.details, map[string]any{"receipt_removed": false})
-				if _, present := rt.files[RECEIPT_PATH]; !present {
+				if _, present := rt.files[testReceiptPath]; !present {
 					t.Fatalf("the receipt was removed although the return failed")
 				}
 			}
@@ -732,16 +746,16 @@ func TestWriteAcquireRollbackKeepsTheReceiptWhenTheReturnFails(t *testing.T) {
 
 func TestTheWrapperNeverPassesForce(t *testing.T) {
 	acquire := newFakeRuntime(t)
-	prepareAcquire(acquire, LEASED, NATIVE_HEAD)
+	prepareAcquire(acquire, leasedEntry, testNativeHead)
 	data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, acquire)
 	requireSuccess(t, data, err)
 	assertNoForce(t, acquire)
 
 	returned := newFakeRuntime(t)
 	prepareReturn(returned, " M changed.kt\n")
-	returned.push(result("", 0, ""), jsonResult([]any{AVAILABLE}))
+	returned.push(result("", 0, ""), jsonResult([]any{availableEntry}))
 	data, err = execute([]string{
-		"write", "return", "--workspace", WORKSPACE, "--confirm-preserved",
+		"write", "return", "--workspace", testWorkspace, "--confirm-preserved",
 	}, returned)
 	requireSuccess(t, data, err)
 	assertNoForce(t, returned)

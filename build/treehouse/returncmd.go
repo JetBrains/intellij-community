@@ -61,10 +61,8 @@ func executeReturn(rt Runtime, workspaceOption string, confirmPreserved bool) (a
 	if err != nil {
 		return nil, err
 	}
-	live := findWorkspace(statuses, func(entry WorkspaceStatus) bool {
-		return absPath(rt, entry.Path()) == receipt.Path
-	})
-	if live == nil || live.LeaseID() != receipt.LeaseID || live.LeaseHolder() != receipt.LeaseHolder {
+	live, held := liveLease(rt, statuses, receipt.LeaseIdentity)
+	if !held {
 		return nil, &cliError{
 			message:  "The local Treehouse receipt does not match the live lease; refusing to return it.",
 			exitCode: 2,
@@ -72,7 +70,7 @@ func executeReturn(rt Runtime, workspaceOption string, confirmPreserved bool) (a
 		}
 	}
 	if len(live.Processes()) > 0 {
-		details := receipt.LeaseIdentity.fields()
+		details := receipt.fields()
 		details["processes"] = live.Processes()
 		return nil, &cliError{
 			message:  "The Treehouse workspace still has live processes; stop them before returning it.",

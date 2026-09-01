@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	goruntime "runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -48,9 +49,13 @@ type Runtime interface {
 	Spawn(command []string, options SpawnOptions) SpawnResult
 }
 
-// osRuntime is the Runtime of the real process.
+// osRuntime is the Runtime of the real process. It resolves the Treehouse CLI binary once,
+// because one command spawns the CLI several times.
 type osRuntime struct {
-	cwd string
+	cwd     string
+	cliOnce sync.Once
+	cliPath string
+	cliErr  error
 }
 
 func newOSRuntime() *osRuntime {
@@ -109,13 +114,13 @@ func (r *osRuntime) Spawn(command []string, options SpawnOptions) SpawnResult {
 	argv := append([]string(nil), command...)
 	isCLI := argv[0] == treehouseCommandName
 	if isCLI {
-		path, err := treehouseCLIPath()
-		if err != nil {
+		r.cliOnce.Do(func() { r.cliPath, r.cliErr = treehouseCLIPath() })
+		if r.cliErr != nil {
 			// Exit code 127 makes this an "unavailable" failure, the same code a shell
 			// reports for a command it cannot find.
-			return SpawnResult{ExitCode: 127, Stderr: err.Error()}
+			return SpawnResult{ExitCode: 127, Stderr: r.cliErr.Error()}
 		}
-		argv[0] = path
+		argv[0] = r.cliPath
 	}
 
 	child := exec.Command(argv[0], argv[1:]...)
@@ -254,8 +259,7 @@ func isExecutableFile(path string) bool {
 	return info.Mode().Perm()&0o111 != 0
 }
 
-// isoTimestamp formats a time the way JavaScript's Date.toISOString does: UTC, three
-// fraction digits, and a "Z" suffix.
+// isoTimestamp formats a time in UTC with three fraction digits and a "Z" suffix.
 func isoTimestamp(value time.Time) string {
 	return value.UTC().Format("2006-01-02T15:04:05.000Z07:00")
 }

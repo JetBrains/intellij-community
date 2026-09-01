@@ -7,7 +7,7 @@ import (
 // WorkspaceStatus is one entry of the `status --json` array of the CLI.
 //
 // The type stays a map, so an unknown field such as `flavor` survives the round trip
-// into the `read status` payload unchanged. parseStatus normalizes every key the
+// into the `read status` payload unchanged. parseStatus checks the type of every key the
 // accessors read, so their type assertions cannot fail.
 type WorkspaceStatus map[string]any
 
@@ -33,9 +33,9 @@ func parseStatus(value any) ([]WorkspaceStatus, error) {
 				exitCode: 1,
 			}
 		}
-		leaseID, hasLeaseID := record["lease_id"].(string)
-		leaseHolder, hasLeaseHolder := record["lease_holder"].(string)
-		processes, hasProcesses := record["processes"].([]any)
+		_, hasLeaseID := record["lease_id"].(string)
+		_, hasLeaseHolder := record["lease_holder"].(string)
+		_, hasProcesses := record["processes"].([]any)
 		if !hasLeaseID || !hasLeaseHolder || !hasProcesses {
 			return nil, &cliError{
 				message:  fmt.Sprintf("Treehouse status entry %d has an unsupported shape.", index),
@@ -44,26 +44,11 @@ func parseStatus(value any) ([]WorkspaceStatus, error) {
 			}
 		}
 		description := fmt.Sprintf("Treehouse status entry %d", index)
-		name, err := nonEmptyString(record["name"], "name", description)
-		if err != nil {
-			return nil, err
-		}
-		path, err := nonEmptyString(record["path"], "path", description)
-		if err != nil {
-			return nil, err
-		}
-		status, err := nonEmptyString(record["status"], "status", description)
-		if err != nil {
+		if _, err := requireStrings(record, description, "name", "path", "status"); err != nil {
 			return nil, err
 		}
 
 		entry := WorkspaceStatus(record)
-		entry["name"] = name
-		entry["path"] = path
-		entry["status"] = status
-		entry["lease_id"] = leaseID
-		entry["lease_holder"] = leaseHolder
-		entry["processes"] = processes
 		if _, ok := record["leased_at"].(string); !ok {
 			// A worktree with no lease reports null, and any other type becomes null too.
 			entry["leased_at"] = nil
@@ -86,14 +71,24 @@ func readStatus(rt Runtime) ([]WorkspaceStatus, error) {
 	return parseStatus(value)
 }
 
-// findWorkspace returns the first entry the predicate accepts, or nil.
-func findWorkspace(statuses []WorkspaceStatus, match func(WorkspaceStatus) bool) WorkspaceStatus {
+// workspaceAt returns the entry of the live pool at one absolute path, or nil.
+func workspaceAt(rt Runtime, statuses []WorkspaceStatus, path string) WorkspaceStatus {
 	for _, entry := range statuses {
-		if match(entry) {
+		if absPath(rt, entry.Path()) == path {
 			return entry
 		}
 	}
 	return nil
+}
+
+// liveLease returns the entry at the path of the identity, and whether that entry still
+// holds the same lease ID and holder. The entry is nil when the path is absent.
+func liveLease(rt Runtime, statuses []WorkspaceStatus, identity LeaseIdentity) (WorkspaceStatus, bool) {
+	live := workspaceAt(rt, statuses, identity.Path)
+	if live == nil {
+		return nil, false
+	}
+	return live, live.LeaseID() == identity.LeaseID && live.LeaseHolder() == identity.LeaseHolder
 }
 
 // leaseOutcome is what the live pool says about one lease after a return.
@@ -123,10 +118,8 @@ func confirmLeaseGone(rt Runtime, identity LeaseIdentity) (leaseOutcome, Workspa
 	if err != nil {
 		return leaseUnknown, nil, err
 	}
-	live := findWorkspace(statuses, func(entry WorkspaceStatus) bool {
-		return absPath(rt, entry.Path()) == identity.Path
-	})
-	if live == nil || live.LeaseID() != identity.LeaseID || live.LeaseHolder() != identity.LeaseHolder {
+	live, held := liveLease(rt, statuses, identity)
+	if !held {
 		return leaseReturned, nil, nil
 	}
 	return leaseHeld, live, nil

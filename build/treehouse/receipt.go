@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"path/filepath"
 )
@@ -12,41 +13,40 @@ type LeaseIdentity struct {
 	LeaseHolder string `json:"lease_holder"`
 }
 
-// LeaseReceipt is the `out/treehouse/lease.json` document of an acquired workspace.
-//
-// Schema version 1 holds the identity and the acquisition time. Schema version 2 adds
-// the captured `source_head`. The wrapper writes only version 2. It still reads a
-// version-1 receipt, so an older lease stays returnable.
+// LeaseReceipt is the `out/treehouse/lease.json` document of an acquired workspace. It
+// holds the identity, the acquisition time and the captured `source_head`. The wrapper
+// reads and writes schema version 2 only.
 type LeaseReceipt struct {
 	SchemaVersion int `json:"schema_version"`
 	LeaseIdentity
 	AcquiredAt string `json:"acquired_at"`
-	SourceHead string `json:"source_head,omitempty"`
+	SourceHead string `json:"source_head"`
 }
 
-// fields renders the receipt as the failure details of a command.
-func (r *LeaseReceipt) fields() map[string]any {
-	out := map[string]any{
-		"schema_version": r.SchemaVersion,
-		"path":           r.Path,
-		"lease_id":       r.LeaseID,
-		"lease_holder":   r.LeaseHolder,
-		"acquired_at":    r.AcquiredAt,
+// receiptSchemaVersion is the one schema version the wrapper accepts.
+const receiptSchemaVersion = 2
+
+// jsonFields renders a value as the object of its JSON tags, so a failure detail names
+// each field the way the receipt does.
+func jsonFields(value any) map[string]any {
+	text, err := json.Marshal(value)
+	if err != nil {
+		return map[string]any{"error": err.Error()}
 	}
-	if r.SourceHead != "" {
-		out["source_head"] = r.SourceHead
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.UseNumber()
+	var out map[string]any
+	if err := decoder.Decode(&out); err != nil {
+		return map[string]any{"error": err.Error()}
 	}
 	return out
 }
 
+// fields renders the receipt as the failure details of a command.
+func (r *LeaseReceipt) fields() map[string]any { return jsonFields(r) }
+
 // fields renders the identity as the failure details of a command.
-func (i LeaseIdentity) fields() map[string]any {
-	return map[string]any{
-		"path":         i.Path,
-		"lease_id":     i.LeaseID,
-		"lease_holder": i.LeaseHolder,
-	}
-}
+func (i LeaseIdentity) fields() map[string]any { return jsonFields(i) }
 
 // AcquireResult is the `data` payload of `write acquire`.
 type AcquireResult struct {
@@ -68,30 +68,16 @@ func receiptPathOf(workspace string) string {
 	return filepath.Join(workspace, receiptRelativePath)
 }
 
-// schemaVersionOf accepts only the two supported versions. parseJSON keeps a number as
-// json.Number, so `2` and `2.0` both pass and a string does not.
-func schemaVersionOf(value any) (int, bool) {
-	number, ok := value.(json.Number)
-	if !ok {
-		return 0, false
-	}
-	parsed, err := number.Float64()
-	if err != nil {
-		return 0, false
-	}
-	if parsed == 1 || parsed == 2 {
-		return int(parsed), true
-	}
-	return 0, false
-}
-
+// parseReceipt reads one receipt document. parseJSON keeps a number as json.Number, so
+// `2` and `2.0` both pass the version check and a string does not.
 func parseReceipt(rt Runtime, value any) (*LeaseReceipt, error) {
 	record, ok := value.(map[string]any)
 	if !ok {
 		return nil, &cliError{message: "The Treehouse lease receipt must be an object.", exitCode: 2}
 	}
-	version, ok := schemaVersionOf(record["schema_version"])
-	if !ok {
+	number, isNumber := record["schema_version"].(json.Number)
+	version, err := number.Float64()
+	if !isNumber || err != nil || version != receiptSchemaVersion {
 		return nil, &cliError{
 			message:  "The Treehouse lease receipt has an unsupported schema version.",
 			exitCode: 2,
@@ -99,40 +85,17 @@ func parseReceipt(rt Runtime, value any) (*LeaseReceipt, error) {
 		}
 	}
 
-	const description = "Treehouse lease receipt"
-	path, err := nonEmptyString(record["path"], "path", description)
+	values, err := requireStrings(record, "Treehouse lease receipt",
+		"path", "lease_id", "lease_holder", "acquired_at", "source_head")
 	if err != nil {
 		return nil, err
 	}
-	leaseID, err := nonEmptyString(record["lease_id"], "lease_id", description)
-	if err != nil {
-		return nil, err
-	}
-	leaseHolder, err := nonEmptyString(record["lease_holder"], "lease_holder", description)
-	if err != nil {
-		return nil, err
-	}
-	acquiredAt, err := nonEmptyString(record["acquired_at"], "acquired_at", description)
-	if err != nil {
-		return nil, err
-	}
-	receipt := &LeaseReceipt{
-		SchemaVersion: version,
-		LeaseIdentity: LeaseIdentity{
-			Path:        absPath(rt, path),
-			LeaseID:     leaseID,
-			LeaseHolder: leaseHolder,
-		},
-		AcquiredAt: acquiredAt,
-	}
-	if version == 2 {
-		sourceHead, err := nonEmptyString(record["source_head"], "source_head", description)
-		if err != nil {
-			return nil, err
-		}
-		receipt.SourceHead = sourceHead
-	}
-	return receipt, nil
+	return &LeaseReceipt{
+		SchemaVersion: receiptSchemaVersion,
+		LeaseIdentity: identityOf(rt, values),
+		AcquiredAt:    values["acquired_at"],
+		SourceHead:    values["source_head"],
+	}, nil
 }
 
 // parseAllocation reads the `get --lease --json` document of the CLI.
@@ -141,20 +104,20 @@ func parseAllocation(rt Runtime, value any) (LeaseIdentity, error) {
 	if !ok {
 		return LeaseIdentity{}, &cliError{message: "Treehouse acquire JSON must be an object.", exitCode: 1}
 	}
-	const description = "Treehouse acquire result"
-	path, err := nonEmptyString(record["path"], "path", description)
+	values, err := requireStrings(record, "Treehouse acquire result", "path", "lease_id", "lease_holder")
 	if err != nil {
 		return LeaseIdentity{}, err
 	}
-	leaseID, err := nonEmptyString(record["lease_id"], "lease_id", description)
-	if err != nil {
-		return LeaseIdentity{}, err
+	return identityOf(rt, values), nil
+}
+
+// identityOf builds the identity from the three checked fields of a document.
+func identityOf(rt Runtime, values map[string]string) LeaseIdentity {
+	return LeaseIdentity{
+		Path:        absPath(rt, values["path"]),
+		LeaseID:     values["lease_id"],
+		LeaseHolder: values["lease_holder"],
 	}
-	leaseHolder, err := nonEmptyString(record["lease_holder"], "lease_holder", description)
-	if err != nil {
-		return LeaseIdentity{}, err
-	}
-	return LeaseIdentity{Path: absPath(rt, path), LeaseID: leaseID, LeaseHolder: leaseHolder}, nil
 }
 
 // returnPromptAnswer is what the CLI reads at "Worktree has uncommitted changes. Clean and

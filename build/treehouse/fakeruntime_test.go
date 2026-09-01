@@ -11,23 +11,23 @@ import (
 	"time"
 )
 
-// The fixtures of the whole suite. ROOT is the source workspace, and WORKSPACE is the
+// The fixtures of the whole suite. testRoot is the source workspace, and testWorkspace is the
 // leased one that Treehouse hands out.
 const (
-	ROOT        = "/repo"
-	WORKSPACE   = "/treehouse/1/repo"
-	COMMON_DIR  = "/repo/.git"
-	SOURCE_HEAD = "1111111111111111111111111111111111111111"
-	NATIVE_HEAD = "2222222222222222222222222222222222222222"
+	testRoot       = "/repo"
+	testWorkspace  = "/treehouse/1/repo"
+	testCommonDir  = "/repo/.git"
+	testSourceHead = "1111111111111111111111111111111111111111"
+	testNativeHead = "2222222222222222222222222222222222222222"
 )
 
-// RECEIPT_PATH is where an acquired workspace holds its receipt.
-var RECEIPT_PATH = filepath.Join(WORKSPACE, "out", "treehouse", "lease.json")
+// testReceiptPath is where an acquired workspace holds its receipt.
+var testReceiptPath = filepath.Join(testWorkspace, "out", "treehouse", "lease.json")
 
-// AVAILABLE is one free pool entry, in the shape of `treehouse status --json`.
-var AVAILABLE = map[string]any{
+// availableEntry is one free pool entry, in the shape of `treehouse status --json`.
+var availableEntry = map[string]any{
 	"name":         "1",
-	"path":         WORKSPACE,
+	"path":         testWorkspace,
 	"status":       "available",
 	"lease_id":     "",
 	"lease_holder": "",
@@ -35,8 +35,8 @@ var AVAILABLE = map[string]any{
 	"processes":    []any{},
 }
 
-// LEASED is the same entry with the lease of the suite on it.
-var LEASED = withFields(AVAILABLE, map[string]any{
+// leasedEntry is the same entry with the lease of the suite on it.
+var leasedEntry = withFields(availableEntry, map[string]any{
 	"status":       "leased",
 	"lease_id":     "lease-1",
 	"lease_holder": "agent-session",
@@ -74,23 +74,15 @@ func mustJSON(value any) string {
 	return string(text)
 }
 
-// receipt renders a schema-version-1 receipt document with the overrides applied.
+// receipt renders a receipt document with the overrides applied.
 func receipt(overrides map[string]any) string {
 	return mustJSON(withFields(map[string]any{
-		"schema_version": 1,
-		"path":           WORKSPACE,
+		"schema_version": receiptSchemaVersion,
+		"path":           testWorkspace,
 		"lease_id":       "lease-1",
 		"lease_holder":   "agent-session",
 		"acquired_at":    "2026-08-06T10:00:00.000Z",
-	}, overrides))
-}
-
-// receiptV2 renders a schema-version-2 receipt document, which also carries the
-// captured source HEAD.
-func receiptV2(overrides map[string]any) string {
-	return receipt(withFields(map[string]any{
-		"schema_version": 2,
-		"source_head":    SOURCE_HEAD,
+		"source_head":    testSourceHead,
 	}, overrides))
 }
 
@@ -118,7 +110,7 @@ func newFakeRuntime(t *testing.T) *FakeRuntime {
 	t.Helper()
 	return &FakeRuntime{
 		t:         t,
-		cwd:       ROOT,
+		cwd:       testRoot,
 		env:       map[string]string{},
 		files:     map[string]string{},
 		removed:   []string{},
@@ -198,10 +190,10 @@ func (r *FakeRuntime) call(index int) spawnCall {
 // prepareAcquireStart queues the source reads and the lease allocation of an acquire.
 func prepareAcquireStart(rt *FakeRuntime, allocation map[string]any) {
 	rt.push(
-		result(ROOT+"\n", 0, ""),
-		result(SOURCE_HEAD+"\n", 0, ""),
-		result(COMMON_DIR+"\n", 0, ""),
-		jsonResult([]any{AVAILABLE}),
+		result(testRoot+"\n", 0, ""),
+		result(testSourceHead+"\n", 0, ""),
+		result(testCommonDir+"\n", 0, ""),
+		jsonResult([]any{availableEntry}),
 		jsonResult(allocation),
 	)
 }
@@ -210,15 +202,15 @@ func prepareAcquireStart(rt *FakeRuntime, allocation map[string]any) {
 func prepareWorkspace(rt *FakeRuntime, allocation map[string]any, destinationHead string) {
 	rt.push(
 		jsonResult([]any{allocation}),
-		result(WORKSPACE+"\n", 0, ""),
-		result(COMMON_DIR+"\n", 0, ""),
+		result(testWorkspace+"\n", 0, ""),
+		result(testCommonDir+"\n", 0, ""),
 		result("", 0, ""),
 		result(destinationHead+"\n", 0, ""),
 	)
-	if destinationHead != SOURCE_HEAD {
+	if destinationHead != testSourceHead {
 		rt.push(result("", 0, ""))
 	}
-	rt.push(result(SOURCE_HEAD+"\n", 0, ""), result("", 0, ""))
+	rt.push(result(testSourceHead+"\n", 0, ""), result("", 0, ""))
 }
 
 // prepareAcquire queues a whole successful acquire.
@@ -231,19 +223,19 @@ func prepareAcquire(rt *FakeRuntime, allocation map[string]any, destinationHead 
 // queues the rollback return and the live check that follows it.
 func prepareFailedReceiptWrite(rt *FakeRuntime) {
 	rt.writeError = &fakeWriteError{}
-	prepareAcquireStart(rt, LEASED)
+	prepareAcquireStart(rt, leasedEntry)
 }
 
 // prepareFailedPreparation queues an acquire whose HEAD preparation fails at the
 // checkout. The caller queues the rollback return and the live check that follows it.
 func prepareFailedPreparation(rt *FakeRuntime) {
-	prepareAcquireStart(rt, LEASED)
+	prepareAcquireStart(rt, leasedEntry)
 	rt.push(
-		jsonResult([]any{LEASED}),
-		result(WORKSPACE+"\n", 0, ""),
-		result(COMMON_DIR+"\n", 0, ""),
+		jsonResult([]any{leasedEntry}),
+		result(testWorkspace+"\n", 0, ""),
+		result(testCommonDir+"\n", 0, ""),
 		result("", 0, ""),
-		result(NATIVE_HEAD+"\n", 0, ""),
+		result(testNativeHead+"\n", 0, ""),
 		result("", 4, "checkout failed"),
 	)
 }
@@ -251,8 +243,8 @@ func prepareFailedPreparation(rt *FakeRuntime) {
 // prepareReturn writes the receipt and queues the git root, the live status and the git
 // status of a return. The caller queues the return call itself.
 func prepareReturn(rt *FakeRuntime, gitStatus string) {
-	rt.files[RECEIPT_PATH] = receipt(nil)
-	rt.push(result(WORKSPACE+"\n", 0, ""), jsonResult([]any{LEASED}), result(gitStatus, 0, ""))
+	rt.files[testReceiptPath] = receipt(nil)
+	rt.push(result(testWorkspace+"\n", 0, ""), jsonResult([]any{leasedEntry}), result(gitStatus, 0, ""))
 }
 
 // requireFailure asserts that the command failed with a cliError and returns it.
@@ -317,7 +309,7 @@ func assertJSON(t *testing.T, actual any, expected string) {
 	}
 }
 
-// assertSubset compares only the named keys of a JSON object, the way toMatchObject did.
+// assertSubset compares only the named keys of a JSON object.
 func assertSubset(t *testing.T, actual any, expected map[string]any) {
 	t.Helper()
 	record, ok := asJSON(t, actual).(map[string]any)

@@ -123,6 +123,20 @@ func nonEmptyString(value any, field string, description string) (string, error)
 	return text, nil
 }
 
+// requireStrings reads the named fields of one document. Every field must hold a non-empty
+// string.
+func requireStrings(record map[string]any, description string, fields ...string) (map[string]string, error) {
+	values := make(map[string]string, len(fields))
+	for _, field := range fields {
+		text, err := nonEmptyString(record[field], field, description)
+		if err != nil {
+			return nil, err
+		}
+		values[field] = text
+	}
+	return values, nil
+}
+
 // causeDetails renders one nested failure for the `cause` detail of an outer failure.
 func causeDetails(err error) map[string]any {
 	var cli *cliError

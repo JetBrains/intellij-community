@@ -12,8 +12,7 @@ func gitCommand(path string, args ...string) []string {
 	return append(command, args...)
 }
 
-// absPath makes a path absolute against the working directory of the runtime, the way
-// Node's path.resolve does against the process directory.
+// absPath makes a path absolute against the working directory of the runtime and cleans it.
 func absPath(rt Runtime, path string) string {
 	if filepath.IsAbs(path) {
 		return filepath.Clean(path)
