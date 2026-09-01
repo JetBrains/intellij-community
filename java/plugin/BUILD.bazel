@@ -160,16 +160,6 @@ dev_dist_plugin(
         "@community//build:build-javac-rt_content_module_jar": "intellij.platform.jps.build.javac.rt.jar",
     },
     prepacked_layout_jars = [":jps-launcher_dev_dist_plugin_jar"],
-    residue_member_jars = {
-        "intellij.platform.jps.build.launcher": ["jps-launcher.jar"],
-    },
-    residue_project_libraries = ["Eclipse"],
-    residue_vetoed_members = [
-        "intellij.java.compiler.impl",
-        "intellij.java.debugger.impl",
-        "intellij.java.debugger.memory.agent",
-        "intellij.libraries.completion.ranking.java",
-    ],
 )
 
 dev_dist_plugin_jar(

@@ -82,9 +82,5 @@ dev_dist_plugin(
     prepacked_jars = {
         "//plugins/kotlin/jsr223:jsr223_content_module_jar": "intellij.kotlin.jsr223.jar",
     },
-    residue_member_jars = {
-        "intellij.libraries.kotlinc.kotlin.compiler.common": ["intellij.libraries.kotlinc.kotlin.compiler.common.jar"],
-    },
-    residue_project_libraries = ["kotlinc.kotlin-compiler-fe10"],
 )
 ### auto-generated section `dev intellij.kotlin.jsr223.plugin` end

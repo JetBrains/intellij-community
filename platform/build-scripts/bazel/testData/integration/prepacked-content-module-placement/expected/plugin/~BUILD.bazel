@@ -62,6 +62,5 @@ dev_dist_plugin(
     prepacked_jars = {
         "//embedded:embedded_content_module_jar": "intellij.libraries.embedded.jar",
     },
-    residue_raw_members = ["intellij.libraries.conflicting"],
 )
 ### auto-generated section `dev intellij.example.plugin` end

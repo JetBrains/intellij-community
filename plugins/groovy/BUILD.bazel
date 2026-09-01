@@ -252,13 +252,6 @@ dev_dist_plugin(
         ":groovy-rt_dev_dist_plugin_jar",
         ":groovy-spock-rt_dev_dist_plugin_jar",
     ],
-    residue_member_jars = {
-        "intellij.groovy.constants.rt": ["groovy-constants-rt.jar"],
-        "intellij.groovy.jps": ["groovy-jps.jar"],
-        "intellij.groovy.rt": ["groovy-rt.jar"],
-        "intellij.groovy.rt.classLoader": ["groovy-rt-class-loader.jar"],
-        "intellij.groovy.spock.rt": ["groovy-spock-rt.jar"],
-    },
 )
 
 dev_dist_plugin_jar(

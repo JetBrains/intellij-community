@@ -155,9 +155,6 @@ dev_dist_plugin(
     descriptor_module = ":xpath",
     main_module = "intellij.xpath",
     prepacked_layout_jars = [":rt_xslt-rt_dev_dist_plugin_jar"],
-    residue_member_jars = {
-        "intellij.xpath.rt": ["rt/xslt-rt.jar"],
-    },
 )
 
 dev_dist_plugin_jar(

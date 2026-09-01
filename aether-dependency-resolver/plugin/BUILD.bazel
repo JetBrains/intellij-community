@@ -63,9 +63,5 @@ dev_dist_plugin(
         "//libraries/package-search-api-client:package-search-api-client_content_module_jar",
         "//plugins/repository-search/completion:completion_content_module_jar",
     ],
-    residue_vetoed_members = [
-        "intellij.libraries.maven.resolver.provider",
-        "intellij.repository.search.common",
-    ],
 )
 ### auto-generated section `dev intellij.java.aetherDependencyResolver.plugin` end

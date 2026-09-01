@@ -25,12 +25,10 @@ half names and 34 that only the descriptor half names, and only 55 of the 102 na
 module name would therefore add a third token to every relation and still need a two-sided remainder. That is the mistake
 `PluginContent.prepackedContentModuleLabels` already records having made once, at 2 030 relations.
 
-**Eight attributes are the JPS-to-Bazel converter's own input, and this macro reads none of them.** They carry the
-plugin's content residue - what the converter cannot derive about the plugin's members, their jars and their libraries.
-They sit on this call so that the plugin states itself in one file, and so that a conflict over them stays inside one
-plugin's package (ADR 0007 rule 2). Their names all start with `residue_`, so one search finds the whole group and no
-reader has to ask which attributes a leaf rule takes. They are named parameters, and not part of `**descriptor_attrs`,
-because a forwarded one would reach `dev_dist_plugin_descriptor` and fail there under a name that rule never had.
+**The plugin's content residue is not here.** It is in `community/build/dev_dist_plugin_content_residue.txt`, which the
+converter writes and reads. This call carried it for one commit, and a measurement took it back off: the hermetic
+`bazel-targets.json` run materializes its project model from declared labels alone, no `BUILD.bazel` is among them, and
+the residue therefore reached that run by no route.
 """
 
 load(":dev_dist_content.bzl", "dev_dist_plugin_content")
@@ -51,14 +49,6 @@ def dev_dist_plugin(
         prepacked_layout_jars = [],
         descriptor = "",
         variants = [],
-        residue_lib_root_jars = [],
-        residue_member_jars = {},
-        residue_merged_libraries = {},
-        residue_module_libraries = {},
-        residue_project_libraries = [],
-        residue_raw_members = [],
-        residue_separate_jars = [],
-        residue_vetoed_members = [],
         **descriptor_attrs):
     """The dev-distribution content and the patched descriptor of one plugin.
 
@@ -83,46 +73,13 @@ def dev_dist_plugin(
             A list and not a table of per-variant deviations. Every other attribute here is a fact about the plugin, and
             the two plugins that have variants today state their six leaves identically apart from the variant token.
             A variant that ever needs its own deviation must be refused by whatever writes this call, not approximated:
-            the residue's `descriptor:` part is keyed by `<plugin>/<variant>`, so the writer sees both sections and one
-            of them would be silently dropped here.
-        residue_lib_root_jars: the members whose jar this plugin puts at `lib/<module>.jar` although the convention says
-            `lib/modules/<module>.jar`. A name list and never a path map: the path follows from the module name alone.
-        residue_member_jars: the jars this plugin packs a member into, by member, where the layout names the jar itself.
-            The whole jar set of the member, relative to the plugin's `lib/`, so a member two products place differently
-            states both jars. The plugin's own main jar name puts the member back in the main jar.
-        residue_merged_libraries: the module libraries a member's jar really merges, by member, where the layout took
-            some of them out. The whole set and not the difference, so an empty list is a jar that merges nothing.
-        residue_module_libraries: the libraries the layout packs that no member declares, by the module that owns them.
-        residue_project_libraries: the same, for a project library, which has no owning module. Two attributes and not
-            one list of rows, because Starlark has no optional field of a record: a list of two-field dicts would make
-            `buildifier` reflow one row of a plugin and leave its neighbour inline, so the generator would carry a copy
-            of the formatter's own line-breaking rules.
-        residue_raw_members: the members this plugin does not hand over, although the module has a packing target for the
-            repository. A second jar of this plugin holds the module.
-        residue_separate_jars: the members that get a jar of their own although the convention puts them in the plugin's
-            main jar.
-        residue_vetoed_members: the members this plugin must not hand over, which takes the packing target away from
-            every plugin. The veto is repository-global, because one packing target serves every plugin that ships the
-            module, so one plugin stating the row is enough.
+            the descriptor residue is keyed by `<plugin>/<variant>`, so the writer sees both keys and one of them would
+            be silently dropped here.
         **descriptor_attrs: every remaining `dev_dist_plugin_descriptor` attribute, forwarded to each *descriptor* leaf
             unchanged. Forwarded rather than enumerated so that this macro has no second copy of that rule's surface to
             keep in step; an attribute that rule does not have fails at the rule, which names it. An attribute both leaf
             macros take is refused instead - see `_SHARED_LEAF_ATTRS`.
     """
-
-    # The converter's own input, gathered so that no line below can read one, and named so that a typo fails while Bazel
-    # loads. `emitDevDistPlugin` writes them and `parseDevDistPluginResidue` reads them back. The sink is what keeps
-    # `unused-variable` quiet for all eight at once, so a reader meets one suppression rather than eight.
-    _ = {
-        "residue_lib_root_jars": residue_lib_root_jars,
-        "residue_member_jars": residue_member_jars,
-        "residue_merged_libraries": residue_merged_libraries,
-        "residue_module_libraries": residue_module_libraries,
-        "residue_project_libraries": residue_project_libraries,
-        "residue_raw_members": residue_raw_members,
-        "residue_separate_jars": residue_separate_jars,
-        "residue_vetoed_members": residue_vetoed_members,
-    }  # buildifier: disable=unused-variable
 
     shared = [attr for attr in _SHARED_LEAF_ATTRS if attr in descriptor_attrs]
     if shared:

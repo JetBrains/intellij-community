@@ -212,7 +212,6 @@ dev_dist_plugin(
         "//platform/remote-driver/model:model_content_module_jar": "intellij.driver.model.jar",
         "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_content_module_jar": "intellij.tools.ide.starter.bus.jar",
     },
-    residue_vetoed_members = ["intellij.performanceTesting.remoteDriver"],
 )
 ### auto-generated section `dev intellij.performanceTesting` end
 

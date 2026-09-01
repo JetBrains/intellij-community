@@ -111,6 +111,9 @@ internal data class ResidueLibraryRow(
   @JvmField val name: String = "",
 )
 
+/** A section that states nothing, so that an absent residue and an all-default one are one verdict. */
+internal val EMPTY_CONTENT_RESIDUE: ContentResidueSection = ContentResidueSection()
+
 internal const val DEV_DIST_RESIDUE_FILE_NAME: String = "dev-dist.yaml"
 
 /**

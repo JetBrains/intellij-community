@@ -122,11 +122,6 @@ dev_dist_plugin(
         ":javaFX-jps_dev_dist_plugin_jar",
         ":rt_sceneBuilderBridge_dev_dist_plugin_jar",
     ],
-    residue_member_jars = {
-        "intellij.javaFX.common": ["javaFX-common.jar"],
-        "intellij.javaFX.jps": ["javaFX-jps.jar"],
-        "intellij.javaFX.sceneBuilder": ["rt/sceneBuilderBridge.jar"],
-    },
 )
 
 dev_dist_plugin_jar(

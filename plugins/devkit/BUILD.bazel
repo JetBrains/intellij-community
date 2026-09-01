@@ -78,9 +78,6 @@ dev_dist_plugin(
         "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_content_module_jar",
     ],
     prepacked_layout_jars = [":devkit-jps_dev_dist_plugin_jar"],
-    residue_member_jars = {
-        "intellij.devkit.jps": ["devkit-jps.jar"],
-    },
 )
 
 dev_dist_plugin_jar(

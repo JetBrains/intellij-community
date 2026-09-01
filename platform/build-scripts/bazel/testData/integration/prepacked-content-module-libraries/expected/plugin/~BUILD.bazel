@@ -59,8 +59,5 @@ dev_dist_plugin(
     descriptor_module = ":plugin",
     libraries = ["//libs:libraries-refused-testonly"],
     prepacked_content_modules = ["//content:libraries-example_content_module_jar"],
-    residue_merged_libraries = {
-        "intellij.libraries.refused": ["testonly"],
-    },
 )
 ### auto-generated section `dev intellij.example.plugin` end

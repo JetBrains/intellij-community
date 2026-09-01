@@ -218,9 +218,6 @@ exports_files(
 dev_dist_plugin(
     descriptor_module = ":java-guiForms-designer",
     prepacked_layout_jars = [":jps_java-guiForms-jps_dev_dist_plugin_jar"],
-    residue_member_jars = {
-        "intellij.java.guiForms.jps": ["jps/java-guiForms-jps.jar"],
-    },
 )
 
 dev_dist_plugin_jar(
