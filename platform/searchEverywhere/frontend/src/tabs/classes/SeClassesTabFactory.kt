@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.tabs.classes
 
+import com.intellij.ide.actions.searcheverywhere.GotoContributorsAvailabilityService
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -21,6 +22,7 @@ class SeClassesTabFactory : SeEssentialTabFactory {
 
   override suspend fun getTab(scope: CoroutineScope, project: Project?, session: SeSession, initEvent: AnActionEvent, registerShortcut: (AnAction) -> Unit): SeTab? {
     project ?: return null
+    if (!GotoContributorsAvailabilityService.getInstance(project).awaitHasClassContributors()) return null
 
     val delegate = SeTabDelegate.create(project,
                                         session,

@@ -14,6 +14,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.IdeLanguageCustomizationApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.lang.impl.backend.GotoContributorsAvailabilityApiProvider"/>
 
     <intentionAction>
       <language/>

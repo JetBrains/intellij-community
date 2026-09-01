@@ -2868,6 +2868,7 @@ c:com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 f:com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor$Factory
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
 - createContributor(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+- isAvailable(com.intellij.openapi.project.Project):Z
 f:com.intellij.ide.extensionResources.ExtensionsRootType
 - com.intellij.ide.scratch.RootType
 - s:getInstance():com.intellij.ide.extensionResources.ExtensionsRootType

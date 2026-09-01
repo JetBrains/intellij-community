@@ -4,10 +4,8 @@ package com.intellij.ide.lightProducts
 import com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor
 import com.intellij.codeInsight.daemon.impl.IntentionMenuContributor
 import com.intellij.ide.GeneralSettings
-import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributorFactory
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.internal.statistic.service.fus.collectors.UsageCollectorBean
 import com.intellij.internal.statistic.service.fus.collectors.UsageCollectors
 import com.intellij.navigation.ChooseByNameContributor
@@ -49,8 +47,6 @@ fun unregisterExtensionsForLightProduct() {
 
   SearchEverywhereContributor.EP_NAME.appPoint
     .unregisterExtensions(
-      ClassSearchEverywhereContributor.Factory::class,
-      SymbolSearchEverywhereContributor.Factory::class,
       FileSearchEverywhereContributorFactory::class,
     )
 

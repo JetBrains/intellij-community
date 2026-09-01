@@ -5,6 +5,7 @@ import com.intellij.navigation.ChooseByNameContributorEx2
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspWorkspaceSymbolSupport
 import com.intellij.platform.lsp.impl.LspClientImpl
@@ -20,6 +21,9 @@ import org.eclipse.lsp4j.SymbolKind
 import org.eclipse.lsp4j.WorkspaceSymbol
 
 internal abstract class LspWorkspaceSymbolContributor : ChooseByNameContributorEx2, DumbAware {
+
+  override fun isAvailableNow(project: Project): Boolean =
+    LspClientManagerImpl.getInstanceImpl(project).hasInitializingOrRunningClients()
 
   override fun processNames(processor: Processor<in String>, parameters: FindSymbolParameters) {
     val project = parameters.project

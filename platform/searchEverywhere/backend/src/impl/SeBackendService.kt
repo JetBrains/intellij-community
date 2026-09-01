@@ -30,6 +30,7 @@ import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.SeSortedProviderIds
+import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProviderFactory
 import com.intellij.platform.searchEverywhere.providers.areCommandsSupported
 import com.intellij.platform.searchEverywhere.providers.isExtendedInfoEnabled
 import com.intellij.platform.searchEverywhere.providers.isPreviewEnabled
@@ -134,7 +135,11 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     dataContextId: DataContextId,
   ): SeSortedProviderIds? {
     val providersHolder = getProvidersHolder(session, dataContextId) ?: return null
-    val allProviderIds = (SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() } +
+    val allProviderIds = (SeItemsProviderFactory.EP_NAME.extensionList.filter {
+      // A wrapped legacy factory has no provider when its legacy contributor is not available.
+      // Do not report such an ID: the frontend drops its own provider with the same ID.
+      it !is SeWrappedLegacyContributorItemsProviderFactory || providersHolder.get(it.id.toProviderId(), false) != null
+    }.map { it.id.toProviderId() } +
                           providersHolder.legacyContributors.allTab.map { it.key }).filter {
       // Remove the frontend version of TopHit contributor
       it.value != SeProviderIdUtils.TOP_HIT_ID

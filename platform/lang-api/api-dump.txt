@@ -1594,6 +1594,7 @@ com.intellij.navigation.ChooseByNameContributor
 - sf:SYMBOL_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getItemsByName(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,Z):com.intellij.navigation.NavigationItem[]
 - a:getNames(com.intellij.openapi.project.Project,Z):java.lang.String[]
+- isAvailableNow(com.intellij.openapi.project.Project):Z
 f:com.intellij.navigation.ChooseByNameRegistry
 - getClassModelContributorList():java.util.List
 - getClassModelContributors():com.intellij.navigation.ChooseByNameContributor[]

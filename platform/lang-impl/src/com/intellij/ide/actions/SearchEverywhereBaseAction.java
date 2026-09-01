@@ -27,7 +27,7 @@ public abstract class SearchEverywhereBaseAction extends AnAction implements Act
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     boolean hasContributors = hasContributors(dataContext);
     presentation.setEnabled((!requiresProject() || project != null) && hasContributors);
-    presentation.setVisible(hasContributors);
+    presentation.setVisible(true);
   }
 
   @Override

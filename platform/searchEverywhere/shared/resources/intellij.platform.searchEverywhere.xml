@@ -53,5 +53,13 @@
          where it is de-prioritized in favor of the BE one -->
     <searchEverywhere.itemsProviderFactory
       implementation="com.intellij.platform.searchEverywhere.providers.text.SeTextItemsProviderFactory"/>
+
+    <!-- The classes and symbols providers wrap legacy contributors from lang-impl, which runs locally in monolith, light and RD backend.
+         Same as for the provider above, these declarations also bring them to ThinClient,
+         where they are de-prioritized in favor of the BE ones -->
+    <searchEverywhere.itemsProviderFactory
+      implementation="com.intellij.platform.searchEverywhere.providers.classes.SeClassesProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory
+      implementation="com.intellij.platform.searchEverywhere.providers.symbols.SeSymbolsProviderFactory"/>
   </extensions>
 </idea-plugin>

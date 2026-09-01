@@ -21,6 +21,16 @@ public interface ChooseByNameContributor {
   ExtensionPointName<ChooseByNameContributor> FILE_EP_NAME = ExtensionPointName.create("com.intellij.gotoFileContributor");
 
   /**
+   * Tells whether this contributor can supply items for the project now.
+   * The platform hides the related Search Everywhere tab and disables the related action
+   * when no contributor for that tab is available now.
+   * The method runs on each action update, so it must be fast.
+   */
+  default boolean isAvailableNow(@NotNull Project project) {
+    return true;
+  }
+
+  /**
    * Returns the list of names for the specified project to which it is possible to navigate
    * by name.
    *

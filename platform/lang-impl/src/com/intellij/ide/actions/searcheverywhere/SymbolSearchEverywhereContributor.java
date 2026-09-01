@@ -107,5 +107,10 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
       return PSIPresentationBgRendererWrapper.wrapIfNecessary(new SymbolSearchEverywhereContributor(initEvent));
     }
+
+    @Override
+    public boolean isAvailable(Project project) {
+      return GotoContributorsAvailabilityService.hasLocalSymbolContributors(project);
+    }
   }
 }

@@ -128,6 +128,9 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
   internal fun getRunningClients(): Collection<LspClientImpl> = lspClients.filter { it.state == LspServerState.Running }
 
+  internal fun hasInitializingOrRunningClients(): Boolean =
+    lspClients.any { it.state == LspServerState.Initializing || it.state == LspServerState.Running }
+
   internal fun findRunningClient(condition: (LspClientImpl) -> Boolean): LspClientImpl? =
     lspClients.find { it.state == LspServerState.Running && condition(it) }
 

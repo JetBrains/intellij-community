@@ -125,6 +125,10 @@ open class ClassSearchEverywhereContributor @Internal constructor(event: AnActio
     override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<Any?> {
       return PSIPresentationBgRendererWrapper.wrapIfNecessary(ClassSearchEverywhereContributor(initEvent))
     }
+
+    override fun isAvailable(project: Project): Boolean {
+      return GotoContributorsAvailabilityService.hasLocalClassContributors(project)
+    }
   }
 }
 
