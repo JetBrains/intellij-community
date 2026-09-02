@@ -44,6 +44,10 @@
         id="com.intellij.platform.ijent.community.ui.actions.dashboard.ShowIjentDashboardAction"
         class="com.intellij.platform.ijent.community.ui.actions.dashboard.ShowIjentDashboardAction"
         internal="true"/>
+      <action
+        id="com.intellij.platform.ijent.community.ui.actions.dashboard.EmulateIjentFreezeAction"
+        class="com.intellij.platform.ijent.community.ui.actions.dashboard.EmulateIjentFreezeAction"
+        internal="true"/>
     </group>
   </actions>
   <extensionPoints>

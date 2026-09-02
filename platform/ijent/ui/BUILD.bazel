@@ -50,6 +50,7 @@ jvm_library(
         "//libraries/pty4j",
         "//platform/ide-core-impl",
         "//platform/core-impl",
+        "//platform/util/progress",
     ],
 )
 
@@ -96,6 +97,7 @@ jvm_library(
         "//libraries/pty4j:pty4j_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/core-impl:core-impl_test_lib",
+        "//platform/util/progress:progress_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ijent.community.ui` end
