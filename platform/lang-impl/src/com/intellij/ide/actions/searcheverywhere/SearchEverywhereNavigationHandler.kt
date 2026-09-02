@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.Companion.getElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -62,7 +63,8 @@ open class SearchEverywhereNavigationHandler(val project: Project) {
     val navigationOptions = NavigationOptions.defaultOptions()
       .openInRightSplit((modifiers and InputEvent.SHIFT_DOWN_MASK) != 0)
       .preserveCaret(true).forceFocus(true)
-    project.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch {
+    // the client id must reach the navigation
+    project.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
       val navigationService = project.serviceAsync<NavigationService>()
       semaphore.withPermit {
         navigationService.navigateRequests(navigationOptions) {
