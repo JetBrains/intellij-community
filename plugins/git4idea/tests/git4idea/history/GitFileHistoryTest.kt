@@ -2,13 +2,7 @@
 package git4idea.history
 
 import com.intellij.dvcs.DvcsUtil
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.Executor.child
-import com.intellij.openapi.vcs.Executor.echo
-import com.intellij.openapi.vcs.Executor.mkdir
 import com.intellij.openapi.vcs.Executor.ourCurrentDir
-import com.intellij.openapi.vcs.Executor.rm
-import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
@@ -16,10 +10,13 @@ import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
 import com.intellij.util.ExceptionUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.test.updateChangeListManager
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitFileRevision
 import git4idea.GitUtil
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.add
 import git4idea.test.addCommit
 import git4idea.test.checkout
@@ -27,18 +24,24 @@ import git4idea.test.checkoutNew
 import git4idea.test.commit
 import git4idea.test.last
 import git4idea.test.mv
-import junit.framework.TestCase
 import org.apache.commons.lang3.RandomStringUtils
-import java.io.File
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.appendText
+import kotlin.io.path.name
+import kotlin.io.path.writeText
 
-class GitFileHistoryTest : GitSingleRepoTest() {
-
-  override fun makeInitialCommit(): Boolean = false
+@TestApplication
+class GitFileHistoryTest {
+  private val fixture = gitSingleRepoContextFixture(makeInitialCommit = false)
+  private val context: GitSingleRepoContext get() = fixture.get()
 
   @Throws(VcsException::class)
-  fun `test commit message with escape sequence`() {
+  @Test
+  fun `test commit message with escape sequence`(): Unit = with(context) {
     touch("a.txt")
     add()
     val message = "Before \u001B[30;47mescaped\u001B[0m after"
@@ -46,15 +49,16 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
     markEverythingDirtyAndSync()
     val history = GitFileHistory.collectHistory(project, VcsUtil.getFilePath(projectRoot, "a.txt"), "-1")
-    assertEquals("Commit message is incorrect", message, history[0].commitMessage)
+    assertThat(history[0].commitMessage).describedAs("Commit message is incorrect").isEqualTo(message)
   }
 
   // Inspired by IDEA-89347
   @Throws(VcsException::class, IOException::class)
-  fun `test cyclic rename`() {
+  @Test
+  fun `test cyclic rename`(): Unit = with(context) {
     val commits = ArrayList<TestCommit>()
 
-    commits.add(add("PostHighlightingPass.java", mkdir("source").toPath()))
+    commits.add(add("PostHighlightingPass.java", mkdir("source")))
     commits.add(modify(commits.last().file))
 
     commits.add(move(commits.last().file, mkdir("codeInside-impl")))
@@ -80,15 +84,16 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   @Throws(VcsException::class, IOException::class)
-  fun `test history`() {
+  @Test
+  fun `test history`(): Unit = with(context) {
     val commits = ArrayList<TestCommit>()
 
     commits.add(add("a.txt", ourCurrentDir()))
     commits.add(modify(commits.last().file))
 
-    commits.add(rename(commits.last().file, File(mkdir("dir"), "b.txt")))
+    commits.add(rename(commits.last().file, mkdir("dir").resolve("b.txt")))
 
-    for (i in 0..3) {
+    repeat(4) {
       commits.add(modify(commits.last().file))
     }
 
@@ -101,15 +106,16 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   @Throws(VcsException::class, IOException::class)
-  fun `test appendable history`() {
+  @Test
+  fun `test appendable history`(): Unit = with(context) {
     val commits = ArrayList<TestCommit>()
 
     commits.add(add("a.txt", ourCurrentDir()))
     commits.add(modify(commits.last().file))
 
-    commits.add(rename(commits.last().file, File(mkdir("dir"), "b.txt")))
+    commits.add(rename(commits.last().file, mkdir("dir").resolve("b.txt")))
 
-    for (i in 0..3) {
+    repeat(4) {
       commits.add(modify(commits.last().file))
     }
 
@@ -117,15 +123,16 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
     val history = ArrayList<GitFileRevision>()
     markEverythingDirtyAndSync()
-    GitFileHistory.loadHistory(myProject, VcsUtil.getFilePath(commits.first().file, false), null, CollectConsumer(history),
+    GitFileHistory.loadHistory(project, VcsUtil.getFilePath(commits.first().file, false), null, CollectConsumer(history),
                                { exception: VcsException ->
-                                 TestCase.fail("No exception expected " + ExceptionUtil.getThrowableText(exception))
+                                 Assertions.fail("No exception expected " + ExceptionUtil.getThrowableText(exception))
                                })
     assertSameHistory(commits, history)
   }
 
   @Throws(VcsException::class, IOException::class)
-  fun `test history through merged rename`() {
+  @Test
+  fun `test history through merged rename`(): Unit = with(context) {
     add("initial.txt", ourCurrentDir(), "initial commit")
 
     val commits = ArrayList<TestCommit>()
@@ -141,7 +148,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     repo.checkout("master")
     git.merge(repo, "newBranch", mutableListOf("--no-ff", "--no-commit"))
 
-    commits.add(rename(commits.last().file, File(mkdir("dir"), "b.txt")))
+    commits.add(rename(commits.last().file, mkdir("dir").resolve("b.txt")))
     commits.reverse()
 
     val history = collectFileHistory(commits.first().file)
@@ -149,7 +156,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   @Throws(VcsException::class, IOException::class)
-  fun `test history through non-trivial merge`() {
+  @Test
+  fun `test history through non-trivial merge`(): Unit = with(context) {
     val commits = ArrayList<TestCommit>()
 
     commits.add(add("a.txt", ourCurrentDir()))
@@ -165,7 +173,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     repo.checkout("master")
     git.merge(repo, "newBranch", mutableListOf("--no-ff", "--no-commit"))
 
-    FileUtil.writeToFile(file, "merged")
+    file.writeText("merged")
 
     commits.add(commit(file, "merge commit"))
     commits.reverse()
@@ -175,7 +183,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   @Throws(VcsException::class, IOException::class)
-  fun `test history through trivial merge`() {
+  @Test
+  fun `test history through trivial merge`(): Unit = with(context) {
     val commits = ArrayList<TestCommit>()
 
     commits.add(add("a.txt", ourCurrentDir()))
@@ -197,7 +206,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   @Throws(VcsException::class, IOException::class)
-  fun `test history through reverting merge`() {
+  @Test
+  fun `test history through reverting merge`(): Unit = with(context) {
     val commits = ArrayList<TestCommit>()
 
     val initialContent = "initial content"
@@ -213,7 +223,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     repo.checkout("master")
     git.merge(repo, "newBranch", mutableListOf("--no-ff", "--no-commit"))
 
-    FileUtil.writeToFile(file, initialContent) // revert file to initial content
+    file.writeText(initialContent) // revert file to initial content
     commits.add(commit(file, "merge commit"))
 
     commits.reverse()
@@ -223,7 +233,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   @Throws(VcsException::class)
-  fun `test history through monorepo merge`() {
+  @Test
+  fun `test history through monorepo merge`(): Unit = with(context) {
     val repo1Commits = ArrayList<TestCommit>()
     val repo2Commits = ArrayList<TestCommit>()
 
@@ -240,10 +251,10 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     repo.checkout("master")
     git.merge(repo, "repo2-master", mutableListOf("--no-commit", "--allow-unrelated-histories"))
 
-    val repo1MovedFile = File(mkdir("repo1"), repo1FileName)
-    val repo2MovedFile = File(mkdir("repo2"), repo2FileName)
-    repo.mv(repo1File, repo1MovedFile)
-    repo.mv(repo2File, repo2MovedFile)
+    val repo1MovedFile = mkdir("repo1").resolve(repo1FileName)
+    val repo2MovedFile = mkdir("repo2").resolve(repo2FileName)
+    repo.mv(repo1File.toString(), repo1MovedFile.toString())
+    repo.mv(repo2File.toString(), repo2MovedFile.toString())
     val monorepoMergeMessage = "monorepo merge"
     val monorepoMerge = repo.addCommit(monorepoMergeMessage)
     repo1Commits.add(TestCommit(monorepoMerge, monorepoMergeMessage, repo.root, repo1MovedFile))
@@ -254,7 +265,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   @Throws(VcsException::class)
-  fun `test history through submodule merge`() {
+  @Test
+  fun `test history through submodule merge`(): Unit = with(context) {
     val commits = ArrayList<TestCommit>()
 
     val fileName = "file.txt"
@@ -276,7 +288,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   @Throws(VcsException::class, IOException::class)
-  fun `test history through parallel renames`() {
+  @Test
+  fun `test history through parallel renames`(): Unit = with(context) {
     val commits = ArrayList<TestCommit>()
 
     val fileName = "file.txt"
@@ -286,18 +299,18 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     val renamedFileName = "renamed.txt"
 
     repo.checkout("-b", "other")
-    commits.add(modify(file, appendContent = RandomStringUtils.randomAlphanumeric(20)))
-    commits.add(rename(file, renamedFileName))
+    commits.add(modify(file, appendContent = RandomStringUtils.secure().nextAlphanumeric(20)))
+    commits.add(rename(file, file.resolveSibling(renamedFileName)))
 
     repo.checkout("master")
-    commits.add(modify(file, appendContent = RandomStringUtils.randomAlphanumeric(20)))
-    commits.add(rename(file, renamedFileName))
+    commits.add(modify(file, appendContent = RandomStringUtils.secure().nextAlphanumeric(20)))
+    commits.add(rename(file, file.resolveSibling(renamedFileName)))
 
     val renamedFile = commits.last().file
 
     git.merge(repo, "other", mutableListOf("--no-ff"))
-    echo(renamedFile.path, RandomStringUtils.randomAlphanumeric(20))
-    repo.add(renamedFile.path)
+    echo(renamedFile.toString(), RandomStringUtils.secure().nextAlphanumeric(20))
+    repo.add(renamedFile.toString())
     commits.add(commit(renamedFile, "merge other branch"))
 
     assertSameHistory(commits.sortedBy { it.hash },
@@ -305,10 +318,11 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   @Throws(VcsException::class, IOException::class)
-  fun `test history through incorrectly detected rename in monorepo merge`() {
+  @Test
+  fun `test history through incorrectly detected rename in monorepo merge`(): Unit = with(context) {
     val commits = ArrayList<TestCommit>()
 
-    val content = RandomStringUtils.randomAlphanumeric(200)
+    val content = RandomStringUtils.secure().nextAlphanumeric(200)
 
     val repo1FileName = "file1.txt"
     commits.add(add(repo1FileName, ourCurrentDir(), initialContent = content))
@@ -323,10 +337,10 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     repo.checkout("master")
     git.merge(repo, "repo2-master", mutableListOf("--no-commit", "--allow-unrelated-histories"))
 
-    val repo1MovedFile = File(mkdir("repo1"), repo1FileName)
-    val repo2MovedFile = File(mkdir("repo2"), repo2FileName)
-    repo.mv(repo1File, repo1MovedFile)
-    repo.mv(repo2File, repo2MovedFile)
+    val repo1MovedFile = mkdir("repo1").resolve(repo1FileName)
+    val repo2MovedFile = mkdir("repo2").resolve(repo2FileName)
+    repo.mv(repo1File.toString(), repo1MovedFile.toString())
+    repo.mv(repo2File.toString(), repo2MovedFile.toString())
     val monorepoMergeMessage = "monorepo merge"
     val monorepoMerge = repo.addCommit(monorepoMergeMessage)
     val monorepoMergeFile1 = TestCommit(monorepoMerge, monorepoMergeMessage, repo.root, repo1MovedFile)
@@ -339,7 +353,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   @Throws(VcsException::class, IOException::class)
-  fun `test branches history`() {
+  @Test
+  fun `test branches history`(): Unit = with(context) {
     val commonCommits = ArrayList<TestCommit>()
     val masterCommits = ArrayList<TestCommit>()
     val branchCommits = ArrayList<TestCommit>()
@@ -363,14 +378,19 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     masterCommits.reverse()
     branchCommits.reverse()
 
-    assertSameHistory(branchCommits + masterCommits + commonCommits, collectFileHistory(file, GitLogUtil.LOG_ALL, true))
+    assertSameHistory(buildList {
+      addAll(branchCommits)
+      addAll(masterCommits)
+      addAll(commonCommits)
+    }, collectFileHistory(file, GitLogUtil.LOG_ALL, true))
     assertSameHistory(masterCommits + commonCommits, collectFileHistory(file, listOf("master"), true))
     assertSameHistory(branchCommits + commonCommits, collectFileHistory(file, listOf("newBranch"), true))
     assertSameHistory(commonCommits, collectFileHistory(file, listOf(branchingPoint), true))
   }
 
   @Throws(VcsException::class, IOException::class)
-  fun `test branches history with rename`() {
+  @Test
+  fun `test branches history with rename`(): Unit = with(context) {
     val commitsBeforeRename = ArrayList<TestCommit>()
     val commitsAfterRename = ArrayList<TestCommit>()
 
@@ -380,7 +400,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     val pointBeforeRename = commitsBeforeRename.last().hash
     val fileBeforeRename = commitsBeforeRename.last().file
 
-    commitsAfterRename.add(rename(fileBeforeRename, File(mkdir("dir"), "b.txt")))
+    commitsAfterRename.add(rename(fileBeforeRename, mkdir("dir").resolve("b.txt")))
     commitsAfterRename.add(modify(commitsAfterRename.last().file))
 
     val fileAfterRename = commitsAfterRename.last().file
@@ -393,73 +413,69 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     assertSameHistory(commitsBeforeRename, collectFileHistory(fileBeforeRename, listOf(pointBeforeRename), true))
   }
 
-  private fun collectFileHistory(file: File, full: Boolean = false): List<VcsFileRevision> {
+  private fun collectFileHistory(file: Path, full: Boolean = false): List<VcsFileRevision> {
     return collectFileHistory(file, listOf(GitUtil.HEAD), full)
   }
 
-  private fun collectFileHistory(file: File, startingRevisions: List<String>, full: Boolean): List<VcsFileRevision> {
+  private fun collectFileHistory(file: Path, startingRevisions: List<String>, full: Boolean): List<VcsFileRevision> = with(context) {
     markEverythingDirtyAndSync()
 
     val path = VcsUtil.getFilePath(file, false)
-    val gitFileHistory = GitFileHistory(myProject, repo.root, path, startingRevisions, full)
-    TestCase.assertEquals("Last commit path differs from the requested one", path, gitFileHistory.getFilePath())
+    val gitFileHistory = GitFileHistory(project, repo.root, path, startingRevisions, full)
+    assertThat(gitFileHistory.getFilePath()).describedAs("Last commit path differs from the requested one").isEqualTo(path)
     return buildList {
       gitFileHistory.load(::add)
     }
   }
 
-  private fun markEverythingDirtyAndSync() {
+  private fun markEverythingDirtyAndSync(): Unit = with(context) {
     VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
     ChangeListManagerImpl.getInstanceImpl(project).waitEverythingDoneInTestMode()
   }
 
-  private fun assertSameHistory(expected: List<TestCommit>, actual: List<VcsFileRevision>, file: File? = null) {
+  private fun assertSameHistory(expected: List<TestCommit>, actual: List<VcsFileRevision>, file: Path? = null) {
     val description = if (file == null) "History is different." else "History for ${file.relativePath()} is different."
-    TestCase.assertEquals(description, expected, actual.map { it.toTestCommit() })
+    assertThat(actual.map { it.toTestCommit() }).describedAs(description).isEqualTo(expected)
   }
 
-  private data class TestCommit(val hash: String, val commitMessage: String, val root: VirtualFile, val file: File) {
+  private data class TestCommit(val hash: String, val commitMessage: String, val root: VirtualFile, val file: Path) {
     override fun toString(): String {
-      val relativePath = FileUtil.getRelativePath(root.toNioPath().toFile(), file)
+      val relativePath = root.toNioPath().relativize(file)
       return "${DvcsUtil.getShortHash(hash)}:${relativePath}:$commitMessage"
     }
   }
 
-  private fun VcsFileRevision.toTestCommit(): TestCommit {
-    return TestCommit(revisionNumber.asString(), commitMessage!!, repo.root, (this as GitFileRevision).path.ioFile)
+  private fun VcsFileRevision.toTestCommit(): TestCommit = with(context) {
+    return TestCommit(revisionNumber.asString(), commitMessage!!, repo.root, Path.of((this@toTestCommit as GitFileRevision).path.path))
   }
 
-  private fun move(file: File, dir: File): TestCommit {
-    repo.mv(file, dir)
-    return commit(File(dir, file.name), "Moved ${file.relativePath()} to ${dir.relativePath()}")
+  private fun move(file: Path, dir: Path): TestCommit = with(context) {
+    repo.mv(file.toString(), dir.toString())
+    return commit(dir.resolve(file.name), "Moved ${file.relativePath()} to ${dir.relativePath()}")
   }
 
-  private fun rename(file: File, newFile: File): TestCommit {
-    repo.mv(file, newFile)
+  private fun rename(file: Path, newFile: Path): TestCommit = with(context) {
+    repo.mv(file.toString(), newFile.toString())
     return commit(newFile, "Renamed ${file.relativePath()} to ${newFile.relativePath()}")
   }
 
-  private fun rename(file: File, newFileName: String): TestCommit {
-    val newFile = File(file.parentFile, newFileName)
-    return rename(file, newFile)
-  }
-
   @Throws(IOException::class)
-  private fun modify(file: File, appendContent: String = "Modified"): TestCommit {
-    FileUtil.appendToFile(file, appendContent)
+  private fun modify(file: Path, appendContent: String = "Modified"): TestCommit {
+    file.appendText(appendContent)
     return commit(file, "Modified ${file.relativePath()}")
   }
 
-  private fun add(fileName: String, dir: Path, initialContent: String = RandomStringUtils.randomAlphanumeric(200)): TestCommit {
-    val relativePath = dir.resolve(ourCurrentDir())
-    val file = touch(relativePath.resolve(fileName).toString(), initialContent)
-    return commit(file, "Created ${file.relativePath()}")
-  }
+  private fun add(fileName: String, dir: Path, initialContent: String = RandomStringUtils.secure().nextAlphanumeric(200)): TestCommit =
+    with(context) {
+      val relativePath = dir.resolve(ourCurrentDir())
+      val file = touch(relativePath.resolve(fileName).toString(), initialContent)
+      return commit(file, "Created ${file.relativePath()}")
+    }
 
-  private fun commit(file: File, message: String): TestCommit {
+  private fun commit(file: Path, message: String): TestCommit = with(context) {
     repo.addCommit(message)
     return TestCommit(last(), message, repo.root, file)
   }
 
-  private fun File.relativePath(): String? = FileUtil.getRelativePath(repo.root.toNioPath().toFile(), this)
+  private fun Path.relativePath(): String = context.repo.root.toNioPath().relativize(this).toString()
 }

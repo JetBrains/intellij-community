@@ -1,40 +1,48 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
-import com.intellij.openapi.vcs.Executor.cd
-import com.intellij.openapi.vcs.Executor.mkdir
-import com.intellij.openapi.vcs.Executor.overwrite
-import com.intellij.openapi.vcs.Executor.touch
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.Consumer
+import com.intellij.vcs.test.refresh
+import com.intellij.vcs.test.updateChangeListManager
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitRevisionNumber
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.addCommit
 import git4idea.test.checkout
 import git4idea.test.checkoutNew
 import git4idea.test.commit
 import git4idea.test.createSubRepository
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.last
 import git4idea.test.lastAuthorTime
 import git4idea.test.log
 import git4idea.test.mv
-import junit.framework.TestCase
-import java.io.File
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
+import java.nio.file.Path
 import java.util.Date
+import kotlin.io.path.exists
+import kotlin.io.path.writeText
 
 /**
  * Tests for low-level history methods in GitHistoryUtils.
  * There are some known problems with newlines and whitespaces in commit messages, these are ignored by the tests for now.
  * (see #convertWhitespacesToSpacesAndRemoveDoubles).
  */
-class GitHistoryUtilsTest : GitSingleRepoTest() {
-  private lateinit var afile: File
-  private lateinit var bfile: File
+@TestApplication
+class GitHistoryUtilsTest {
+  private val fixture = gitSingleRepoContextFixture(makeInitialCommit = false)
+  private val context: GitSingleRepoContext get() = fixture.get()
+
+  private lateinit var afile: Path
+  private lateinit var bfile: Path
   private lateinit var revisions: MutableList<GitTestRevision>
 
-  @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
+  @org.junit.jupiter.api.BeforeEach
+  fun setUp(): Unit = with(context) {
 
     revisions = ArrayList(7)
 
@@ -44,16 +52,16 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime())))
 
     // modify
-    overwrite(afile, "second content")
+    afile.writeText("second content", Charsets.UTF_8)
     hash = repo.addCommit("simple commit")
     revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime())))
 
     // mv to dir
     val dir = mkdir("dir")
-    bfile = File(dir.path, "b.txt")
-    TestCase.assertFalse("File $bfile shouldn't have existed", bfile.exists())
-    repo.mv(afile, bfile)
-    TestCase.assertTrue("File $bfile was not created by mv command", bfile.exists())
+    bfile = dir.resolve("b.txt")
+    assertThat(bfile.exists()).describedAs("File $bfile shouldn't have existed").isFalse()
+    repo.mv(afile.toString(), bfile.toString())
+    assertThat(bfile.exists()).describedAs("File $bfile was not created by mv command").isTrue()
     hash = repo.commit("moved a.txt to dir/b.txt")
     revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime())))
 
@@ -77,55 +85,56 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     updateChangeListManager()
   }
 
-  override fun makeInitialCommit(): Boolean {
-    return false
+  @Throws(Exception::class)
+  @Test
+  fun testGetCurrentRevision(): Unit = with(context) {
+    val revisionNumber = GitHistoryUtils.getCurrentRevision(project, getFilePath(bfile, false), null) as GitRevisionNumber?
+    assertThat(revisions[0].hash).isEqualTo(revisionNumber!!.rev)
+    assertThat(revisions[0].date).isEqualTo(revisionNumber.timestamp)
   }
 
   @Throws(Exception::class)
-  fun testGetCurrentRevision() {
-    val revisionNumber = GitHistoryUtils.getCurrentRevision(myProject, getFilePath(bfile), null) as GitRevisionNumber?
-    TestCase.assertEquals(revisionNumber!!.rev, revisions[0].hash)
-    TestCase.assertEquals(revisionNumber.timestamp, revisions[0].date)
+  @Test
+  fun testGetCurrentRevisionInMasterBranch(): Unit = with(context) {
+    val revisionNumber = GitHistoryUtils.getCurrentRevision(project, getFilePath(bfile, false), "master") as GitRevisionNumber?
+    assertThat(revisions[0].hash).isEqualTo(revisionNumber!!.rev)
+    assertThat(revisions[0].date).isEqualTo(revisionNumber.timestamp)
   }
 
   @Throws(Exception::class)
-  fun testGetCurrentRevisionInMasterBranch() {
-    val revisionNumber = GitHistoryUtils.getCurrentRevision(myProject, getFilePath(bfile), "master") as GitRevisionNumber?
-    TestCase.assertEquals(revisionNumber!!.rev, revisions[0].hash)
-    TestCase.assertEquals(revisionNumber.timestamp, revisions[0].date)
-  }
-
-  @Throws(Exception::class)
-  fun testGetCurrentRevisionInOtherBranch() {
+  @Test
+  fun testGetCurrentRevisionInOtherBranch(): Unit = with(context) {
     repo.checkout("-b feature")
     overwrite(bfile, "new content")
     repo.addCommit("new content")
     val output = repo.log("master --pretty=%H#%at", "-n1").trim { it <= ' ' }.split(
       "#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
-    val revisionNumber = GitHistoryUtils.getCurrentRevision(myProject, getFilePath(bfile), "master") as GitRevisionNumber?
-    TestCase.assertEquals(revisionNumber!!.rev, output[0])
-    TestCase.assertEquals(revisionNumber.timestamp, timeStampToDate(output[1]))
+    val revisionNumber = GitHistoryUtils.getCurrentRevision(project, getFilePath(bfile, false), "master") as GitRevisionNumber?
+    assertThat(output[0]).isEqualTo(revisionNumber!!.rev)
+    assertThat(timeStampToDate(output[1])).isEqualTo(revisionNumber.timestamp)
   }
 
   @Throws(Exception::class)
-  fun testGetLastRevisionForExistingFile() {
-    val state = GitHistoryUtils.getLastRevision(myProject, getFilePath(bfile))
-    TestCase.assertTrue(state!!.isItemExists)
+  @Test
+  fun testGetLastRevisionForExistingFile(): Unit = with(context) {
+    val state = GitHistoryUtils.getLastRevision(project, getFilePath(bfile, false))
+    assertThat(state!!.isItemExists).isTrue()
     val revisionNumber = state.number as GitRevisionNumber
-    TestCase.assertEquals(revisionNumber.rev, revisions[0].hash)
-    TestCase.assertEquals(revisionNumber.timestamp, revisions[0].date)
+    assertThat(revisions[0].hash).isEqualTo(revisionNumber.rev)
+    assertThat(revisions[0].date).isEqualTo(revisionNumber.timestamp)
   }
 
   @Throws(Exception::class)
-  fun testGetLastRevisionForNonExistingFile() {
+  @Test
+  fun testGetLastRevisionForNonExistingFile(): Unit = with(context) {
     val child = repo.createSubRepository("child")
 
     git("remote add origin file://${child.root.path}.git")
     git("config branch.master.remote origin")
     git("config branch.master.merge refs/heads/master")
 
-    git("rm " + bfile.path)
+    git("rm $bfile")
     repo.commit("removed bfile")
     val hashAndDate = repo.log("--pretty=format:%H#%ct", "-n1").split("#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
     git("update-ref refs/remotes/origin/master HEAD") // to avoid pushing to this fake origin
@@ -136,54 +145,57 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     refresh()
     repo.update()
 
-    val state = GitHistoryUtils.getLastRevision(myProject, getFilePath(bfile))
-    TestCase.assertTrue(!state!!.isItemExists)
+    val state = GitHistoryUtils.getLastRevision(project, getFilePath(bfile, false))
+    assertThat(!state!!.isItemExists).isTrue()
     val revisionNumber = state.number as GitRevisionNumber
-    TestCase.assertEquals(revisionNumber.rev, hashAndDate[0])
-    TestCase.assertEquals(revisionNumber.timestamp, timeStampToDate(hashAndDate[1]))
+    assertThat(hashAndDate[0]).isEqualTo(revisionNumber.rev)
+    assertThat(timeStampToDate(hashAndDate[1])).isEqualTo(revisionNumber.timestamp)
   }
 
-  fun testHistoryWithMergeCommit() {
+  @Test
+  fun testHistoryWithMergeCommit(): Unit = with(context) {
     repo.checkoutNew("newBranch", revisions.last().hash)
 
-    git("rm " + afile.path)
+    git("rm $afile")
     repo.addCommit("remove a.txt")
     // difference with master is going to be in one file (bfile)
     // so merge commit is going to have no difference with one of the parents
 
     val success = git.merge(repo, "master", mutableListOf("--no-ff")).success()
     if (!success) {
-      TestCase.fail("Could not do a merge")
+      Assertions.fail<Nothing>("Could not do a merge")
     }
 
     val mergeCommit = repo.last()
 
-    val history = GitHistoryUtils.history(myProject, projectRoot)
-    TestCase.assertNotNull("History does not contain merge commit", history.find { it.id.asString() == mergeCommit })
-    TestCase.assertEquals("Merge commit is not the first", mergeCommit, history.first().id.asString())
+    val history = GitHistoryUtils.history(project, projectRoot)
+    assertThat(history.find { it.id.asString() == mergeCommit }).describedAs("History does not contain merge commit").isNotNull()
+    assertThat(history.first().id.asString()).describedAs("Merge commit is not the first").isEqualTo(mergeCommit)
   }
 
-  fun testCollectCommitsMetadataFromReference() {
+  @Test
+  fun testCollectCommitsMetadataFromReference(): Unit = with(context) {
     val branchName = "newBranch"
     repo.checkoutNew(branchName, revisions.last().hash)
     overwrite(afile, "new branch content")
     val commitMessage = "change a file"
     val hash = repo.addCommit(commitMessage)
 
-    val commit = GitHistoryUtils.collectCommitsMetadata(myProject, projectRoot, branchName)!!.single()
-    TestCase.assertEquals(hash, commit.id.asString())
-    TestCase.assertEquals(commitMessage, commit.fullMessage)
+    val commit = GitHistoryUtils.collectCommitsMetadata(project, projectRoot, branchName)!!.single()
+    assertThat(commit.id.asString()).isEqualTo(hash)
+    assertThat(commit.fullMessage).isEqualTo(commitMessage)
   }
 
-  fun testLoadTimedCommits() {
+  @Test
+  fun testLoadTimedCommits(): Unit = with(context) {
     val branchName = "newBranch"
     repo.checkoutNew(branchName, revisions.last().hash)
     repo.checkout(revisions.first().hash)
 
     val hashes = mutableListOf<String>()
-    GitHistoryUtils.loadTimedCommits(myProject, projectRoot, Consumer { hashes.add(it.id.asString()) }, "$branchName..HEAD")
+    GitHistoryUtils.loadTimedCommits(project, projectRoot, Consumer { hashes.add(it.id.asString()) }, "$branchName..HEAD")
 
-    TestCase.assertEquals(revisions.subList(0, revisions.size - 1).map { it.hash }, hashes)
+    assertThat(hashes).isEqualTo(revisions.subList(0, revisions.size - 1).map { it.hash })
   }
 
   private fun timeStampToDate(timestamp: String): Date {
