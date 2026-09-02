@@ -14,8 +14,10 @@ import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
@@ -40,16 +42,15 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
     fixture.assertOutputModelState(model) { it.text.count { c -> c == 'A' } == 100 }
 
     // Reflow narrower: the 100 characters re-wrap onto more rows but none are lost.
-    fixture.resize(columns = 40, rows = 24)
-    fixture.assertOutputModelState(model) { it.text.count { c -> c == 'A' } == 100 }
+    fixture.resizeAndAwait(columns = 40, rows = 24)
+    assertThat(model.text.count { it == 'A' })
+      .describedAs("a narrowing reflow must neither lose nor duplicate characters")
+      .isEqualTo(100)
 
     // Reflow wider: they fit on a single row again, still all present.
-    fixture.resize(columns = 200, rows = 24)
-    fixture.assertOutputModelState(model) { it.text.count { c -> c == 'A' } == 100 }
-
-    // Across both reflows the document must end up with each character exactly once.
+    fixture.resizeAndAwait(columns = 200, rows = 24)
     assertThat(model.text.count { it == 'A' })
-      .describedAs("reflow must neither lose nor duplicate characters in the document")
+      .describedAs("a widening reflow must neither lose nor duplicate characters")
       .isEqualTo(100)
   }
 
@@ -202,6 +203,97 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
     }
 
     assertThat(model.text.split("\n")).isEqualTo((0 until 15).map { "R%02d".format(it) })
+  }
+
+  @Test
+  fun `a resize in both dimensions preserves every line`() = doTest { fixture ->
+    // Ghostty only: it reports its own reflow, where JediTerm needs a following write. See above.
+    assumeGhostty()
+    val model = fixture.view.activeOutputModel()
+    val lines = (0 until 40).map { "R%02d".format(it).padEnd(100, '-') }
+
+    fixture.connector.feed(lines.joinToString("\r\n"))
+    fixture.assertOutputModelState(model) { it.text.contains("R39") }
+
+    // Narrower and shorter, then wider and taller. A soft wrap is not a line end, so neither reflow may
+    // change the document text.
+    fixture.resizeAndAwait(columns = 40, rows = 10)
+    assertThat(model.text.split("\n")).describedAs("after a shrink in both dimensions").isEqualTo(lines)
+
+    fixture.resizeAndAwait(columns = 200, rows = 40)
+    assertThat(model.text.split("\n")).describedAs("after a growth in both dimensions").isEqualTo(lines)
+  }
+
+  @Test
+  fun `the cursor keeps its position across a resize`() = doTest { fixture ->
+    assumeGhostty()
+    val model = fixture.view.activeOutputModel()
+
+    // 30 lines of three characters: the cursor ends on line 29, at column 3.
+    fixture.connector.feed((0 until 30).joinToString("\r\n") { "R%02d".format(it) })
+    fixture.assertOutputModelState(model) { it.cursorLine() == 29L }
+    assertThat(model.cursorColumn()).isEqualTo(3L)
+
+    // A reflow moves the cursor's row, but not the logical line or the column it sits on.
+    fixture.resizeAndAwait(columns = 80, rows = 5)
+    assertThat(model.cursorLine()).describedAs("after a height shrink").isEqualTo(29L)
+    assertThat(model.cursorColumn()).describedAs("after a height shrink").isEqualTo(3L)
+
+    fixture.resizeAndAwait(columns = 40, rows = 24)
+    assertThat(model.cursorLine()).describedAs("after a width shrink").isEqualTo(29L)
+    assertThat(model.cursorColumn()).describedAs("after a width shrink").isEqualTo(3L)
+  }
+
+  @Test
+  fun `a height growth does not clear an output the model already trimmed`() {
+    assumeGhostty()
+    // A 1 KB cap holds about 170 of these lines, so the model trims while the emulator still has more.
+    // The model reads the cap when it is built, so this must run before the fixture exists.
+    setMaxOutputCapacityKb(1)
+
+    doTest { fixture ->
+      val model = fixture.view.activeOutputModel()
+
+      fixture.connector.feed((0 until 400).joinToString("\r\n") { "R%03d".format(it) })
+      fixture.assertOutputModelState(model) { it.text.contains("R399") }
+      assertThat(model.startOffset).describedAs("the model must have trimmed").isGreaterThan(TerminalOffset.ZERO)
+      val trimmedTo = model.startOffset
+
+      // A growth moves the reported anchor back by the rows it recovers from the scrollback. Nothing
+      // clamps that against the trim watermark, and an anchor below it makes the model clear everything.
+      fixture.resizeAndAwait(columns = 80, rows = 5)
+      assertThat(model.text).describedAs("the tail must survive the shrink").contains("R399")
+      fixture.resizeAndAwait(columns = 80, rows = 40)
+
+      assertThat(model.text).describedAs("the tail must survive the growth").contains("R399")
+      assertThat(model.startOffset).describedAs("trimming only ever moves forward").isGreaterThanOrEqualTo(trimmedTo)
+    }
+  }
+
+  @Disabled(
+    "KNOWN GAP: the projector reports the alternate screen at a positive logical line, because " +
+    "its history mark still points into the primary screen. The alternate model pads that gap with empty " +
+    "lines, so a full-screen program draws below the top of its own buffer. " +
+    "TerminalEmulatorOutputProjectorTest pins the misplaced anchor itself."
+  )
+  @Test
+  fun `entering the alternate screen shows the program at the top of the alternate model`() = doTest { fixture ->
+    assumeGhostty()
+    val regular = fixture.view.outputModels.regular
+    val alternate = fixture.view.outputModels.alternative
+
+    // 60 lines leave 36 rows in the scrollback, which is more than the 24 screen rows.
+    fixture.connector.feed((0 until 60).joinToString("\r\n") { "R%02d".format(it) })
+    fixture.assertOutputModelState(regular) { it.text.contains("R59") }
+
+    fixture.connector.feed("${ESC}[?1049h")
+    fixture.view.sessionModel.terminalState.first { it.isAlternateScreenBuffer }
+    fixture.connector.feed("~ VIM ~")
+    fixture.assertOutputModelState(alternate) { it.text.contains("~ VIM ~") }
+
+    // The alternate screen starts empty and holds no scrollback, so its model must hold the editor's
+    // screen alone, with the program's first row on the first line.
+    assertThat(alternate.text.split("\n").first()).describedAs("the first alternate line").isEqualTo("~ VIM ~")
   }
 
   // ---------------------------------------------------------------------------
@@ -399,11 +491,13 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
     Disposer.register(disposable) { AdvancedSettings.setInt(maxLinesKey, previousMaxLines) }
   }
 
-  /** Raises the output model's own character cap until the end of the test, so only the emulator's scrollback evicts. */
-  private fun setMaxOutputCapacityKb() {
+  /**
+   * Sets the output model's own character cap until the end of the test.
+   */
+  private fun setMaxOutputCapacityKb(kb: Int = 4096) {
     val capacityKey = "new.terminal.output.capacity.kb"
     val previousCapacity = AdvancedSettings.getInt(capacityKey)
-    AdvancedSettings.setInt(capacityKey, 4096)
+    AdvancedSettings.setInt(capacityKey, kb)
     Disposer.register(disposable) { AdvancedSettings.setInt(capacityKey, previousCapacity) }
   }
 

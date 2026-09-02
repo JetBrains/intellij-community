@@ -6,6 +6,7 @@ import com.intellij.terminal.emulator.TerminalEmulator
 import com.intellij.terminal.emulator.TerminalSize
 import com.intellij.terminal.emulator.createTerminalEmulator
 import com.intellij.terminal.frontend.session.ghostty.TerminalEmulatorOutputProjector
+import com.intellij.terminal.tests.reworked.util.ESC
 import com.intellij.terminal.tests.reworked.util.promptStartedOsc
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
@@ -15,6 +16,7 @@ import org.jetbrains.plugins.terminal.session.impl.dto.MouseModeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.Osc8HyperlinkDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TextStyleOptionDto
+import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -539,6 +541,362 @@ internal class TerminalEmulatorOutputProjectorTest {
       assertThat(event.text.split('\n')).isEqualTo((14..19).map { "R%02d".format(it) })
     }
 
+  // --- a width change, which reflows -----------------------------------------
+
+  @Test
+  fun `a width growth that joins scrollback rows moves the anchor back`() = withProjector(columns = 10, rows = 4) {
+    // Each 20-character line takes two rows at 10 columns, so 20 rows exist and 16 scroll off. The
+    // screen then starts on line 8.
+    val lines = numberedLines(count = 10, length = 20)
+    write(lines.joinToString("\r\n"))
+    assertThat(collectUpdate().startLineLogicalIndex).isEqualTo(0L)
+
+    // At 40 columns each line fits one row, so 10 rows exist, and the screen starts on line 6.
+    emulator.resize(TerminalSize(40, 4))
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(6L)
+    assertThat(event.text.split('\n')).isEqualTo(lines.subList(6, 10))
+  }
+
+  @Test
+  fun `a width shrink that splits scrollback rows keeps the anchor`() = withProjector(columns = 40, rows = 4) {
+    // Each 20-character line fits one row at 40 columns, so 10 rows exist and 6 scroll off.
+    val lines = numberedLines(count = 10, length = 20)
+    write(lines.joinToString("\r\n"))
+    assertThat(collectUpdate().startLineLogicalIndex).isEqualTo(0L)
+
+    // At 10 columns each line takes two rows. The split rows are not new output, so the anchor stays
+    // on the line the previous update's screen started on.
+    emulator.resize(TerminalSize(10, 4))
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(6L)
+    assertThat(event.text.split('\n')).isEqualTo(lines.subList(6, 10))
+  }
+
+  @Ignore(
+    "KNOWN GAP: the history mark measures how far the visible screen expanded, so a width " +
+    "shrink reports 1200 rows finalized. That is above HISTORY_REPLACE_LINES, so the projector sets " +
+    "isHistoryReplaced, anchors at 0 and reports the visible screen alone, which is two logical lines. " +
+    "Downstream that deletes every command block."
+  )
+  @Test
+  fun `a width shrink that expands the screen past the replace threshold keeps the history`() =
+    withProjector(columns = 200, rows = 50) {
+    // Each 200-character line fits one row, so 80 rows exist, 30 scroll off, and the screen starts on
+    // line 30.
+    val lines = numberedLines(count = 80, length = 200)
+    write(lines.joinToString("\r\n"))
+    assertThat(collectUpdate().startLineLogicalIndex).isEqualTo(0L)
+
+    // At 8 columns each line takes 25 rows, so the 50 screen rows become 1250. The mark follows the old
+    // screen top, so it reports 1200 rows finalized, which is above HISTORY_REPLACE_LINES.
+    emulator.resize(TerminalSize(8, 50))
+    val event = collectUpdate()
+
+    // A width shrink adds no output, so the anchor must stay on line 30 and the text must still hold
+    // lines 30 to 79. A user reaches this by dragging a wide terminal narrow over a long history.
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(30L)
+    assertThat(event.text.split('\n')).isEqualTo(lines.subList(30, 80))
+  }
+
+  @Test
+  fun `a narrowing to one column loses no character`() = withProjector(columns = 20, rows = 4) {
+    write("A".repeat(60))
+    collectUpdate()
+
+    emulator.resize(TerminalSize(1, 4))
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+    assertThat(event.text).isEqualTo("A".repeat(60))
+  }
+
+  @Test
+  fun `a reflow that joins rows keeps one style run`() = withProjector(columns = 20, rows = 4) {
+    // 30 red characters take two rows at 20 columns and one row at 40.
+    write("$ESC[31m" + "R".repeat(30) + "$ESC[0m")
+    collectUpdate()
+
+    emulator.resize(TerminalSize(40, 4))
+    val event = collectUpdate()
+
+    assertThat(event.text).isEqualTo("R".repeat(30))
+    assertThat(event.styles).hasSize(1)
+    assertThat(event.styles.single().startOffset).isEqualTo(0L)
+    assertThat(event.styles.single().endOffset).isEqualTo(30L)
+  }
+
+  // --- both dimensions at once -----------------------------------------------
+
+  @Test
+  fun `a growth in both dimensions moves the anchor back`() = withProjector(columns = 10, rows = 4) {
+    val lines = numberedLines(count = 10, length = 20)
+    write(lines.joinToString("\r\n"))
+    collectUpdate()
+
+    // At 40 columns 10 rows exist, and an 8-row screen starts on line 2.
+    emulator.resize(TerminalSize(40, 8))
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(2L)
+    assertThat(event.text.split('\n')).isEqualTo(lines.subList(2, 10))
+  }
+
+  @Test
+  fun `a shrink in both dimensions keeps the anchor`() = withProjector(columns = 10, rows = 4) {
+    val lines = numberedLines(count = 10, length = 20)
+    write(lines.joinToString("\r\n"))
+    collectUpdate()
+
+    // At 5 columns each line takes four rows, so 40 rows exist and a 2-row screen starts inside line 9.
+    emulator.resize(TerminalSize(5, 2))
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(8L)
+    assertThat(event.text.split('\n')).isEqualTo(lines.subList(8, 10))
+  }
+
+  @Test
+  fun `a width growth with a height shrink moves the anchor back`() = withProjector(columns = 10, rows = 4) {
+    val lines = numberedLines(count = 10, length = 20)
+    write(lines.joinToString("\r\n"))
+    collectUpdate()
+
+    // At 40 columns 10 rows exist, and a 3-row screen starts on line 7.
+    emulator.resize(TerminalSize(40, 3))
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(7L)
+    assertThat(event.text.split('\n')).isEqualTo(lines.subList(7, 10))
+  }
+
+  @Test
+  fun `a width shrink with a height growth re-emits the straddled line whole`() = withProjector(columns = 10, rows = 4) {
+    val lines = numberedLines(count = 10, length = 20)
+    write(lines.joinToString("\r\n"))
+    collectUpdate()
+
+    // At 5 columns the 10-row screen starts inside line 8, so the window begins on a wrap continuation.
+    // The projector must back up to that line's first row and report line 8 whole, not only its tail.
+    emulator.resize(TerminalSize(5, 10))
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(8L)
+    assertThat(event.text.split('\n')).isEqualTo(lines.subList(8, 10))
+  }
+
+  @Test
+  fun `a height shrink onto a wrapped row re-emits that line whole`() = withProjector(columns = 10, rows = 4) {
+    // Each 30-character line takes three rows, so 15 rows exist and the 4-row screen starts on the last
+    // row of line 3.
+    val lines = numberedLines(count = 5, length = 30)
+    write(lines.joinToString("\r\n"))
+    collectUpdate()
+
+    emulator.resize(TerminalSize(10, 2))
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(3L)
+    assertThat(event.text.split('\n')).isEqualTo(lines.subList(3, 5))
+  }
+
+  // --- the alternate screen --------------------------------------------------
+
+  @Ignore(
+    "KNOWN GAP: the history mark still points into the primary screen while scrollbackRows " +
+    "already reads the alternate one, so finalizedLineCount reports a recovery of 15 rows that no resize " +
+    "caused. The anchor lands on line 10, and the alternate model then pads ten empty lines above the " +
+    "content. No resize is needed. A filled primary scrollback is enough."
+  )
+  @Test
+  fun `entering the alternate screen over a filled scrollback keeps the anchor at 0`() =
+    withProjector(columns = 80, rows = 5) {
+      // 20 lines put 15 into the scrollback, so the primary screen starts on line 15.
+      write((0 until 20).joinToString("\r\n") { "R%02d".format(it) })
+      assertThat(collectUpdate().startLineLogicalIndex).isEqualTo(0L)
+
+      // The cursor keeps its column across the switch, so "ALT" starts three columns in, under "R19".
+      write("$ESC[?1049h" + "ALT")
+      val event = collectUpdate()
+
+      // The alternate screen holds no scrollback and its output model starts empty, so this content must
+      // be reported at index 0.
+      assertThat(projector.isHistoryReplaced).isFalse()
+      assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(event.text.split('\n')).isEqualTo(listOf("", "", "", "", "   ALT"))
+    }
+
+  @Ignore(
+    "KNOWN GAP: the anchor holds the value the buffer switch already put there, which is 10. " +
+    "The resize itself adds no error. See the case above."
+  )
+  @Test
+  fun `a resize on the alternate screen keeps the anchor at 0`() = withProjector(columns = 80, rows = 5) {
+    write((0 until 20).joinToString("\r\n") { "R%02d".format(it) })
+    collectUpdate()
+    write("$ESC[?1049h" + "ALT")
+    collectUpdate()
+
+    emulator.resize(TerminalSize(40, 10))
+    val event = collectUpdate()
+
+    // The alternate screen still holds only its own content, so the anchor must be 0.
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+    assertThat(event.text.split('\n')).isEqualTo(listOf("", "", "", "", "   ALT"))
+  }
+
+  @Ignore(
+    "KNOWN GAP, the severe half: the projector reports the anchor 10 with the text of all 20 " +
+    "lines. The model then writes \"R00\" at logical line 10, which duplicates the whole history."
+  )
+  @Test
+  fun `leaving the alternate screen after a resize restores the primary anchor`() =
+    withProjector(columns = 80, rows = 5) {
+      write((0 until 20).joinToString("\r\n") { "R%02d".format(it) })
+      collectUpdate()
+      write("$ESC[?1049h" + "ALT")
+      collectUpdate()
+      emulator.resize(TerminalSize(80, 10))
+      collectUpdate()
+
+      write("$ESC[?1049l")
+      val event = collectUpdate()
+
+      // On the primary screen the 20 lines now fit a 10-row screen with 10 in the scrollback, so the
+      // anchor must be 10 and the text must hold lines 10 to 19.
+      assertThat(projector.isHistoryReplaced).isFalse()
+      assertThat(event.startLineLogicalIndex).isEqualTo(10L)
+      assertThat(event.text.split('\n')).isEqualTo((10 until 20).map { "R%02d".format(it) })
+    }
+
+  @Ignore(
+    "KNOWN GAP: the buffer holds 20 lines, numbered 0 to 19, so no anchor above 10 is " +
+    "reachable. The projector reports 20, which is past the end of its own content. The drift stays for " +
+    "the rest of the session, because nothing re-anchors screenTopLogical."
+  )
+  @Test
+  fun `the anchor stays inside the buffer after the alternate screen is left`() =
+    withProjector(columns = 80, rows = 5) {
+      write((0 until 20).joinToString("\r\n") { "R%02d".format(it) })
+      collectUpdate()
+      write("$ESC[?1049h" + "ALT")
+      collectUpdate()
+      emulator.resize(TerminalSize(80, 10))
+      collectUpdate()
+      write("$ESC[?1049l")
+      collectUpdate()
+
+      val event = collectUpdate()
+
+      // The buffer holds 20 lines, numbered 0 to 19, so the screen top stays on line 10. A later update
+      // with no new output must repeat the screen at that same anchor.
+      assertThat(event.startLineLogicalIndex).isEqualTo(10L)
+      assertThat(event.text.split('\n')).isEqualTo((10 until 20).map { "R%02d".format(it) })
+    }
+
+  @Ignore(
+    "KNOWN GAP, the root cause: finalizedLineCount reports a recovery of 36 rows, because it " +
+    "reads the alternate screen's empty scrollback against a mark still pinned in the primary screen. " +
+    "The projector clamps that to the 24 screen rows, counts each empty alternate row as one logical " +
+    "line, and subtracts 24 from a screen top of 12. The anchor becomes -12. " +
+    "MutableTerminalOutputModelImpl.updateContent passes it to getStartOfLine, which throws " +
+    "IndexOutOfBoundsException. That error stops the frontend output-flow collection, so the terminal " +
+    "stops updating."
+  )
+  @Test
+  fun `the anchor never goes negative on the alternate screen`() = withProjector(columns = 80, rows = 24) {
+    // 20 lines of 200 characters take three rows each at 80 columns, so 60 rows exist. The 24-row screen
+    // leaves 36 rows in the scrollback, but those hold only 12 logical lines.
+    write(numberedLines(count = 20, length = 200).joinToString("\r\n"))
+    assertThat(collectUpdate().startLineLogicalIndex).isEqualTo(0L)
+
+    write("$ESC[?1049h")
+    val event = collectUpdate()
+
+    // An anchor addresses a logical line of the output, so it can never be negative. The alternate
+    // screen starts empty, so this one must be 0.
+    assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+  }
+
+  // --- a resize beside the other projector states ----------------------------
+
+  @Test
+  fun `a resize while the history is replaced resumes exact tracking`() =
+    withProjector(columns = 80, rows = 5, maxScrollbackBytes = 1) {
+      // maxScrollbackBytes is floored to two pages, so this burst finalizes far more than is retained.
+      write((0 until 5_000).joinToString("\r\n") { "R%04d".format(it) })
+      collectUpdate()
+      assertThat(projector.isHistoryReplaced).isTrue()
+
+      // The lines are five characters wide, so this resize reflows nothing and finalizes no row. The
+      // next update therefore ends the replacement and reads the retained window again.
+      emulator.resize(TerminalSize(40, 5))
+      val event = collectUpdate()
+
+      assertThat(projector.isHistoryReplaced).isFalse()
+      assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(event.text).contains("R4999")
+    }
+
+  @Test
+  fun `several resizes between two updates report the final geometry`() = withProjector(columns = 10, rows = 4) {
+    val lines = numberedLines(count = 10, length = 20)
+    write(lines.joinToString("\r\n"))
+    collectUpdate()
+
+    emulator.resize(TerminalSize(20, 6))
+    emulator.resize(TerminalSize(40, 8))
+    emulator.resize(TerminalSize(40, 4))
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(6L)
+    assertThat(event.text.split('\n')).isEqualTo(lines.subList(6, 10))
+  }
+
+  @Test
+  fun `a resize to the same size reports the screen at the same anchor`() = withProjector(columns = 10, rows = 4) {
+    val lines = numberedLines(count = 10, length = 20)
+    write(lines.joinToString("\r\n"))
+    collectUpdate()
+
+    emulator.resize(TerminalSize(10, 4))
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(8L)
+    assertThat(event.text.split('\n')).isEqualTo(lines.subList(8, 10))
+  }
+
+  @Test
+  fun `the cursor after a resize agrees between the update and computeCursor`() =
+    withProjector(columns = 10, rows = 4) {
+      val lines = numberedLines(count = 10, length = 20)
+      write(lines.joinToString("\r\n"))
+      collectUpdate()
+
+      // Line 9 fills its last row exactly, so the cursor rests on that row's final cell with the wrap
+      // pending. Its column is therefore 19, one before the 20-character line end.
+      emulator.resize(TerminalSize(40, 4))
+      val event = collectUpdate()
+
+      assertThat(event.cursorLogicalLineIndex).isEqualTo(9L)
+      assertThat(event.cursorColumnIndex).isEqualTo(19)
+      assertThat(projector.computeCursor()).isEqualTo(9L to 19)
+    }
+
   // ---------------------------------------------------------------------------
   // Two updates from one write
   // ---------------------------------------------------------------------------
@@ -591,6 +949,14 @@ internal class TerminalEmulatorOutputProjectorTest {
       runCatching { emulator.close() }
     }
   }
+
+  /**
+   * [count] hard lines of exactly [length] characters. Each one starts with its own index, so a case can
+   * name the line an assertion is about, and a fixed length keeps the row count per line exact at a
+   * given width.
+   */
+  private fun numberedLines(count: Int, length: Int): List<String> =
+    (0 until count).map { "L$it".padEnd(length, '-') }
 
   /** `ESC ] 8 ; ; <uri> ST <text> ESC ] 8 ; ; ST` - [text] hyperlinked to [uri]. */
   private fun osc8(uri: String, text: String): String {

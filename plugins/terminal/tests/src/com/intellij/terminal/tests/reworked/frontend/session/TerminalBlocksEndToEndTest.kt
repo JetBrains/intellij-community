@@ -5,6 +5,7 @@ import com.intellij.terminal.tests.reworked.frontend.session.TerminalBlocksEndTo
 import com.intellij.terminal.tests.reworked.frontend.session.TerminalBlocksEndToEndTest.Companion.SETTLE_DELAY
 import com.intellij.terminal.tests.reworked.frontend.session.TerminalBlocksEndToEndTest.Companion.printedText
 import com.intellij.terminal.tests.reworked.util.ESC
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.text
 import com.intellij.terminal.tests.reworked.util.TerminalViewFixture
 import com.intellij.terminal.tests.reworked.util.TerminalViewTestCase
 import com.intellij.terminal.tests.reworked.util.assertBlocksModelState
@@ -15,6 +16,7 @@ import com.intellij.terminal.tests.reworked.util.promptFinishedOsc
 import com.intellij.terminal.tests.reworked.util.promptStartedOsc
 import com.intellij.terminal.tests.reworked.util.shellIntegrationInitializedOsc
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.view.TerminalOffset
@@ -24,6 +26,7 @@ import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.getOutputText
 import org.jetbrains.plugins.terminal.view.shellIntegration.getTypedCommandText
 import org.jetbrains.plugins.terminal.view.shellIntegration.wasExecuted
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -258,6 +261,129 @@ internal class TerminalBlocksEndToEndTest(emulatorType: TerminalEmulatorType) : 
     assertThat(integration.block(1).endOffset).isEqualTo(integration.model.endOffset)
   }
 
+  // ---------------------------------------------------------------------------
+  // (4) A resize, which reflows the rows under the recorded offsets
+  // ---------------------------------------------------------------------------
+  //
+  // A reflow moves content between rows, but a soft wrap is not a line end, so the document text never
+  // changes. Every block offset must therefore hold across any resize. Ghostty only: it reports a resize
+  // from its own reflow, where JediTerm needs a following write, so the two cannot share expectations.
+
+  @Test
+  fun `a height shrink keeps the block boundaries`() = doResizeTest { fixture ->
+    fixture.resizeAndAwait(columns = 80, rows = 5)
+  }
+
+  @Test
+  fun `a height growth that recovers scrollback keeps the block boundaries`() = doResizeTest { fixture ->
+    fixture.resizeAndAwait(columns = 80, rows = 5)
+    fixture.resizeAndAwait(columns = 80, rows = 40)
+  }
+
+  @Test
+  fun `a width shrink keeps the block boundaries`() = doResizeTest { fixture ->
+    fixture.resizeAndAwait(columns = 40, rows = 24)
+  }
+
+  @Test
+  fun `a width growth keeps the block boundaries`() = doResizeTest { fixture ->
+    fixture.resizeAndAwait(columns = 200, rows = 24)
+  }
+
+  @Test
+  fun `a shrink in both dimensions keeps the block boundaries`() = doResizeTest { fixture ->
+    fixture.resizeAndAwait(columns = 40, rows = 10)
+  }
+
+  @Test
+  fun `a growth in both dimensions keeps the block boundaries`() = doResizeTest { fixture ->
+    fixture.resizeAndAwait(columns = 200, rows = 40)
+  }
+
+  @Test
+  fun `several resizes keep the block boundaries`() = doResizeTest { fixture ->
+    fixture.resizeAndAwait(columns = 40, rows = 10)
+    fixture.resizeAndAwait(columns = 200, rows = 40)
+    fixture.resizeAndAwait(columns = 80, rows = 24)
+  }
+
+  @Disabled(
+    "KNOWN GAP: the projector emits a negative startLineLogicalIndex here, and " +
+    "MutableTerminalOutputModelImpl.updateContent throws IndexOutOfBoundsException on it. That error " +
+    "stops the frontend output-flow collection, so this case cannot assert a model state. " +
+    "TerminalEmulatorOutputProjectorTest pins the negative index itself. Enable this once the projector " +
+    "keeps the alternate screen's anchor at 0."
+  )
+  @Test
+  fun `a resize on the alternate screen keeps the block boundaries`() {
+    assumeGhostty()
+    doTest { fixture ->
+      val integration = fixture.feedResizeTestData()
+
+      fixture.connector.feed("$ESC[?1049h")
+      fixture.view.sessionModel.terminalState.first { it.isAlternateScreenBuffer }
+      fixture.resizeAndAwait(columns = 40, rows = 10)
+
+      // The blocks belong to the regular output model alone, so a resize behind a full-screen program
+      // must not touch them. See TerminalTextBufferEventsTest for what the switch does to the models.
+      assertResizeBlocks(integration, "after a resize on the alternate screen")
+    }
+  }
+
+  @Test
+  fun `output after a resize joins the active block`() {
+    assumeGhostty()
+    doTest { fixture ->
+      val integration = fixture.feedResizeTestData()
+
+      fixture.resizeAndAwait(columns = 40, rows = 10)
+      fixture.connector.feed("tail")
+      fixture.assertOutputModelState(integration.model) { it.text.endsWith("tail") }
+
+      // The finished blocks keep their offsets, and the text after the resize extends the active block.
+      assertResizeBlocks(integration, "after the resize and the following write")
+      assertThat(integration.block(RESIZE_ITERATIONS).getTypedCommandText(integration.model)).isNull()
+    }
+  }
+
+  @Disabled(
+    "KNOWN GAP: a width shrink reports more finalized rows than HISTORY_REPLACE_LINES, because " +
+    "the history mark measures how far the visible screen expanded, not how much output arrived. The " +
+    "projector then replaces the history and anchors at 0, so the blocks model trims every finished " +
+    "block: five collapse into one, which also inherits the last command. The text itself survives. " +
+    "TerminalEmulatorOutputProjectorTest pins the replacement itself. Enable this once a width shrink " +
+    "keeps the anchor."
+  )
+  @Test
+  fun `a width shrink past the replace threshold keeps the finished blocks`() {
+    assumeGhostty()
+    doTest { fixture ->
+      val integration = fixture.initShellIntegration()
+      // A 50-row screen of 200-character lines expands to 1250 rows at 8 columns. The history mark
+      // follows the old screen top, so it reports 1200 rows finalized, above HISTORY_REPLACE_LINES.
+      fixture.resizeAndAwait(columns = 200, rows = 50)
+      // Four commands of 21 rows each fill the 50-row screen, which the count depends on: it measures how
+      // far the visible screen expands, not how much history exists.
+      val wide = List(20) { "W%02d".format(it).padEnd(200, '-') }
+      fixture.connector.feed(
+        (List(4) { commandSegments("wide", wide) }.flatten() + listOf(promptStartedOsc(), PROMPT))
+          .joinToString("")
+      )
+      fixture.assertBlocksModelState(integration.blocks) { it.blocks.size == 5 }
+
+      fixture.resizeAndAwait(columns = 8, rows = 50)
+
+      // A width shrink adds no output, so the text and all five blocks must survive.
+      assertThat(integration.model.text).contains("W00", "W19")
+      assertThat(integration.blocks.blocks).hasSize(5)
+      for (index in 0 until 4) {
+        assertThat(integration.block(index).executedCommand)
+          .describedAs("command of block $index after the width shrink")
+          .isEqualTo("wide")
+      }
+    }
+  }
+
   // Trimming is not covered here. It needs the output model to evict while the emulator still holds the
   // text, and GhosttyTerminalSession derives its scrollback cap from the same setting, so the two caps move
   // together. TerminalBlocksModelTest states that contract directly on the models instead.
@@ -335,6 +461,65 @@ internal class TerminalBlocksEndToEndTest(emulatorType: TerminalEmulatorType) : 
   /** The order matters: [doShellIntegrationTest] runs the control before the contract under test. */
   private enum class FeedMode { PER_SEGMENT, ONE_CHUNK }
 
+  // ---------------------------------------------------------------------------
+  // The resize harness
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Feeds [RESIZE_ITERATIONS] commands whose output is taller than the screen, so the earliest rows reach
+   * the scrollback, then asserts the blocks, runs [resize] and asserts the same blocks again.
+   */
+  private fun doResizeTest(resize: suspend (fixture: TerminalViewFixture) -> Unit) {
+    assumeGhostty()
+    doTest { fixture ->
+      val integration = fixture.feedResizeTestData()
+      assertResizeBlocks(integration, "before the resize")
+
+      resize(fixture)
+
+      assertResizeBlocks(integration, "after the resize")
+    }
+  }
+
+  /** Feeds the resize test data and returns the state once every block is in place. */
+  private suspend fun TerminalViewFixture.feedResizeTestData(): ShellIntegration {
+    val integration = initShellIntegration()
+    resize(columns = 80, rows = 24)
+    connector.feed(
+      ((0 until RESIZE_ITERATIONS).flatMap { commandSegments(RESIZE_COMMAND, RESIZE_OUTPUT_LINES) } +
+       listOf(promptStartedOsc(), PROMPT)).joinToString("")
+    )
+    assertBlocksModelState(integration.blocks) { it.blocks.size == RESIZE_ITERATIONS + 1 }
+    return integration
+  }
+
+  /** Asserts every block of the resize case. [phase] names the moment, so a failure says which one. */
+  private fun assertResizeBlocks(integration: ShellIntegration, phase: String) {
+    assertThat(integration.blocks.blocks).describedAs("block count $phase").hasSize(RESIZE_ITERATIONS + 1)
+    for (index in 0 until RESIZE_ITERATIONS) {
+      val base = RESIZE_ITERATION_LENGTH * index
+      val block = integration.block(index)
+      assertThat(block.startOffset).describedAs("start of block $index $phase").isEqualTo(integration.offset(base))
+      assertThat(block.commandStartOffset)
+        .describedAs("command start of block $index $phase").isEqualTo(integration.offset(base + 2))
+      assertThat(block.outputStartOffset)
+        .describedAs("output start of block $index $phase").isEqualTo(integration.offset(base + 10))
+      assertThat(block.endOffset)
+        .describedAs("end of block $index $phase").isEqualTo(integration.offset(base + RESIZE_ITERATION_LENGTH))
+      assertThat(block.executedCommand).describedAs("command of block $index $phase").isEqualTo(RESIZE_COMMAND)
+      assertThat(block.exitCode).describedAs("exit code of block $index $phase").isEqualTo(0)
+      assertThat(block.getOutputText(integration.model))
+        .describedAs("output of block $index $phase").isEqualTo(RESIZE_OUTPUT_LINES.joinToString("\n"))
+    }
+
+    val active = integration.block(RESIZE_ITERATIONS)
+    assertThat(active.startOffset)
+      .describedAs("start of the active block $phase")
+      .isEqualTo(integration.offset(RESIZE_ITERATION_LENGTH * RESIZE_ITERATIONS))
+    assertThat(active.endOffset)
+      .describedAs("end of the active block $phase").isEqualTo(integration.model.endOffset)
+  }
+
   companion object {
     /** The prompt every script prints. Two characters, so the command starts two characters into the block. */
     private const val PROMPT = "$ "
@@ -383,6 +568,24 @@ internal class TerminalBlocksEndToEndTest(emulatorType: TerminalEmulatorType) : 
         }
         add(commandFinishedOsc(exitCode, WORKING_DIRECTORY))
       }
+
+    /** The command the resize case runs. Seven characters, so its output starts ten characters in. */
+    private const val RESIZE_COMMAND = "echo hi"
+
+    /**
+     * The output of one resize case command: ten 100-character lines. They soft-wrap at 80 columns and
+     * re-wrap at every other width the resize cases use, so each case really reflows.
+     */
+    private val RESIZE_OUTPUT_LINES: List<String> = List(10) { "O$it".padEnd(100, '-') }
+
+    /** How many commands the resize case runs. Their output is taller than the 24-row screen. */
+    private const val RESIZE_ITERATIONS = 3
+
+    /**
+     * The characters one resize case command prints: `"$ echo hi\n"` is 10, and each of the ten output
+     * lines is 101 with its line end.
+     */
+    private const val RESIZE_ITERATION_LENGTH = 1020L
 
     /** A 50-character line of repeating letters. It fits an 80-column row, but reflows onto two 40-column rows. */
     private val LONG_OUTPUT_LINE: String = (0 until 50).map { 'a' + it % 26 }.joinToString("")
