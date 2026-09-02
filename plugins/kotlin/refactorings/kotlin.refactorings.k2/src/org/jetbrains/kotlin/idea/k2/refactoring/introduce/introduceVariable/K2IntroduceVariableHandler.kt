@@ -563,14 +563,6 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                         }
                     }
 
-                    if (editor == null) {
-                        onNonInteractiveFinish?.invoke(property)
-                        return@executeCommand
-                    }
-
-                    editor.caretModel.moveToOffset(property.textOffset)
-                    editor.selectionModel.removeSelection()
-
                     fun postProcess(declaration: KtDeclaration, editor: Editor?) {
                         val processedDeclaration = if (declaration is KtDestructuringDeclaration && nameBasedDestructuringPropertyNames != null) {
                             runWriteAction {
@@ -604,6 +596,15 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                             editor.caretModel.moveToOffset(endOffset)
                         }
                     }
+
+                    if (editor == null) {
+                        postProcess(property, null)
+                        onNonInteractiveFinish?.invoke(property)
+                        return@executeCommand
+                    }
+
+                    editor.caretModel.moveToOffset(property.textOffset)
+                    editor.selectionModel.removeSelection()
 
                     if (!isInplaceAvailable) {
                         postProcess(property, editor)
