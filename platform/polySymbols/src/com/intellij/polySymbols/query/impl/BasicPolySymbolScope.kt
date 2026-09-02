@@ -9,6 +9,7 @@ import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.impl.SearchMap
 import com.intellij.polySymbols.impl.checkNoPsiCapture
+import com.intellij.polySymbols.impl.filterByQueryParams
 import com.intellij.polySymbols.polySymbol
 import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
 import com.intellij.polySymbols.utils.ReferencingPolySymbol
@@ -91,7 +92,7 @@ internal class BasicPolySymbolScope(
     if (!provides(kind)) return emptyList()
     val mapCache = this.mapCache
     return if (mapCache == null)
-      symbols.filter { it.kind == kind }
+      symbols.asSequence().filter { it.kind == kind }.filterByQueryParams(params).toList()
     else
       getMap(mapCache, params.queryExecutor.namesProvider).getSymbols(kind, params).toList()
   }
