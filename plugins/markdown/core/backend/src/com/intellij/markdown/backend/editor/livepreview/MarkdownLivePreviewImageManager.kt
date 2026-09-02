@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.backend.editor.livepreview
 
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
@@ -22,13 +23,14 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownImageLoader
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewImage
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
 import org.intellij.plugins.markdown.util.MarkdownApplicationScope
+import java.util.concurrent.ConcurrentHashMap
 
 /** Resolves and refreshes image sources for one backend editor. */
 internal class MarkdownLivePreviewImageManager(
@@ -43,11 +45,10 @@ internal class MarkdownLivePreviewImageManager(
 
   private val document = FileDocumentManager.getInstance().getFile(editor.document)
     ?: error("Markdown live preview editor has no document file")
-  private val loadedSources = LinkedHashMap<String, VirtualFile>()
-  private val loadingSources = HashMap<String, Deferred<VirtualFile?>>()
-  private val rejectedSources = HashSet<String>()
+  private val loadedSources = ConcurrentHashMap<String, VirtualFile>()
+  private val loadingSources = ConcurrentHashMap<String, Deferred<VirtualFile?>>()
+  private val rejectedSources = ConcurrentHashMap.newKeySet<String>()
   private val coroutineScope = MarkdownApplicationScope.createChildScope()
-  private val stateLock = Any()
 
   @Volatile
   private var disposed = false
@@ -58,27 +59,30 @@ internal class MarkdownLivePreviewImageManager(
         invalidate(events)
       }
     })
+    coroutineScope.launch(Dispatchers.Default) {
+      editor.livePreviewSpecSetFlow().collect { specSet ->
+        retainCachedSources(specSet)
+      }
+    }
   }
 
-  suspend fun load(destination: String): MarkdownLivePreviewImage? {
+  suspend fun load(destination: String): VirtualFileId? {
     val source = loadSource(destination)
-    val image = source?.let { MarkdownLivePreviewImage(it.rpcId()) }
-    publishSource(destination, image)
-    return image
+    val sourceId = source?.rpcId()
+    publishSource(destination, sourceId)
+    return sourceId
   }
 
   private suspend fun loadSource(destination: String): VirtualFile? {
-    val request = synchronized(stateLock) {
-      if (disposed) return@synchronized LoadRequest.Rejected
+    if (disposed) return null
 
-      val cachedSource = loadedSources[destination]
-      if (cachedSource != null && cachedSource.isValid) {
-        LoadRequest.Cached(cachedSource)
-      }
-      else {
-        loadedSources.remove(destination)
+    val cachedSource = loadedSources[destination]
+    val request = when {
+      cachedSource != null && cachedSource.isValid -> LoadRequest.Cached(cachedSource)
+      else -> {
+        if (cachedSource != null) loadedSources.remove(destination, cachedSource)
         rejectedSources.remove(destination)
-        LoadRequest.Pending(startLoadingLocked(destination))
+        startLoading(destination)?.let(LoadRequest::Pending) ?: LoadRequest.Rejected
       }
     }
 
@@ -89,35 +93,37 @@ internal class MarkdownLivePreviewImageManager(
     }
   }
 
-  private fun startLoadingLocked(destination: String): Deferred<VirtualFile?> {
-    loadingSources[destination]?.let { return it }
-
+  private fun startLoading(destination: String): Deferred<VirtualFile?>? {
     val deferred = coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
       loadImage(destination)
     }
-    loadingSources[destination] = deferred
+    val existing = loadingSources.putIfAbsent(destination, deferred)
+    if (existing != null) {
+      deferred.cancel()
+      return existing
+    }
+    if (disposed) {
+      if (loadingSources.remove(destination, deferred)) deferred.cancel()
+      return null
+    }
     deferred.start()
     return deferred
   }
 
   private suspend fun loadImage(destination: String): VirtualFile? {
-    val source = try {
-      withBackgroundProgress(project, MarkdownBundle.message("markdown.image.loading"), cancellable = true) {
-        MarkdownImageLoader.load(project, document, destination)
+    try {
+      val source = try {
+        withBackgroundProgress(project, MarkdownBundle.message("markdown.image.loading"), cancellable = true) {
+          MarkdownImageLoader.load(project, document, destination)
+        }
       }
-    }
-    catch (throwable: Throwable) {
-      rethrowControlFlowException(throwable)
-      LOG.warn("Failed to load Markdown image $destination", throwable)
-      null
-    }
+      catch (throwable: Throwable) {
+        rethrowControlFlowException(throwable)
+        LOG.warn("Failed to load Markdown image $destination", throwable)
+        null
+      }
 
-    val (completion, result) = synchronized(stateLock) {
-      loadingSources.remove(destination)
-      if (disposed) {
-        false to null
-      }
-      else {
+      if (!disposed) {
         if (source == null) {
           loadedSources.remove(destination)
           rejectedSources.add(destination)
@@ -126,10 +132,21 @@ internal class MarkdownLivePreviewImageManager(
           rejectedSources.remove(destination)
           loadedSources[destination] = source
         }
-        true to source
       }
+      return if (disposed) null else source
     }
-    return if (completion) result else null
+    finally {
+      loadingSources.remove(destination)
+    }
+  }
+
+  private fun retainCachedSources(specSet: MarkdownLivePreviewSpecSet?) {
+    val destinations = specSet?.elements
+      ?.filterIsInstance<MarkdownLivePreviewSpec.Image>()
+      ?.mapTo(HashSet()) { it.destination }
+      ?: emptySet()
+    loadedSources.keys.retainAll(destinations)
+    rejectedSources.retainAll(destinations)
   }
 
   private fun invalidate(events: List<VFileEvent>) {
@@ -142,17 +159,13 @@ internal class MarkdownLivePreviewImageManager(
       .filterIsInstance<MarkdownLivePreviewSpec.Image>()
       .mapTo(LinkedHashSet()) { it.destination }
 
-    val reloads = synchronized(stateLock) {
-      if (disposed) return@synchronized emptyList()
-
-      val destinationsToReload = destinations.filterTo(LinkedHashSet()) { destination ->
-        destination in rejectedSources || loadedSources[destination] in files
-      }
-      destinationsToReload.map { destination ->
-        rejectedSources.remove(destination)
-        loadedSources.remove(destination)
-        destination to startLoadingLocked(destination)
-      }
+    val destinationsToReload = destinations.filterTo(LinkedHashSet()) { destination ->
+      destination in rejectedSources || loadedSources[destination] in files
+    }
+    val reloads = destinationsToReload.mapNotNull { destination ->
+      rejectedSources.remove(destination)
+      loadedSources.remove(destination)
+      startLoading(destination)?.let { destination to it }
     }
 
     reloads.forEach { (destination, deferred) ->
@@ -165,49 +178,47 @@ internal class MarkdownLivePreviewImageManager(
           LOG.warn("Failed to refresh Markdown image $destination", throwable)
           null
         }
-        publishSource(destination, source?.let { MarkdownLivePreviewImage(it.rpcId()) })
+        publishSource(destination, source?.rpcId())
       }
     }
   }
 
-  private fun publishSource(destination: String, image: MarkdownLivePreviewImage?) {
+  private fun publishSource(destination: String, sourceId: VirtualFileId?) {
     if (disposed) return
     val specFlow = editor.livePreviewSpecSetFlow()
-    val currentSpecSet = specFlow.value ?: return
-    var changed = false
-    val updatedElements = currentSpecSet.elements.map { spec ->
-      if (spec is MarkdownLivePreviewSpec.Image && spec.destination == destination && spec.source != image) {
-        changed = true
-        spec.copy(source = image)
+    specFlow.update { currentSpecSet ->
+      if (currentSpecSet == null || disposed) return@update currentSpecSet
+      val updatedElements = currentSpecSet.elements.map { spec ->
+        if (spec is MarkdownLivePreviewSpec.Image && spec.destination == destination && spec.source != sourceId) {
+          spec.copy(source = sourceId)
+        }
+        else {
+          spec
+        }
+      }
+      val documentVersion = currentSpecSet.documentVersion.withElements(updatedElements, sourceHash(updatedElements))
+      if (currentSpecSet.elements != updatedElements || currentSpecSet.documentVersion != documentVersion) {
+        MarkdownLivePreviewSpecSet(documentVersion, updatedElements)
       }
       else {
-        spec
+        currentSpecSet
       }
-    }
-    if (changed) {
-      specFlow.value = MarkdownLivePreviewSpecSet(
-        currentSpecSet.documentVersion.withElements(updatedElements, sourceHash(updatedElements)),
-        updatedElements,
-      )
     }
   }
 
   private fun sourceHash(elements: List<MarkdownLivePreviewSpec>): Int {
-    return synchronized(stateLock) {
-      elements.filterIsInstance<MarkdownLivePreviewSpec.Image>()
-        .map { it.destination to loadedSources[it.destination]?.modificationStamp }
-        .hashCode()
-    }
+    return elements.filterIsInstance<MarkdownLivePreviewSpec.Image>()
+      .map { it.destination to loadedSources[it.destination]?.modificationStamp }
+      .hashCode()
   }
 
   override fun dispose() {
-    synchronized(stateLock) {
-      if (disposed) return
-      disposed = true
-      loadedSources.clear()
-      loadingSources.clear()
-      rejectedSources.clear()
-    }
+    if (disposed) return
+    disposed = true
+    loadedSources.clear()
+    loadingSources.values.forEach { it.cancel() }
+    loadingSources.clear()
+    rejectedSources.clear()
     coroutineScope.cancel()
   }
 }

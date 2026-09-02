@@ -28,7 +28,6 @@ import fleet.rpc.client.durable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewImage
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi
 import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
@@ -97,7 +96,7 @@ internal class MarkdownLivePreviewImageRenderer(
   }
 
   @RequiresEdt
-  fun updateItem(item: MarkdownImageRenderItem, image: MarkdownLivePreviewImage, elementsHash: Int) {
+  fun updateItem(item: MarkdownImageRenderItem, image: VirtualFileId, elementsHash: Int) {
     if (disposed || item !in items) return
     val imageUrl = imageUrl(item.destination, elementsHash)
     if (!item.updateSource(image, elementsHash, imageUrl)) return
@@ -105,7 +104,7 @@ internal class MarkdownLivePreviewImageRenderer(
   }
 
   @RequiresEdt
-  fun createItem(range: TextRange, destination: String, image: MarkdownLivePreviewImage, elementsHash: Int): MarkdownImageRenderItem {
+  fun createItem(range: TextRange, destination: String, image: VirtualFileId, elementsHash: Int): MarkdownImageRenderItem {
     val item = MarkdownImageRenderItem(editor, range, destination, image, elementsHash, imageUrl(destination, elementsHash)) { items.remove(it) }
     items.add(item)
     return item
@@ -147,12 +146,12 @@ internal class MarkdownImageRenderItem(
   override val editor: Editor,
   range: TextRange,
   val destination: String,
-  image: MarkdownLivePreviewImage,
+  image: VirtualFileId,
   private var elementsHash: Int,
   private var imageUrl: String,
   private val onDispose: (MarkdownImageRenderItem) -> Unit,
 ) : DocRenderItem {
-  var source: VirtualFileId = image.source
+  var source: VirtualFileId = image
     private set
   private var disposed = false
 
@@ -172,9 +171,9 @@ internal class MarkdownImageRenderItem(
   override fun getInlineDocumentationTarget() = null
 
   @RequiresEdt
-  fun updateSource(image: MarkdownLivePreviewImage, elementsHash: Int, imageUrl: String): Boolean {
-    if (source == image.source && this.elementsHash == elementsHash) return false
-    source = image.source
+  fun updateSource(image: VirtualFileId, elementsHash: Int, imageUrl: String): Boolean {
+    if (source == image && this.elementsHash == elementsHash) return false
+    source = image
     this.elementsHash = elementsHash
     this.imageUrl = imageUrl
     textToRender = imageText(imageUrl)

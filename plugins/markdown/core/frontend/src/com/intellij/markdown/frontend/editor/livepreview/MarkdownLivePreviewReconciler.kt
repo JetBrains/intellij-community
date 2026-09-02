@@ -2,6 +2,7 @@
 package com.intellij.markdown.frontend.editor.livepreview
 
 import com.intellij.codeInsight.documentation.render.DocRenderItemUpdater
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -35,7 +36,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewImage
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
 import org.intellij.plugins.markdown.editor.livepreview.toTextRange
@@ -382,12 +382,7 @@ class MarkdownLivePreviewReconciler private constructor(
     return region
   }
 
-  private fun createImageRegion(
-    range: TextRange,
-    destination: String,
-    image: MarkdownLivePreviewImage,
-    elementsHash: Int,
-  ): CustomFoldRegion? {
+  private fun createImageRegion(range: TextRange, destination: String, image: VirtualFileId, elementsHash: Int): CustomFoldRegion? {
     if (range.isEmpty) return null
     val document = editor.document
     val item = imageRenderer.createItem(range, destination, image, elementsHash)
@@ -581,11 +576,7 @@ private sealed interface OwnedRegion {
     }
   }
 
-  data class Image(
-    val destination: String,
-    val image: MarkdownLivePreviewImage,
-    val elementsHash: Int,
-  ) : OwnedRegion {
+  data class Image(val destination: String, val image: VirtualFileId, val elementsHash: Int) : OwnedRegion {
     override fun matches(region: FoldRegion): Boolean {
       val item = (region as? CustomFoldRegion)?.markdownImageRenderItem() ?: return false
       return item.destination == destination

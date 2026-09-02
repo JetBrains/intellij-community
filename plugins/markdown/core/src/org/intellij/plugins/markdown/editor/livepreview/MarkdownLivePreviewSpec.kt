@@ -43,10 +43,6 @@ data class MarkdownLivePreviewDocumentVersion(
   @JvmField val localModificationStamp: Long,
   @JvmField val elementsHash: Int = 0,
 ) {
-  fun matches(other: MarkdownLivePreviewDocumentVersion): Boolean {
-    return matchesDocument(other) && elementsHash == other.elementsHash
-  }
-
   fun matchesDocument(other: MarkdownLivePreviewDocumentVersion): Boolean {
     if (patchVersion != null || other.patchVersion != null) {
       return patchVersion == other.patchVersion
@@ -73,13 +69,6 @@ data class MarkdownLivePreviewDocumentVersion(
   }
 }
 
-/** Identifies an image source on the backend. */
-@ApiStatus.Internal
-@Serializable
-data class MarkdownLivePreviewImage(
-  @JvmField val source: VirtualFileId,
-)
-
 /** A live-preview decoration and the source range it reveals when touched. */
 @ApiStatus.Internal
 @Serializable
@@ -102,7 +91,7 @@ sealed interface MarkdownLivePreviewSpec {
   data class Image(
     override val range: MarkdownLivePreviewRange,
     val destination: String,
-    val source: MarkdownLivePreviewImage? = null,
+    val source: VirtualFileId? = null,
   ) : MarkdownLivePreviewSpec
 
   /** Replaces a list marker with a depth-aware bullet placeholder. */

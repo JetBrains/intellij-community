@@ -194,13 +194,13 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
   fun testDocumentVersionUsesPatchVersionWhenPresent() {
     val patchVersion = DocumentPatchVersion(7, 11)
 
-    assertTrue(MarkdownLivePreviewDocumentVersion(patchVersion, 42).matches(MarkdownLivePreviewDocumentVersion(patchVersion, 99)))
+    assertTrue(MarkdownLivePreviewDocumentVersion(patchVersion, 42).matchesDocument(MarkdownLivePreviewDocumentVersion(patchVersion, 99)))
     assertFalse(
-      MarkdownLivePreviewDocumentVersion(patchVersion, 42).matches(
+      MarkdownLivePreviewDocumentVersion(patchVersion, 42).matchesDocument(
         MarkdownLivePreviewDocumentVersion(DocumentPatchVersion(8, 11), 42)
       )
     )
-    assertFalse(MarkdownLivePreviewDocumentVersion(patchVersion, 42).matches(MarkdownLivePreviewDocumentVersion(null, 42)))
+    assertFalse(MarkdownLivePreviewDocumentVersion(patchVersion, 42).matchesDocument(MarkdownLivePreviewDocumentVersion(null, 42)))
   }
 
   private fun MarkdownLivePreviewSpec.concealedRanges(): List<MarkdownLivePreviewRange> = when (this) {

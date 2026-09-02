@@ -378,12 +378,18 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     configureProjectFile("![alt](image.png)\n\ntail")
     val region = waitForImageRenderer()
     assertTrue(region.renderer is DocRenderer)
+    val initialImageUrl = imageUrl(region)
+    val initialStamp = image.modificationStamp
 
     ApplicationManager.getApplication().runWriteAction { image.setBinaryContent(pngBytes(100, 90)) }
+    assertTrue("The image modification stamp must change", initialStamp != image.modificationStamp)
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    PlatformTestUtil.waitWithEventsDispatching(
+      "Image renderer was not refreshed",
+      { imageUrl(imageRegions().single()) != initialImageUrl },
+      10,
+    )
     assertSame(region, imageRegions().single())
-    assertTrue(imageRegions().single().renderer is DocRenderer)
   }
 
   fun testImageOverByteLimitIsRejectedAfterVfsRefresh() {
@@ -781,4 +787,8 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     myFixture.editor.foldingModel.allFoldRegions
       .filterIsInstance<CustomFoldRegion>()
       .filter { it.isValid }
+
+  private fun imageUrl(region: CustomFoldRegion): String? {
+    return (region.renderer as? DocRenderer)?.item?.textToRender
+  }
 }
