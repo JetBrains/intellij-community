@@ -2,7 +2,6 @@
 package com.intellij.ide.todo
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.psi.search.TodoAttributesUtil
 import com.intellij.psi.search.TodoPattern
 import org.jetbrains.annotations.ApiStatus

@@ -22,11 +22,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
 
-@State(name = "TodoConfiguration", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
+@State(name = "TodoConfiguration", storages = {
+  @Storage("editor.xml"),
+  // Rider kept TodoConfiguration in the non-roamable other.xml before 2016. Read-only migration.
+  // Could as well be removed, but I keep it for total backwards-compatibility
+  @Storage(value = "other.xml", deprecated = true),
+}, category = SettingsCategory.CODE)
 public class TodoConfiguration implements PersistentStateComponent<Element> {
 
   public static TodoConfiguration getInstance() {
