@@ -54,6 +54,7 @@ internal fun VersionedStorageChange.findTrigger(): Trigger? {
   // excluded url that way, and `collectExcludedPaths` reads the union over every content root. The set of
   // excluded paths is therefore the same after such a pair, and a build would repeat the previous build.
   // The directory also stays excluded, so a subtree load of it would fill the VFS with a build output.
+  // This pairing is sound only while `collectExcludedPaths` reads one union over every content root.
   val unExcluded = removed.filterKeys { it !in added }
   val newlyExcluded = added.filterKeys { it !in removed }
 

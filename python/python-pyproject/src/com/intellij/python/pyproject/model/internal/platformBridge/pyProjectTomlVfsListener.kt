@@ -19,8 +19,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.model.internal.pyProjectToml.isPrunedName
 import com.intellij.util.containers.CollectionFactory
-import com.jetbrains.python.venvReader.PRUNED_SCAN_DIRS
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -108,12 +108,22 @@ internal suspend fun loadSubtreesIntoVfs(directories: Set<VirtualFile>, excluded
       if (!directory.isValid || !directory.isDirectory) continue
       log.debug { "Loading $directory into the VFS" }
       VfsUtilCore.visitChildrenRecursively(directory, object : VirtualFileVisitor<Unit>(NO_FOLLOW_SYMLINKS) {
+        // Keep every rule below at or wider than `PyProjectTomlPathFilter.isVisible` of the search. A rule
+        // that prunes more hides a `pyproject.toml` from the search, and the model loses that module. The
+        // name rule comes from [isPrunedName], which the search reads too.
         override fun visitFile(file: VirtualFile): Boolean {
           if (!file.isDirectory) return true
           if (file.name.isPrunedName()) return false
           val path = file.toNioPathOrNull() ?: return true
           if (path in excludedPaths) return false
-          // A `venv` name has no dot, so only this check stops an install of thousands of files.
+          // A directory that holds a python interpreter. The name of such a directory has no dot, so only
+          // this check stops an install of thousands of files. The rule is wider than a virtualenv: it also
+          // holds for a conda environment and for the root of a python installation.
+          //
+          // `findPythonInPythonRoot` opens a directory stream, so a call for each visited directory reads
+          // the whole project from the disk. Very few directories hold an interpreter, hence almost every
+          // call finds nothing. [mayContainPython] reads the names that the walk loaded anyway (PY-91841).
+          if (!mayContainPython(file.children.asSequence().map { it.name })) return true
           return virtualEnvReader.findPythonInPythonRoot(path) == null
         }
       })
@@ -154,7 +164,36 @@ private fun VFileEvent.removesDirectory(): Boolean = this is VFileDeleteEvent &&
 private fun VFileEvent.renamesDirectory(): Boolean =
   this is VFilePropertyChangeEvent && propertyName == VirtualFile.PROP_NAME && file.isDirectory
 
-private fun String.isPrunedName(): Boolean = startsWith(".") || this in PRUNED_SCAN_DIRS
+/**
+ * True when a name of [childNames] can lead `VirtualEnvReader.findPythonInPythonRoot` to an interpreter.
+ *
+ * That method reads the filesystem on every call, and it opens a directory stream for each one. The load
+ * calls it for every directory of a project, and only a few directories hold an interpreter. This filter
+ * reads the names that the walk loaded anyway, so the load reaches the filesystem for a few directories.
+ *
+ * The answer is a superset, and it covers both layouts of the method at once. The method finds a binary
+ * under a directory of interpreters, `bin` or `Scripts`, or directly in the directory. Both of its name
+ * patterns start with the alternation of `pypy` and `python`, so a test of the prefix covers every name
+ * that they match. A superset only costs one call of the method, and it hides no interpreter.
+ *
+ * The comparison ignores the case, because the method resolves the nested directory with `Path.resolve`,
+ * and the filesystem of macOS and of Windows resolves a name without the case.
+ *
+ * Read the patterns of `VirtualEnvReader` again if they change. A pattern that matches a name with another
+ * prefix needs that prefix here. `PyProjectTomlDiscoveryBenchmarkTest` compares the two on a real tree.
+ */
+internal fun mayContainPython(childNames: Sequence<String>): Boolean =
+  childNames.any { name ->
+    name.equals(POSIX_DIR_WITH_PYTHON, ignoreCase = true) ||
+    name.equals(WINDOWS_DIR_WITH_PYTHON, ignoreCase = true) ||
+    name.startsWith(PYTHON_PREFIX, ignoreCase = true) ||
+    name.startsWith(PYPY_PREFIX, ignoreCase = true)
+  }
+
+private const val POSIX_DIR_WITH_PYTHON = "bin"
+private const val WINDOWS_DIR_WITH_PYTHON = "Scripts"
+private const val PYTHON_PREFIX = "python"
+private const val PYPY_PREFIX = "pypy"
 
 /**
  * Rejects a change that the model never reads.
@@ -188,6 +227,8 @@ private class EventFilter(knownRoots: Set<Path>) {
       else -> event.file?.name
     }
     if (name != null && name.isPrunedName()) return true
+    // Give a new kind of event its own branch when the kind changes the parent of a file. The branch below
+    // reads the parent of the file, which is the parent before the change.
     return when (event) {
       is VFileCreateEvent -> isOutside(event.parent)
       is VFileCopyEvent -> isOutside(event.newParent)

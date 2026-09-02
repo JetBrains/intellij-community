@@ -116,7 +116,7 @@ private suspend fun findPyProjectTomlByVfsWalk(roots: Set<Directory>, excludedPa
           }
           // The name of a root is never checked, because a project may itself live under a dot directory.
           if (file == rootDirectory) return true
-          if (file.name.startsWith(".") || file.name in PRUNED_SCAN_DIRS_NO_DOT) return false
+          if (file.name.isPrunedName()) return false
           val path = file.toNioPathOrNull() ?: return true
           return path !in excludedPaths && virtualEnvReader.findPythonInPythonRoot(path) == null
         }
@@ -175,11 +175,14 @@ private class PyProjectTomlPathFilter(
     return false
   }
 
+  // These rules decide the model. `loadSubtreesIntoVfs` prunes the VFS walk with the same rules, so a rule
+  // added here must reach that walk too, or the walk loads a subtree that the model then rejects. The name
+  // rule is shared through [isPrunedName]. The excluded path and the interpreter stay in both places.
   private fun isVisible(directory: Path): Boolean = cache.getOrPut(directory) {
     val name = directory.name
     // The order of the checks follows their cost. A check of the name needs no syscall (PY-91826).
     when {
-      name.startsWith(".") || name in PRUNED_SCAN_DIRS_NO_DOT || directory in excludedPaths -> false
+      name.isPrunedName() || directory in excludedPaths -> false
       // `Files.walkFileTree` never follows a link, and the VFS always does. A link that points into a build
       // cache can hold a second copy of the whole project, and every copy would become a module. A build
       // directory that links to the execroot of the build tool is the common case.
@@ -205,5 +208,16 @@ private class PyProjectTomlPathFilter(
  * `WindowsPath` needs none of this. It compares two names without the case already.
  */
 private fun isUnder(root: Path, file: Path): Boolean = FileUtil.isAncestor(root.toString(), file.toString(), true)
+
+/**
+ * True when a directory of this name never holds a `pyproject.toml` that becomes a module.
+ *
+ * The search and the subtree load read one rule, so neither can prune a name that the other keeps. A load
+ * that prunes more hides a `pyproject.toml` from the search, and the model loses that module.
+ *
+ * A name that starts with a dot is pruned, which already covers every dot name of `PRUNED_SCAN_DIRS`. The
+ * set [PRUNED_SCAN_DIRS_NO_DOT] holds the rest, so the two tests together cover the whole list.
+ */
+internal fun String.isPrunedName(): Boolean = startsWith(".") || this in PRUNED_SCAN_DIRS_NO_DOT
 
 private val log = fileLogger()

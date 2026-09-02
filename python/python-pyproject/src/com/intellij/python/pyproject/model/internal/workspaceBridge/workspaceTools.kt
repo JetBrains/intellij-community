@@ -65,7 +65,13 @@ import kotlin.io.path.exists
 
 private val logger = fileLogger()
 
-/** Collect all excluded folder paths from the workspace model. */
+/**
+ * Collect all excluded folder paths from the workspace model.
+ *
+ * The result is one set over every content root. `findTrigger` of the tracker relies on that union: it
+ * ignores a url that one change removes and another adds, because the union then stays equal. A result per
+ * content root would break that reasoning.
+ */
 internal fun collectExcludedPaths(project: Project): Set<Path> {
   return project.workspaceModel.currentSnapshot.entities<ContentRootEntity>()
     .flatMap { cr -> cr.excludedUrls.asSequence().map { it.url.toPath() } }.toSet()
@@ -82,13 +88,17 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
   }
   changeWorkspaceMutex.withLock {
     for (attempt in 1..MODEL_UPDATE_ATTEMPTS) {
-      if (tryRebuildProjectModel(project, files, lastAttempt = attempt == MODEL_UPDATE_ATTEMPTS)) {
+      val lastAttempt = attempt == MODEL_UPDATE_ATTEMPTS
+      if (tryRebuildProjectModel(project, files, lastAttempt)) {
         // Flush .iml files to disk to make changes visible for VCS and to prevent races with VFS.
         val saveStart = System.nanoTime()
         saveSettings(project)
         logger.info("Saved the project settings in ${millisSince(saveStart)} ms")
         return@withLock
       }
+      // The last attempt writes the model whatever the module set holds, so it never asks for a repeat.
+      // A repeat here would leave the loop with no model, no saved settings and no report of either.
+      check(!lastAttempt) { "The last attempt of the model build has to write the model" }
       logger.info("The module set changed during the build. Attempt $attempt of $MODEL_UPDATE_ATTEMPTS.")
     }
   }
@@ -105,8 +115,12 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
  * the write cannot share one lock. The method compares the names again inside the update instead, and it asks
  * the caller for one more attempt when they differ.
  *
- * On [lastAttempt] the model is written with the names of that attempt. A model that lags one JPS change is
- * better than no model at all, and the next VFS event starts a new build.
+ * On [lastAttempt] the model is written with the names of that attempt, so the method returns true. A model
+ * that lags one JPS change is better than no model at all, and the next VFS event starts a new build.
+ *
+ * A contract of Kotlin cannot hold that rule. `implies` reads the return of a method and states a fact about
+ * an argument, and this rule reads an argument and states a fact about the return. The caller therefore
+ * checks the rule.
  */
 private suspend fun tryRebuildProjectModel(project: Project, files: FSWalkInfoWithToml, lastAttempt: Boolean): Boolean {
   val currentSnapshot = project.workspaceModel.currentSnapshot

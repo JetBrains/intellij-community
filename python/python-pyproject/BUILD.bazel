@@ -199,6 +199,8 @@ jvm_library(
         "//python/python-psi-impl:psi-impl_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
         "//python/python-sdk/backend",
         "//python/python-sdk/backend:backend_test_lib",
         "//platform/util",

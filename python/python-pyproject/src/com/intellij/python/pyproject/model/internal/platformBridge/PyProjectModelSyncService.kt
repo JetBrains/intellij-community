@@ -306,8 +306,11 @@ private val DEBOUNCE: Duration = 300.milliseconds
 /**
  * How long the sync waits for a platform step before it builds the model anyway.
  *
- * The value is longer than the scanning pass of a large monorepo, because a build during the scan is work that
- * a later build repeats. It is not a correctness bound, see `awaitOrWarn`.
+ * The value is longer than the scanning pass of a large project, because a build during the scan is work
+ * that a later build repeats. It is not a correctness bound, see `awaitOrWarn`.
+ *
+ * A build after this bound stays correct only because `loadProjectRootsIntoVfs` runs first. Keep that call
+ * before the first build if this bound stays.
  */
 private val AWAIT_TIMEOUT: Duration = 5.minutes
 
