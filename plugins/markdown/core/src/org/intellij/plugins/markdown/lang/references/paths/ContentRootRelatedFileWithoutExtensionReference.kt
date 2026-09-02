@@ -15,6 +15,6 @@ class ContentRootRelatedFileWithoutExtensionReference(
   override fun findReferencedFile(): VirtualFile? {
     val containingFile = containingFile ?: return null
     val fileIndex = ProjectRootManager.getInstance(element.project).fileIndex
-    return fileIndex.getContentRootForFile(containingFile)?.findFileByRelativePath(path)
+    return fileIndex.getContentRootForFile(containingFile)?.findFileByRelativePath(decodedPath)
   }
 }

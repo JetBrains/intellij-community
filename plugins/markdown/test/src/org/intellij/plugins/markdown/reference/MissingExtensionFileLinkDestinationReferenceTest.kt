@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.reference
 
+import com.intellij.psi.util.PsiUtilCore
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import java.nio.file.Path
 
@@ -42,6 +43,20 @@ class MissingExtensionFileLinkDestinationReferenceTest : BaseLinkDestinationRefe
   fun testRenameExtensionIntroduction() = testRenameFile(Path.of("stub_without_extension"), "renamed.md")
 
   fun testRenameExtensionIntroductionTxt() = testRenameFile(Path.of("stub_without_extension"), "renamed.txt")
+
+  fun testRenameWithSpaceAndParentDirectory() {
+    myFixture.configureByFile("source/renameWithSpaceAndParentDirectory.md")
+    val target = PsiUtilCore.findFileSystemItem(project, myFixture.findFileInTempDir("test2/test data.md"))!!
+    myFixture.renameElement(target, "test data2.md")
+    myFixture.checkResultByFile("source/renameWithSpaceAndParentDirectoryAfter.md")
+  }
+
+  fun testRenameWithEncodedParentDirectory() {
+    myFixture.configureByFile("source/renameWithEncodedParentDirectory.md")
+    val target = PsiUtilCore.findFileSystemItem(project, myFixture.findFileInTempDir("test dir/test.md"))!!
+    myFixture.renameElement(target, "test data.md")
+    myFixture.checkResultByFile("source/renameWithEncodedParentDirectoryAfter.md")
+  }
 
   fun testRenameDirectory() = testRenameFile(Path.of("topDir", "innerDir"), "renamed")
 

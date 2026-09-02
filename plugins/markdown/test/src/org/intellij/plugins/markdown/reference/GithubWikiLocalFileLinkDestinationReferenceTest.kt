@@ -65,4 +65,6 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
   fun testRenameExtensionRemovalWithMissingExtension() = testRenameFile(Path.of("stub_in_root.md"), "renamed")
 
   fun testRenameExtensionIntroduction() = testRenameFile(Path.of("stub_without_extension"), "renamed.md")
+
+  fun testRenameWithSpaceAndMissingExtension() = testRenameFile(Path.of("test data.md"), "test data2.md")
 }

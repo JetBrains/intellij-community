@@ -15,7 +15,7 @@ class RelativeFileWithoutExtensionReference(
   soft: Boolean
 ): FileWithoutExtensionReference(element, fileReference, soft), PriorityReference {
   override fun findReferencedFile(): VirtualFile? {
-    return VfsUtilCore.findRelativeFile(path, containingFile)
+    return VfsUtilCore.findRelativeFile(decodedPath, containingFile)
   }
 
   override fun getPriority(): Double {

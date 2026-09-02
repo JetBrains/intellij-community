@@ -13,6 +13,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import org.intellij.plugins.markdown.lang.MarkdownFileType
+import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
 import org.jetbrains.annotations.ApiStatus
 
@@ -29,7 +30,7 @@ object ReferenceUtil {
     return CachedValuesManager.getManager(project).getCachedValue(project) {
       CachedValueProvider.Result.create(
         FileTypeIndex.containsFileOfType(MarkdownFileType.INSTANCE, GlobalSearchScope.projectScope(project)),
-        PsiModificationTracker.MODIFICATION_COUNT
+        PsiModificationTracker.getInstance(project).forLanguages { it.isKindOf(MarkdownLanguage.INSTANCE) }
       )
     }
   }
