@@ -542,6 +542,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   void updateSystemSelection() {
     if (GraphicsEnvironment.isHeadless() ||
         !PRIMARY_SELECTION_CARET_UPDATE.asBoolean() ||
+        editor.isRendererMode() ||
         !CopyPasteManager.getInstance().isSystemSelectionSupported()) {
       return;
     }
