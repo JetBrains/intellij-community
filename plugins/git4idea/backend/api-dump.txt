@@ -121,6 +121,9 @@ git4idea.commands.Git
 f:git4idea.commands.GitCommand
 - sf:HOOK:git4idea.commands.GitCommand
 - sf:NOTES:git4idea.commands.GitCommand
+f:git4idea.commands.GitCommandNotTrustedException
+- java.lang.IllegalStateException
+- <init>(java.lang.String):V
 c:git4idea.commands.GitCommandResult
 - s:error(java.lang.String):git4idea.commands.GitCommandResult
 - getOutputOrThrow(I[]):java.lang.String

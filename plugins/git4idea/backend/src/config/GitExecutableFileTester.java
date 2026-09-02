@@ -18,6 +18,7 @@ import com.intellij.platform.ide.impl.wsl.WslEelDescriptor;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandNotTrustedException;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
@@ -60,11 +61,25 @@ class GitExecutableFileTester {
         LOG.warn(e);
 
         result = new TestResult(e, currentLastModificationDate);
-        myTestMap.put(executable, result);
+        if (!isProjectTrustFailure(e)) {
+          myTestMap.put(executable, result);
+        }
       }
 
       return result;
     });
+  }
+
+  /**
+   * A {@link GitCommandNotTrustedException} reflects the trust state of the caller, not a
+   * property of {@code executable}, so it must not be cached: the same executable can be
+   * retested for a different, trusted caller and succeed.
+   */
+  private static boolean isProjectTrustFailure(@NotNull Throwable e) {
+    for (Throwable t = e; t != null; t = t.getCause()) {
+      if (t instanceof GitCommandNotTrustedException) return true;
+    }
+    return false;
   }
 
   private static @NotNull GitVersion testOrAbort(@Nullable Project project, @NotNull GitExecutable executable) throws Exception {
