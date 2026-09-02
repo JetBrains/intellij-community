@@ -324,7 +324,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private static ThreeState isPotentialCompatible(PsiExpression expression, PsiType formalType, PsiMethod method) {
     if (expression instanceof PsiFunctionalExpression) {
       final PsiClass targetTypeParameter = PsiUtil.resolveClassInClassTypeOnly(formalType);
-      if (targetTypeParameter instanceof PsiTypeParameter && method.equals(((PsiTypeParameter)targetTypeParameter).getOwner())) {
+      if (targetTypeParameter instanceof PsiTypeParameter && method.isEquivalentTo(((PsiTypeParameter)targetTypeParameter).getOwner())) {
         return ThreeState.YES;
       }
 

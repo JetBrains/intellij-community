@@ -350,7 +350,7 @@ public class InferenceSession {
   private static boolean isTypeParameterType(PsiTypeParameterListOwner method, PsiType paramType) {
     if (paramType instanceof PsiWildcardType) return isTypeParameterType(method, ((PsiWildcardType)paramType).getBound());
     final PsiClass psiClass = PsiUtil.resolveClassInType(paramType); //accept ellipsis here
-    if (psiClass instanceof PsiTypeParameter && ((PsiTypeParameter)psiClass).getOwner() == method) return true;
+    if (psiClass instanceof PsiTypeParameter && method.isEquivalentTo(((PsiTypeParameter)psiClass).getOwner())) return true;
     return false;
   }
 
