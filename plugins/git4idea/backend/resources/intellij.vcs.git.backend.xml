@@ -916,6 +916,8 @@
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>
     <lookup.charFilter implementation="git4idea.commit.GitCommitCompletionCharFilter"/>
+    <!--suppress SplitModeXmlApiUsage The handler needs the Git API, which intellij.vcs.git.shared does not have. -->
+    <typedHandler implementation="git4idea.commit.GitCommitCompletionTypedHandler"/>
 
     <customVcsLogUiFactoryProvider implementation="git4idea.ui.branch.dashboard.BranchesInGitLogUiFactoryProvider"/>
     <virtualFileSystem key="git-compare-branches" implementationClass="git4idea.branch.GitCompareBranchesVirtualFileSystem"/>
