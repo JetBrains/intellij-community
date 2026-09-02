@@ -1,4 +1,4 @@
-// "Specify UTF-8 charset" "false"
+// "Add 'StandardCharsets.UTF_8' argument" "false"
 import java.io.*;
 
 class X {

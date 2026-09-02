@@ -1,4 +1,4 @@
-// "Specify UTF-8 charset" "true"
+// "Add 'StandardCharsets.UTF_8' argument" "true-preview"
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 

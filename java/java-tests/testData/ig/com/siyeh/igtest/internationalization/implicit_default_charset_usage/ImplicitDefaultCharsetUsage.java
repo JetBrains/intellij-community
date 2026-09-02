@@ -40,6 +40,8 @@ class ImplicitDefaultCharsetUsage {
     new Scanner(new FileInputStream("null"), "utf-8");
     new Scanner("string input");
     new ArrayList(10);
+    new ByteArrayOutputStream().<warning descr="Call to 'toString()' uses the platform's default charset">toString</warning>();
+    System.out.println(<warning descr="Implicit call to 'toString()' uses the platform's default charset">new ByteArrayOutputStream()</warning>);
   }
 
   void charsetEnAndDecoders(InputStream inputStream, OutputStream outputStream) throws IOException {

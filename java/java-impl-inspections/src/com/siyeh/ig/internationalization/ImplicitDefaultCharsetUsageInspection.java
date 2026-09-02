@@ -1,9 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.FileModifier.SafeTypeForPreview;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.JdkApiCompatibilityService;
@@ -16,6 +18,7 @@ import com.intellij.psi.PsiCallExpression;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -37,7 +40,9 @@ import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -58,12 +63,12 @@ public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection 
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
-    if (infos[0] instanceof PsiNewExpression) {
-      return InspectionGadgetsBundle.message("implicit.default.charset.usage.constructor.problem.descriptor");
+    if (infos.length > 1) {
+      return InspectionGadgetsBundle.message("implicit.default.charset.usage.implicit.tostring.problem.descriptor");
     }
-    else {
-      return InspectionGadgetsBundle.message("implicit.default.charset.usage.problem.descriptor");
-    }
+    return infos[0] instanceof PsiNewExpression
+           ? InspectionGadgetsBundle.message("implicit.default.charset.usage.constructor.problem.descriptor")
+           : InspectionGadgetsBundle.message("implicit.default.charset.usage.problem.descriptor");
   }
 
   @SafeTypeForPreview
@@ -109,10 +114,9 @@ public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection 
           parameterTypes = ArrayUtil.append(parameterTypes, PsiTypes.booleanType());
           args = FALSE_AND_UTF_8_ARG;
         }
-        MethodSignature newSignature = MethodSignatureUtil
-          .createMethodSignature(signature.getName(), ArrayUtil.append(parameterTypes, charsetType),
-                                 signature.getTypeParameters(), signature.getSubstitutor(), signature.isConstructor()
-          );
+        MethodSignature newSignature =
+          MethodSignatureUtil.createMethodSignature(signature.getName(), ArrayUtil.append(parameterTypes, charsetType),
+                                                    signature.getTypeParameters(), signature.getSubstitutor(), signature.isConstructor());
         methodWithCharsetArgument = MethodSignatureUtil.findMethodBySignature(aClass, newSignature, false);
       }
       charsetOverload = methodWithCharsetArgument != null ? new CharsetOverload(methodWithCharsetArgument, args) : CharsetOverload.NONE;
@@ -123,11 +127,20 @@ public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection 
 
   @Override
   protected @Nullable LocalQuickFix buildFix(Object... infos) {
-    PsiCallExpression call = (PsiCallExpression)infos[0];
-    LanguageLevel level = PsiUtil.getLanguageLevel(call);
-    if (!level.isAtLeast(LanguageLevel.JDK_1_7)) return null;
-    PsiMethod method = call.resolveMethod();
-    return getCharsetOverload(method).createFix(level);
+    if (infos.length > 1) {
+      PsiExpression expression = (PsiExpression)infos[0];
+      if (PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_10)
+          && NullabilityUtil.getExpressionNullability(expression, true) == Nullability.NOT_NULL) {
+        return new AddUtf8CharsetToImplicitToStringFix();
+      }
+    }
+    else if (infos[0] instanceof PsiCallExpression call) {
+      LanguageLevel level = PsiUtil.getLanguageLevel(call);
+      if (!level.isAtLeast(LanguageLevel.JDK_1_7)) return null;
+      PsiMethod method = call.resolveMethod();
+      return getCharsetOverload(method).createFix(level);
+    }
+    return null;
   }
 
   @Override
@@ -138,6 +151,7 @@ public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection 
   private static class ImplicitDefaultCharsetUsageVisitor extends BaseInspectionVisitor {
     private static final CallMatcher METHODS = CallMatcher.anyOf(
       CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "getBytes").parameterCount(0),
+      CallMatcher.exactInstanceCall(CommonClassNames.JAVA_IO_BYTE_ARRAY_OUTPUT_STREAM, "toString").parameterCount(0),
       CallMatcher.staticCall("org.apache.commons.io.IOUtils", "toByteArray").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
       CallMatcher.staticCall("org.apache.commons.io.IOUtils", "toByteArray").parameterTypes("java.io.Reader"),
       CallMatcher.staticCall("org.apache.commons.io.IOUtils", "toCharArray", "toString", "readLines").parameterTypes("java.io.InputStream"),
@@ -152,6 +166,15 @@ public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection 
       super.visitMethodCallExpression(expression);
       if (METHODS.test(expression)) {
         registerMethodCallError(expression, expression);
+      }
+    }
+
+    @Override
+    public void visitExpression(@NotNull PsiExpression expression) {
+      super.visitExpression(expression);
+      if (TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_IO_BYTE_ARRAY_OUTPUT_STREAM)
+          && ExpressionUtils.isImplicitToStringCall(expression)) {
+        registerError(expression, expression, true);
       }
     }
 
@@ -268,6 +291,22 @@ public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("implicit.default.charset.usage.fix.family.name");
+    }
+  }
+
+  private static final class AddUtf8CharsetToImplicitToStringFix extends PsiUpdateModCommandQuickFix {
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("implicit.default.charset.usage.implicit.tostring.family.name");
+    }
+
+    @Override
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element instanceof PsiExpression expression) {
+        // we don't support toString(String) because it can throw a (checked) UnsupportedEncodingException
+        PsiReplacementUtil.replaceExpressionAndShorten(expression,
+                                                       expression.getText() + ".toString(java.nio.charset.StandardCharsets.UTF_8)");
+      }
     }
   }
 }
