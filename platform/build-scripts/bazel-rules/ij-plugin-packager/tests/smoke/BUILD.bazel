@@ -1,4 +1,3 @@
-load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
@@ -92,9 +91,4 @@ ij_plugin_settings_test_target(
     ide_build_number = "263.12345.67",
     ide_stability_level = "release",
     plugin = ":smoke-plugin-with-restricted-compatibility-range",
-)
-
-build_test(
-    name = "ij-plugin-smoke-test",
-    targets = [":smoke-plugin"],
 )

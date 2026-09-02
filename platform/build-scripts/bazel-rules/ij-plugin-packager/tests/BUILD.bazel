@@ -34,6 +34,7 @@ jps_test(
         "-Dij.plugin.packager.test.nightly=$(rlocationpath //platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-nightly-settings)",
         "-Dij.plugin.packager.test.release=$(rlocationpath //platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-release-settings)",
         "-Dij.plugin.packager.test.restricted.range.in.release=$(rlocationpath //platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-with-restricted-compatibility-range-in-release)",
+        "-Dij.plugin.packager.test.smoke=$(rlocationpath //platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-default-settings)",
     ],
     runtime_deps = [":ij-plugin-packager-tests-lib"],
 )
