@@ -572,6 +572,7 @@
     <applicationService serviceInterface="com.intellij.psi.search.scope.packageSet.PackageSetFactory"
                         serviceImplementation="com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl"/>
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
+    <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.ProjectPathPackageSetParserExtension"/>
     <typedHandler implementation="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypedHandlerDelegate"/>
     <inline.completion.suppress.state.supplier
       implementation="com.intellij.codeInsight.inline.completion.suppress.InlineCompletionSuppressStateByInlinePromptSupplier"/>
