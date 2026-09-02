@@ -95,15 +95,13 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
   /** See [IjentConnectionContext.remoteTerminationSettled]; exposed so a deployer's own teardown can await it. */
   protected val remoteTerminationSettled: CompletableDeferred<Unit> = CompletableDeferred()
 
-  /** Called after the connected session has taken ownership of the launched process. */
-  protected open fun onSessionConnected(ijentSession: IjentSession) {}
-
   override suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession =
-    createIjentSessionForPlatform(provider, ::getTargetPlatform)
+    createIjentSessionForPlatform(provider, ::getTargetPlatform) { }
 
   protected suspend fun createIjentSessionForPlatform(
     provider: IjentSessionProvider,
     getPlatform: suspend () -> EelPlatform,
+    onSessionConnected: (IjentSession) -> Unit,
   ): IjentSession =
     try {
       deployEvents.emit(DeployEvent.DEPLOY_STARTED)

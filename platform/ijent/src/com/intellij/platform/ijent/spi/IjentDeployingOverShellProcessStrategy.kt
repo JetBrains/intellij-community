@@ -188,6 +188,12 @@ abstract class IjentDeployingOverShellProcessStrategy(
   override suspend fun getTargetPlatform(): EelPlatform =
     getDetectedTarget().platform
 
+  override suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession =
+    createIjentSessionForPlatform(provider, ::getTargetPlatform) {
+      // A connected session owns the process from this point on, so deployer cleanup must no longer close it.
+      createdShellProcess = null
+    }
+
   private suspend fun getDetectedTarget(): DetectedTarget {
     return try {
       myDetectedTarget.await()
@@ -234,15 +240,8 @@ abstract class IjentDeployingOverShellProcessStrategy(
   final override fun close() {
     if (!closed.compareAndSet(false, true)) return
 
-    myContext.cancel(CancellationException("Closed explicitly"))
+    myContext.cancel()
     createdShellProcess?.close()
-    createdShellProcess = null
-  }
-
-  final override fun onSessionConnected(ijentSession: IjentSession) {
-    checkNotNull(createdShellProcess) {
-      "IJent deployer '$ijentLabel': onSessionConnected ran before createProcess created the shell process. Deployer closed=${closed.get()}."
-    }
     createdShellProcess = null
   }
 
@@ -330,6 +329,9 @@ private class ShellProcessWrapper(
       if (processTerminationWasRequested) {
         try {
           mediator.process.destroyForcibly()
+        }
+        catch (e: CancellationException) {
+          throw e
         }
         catch (e: Exception) {
           cleanupFailure = e
