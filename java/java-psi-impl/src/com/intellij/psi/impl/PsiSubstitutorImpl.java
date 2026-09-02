@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.TypeNullability;
@@ -217,8 +217,8 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
         if (newBound instanceof PsiWildcardType) {
           final PsiType newBoundBound = ((PsiWildcardType)newBound).getBound();
           // '? extends T' with 'T <- ?' is the substituted '?', so it keeps the place that one was written at
-          return !((PsiWildcardType)newBound).isBounded()
-                 ? PsiWildcardType.createUnbounded(wildcardType.getManager(), ((PsiWildcardType)newBound).getPsiContext())
+          return !((PsiWildcardType)newBound).isBounded() || newBoundBound == null
+                 ? ((PsiWildcardType)newBound).unbounded()
                  : rebound(wildcardType, newBoundBound);
         }
 
@@ -232,7 +232,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
 
       if (type.isExtends()) {
         if (newBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-          return PsiWildcardType.createUnbounded(type.getManager(), type.getPsiContext())
+          return type.unbounded()
             .withNullability(newBound.getNullability());
         }
         return PsiWildcardType.createExtends(type.getManager(), newBound);

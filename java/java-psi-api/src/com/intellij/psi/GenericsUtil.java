@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.TypeNullability;
@@ -357,20 +357,19 @@ public final class GenericsUtil {
         PsiManager manager = wildcardType.getManager();
         if (bound != null) {
 
-          PsiElement context = wildcardType.getPsiContext();
           if (wildcardType.isSuper() && bound instanceof PsiIntersectionType) {
-            return PsiWildcardType.createUnbounded(manager, context);
+            return wildcardType.unbounded();
           }
 
           final PsiType acceptedBound = bound.accept(this);
           if (acceptedBound instanceof PsiWildcardType) {
             if (((PsiWildcardType)acceptedBound).isExtends() != wildcardType.isExtends()) {
-              return PsiWildcardType.createUnbounded(manager, context);
+              return wildcardType.unbounded();
             }
             return acceptedBound;
           }
           if (wildcardType.isExtends() && acceptedBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-            return PsiWildcardType.createUnbounded(manager, context);
+            return wildcardType.unbounded();
           }
           if (acceptedBound.equals(bound)) return wildcardType;
           return wildcardType.isExtends()
