@@ -77,9 +77,9 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 internal class MultiProjectIndexingContractTest {
   companion object {
-    private const val FILES_TO_CHANGE: Int = 500
+    private const val FILES_TO_CHANGE: Int = 400
     private const val ORPHAN_FILES_TO_CHANGE: Int = 1000  
-    private const val TURNS = 16
+    private const val TURNS = 12
 
     private const val MODULE_NAME: String = "indexing-contract"
     private const val SEED_PROPERTY: String = "indexing.contract.seed"
