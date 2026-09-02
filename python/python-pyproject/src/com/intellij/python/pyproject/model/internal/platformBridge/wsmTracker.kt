@@ -7,7 +7,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.python.pyproject.model.internal.workspaceBridge.isPythonEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -16,8 +16,8 @@ import org.jetbrains.annotations.CheckReturnValue
 
 
 /**
- * Tracks workspace model of [project] for events (see [changesToTrack]).
- * Calls [onWsmChanged] if one happens. Be sure to cancel returned job when not needed.
+ * Tracks the workspace model of [project] for a change that the `pyproject.toml` model reads.
+ * Calls [onWsmChanged] if one happens. Be sure to cancel the returned job when not needed.
  *
  * The first argument of [onWsmChanged] holds every directory that stopped being excluded. The scanning pass
  * never descends into an excluded directory, so the VFS does not know its content. Such a directory therefore
@@ -30,52 +30,55 @@ import org.jetbrains.annotations.CheckReturnValue
 internal fun CoroutineScope.createWsmTracker(project: Project, onWsmChanged: (Set<VirtualFile>, String) -> Unit): Job =
   launch {
     project.workspaceModel.eventLog.collect { event ->
-      val reason = changesToTrack.firstNotNullOfOrNull { (entityCls, check) ->
-        event.getChanges(entityCls).firstOrNull { check(it) }?.let { describe(entityCls, it) }
-      }
-      if (reason != null) {
-        val unExcluded = event.getChanges(ExcludeUrlEntity::class.java)
-          .filterIsInstance<EntityChange.Removed<ExcludeUrlEntity>>()
-          .mapNotNullTo(LinkedHashSet()) { it.oldEntity.url.virtualFile }
-        onWsmChanged(unExcluded, reason)
-      }
+      val trigger = event.findTrigger() ?: return@collect
+      onWsmChanged(trigger.directoriesToLoad, trigger.reason)
     }
   }
+
+internal class Trigger(val directoriesToLoad: Set<VirtualFile>, val reason: String)
 
 /**
- * Names one change for the log.
+ * Returns the change that must start a build, or `null` when this event changes nothing the model reads.
  *
- * The entity source is part of the name, because it tells a python entity of a rebuild from an entity that the
- * platform wrote.
+ * The model reads two things from the workspace model: the set of excluded paths, and the set of module
+ * names. An event that leaves both sets equal cannot change the model, so it must not cost a build.
+ *
+ * Internal for `PyWsmTriggerTest`, which feeds it a real event of a relocation.
  */
-private fun describe(entityClass: Class<out WorkspaceEntity>, change: EntityChange<*>): String {
-  val kind = when (change) {
-    is EntityChange.Added -> "added"
-    is EntityChange.Removed -> "removed"
-    is EntityChange.Replaced -> "replaced"
+internal fun VersionedStorageChange.findTrigger(): Trigger? {
+  val excludeChanges = getChanges(ExcludeUrlEntity::class.java)
+  val added = excludeChanges.filterIsInstance<EntityChange.Added<ExcludeUrlEntity>>().associateBy { it.newEntity.url.url }
+  val removed = excludeChanges.filterIsInstance<EntityChange.Removed<ExcludeUrlEntity>>().associateBy { it.oldEntity.url.url }
+
+  // A url in both maps only moved to another content root. `ensureNoSrcIntersectsWithOtherRoots` relocates an
+  // excluded url that way, and `collectExcludedPaths` reads the union over every content root. The set of
+  // excluded paths is therefore the same after such a pair, and a build would repeat the previous build.
+  // The directory also stays excluded, so a subtree load of it would fill the VFS with a build output.
+  val unExcluded = removed.filterKeys { it !in added }
+  val newlyExcluded = added.filterKeys { it !in removed }
+
+  if (unExcluded.isNotEmpty()) {
+    val directories = unExcluded.values.mapNotNullTo(LinkedHashSet()) { it.oldEntity.url.virtualFile }
+    return Trigger(directories, describe("no longer excluded", unExcluded.keys))
   }
-  val entity = change.newEntity ?: change.oldEntity
-  val name = (entity as? ModuleEntity)?.name ?: (entity as? ExcludeUrlEntity)?.url?.url ?: "?"
-  return "workspace model, ${entityClass.simpleName} $kind '$name', source ${entity?.entitySource?.javaClass?.simpleName}"
+  if (newlyExcluded.isNotEmpty()) {
+    // A rebuild excludes a virtualenv of its own, and that write must not start a new rebuild.
+    val fromPlatform = newlyExcluded.filterValues { !it.newEntity.entitySource.isPythonEntity }
+    if (fromPlatform.isNotEmpty()) {
+      return Trigger(emptySet(), describe("newly excluded", fromPlatform.keys))
+    }
+  }
+
+  // A module that the platform added. A module of this model carries a python entity source, and a build that
+  // reacted to its own module would never stop.
+  val newModule = getChanges(ModuleEntity::class.java)
+    .filterIsInstance<EntityChange.Added<ModuleEntity>>()
+    .firstOrNull { !it.newEntity.entitySource.isPythonEntity }
+  if (newModule != null) {
+    return Trigger(emptySet(), "workspace model, the platform added the module '${newModule.newEntity.name}'")
+  }
+  return null
 }
 
-
-private val changesToTrack: Map<Class<out WorkspaceEntity>, (EntityChange<*>) -> Boolean> =
-  mapOf(
-    ExcludeUrlEntity::class.java to {
-      when (it) {
-        // A rebuild writes an exclusion of its own, and that write must not start a new rebuild.
-        is EntityChange.Added -> !it.newEntity.entitySource.isPythonEntity
-        // A removal is always kept. The scanning pass skipped the directory while it was excluded, so the VFS
-        // may not know its content, whoever removed the exclusion.
-        is EntityChange.Removed -> true
-        is EntityChange.Replaced -> false
-      }
-    },
-    ModuleEntity::class.java to {
-      when (it) {
-        is EntityChange.Added -> !it.newEntity.entitySource.isPythonEntity // New module and not python
-        is EntityChange.Replaced, is EntityChange.Removed -> false
-      }
-    }
-  )
+private fun describe(what: String, urls: Set<String>): String =
+  "workspace model, ${urls.size} url $what, first '${urls.first()}'"
