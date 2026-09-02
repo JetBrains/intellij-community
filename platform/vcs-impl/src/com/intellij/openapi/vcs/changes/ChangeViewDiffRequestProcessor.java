@@ -47,7 +47,7 @@ import java.util.stream.Stream;
 import static com.intellij.platform.vcs.changes.ChangesUtil.isScopeNavigationToGroupEnabled;
 
 public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple
-  implements DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
+  implements DiffPreviewUpdateProcessor {
 
   private static final int MANY_CHANGES_THRESHOLD = 10000;
 
@@ -60,16 +60,6 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   //
   // Abstract
   //
-
-  @Override
-  public ListSelection<? extends DiffRequestProducer> collectDiffProducers(boolean selectedOnly) {
-    Project project = getProject();
-    Wrapper change = getCurrentChange();
-    List<? extends Wrapper> changes = ContainerUtil.newArrayList(selectedOnly ? iterateSelectedChanges() : iterateAllChanges());
-    return ListSelection.create(changes, change)
-      .withExplicitSelection(selectedOnly)
-      .map(wrapper -> wrapper.createProducer(project));
-  }
 
   /**
    * @deprecated Use {@link #iterateSelectedChanges()}

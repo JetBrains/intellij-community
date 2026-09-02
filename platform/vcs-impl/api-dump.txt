@@ -560,7 +560,6 @@ a:com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 - com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 - <init>(com.intellij.openapi.project.Project,java.lang.String):V
 - clear():V
-- collectDiffProducers(Z):com.intellij.openapi.ListSelection
 - p:createGoToChangeAction():com.intellij.openapi.actionSystem.AnAction
 - forceKeepCurrentFileWhileFocused():Z
 - getAllChanges():java.util.stream.Stream
@@ -2402,9 +2401,6 @@ c:com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser
 - setChangeNodeDecorator(com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator):V
 - setChangesToDisplay(java.util.Collection):V
 - setIncludedChanges(java.util.Collection):V
-f:com.intellij.openapi.vcs.changes.ui.SimpleTreeDiffRequestProcessor
-- com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
-- <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.openapi.Disposable):V
 c:com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 - javax.swing.JPanel
 - <init>(com.intellij.openapi.actionSystem.ActionToolbar,com.intellij.openapi.actionSystem.ActionGroup,javax.swing.JComponent):V
