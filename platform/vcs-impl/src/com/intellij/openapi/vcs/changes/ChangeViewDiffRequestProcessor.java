@@ -56,11 +56,11 @@ public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleCh
   // Abstract
   //
 
-  public @NotNull Iterable<? extends Wrapper> iterateSelectedChanges() {
+  protected @NotNull Iterable<? extends Wrapper> iterateSelectedChanges() {
     throw new UnsupportedOperationException();
   }
 
-  public @NotNull Iterable<? extends Wrapper> iterateAllChanges() {
+  protected @NotNull Iterable<? extends Wrapper> iterateAllChanges() {
     throw new UnsupportedOperationException();
   }
 
@@ -70,7 +70,7 @@ public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleCh
    * Defaults to all changes; overridden where the tree exposes grouping (e.g. changelists).
    */
   @ApiStatus.Internal
-  public @NotNull Iterable<? extends Wrapper> iterateChangesInSameGroup(@NotNull Wrapper change) {
+  protected @NotNull Iterable<? extends Wrapper> iterateChangesInSameGroup(@NotNull Wrapper change) {
     return iterateAllChanges();
   }
 
@@ -246,14 +246,6 @@ public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleCh
     return PresentableGoToChangePopupAction.create(changesSupplier::get, new MyGoToChangePopupController());
   }
 
-  protected @NotNull List<AnAction> getGoToChangeToolbarActions() {
-    return Collections.emptyList();
-  }
-
-  protected @NotNull List<AnAction> getGoToChangePopupMenuActions() {
-    return Collections.emptyList();
-  }
-
   private @NotNull ListSelection<? extends Wrapper> getGroupOrMultiSelectionListSelection() {
     Wrapper currentChange = getCurrentChange();
     if (currentChange == null) {
@@ -289,12 +281,12 @@ public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleCh
 
     @Override
     public @NotNull List<AnAction> createToolbarActions() {
-      return ChangeViewDiffRequestProcessor.this.getGoToChangeToolbarActions();
+      return Collections.emptyList();
     }
 
     @Override
     public @NotNull List<AnAction> createPopupMenuActions() {
-      return ChangeViewDiffRequestProcessor.this.getGoToChangePopupMenuActions();
+      return Collections.emptyList();
     }
 
     @Override
@@ -335,8 +327,7 @@ public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleCh
     return true;
   }
 
-  @ApiStatus.Internal
-  protected @Nullable PrevNextDifferenceIterable getSelectionStrategy(boolean fromUpdate) {
+  private @Nullable PrevNextDifferenceIterable getSelectionStrategy(boolean fromUpdate) {
     if (myCurrentChange == null) return null;
 
     List<? extends Wrapper> selectedChanges = toListIfNotMany(iterateSelectedChanges(), fromUpdate);

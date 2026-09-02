@@ -566,8 +566,6 @@ a:com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 - getCurrentChangeIndex():I
 - getCurrentChangeName():java.lang.String
 - p:getCurrentRequestProvider():com.intellij.diff.chains.DiffRequestProducer
-- p:getGoToChangePopupMenuActions():java.util.List
-- p:getGoToChangeToolbarActions():java.util.List
 - getProject():com.intellij.openapi.project.Project
 - p:goToNextChange(Z):V
 - p:goToPrevChange(Z):V
@@ -575,8 +573,8 @@ a:com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 - p:hasPrevChange(Z):Z
 - p:isNavigationEnabled():Z
 - isWindowFocused():Z
-- iterateAllChanges():java.lang.Iterable
-- iterateSelectedChanges():java.lang.Iterable
+- p:iterateAllChanges():java.lang.Iterable
+- p:iterateSelectedChanges():java.lang.Iterable
 - p:loadRequestFast(com.intellij.diff.chains.DiffRequestProducer):com.intellij.diff.requests.DiffRequest
 - refresh(Z):V
 - pa:selectChange(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
@@ -2431,8 +2429,8 @@ c:com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
 - pf:getHandler():com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
 - pf:getTree():com.intellij.openapi.vcs.changes.ui.ChangesTree
 - f:iterateAllChanges():java.lang.Iterable
-- f:iterateChangesInSameGroup(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):java.lang.Iterable
-- f:iterateSelectedChanges():java.lang.Iterable
+- pf:iterateChangesInSameGroup(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):java.lang.Iterable
+- pf:iterateSelectedChanges():java.lang.Iterable
 - pf:selectChange(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
 - p:showAllChangesForEmptySelection():Z
 a:com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
