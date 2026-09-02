@@ -59,6 +59,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import kotlin.io.path.exists
 
@@ -153,6 +154,24 @@ private suspend fun tryRebuildProjectModel(project: Project, files: FSWalkInfoWi
 }
 
 private fun millisSince(startNanos: Long): Long = (System.nanoTime() - startNanos) / 1_000_000
+
+/**
+ * The value of the deepest key of [byPath] that is [path] itself or an ancestor of [path]. Null if none is.
+ *
+ * A caller wants the innermost match. Every key that is an ancestor of one path is comparable to every other
+ * such key, so the matches form one chain and the deepest match is the innermost. A walk up from [path] meets
+ * the deepest match first, hence it costs the depth of [path] and not the size of [byPath] (PY-91841).
+ */
+@VisibleForTesting
+internal fun <T : Any> findInnermost(path: Path, byPath: Map<Path, T>): T? {
+  var directory: Path? = path
+  while (directory != null) {
+    byPath[directory]?.let { return it }
+    directory = directory.parent
+  }
+  return null
+}
+
 
 /** How often a build may repeat when the platform changes the module set at the same time. */
 private const val MODEL_UPDATE_ATTEMPTS = 3
@@ -265,12 +284,12 @@ private fun deleteModule(
 
   // Preserve source roots and excluded folders by relocating them to the parent module,
   // but only if the underlying directory still physically exists on disk.
-  val otherContentRoots = projectStorage.entities<ContentRootEntity>().filter { it.module != module }.toList()
+  val otherContentRootIndex = ContentRootIndex(projectStorage.entities<ContentRootEntity>().filter { it.module != module }.toList())
 
   val sourcesByTarget = mutableMapOf<ContentRootEntity, MutableList<SourceRootEntityBuilder>>()
   val excludesByTarget = mutableMapOf<ContentRootEntity, MutableList<ExcludeUrlEntityBuilder>>()
   for (cr in module.contentRoots) {
-    val parent = otherContentRoots.deepestContaining(cr.url.toPath()) ?: continue
+    val parent = otherContentRootIndex.deepestContaining(cr.url.toPath()) ?: continue
     for (sr in cr.sourceRoots) {
       if (sr.url.toPath().exists()) {
         sourcesByTarget.getOrPut(parent) { mutableListOf() }.add(copyOfSourceRoot(sr, parent.entitySource))
@@ -456,9 +475,11 @@ private fun ensureNoSrcIntersectsWithOtherRoots(projectStorage: MutableEntitySto
   val sourcesToAdd = mutableMapOf<ContentRootEntity, MutableList<SourceRootEntityBuilder>>()
   val excludesToAdd = mutableMapOf<ContentRootEntity, MutableList<ExcludeUrlEntityBuilder>>()
 
+  val contentRootIndex = ContentRootIndex(allContentRoots)
+
   /** Find the innermost content root containing [path] that belongs to a different module than [cr]. */
   fun clashTarget(path: Path, cr: ContentRootEntity): ContentRootEntity? {
-    return allContentRoots.deepestContaining(path)?.takeIf { it.module != cr.module }?.also {
+    return contentRootIndex.deepestContaining(path)?.takeIf { it.module != cr.module }?.also {
       pathsToRemove.getOrPut(cr) { mutableSetOf() }.add(path)
     }
   }
@@ -559,9 +580,23 @@ private fun copyOfSourceRoot(sourceRoot: SourceRootEntity, entitySource: EntityS
     javaSourceRoots = sourceRoot.javaSourceRoots.map { JavaSourceRootPropertiesEntity(it.generated, it.packagePrefix, entitySource) }
   }
 
-/** The content root that contains [path] and lies deepest. */
-private fun List<ContentRootEntity>.deepestContaining(path: Path): ContentRootEntity? =
-  filter { path.startsWith(it.url.toPath()) }.maxByOrNull { it.url.url.length }
+/**
+ * Content roots indexed by path, for a repeated [deepestContaining] query.
+ */
+private class ContentRootIndex(contentRoots: List<ContentRootEntity>) {
+  private val byPath = HashMap<Path, ContentRootEntity>(contentRoots.size)
+
+  init {
+    // The first entry wins for a repeated path, as the `maxByOrNull` of the previous scan also did.
+    // Two content roots with one path carry one url, hence one url length.
+    for (contentRoot in contentRoots) {
+      byPath.putIfAbsent(contentRoot.url.toPath(), contentRoot)
+    }
+  }
+
+  /** The content root that contains [path] and lies deepest. */
+  fun deepestContaining(path: Path): ContentRootEntity? = findInnermost(path, byPath)
+}
 
 private suspend fun generatePyProjectTomlEntries(
   fsInfo: FSWalkInfoWithToml,
