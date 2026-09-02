@@ -154,7 +154,14 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     return false;
   }
 
-
+  /**
+   * Computes the initial context that should be used to perform inline method refactoring.
+   * @param method - Method to be inlined.
+   * @param reference - Reference to the method call on which inline refactoring was invoked. It is null when refactoring is invoked on method declaration.
+   * @param allowInlineThisOnly - whether to allow inlining of "this" only.
+   *
+   * @see ContextOrError
+   */
   public static @NotNull ContextOrError createInlineContext(@NotNull PsiMethod method, @Nullable PsiReference reference, boolean allowInlineThisOnly) {
     Project project = method.getProject();
     if (reference != null && reference.isReferenceTo(method) && method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -262,19 +269,45 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     return RefactoringBundle.message("inline.method.title");
   }
 
+  /**
+   * Represents the result of preliminary analysis of the context of the method to be inlined.
+   */
   public sealed interface ContextOrError
     permits ContextOrError.Error, ContextOrError.InlineAbstractMethod, ContextOrError.InlineObjectMethod,
             ContextOrError.InlineRegularMethod {
+
+    /**
+     * Result in which the refactoring was invoked on the abstract method, but it has single implementation.
+     * @param method - Method to be inlined.
+     * @param reference - Reference to the method call on which inline refactoring was invoked. It is null when refactoring is invoked on method declaration.
+     */
     record InlineAbstractMethod(@NotNull PsiMethod method, @NotNull PsiReference reference) implements ContextOrError {
     }
 
+    /**
+     * Result in which the object method could be inlined, for example, {@code new Point(12, 34).getX()}.
+     * @param processor - Processor that will be used to perform inline
+     * @param method - Method to be inlined.
+     * @param reference - Reference to the method call on which inline refactoring was invoked. It is null when refactoring is invoked on method declaration.
+     */
     record InlineObjectMethod(@NotNull InlineObjectProcessor processor, @NotNull PsiMethod method, @Nullable PsiReference reference) implements ContextOrError {
     }
 
+    /**
+     * Result in which the regular method could be inlined.
+     * @param method - Method to be inlined.
+     * @param reference - Reference to the method call on which inline refactoring was invoked. It is null when refactoring is invoked on method declaration.
+     * @param allowInsideThisOnly - Whether the only single reference should be inlined.
+     */
     record InlineRegularMethod(@NotNull PsiMethod method, @Nullable PsiReference reference, boolean allowInsideThisOnly)
       implements ContextOrError {
     }
 
+    /**
+     * Represents an error that occurred during the initial analysis of the context of the method to be inlined.
+     *
+     * @param message the error message
+     */
     record Error(@Nls String message) implements ContextOrError {
     }
   }

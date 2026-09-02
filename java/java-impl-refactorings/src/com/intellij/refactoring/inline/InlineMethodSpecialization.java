@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 
 import java.util.Objects;
@@ -28,6 +29,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
+@ApiStatus.Internal
 public final class InlineMethodSpecialization {
   private static final CallMatcher
     CLASS_METHODS = CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_CLASS, "getName", "getSimpleName").parameterCount(0);
@@ -93,7 +95,7 @@ public final class InlineMethodSpecialization {
    * @param ref method call site reference
    * @return call-site-specific specialization of method body; or original method if there's no specialization for given method
    */
-  static PsiMethod specialize(PsiMethod method, PsiReference ref) {
+  public static PsiMethod specialize(PsiMethod method, PsiReference ref) {
     Supplier<PsiCodeBlock> specialization = forReference(ref);
     if (specialization == null) return method;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());

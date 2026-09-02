@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -62,17 +62,20 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getInlineAllText() {
-    return JavaRefactoringBundle.message(isLibraryInline() ? "all.invocations.in.project" : "all.invocations.and.remove.the.method");
+    return JavaRefactoringBundle.message(isLibraryInline(myMethod) ? "all.invocations.in.project" : "all.invocations.and.remove.the.method");
   }
 
   @Override
   protected String getKeepTheDeclarationText() {
-    if (!isLibraryInline()) return JavaRefactoringBundle.message("all.invocations.keep.the.method");
+    if (!isLibraryInline(myMethod)) return JavaRefactoringBundle.message("all.invocations.keep.the.method");
     return super.getKeepTheDeclarationText();
   }
 
-  private boolean isLibraryInline() {
-    return myMethod.getOriginalElement() instanceof PsiCompiledElement;
+  /**
+   * Checks whether the current method is located in a library.
+   */
+  public static boolean isLibraryInline(PsiMethod method) {
+    return method.getOriginalElement() instanceof PsiCompiledElement;
   }
 
   @Override
@@ -80,7 +83,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     super.doAction();
     invokeRefactoring(
       new InlineMethodProcessor(getProject(), myMethod, myReference, myEditor, isInlineThisOnly(), isSearchInCommentsAndStrings(),
-                                isSearchForTextOccurrences(), !isLibraryInline() && !isKeepTheDeclaration()));
+                                isSearchForTextOccurrences(), !isLibraryInline(myMethod) && !isKeepTheDeclaration()));
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_METHOD_THIS = isInlineThisOnly();
@@ -98,7 +101,14 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected boolean canInlineThisOnly() {
-    return InlineMethodHandler.checkRecursive(myMethod) || myAllowInlineThisOnly;
+    return canInlineThisOnly(myMethod, myAllowInlineThisOnly);
+  }
+
+  /**
+   * Checks whether the processor can inline only one reference
+   */
+  public static boolean canInlineThisOnly(PsiMethod method, boolean allowInlineThisOnly) {
+    return InlineMethodHandler.checkRecursive(method) || allowInlineThisOnly;
   }
 
   @Override

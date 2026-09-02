@@ -53,7 +53,9 @@ import java.util.Set;
 import java.util.function.Function;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
-import static com.intellij.refactoring.inline.InlineMethodProcessorUtil.*;
+import static com.intellij.refactoring.inline.InlineMethodProcessorUtil.InlineMethodContext;
+import static com.intellij.refactoring.inline.InlineMethodProcessorUtil.collectConflicts;
+import static com.intellij.refactoring.inline.InlineMethodProcessorUtil.initInliners;
 
 public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InlineMethodProcessor.class);
