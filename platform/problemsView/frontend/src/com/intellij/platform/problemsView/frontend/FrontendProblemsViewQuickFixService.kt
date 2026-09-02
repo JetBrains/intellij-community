@@ -18,10 +18,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicReference
 
-internal data class QuickFixModel(
+private data class QuickFixModel(
   val quickFixModelId: String,
-  val actions: List<HighlightInfo.IntentionActionDescriptor>,
-  val offset: Int,
+  val intentions: List<HighlightInfo.IntentionActionDescriptor>,
 )
 
 private data class FrontendHighlightingProblemModel(
@@ -47,8 +46,8 @@ internal class FrontendProblemsViewQuickFixService(
     previousSelection?.quickFixModel?.let(::discardBackendQuickFixModel)
   }
 
-  suspend fun loadQuickFixModel(problem: HighlightingProblem): QuickFixModel? = quickFixLoadingMutex.withLock {
-    loadQuickFixModelIfSelected(problem)
+  suspend fun loadQuickFixes(problem: HighlightingProblem): List<HighlightInfo.IntentionActionDescriptor> = quickFixLoadingMutex.withLock {
+    loadQuickFixModelIfSelected(problem)?.intentions.orEmpty()
   }
 
   private suspend fun loadQuickFixModelIfSelected(problem: HighlightingProblem): QuickFixModel? {
@@ -96,10 +95,10 @@ internal class FrontendProblemsViewQuickFixService(
   }
 
   private fun QuickFixModelDto.toQuickFixModel(): QuickFixModel {
-    val actions = quickFixes.map { quickFix ->
+    val intentions = quickFixes.map { quickFix ->
       dtoToIntentionActionDescriptor(quickFix, quickFixModelId)
     }
-    return QuickFixModel(quickFixModelId, actions, offset)
+    return QuickFixModel(quickFixModelId, intentions)
   }
 
   companion object {

@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.intention.IntentionSource
 import com.intellij.codeInsight.intention.impl.CachedIntentions
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.IntentionListStep
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -20,13 +21,15 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.problemsView.frontend.FrontendHighlightingPanel
 import com.intellij.platform.problemsView.frontend.FrontendProblemsViewQuickFixService
-import com.intellij.platform.problemsView.frontend.QuickFixModel
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.awt.AnchoredPoint
@@ -54,33 +57,52 @@ internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemo
     val project = event.project ?: return
     val problem = (event.getData(SELECTED_ITEM) as? ProblemNode)?.problem as? HighlightingProblem ?: return
 
-    val quickFixService = FrontendProblemsViewQuickFixService.getInstance(project)
-
     event.coroutineScope.launch {
-      val quickFixModel = quickFixService.loadQuickFixModel(problem) ?: return@launch
+      val intentions = getQuickFixes(problem, project)
+      if (intentions.isEmpty()) return@launch
 
       withContext(Dispatchers.EDT) {
-        showQuickFixes(event, problem, quickFixModel)
+        showQuickFixes(event, problem, intentions)
       }
     }
   }
 
-  private fun showQuickFixes(event: AnActionEvent, problem: HighlightingProblem, quickFixModel: QuickFixModel) {
+  private suspend fun getQuickFixes(problem: HighlightingProblem, project: Project): List<HighlightInfo.IntentionActionDescriptor> {
+    if (IdeProductMode.isMonolith) {
+      val info = problem.info ?: return emptyList()
+      return buildList {
+        info.findRegisteredQuickFix { action, _ ->
+          add(action)
+          null
+        }
+      }
+    }
+    else {
+      return FrontendProblemsViewQuickFixService.getInstance(project).loadQuickFixes(problem)
+    }
+  }
+
+  private fun showQuickFixes(
+    event: AnActionEvent,
+    problem: HighlightingProblem,
+    intentions: List<HighlightInfo.IntentionActionDescriptor>
+  ) {
     val project = event.project ?: return
+    val offset = problem.getQuickFixOffset()
     val psiFile = PsiManager.getInstance(project).findFile(problem.file) ?: return
     val editor = event.getData(ProblemsViewPanel.PREVIEW_DATA_KEY) ?: run {
       val existingEditor = getEditor(problem.file, project) ?: return
       openEditorIfNeeded(problem.file, project, existingEditor) ?: return
     }
     val cachedIntentions = createCachedIntentions(
-      quickFixModel.actions,
+      intentions,
       project,
       psiFile,
       editor,
-      quickFixModel.offset,
+      offset,
     ) ?: return
 
-    positionCaret(quickFixModel.offset, editor)
+    positionCaret(offset, editor)
     val popup = createPopup(project, psiFile, editor, cachedIntentions)
     show(event, popup)
   }
@@ -90,24 +112,44 @@ internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemo
   }
 
   private fun createCachedIntentions(
-    actions: List<HighlightInfo.IntentionActionDescriptor>,
+    intentionsToShow: List<HighlightInfo.IntentionActionDescriptor>,
     project: Project,
     psiFile: PsiFile,
     editor: Editor,
     offset: Int,
   ): CachedIntentions? {
-    if (actions.isEmpty()) return null
+    if (intentionsToShow.isEmpty()) return null
 
     val intentions = ShowIntentionsPass.IntentionsInfo()
     intentions.offset = offset
-    intentions.intentionsToShow.addAll(actions)
+    intentions.intentionsToShow.addAll(intentionsToShow)
     return CachedIntentions.createAndUpdateActions(project, psiFile, editor, intentions)
       .takeIf { it.intentions.isNotEmpty() }
   }
 
   private fun createPopup(project: Project, psiFile: PsiFile, editor: Editor, intentions: CachedIntentions): JBPopup {
     return JBPopupFactory.getInstance().createListPopup(
-      object : IntentionListStep(null, editor, psiFile, project, intentions, IntentionSource.PROBLEMS_VIEW) {}
+      object : IntentionListStep(null, editor, psiFile, project, intentions, IntentionSource.PROBLEMS_VIEW) {
+        override fun chooseActionAndInvoke(
+          cachedAction: IntentionActionWithTextCaching,
+          psiFile: PsiFile,
+          project: Project,
+          editor: Editor?,
+        ) {
+          editor?.contentComponent?.requestFocus()
+          val modality = editor?.contentComponent?.let { ModalityState.stateForComponent(it) } ?: ModalityState.current()
+          getApplication().invokeLater(
+            {
+              IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
+                { super.chooseActionAndInvoke(cachedAction, psiFile, project, editor) },
+                modality,
+              )
+            },
+            modality,
+            project.disposed,
+          )
+        }
+      }
     )
   }
 
