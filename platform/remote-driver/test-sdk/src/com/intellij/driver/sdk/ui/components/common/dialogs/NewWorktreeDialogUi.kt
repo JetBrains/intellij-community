@@ -10,6 +10,8 @@ import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.comboBox
 import com.intellij.driver.sdk.ui.components.elements.textField
 
+private const val PROJECT_NAME_FIELD_NAME: String = "Git.Worktree.Dialog.ProjectNameField"
+
 fun Finder.newWorktreeDialog(action: NewWorktreeDialogUi.() -> Unit) {
   x("//div[@title='New Worktree']", NewWorktreeDialogUi::class.java).action()
 }
@@ -23,6 +25,9 @@ class NewWorktreeDialogUi(data: ComponentData) : DialogUiComponent(data) {
   fun branchComboBox(): JComboBoxUiComponent = comboBox()
 
   fun locationField(): JTextFieldUI = x { byClass("TextFieldWithBrowseButton") }.textField()
+
+  /** The project name field. Keep the name in sync with `GitWorkingTreeDialog.PROJECT_NAME_FIELD_NAME`. */
+  fun nameField(): JTextFieldUI = textField { byAttribute("name", PROJECT_NAME_FIELD_NAME) }
 
   fun setNewBranchName(name: String) {
     editor().text = name

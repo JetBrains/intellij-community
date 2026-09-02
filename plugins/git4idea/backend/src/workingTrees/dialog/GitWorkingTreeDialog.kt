@@ -200,6 +200,7 @@ internal class GitWorkingTreeDialog(
 
       row(GitBundle.message("working.tree.dialog.label.name")) {
         projectNameCell = textField()
+          .applyToComponent { name = PROJECT_NAME_FIELD_NAME }
           .bindText(projectName)
           .align(Align.FILL)
           .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
@@ -457,6 +458,9 @@ internal class GitWorkingTreeDialog(
   }
 
   companion object {
+
+    const val PROJECT_NAME_FIELD_NAME: String = "Git.Worktree.Dialog.ProjectNameField"
+
     @VisibleForTesting
     internal fun validateWorktreeParentPath(parentPath: String): @NlsContexts.DialogMessage String? {
       if (parentPath.isBlank()) {
