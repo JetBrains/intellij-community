@@ -5,6 +5,7 @@ package com.intellij.refactoring.actions;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public final class MoveAction extends BaseRefactoringAction {
+public final class MoveAction extends BaseRefactoringAction implements DumbAware {
 
   public MoveAction() {
     setInjectedContext(true);
