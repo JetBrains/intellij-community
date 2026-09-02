@@ -38,6 +38,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.remote.RemoteSdkException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
@@ -473,15 +474,16 @@ public final class PythonSdkType extends SdkType {
     SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
     if (sdkAdditionalData instanceof PyTargetAwareAdditionalData) {
       // TODO [targets] Cache version as for `PyRemoteSdkAdditionalDataBase`
-      String versionString;
       try {
-        versionString =
-          PyInterpreterVersionUtil.getInterpreterVersionForJava((PyTargetAwareAdditionalData)sdkAdditionalData).toPythonVersion();
+        return PyInterpreterVersionUtil.getInterpreterVersionForJava((PyTargetAwareAdditionalData)sdkAdditionalData).toPythonVersion();
       }
-      catch (Exception e) {
-        versionString = "undefined";
+      catch (RemoteSdkException e) {
+        // Null, not a placeholder: an unreachable target says nothing about the interpreter on it, and the version
+        // recorded for it is persisted. "undefined" was written to jdk.table.xml and outlived the outage that caused
+        // it, leaving the interpreter with no readable version for good. See PythonSdkUpdater.updateSdkVersion.
+        LOG.info("Cannot read the version of " + sdk.getName(), e);
+        return null;
       }
-      return versionString;
     }
     else {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

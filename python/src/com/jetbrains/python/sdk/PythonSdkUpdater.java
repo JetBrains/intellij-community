@@ -521,6 +521,9 @@ public final class PythonSdkUpdater {
   private static void updateSdkVersion(@NotNull Sdk sdk) {
     ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.version"));
     final String versionString = sdk.getSdkType().getVersionString(sdk);
+    // A probe that could not answer leaves the version last recorded alone. Committing its null would erase a good
+    // version because a remote host happened to be down, and the version is persisted, so the loss outlives the outage.
+    if (versionString == null) return;
     commitSdkVersionIfChanged(sdk, versionString);
   }
 
