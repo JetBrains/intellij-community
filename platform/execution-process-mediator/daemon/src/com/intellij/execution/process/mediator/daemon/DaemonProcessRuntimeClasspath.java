@@ -6,7 +6,6 @@ import com.google.common.util.concurrent.internal.InternalFutureFailureAccess;
 import com.google.protobuf.Message;
 import com.intellij.execution.process.mediator.common.DaemonLaunchOptions;
 import com.intellij.execution.process.mediator.common.rpc.ProcessMediatorProto;
-import com.sun.jna.Native;
 import io.grpc.Context;
 import io.grpc.Grpc;
 import io.grpc.internal.ServerImpl;
@@ -62,16 +61,16 @@ public final class DaemonProcessRuntimeClasspath {
     ByteBufAllocator.class, // netty buffer
     ProtobufDecoder.class, // netty codec
     PerfMark.class, // perfmark-api
-
-    Native.class, // JNA
   });
 
   private static final List<String> PROPERTY_NAMES = List.of(new String[]{
     "java.net.preferIPv4Stack",
     "java.net.preferIPv6Addresses",
     "java.util.logging.config.file",
-    "jna.boot.library.path",
   });
+
+  /** The daemon binds libc and libSystem with the FFM API, so its JVM must permit native access. */
+  public static final @NotNull String ENABLE_NATIVE_ACCESS_ARGUMENT = "--enable-native-access=ALL-UNNAMED";
 
   public static @NotNull Class<?> getMainClass() {
     return DaemonProcessMainKt.class;

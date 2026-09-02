@@ -67,6 +67,7 @@ private fun createJavaVmCommandLine(properties: Map<String, String>,
   val classpath = classpathClasses.mapNotNullTo(LinkedHashSet()) { it.getResourcePath() }.joinToString(File.pathSeparator)
 
   return GeneralCommandLine(javaVmExecutablePath)
+    .withParameters(DaemonProcessRuntimeClasspath.ENABLE_NATIVE_ACCESS_ARGUMENT)
     .withParameters(propertyArgs)
     .withParameters("-cp", classpath)
 }

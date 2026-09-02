@@ -25,6 +25,7 @@ import kotlin.system.exitProcess
 
 private fun createDaemonProcessCommandLine(vararg args: String): ProcessBuilder {
   return ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java",
+                        DaemonProcessRuntimeClasspath.ENABLE_NATIVE_ACCESS_ARGUMENT,
                         *DaemonProcessRuntimeClasspath.getProperties().map { (k, v) -> "-D$k=$v" }.toTypedArray(),
                         "-cp", System.getProperty("java.class.path"),
                         DaemonProcessRuntimeClasspath.getMainClass().name,
