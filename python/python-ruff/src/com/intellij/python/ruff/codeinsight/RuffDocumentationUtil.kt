@@ -62,7 +62,7 @@ object RuffDocumentationUtil {
       # ${ruleInfo.name} (${ruleInfo.code})
       Derived from the **${ruleInfo.linter}** linter.
       
-      """.trimIndent() + ruleInfo.explanation)
+      """.trimIndent() + (ruleInfo.explanation ?: ruleInfo.summary))
   }
 }
 

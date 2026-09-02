@@ -4,10 +4,12 @@ package com.intellij.python.ruff
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.Args
 import com.intellij.python.pytools.executeOn
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
@@ -63,9 +65,9 @@ data class RuffRuleInfo(
   val summary: String,
   val fix: String,
   /**
-   * formatted in Markdown
+   * formatted in Markdown. Ruff has no explanation for every rule.
    */
-  val explanation: String,
+  val explanation: String?,
   val preview: Boolean,
 )
 
@@ -221,22 +223,35 @@ class RuffService(val project: Project, val cs: CoroutineScope) {
    * @param jsonString The JSON string containing rule information.
    */
   fun loadRuleInformation(@Language("JSON") jsonString: String) {
-    val jsonArray = JsonParser.parseString(jsonString) as? JsonArray ?: return
-    ruleInformation = jsonArray.associate { item ->
-      item as JsonObject
-      val code = item.get("code").asString
-      code to RuffRuleInfo(
-        name = item.get("name").asString,
-        code = code,
-        linter = item.get("linter").asString,
-        summary = item.get("summary").asString,
-        fix = item.get("fix").asString,
-        explanation = item.get("explanation").asString,
-        preview = item.get("preview").asBoolean,
-      )
+    val jsonArray = try {
+      JsonParser.parseString(jsonString) as? JsonArray ?: return
     }
+    catch (e: JsonParseException) {
+      LOG.warn("Error parsing Ruff rules JSON", e)
+      return
+    }
+
+    ruleInformation = jsonArray.mapNotNull { item ->
+      val rule = item as? JsonObject ?: return@mapNotNull null
+      // Ruff omits an optional field, or reports it as null. A rule without a code is not addressable.
+      val code = rule.stringOrNull("code") ?: return@mapNotNull null
+      val linter: @NlsSafe String = rule.stringOrNull("linter") ?: ""
+      code to RuffRuleInfo(
+        name = rule.stringOrNull("name") ?: code,
+        code = code,
+        linter = linter,
+        summary = rule.stringOrNull("summary").orEmpty(),
+        fix = rule.stringOrNull("fix").orEmpty(),
+        explanation = rule.stringOrNull("explanation"),
+        preview = rule.get("preview")?.takeIf { it.isJsonPrimitive }?.asBoolean == true,
+      )
+    }.toMap()
+
     linterInformation = ruleInformation.entries.associate { (key, value) ->
       key.takeWhile { it.isLetter() } to value.linter
     }
   }
+
+  private fun JsonObject.stringOrNull(key: String): @NlsSafe String? =
+    get(key)?.takeIf { it.isJsonPrimitive }?.asString
 }
