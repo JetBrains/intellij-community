@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
 import com.intellij.openapi.application.ApplicationManager
@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -30,7 +31,7 @@ import kotlin.time.Duration.Companion.seconds
 @Service
 @ApiStatus.Experimental
 class GradleFileModificationTracker(coroutineScope: CoroutineScope) {
-  private val cacheRef = AtomicReference<MutableSet<Path>>(ConcurrentHashMap.newKeySet())
+  private val cacheRef = AtomicReference<MutableSet<VirtualFile>>(ConcurrentHashMap.newKeySet())
 
   // This runnable does not interact with project configuration, it should not carry context
   private val updateCacheRefRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -48,19 +49,23 @@ class GradleFileModificationTracker(coroutineScope: CoroutineScope) {
   /**
    * If called when wrapper is not yet available, wrapper download events will be lost!
    * Make sure, wrapper is already downloaded in the call site
+   *
+   * This function resolves the [Path] of each file. The resolution can touch the file system,
+   * therefore call this function on a background thread.
    */
+  @RequiresBackgroundThread
   fun notifyConnectionAboutChangedPaths(connection: ProjectConnection) {
-    val collection = cacheRef.getAndSet(ConcurrentHashMap.newKeySet()).toList()
-    if (collection.isNotEmpty()) {
-      connection.notifyDaemonsAboutChangedPaths(collection)
+    val files = cacheRef.getAndSet(ConcurrentHashMap.newKeySet())
+    val paths = files.mapNotNullTo(LinkedHashSet()) { file ->
+      if (file.isValid) file.fileSystem.getNioPath(file) else null
+    }
+    if (paths.isNotEmpty()) {
+      connection.notifyDaemonsAboutChangedPaths(paths.toList())
     }
   }
 
   fun beforeSaving(virtualFile: VirtualFile) {
-    val vfs = virtualFile.fileSystem
-    vfs.getNioPath(virtualFile)?.let {
-      cacheRef.get().add(it)
-    }
+    cacheRef.get().add(virtualFile)
     check(updateCacheRefRequests.tryEmit(Unit))
   }
 }
