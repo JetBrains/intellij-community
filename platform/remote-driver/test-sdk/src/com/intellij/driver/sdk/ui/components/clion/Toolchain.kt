@@ -116,7 +116,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.WSL_DEBUGGER,
     buildTool: BuildTool = BuildTool.GMAKE,
     name: ToolchainNames = ToolchainNames.WSL,
-    toolset: Toolset = Toolset(kind = "WSL", path = "ubuntu2204wsl2"),
+    toolset: Toolset = Toolset(kind = "WSL", path = DEFAULT_WSL_DISTRIBUTION),
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class Docker(
@@ -135,6 +135,7 @@ sealed class Toolchain(
   ) : Toolchain(name, compiler, debugger, buildTool)
 
   companion object {
+    const val DEFAULT_WSL_DISTRIBUTION: String = "ubuntu2204wsl2"
     // Cygwin CMake is the only case where we need to specify CMake path manually. For this reason we did not add a cmake value to
     // all the sealed Toolchain classes. This property should be removed anyway and should be made an environment variable
     const val CYGWIN_CMAKE_PATH: String = "C:/Tools/cygwin/bin/cmake.exe"
