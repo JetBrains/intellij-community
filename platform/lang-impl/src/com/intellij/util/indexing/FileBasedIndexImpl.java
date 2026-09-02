@@ -1965,16 +1965,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private void forceUpdate(@Nullable Project project,
                            boolean advanceProjectCursor,
                            @NotNull ProjectFilesCondition filter) {
-    @Nullable Project cursorOwningProject;
-    if (project != null && (USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES || advanceProjectCursor)) {
-      cursorOwningProject = project;
-    }
-    else {
-      cursorOwningProject = null;
-      THROTTLED_LOG_FAST.debug(project == null ? "project=null -> can't use a request cursor -> process all updates"
-                                               : "restricted update without request version filtering -> process all updates");
+    if (project == null) {
+      THROTTLED_LOG_FAST.debug("project=null -> can't use a request cursor -> process all updates");
     }
 
+    @Nullable Project cursorOwningProject = project;
     var snapshot = myFilesToUpdateCollector.requestsFor(cursorOwningProject, USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES);
     List<FileIndexingRequest> requestsToProcess = snapshot.requests();
     if (cursorOwningProject != null && requestsToProcess.isEmpty()) {
@@ -2007,7 +2002,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("forceUpdate(project: " + (project == null ? "null" : project.getLocationHash()) + ", " + snapshot +
-                ", accepted: " + toBeUpdatedForProject.size() + ")");
+                ", toBeUpdatedForProject: " + toBeUpdatedForProject.size() + ")");
     }
   }
 
