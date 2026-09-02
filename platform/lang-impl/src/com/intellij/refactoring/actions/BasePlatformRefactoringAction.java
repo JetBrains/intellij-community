@@ -87,7 +87,10 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
     if (element == null) return getRefactoringHandler(providers.getFirst());
     for (RefactoringSupportProvider provider : providers) {
       if (provider.isAvailable(element)) {
-        return getRefactoringHandler(provider, element);
+        RefactoringActionHandler handler = getRefactoringHandler(provider, element);
+        if (handler != null) {
+          return handler;
+        }
       }
     }
     return null;
