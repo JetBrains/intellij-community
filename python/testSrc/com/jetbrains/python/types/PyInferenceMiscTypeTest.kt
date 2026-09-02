@@ -7,6 +7,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -2615,6 +2616,95 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       "_widget_c.py" to """
         class Widget:
             value: str
+        """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85200"])
+    @Disabled("PY-85200: a descriptor reached through an aliased import of a stub-declared class loses the return type of its __get__")
+    fun `descriptor re-exported through a type-checking guard keeps the return type of its __get__`() = test("""
+      from cache_api import cached_property
+
+      class Holder:
+          @cached_property
+          def value(self) -> int:
+              return 1
+
+      def f(h: Holder):
+          expr = h.value
+      #   └ TYPE int
+      """.trimIndent(),
+      // Flattened mirror of `propcache`'s own chain, which is what `yarl.URL.query` is decorated with:
+      //   propcache.api          -> from ._helpers import cached_property
+      //   propcache._helpers     -> if TYPE_CHECKING / elif not NO_EXTENSIONS / else, each branch binding the
+      //                             public name by a module-level assignment from an *aliased* import
+      //   propcache._helpers_py  -> from functools import cached_property
+      // The name at the end of that chain is therefore reached through two chained import aliases plus an
+      // assignment, and unlike `under_cached_property` (a class declared in the leaf module) it is itself only
+      // an alias of a stdlib class. Fixtures here are flat, so packages and relative imports become
+      // absolute imports between top-level modules; the guard shape, the alias hops and the assignments are
+      // kept exactly.
+      "cache_api.py" to """
+        from cache_helpers import cached_property
+
+        __all__ = ("cached_property",)
+        """.trimIndent(),
+      "cache_helpers.py" to """
+        import os
+        from typing import TYPE_CHECKING
+
+        __all__ = ("cached_property",)
+
+        NO_EXTENSIONS = bool(os.environ.get("CACHE_NO_EXTENSIONS"))
+
+        if TYPE_CHECKING:
+            from cache_helpers_py import cached_property as cached_property_py
+
+            cached_property = cached_property_py
+        elif not NO_EXTENSIONS:
+            from cache_helpers_c import cached_property as cached_property_c
+
+            cached_property = cached_property_c
+        else:
+            from cache_helpers_py import cached_property as cached_property_py
+
+            cached_property = cached_property_py
+        """.trimIndent(),
+      "cache_helpers_py.py" to """
+        from functools import cached_property
+
+        __all__ = ("cached_property",)
+        """.trimIndent(),
+      "cache_helpers_c.py" to """
+        class cached_property: ...
+        """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85200"])
+    @Disabled("PY-85200: a descriptor reached through an aliased import of a stub-declared class loses the return type of its __get__")
+    fun `an aliased re-export of a stub-declared descriptor keeps the return type of its __get__`() = test("""
+      from leaf import cp
+
+      class Holder:
+          @cp
+          def value(self) -> int:
+              return 1
+
+      def f(h: Holder):
+          expr = h.value
+      #   └ TYPE int
+      """.trimIndent(),
+      // The minimal shape behind the case above: one `import ... as ...` hop over a descriptor whose class is
+      // declared in a **stub** (`functools.cached_property`, from typeshed). Neither `TYPE_CHECKING` nor a
+      // compiled extension nor an installed package is needed to lose the type — which is why the ticket's
+      // `propcache` half is not a dual-implementation problem at all.
+      //
+      // The three neighbouring shapes were each run against this build and infer `int` correctly, so the alias
+      // over a stub declaration is what discriminates. Re-check them if this test ever changes:
+      //   - `from functools import cached_property` used directly;
+      //   - re-exported one module on **without** an alias;
+      //   - re-exported one module on **with** an alias, when the descriptor class is declared in a `.py`.
+      "leaf.py" to """
+        from functools import cached_property as cp
         """.trimIndent())
   }
 

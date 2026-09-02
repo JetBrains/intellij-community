@@ -747,6 +747,11 @@ async def nosupAssertFalse(b):
     );
   }
 
+  /**
+   * The suppression half, and on its own it asserts nothing: before the fix the compound condition could not be
+   * evaluated at all, so nothing was unreachable and no warning was reported either. Keep it paired with
+   * {@link #testShortCircuitedConditionIsReportedUnreachable()}, which is the half that discriminates.
+   */
   @TestFor(issues="PY-85200")
   public void testTypeCheckingCompoundCondition() {
     doTestByText(
@@ -764,6 +769,27 @@ async def nosupAssertFalse(b):
             y: list[int] = [1, 2]
         else:
             y: list[str] = ['a', 'b']"""
+    );
+  }
+
+  /**
+   * The reporting half: the same short-circuit with no {@code TYPE_CHECKING}, so the dead branch is dead for
+   * everyone and the warning is owed. Fails without the fix. {@code PyEvaluatorTest.testBooleanShortCircuit}
+   * covers the evaluator; this covers the inspection consuming its result.
+   */
+  @TestFor(issues="PY-85200")
+  public void testShortCircuitedConditionIsReportedUnreachable() {
+    doTestByText(
+      """
+        def use_extensions() -> bool: ...
+
+        if False and use_extensions():
+            <warning descr="This code is unreachable">print("never runs")</warning>
+
+        if True or use_extensions():
+            print("always runs")
+        else:
+            <warning descr="This code is unreachable">print("never runs either")</warning>"""
     );
   }
 
