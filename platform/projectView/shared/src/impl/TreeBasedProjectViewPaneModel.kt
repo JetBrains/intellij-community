@@ -110,8 +110,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.concurrent.atomics.AtomicLong
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
 
 @ApiStatus.Experimental
 interface ProjectViewTreeNodeProvider<T> {
@@ -426,11 +428,11 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
     private val appliedUpdateEpoch = MutableStateFlow(0L)
 
     // The updater queue (phase 1 of awaitPendingUpdates): events queued vs. events turned into updateNode calls.
-    private val submittedEventEpoch = MutableStateFlow(0L)
+    private val submittedEventEpoch = AtomicLong(0L)
     private val processedEventEpoch = MutableStateFlow(0L)
     val progressReporter: ProjectViewUpdaterProgressReporter = object : ProjectViewUpdaterProgressReporter {
       override fun eventSubmitted() {
-        submittedEventEpoch.update { it + 1L }
+        submittedEventEpoch.incrementAndFetch()
       }
 
       override fun eventsProcessed(count: Int) {
@@ -507,7 +509,7 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
         // the updater (and thus the epochs below) before we start waiting for them.
         flushExternalUpdates()
         // Phase 1: wait for the updater to turn every already-queued event into updateNode calls.
-        val eventTarget = submittedEventEpoch.value
+        val eventTarget = submittedEventEpoch.load()
         processedEventEpoch.first { it >= eventTarget }
         // Phase 2: enqueue a barrier that drains everything currently pending (plus all prior requests),
         // then wait until it (and thus everything submitted before this call) has been applied.
