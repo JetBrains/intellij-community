@@ -308,6 +308,8 @@ language-server.plugins.kotlin-dap.lsp	kotlin-dap.lsp	language-server-plugins-ko
 language-server.plugins.kotlin.lsp	kotlin.lsp	language-server-plugins-kotlin-lsp.jar
 language-server.plugins.mcp	mcp	language-server-plugins-mcp.jar
 language-server.plugins.spring	spring	language-server-plugins-spring.jar
+language-server.plugins.spring.boot	spring.boot	language-server-plugins-spring-boot.jar
+language-server.plugins.spring.boot.lsp	spring.boot.lsp	language-server-plugins-spring-boot-lsp.jar
 language-server.plugins.spring.lsp	spring.lsp	language-server-plugins-spring-lsp.jar
 language-server.plugins.sql	sql	language-server-plugins-sql.jar
 language-server.plugins.sql.lsp	sql.lsp	language-server-plugins-sql-lsp.jar
