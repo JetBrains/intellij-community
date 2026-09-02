@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.ProblemsViewEditorUtils.positionCaret
 import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.ProblemsViewEditorUtils.getEditor
+import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.ProblemsViewEditorUtils.openEditorIfNeeded
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM
@@ -26,6 +27,7 @@ import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.awt.RelativePoint
 import java.awt.event.MouseEvent
 
+//deprecated, monolithic implementation
 internal class ShowProblemsViewQuickFixesAction : AnAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -94,7 +96,11 @@ internal class ShowProblemsViewQuickFixesAction : AnAction() {
 
   private fun getCachedIntentions(event: AnActionEvent, problem: HighlightingProblem, showEditor: Boolean): CachedIntentions? {
     val psi = event.getData(CommonDataKeys.PSI_FILE) ?: return null
-    val editor = event.getData(ProblemsViewPanel.PREVIEW_DATA_KEY) ?: getEditor(psi, showEditor) ?: return null
+    val editor = event.getData(ProblemsViewPanel.PREVIEW_DATA_KEY) ?: run {
+      val existingEditor = getEditor(psi) ?: return null
+      if (!showEditor) existingEditor
+      else openEditorIfNeeded(psi.virtualFile ?: return null, psi.project, existingEditor) ?: return null
+    }
     val info = ShowIntentionsPass.IntentionsInfo()
     problem.info?.findRegisteredQuickFix { desc, _ ->
       info.intentionsToShow.add(desc)

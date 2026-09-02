@@ -5,6 +5,7 @@ import com.intellij.analysis.problemsView.toolWindow.HighlightingProblem
 import com.intellij.analysis.problemsView.toolWindow.ProblemNode
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanel
 import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.ProblemsViewEditorUtils.getEditor
+import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.ProblemsViewEditorUtils.openEditorIfNeeded
 import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.ProblemsViewEditorUtils.positionCaret
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
@@ -67,7 +68,10 @@ internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemo
   private fun showQuickFixes(event: AnActionEvent, problem: HighlightingProblem, quickFixModel: QuickFixModel) {
     val project = event.project ?: return
     val psiFile = PsiManager.getInstance(project).findFile(problem.file) ?: return
-    val editor = event.getData(ProblemsViewPanel.PREVIEW_DATA_KEY) ?: getEditor(problem.file, project, true) ?: return
+    val editor = event.getData(ProblemsViewPanel.PREVIEW_DATA_KEY) ?: run {
+      val existingEditor = getEditor(problem.file, project) ?: return
+      openEditorIfNeeded(problem.file, project, existingEditor) ?: return
+    }
     val cachedIntentions = createCachedIntentions(
       quickFixModel.actions,
       project,

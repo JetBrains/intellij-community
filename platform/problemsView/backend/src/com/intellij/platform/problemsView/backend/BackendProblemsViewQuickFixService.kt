@@ -10,9 +10,9 @@ import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
-import com.intellij.openapi.application.ApplicationManager.getApplication
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.MarkupModelEx
@@ -21,12 +21,13 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.problemsView.backend.actions.BackendQuickFixModel
 import com.intellij.platform.problemsView.backend.actions.IntentionActionWithIds
 import com.intellij.platform.problemsView.backend.actions.IntentionOptionWithId
 import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
@@ -85,7 +86,7 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
     val psiFile = PsiManager.getInstance(project).findFile(file)
     if (psiFile == null) return emptyList()
 
-    val editor = ProblemsViewEditorUtils.getEditor(psiFile, showEditor = false)
+    val editor = ProblemsViewEditorUtils.getEditor(psiFile)
     if (editor == null) return emptyList()
 
     val quickFixes = mutableListOf<IntentionActionWithIds>()
@@ -128,40 +129,33 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
     val action = quickFixModel.findQuickFixById(intentionId) ?: return
 
     if (!currentQuickFixModel.compareAndSet(quickFixModel, null)) return
-    if (!file.isValid) return
 
     executeQuickFix(file, quickFixModel.offset, action)
   }
 
   private suspend fun executeQuickFix(file: VirtualFile, offset: Int, action: IntentionAction) {
-    val (psiFile, editor) = readAction {
-      val psiFile = PsiManager.getInstance(project).findFile(file)
-      val editor = psiFile?.let { ProblemsViewEditorUtils.getEditor(it, showEditor = true) }
+    val context = readAction {
+      if (!file.isValid) return@readAction null
+      val editor = ProblemsViewEditorUtils.getEditor(file, project) ?: return@readAction null
+      val psiFile = PsiManager.getInstance(project).findFile(file) ?: return@readAction null
       psiFile to editor
-    }
-    if (psiFile == null || editor == null) return
+    } ?: return
 
-    editor.contentComponent.requestFocus()
-    val modality = ModalityState.stateForComponent(editor.contentComponent)
-    getApplication().invokeLater(
-      {
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
-          {
-            ShowIntentionActionsHandler.chooseActionAndInvoke(
-              psiFile,
-              editor,
-              action,
-              action.text,
-              offset,
-              IntentionSource.PROBLEMS_VIEW,
-            )
-          },
-          modality,
-        )
-      },
-      modality,
-      project.disposed,
-    )
+    val (psiFile, editor) = context
+
+    withContext(Dispatchers.EDT) invoke@{
+      val targetEditor = ProblemsViewEditorUtils.openEditorIfNeeded(file, project, editor) ?: return@invoke
+      if (!file.isValid || targetEditor.isDisposed) return@invoke
+
+      ShowIntentionActionsHandler.chooseActionAndInvoke(
+        psiFile,
+        targetEditor,
+        action,
+        action.text,
+        offset,
+        IntentionSource.PROBLEMS_VIEW
+      )
+    }
   }
 
   private fun BackendQuickFixModel.toDto(): QuickFixModelDto? {
