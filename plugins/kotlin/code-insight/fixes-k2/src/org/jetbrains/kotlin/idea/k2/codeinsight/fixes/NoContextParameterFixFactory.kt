@@ -8,14 +8,14 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KaScopeImplicitArgumentValue
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.types.Variance
 
 /** A context argument to provide at a call site: a visible value [candidateName],
@@ -68,7 +69,11 @@ internal object NoContextParameterFixFactory {
         // Analysis inputs shared by the fix builders below. Candidate resolution and scope
         // context are not cached per element the way `resolveToCall` is, so compute them once.
         val scopeContext = expression.containingKtFile.scopeContext(expression)
-        val callCandidates = if (expression.isInCallableReference()) emptyList() else expression.resolveToCallCandidates()
+        val callCandidates = if (expression.isInCallableReference()) {
+            emptyList()
+        } else {
+            (expression as? KtResolvableCall)?.collectCallCandidates().orEmpty()
+        }
 
 
         // Every fix covers all context types missing at this call site at once, so when the call
@@ -97,7 +102,7 @@ internal object NoContextParameterFixFactory {
     context(session: KaSession)
     private fun findUnsatisfiedContextParameters(
         expression: KtExpression,
-        callCandidates: List<KaCallCandidateInfo>,
+        callCandidates: List<KaCallCandidate>,
         scopeContext: KaScopeContext,
     ): List<KaVariableSignature<KaContextParameterSymbol>> {
         val candidate = callCandidates
@@ -283,7 +288,7 @@ internal object NoContextParameterFixFactory {
     private fun createExplicitContextArgumentFix(
         expression: KtExpression,
         unsatisfiedParameters: List<KaVariableSignature<KaContextParameterSymbol>>,
-        callCandidates: List<KaCallCandidateInfo>,
+        callCandidates: List<KaCallCandidate>,
     ): AddExplicitContextArgumentFix? {
         val callElement = expression as? KtCallElement ?: return null
         if (!callElement.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments)) return null
@@ -335,7 +340,7 @@ internal object NoContextParameterFixFactory {
     }
 
     private fun wouldCauseOverloadAmbiguity(
-        callCandidates: List<KaCallCandidateInfo>,
+        callCandidates: List<KaCallCandidate>,
         contextParamName: Name,
     ): Boolean {
         return callCandidates.any { candidateInfo ->

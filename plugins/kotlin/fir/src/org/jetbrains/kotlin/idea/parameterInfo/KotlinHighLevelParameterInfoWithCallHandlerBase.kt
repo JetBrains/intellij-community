@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidate
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -148,6 +148,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     fun createCallInfos(argumentList: TArgumentList, currentArgumentIndex: Int): List<CallInfo> {
         val callElement = argumentList.parent as? KtElement ?: return emptyList()
         return analyze(callElement) {
@@ -158,7 +159,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
             val callCandidateInfos = collectCallCandidates(callElement)
             val hasMultipleApplicableBestCandidates =
-                callCandidateInfos.count { it is KaApplicableCallCandidateInfo && it.isInBestCandidates } > 1
+                callCandidateInfos.count { it is KaApplicableCallCandidate && it.isInBestCandidates } > 1
 
             callCandidateInfos.map {
                 createCallInfo(
@@ -183,7 +184,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
     @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createCallInfo(
-        callCandidateInfo: KaCallCandidateInfo,
+        callCandidateInfo: KaCallCandidate,
         callElement: KtElement,
         currentArgumentIndex: Int,
         arguments: List<KtExpression?>,
@@ -194,7 +195,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val functionCall = callCandidateInfo.candidate as KaFunctionCall<*>
         val candidateSignature = functionCall.signature
         val argumentMapping = functionCall.valueArgumentMapping
-        val isApplicableBestCandidate = callCandidateInfo is KaApplicableCallCandidateInfo && callCandidateInfo.isInBestCandidates
+        val isApplicableBestCandidate = callCandidateInfo is KaApplicableCallCandidate && callCandidateInfo.isInBestCandidates
 
         // For array set calls, we only want the index arguments in brackets, which are all except the last (the value to set).
         val isArraySetCall = isArraySetCall(callElement, candidateSignature)

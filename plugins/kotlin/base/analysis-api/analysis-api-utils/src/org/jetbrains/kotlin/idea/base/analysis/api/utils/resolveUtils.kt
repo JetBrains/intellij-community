@@ -5,17 +5,17 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates as collectAnalysisCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -60,14 +60,14 @@ import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
-fun collectCallCandidates(callElement: KtElement): List<KaCallCandidateInfo> {
+fun collectCallCandidates(callElement: KtElement): List<KaCallCandidate> {
     val (candidates, explicitReceiver) = when (callElement) {
         is KtCallElement -> {
             val explicitReceiver = callElement.getQualifiedExpressionForSelector()?.receiverExpression
-            callElement.resolveToCallCandidates() to explicitReceiver
+            callElement.collectAnalysisCallCandidates() to explicitReceiver
         }
 
-        is KtArrayAccessExpression -> callElement.resolveToCallCandidates() to callElement.arrayExpression
+        is KtArrayAccessExpression -> callElement.collectAnalysisCallCandidates() to callElement.arrayExpression
         else -> return emptyList()
     }
 
@@ -80,7 +80,7 @@ fun collectCallCandidates(callElement: KtElement): List<KaCallCandidateInfo> {
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun filterCandidate(
-    candidateInfo: KaCallCandidateInfo,
+    candidateInfo: KaCallCandidate,
     callElement: KtElement,
     explicitReceiver: KtExpression?,
     visibilityChecker: KaUseSiteVisibilityChecker,

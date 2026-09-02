@@ -4,13 +4,14 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.handlers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.isFunctionType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.isFunctionType
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.MultipleArgumentsLookupObject
@@ -141,6 +142,7 @@ private fun ValueParameter?.isLastParameter(parameters: List<ValueParameter>): B
 /**
  * Calculates all tails based on all possible call candidates at the position.
  */
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession, _: K2CompletionSectionContext<*>)
 private fun calculateTailForCalls(
     expression: KtExpression,
@@ -152,11 +154,11 @@ private fun calculateTailForCalls(
         argument is KtValueArgument -> {
             val argumentList = argument.parent as? KtValueArgumentList ?: return emptySet()
             val call = argumentList.parent as? KtCallElement ?: return emptySet()
-            call.resolveToCallCandidates()
+            call.collectCallCandidates()
         }
 
         argumentParent is KtArrayAccessExpression -> {
-            argumentParent.resolveToCallCandidates()
+            argumentParent.collectCallCandidates()
         }
 
         else -> emptyList()
@@ -165,7 +167,8 @@ private fun calculateTailForCalls(
     if (callCandidates.isEmpty()) return emptySet()
 
     return callCandidates.mapNotNullTo(mutableSetOf()) {
-        calculateTailForCall(expression, it.candidate)
+        val candidate = it.candidate as? KaCall ?: return@mapNotNullTo null
+        calculateTailForCall(expression, candidate)
     }
 }
 

@@ -5,11 +5,11 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
-import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaInapplicableCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidate
+import org.jetbrains.kotlin.analysis.api.resolution.KaInapplicableCallCandidate
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
@@ -133,7 +133,7 @@ internal fun KotlinUnknownPositionContext.isAfterRangeToken(): Boolean {
  * @return `true` if the context is after a double dot (`..`) not associated with a `rangeTo` operation,
  *         otherwise `false`.
  */
-@OptIn(KaUnstableDiagnosticApi::class)
+@OptIn(KaUnstableDiagnosticApi::class, KaExperimentalApi::class)
 context(_: KaSession)
 internal fun KotlinRawPositionContext.isAfterRangeOperator(): Boolean {
     if (this !is KotlinExpressionNameReferencePositionContext) return false
@@ -143,11 +143,11 @@ internal fun KotlinRawPositionContext.isAfterRangeOperator(): Boolean {
     if (binaryExpression.operationToken != KtTokens.RANGE) return false
 
     return binaryExpression.operationReference
-        .resolveToCallCandidates()
+        .collectCallCandidates()
         .none { candidateInfo ->
             when (candidateInfo) {
-                is KaApplicableCallCandidateInfo -> true
-                is KaInapplicableCallCandidateInfo -> candidateInfo.diagnostic is KaFirDiagnostic.InapplicableCandidate
+                is KaApplicableCallCandidate -> true
+                is KaInapplicableCallCandidate -> candidateInfo.diagnostic is KaFirDiagnostic.InapplicableCandidate
             }
         }
 }

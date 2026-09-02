@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
@@ -50,6 +51,7 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
         return !context.positionContext.isAfterRangeOperator()
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession, context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>)
     override fun complete() {
         if (context.positionContext.explicitReceiver != null) return

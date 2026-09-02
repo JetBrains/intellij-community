@@ -9,11 +9,11 @@ import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -50,7 +50,7 @@ internal object AddExplicitContextArgumentFixFactory {
             return@ModCommandBased emptyList()
         }
 
-        val resolvedCallCandidates = callExpression.resolveToCallCandidates()
+        val resolvedCallCandidates = callExpression.collectCallCandidates()
         if (resolvedCallCandidates.size < 2) return@ModCommandBased emptyList()
         val existingArgumentsCount = callExpression.valueArguments.size
 

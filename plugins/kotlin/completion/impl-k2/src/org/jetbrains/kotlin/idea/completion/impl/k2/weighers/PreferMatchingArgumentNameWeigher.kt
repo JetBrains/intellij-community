@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.NameUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 internal object PreferMatchingArgumentNameWeigher {
     private const val WEIGHER_ID = "kotlin.preferMatchingArgumentName"
 
+    @OptIn(KaExperimentalApi::class)
     private var K2CompletionSectionContext<*>.callCandidates: List<KaFunctionCall<*>> by LazyCompletionSessionProperty {
         val scopeContext = contextOf<K2CompletionSectionContext<*>>()
         val nameExpression = scopeContext.positionContext.position.parent as? KtSimpleNameExpression

@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -48,7 +48,7 @@ private fun KtCallExpression.isReceiverSubtypeOf(supertypeFqn: FqName): Boolean 
     val functionCall = callExpression.resolveToCall()?.singleFunctionCallOrNull()
     if (functionCall == null) {
       // An expression might not be resolved to a single call due to ambiguity - e.g. when inputting arguments is not finished yet.
-      return callExpression.resolveToCallCandidates().any { candidateInfo ->
+      return callExpression.collectCallCandidates().any { candidateInfo ->
         val candidateCall = candidateInfo.candidate as? KaSimpleCall<*, *> ?: return@any false
         isReceiverForCallASubtypeOf(candidateCall, supertype)
       }

@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.parameterInfo
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -75,7 +75,7 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
         val fileSymbol = callElement.containingKtFile.symbol
 
         val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, explicitReceiver, callElement)
-        val symbols = callElement.resolveToCallCandidates()
+        val symbols = callElement.collectCallCandidates()
             .mapNotNull { (it.candidate as? KaSimpleCall<*, *>)?.signature }
             .filterIsInstance<KaFunctionSignature<*>>()
             .filter { candidate ->

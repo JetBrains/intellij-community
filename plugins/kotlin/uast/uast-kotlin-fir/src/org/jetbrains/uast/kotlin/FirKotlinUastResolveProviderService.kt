@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
@@ -31,6 +30,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.constructor
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -350,8 +350,9 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     @OptIn(KaExperimentalApi::class)
     override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
         val candidates = analyzeForUast(ktExpression) {
+            val resolvableCall = ktExpression as? KtResolvableCall ?: return@analyzeForUast emptyList()
             buildList {
-                ktExpression.resolveToCallCandidates().forEach { candidateInfo ->
+                resolvableCall.collectCallCandidates().forEach { candidateInfo ->
                     when (val candidate = candidateInfo.candidate) {
                         is KaFunctionCall<*> -> {
                             add(candidate.symbol)

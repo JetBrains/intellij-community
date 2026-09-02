@@ -12,13 +12,13 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -118,6 +118,7 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession, context: K2CompletionSectionContext<P>)
     protected fun complete(
         position: KtElement,
@@ -132,7 +133,7 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         val callExpression = functionLiteral.parentOfType<KtCallExpression>()
             ?: return
 
-        callExpression.resolveToCallCandidates()
+        callExpression.collectCallCandidates()
             .asSequence()
             .map { it.candidate }
             .filterIsInstance<KaFunctionCall<*>>()

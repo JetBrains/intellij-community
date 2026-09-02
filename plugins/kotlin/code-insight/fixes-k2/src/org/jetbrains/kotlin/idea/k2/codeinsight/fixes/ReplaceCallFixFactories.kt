@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -161,6 +161,7 @@ object ReplaceCallFixFactories {
         return nullableExpressionType?.isSubtypeOf(expectedType) != true && !expectedType.isMarkedNullable && expectedType.classId != KaStandardTypeClassIds.UNIT
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun nullableTypeIsAcceptableForValueArgument(expression: KtExpression, nullableExpressionType: KaType): Boolean {
         val argument = expression.getStrictParentOfType<KtValueArgument>() ?: return false
@@ -169,7 +170,7 @@ object ReplaceCallFixFactories {
 
         val callElement = argument.parent?.parent as? KtCallElement ?: return false
         return collectCallCandidates(callElement).any { candidateInfo ->
-            if (candidateInfo !is KaApplicableCallCandidateInfo) return@any false
+            if (candidateInfo !is KaApplicableCallCandidate) return@any false
             val functionCall = candidateInfo.candidate as? KaFunctionCall<*> ?: return@any false
             val parameterType = (functionCall.valueArgumentMapping[argumentExpression] ?: functionCall.valueArgumentMapping[expression])?.returnType
                 ?: return@any false
