@@ -37,12 +37,12 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertEquals(TypeNullability.NULLABLE_MANDATED, nullTypeNullability);
     assertEquals(Nullability.NULLABLE, nullTypeNullability.nullability());
     assertEquals(NullabilitySource.Standard.MANDATED, nullTypeNullability.source());
-    
+
     TypeNullability intTypeNullability = PsiTypes.intType().getNullability();
     assertEquals(TypeNullability.NOT_NULL_MANDATED, intTypeNullability);
     assertEquals(Nullability.NOT_NULL, intTypeNullability.nullability());
     assertEquals(NullabilitySource.Standard.MANDATED, intTypeNullability.source());
-    
+
     TypeNullability voidTypeNullability = PsiTypes.voidType().getNullability();
     assertEquals(TypeNullability.UNKNOWN, voidTypeNullability);
     assertEquals(Nullability.UNKNOWN, voidTypeNullability.nullability());
@@ -70,7 +70,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       """);
     assertEquals("UNKNOWN (NONE)", type.getNullability().toString());
   }
-  
+
   public void testSimpleUnknownWithAnnotation() {
     PsiType type = configureAndGetFieldType("""
       @org.jetbrains.annotations.NotNullByDefault
@@ -80,7 +80,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       """);
     assertEquals("UNKNOWN (@UnknownNullability)", type.getNullability().toString());
   }
-  
+
   public void testSimpleNotNull() {
     PsiType type = configureAndGetFieldType("""
       class A {
@@ -89,7 +89,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       """);
     assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
   }
-  
+
   public void testSimpleNullable() {
     PsiType type = configureAndGetFieldType("""
       import org.jetbrains.annotations.*;
@@ -100,7 +100,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       """);
     assertEquals("NULLABLE (@Nullable)", type.getNullability().toString());
   }
-  
+
   public void testContainerNotNull() {
     PsiType type = configureAndGetFieldType("""
       @org.jetbrains.annotations.NotNullByDefault
@@ -110,7 +110,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       """);
     assertEquals("NOT_NULL (@NotNullByDefault on class A)", type.getNullability().toString());
   }
-  
+
   public void testTypeParameterSupertype() {
     PsiType type = configureAndGetFieldType("""
       import org.jetbrains.annotations.NotNull;
@@ -156,11 +156,6 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertEquals("UNKNOWN (NONE)", type.getNullability().toString());
   }
 
-  private static void assertNullability(@NotNull String expectedDeclared, @NotNull String expectedValue, @NotNull PsiType type) {
-    assertEquals(expectedDeclared, type.getNullability().toString());
-    assertEquals(expectedValue, JavaTypeNullabilityUtil.getValueNullability(type).toString());
-  }
-
   /**
    * Registers the JSpecify annotations, including {@code @NullnessUnspecified}, which is the only unspecified nullness that
    * {@link JavaTypeNullabilityUtil#getValueNullability} looks through.
@@ -173,89 +168,6 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
                          import java.lang.annotation.*;
 
                          @Target(ElementType.TYPE_USE) public @interface NullnessUnspecified { }""");
-  }
-
-  public void testTypeParameterUnspecifiedBoundOverNotNull() {
-    setupJSpecifyAnnotations();
-    PsiType type = configureAndGetFieldType("""
-      import org.jspecify.annotations.NullnessUnspecified;
-
-      class A<T extends @NullnessUnspecified Object> {
-        T foo;
-      }
-      """);
-    // Object is not a type parameter, so there is no further bound to walk and the unspecified nullness stays
-    assertNullability("UNKNOWN (inherited @NullnessUnspecified)", "UNKNOWN (inherited @NullnessUnspecified)", type);
-  }
-
-  public void testTypeParameterUnspecifiedBoundOverNullable() {
-    setupJSpecifyAnnotations();
-    PsiType type = configureAndGetFieldType("""
-      import org.jspecify.annotations.Nullable;
-      import org.jspecify.annotations.NullnessUnspecified;
-
-      class A<P extends @Nullable Object, T extends @NullnessUnspecified P> {
-        T foo;
-      }
-      """);
-    // the declared nullability keeps the unspecified nullness (type-argument containment relies on it),
-    // but a value of type T may definitely be null
-    assertNullability("UNKNOWN (inherited @NullnessUnspecified)", "NULLABLE (inherited @Nullable)", type);
-  }
-
-  /**
-   * The bound walk is deliberately restricted to JSpecify's {@code @NullnessUnspecified}: the same shape written with another
-   * framework's unspecified nullness keeps the old behaviour.
-   */
-  public void testUnknownNullabilityBoundIsNotLookedThrough() {
-    PsiType type = configureAndGetFieldType("""
-      import org.jetbrains.annotations.Nullable;
-      import org.jetbrains.annotations.UnknownNullability;
-
-      class A<P extends @Nullable Object, T extends @UnknownNullability P> {
-        T foo;
-      }
-      """);
-    assertNullability("UNKNOWN (inherited @UnknownNullability)", "UNKNOWN (inherited @UnknownNullability)", type);
-  }
-
-  public void testUseSiteUnspecifiedOverNullableBound() {
-    setupJSpecifyAnnotations();
-    PsiType type = configureAndGetFieldType("""
-      import org.jspecify.annotations.Nullable;
-      import org.jspecify.annotations.NullnessUnspecified;
-
-      class A<P extends @Nullable Object> {
-        @NullnessUnspecified P foo;
-      }
-      """);
-    assertNullability("UNKNOWN (@NullnessUnspecified)", "NULLABLE (inherited @Nullable)", type);
-  }
-
-  public void testUseSiteUnspecifiedOnClassTypeIgnoresContainer() {
-    setupJSpecifyAnnotations();
-    PsiType type = configureAndGetFieldType("""
-      @org.jspecify.annotations.NullMarked
-      class A {
-        @org.jspecify.annotations.NullnessUnspecified String foo;
-      }
-      """);
-    // String is not a type parameter, so there is no bound chain to walk and the not-null container must not leak in
-    assertNullability("UNKNOWN (@NullnessUnspecified)", "UNKNOWN (@NullnessUnspecified)", type);
-  }
-
-  public void testTypeParameterUnspecifiedBoundAmongTwoSupertypes() {
-    setupJSpecifyAnnotations();
-    PsiType type = configureAndGetFieldType("""
-      import org.jspecify.annotations.Nullable;
-      import org.jspecify.annotations.NullnessUnspecified;
-
-      class A<T extends @Nullable CharSequence & @NullnessUnspecified Comparable<T>> {
-        T foo;
-      }
-      """);
-    // Comparable is not a type parameter, so the unspecified nullness is opaque here and intersect keeps UNKNOWN
-    assertNullability("UNKNOWN (inherited @NullnessUnspecified)", "UNKNOWN (inherited @NullnessUnspecified)", type);
   }
 
   private @NotNull Nullability captureUpperBoundNullability(@NotNull String wildcardBound) {
@@ -359,7 +271,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertEquals("NULLABLE (@Nullable)", type.getNullability().toString());
     assertEquals("NOT_NULL (@NotNull)", type.getDeepComponentType().getNullability().toString());
   }
-  
+
   public void testSubstitutorSimple() {
     PsiType type = configureAndGetExpressionType("""
       import org.jetbrains.annotations.NotNull;
@@ -426,7 +338,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertEquals("X<? extends java.lang.CharSequence>", type.getCanonicalText());
     assertEquals("NULLABLE (inherited @Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
   }
-  
+
   public void testWildcardAnnotated() {
     PsiType type = configureAndGetExpressionType("""
       import org.jetbrains.annotations.*;
@@ -548,7 +460,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
                  ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0].getReturnType().getNullability().toString());
     assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
   }
-  
+
   public void testLocalTopLevelIgnoreContainer() {
     PsiType type = configureAndGetExpressionType("""
       import org.jetbrains.annotations.NotNull;
@@ -563,17 +475,17 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertEquals("java.lang.String", type.getCanonicalText());
     assertEquals("UNKNOWN (NONE)", type.getNullability().toString());
   }
-  
+
   public void testPackageNullabilityInfoToTypeNullability() {
     myFixture.addFileToProject("foo/package-info.java", "@org.jetbrains.annotations.NotNullByDefault package foo;");
-    PsiFile clsFile = myFixture.addFileToProject("foo/A.java", "package foo; class A {}"); 
+    PsiFile clsFile = myFixture.addFileToProject("foo/A.java", "package foo; class A {}");
     PsiElement context = ((PsiJavaFile)clsFile).getClasses()[0];
     NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(getProject()).findDefaultTypeUseNullability(context);
     assertNotNull(info);
     TypeNullability typeNullability = info.toTypeNullability();
     assertEquals("NOT_NULL (@NotNullByDefault on package foo)", typeNullability.toString());
   }
-  
+
   public void testMalformedPackageInfo() {
     myFixture.addFileToProject("org/example/package-info.java", """
       @NotNullByDefault
@@ -587,7 +499,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     TypeNullability typeNullability = info.toTypeNullability();
     assertEquals("NOT_NULL (@NotNullByDefault on package org.example2)", typeNullability.toString());
   }
-  
+
   public void testFBoundResolveUnderNotNull() {
     myFixture.addClass("""
       package org.jetbrains.annotations;

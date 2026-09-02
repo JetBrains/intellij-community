@@ -8,7 +8,7 @@ class JSpecifyUnspecifiedParameterOverridesNullable {
   }
 
   interface Sub extends Super<@Nullable String> {
-    void take(@NotNull String <warning descr="Parameter annotated @NotNull must not override @NullnessUnspecified parameter">t</warning>);
+    void take(@NotNull String <warning descr="Parameter annotated @NotNull must not override a parameter whose type variable is instantiated with a nullable type">t</warning>);
   }
 
   interface SubHiddenBound<U extends @Nullable Object> extends Super<U> {

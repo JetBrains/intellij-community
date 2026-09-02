@@ -61,6 +61,10 @@ public final class JavaTypeNullabilityUtil {
   }
 
   /**
+   * <b>The support is very limited.</b> This method is only for JSpecify's {@code @NullnessUnspecified} annotation.
+   * That annotation is not a part of JSpecify 1.0, so the platform gives it very limited support.
+   * Only {@link #hasNullableBound} must call this method. Do not use it in other places.
+   * <p>
    * Computes the nullability of a <em>value</em> whose static type is the supplied type.
    * <p>
    * Unlike {@link PsiType#getNullability()}, an unspecified nullness (e.g. JSpecify's {@code @NullnessUnspecified})
@@ -87,7 +91,7 @@ public final class JavaTypeNullabilityUtil {
    * @return the bound-chain nullability when that chain provably reaches a nullable type through unspecified nullness only;
    * {@link PsiType#getNullability()} unchanged otherwise
    */
-  public static @NotNull TypeNullability getValueNullability(@NotNull PsiType type) {
+  private static @NotNull TypeNullability getValueNullability(@NotNull PsiType type) {
     TypeNullability declared = type.getNullability();
     if (!(type instanceof PsiClassType)) return declared;
     PsiClassType classType = (PsiClassType)type;

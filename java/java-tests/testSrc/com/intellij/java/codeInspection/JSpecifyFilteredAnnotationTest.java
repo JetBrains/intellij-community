@@ -94,7 +94,27 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     new SkipErrorFilter("jspecify_nullness_not_enough_information"), //it is useless for our goals
     new SkipIndividuallyFilter( //each case has its own reason (line number starts from 0)
       Set.of(
-        new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24)// see: IDEA-377699
+        new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24),// see: IDEA-377699
+
+        //this set was reverted because it is mostly about unspecified annotation, which we don't support, because it is not in the spec
+        new Pair<>("CaptureConvertedUnspecToObject.java", 77), // see: IDEA-380143
+        new Pair<>("CaptureConvertedUnspecToOther.java", 77), // see: IDEA-380143
+        new Pair<>("DereferenceTypeVariable.java", 123), // see: IDEA-380143
+        new Pair<>("MultiBoundTypeVariableUnspecToObject.java", 63), // see: IDEA-380143
+        new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63), // see: IDEA-380143
+        new Pair<>("TypeVariableToObject.java", 109), // see: IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 58), // see: IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 78), // see: IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 98), // see: IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 103), // see: IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 108), // see: IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 113), // see: IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 118), // see: IDEA-380143
+        new Pair<>("TypeVariableUnspecToParent.java", 53), // see: IDEA-380143
+        new Pair<>("TypeVariableUnspecToParent.java", 68), // see: IDEA-380143
+        new Pair<>("TypeVariableUnspecToParent.java", 83), // see: IDEA-380143
+        new Pair<>("TypeVariableUnspecToParent.java", 98), // see: IDEA-380143
+        new Pair<>("UnionTypeArgumentWithUseSite.java", 95) // see: IDEA-380143
       )
     )
   );
