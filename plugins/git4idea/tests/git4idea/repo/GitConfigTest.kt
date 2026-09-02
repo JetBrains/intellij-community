@@ -13,12 +13,14 @@ import git4idea.GitStandardRemoteBranch
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
+import git4idea.config.GitVersionSpecialty
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.TestDataUtil
 import git4idea.test.git
 import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.tac
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
@@ -441,6 +443,120 @@ internal class GitConfigTest {
     }
   }
 
+  @Test
+  fun `test config-based commit hook is extracted from config`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    tac("file1.txt")
+
+    addConfigHook("linter", "pre-commit")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    assertHookFailure {
+      tac("file2.txt")
+    }
+  }
+
+  @Test
+  fun `test config-based commit-msg hook is extracted from config`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    addConfigHook("spellcheck", "commit-msg")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    assertHookFailure {
+      tac("file1.txt")
+    }
+  }
+
+  @Test
+  fun `test config-based hook is extracted for each of its events`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    addConfigHook("linter", "pre-commit", "pre-push")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isTrue()
+  }
+
+  @Test
+  fun `test config-based hook of an unrelated event is ignored`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    addConfigHook("mailer", "post-commit")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+  }
+
+  @Test
+  fun `test disabled config-based hook is ignored`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    addConfigHook("linter", "pre-commit", isEnabled = false)
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    tac("file1.txt")
+  }
+
+  @Test
+  fun `test config-based hook without a command is ignored`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    Executor.append(".git/config", """
+      [hook "linter"]
+        event = pre-commit
+    """.trimIndent())
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+  }
+
+  @Test
+  fun `test empty event value resets the events of a config-based hook`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    addConfigHook("linter", "pre-commit")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+
+    Executor.append(".git/config", """
+      [hook "linter"]
+        event =
+    """.trimIndent())
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    tac("file1.txt")
+  }
+
+  @Test
+  fun `test config-based hook is detected along with the hook from the hookdir`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    createHook(".git/hooks/pre-push")
+    addConfigHook("linter", "pre-commit")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isTrue()
+  }
+
   private fun GitRemote.checkRemoteUrls(expectedUrls: List<String>, expectedPushUrls: List<String>) {
     val handler = GitLineHandler(context.project, context.projectRoot, GitCommand.REMOTE)
     handler.isEnableInteractiveCallbacks = false
@@ -455,6 +571,11 @@ internal class GitConfigTest {
       .containsExactlyInAnyOrderElementsOf(expectedPushUrls.map { "origin\t$it (push)" })
     assertThat(urls).isEqualTo(expectedUrls)
     assertThat(pushUrls).isEqualTo(expectedPushUrls)
+  }
+
+  private fun GitSingleRepoContext.assumeConfigBasedHooksSupported() {
+    assumeTrue(GitVersionSpecialty.CONFIG_BASED_HOOKS.existsIn(vcs.version),
+               "Config-based hooks are not supported in ${vcs.version}")
   }
 
   private fun readConfig(): GitConfig = GitConfig.read(context.project, context.projectNioRoot)
@@ -503,6 +624,22 @@ private fun createHook(hookPath: String): File {
                        "exit 1")
   hookFile.setExecutable(true)
   return hookFile
+}
+
+/**
+ * Declares a config-based hook (Git 2.54+) named [name] that fails on each of the given [events].
+ *
+ * The command is a shell one-liner instead of a script file: Git runs it through its own shell on every platform,
+ * so the test doesn't depend on the executable bit, which Windows doesn't have.
+ * The section is appended to `.git/config` verbatim, so that the exact spelling of the keys is a part of the test.
+ */
+private fun addConfigHook(name: String, vararg events: String, isEnabled: Boolean? = null) {
+  Executor.append(".git/config", buildString {
+    append("[hook \"$name\"]\n")
+    events.forEach { append("  event = $it\n") }
+    append("  command = echo $HOOK_FAILURE_MESSAGE && exit 1\n")
+    if (isEnabled != null) append("  enabled = $isEnabled\n")
+  })
 }
 
 private fun assertHookFailure(task: () -> Unit) {

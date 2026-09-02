@@ -51,9 +51,13 @@ public final class GitRepositoryFiles {
   private static final @NonNls String REMOTES = "remotes";
   private static final @NonNls String SQUASH_MSG = "SQUASH_MSG";
   private static final @NonNls String HOOKS = "hooks";
-  private static final @NonNls String PRE_COMMIT_HOOK = "pre-commit";
-  private static final @NonNls String PRE_PUSH_HOOK = "pre-push";
-  private static final @NonNls String COMMIT_MSG_HOOK = "commit-msg";
+  /**
+   * Names of the files in the hookdir, which are also the names of the corresponding hook events
+   * used by the config-based hooks, see {@link GitConfig#getConfiguredHookEvents()}.
+   */
+  static final @NonNls String PRE_COMMIT_HOOK = "pre-commit";
+  static final @NonNls String PRE_PUSH_HOOK = "pre-push";
+  static final @NonNls String COMMIT_MSG_HOOK = "commit-msg";
   private static final @NonNls String SHALLOW = "shallow";
   private static final @NonNls String LOGS = "logs";
   private static final @NonNls String STASH = "stash";

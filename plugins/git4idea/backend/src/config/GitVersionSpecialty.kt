@@ -151,7 +151,15 @@ enum class GitVersionSpecialty(val version: GitVersion) {
    *
    * @see git4idea.util.GitFileUtils.PATHSPEC_FROM_FILE_SUPPORTED_COMMANDS
    */
-  PATHSPEC_FROM_FILE_SUPPORTED(GitVersion(2, 26, 0, 0));
+  PATHSPEC_FROM_FILE_SUPPORTED(GitVersion(2, 26, 0, 0)),
+
+  /**
+   * Hooks can be declared in the git config via `hook.<friendly-name>.command`/`hook.<friendly-name>.event`
+   * in addition to the scripts in the hookdir. Older versions silently ignore such entries.
+   *
+   * @see git4idea.repo.GitConfig.configuredHookEvents
+   */
+  CONFIG_BASED_HOOKS(GitVersion(2, 54, 0, 0));
 
   open fun existsIn(gitVersion: GitVersion): Boolean = gitVersion.isLaterOrEqual(version)
 

@@ -224,7 +224,7 @@ class GitRepositoryImpl private constructor(
       val localBranches = state.localBranches
       val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
 
-      val hooksInfo = repositoryReader.readHooksInfo()
+      val hooksInfo = repositoryReader.readHooksInfo(config)
       val submoduleFile = root.toNioPath().resolve(".gitmodules")
       val submodules = GitModulesFileReader().read(submoduleFile)
       recentCheckoutBranches = collectRecentCheckoutBranches(project, root) { branch: GitLocalBranch -> localBranches.containsKey(branch) }

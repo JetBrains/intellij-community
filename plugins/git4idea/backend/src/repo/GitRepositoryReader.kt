@@ -24,6 +24,7 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.commands.GitLineHandlerListener
+import git4idea.config.GitVersionSpecialty
 import git4idea.util.StringScanner
 import org.jetbrains.annotations.NonNls
 import java.io.File
@@ -107,12 +108,20 @@ internal class GitRepositoryReader(private val project: Project, private val git
     }
   }
 
-  fun readHooksInfo(): GitHooksInfo {
-    val hasCommitHook = isExistingExecutableFile(gitFiles.preCommitHookFile) ||
-                        isExistingExecutableFile(gitFiles.commitMsgHookFile)
-    val hasPushHook: Boolean = isExistingExecutableFile(gitFiles.prePushHookFile)
+  fun readHooksInfo(config: GitConfig): GitHooksInfo {
+    // older git ignores the `hook.*` config entries, so their presence doesn't mean that anything is going to be run
+    val configuredHookEvents = if (GitVersionSpecialty.CONFIG_BASED_HOOKS.existsIn(project)) config.configuredHookEvents else emptySet()
+    val hasCommitHook = hasHook(GitRepositoryFiles.PRE_COMMIT_HOOK, gitFiles.preCommitHookFile, configuredHookEvents) ||
+                        hasHook(GitRepositoryFiles.COMMIT_MSG_HOOK, gitFiles.commitMsgHookFile, configuredHookEvents)
+    val hasPushHook = hasHook(GitRepositoryFiles.PRE_PUSH_HOOK, gitFiles.prePushHookFile, configuredHookEvents)
     return GitHooksInfo(hasCommitHook, hasPushHook)
   }
+
+  /**
+   * A hook event is handled either by an executable in the hookdir or by a config-based hook subscribed to that event.
+   */
+  private fun hasHook(hookEvent: String, hookDirFile: File, configuredHookEvents: Set<String>): Boolean =
+    hookEvent in configuredHookEvents || isExistingExecutableFile(hookDirFile)
 
   fun hasShallowCommits(): Boolean {
     val shallowFile = gitFiles.shallowFile
