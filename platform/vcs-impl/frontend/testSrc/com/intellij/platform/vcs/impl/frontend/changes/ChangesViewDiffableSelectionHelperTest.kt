@@ -129,7 +129,55 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
   }
 
 
-  fun `test change selected then select changelist node doesn't cause update`() {
+  fun `test extending the selection doesn't switch the previewed change`() {
+    val paths = (1..3).map { path("c$it.txt") }
+    val changes = paths.map { change(it) }
+
+    val defaultList = LocalChangeListImpl.Builder(project, "Default").setDefault(true)
+      .setChanges(changes)
+      .build()
+
+    val model = buildModel(view, listOf(defaultList), emptyList())
+    updateModelAndSelect(view, model, paths[0])
+
+    val helper = ChangesViewDiffableSelectionHelper(view)
+    val before = helper.updateSelection()
+    checkNotNull(before)
+    assertTreePath(before.selectedChange, changes[0])
+
+    // Ctrl-click a second file: the first one stays selected, so the update must not be skipped
+    findNodesAndSelect(changes[0], changes[1])
+
+    val after = helper.updateSelection()
+    checkNotNull(after)
+    // The previewed change must not switch
+    assertTreePath(after.selectedChange, changes[0])
+  }
+
+  fun `test shrinking the selection doesn't switch the previewed change`() {
+    val paths = (1..3).map { path("c$it.txt") }
+    val changes = paths.map { change(it) }
+
+    val defaultList = LocalChangeListImpl.Builder(project, "Default").setDefault(true)
+      .setChanges(changes)
+      .build()
+
+    val model = buildModel(view, listOf(defaultList), emptyList())
+    updateModelAndSelect(view, model, paths[0])
+    findNodesAndSelect(changes[0], changes[1])
+
+    val helper = ChangesViewDiffableSelectionHelper(view)
+    checkNotNull(helper.updateSelection())
+
+    // Back to a single selection
+    findNodesAndSelect(changes[0])
+
+    val after = helper.updateSelection()
+    checkNotNull(after)
+    assertTreePath(after.selectedChange, changes[0])
+  }
+
+  fun `test change selected then select changelist node doesn't switch the selected change`() {
     val c1 = path("c1.txt")
     val c2 = path("c2.txt")
 
@@ -141,16 +189,22 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, c1)
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    runInEdtAndWait { helper.tryUpdateSelection() }
+    helper.updateSelection()
     val previous = helper.diffableSelection.value
+    checkNotNull(previous)
 
     // Switch selection to the changelist node
     findNodeAndSelect(defaultList)
     val updated = helper.updateSelection()
-    assertSame(previous, updated)
+    checkNotNull(updated)
+
+    // The changelist node selects all its changes, but the change shown in the diff preview must not switch.
+    assertEquals(previous.selectedChange, updated.selectedChange)
+    assertEquals(previous.previousChange, updated.previousChange)
+    assertEquals(previous.nextChange, updated.nextChange)
   }
 
-  fun `test unversioned selected then select unversioned root doesn't cause update`() {
+  fun `test unversioned selected then select unversioned root doesn't switch the selected change`() {
     val u1 = path("u1.txt")
     val u2 = path("u2.txt")
 
@@ -159,12 +213,16 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
 
     val helper = ChangesViewDiffableSelectionHelper(view)
     val previous = helper.updateSelection()
+    checkNotNull(previous)
 
     // Switch selection to Unversioned root node
     findNodeAndSelect(ChangesBrowserNode.UNVERSIONED_FILES_TAG)
 
     val updated = helper.updateSelection()
-    assertSame(previous, updated)
+    checkNotNull(updated)
+    assertEquals(previous.selectedChange, updated.selectedChange)
+    assertEquals(previous.previousChange, updated.previousChange)
+    assertEquals(previous.nextChange, updated.nextChange)
   }
 
   fun `test switch from change to unversioned`() {
@@ -256,12 +314,19 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
   }
 
   private fun findNodeAndSelect(node: Any) {
+    findNodesAndSelect(node)
+  }
+
+  private fun findNodesAndSelect(vararg nodes: Any) {
     runInEdtAndWait {
-      val amendNodePath = view.root.traverse().find { it.userObject === node }
-      requireNotNull(amendNodePath) { "Node $node not found" }
+      val treePaths = nodes.map { node ->
+        val treeNode = view.root.traverse().find { it.userObject === node }
+        requireNotNull(treeNode) { "Node $node not found" }
+        TreeUtil.getPathFromRoot(treeNode)
+      }
       view.clearSelection()
-      view.addSelectionPath(TreeUtil.getPathFromRoot(amendNodePath))
-      assertEquals(1, view.selectionCount)
+      treePaths.forEach { view.addSelectionPath(it) }
+      assertEquals(nodes.size, view.selectionCount)
     }
   }
 

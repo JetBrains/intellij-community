@@ -27,33 +27,19 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun tryUpdateSelection() {
-    _diffableSelection.update { currentValue ->
-      if (shouldUpdateSelection(currentValue)) getDiffableSelection() else currentValue
-    }
+    _diffableSelection.update { currentValue -> getDiffableSelection(currentValue?.selectedChange) }
   }
 
+  /**
+   * @param currentChange the change that is currently shown in the diff preview, if any. It is kept as the selected one
+   * as long as it is still selected, so that selecting a parent node (e.g. a changelist) doesn't switch the previewed
+   * file. Everything else depends on the whole selection and is always recalculated.
+   */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  private fun shouldUpdateSelection(previousSelection: ChangesViewDiffableSelection?): Boolean {
-    if (previousSelection == null) return true
-
-    val currentValueIsSelected = changesView.selectedChangesNodes.any { node ->
-      when (val obj = node.userObject) {
-        is Change -> ChangesUtil.matches(obj, previousSelection.selectedChange.filePath.filePath) &&
-                     ChangeId.getId(obj) == previousSelection.selectedChange.changeId
-        is FilePath -> obj == previousSelection.selectedChange.filePath.filePath
-        else -> false
-      }
-    }
-
-    return !currentValueIsSelected
-  }
-
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  private fun getDiffableSelection(): ChangesViewDiffableSelection? {
-    val selectedDiffableNode = changesView.selectedDiffableNode ?: return null
+  private fun getDiffableSelection(currentChange: ChangesTreePath?): ChangesViewDiffableSelection? {
+    val selectedDiffableNode = findSelectedDiffableNode(currentChange) ?: return null
     val selectedNodePath =
       getPathOrLog(selectedDiffableNode) { LOG.warn("Could not create path for selected node: $it") } ?: return null
-
 
     val (prevNode, nextNode) = findPreviousAndNextDiffableNodes(selectedDiffableNode)
 
@@ -63,8 +49,41 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
       nextChange = getPathOrLog(nextNode) { LOG.warn("Could not create path for next node: $it") })
   }
 
-  private fun getPathOrLog(prevNode: Any?, log: (Any) -> Unit): ChangesTreePath? = prevNode?.let { node ->
-    ChangesTreePath.create(node).also { path -> if (path == null) log(node) }
+  /**
+   * Diffable objects in the current tree selection. Lazy, so that callers looking for a single object don't have to
+   * traverse a possibly huge selection.
+   *
+   * Ordered like `ChangesViewDiffPreviewHandler.iterateSelectedChanges` in monolith mode – selected changes in the tree
+   * display order first, then selected unversioned files – so that navigating inside a selection visits files in the
+   * same order in both modes.
+   */
+  @RequiresEdt
+  private fun selectedDiffableObjects(): Sequence<Any> {
+    val changes = changesView.selectedChangesNodes.asSequence().map { it.userObject }.filterIsInstance<Change>()
+    val unversionedFiles = changesView.selectedUnversionedFiles.asSequence()
+    return changes + unversionedFiles
+  }
+
+  private fun getPathOrLog(node: Any?, log: (Any) -> Unit): ChangesTreePath? = node?.let {
+    ChangesTreePath.create(it).also { path -> if (path == null) log(it) }
+  }
+
+  /**
+   * [currentChange] if it is still selected, the first selected diffable object otherwise.
+   */
+  @RequiresEdt
+  private fun findSelectedDiffableNode(currentChange: ChangesTreePath?): Any? {
+    if (currentChange != null) {
+      val stillSelected = selectedDiffableObjects().firstOrNull { currentChange.matches(it) }
+      if (stillSelected != null) return stillSelected
+    }
+    return changesView.selectedDiffableNode
+  }
+
+  private fun ChangesTreePath.matches(userObject: Any): Boolean = when (userObject) {
+    is Change -> ChangesUtil.matches(userObject, filePath.filePath) && ChangeId.getId(userObject) == changeId
+    is FilePath -> userObject == filePath.filePath
+    else -> false
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
