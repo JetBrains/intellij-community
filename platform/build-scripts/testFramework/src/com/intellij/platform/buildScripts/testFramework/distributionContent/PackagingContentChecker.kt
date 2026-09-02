@@ -3,6 +3,7 @@
 
 package com.intellij.platform.buildScripts.testFramework.distributionContent
 
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.openapi.util.io.NioFiles
@@ -17,16 +18,18 @@ import io.opentelemetry.api.trace.TracerProvider
 import io.opentelemetry.context.Context
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.select
@@ -59,12 +62,17 @@ import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.TestInstance
 import org.opentest4j.MultipleFailuresError
 import org.opentest4j.TestAbortedException
+import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.concurrent.thread
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.nanoseconds
 
 internal data class PackageResult(
   @JvmField val projectHome: Path,
@@ -253,6 +261,7 @@ private val packagingSuiteNoopTracer = TracerProvider.noop().get("packaging-suit
 class PackagingSuiteFixture private constructor(
   private val spec: PackagingSuiteSpec,
   private val scopeJob: Job,
+  private val diagnostics: PackagingSuiteHangDiagnostics,
   private val tempDir: Path,
   private val telemetry: PackagingSuiteTelemetry?,
   private val tracerOverride: AutoCloseable?,
@@ -262,6 +271,10 @@ class PackagingSuiteFixture private constructor(
   private val pluginCheckTasks: List<PluginCheckTask>,
   private val targetValidationTasks: List<TargetValidationTask>,
 ) : AutoCloseable {
+  /** The report of the first frozen wait. It stays null while the fixture works. */
+  @Volatile
+  private var hangReport: String? = null
+
   companion object {
     fun create(spec: PackagingSuiteSpec): PackagingSuiteFixture {
       require(spec.targets.isNotEmpty()) { "Packaging suite must contain at least one target" }
@@ -280,9 +293,8 @@ class PackagingSuiteFixture private constructor(
       val tracerOverride = traceSettings.takeUnless { it.enabled }?.let { TraceManager.pushTracer(packagingSuiteNoopTracer) }
 
       val scopeJob = SupervisorJob()
-
-      @Suppress("RAW_SCOPE_CREATION")
-      val scope = CoroutineScope(scopeJob + Dispatchers.Default)
+      val diagnostics = PackagingSuiteHangDiagnostics()
+      val scope = createPackagingSuiteScope(job = scopeJob, diagnostics = diagnostics)
       var tempDirForCleanup: Path? = null
       try {
         val tempDir = Files.createTempDirectory("${spec.name}-packaging-suite-").also { tempDirForCleanup = it }
@@ -348,6 +360,7 @@ class PackagingSuiteFixture private constructor(
         return PackagingSuiteFixture(
           spec = spec,
           scopeJob = scopeJob,
+          diagnostics = diagnostics,
           tempDir = tempDir,
           telemetry = telemetry,
           tracerOverride = tracerOverride,
@@ -378,7 +391,7 @@ class PackagingSuiteFixture private constructor(
 
     val result = ArrayList<DynamicTest>()
     for (task in validationTasks) {
-      val taskResult = awaitOnTestThread("suite validation '${task.spec.name}'") { task.resultDeferred.await() }
+      val taskResult = awaitTask("suite validation '${task.spec.name}'") { task.resultDeferred.await() }
       val failure = taskResult.failure
       if (failure != null) {
         if (failure is TestAbortedException && task.spec.skipIfAborted) {
@@ -409,7 +422,7 @@ class PackagingSuiteFixture private constructor(
     val tests = ArrayList<DynamicTest>(packagingTasks.size)
     for (task in packagingTasks) {
       tests.add(DynamicTest.dynamicTest(task.spec.id) {
-        awaitOnTestThread("packaging of '${task.spec.id}'") {
+        awaitTask("packaging of '${task.spec.id}'") {
           task.resultDeferred.await().getOrThrow()
         }
       })
@@ -428,7 +441,7 @@ class PackagingSuiteFixture private constructor(
     for (task in tasksWithContentChecks) {
       val expectedContentYamlPath = requireNotNull(task.spec.contentYamlPath)
       tests.add(DynamicTest.dynamicTest(task.spec.id) {
-        awaitOnTestThread("platform content check of '${task.spec.id}'") {
+        awaitTask("platform content check of '${task.spec.id}'") {
           withTelemetrySpan(
             telemetry = telemetry,
             name = "platform content check: ${task.spec.id}",
@@ -459,7 +472,7 @@ class PackagingSuiteFixture private constructor(
     pluginCheckTasks.startAllDeferreds { it.resultDeferred }
 
     val tests = ArrayList<DynamicTest>(packagingTasks.size)
-    val resolvedCheckResults = awaitOnTestThread("plugin content checks") {
+    val resolvedCheckResults = awaitTask("plugin content checks") {
       pluginCheckTasks.map { it.resultDeferred }.awaitAll()
     }
     for ((task, checkResult) in pluginCheckTasks.zip(resolvedCheckResults)) {
@@ -490,7 +503,7 @@ class PackagingSuiteFixture private constructor(
     val tests = ArrayList<DynamicTest>()
     for (task in targetValidationTasks) {
       val testName = "${task.spec.targetId} ${task.spec.name}"
-      val taskResult = awaitOnTestThread("target validation '$testName'") { task.resultDeferred.await() }
+      val taskResult = awaitTask("target validation '$testName'") { task.resultDeferred.await() }
       val failure = taskResult.failure
       if (failure != null) {
         tests.add(DynamicTest.dynamicTest(testName) { throw failure })
@@ -515,16 +528,39 @@ class PackagingSuiteFixture private constructor(
 
   private fun isOptimizedFullSuiteScheduling(): Boolean = spec.taskScheduling == PackagingSuiteTaskScheduling.FULL_SUITE_OPTIMIZED
 
+  /**
+   * Waits for [block], and fails at once when an earlier wait found the fixture scope frozen.
+   *
+   * A frozen scope cannot finish any later task, so every remaining test factory would wait its own [HANG_DUMP_DELAY].
+   */
+  private fun <T> awaitTask(what: String, block: suspend () -> T): T {
+    hangReport?.let {
+      throw PackagingSuiteHangException("Packaging suite: $what cannot run, because the fixture scope is frozen. The first report:\n$it")
+    }
+    return awaitOnTestThread(what = what, diagnostics = diagnostics, report = { hangReport = it }, block = block)
+  }
+
   override fun close() {
-    awaitOnTestThread("cancellation of the fixture scope") { scopeJob.cancelAndJoin() }
+    val hangReport = hangReport
+    if (hangReport == null) {
+      awaitTask("cancellation of the fixture scope") { scopeJob.cancelAndJoin() }
+    }
+    else {
+      // the scope cannot run a coroutine any more, so the join, the build messages and the trace flush would never end
+      scopeJob.cancel()
+      System.err.println("Packaging suite: the fixture scope is frozen, so the close skips the trace and the build messages.")
+    }
+
     try {
-      if (suiteContextDeferred.isCompleted) {
-        runCatching { runBlocking { suiteContextDeferred.await().compilationContext.messages.close() } }
-      }
-      telemetry?.let {
-        it.rootSpan.end()
-        runCatching { runBlocking { TraceManager.flush() } }
-        println("Packaging suite trace is written to ${it.traceFile}")
+      if (hangReport == null) {
+        if (suiteContextDeferred.isCompleted) {
+          runCatching { runBlocking { suiteContextDeferred.await().compilationContext.messages.close() } }
+        }
+        telemetry?.let {
+          it.rootSpan.end()
+          runCatching { runBlocking { TraceManager.flush() } }
+          println("Packaging suite trace is written to ${it.traceFile}")
+        }
       }
       NioFiles.deleteRecursively(tempDir)
     }
@@ -543,6 +579,13 @@ private fun startBlockingValidationTasks(validationTasks: List<ValidationTask>) 
 }
 
 private val HANG_DUMP_DELAY = 10.minutes
+private val HANG_PROBE_INTERVAL = 1.minutes
+/** The CPU time that a frozen JVM can still use in one probe interval. */
+private val HANG_IDLE_CPU_FLOOR = 200.milliseconds
+private const val HANG_IDLE_CPU_FRACTION = 0.05
+private const val SCHEDULER_WORKER_THREAD_PREFIX = "DefaultDispatcher-worker"
+private const val SCHEDULER_WORKER_CLASS = $$"kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"
+private const val RUNNING_COROUTINE_MARKER = "state: RUNNING"
 
 /**
  * Installs the coroutine debug probes, so that [dumpCoroutines] sees the coroutines of the fixture.
@@ -558,32 +601,244 @@ internal fun installCoroutineDebugProbes() {
   }
 }
 
+/** A wait on the fixture scope stopped to make progress. */
+internal class PackagingSuiteHangException(message: String) : IllegalStateException(message)
+
+/**
+ * Keeps the evidence for a hang report, and catches an exception that the coroutine machinery loses.
+ *
+ * `DispatchedTask.run` gives every throwable of a resume to `handleCoroutineException`, which asks the
+ * [CoroutineExceptionHandler] of the context first. Without the handler such an exception reaches
+ * `UnhandledCoroutineExceptionHandlerService`, which has an empty body, and then the handler of the test framework,
+ * which prints only when the test ends. A hang never ends, so the exception stays invisible, and the coroutine that
+ * the resume belongs to stays suspended forever.
+ */
+internal class PackagingSuiteHangDiagnostics {
+  private val escapedExceptions = CopyOnWriteArrayList<String>()
+
+  val exceptionHandler: CoroutineExceptionHandler = CoroutineExceptionHandler { context, e ->
+    val name = context[CoroutineName]?.name ?: "an unnamed coroutine"
+    val text = "Packaging suite: an exception escaped the coroutine machinery in $name:\n${e.stackTraceToString()}"
+    escapedExceptions.add(text)
+    System.err.println(text)
+  }
+
+  fun describeEscapedExceptions(): String = escapedExceptions.joinToString(separator = "\n").ifEmpty { "none" }
+}
+
+/**
+ * Creates a scope that reports an exception of the coroutine machinery to [diagnostics].
+ *
+ * The fixture and its test use it, so both report such an exception the same way.
+ */
+internal fun createPackagingSuiteScope(job: Job, diagnostics: PackagingSuiteHangDiagnostics): CoroutineScope {
+  @Suppress("RAW_SCOPE_CREATION")
+  return CoroutineScope(job + Dispatchers.Default + diagnostics.exceptionHandler)
+}
+
 /**
  * Runs [block] on the test thread and waits for it.
  *
  * A test factory waits here for work on the fixture scope. A suspension that never resumes is invisible in a thread dump,
- * because every dispatcher thread is idle. So after [dumpDelay] this passes a coroutine dump to [report] once and keeps
- * waiting, and the dump names the suspension. The fixture calls [installCoroutineDebugProbes] when it is created.
+ * because every dispatcher thread is idle. So after [dumpDelay] a watchdog looks for a freeze every [probeInterval].
+ * A slow suite keeps waiting, and a frozen one fails with a report that names the suspension. The fixture calls
+ * [installCoroutineDebugProbes] when it is created.
  */
 internal fun <T> awaitOnTestThread(
   what: String,
+  diagnostics: PackagingSuiteHangDiagnostics = PackagingSuiteHangDiagnostics(),
   dumpDelay: Duration = HANG_DUMP_DELAY,
+  probeInterval: Duration = HANG_PROBE_INTERVAL,
   report: (String) -> Unit = System.err::println,
   block: suspend () -> T,
 ): T {
   return runBlocking {
-    val dump = launch {
-      delay(dumpDelay)
-      val coroutineDump = dumpCoroutines() ?: "the coroutine debug probes are not installed"
-      report("Packaging suite: $what is still running after $dumpDelay. Coroutine dump:\n$coroutineDump")
-    }
+    val hang = CompletableDeferred<Nothing>()
+    val watchdog = PackagingSuiteHangWatchdog(
+      what = what,
+      diagnostics = diagnostics,
+      dumpDelay = dumpDelay,
+      probeInterval = probeInterval,
+      report = report,
+      hang = hang,
+    )
+    watchdog.start()
+    val task = async { block() }
     try {
-      block()
+      select {
+        task.onAwait { it }
+        hang.onAwait { it }
+      }
     }
     finally {
-      dump.cancel()
+      watchdog.stop()
     }
   }
+}
+
+/**
+ * Watches one wait of [awaitOnTestThread] for a freeze.
+ *
+ * It runs on a plain thread, and not on a coroutine, for two reasons. A frozen dispatcher cannot stop it. It also puts
+ * no coroutine of its own into the dump that it compares.
+ */
+private class PackagingSuiteHangWatchdog(
+  private val what: String,
+  private val diagnostics: PackagingSuiteHangDiagnostics,
+  private val dumpDelay: Duration,
+  private val probeInterval: Duration,
+  private val report: (String) -> Unit,
+  private val hang: CompletableDeferred<Nothing>,
+) {
+  private val startNanos = System.nanoTime()
+
+  @Volatile
+  private var stopped = false
+
+  private val thread = thread(start = false, isDaemon = true, name = "packaging suite hang watchdog") { watch() }
+
+  fun start() {
+    thread.start()
+  }
+
+  fun stop() {
+    stopped = true
+    thread.interrupt()
+  }
+
+  private fun watch() {
+    try {
+      Thread.sleep(dumpDelay.inWholeMilliseconds)
+      var previous = takeHangSample()
+      var lastProgressNanos = 0L
+      while (!stopped) {
+        Thread.sleep(probeInterval.inWholeMilliseconds)
+        val current = takeHangSample()
+        if (stopped) {
+          return
+        }
+        if (isFrozen(previous = previous, current = current, probeInterval = probeInterval)) {
+          val text = describeHang(what = what, elapsed = elapsed(), probeInterval = probeInterval, diagnostics = diagnostics, sample = current)
+          report(text)
+          hang.completeExceptionally(PackagingSuiteHangException(text))
+          return
+        }
+
+        val now = System.nanoTime()
+        if (lastProgressNanos == 0L || (now - lastProgressNanos).nanoseconds >= dumpDelay) {
+          lastProgressNanos = now
+          System.err.println("Packaging suite: $what is still running after ${elapsed()}, and the fixture scope makes progress.")
+        }
+        previous = current
+      }
+    }
+    catch (_: InterruptedException) {
+    }
+  }
+
+  private fun elapsed(): Duration = (System.nanoTime() - startNanos).nanoseconds.inWholeMilliseconds.milliseconds
+}
+
+private class HangSample(
+  val javaThreadCpuTime: Duration?,
+  @JvmField val schedulerWorkersAreParked: Boolean,
+  @JvmField val coroutineDump: String,
+)
+
+private fun takeHangSample(): HangSample {
+  return HangSample(
+    javaThreadCpuTime = javaThreadCpuTime(),
+    schedulerWorkersAreParked = schedulerWorkersAreParked(),
+    coroutineDump = dumpCoroutines() ?: "the coroutine debug probes are not installed",
+  )
+}
+
+/**
+ * Tells whether the scope is frozen and not slow.
+ *
+ * A frozen scope has an unchanged coroutine dump, no coroutine that runs, a parked worker for every worker of the
+ * scheduler, and almost no CPU time. A slow suite fails at least one of these tests, because it runs a coroutine, or it
+ * starts one, or it uses the CPU on some thread.
+ *
+ * One state looks frozen and is not. A scope where every coroutine waits for a timer, and no thread works, gives the
+ * same picture. The suite has no such wait, and the watchdog looks only after [HANG_DUMP_DELAY].
+ */
+private fun isFrozen(previous: HangSample, current: HangSample, probeInterval: Duration): Boolean {
+  if (previous.coroutineDump != current.coroutineDump) {
+    return false
+  }
+  if (current.coroutineDump.contains(RUNNING_COROUTINE_MARKER)) {
+    return false
+  }
+  if (!previous.schedulerWorkersAreParked || !current.schedulerWorkersAreParked) {
+    return false
+  }
+
+  val previousCpu = previous.javaThreadCpuTime ?: return true
+  val currentCpu = current.javaThreadCpuTime ?: return true
+  val used = currentCpu - previousCpu
+  return used >= Duration.ZERO && used <= maxOf(HANG_IDLE_CPU_FLOOR, probeInterval * HANG_IDLE_CPU_FRACTION)
+}
+
+/**
+ * Sums the CPU time of every Java thread except the caller.
+ *
+ * The garbage collector and the JIT compiler have no Java thread, so their CPU time does not count. The result is null
+ * when the JVM does not measure the CPU time of a thread.
+ */
+private fun javaThreadCpuTime(): Duration? {
+  val threads = ManagementFactory.getThreadMXBean()
+  if (!threads.isThreadCpuTimeSupported || !threads.isThreadCpuTimeEnabled) {
+    return null
+  }
+
+  val self = Thread.currentThread().threadId()
+  var total = 0L
+  for (id in threads.allThreadIds) {
+    if (id == self) {
+      continue
+    }
+    val cpuTime = threads.getThreadCpuTime(id)
+    if (cpuTime > 0) {
+      total += cpuTime
+    }
+  }
+  return total.nanoseconds
+}
+
+private fun schedulerWorkersAreParked(): Boolean {
+  return ManagementFactory.getThreadMXBean().dumpAllThreads(false, false)
+    .asSequence()
+    .filter { it.threadName.startsWith(SCHEDULER_WORKER_THREAD_PREFIX) }
+    .all { info ->
+      info.stackTrace.any { it.className == SCHEDULER_WORKER_CLASS && (it.methodName == "park" || it.methodName == "tryPark") }
+    }
+}
+
+private fun describeHang(
+  what: String,
+  elapsed: Duration,
+  probeInterval: Duration,
+  diagnostics: PackagingSuiteHangDiagnostics,
+  sample: HangSample,
+): String {
+  return buildString {
+    appendLine("Packaging suite: $what made no progress for $probeInterval after $elapsed, so the wait aborts.")
+    appendLine("The coroutine dump did not change, no coroutine runs, and every worker of the scheduler is parked.")
+    appendLine("Dispatchers.Default: ${describeDefaultDispatcher()}")
+    appendLine("Exceptions that escaped the coroutine machinery: ${diagnostics.describeEscapedExceptions()}")
+    appendLine("Coroutine dump:")
+    appendLine(sample.coroutineDump)
+    appendLine("Thread dump:")
+    append(ThreadDumper.dumpThreadsToString())
+  }
+}
+
+private fun describeDefaultDispatcher(): String {
+  // `Dispatchers.Default.toString()` is a constant. The scheduler behind it prints the worker states, the queue sizes
+  // and the CPU permits that it gave out.
+  return runCatching { (Dispatchers.Default as ExecutorCoroutineDispatcher).executor.toString() }
+    .getOrElse { "cannot read the state of the scheduler: $it" }
 }
 
 private fun scheduleFullSuiteWork(
