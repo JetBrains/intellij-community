@@ -26,13 +26,15 @@ export TOOL_CHECKSUM_WINDOWS_ARM64="f473bfe2df73ee770548c93dd5d380aea7120c218ec2
 export TOOL_CHECKSUM_MACOS_X64="1d0211b8f1dc991182344687ad15e72ee86f154845a5f7fa477994cd341dd9b0"
 export TOOL_CHECKSUM_MACOS_ARM64="c669e97f6164e1c96e0701748db98dfa77492908cbd8394c7557134a735de381"
 
-# Download URLs (GitHub releases)
-export TOOL_URL_LINUX_X64="https://github.com/oven-sh/bun/releases/download/bun-v${TOOL_VERSION}/bun-linux-x64.zip"
-export TOOL_URL_LINUX_ARM64="https://github.com/oven-sh/bun/releases/download/bun-v${TOOL_VERSION}/bun-linux-aarch64.zip"
-export TOOL_URL_WINDOWS_X64="https://github.com/oven-sh/bun/releases/download/bun-v${TOOL_VERSION}/bun-windows-x64.zip"
-export TOOL_URL_WINDOWS_ARM64="https://github.com/oven-sh/bun/releases/download/bun-v${TOOL_VERSION}/bun-windows-aarch64.zip"
-export TOOL_URL_MACOS_X64="https://github.com/oven-sh/bun/releases/download/bun-v${TOOL_VERSION}/bun-darwin-x64.zip"
-export TOOL_URL_MACOS_ARM64="https://github.com/oven-sh/bun/releases/download/bun-v${TOOL_VERSION}/bun-darwin-aarch64.zip"
+# Download URLs: the JetBrains mirror of the GitHub release archives, byte-identical. The same
+# mirror serves the bun_* http_archives in community/MODULE.bazel, so both pins share one source.
+TOOL_MIRROR="https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/bun/${TOOL_VERSION}"
+export TOOL_URL_LINUX_X64="${TOOL_MIRROR}/bun-linux-x64.zip"
+export TOOL_URL_LINUX_ARM64="${TOOL_MIRROR}/bun-linux-aarch64.zip"
+export TOOL_URL_WINDOWS_X64="${TOOL_MIRROR}/bun-windows-x64.zip"
+export TOOL_URL_WINDOWS_ARM64="${TOOL_MIRROR}/bun-windows-aarch64.zip"
+export TOOL_URL_MACOS_X64="${TOOL_MIRROR}/bun-darwin-x64.zip"
+export TOOL_URL_MACOS_ARM64="${TOOL_MIRROR}/bun-darwin-aarch64.zip"
 
 # Binary path within extracted archive
 export TOOL_BINARY_UNIX="bun"
@@ -65,13 +67,15 @@ set "TOOL_CHECKSUM_WINDOWS_ARM64=f473bfe2df73ee770548c93dd5d380aea7120c218ec2aa1
 set "TOOL_CHECKSUM_MACOS_X64=1d0211b8f1dc991182344687ad15e72ee86f154845a5f7fa477994cd341dd9b0"
 set "TOOL_CHECKSUM_MACOS_ARM64=c669e97f6164e1c96e0701748db98dfa77492908cbd8394c7557134a735de381"
 
-REM Download URLs (GitHub releases)
-set "TOOL_URL_LINUX_X64=https://github.com/oven-sh/bun/releases/download/bun-v%TOOL_VERSION%/bun-linux-x64.zip"
-set "TOOL_URL_LINUX_ARM64=https://github.com/oven-sh/bun/releases/download/bun-v%TOOL_VERSION%/bun-linux-aarch64.zip"
-set "TOOL_URL_WINDOWS_X64=https://github.com/oven-sh/bun/releases/download/bun-v%TOOL_VERSION%/bun-windows-x64.zip"
-set "TOOL_URL_WINDOWS_ARM64=https://github.com/oven-sh/bun/releases/download/bun-v%TOOL_VERSION%/bun-windows-aarch64.zip"
-set "TOOL_URL_MACOS_X64=https://github.com/oven-sh/bun/releases/download/bun-v%TOOL_VERSION%/bun-darwin-x64.zip"
-set "TOOL_URL_MACOS_ARM64=https://github.com/oven-sh/bun/releases/download/bun-v%TOOL_VERSION%/bun-darwin-aarch64.zip"
+REM Download URLs: the JetBrains mirror of the GitHub release archives, byte-identical. The same
+REM mirror serves the bun_* http_archives in community/MODULE.bazel, so both pins share one source.
+set "TOOL_MIRROR=https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/bun/%TOOL_VERSION%"
+set "TOOL_URL_LINUX_X64=%TOOL_MIRROR%/bun-linux-x64.zip"
+set "TOOL_URL_LINUX_ARM64=%TOOL_MIRROR%/bun-linux-aarch64.zip"
+set "TOOL_URL_WINDOWS_X64=%TOOL_MIRROR%/bun-windows-x64.zip"
+set "TOOL_URL_WINDOWS_ARM64=%TOOL_MIRROR%/bun-windows-aarch64.zip"
+set "TOOL_URL_MACOS_X64=%TOOL_MIRROR%/bun-darwin-x64.zip"
+set "TOOL_URL_MACOS_ARM64=%TOOL_MIRROR%/bun-darwin-aarch64.zip"
 
 REM Binary path within extracted archive
 set "TOOL_BINARY_UNIX=bun"
