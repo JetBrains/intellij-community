@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management.ui
 
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -159,9 +158,7 @@ class PythonPackageManagerUI private constructor(
     progressTitle: @Nls String,
     operation: suspend (() -> PyResult<T>),
   ): T? {
-    edtWriteAction {
-      FileDocumentManager.getInstance().saveAllDocuments()
-    }
+    FileDocumentManager.getInstance().saveAllDocuments()
     return PythonPackageManagerUIHelpers.runPackagingOperationMaybeBackground(manager, sink, progressTitle) {
       operation()
     }

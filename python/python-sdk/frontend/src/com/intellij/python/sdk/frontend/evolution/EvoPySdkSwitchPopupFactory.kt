@@ -91,12 +91,6 @@ private val managePackagesAction = object : AnAction(
 /** Backend id of the `advanced` node (`AdvancedEvoEnvironmentProvider`), the anchor for the target-interpreters node. */
 private const val ADVANCED_NODE_ID: String = EvoNodeIds.ADVANCED
 
-/** Synthetic node id for the frontend-only "Associated environments" node (its rows are existing SDKs, never version-probed). */
-/**
- * The Python Process Output tool window, opened by a failed row's sign when the backend could not address the run's
- * process. A literal because the constant declaring it is internal to the process-output module — the packaging tool
- * window is reached the same way elsewhere in this plugin.
- */
 /**
  * Longest environment name a row shows before its middle is elided, with the whole of it moving to the row's tooltip.
  *
@@ -107,8 +101,7 @@ private const val CREATE_ROW_ICON_ALPHA = 0.5f
 
 private const val ROW_TITLE_MAX_CHARS: Int = 50
 
-private const val PROCESS_OUTPUT_TOOL_WINDOW_ID: String = "PythonProcessOutput"
-
+/** Synthetic node id for the frontend-only "Associated environments" node (its rows are existing SDKs, never version-probed). */
 private const val ASSOCIATED_NODE_ID: String = EvoNodeIds.ASSOCIATED
 
 private fun EvoLeafDto.toStubAction(): AnAction = object : AnAction({ title }, { description ?: "" }, icon.icon()), DumbAware {
@@ -497,7 +490,9 @@ class EvoPySdkSwitchPopupFactory(
     null -> shortcuts.takeIf { it.isNotEmpty() }?.let { leaves ->
       EvoTreeSection(
         label = ListSeparator(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.shortcuts")),
-        elements = leaves.map { EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, SHORTCUTS_NODE_ID, EvoNodeStats(EvoNodeKind.SHORTCUTS), traceId, scope)) },
+        elements = leaves.map {
+          EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, SHORTCUTS_NODE_ID, EvoNodeStats(EvoNodeKind.SHORTCUTS), traceId, scope))
+        },
       )
     }
     else -> EvoTreeSection(
@@ -524,7 +519,9 @@ class EvoPySdkSwitchPopupFactory(
       sections = listOf(
         EvoTreeSection(
           label = null,
-          elements = associated.map { EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, ASSOCIATED_NODE_ID, EvoNodeStats(EvoNodeKind.ASSOCIATED), traceId, scope)) },
+          elements = associated.map {
+            EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, ASSOCIATED_NODE_ID, EvoNodeStats(EvoNodeKind.ASSOCIATED), traceId, scope))
+          },
         ),
       ),
       // A static node, so it never runs the lazy loader that reports every other node's opening.
@@ -735,19 +732,15 @@ class EvoPySdkSwitchPopupFactory(
   /**
    * Opens the Python Process Output tool window on what this tool's last run produced — the failure sign's action.
    *
-   * The backend does the addressing, since the trace the tool window knows the process by lives there. When it reports
-   * that it found nothing — a run whose scope has since expired, or a failure with no process behind it at all, like a
-   * tool that simply offered nothing — the window is opened without a selection, which is still better than a sign that
-   * does nothing when clicked.
+   * The backend does the addressing, since the trace the tool window knows the process by lives there. When it finds
+   * nothing — a run whose scope has since expired, or a failure with no process behind it at all, like a tool that
+   * simply offered nothing — the window is opened without a selection, which is still better than a sign that does
+   * nothing when clicked.
    */
   private fun showToolOutput(nodeId: String, traceId: String) {
     PyEvoWidgetCollector.controlUsed(project, PyEvoWidgetCollector.Control.PROCESS_OUTPUT, nodeStats(nodeId))
     scope.launch {
-      val opened = evoRpcOrNull { requestEvoShowToolProcessOutput(project.projectId(), nodeId, traceId) } == true
-      if (opened) return@launch
-      withContext(Dispatchers.EDT) {
-        ToolWindowManager.getInstance(project).getToolWindow(PROCESS_OUTPUT_TOOL_WINDOW_ID)?.activate(null)
-      }
+      evoRpcOrNull { requestEvoShowToolProcessOutput(project.projectId(), nodeId, traceId) }
     }
   }
 

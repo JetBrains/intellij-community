@@ -1788,7 +1788,6 @@ python/python-packaging
 python/python-parser
 python/python-poetry/backend
 python/python-poetry/common
-python/python-process-output/backend
 python/python-process-output/common
 python/python-process-output/frontend
 python/python-psi-api

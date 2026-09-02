@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.Messages
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.ExecErrorImpl
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyErrorDetail
 import com.jetbrains.python.packaging.PyExecutionException
@@ -23,26 +24,30 @@ import kotlinx.coroutines.withContext
  */
 internal class ShowingMessageErrorSink : ErrorSink {
   override suspend fun emit(value: PyErrorDetail) {
-    val (error, project) = value
+    val (error, _) = value
 
     // In unit tests dialogs are not supported
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw PyExecutionException(error)
     }
 
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      thisLogger().warn(error.message)
-      // Platform doesn't allow dialogs without a lock for now, fix later
-      writeIntentReadAction {
-        when (error) {
-          is ExecError -> {
-            showProcessExecutionErrorDialog(project, error)
-          }
-          is MessageError -> {
+    logger.warn(error.message)
+   
+    when (error) {
+      is ExecError -> {
+        showProcessExecutionErrorDialog(error)
+      }
+      is MessageError -> {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          writeIntentReadAction {
             Messages.showErrorDialog(error.message, PyBundle.message("python.error"))
           }
         }
       }
     }
+  }
+  
+  companion object {
+    private val logger = thisLogger()
   }
 }

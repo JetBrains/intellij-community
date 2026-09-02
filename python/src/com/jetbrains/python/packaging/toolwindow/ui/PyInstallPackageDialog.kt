@@ -20,8 +20,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.python.processOutput.common.ProcessOutputQuery
-import com.intellij.python.processOutput.common.sendProcessOutputQuery
+import com.intellij.python.processOutput.common.sendOpenToolWindowByTraceUuidEvent
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.intellij.ui.ExperimentalUI
@@ -690,9 +689,7 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
       else {
         // Failure keeps today's behavior: close the dialog and surface the logs.
         withContext(Dispatchers.EDT) { popup.cancel() }
-        sendProcessOutputQuery(
-          ProcessOutputQuery.OpenToolWindowByTraceUuid(trace.uuid.toString())
-        )
+        sendOpenToolWindowByTraceUuidEvent(trace.uuid)
       }
     }.invokeOnCompletion {
       ApplicationManager.getApplication().invokeLater(

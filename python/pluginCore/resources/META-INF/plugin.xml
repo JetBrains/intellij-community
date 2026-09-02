@@ -38,7 +38,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.syntax" loading="required"/>
 
     <module name="intellij.python.processOutput.common"/>
-    <module name="intellij.python.processOutput.backend"/>
     <module name="intellij.python.processOutput.frontend"/>
 
     <!-- Backend-only modules: load only when intellij.platform.backend is available -->

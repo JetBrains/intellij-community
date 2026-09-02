@@ -8,7 +8,6 @@ import com.intellij.python.processOutput.frontend.InfoTag
 import com.intellij.python.processOutput.frontend.OutputFilter
 import com.intellij.python.processOutput.frontend.OutputTag
 import com.intellij.python.processOutput.frontend.ProcessOutputBundle.message
-import com.intellij.python.processOutput.frontend.ProcessOutputController
 import com.intellij.python.processOutput.frontend.ProcessStatus
 import com.intellij.python.processOutput.frontend.formatFull
 import com.intellij.python.processOutput.frontend.ui.ProcessOutputUiContext
@@ -35,22 +34,7 @@ import javax.swing.ScrollPaneConstants
 import javax.swing.Scrollable
 import javax.swing.SwingUtilities
 
-internal class OutputConsole(private val uiContext: ProcessOutputUiContext) {
-  private val infoSection = CollapsibleConsoleSection(
-    title = message("process.output.output.sections.info"),
-    name = Naming.INFO_SECTION_NAME,
-    formatter = InfoTag.formatter,
-    onToggle = { uiContext.controller.toggleProcessInfo() },
-  )
-
-  private val outputSection = CollapsibleConsoleSection(
-    title = message("process.output.output.sections.output"),
-    name = Naming.OUTPUT_SECTION_NAME,
-    formatter = OutputTag.formatter,
-    onToggle = { uiContext.controller.toggleProcessOutput() },
-    onCopy = this::onCopy,
-  )
-
+internal class Console(private val uiContext: ProcessOutputUiContext) {
   private val contentPanel: ContentPanel = ContentPanel()
   private val scrollPane: JScrollPane = ScrollPaneFactory.createScrollPane(contentPanel, true)
   private var linesJob: Job? = null
@@ -58,10 +42,26 @@ internal class OutputConsole(private val uiContext: ProcessOutputUiContext) {
   val component: JComponent
     field = JPanel(BorderLayout())
 
+  private val infoSection = CollapsibleConsolePanel(
+    title = message("process.output.output.sections.info"),
+    name = Naming.INFO_SECTION_NAME,
+    formatter = InfoTag.formatter,
+    onToggle = { uiContext.controller.toggleProcessInfo() },
+  )
+
+  private val outputSection = CollapsibleConsolePanel(
+    title = message("process.output.output.sections.output"),
+    name = Naming.OUTPUT_SECTION_NAME,
+    formatter = OutputTag.formatter,
+    onToggle = { uiContext.controller.toggleProcessOutput() },
+    onCopy = this::onCopy,
+    onRebuild = this::onOutputPanelRebuild,
+  )
+
   init {
     contentPanel.isOpaque = false
     contentPanel.layout = BoxLayout(contentPanel, BoxLayout.Y_AXIS)
-    contentPanel.border = 
+    contentPanel.border =
       JBUI.Borders.empty(
         Styling.CONTENT_PANEL_PADDING,
         Styling.CONTENT_PANEL_PADDING,
@@ -79,12 +79,13 @@ internal class OutputConsole(private val uiContext: ProcessOutputUiContext) {
 
         if (loggedProcess == null) {
           contentPanel.removeAll()
+          uiContext.scrollOnProcessDisplayed = ProcessOutputUiContext.ScrollOnProcessDisplayed.None
         }
         else {
           infoSection.setLines(buildInfoLines(loggedProcess.data))
 
           linesJob =
-            this@launch.launch(Dispatchers.EDT) {
+            this@launch.launch {
               combine(
                 loggedProcess.lines,
                 loggedProcess.status,
@@ -100,12 +101,14 @@ internal class OutputConsole(private val uiContext: ProcessOutputUiContext) {
             contentPanel.add(infoSection.component)
             contentPanel.add(outputSection.component)
           }
+
+          if (uiContext.scrollOnProcessDisplayed == ProcessOutputUiContext.ScrollOnProcessDisplayed.None) {
+            uiContext.scrollOnProcessDisplayed = ProcessOutputUiContext.ScrollOnProcessDisplayed.Up(loggedProcess.data.id)
+          }
         }
 
         contentPanel.revalidate()
         contentPanel.repaint()
-
-        scrollPane.viewport.viewPosition = Point(0, 0)
       }
     }
 
@@ -143,22 +146,6 @@ internal class OutputConsole(private val uiContext: ProcessOutputUiContext) {
           contentPanel.revalidate()
         }
     }
-
-    uiContext.coroutineScope.launch(Dispatchers.EDT) {
-      uiContext.controller.events.collect { event ->
-        when (event) {
-          is ProcessOutputController.Event.StatusUpdate -> {}
-          ProcessOutputController.Event.OutputScrollDown -> {
-            SwingUtilities.invokeLater {
-              val view = scrollPane.viewport.view
-              val y = maxOf(0, view.height - scrollPane.viewport.height)
-
-              scrollPane.viewport.viewPosition = Point(0, y)
-            }
-          }
-        }
-      }
-    }
   }
 
   private fun onCopy(line: ConsoleTextLine<OutputTag>, index: Int) {
@@ -169,6 +156,30 @@ internal class OutputConsole(private val uiContext: ProcessOutputUiContext) {
         uiContext.controller.copyOutputExitInfoToClipboard(loggedProcess)
       OutputTag.OUTPUT, OutputTag.ERROR ->
         uiContext.controller.copyOutputTagAtIndexToClipboard(loggedProcess, index)
+    }
+  }
+
+  private fun onOutputPanelRebuild() {
+    SwingUtilities.invokeLater {
+      val selectedProcess = uiContext.controller.selectedProcess.value
+
+      when (val scrollData = uiContext.scrollOnProcessDisplayed) {
+        is ProcessOutputUiContext.ScrollOnProcessDisplayed.Up -> {
+          if (selectedProcess?.data?.id == scrollData.processId) {
+            uiContext.scrollOnProcessDisplayed = ProcessOutputUiContext.ScrollOnProcessDisplayed.None
+
+            scrollPane.viewport.viewPosition = Point(0, 0)
+          }
+        }
+        is ProcessOutputUiContext.ScrollOnProcessDisplayed.Down -> {
+          if (selectedProcess?.data?.id == scrollData.processId) {
+            uiContext.scrollOnProcessDisplayed = ProcessOutputUiContext.ScrollOnProcessDisplayed.None
+
+            scrollPane.viewport.viewPosition = Point(0, Int.MAX_VALUE)
+          }
+        }
+        ProcessOutputUiContext.ScrollOnProcessDisplayed.None -> {}
+      }
     }
   }
 

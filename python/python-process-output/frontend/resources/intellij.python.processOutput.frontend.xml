@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution.impl"/>

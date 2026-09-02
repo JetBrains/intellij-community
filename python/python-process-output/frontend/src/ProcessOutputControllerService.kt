@@ -1,13 +1,11 @@
 package com.intellij.python.processOutput.frontend
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.python.processOutput.common.ExecErrorDto
 import com.intellij.python.processOutput.common.FrontendTopicService
 import com.intellij.python.processOutput.common.LoggedProcessDto
 import com.intellij.python.processOutput.common.OutputKindDto
@@ -15,9 +13,7 @@ import com.intellij.python.processOutput.common.OutputLineDto
 import com.intellij.python.processOutput.common.ProcessBinaryFileName
 import com.intellij.python.processOutput.common.ProcessIcon
 import com.intellij.python.processOutput.common.ProcessOutputEventDto
-import com.intellij.python.processOutput.common.ProcessOutputQuery
 import com.intellij.python.processOutput.common.ProcessWeightDto
-import com.intellij.python.processOutput.common.QueryResponsePayload
 import com.intellij.python.processOutput.common.TraceContextDto
 import com.intellij.python.processOutput.common.TraceContextKind
 import com.intellij.python.processOutput.common.TraceContextUuid
@@ -28,10 +24,8 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -43,7 +37,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.tree.DefaultMutableTreeNode
@@ -58,6 +52,7 @@ object CoroutineNames {
 internal object ProcessOutputControllerServiceLimits {
   const val MAX_PROCESSES = 512
   const val MAX_LINES = 1024
+  val OPEN_TOOL_WINDOW_BY_TRACE_UUID_TIMEOUT = 5.seconds
 }
 
 @ApiStatus.Internal
@@ -100,7 +95,8 @@ internal interface ProcessOutputController {
 
   sealed interface Event {
     data class StatusUpdate(val loggedProcess: LoggedProcess) : Event
-    data object OutputScrollDown : Event
+    data class DisplayExecError(val execErrorDto: ExecErrorDto, val associatedProcess: LoggedProcess?) : Event
+    data class DisplayToolWindow(val processToSelect: LoggedProcess?) : Event
   }
 }
 
@@ -247,10 +243,7 @@ internal class InternalLoggedProcess(
 )
 
 @Service(Service.Level.PROJECT)
-internal class ProcessOutputControllerService(
-  private val project: Project,
-  private val coroutineScope: CoroutineScope,
-) : ProcessOutputController {
+internal class ProcessOutputControllerService(private val coroutineScope: CoroutineScope) : ProcessOutputController {
   internal val loggedProcesses = MutableStateFlow<List<LoggedProcess>>(listOf())
 
   private val isInfoExpandedFlow = MutableStateFlow(false)
@@ -425,32 +418,6 @@ internal class ProcessOutputControllerService(
     ProcessOutputUsageCollector.outputExitInfoCopyClicked()
   }
 
-  private fun tryOpenLogInToolWindow(logId: Int): Boolean {
-    val process = loggedProcesses.value.find { process -> process.data.id == logId }
-                  ?: return false
-    val toolWindowManager = ToolWindowManager.getInstance(project)
-
-    coroutineScope.launch(Dispatchers.EDT) {
-      toolWindowManager.getToolWindow(TOOL_WINDOW_ID)?.show()
-
-      // select the process
-      selectedProcess.value = process
-
-      // clear search text
-      searchQuery.value = ""
-
-      // expand process output section
-      isOutputExpandedFlow.value = true
-
-      // scroll output all the way to the bottom left
-      events.emit(ProcessOutputController.Event.OutputScrollDown)
-    }
-
-    ProcessOutputUsageCollector.toolwindowOpenedDueToError()
-
-    return true
-  }
-
   private fun collectTopicEvents() {
     val processMap = boundedLinkedHashMap<Int, InternalLoggedProcess>(
       ProcessOutputControllerServiceLimits.MAX_PROCESSES,
@@ -526,51 +493,44 @@ internal class ProcessOutputControllerService(
               )
             }
           }
-          is ProcessOutputEventDto.ReceivedQuery<*> ->
-            when (val query = event.query) {
-              is ProcessOutputQuery.OpenToolWindowWithError -> {
-                val hasOpened = tryOpenLogInToolWindow(query.processId)
-                query.respond(QueryResponsePayload.BooleanPayload(hasOpened))
+          is ProcessOutputEventDto.ExecError -> {
+            val error = event.execErrorDto
+            val associatedProcess =
+              error.loggedProcessId?.let { processId ->
+                loggedProcesses.value.find { process ->
+                  process.data.id == processId
+                }
               }
-              is ProcessOutputQuery.SpecifyAdditionalMessageToUser -> {
-                processMap[query.processId]?.also { internalProcess ->
-                  when (val status = internalProcess.status.value) {
-                    ProcessStatus.Running -> {}
-                    is ProcessStatus.Done -> {
-                      internalProcess.status.emit(
-                        status.copy(
-                          additionalMessageToUser = query.messageToUser,
-                          isCritical = true,
-                        ),
-                      )
+
+            events.emit(
+              ProcessOutputController.Event.DisplayExecError(
+                execErrorDto = error,
+                associatedProcess = associatedProcess,
+              )
+            )
+          }
+          is ProcessOutputEventDto.OpenToolWindowByTraceUuid -> {
+            coroutineScope.launch {
+              val process =
+                withTimeoutOrNull(ProcessOutputControllerServiceLimits.OPEN_TOOL_WINDOW_BY_TRACE_UUID_TIMEOUT) {
+                  loggedProcesses
+                    .mapNotNull { list ->
+                      list.lastOrNull {
+                        it.data.traceContextUuid == event.uuid
+                      }
                     }
-                  }
+                    .first()
                 }
 
-                query.respond(QueryResponsePayload.UnitPayload)
-              }
-              is ProcessOutputQuery.OpenToolWindowByTraceUuid -> {
-                coroutineScope.launch {
-                  try {
-                    withTimeout(10.seconds) {
-                      val target =
-                        loggedProcesses
-                          .mapNotNull { list ->
-                            list.lastOrNull {
-                              it.data.traceContextUuid?.uuid == query.traceUuid
-                            }
-                          }
-                          .first()
-                      val hasOpened = tryOpenLogInToolWindow(target.data.id)
-                      query.respond(QueryResponsePayload.BooleanPayload(hasOpened))
-                    }
-                  }
-                  catch (_: TimeoutCancellationException) {
-                    query.respond(QueryResponsePayload.BooleanPayload(false))
-                  }
-                }
+              if (process != null || event.openIfNotFound) {
+                events.emit(
+                  ProcessOutputController.Event.DisplayToolWindow(
+                    processToSelect = process
+                  )
+                )
               }
             }
+          }
         }
       }
     }

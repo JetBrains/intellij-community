@@ -1,6 +1,8 @@
 package com.intellij.python.processOutput.common
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.topics.ApplicationRemoteTopic
 import com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener
 import com.intellij.platform.rpc.topics.sendToClient
@@ -14,6 +16,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.util.UUID
 import kotlin.time.Instant
 
 @ApiStatus.Internal
@@ -84,6 +87,29 @@ data class OutputLineDto(
 
 @ApiStatus.Internal
 @Serializable
+data class ExecErrorDto(
+  val message: @NlsSafe String,
+  val command: String,
+  val reason: ExecErrorReasonDto,
+  val loggedProcessId: Int? = null,
+  val additionalMessageToUser: @NlsContexts.DialogTitle String? = null,
+)
+
+@ApiStatus.Internal
+@Serializable
+sealed interface ExecErrorReasonDto {
+  @Serializable
+  data class CantStart(val cantExecProcessError: String) : ExecErrorReasonDto
+
+  @Serializable
+  data class UnexpectedTermination(val stdout: String, val stderr: String, val exitCode: Int) : ExecErrorReasonDto
+
+  @Serializable
+  data object Timeout : ExecErrorReasonDto
+}
+
+@ApiStatus.Internal
+@Serializable
 sealed interface ProcessOutputEventDto {
   @Serializable
   data class NewProcess(val loggedProcess: LoggedProcessDto, val traceHierarchy: List<TraceContextDto>) : ProcessOutputEventDto
@@ -95,18 +121,48 @@ sealed interface ProcessOutputEventDto {
   data class ProcessExit(val processId: Int, val exitedAt: Instant, val exitValue: Int) : ProcessOutputEventDto
 
   @Serializable
-  class ReceivedQuery<TResponse : QueryResponsePayload> internal constructor(
-    val query: ProcessOutputQuery<TResponse>,
-  ) : ProcessOutputEventDto
+  data class ExecError(val execErrorDto: ExecErrorDto) : ProcessOutputEventDto
+
+  @Serializable
+  data class OpenToolWindowByTraceUuid(val uuid: TraceContextUuid, val openIfNotFound: Boolean) : ProcessOutputEventDto
 }
 
-@ApiStatus.Internal
-val PROCESS_OUTPUT_TOPIC: ApplicationRemoteTopic<ProcessOutputEventDto> =
+private val PROCESS_OUTPUT_TOPIC: ApplicationRemoteTopic<ProcessOutputEventDto> =
   ApplicationRemoteTopic("PythonProcessOutputTopic", ProcessOutputEventDto.serializer())
 
 @ApiStatus.Internal
-fun sendProcessOutputTopicEvent(event: ProcessOutputEventDto) {
-  PROCESS_OUTPUT_TOPIC.sendToClient(event)
+fun sendNewProcessEvent(loggedProcessDto: LoggedProcessDto, traceHierarchy: List<TraceContextDto>) {
+  PROCESS_OUTPUT_TOPIC.sendToClient(ProcessOutputEventDto.NewProcess(loggedProcessDto, traceHierarchy))
+}
+
+@ApiStatus.Internal
+fun sendNewOutputLineEvent(processId: Int, outputLine: OutputLineDto) {
+  PROCESS_OUTPUT_TOPIC.sendToClient(ProcessOutputEventDto.NewOutputLine(processId, outputLine))
+}
+
+@ApiStatus.Internal
+fun sendProcessExitEvent(processId: Int, exitedAt: Instant, exitValue: Int) {
+  PROCESS_OUTPUT_TOPIC.sendToClient(ProcessOutputEventDto.ProcessExit(processId, exitedAt, exitValue))
+}
+
+@ApiStatus.Internal
+fun sendExecErrorEvent(execErrorDto: ExecErrorDto) {
+  PROCESS_OUTPUT_TOPIC.sendToClient(ProcessOutputEventDto.ExecError(execErrorDto))
+}
+
+@ApiStatus.Internal
+fun sendOpenToolWindowByTraceUuidEvent(uuid: UUID, openIfNotFound: Boolean = false) {
+  sendOpenToolWindowByTraceUuidEvent(uuid.toString(), openIfNotFound)
+}
+
+@ApiStatus.Internal
+fun sendOpenToolWindowByTraceUuidEvent(uuid: String, openIfNotFound: Boolean = false) {
+  PROCESS_OUTPUT_TOPIC.sendToClient(
+    ProcessOutputEventDto.OpenToolWindowByTraceUuid(
+      TraceContextUuid(uuid),
+      openIfNotFound,
+    )
+  )
 }
 
 internal class ProcessOutputTopicListener : ApplicationRemoteTopicListener<ProcessOutputEventDto> {

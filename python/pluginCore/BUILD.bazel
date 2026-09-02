@@ -115,7 +115,6 @@ dev_dist_plugin(
         "//python/python-parser:parser_content_module_jar",
         "//python/python-poetry/backend:backend_content_module_jar",
         "//python/python-poetry/common:common_content_module_jar",
-        "//python/python-process-output/backend:backend_content_module_jar",
         "//python/python-process-output/common:common_content_module_jar",
         "//python/python-process-output/frontend:frontend_content_module_jar",
         "//python/python-psi-api:psi_content_module_jar",

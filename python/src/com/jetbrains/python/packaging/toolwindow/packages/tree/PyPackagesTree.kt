@@ -16,8 +16,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.openapi.application.EDT
-import com.intellij.python.processOutput.common.ProcessOutputQuery
-import com.intellij.python.processOutput.common.sendProcessOutputQuery
+import com.intellij.python.processOutput.common.sendOpenToolWindowByTraceUuidEvent
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
@@ -428,7 +427,7 @@ internal class PyPackagesTree(
   private fun showInstallOutput(pkg: DisplayablePackage) {
     val traceUuid = installTraceUuid(pkg) ?: return
     PyPackageCoroutine.launch(project, Dispatchers.Default) {
-      sendProcessOutputQuery(ProcessOutputQuery.OpenToolWindowByTraceUuid(traceUuid))
+      sendOpenToolWindowByTraceUuidEvent(traceUuid)
     }
   }
 
@@ -491,7 +490,7 @@ internal class PyPackagesTree(
       val trace = TraceContext(PyBundle.message("python.toolwindow.packages.tooltip.change.version"), null)
       val details = withContext(trace) { packagingService.detailsForPackage(pkg) }
       if (details == null) {
-        sendProcessOutputQuery(ProcessOutputQuery.OpenToolWindowByTraceUuid(trace.uuid.toString()))
+        sendOpenToolWindowByTraceUuidEvent(trace.uuid)
         return@launch
       }
       withContext(Dispatchers.EDT) {

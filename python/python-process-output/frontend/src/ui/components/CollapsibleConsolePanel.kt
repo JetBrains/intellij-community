@@ -35,12 +35,13 @@ internal data class ConsoleTextLine<TTag>(
   val foreground: Color? = null,
 ) where TTag : ConsoleTag, TTag : Enum<TTag>
 
-internal class CollapsibleConsoleSection<TTag>(
+internal class CollapsibleConsolePanel<TTag>(
   @Nls title: String,
   name: String,
   private val formatter: ConsoleTagFormatter<TTag>,
   private val onToggle: () -> Unit,
   private val onCopy: ((line: ConsoleTextLine<TTag>, index: Int) -> Unit)? = null,
+  private val onRebuild: (() -> Unit)? = null,
 ) where TTag : ConsoleTag, TTag : Enum<TTag> {
   private var lines: List<ConsoleTextLine<TTag>> = emptyList()
   private var sections: List<Section<TTag>> = emptyList()
@@ -48,7 +49,7 @@ internal class CollapsibleConsoleSection<TTag>(
   private var wrap: Boolean = false
   private var expanded: Boolean = true
 
-  private val textPane: JTextPane = 
+  private val textPane: JTextPane =
     object : JTextPane() {
       override fun getPreferredSize(): Dimension {
         val superSize = super.getPreferredSize()
@@ -117,8 +118,10 @@ internal class CollapsibleConsoleSection<TTag>(
   fun setLines(newLines: List<ConsoleTextLine<TTag>>) {
     lines = newLines
 
-    rebuildText()
-    rebuildSections()
+    if (expanded) {
+      rebuildText()
+      rebuildSections()
+    }
   }
 
   fun setShowTags(show: Boolean) {
@@ -153,6 +156,13 @@ internal class CollapsibleConsoleSection<TTag>(
     expanded = newExpanded
 
     applyExpanded()
+
+    if (newExpanded) {
+      SwingUtilities.invokeLater {
+        rebuildText()
+        rebuildSections()
+      }
+    }
   }
 
   private fun applyExpanded() {
@@ -232,8 +242,12 @@ internal class CollapsibleConsoleSection<TTag>(
       }
     }
 
-    body.revalidate()
-    body.repaint()
+    SwingUtilities.invokeLater {
+      body.revalidate()
+      body.repaint()
+
+      onRebuild?.invoke()
+    }
   }
 
   private fun copyButton(section: Section<TTag>): JComponent {
@@ -247,7 +261,7 @@ internal class CollapsibleConsoleSection<TTag>(
     return button
   }
 
-  private inner class ColumnPanel(private val childOffset: (Int) -> Int?) : JPanel(null) {
+  private inner class ColumnPanel(private val childOffset: (Int) -> Int?) : JComponent() {
     init {
       isOpaque = false
     }

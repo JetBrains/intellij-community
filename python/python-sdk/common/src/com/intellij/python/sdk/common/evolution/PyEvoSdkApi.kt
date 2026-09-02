@@ -157,10 +157,8 @@ interface PyEvoSdkApi : RemoteApi<Unit> {
    *
    * Done from the backend because that is where the trace is: the widget's `traceId` keys the coroutine scope a tool
    * runs in, and the [com.jetbrains.python.TraceContext] in that scope is what the tool window knows the process by.
-   * `false` when that run is gone (an expired scope) or the window could not find it, which the frontend answers by
-   * opening the window without a selection.
    */
-  suspend fun showToolProcessOutput(projectId: ProjectId, nodeId: String, traceId: String): Boolean
+  suspend fun showToolProcessOutput(projectId: ProjectId, nodeId: String, traceId: String)
 
   /**
    * A flow of the project's SDK-configuration lock state (`com.jetbrains.python.sdk.isSdkConfigurationInProgress`):
@@ -268,7 +266,7 @@ suspend fun requestEvoPerformNodeAction(projectId: ProjectId, pyProjectKey: Stri
   PyEvoSdkApi().performNodeAction(projectId, pyProjectKey, nodeId, actionId)
 
 @ApiStatus.Internal
-suspend fun requestEvoShowToolProcessOutput(projectId: ProjectId, nodeId: String, traceId: String): Boolean =
+suspend fun requestEvoShowToolProcessOutput(projectId: ProjectId, nodeId: String, traceId: String): Unit =
   PyEvoSdkApi().showToolProcessOutput(projectId, nodeId, traceId)
 
 @ApiStatus.Internal

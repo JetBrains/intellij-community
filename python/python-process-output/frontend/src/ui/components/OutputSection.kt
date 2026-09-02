@@ -41,7 +41,7 @@ internal class OutputSection(private val uiContext: ProcessOutputUiContext) {
     }
 
     component.add(toolbar(), BorderLayout.NORTH)
-    component.add(OutputConsole(uiContext).component, BorderLayout.CENTER)
+    component.add(Console(uiContext).component, BorderLayout.CENTER)
   }
 
   private fun toolbar(): JPanel {

@@ -10,12 +10,13 @@ import com.intellij.python.processOutput.common.ExecutableDto
 import com.intellij.python.processOutput.common.LoggedProcessDto
 import com.intellij.python.processOutput.common.OutputKindDto
 import com.intellij.python.processOutput.common.OutputLineDto
-import com.intellij.python.processOutput.common.ProcessOutputEventDto
 import com.intellij.python.processOutput.common.ProcessWeightDto
 import com.intellij.python.processOutput.common.TraceContextDto
 import com.intellij.python.processOutput.common.TraceContextKind
 import com.intellij.python.processOutput.common.TraceContextUuid
-import com.intellij.python.processOutput.common.sendProcessOutputTopicEvent
+import com.intellij.python.processOutput.common.sendNewOutputLineEvent
+import com.intellij.python.processOutput.common.sendNewProcessEvent
+import com.intellij.python.processOutput.common.sendProcessExitEvent
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.Exe
@@ -98,21 +99,17 @@ class LoggingProcess(
         currentTraceContext = currentTraceContext.parentTraceContext
       }
 
-      sendProcessOutputTopicEvent(
-        ProcessOutputEventDto.NewProcess(loggedProcess, traceHierarchy)
-      )
+      sendNewProcessEvent(loggedProcess, traceHierarchy)
 
       // PY-89717: avoid awaitExit() on this app-scoped coroutine to stop
       // ThreadLeakTracker false-positives. See processAwaiter.kt for the full rationale.
       // (LoggingProcess.onExit() below already delegates to the JDK process reaper.)
       onExit().await()
 
-      sendProcessOutputTopicEvent(
-        ProcessOutputEventDto.ProcessExit(
-          processId = loggedProcess.id,
-          exitedAt = Clock.System.now(),
-          exitValue = exitValue(),
-        )
+      sendProcessExitEvent(
+        processId = loggedProcess.id,
+        exitedAt = Clock.System.now(),
+        exitValue = exitValue(),
       )
     }
   }
@@ -252,13 +249,11 @@ private class LoggingInputStream(
   private fun finalizeLine(bytes: ByteArray) {
     val line = String(bytes)
 
-    sendProcessOutputTopicEvent(
-      ProcessOutputEventDto.NewOutputLine(
-        processId = processId,
-        OutputLineDto(
-          kind = kind,
-          text = line,
-        )
+    sendNewOutputLineEvent(
+      processId = processId,
+      OutputLineDto(
+        kind = kind,
+        text = line,
       )
     )
 

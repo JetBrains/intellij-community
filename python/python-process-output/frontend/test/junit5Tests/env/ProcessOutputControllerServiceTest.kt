@@ -15,11 +15,10 @@ import com.intellij.python.processOutput.common.ExecutableDto
 import com.intellij.python.processOutput.common.LoggedProcessDto
 import com.intellij.python.processOutput.common.OutputKindDto
 import com.intellij.python.processOutput.common.OutputLineDto
-import com.intellij.python.processOutput.common.ProcessOutputEventDto
 import com.intellij.python.processOutput.common.TraceContextDto
 import com.intellij.python.processOutput.common.TraceContextKind
 import com.intellij.python.processOutput.common.TraceContextUuid
-import com.intellij.python.processOutput.common.sendProcessOutputTopicEvent
+import com.intellij.python.processOutput.common.sendNewProcessEvent
 import com.intellij.python.processOutput.frontend.CoroutineNames
 import com.intellij.python.processOutput.frontend.LoggedProcess
 import com.intellij.python.processOutput.frontend.OutputFilter
@@ -513,94 +512,6 @@ class ProcessOutputControllerServiceTest {
   }
 
   @Test
-  fun `tryOpenLogInToolWindow selects process, clears search, expands output, and returns true`(
-    @TempDir cwd: Path,
-    @PythonBinaryPath python: PythonBinary,
-  ): Unit = timeoutRunBlocking {
-    val service = projectFixture.get().service<ProcessOutputControllerService>()
-    val binOnEel = BinOnEel(python, cwd)
-    val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
-    val events = ConcurrentLinkedQueue<ProcessOutputController.Event>()
-
-    val tryOpenLogInToolWindow =
-      ProcessOutputControllerService::class.java
-        .getDeclaredMethod("tryOpenLogInToolWindow", Int::class.javaPrimitiveType)
-        .also { it.isAccessible = true }
-
-    val eventCollectorJob = launch(Dispatchers.EDT) {
-      service.events.collect { event ->
-        events.add(event)
-      }
-    }
-
-    try {
-      edtWriteAction {
-        mainPy.toFile().writeText(
-          """
-            print("hello")
-          """.trimIndent(),
-        )
-      }
-
-      val processDto = runBin(binOnEel, Args(MAIN_PY))
-      val processId = processDto.id
-      waitForProcess(service, processDto.id)
-
-      // setting search
-      service.search("initial search")
-
-      // collapsing the output
-      if (service.outputSectionState.isOutputExpanded.value) {
-        service.toggleProcessOutput()
-      }
-
-      // search should be "initial search", output should not be expanded, no process selected, and no scroll event in the queue
-      assertEquals("initial search", service.treeSectionState.searchQuery.value)
-      assertEquals(false, service.outputSectionState.isOutputExpanded.value)
-      assertEquals(null, service.selectedProcess.value)
-      assertEquals(false, events.contains(ProcessOutputController.Event.OutputScrollDown))
-
-      // try opening the error message in the tool window
-      val result = tryOpenLogInToolWindow.invoke(service, processId) as Boolean
-
-      // result should be true, correct process selected, search query empty and find an OutputScrollDown in the event queue
-      assertEquals(true, result)
-      waitUntil { service.selectedProcess.value?.data?.id == processId }
-      waitUntil { service.treeSectionState.searchQuery.value.isEmpty() }
-      waitUntil { service.outputSectionState.isOutputExpanded.value }
-      events.waitForEvent { it is ProcessOutputController.Event.OutputScrollDown }
-
-      // setting search
-      service.search("still there")
-
-      // collapsing process output again
-      service.toggleProcessOutput()
-
-      // deselecting process
-      service.selectProcess(null)
-
-      // search should be "still there", output should not be expanded, no process selected, and no scroll event in the queue
-      assertEquals("still there", service.treeSectionState.searchQuery.value)
-      assertEquals(false, service.outputSectionState.isOutputExpanded.value)
-      assertEquals(null, service.selectedProcess.value)
-      assertEquals(false, events.contains(ProcessOutputController.Event.OutputScrollDown))
-
-      // try opening the error message in the tool window but non-existing process id
-      val result2 = tryOpenLogInToolWindow.invoke(service, Int.MIN_VALUE) as Boolean
-
-      // result should be false, no process selected, search query unchanged and no scroll event in the queue, and output not expanded
-      assertEquals(false, result2)
-      assertEquals("still there", service.treeSectionState.searchQuery.value)
-      assertEquals(false, service.outputSectionState.isOutputExpanded.value)
-      assertEquals(null, service.selectedProcess.value)
-      assertEquals(false, events.contains(ProcessOutputController.Event.OutputScrollDown))
-    }
-    finally {
-      eventCollectorJob.cancelAndJoin()
-    }
-  }
-
-  @Test
   fun `line limits are maintained`(
     @TempDir cwd: Path,
     @PythonBinaryPath python: PythonBinary,
@@ -677,10 +588,10 @@ class ProcessOutputControllerServiceTest {
       )
 
     // sending new process events
-    sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(process1, emptyList()))
-    sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(process2, listOf(parentContext)))
-    sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(process3, listOf(parentContext, childContext)))
-    sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(process4, listOf(parentContext)))
+    sendNewProcessEvent(process1, emptyList())
+    sendNewProcessEvent(process2, listOf(parentContext))
+    sendNewProcessEvent(process3, listOf(parentContext, childContext))
+    sendNewProcessEvent(process4, listOf(parentContext))
 
     // wait until all processes appear loggedProcesses
     waitUntil({
@@ -742,9 +653,9 @@ class ProcessOutputControllerServiceTest {
       )
 
     // sending new process events
-    sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(pythonProcess, emptyList()))
-    sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(nodeProcess, emptyList()))
-    sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(cargoProcess, emptyList()))
+    sendNewProcessEvent(pythonProcess, emptyList())
+    sendNewProcessEvent(nodeProcess, emptyList())
+    sendNewProcessEvent(cargoProcess, emptyList())
 
     waitUntil({
       """
@@ -824,8 +735,8 @@ class ProcessOutputControllerServiceTest {
       )
 
     // sending new process events
-    sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(backgroundProcess, listOf(backgroundContext)))
-    sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(interactiveProcess, listOf(interactiveContext)))
+    sendNewProcessEvent(backgroundProcess, listOf(backgroundContext))
+    sendNewProcessEvent(interactiveProcess, listOf(interactiveContext))
 
     waitUntil({
       """

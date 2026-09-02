@@ -9,11 +9,11 @@ import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class ProcessOutputToolWindow(project: Project, toolWindow: ToolWindow) {
+internal class ProcessOutputToolWindow(toolWindow: ToolWindow) {
   val component: JComponent
     field = SimpleToolWindowPanel(true, true)
 
-  private val uiContext = ProcessOutputUiContext(project, component, toolWindow.disposable)
+  val uiContext = ProcessOutputUiContext(toolWindow.project, component, toolWindow.disposable)
 
   init {
     val splitter = OnePixelSplitter(false, SPLITTER_PROPORTION_KEY, SPLITTER_DEFAULT_PROPORTION)

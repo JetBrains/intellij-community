@@ -3,7 +3,6 @@ package com.intellij.python.processOutput.frontend.ui.components
 import com.intellij.openapi.application.EDT
 import com.intellij.python.processOutput.frontend.LoggedProcess
 import com.intellij.python.processOutput.frontend.ProcessOutputBundle.message
-import com.intellij.python.processOutput.frontend.ProcessOutputController
 import com.intellij.python.processOutput.frontend.ui.ProcessOutputUiContext
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ClientProperty
@@ -42,6 +41,8 @@ internal class ProcessTree(private val uiContext: ProcessOutputUiContext) {
     field = ScrollPaneFactory.createScrollPane(tree, true)
 
   init {
+    uiContext.processTree = tree
+
     ClientProperty.put(tree, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true) // animates spinners
     TreeHoverListener.DEFAULT.addTo(tree) // enables hover highlight
 
@@ -105,17 +106,6 @@ internal class ProcessTree(private val uiContext: ProcessOutputUiContext) {
       }
 
       uiContext.controller.selectProcess(selectedProcess)
-    }
-
-    uiContext.coroutineScope.launch(Dispatchers.EDT) {
-      uiContext.controller.events.collect { event ->
-        when (event) {
-          is ProcessOutputController.Event.StatusUpdate -> {
-            tree.repaint()
-          }
-          ProcessOutputController.Event.OutputScrollDown -> {}
-        }
-      }
     }
   }
 

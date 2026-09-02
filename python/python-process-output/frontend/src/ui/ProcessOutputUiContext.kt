@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.python.processOutput.frontend.ProcessOutputController
 import com.intellij.python.processOutput.frontend.ProcessOutputControllerService
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.JPanel
@@ -26,6 +27,15 @@ internal class ProcessOutputUiContext(
 
   val controller: ProcessOutputController
     get() = project.service<ProcessOutputControllerService>()
+
+  var scrollOnProcessDisplayed: ScrollOnProcessDisplayed = ScrollOnProcessDisplayed.None
+  var processTree: Tree? = null
+
+  sealed interface ScrollOnProcessDisplayed {
+    data class Up(val processId: Int) : ScrollOnProcessDisplayed
+    data class Down(val processId: Int) : ScrollOnProcessDisplayed
+    data object None : ScrollOnProcessDisplayed
+  }
 }
 
 @Service(Service.Level.PROJECT)
