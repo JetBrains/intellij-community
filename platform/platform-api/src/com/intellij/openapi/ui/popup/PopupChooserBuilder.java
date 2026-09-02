@@ -368,9 +368,17 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
     if (myCloseOnEnter || myItemChosenRunnable != null) {
       myChooserComponent.addMouseListener(new MouseAdapter() {
+        private boolean isRealClick = false;
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+          // Protection against "pressed elsewhere, released here," happens on Fedora+Wayland.
+          isRealClick = true;
+        }
+
         @Override
         public void mouseReleased(MouseEvent e) {
-          if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
+          if (isRealClick && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
             if (myCloseOnEnter) {
               closePopup(e, true);
             }
