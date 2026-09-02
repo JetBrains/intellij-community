@@ -18,9 +18,9 @@ internal class DocumentSnapshotImpl private constructor(
   private val text: DocumentText,
   private val modState: DocumentModState,
   private val sputniks: DocumentSputniks,
+  root: PMarkerRoot = PMarkerRootImpl.empty(),
 ) : DocumentSnapshot {
-
-  internal val markerRoot: AtomicReference<PMarkerRoot> = AtomicReference(PMarkerRootImpl.empty())
+  internal val markerRoot: AtomicReference<PMarkerRoot> = AtomicReference(root)
 
   constructor(text: DocumentText) : this(
     text = text,
@@ -49,9 +49,7 @@ internal class DocumentSnapshotImpl private constructor(
   }
 
   internal fun copyWithMarkerRoot(root: PMarkerRoot): DocumentSnapshotImpl {
-    return DocumentSnapshotImpl(text, modState, sputniks).also {
-      it.markerRoot.set(root)
-    }
+    return DocumentSnapshotImpl(text, modState, sputniks, root)
   }
 
   override fun applyOp(op: DocumentOp): DocumentSnapshot {
@@ -65,11 +63,11 @@ internal class DocumentSnapshotImpl private constructor(
       this
     }
     else {
-      DocumentSnapshotImpl(newText, newModState, sputniks)
+      DocumentSnapshotImpl(newText, newModState, sputniks, markerRoot.get())
     }
     val after = if (canAffectSputniks && (sputniks !== DocumentSputniksImpl.EMPTY || op is DocumentOp.SetSputnik)) {
       sputniks.applyOp(this, newSnapshot, op) { newSputniks ->
-        DocumentSnapshotImpl(newText, newModState, newSputniks)
+        DocumentSnapshotImpl(newText, newModState, newSputniks, markerRoot.get())
       }
     }
     else {

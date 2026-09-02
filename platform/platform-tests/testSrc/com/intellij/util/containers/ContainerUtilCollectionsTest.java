@@ -231,7 +231,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftMapWithStrategyAndListenerTossed() {
     AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
-    map.set(CollectionFactory.createConcurrentSoftMap(HashingStrategy.identity(), (thisMap,hash, value) ->
+    map.set(CollectionFactory.createConcurrentSoftMap(HashingStrategy.identity(), (thisMap,_, _) ->
       assertSame(map.get(), thisMap)
     ));
     checkKeyTossedEventually(map.get());
@@ -741,7 +741,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     assertTrue(set.isEmpty());
   }
 
-  private void checkSizeMethodIsConstantEvenThoughItMightReturnSlightlyBiggerValue(Set<Object> set) {
+  private static void checkSizeMethodIsConstantEvenThoughItMightReturnSlightlyBiggerValue(Set<Object> set) {
     set.clear();
     //noinspection ConstantValue
     assertEquals(0, set.size());
@@ -767,6 +767,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     assertTrue(set.isEmpty());
 
     assertTrue(set.add(this));  // to run processQueues();
+    //noinspection ConstantValue
     assertFalse(set.isEmpty());
     assertTrue(set.remove(this));
 
@@ -979,7 +980,6 @@ public class ContainerUtilCollectionsTest extends Assert {
   public void testValueEvictionListenerWorks() {
     AtomicReference<Object> evicted = new AtomicReference<>();
     AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
-    AtomicReference<Object> value = new AtomicReference<>(new Object());
     Object key = new Object();
     int keyHashCode = System.identityHashCode(key);
     map.set(CollectionFactory.createConcurrentSoftValueMap((thisMap,hash, keyForEvictedValue) -> {

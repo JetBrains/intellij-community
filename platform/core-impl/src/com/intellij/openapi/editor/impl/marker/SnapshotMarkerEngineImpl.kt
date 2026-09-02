@@ -78,15 +78,22 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
    * - a marker inserted after this operation is not inherited by the child;
    * - the root belonging to [beforeSnapshot] is not changed.
    *
-   * [afterSnapshot] must not become visible before this method completes. Otherwise marker creation may race with
+   * [afterSnapshot] must not become visible before this method completes. Otherwise, marker creation may race with
    * publishing the derived root.
    */
   override fun applyPatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentTextPatch) {
     validatePatch(beforeSnapshot, afterSnapshot, patch)
     var hasInvalidatedMarkers = false
     val invalidatedMarkerConsumer = LongConsumer { hasInvalidatedMarkers = true }
-    publishRoot(beforeSnapshot, afterSnapshot) {
-      it.applyPatch(patch, beforeSnapshot.text(), afterSnapshot.text(), invalidatedMarkerConsumer)
+    val beforeRoot = markerRoot(beforeSnapshot).get()
+    val afterRoot = beforeRoot.applyPatch(patch, beforeSnapshot.text(), afterSnapshot.text(), invalidatedMarkerConsumer)
+    processQueue()
+    require(afterSnapshot !== beforeSnapshot) {
+      "Before and after snapshots must be different instances"
+    }
+    val updated = markerRoot(afterSnapshot).compareAndSet(beforeRoot, afterRoot)
+    require(updated) {
+      "After snapshot marker root is already initialized"
     }
     if (hasInvalidatedMarkers) {
       snapshotsWithInvalidatedMarkers.add(afterSnapshot)
@@ -94,7 +101,9 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
     else {
       snapshotsWithInvalidatedMarkers.remove(afterSnapshot) // to call snapshotsWithInvalidatedMarkers.processQueue()
     }
-    rootStores.keys.forEach { it.applyPatch(beforeSnapshot, afterSnapshot, patch) }
+    if (!rootStores.isEmpty()) {
+      rootStores.keys.forEach { it.applyPatch(beforeSnapshot, afterSnapshot, patch) }
+    }
   }
 
   /** Returns true if the snapshot derivation invalidated at least one marker. */
@@ -105,8 +114,9 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
     require(beforeSnapshot.text() === afterSnapshot.text()) {
       "Snapshots must share the same text instance"
     }
-    publishRoot(beforeSnapshot, afterSnapshot) { it }
-    rootStores.keys.forEach { it.inherit(beforeSnapshot, afterSnapshot) }
+    if (!rootStores.isEmpty()) {
+      rootStores.keys.forEach { it.inherit(beforeSnapshot, afterSnapshot) }
+    }
   }
 
   /**
@@ -133,23 +143,6 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
     val mergedSnapshot = (metadataSnapshot as DocumentSnapshotImpl).copyWithMarkerRoot(mergedRoot)
     rootStores.keys.forEach { it.merge(markerSnapshot, metadataSnapshot, mergedSnapshot) }
     return mergedSnapshot
-  }
-
-  private inline fun publishRoot(
-    beforeSnapshot: DocumentSnapshot,
-    afterSnapshot: DocumentSnapshot,
-    transform: (PMarkerRoot) -> PMarkerRoot,
-  ) {
-    processQueue()
-    require(afterSnapshot !== beforeSnapshot) {
-      "Before and after snapshots must be different instances"
-    }
-    val beforeRoot = markerRoot(beforeSnapshot).get()
-    val afterRoot = transform(beforeRoot)
-    val updated = markerRoot(afterSnapshot).compareAndSet(PMarkerRootImpl.empty(), afterRoot)
-    require(updated) {
-      "After snapshot marker root is already initialized"
-    }
   }
 
   /**
