@@ -7,76 +7,39 @@ import com.intellij.execution.portsWatcher.ProcessPortsWatcher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
-import com.sun.jna.Memory
-import com.sun.jna.platform.win32.IPHlpAPI
-import com.sun.jna.platform.win32.WinError
-import com.sun.jna.ptr.IntByReference
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 private val LOG = logger<ProcessPortsWatcher>()
 
 /**
- * Scans listening TCP ports for the given [pids] on the local Windows host via JNA `IPHlpAPI`
+ * Scans listening TCP ports for the given [pids] on the local Windows host via [TcpTableApi]
  * (`GetExtendedTcpTable`).
  */
 internal fun scanLocalWindowsListeningPorts(pids: Set<Long>): Set<ListeningPort> {
   @OptIn(LowLevelLocalMachineAccess::class)
   check(OS.CURRENT == OS.Windows) { "This method is supposed to be called only in Windows local environment" }
 
-  val sizePtr = IntByReference()
-  // First call sizes the buffer; subsequent calls populate it.
-  run {
-    val retCode = IPHlpAPI.INSTANCE.GetExtendedTcpTable(null,
-                                                        sizePtr,
-                                                        false,
-                                                        IPHlpAPI.AF_INET,
-                                                        IPHlpAPI.TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_LISTENER,
-                                                        0)
-    when (retCode) {
-      WinError.ERROR_INSUFFICIENT_BUFFER -> { /* do nothing, works as expected */
-      }
-      WinError.ERROR_INVALID_PARAMETER -> {
-        LOG.error("Invalid parameter(s) was passed to GetExtendedTcpTable.")
-        return mutableSetOf()
-      }
-      else -> LOG.warn("Unexpected return code from GetExtendedTcpTable. $retCode")
-    }
+  val rows = try {
+    TcpTableApi.listeningRows()
   }
-  var size: Int
-  var buf: Memory
-  do {
-    size = sizePtr.value
-    buf = Memory(size.toLong())
-    val retCode = IPHlpAPI.INSTANCE.GetExtendedTcpTable(buf,
-                                                        sizePtr,
-                                                        false,
-                                                        IPHlpAPI.AF_INET,
-                                                        IPHlpAPI.TCP_TABLE_CLASS.TCP_TABLE_OWNER_PID_LISTENER,
-                                                        0)
-    when (retCode) {
-      WinError.ERROR_INSUFFICIENT_BUFFER -> {
-        /* do nothing, just call one more time with new extended buffer */
-      }
-      WinError.ERROR_INVALID_PARAMETER -> {
-        LOG.error("Invalid parameter(s) was passed to GetExtendedTcpTable.")
-        return mutableSetOf()
-      }
-      WinError.NO_ERROR -> {}
-      else -> LOG.warn("Unexpected return code from GetExtendedTcpTable. $retCode")
+  catch (e: TcpTableApi.Win32Exception) {
+    if (e.errorCode == TcpTableApi.ERROR_INVALID_PARAMETER) {
+      LOG.error("Invalid parameter(s) was passed to GetExtendedTcpTable.", e)
     }
+    else {
+      LOG.warn("Unexpected return code from GetExtendedTcpTable. ${e.errorCode}", e)
+    }
+    return mutableSetOf()
   }
-  while (size < sizePtr.value)
 
-  val tcpTable = IPHlpAPI.MIB_TCPTABLE_OWNER_PID(buf)
   val result = mutableSetOf<ListeningPort>()
-  for (i in 0 until tcpTable.dwNumEntries) {
-    val row = tcpTable.table[i]
+  for (row in rows) {
     try {
-      val rowPid = row.dwOwningPid.toLong()
+      val rowPid = row.owningPid
       if (rowPid !in pids) continue
 
-      var localPortBytes = ByteBuffer.allocate(4).putInt(row.dwLocalPort).array()
+      var localPortBytes = ByteBuffer.allocate(4).putInt(row.localPort).array()
       if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
         localPortBytes = localPortBytes.reversedArray()
       }
