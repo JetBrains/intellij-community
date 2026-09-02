@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
@@ -97,6 +98,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarFile;
@@ -1093,6 +1095,46 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     }
   }
 
+  /** Ensures that the EOF probe in {@code close()} cannot hide a cancellation from the caller's read operation. */
+  @Test
+  public void testClosingCancelledInputStreamDoesNotSuppressSameCancellation() throws IOException {
+    String text = "<virtualFileSystem implementationClass=\"" +
+                  CancellationOnReadJarFileSystemTestWrapper.class.getName() +
+                  "\" key=\"cancellation-on-read-wrapper\" physical=\"true\"/>";
+    Disposable disposable = runInEdtAndGet(() -> DynamicPluginTestUtilsKt.loadExtensionWithText(text, "com.intellij"));
+
+    try {
+      File generationDir = tempDirectory.newDirectory("gen");
+      File testDir = tempDirectory.newDirectory("test");
+      String entryName = "Some.java";
+      File zipFile = zipWithEntry("test.jar", generationDir, testDir, entryName, "class Some {}");
+      String url = "cancellation-on-read-wrapper://" + FileUtil.toSystemIndependentName(zipFile.getPath()) + "!/" + entryName;
+      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+      file.refresh(false, false);
+
+      CancellationOnReadJarFileSystemTestWrapper fs = (CancellationOnReadJarFileSystemTestWrapper)file.getFileSystem();
+      ReadAction.CannotReadException cancellation = new ReadAction.CannotReadException();
+      fs.cancellation = cancellation;
+
+      try {
+        try (InputStream stream = file.getInputStream()) {
+          int value = stream.read();
+          fail("The read operation must propagate its cancellation, but returned: " + value);
+        }
+      }
+      catch (ReadAction.CannotReadException actual) {
+        assertSame("The close operation must not replace the read cancellation", cancellation, actual);
+      }
+
+      assertTrue("The close operation must close the source stream after its EOF probe is cancelled", fs.streamClosed.get());
+      int fileId = ((VirtualFileWithId)file).getId();
+      assertNull("A cancelled read operation must not cache partial content", FSRecords.getInstance().readContent(fileId));
+    }
+    finally {
+      runInEdtAndWait(() -> Disposer.dispose(disposable));
+    }
+  }
+
   @Test
   public void testDeleteJarRootInsideJarMustCauseDeleteLocalJarFile() throws IOException {
     File generationDir = tempDirectory.newDirectory("gen");
@@ -1438,6 +1480,35 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     @Override
     public @NotNull String getProtocol() {
       return "jar-wrapper";
+    }
+  }
+
+  /** Provides one cancellation instance to reproduce self-suppression during stream closing */
+  private static class CancellationOnReadJarFileSystemTestWrapper extends JarFileSystemImpl {
+    private final AtomicBoolean streamClosed = new AtomicBoolean();
+    private ReadAction.CannotReadException cancellation;
+
+    @Override
+    public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
+      if (cancellation == null) {
+        return super.getInputStream(file);
+      }
+      return new InputStream() {
+        @Override
+        public int read() {
+          throw cancellation;
+        }
+
+        @Override
+        public void close() {
+          streamClosed.set(true);
+        }
+      };
+    }
+
+    @Override
+    public @NotNull String getProtocol() {
+      return "cancellation-on-read-wrapper";
     }
   }
 

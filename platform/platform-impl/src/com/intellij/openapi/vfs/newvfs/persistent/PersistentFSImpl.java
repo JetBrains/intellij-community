@@ -1194,14 +1194,23 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       public void close() throws IOException {
         if (!isClosed) {
           try {
-            boolean isEndOfFileReached;
+            boolean isEndOfFileReached = false;
             try {
               isEndOfFileReached = available() < 0 || read() == -1;
             }
-            catch (IOException ignored) {
-              isEndOfFileReached = false;
+            catch (Exception ignored) {
+              //DO NOT use rethrowControlFlowException() -- close should not (re)throw cancellation, in general.
+              // But there is more specific reason for not doing that: if it is a coroutine underneath, and it is canceled
+              // => such a coroutine throws _same instance_ of CE every time it is touched. Such a same-instance-throwing
+              // interacts badly with try-with-resource flow: if the main body terminates with exception (=mainEx), the
+              // exception thrown during .close() is appended to mainEx.addSuppressed() -- which is, in case of cancellation
+              // exceptions is mainEx.addSuppressed(mainEx /* thrown again in close */) => IllegalArgumentException('Self-suppression
+              // not permitted')
             }
-            super.close();
+            finally {
+              super.close();
+            }
+
             if (isEndOfFileReached) {
               storeContentToStorage(fileLength, file, cache.getInternalBuffer(), cache.size());
             }
