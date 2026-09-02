@@ -62,6 +62,8 @@ import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetAdapter
 import java.awt.dnd.DropTargetDropEvent
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.RoundRectangle2D
@@ -379,7 +381,9 @@ internal class WelcomeScreenRightTabImpl(
 
     createAdditionalComponents(additionalPanel)
     createFeatureSections(additionalPanel, contents)
-    //createSingleBanner(additionalPanel) // TODO: enable after sync design
+    if (contentProvider.isSingleBannerEnabled) {
+      createSingleBanner(additionalPanel)
+    }
 
     if (additionalPanel.componentCount > 0) {
       contentPanel.addToBottom(additionalPanel)
@@ -419,6 +423,7 @@ internal class WelcomeScreenRightTabImpl(
         button.rightMargin = JBUI.scale(51)
         button.isOpaque = false
         button.layout = BorderLayout()
+        button.buttonBackground = model.background
 
         val innerPanel = JPanel(VerticalLayout(0, SwingConstants.CENTER))
         innerPanel.isOpaque = false
@@ -472,7 +477,24 @@ internal class WelcomeScreenRightTabImpl(
   private fun createSingleBanner(parentPanel: JPanel) {
     val singleBanner = WelcomeScreenRightTabBannerProvider.createSingleBanner(project)
     if (singleBanner != null) {
-      parentPanel.add(Wrapper(singleBanner).also { it.border = JBUI.Borders.emptyTop(24) }, VerticalLayout.CENTER)
+      val wrapper = Wrapper(singleBanner)
+      wrapper.border = JBUI.Borders.emptyTop(24)
+      // A provider may return a placeholder that starts invisible and only becomes visible once some
+      // async check resolves whether there's anything to show (e.g. GoFeaturesWelcomeRightTabBannerProvider).
+      // Mirroring visibility onto the wrapper keeps its border from reserving space while that's the case.
+      wrapper.isVisible = singleBanner.isVisible
+      singleBanner.addComponentListener(object : ComponentAdapter() {
+        override fun componentShown(e: ComponentEvent) {
+          wrapper.isVisible = true
+          wrapper.revalidate()
+        }
+
+        override fun componentHidden(e: ComponentEvent) {
+          wrapper.isVisible = false
+          wrapper.revalidate()
+        }
+      })
+      parentPanel.add(wrapper, VerticalLayout.CENTER)
     }
   }
 
