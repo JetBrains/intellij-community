@@ -19,7 +19,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.sun.jna.platform.unix.LibC
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.PosixIds
 import java.io.IOException
 import java.nio.file.Path
 
@@ -63,11 +64,12 @@ class ElevationDaemonProcessLauncher(clientBuilder: ProcessMediatorClient.Builde
       .encrypted()
   }
 
+  @OptIn(LowLevelLocalMachineAccess::class)
   override fun createBaseLaunchOptions(): DaemonLaunchOptions {
     return super.createBaseLaunchOptions().let {
       if (SystemInfo.isWindows) it
       else it.copy(trampoline = true, daemonize = true,
-                   machNamespaceUid = if (SystemInfo.isMac) LibC.INSTANCE.getuid() else null)
+                   machNamespaceUid = if (SystemInfo.isMac) PosixIds.getuid() else null)
     }
   }
 
