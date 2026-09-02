@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
@@ -6,7 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionSuccess
+import org.jetbrains.kotlin.analysis.api.resolution.isSuccessful
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -73,7 +73,7 @@ internal object InsertDelegationCallFixFactory {
 
                 // If the new delegation call does not contain errors and there is no cycle in the delegation call chain,
                 // do not move the caret.
-                if (resolutionAttempt is KaCallResolutionSuccess && element.valueParameters.any { !it.hasDefaultValue() }) return
+                if (resolutionAttempt?.isSuccessful == true && element.valueParameters.any { !it.hasDefaultValue() }) return
             }
             val leftParOffset = newDelegationCall.valueArgumentList!!.leftParenthesis!!.textOffset
             updater.moveCaretTo(leftParOffset + 1)

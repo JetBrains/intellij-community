@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
@@ -21,11 +21,12 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionError
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.errors
 import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.isSuccessful
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -107,8 +108,9 @@ internal class KotlinFunctionCallUsage(
                 val resolutionAttempt = element.tryResolveCall()
                 val functionCall = resolutionAttempt?.single?.function
                     ?: return@allowAnalysisOnEdt null
-                if (resolutionAttempt is KaCallResolutionError && (functionCall.signature.valueParameters.size != element.valueArguments.size ||
-                        resolutionAttempt.diagnostic is KaFirDiagnostic.NamedParameterNotFound)) {
+                if (!resolutionAttempt.isSuccessful && (functionCall.signature.valueParameters.size != element.valueArguments.size ||
+                            resolutionAttempt.errors.firstOrNull()?.diagnostic is KaFirDiagnostic.NamedParameterNotFound)
+                ) {
                     //don't update broken call sites e.g. if new parameter is added as follows
                     //first add new argument to all function usages and only then call refactoring to update function hierarchy
                     return@allowAnalysisOnEdt null

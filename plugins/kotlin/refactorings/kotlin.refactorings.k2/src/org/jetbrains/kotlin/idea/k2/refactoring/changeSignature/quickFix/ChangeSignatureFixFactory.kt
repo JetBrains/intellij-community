@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix
 
 import com.intellij.codeInsight.intention.PriorityAction
@@ -23,7 +23,9 @@ import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionError
+import org.jetbrains.kotlin.analysis.api.resolution.errors
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -224,9 +226,13 @@ object ChangeSignatureFixFactory {
             return prepareFunctionalLiteralChangeInfo(psi as KtLambdaExpression, input)
         }
         val callElement = psi.parentOfType<KtCallElement>(input.type == ChangeType.REMOVE) ?: return null
-        val singleCall =
-            (callElement.tryResolveCall() as? KaCallResolutionError)?.candidateCalls?.firstOrNull()
-                ?: return null
+        val singleCall = callElement.tryResolveCall()
+            ?.errors
+            ?.firstOrNull()
+            ?.candidateCalls
+            ?.firstOrNull()
+            ?.simple
+            ?: return null
 
         val psiElement = singleCall.symbol.psi
 
@@ -492,9 +498,14 @@ object ChangeSignatureFixFactory {
         element: KtElement,
         parameterName: String,
     ): List<ParameterQuickFix> {
-        val functionLikeSymbol =
-            ((element as? KtResolvableCall)?.tryResolveCall() as? KaCallResolutionError)?.candidateCalls?.firstOrNull()?.symbol as? KaFunctionSymbol
-                ?: return emptyList()
+        val functionLikeSymbol = (element as? KtResolvableCall)?.tryResolveCall()
+            ?.errors
+            ?.firstOrNull()
+            ?.candidateCalls
+            ?.firstOrNull()
+            ?.function
+            ?.symbol
+            ?: return emptyList()
 
         if (!isWritable(functionLikeSymbol)) return emptyList()
         if (functionLikeSymbol is KaNamedFunctionSymbol && functionLikeSymbol.valueParameters.any { it.isVararg } ||
@@ -527,9 +538,14 @@ object ChangeSignatureFixFactory {
         if (valueArgument == null) return emptyList()
 
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
-        val functionLikeSymbol =
-            (callElement.tryResolveCall() as? KaCallResolutionError)?.candidateCalls?.firstOrNull()?.symbol as? KaFunctionSymbol
-                ?: return emptyList()
+        val functionLikeSymbol = callElement.tryResolveCall()
+            ?.errors
+            ?.firstOrNull()
+            ?.candidateCalls
+            ?.firstOrNull()
+            ?.function
+            ?.symbol
+            ?: return emptyList()
 
         if (!isWritable(functionLikeSymbol)) return emptyList()
 

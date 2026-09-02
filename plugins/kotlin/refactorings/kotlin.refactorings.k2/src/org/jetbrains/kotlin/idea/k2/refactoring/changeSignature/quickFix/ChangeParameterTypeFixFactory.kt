@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix
 
 import com.intellij.openapi.editor.Editor
@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionError
-import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
@@ -80,8 +80,8 @@ object ChangeParameterTypeFixFactory {
             val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
             argumentKey to callElement
         }
-        val memberCall =
-            ((callElement as? KtResolvableCall)?.tryResolveCall() as? KaCallResolutionError)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
+
+        val memberCall = (callElement as? KtResolvableCall)?.tryResolveCall()?.calls?.firstOrNull()?.function
         val functionLikeSymbol = memberCall?.symbol ?: return emptyList()
 
         val paramSymbol = memberCall.valueArgumentMapping[argumentKey]

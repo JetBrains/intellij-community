@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionSuccess
+import org.jetbrains.kotlin.analysis.api.resolution.isSuccessful
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -41,9 +41,7 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : KotlinApplicable
     @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtValueArgumentList): Unit? =
-        ((element.parent as? KtCallExpression)
-            ?.tryResolveCall() is KaCallResolutionSuccess)
-            .asUnit
+        ((element.parent as? KtCallExpression)?.tryResolveCall()?.isSuccessful == true).asUnit
 
     override fun createQuickFix(
         element: KtValueArgumentList,

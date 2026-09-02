@@ -99,10 +99,10 @@ import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsIn
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocationKind
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.functionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionSuccess
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -1576,7 +1576,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun processCallExpression(expr: KtCallExpression, qualifierOnStack: Boolean = false) {
-        val call: KaCallResolutionSuccess? = expr.tryResolveCall() as? KaCallResolutionSuccess
+        val call = expr.resolveSuccessfulCall()
         val updatedQualifierOnStack = if (!qualifierOnStack && call != null) {
             tryPushImplicitQualifier(call)
         } else {
@@ -1807,10 +1807,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return argCount
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
-    private fun pushCallArguments(expr: KtCallExpression, resolutionSuccess: KaCallResolutionSuccess?): Int {
-        val functionCall = resolutionSuccess?.call?.function ?: return pushUnresolvedCallArguments(expr)
+    private fun pushCallArguments(expr: KtCallExpression, functionCall: KaFunctionCall<*>?): Int {
+        val functionCall = functionCall ?: return pushUnresolvedCallArguments(expr)
         var argCount = 0
         var varArgCount = 0
         var varArgType: DfType = DfType.BOTTOM
@@ -1840,11 +1839,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return argCount
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
-    private fun tryPushImplicitQualifier(resolutionSuccess: KaCallResolutionSuccess): Boolean {
-        val call = resolutionSuccess.call.function
-        val receiver = (call?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
+    private fun tryPushImplicitQualifier(functionCall: KaFunctionCall<*>): Boolean {
+        val receiver = (functionCall.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
         if (receiver is KaReceiverParameterSymbol) {
             val psi = receiver.psi
             if (psi is KtFunctionLiteral) {

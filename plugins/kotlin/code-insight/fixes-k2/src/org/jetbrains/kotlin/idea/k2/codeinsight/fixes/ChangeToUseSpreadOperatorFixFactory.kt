@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.fold
+import org.jetbrains.kotlin.analysis.api.resolution.errors
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -32,9 +32,7 @@ internal object ChangeToUseSpreadOperatorFixFactory {
         val element = diagnostic.psi as? KtReferenceExpression ?: return@ModCommandBased emptyList()
         val callExpression = element.getStrictParentOfType<KtCallExpression>() ?: return@ModCommandBased emptyList()
         val arrayElementType = diagnostic.actualType.arrayElementType?.unwrap() ?: return@ModCommandBased emptyList()
-        val functionCall =
-            callExpression.tryResolveCall()?.fold(onSuccess = { null }, onFailure = { it.singleOrNull()?.single?.function })
-                ?: return@ModCommandBased emptyList()
+        val functionCall = callExpression.tryResolveCall()?.errors?.singleOrNull()?.single?.function ?: return@ModCommandBased emptyList()
 
         if (functionCall.valueArgumentMapping[element]?.symbol?.isVararg != true &&
             functionCall.symbol.callableId?.asSingleFqName() != FqName("kotlin.collections.mapOf")

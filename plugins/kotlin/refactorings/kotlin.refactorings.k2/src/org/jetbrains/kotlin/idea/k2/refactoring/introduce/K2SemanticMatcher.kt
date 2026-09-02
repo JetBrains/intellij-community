@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionError
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionAttempt
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.errors
+import org.jetbrains.kotlin.analysis.api.resolution.isSuccessful
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
@@ -892,7 +894,7 @@ object K2SemanticMatcher {
             return false
         }
 
-        if (targetCallInfo is KaCallResolutionError && patternCallInfo is KaCallResolutionError) {
+        if (!targetCallInfo.isSuccessful && !patternCallInfo.isSuccessful) {
             if (targetCallInfo.isUnresolvedCall() != patternCallInfo.isUnresolvedCall()) return false
             if (targetCallInfo.isUnresolvedCall() && patternCallInfo.isUnresolvedCall()) {
                 if (!areUnresolvedCallsMatchingByResolve(targetExpression, patternExpression, context)) return false
@@ -1141,7 +1143,7 @@ object K2SemanticMatcher {
         this is KtFunctionLiteral && !this.hasParameterSpecification()
 
     @OptIn(KaExperimentalApi::class)
-    private fun KaCallResolutionError.isUnresolvedCall(): Boolean = diagnostic is KaFirDiagnostic.UnresolvedReference
+    private fun KaCallResolutionAttempt.isUnresolvedCall(): Boolean = errors.firstOrNull()?.diagnostic is KaFirDiagnostic.UnresolvedReference
 
     private fun KtExpression.isCalleeInCall(): Boolean = this == (parent as? KtCallElement)?.calleeExpression
 

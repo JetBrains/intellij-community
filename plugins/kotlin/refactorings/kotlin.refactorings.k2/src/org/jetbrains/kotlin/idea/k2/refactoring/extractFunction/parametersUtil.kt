@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction
 
 import com.intellij.psi.PsiMember
@@ -11,20 +11,20 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.diagnostics
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionError
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.errors
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -160,27 +160,33 @@ internal fun ExtractionData.inferParametersInfo(
     val unknownContextParameters = analyzeCopy(virtualBlock, KaDanglingFileResolutionMode.IGNORE_SELF) {
         val parameters = linkedMapOf<KaType, KtParameter>()
         for (referenceExpression in virtualBlock.collectDescendantsOfType<KtReferenceExpression> { it.resolveResult != null }) {
-            val resolutionAttempt = (referenceExpression as? KtResolvableCall)?.tryResolveCall()
+            val errors = (referenceExpression as? KtResolvableCall)?.tryResolveCall()?.errors
+            if (errors?.isNotEmpty() != true) continue
+
             val substitutions = buildSubstitutor {
                 referenceExpression.resolveResult!!.originalRefExpr.tryResolveExpressionCall()?.single?.simple?.typeArgumentsMapping?.let {
                     substitutions(it)
                 }
             }
-            if (resolutionAttempt is KaCallResolutionError) {
-                val diagnostics = (referenceExpression.parent as? KtCallExpression ?: referenceExpression).directDiagnostics(
-                    KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
-                ).takeIf { it.isNotEmpty() } ?: listOf(resolutionAttempt.diagnostic)
-                diagnostics.filterIsInstance<KaFirDiagnostic.NoContextArgument>().forEach { diagnostic ->
-                    val parameter = (diagnostic.symbol as? KaContextParameterSymbol)?.psi as? KtParameter
-                    if (parameter != null) {
-                        val implicitContextParameterType = substitutions.substitute(parameter.returnType)
-                        if (extractedDescriptorToParameter.none { it.value.contextParameter && (it.value.originalDescriptor as? KtParameter)?.returnType?.isSubtypeOf(implicitContextParameterType) == true }) {
-                            parameters.putIfAbsent(implicitContextParameterType, parameter)
-                        }
+
+            val elementToCheck = referenceExpression.parent as? KtCallExpression ?: referenceExpression
+            val diagnostics = elementToCheck.diagnostics()
+                .directOnly(true)
+                .toList()
+                .takeIf { it.isNotEmpty() }
+                ?: errors.map { it.diagnostic }
+
+            diagnostics.filterIsInstance<KaFirDiagnostic.NoContextArgument>().forEach { diagnostic ->
+                val parameter = (diagnostic.symbol as? KaContextParameterSymbol)?.psi as? KtParameter
+                if (parameter != null) {
+                    val implicitContextParameterType = substitutions.substitute(parameter.returnType)
+                    if (extractedDescriptorToParameter.none { it.value.contextParameter && (it.value.originalDescriptor as? KtParameter)?.returnType?.isSubtypeOf(implicitContextParameterType) == true }) {
+                        parameters.putIfAbsent(implicitContextParameterType, parameter)
                     }
                 }
             }
         }
+
         parameters.mapKeys { it.key.createPointer() }
     }
 

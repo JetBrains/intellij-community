@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.lang.java.JavaLanguage
@@ -24,8 +24,8 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionError
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.successful
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -315,10 +315,8 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(
         if (paramType != null && paramType.isFunctionalType()) {
             return true
         }
-        val calls =
-            (resolutionAttempt as? KaCallResolutionError)?.candidateCalls?.filterIsInstance<KaFunctionCall<*>>() ?:
-            emptyList()
 
+        val calls = resolutionAttempt?.calls?.filterIsInstance<KaFunctionCall<*>>() ?: emptyList()
         return calls.isEmpty() || calls.all { functionalCall ->
             val lastParameter = functionalCall.signature.valueParameters.lastOrNull()
             val lastParameterType = lastParameter?.returnType
