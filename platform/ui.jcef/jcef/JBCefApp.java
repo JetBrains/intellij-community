@@ -23,6 +23,7 @@ import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.system.GlibcVersion;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefApp;
@@ -940,11 +941,9 @@ public final class JBCefApp {
   }
 
   private static boolean isLinuxLibcSupported() {
-    String libcVersionString;
-    try {
-      libcVersionString = LibC.INSTANCE.gnu_get_libc_version();
-    } catch (UnsatisfiedLinkError e) {
-      LOG.warn("Failed to get the glibc version: " + e.getMessage());
+    String libcVersionString = GlibcVersion.INSTANCE.getCurrent();
+    if (libcVersionString == null) {
+      LOG.warn("Failed to get the glibc version");
       return false;
     }
 
