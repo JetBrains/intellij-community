@@ -563,6 +563,7 @@ a:com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 - p:createGoToChangeAction():com.intellij.openapi.actionSystem.AnAction
 - forceKeepCurrentFileWhileFocused():Z
 - getCurrentChange():com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper
+- getCurrentChangeIndex():I
 - getCurrentChangeName():java.lang.String
 - p:getCurrentRequestProvider():com.intellij.diff.chains.DiffRequestProducer
 - p:getGoToChangePopupMenuActions():java.util.List

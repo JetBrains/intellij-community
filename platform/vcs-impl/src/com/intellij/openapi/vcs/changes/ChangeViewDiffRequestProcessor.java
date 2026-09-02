@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.FileContent;
-import com.intellij.diff.impl.CacheDiffRequestProcessor;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
@@ -27,7 +26,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupA
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.PresentableChange;
-import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor;
+import com.intellij.platform.vcs.impl.shared.changes.UpdatableMultipleChangesDiffRequestProcessor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -45,8 +44,7 @@ import java.util.function.Supplier;
 import static com.intellij.platform.vcs.changes.ChangesUtil.MANY_CHANGES_THRESHOLD;
 import static com.intellij.platform.vcs.changes.ChangesUtil.isScopeNavigationToGroupEnabled;
 
-public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple
-  implements DiffPreviewUpdateProcessor {
+public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleChangesDiffRequestProcessor {
 
   private @Nullable Wrapper myCurrentChange;
 
@@ -112,7 +110,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return isRequestValid(request) ? request : null;
   }
 
-  private static boolean isRequestValid(@Nullable DiffRequest request) {
+  static boolean isRequestValid(@Nullable DiffRequest request) {
     if (request instanceof ContentDiffRequest) {
       for (DiffContent content : ((ContentDiffRequest)request).getContents()) {
         // We compare CurrentContentRevision by their FilePath in cache map
@@ -207,6 +205,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     setCurrentChange(selectedChange);
   }
 
+  @Override
   @RequiresEdt
   public @Nullable @Nls String getCurrentChangeName() {
     if (myCurrentChange == null) {
@@ -224,6 +223,18 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   @CalledInAny
   public @Nullable Wrapper getCurrentChange() {
     return myCurrentChange;
+  }
+
+  /**
+   * 0-based position of {@link #getCurrentChange()} among all changes, or {@code -1} if it cannot be determined:
+   * there is no current change, it is not among all changes, or there are too many changes to count.
+   */
+  @Override
+  @RequiresEdt
+  public int getCurrentChangeIndex() {
+    if (myCurrentChange == null) return -1;
+    List<? extends Wrapper> allChanges = toListIfNotMany(iterateAllChanges(), true);
+    return allChanges != null ? allChanges.indexOf(myCurrentChange) : -1;
   }
 
   @Override

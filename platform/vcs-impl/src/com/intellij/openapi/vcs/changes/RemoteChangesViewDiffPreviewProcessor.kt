@@ -2,6 +2,8 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.chains.DiffRequestProducer
+import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
@@ -9,12 +11,15 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
-import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
+import com.intellij.platform.vcs.impl.shared.changes.UpdatableMultipleChangesDiffRequestProcessor
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffableSelection
 import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.changes.ChangesViewChangeIdProvider
 import com.intellij.vcs.changes.viewModel.RpcChangesViewProxy
 import kotlinx.coroutines.CoroutineScope
@@ -23,19 +28,27 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
- * Reduced implementation of [ChangesViewDiffPreviewProcessor] interacting with [RpcChangesViewProxy] instead of the tree.
- * Its limitations are:
- * 1. "Go To Changed File" pop-up is not supported.
- * 2. Navigation between files is not limited by the current selection if multiple files are selected.
+ * Diff preview of the Changes View in split mode, where the changes tree lives on the frontend.
  *
- * This implementation relies on [RpcChangesViewProxy.diffableSelection] and invokes [RpcChangesViewProxy.selectPath] for
- * when next/previous file should be opened.
+ * Unlike [ChangesViewDiffPreviewProcessor], which walks the tree, this processor is driven entirely by
+ * [RpcChangesViewProxy.diffableSelection]: the frontend reports the selected file, the files reachable via
+ * "Compare Previous/Next File", and the file counter values. Navigation is performed by asking the frontend to move
+ * to the reported file via [RpcChangesViewProxy.selectPath], which keeps an explicit multiple selection intact.
+ *
+ * The "Go To Changed File" pop-up is not supported, only the file counter is shown, see [createGoToChangeAction].
  */
 internal class RemoteChangesViewDiffPreviewProcessor(
   private val changesView: RpcChangesViewProxy,
   private val isInEditor: Boolean,
-) : ChangeViewDiffRequestProcessor(changesView.project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW) {
+) : UpdatableMultipleChangesDiffRequestProcessor(changesView.project,
+                                                 if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW) {
   private val changesCache by lazy { ChangesViewChangeIdProvider.getInstance(project) }
+
+  /**
+   * The file currently shown. Not read from [RpcChangesViewProxy.diffableSelection] directly: navigating with
+   * "Compare Previous/Next File" moves it before the frontend reports the new selection back.
+   */
+  private var currentPath: ChangesTreePath? = null
 
   init {
     putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true)
@@ -66,54 +79,78 @@ internal class RemoteChangesViewDiffPreviewProcessor(
     changesView.scope.launch(Dispatchers.UiWithModelAccess, block = block).cancelOnDispose(this)
   }
 
-  override fun showAllChangesForEmptySelection(): Boolean = true
+  override fun getProject(): Project = changesView.project
 
-  override fun iterateSelectedChanges(): Iterable<Wrapper> {
-    val selectedChange = changesView.diffableSelection.value?.selectedChange ?: return emptyList()
-    return wrapChange(selectedChange)
-  }
+  //
+  // Update
+  //
 
-  private fun wrapChange(selectedChange: ChangesTreePath): List<Wrapper> {
-    val changeId = selectedChange.changeId ?: return listOf(UnversionedFileWrapper(selectedChange.filePath.filePath))
+  @RequiresEdt
+  override fun refresh(fromModelRefresh: Boolean) {
+    if (isDisposed) return
 
-    val changeListChange = changesCache.getChangeListChange(changeId)
-    if (changeListChange != null) {
-      return listOf(createChangeListWrapper(changeListChange))
+    val selectedPath = changesView.diffableSelection.value?.selectedChange
+    val current = currentPath
+    if (fromModelRefresh && current != null && selectedPath != current &&
+        context.isWindowFocused && context.isFocusedInWindow) {
+      // Do not automatically switch the focused viewer: the user is likely to keep editing the same file.
+      // Restore the frontend selection instead, so that it stays in sync with the shown file.
+      if (selectedPath != null) changesView.selectPath(current)
+      return
     }
 
-    val amendCommitChange = changesCache.getEditedCommitDetailsChange(changeId)
-    if (amendCommitChange != null) {
-      return listOf(createAmendCommitWrapper(amendCommitChange))
+    // Applied even when the path is unchanged: a [ChangesTreePath] outlives the [Change] it points at, so the request
+    // has to be recreated from the refreshed model. Also lets the file counter pick up its new values.
+    setCurrentPath(selectedPath)
+  }
+
+  @RequiresEdt
+  override fun clear() {
+    if (currentPath != null) {
+      currentPath = null
+      updateRequest()
     }
-
-    return emptyList()
+    dropCaches()
   }
 
-  private fun createChangeListWrapper(change: Change): Wrapper {
-    val tag = (change as? ChangeListChange)
-      ?.let { ChangeListManager.getInstance(project).getChangeList(it.changeListId) }
-      ?.let { ChangeListWrapper(it) }
-    return ChangeWrapper(change, tag)
+  @RequiresEdt
+  private fun setCurrentPath(path: ChangesTreePath?) {
+    currentPath = path
+    updateRequest()
   }
 
-  private fun createAmendCommitWrapper(change: Change): Wrapper {
-    val tag = (ChangesViewWorkflowManager.getInstance(project).editedCommit.value as? EditedCommitDetails)
-      ?.let { AmendChangeWrapper(it) }
-    return ChangeWrapper(change, tag)
+  override fun getCurrentRequestProvider(): DiffRequestProducer? = currentPath?.let(::createProducer)
+
+  private fun createProducer(path: ChangesTreePath): DiffRequestProducer? {
+    val changeId = path.changeId ?: return UnversionedDiffRequestProducer.create(project, path.filePath.filePath)
+    val change = changesCache.getChangeListChange(changeId)
+                 ?: changesCache.getEditedCommitDetailsChange(changeId)
+                 ?: return null
+    // Reuses the value class only for its producer, to keep the loading and error states in sync with monolith mode.
+    return ChangeViewDiffRequestProcessor.ChangeWrapper(change).createProducer(project)
   }
 
-  override fun iterateAllChanges(): Iterable<Wrapper> = iterateSelectedChanges()
-
-  // TODO amend node support
-  override fun selectChange(change: Wrapper) {
-    changesView.select(change.userObject)
+  override fun loadRequestFast(provider: DiffRequestProducer): DiffRequest? {
+    val request = super.loadRequestFast(provider)
+    return if (ChangeViewDiffRequestProcessor.isRequestValid(request)) request else null
   }
+
+  //
+  // Presentation
+  //
+
+  override fun getCurrentChangeName(): String? = currentPath?.filePath?.filePath?.name
+
+  /**
+   * The frontend does not report the position of the shown change yet, so the position stays unknown.
+   */
+  override fun getCurrentChangeIndex(): Int = -1
 
   override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
     return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
   }
 
-  override fun forceKeepCurrentFileWhileFocused(): Boolean = true
+  override fun isWindowFocused(): Boolean = DiffUtil.isFocusedComponent(project, component)
 
   private fun setAllowExcludeFromCommit(value: Boolean) {
     if (DiffUtil.isUserDataFlagSet(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, context) == value) return
@@ -122,35 +159,53 @@ internal class RemoteChangesViewDiffPreviewProcessor(
   }
 
   /**
-   * Changes pop-up not supported
+   * The "Go To Changed File" pop-up is not supported, because it requires a lot of refactoring.
    */
   override fun createGoToChangeAction(): AnAction? = null
-
-  override fun getSelectionStrategy(fromUpdate: Boolean): PrevNextDifferenceIterable =
-    DiffIterable(changesView.diffableSelection.value)
 
   private fun fireDiffSettingsChanged() {
     dropCaches()
     updateRequest(true)
   }
 
-  private inner class DiffIterable(private val currentSelection: ChangesViewDiffableSelection?): PrevNextDifferenceIterable {
-    override fun canGoPrev(): Boolean = currentSelection != null && currentSelection.previousChange != null
+  //
+  // Navigation
+  //
 
-    override fun canGoNext(): Boolean = currentSelection != null && currentSelection.nextChange != null
+  override fun isNavigationEnabled(): Boolean = true
+
+  override fun hasNextChange(fromUpdate: Boolean): Boolean = selectionStrategy.canGoNext()
+
+  override fun hasPrevChange(fromUpdate: Boolean): Boolean = selectionStrategy.canGoPrev()
+
+  override fun goToNextChange(fromDifferences: Boolean) {
+    goToNextChangeImpl(fromDifferences) { selectionStrategy.goNext() }
+  }
+
+  override fun goToPrevChange(fromDifferences: Boolean) {
+    goToPrevChangeImpl(fromDifferences) { selectionStrategy.goPrev() }
+  }
+
+  private val selectionStrategy: PrevNextDifferenceIterable
+    get() = DiffIterable(changesView.diffableSelection.value)
+
+  private inner class DiffIterable(private val currentSelection: ChangesViewDiffableSelection?) : PrevNextDifferenceIterable {
+    override fun canGoPrev(): Boolean = currentSelection?.previousChange != null
+
+    override fun canGoNext(): Boolean = currentSelection?.nextChange != null
 
     override fun goPrev() {
-      val previousChange = currentSelection?.previousChange
-      if (previousChange != null) {
-        changesView.selectPath(previousChange)
-      }
+      goTo(currentSelection?.previousChange)
     }
 
     override fun goNext() {
-      val nextChange = currentSelection?.nextChange
-      if (nextChange != null) {
-        changesView.selectPath(nextChange)
-      }
+      goTo(currentSelection?.nextChange)
+    }
+
+    private fun goTo(path: ChangesTreePath?) {
+      if (path == null) return
+      setCurrentPath(path)
+      changesView.selectPath(path)
     }
   }
 }

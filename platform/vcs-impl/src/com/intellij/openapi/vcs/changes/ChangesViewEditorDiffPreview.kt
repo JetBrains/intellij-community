@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.WrapperCombinedBlockProduce
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.CommitToolWindowUtil
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.vcs.impl.shared.changes.UpdatableMultipleChangesDiffRequestProcessor
 import com.intellij.vcs.changes.viewModel.ChangesViewProxy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -65,12 +66,12 @@ internal class ChangesViewEditorDiffPreview(
 
   @CalledInAny
   override fun getEditorTabName(processor: DiffEditorViewer?): String? {
-    val wrapper = when (processor) {
-      is ChangeViewDiffRequestProcessor -> processor.currentChange
-      is CombinedDiffComponentProcessor -> (processor.currentBlock as? WrapperCombinedBlockProducer)?.wrapper
+    val fileName = when (processor) {
+      is UpdatableMultipleChangesDiffRequestProcessor -> processor.getCurrentChangeName()
+      is CombinedDiffComponentProcessor -> (processor.currentBlock as? WrapperCombinedBlockProducer)?.wrapper?.presentableName
       else -> null
     }
-    return if (wrapper != null) message("commit.editor.diff.preview.title", wrapper.presentableName)
+    return if (fileName != null) message("commit.editor.diff.preview.title", fileName)
     else message("commit.editor.diff.preview.empty.title")
   }
 

@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewUIUtil
 import com.intellij.openapi.vcs.changes.ui.ShelvedChangeListDragBean
 import com.intellij.openapi.vcs.changes.ui.subscribeOnVcsToolWindowLayoutChanges
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.impl.shared.changes.UpdatableMultipleChangesDiffRequestProcessor
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
@@ -245,7 +246,7 @@ class ChangesViewManager internal constructor(private val project: Project, priv
     }
 
     private inner class ChangesViewSplitterDiffPreview(
-      private val processor: ChangeViewDiffRequestProcessor,
+      private val processor: UpdatableMultipleChangesDiffRequestProcessor,
     ) : DiffPreview, Disposable {
       private val splitterComponent = PreviewDiffSplitterComponent(processor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION)
 
@@ -255,7 +256,7 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       }
 
       override fun dispose() {
-        Disposer.dispose(processor)
+        Disposer.dispose(processor.disposable)
 
         if (!this@ChangesViewToolWindowPanel.isDisposed) {
           mainPanelContent.setContent(contentPanel)
