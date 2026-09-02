@@ -297,7 +297,8 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
         service<Git>().deleteWorkingTree(mainRepository, currentWorktree)
       }
       if (commandResult.success()) {
-        notifyWorkingTreeDeletedSuccess(mainProject, mainRepository, currentWorktree)
+        onWorkingTreeDeleted(mainRepository, currentWorktree)
+        notifyWorkingTreeDeletedSuccess(mainProject, currentWorktree)
       }
       else {
         notifyWorkingTreeDeletedError(mainProject, commandResult.errorOutputAsHtmlString)
@@ -346,19 +347,44 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
   }
 
   fun deleteWorkingTree(project: Project, tree: GitWorkingTree, repository: GitRepository) {
+    deleteWorkingTrees(project, listOf(tree), repository)
+  }
+
+  /**
+   * Deletes [trees] one by one, so their git commands, progress indicators and confirmation dialogs don't overlap.
+   * Reports the deleted trees with a single notification, so a multi-selection doesn't produce a notification per tree.
+   */
+  fun deleteWorkingTrees(project: Project, trees: List<GitWorkingTree>, repository: GitRepository) {
     coroutineScope.launch {
-      doDeleteWorkingTree(project, tree, repository)
+      val deleted = mutableListOf<GitWorkingTree>()
+      try {
+        for (tree in trees) {
+          if (doDeleteWorkingTree(project, tree, repository)) {
+            deleted.add(tree)
+          }
+        }
+      }
+      finally {
+        if (!project.isDisposed) {
+          val singleDeleted = deleted.singleOrNull()
+          when {
+            singleDeleted != null -> notifyWorkingTreeDeletedSuccess(project, singleDeleted)
+            deleted.isNotEmpty() -> notifyWorkingTreesDeletedSuccess(project, deleted.size)
+          }
+        }
+      }
     }
   }
 
-  private suspend fun doDeleteWorkingTree(project: Project, tree: GitWorkingTree, repository: GitRepository) {
+  /** Returns `true` if [tree] was deleted. */
+  private suspend fun doDeleteWorkingTree(project: Project, tree: GitWorkingTree, repository: GitRepository): Boolean {
     val existingProject = ProjectUtil.findProject(Path(tree.path.path))
     if (existingProject != null) {
       if (shouldStopDeletion(project, tree, existingProject)) {
         closeProject(existingProject)
       }
       else {
-        return
+        return false
       }
     }
 
@@ -367,15 +393,15 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     }
 
     if (commandResult.success()) {
-      notifyWorkingTreeDeletedSuccess(project, repository, tree)
-      return
+      onWorkingTreeDeleted(repository, tree)
+      return true
     }
 
     if (project.getEelDescriptor().osFamily.isWindows && isPermissionDenied(commandResult)) {
-      handleFailedDeletionOnWindows(project, repository, tree)
-    } else {
-      notifyWorkingTreeDeletedError(project, commandResult.errorOutputAsHtmlString)
+      return handleFailedDeletionOnWindows(project, repository, tree)
     }
+    notifyWorkingTreeDeletedError(project, commandResult.errorOutputAsHtmlString)
+    return false
   }
 
   private suspend fun shouldStopDeletion(project: Project, tree: GitWorkingTree, existingProject: Project): Boolean {
@@ -406,13 +432,23 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     return result.errorOutput.any { it.contains("permission denied", ignoreCase = true) }
   }
 
-  private fun notifyWorkingTreeDeletedSuccess(project: Project, repository: GitRepository, tree: GitWorkingTree) {
+  private fun onWorkingTreeDeleted(repository: GitRepository, tree: GitWorkingTree) {
     repository.workingTreeHolder.scheduleReload()
     RecentProjectsManager.getInstance().removePath(tree.path.path)
+  }
+
+  private fun notifyWorkingTreeDeletedSuccess(project: Project, tree: GitWorkingTree) {
     VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED,
                                                    "",
                                                    GitBundle.message("Git.WorkingTrees.delete.worktree.success.message",
                                                                      tree.path.name))
+  }
+
+  private fun notifyWorkingTreesDeletedSuccess(project: Project, deletedCount: Int) {
+    VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED,
+                                                   "",
+                                                   GitBundle.message("Git.WorkingTrees.delete.worktrees.success.message",
+                                                                     deletedCount))
   }
 
   private fun notifyWorkingTreeDeletedError(project: Project, @NlsSafe errorOutput: String) {
@@ -422,7 +458,8 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
                                                  true)
   }
 
-  private suspend fun handleFailedDeletionOnWindows(project: Project, repository: GitRepository, tree: GitWorkingTree) {
+  /** Returns `true` if [tree] was deleted. */
+  private suspend fun handleFailedDeletionOnWindows(project: Project, repository: GitRepository, tree: GitWorkingTree): Boolean {
     val shouldRetry = withContext(Dispatchers.UiWithModelAccess) {
       MessageDialogBuilder.yesNo(
         GitBundle.message("Git.WorkingTrees.dialog.inuse.title"),
@@ -434,7 +471,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     }
 
     if (!shouldRetry) {
-      return
+      return false
     }
 
     try  {
@@ -443,10 +480,11 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       throw c
     } catch (e: Exception) {
       notifyWorkingTreeDeletedError(project, e.message ?: "Unknown error while deleting working tree")
-      return
+      return false
     }
 
-    notifyWorkingTreeDeletedSuccess(project, repository, tree)
+    onWorkingTreeDeleted(repository, tree)
+    return true
   }
 
 

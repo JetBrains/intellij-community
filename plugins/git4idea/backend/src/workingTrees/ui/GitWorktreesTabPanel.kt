@@ -99,7 +99,12 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
     override fun invokePopup(comp: Component, x: Int, y: Int) {
       val index = list.locationToIndex(Point(x, y))
       if (index == -1 || !list.getCellBounds(index, index).contains(x, y)) return
-      list.selectedIndex = index
+      /* An unconditional assignment collapses the selection to one row on every right-click — including a right-click inside
+      the multi-selection. So "select 3 worktrees → right-click → Delete Worktrees" would delete exactly one,
+      and the multi-select delete would only ever be reachable from the toolbar. */
+      if (!list.isSelectedIndex(index)) {
+        list.selectedIndex = index
+      }
 
       val actionGroup = ActionManager.getInstance().getAction("Git.WorkingTrees.ToolwindowGroup.Popup") as ActionGroup
       val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.POPUP, actionGroup)
