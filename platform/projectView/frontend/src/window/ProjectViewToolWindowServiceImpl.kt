@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalAtomicApi::class, AwaitCancellationAndInvoke::class)
+@file:OptIn(ExperimentalAtomicApi::class, AwaitCancellationAndInvoke::class, FlowPreview::class)
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.frontend.window
 
@@ -45,6 +45,7 @@ import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
@@ -53,6 +54,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -66,6 +70,7 @@ import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.resume
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @State(name = "FrontendProjectView", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
@@ -368,43 +373,48 @@ internal class ProjectViewToolWindowServiceImpl(
         LOG.debug { "Obtaining the pane aggregator to manage the pane ${pane.id}" }
         val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
         launch(CoroutineName("Pane ${pane.id} state updates")) {
-          currentPaneMutableFlow.collectLatest { currentPane ->
-            if (currentPane == pane) {
-              LOG.debug { "The pane ${pane.id} is selected, starting to collect its updates"}
-              try {
-                val paneStateFlow = aggregator.getPaneStateFlow(descriptor)
-                if (paneStateFlow == null) {
-                  LOG.debug { "The pane ${pane.id} has no state flow, nothing to collect"}
-                }
-                else if (pane !is TreeBasedFrontendProjectViewPane) {
-                  LOG.warn("The pane ${pane.id} has a state flow, but it's not a TreeBasedFrontendProjectViewPane")
-                }
-                else {
-                  paneStateFlow.collect { event ->
-                    try {
-                      LOG.trace { "Update pane state for ${pane.id}: $event" }
-                      pane.applyStateChange(event)
-                    }
-                    catch (e: Exception) {
-                      rethrowControlFlowException(e)
-                      LOG.error(
-                        "An error has occurred when updating the pane ${pane.id} state, the state might be inconsistent. " +
-                        "The problematic event was $event",
-                        e
-                      )
+          currentPaneMutableFlow
+            .map { it == pane }
+            .distinctUntilChanged()
+            .debounce { isCurrent -> if (isCurrent) Duration.ZERO else 60.seconds }
+            .distinctUntilChanged()
+            .collectLatest { isCurrent ->
+              if (isCurrent) {
+                LOG.debug { "The pane ${pane.id} is selected, starting to collect its updates" }
+                try {
+                  val paneStateFlow = aggregator.getPaneStateFlow(descriptor)
+                  if (paneStateFlow == null) {
+                    LOG.debug { "The pane ${pane.id} has no state flow, nothing to collect" }
+                  }
+                  else if (pane !is TreeBasedFrontendProjectViewPane) {
+                    LOG.warn("The pane ${pane.id} has a state flow, but it's not a TreeBasedFrontendProjectViewPane")
+                  }
+                  else {
+                    paneStateFlow.collect { event ->
+                      try {
+                        LOG.trace { "Update pane state for ${pane.id}: $event" }
+                        pane.applyStateChange(event)
+                      }
+                      catch (e: Exception) {
+                        rethrowControlFlowException(e)
+                        LOG.error(
+                          "An error has occurred when updating the pane ${pane.id} state, the state might be inconsistent. " +
+                          "The problematic event was $event",
+                          e
+                        )
+                      }
                     }
                   }
                 }
-              }
-              catch (e: Exception) {
-                rethrowControlFlowException(e)
-                LOG.error("An error has occurred when requesting the state flow of the pane ${pane.id} state. ", e)
-              }
-              finally {
-                LOG.debug { "The pane ${pane.id} has finished collecting its updates"}
+                catch (e: Exception) {
+                  rethrowControlFlowException(e)
+                  LOG.error("An error has occurred when requesting the state flow of the pane ${pane.id} state. ", e)
+                }
+                finally {
+                  LOG.debug { "The pane ${pane.id} has finished collecting its updates" }
+                }
               }
             }
-          }
         }
         launch(CoroutineName("Pane ${pane.id} requests to the backend")) {
           val inChannel = (pane as? TreeBasedFrontendProjectViewPane)?.requestChannel
