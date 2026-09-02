@@ -34,7 +34,10 @@ import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JsonToken
 import tools.jackson.core.ObjectReadContext
 import tools.jackson.core.json.JsonFactory
+import java.io.FilterWriter
+import java.io.IOException
 import java.io.OutputStreamWriter
+import java.io.Writer
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLEncoder
@@ -123,7 +126,7 @@ object ITNProxy {
     template
   }
 
-  private fun appendEarlyAppData(builder: StringBuilder) {
+  private fun appendEarlyAppData(builder: Appendable) {
     @Suppress("TestOnlyProblems")
     val homeDir = System.getProperty("idea.home.path")?.let { Path(it) }
       ?: PathManager.getHomeDirFor(ITNProxy::class.java)
@@ -288,84 +291,97 @@ object ITNProxy {
   internal val appInfoString: String
     get() = StringBuilder().apply { appendAppInfo(this) }.toString()
 
-  private fun appendAppInfo(builder: StringBuilder) {
+  @Throws(Exception::class)
+  private fun appendAppInfo(builder: Appendable) {
     TEMPLATE_SAFE.forEach { (key, value) -> append(builder, key, value) }
     TEMPLATE_APP.forEach { (key, value) -> append(builder, key, value) }
   }
 
-  private fun createRequest(event: IdeaLoggingEvent, errorBean: ErrorBean?): StringBuilder {
-    val builder = StringBuilder(8192)
+  @Throws(Exception::class)
+  private fun createRequest(event: IdeaLoggingEvent, errorBean: ErrorBean?): BufferExposingByteArrayOutputStream {
+    val compressed = BufferExposingByteArrayOutputStream(8192)
 
-    if (errorBean != null) {
-      val appInfo = (event.data as? AbstractMessage)?.appInfo
-      if (appInfo != null) {
-        builder.append(appInfo)
+    TrackingStreamWriter(OutputStreamWriter(GZIPOutputStream(compressed), StandardCharsets.UTF_8)).use { builder ->
+      if (errorBean != null) {
+        val appInfo = (event.data as? AbstractMessage)?.appInfo
+        if (appInfo != null) {
+          builder.append(appInfo)
+        }
+        else {
+          appendAppInfo(builder)
+          append(builder, "report.startup.error", "true")
+        }
       }
       else {
-        appendAppInfo(builder)
-        append(builder, "report.startup.error", "true")
-      }
-    }
-    else {
-      TEMPLATE_SAFE.forEach { (key, value) -> append(builder, key, value) }
-      appendEarlyAppData(builder)
-    }
-
-    append(builder, "error.message", event.message?.trim { it <= ' ' } ?: "")
-    append(builder, "error.stacktrace", event.throwableText)
-    (event.throwable as? UnhandledException)?.let {
-      append(builder, "error.unhandled.interactive", it.isInteractive.toString())
-    }
-    if (event.throwable is RecoveredThrowable) {
-      append(builder, "error.redacted", "true")
-    }
-
-    for (attachment in event.attachments) {
-      append(builder, "attachment.name", attachment.name)
-      append(builder, "attachment.value", attachment.encodedBytes)
-    }
-
-    // optional fields; added only when the app is loaded
-    if (errorBean != null) {
-      JBAccountInfoService.getInstance()?.userData?.email?.takeIf { it.endsWith("@jetbrains.com", ignoreCase = true) }?.let {
-        append(builder, "user.email", it)
+        TEMPLATE_SAFE.forEach { (key, value) -> append(builder, key, value) }
+        appendEarlyAppData(builder)
       }
 
-      val updateSettings = UpdateSettings.getInstance()
-      append(builder, "update.channel.status", updateSettings.selectedChannelStatus.code)
-      append(builder, "update.ignored.builds", updateSettings.ignoredBuildNumbers.joinToString(","))
+      append(builder, "error.message", event.message?.trim { it <= ' ' } ?: "")
+      append(builder, "error.stacktrace", event.throwableText)
+      (event.throwable as? UnhandledException)?.let {
+        append(builder, "error.unhandled.interactive", it.isInteractive.toString())
+      }
+      if (event.throwable is RecoveredThrowable) {
+        append(builder, "error.redacted", "true")
+      }
 
-      append(builder, "plugin.id", errorBean.pluginId)
-      append(builder, "plugin.name", errorBean.pluginName)
-      append(builder, "plugin.version", errorBean.pluginVersion)
-      append(builder, "last.action", errorBean.lastActionId)
+      for (attachment in event.attachments) {
+        append(builder, "attachment.name", attachment.name)
+        attachment.openContentStream().use { input ->
+          builder.append("&attachment.value=")
+          val buffer = ByteArray(8190) // a multiple of 3
+          while (true) {
+            val n = input.readNBytes(buffer, 0, buffer.size)
+            if (n <= 0) break
+            val chunk = if (n == buffer.size) buffer else buffer.copyOf(n)
+            builder.append(URLEncoder.encode(Base64.getEncoder().encodeToString(chunk), StandardCharsets.UTF_8))
+          }
+        }
+      }
 
-      append(builder, "error.description", errorBean.comment)
+      // optional fields; added only when the app is loaded
+      if (errorBean != null) {
+        JBAccountInfoService.getInstance()?.userData?.email?.takeIf { it.endsWith("@jetbrains.com", ignoreCase = true) }?.let {
+          append(builder, "user.email", it)
+        }
 
-      PluginManagerCore.loadedPlugins.asSequence()
-        .filter { !it.isBundled && !PluginManagerCore.isUpdatedBundledPlugin(it) }
-        .map { it.pluginId }
-        .filter { getPluginInfoById(it).isSafeToReport() }
-        .toList()
-        .takeIf { it.isNotEmpty() }
-        ?.joinToString(",") { it.idString }
-        ?.let { append(builder, "plugins.nonbundled", it) }
-      appendDynamicPluginUnloadInfo(builder, event)
+        val updateSettings = UpdateSettings.getInstance()
+        append(builder, "update.channel.status", updateSettings.selectedChannelStatus.code)
+        append(builder, "update.ignored.builds", updateSettings.ignoredBuildNumbers.joinToString(","))
 
-      if (errorBean.isAutoReportedByPlatform) {
-        append(builder, "report.automatic", "true")
-        append(builder, "report.automatic.source", ExceptionAutoReportUtil.getAutoReportSource(event.throwable))
+        append(builder, "plugin.id", errorBean.pluginId)
+        append(builder, "plugin.name", errorBean.pluginName)
+        append(builder, "plugin.version", errorBean.pluginVersion)
+        append(builder, "last.action", errorBean.lastActionId)
 
-        ExceptionAutoReportUtil.getAutoReportTag()?.let {
-          append(builder, "report.automatic.tag", it)
+        append(builder, "error.description", errorBean.comment)
+
+        PluginManagerCore.loadedPlugins.asSequence()
+          .filter { !it.isBundled && !PluginManagerCore.isUpdatedBundledPlugin(it) }
+          .map { it.pluginId }
+          .filter { getPluginInfoById(it).isSafeToReport() }
+          .toList()
+          .takeIf { it.isNotEmpty() }
+          ?.joinToString(",") { it.idString }
+          ?.let { append(builder, "plugins.nonbundled", it) }
+        appendDynamicPluginUnloadInfo(builder, event)
+
+        if (errorBean.isAutoReportedByPlatform) {
+          append(builder, "report.automatic", "true")
+          append(builder, "report.automatic.source", ExceptionAutoReportUtil.getAutoReportSource(event.throwable))
+          ExceptionAutoReportUtil.getAutoReportTag()?.let {
+            append(builder, "report.automatic.tag", it)
+          }
         }
       }
     }
 
-    return builder
+    return compressed
   }
 
-  private fun appendDynamicPluginUnloadInfo(builder: StringBuilder, event: IdeaLoggingEvent) {
+  @Throws(Exception::class)
+  private fun appendDynamicPluginUnloadInfo(builder: Appendable, event: IdeaLoggingEvent) {
     val message = event.data as? AbstractMessage ?: return
     if (DynamicPluginUnloadDiagnosticState.wasUnloadAttemptedBefore(message.date.time)) {
       append(builder, "plugins.dynamic.unload.attempted", "true")
@@ -376,26 +392,32 @@ object ITNProxy {
     System.getProperty("kotlinx.coroutines.scheduler.core.pool.size")?.trim()?.toIntOrNull()
     ?: maxOf(2, Runtime.getRuntime().availableProcessors())
 
-  private fun append(builder: StringBuilder, key: String, value: String?) {
+  @Throws(Exception::class)
+  private fun append(builder: Appendable, key: String, value: String?) {
     if (!value.isNullOrEmpty()) {
-      if (builder.isNotEmpty()) builder.append('&')
-      builder.append(key).append('=').append(URLEncoder.encode(value, StandardCharsets.UTF_8))
+      val empty = when (builder) {
+        is TrackingStreamWriter -> builder.isEmpty
+        is StringBuilder -> builder.isEmpty()
+        else -> throw IllegalStateException("Unexpected: ${builder.javaClass}")
+      }
+      try {
+        if (!empty) builder.append('&')
+        builder.append(key).append('=').append(URLEncoder.encode(value, StandardCharsets.UTF_8))
+      }
+      catch (e: OutOfMemoryError) {
+        LOG.warn(e)
+        throw IOException("The report is too large (last key: '${key}', size: ${value.length})", e)
+      }
     }
   }
 
   @Throws(Exception::class)
-  private fun post(endpoint: Endpoint, formData: CharSequence): HttpResponse<String> {
-    val compressed = BufferExposingByteArrayOutputStream(formData.length)
-    OutputStreamWriter(GZIPOutputStream(compressed), StandardCharsets.UTF_8).use { writer ->
-      for (element in formData) {
-        writer.write(element.code)
-      }
-    }
+  private fun post(endpoint: Endpoint, formData: BufferExposingByteArrayOutputStream): HttpResponse<String> {
     val (url, pinnedPublicKey) = endpoint
     val request = HttpRequest.newBuilder(url)
       .header("Content-Type", "application/x-www-form-urlencoded; charset=" + StandardCharsets.UTF_8.name())
       .header("Content-Encoding", "gzip")
-      .POST(HttpRequest.BodyPublishers.ofByteArray(compressed.toByteArray(), 0, compressed.size()))
+      .POST(HttpRequest.BodyPublishers.ofByteArray(formData.internalBuffer, 0, formData.size()))
       .build()
     val client = PlatformHttpClient.clientBuilder()
       .apply {
@@ -419,5 +441,24 @@ object ITNProxy {
         ?.let { return it }
     }
     return jdkDefaultTrustManager
+  }
+
+  private class TrackingStreamWriter(out: Writer) : FilterWriter(out) {
+    @JvmField var isEmpty = true
+
+    override fun write(c: Int) {
+      super.write(c)
+      isEmpty = false
+    }
+
+    override fun write(cbuf: CharArray, off: Int, len: Int) {
+      super.write(cbuf, off, len)
+      isEmpty = false
+    }
+
+    override fun write(str: String, off: Int, len: Int) {
+      super.write(str, off, len)
+      isEmpty = false
+    }
   }
 }
