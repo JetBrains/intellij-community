@@ -32,6 +32,8 @@ enum class ErrorCategory {
   PLUGIN_PLUGIN_DEP_MISSING,
   /** [DuplicatePluginDependencyDeclarationError] - hard failure, not suppressible */
   PLUGIN_PLUGIN_DEP_DUPLICATE,
+  /** [ContentModuleDependencyDeclarationError] - hard failure; an unresolved plugin id is allowed per module via validationExceptions */
+  CONTENT_MODULE_DEPENDENCY_DECLARATION,
   /** [DslTestPluginDependencyError] - hard failure, not suppressible */
   DSL_TEST_PLUGIN_DEPENDENCY_UNRESOLVED,
   /** [MissingTestPluginPluginDependencyError] - hard failure, not suppressible */
@@ -128,6 +130,7 @@ fun ValidationError.errorId(): String {
     is PluginDependencyError -> "plugin-dep:${pluginName.value}"
     is PluginDependencyNotBundledError -> "plugin-plugin-dep:${pluginName.value}"
     is DuplicatePluginDependencyDeclarationError -> "plugin-plugin-dep-dup:${pluginName.value}"
+    is ContentModuleDependencyDeclarationError -> "content-module-dep-declaration:${contentModuleName.value}"
     is DslTestPluginDependencyError -> "dsl-test-plugin-dep:${testPluginId.value}"
     is MissingTestPluginPluginDependencyError -> "test-plugin-missing-plugin-dep:${testPluginId.value}"
     is InvalidSuppressionConfigKeyError -> "invalid-suppression-keys:$context"

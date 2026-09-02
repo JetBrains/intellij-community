@@ -793,3 +793,78 @@ data class ModuleInMultiplePluginsError(
     private const val ALLOWLIST_FILE = "platform/buildScripts/src/productLayout/ultimateGenerator.kt"
   }
 }
+
+/**
+ * The kind of a wrong dependency declaration in a content module descriptor.
+ *
+ * Read `docs/validators/content-module-dependency-declaration.md` for the rule of each kind.
+ */
+enum class ContentModuleDependencyProblemKind {
+  /** `com.intellij.modules.java` names the Java plugin. Use `com.intellij.java`. */
+  JAVA_MODULE_ALIAS,
+
+  /** `com.intellij.modules.platform` is redundant next to another module dependency. */
+  REDUNDANT_PLATFORM_DEPENDENCY,
+
+  /** No plugin and no alias in the monorepo defines the plugin id. */
+  UNRESOLVED_PLUGIN,
+
+  /** The descriptor declares one plugin id two times. */
+  DUPLICATE_PLUGIN,
+
+  /** A `<module name="...">` element names the main module of a plugin. Use `<plugin id="...">`. */
+  PLUGIN_AS_MODULE,
+
+  /** An `internal` content module is used from another namespace. */
+  INTERNAL_FROM_OTHER_NAMESPACE,
+}
+
+/**
+ * One wrong dependency declaration in a content module descriptor.
+ */
+data class ContentModuleDependencyProblem(
+  @JvmField val kind: ContentModuleDependencyProblemKind,
+  /** What is wrong. One sentence. */
+  @JvmField val message: String,
+  /** How to fix it, or null when the message holds the fix. */
+  @JvmField val fix: String? = null,
+)
+
+/**
+ * Error when a content module descriptor declares a dependency in a wrong form.
+ *
+ * The subject is the text of the descriptor, and not the module graph. So the error names the descriptor of one
+ * content module, and it holds every problem of that descriptor.
+ */
+data class ContentModuleDependencyDeclarationError(
+  override val context: String,
+  /** The content module whose descriptor holds the problems. */
+  val contentModuleName: ContentModuleName,
+  /** The descriptor path, for the report. */
+  @JvmField val descriptorPath: String,
+  @JvmField val problems: List<ContentModuleDependencyProblem>,
+  override val ruleName: String = "ContentModuleDependencyDeclaration",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.CONTENT_MODULE_DEPENDENCY_DECLARATION
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Content module '${contentModuleName.value}' declares a dependency in a wrong form${s.reset}")
+    appendLine()
+    appendLine("  ${s.gray}$descriptorPath${s.reset}")
+    appendLine()
+    for (problem in problems) {
+      appendLine("  ${s.red}*${s.reset} ${problem.message}")
+      if (problem.fix != null) {
+        for (line in problem.fix.lineSequence()) {
+          appendLine("      ${s.blue}$line${s.reset}")
+        }
+      }
+    }
+    appendLine()
+    appendLine("${s.yellow}Why this matters:${s.reset} the runtime drops a content module that declares an unknown dependency.")
+    appendLine("So the plugin loses the feature of that module without a message.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}

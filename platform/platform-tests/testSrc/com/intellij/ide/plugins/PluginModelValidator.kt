@@ -228,8 +228,6 @@ internal class PluginModelValidator(
 
       val moduleNameToLoadingRule = pluginInfo.descriptor.contentModules
         .associateBy({ it.name }, { it.loadingRule })
-      val moduleNameToNamespace = pluginInfo.descriptor.contentModules
-        .associateBy({ it.name }, { it.namespace })
       checkDependencies(
         dependenciesElements = descriptor.dependencies,
         referencingModuleInfo = pluginInfo,
@@ -238,7 +236,6 @@ internal class PluginModelValidator(
         moduleNameToInfo = moduleNameToInfo,
         sourceModuleNameToPluginFileInfo = sourceModuleNameToPluginFileInfo,
         contentModuleToContainingPlugins = contentModuleToContainingPlugins,
-        isMainModule = true,
         contentModuleNameFromThisPluginToLoadingRule = moduleNameToLoadingRule,
       )
 
@@ -254,19 +251,9 @@ internal class PluginModelValidator(
         )
       }
 
+      // the dependency declarations of a content module are checked by the product-dsl rule
+      // ContentModuleDependencyDeclarationValidator
       for (contentModuleInfo in pluginInfo.content) {
-        checkDependencies(
-          dependenciesElements = contentModuleInfo.descriptor.dependencies,
-          referencingModuleInfo = contentModuleInfo,
-          referencingPluginInfo = pluginInfo,
-          referencingModuleNamespace = moduleNameToNamespace[contentModuleInfo.name],
-          moduleNameToInfo = moduleNameToInfo,
-          sourceModuleNameToPluginFileInfo = sourceModuleNameToPluginFileInfo,
-          contentModuleToContainingPlugins = contentModuleToContainingPlugins,
-          isMainModule = false,
-          contentModuleNameFromThisPluginToLoadingRule = moduleNameToLoadingRule,
-        )
-
         if (contentModuleInfo.descriptor.depends.isNotEmpty()) {
           reportError(
             "Old format must be not used for a module but `depends` tag is used",
@@ -485,7 +472,6 @@ internal class PluginModelValidator(
     moduleNameToInfo: Map<String, ModuleInfo>,
     sourceModuleNameToPluginFileInfo: Map<String, PluginDescriptorFileInfo>,
     contentModuleToContainingPlugins: HashMap<String, MutableList<ModuleInfo>>,
-    isMainModule: Boolean,
     contentModuleNameFromThisPluginToLoadingRule: Map<String, ModuleLoadingRuleValue>,
   ) {
     val moduleDependenciesCount = dependenciesElements.count {
@@ -580,38 +566,13 @@ internal class PluginModelValidator(
               |""".trimMargin())
             continue
           }
-          val loadingRule = contentModuleNameFromThisPluginToLoadingRule[moduleName]
-          when {
-            isMainModule && loadingRule != null -> {
-              registerError("""
-                        |The main module of plugin '${referencingPluginInfo.pluginId}' declares dependency on a content module '$moduleName' registered 
-                        |in the same plugin. Such dependencies aren't allowed.
-                        |To fix the problem, extract relevant code to a separate content module and move the dependency to it.
-                        |""".trimMargin())
-              continue
-            }
-            !isMainModule && loadingRule == ModuleLoadingRuleValue.OPTIONAL -> {
-              val thisModuleName = referencingModuleInfo.name ?: error("Module name is not specified for $referencingModuleInfo")
-              val thisLoadingRule = contentModuleNameFromThisPluginToLoadingRule.getValue(thisModuleName)
-              val problemDescription = when (thisLoadingRule) {
-                ModuleLoadingRuleValue.EMBEDDED ->
-                  "Since optional modules have implicit dependencies on the main module, this creates a circular dependency and the plugin won't load."
-                ModuleLoadingRuleValue.REQUIRED ->
-                  "This actually makes '${moduleName}' required as well (the plugin won't load if it's not available)."
-                else -> null
-              }
-              if (problemDescription != null) {
-                registerError("""
-                    |The content module '$thisModuleName' is registered as '${thisLoadingRule.name.lowercase()}', but it depends on the module '$moduleName' which is declared as optional
-                    |in the same plugin '${referencingPluginInfo.pluginId}'.
-                    |$problemDescription
-                    |To fix the problem, you can do one of the following:
-                    | * set 'loading="required"' for '$moduleName',
-                    | * set 'loading="optional"' for '$thisModuleName',
-                    | * remove the dependency on '$moduleName' from '${referencingModuleInfo.descriptorFile.name}', if it's not needed.
-                    |""".trimMargin())
-              }
-            }
+          if (contentModuleNameFromThisPluginToLoadingRule.containsKey(moduleName)) {
+            registerError("""
+                      |The main module of plugin '${referencingPluginInfo.pluginId}' declares dependency on a content module '$moduleName' registered 
+                      |in the same plugin. Such dependencies aren't allowed.
+                      |To fix the problem, extract relevant code to a separate content module and move the dependency to it.
+                      |""".trimMargin())
+            continue
           }
 
           referencingModuleInfo.dependencies.add(Reference(moduleName, isPlugin = false, moduleInfo))

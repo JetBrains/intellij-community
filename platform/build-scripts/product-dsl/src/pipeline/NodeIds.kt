@@ -82,6 +82,9 @@ internal object NodeIds {
   /** Plugin-to-plugin dependency validation */
   @JvmField val PLUGIN_PLUGIN_VALIDATION = NodeId("pluginPluginValidation", NodeCategory.VALIDATION)
 
+  /** Content module descriptor dependency declaration validation (wrong form, unresolved id, duplicate id) */
+  @JvmField val CONTENT_MODULE_DEPENDENCY_DECLARATION_VALIDATION = NodeId("contentModuleDependencyDeclarationValidation", NodeCategory.VALIDATION)
+
   /** Duplicate legacy/modern plugin dependency declaration validation */
   @JvmField val PLUGIN_DEPENDENCY_DECLARATION_VALIDATION = NodeId("pluginDependencyDeclarationValidation", NodeCategory.VALIDATION)
 

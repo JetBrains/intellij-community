@@ -17,6 +17,7 @@ Complete reference of validation errors, their causes, and fixes.
 | [Structural Violations](#structural-loading-violations) | Error | Yes* | Loading mode constraint violations |
 | [MissingContentModulePluginDep](#missing-content-module-plugin-dependency) | Error | No | Content module missing plugin dep |
 | [MissingTestPluginPluginDep](#missing-test-plugin-plugin-dependency) | Error | No | Test plugin missing plugin dep |
+| [ContentModuleDependencyDeclarationError](#content-module-dependency-declaration) | Error | No | A `<dependencies>` entry of a content module has the wrong form |
 | [MissingLibraryLicenseError](#missing-library-license) | Error | No | Library in a distribution has no license entry |
 | [ModuleInMultiplePluginsError](#module-in-multiple-plugins) | Error | No | Two plugin layouts pack one JPS module |
 | [DSL Constraint Errors](#dsl-constraint-errors) | Error | No | Invalid DSL usage |
@@ -481,6 +482,42 @@ missing from the test classpath.
 2. **Adjust JPS deps**: Remove the JPS dependency if it shouldn't be required at runtime.
 3. **Suppress intentionally**: Add the plugin ID to `allowedMissingPluginIds` in the test plugin spec
    (or module-level `allowedMissingPluginIds` for a narrower scope).
+
+---
+
+## Content Module Dependency Declaration
+
+```
+Content module 'intellij.foo.impl' declares a dependency in a wrong form
+
+  plugins/foo/impl/resources/intellij.foo.impl.xml
+
+  * the plugin dependency 'com.intellij.modules.java' uses the old alias of the Java plugin
+      <plugin id="com.intellij.java"/>
+  * no plugin defines the plugin id 'com.example.gone'
+      fix the id, or add it to validationExceptions of 'intellij.foo.impl' in suppressions.json
+
+Why this matters: the runtime drops a content module that declares an unknown dependency.
+So the plugin loses the feature of that module without a message.
+
+[Rule: ContentModuleDependencyDeclaration]
+```
+
+**Cause**: A `<dependencies>` entry of the content module descriptor has the wrong form. The validator reports six
+problems: the old Java alias, a redundant `com.intellij.modules.platform` element, an unresolved plugin id, a
+duplicated plugin id, a `<module>` element that names a plugin main module, and an `internal` module that is used from
+another namespace.
+
+**Runtime impact**: The runtime drops a content module with an unknown dependency, so the plugin loses that feature
+without a message.
+
+**Fixes**:
+1. **Fix the element**: each problem prints the element to use.
+2. **Suppress an unresolved id**: add it to `contentModules.<module>.suppressPlugins` or to
+   `validationExceptions.<module>.allowMissingPlugins` in `platform/buildScripts/suppressions.json`. Use this only for
+   a plugin that lives outside the monorepo.
+
+**Spec**: [validators/content-module-dependency-declaration.md](validators/content-module-dependency-declaration.md)
 
 ---
 
