@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
-import java.lang.ref.WeakReference
 import java.util.function.LongConsumer
 
 /**
@@ -62,7 +61,7 @@ interface PMarkerRoot {
    * specific implementation-defined exception.
    *
    * [flavorFlags] is the value obtained from the marker's `RangeMarkerEx.getFlavorFlags()` method at insertion time.
-   * [markerReference] is the weak handle reference owned by the snapshot marker engine; standalone roots may omit it.
+   * [markerReference] provides the marker handle with either weak or strong ownership. Standalone roots may omit it.
    */
   fun insert(
     markerId: Long,
@@ -70,7 +69,7 @@ interface PMarkerRoot {
     endOffset: Int,
     spec: MarkerSpec,
     flavorFlags: Byte,
-    markerReference: WeakReference<SnapshotRangeMarkerImpl>? = null,
+    markerReference: SnapshotMarkerReference? = null,
   ): PMarkerRoot
 
   /**
@@ -86,13 +85,6 @@ interface PMarkerRoot {
    * If [markerId] is absent or invalid, this method returns the receiver unchanged.
    */
   fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot
-
-  /**
-   * Returns the weak handle reference retained by any state of [markerId].
-   *
-   * Standalone roots and roots that have never observed [markerId] return `null`.
-   */
-  fun markerReference(markerId: Long): WeakReference<SnapshotRangeMarkerImpl>?
 
   /**
    * Removes the marker's endpoint anchors and secondary-index entries, retaining an absent tombstone with its last
@@ -124,11 +116,11 @@ interface PMarkerRoot {
     val endOffset: Int,
     val spec: MarkerSpec,
     val flavorFlags: Byte,
-    val markerReference: WeakReference<SnapshotRangeMarkerImpl>? = null,
+    val markerReference: SnapshotMarkerReference? = null,
   )
 
   /**
-   * Processes valid markers intersecting the requested range and containing every bit in [tastePreference].
+   * Processes valid markers that non-strictly intersect the requested range and contain every bit in [tastePreference].
    * A zero preference matches every marker.
    */
   fun processRangeMarkersOverlappingWith(
@@ -139,7 +131,7 @@ interface PMarkerRoot {
   ): Boolean
 
   /**
-   * Returns a lazy iterator over valid markers that intersect the requested range and match [tastePreference].
+   * Returns a lazy iterator over valid markers that intersect the half-open range `[startOffset, endOffset)` and match [tastePreference].
    * The iterator orders entries by start offset and marker ID.
    */
   fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry>

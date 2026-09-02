@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -208,6 +209,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   void invalidateHighlighterCache() {
     myCachedHighlighters = null;
+  }
+
+  @TestOnly
+  boolean containsSnapshotHighlighterId(long markerId) {
+    return mySnapshotHighlighterStorage != null && mySnapshotHighlighterStorage.containsHighlighterId(markerId);
   }
 
   public void addRangeHighlighter(@NotNull RangeHighlighterEx marker,

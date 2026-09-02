@@ -67,6 +67,7 @@ interface SnapshotMarkerEngine {
    * @param startOffset inclusive range start
    * @param endOffset exclusive range end
    * @param spec immutable marker configuration
+   * @param retainStrong true when the marker root must retain the marker handle
    * @return stable marker handle
    */
   fun createRangeMarker(
@@ -75,6 +76,7 @@ interface SnapshotMarkerEngine {
     startOffset: Int,
     endOffset: Int,
     spec: MarkerSpec,
+    retainStrong: Boolean = false,
   ): PMarker
 
   /**

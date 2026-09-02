@@ -96,7 +96,7 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
     this.impl = impl;
     this.hostDocument = hostDocument;
     rangeMarkers = new RangeMarkerStorageImpl(impl.dispatcher(), hostDocument());
-    guardedBlocks = new GuardedBlocksImpl(rangeMarkers);
+    guardedBlocks = new GuardedBlocksImpl(rangeMarkers, impl.dispatcher());
   }
 
   @Override

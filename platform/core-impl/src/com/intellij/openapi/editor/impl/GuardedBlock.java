@@ -3,13 +3,16 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import org.jetbrains.annotations.NotNull;
 
 final class GuardedBlock extends PersistentRangeMarker {
   static final byte GUARD_BLOCK_FLAVOR_FLAG = IntervalTreeImpl.nextAvailableFlavorFlag();
 
   static boolean isGuard(@NotNull RangeMarker rangeMarker) {
-    return rangeMarker instanceof GuardedBlock;
+    if (!(rangeMarker instanceof RangeMarkerEx)) return false;
+    RangeMarkerEx marker = (RangeMarkerEx)rangeMarker;
+    return (marker.getFlavorFlags() & GUARD_BLOCK_FLAVOR_FLAG) != 0;
   }
 
   GuardedBlock(@NotNull DocumentEx document, int startOffset, int endOffset) {

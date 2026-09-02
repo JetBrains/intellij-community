@@ -50,7 +50,8 @@ public final class RangeMarkerStorageImpl implements RangeMarkerStorage {
         ((DocumentImpl)hostDocument).getCore().snapshot(),
         startOffset,
         endOffset,
-        spec
+        spec,
+        false
       );
     }
     if (surviveOnExternalChange) {

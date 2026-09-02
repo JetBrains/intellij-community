@@ -3,7 +3,12 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEventDispatcher;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,20 +19,27 @@ import java.util.Collections;
 import java.util.List;
 
 /// Storage for guarded blocks. Uses [RangeMarkerStorageImpl] for them
-final class GuardedBlocksImpl implements GuardedBlocks {
+final class GuardedBlocksImpl implements GuardedBlocks, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance(GuardedBlocksImpl.class);
 
   @NotNull private final RangeMarkerStorageImpl myRangeMarkerStorage;
   private List<RangeMarker> myCachedGuardedBlocks;
 
-  GuardedBlocksImpl(@NotNull RangeMarkerStorageImpl rangeMarkerStorage) {
+  GuardedBlocksImpl(@NotNull RangeMarkerStorageImpl rangeMarkerStorage, @NotNull DocumentEventDispatcher dispatcher) {
     myRangeMarkerStorage = rangeMarkerStorage;
+    dispatcher.addDocumentListener(this);
   }
 
   @Override
-  public @NotNull GuardedBlock createGuardedBlock(@NotNull DocumentEx hostDocument, int startOffset, int endOffset) {
+  public @NotNull RangeMarkerEx createGuardedBlock(@NotNull DocumentEx hostDocument, int startOffset, int endOffset) {
     LOG.assertTrue(startOffset <= endOffset, "Should be startOffset <= endOffset");
-    GuardedBlock block = new GuardedBlock(hostDocument, startOffset, endOffset);
+    RangeMarkerEx block;
+    if (RangeMarkerStorageImpl.Holder.USE_PMARKER_IMPLEMENTATION) {
+      block = SnapshotGuardedBlock.create((DocumentImpl)hostDocument, startOffset, endOffset);
+    }
+    else {
+      block = new GuardedBlock(hostDocument, startOffset, endOffset);
+    }
     myCachedGuardedBlocks = null;
     return block;
   }
@@ -80,6 +92,18 @@ final class GuardedBlocksImpl implements GuardedBlocks {
     return Collections.unmodifiableList(blocks);
   }
 
+  @Override
+  public int getPriority() {
+    return EditorDocumentPriorities.RANGE_MARKER;
+  }
+
+  @Override
+  public void documentChanged(@NotNull DocumentEvent event) {
+    DocumentImpl document = (DocumentImpl)event.getDocument();
+    if (SnapshotMarkerEngineImpl.INSTANCE.hasInvalidatedMarkers(document.getCore().snapshot())) {
+      myCachedGuardedBlocks = null;
+    }
+  }
 
   @SuppressWarnings("SameParameterValue")
   private static boolean rangesIntersect(

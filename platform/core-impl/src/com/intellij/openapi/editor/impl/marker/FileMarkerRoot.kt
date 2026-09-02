@@ -37,9 +37,10 @@ internal class FileMarkerRoot private constructor(
   private fun attach(document: DocumentImpl) {
     synchronized(this) {
       rootReference = markerRoot(document)
-      if (documentReference?.get() === document) return
-      document.addDocumentListener(this)
-      documentReference = WeakReference(document)
+      if (documentReference?.get() !== document) {
+        document.addDocumentListener(this)
+        documentReference = WeakReference(document)
+      }
     }
   }
 

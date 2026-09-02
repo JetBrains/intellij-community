@@ -66,7 +66,8 @@ public class SnapshotMarkerEngineBenchmark {
         state.snapshot,
         startOffset,
         startOffset + MARKER_LENGTH,
-        NON_GREEDY_SPEC
+        NON_GREEDY_SPEC,
+        false
       );
       state.createdMarkers[index] = marker;
       checksum ^= marker.getId();
@@ -186,7 +187,8 @@ public class SnapshotMarkerEngineBenchmark {
           snapshot,
           startOffset,
           startOffset + MARKER_LENGTH,
-          NON_GREEDY_SPEC
+          NON_GREEDY_SPEC,
+          false
         );
       }
 
@@ -251,7 +253,8 @@ public class SnapshotMarkerEngineBenchmark {
           snapshot,
           startOffset,
           startOffset + MARKER_LENGTH,
-          NON_GREEDY_SPEC
+          NON_GREEDY_SPEC,
+          false
         );
       }
 

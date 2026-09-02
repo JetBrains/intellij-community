@@ -7,9 +7,12 @@ import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.ref.GCUtil
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import java.lang.ref.WeakReference
 
 @TestApplication
 @UsePMarkerImplementation
@@ -154,6 +157,69 @@ class SnapshotRangeHighlighterImplTest {
     finally {
       model.dispose()
     }
+  }
+
+  @Test
+  fun `snapshot root strongly retains a highlighter`() {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val highlighterReference = createWeakHighlighter(model)
+
+      GCUtil.tryGcSoftlyReachableObjects()
+
+      Assertions.assertThat(highlighterReference.get()).isNotNull()
+      Assertions.assertThat(model.allHighlighters).containsExactly(highlighterReference.get())
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
+  fun `disposing storage releases its highlighters`() {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    val highlighterReference = createWeakHighlighter(model)
+
+    model.dispose()
+    GCUtil.tryGcSoftlyReachableObjects { highlighterReference.get() == null }
+
+    Assertions.assertThat(highlighterReference.get()).isNull()
+  }
+
+  @Test
+  fun `highlighter registry removes collected references`() {
+    val document = DocumentImpl("abcdef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val markerId = createUnrootedHighlighter(model)
+      Assertions.assertThat(model.containsSnapshotHighlighterId(markerId)).isTrue()
+
+      GCUtil.tryGcSoftlyReachableObjects {
+        !model.containsSnapshotHighlighterId(markerId)
+      }
+
+      Assertions.assertThat(model.containsSnapshotHighlighterId(markerId)).isFalse()
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  private fun createWeakHighlighter(model: MarkupModelImpl): WeakReference<RangeHighlighter> {
+    val highlighter = model.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE)
+    return WeakReference(highlighter)
+  }
+
+  private fun createUnrootedHighlighter(model: MarkupModelImpl): Long {
+    val highlighter = model.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE) as SnapshotRangeMarkerImpl
+    val rootReference = highlighter.currentRootReference()
+    val root = rootReference.get()
+    val entry = root.overlappingIterator(0, model.document.textLength, 0).next()
+    check(entry.markerReference?.get() === highlighter)
+    rootReference.set(root.remove(entry.markerId))
+    return entry.markerId
   }
 
   private fun textPatch(startOffset: Int, endOffset: Int, newFragment: String): DocumentTextPatch {

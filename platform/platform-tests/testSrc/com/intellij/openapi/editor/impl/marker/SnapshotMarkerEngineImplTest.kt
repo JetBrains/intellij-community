@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.ref.GCUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -581,6 +582,52 @@ class SnapshotMarkerEngineImplTest {
   }
 
   @Test
+  fun `strong marker is retained by a valid root`() {
+    val fixture = Fixture("abcdef")
+    val strongMarker = createStrongMarker(fixture.document, startOffset = 2, endOffset = 4)
+
+    GCUtil.tryGcSoftlyReachableObjects()
+
+    assertNotNull(strongMarker.reference.get())
+  }
+
+  @Test
+  fun `invalid root releases a strong marker`() {
+    val document = DocumentImpl("abcdef", true)
+    val strongMarker = createInvalidStrongMarker(document, startOffset = 2, endOffset = 4)
+
+    GCUtil.tryGcSoftlyReachableObjects { strongMarker.reference.get() == null }
+
+    assertNull(strongMarker.reference.get())
+  }
+
+  @Test
+  fun `invalid child keeps a strong marker retained by its valid parent`() {
+    val document = DocumentImpl("abcdef", true)
+    val parent = document.core.snapshot()
+    val strongMarker = createStrongMarker(document, startOffset = 2, endOffset = 4)
+
+    parent.applyOp(textPatch(1, 5, ""))
+    GCUtil.tryGcSoftlyReachableObjects()
+
+    assertNotNull(strongMarker.reference.get())
+  }
+
+  @Test
+  fun `descendant snapshot retains a disposed strong marker`() {
+    val document = DocumentImpl("abcdef", true)
+    val parent = document.core.snapshot()
+    val strongMarker = createStrongMarker(document, startOffset = 2, endOffset = 4)
+    val child = parent.applyOp(textPatch(0, 0, "X"))
+
+    disposeMarker(strongMarker)
+    GCUtil.tryGcSoftlyReachableObjects()
+
+    assertNotNull(strongMarker.reference.get())
+    assertTrue(SnapshotMarkerEngineImpl.containsMarkerId(child, strongMarker.markerId))
+  }
+
+  @Test
   fun `garbage collected marker is purged before an edit is inherited`() {
     val fixture = Fixture("abcdef")
     val weakMarker = createWeakMarker(fixture, startOffset = 2, endOffset = 4)
@@ -614,6 +661,15 @@ class SnapshotMarkerEngineImplTest {
   @Test
   fun `marker reference does not retain document`() {
     val documentReference = createWeakDocumentWithMarker()
+
+    GCUtil.tryGcSoftlyReachableObjects { documentReference.get() == null }
+
+    assertNull(documentReference.get())
+  }
+
+  @Test
+  fun `strong marker reference does not retain document graph`() {
+    val documentReference = createWeakDocumentWithStrongMarker()
 
     GCUtil.tryGcSoftlyReachableObjects { documentReference.get() == null }
 
@@ -698,6 +754,21 @@ class SnapshotMarkerEngineImplTest {
     val updated = removed.updateFlavor(1, combinedFlavor)
     assertTrue(markerIds(removed, tastePreference = combinedFlavor.toInt()).isEmpty())
     assertEquals(listOf(1L), markerIds(updated, tastePreference = combinedFlavor.toInt()))
+  }
+
+  @Test
+  fun `root processing reports non-strict overlaps`() {
+    val flavor: Byte = 1
+    val otherFlavor: Byte = 2
+    val root = PMarkerRootImpl.empty()
+      .insert(1, 0, 0, nonGreedySpec(), flavor)
+      .insert(2, 0, 2, nonGreedySpec(), flavor)
+      .insert(3, 2, 4, nonGreedySpec(), flavor)
+      .insert(4, 2, 2, nonGreedySpec(), otherFlavor)
+      .insert(5, 3, 3, nonGreedySpec(), flavor)
+
+    assertEquals(listOf(1L, 2L), markerIds(root, flavor.toInt(), startOffset = 0, endOffset = 0))
+    assertEquals(listOf(2L, 3L), markerIds(root, flavor.toInt(), startOffset = 2, endOffset = 2))
   }
 
   @Test
@@ -849,11 +920,16 @@ class SnapshotMarkerEngineImplTest {
     return count
   }
 
-  private fun markerIds(root: PMarkerRoot, tastePreference: Int): List<Long> {
+  private fun markerIds(
+    root: PMarkerRoot,
+    tastePreference: Int,
+    startOffset: Int = 0,
+    endOffset: Int = 100,
+  ): List<Long> {
     val result = mutableListOf<Long>()
     root.processRangeMarkersOverlappingWith(
-      startOffset = 0,
-      endOffset = 100,
+      startOffset = startOffset,
+      endOffset = endOffset,
       tastePreference = tastePreference,
     ) {
       result.add(it.markerId)
@@ -876,6 +952,37 @@ class SnapshotMarkerEngineImplTest {
     return WeakMarker(marker.id, WeakReference(marker))
   }
 
+  private fun createStrongMarker(document: DocumentImpl, startOffset: Int, endOffset: Int): WeakMarker {
+    val marker = SnapshotMarkerEngineImpl.createRangeMarker(
+      document = document,
+      snapshot = document.core.snapshot(),
+      startOffset = startOffset,
+      endOffset = endOffset,
+      spec = nonGreedySpec(),
+      retainStrong = true,
+    ) as SnapshotRangeMarkerImpl
+    return WeakMarker(marker.id, WeakReference(marker))
+  }
+
+  private fun createInvalidStrongMarker(document: DocumentImpl, startOffset: Int, endOffset: Int): WeakMarker {
+    val marker = SnapshotMarkerEngineImpl.createRangeMarker(
+      document = document,
+      snapshot = document.core.snapshot(),
+      startOffset = startOffset,
+      endOffset = endOffset,
+      spec = nonGreedySpec(),
+      retainStrong = true,
+    ) as SnapshotRangeMarkerImpl
+    val result = WeakMarker(marker.id, WeakReference(marker))
+    document.deleteString(1, 5)
+    check(!marker.isValid)
+    return result
+  }
+
+  private fun disposeMarker(marker: WeakMarker) {
+    marker.reference.get()!!.dispose()
+  }
+
   private fun createWeakInvalidMarker(fixture: Fixture, startOffset: Int, endOffset: Int): WeakMarker {
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
@@ -892,6 +999,19 @@ class SnapshotMarkerEngineImplTest {
   private fun createWeakDocumentWithMarker(): WeakReference<DocumentImpl> {
     val document = DocumentImpl("abcdef", true)
     document.createRangeMarker(2, 4)
+    return WeakReference(document)
+  }
+
+  private fun createWeakDocumentWithStrongMarker(): WeakReference<DocumentImpl> {
+    val document = DocumentImpl("abcdef", true)
+    SnapshotMarkerEngineImpl.createRangeMarker(
+      document = document,
+      snapshot = document.core.snapshot(),
+      startOffset = 2,
+      endOffset = 4,
+      spec = nonGreedySpec(),
+      retainStrong = true,
+    )
     return WeakReference(document)
   }
 
