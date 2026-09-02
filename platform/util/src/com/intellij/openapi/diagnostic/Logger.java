@@ -12,7 +12,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
-import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 
 /**
@@ -500,14 +499,13 @@ public abstract class Logger {
 
   @SuppressWarnings("SpellCheckingInspection")
   static boolean isRethrowable(@NotNull Throwable t) {
-    return t instanceof ControlFlowException ||
-           t instanceof CancellationException;
+    return ControlFlowExceptionKt.isControlFlowException(t);
   }
 
   /**
    * Do not use in applied code.
    *
-   * @see LoggerKt#rethrowControlFlowException(Throwable)
+   * @see com.intellij.diagnostic.ControlFlowExceptionsKt#rethrowControlFlowException(Throwable)
    */
   @ApiStatus.Internal
   public static boolean shouldRethrow(@NotNull Throwable t) {

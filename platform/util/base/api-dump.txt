@@ -1,3 +1,5 @@
+f:com.intellij.diagnostic.ControlFlowExceptionsKt
+- sf:rethrowControlFlowException(java.lang.Throwable):V
 f:com.intellij.diagnostic.CoroutineDumperKt
 - sf:dumpCoroutines(kotlinx.coroutines.CoroutineScope,Z,Z):java.lang.String
 - bs:dumpCoroutines$default(kotlinx.coroutines.CoroutineScope,Z,Z,I,java.lang.Object):java.lang.String

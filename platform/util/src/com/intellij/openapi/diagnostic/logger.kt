@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
-import com.intellij.util.ExceptionUtilRt
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
@@ -157,18 +156,12 @@ inline fun <T> Result<T>.getOrHandleException(handler: (Throwable) -> Unit): T? 
 }
 
 /**
- * Rethrows the given exception [e] if it's a _control flow exception_.
- *
- * _Control flow exceptions_ are:
- * - [CancellationException] (including [ProcessCanceledException][com.intellij.openapi.progress.ProcessCanceledException])
- * - [ControlFlowException]
- *
- * The current stack trace is added to the rethrown exception as a suppressed exception.
- *
- * If [e] is null, then this function is a no-op.
+ * @see com.intellij.diagnostic.rethrowControlFlowException
  */
+@Deprecated(
+  message = "Moved to util.base so a module that depends only on util.base, such as Eel, can call it without the full util module.",
+  replaceWith = ReplaceWith("rethrowControlFlowException(e)", "com.intellij.diagnostic.rethrowControlFlowException"),
+)
 fun rethrowControlFlowException(e: Throwable?) {
-  if (e != null && Logger.isRethrowable(e)) {
-    throw ExceptionUtilRt.addRethrownStackAsSuppressed(e)
-  }
+  com.intellij.diagnostic.rethrowControlFlowException(e)
 }

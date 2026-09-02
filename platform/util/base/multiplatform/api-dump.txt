@@ -1,4 +1,6 @@
 com.intellij.openapi.diagnostic.ControlFlowException
+f:com.intellij.openapi.diagnostic.ControlFlowExceptionKt
+- sf:isControlFlowException(java.lang.Throwable):Z
 c:com.intellij.openapi.progress.ProcessCanceledException
 - java.util.concurrent.CancellationException
 - com.intellij.openapi.diagnostic.ControlFlowException
