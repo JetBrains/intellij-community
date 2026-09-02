@@ -15,6 +15,8 @@ jps_test(
 create_kotlinc_options(
     name = "custom_pyproject",
     opt_in = ["com.jetbrains.python.PyInternalExecApi"],
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
 )
 
 jvm_library(

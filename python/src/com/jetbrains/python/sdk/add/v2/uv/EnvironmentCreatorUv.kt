@@ -110,6 +110,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
     }
 
     propertyGraph.dependsOn(venvAlreadyExistsError, model.uvViewModel.uvVenvPath, deleteWhenChildModified = false) {
+      @Suppress("UNCHECKED_CAST") // TODO: Express it in the type-safe manner
       model.uvViewModel.uvVenvPath.get()?.validationResult?.errorOrNull as? VenvAlreadyExistsError<P>
     }
   }

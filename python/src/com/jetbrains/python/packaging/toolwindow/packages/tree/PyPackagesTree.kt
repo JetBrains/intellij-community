@@ -7,46 +7,45 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.python.processOutput.common.sendOpenToolWindowByTraceUuidEvent
+import com.intellij.python.requirements.pyRequirement
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingHelper
-import com.intellij.openapi.application.EDT
-import com.intellij.python.processOutput.common.sendOpenToolWindowByTraceUuidEvent
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.packaging.management.PyPackageScope
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
-import com.intellij.python.requirements.pyRequirement
-import com.intellij.python.requirements.pyRequirementVersionSpec
+import com.jetbrains.python.packaging.statistics.PyInstallDialogSource
+import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
+import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
-import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
-import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
 import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
+import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
+import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTree.Companion.LOAD_MORE_PAGE
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PyPackageTreeCellRenderer
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.TrailingIconKind
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.asInstalledPackageOrNull
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.trailingIconTooltip
-import com.jetbrains.python.packaging.statistics.PyInstallDialogSource
-import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialog
 import com.jetbrains.python.packaging.toolwindow.ui.showChangeVersionPopup
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.isReadOnly
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ComponentAdapter
@@ -61,11 +60,10 @@ import javax.swing.event.TreeSelectionListener
 import javax.swing.plaf.basic.BasicTreeUI
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
-import javax.swing.tree.TreeSelectionModel
 import javax.swing.tree.TreeCellRenderer
+import javax.swing.tree.TreeSelectionModel
 import com.intellij.ui.treeStructure.Tree as IntelliJTree
 
-@ApiStatus.Internal
 internal class PyPackagesTree(
   val project: Project,
   private val controller: PyPackagingToolWindowPanel,
@@ -80,7 +78,7 @@ internal class PyPackagesTree(
   private var treeListener: PyPackagesTreeListener? = null
 
   private val rootNode = DefaultMutableTreeNode()
-  private val treeModel = DefaultTreeModel(rootNode)
+  private val myTreeModel = DefaultTreeModel(rootNode)
 
   @set:RequiresEdt
   var items: List<DisplayablePackage> = emptyList()
@@ -175,7 +173,7 @@ internal class PyPackagesTree(
     // Allow AnimatedIcon (the install spinner in PyPackageTreeCellRenderer) to animate inside the
     // cell renderer; without this the platform paints only a single static frame (PY-91529).
     ClientProperty.put(this, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
-    model = treeModel
+    model = myTreeModel
     alignmentX = LEFT_ALIGNMENT
     alignmentY = TOP_ALIGNMENT
     isRootVisible = false
@@ -270,7 +268,7 @@ internal class PyPackagesTree(
   private fun updateTreeModel() {
     rootNode.removeAllChildren()
     items.forEach { pkg -> rootNode.add(createNodeRecursively(pkg)) }
-    treeModel.reload()
+    myTreeModel.reload()
   }
 
   private fun createNodeRecursively(pkg: DisplayablePackage): DefaultMutableTreeNode {
@@ -371,15 +369,22 @@ internal class PyPackagesTree(
       val handled = when (trailingIconKind) {
         // A spinner is a progress indicator, not the action button whose hit-box it inherited: show the
         // output of the install it stands for instead of re-opening the install dialog (PY-91529).
-        TrailingIconKind.PROGRESS -> { setSelectionRow(row); handlePackageSelection(pkg); showInstallOutput(pkg); true }
+        TrailingIconKind.PROGRESS -> {
+          setSelectionRow(row); handlePackageSelection(pkg); showInstallOutput(pkg); true
+        }
         TrailingIconKind.ACTION -> when (pkg) {
-          is InstalledPackage -> { setSelectionRow(row); handlePackageSelection(pkg); deletePackageInline(pkg); true }
-          is InstallablePackage -> { setSelectionRow(row); handlePackageSelection(pkg); showInstallDialog(pkg); true }
+          is InstalledPackage -> {
+            setSelectionRow(row); handlePackageSelection(pkg); deletePackageInline(pkg); true
+          }
+          is InstallablePackage -> {
+            setSelectionRow(row); handlePackageSelection(pkg); showInstallDialog(pkg); true
+          }
           is RequirementPackage,
           is UndeclaredPackagesGroup,
           is DependencyGroupNode,
           is WorkspaceMember,
-          is LoadingNode -> false
+          is LoadingNode,
+            -> false
         }
         null -> false
       }
@@ -395,13 +400,16 @@ internal class PyPackagesTree(
     handlePackageSelection(pkg)
 
     return when (pkg) {
-      is InstallablePackage -> { installPackage(pkg); true }
+      is InstallablePackage -> {
+        installPackage(pkg); true
+      }
       is InstalledPackage,
       is RequirementPackage,
       is WorkspaceMember,
       is LoadingNode,
       is DependencyGroupNode,
-      is UndeclaredPackagesGroup -> false
+      is UndeclaredPackagesGroup,
+        -> false
     }
   }
 
@@ -439,24 +447,6 @@ internal class PyPackagesTree(
   private fun installSpinnerTooltip(pkg: DisplayablePackage): String =
     if (installTraceUuid(pkg) != null) PyBundle.message("python.toolwindow.packages.tooltip.show.install.output")
     else PyBundle.message("python.packaging.installing.package", pkg.name)
-
-  private fun updatePackageToLatest(pkg: InstalledPackage) {
-    val versionString = pkg.nextVersion?.presentableText ?: return
-    val requirement = pyRequirement(pkg.name, pyRequirementVersionSpec(versionString))
-    val spec = pkg.repository?.findPackageSpecification(requirement) ?: return
-    val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))
-    val sdk = packagingService.currentSdk ?: return
-    val key = PyPackagingToolWindowService.packageKey(pkg.name)
-    if (!packagingService.markInstalling(sdk, key)) return
-    PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      try {
-        packagingService.installPackage(installRequest, workspaceMember = pkg.workspaceMember, dependencyGroup = pkg.dependencyGroup)
-      }
-      finally {
-        packagingService.unmarkInstalling(sdk, key)
-      }
-    }
-  }
 
   private fun installPackage(pkg: InstallablePackage) {
     val spec = pkg.repository.findPackageSpecification(pyRequirement(pkg.name, null)) ?: return

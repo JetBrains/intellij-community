@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
 import com.intellij.execution.target.RunConfigurationTargetEnvironmentAdjuster
@@ -32,6 +32,7 @@ class PyRunConfigurationTargetOptions : PyRunConfigurationEditorExtension {
     override fun createEditor(configuration: AbstractPythonRunConfiguration<*>): SettingsEditor<AbstractPythonRunConfiguration<*>> {
       val adjuster = RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(configuration.sdk!!)!!
       val runConfigurationEditor = adjuster.createAdditionalRunConfigurationUI(configuration) { configuration.sdk }
+      @Suppress("UNCHECKED_CAST") // TODO: Express it in the type-safe manner
       return runConfigurationEditor as SettingsEditor<AbstractPythonRunConfiguration<*>>
     }
 

@@ -704,6 +704,12 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.impl` end
 
 ### auto-generated section `build intellij.python.community.impl.tests` start
+create_kotlinc_options(
+    name = "custom_python-community-impl-tests",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "python-community-impl-tests",
     srcs = glob(
@@ -734,6 +740,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_python-community-impl-tests",
     module_name = "intellij.python.community.impl.tests",
     resource_strip_prefix = "testData",
     resources = glob(
@@ -1123,6 +1130,8 @@ create_kotlinc_options(
         "kotlin.time.ExperimentalTime",
         "com.jetbrains.python.PyInternalExecApi",
     ],
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
 )
 
 jvm_library(

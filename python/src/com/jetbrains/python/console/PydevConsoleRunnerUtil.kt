@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PydevConsoleRunnerUtil")
 
 package com.jetbrains.python.console
@@ -69,7 +69,7 @@ fun getPathMapper(project: Project,
 
 private fun getPathMapper(project: Project, consoleSettings: PyConsoleSettings, data: PyTargetAwareAdditionalData): PyRemotePathMapper {
   val remotePathMapper = appendBasicMappings(project, data)
-  consoleSettings.mappingSettings?.let { mappingSettings ->
+  consoleSettings.mappingSettings.let { mappingSettings ->
     remotePathMapper.addAll(mappingSettings.pathMappings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
   }
   return remotePathMapper

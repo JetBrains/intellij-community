@@ -286,7 +286,7 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
     })
 
     addViewTypeListener { type ->
-      val balloon = popup ?: return@addViewTypeListener
+      val balloon = popup
       bottomContainer.isVisible = (type == ViewType.FULL || currentMode != DialogMode.SEARCH)
       ApplicationManager.getApplication().invokeLater {
         applyBalloonSize(balloon, type)

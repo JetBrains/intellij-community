@@ -234,6 +234,7 @@ class PyConsoleOptions(private val project: Project) : PersistentStateComponent<
     @Attribute("custom-start-script")
     fun getCustomStartScript(): String = myCustomStartScript
 
+    @Deprecated("Deprecated in Java")
     @Attribute("sdk-home")
     override fun getSdkHome(): String? = mySdkHome
 
@@ -270,6 +271,7 @@ class PyConsoleOptions(private val project: Project) : PersistentStateComponent<
       myCustomStartScript = customStartScript
     }
 
+    @Deprecated("Deprecated in Java")
     override fun setSdkHome(sdkHome: String?) {
       mySdkHome = sdkHome
     }

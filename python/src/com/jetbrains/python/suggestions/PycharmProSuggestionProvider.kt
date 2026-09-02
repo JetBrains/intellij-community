@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.suggestions
 
 import com.intellij.icons.AllIcons
@@ -37,16 +37,16 @@ private val PACKAGES_TO_ADVERTISE = hashSetOf("pytorch", "sklearn", "pandas",
 
 internal class PycharmProSuggestionProvider : PluginSuggestionProvider {
 
-  override fun getSuggestion(project: Project, vFile: VirtualFile): PluginSuggestion? {
-    if (!vFile.isPythonFile()
+  override fun getSuggestion(project: Project, file: VirtualFile): PluginSuggestion? {
+    if (!file.isPythonFile()
         || isDismissed()
         || tryUltimateIsDisabled()
         || isUntargetedIDE()
-        || FileIndexFacade.getInstance(project).isInLibraryClasses(vFile)) {
+        || FileIndexFacade.getInstance(project).isInLibraryClasses(file)) {
       return null
     }
 
-    val psiFile = PsiManager.getInstance(project).findFile(vFile)
+    val psiFile = PsiManager.getInstance(project).findFile(file)
 
     if (psiFile == null || psiFile is PyiFile || psiFile !is PyFile) return null
 
@@ -81,10 +81,10 @@ internal class PycharmProSuggestionProvider : PluginSuggestionProvider {
   private class PycharmProSuggestion(
     @Nls private val label: String,
     private val project: Project,
-    override val pluginIds: List<String> = emptyList<String>(),
+    override val pluginIds: List<String> = emptyList(),
   ) : PluginSuggestion {
 
-    override fun apply(fileEditor: FileEditor): EditorNotificationPanel? {
+    override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
       val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Promo)
       setupCommercialIdeSuggestion(panel, label)
       return panel

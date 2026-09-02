@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.pyTestParametrized
 
 import com.intellij.openapi.module.ModuleUtilCore
@@ -71,7 +71,7 @@ private fun getParametersFromDecorator(decorator: PyDecorator, function: PyFunct
     }
     is PyTupleType -> iteratedItemType.elementTypes.forEachIndexed { i, type -> if (parameterTypes.size > i) parameterTypes[i] = type }
     !is PyClassType -> parameterTypes.fill(iteratedItemType)
-    is PyClassType if !iteratedItemType.isParameterized -> parameterTypes.fill(iteratedItemType)
+    else if !iteratedItemType.isParameterized -> parameterTypes.fill(iteratedItemType)
   }
   // We now have array of param names and array of their types
   // But if indirect=true or indirect=["param"..], we should replace param types with fixture result types

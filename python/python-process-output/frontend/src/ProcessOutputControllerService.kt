@@ -19,9 +19,6 @@ import com.intellij.python.processOutput.common.TraceContextKind
 import com.intellij.python.processOutput.common.TraceContextUuid
 import com.intellij.python.processOutput.frontend.ProcessOutputBundle.message
 import com.intellij.python.processOutput.frontend.ui.shortenedCommandString
-import java.util.WeakHashMap
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -40,8 +37,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.util.WeakHashMap
 import javax.swing.tree.DefaultMutableTreeNode
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 @ApiStatus.Internal
 object CoroutineNames {
@@ -675,7 +675,7 @@ internal class ProcessOutputControllerService(private val coroutineScope: Corout
         selectProcess(null)
       }
 
-      processTreeState.value = root.children().toList() as List<ProcessTreeNode>
+      processTreeState.value = root.children().toList().map{ it as ProcessTreeNode}
     }.launchIn(coroutineScope)
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.python
 
 import com.intellij.execution.target.TargetProgressIndicator
@@ -18,7 +18,7 @@ import com.jetbrains.python.tools.sdkTools.SdkCreationType
 import junit.framework.TestCase.assertNotNull
 import org.junit.Test
 
-class PyPathGeneratorTest : PyEnvTestCase() {
+internal class PyPathGeneratorTest : PyEnvTestCase() {
 
   @Test
   fun `test only source dirs are added to PYTHONPATH`() {
@@ -38,8 +38,8 @@ class PyPathGeneratorTest : PyEnvTestCase() {
               myDir = file!!.createChildDirectory(this@PyPathGeneratorTest, "my_dir")
               assertNotNull(myFile)
               assertNotNull(myDir)
-              addSourceFolder(myFile!!, false) // add file as a source root
-              addSourceFolder(myDir!!, false) // add directory as a source root
+              addSourceFolder(myFile, false) // add file as a source root
+              addSourceFolder(myDir, false) // add directory as a source root
             }
             commit()
           }
@@ -66,8 +66,8 @@ class PyPathGeneratorTest : PyEnvTestCase() {
         val env = LocalTargetEnvironmentRequest().prepareEnvironment(TargetProgressIndicator.EMPTY)
         paths = collectPythonPath(myFixture.project, module, sdkHome, null, true, true)
           .map { it.apply(env) }
-        assertContains(expected = false, paths = paths, file = myFile!!)
-        assertContains(paths = paths, file = myDir!!)
+        assertContains(expected = false, paths = paths, file = myFile)
+        assertContains(paths = paths, file = myDir)
       }
     })
   }

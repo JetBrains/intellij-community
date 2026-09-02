@@ -1,15 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run.features
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId2
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.project.Project
+import com.jetbrains.fus.reporting.api.IEventContext
+import com.jetbrains.fus.reporting.api.ValidationResultType
 
 /**
  * FUS collector for "Run with …" Python tools exposed via [PyRunToolProvider].
@@ -39,7 +39,7 @@ internal object PyRunToolUsageCollector : CounterUsagesCollector() {
 internal class PyRunToolIdValidator : CustomValidationRule() {
   override fun getRuleId(): String = "python_run_tool"
 
-  override fun doValidate(data: String, context: EventContext): ValidationResultType {
+  override fun doValidate(data: String, context: IEventContext): ValidationResultType {
     val validIds = PyRunToolProvider.EP.extensionList
       .asSequence()
       .filter { getPluginInfo(it.javaClass).isDevelopedByJetBrains() }

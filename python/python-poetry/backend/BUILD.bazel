@@ -9,6 +9,8 @@ create_kotlinc_options(
         "kotlin.time.ExperimentalTime",
         "com.jetbrains.python.PyInternalExecApi",
     ],
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
 )
 
 jvm_library(

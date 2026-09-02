@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.venv
 
 import com.intellij.openapi.application.EDT
@@ -7,12 +7,12 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.isNotNull
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.components.validationTooltip
-import com.intellij.platform.util.progress.withProgressText
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -52,6 +52,7 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
 
   init {
     propertyGraph.dependsOn(venvAlreadyExistsError, model.venvViewModel.backProperty, deleteWhenChildModified = false) {
+      @Suppress("UNCHECKED_CAST") // TODO: Express it in the type-safe manner
       model.venvViewModel.backProperty.get()?.validationResult?.errorOrNull as? VenvAlreadyExistsError<P>
     }
     propertyGraph.dependsOn(venvAlreadyExistsErrorMessage, venvAlreadyExistsError, deleteWhenChildModified = false) {

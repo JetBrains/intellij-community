@@ -83,7 +83,9 @@ data class Binary(
   val resources: List<Resource>,
   val tags: List<String>? = null,
 ) {
-  fun isCompatible(os: OS = OS.CURRENT, cpuArch: CpuArch = CpuArch.CURRENT) = this.os == os && (this.cpuArch?.equals(cpuArch) ?: true)
+  @Suppress("OPT_IN_USAGE")
+  fun isCompatible(os: OS = OS.CURRENT, cpuArch: CpuArch = CpuArch.CURRENT): Boolean =
+    this.os == os && (this.cpuArch?.equals(cpuArch) ?: true)
 }
 
 
