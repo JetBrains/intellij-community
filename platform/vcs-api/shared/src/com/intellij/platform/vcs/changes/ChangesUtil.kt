@@ -17,6 +17,11 @@ import java.util.Objects
 
 @ApiStatus.Internal
 object ChangesUtil {
+  /**
+   * Shared threshold for VCS UI actions that should not materialize very large change lists.
+   */
+  const val MANY_CHANGES_THRESHOLD: Int = 10_000
+
   @JvmField
   val CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath?> = object : HashingStrategy<FilePath?> {
     override fun hashCode(path: FilePath?): Int {

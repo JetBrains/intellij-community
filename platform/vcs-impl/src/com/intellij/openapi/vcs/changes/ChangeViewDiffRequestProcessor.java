@@ -42,12 +42,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import static com.intellij.platform.vcs.changes.ChangesUtil.MANY_CHANGES_THRESHOLD;
 import static com.intellij.platform.vcs.changes.ChangesUtil.isScopeNavigationToGroupEnabled;
 
 public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple
   implements DiffPreviewUpdateProcessor {
-
-  private static final int MANY_CHANGES_THRESHOLD = 10000;
 
   private @Nullable Wrapper myCurrentChange;
 
