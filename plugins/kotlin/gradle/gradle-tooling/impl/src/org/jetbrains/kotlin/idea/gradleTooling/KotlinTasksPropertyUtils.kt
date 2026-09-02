@@ -71,7 +71,7 @@ private fun Task.getPureKotlinSourceRoots(sourceSet: String, disambiguationClass
 
 private fun getJavaSourceRoot(project: Project, sourceSet: String): Set<File>? {
     val javaSourceSet: SourceSet? = if (GradleVersionUtil.isGradleAtLeast(project.gradle.gradleVersion, "8.2")) {
-        project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.asMap[sourceSet] as SourceSet
+        project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.asMap[sourceSet]
     } else {
         ConventionJavaPluginAccessor(project).sourceSetContainer?.asMap[sourceSet]
     }
