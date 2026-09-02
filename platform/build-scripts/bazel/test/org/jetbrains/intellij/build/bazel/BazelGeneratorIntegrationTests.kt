@@ -40,6 +40,7 @@ class BazelGeneratorIntegrationTests {
   val softly = JUnitSoftAssertions()
 
   @Test fun kotlinSnapshotLibrary() = doTest("kotlin-snapshot-library")
+  @Test fun kotlinSnapshotModuleLibrary() = doTest("kotlin-snapshot-module-library")
   @Test fun snapshotRepositoryLibrary() = doTest("snapshot-repository-library")
   @Test fun snapshotLibrary() = doTest("snapshot-library")
   @Test fun snapshotLibraryInTree() = doTest("snapshot-library-in-tree")

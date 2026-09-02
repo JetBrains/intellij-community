@@ -196,7 +196,7 @@ internal fun generateDeps(
           val libraryContainer = context.getLibraryContainer(isCommunityLib)
 
           val isModuleLibrary = element.libraryReference.parentReference is JpsModuleReference
-          val targetName = if (underKotlinSnapshotLibRoot(firstFile, communityRoot = context.communityRoot)) {
+          val targetName = if (underKotlinSnapshotLibRoot(firstFile, communityRoot = context.communityRoot) && !isModuleLibrary) {
             // name the same way as a maven library, so there will be minimal changes
             // migrating from kotlin from maven to kotlin from a snapshot
             escapeBazelLabel(jpsLibrary.name)
