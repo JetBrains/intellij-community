@@ -46,5 +46,6 @@ object UnsupportedFeatureFixFactory {
             // 2.5
             put(LanguageFeature.CompanionBlocks, LanguageVersion.KOTLIN_2_4)
             put(LanguageFeature.CompanionExtensions, LanguageVersion.KOTLIN_2_4)
+            put(LanguageFeature.NameBasedDestructuring, LanguageVersion.KOTLIN_2_4)
         }
 }

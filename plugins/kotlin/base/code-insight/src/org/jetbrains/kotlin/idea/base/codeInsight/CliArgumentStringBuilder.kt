@@ -29,7 +29,10 @@ object CliArgumentStringBuilder {
 
     fun LanguageFeature.getFeatureMentionInCompilerArgsRegex(): Regex {
         val basePattern = "$LANGUAGE_FEATURE_FLAG_PREFIX(?:-|\\+)$name"
-        val fullPattern = dedicatedFlagInfo?.let { (dedicatedFlag, _) -> "(?:$basePattern)|$dedicatedFlag" } ?: basePattern
+        val fullPattern = dedicatedFlagInfo?.let { (dedicatedFlag, _) ->
+            val flag = dedicatedFlag.replace('{', '(').replace('}', ')')
+            "(?:$basePattern)|$flag"
+        } ?: basePattern
 
         return Regex(fullPattern)
     }
