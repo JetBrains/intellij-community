@@ -3,6 +3,7 @@
 
 package com.intellij.platform.buildScripts.testFramework.distributionContent
 
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildScripts.testFramework.createBuildOptionsForTest
 import com.intellij.platform.buildScripts.testFramework.customizeBuildOptionsForPackagingContentTest
@@ -24,6 +25,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.select
@@ -60,6 +62,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.minutes
 
 internal data class PackageResult(
   @JvmField val projectHome: Path,
@@ -372,7 +375,7 @@ class PackagingSuiteFixture private constructor(
 
     val result = ArrayList<DynamicTest>()
     for (task in validationTasks) {
-      val taskResult = runBlocking { task.resultDeferred.await() }
+      val taskResult = awaitOnTestThread("suite validation '${task.spec.name}'") { task.resultDeferred.await() }
       val failure = taskResult.failure
       if (failure != null) {
         if (failure is TestAbortedException && task.spec.skipIfAborted) {
@@ -403,7 +406,7 @@ class PackagingSuiteFixture private constructor(
     val tests = ArrayList<DynamicTest>(packagingTasks.size)
     for (task in packagingTasks) {
       tests.add(DynamicTest.dynamicTest(task.spec.id) {
-        runBlocking {
+        awaitOnTestThread("packaging of '${task.spec.id}'") {
           task.resultDeferred.await().getOrThrow()
         }
       })
@@ -453,7 +456,7 @@ class PackagingSuiteFixture private constructor(
     pluginCheckTasks.startAllDeferreds { it.resultDeferred }
 
     val tests = ArrayList<DynamicTest>(packagingTasks.size)
-    val resolvedCheckResults = runBlocking {
+    val resolvedCheckResults = awaitOnTestThread("plugin content checks") {
       pluginCheckTasks.map { it.resultDeferred }.awaitAll()
     }
     for ((task, checkResult) in pluginCheckTasks.zip(resolvedCheckResults)) {
@@ -483,8 +486,8 @@ class PackagingSuiteFixture private constructor(
 
     val tests = ArrayList<DynamicTest>()
     for (task in targetValidationTasks) {
-      val taskResult = runBlocking { task.resultDeferred.await() }
       val testName = "${task.spec.targetId} ${task.spec.name}"
+      val taskResult = awaitOnTestThread("target validation '$testName'") { task.resultDeferred.await() }
       val failure = taskResult.failure
       if (failure != null) {
         tests.add(DynamicTest.dynamicTest(testName) { throw failure })
@@ -532,6 +535,30 @@ private fun startBlockingValidationTasks(validationTasks: List<ValidationTask>) 
   for (task in validationTasks) {
     if (task.spec.isBlocking) {
       task.resultDeferred.start()
+    }
+  }
+}
+
+private val HANG_DUMP_DELAY = 10.minutes
+
+/**
+ * Runs [block] on the test thread and waits for it.
+ *
+ * A test factory waits here for work on the fixture scope. A suspension that never resumes is invisible in a thread dump,
+ * because every dispatcher thread is idle. So after [HANG_DUMP_DELAY] this prints a coroutine dump once and keeps
+ * waiting, and the dump names the suspension.
+ */
+private fun <T> awaitOnTestThread(what: String, block: suspend () -> T): T {
+  return runBlocking {
+    val dump = launch {
+      delay(HANG_DUMP_DELAY)
+      System.err.println("Packaging suite: $what is still running after $HANG_DUMP_DELAY. Coroutine dump:\n${dumpCoroutines()}")
+    }
+    try {
+      block()
+    }
+    finally {
+      dump.cancel()
     }
   }
 }
