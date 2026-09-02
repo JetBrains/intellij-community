@@ -95,12 +95,19 @@ internal class KotlinMppGradleTestLocator : GradleTestLocatorExtension, DumbAwar
         return LightClassUtil.getLightClassMethod(this) ?: KtFakeLightMethod.get(this)
     }
 
-    private data class TestLocationPath(
+    internal data class TestLocationPath(
         val className: String,
         val methodName: String?,
         val paramName: String?,
     ) {
         companion object {
+            /**
+             * Parses the path part of a Java test location URL.
+             *
+             * `a.b.Test/test[target]` -> `TestLocationPath("a.b.Test", "test", "[target]")`
+             * `a.b.Test.test` -> `TestLocationPath("a.b.Test", "test", null)` for the legacy test protocol.
+             * `a.b.Test.` -> `TestLocationPath("a.b.Test", null, null)` for the suite protocol.
+             */
             fun parse(sourcePath: String, isTestProtocol: Boolean): TestLocationPath? {
                 var path = sourcePath
                 val paramName = path.indexOf('[')
