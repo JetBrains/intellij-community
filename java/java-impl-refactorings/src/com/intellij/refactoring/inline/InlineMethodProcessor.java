@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpressionUtil;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -22,7 +21,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
@@ -82,9 +80,6 @@ import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
 import com.intellij.psi.controlFlow.ThrowToInstruction;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -94,16 +89,13 @@ import com.intellij.refactoring.OverrideMethodsProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.listeners.RefactoringEventData;
-import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
-import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
@@ -136,6 +128,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+import static com.intellij.refactoring.inline.InlineMethodProcessorUtil.*;
 
 public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InlineMethodProcessor.class);
@@ -209,59 +202,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected UsageInfo @NotNull [] findUsages() {
-    if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myReference)};
-    Set<UsageInfo> usages = ConcurrentCollectionFactory.createConcurrentSet();
-    if (myReference != null) {
-      usages.add(new UsageInfo(myReference.getElement()));
-    }
-    for (PsiReference reference : MethodReferencesSearch.search(myMethod, myRefactoringScope, true).asIterable()) {
-      usages.add(new UsageInfo(reference.getElement()));
-    }
-
-    if (myDeleteTheDeclaration) {
-      OverridingMethodsSearch.search(myMethod, myRefactoringScope, true)
-        .forEach(method -> {
-          if (shouldDeleteOverrideAttribute(method)) {
-            usages.add(new OverrideAttributeUsageInfo(method));
-          }
-          return true;
-        });
-    }
-
-    if (mySearchInComments || mySearchForTextOccurrences) {
-      final NonCodeUsageInfoFactory infoFactory = new NonCodeUsageInfoFactory(myMethod, myMethod.getName()) {
-        @Override
-        public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
-          if (PsiTreeUtil.isAncestor(myMethod, usage, false)) return null;
-          return super.createUsageInfo(usage, startOffset, endOffset);
-        }
-      };
-      if (mySearchInComments) {
-        String stringToSearch = ElementDescriptionUtil.getElementDescription(myMethod, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
-        TextOccurrencesUtil.addUsagesInStringsAndComments(myMethod, myRefactoringScope, stringToSearch, usages, infoFactory);
-      }
-
-      if (mySearchForTextOccurrences && myRefactoringScope instanceof GlobalSearchScope scope) {
-        String stringToSearch = ElementDescriptionUtil.getElementDescription(myMethod, NonCodeSearchDescriptionLocation.NON_JAVA);
-        TextOccurrencesUtil.addTextOccurrences(myMethod, stringToSearch, scope, usages, infoFactory);
-      }
-    }
-
-    return usages.toArray(UsageInfo.EMPTY_ARRAY);
-  }
-
-  private boolean shouldDeleteOverrideAttribute(PsiMethod method) {
-    return ContainerUtil.and(method.getHierarchicalMethodSignature().getSuperSignatures(), signature -> {
-        PsiMethod superMethod = signature.getMethod();
-        if (superMethod == myMethod) {
-          return true;
-        }
-        if (JavaLanguage.INSTANCE == method.getLanguage() &&
-            Objects.requireNonNull(superMethod.getContainingClass()).isInterface()) {
-          return !PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, method);
-        }
-        return false;
-      });
+    return InlineMethodProcessorUtil.findUsages(myMethod, myReference, myRefactoringScope, myInlineThisOnly, myDeleteTheDeclaration,
+                                                mySearchInComments, mySearchForTextOccurrences);
   }
 
   @Override
@@ -1106,12 +1048,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     else {
       if (!checkReadOnly()) return Collections.emptyList();
       return myReference == null ? Collections.singletonList(myMethod) : Arrays.asList(myReference.getElement(), myMethod);
-    }
-  }
-
-  private static class OverrideAttributeUsageInfo extends UsageInfo {
-    private OverrideAttributeUsageInfo(@NotNull PsiElement element) {
-      super(element);
     }
   }
 }
