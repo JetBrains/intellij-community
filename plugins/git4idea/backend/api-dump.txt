@@ -97,6 +97,9 @@ git4idea.commands.Git
 - a:runCommand(com.intellij.openapi.util.Computable):git4idea.commands.GitCommandResult
 - a:runCommand(git4idea.commands.GitLineHandler):git4idea.commands.GitCommandResult
 - a:runCommandWithoutCollectingOutput(git4idea.commands.GitLineHandler):git4idea.commands.GitCommandResult
+f:git4idea.commands.GitCommandNotTrustedException
+- java.lang.IllegalStateException
+- <init>(java.lang.String):V
 c:git4idea.commands.GitCommandResult
 - s:error(java.lang.String):git4idea.commands.GitCommandResult
 - getOutputOrThrow(I[]):java.lang.String

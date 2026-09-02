@@ -465,12 +465,12 @@ public abstract class GitHandler {
 
   private void start() throws IOException {
     if (myProject == null && !TrustedProjects.isProjectTrusted(Objects.requireNonNull(getWorkingDirectory()))) {
-      throw new IllegalStateException("Shouldn't be possible to run a Git command in potentially untrusted project. " +
-                                      "Pass Project to GitHandler constructor if applicable.");
+      throw new GitCommandNotTrustedException("Shouldn't be possible to run a Git command in potentially untrusted project. " +
+                                              "Pass Project to GitHandler constructor if applicable.");
     }
 
     if (myProject != null && !myProject.isDefault() && !TrustedProjects.isProjectTrusted(myProject)) {
-      throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
+      throw new GitCommandNotTrustedException("Shouldn't be possible to run a Git command in the safe mode");
     }
 
     if (isStarted()) {
