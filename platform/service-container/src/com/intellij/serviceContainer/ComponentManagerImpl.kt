@@ -1588,8 +1588,6 @@ val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   "com.intellij.compiler.server.BuildManager",
   "com.intellij.openapi.module.WebModuleTypeRegistrar",
   "com.intellij.ide.RecentProjectsManagerBase",
-  "com.intellij.remoteDev.tests.impl.DistributedTestHost",
-  "com.intellij.remoteDev.tests.impl.LambdaTestHost", // AT-3387
   "com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager",
   // use lazy listener
   "com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge",
