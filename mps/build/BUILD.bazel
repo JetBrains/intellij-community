@@ -73,6 +73,7 @@ jvm_library(
 exports_files(
     [
         "intellij.mps.build.iml",
+        "build/manifests/java-impl.jar/META-INF/JavaPlugin.xml",
         "build/manifests/java-impl.jar/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
