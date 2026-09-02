@@ -142,7 +142,8 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
       if (!DumbService.getInstance(myProject).isUsableInCurrentContext(cachedAction)) {
         DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(
-          CodeInsightBundle.message("notification.0.is.not.available.during.indexing", cachedAction.getText()),
+          CodeInsightBundle.dumbModeMessage("notification.0.is.not.available.during.indexing",
+                                            "notification.0.is.not.available.in.light.mode", cachedAction.getText()),
           DumbModeBlockedFunctionality.Intentions);
         return;
       }

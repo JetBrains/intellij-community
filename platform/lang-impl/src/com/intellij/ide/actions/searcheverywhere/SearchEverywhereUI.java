@@ -950,14 +950,16 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       contributors = DumbService.getInstance(myProject).filterByDumbAwareness(contributorsMap.keySet());
       if (contributors.isEmpty() && DumbService.isDumb(myProject)) {
         DumbModeBlockedFunctionalityCollector.INSTANCE.logFunctionalityBlocked(myProject, DumbModeBlockedFunctionality.SearchEverywhere);
-        myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported",
-                                                     myHeader.getSelectedTab().getName()));
+        myResultsList.setEmptyText(IdeBundle.dumbModeMessage("searcheverywhere.indexing.mode.not.supported",
+                                                             "searcheverywhere.light.mode.not.supported",
+                                                             myHeader.getSelectedTab().getName()));
         myListModel.clear();
         return;
       }
       if (contributors.size() != contributorsMap.size()) {
-        myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.incomplete.results",
-                                                     myHeader.getSelectedTab().getName()));
+        myResultsList.setEmptyText(IdeBundle.dumbModeMessage("searcheverywhere.indexing.incomplete.results",
+                                                             "searcheverywhere.light.mode.incomplete.results",
+                                                             myHeader.getSelectedTab().getName()));
       }
     }
 

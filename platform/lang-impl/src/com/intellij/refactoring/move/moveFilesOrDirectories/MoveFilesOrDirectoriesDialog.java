@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -127,9 +128,8 @@ public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
     String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
 
     isDumb = DumbService.isDumb(myProject);
-    myCbSearchForReferences = new NonFocusableCheckBox(isDumb ?
-                                                       RefactoringBundle.message("search.for.references.dumb.mode") :
-                                                       RefactoringBundle.message("search.for.references"));
+
+    myCbSearchForReferences = createCbSearchForReferences(isDumb);
     myCbSearchForReferences.setSelected(!isDumb && RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE);
     myCbSearchForReferences.setEnabled(!isDumb);
 
@@ -138,6 +138,20 @@ public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
       .addTooltip(RefactoringBundle.message("path.completion.shortcut", shortcutText))
       .addComponentToRightColumn(myCbSearchForReferences, UIUtil.LARGE_VGAP)
       .getPanel();
+  }
+
+  private JCheckBox createCbSearchForReferences(boolean isDumb) {
+    String cbSearchForReferencesLabel;
+
+    if (IdeProductMode.isLight()) {
+      cbSearchForReferencesLabel = RefactoringBundle.message("search.for.references.light.mode");
+    } else if (isDumb) {
+      cbSearchForReferencesLabel = RefactoringBundle.message("search.for.references.dumb.mode");
+    } else {
+      cbSearchForReferencesLabel = RefactoringBundle.message("search.for.references");
+    }
+
+    return new NonFocusableCheckBox(cbSearchForReferencesLabel);
   }
 
   @Override

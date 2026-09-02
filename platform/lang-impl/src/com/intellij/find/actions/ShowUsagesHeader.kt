@@ -37,7 +37,7 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
 
 
   private val analyzingText = TextIcon(
-    IdeBundle.message("dumb.mode.results.might.be.incomplete"),
+    IdeBundle.dumbModeMessage("dumb.mode.results.might.be.incomplete", "dumb.mode.light.results.might.be.incomplete"),
     JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground(),
     Gray.TRANSPARENT,
     0
@@ -75,7 +75,8 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
 
           val projectAnalyzingCell = icon(analyzingIcon)
           analyzingProgressLabel = projectAnalyzingCell.component.apply {
-            toolTipText = IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis")
+            toolTipText = IdeBundle.dumbModeMessage("dumb.mode.results.might.be.incomplete.during.project.analysis",
+                                                    "dumb.mode.light.results.might.be.incomplete.during.project.analysis")
             isVisible = false
           }
 

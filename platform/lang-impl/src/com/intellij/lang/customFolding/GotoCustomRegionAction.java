@@ -45,8 +45,9 @@ public final class GotoCustomRegionAction extends AnAction implements DumbAware,
     }
     if (project != null && editor != null) {
       if (DumbService.getInstance(project).isDumb()) {
-        DumbService.getInstance(project).showDumbModeNotificationForAction(IdeBundle.message("goto.custom.region.message.dumb.mode"),
-                                                                           ActionManager.getInstance().getId(this));
+        DumbService.getInstance(project).showDumbModeNotificationForAction(
+          IdeBundle.dumbModeMessage("goto.custom.region.message.dumb.mode", "goto.custom.region.message.light.mode"),
+          ActionManager.getInstance().getId(this));
         return;
       }
       CommandProcessor processor = CommandProcessor.getInstance();

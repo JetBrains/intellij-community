@@ -97,7 +97,9 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
                SimpleTextAttributes.GRAYED_ATTRIBUTES.derive(attributes.getStyle(), null, null, null));
 
         if (!node.isRoot() && ((DefaultMutableTreeNode)node.getParent()).isRoot() && DumbService.isDumb(myView.getProject())) {
-          append(FontUtil.spaceAndThinSpace() + IdeBundle.message("dumb.mode.analyzing.project"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append(FontUtil.spaceAndThinSpace() +
+                 IdeBundle.dumbModeMessage("dumb.mode.analyzing.project", "dumb.mode.light.analyzing.project"),
+                 SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
       }
       else if (treeNode instanceof UsageNode node) {

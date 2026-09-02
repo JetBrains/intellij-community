@@ -2615,7 +2615,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     Project project = myEditor.getProject();
     if (project != null) {
       DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
-        IdeBundle.message("message.this.functionality.is.not.available.during.indexing"),
+        IdeBundle.dumbModeMessage("message.this.functionality.is.not.available.during.indexing",
+                                  "message.this.functionality.is.not.available.in.light.mode"),
         DumbModeBlockedFunctionality.EditorGutterComponent);
     }
   }

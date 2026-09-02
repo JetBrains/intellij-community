@@ -3,6 +3,8 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ide.IdeDeprecatedMessagesBundle;
+import com.intellij.platform.ide.productMode.IdeProductMode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,5 +30,21 @@ public final class DaemonBundle {
       return INSTANCE.getLazyMessage(key, params);
     }
     return IdeDeprecatedMessagesBundle.messagePointer(key, params);
+  }
+
+  /**
+   * Returns the dumb mode message for the current product mode.
+   * Uses {@code lightModeKey} in Light mode and {@code key} in all other modes.
+   * Both messages must accept the same {@code params}.
+   *
+   * @param key          the message key for dumb mode
+   * @param lightModeKey the message key for Light mode
+   * @param params       the parameters for the selected message
+   */
+  @ApiStatus.Experimental
+  public static @NotNull @Nls String dumbModeMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                      @NotNull @PropertyKey(resourceBundle = BUNDLE) String lightModeKey,
+                                                      Object @NotNull ... params) {
+    return message(IdeProductMode.isLight() ? lightModeKey : key, params);
   }
 }

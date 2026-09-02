@@ -87,7 +87,9 @@ public class RenameElementAction extends DumbAwareAction {
       if (availableRenamers.isEmpty()) {
         // check if rename is not performed due to dumb mode
         if (!allRenamers.isEmpty() && DumbService.isDumb(project)) {
-          String actionUnavailableMessage = IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", this.getTemplateText());
+          String actionUnavailableMessage = IdeBundle.dumbModeMessage("dumb.balloon.0.is.not.available.while.indexing",
+                                                                      "dumb.balloon.0.is.not.available.in.light.mode",
+                                                                      this.getTemplateText());
           Runnable rerunAction = () -> {
             ActionManager.getInstance().tryToExecute(this, null, null, null, true);
           };

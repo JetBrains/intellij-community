@@ -909,14 +909,17 @@ private fun getActionUnavailableMessage(actions: List<AnAction>): @Nls String {
   val actionNames = actions.asSequence().mapNotNull { action -> action.templateText?.takeIf { it.isNotEmpty() } }.distinct().toList()
   return when {
     actionNames.isEmpty() -> {
-      IdeBundle.message("dumb.balloon.this.action.is.not.available.during.indexing")
+      IdeBundle.dumbModeMessage("dumb.balloon.this.action.is.not.available.during.indexing",
+                                "dumb.balloon.this.action.is.not.available.in.light.mode")
     }
     actionNames.size == 1 -> {
-      IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", actionNames[0])
+      IdeBundle.dumbModeMessage("dumb.balloon.0.is.not.available.while.indexing",
+                                "dumb.balloon.0.is.not.available.in.light.mode", actionNames[0])
     }
     else -> {
       val join: @NlsSafe String = actionNames.joinToString(separator = ", ")
-      IdeBundle.message("dumb.balloon.none.of.the.following.actions.are.available.during.indexing.0", join)
+      IdeBundle.dumbModeMessage("dumb.balloon.none.of.the.following.actions.are.available.during.indexing.0",
+                                "dumb.balloon.none.of.the.following.actions.are.available.in.light.mode.0", join)
     }
   }
 }

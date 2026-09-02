@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.DynamicBundle;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,12 @@ public final class IdeBundle {
 
   public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.containsKey(key) ? INSTANCE.getLazyMessage(key, params) : IdeDeprecatedMessagesBundle.messagePointer(key, params);
+  }
+
+  public static @NotNull @Nls String dumbModeMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                      @NotNull @PropertyKey(resourceBundle = BUNDLE) String lightModeKey,
+                                                      Object @NotNull ... params) {
+    return message(IdeProductMode.isLight() ? lightModeKey : key, params);
   }
 
   private IdeBundle() {

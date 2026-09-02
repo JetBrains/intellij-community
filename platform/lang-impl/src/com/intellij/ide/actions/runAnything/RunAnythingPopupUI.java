@@ -402,7 +402,8 @@ public final class RunAnythingPopupUI extends BigPopupUI implements UiDataProvid
     myResultsList.getEmptyText().setText(FindBundle.message("empty.text.searching"));
 
     if (DumbService.getInstance(myProject).isDumb()) {
-      myResultsList.setEmptyText(IdeBundle.message("run.anything.indexing.mode.not.supported"));
+      myResultsList.setEmptyText(IdeBundle.dumbModeMessage("run.anything.indexing.mode.not.supported",
+                                                          "run.anything.light.mode.not.supported"));
       return;
     }
 

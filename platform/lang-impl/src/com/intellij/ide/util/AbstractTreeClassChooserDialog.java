@@ -242,7 +242,8 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
         super.initUI(callback, modalityState, allowMultipleSelection);
         dummyPanel.add(myGotoByNamePanel.getPanel(), BorderLayout.CENTER);
         if (myProject != null && !myProject.isDefault() && DumbService.getInstance(myProject).isDumb()) {
-          JBLabel dumbLabel = new JBLabel(IdeBundle.message("dumb.mode.analyzing.project"), SwingConstants.LEFT);
+          JBLabel dumbLabel = new JBLabel(IdeBundle.dumbModeMessage("dumb.mode.analyzing.project", "dumb.mode.light.analyzing.project"),
+                                          SwingConstants.LEFT);
           dumbLabel.setIcon(AnimatedIcon.Default.INSTANCE);
           dumbLabel.setBorder(new JBEmptyBorder(10, 3, 0, 3));
           dummyPanel.add(dumbLabel, BorderLayout.SOUTH);

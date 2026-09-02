@@ -391,7 +391,8 @@ open class TrafficLightRenderer private constructor(
     if (status.errorAnalyzingFinished) {
       if (isDumb) {
         title = DaemonBundle.message("shallow.analysis.completed")
-        details = DaemonBundle.message("shallow.analysis.completed.details")
+        details = DaemonBundle.dumbModeMessage("shallow.analysis.completed.details",
+                                               "shallow.analysis.completed.in.light.mode.details")
         state = InspectionsState.SHALLOW_ANALYSIS_COMPLETE
       }
       else if (fileHighlightingSettings.containsValue(FileHighlightingSetting.ESSENTIAL)) {

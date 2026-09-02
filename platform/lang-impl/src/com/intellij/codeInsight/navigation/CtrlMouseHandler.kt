@@ -6,8 +6,6 @@ import com.intellij.codeInsight.documentation.DocumentationManagerProtocol.PSI_E
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
-import com.intellij.ui.components.JBScrollBar
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.CtrlMouseHintShown
 import com.intellij.lang.documentation.ide.impl.DocumentationManager
@@ -59,6 +57,8 @@ import com.intellij.ui.LightweightHint
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.ScreenUtil.isMovementTowards
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.components.JBScrollBar
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
@@ -242,7 +242,8 @@ class CtrlMouseHandler2(
     }
     catch (e: IndexNotReadyException) {
       DumbService.getInstance(project).showDumbModeNotificationForFunctionalityWithCoalescing(
-        CodeInsightBundle.message("notification.element.information.is.not.available.during.index.update"),
+        CodeInsightBundle.dumbModeMessage("notification.element.information.is.not.available.during.index.update",
+                                          "notification.element.information.is.not.available.in.light.mode"),
         DumbModeBlockedFunctionality.CtrlMouseHandler,
         Pair(request.action.javaClass.name, request.editor.virtualFile?.path)
       )

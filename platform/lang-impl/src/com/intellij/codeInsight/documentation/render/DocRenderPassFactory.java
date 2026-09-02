@@ -127,7 +127,7 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
       return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : preProcess(text);
     }
     catch (IndexNotReadyException e) {
-      return CodeInsightBundle.message("doc.render.dumb.mode.text");
+      return CodeInsightBundle.dumbModeMessage("doc.render.dumb.mode.text", "doc.render.light.mode.text");
     }
   }
 

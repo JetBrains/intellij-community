@@ -250,7 +250,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
-        CodeInsightBundle.message("notification.navigation.is.not.available.while.indexing"),
+        CodeInsightBundle.dumbModeMessage("notification.navigation.is.not.available.while.indexing",
+                                          "notification.navigation.is.not.available.in.light.mode"),
         DumbModeBlockedFunctionality.GotoTarget);
     }
   }
