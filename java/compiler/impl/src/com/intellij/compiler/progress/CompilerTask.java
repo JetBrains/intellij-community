@@ -215,7 +215,7 @@ public final class CompilerTask extends Task.Backgroundable {
       public void setFraction(final double fraction) {
         super.setFraction(fraction);
         ModalityUiUtil.invokeLaterIfNeeded(
-          ModalityState.any(), () -> AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true)
+          ModalityState.any(), () -> AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, myErrorCount == 0)
         );
       }
 
