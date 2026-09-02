@@ -13,7 +13,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ASK
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.OFF
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ON
-import com.intellij.python.pyproject.model.internal.autoImportBridge.PyProjectAutoImportService
+import com.intellij.python.pyproject.model.internal.platformBridge.PyProjectModelSyncService
 import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 
 
@@ -45,7 +45,7 @@ class PyProjectModelSettings(private val project: Project) :
       // Persist an explicit choice only when it deviates from the registry default; otherwise keep it unset
       // (null) so it's omitted from storage and keeps following the default. See [State.usePyprojectToml].
       myState.usePyprojectToml = value.takeIf { it != enabledByDefault }
-      project.service<PyProjectAutoImportService>().apply {
+      project.service<PyProjectModelSyncService>().apply {
         PyProjectTomlCollector.pyProjectBasedModelModeChanged(value)
         if (value) {
           start()

@@ -80,33 +80,66 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
     }
   }
   changeWorkspaceMutex.withLock {
-    val currentSnapshot = project.workspaceModel.currentSnapshot
-
-    // All module names (Python and non-Python) — module names must be unique across the project.
-    // A stale registration does not reserve its name. `applyProjectModel` removes it (PY-91133).
-    val allModuleNames: Set<String> = currentSnapshot.entities<ModuleEntity>()
-      .filterNot { it.isStaleRegistration() }
-      .map { it.name }.toSet()
-
-    // Existing Python module names keyed by their content root directory.
-    val existingPythonNames: Map<Path, String> =
-      currentSnapshot.entities<ModuleEntity>().filter { it.type == PYTHON_MODULE_TYPE_ID }.mapNotNull { module ->
-        val moduleRootPath = module.contentRoots.singleOrNull()?.url?.toPath()
-        moduleRootPath?.let { it to module.name }
-      }.toMap()
-
-    val entries = generatePyProjectTomlEntries(files, existingPythonNames, allModuleNames)
-
-    project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { projectStorage ->
-      preserveRootModule(project, projectStorage) {
-        applyProjectModel(entries, project, projectStorage)
-        ensureNoSrcIntersectsWithOtherRoots(projectStorage)
+    for (attempt in 1..MODEL_UPDATE_ATTEMPTS) {
+      if (tryRebuildProjectModel(project, files, lastAttempt = attempt == MODEL_UPDATE_ATTEMPTS)) {
+        // Flush .iml files to disk to make changes visible for VCS and to prevent races with VFS.
+        saveSettings(project)
+        return@withLock
       }
+      logger.info("The module set changed during the build. Attempt $attempt of $MODEL_UPDATE_ATTEMPTS.")
     }
-    // Flush .iml files to disk to make changes visible for VCS and to prevent races with VFS.
-    saveSettings(project)
   }
 }
+
+/**
+ * Builds the model once, and returns false when the platform changed the module set in the meantime.
+ *
+ * The mutex serializes one pyproject build against another, and against nothing else. The platform loads the
+ * JPS files on its own, so a new `.iml` can add a module while this method runs. The name dedup reads the
+ * module names, hence a stale read can produce a name that the new module already holds.
+ *
+ * [generatePyProjectTomlEntries] suspends, and the block of `WorkspaceModel.update` does not, so the read and
+ * the write cannot share one lock. The method compares the names again inside the update instead, and it asks
+ * the caller for one more attempt when they differ.
+ *
+ * On [lastAttempt] the model is written with the names of that attempt. A model that lags one JPS change is
+ * better than no model at all, and the next VFS event starts a new build.
+ */
+private suspend fun tryRebuildProjectModel(project: Project, files: FSWalkInfoWithToml, lastAttempt: Boolean): Boolean {
+  val currentSnapshot = project.workspaceModel.currentSnapshot
+
+  // All module names (Python and non-Python) — module names must be unique across the project.
+  // A stale registration does not reserve its name. `applyProjectModel` removes it (PY-91133).
+  val allModuleNames: Set<String> = currentSnapshot.entities<ModuleEntity>()
+    .filterNot { it.isStaleRegistration() }
+    .map { it.name }.toSet()
+
+  // Existing Python module names keyed by their content root directory.
+  val existingPythonNames: Map<Path, String> =
+    currentSnapshot.entities<ModuleEntity>().filter { it.type == PYTHON_MODULE_TYPE_ID }.mapNotNull { module ->
+      val moduleRootPath = module.contentRoots.singleOrNull()?.url?.toPath()
+      moduleRootPath?.let { it to module.name }
+    }.toMap()
+
+  val entries = generatePyProjectTomlEntries(files, existingPythonNames, allModuleNames)
+
+  var applied = true
+  project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { projectStorage ->
+    val namesNow = projectStorage.entities<ModuleEntity>().map { it.name }.toSet()
+    if (namesNow != allModuleNames && !lastAttempt) {
+      applied = false
+      return@update
+    }
+    preserveRootModule(project, projectStorage) {
+      applyProjectModel(entries, project, projectStorage)
+      ensureNoSrcIntersectsWithOtherRoots(projectStorage)
+    }
+  }
+  return applied
+}
+
+/** How often a build may repeat when the platform changes the module set at the same time. */
+private const val MODEL_UPDATE_ATTEMPTS = 3
 
 /**
  * Apply the desired project model described by [entries] directly to [projectStorage].

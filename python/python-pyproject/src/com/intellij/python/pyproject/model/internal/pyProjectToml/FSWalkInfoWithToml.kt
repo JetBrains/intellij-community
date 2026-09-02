@@ -7,7 +7,3 @@ import java.nio.file.Path
 @JvmInline
 internal value class FSWalkInfoWithToml(val tomlFiles: Map<Path, PyProjectToml>)
 
-
-// Files only
-@JvmInline
-value class FsWalkInfoNoToml(val rawTomlFiles: List<Path>)

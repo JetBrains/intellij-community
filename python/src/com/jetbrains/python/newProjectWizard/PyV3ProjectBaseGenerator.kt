@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.python.pyproject.model.internal.startAutoImportIfNeeded
+import com.intellij.python.pyproject.model.internal.startPyProjectModelSyncIfNeeded
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
@@ -88,7 +88,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   ) {
     generateProjectImpl(settings, module, baseDir)
     log.info("Import started by project generator")
-    startAutoImportIfNeeded(module.project, "PyV3 generation")
+    startPyProjectModelSyncIfNeeded(module.project, "PyV3 generation")
   }
 
   private suspend fun generateProjectImpl(

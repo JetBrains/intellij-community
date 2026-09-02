@@ -18,10 +18,9 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * The sync marks `<content root>/src` as a source root of every pyproject module, before the directory exists.
  *
- * The auto-import bridge watches only `pyproject.toml` files, because
- * [com.intellij.python.pyproject.model.internal.autoImportBridge.PyExternalSystemProjectAware.settingsFiles] returns
- * the toml paths and nothing else. A new `pyproject.toml` starts a sync, but a new directory does not. The user
- * creates the `src` directory after that sync, so a sync that looks on disk finds nothing (PY-89039).
+ * The sync reacts to a `pyproject.toml` and to a new directory, and it never reads `src` from the disk.
+ * A user creates the `src` directory after the sync of its module, so a sync that looked on disk found
+ * nothing (PY-89039).
  *
  * The platform keeps a source root that points to no file in `NonExistingWorkspaceRootsRegistry`, and turns it live
  * as soon as the directory appears. The user therefore needs no second sync and no IDE restart.

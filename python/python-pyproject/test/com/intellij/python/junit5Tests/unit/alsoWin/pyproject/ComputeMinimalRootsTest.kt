@@ -1,6 +1,6 @@
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 
-import com.intellij.python.pyproject.model.internal.autoImportBridge.computeMinimalRoots
+import com.intellij.python.pyproject.model.internal.platformBridge.computeMinimalRoots
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledOnOs

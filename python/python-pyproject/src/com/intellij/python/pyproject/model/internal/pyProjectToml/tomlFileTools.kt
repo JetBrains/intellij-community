@@ -1,7 +1,6 @@
 package com.intellij.python.pyproject.model.internal.pyProjectToml
 
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
@@ -10,35 +9,31 @@ import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.intellij.python.pyproject.safeGet
 import com.intellij.python.pyproject.safeGetArr
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.Result
 import com.jetbrains.python.venvReader.Directory
-import com.jetbrains.python.venvReader.PRUNED_SCAN_DIRS_NO_DOT
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.apache.tuweni.toml.TomlTable
-import java.io.IOException
 import java.net.URI
 import java.net.URISyntaxException
-import java.nio.file.FileVisitResult
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import kotlin.io.path.name
 import kotlin.io.path.toPath
-import kotlin.io.path.visitFileTree
 
-// Tools to walk FS and parse pyproject.toml
+// Tools to find and parse pyproject.toml
 /**
- * Walks down the [root]. Like [walkFileSystemNoTomlContent] but with TOML files content
+ * Finds every `pyproject.toml` under [roots] and reads its content.
+ *
+ * [findPyProjectTomlFilesInIndex] does the search. It reads the VFS filename index and needs no filesystem walk.
+ * The search reads no directory of its own, so it reports no I/O error and this method needs no result wrapper.
  */
-internal suspend fun walkFileSystemWithTomlContent(
+internal suspend fun findPyProjectTomlWithContent(
   roots: Set<Directory>,
   excludedPaths: Set<Path> = emptySet(),
-): Result<FSWalkInfoWithToml, IOException> {
-  val rawTomlFiles = walkFileSystemNoTomlContent(roots, excludedPaths).getOr { return it }.rawTomlFiles
+): FSWalkInfoWithToml {
+  val rawTomlFiles = findPyProjectTomlFilesInIndex(roots, excludedPaths)
 
   // `awaitAll` keeps the order of `rawTomlFiles`, so the resulting map stays deterministic.
   val tomlFiles = coroutineScope {
@@ -48,67 +43,7 @@ internal suspend fun walkFileSystemWithTomlContent(
       .filterNotNull()
       .toMap()
   }
-  return Result.success(FSWalkInfoWithToml(tomlFiles = tomlFiles))
-}
-
-/**
- * Walks down [roots], returns all [PY_PROJECT_TOML]  (started with dot).
- * [IOException] is returned if one of the [roots] is inaccessible
- */
-suspend fun walkFileSystemNoTomlContent(
-  roots: Set<Directory>,
-  excludedPaths: Set<Path> = emptySet(),
-): Result<FsWalkInfoNoToml, IOException> {
-  val rawTomlFiles = ArrayList<Path>(10)
-  // TODO: Measure performance, parallelize if needed
-  try {
-    withContext(Dispatchers.IO) {
-      for (root in roots) {
-        walkFileSystemNoTomlContent(root, rawTomlFiles, excludedPaths)
-      }
-    }
-  }
-  catch (e: IOException) {
-    return Result.failure(e)
-  }
-  return Result.success(FsWalkInfoNoToml(rawTomlFiles = rawTomlFiles))
-}
-
-@Throws(IOException::class)
-@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-private fun walkFileSystemNoTomlContent(
-  root: Directory,
-  rawTomlFiles: MutableList<Path>,
-  excludedPaths: Set<Path>,
-) {
-  val virtualEnvReader = VirtualEnvReader()
-  root.visitFileTree {
-    onVisitFile { file, _ ->
-      if (file.name == PY_PROJECT_TOML) {
-        rawTomlFiles.add(file)
-      }
-      return@onVisitFile FileVisitResult.CONTINUE
-    }
-    // The order of the checks follows their cost. A check of the name needs no syscall.
-    // Only a directory that passes the name checks pays for the `stat` of the venv marker.
-    // This walk visits every directory of the project, so the order is important (PY-91826).
-    onPreVisitDirectory { directory, _ ->
-      val dirName = directory.name
-
-      // A dot directory, a well-known heavy directory, or an excluded directory.
-      // A `pyproject.toml` in an excluded folder must not become a module.
-      if (dirName.startsWith(".") || dirName in PRUNED_SCAN_DIRS_NO_DOT || directory in excludedPaths) {
-        FileVisitResult.SKIP_SUBTREE
-      }
-      // A venv. The walk never descends into an environment.
-      else if (virtualEnvReader.findPythonInPythonRoot(directory) != null) {
-        FileVisitResult.SKIP_SUBTREE
-      }
-      else {
-        FileVisitResult.CONTINUE
-      }
-    }
-  }
+  return FSWalkInfoWithToml(tomlFiles = tomlFiles)
 }
 
 private val logger = fileLogger()

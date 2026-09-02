@@ -6,7 +6,8 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
-import com.intellij.python.pyproject.model.internal.autoImportBridge.PyExternalSystemProjectAware
+import com.intellij.python.pyproject.model.internal.platformBridge.rebuildPyProjectModelForTest
+import com.intellij.python.pyproject.model.internal.pyProjectToml.findPyProjectTomlFilesInIndex
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -14,10 +15,8 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.util.io.write
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -28,7 +27,7 @@ import kotlin.time.Duration.Companion.minutes
 
 @Timeout(TIMEOUT_MIN.toLong(), unit = TimeUnit.MINUTES)
 @TestApplication
-class PyExternalSystemProjectAwareTest {
+class PyProjectModelSyncServiceTest {
   private val members = arrayOf("foo", "bar").sortedArray()
 
   private val pathFixture = tempPathFixture()
@@ -47,21 +46,28 @@ class PyExternalSystemProjectAwareTest {
 
   @Test
   fun testBuildProjectRainyDay(): Unit = timeoutRunBlocking {
-    val sut = PyExternalSystemProjectAware.create(projectFixture.get())
     pathFixture.get().deleteRecursively()
-    sut.reloadProjectImpl()
+    rebuildPyProjectModelForTest(projectFixture.get())
+  }
+
+  @Test
+  fun testFindTomlFilesInIndex(): Unit = timeoutRunBlocking {
+    val project = projectFixture.get()
+    // The rebuild refreshes the temp tree into the VFS, which the filename index needs.
+    rebuildPyProjectModelForTest(project)
+    val root = pathFixture.get()
+    val found = findPyProjectTomlFilesInIndex(roots = setOf(root), excludedPaths = emptySet())
+    Assertions.assertEquals(
+      members.map { root.resolve(it).resolve(PY_PROJECT_TOML) }.sorted(),
+      found.sorted(),
+      "Wrong toml files found in the index",
+    )
   }
 
   @Test
   fun testBuildProjectSunnyDay(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(TIMEOUT_MIN.minutes) {
-    val sut = PyExternalSystemProjectAware.create(projectFixture.get())
-    val files = withContext(Dispatchers.IO) {
-      sut.settingsFiles
-    }
-    Assertions.assertEquals(members.size, files.size, "Wrong number of toml files")
-
     launch {
-      sut.reloadProjectImpl()
+      rebuildPyProjectModelForTest(projectFixture.get())
     }
 
     val m = Mutex(locked = true)

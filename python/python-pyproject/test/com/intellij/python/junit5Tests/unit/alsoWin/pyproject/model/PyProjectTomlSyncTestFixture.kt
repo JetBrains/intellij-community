@@ -26,7 +26,7 @@ import com.intellij.project.stateStore
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
-import com.intellij.python.pyproject.model.internal.autoImportBridge.PyExternalSystemProjectAware
+import com.intellij.python.pyproject.model.internal.platformBridge.rebuildPyProjectModelForTest
 import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -164,17 +164,14 @@ internal fun pyProjectTomlSyncFixture(
  */
 internal class PyProjectTomlSyncTestFixture(val project: Project, val root: VirtualFile, val implicitModuleName: String = "") {
 
-  lateinit var sut: PyExternalSystemProjectAware
-
-  /** Triggers a full pyproject.toml sync (creates [sut] lazily on first call). */
+  /** Triggers a full pyproject.toml sync. */
   suspend fun reloadProject() {
-    if (!::sut.isInitialized) sut = PyExternalSystemProjectAware.create(project)
     // Tests default `Project.isExternalStorageEnabled` to true, which routes pyproject
     // module .iml content to `external_build_system/` instead of `.idea/<name>.iml`.
     // Disable that default so the sync flushes .iml files to the .idea/ folder, matching
     // a freshly-created real project (where external storage is off by default).
     doNotEnableExternalStorageByDefaultInTestsSuspend {
-      sut.reloadProjectImpl()
+      rebuildPyProjectModelForTest(project)
     }
   }
 

@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.python.pyproject.model.internal.autoImportBridge.PyExternalSystemProjectAware
+import com.intellij.python.pyproject.model.internal.platformBridge.rebuildPyProjectModelForTest
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataProvider
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -105,7 +105,7 @@ fun pyExternalSystemProjectFixture(
   )
   return testFixture {
     val project = projectWithBlueprint.init()
-    PyExternalSystemProjectAware.create(project).reloadProjectImpl()
+    rebuildPyProjectModelForTest(project)
     initialized(project) {}
   }
 }

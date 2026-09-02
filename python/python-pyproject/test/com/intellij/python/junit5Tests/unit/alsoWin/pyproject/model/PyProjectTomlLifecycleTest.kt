@@ -29,7 +29,7 @@ import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
-import com.intellij.python.pyproject.model.internal.autoImportBridge.createWsmTracker
+import com.intellij.python.pyproject.model.internal.platformBridge.createWsmTracker
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture

@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.writeText
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
-import com.intellij.python.pyproject.model.internal.autoImportBridge.PyExternalSystemProjectAware
+import com.intellij.python.pyproject.model.internal.platformBridge.rebuildPyProjectModelForTest
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -29,10 +29,9 @@ internal class PyProjectTomlModuleTest {
     var module = edtWriteAction {
       ModuleManager.getInstance(projectFixture.get()).newNonPersistentModule("myModule", PYTHON_MODULE_ID)
     }
-    val externalSystemAware = PyExternalSystemProjectAware.create(projectFixture.get())
     val dir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tempDirFixture.get())!!
 
-    externalSystemAware.reloadProjectImpl()
+    rebuildPyProjectModelForTest(projectFixture.get())
     Assertions.assertFalse(module.isPyProjectTomlBased, "Module shouldn't be pyproject based")
     module = projectFixture.get().modules[0]
     edtWriteAction {
@@ -44,7 +43,7 @@ internal class PyProjectTomlModuleTest {
         name="D"
       """.trimIndent())
     }
-    externalSystemAware.reloadProjectImpl()
+    rebuildPyProjectModelForTest(projectFixture.get())
     module = projectFixture.get().modules[0]
     Assertions.assertTrue(module.isPyProjectTomlBased, "Module should be pyproject based")
   }

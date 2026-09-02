@@ -3,9 +3,9 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.components.service
 import com.intellij.python.pyproject.model.PyProjectModelSettings
-import com.intellij.python.pyproject.model.internal.autoImportBridge.PyProjectAutoImportService
+import com.intellij.python.pyproject.model.internal.platformBridge.PyProjectModelSyncService
 import com.intellij.python.pyproject.model.internal.platformBridge.PyProjectSyncActivity
-import com.intellij.python.pyproject.model.internal.startAutoImportIfNeeded
+import com.intellij.python.pyproject.model.internal.startPyProjectModelSyncIfNeeded
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -68,11 +68,11 @@ internal class PyProjectSyncActivityTest {
     val settings = project.service<PyProjectModelSettings>()
     settings.usePyprojectToml = enableAutoImport
     // Setting this var starts import automatically, so we stop it check that code starts it in tests
-    project.service<PyProjectAutoImportService>().stop()
-    val sut = project.service<PyProjectAutoImportService>()
+    project.service<PyProjectModelSyncService>().stop()
+    val sut = project.service<PyProjectModelSyncService>()
     PyProjectSyncActivity().execute(project)
     assertFalse(sut.initialized, "Newly opened project shouldn't lead to autoimport ")
-    startAutoImportIfNeeded(project, "sync activity test testNoAutoRebuildForWizardBasedProject")
+    startPyProjectModelSyncIfNeeded(project, "sync activity test testNoAutoRebuildForWizardBasedProject")
     if (enableAutoImport) {
       assertTrue(sut.initialized, "Auto import must be started when called manually")
     }
@@ -83,13 +83,13 @@ internal class PyProjectSyncActivityTest {
     assertFalse(sut.initialized, "Autoimport must be stopped")
   }
 
-  private suspend fun callStartAutoImport(userEnabledImport: Boolean): PyProjectAutoImportService {
+  private suspend fun callStartAutoImport(userEnabledImport: Boolean): PyProjectModelSyncService {
     val settings = project.service<PyProjectModelSettings>()
     settings.usePyprojectToml = userEnabledImport
     // Setting this var starts import automatically, so we stop it check that code starts it in tests
-    project.service<PyProjectAutoImportService>().stop()
-    val sut = project.service<PyProjectAutoImportService>()
-    startAutoImportIfNeeded(project, "sync activity test callStartAutoImport")
+    project.service<PyProjectModelSyncService>().stop()
+    val sut = project.service<PyProjectModelSyncService>()
+    startPyProjectModelSyncIfNeeded(project, "sync activity test callStartAutoImport")
     return sut
   }
 }
