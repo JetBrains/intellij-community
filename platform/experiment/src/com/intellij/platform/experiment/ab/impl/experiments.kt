@@ -80,14 +80,13 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
     majorVersion = "2026.2",
     products = EnumSet.of(IntelliJPlatformProduct.CLION),
   ),
-  // Do NOT delete -- will be activated for 2026.2.2
-  //ExperimentAssignment(
-  //  experiment = ABExperimentOption.RIDER_REPO_VIEW,
-  //  experimentBuckets = (0 until 256).toSet(),
-  //  controlBuckets = (256 until 512).toSet(),
-  //  majorVersion = "2026.2.2",
-  //  products = EnumSet.of(IntelliJPlatformProduct.RIDER)
-  //)
+  ExperimentAssignment(
+    experiment = ABExperimentOption.RIDER_REPO_VIEW,
+    experimentBuckets = (0 until 256).toSet(),
+    controlBuckets = (786 until 1024).toSet(),
+    majorVersion = "2026.2.2",
+    products = EnumSet.of(IntelliJPlatformProduct.RIDER)
+  )
   // the rest belongs to the "unassigned" experiment
 )
 
