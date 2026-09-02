@@ -175,6 +175,7 @@ abstract class CommitChangesViewWithToolbarPanel(
     withContext(Dispatchers.EDT) {
       TRACER.spanBuilder(ChangesView.ChangesViewRefreshEdt.getName()).use {
         changesView.updateTreeModel(model, ChangesViewTreeStateStrategy())
+        onTreeModelUpdated()
         checkCanceled()
         synchronizeInclusion(modelData.changeLists, modelData.unversionedFiles)
       }
@@ -190,6 +191,13 @@ abstract class CommitChangesViewWithToolbarPanel(
   abstract fun getModelData(): ModelData
 
   abstract fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>)
+
+  /**
+   * Called right after the tree model was replaced.
+   */
+  @RequiresEdt
+  protected open fun onTreeModelUpdated() {
+  }
 
   /**
    * Immediately reset changes view and request refresh when NON_MODAL modality allows (i.e. after a plugin was unloaded or a dialog closed)

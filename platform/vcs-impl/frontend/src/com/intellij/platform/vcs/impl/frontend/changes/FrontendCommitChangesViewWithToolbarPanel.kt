@@ -97,6 +97,12 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     }
   }
 
+  override fun onTreeModelUpdated() {
+    // The file counter values depend on the model, not only on the selection, so they have to be recalculated even if
+    // the same change is still selected.
+    diffableSelectionHelper.updateSelectionAfterModelChange()
+  }
+
   private suspend fun subscribeToBackendEvents() {
     durable {
       ChangesViewApi.getInstance().getBackendChangesViewEvents(project.projectId()).collect { event ->

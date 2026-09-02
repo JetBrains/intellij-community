@@ -39,9 +39,12 @@ abstract class ChangesViewTestBase : LightPlatformTestCase() {
     lists: List<LocalChangeListImpl>,
     unversioned: List<FilePath>,
     editedCommit: EditedCommitDetails? = null,
+    skipSingleDefaultChangeList: Boolean = false,
+    ignored: List<FilePath> = emptyList(),
   ): DefaultTreeModel = TreeModelBuilder(project, view.grouping)
-    .setChangeLists(lists, false, null)
+    .setChangeLists(lists, skipSingleDefaultChangeList, null)
     .setUnversioned(unversioned)
+    .setIgnored(ignored)
     .apply {
       if (editedCommit != null) {
         insertEditedCommitNode(this, editedCommit)
