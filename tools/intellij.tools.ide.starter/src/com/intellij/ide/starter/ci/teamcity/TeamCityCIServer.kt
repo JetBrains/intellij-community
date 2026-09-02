@@ -32,7 +32,18 @@ open class TeamCityCIServer(
 ) : CIServer {
   private val codeOwnerResolver by lazy { di.direct.instance<CodeOwnerResolver>() }
 
+  /**
+   * Publishes [source] only on a TeamCity build. Off CI the artifact stays where the launch wrote it.
+   *
+   * The client copies the whole tree into `teamcity-artifacts-for-publish` and creates a new suffixed directory
+   * on every call, and nothing deletes it. A local run publishes its logs, snapshots and reports after every
+   * launch, so the copy grew without bound on a developer machine, while the originals were already on disk.
+   */
   override fun publishArtifact(source: Path, artifactPath: String, artifactName: String) {
+    if (!isBuildRunningOnCI) {
+      logOutput("Not running on TeamCity, so '$artifactName' stays at $source and is not staged for publishing")
+      return
+    }
     TeamCityClient.publishTeamCityArtifacts(source = source, artifactPath = artifactPath, artifactName = artifactName)
   }
 
