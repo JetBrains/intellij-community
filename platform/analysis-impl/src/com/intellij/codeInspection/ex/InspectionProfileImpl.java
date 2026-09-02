@@ -58,7 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.NotNullLazyValue.lazy;
@@ -79,13 +79,17 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   private static final String USED_LEVELS = "used_levels";
 
   protected final @NotNull InspectionToolsSupplier myToolSupplier;
-  protected final Map<String, Element> myUninitializedSettings = new TreeMap<>(); // accessed in EDT
+  // `addTool` removes from this map off the EDT, and `writeExternal` reads it without the lock
+  protected final Map<String, Element> myUninitializedSettings = new ConcurrentSkipListMap<>();
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   protected Map<String, ToolsImpl> myTools = ConcurrentCollectionFactory.createConcurrentMap(); // `addTool` is called concurrently
   protected volatile Set<String> myChangedToolNames;
   @Attribute("is_locked")
   protected boolean myLockedProfile;
   protected final InspectionProfileImpl myBaseProfile;
+
+  // the key registry in HighlightDisplayKey is global, so this lock is static
+  private static final Object ourKeyRegistrationLock = new Object();
 
   private final Object myLock = new Object();
   private BaseInspectionProfileManager myProfileManager;
@@ -644,14 +648,26 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       Computable<String> computable = extension == null || extension.displayName == null && extension.key == null
                                       ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName())
                                       : extension::getDisplayName;
-      if (toolWrapper instanceof LocalInspectionToolWrapper local) {
-        key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(), local.getAlternativeID(), toolWrapper);
-      }
-      else {
-        key = HighlightDisplayKey.register(shortName, computable, shortName, null, toolWrapper);
+      // `find` and `register` are a check-then-act pair on a global registry, so they must be atomic.
+      // Without the lock a concurrent registrant makes `register` log an error and return null, and the profile loses the tool.
+      // The lock holds no other monitor. `myBaseProfile` is read after it, because that read can take the lock of the base profile.
+      synchronized (ourKeyRegistrationLock) {
+        key = HighlightDisplayKey.find(shortName);
+        if (key == null) {
+          if (toolWrapper instanceof LocalInspectionToolWrapper local) {
+            key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(), local.getAlternativeID(), toolWrapper);
+          }
+          else {
+            key = HighlightDisplayKey.register(shortName, computable, shortName, null, toolWrapper);
+          }
+        }
       }
       if (key == null) {
-        // it's an error, but it was already logged in .register()
+        // an outside caller registered the short name, and `register` should have logged that error
+        key = HighlightDisplayKey.find(shortName);
+      }
+      if (key == null) {
+        // an outside caller seems to have both registered and unregistered the key - bail to avoid undefined behavior
         return;
       }
     }

@@ -10,8 +10,10 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.junit.codeInspection.naming.TestClassNamingConvention;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.ProfileChangeAdapter;
@@ -23,6 +25,8 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.naming.ClassNamingConvention;
 import com.siyeh.ig.naming.FieldNamingConventionInspection;
 import com.siyeh.ig.naming.NewClassNamingConventionInspection;
@@ -37,6 +41,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
@@ -1085,6 +1092,44 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                      </profile>"""));
     foo.initInspectionTools(getProject());
     assertEquals(1, countInitializedTools(foo));
+  }
+
+  /**
+   * IJPL-235583. Every profile must keep the tool, even when the profiles register the key at the same time.
+   * <p>
+   * A loaded agent can fail to interleave the threads, so this test can pass without a real race. It is a
+   * regression net, not a reproduction.
+   */
+  public void testConcurrentInitializationKeepsEveryTool() throws Exception {
+    String shortName = "ijpl235583Concurrent";
+    int profileCount = 8;
+    List<InspectionProfileImpl> profiles = new ArrayList<>();
+    for (int i = 0; i < profileCount; i++) {
+      profiles.add(createProfile(new InspectionToolsSupplier.Simple(List.of(createTool(shortName, true)))));
+    }
+
+    try {
+      CyclicBarrier barrier = new CyclicBarrier(profileCount);
+      var futures = ContainerUtil.map(profiles, profile -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        barrier.await(1, TimeUnit.MINUTES);
+        // a null project keeps the profile out of the Disposer tree
+        profile.initInspectionTools(null);
+        return null;
+      }));
+      try {
+        ConcurrencyUtil.getAll(1, TimeUnit.MINUTES, futures);
+      }
+      catch (TimeoutException e) {
+        fail("the profiles did not initialize: " + ThreadDumper.dumpThreadsToString());
+      }
+
+      for (InspectionProfileImpl profile : profiles) {
+        assertNotNull("the profile lost " + shortName, profile.getInspectionTool(shortName, getProject()));
+      }
+    }
+    finally {
+      HighlightDisplayKey.unregister(shortName);
+    }
   }
 
   public static int countInitializedTools(@NotNull InspectionProfileImpl foo) {
