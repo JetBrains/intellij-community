@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,7 +37,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
 
   protected final Project myProject;
   protected final BuildContentManager myBuildContentManager;
-  private final SynchronizedClearableLazy<MultipleBuildsView> myBuildsViewValue;
+  private final SynchronizedClearableLazy<@Nullable MultipleBuildsView> myBuildsViewValue; // null value is returned after service disposal
   private final Set<MultipleBuildsView> myPinnedViews;
   private final AtomicBoolean isDisposed = new AtomicBoolean(false);
   private final DisposableWrapperList<BuildProgressListener> myListeners = new DisposableWrapperList<>();
@@ -48,11 +49,13 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     myBuildsViewValue = new SynchronizedClearableLazy<>(() -> {
       Ref<MultipleBuildsView> ref = new Ref<>();
       ApplicationManager.getApplication().invokeAndWait(() -> {
-        ref.set(createMultipleBuildsView());
+        if (!isDisposed.get()) {
+          MultipleBuildsView view = createMultipleBuildsView();
+          Disposer.register(this, view);
+          ref.set(view);
+        }
       });
-      MultipleBuildsView buildsView = ref.get();
-      Disposer.register(this, buildsView);
-      return buildsView;
+      return ref.get();
     });
     myPinnedViews = ConcurrentCollectionFactory.createConcurrentSet();
     BuildProgressListenerRegistrar.registerBuildProgressListeners(project, this);
@@ -82,7 +85,8 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   protected abstract @NotNull @NlsContexts.TabTitle String getViewName();
 
   protected Map<BuildDescriptor, BuildView> getBuildsMap() {
-    return myBuildsViewValue.getValue().getBuildsMap();
+    MultipleBuildsView view = myBuildsViewValue.getValue();
+    return view == null ? Collections.emptyMap() : view.getBuildsMap();
   }
 
   @Override
@@ -113,7 +117,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   private @Nullable MultipleBuildsView getMultipleBuildsView(@NotNull Object buildId) {
     if (myProject.isDisposed()) return null;
     MultipleBuildsView buildsView = myBuildsViewValue.getValue();
-    if (!buildsView.shouldConsume(buildId)) {
+    if (buildsView != null && !buildsView.shouldConsume(buildId)) {
       buildsView = ContainerUtil.find(myPinnedViews, pinnedView -> pinnedView.shouldConsume(buildId));
     }
     return buildsView;
@@ -157,7 +161,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
 
   private void configurePinnedContent() {
     MultipleBuildsView buildsView = myBuildsViewValue.getValue();
-    if (buildsView.isPinned()) {
+    if (buildsView != null && buildsView.isPinned()) {
       buildsView.lockContent();
       myPinnedViews.add(buildsView);
       myBuildsViewValue.drop();
