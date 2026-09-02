@@ -45,12 +45,12 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.DistributionBuilderState
 import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COMPACT_PATH
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
-import org.jetbrains.intellij.build.impl.asArchivedIfNeeded
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.impl.createBuildContext
 import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
+import org.jetbrains.intellij.build.impl.toArchivedIfNeeded
 import org.jetbrains.intellij.build.impl.toBazelIfNeeded
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager
@@ -1256,7 +1256,7 @@ private suspend fun createSharedCompilationContext(projectHome: Path, tempDir: P
     buildOutputRootEvaluator = { tempDir },
     options = createBuildOptionsForTest(homeDir = projectHome, outDir = tempDir),
     setupTracer = false,
-  ).toBazelIfNeeded(scope).asArchivedIfNeeded
+  ).toBazelIfNeeded(scope).toArchivedIfNeeded(scope)
 }
 
 private fun createPackagingBuildOptions(projectHome: Path, buildOutputRoot: Path) =

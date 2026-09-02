@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
@@ -108,8 +107,12 @@ private class ArchivedModuleOutputProvider(
 val CompilationContext.asArchivedIfNeeded: CompilationContext
   get() = this.toArchivedIfNeeded(scope = null)
 
-@Experimental
-internal fun CompilationContext.toArchivedIfNeeded(scope: CoroutineScope?): CompilationContext {
+/**
+ * Pass the [scope] that owns the read. It enables the zip cache of the module output pool, so a repeated
+ * read of the same archive costs a map lookup instead of a new open.
+ */
+@Internal
+fun CompilationContext.toArchivedIfNeeded(scope: CoroutineScope?): CompilationContext {
   return when {
     this is ArchivedCompilationContext -> this
     TestingOptions().useArchivedCompiledClasses || !System.getProperty("intellij.test.jars.mapping.file", "").isNullOrBlank() -> this.toArchivedContext(scope)
