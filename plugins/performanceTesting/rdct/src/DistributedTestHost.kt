@@ -11,6 +11,7 @@ import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.logs.DebugLogLevel
 import com.intellij.diagnostic.logs.LogCategory
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
+import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleId
@@ -92,11 +93,10 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-@Suppress("NonDefaultConstructor")
 @TestOnly
 @ApiStatus.Internal
 @InternalIgnoreDependencyViolation
-open class DistributedTestHost(coroutineScope: CoroutineScope) {
+open class DistributedTestHost(private val coroutineScope: CoroutineScope) : ApplicationInitializedListener {
   companion object {
     // it is easier to sort out logs from just testFramework
     private val LOG
@@ -121,7 +121,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     LogFactoryHandler.assertLoggerFactory<AgentTestLoggerFactory>()
   }
 
-  init {
+  override suspend fun execute() {
     val hostAddress =
       System.getProperty(DistributedTestsAgentConstants.protocolHostPropertyName)?.let {
         LOG.info("${DistributedTestsAgentConstants.protocolHostPropertyName} system property is set=$it, will try to get address from it.")
