@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers.target
 
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -72,6 +73,28 @@ class SeTargetsProviderDelegateExactMatchTest {
     assertTrue(isExactMatch(presentableText = "Foo", query = "Foo", fromItem = true, isDirectory = true))
     assertTrue(isExactMatch(presentableText = "Unrelated", query = "Foo", fromItem = true, isDirectory = true))
   }
+
+  @Test
+  fun normalizeQueryRemovesTrailingWhitespace() {
+    // IJPL-215201: a trailing space must not stop a symbol from matching, or drop its exact-match rank.
+    assertEquals("Foo#bar", normalizeQuery("Foo#bar   "))
+    assertEquals("Foo", normalizeQuery("Foo\t "))
+  }
+
+  @Test
+  fun normalizeQueryKeepsInternalSpace() {
+    // A command with an argument keeps its space. So command autocompletion is not affected.
+    assertEquals("/do it", normalizeQuery("/do it   "))
+    assertEquals("a b", normalizeQuery("a b"))
+  }
+
+  @Test
+  fun normalizeQueryKeepsLeadingSpace() {
+    // Only the trailing space is removed. Nothing else changes.
+    assertEquals("  Foo", normalizeQuery("  Foo"))
+  }
+
+  private fun normalizeQuery(rawQuery: String): String = SeTargetsProviderDelegate.normalizeQuery(rawQuery)
 
   /**
    * [queryHasNoExtension] defaults to the same expression the production caller uses, so that the cases above exercise

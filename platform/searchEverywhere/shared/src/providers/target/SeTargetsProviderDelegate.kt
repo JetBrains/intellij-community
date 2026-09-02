@@ -68,7 +68,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
   }
 
   suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector, operationDisposable: Disposable? = null) {
-    val inputQuery = params.inputQuery
+    val inputQuery = normalizeQuery(params.inputQuery)
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
     scopeProviderDelegate?.let { scopeProviderDelegate ->
@@ -178,6 +178,11 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
   }
 
   companion object {
+    /**
+     * Removes the trailing space from the query. A trailing space is not part of a name.
+     */
+    fun normalizeQuery(rawQuery: String): String = rawQuery.trimEnd()
+
     fun isExactMatch(
       isExactMatchFromItem: Boolean,
       presentableText: String,
