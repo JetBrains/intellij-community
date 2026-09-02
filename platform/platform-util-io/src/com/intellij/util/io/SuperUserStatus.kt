@@ -3,6 +3,8 @@ package com.intellij.util.io
 
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.sun.jna.Structure
 import com.sun.jna.platform.unix.LibC
@@ -12,15 +14,64 @@ import com.sun.jna.platform.win32.Kernel32Util
 import com.sun.jna.platform.win32.WinDef
 import com.sun.jna.platform.win32.WinNT
 import com.sun.jna.ptr.IntByReference
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
 
 @ApiStatus.Internal
 object SuperUserStatus {
+
+  /**
+   * Returns `null` if the super user status is not yet computed.
+   * Use [whenKnown] for a callback when the status is known
+   */
   @JvmStatic
-  val isSuperUser: Boolean by lazy {
+  @get:Contract(pure = false)
+  val isSuperUserOrNull: Boolean?
+    get() {
+      request.start()
+      if (request.isCompleted) {
+        @OptIn(ExperimentalCoroutinesApi::class)
+        return request.getCompleted()
+      } else {
+        return null
+      }
+    }
+
+  /**
+   * Blocks until super user status is computed
+   */
+  @JvmStatic
+  val isSuperUser: Boolean
+    get() {
+      request.start()
+      return request.asCompletableFuture().get()
+    }
+
+  fun whenKnown(@RequiresBackgroundThread action: suspend () -> Unit): Job {
+    @OptIn(DelicateCoroutinesApi::class)
+    return GlobalScope.launch(Dispatchers.IO) {
+      request.join()
+      action()
+    }
+  }
+
+  @OptIn(DelicateCoroutinesApi::class, LowLevelLocalMachineAccess::class)
+  private val request: Deferred<Boolean> = GlobalScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
     try {
+      if (!JnaLoader.isLoaded()) {
+        return@async false
+      }
       when {
-        !JnaLoader.isLoaded() -> false
         OS.CURRENT == OS.Windows -> WindowsElevationStatus.isElevated()
         else -> UnixUserStatus.isSuperUser()
       }

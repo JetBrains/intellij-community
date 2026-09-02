@@ -57,7 +57,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowResizeListenerEx
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.io.SuperUserStatus.isSuperUser
+import com.intellij.util.io.SuperUserStatus.isSuperUserOrNull
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -275,7 +275,7 @@ abstract class ProjectFrameHelper internal constructor(
     }
 
     val superUserSuffix: String?
-      get() = if (!isSuperUser) null else if (SystemInfoRt.isWindows) "Administrator" else "ROOT"
+      get() = if (isSuperUserOrNull != true) null else if (SystemInfoRt.isWindows) "Administrator" else "ROOT"
 
     internal fun appendTitlePart(sb: StringBuilder, s: String?) {
       appendTitlePart(sb, s, " \u2013 ")

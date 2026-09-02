@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
@@ -67,6 +68,7 @@ import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
+import com.intellij.util.io.SuperUserStatus
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -74,9 +76,11 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Component
@@ -175,6 +179,11 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     setGlassPane(glassPane)
     glassPane.isVisible = false
     updateComponentsAndResize()
+    SuperUserStatus.whenKnown {
+      withContext(Dispatchers.UI) {
+        title = welcomeFrameTitle
+      }
+    }
 
     // at this point, window insets may be unavailable, so we need to resize the window when it is shown
     UiNotifyConnector.doWhenFirstShown(this, ::pack)
