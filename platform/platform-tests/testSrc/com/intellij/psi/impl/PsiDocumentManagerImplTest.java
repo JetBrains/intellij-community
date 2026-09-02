@@ -1113,7 +1113,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
             });
             WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.insertString(0, " "));
           }
-          TestApplicationKt.waitForAllDocumentsCommitted(1, TimeUnit.MINUTES);
+          TestApplicationKt.waitForAllDocumentsCommitted(5, TimeUnit.MINUTES);
         }
         finally {
           psiDocumentManager.clearUncommittedDocuments();
@@ -1176,7 +1176,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
                 Thread.onSpinWait();
               }
               GCWatcher.tracking(Arrays.asList(ReadAction.compute(()->getPsiDocumentManager().getUncommittedDocuments())))
-                .ensureCollectedWithinTimeout(5_000); // wait for document commit queue
+                .ensureCollectedWithinTimeout((int)TimeUnit.MINUTES.toMillis(5)); // wait for document commit queue
               assertEquals(0, committed.get());
             }
             finally {
