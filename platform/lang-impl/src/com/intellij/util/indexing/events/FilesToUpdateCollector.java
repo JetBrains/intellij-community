@@ -236,25 +236,38 @@ public class FilesToUpdateCollector {
       return new RequestsSnapshot(exclusiveVersion, readUpToVersion, Collections.emptyList(), -1L, 0, registration);
     }
 
-    // Materialize the snapshot under the lock to keep its boundary consistent with all included requests.
-    List<FileIndexingRequest> requests = new ArrayList<>();
+    // Materialize the snapshot under the lock to keep its boundary consistent with all included requests
+
+    Collection<VersionedRequest> requests = myFilesToUpdate.values();
+    if (requests.isEmpty()) {
+      return new RequestsSnapshot(
+        exclusiveVersion, readUpToVersion,
+        /*requests: */ Collections.emptyList(),
+        dropRequestsNotNewerThan, /*droppedRequests: */ 0,
+        registration
+      );
+    }
     int droppedRequests = 0;
-    for (Iterator<VersionedRequest> iterator = myFilesToUpdate.values().iterator(); iterator.hasNext(); ) {
-      VersionedRequest versionedRequest = iterator.next();
+    List<FileIndexingRequest> filteredRequests = new ArrayList<>();
+    for (Iterator<VersionedRequest> it = requests.iterator(); it.hasNext(); ) {
+      VersionedRequest versionedRequest = it.next();
       long requestVersion = versionedRequest.version();
       FileIndexingRequest request = versionedRequest.request();
       if (requestVersion <= dropRequestsNotNewerThan) {
-        iterator.remove();
+        it.remove();
         myDirtyFiles.removeFile(request.getFileId());
         droppedRequests++;
         continue;
       }
       if ((!filterByRequestVersion || exclusiveVersion < requestVersion) && requestVersion <= readUpToVersion) {
-        requests.add(request);
+        filteredRequests.add(request);
       }
     }
     return new RequestsSnapshot(
-      exclusiveVersion, readUpToVersion, requests, dropRequestsNotNewerThan, droppedRequests, registration
+      exclusiveVersion, readUpToVersion,
+      filteredRequests,
+      dropRequestsNotNewerThan, droppedRequests,
+      registration
     );
   }
 
