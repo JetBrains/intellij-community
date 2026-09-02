@@ -5,8 +5,8 @@ import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
-import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.utils.io.deleteRecursively
@@ -18,12 +18,14 @@ import com.intellij.vcs.git.branch.popup.GitDefaultBranchesPopupStep
 import com.intellij.vcs.git.branch.popup.GitDefaultBranchesTreeRenderer
 import com.intellij.vcs.git.branch.tree.GitBranchesTreeRenderer
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
+import com.intellij.vcs.test.refresh
 import git4idea.GitUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryTagsHolderImpl
-import git4idea.test.GitPlatformTest
+import git4idea.test.GitPlatformTestContext
 import git4idea.test.TestDataUtil
+import git4idea.test.gitPlatformContextFixture
 import git4idea.test.branch
 import git4idea.test.cd
 import git4idea.test.checkout
@@ -31,22 +33,32 @@ import git4idea.test.checkoutNew
 import git4idea.test.git
 import git4idea.test.gitInit
 import git4idea.test.registerRepo
+import git4idea.test.setupRepositories
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
 private const val TEST_DATA_SUBFOLDER = "widgetTree"
 
-@TestDataPath("\$CONTENT_ROOT/../testData/$TEST_DATA_SUBFOLDER")
-class GitWidgetTreeStructureTest : GitPlatformTest() {
+@TestApplication
+@TestDataPath($$"$CONTENT_ROOT/../testData/$$TEST_DATA_SUBFOLDER")
+class GitWidgetTreeStructureTest {
   private lateinit var repo: GitRepository
   private lateinit var broRepoPath: Path
 
   private lateinit var popupStep: GitBranchesPopupStepBase
 
-  override fun setUp() {
-    super.setUp()
-    val trinity = setupRepositories(projectPath, "parent", "bro-repo")
+  private val fixture = gitPlatformContextFixture()
+  private val context: GitPlatformTestContext get() = fixture.get()
+  private lateinit var testMethodName: String
+
+  @BeforeEach
+  fun setUp(testInfo: TestInfo): Unit = with(context) {
+    testMethodName = testInfo.testMethod.orElseThrow().name
+    val trinity = setupRepositories(project, testNioRoot, projectPath, "parent", "bro-repo")
     broRepoPath = trinity.bro
     repo = trinity.projectRepo
 
@@ -60,6 +72,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     }
   }
 
+  @Test
   fun testSingleRepo() {
     createRefs(repo)
     repo.checkoutNew("another-branch")
@@ -67,14 +80,16 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     compareWithSnapshot(buildTestTree())
   }
 
-  fun testSingleRepoWithTags() {
+  @Test
+  fun testSingleRepoWithTags(): Unit = with(context) {
     GitVcsSettings.getInstance(project).setShowTags(true)
     createRefs(repo, ensureTags = true)
 
     compareWithSnapshot(buildTestTree())
   }
 
-  fun testSingleRepoFiltering() {
+  @Test
+  fun testSingleRepoFiltering(): Unit = with(context) {
     GitVcsSettings.getInstance(project).setShowTags(true)
     createRefs(repo)
     repo.checkoutNew("update")
@@ -83,7 +98,8 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
   }
 
   // Favorite refs should be displayed first
-  fun testSingleRepoWithFavoriteRefsSorted() {
+  @Test
+  fun testSingleRepoWithFavoriteRefsSorted(): Unit = with(context) {
     GitVcsSettings.getInstance(project).setShowTags(true)
     listOf("a", "b", "c", "Bb", "d", "e-group/a", "f-group/a", "f-group/b").forEach {
       repo.branch(it)
@@ -103,6 +119,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     compareWithSnapshot(buildTestTree())
   }
 
+  @Test
   fun testMultiRepo() {
     createRefs(repo)
     repo.checkoutNew("newBranch")
@@ -116,6 +133,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     compareWithSnapshot(buildTestTree())
   }
 
+  @Test
   fun testMultiRepoNotFavoriteCurrentBranch() {
     createRefs(repo)
     val currentBranch = "newBranch"
@@ -129,7 +147,8 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
   }
 
 
-  fun testMultiRepoWithFavoriteRefs() {
+  @Test
+  fun testMultiRepoWithFavoriteRefs(): Unit = with(context) {
     val broRepo = registerBroRepo()
 
     listOf("a", "b", "c", "d", "e").forEach {
@@ -150,7 +169,8 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     compareWithSnapshot(buildTestTree())
   }
 
-  fun testMultiRepoWithoutSync() {
+  @Test
+  fun testMultiRepoWithoutSync(): Unit = with(context) {
     settings.syncSetting = DvcsSyncSettings.Value.DONT_SYNC
     createRefs(repo)
     repo.checkoutNew("newBranch")
@@ -162,7 +182,8 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     compareWithSnapshot(buildTestTree())
   }
 
-  fun testMultiRepoWithoutSyncWithFilter() {
+  @Test
+  fun testMultiRepoWithoutSyncWithFilter(): Unit = with(context) {
     settings.syncSetting = DvcsSyncSettings.Value.DONT_SYNC
     createRefs(repo)
     registerBroRepo().also {
@@ -173,6 +194,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
   }
 
 
+  @Test
   fun testMultiRepoWithFilterMatchingRepo() {
     registerBroRepo()
     repo.branch("project-branch")
@@ -180,7 +202,8 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     compareWithSnapshot(buildTestTree("ro"))
   }
 
-  fun testMultiRepoWithFilter() {
+  @Test
+  fun testMultiRepoWithFilter(): Unit = with(context) {
     GitVcsSettings.getInstance(project).setShowTags(true)
     createRefs(repo, ensureTags = true)
     registerBroRepo().also {
@@ -190,18 +213,21 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     compareWithSnapshot(buildTestTree("group"))
   }
 
+  @Test
   fun testSingleFreshRepo() {
     resetToFreshState(repo)
     compareWithSnapshot(buildTestTree())
   }
 
+  @Test
   fun testMultipleFreshRepos() {
     resetToFreshState(repo)
     registerBroRepo().also { resetToFreshState(it) }
     compareWithSnapshot(buildTestTree())
   }
 
-  fun testMultipleFreshReposNoSync() {
+  @Test
+  fun testMultipleFreshReposNoSync(): Unit = with(context) {
     settings.syncSetting = DvcsSyncSettings.Value.DONT_SYNC
 
     resetToFreshState(repo)
@@ -209,10 +235,10 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     compareWithSnapshot(buildTestTree())
   }
 
-  private fun resetToFreshState(repo: GitRepository) {
+  private fun resetToFreshState(repo: GitRepository): Unit = with(context) {
     repo.root.toNioPath().resolve(GitUtil.DOT_GIT).deleteRecursively()
     cd(repo)
-    gitInit()
+    gitInit(project)
   }
 
   private fun createRefs(repo: GitRepository, ensureTags: Boolean = false) {
@@ -228,10 +254,12 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     }
   }
 
-  private fun registerBroRepo(): GitRepository = registerRepo(project, broRepoPath)
+  private fun registerBroRepo(): GitRepository = with(context) {
+    registerRepo(project, broRepoPath)
+  }
 
   private fun compareWithSnapshot(tree: Tree, snapshotName: String? = null) {
-    val testDataFileName = snapshotName ?: PlatformTestUtil.getTestName(name, false)
+    val testDataFileName = snapshotName ?: PlatformTestUtil.getTestName(testMethodName, false)
     val testData = TestDataUtil.basePath.resolve(TEST_DATA_SUBFOLDER).resolve(testDataFileName)
 
     val printedTree = invokeAndWaitIfNeeded {
@@ -256,7 +284,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     Assertions.assertThat(printedTree).toMatchSnapshot(testData)
   }
 
-  private fun buildTestTree(filter: String? = null): Tree {
+  private fun buildTestTree(filter: String? = null): Tree = with(context) {
     repositoryManager.updateAllRepositories()
 
     return invokeAndWaitIfNeeded {

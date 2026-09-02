@@ -2,24 +2,33 @@
 package git4idea.branch
 
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitLocalBranch
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.checkout
 import git4idea.test.checkoutNew
 import git4idea.test.deleteBranch
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class GitRecentCheckoutBranchesParseTest : GitSingleRepoTest() {
+@TestApplication
+class GitRecentCheckoutBranchesParseTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
 
-  fun `test recent checkout branches collection`() {
+  @Test
+  fun `test recent checkout branches collection`(): Unit = with(context) {
     val expected = listOf("test/feature3", "feature2", "feature1")
     expected.reversed().forEach { branch -> repo.checkoutNew(branch) }
     waitForRepoUpdate()
 
     val branchNames = repo.branches.recentCheckoutBranches.map(GitLocalBranch::name)
-    assertOrderedEquals(branchNames, expected)
+    assertThat(branchNames).containsExactlyElementsOf(expected)
   }
 
-  fun `test recent checkout branches collection no duplicates`() {
+  @Test
+  fun `test recent checkout branches collection no duplicates`(): Unit = with(context) {
     val initialBranch = "master"
     val expected = mutableListOf("test/feature3", "feature2", "feature1")
     expected.reversed().forEach { branch -> repo.checkoutNew(branch) }
@@ -30,25 +39,26 @@ class GitRecentCheckoutBranchesParseTest : GitSingleRepoTest() {
     waitForRepoUpdate()
 
     val branchNames = repo.branches.recentCheckoutBranches.map(GitLocalBranch::name)
-    assertOrderedEquals(branchNames, expected)
+    assertThat(branchNames).containsExactlyElementsOf(expected)
   }
 
-  fun `test recent checkout branches collection with branch remove`() {
+  @Test
+  fun `test recent checkout branches collection with branch remove`(): Unit = with(context) {
     val expected = listOf("test/feature3", "feature2", "feature1")
     expected.reversed().forEach { branch -> repo.checkoutNew(branch) }
     waitForRepoUpdate()
 
     var branchNames = repo.branches.recentCheckoutBranches.map(GitLocalBranch::name)
-    assertOrderedEquals(branchNames, expected)
+    assertThat(branchNames).containsExactlyElementsOf(expected)
 
     repo.deleteBranch("feature1")
     waitForRepoUpdate()
 
     branchNames = repo.branches.recentCheckoutBranches.map(GitLocalBranch::name)
-    assertOrderedEquals(branchNames, expected.dropLast(1))
+    assertThat(branchNames).containsExactlyElementsOf(expected.dropLast(1))
   }
 
-  private fun waitForRepoUpdate() {
+  private fun waitForRepoUpdate(): Unit = with(context) {
     repo.update()
     ChangeListManagerImpl.getInstanceImpl(project).waitEverythingDoneInTestMode()
   }
