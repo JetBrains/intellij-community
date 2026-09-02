@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -27,7 +27,7 @@ fun checkRecursiveSingleFlightAwait(
   currentContext: CoroutineContext,
   owner: Any,
   operationName: String,
-  deferred: CompletableDeferred<*>,
+  deferred: Deferred<*>,
 ) {
   check(deferred.isCompleted || currentContext[ActiveSingleFlightComputations]?.contains(owner) != true) {
     "Recursive await of '$operationName' detected"

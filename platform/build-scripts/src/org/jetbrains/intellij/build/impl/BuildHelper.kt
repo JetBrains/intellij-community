@@ -72,7 +72,8 @@ interface SuspendingLazy<T> {
 /**
  * Computes a value on the first `await()` and shares the result with all concurrent awaiters.
  *
- * Cancellation evicts the in-flight computation so the next call retries, while successful values and ordinary failures are reused.
+ * A cancelled caller stops waiting, and the computation continues for the other callers. Successful values and ordinary
+ * failures are reused.
  */
 fun <T> suspendingLazy(coroutineName: String, initializer: suspend CoroutineScope.() -> T): SuspendingLazy<T> {
   return AsyncCacheBackedSuspendingLazy(coroutineName = coroutineName, initializer = initializer)

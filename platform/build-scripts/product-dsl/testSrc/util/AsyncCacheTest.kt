@@ -1,12 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.util
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
@@ -14,7 +17,10 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.CancellationException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -315,47 +321,75 @@ class AsyncCacheTest {
   }
 
   @Test
-  fun `owner cancellation evicts entry and next caller retries`() {
+  fun `owner cancellation does not cancel the shared computation`() {
     runBlocking(Dispatchers.Default) {
       val cache = AsyncCache<String, String>()
       val loadCount = AtomicInteger(0)
       val started = CompletableDeferred<Unit>()
       val release = CompletableDeferred<Unit>()
-      val firstAttempt = async {
+      val owner = async {
         cache.getOrPut("key") {
-          val attempt = loadCount.incrementAndGet()
-          if (attempt == 1) {
-            started.complete(Unit)
-            release.await()
-          }
-          "value-$attempt"
+          loadCount.incrementAndGet()
+          started.complete(Unit)
+          release.await()
+          "value"
         }
       }
 
       withTimeout(5.seconds) {
         started.await()
       }
-      firstAttempt.cancel()
-
-      var failure: Throwable? = null
-      try {
-        firstAttempt.await()
+      val waiter = async {
+        cache.getOrPut("key") { "should-not-be-called" }
       }
-      catch (t: Throwable) {
-        failure = t
-      }
+      // let the waiter reach its await before the owner goes away
+      delay(100.milliseconds)
+      owner.cancel()
+      owner.join()
+      assertThat(owner.isCancelled).isTrue()
 
-      assertThat(failure).isInstanceOf(CancellationException::class.java)
       release.complete(Unit)
+      assertThat(withTimeout(5.seconds) { waiter.await() }).isEqualTo("value")
       assertThat(
         withTimeout(5.seconds) {
+          cache.getOrPut("key") { "should-not-be-called" }
+        }
+      ).isEqualTo("value")
+      assertThat(loadCount.get()).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun `owner cancelled before the computation is dispatched does not poison the key`() {
+    val gate = CountDownLatch(1)
+    Executors.newSingleThreadExecutor { Thread(it, "AsyncCacheTest gate") }.asCoroutineDispatcher().use { singleThread ->
+      runBlocking(Dispatchers.Default) {
+        val cache = AsyncCache<String, String>()
+        val loadCount = AtomicInteger(0)
+        // the only thread of the dispatcher is busy, so nothing dispatched to it runs until the gate opens
+        singleThread.dispatch(EmptyCoroutineContext, Runnable { gate.await() })
+
+        // UNDISPATCHED runs the owner here until it suspends in `getOrPut`, with its computation queued behind the gate
+        val owner = launch(singleThread, start = CoroutineStart.UNDISPATCHED) {
           cache.getOrPut("key") {
-            val attempt = loadCount.incrementAndGet()
-            "value-$attempt"
+            loadCount.incrementAndGet()
+            "value"
           }
         }
-      ).isEqualTo("value-2")
-      assertThat(loadCount.get()).isEqualTo(2)
+        owner.cancel()
+        gate.countDown()
+        owner.join()
+
+        assertThat(
+          withTimeout(5.seconds) {
+            cache.getOrPut("key") {
+              loadCount.incrementAndGet()
+              "value"
+            }
+          }
+        ).isEqualTo("value")
+        assertThat(loadCount.get()).isEqualTo(1)
+      }
     }
   }
 

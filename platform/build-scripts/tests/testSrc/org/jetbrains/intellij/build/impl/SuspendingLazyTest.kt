@@ -60,17 +60,15 @@ class SuspendingLazyTest {
   }
 
   @Test
-  fun retriesAfterCancellation() {
+  fun cancelledAwaiterDoesNotStopTheComputation() {
     val invocationCount = AtomicInteger()
     val started = CompletableDeferred<Unit>()
     val release = CompletableDeferred<Unit>()
     val lazyValue = suspendingLazy("cancellable value") {
-      val attempt = invocationCount.incrementAndGet()
-      if (attempt == 1) {
-        started.complete(Unit)
-        release.await()
-      }
-      40 + attempt
+      invocationCount.incrementAndGet()
+      started.complete(Unit)
+      release.await()
+      42
     }
 
     runBlocking(Dispatchers.Default) {
@@ -93,10 +91,10 @@ class SuspendingLazyTest {
 
       assertThat(failure).isInstanceOf(CancellationException::class.java)
       release.complete(Unit)
-      assertThat(lazyValue.await()).isEqualTo(42)
+      assertThat(withTimeout(5.seconds) { lazyValue.await() }).isEqualTo(42)
     }
 
-    assertThat(invocationCount.get()).isEqualTo(2)
+    assertThat(invocationCount.get()).isEqualTo(1)
   }
 
   @Test
