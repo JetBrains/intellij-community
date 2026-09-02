@@ -117,7 +117,6 @@ internal class TerminalViewFixture(project: Project, emulatorType: TerminalEmula
    * reports an added, a removed and a replaced block, but never an offset update - so a listener never sees
    * `commandStartOffset`, `outputStartOffset` or `exitCode` change on the active block.
    */
-  @RequiresEdt
   suspend fun awaitBlocksModelState(
     model: TerminalBlocksModel,
     timeout: Duration = 10.seconds,
