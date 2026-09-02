@@ -9,6 +9,7 @@ import com.intellij.platform.vcs.impl.changes.ChangesViewTestBase
 import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffableSelection
+import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.tree.TreeUtil
 
@@ -46,6 +47,62 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     assertTreePath(selection.selectedChange, p2, expectChangeId = true)
     assertTreePath(selection.previousChange!!, p1, expectChangeId = true)
     assertTreePath(selection.nextChange!!, p3, expectChangeId = true)
+  }
+
+  fun `test navigation is scoped to the explicit multiple selection`() {
+    val paths = (1..5).map { path("c$it.txt") }
+    val changes = paths.map { change(it) }
+
+    val defaultList = LocalChangeListImpl.Builder(project, "Default").setDefault(true)
+      .setChanges(changes)
+      .build()
+
+    val model = buildModel(view, listOf(defaultList), emptyList())
+    updateModelAndSelect(view, model, paths[1])
+    findNodesAndSelect(changes[1], changes[3])
+
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    checkNotNull(selection)
+    assertTreePath(selection.selectedChange, changes[1])
+    // changes[0] and changes[2] are skipped: navigation walks the selected files only, as in monolith mode.
+    assertNull(selection.previousChange)
+    assertTreePath(selection.nextChange!!, changes[3])
+  }
+
+  fun `test moving outside the explicit multiple selection is left to the tree`() {
+    val paths = (1..3).map { path("c$it.txt") }
+    val changes = paths.map { change(it) }
+
+    val defaultList = LocalChangeListImpl.Builder(project, "Default").setDefault(true)
+      .setChanges(changes)
+      .build()
+
+    val model = buildModel(view, listOf(defaultList), emptyList())
+    updateModelAndSelect(view, model, paths[0])
+    findNodesAndSelect(changes[0], changes[1])
+
+    val helper = ChangesViewDiffableSelectionHelper(view)
+    checkNotNull(helper.updateSelection())
+
+    val path = checkNotNull(ChangesTreePath.create(changes[2]))
+    assertFalse(helper.moveWithinSelection(path))
+  }
+
+  fun `test moving with a single selection is left to the tree`() {
+    val p1 = path("c1.txt")
+    val p2 = path("c2.txt")
+
+    val defaultList = LocalChangeListImpl.Builder(project, "Default").setDefault(true)
+      .setChanges(listOf(change(p1), change(p2)))
+      .build()
+
+    val model = buildModel(view, listOf(defaultList), emptyList())
+    updateModelAndSelect(view, model, p1)
+
+    val helper = ChangesViewDiffableSelectionHelper(view)
+    val selection = checkNotNull(helper.updateSelection())
+
+    assertFalse(helper.moveWithinSelection(selection.nextChange!!))
   }
 
   fun `test current unversioned then next unversioned and previous change`() {
@@ -312,6 +369,9 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     runInEdtAndWait { tryUpdateSelection() }
     return diffableSelection.value
   }
+
+  private fun ChangesViewDiffableSelectionHelper.moveWithinSelection(path: ChangesTreePath): Boolean =
+    runInEdtAndGet { moveWithinExplicitSelection(path) }
 
   private fun findNodeAndSelect(node: Any) {
     findNodesAndSelect(node)

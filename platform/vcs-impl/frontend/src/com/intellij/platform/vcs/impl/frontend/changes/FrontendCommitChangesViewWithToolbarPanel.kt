@@ -130,6 +130,10 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
   @VisibleForTesting
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun selectPath(path: ChangesTreePath) {
+    // Navigating inside an explicit selection of 2+ files must not collapse it to a single node: only the previewed
+    // file changes, as in monolith mode.
+    if (diffableSelectionHelper.moveWithinExplicitSelection(path)) return
+
     if (path.changeId == null) {
       changesView.selectFile(path.filePath.filePath)
     }

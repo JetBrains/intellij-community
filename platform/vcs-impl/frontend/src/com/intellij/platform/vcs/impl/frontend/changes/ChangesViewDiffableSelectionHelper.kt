@@ -41,12 +41,35 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
     val selectedNodePath =
       getPathOrLog(selectedDiffableNode) { LOG.warn("Could not create path for selected node: $it") } ?: return null
 
-    val (prevNode, nextNode) = findPreviousAndNextDiffableNodes(selectedDiffableNode)
+    // An explicit selection of 2+ diffable files scopes navigation to itself, as monolith mode does, so that
+    // "Compare Previous/Next File" walks the selected files only. Moving inside it must not change the tree selection,
+    // see [moveWithinExplicitSelection].
+    val explicitSelection = selectedDiffableObjects().toList().takeIf { it.size > 1 }
+
+    val neighbours = explicitSelection?.let { neighboursWithin(it, selectedDiffableNode) }
+                     ?: findNeighboursInTree(selectedDiffableNode)
 
     return ChangesViewDiffableSelection(
       selectedChange = selectedNodePath,
-      previousChange = getPathOrLog(prevNode) { LOG.warn("Could not create path for previous node: $it") },
-      nextChange = getPathOrLog(nextNode) { LOG.warn("Could not create path for next node: $it") })
+      previousChange = getPathOrLog(neighbours.previous) { LOG.warn("Could not create path for previous node: $it") },
+      nextChange = getPathOrLog(neighbours.next) { LOG.warn("Could not create path for next node: $it") })
+  }
+
+  /**
+   * Moves the previewed change to [path] without touching the tree selection.
+   *
+   * Navigating inside an explicit selection of 2+ diffable files changes only the previewed file in monolith mode, so
+   * the selection has to be preserved here too.
+   * @return false when [path] does not belong to such a selection, so that the caller selects the corresponding node in the tree instead.
+   */
+  @RequiresEdt
+  fun moveWithinExplicitSelection(path: ChangesTreePath): Boolean {
+    val selectedObjects = selectedDiffableObjects()
+    if (selectedObjects.take(2).count() < 2) return false
+    if (selectedObjects.none { path.matches(it) }) return false
+
+    _diffableSelection.value = getDiffableSelection(path)
+    return true
   }
 
   /**
@@ -64,10 +87,6 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
     return changes + unversionedFiles
   }
 
-  private fun getPathOrLog(node: Any?, log: (Any) -> Unit): ChangesTreePath? = node?.let {
-    ChangesTreePath.create(it).also { path -> if (path == null) log(it) }
-  }
-
   /**
    * [currentChange] if it is still selected, the first selected diffable object otherwise.
    */
@@ -80,38 +99,30 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
     return changesView.selectedDiffableNode
   }
 
-  private fun ChangesTreePath.matches(userObject: Any): Boolean = when (userObject) {
-    is Change -> ChangesUtil.matches(userObject, filePath.filePath) && ChangeId.getId(userObject) == changeId
-    is FilePath -> userObject == filePath.filePath
-    else -> false
-  }
-
+  /**
+   * Diffable objects around [selectedDiffableNode] in the whole tree, in the tree display order.
+   */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  private fun findPreviousAndNextDiffableNodes(selectedDiffableNode: Any): Pair<Any?, Any?> {
+  private fun findNeighboursInTree(selectedDiffableNode: Any): Neighbours {
     var previousNode: Any? = null
     var nextNode: Any? = null
 
     var selectedNodeWasFound = false
     for (node in VcsTreeModelData.all(changesView).iterateNodes()) {
-      if (nextNode != null) break
-
+      if (!isDiffableNode(node)) continue
       val userObject = node.userObject
-      if (userObject === selectedDiffableNode) {
-        selectedNodeWasFound = true
-      }
-      else {
-        if (isDiffableNode(node)) {
-          if (selectedNodeWasFound) {
-            nextNode = userObject
-          }
-          else {
-            previousNode = userObject
-          }
+
+      when {
+        userObject === selectedDiffableNode -> selectedNodeWasFound = true
+        !selectedNodeWasFound -> previousNode = userObject
+        else -> {
+          nextNode = userObject
+          break
         }
       }
     }
 
-    return previousNode to nextNode
+    return Neighbours(previousNode, nextNode)
   }
 
   private fun isDiffableNode(node: ChangesBrowserNode<*>): Boolean = when (node.userObject) {
@@ -119,4 +130,25 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
     is FilePath -> node.isUnderTag(ChangesBrowserNode.UNVERSIONED_FILES_TAG)
     else -> false
   }
+}
+
+private data class Neighbours(val previous: Any?, val next: Any?)
+
+/**
+ * Diffable objects around [selectedObject] within [scope], in the tree display order.
+ */
+private fun neighboursWithin(scope: List<Any>, selectedObject: Any): Neighbours {
+  val index = scope.indexOfFirst { it === selectedObject }
+  if (index < 0) return Neighbours(null, null)
+  return Neighbours(scope.getOrNull(index - 1), scope.getOrNull(index + 1))
+}
+
+private fun ChangesTreePath.matches(userObject: Any): Boolean = when (userObject) {
+  is Change -> ChangesUtil.matches(userObject, filePath.filePath) && ChangeId.getId(userObject) == changeId
+  is FilePath -> userObject == filePath.filePath
+  else -> false
+}
+
+private fun getPathOrLog(node: Any?, log: (Any) -> Unit): ChangesTreePath? = node?.let {
+  ChangesTreePath.create(it).also { path -> if (path == null) log(it) }
 }
