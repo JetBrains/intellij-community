@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.projectView.window
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.projectView.frontend.window
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.impl.isProjectViewSplit
@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import javax.swing.Icon
 
 internal class ProjectViewToolWindowFactory : ToolWindowFactory, DumbAware {
@@ -25,9 +26,7 @@ internal class ProjectViewToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    if (!AppMode.isRemoteDevHost()) { // monolith or frontend - the UI part
-      ProjectViewToolWindowService.getInstance(project).setupToolWindow(toolWindow)
-    }
+    ProjectViewToolWindowService.getInstance(project).setupToolWindow(toolWindow)
   }
 
   override suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {

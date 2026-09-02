@@ -20,12 +20,9 @@
     <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
-    <module name="intellij.platform.projectFrame"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <toolWindow id="Project" anchor="left" icon="AllIcons.Toolwindows.ToolWindowProject"
-                factoryClass="com.intellij.platform.projectView.window.ProjectViewToolWindowFactory"/>
     <registryKey key="project.view.toolwindow.split" defaultValue="false" restartRequired="true"
                  description="Enables the new experimental split Project View tool window" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewPaneIdDataContextSerializer" />
