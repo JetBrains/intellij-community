@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -16,9 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 
-/**
- * @see com.intellij.openapi.diagnostic.AttachmentFactory
- */
+/// @see com.intellij.openapi.diagnostic.AttachmentFactory
 public final class Attachment {
   private static final LoggerRt LOG = LoggerRt.getInstance(Attachment.class);
 
@@ -48,7 +45,10 @@ public final class Attachment {
     this(path, displayText, null, temporaryFile);
   }
 
-  public Attachment(@NotNull String path, @NotNull File temporaryFile, @NotNull String displayText) {
+  /// @deprecated use [#Attachment(String, Path, String)] instead
+  @Deprecated
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public Attachment(@NotNull String path, @NotNull java.io.File temporaryFile, @NotNull String displayText) {
     this(path, displayText, null, temporaryFile.toPath());
   }
 
@@ -85,7 +85,7 @@ public final class Attachment {
         return Files.readAllBytes(myTemporaryFile);
       }
       catch (IOException e) {
-        LOG.error("Failed to read attachment content from temp. file " + myTemporaryFile, e);
+        LOG.error("Failed to read attachment content from the temp. file " + myTemporaryFile, e);
       }
     }
 
@@ -106,7 +106,7 @@ public final class Attachment {
         return Files.newInputStream(myTemporaryFile);
       }
       catch (IOException e) {
-        LOG.error("Failed to read attachment content from temp. file " + myTemporaryFile, e);
+        LOG.error("Failed to read attachment content from the temp. file " + myTemporaryFile, e);
       }
     }
 
