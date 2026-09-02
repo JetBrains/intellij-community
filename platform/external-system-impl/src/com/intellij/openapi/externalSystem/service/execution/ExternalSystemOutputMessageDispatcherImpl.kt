@@ -68,6 +68,8 @@ open class ExternalSystemOutputMessageDispatcherImpl(
         handler.accept(exception)
       }
       catch (exception: Exception) {
+        //TODO: Closeable.close() should not (re)throw cancellation exceptions, 'cos it may interact badly with
+        //      try-with-resource pattern: see IJPL-248654 for details
         rethrowControlFlowException(exception)
         LOG.warn(exception)
       }

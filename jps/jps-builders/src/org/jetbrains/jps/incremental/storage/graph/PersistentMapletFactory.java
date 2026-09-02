@@ -54,7 +54,7 @@ public final class PersistentMapletFactory implements MapletFactory, Closeable {
     int cacheSizeOverride = SystemProperties.getIntProperty(DEPENDENCY_GRAPH_BASE_CACHE_SIZE, 0);
     BASE_CACHE_SIZE = cacheSizeOverride > 0? cacheSizeOverride : 512 * (SystemProperties.getBooleanProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false)? 2 : 1);
   }
-  
+
   private final String myRootDirPath;
   private final PersistentStringEnumerator myStringTable;
   private final List<BaseMaplet<?>> myMaps = new ArrayList<>();
@@ -80,7 +80,7 @@ public final class PersistentMapletFactory implements MapletFactory, Closeable {
     };
     final int maxGb = (int) (Runtime.getRuntime().maxMemory() / 1_073_741_824L);
     myCacheSize = BASE_CACHE_SIZE * Math.min(Math.max(1, maxGb), 5); // increase by BASE_CACHE_SIZE for every additional Gb
-    
+
     myDataInterner = elem -> {
       if (elem instanceof Usage) {
         return GraphElementInterner.intern((Usage)elem);
@@ -136,7 +136,7 @@ public final class PersistentMapletFactory implements MapletFactory, Closeable {
         if (ex == null) {
           ex = e;
         }
-        else {
+        else if (e != ex) {
           ex.addSuppressed(e);
         }
       }

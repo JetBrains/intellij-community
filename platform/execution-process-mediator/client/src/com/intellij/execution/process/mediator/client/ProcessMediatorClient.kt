@@ -199,6 +199,8 @@ class ProcessMediatorClient private constructor(
 
   override fun close() {
     try {
+      //TODO: Closeable.close() should not (re)throw cancellation exceptions, 'cos it may interact badly with
+      //      try-with-resource pattern: see IJPL-248654 for details
       runBlocking(coroutineScope.coroutineContext) {
         shutdown()
       }

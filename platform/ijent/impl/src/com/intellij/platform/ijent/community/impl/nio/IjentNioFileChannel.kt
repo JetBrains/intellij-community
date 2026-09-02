@@ -357,6 +357,8 @@ internal class IjentNioFileChannel private constructor(
   @Throws(FileSystemException::class)
   override fun implCloseChannel() {
     closeOrigin = Throwable()
+    //TODO: (Auto)Closeable.close() should not (re)throw cancellation exceptions, 'cos it may interact badly with
+    //      try-with-resource pattern: see IJPL-248654 for details
     ijentOpenedFile.fsBlocking { close() }
   }
 
