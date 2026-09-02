@@ -46,6 +46,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.ui.ClientProperty
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SlowOperationCanceledException
@@ -306,6 +307,12 @@ object ActionUtil {
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false)
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, false)
       return AnActionResult.ignored("action is not compatible with LightEdit")
+    }
+    if (IdeProductMode.isLight && !action.isDumbAware) {
+      presentation.isEnabledAndVisible = false
+      presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false)
+      presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, false)
+      return AnActionResult.ignored("action is not compatible with LightMode")
     }
     val wasEnabledBefore = presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB)
     val dumbMode = isDumbMode(e.project)
