@@ -28,6 +28,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -617,6 +618,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   }
 
   private fun doShowDumbModeNotification(message: @NlsContexts.PopupContent String) {
+    LOG.assertTrue(!IdeProductMode.isLight,
+                   "Dumb mode notifications in Light mode are useless: dumb mode never ends in Light. Make functionality unavailable instead.")
     EdtInvocationManager.invokeLaterIfNeeded {
       val ideFrame = WindowManager.getInstance().getIdeFrame(myProject)
       if (ideFrame != null) {
@@ -646,6 +649,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     runWhenSmartAndBalloonStillShowing: Runnable,
     actionIds: List<String>,
   ) {
+    LOG.assertTrue(!IdeProductMode.isLight,
+                   "Dumb mode notifications in Light mode are useless: dumb mode never ends in Light. Make functionality unavailable instead.")
     balloon.showDumbModeActionBalloon(
       balloonText = balloonText,
       runWhenSmartAndBalloonStillShowing = {
