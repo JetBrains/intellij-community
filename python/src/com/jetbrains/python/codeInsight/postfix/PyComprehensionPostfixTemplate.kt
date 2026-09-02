@@ -12,12 +12,12 @@ import com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro
 /**
  * Builds a list/set/generator comprehension over an iterable expression, e.g. `nums.compl` -> `[n for n in nums]`.
  */
-class PyComprehensionPostfixTemplate(name: String, template: String, provider: PostfixTemplateProvider) :
+class PyComprehensionPostfixTemplate(name: String, template: String, example: String, provider: PostfixTemplateProvider) :
   PyEditablePostfixTemplate(
     name,
     name,
     template,
-    "[e for e in expr]",
+    example,
     setOf(PyPostfixTemplateExpressionCondition.PyIterable()),
     false,
     provider,

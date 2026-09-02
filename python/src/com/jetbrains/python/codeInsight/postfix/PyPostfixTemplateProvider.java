@@ -49,9 +49,9 @@ public final class PyPostfixTemplateProvider implements PostfixTemplateProvider 
     new PyCallWrapPostfixTemplate("set", this),
     new PyCallWrapPostfixTemplate("dict", this),
     new PyCallWrapPostfixTemplate("tuple", this),
-    new PyComprehensionPostfixTemplate("compl", "[$VAR_EXPR$ for $VAR$ in $EXPR$]$END$", this),
-    new PyComprehensionPostfixTemplate("comps", "{$VAR_EXPR$ for $VAR$ in $EXPR$}$END$", this),
-    new PyComprehensionPostfixTemplate("compg", "($VAR_EXPR$ for $VAR$ in $EXPR$)$END$", this),
+    new PyComprehensionPostfixTemplate("compl", "[$VAR_EXPR$ for $VAR$ in $EXPR$]$END$", "[e for e in expr]", this),
+    new PyComprehensionPostfixTemplate("comps", "{$VAR_EXPR$ for $VAR$ in $EXPR$}$END$", "{e for e in expr}", this),
+    new PyComprehensionPostfixTemplate("compg", "($VAR_EXPR$ for $VAR$ in $EXPR$)$END$", "(e for e in expr)", this),
     new PyDictComprehensionPostfixTemplate(this)
   );
 
