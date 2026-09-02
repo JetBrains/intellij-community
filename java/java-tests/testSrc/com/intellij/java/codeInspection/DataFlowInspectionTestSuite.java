@@ -60,6 +60,7 @@ import org.junit.platform.suite.api.Suite;
 
   NullableStuffInspectionTest.class,
   NullableStuffInspectionAncientTest.class,
+  NotNullParameterReceivesNullInspectionTest.class,
 
   CheckerNullityTest.class,
 

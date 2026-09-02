@@ -170,12 +170,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
-  public void testNullableCalledWithNullUnderNotNullByDefault() {
-    addJavaxNullabilityAnnotations(myFixture);
-    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
-    doTest();
-  }
-
   public void testNullableSiblingOverriding() { doTest(); }
 
   public void testNonAnnotatedSiblingOverriding() {
@@ -239,18 +233,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
     myFixture.enableInspections(myInspection);
     myFixture.checkHighlighting(true, false, true);
-  }
-
-  public void testNullPassedToNotNullParameter() {
-    doTest();
-  }
-
-  public void testNullPassedToNotNullConstructorParameter() {
-    doTest();
-  }
-
-  public void testNullPassedAsPartNotNullAnnotatedOfVarArg() {
-    doTest();
   }
 
   public void testHonorParameterDefaultInSetters() {
@@ -367,10 +349,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTestWithFix("Remove annotation");
   }
 
-  public void testNullPassedToNullableParameter() {
-    doTest();
-  }
-
   public void testTypeUseArrayAnnotation() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     setupTypeUseAnnotations("typeUse", myFixture);
@@ -472,10 +450,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
-  public void testParameterUnderDefaultNotNull() {
-    doTest();
-  }
-  
   public void testRedundantNotNull() {
     doTest();
   }

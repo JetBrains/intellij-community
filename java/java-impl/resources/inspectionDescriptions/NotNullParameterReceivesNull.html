@@ -1,0 +1,26 @@
+<html>
+<body>
+Reports a non-null parameter that some call site passes the <code>null</code> literal to.
+<p>Example:</p>
+<pre><code>class Greeter {
+  void greet(@NotNull String name) {
+    System.out.println("Hello, " + name);
+  }
+
+  void run() {
+    greet(null); // 'name' is reported
+  }
+}</code></pre>
+<p>
+  Such a call breaks the not-null contract of the parameter. Either the argument must become non-null,
+  or the parameter must accept <code>null</code>.
+</p>
+<p>The <b>Navigate to 'null' argument usages</b> quick-fix shows every such call site.</p>
+<p>
+  The inspection must search the whole project for the call sites, so it works in the editor only.
+  It reports nothing in batch mode.
+</p>
+<!-- tooltip end -->
+<p><small>New in 2026.3</small></p>
+</body>
+</html>

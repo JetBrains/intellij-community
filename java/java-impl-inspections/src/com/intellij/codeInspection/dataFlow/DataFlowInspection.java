@@ -19,7 +19,7 @@ import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.dataFlow.fix.FindDfaProblemCauseFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithBooleanEqualsFix;
 import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
-import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.codeInspection.nullable.NavigateToNullLiteralArguments;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.JavaFeature;
@@ -223,7 +223,7 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
 
   @Override
   protected LocalQuickFix createNavigateToNullParameterUsagesFix(PsiParameter parameter) {
-    return new NullableStuffInspection.NavigateToNullLiteralArguments(parameter);
+    return new NavigateToNullLiteralArguments(parameter);
   }
 
   @Override

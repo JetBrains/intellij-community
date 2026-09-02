@@ -90,17 +90,14 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.PsiWildcardType;
-import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.TypeAnnotationProvider;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil;
 import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -177,7 +174,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
    * @deprecated the field remains to minimize changes to users' inspection profiles.
    */
   @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
-  public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
+  /**
+   * @deprecated the field remains to minimize changes to users' inspection profiles.
+   * The check moved to {@code NotNullParameterReceivesNullInspection}.
+   */
+  @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER = true;
 
   private static final Logger LOG = Logger.getInstance(NullableStuffInspectionBase.class);
@@ -221,12 +222,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
-        if (aClass.isRecord()) {
-          PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
-          if (constructor instanceof SyntheticElement) {
-            checkParameters(constructor, holder, List.of(), manager);
-          }
-        }
         checkConflictingContainerAnnotations(holder, aClass.getModifierList());
       }
 
@@ -845,10 +840,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     }
   }
 
-  protected LocalQuickFix createNavigateToNullParameterUsagesFix(PsiParameter parameter) {
-    return null;
-  }
-
   private static boolean nullabilityAnnotationsNotAvailable(final PsiFile file) {
     final Project project = file.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -1252,8 +1243,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       List<PsiParameter> superParameters = getSuperParameters(superMethods, parameters, i);
 
       checkSuperParameterAnnotations(holder, nullableManager, parameter, superParameters);
-
-      checkNullLiteralArgumentOfNotNullParameterUsages(method, holder, nullableManager, i, parameter);
     }
   }
 
@@ -1468,38 +1457,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
     }
     return true;
-  }
-
-  private void checkNullLiteralArgumentOfNotNullParameterUsages(PsiMethod method,
-                                                                ProblemsHolder holder,
-                                                                NullableNotNullManager nullableManager,
-                                                                int parameterIdx,
-                                                                PsiParameter parameter) {
-    if (!REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER || !holder.isOnTheFly()) return;
-
-    PsiVariable owner = parameter.isPhysical() ? parameter : JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(parameter);
-    if (owner == null) return;
-
-    PsiElement elementToHighlight = null;
-    NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(owner);
-    if (info != null && !info.isInferred()) {
-      if (info.getNullability() == Nullability.NOT_NULL) {
-        PsiAnnotation notNullAnnotation = info.getAnnotation();
-        boolean physical = PsiTreeUtil.isAncestor(owner, notNullAnnotation, true);
-        elementToHighlight = physical ? notNullAnnotation : owner.getNameIdentifier();
-      }
-    }
-    else {
-      info = DfaPsiUtil.getTypeNullabilityInfo(owner.getType());
-      if (info != null && info.getNullability() == Nullability.NOT_NULL) {
-        elementToHighlight = owner.getNameIdentifier();
-      }
-    }
-    if (elementToHighlight == null || !JavaNullMethodArgumentUtil.hasNullArgument(method, parameterIdx)) return;
-
-    reportProblem(holder, elementToHighlight, createNavigateToNullParameterUsagesFix(parameter),
-                  "inspection.nullable.problems.NotNull.parameter.receives.null.literal",
-                  StringUtil.getShortName(requireNonNull(info.getAnnotation().getQualifiedName())));
   }
 
   private void checkOverriders(@NotNull PsiMethod method,

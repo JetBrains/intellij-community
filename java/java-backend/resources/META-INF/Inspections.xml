@@ -493,6 +493,11 @@
                      groupKey="group.names.nullability.problems" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.nullable.NullableStuffInspection"/>
+    <localInspection groupPathKey="group.path.names.probable.bugs" language="JAVA" shortName="NotNullParameterReceivesNull"
+                     bundle="messages.JavaBundle" key="inspection.notnull.parameter.receives.null.display.name"
+                     groupKey="group.names.nullability.problems" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
+                     level="WARNING" alternativeId="NullableProblems"
+                     implementationClass="com.intellij.codeInspection.nullable.NotNullParameterReceivesNullInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnsatisfiedRange" bundle="messages.JavaAnalysisBundle"
                      key="inspection.unsatisfied.range.display.name"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
