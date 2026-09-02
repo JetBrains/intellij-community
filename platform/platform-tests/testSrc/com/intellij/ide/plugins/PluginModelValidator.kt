@@ -11,7 +11,6 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.DependenciesEleme
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ServiceElement
-import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.testFramework.junit5.NamedFailure
 import com.intellij.testFramework.junit5.groupFailures
 import com.intellij.util.io.jackson.array
@@ -19,6 +18,8 @@ import com.intellij.util.io.jackson.createGenerator
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.io.jackson.writeFieldName
 import com.intellij.util.io.jackson.writeStringField
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import org.junit.jupiter.api.DynamicContainer
@@ -214,6 +215,7 @@ internal class PluginModelValidator(
     }
 
     for (pluginInfo in allMainModulesOfPlugins) {
+      currentCoroutineContext().ensureActive()
       val descriptor = pluginInfo.descriptor
 
       for (incompatibleWithId in descriptor.incompatibleWith) {
@@ -252,7 +254,7 @@ internal class PluginModelValidator(
         )
       }
 
-      pluginInfo.content.forEachConcurrent { contentModuleInfo ->
+      for (contentModuleInfo in pluginInfo.content) {
         checkDependencies(
           dependenciesElements = contentModuleInfo.descriptor.dependencies,
           referencingModuleInfo = contentModuleInfo,
