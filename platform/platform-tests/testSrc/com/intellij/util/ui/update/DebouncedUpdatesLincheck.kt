@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update
 
+import com.intellij.testFramework.PerformanceUnitTest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -36,6 +37,7 @@ class DebouncedUpdatesActivityCoverageLincheck {
   @Suppress("unused")
   fun isAllExecuted(): Boolean = queue.isAllExecuted
 
+  @PerformanceUnitTest
   @Test
   fun stressTest() = StressOptions()
     .sequentialSpecification(ActivityCoverageSeqSpec::class.java)
