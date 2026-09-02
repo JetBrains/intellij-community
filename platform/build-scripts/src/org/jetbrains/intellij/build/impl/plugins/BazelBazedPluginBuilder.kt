@@ -10,7 +10,6 @@ import com.intellij.platform.distributionContent.deserializeContentData
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.FileSource
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
@@ -221,7 +220,6 @@ internal fun computeSearchableOptionsInjections(
       searchableOptionSet.createSourceByModule(entry.owner.moduleName)
     }
     for (source in sources) {
-      source as? FileSource ?: error("$source is not FileSource")
       entriesByJar.computeIfAbsent(entry.path) { ArrayList() }.add(SearchableOptionsEntry(source.relativePath, source.file))
     }
   }

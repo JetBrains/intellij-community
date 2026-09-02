@@ -39,14 +39,14 @@ class SearchableOptionSetDescriptor(
   @JvmField internal val index: Map<String, List<SearchableOptionSetIndexItem>>,
   @JvmField val baseDir: Path,
 ) {
-  fun createSourceByModule(moduleName: String): List<Source> {
+  fun createSourceByModule(moduleName: String): List<FileSource> {
     val list = index[moduleName] ?: return emptyList()
     return list.map {
       FileSource(relativePath = it.file, size = it.size, hash = it.hash, file = baseDir.resolve(it.file))
     }
   }
 
-  fun createSourceByPlugin(pluginId: String): Collection<Source> = createSourceByModule(pluginId)
+  fun createSourceByPlugin(pluginId: String): List<FileSource> = createSourceByModule(pluginId)
 }
 
 internal fun readSearchableOptionIndex(baseDir: Path): SearchableOptionSetDescriptor {
