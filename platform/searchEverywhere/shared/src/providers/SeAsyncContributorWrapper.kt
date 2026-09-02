@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers
 
-import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
+import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.EmptyProgressIndicatorBase
@@ -206,4 +206,5 @@ fun SearchEverywhereContributor<*>.getExtendedInfo(item: Any): SeExtendedInfo {
   return SeExtendedInfoBuilder().withExtendedInfo(extendedInfo, item).build()
 }
 
-private val FoundItemDescriptor<*>.isExactMatch: Boolean get() = GotoFileItemProvider.isInExactMatchDegreeRange(weight)
+private val FoundItemDescriptor<*>.isExactMatch: Boolean
+  get() = DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(weight)

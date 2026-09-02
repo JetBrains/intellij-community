@@ -8,6 +8,7 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor;
+import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.mock.MockProgressIndicator;
@@ -639,7 +640,8 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   public void test_include_overridden_qualified_name_method_matches() {
     PsiMethod m1 = myFixture.addClass("interface HttpRequest { void start() {} }").getMethods()[0];
     PsiMethod m2 = myFixture.addClass("interface Request extends HttpRequest { void start() {} }").getMethods()[0];
-    assertOrderedEquals(gotoSymbol("Request.start"), List.of(m1, m2));
+    // IJPL-220122: "Request.start" names m2 exactly, and names m1 only in part.
+    assertOrderedEquals(gotoSymbol("Request.start"), List.of(m2, m1));
     if (DumbService.getInstance(myFixture.getProject()).isDumb()) {
       assertOrderedEquals(gotoSymbol("start"), List.of(m1, m2)); // can't remove overrides in dumb mode
     }
@@ -672,6 +674,64 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
     assertOrderedEquals(gotoFile("bbbbbbbbbbbbbbbb/cccccccccccccccccc/ddddddddddddddddd/eeeeeeeeeeeeeeee/" +
                                  "ffffffffffffffffff/ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java"), List.of(veryLongNameFile));
+  }
+
+  public void test_exactly_matching_qualified_symbol_gets_the_exact_match_degree() {
+    PsiMethod method = myFixture.addClass("package foo; class Bar { void createBreakpoints() {} }").getMethods()[0];
+    WeightedSearchEverywhereContributor<?> contributor =
+      (WeightedSearchEverywhereContributor<?>)createSymbolContributor(getProject(), getTestRootDisposable(), null, false);
+
+    int exactMatchDegree = DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE;
+    assertTrue(weightOf(contributor, "foo.Bar#createBreakpoints", method) >= exactMatchDegree);
+    // '#' and '.' are both name separators, so both spellings name the method exactly.
+    assertTrue(weightOf(contributor, "foo.Bar.createBreakpoints", method) >= exactMatchDegree);
+    // The user can leave out a part of the qualifier.
+    assertTrue(weightOf(contributor, "Bar#createBreakpoints", method) >= exactMatchDegree);
+    // A search text without a separator says nothing about the qualifier.
+    assertTrue(weightOf(contributor, "createBreakpoints", method) < exactMatchDegree);
+    // A partial name is not an exact match.
+    assertTrue(weightOf(contributor, "foo.Bar#createBreak", method) < exactMatchDegree);
+    // A Copy Reference result carries a signature. A signature is not a part of a name.
+    assertTrue(weightOf(contributor, "foo.Bar#createBreakpoints()", method) >= exactMatchDegree);
+
+    // The split Search Everywhere reads the exactness back from the weight, so the weight of a real
+    // exact match must pass isInExactMatchDegreeRange.
+    assertTrue(DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(
+      weightOf(contributor, "foo.Bar#createBreakpoints", method)));
+    assertFalse(DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(
+      weightOf(contributor, "createBreakpoints", method)));
+  }
+
+  public void test_exactly_matching_qualified_class_gets_the_exact_match_degree() {
+    PsiClass barClass = myFixture.addClass("package foo; class Bar { }");
+    WeightedSearchEverywhereContributor<?> contributor =
+      (WeightedSearchEverywhereContributor<?>)createClassContributor(getProject(), getTestRootDisposable(), null, false);
+
+    int exactMatchDegree = DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE;
+    assertTrue(weightOf(contributor, "foo.Bar", barClass) >= exactMatchDegree);
+    assertTrue(weightOf(contributor, "foo.Ba", barClass) < exactMatchDegree);
+  }
+
+  public void test_a_class_is_not_an_exact_match_for_a_member_search_text() {
+    PsiClass barClass = myFixture.addClass("package foo; class Bar { String baz; }");
+    WeightedSearchEverywhereContributor<?> contributor =
+      (WeightedSearchEverywhereContributor<?>)createClassContributor(getProject(), getTestRootDisposable(), null, false);
+
+    // The Classes tab drops "#baz" from the search text, because it navigates to the member after
+    // it opens the class. The class alone does not answer the whole search text, so it must not
+    // get the exact match degree.
+    assertTrue(weightOf(contributor, "foo.Bar#baz", barClass) < DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE);
+    // The same holds for an anonymous class search text.
+    assertTrue(weightOf(contributor, "foo.Bar$1", barClass) < DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE);
+  }
+
+  private static int weightOf(WeightedSearchEverywhereContributor<?> contributor, String text, Object item) {
+    List<?> items = contributor.searchWeightedElements(text, new MockProgressIndicator(), ELEMENTS_LIMIT).getItems();
+    for (Object each : items) {
+      FoundItemDescriptor<?> descriptor = (FoundItemDescriptor<?>)each;
+      if (item.equals(descriptor.getItem())) return descriptor.getWeight();
+    }
+    throw new AssertionError("The search for '" + text + "' did not return " + item);
   }
 
   @SuppressWarnings("unchecked")

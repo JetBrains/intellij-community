@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,6 +18,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.MatcherWithFallback;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.PreferStartMatchMatcherWrapper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.CollectConsumer;
@@ -35,6 +35,7 @@ import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +49,15 @@ import java.util.function.Supplier;
 
 public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemProvider {
   private static final Logger LOG = Logger.getInstance(DefaultChooseByNameItemProvider.class);
-  private static final String UNIVERSAL_SEPARATOR = "\u0000";
+  private static final char UNIVERSAL_SEPARATOR_CHAR = '\u0000';
+  private static final String UNIVERSAL_SEPARATOR = String.valueOf(UNIVERSAL_SEPARATOR_CHAR);
+
+  @ApiStatus.Internal
+  public static final int EXACT_MATCH_BONUS = 5000;
+  @ApiStatus.Internal
+  public static final int EXACT_MATCH_DEGREE = PreferStartMatchMatcherWrapper.START_MATCH_WEIGHT + EXACT_MATCH_BONUS;
+  private static final String EXACT_MATCH_REGISTRY_KEY = "search.everywhere.qualified.symbols.exact.match.priority";
+
   private final SmartPsiElementPointer<PsiElement> myContext;
 
   public DefaultChooseByNameItemProvider(@Nullable PsiElement context) {
@@ -266,22 +275,30 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
                                         @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
                                         @NotNull List<? extends MatchResult> namesList,
                                         @NotNull  FindSymbolParameters parameters) {
-    List<Pair<Object, MatchResult>> sameNameElements = new SmartList<>();
+    List<Candidate> sameNameElements = new SmartList<>();
 
     ChooseByNameModel model = base.getModel();
-    Comparator<Pair<Object, MatchResult>> weightComparator = new Comparator<>() {
+    Comparator<Candidate> weightComparator = new Comparator<>() {
       @SuppressWarnings("unchecked") final
       Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model :
                                            new PathProximityComparator(context);
 
       @Override
-      public int compare(Pair<Object, MatchResult> o1, Pair<Object, MatchResult> o2) {
-        int result = modelComparator.compare(o1.first, o2.first);
-        return result != 0 ? result : o1.second.compareTo(o2.second);
+      public int compare(Candidate o1, Candidate o2) {
+        int result = modelComparator.compare(o1.element(), o2.element());
+        return result != 0 ? result : o1.qualifiedResult().compareTo(o2.qualifiedResult());
       }
     };
 
     MinusculeMatcher fullMatcher = buildFullMatcher(parameters, base);
+    // Null when the search text cannot express an exact qualified match. See buildExactMatchPattern.
+    String exactMatchPattern = buildExactMatchPattern(base, parameters.getCompletePattern());
+    // An exact match goes first inside one name group. The plain Goto Class and Goto Symbol popups
+    // drop the weight and keep the emission order, so the sort is what fixes them.
+    // The order across name groups comes from namesList and stays as it is.
+    Comparator<Candidate> groupComparator =
+      exactMatchPattern == null ? weightComparator
+                                : Comparator.comparing((Candidate c) -> !c.exactMatch()).thenComparing(weightComparator);
 
     for (MatchResult result : namesList) {
       indicator.checkCanceled();
@@ -297,21 +314,34 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
           indicator.checkCanceled();
           MatchResult qualifiedResult = matchQualifiedName(model, fullMatcher, element);
           if (qualifiedResult != null) {
-            sameNameElements.add(Pair.create(element, qualifiedResult));
+            sameNameElements.add(new Candidate(element, qualifiedResult, isExactQualifiedMatch(exactMatchPattern, qualifiedResult)));
           }
         }
-        sameNameElements.sort(weightComparator);
+        sameNameElements.sort(groupComparator);
         List<FoundItemDescriptor<?>> processedItems =
-          ContainerUtil.map(sameNameElements, p -> new FoundItemDescriptor<>(p.first, result.matchingDegree));
+          ContainerUtil.map(sameNameElements, c -> new FoundItemDescriptor<>(c.element(), weightOf(result, c.exactMatch())));
         if (!ContainerUtil.process(processedItems, consumer)) return false;
       }
       else if (elements.length == 1) {
-        if (matchQualifiedName(model, fullMatcher, elements[0]) != null) {
-          if (!consumer.process(new FoundItemDescriptor<>(elements[0], result.matchingDegree))) return false;
+        MatchResult qualifiedResult = matchQualifiedName(model, fullMatcher, elements[0]);
+        if (qualifiedResult != null) {
+          int weight = weightOf(result, isExactQualifiedMatch(exactMatchPattern, qualifiedResult));
+          if (!consumer.process(new FoundItemDescriptor<>(elements[0], weight))) return false;
         }
       }
     }
     return true;
+  }
+
+  /** One element of a group of elements that share a short name. */
+  private record Candidate(@NotNull Object element, @NotNull MatchResult qualifiedResult, boolean exactMatch) { }
+
+  private static int weightOf(@NotNull MatchResult nameResult, boolean exactMatch) {
+    return exactMatch ? nameResult.matchingDegree + EXACT_MATCH_BONUS : nameResult.matchingDegree;
+  }
+
+  private static boolean isExactQualifiedMatch(@Nullable String exactMatchPattern, @NotNull MatchResult qualifiedResult) {
+    return exactMatchPattern != null && isExactQualifiedMatch(exactMatchPattern, qualifiedResult.elementName);
   }
 
   @ApiStatus.Internal
@@ -345,6 +375,76 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
 
   private static @NotNull String buildQualifiedNamePattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     return removeModelSpecificMarkup(base.getModel(), base.transformPattern(pattern));
+  }
+
+  /**
+   * The normalized qualified name an element must end with to count as an exact match,or null when the search text cannot express one.
+   */
+  private static @Nullable String buildExactMatchPattern(@NotNull ChooseByNameViewModel base, @NotNull String rawPattern) {
+    if (!Registry.is(EXACT_MATCH_REGISTRY_KEY, true)) return null;
+
+    ChooseByNameModel model = base.getModel();
+    String transformedPattern = buildQualifiedNamePattern(base, rawPattern);
+    if (!keepsTheLastName(model, removeModelSpecificMarkup(model, rawPattern), transformedPattern)) return null;
+
+    return normalizeExactMatchPattern(model.getSeparators(), transformedPattern);
+  }
+
+  /**
+   * True when {@link ChooseByNameViewModel#transformPattern} keeps the last name of the search text.
+   * <p>
+   * A model can drop the end of the search text. {@link GotoClassModel2} drops "#member", because the
+   * Classes tab opens the class first and goes to the member after that. The class alone then answers
+   * a part of the search text, so it is not an exact match. {@link GotoSymbolModel2} keeps "#member"
+   * and drops only a method signature, which is not a name.
+   */
+  private static boolean keepsTheLastName(@NotNull ChooseByNameModel model,
+                                          @NotNull String rawPattern,
+                                          @NotNull String transformedPattern) {
+    // A signature is not a part of a name. "pkg.Cls#method(int)" comes from Copy Reference.
+    int signatureStart = rawPattern.indexOf('(');
+    String rawName = signatureStart < 0 ? rawPattern : rawPattern.substring(0, signatureStart);
+    return buildNamePattern(model, rawName).equals(buildNamePattern(model, transformedPattern));
+  }
+
+  /** @see #buildExactMatchPattern */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @Nullable String normalizeExactMatchPattern(String @NotNull [] separators, @NotNull String rawPattern) {
+    String pattern = rawPattern.stripTrailing();
+    if (pattern.isEmpty() || pattern.indexOf('*') >= 0) return null;
+
+    boolean hasSeparator = false;
+    for (String separator : separators) {
+      if (pattern.contains(separator)) {
+        hasSeparator = true;
+        pattern = StringUtil.replace(pattern, separator, UNIVERSAL_SEPARATOR);
+      }
+    }
+    return hasSeparator ? pattern : null;
+  }
+
+  /**
+   * True when the search text names the element exactly.
+   */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static boolean isExactQualifiedMatch(@NotNull String normalizedPattern, @NotNull String normalizedFullName) {
+    int offset = normalizedFullName.length() - normalizedPattern.length();
+    if (offset < 0) return false;
+    if (!normalizedFullName.regionMatches(offset, normalizedPattern, 0, normalizedPattern.length())) return false;
+    if (offset == 0) return true;
+
+    char preceding = normalizedFullName.charAt(offset - 1);
+    return preceding == UNIVERSAL_SEPARATOR_CHAR || !Character.isJavaIdentifierPart(preceding);
+  }
+
+  /**
+   * True when the weight holds the {@link #EXACT_MATCH_BONUS} bonus.
+   */
+  @ApiStatus.Internal
+  public static boolean isInExactMatchDegreeRange(int degree) {
+    return degree >= EXACT_MATCH_DEGREE - 1000;
   }
 
   private static @NotNull String buildNamePattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {

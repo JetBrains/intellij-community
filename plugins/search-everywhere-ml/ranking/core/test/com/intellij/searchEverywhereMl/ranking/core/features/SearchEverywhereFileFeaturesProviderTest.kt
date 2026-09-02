@@ -1,8 +1,8 @@
 package com.intellij.searchEverywhereMl.ranking.core.features
 
-import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.providers.LineBookmarkProvider
+import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileFeaturesProvider.Fields.FILETYPE_DATA_KEY
@@ -55,14 +55,14 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun `test exact match is true when priority is exactly exact match degree`() {
     checkThatFeature(IS_EXACT_MATCH_DATA_KEY)
       .ofElement(testFile)
-      .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE)
+      .withPriority(DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE)
       .isEqualTo(true)
   }
 
   fun `test exact match is false when only slash is first character of query`() {
     checkThatFeature(IS_EXACT_MATCH_DATA_KEY)
       .ofElement(testFile)
-      .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
+      .withPriority(DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE + 1)
       .withQuery("/${testFile.virtualFile.name}")
       .isEqualTo(false)
   }
@@ -70,7 +70,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun `test exact match is true when query starts with slash`() {
     checkThatFeature(IS_EXACT_MATCH_DATA_KEY)
       .ofElement(testFile)
-      .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
+      .withPriority(DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE + 1)
       .withQuery("/${testFile.virtualFile.parent.name}/${testFile.virtualFile.name}")
       .isEqualTo(true)
   }
@@ -78,7 +78,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun `test exact match is true when last slash is not first character of query`() {
     checkThatFeature(IS_EXACT_MATCH_DATA_KEY)
       .ofElement(testFile)
-      .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
+      .withPriority(DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE + 1)
       .withQuery("${testFile.virtualFile.parent.name.last()}/${testFile.virtualFile.name}")
       .isEqualTo(true)
   }
@@ -86,7 +86,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun `test exact match is true when using backslash`() {
     checkThatFeature(IS_EXACT_MATCH_DATA_KEY)
       .ofElement(testFile)
-      .withPriority(GotoFileItemProvider.EXACT_MATCH_DEGREE + 1)
+      .withPriority(DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE + 1)
       .withQuery("${testFile.virtualFile.parent.name.last()}\\${testFile.virtualFile.name}")
       .isEqualTo(true)
   }
