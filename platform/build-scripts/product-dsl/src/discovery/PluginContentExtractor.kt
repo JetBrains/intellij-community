@@ -10,14 +10,12 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ContentModuleElem
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.DescriptorDependencyWalk
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
@@ -324,13 +322,11 @@ private suspend fun extractContentModules(
     }
 
     // Resolve all new paths concurrently (errors are collected, not thrown)
-    pending = coroutineScope {
-      newPaths.map { path ->
-        async {
-          xIncludeResolver(path)?.let { path to it }
-        }
-      }.awaitAll().filterNotNull()
-    }
+    // `mapConcurrent` bounds the fan-out. An unresolved path sweeps the output archive of each module of
+    // the project, so one coroutine per path oversubscribes the dispatcher.
+    pending = newPaths.mapConcurrent { path ->
+      xIncludeResolver(path)?.let { path to it }
+    }.filterNotNull()
   }
 
   return ExtractedContent(

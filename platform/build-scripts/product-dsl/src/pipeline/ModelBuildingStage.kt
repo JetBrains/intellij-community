@@ -24,6 +24,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.resolveDescriptor
 import org.jetbrains.intellij.build.productLayout.ContentModule
 import org.jetbrains.intellij.build.productLayout.DeprecatedXmlInclude
@@ -367,14 +368,12 @@ internal object ModelBuildingStage {
     // NOTE: Plugins without META-INF/plugin.xml are silently skipped here.
     //       Phase 2 will emit MissingPluginInGraphError if a product tries to bundle them.
     // ───────────────────────────────────────────────────────────────────────────────
-    val extractedPlugins = coroutineScope {
-      pluginTargets.map { plugin ->
-        async {
-          val info = pluginContentCache.extract(plugin = plugin, isTest = plugin in testPluginModuleNames)
-          info?.let { plugin to it }
-        }
-      }.awaitAll().filterNotNull()
-    }
+    // `mapConcurrent` bounds the fan-out. One coroutine per plugin target oversubscribes the dispatcher,
+    // and every extraction can sweep the output archive of each module of the project.
+    val extractedPlugins = pluginTargets.mapConcurrent { plugin ->
+      val info = pluginContentCache.extract(plugin = plugin, isTest = plugin in testPluginModuleNames)
+      info?.let { plugin to it }
+    }.filterNotNull()
     for ((pluginModule, info) in extractedPlugins) {
       builder.addPluginWithContent(pluginModule = pluginModule, content = info, testFrameworkContentModules = testFrameworkContentModules)
       pluginInfos[pluginModule] = info
