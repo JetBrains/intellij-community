@@ -1,6 +1,6 @@
 package com.intellij.mcpserver.impl.util.network
 
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.registry.Registry
@@ -39,27 +39,21 @@ import io.modelcontextprotocol.kotlin.sdk.shared.TransportSendOptions
 import io.modelcontextprotocol.kotlin.sdk.types.JSONRPCMessage
 import io.modelcontextprotocol.kotlin.sdk.types.JSONRPCRequest
 import io.modelcontextprotocol.kotlin.sdk.types.McpJson
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
-private val logger = logger<RoutingContext>()
+private val logger = fileLogger()
 
 /**
  * MCP Streamable HTTP session header.
@@ -73,101 +67,21 @@ private val SSE_HEARTBEAT_EVENT = ServerSentEvent(comments = "heartbeat")
 private val sseHeartbeatPeriod: Duration
   get() = Registry.intValue(SSE_HEARTBEAT_PERIOD_REGISTRY_KEY, 5_000).coerceAtLeast(1).milliseconds
 
-internal const val STREAMABLE_SESSION_IDLE_TIMEOUT_REGISTRY_KEY: String = "mcp.server.streamable.session.idle.timeout.ms"
-
-private const val ABANDONED_SESSION_CLOSED = "Closing an abandoned Streamable HTTP session"
-
-/** A test asserts on this text, so a reword changes an observable. */
-internal const val UNINITIALIZED_SESSION_CLOSED: String = "$ABANDONED_SESSION_CLOSED that never initialized"
-
 /**
- * Inactivity is the only signal an abandoned session gives: a client is not obliged to send DELETE and the SDK ones do
- * not do it on their own, and a client may work without a notification stream at all, so nothing else distinguishes an
- * abandoned session from an idle one.
+ * Serves the MCP endpoints of an IDE. The legacy SSE stream is on `/sse`, with its POST endpoint on `/message`.
+ * Streamable HTTP is on `/stream`, for GET, POST and DELETE.
+ *
+ * [createSession] connects the MCP SDK [ServerSession] of a new session to the [Transport] it is given, and returns it.
+ * Closing that transport is what ends the session: the `onClose` callbacks unregister it here, and cancel the scope
+ * that serves it. This [Application] is the scope the sessions run in, so cancelling it closes every live session.
  */
-private val streamableSessionIdleTimeout: Duration
-  get() = Registry.intValue(STREAMABLE_SESSION_IDLE_TIMEOUT_REGISTRY_KEY, 300_000).coerceAtLeast(1).milliseconds
-
-/**
- * A session that never initialized holds a global IDE override installed for it (document conflict resolution), so it
- * is given only enough time to follow its own POST with an `initialize`.
- */
-private val UNINITIALIZED_GRACE_PERIOD = 30.seconds
-
-/**
- * A Streamable HTTP session, which lives independently of the requests that use it: notification streams come and go,
- * and a client may never open one.
- */
-private class StreamableSession(val transport: StreamableHttpServerTransport) {
-  private sealed interface State {
-    /** [requestsStarted] is what tells an idle moment apart from a later one that looks just like it. */
-    data class Serving(val inFlight: Int, val requestsStarted: Long) : State
-
-    data object Closed : State
-  }
-
-  private val state = MutableStateFlow<State>(State.Serving(inFlight = 0, requestsStarted = 0))
-
-  private val idleTimeout: Duration
-    get() =
-      if (transport.sessionId == null) streamableSessionIdleTimeout.coerceAtMost(UNINITIALIZED_GRACE_PERIOD)
-      else streamableSessionIdleTimeout
-
-  init {
-    transport.onClose { state.value = State.Closed }
-  }
-
-  /** Runs [request] on a session that is still open, or returns `null` because it is not. */
-  suspend fun <T> ifOpen(request: suspend () -> T): T? {
-    if (!startRequest()) return null
-    try {
-      return request()
-    }
-    finally {
-      finishRequest()
-    }
-  }
-
-  /**
-   * Suspends until the session has been idle long enough to be considered abandoned and claims it, or returns `false`
-   * because it was closed for another reason.
-   */
-  suspend fun awaitAbandoned(): Boolean {
-    while (true) {
-      val idle = awaitNothingInFlight() ?: return false
-      if (!usedWithin(idleTimeout, since = idle) && state.compareAndSet(idle, State.Closed)) return true
-    }
-  }
-
-  private fun startRequest(): Boolean {
-    while (true) {
-      val serving = state.value as? State.Serving ?: return false
-      val started = serving.copy(inFlight = serving.inFlight + 1, requestsStarted = serving.requestsStarted + 1)
-      if (state.compareAndSet(serving, started)) return true
-    }
-  }
-
-  private fun finishRequest() {
-    while (true) {
-      val serving = state.value as? State.Serving ?: return
-      if (state.compareAndSet(serving, serving.copy(inFlight = serving.inFlight - 1))) return
-    }
-  }
-
-  private suspend fun awaitNothingInFlight(): State.Serving? =
-    state.first { it !is State.Serving || it.inFlight == 0 } as? State.Serving
-
-  private suspend fun usedWithin(timeout: Duration, since: State): Boolean =
-    withTimeoutOrNull(timeout) { state.first { it != since } } != null
-}
-
 @KtorDsl
 fun Application.mcpPatched(
   prePhase: suspend PipelineContext<*, PipelineCall>.() -> Unit,
-  block: suspend (ApplicationCall, Transport) -> ServerSession,
+  createSession: suspend (ApplicationCall, Transport) -> ServerSession,
 ) {
   val sseTransports = ConcurrentMap<String, SseServerTransport>()
-  val streamableSessions = ConcurrentMap<String, StreamableSession>()
+  val streamableSessions = ConcurrentMap<String, StreamableHttpSession>()
 
   install(SSE)
   install(ContentNegotiation) { json(McpJson) }
@@ -188,7 +102,7 @@ fun Application.mcpPatched(
         period = sseHeartbeatPeriod
       }
 
-      mcpSseEndpoint("/message", sseTransports, block)
+      mcpSseEndpoint("/message", sseTransports, createSession)
     }
 
     post("/message") {
@@ -197,18 +111,19 @@ fun Application.mcpPatched(
 
     route("/stream") {
       sse {
-        val session = call.streamableSessionOrNull(streamableSessions) ?: return@sse
-        session.ifOpen { serveNotificationStream(session.transport) }
+        // ktor commits the response before this handler runs, so the only way to refuse a stream is to end it.
+        val session = call.sessionForStream(streamableSessions) ?: return@sse
+        session.runRequest { serveNotificationStream(session.transport) }
       }
 
       post {
-        val session = obtainOrCreateStreamableSession(call, streamableSessions, this@mcpPatched, block) ?: return@post
-        session.ifOpen { session.transport.handleRequest(null, call) } ?: call.respondSessionNotFound()
+        val session = obtainOrCreateStreamableSession(call, streamableSessions, this@mcpPatched, createSession) ?: return@post
+        session.serveRequest(call)
       }
 
       delete {
-        val session = call.streamableSession(streamableSessions) ?: return@delete
-        session.ifOpen { session.transport.handleRequest(null, call) } ?: call.respondSessionNotFound()
+        val session = call.sessionForRequest(streamableSessions) ?: return@delete
+        session.serveRequest(call)
       }
     }
   }
@@ -218,16 +133,16 @@ fun Application.mcpPatched(
 private suspend fun ServerSSESession.mcpSseEndpoint(
   postEndpoint: String,
   transports: ConcurrentMap<String, SseServerTransport>,
-  block: suspend (ApplicationCall, Transport) -> ServerSession,
+  createSession: suspend (ApplicationCall, Transport) -> ServerSession,
 ) {
   val transport = mcpSseTransport(postEndpoint, transports)
   try {
-    block(call, ClientDisconnectTolerantTransport(transport))
+    createSession(call, ClientDisconnectTolerantTransport(transport))
     logger.trace { "Server connected to transport for sessionId: ${transport.sessionId}" }
     awaitCancellation()
   }
   finally {
-    withContext(NonCancellable) { transport.close() }
+    transport.closeUninterruptibly()
   }
 }
 
@@ -251,7 +166,7 @@ private fun ServerSSESession.mcpSseTransport(
   return transport
 }
 
-internal suspend fun RoutingContext.mcpPostEndpoint(
+private suspend fun RoutingContext.mcpPostEndpoint(
   transports: ConcurrentMap<String, SseServerTransport>,
 ) {
   val sessionId: String = call.request.queryParameters["sessionId"]
@@ -273,13 +188,9 @@ internal suspend fun RoutingContext.mcpPostEndpoint(
   logger.trace { "Message handled for sessionId: $sessionId" }
 }
 
-/**
- * Returns the session named by the `mcp-session-id` header, or responds with the reason it cannot be served
- * and returns `null`.
- */
-private suspend fun ApplicationCall.streamableSession(
-  sessions: ConcurrentMap<String, StreamableSession>,
-): StreamableSession? {
+private suspend fun ApplicationCall.sessionForRequest(
+  sessions: ConcurrentMap<String, StreamableHttpSession>,
+): StreamableHttpSession? {
   val sessionId = request.headers[MCP_SESSION_ID_HEADER]
   if (sessionId.isNullOrEmpty()) {
     respond(HttpStatusCode.BadRequest, "Missing $MCP_SESSION_ID_HEADER header")
@@ -293,17 +204,21 @@ private suspend fun ApplicationCall.streamableSession(
   return session
 }
 
-/**
- * The response of a notification stream is already committed by the time its handler runs, so the only way to refuse
- * one is to end it.
- */
-private fun ApplicationCall.streamableSessionOrNull(
-  sessions: ConcurrentMap<String, StreamableSession>,
-): StreamableSession? {
+private fun ApplicationCall.sessionForStream(
+  sessions: ConcurrentMap<String, StreamableHttpSession>,
+): StreamableHttpSession? {
   val sessionId = request.headers[MCP_SESSION_ID_HEADER]
-  val session = sessionId?.let(sessions::get)
-  if (session == null) logger.trace { "No StreamableHttp session to serve a notification stream for: $sessionId" }
+  if (sessionId.isNullOrEmpty()) {
+    logger.trace { "A notification stream arrived without the $MCP_SESSION_ID_HEADER header" }
+    return null
+  }
+  val session = sessions[sessionId]
+  if (session == null) logger.trace { "A notification stream named an unknown Streamable HTTP session: $sessionId" }
   return session
+}
+
+private suspend fun StreamableHttpSession.serveRequest(call: ApplicationCall) {
+  if (!runRequest { transport.handleRequest(null, call) }) call.respondSessionNotFound()
 }
 
 private suspend fun ApplicationCall.respondSessionNotFound() {
@@ -312,34 +227,37 @@ private suspend fun ApplicationCall.respondSessionNotFound() {
 
 private suspend fun obtainOrCreateStreamableSession(
   call: ApplicationCall,
-  sessions: ConcurrentMap<String, StreamableSession>,
-  scope: CoroutineScope,
-  block: suspend (ApplicationCall, Transport) -> ServerSession,
-): StreamableSession? {
-  if (call.request.headers[MCP_SESSION_ID_HEADER] != null) return call.streamableSession(sessions)
+  sessions: ConcurrentMap<String, StreamableHttpSession>,
+  serverScope: CoroutineScope,
+  createSession: suspend (ApplicationCall, Transport) -> ServerSession,
+): StreamableHttpSession? {
+  if (call.request.headers[MCP_SESSION_ID_HEADER] != null) return call.sessionForRequest(sessions)
 
   val transport = StreamableHttpServerTransport(
     StreamableHttpServerTransport.Configuration(enableJsonResponse = true)
   )
-  val session = StreamableSession(transport)
+  val session = StreamableHttpSession(transport)
 
   val serverSession = try {
-    block(call, ClientDisconnectTolerantTransport(transport))
+    createSession(call, ClientDisconnectTolerantTransport(transport))
   }
   catch (e: Throwable) {
-    withContext(NonCancellable) { transport.close() }
+    transport.closeUninterruptibly()
     throw e
   }
 
   val sessionId = serverSession.sessionId
   transport.setSessionIdGenerator { sessionId }
+  // Registered before the entry exists, so no close can leave the entry behind.
   transport.onClose {
     sessions.remove(sessionId)
-    logger.trace { "StreamableHttp session unregistered: $sessionId" }
+    logger.trace { "Streamable HTTP session unregistered: $sessionId" }
   }
   sessions[sessionId] = session
-  scope.closeWhenAbandoned(sessionId, session)
-  logger.trace { "New StreamableHttp session created with sessionId: $sessionId" }
+  serverScope.launch(CoroutineName("mcp-streamable-session-close/$sessionId")) {
+    session.closeWhenAbandoned(sessionId)
+  }
+  logger.trace { "New Streamable HTTP session created with sessionId: $sessionId" }
 
   return session
 }
@@ -365,58 +283,39 @@ class ClientDisconnectTolerantTransport(private val delegate: Transport) : Trans
     try {
       delegate.send(message, options)
     }
-    catch (e: CancellationException) {
-      throw e
-    }
     catch (e: Exception) {
+      rethrowControlFlowException(e)
       if (message is JSONRPCRequest || (e !is IOException && e !is IllegalStateException)) throw e
       logger.debug("Client disconnected before an outgoing ${message::class.simpleName} could be delivered", e)
     }
   }
 }
 
-/**
- * Because cancelling this coroutine runs the same `finally`, a session is closed on server shutdown as well. Closing
- * the transport is what ends a session: its `onClose` callbacks unregister it and cancel the scope that serves it.
- */
-private fun CoroutineScope.closeWhenAbandoned(sessionId: String, session: StreamableSession) {
-  launch(CoroutineName("streamable-session-$sessionId")) {
-    try {
-      if (session.awaitAbandoned()) {
-        if (session.transport.sessionId != null) logger.info("$ABANDONED_SESSION_CLOSED. Id: $sessionId")
-        else logger.warn("$UNINITIALIZED_SESSION_CLOSED. Id: $sessionId")
-      }
-    }
-    finally {
-      withContext(NonCancellable) { session.transport.close() }
-    }
-  }
+/** A close must survive the cancellation that asked for it, so it runs outside the cancelled scope. */
+internal suspend fun Transport.closeUninterruptibly() {
+  withContext(NonCancellable) { close() }
 }
 
-/**
- * Heartbeats keep intermediaries from dropping the stream. Neither the stream nor its heartbeat ends the MCP session
- * they belong to: a session outlives every stream opened for it.
- */
+/** Heartbeats keep an intermediary from dropping the stream. */
 private suspend fun ServerSSESession.serveNotificationStream(transport: StreamableHttpServerTransport) {
   coroutineScope {
-    val stream = launch(CoroutineName("sse-notification-stream")) { transport.handleRequest(this@serveNotificationStream, call) }
-    val heartbeat = launch(CoroutineName("sse-heartbeat")) { heartbeatUntilDisconnected() }
-    stream.endsTogetherWith(heartbeat)
+    val stream = launch(CoroutineName("mcp-sse-notification-stream")) {
+      transport.handleRequest(this@serveNotificationStream, call)
+    }
+    val heartbeat = launch(CoroutineName("mcp-sse-heartbeat")) {
+      while (trySendHeartbeat()) {
+        delay(sseHeartbeatPeriod)
+      }
+    }
+    stream.invokeOnCompletion { heartbeat.cancel() }
+    heartbeat.invokeOnCompletion { stream.cancel() }
   }
 }
 
-private fun Job.endsTogetherWith(other: Job) {
-  invokeOnCompletion { other.cancel() }
-  other.invokeOnCompletion { cancel() }
-}
-
-private suspend fun ServerSSESession.heartbeatUntilDisconnected() {
-  while (trySendHeartbeat()) {
-    delay(sseHeartbeatPeriod)
-  }
-}
-
-/** A failed write is how a connection lost without a clean shutdown is noticed. */
+/**
+ * A failed write is how a connection lost without a clean shutdown is noticed. It ends the stream, and so it also
+ * bounds the hold the stream keeps on its session.
+ */
 private suspend fun ServerSSESession.trySendHeartbeat(): Boolean =
   try {
     send(SSE_HEARTBEAT_EVENT)
@@ -428,14 +327,12 @@ private suspend fun ServerSSESession.trySendHeartbeat(): Boolean =
     false
   }
 
-//–– your custom context element
 class HttpRequestElement(val request: ApplicationRequest) : CoroutineContext.Element {
   companion object Key : CoroutineContext.Key<HttpRequestElement>
 
   override val key: CoroutineContext.Key<*> = Key
 }
 
-//–– install interceptor at the Call phase
 fun Application.installHttpRequestPropagation() {
   intercept(ApplicationCallPipeline.Call) {
     withContext(HttpRequestElement(this.context.request)) {
