@@ -699,10 +699,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     parent.add(myImagesComponent, BorderLayout.NORTH)
     parent.add(descriptionComponent)
 
-    addTabWithoutBorders(pane
-    ) {
-      pane.addTab(IdeBundle.message("plugins.configurable.overview.tab.name"),
-                  createScrollPane(parent).also { bottomScrollPane = it })
+    addTabWithoutBorders(pane) {
+      pane.addTab(
+        IdeBundle.message("plugins.configurable.overview.tab.name"),
+        createScrollPane(parent).also { bottomScrollPane = it },
+      )
     }
     myImagesComponent!!.setParent(bottomScrollPane.viewport)
     if (bottomScrollPane.verticalScrollBarNeedsSpace()) {
@@ -789,9 +790,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       }
     }
 
-
-    addTabWithoutBorders(pane
-    ) {
+    addTabWithoutBorders(pane) {
       pane.add(IdeBundle.message("plugins.configurable.reviews.tab.name"), createScrollPane(reviewsPanel))
     }
   }
@@ -829,7 +828,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       customRepoForDebug!!.foreground = ListPluginComponent.GRAY_COLOR
     }
 
-    pane.add(IdeBundle.message("plugins.configurable.additional.info.tab.name"), Wrapper(infoPanel))
+    addTabWithoutBorders(pane) {
+      pane.add(IdeBundle.message("plugins.configurable.additional.info.tab.name"), createScrollPane(infoPanel))
+    }
   }
 
   private fun initializePluginSourceIdDropDownLink(infoPanel: JPanel) {
