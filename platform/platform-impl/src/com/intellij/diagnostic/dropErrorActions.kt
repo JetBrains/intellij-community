@@ -5,17 +5,20 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.TimeoutUtil
 import java.awt.event.ActionEvent.CTRL_MASK
 import java.awt.event.ActionEvent.META_MASK
 import java.awt.event.ActionEvent.SHIFT_MASK
-import java.io.RandomAccessFile
 import java.util.Random
+import kotlin.io.path.createTempFile
+import kotlin.io.path.outputStream
 
 private const val TEST_LOGGER = "TEST.LOGGER"
 private const val TEST_MESSAGE = "test exception; please ignore"
@@ -41,6 +44,7 @@ internal class DropAnErrorAction : DumbAwareAction() {
   }
 }
 
+@Suppress("HardCodedStringLiteral")
 internal class DropAnErrorWithAttachmentsAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -52,7 +56,9 @@ internal class DropAnErrorWithAttachmentsAction : DumbAwareAction() {
       arrayOf(Attachment("first.txt", "content"), Attachment("second.txt", "more content"), Attachment("third.txt", "even more content"))
     }
     else if (e.modifiers and CTRL_MASK != 0) {
-      getLargeAttachment()
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "Creating Attachments") {
+        getLargeAttachment()
+      }
     }
     else {
       emptyArray<Attachment>()
@@ -60,12 +66,19 @@ internal class DropAnErrorWithAttachmentsAction : DumbAwareAction() {
     Logger.getInstance(TEST_LOGGER).error(TEST_MESSAGE, Exception(randomString()), *attachments)
   }
 
-  @Suppress("UsagesOfObsoleteApi", "IO_FILE_USAGE")
   private fun getLargeAttachment(): Array<Attachment> {
-    val size = 300 * 1024 * 1024
-    val file = FileUtil.createTempFile("large-attachment", ".bin", true)
-    RandomAccessFile(file, "rw").apply { setLength(size.toLong()) }
-    return arrayOf(Attachment("large.txt", file, "A large attachment of size: $size bytes").apply { isIncluded = true })
+    val buffer = ByteArray(1 shl 20)
+    val n = 50
+    val file = createTempFile(PathManager.getTempDir(), "large-attachment", ".bin")
+    file.outputStream().use { out ->
+      repeat(n) {
+        random.nextBytes(buffer)
+        out.write(buffer)
+      }
+    }
+    @Suppress("SSBasedInspection")
+    file.toFile().deleteOnExit()
+    return arrayOf(Attachment("large.bin", file, "A large attachment of ${n * buffer.size} bytes").apply { isIncluded = true })
   }
 }
 
