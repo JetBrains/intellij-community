@@ -42,20 +42,29 @@ class ModuleOutputZipFilePool(
 
   suspend fun getData(file: Path, entryPath: String): ByteArray? {
     try {
-      if (cache == null) {
-        return withTimeout(cacheReadTimeout) {
-          zipFileLoader(file)?.use { it.getData(entryPath) }
+      // `Dispatchers.IO` comes first because `AsyncCache` runs the load on the dispatcher of the caller.
+      // A caller on `Dispatchers.Default` makes the load wait for a thread that the packaging work holds.
+      return withContext(Dispatchers.IO) {
+        withTimeout(cacheReadTimeout) {
+          if (cache == null) {
+            zipFileLoader(file)?.use { it.getData(entryPath) }
+          }
+          else {
+            cache.getOrPut(file) { zipFileLoader(file) }?.getData(entryPath)
+          }
         }
-      }
-      else {
-        return withTimeout(cacheReadTimeout) {
-          cache.getOrPut(file) { zipFileLoader(file) }
-        }?.getData(entryPath)
       }
     }
     catch (e: TimeoutCancellationException) {
+      // The dump goes to stderr, not into the message. The build server truncates a message of this size,
+      // and the truncation deletes the stack trace under it.
+      val dump = dumpCoroutines()
+      if (dump != null) {
+        System.err.println("Coroutine dump for the timed out read of '$entryPath' from '$file':\n$dump")
+      }
       throw IllegalStateException(
-        "Timed out after $cacheReadTimeout reading '$entryPath' from archived module output '$file'; possible deadlock in module output zip cache: ${dumpCoroutines()}",
+        "Timed out after $cacheReadTimeout reading '$entryPath' from archived module output '$file'." +
+        (if (dump == null) "" else " A coroutine dump is on stderr."),
         e,
       )
     }
