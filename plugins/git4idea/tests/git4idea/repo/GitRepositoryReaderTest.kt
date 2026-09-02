@@ -1,181 +1,113 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.repo;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.repo
 
-import com.intellij.openapi.util.io.FileFilters;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsTestUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.RegistryKeyRule;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.ZipUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.impl.HashImpl;
-import git4idea.GitLocalBranch;
-import git4idea.GitReference;
-import git4idea.test.GitPlatformTest;
-import git4idea.test.TestDataUtil;
-import junit.framework.TestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.util.io.ZipUtil
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.impl.HashImpl
+import git4idea.GitReference
+import git4idea.test.GitPlatformTestContext
+import git4idea.test.TestDataUtil
+import git4idea.test.gitPlatformContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+@TestApplication
+class GitRepositoryReaderTest {
 
-@RunWith(Parameterized.class)
-public class GitRepositoryReaderTest extends GitPlatformTest {
-
-  @Rule
-  public final RegistryKeyRule registryKeyRule = new RegistryKeyRule("git.read.branches.from.disk", true);
-
-  @NotNull private final File myTestCaseDir;
-
-  private File myTempDir;
-  private GitRepositoryReader myRepositoryReader;
-  private File myGitDir;
-  private @Nullable VirtualFile myRootDir;
-  private @NotNull GitRepositoryFiles myRepoFiles;
-
-  @Parameterized.Parameters(name = "{0}")
-  public static Collection<Object[]> data() {
-    File dataDir = TestDataUtil.getBasePath().resolve("repo").toFile();
-    File[] testCases = dataDir.listFiles(FileFilters.DIRECTORIES);
-    return ContainerUtil.map(testCases, file -> new Object[]{file.getName(), file});
-  }
-
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
-  public GitRepositoryReaderTest(@NotNull String name, @NotNull File testDir) {
-    myTestCaseDir = testDir;
-  }
-
-  @Before
-  public void before() throws IOException {
-    myTempDir = new File(getProjectRoot().getPath(), "test");
-    prepareTest(myTestCaseDir);
-  }
-
-  @After
-  public void after() {
-    if (myTempDir != null) {
-      FileUtil.delete(myTempDir);
+  companion object {
+    @JvmStatic
+    fun data(): List<Arguments> {
+      Files.newDirectoryStream(TestDataUtil.basePath.resolve("repo")).use { testCases ->
+        return testCases.filter(Files::isDirectory).map { Arguments.of(it.fileName.toString(), it) }
+      }
     }
   }
 
-  private void prepareTest(File testDir) throws IOException {
-    assertTrue("Temp directory was not created", myTempDir.mkdir());
-    FileUtil.copyDir(testDir, myTempDir);
-    myGitDir = new File(myTempDir, ".git");
-    File dotGit = new File(myTempDir, "dot_git");
-    if (!dotGit.exists()) {
-      File dotGitZip = new File(myTempDir, "dot_git.zip");
-      assertTrue("Neither dot_git nor dot_git.zip were found", dotGitZip.exists());
-      ZipUtil.extract(dotGitZip, myTempDir, null);
+  private val fixture = gitPlatformContextFixture()
+  private val context: GitPlatformTestContext get() = fixture.get()
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("data")
+  @RegistryKey(key = "git.read.branches.from.disk", value = "true")
+  fun `test branches`(@Suppress("UNUSED_PARAMETER") name: String, testCaseDir: Path): Unit = with(context) {
+    assumeTrue(Registry.`is`("git.read.branches.from.disk")) // The test data does not contain .git/objects.
+
+    val tempDir = prepareTest(testCaseDir)
+    val gitDir = tempDir.resolve(".git")
+    val rootDir = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDir))
+    val virtualGitDir = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(gitDir))
+    val repositoryReader = GitRepositoryReader(project, GitRepositoryFiles.createInstance(rootDir, virtualGitDir))
+
+    val remotes = GitConfig.read(project, projectNioRoot).parseRemotes()
+    val state = repositoryReader.readState(remotes)
+
+    assertThat(state.currentRevision).describedAs("HEAD revision is incorrect").isEqualTo(readHead(tempDir))
+    val currentBranch = readCurrentBranch(tempDir)
+    assertThat(state.currentBranch?.name).isEqualTo(currentBranch.name)
+    assertThat(state.localBranches[state.currentBranch]).isEqualTo(currentBranch.hash)
+    assertReferences(state.localBranches, readRefs(tempDir, RefType.LOCAL_BRANCH))
+    assertReferences(state.remoteBranches, readRefs(tempDir, RefType.REMOTE_BRANCH))
+  }
+
+  private fun GitPlatformTestContext.prepareTest(testDir: Path): Path {
+    val tempPath = projectNioRoot.resolve("test")
+    Files.createDirectory(tempPath)
+    Disposer.register(disposable) { NioFiles.deleteRecursively(tempPath) }
+    NioFiles.copyRecursively(testDir, tempPath)
+    val gitDir = tempPath.resolve(".git")
+    val dotGit = tempPath.resolve("dot_git")
+    if (Files.notExists(dotGit)) {
+      val dotGitZip = tempPath.resolve("dot_git.zip")
+      assertThat(dotGitZip).describedAs("Neither dot_git nor dot_git.zip was found").exists()
+      ZipUtil.extract(dotGitZip, tempPath, null)
     }
-    FileUtil.rename(dotGit, myGitDir);
-    TestCase.assertTrue(myGitDir.exists());
-    myRootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir);
-    VirtualFile gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myGitDir);
-    myRepoFiles = GitRepositoryFiles.createInstance(myRootDir, gitDir);
-    myRepositoryReader = new GitRepositoryReader(myProject, myRepoFiles);
+    Files.move(dotGit, gitDir, StandardCopyOption.ATOMIC_MOVE)
+    assertThat(gitDir).exists()
+    return tempPath
   }
 
-  @NotNull
-  private static String readHead(@NotNull File dir) throws IOException {
-    return FileUtil.loadFile(new File(dir, "head.txt")).trim();
+  private fun readHead(dir: Path): String = Files.readString(dir.resolve("head.txt")).trim()
+
+  private fun readCurrentBranch(resultDir: Path): Branch =
+    readBranchFromLine(Files.readString(resultDir.resolve("current-branch.txt")).trim())
+
+  private fun readBranchFromLine(branch: String): Branch {
+    val branchAndHash = StringUtil.split(branch, " ")
+    return Branch(branchAndHash[1], HashImpl.build(branchAndHash[0]))
   }
 
-  @NotNull
-  private static Branch readCurrentBranch(@NotNull File resultDir) throws IOException {
-    String branch = FileUtil.loadFile(new File(resultDir, "current-branch.txt")).trim();
-    return readBranchFromLine(branch);
+  private fun assertReferences(actual: Map<out GitReference, Hash>, expected: Collection<Branch>) {
+    val actualBranches = actual.map { (reference, hash) -> Branch(reference.fullName, hash) }
+    assertThat(actualBranches).containsExactlyInAnyOrderElementsOf(expected)
   }
 
-  @NotNull
-  private static Branch readBranchFromLine(@NotNull String branch) {
-    List<String> branchAndHash = StringUtil.split(branch, " ");
-    return new Branch(branchAndHash.get(1), HashImpl.build(branchAndHash.get(0)));
+  private fun readRefs(resultDir: Path, refType: RefType): Collection<Branch> =
+    StringUtil.splitByLines(Files.readString(resultDir.resolve(refType.path))).map(::readBranchFromLine)
+
+  private data class Branch(val name: String, val hash: Hash) {
+    override fun toString(): String = name
   }
 
-  @Test
-  public void testBranches() throws Exception {
-    Assume.assumeTrue(Registry.is("git.read.branches.from.disk")); // not a valid git repository: .git/objects is missing
-
-    Collection<GitRemote> remotes = GitConfig.read(myProject, getProjectNioRoot()).parseRemotes();
-    GitBranchState state = myRepositoryReader.readState(remotes);
-
-    assertEquals("HEAD revision is incorrect", readHead(myTempDir), state.getCurrentRevision());
-    assertEqualBranches(readCurrentBranch(myTempDir), state.getCurrentBranch(), state.getLocalBranches().get(state.getCurrentBranch()));
-    assertReferences(state.getLocalBranches(), readRefs(myTempDir, RefType.LOCAL_BRANCH));
-    assertReferences(state.getRemoteBranches(), readRefs(myTempDir, RefType.REMOTE_BRANCH));
-  }
-
-  private static void assertEqualBranches(@NotNull Branch expected, @NotNull GitLocalBranch actual, @NotNull Hash hash) {
-    assertEquals(expected.name, actual.getName());
-    assertEquals("Incorrect hash of branch " + actual.getName(), expected.hash, hash);
-  }
-
-  private static void assertReferences(Map<? extends GitReference, Hash> actualBranches, Collection<Branch> expectedBranches) {
-    VcsTestUtil.assertEqualCollections(actualBranches.entrySet(), expectedBranches,
-                                       new VcsTestUtil.EqualityChecker<Map.Entry<? extends GitReference, Hash>, Branch>() {
-                                         @Override
-                                         public boolean areEqual(Map.Entry<? extends GitReference, Hash> actual, Branch expected) {
-                                           return referencesAreEqual(actual.getKey(), actual.getValue(), expected);
-                                         }
-                                       });
-  }
-
-  @NotNull
-  private static Collection<Branch> readRefs(@NotNull File resultDir, RefType refType) throws IOException {
-    File file = new File(resultDir, refType.myPath);
-    String content = FileUtil.loadFile(file);
-    Collection<Branch> branches = new ArrayList<>();
-    for (String line : StringUtil.splitByLines(content)) {
-      branches.add(readBranchFromLine(line));
-    }
-    return branches;
-  }
-
-  private static boolean referencesAreEqual(GitReference actualBranch, Hash actualHash, Branch expected) {
-    return actualBranch.getFullName().equals(expected.name) && actualHash.equals(expected.hash);
-  }
-
-  private static final class Branch {
-    final String name;
-    final Hash hash;
-
-    private Branch(String name, Hash hash) {
-      this.name = name;
-      this.hash = hash;
-    }
-
-    @Override
-    public String toString() {
-      return name;
-    }
-  }
-
-  private enum RefType {
+  private enum class RefType(val path: String) {
     LOCAL_BRANCH("local-branches.txt"),
     REMOTE_BRANCH("remote-branches.txt"),
-    TAG("tags.txt");
-
-    final String myPath;
-
-    RefType(String path) {
-      myPath = path;
-    }
   }
 }
