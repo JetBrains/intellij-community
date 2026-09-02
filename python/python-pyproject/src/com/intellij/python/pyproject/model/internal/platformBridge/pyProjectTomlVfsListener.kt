@@ -52,23 +52,33 @@ internal fun subscribeToPyProjectTomlChanges(
     var tomlChanged = false
     // A create event has no file yet, so the directory is resolved later, in `afterVfsChange`.
     val newDirectoryEvents = ArrayList<VFileEvent>()
+    // The reason of the rebuild. Only the first kept event is described, because the description reads the
+    // path and the listener must stay cheap.
+    var keptEvents = 0
+    var firstKeptEvent: String? = null
     for (event in events) {
       // A Git checkout produces tens of thousands of events, and `prepareChange` must stay cancellable.
       ProgressManager.checkCanceled()
       if (eventFilter.isIgnored(event)) continue
-      when {
-        event.isPyProjectToml() -> tomlChanged = true
-        event.createsDirectory() -> newDirectoryEvents.add(event)
-        event.removesDirectory() || event.renamesDirectory() -> tomlChanged = true
+      val kept = when {
+        event.isPyProjectToml() -> true.also { tomlChanged = true }
+        event.createsDirectory() -> true.also { newDirectoryEvents.add(event) }
+        event.removesDirectory() || event.renamesDirectory() -> true.also { tomlChanged = true }
+        else -> false
+      }
+      if (kept) {
+        keptEvents++
+        if (firstKeptEvent == null) firstKeptEvent = "${event.javaClass.simpleName} ${event.path}"
       }
     }
     if (!tomlChanged && newDirectoryEvents.isEmpty()) return@AsyncFileListener null
+    val reason = "VFS, $keptEvents of ${events.size} events, first $firstKeptEvent"
 
     object : AsyncFileListener.ChangeApplier {
       override fun afterVfsChange() {
         // Only hand the work over. A subtree load must never run inside the write action.
         val directories = newDirectoryEvents.mapNotNullTo(LinkedHashSet()) { it.createdDirectory() }
-        onChange(RebuildRequest(directories))
+        onChange(RebuildRequest(directories, reason))
       }
     }
   }, parentDisposable)

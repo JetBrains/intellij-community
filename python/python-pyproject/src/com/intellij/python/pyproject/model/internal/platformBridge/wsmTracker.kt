@@ -19,25 +19,45 @@ import org.jetbrains.annotations.CheckReturnValue
  * Tracks workspace model of [project] for events (see [changesToTrack]).
  * Calls [onWsmChanged] if one happens. Be sure to cancel returned job when not needed.
  *
- * The argument of [onWsmChanged] holds every directory that stopped being excluded. The scanning pass never
- * descends into an excluded directory, so the VFS does not know its content. Such a directory therefore needs
- * a subtree load before the filename index can report its `pyproject.toml` (PY-91841).
+ * The first argument of [onWsmChanged] holds every directory that stopped being excluded. The scanning pass
+ * never descends into an excluded directory, so the VFS does not know its content. Such a directory therefore
+ * needs a subtree load before the filename index can report its `pyproject.toml` (PY-91841).
+ *
+ * The second argument names the change that woke the tracker. A rebuild writes to the workspace model itself,
+ * so this reason tells a reader whether a build started another build.
  */
 @CheckReturnValue
-fun CoroutineScope.createWsmTracker(project: Project, onWsmChanged: (Set<VirtualFile>) -> Unit): Job =
+internal fun CoroutineScope.createWsmTracker(project: Project, onWsmChanged: (Set<VirtualFile>, String) -> Unit): Job =
   launch {
     project.workspaceModel.eventLog.collect { event ->
-      val hasChanges = changesToTrack.any { (entityCls, check) ->
-        event.getChanges(entityCls).any { check(it) }
+      val reason = changesToTrack.firstNotNullOfOrNull { (entityCls, check) ->
+        event.getChanges(entityCls).firstOrNull { check(it) }?.let { describe(entityCls, it) }
       }
-      if (hasChanges) {
+      if (reason != null) {
         val unExcluded = event.getChanges(ExcludeUrlEntity::class.java)
           .filterIsInstance<EntityChange.Removed<ExcludeUrlEntity>>()
           .mapNotNullTo(LinkedHashSet()) { it.oldEntity.url.virtualFile }
-        onWsmChanged(unExcluded)
+        onWsmChanged(unExcluded, reason)
       }
     }
   }
+
+/**
+ * Names one change for the log.
+ *
+ * The entity source is part of the name, because it tells a python entity of a rebuild from an entity that the
+ * platform wrote.
+ */
+private fun describe(entityClass: Class<out WorkspaceEntity>, change: EntityChange<*>): String {
+  val kind = when (change) {
+    is EntityChange.Added -> "added"
+    is EntityChange.Removed -> "removed"
+    is EntityChange.Replaced -> "replaced"
+  }
+  val entity = change.newEntity ?: change.oldEntity
+  val name = (entity as? ModuleEntity)?.name ?: (entity as? ExcludeUrlEntity)?.url?.url ?: "?"
+  return "workspace model, ${entityClass.simpleName} $kind '$name', source ${entity?.entitySource?.javaClass?.simpleName}"
+}
 
 
 private val changesToTrack: Map<Class<out WorkspaceEntity>, (EntityChange<*>) -> Boolean> =

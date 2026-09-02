@@ -99,7 +99,7 @@ internal class PyProjectTomlLifecycleTest {
 
     // To be unlocked when WSM updated with new module
     val wsmTrackedDef = CompletableDeferred<Unit>()
-    val tracker = scope.createWsmTracker(f.project) {
+    val tracker = scope.createWsmTracker(f.project) { _, _ ->
       scope.launch {
         // Project rebuild doesn't work in tests, so we listen for WSM and update it explicitly
         f.reloadProject() // <-- Reload 2

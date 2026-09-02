@@ -25,21 +25,20 @@ import com.intellij.python.pyproject.model.internal.notifyModelRebuilt
 import com.intellij.python.pyproject.model.internal.pyProjectToml.findPyProjectTomlWithContent
 import com.intellij.python.pyproject.model.internal.workspaceBridge.collectExcludedPaths
 import com.intellij.python.pyproject.model.internal.workspaceBridge.rebuildProjectModel
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import com.intellij.platform.util.coroutines.flow.debounceBatch
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.FileSystem
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -48,8 +47,7 @@ import kotlin.time.Duration.Companion.minutes
  * Builds the `pyproject.toml` project model and keeps it up to date.
  */
 @Service(Service.Level.PROJECT)
-@ApiStatus.Internal
-class PyProjectModelSyncService(private val project: Project, private val scope: CoroutineScope) : Disposable {
+internal class PyProjectModelSyncService(private val project: Project, private val scope: CoroutineScope) : Disposable {
   private val m = Any()
 
   init {
@@ -61,7 +59,7 @@ class PyProjectModelSyncService(private val project: Project, private val scope:
   /**
    * The roots of the last rebuild. The VFS listener reads them to drop a change of another project.
    *
-   * [getRootPaths] needs a background thread, and the listener must stay cheap, so the value is cached here.
+   * [getRootPaths] suspends, and the listener must stay cheap, so the value is cached here.
    * Before the first rebuild it holds the project base path only.
    */
   @Volatile
@@ -85,12 +83,22 @@ class PyProjectModelSyncService(private val project: Project, private val scope:
     val requests = Channel<RebuildRequest>(Channel.UNLIMITED)
     // Both trackers subscribe before the job starts, so no change of the wait window is lost.
     // The channel is unlimited, hence a request that arrives before the first build waits in it.
-    subscribeToPyProjectTomlChanges(disposable, { knownRoots }) { requests.trySend(it) }
-    val wsmTrackerJob = scope.createWsmTracker(project) { unExcluded -> requests.trySend(RebuildRequest(unExcluded)) }
+    subscribeToPyProjectTomlChanges(disposable, { knownRoots }) { requests.sendOrWarn(it) }
+    val wsmTrackerJob = scope.createWsmTracker(project) { unExcluded, reason ->
+      requests.sendOrWarn(RebuildRequest(unExcluded, reason))
+    }
     val job = scope.launch {
       awaitVfsAndJpsModel()
-      rebuildSafely(loadProjectRoots = true)
+      loadProjectRootsIntoVfs()
+      rebuildNow("the start of the sync")
       consumeRequests(requests)
+    }
+    // A failure of a build ends this job. The two trackers must end with it, because a tracker with no
+    // consumer fills the channel and holds a `VirtualFile` of every change. [stop] ends the same two, and
+    // both calls are safe.
+    job.invokeOnCompletion {
+      Disposer.dispose(disposable)
+      wsmTrackerJob.cancel()
     }
     session = Session(disposable, job, wsmTrackerJob)
     log.info("PyProject sync started")
@@ -147,71 +155,81 @@ class PyProjectModelSyncService(private val project: Project, private val scope:
    * The wait only saves the work of a build that a later build would repeat.
    */
   private suspend fun awaitOrWarn(what: String, wait: suspend () -> Unit) {
-    log.debug { "Waiting for $what" }
+    val start = System.nanoTime()
     if (withTimeoutOrNull(AWAIT_TIMEOUT) { wait() } == null) {
       log.warn("$what did not finish in $AWAIT_TIMEOUT. The pyproject.toml model is built without it.")
     }
     else {
-      log.debug { "Got $what" }
+      // INFO, because this wait is a large part of the time to the first model (PY-91841).
+      log.info("Waited ${millisSince(start)} ms for $what")
     }
   }
 
   /**
-   * Rebuilds the model once per batch of [requests].
+   * Rebuilds the model once for each batch of [requests].
    *
-   * A batch is drained after a short delay, so a burst of VFS events costs one rebuild.
+   * [debounceBatch] holds a request until [DEBOUNCE] of quiet, and it then reports every request of the
+   * burst. A burst of VFS events therefore costs one rebuild, and a long burst costs none until it ends.
    * [rebuildProjectModel] holds a mutex of its own, hence two rebuilds never overlap.
+   *
+   * The producer stays a channel. A channel of [Channel.UNLIMITED] never rejects a request, and a producer
+   * runs inside a write action, where it cannot suspend.
    */
   private suspend fun consumeRequests(requests: Channel<RebuildRequest>) {
-    for (firstRequest in requests) {
-      delay(DEBOUNCE)
-      val directoriesToLoad = LinkedHashSet<VirtualFile>()
-      var request: RebuildRequest? = firstRequest
-      while (request != null) {
-        directoriesToLoad.addAll(request.directoriesToLoad)
-        request = requests.tryReceive().getOrNull()
+    requests.receiveAsFlow().debounceBatch(DEBOUNCE).collect { batch ->
+      val directoriesToLoad = batch.flatMapTo(LinkedHashSet()) { it.directoriesToLoad }
+      if (directoriesToLoad.isNotEmpty()) {
+        val start = System.nanoTime()
+        loadSubtreesIntoVfs(directoriesToLoad, collectExcludedPaths(project))
+        log.info("Loaded ${directoriesToLoad.size} new directories into the VFS in ${millisSince(start)} ms")
       }
-      loadSubtreesIntoVfs(directoriesToLoad, collectExcludedPaths(project))
-      rebuildSafely()
+      rebuildNow(batch.mapTo(LinkedHashSet()) { it.reason }.joinToString(" and "))
     }
   }
 
   /**
-   * Runs [rebuildNow] and stops an error here.
+   * Puts [request] in this channel, and reports a loss.
    *
-   * The whole sync is one job. An exception that leaves this method ends that job, and the request channel then
-   * grows with no consumer. No later change of a `pyproject.toml` would reach the model, and [start] would still
-   * report the sync as started. Only a reopen of the project would repair it.
+   * The channel is unlimited and nothing closes it, so a send fails only after the session ended. A lost
+   * request leaves the model stale until the next change of a `pyproject.toml`, so a loss must not pass in
+   * silence.
    */
-  // The catch must be broad here. This is the last point that can keep the sync alive, and the model reads a
-  // file, a TOML parser and the workspace model, so the kind of a failure is not known in advance.
-  @Suppress("PyExceptionTooBroad")
-  private suspend fun rebuildSafely(loadProjectRoots: Boolean = false) {
-    try {
-      if (loadProjectRoots) {
-        loadProjectRootsIntoVfs()
-      }
-      rebuildNow()
+  private fun Channel<RebuildRequest>.sendOrWarn(request: RebuildRequest) {
+    val result = trySend(request)
+    if (result.isFailure) {
+      log.warn("Lost a rebuild request of ${request.reason}: $result")
     }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Exception) {
-      log.error("Can't rebuild the pyproject.toml model", e)
-    }
+  }
+
+  /**
+   * Builds the model at once, for a test.
+   *
+   * A test writes a `pyproject.toml` with `java.nio`, and it starts no sync, so the VFS knows no such file.
+   * The refresh therefore comes first. Production needs no refresh here, because it waits for the initial
+   * VFS refresh and it drills into each new directory.
+   *
+   * This is the only way into [rebuildNow] from outside the class. A caller that reached the build alone
+   * would read a VFS that knows no file of the test.
+   */
+  @TestOnly
+  suspend fun rebuildForTest() {
+    refreshProjectRootsIntoVfs(project)
+    rebuildNow("a test")
   }
 
   /**
    * Reads every `pyproject.toml` of the project and applies the result to the workspace model.
    *
-   * Public for a test and for a caller that must rebuild at once, such as a project generator.
+   * The job of [start] builds the first model, and [consumeRequests] builds one model for each batch.
+   * [rebuildForTest] is the only other way in.
    */
-  @VisibleForTesting
-  @ApiStatus.Internal
-  suspend fun rebuildNow() {
+  private suspend fun rebuildNow(reason: String) {
+    // The counter and the reason answer the question "why did the model build again?" (PY-91841).
+    val build = buildCounter.incrementAndGet()
+    log.info("Model build $build starts, because of $reason")
     saveTomlDocuments()
 
-    val projectRoots = withContext(Dispatchers.IO) { getRootPaths() }
+    val projectRoots = getRootPaths(project)
     knownRoots = projectRoots
     val excludedPaths = collectExcludedPaths(project)
     // The two INFO lines below are the measurement of PY-91841. Keep them: the search and the apply have very
@@ -219,11 +237,11 @@ class PyProjectModelSyncService(private val project: Project, private val scope:
     val searchStart = System.nanoTime()
     val files = findPyProjectTomlWithContent(projectRoots, excludedPaths)
     val applyStart = System.nanoTime()
-    log.info("Found ${files.tomlFiles.size} pyproject.toml files in ${millisSince(searchStart)} ms")
+    log.info("Build $build found ${files.tomlFiles.size} pyproject.toml files in ${millisSince(searchStart)} ms")
     log.debug { "Files found: ${files.tomlFiles.keys.joinToString(", ")}" }
 
     rebuildProjectModel(project, files)
-    log.info("Model of ${files.tomlFiles.size} pyproject.toml files applied in ${millisSince(applyStart)} ms")
+    log.info("Build $build applied the model of ${files.tomlFiles.size} pyproject.toml files in ${millisSince(applyStart)} ms")
     // Even though we have no entities, we still "rebuilt" the model, time to configure SDK
     notifyModelRebuilt(project)
   }
@@ -239,11 +257,16 @@ class PyProjectModelSyncService(private val project: Project, private val scope:
    * This method therefore runs one time for each session.
    */
   private suspend fun loadProjectRootsIntoVfs() {
+    val start = System.nanoTime()
     val localFileSystem = LocalFileSystem.getInstance()
+    val roots = getRootPaths(project)
+    // `refreshAndFindFileByNioFile` reads the filesystem, so this step needs the dispatcher of its own.
     val rootDirectories = withContext(Dispatchers.IO) {
-      getRootPaths().mapNotNullTo(LinkedHashSet()) { localFileSystem.refreshAndFindFileByNioFile(it) }
+      roots.mapNotNullTo(LinkedHashSet()) { localFileSystem.refreshAndFindFileByNioFile(it) }
     }
     loadSubtreesIntoVfs(rootDirectories, collectExcludedPaths(project))
+    // INFO, because this load is a large part of the time to the first model on a monorepo (PY-91841).
+    log.info("Loaded ${rootDirectories.size} project roots into the VFS in ${millisSince(start)} ms")
   }
 
   /**
@@ -265,28 +288,14 @@ class PyProjectModelSyncService(private val project: Project, private val scope:
     }
   }
 
-  /**
-   * Project might have several "attached" modules outside its base path.
-   */
-  @RequiresBackgroundThread
-  private fun getRootPaths(): Set<Path> {
-    // guessPath doesn't work: it returns first module path
-    val projectRootDir = project.stateStore.projectBasePath
-    // Read the content root from the workspace model, not through `Module.baseDir`. `baseDir` gives a `VirtualFile`, and
-    // the VFS resolves a Windows 8.3 short name while `projectBasePath` keeps it. Two forms of one directory make
-    // `computeMinimalRoots` keep two roots, so the walk finds one `pyproject.toml` twice and the sync adds a second
-    // module `<name>@1` (PY-91133). The rest of the sync compares against the workspace url too.
-    val modulePaths = project.workspaceModel.currentSnapshot.entities<ModuleEntity>()
-      .flatMap { it.contentRoots }
-      .map { it.url.toPath() }
-    return computeMinimalRoots(sequenceOf(projectRootDir) + modulePaths)
-  }
-
   private class Session(val disposable: Disposable, val job: Job, val wsmTrackerJob: Job)
 
   private companion object {
     val log = fileLogger()
   }
+
+  /** Numbers the builds of one session, so the log tells one build from the next. */
+  private val buildCounter = AtomicInteger()
 }
 
 private fun millisSince(startNanos: Long): Long = (System.nanoTime() - startNanos) / 1_000_000
@@ -307,8 +316,39 @@ private val AWAIT_TIMEOUT: Duration = 5.minutes
  *
  * [directoriesToLoad] holds a directory whose content the VFS does not know yet: a new directory, or one
  * that stopped being excluded. The consumer loads such a subtree before it reads the filename index.
+ *
+ * [reason] names the change that asked for the build. The log prints it, because a build can start another
+ * build and only the reason tells the two apart.
  */
-internal class RebuildRequest(val directoriesToLoad: Set<VirtualFile>)
+internal class RebuildRequest(val directoriesToLoad: Set<VirtualFile>, val reason: String)
+
+/**
+ * The roots that the model reads, which is the project base path and every content root outside it.
+ *
+ * A project can hold an "attached" module outside its base path. The sync and its test helper must read one
+ * set of roots, so both call this function.
+ *
+ * Every content root of a module counts. A module can hold several, because a build system may root a module
+ * per source file, and a `pyproject.toml` under any of them has to become a module.
+ *
+ * `PyProject` is not the source of a root here, although it carries a base dir. It exists for a python module
+ * only, and this function also runs before the first build, when no module is a python one yet. It reports
+ * one content root as well, for a module that holds several.
+ *
+ * The function leaves the calling thread itself, so no caller has to remember it.
+ */
+internal suspend fun getRootPaths(project: Project): Set<Path> = withContext(Dispatchers.IO) {
+  // guessPath doesn't work: it returns first module path
+  val projectRootDir = project.stateStore.projectBasePath
+  // Read the content root from the workspace model, not through `Module.baseDir`. `baseDir` gives a `VirtualFile`, and
+  // the VFS resolves a Windows 8.3 short name while `projectBasePath` keeps it. Two forms of one directory make
+  // `computeMinimalRoots` keep two roots, so the walk finds one `pyproject.toml` twice and the sync adds a second
+  // module `<name>@1` (PY-91133). The rest of the sync compares against the workspace url too.
+  val modulePaths = project.workspaceModel.currentSnapshot.entities<ModuleEntity>()
+    .flatMap { it.contentRoots }
+    .map { it.url.toPath() }
+  computeMinimalRoots(sequenceOf(projectRootDir) + modulePaths)
+}
 
 /**
  * Returns the minimal set of [paths] such that no element is a descendant of another.

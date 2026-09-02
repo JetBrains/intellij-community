@@ -83,7 +83,9 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
     for (attempt in 1..MODEL_UPDATE_ATTEMPTS) {
       if (tryRebuildProjectModel(project, files, lastAttempt = attempt == MODEL_UPDATE_ATTEMPTS)) {
         // Flush .iml files to disk to make changes visible for VCS and to prevent races with VFS.
+        val saveStart = System.nanoTime()
         saveSettings(project)
+        logger.info("Saved the project settings in ${millisSince(saveStart)} ms")
         return@withLock
       }
       logger.info("The module set changed during the build. Attempt $attempt of $MODEL_UPDATE_ATTEMPTS.")
@@ -121,9 +123,14 @@ private suspend fun tryRebuildProjectModel(project: Project, files: FSWalkInfoWi
       moduleRootPath?.let { it to module.name }
     }.toMap()
 
+  val entriesStart = System.nanoTime()
   val entries = generatePyProjectTomlEntries(files, existingPythonNames, allModuleNames)
+  val entriesMs = millisSince(entriesStart)
 
   var applied = true
+  var applyMs = 0L
+  var clashMs = 0L
+  val updateStart = System.nanoTime()
   project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { projectStorage ->
     val namesNow = projectStorage.entities<ModuleEntity>().map { it.name }.toSet()
     if (namesNow != allModuleNames && !lastAttempt) {
@@ -131,12 +138,21 @@ private suspend fun tryRebuildProjectModel(project: Project, files: FSWalkInfoWi
       return@update
     }
     preserveRootModule(project, projectStorage) {
+      val applyStart = System.nanoTime()
       applyProjectModel(entries, project, projectStorage)
+      applyMs = millisSince(applyStart)
+      val clashStart = System.nanoTime()
       ensureNoSrcIntersectsWithOtherRoots(projectStorage)
+      clashMs = millisSince(clashStart)
     }
   }
+  // The split answers "where does the apply spend its time?" on a monorepo (PY-91841).
+  logger.info("Model apply: ${entries.size} entries in $entriesMs ms, " +
+              "workspace update ${millisSince(updateStart)} ms (entities $applyMs ms, clash check $clashMs ms)")
   return applied
 }
+
+private fun millisSince(startNanos: Long): Long = (System.nanoTime() - startNanos) / 1_000_000
 
 /** How often a build may repeat when the platform changes the module set at the same time. */
 private const val MODEL_UPDATE_ATTEMPTS = 3
@@ -430,6 +446,11 @@ private fun logIfNeeded(projectStorage: MutableEntityStorage, title: String) {
  */
 private fun ensureNoSrcIntersectsWithOtherRoots(projectStorage: MutableEntityStorage) {
   val allContentRoots = projectStorage.entities<ModuleEntity>().flatMap { it.contentRoots }.toList()
+  // `clashTarget` reads every content root for every source root and for every excluded url. The product of
+  // these three numbers is the cost of this method, so the log must carry all of them (PY-91841).
+  logger.info("Clash check over ${allContentRoots.size} content roots, " +
+              "${allContentRoots.sumOf { it.sourceRoots.size }} source roots, " +
+              "${allContentRoots.sumOf { it.excludedUrls.size }} excluded urls")
 
   val pathsToRemove = mutableMapOf<ContentRootEntity, MutableSet<Path>>()
   val sourcesToAdd = mutableMapOf<ContentRootEntity, MutableList<SourceRootEntityBuilder>>()
