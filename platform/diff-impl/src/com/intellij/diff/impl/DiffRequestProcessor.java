@@ -559,7 +559,11 @@ public abstract class DiffRequestProcessor
   }
 
   /**
+   * Action shown between "Compare Previous File" and "Compare Next File": either a link that opens the
+   * "Go to Changed File" pop-up, or a plain file counter.
+   *
    * @see com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
+   * @see com.intellij.openapi.vcs.changes.actions.diff.DiffFilesCounterAction
    */
   protected @Nullable AnAction createGoToChangeAction() {
     return null;

@@ -12,6 +12,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.actions.diff.DiffFilesCounterAction
+import com.intellij.openapi.vcs.changes.actions.diff.DiffFilesCounterState
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
@@ -141,10 +143,7 @@ internal class RemoteChangesViewDiffPreviewProcessor(
 
   override fun getCurrentChangeName(): String? = currentPath?.filePath?.filePath?.name
 
-  /**
-   * The frontend does not report the position of the shown change yet, so the position stays unknown.
-   */
-  override fun getCurrentChangeIndex(): Int = -1
+  override fun getCurrentChangeIndex(): Int = changesView.diffableSelection.value?.selectedIndex ?: -1
 
   override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
     return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
@@ -159,9 +158,17 @@ internal class RemoteChangesViewDiffPreviewProcessor(
   }
 
   /**
-   * The "Go To Changed File" pop-up is not supported, because it requires a lot of refactoring.
+   * The "Go To Changed File" pop-up is not supported, because it requires a lot of refactoring, so only the file
+   * counter is shown.
    */
-  override fun createGoToChangeAction(): AnAction? = null
+  override fun createGoToChangeAction(): AnAction = DiffFilesCounterAction(::getFilesCounterState)
+
+  private fun getFilesCounterState(): DiffFilesCounterState? {
+    val selection = changesView.diffableSelection.value ?: return null
+    val selectedIndex = selection.selectedIndex ?: return null
+    if (selection.changesCount <= 0) return null
+    return DiffFilesCounterState(selection.changesCount, selectedIndex)
+  }
 
   private fun fireDiffSettingsChanged() {
     dropCaches()
