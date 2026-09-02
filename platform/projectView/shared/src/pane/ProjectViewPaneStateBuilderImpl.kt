@@ -6,10 +6,10 @@ package com.intellij.platform.projectView.pane
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.platform.projectView.actions.toDTO
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValueImpl
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
-import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilder
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilderImpl
@@ -308,7 +308,7 @@ private class ProjectViewPaneSettingsAccessorImpl(
   private val stateGetter: () -> ProjectViewPaneSettingsStateDTO?
 ) : ProjectViewPaneSettingsAccessor {
   override fun isOptionSelected(option: ProjectViewPaneOption): Boolean {
-    val optionState = stateGetter()?.optionStates[(option as ProjectViewPaneOptionImpl).dto]
+    val optionState = stateGetter()?.optionStates[option.toDTO()]
     return optionState?.isSelected == true && optionState.isEnabled // disabled options are considered effectively off
   }
 

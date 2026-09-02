@@ -33,7 +33,6 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneProvider
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
-import com.intellij.platform.projectView.settings.projectViewPaneOption
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -69,7 +68,7 @@ internal class PackageViewPaneModel(project: Project) : TreeStructureBasedProjec
       is ProjectViewPaneOption.FlattenModules -> {
         PlatformUtils.isIntelliJ() &&
         isQualifiedModuleNamesEnabled(project) &&
-        ProjectViewPaneSettingsService.getInstance(project).isOptionSelected(projectViewPaneOption<ProjectViewPaneOption.ShowModules>())
+        ProjectViewPaneSettingsService.getInstance(project).isOptionSelected(ProjectViewPaneOption.ShowModules)
       }
       is ProjectViewPaneOption.ShowLibraryContents -> true
       is ProjectViewPaneOption.ShowModules -> PlatformUtils.isIntelliJ()

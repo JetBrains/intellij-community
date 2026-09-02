@@ -30,7 +30,6 @@ import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
-import com.intellij.platform.projectView.settings.projectViewPaneOption
 import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.ApiStatus
@@ -122,8 +121,8 @@ class ScopePaneModel(
       is ProjectViewPaneOption.FlattenModules ->
         PlatformUtils.isIntelliJ() &&
         isQualifiedModuleNamesEnabled(project) &&
-        settings.isOptionSelected(projectViewPaneOption<ProjectViewPaneOption.ShowModules>())
-      is ProjectViewPaneOption.HideEmptyMiddlePackages -> settings.isOptionSelected(projectViewPaneOption<ProjectViewPaneOption.FlattenPackages>())
+        settings.isOptionSelected(ProjectViewPaneOption.ShowModules)
+      is ProjectViewPaneOption.HideEmptyMiddlePackages -> settings.isOptionSelected(ProjectViewPaneOption.FlattenPackages)
       is ProjectViewPaneOption.ShowModules -> PlatformUtils.isIntelliJ()
       is ProjectViewPaneOption.CompactDirectories -> false
       is ProjectViewPaneOption.ShowExcludedFiles -> false

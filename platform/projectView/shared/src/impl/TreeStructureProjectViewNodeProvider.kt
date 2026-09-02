@@ -16,7 +16,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 import com.intellij.platform.projectView.pane.buildProjectViewNodeModel
-import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
+import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.toLegacySortKey
 import com.intellij.pom.Navigatable
@@ -184,15 +184,15 @@ class TreeStructureProjectViewNodeProvider(
     }
 
     override fun isManualOrder(): Boolean {
-      return settings.isOptionSelected(ProjectViewPaneOptionImpl.ManualOrder)
+      return settings.isOptionSelected(ProjectViewPaneOption.ManualOrder)
     }
 
     override fun isAbbreviateQualifiedNames(): Boolean {
-      return settings.isOptionSelected(ProjectViewPaneOptionImpl.AbbreviatePackageNames)
+      return settings.isOptionSelected(ProjectViewPaneOption.AbbreviatePackageNames)
     }
 
     override fun isFoldersAlwaysOnTop(): Boolean {
-      return settings.isOptionSelected(ProjectViewPaneOptionImpl.FoldersAlwaysOnTop)
+      return settings.isOptionSelected(ProjectViewPaneOption.FoldersAlwaysOnTop)
     }
   }
 }

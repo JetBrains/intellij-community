@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.settings.ProjectViewOptionStateDTO
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
-import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
 import com.intellij.platform.projectView.settings.ProjectViewSortKeyStateDTO
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -195,28 +194,53 @@ fun legacyProjectViewOption(project: Project, option: ProjectViewPaneOptionDTO):
 
 @ApiStatus.Internal
 fun legacyProjectViewOption(project: Project, option: ProjectViewPaneOption): Option {
-  return legacyProjectViewOption(project, (option as ProjectViewPaneOptionImpl).dto)
+  return legacyProjectViewOption(project, option.toDTO())
+}
+
+internal fun ProjectViewPaneOption.toDTO(): ProjectViewPaneOptionDTO {
+  return when (this) {
+    ProjectViewPaneOption.OpenInPreviewTab -> ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB
+    ProjectViewPaneOption.AutoscrollToSource -> ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE
+    ProjectViewPaneOption.OpenDirectoriesWithSingleClick -> ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK
+    ProjectViewPaneOption.AutoscrollFromSource -> ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE
+    ProjectViewPaneOption.ShowModules -> ProjectViewPaneOptionDTO.SHOW_MODULES
+    ProjectViewPaneOption.ShowMembers -> ProjectViewPaneOptionDTO.SHOW_MEMBERS
+    ProjectViewPaneOption.ShowExcludedFiles -> ProjectViewPaneOptionDTO.SHOW_EXCLUDED_FILES
+    ProjectViewPaneOption.ShowVisibilityIcons -> ProjectViewPaneOptionDTO.SHOW_VISIBILITY_ICONS
+    ProjectViewPaneOption.ShowLibraryContents -> ProjectViewPaneOptionDTO.SHOW_LIBRARY_CONTENTS
+    ProjectViewPaneOption.ShowScratchesAndConsoles -> ProjectViewPaneOptionDTO.SHOW_SCRATCHES_AND_CONSOLES
+    ProjectViewPaneOption.FlattenModules -> ProjectViewPaneOptionDTO.FLATTEN_MODULES
+    ProjectViewPaneOption.FlattenPackages -> ProjectViewPaneOptionDTO.FLATTEN_PACKAGES
+    ProjectViewPaneOption.AbbreviatePackageNames -> ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES
+    ProjectViewPaneOption.HideEmptyMiddlePackages -> ProjectViewPaneOptionDTO.HIDE_EMPTY_MIDDLE_PACKAGES
+    ProjectViewPaneOption.CompactDirectories -> ProjectViewPaneOptionDTO.COMPACT_DIRECTORIES
+    ProjectViewPaneOption.FoldersAlwaysOnTop -> ProjectViewPaneOptionDTO.FOLDERS_ALWAYS_ON_TOP
+    ProjectViewPaneOption.ManualOrder -> ProjectViewPaneOptionDTO.MANUAL_ORDER
+    else -> {
+      throw IllegalArgumentException("No corresponding DTO for $this")
+    }
+  }
 }
 
 internal fun ProjectViewPaneOptionDTO.fromDTO(): ProjectViewPaneOption {
   return when (this) {
-    ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB -> ProjectViewPaneOptionImpl.OpenInPreviewTab
-    ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> ProjectViewPaneOptionImpl.AutoscrollToSource
-    ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> ProjectViewPaneOptionImpl.OpenDirectoriesWithSingleClick
-    ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE -> ProjectViewPaneOptionImpl.AutoscrollFromSource
-    ProjectViewPaneOptionDTO.SHOW_MODULES -> ProjectViewPaneOptionImpl.ShowModules
-    ProjectViewPaneOptionDTO.SHOW_MEMBERS -> ProjectViewPaneOptionImpl.ShowMembers
-    ProjectViewPaneOptionDTO.SHOW_EXCLUDED_FILES -> ProjectViewPaneOptionImpl.ShowExcludedFiles
-    ProjectViewPaneOptionDTO.SHOW_VISIBILITY_ICONS -> ProjectViewPaneOptionImpl.ShowVisibilityIcons
-    ProjectViewPaneOptionDTO.SHOW_LIBRARY_CONTENTS -> ProjectViewPaneOptionImpl.ShowLibraryContents
-    ProjectViewPaneOptionDTO.SHOW_SCRATCHES_AND_CONSOLES -> ProjectViewPaneOptionImpl.ShowScratchesAndConsoles
-    ProjectViewPaneOptionDTO.FLATTEN_MODULES -> ProjectViewPaneOptionImpl.FlattenModules
-    ProjectViewPaneOptionDTO.FLATTEN_PACKAGES -> ProjectViewPaneOptionImpl.FlattenPackages
-    ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES -> ProjectViewPaneOptionImpl.AbbreviatePackageNames
-    ProjectViewPaneOptionDTO.HIDE_EMPTY_MIDDLE_PACKAGES -> ProjectViewPaneOptionImpl.HideEmptyMiddlePackages
-    ProjectViewPaneOptionDTO.COMPACT_DIRECTORIES -> ProjectViewPaneOptionImpl.CompactDirectories
-    ProjectViewPaneOptionDTO.FOLDERS_ALWAYS_ON_TOP -> ProjectViewPaneOptionImpl.FoldersAlwaysOnTop
-    ProjectViewPaneOptionDTO.MANUAL_ORDER -> ProjectViewPaneOptionImpl.ManualOrder
+    ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB -> ProjectViewPaneOption.OpenInPreviewTab
+    ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> ProjectViewPaneOption.AutoscrollToSource
+    ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> ProjectViewPaneOption.OpenDirectoriesWithSingleClick
+    ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE -> ProjectViewPaneOption.AutoscrollFromSource
+    ProjectViewPaneOptionDTO.SHOW_MODULES -> ProjectViewPaneOption.ShowModules
+    ProjectViewPaneOptionDTO.SHOW_MEMBERS -> ProjectViewPaneOption.ShowMembers
+    ProjectViewPaneOptionDTO.SHOW_EXCLUDED_FILES -> ProjectViewPaneOption.ShowExcludedFiles
+    ProjectViewPaneOptionDTO.SHOW_VISIBILITY_ICONS -> ProjectViewPaneOption.ShowVisibilityIcons
+    ProjectViewPaneOptionDTO.SHOW_LIBRARY_CONTENTS -> ProjectViewPaneOption.ShowLibraryContents
+    ProjectViewPaneOptionDTO.SHOW_SCRATCHES_AND_CONSOLES -> ProjectViewPaneOption.ShowScratchesAndConsoles
+    ProjectViewPaneOptionDTO.FLATTEN_MODULES -> ProjectViewPaneOption.FlattenModules
+    ProjectViewPaneOptionDTO.FLATTEN_PACKAGES -> ProjectViewPaneOption.FlattenPackages
+    ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES -> ProjectViewPaneOption.AbbreviatePackageNames
+    ProjectViewPaneOptionDTO.HIDE_EMPTY_MIDDLE_PACKAGES -> ProjectViewPaneOption.HideEmptyMiddlePackages
+    ProjectViewPaneOptionDTO.COMPACT_DIRECTORIES -> ProjectViewPaneOption.CompactDirectories
+    ProjectViewPaneOptionDTO.FOLDERS_ALWAYS_ON_TOP -> ProjectViewPaneOption.FoldersAlwaysOnTop
+    ProjectViewPaneOptionDTO.MANUAL_ORDER -> ProjectViewPaneOption.ManualOrder
   }
 }
 

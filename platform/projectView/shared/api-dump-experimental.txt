@@ -226,40 +226,91 @@
 - a:getNestingRules():java.util.List
 - a:isFileNestingOn():Z
 *:com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AbbreviatePackageNames
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AbbreviatePackageNames
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AutoscrollFromSource
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AbbreviatePackageNames
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AutoscrollFromSource
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AutoscrollToSource
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AutoscrollFromSource
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AutoscrollToSource
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$CompactDirectories
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AutoscrollToSource
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$CompactDirectories
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FlattenModules
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$CompactDirectories
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FlattenModules
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FlattenPackages
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FlattenModules
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FlattenPackages
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FoldersAlwaysOnTop
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FlattenPackages
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FoldersAlwaysOnTop
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$HideEmptyMiddlePackages
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FoldersAlwaysOnTop
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$HideEmptyMiddlePackages
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ManualOrder
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$HideEmptyMiddlePackages
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ManualOrder
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$OpenDirectoriesWithSingleClick
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ManualOrder
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$OpenDirectoriesWithSingleClick
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$OpenInPreviewTab
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$OpenDirectoriesWithSingleClick
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$OpenInPreviewTab
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowExcludedFiles
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$OpenInPreviewTab
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowExcludedFiles
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowLibraryContents
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowExcludedFiles
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowLibraryContents
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowMembers
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowLibraryContents
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowMembers
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowModules
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowMembers
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowModules
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowScratchesAndConsoles
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowModules
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowScratchesAndConsoles
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
-*:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowVisibilityIcons
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowScratchesAndConsoles
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowVisibilityIcons
 - com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowVisibilityIcons
+- equals(java.lang.Object):Z
+- hashCode():I
 *:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 - a:getFileNesting():com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 - a:getSortKey():com.intellij.platform.projectView.settings.ProjectViewPaneSortKey

@@ -13,7 +13,6 @@ import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 import com.intellij.platform.projectView.pane.buildProjectViewNodeModel
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
-import com.intellij.platform.projectView.settings.projectViewPaneOption
 import com.intellij.platform.projectView.settings.toLegacySortKey
 import com.intellij.pom.Navigatable
 import com.intellij.ui.tree.buildTreeNodeDescriptorPresentation
@@ -97,9 +96,9 @@ private class ScopeViewComparator(
 
   override fun getSortKey(): NodeSortKey = settings.getSortKey().toLegacySortKey()
 
-  override fun isManualOrder(): Boolean = settings.isOptionSelected(projectViewPaneOption<ProjectViewPaneOption.ManualOrder>())
+  override fun isManualOrder(): Boolean = settings.isOptionSelected(ProjectViewPaneOption.ManualOrder)
 
-  override fun isAbbreviateQualifiedNames(): Boolean = settings.isOptionSelected(projectViewPaneOption<ProjectViewPaneOption.AbbreviatePackageNames>())
+  override fun isAbbreviateQualifiedNames(): Boolean = settings.isOptionSelected(ProjectViewPaneOption.AbbreviatePackageNames)
 
-  override fun isFoldersAlwaysOnTop(): Boolean = settings.isOptionSelected(projectViewPaneOption<ProjectViewPaneOption.FoldersAlwaysOnTop>())
+  override fun isFoldersAlwaysOnTop(): Boolean = settings.isOptionSelected(ProjectViewPaneOption.FoldersAlwaysOnTop)
 }

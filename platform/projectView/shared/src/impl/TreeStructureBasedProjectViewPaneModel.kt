@@ -14,7 +14,6 @@ import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
-import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.toLegacySortKey
 import com.intellij.pom.Navigatable
@@ -96,19 +95,19 @@ open class ProjectViewPaneViewSettings(private val settingsAccessor: ProjectView
   }
 
   override fun isShowMembers(): Boolean {
-    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.ShowMembers)
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOption.ShowMembers)
   }
 
   override fun isShowModules(): Boolean {
-    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.ShowModules)
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOption.ShowModules)
   }
 
   override fun isShowScratchesAndConsoles(): Boolean {
-    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.ShowScratchesAndConsoles)
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOption.ShowScratchesAndConsoles)
   }
 
   override fun isFlattenModules(): Boolean {
-    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.FlattenModules)
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOption.FlattenModules)
   }
 
   override fun isShowURL(): Boolean {
@@ -116,31 +115,31 @@ open class ProjectViewPaneViewSettings(private val settingsAccessor: ProjectView
   }
 
   override fun isFlattenPackages(): Boolean {
-    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.FlattenPackages)
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOption.FlattenPackages)
   }
 
   override fun isAbbreviatePackageNames(): Boolean {
-    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.AbbreviatePackageNames)
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOption.AbbreviatePackageNames)
   }
 
   override fun isHideEmptyMiddlePackages(): Boolean {
-    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.HideEmptyMiddlePackages)
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOption.HideEmptyMiddlePackages)
   }
 
   override fun isCompactDirectories(): Boolean {
-    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.CompactDirectories)
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOption.CompactDirectories)
   }
 
   override fun isShowLibraryContents(): Boolean {
-    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.ShowLibraryContents)
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOption.ShowLibraryContents)
   }
 
   override fun isShowExcludedFiles(): Boolean {
-    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.ShowExcludedFiles)
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOption.ShowExcludedFiles)
   }
 
   override fun isShowVisibilityIcons(): Boolean {
-    return settingsAccessor.isOptionSelected(ProjectViewPaneOptionImpl.ShowVisibilityIcons)
+    return settingsAccessor.isOptionSelected(ProjectViewPaneOption.ShowVisibilityIcons)
   }
 
   override fun getSortKey(): NodeSortKey {

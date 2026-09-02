@@ -13,6 +13,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.platform.projectView.actions.toDTO
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -26,7 +27,7 @@ class ProjectViewPaneSettingsService(private val project: Project) {
 
   fun isOptionSelected(option: ProjectViewPaneOption): Boolean {
     // The DTO is an enum, so we can use an exhaustive when with it.
-    val dto = (option as ProjectViewPaneOptionImpl).dto
+    val dto = option.toDTO()
     return when (dto) {
       ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB -> UISettings.getInstance().openInPreviewTabIfPossible
       ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> state.autoscrollToSource
@@ -50,7 +51,7 @@ class ProjectViewPaneSettingsService(private val project: Project) {
 
   fun setOptionSelected(option: ProjectViewPaneOption, isSelected: Boolean) {
     // The DTO is an enum, so we can use an exhaustive when with it.
-    val dto = (option as ProjectViewPaneOptionImpl).dto
+    val dto = option.toDTO()
     // Mirror ProjectViewImpl.Option.setSelected: besides the per-project state, also update the
     // default-project state (the template for newly created projects) and the application-level
     // shared settings. The only exception is OPEN_IN_PREVIEW_TAB, which is backed by UISettings.
@@ -144,21 +145,21 @@ class ProjectViewPaneSettingsService(private val project: Project) {
   }
 
   fun isOptionEnabled(option: ProjectViewPaneOption): Boolean {
-    val dto = (option as ProjectViewPaneOptionImpl).dto
+    val dto = option.toDTO()
     return when (dto) {
       ProjectViewPaneOptionDTO.SHOW_VISIBILITY_ICONS -> OptionsApplicabilityFilter.isApplicable(OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS)
       ProjectViewPaneOptionDTO.SHOW_SCRATCHES_AND_CONSOLES -> AdvancedSettings.getBoolean(ScratchTreeStructureProvider.SCRATCHES_NODE_SETTING)
       ProjectViewPaneOptionDTO.FLATTEN_PACKAGES -> ProjectViewDirectoryHelper.getInstance(project).supportsFlattenPackages()
-      ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES -> isOptionSelectedAndEnabled(ProjectViewPaneOptionImpl.FlattenPackages)
+      ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES -> isOptionSelectedAndEnabled(ProjectViewPaneOption.FlattenPackages)
       ProjectViewPaneOptionDTO.HIDE_EMPTY_MIDDLE_PACKAGES -> ProjectViewDirectoryHelper.getInstance(project).supportsHideEmptyMiddlePackages()
       else -> true
     }
   }
 
   fun isOptionAlwaysVisible(option: ProjectViewPaneOption): Boolean {
-    val dto = (option as ProjectViewPaneOptionImpl).dto
+    val dto = option.toDTO()
     return when (dto) {
-      ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES -> isOptionEnabled(ProjectViewPaneOptionImpl.FlattenPackages)
+      ProjectViewPaneOptionDTO.ABBREVIATE_PACKAGE_NAMES -> isOptionEnabled(ProjectViewPaneOption.FlattenPackages)
       else -> false
     }
   }

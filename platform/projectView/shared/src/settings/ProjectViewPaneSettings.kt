@@ -10,29 +10,23 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface ProjectViewPaneOption {
-  sealed interface OpenInPreviewTab : ProjectViewPaneOption
-  sealed interface AutoscrollToSource : ProjectViewPaneOption
-  sealed interface OpenDirectoriesWithSingleClick : ProjectViewPaneOption
-  sealed interface AutoscrollFromSource : ProjectViewPaneOption
-  sealed interface ShowModules : ProjectViewPaneOption
-  sealed interface ShowMembers : ProjectViewPaneOption
-  sealed interface ShowExcludedFiles : ProjectViewPaneOption
-  sealed interface ShowVisibilityIcons : ProjectViewPaneOption
-  sealed interface ShowLibraryContents : ProjectViewPaneOption
-  sealed interface ShowScratchesAndConsoles : ProjectViewPaneOption
-  sealed interface FlattenModules : ProjectViewPaneOption
-  sealed interface FlattenPackages : ProjectViewPaneOption
-  sealed interface AbbreviatePackageNames : ProjectViewPaneOption
-  sealed interface HideEmptyMiddlePackages : ProjectViewPaneOption
-  sealed interface CompactDirectories : ProjectViewPaneOption
-  sealed interface FoldersAlwaysOnTop : ProjectViewPaneOption
-  sealed interface ManualOrder : ProjectViewPaneOption
-}
-
-// need a better implementation for this (or simplify the whole thing, it seems over-engineered)
-@ApiStatus.Experimental
-inline fun <reified T : ProjectViewPaneOption> projectViewPaneOption(): T {
-  return allProjectViewPaneOptions().asSequence().filterIsInstance<T>().single()
+  data object OpenInPreviewTab : ProjectViewPaneOption
+  data object AutoscrollToSource : ProjectViewPaneOption
+  data object OpenDirectoriesWithSingleClick : ProjectViewPaneOption
+  data object AutoscrollFromSource : ProjectViewPaneOption
+  data object ShowModules : ProjectViewPaneOption
+  data object ShowMembers : ProjectViewPaneOption
+  data object ShowExcludedFiles : ProjectViewPaneOption
+  data object ShowVisibilityIcons : ProjectViewPaneOption
+  data object ShowLibraryContents : ProjectViewPaneOption
+  data object ShowScratchesAndConsoles : ProjectViewPaneOption
+  data object FlattenModules : ProjectViewPaneOption
+  data object FlattenPackages : ProjectViewPaneOption
+  data object AbbreviatePackageNames : ProjectViewPaneOption
+  data object HideEmptyMiddlePackages : ProjectViewPaneOption
+  data object CompactDirectories : ProjectViewPaneOption
+  data object FoldersAlwaysOnTop : ProjectViewPaneOption
+  data object ManualOrder : ProjectViewPaneOption
 }
 
 @ApiStatus.Experimental

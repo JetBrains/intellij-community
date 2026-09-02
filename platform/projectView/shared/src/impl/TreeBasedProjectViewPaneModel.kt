@@ -71,7 +71,6 @@ import com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneSt
 import com.intellij.platform.projectView.pane.buildProjectViewNodeModel
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
-import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilder
@@ -363,7 +362,7 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
     return ProjectViewNodeDeleteProvider(
       elements = psi.extractPsiElements(selectedNodes),
       isHideEmptyMiddlePackages = ProjectViewPaneSettingsService.getInstance(project)
-        .isOptionSelected(ProjectViewPaneOptionImpl.HideEmptyMiddlePackages),
+        .isOptionSelected(ProjectViewPaneOption.HideEmptyMiddlePackages),
     )
   }
 
