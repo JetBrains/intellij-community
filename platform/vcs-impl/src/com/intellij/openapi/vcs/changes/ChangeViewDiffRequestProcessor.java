@@ -41,8 +41,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.platform.vcs.changes.ChangesUtil.isScopeNavigationToGroupEnabled;
 
@@ -61,30 +59,12 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   // Abstract
   //
 
-  /**
-   * @deprecated Use {@link #iterateSelectedChanges()}
-   */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.OverrideOnly
-  public @NotNull Stream<? extends Wrapper> getSelectedChanges() {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * @deprecated Use {@link #iterateAllChanges()}
-   */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.OverrideOnly
-  public @NotNull Stream<? extends Wrapper> getAllChanges() {
-    throw new UnsupportedOperationException();
-  }
-
   public @NotNull Iterable<? extends Wrapper> iterateSelectedChanges() {
-    return JBIterable.from(getSelectedChanges().collect(Collectors.toList()));
+    throw new UnsupportedOperationException();
   }
 
   public @NotNull Iterable<? extends Wrapper> iterateAllChanges() {
-    return JBIterable.from(getAllChanges().collect(Collectors.toList()));
+    throw new UnsupportedOperationException();
   }
 
   /**
