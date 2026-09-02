@@ -3,26 +3,38 @@ package git4idea.scope
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.index.vfs.filePath
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.search.GitIgnoreSearchScope
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.createFile
 import git4idea.test.createFileStructure
 import git4idea.test.createSubRepository
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.util.GitFileUtils
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class GitIgnoreSearchScopeTest : GitSingleRepoTest() {
-  fun `test no gitignore`() {
+@TestApplication
+class GitIgnoreSearchScopeTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
+
+  @Test
+  fun `test no gitignore`(): Unit = with(context) {
     val fileName = "file"
-    repo.root.createFile(fileName)
-    getGitIgnoreSearchScope().assertScope(shouldContain = listOf(fileName))
+    createFile(repo.root, fileName)
+    assertScope(getGitIgnoreSearchScope(), shouldContain = listOf(fileName))
   }
 
-  fun `test ignored files are not in scope`() {
+  @Test
+  fun `test ignored files are not in scope`(): Unit = with(context) {
     val ignoredFiles = listOf("1/ignore", "1/file", "ignore")
     val includedFiles = listOf("file", "2/file", "another-file")
 
@@ -31,41 +43,48 @@ class GitIgnoreSearchScopeTest : GitSingleRepoTest() {
     gitIgnore("ignore")
     gitIgnore(repo.root.findOrCreateDirectory("1"), "file")
 
-    getGitIgnoreSearchScope().assertScope(shouldContain = includedFiles, shouldNotContain = ignoredFiles)
+    assertScope(getGitIgnoreSearchScope(), shouldContain = includedFiles, shouldNotContain = ignoredFiles)
   }
 
-  fun `test explicitly added ignored files are in scope`() {
+  @Test
+  fun `test explicitly added ignored files are in scope`(): Unit = with(context) {
     val toBeIgnored = "to-be-ignored"
     gitIgnore("**")
-    val toBeIgnoredFile = repo.root.createFile(toBeIgnored)
-    getGitIgnoreSearchScope().assertScope(shouldNotContain = listOf(toBeIgnored))
+    val toBeIgnoredFile = createFile(repo.root, toBeIgnored)
+    assertScope(getGitIgnoreSearchScope(), shouldNotContain = listOf(toBeIgnored))
 
     GitFileUtils.addPaths(project, repo.root, listOf(toBeIgnoredFile.filePath()), true)
 
-    getGitIgnoreSearchScope().assertScope(shouldContain = listOf(toBeIgnored))
+    assertScope(getGitIgnoreSearchScope(), shouldContain = listOf(toBeIgnored))
   }
 
-  fun `test gitignore added and deleted`() {
+  @Test
+  fun `test gitignore added and deleted`(): Unit = with(context) {
     val txtFiles = listOf("1.txt", "2.txt")
     val notTxtFiles = listOf("1.png", "2.png")
 
     createFileStructure(repo.root, *txtFiles.toTypedArray(), *notTxtFiles.toTypedArray())
     val gitIgnore = gitIgnore("*.txt")
-    getGitIgnoreSearchScope().assertScope(shouldContain = notTxtFiles, shouldNotContain = txtFiles)
+    assertScope(getGitIgnoreSearchScope(), shouldContain = notTxtFiles, shouldNotContain = txtFiles)
 
     runBlocking {
       edtWriteAction {
         gitIgnore.delete(this)
       }
     }
-    getGitIgnoreSearchScope().assertScope(shouldContain = notTxtFiles + txtFiles)
+    assertScope(getGitIgnoreSearchScope(), shouldContain = notTxtFiles + txtFiles)
 
     gitIgnore("**")
-    getGitIgnoreSearchScope().assertScope(shouldNotContain = notTxtFiles + txtFiles)
+    assertScope(getGitIgnoreSearchScope(), shouldNotContain = notTxtFiles + txtFiles)
   }
 
-  fun `test excluded files are not in scope`() {
-    val module = createMainModule()
+  @Test
+  fun `test excluded files are not in scope`(): Unit = with(context) {
+    val module = runBlocking {
+      edtWriteAction {
+        ModuleManager.getInstance(project).newModule(projectRoot.path + "/scope-test.iml", "JAVA_MODULE")
+      }
+    }
     ModuleRootModificationUtil.addContentRoot(module, projectRoot)
     ModuleRootModificationUtil.updateExcludedFolders(module, projectRoot, emptyList(), listOf(projectRoot.url + "/excluded"))
 
@@ -74,19 +93,22 @@ class GitIgnoreSearchScopeTest : GitSingleRepoTest() {
     gitIgnore("*.txt")
     val scope = getGitIgnoreSearchScope()
 
-    assertFalse(scope.isSearchInLibraries)
-    assertTrue(scope.isSearchInModuleContent(module))
+    assertThat(scope.isSearchInLibraries).isFalse()
+    assertThat(scope.isSearchInModuleContent(module)).isTrue()
 
     for (path in filesNotInScope) {
       runBlocking {
         readAction {
-          assertFalse("'$path' should be excluded from the scope", scope.contains(repo.root.findFileByRelativePath(path)!!))
+          assertThat(scope.contains(repo.root.findFileByRelativePath(path)!!))
+            .describedAs("'%s' should be excluded from the scope", path)
+            .isFalse()
         }
       }
     }
   }
 
-  fun `test nested repo gitignore scope`() {
+  @Test
+  fun `test nested repo gitignore scope`(): Unit = with(context) {
     // Sub repository name is added to repo .gitignore
     val nestedRepo = repo.createSubRepository("nested")
 
@@ -97,7 +119,7 @@ class GitIgnoreSearchScopeTest : GitSingleRepoTest() {
 
     createFileStructure(repo.root, *ignoredFiles.toTypedArray(), *includedFiles.toTypedArray())
 
-    getGitIgnoreSearchScope().assertScope(shouldContain = includedFiles, shouldNotContain = ignoredFiles)
+    assertScope(getGitIgnoreSearchScope(), shouldContain = includedFiles, shouldNotContain = ignoredFiles)
 
     runBlocking {
       edtWriteAction {
@@ -105,10 +127,11 @@ class GitIgnoreSearchScopeTest : GitSingleRepoTest() {
       }
     }
 
-    getGitIgnoreSearchScope().assertScope(shouldContain = includedFiles + ignoredFiles)
+    assertScope(getGitIgnoreSearchScope(), shouldContain = includedFiles + ignoredFiles)
   }
 
-  fun `test nested repo gitignore scope with deeper hierrarchy`() {
+  @Test
+  fun `test nested repo gitignore scope with deeper hierrarchy`(): Unit = with(context) {
     // Sub repository name is added to repo .gitignore
     val nestedRepo = repo.createSubRepository("deps/subprojects/nested")
 
@@ -120,23 +143,27 @@ class GitIgnoreSearchScopeTest : GitSingleRepoTest() {
 
     createFileStructure(repo.root, *ignoredFiles.toTypedArray(), *includedFiles.toTypedArray())
 
-    getGitIgnoreSearchScope().assertScope(shouldContain = includedFiles, shouldNotContain = ignoredFiles)
+    assertScope(getGitIgnoreSearchScope(), shouldContain = includedFiles, shouldNotContain = ignoredFiles)
   }
 
-  private fun getGitIgnoreSearchScope(): GitIgnoreSearchScope {
+  private fun GitSingleRepoContext.getGitIgnoreSearchScope(): GitIgnoreSearchScope {
     awaitEvents()
     return checkNotNull(GitIgnoreSearchScope.getSearchScope(project))
   }
 
-  private fun GitIgnoreSearchScope.assertScope(shouldContain: List<String> = emptyList(), shouldNotContain: List<String> = emptyList()) {
+  private fun GitSingleRepoContext.assertScope(
+    scope: GitIgnoreSearchScope,
+    shouldContain: List<String> = emptyList(),
+    shouldNotContain: List<String> = emptyList(),
+  ) {
     for (path in shouldContain) {
-      assertFalse("'$path' should be included in the scope", isIgnored(repo.root.findFileByRelativePath(path)!!))
+      assertThat(scope.isIgnored(repo.root.findFileByRelativePath(path)!!)).describedAs("'%s' should be included in the scope", path).isFalse()
     }
     for (path in shouldNotContain) {
-      assertTrue("'$path' should be excluded from the scope", isIgnored(repo.root.findFileByRelativePath(path)!!))
+      assertThat(scope.isIgnored(repo.root.findFileByRelativePath(path)!!)).describedAs("'%s' should be excluded from the scope", path).isTrue()
     }
   }
 
-  private fun gitIgnore(content: String) = gitIgnore(repo.root, content)
-  private fun gitIgnore(parentDit: VirtualFile, content: String) = parentDit.createFile(GITIGNORE, content)
+  private fun GitSingleRepoContext.gitIgnore(content: String) = gitIgnore(repo.root, content)
+  private fun gitIgnore(parentDit: VirtualFile, content: String) = context.createFile(parentDit, GITIGNORE, content)
 }
