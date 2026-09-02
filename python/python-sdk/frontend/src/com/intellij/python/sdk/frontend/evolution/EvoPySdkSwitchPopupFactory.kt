@@ -39,7 +39,7 @@ import com.intellij.python.sdk.common.evolution.EvoNodeIds
 import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
-import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.EvoNodeKind
 import com.intellij.python.sdk.common.evolution.EvoNodeStats
 import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
@@ -54,6 +54,7 @@ import com.intellij.python.sdk.frontend.evolution.components.EvoLoadedNode
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeActionLeafElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeAddNewNode
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeElement
+import com.intellij.python.sdk.frontend.evolution.components.ShownWhen
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeLazyNodeElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeLeafElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeNodeElement
@@ -150,20 +151,14 @@ class EvoPySdkSwitchPopupFactory(
   val shortcuts: List<EvoLeafDto>,
   val scope: CoroutineScope,
   /**
-   * Whether the tool list shows every tool, or only the one in use with a "Show More" row standing for the rest.
+   * Reveals the tools the folded list leaves out — what the "Show more…" row runs.
    *
-   * Held by the widget, not by the tree this builds: the widget rebuilds the tree whenever its cache says to, and a
-   * state kept in the tree went back to collapsed each time that happened.
-   */
-  val toolsExpanded: Boolean,
-  /**
-   * Reveals the tools the collapsed list leaves out — what the "Show More" row runs.
+   * The widget unfolds the tree this built and shows the popup again over it. A popup is laid out and placed once, so a
+   * list this much bigger has to be reopened rather than grown in place, and the widget owns the anchoring.
    *
-   * The widget records the choice and shows the popup again over it. A popup is laid out and placed once, so a list this
-   * much bigger has to be reopened rather than grown in place, and the widget owns the anchoring.
+   * One direction only. There is no row to fold the list back, so nothing asks for the opposite.
    */
-  /** Folds the tool list away or unfolds it, and opens the popup again over the list that results. */
-  val setToolsExpanded: (Boolean) -> Unit,
+  val expandTools: () -> Unit,
 ) {
   /** The tool's own name for [nodeId], as the popup writes it, falling back to the id when no node claims it. */
   private fun nodeLabel(nodeId: String): @NlsSafe String = nodes.firstOrNull { it.id == nodeId }?.label ?: nodeId
@@ -694,16 +689,29 @@ class EvoPySdkSwitchPopupFactory(
       )
     }
 
-    fun disclosure(anyToolShown: Boolean) = showMoreRow(expanded = false, anyToolShown = anyToolShown) { setToolsExpanded(true) }
+    fun disclosure(anyToolShown: Boolean) = showMoreRow(anyToolShown = anyToolShown) { expandTools() }
+      .also { it.shownWhen = ShownWhen.FOLDED }
 
-    // What the tool list holds before the user unfolds it, and whether a row to unfold it belongs there at all.
+    /**
+     * Every tool in registered order, with all but [lead] marked [ShownWhen.UNFOLDED], and the "Show more…" row last.
+     *
+     * One section serves both lists, so unfolding shows the rest of a list already built rather than building a second
+     * one. The hidden rows are not loaded until they are shown, so a tool behind the row still costs nothing — see
+     * `EvoActionPopupStep.loadNewElements`.
+     *
+     * The unfold row sits at the end because the folded list is [lead] and it, while the unfolded list is the tools
+     * alone. Registered order is what the unfolded list shows, with the tool in use among the others rather than lifted
+     * out of them.
+     */
+    fun foldedBehindDisclosure(lead: EvoTreeElement?): List<EvoTreeElement> {
+      allTools.forEach { if (it !== lead) it.shownWhen = ShownWhen.UNFOLDED }
+      return allTools + disclosure(anyToolShown = lead != null)
+    }
+
+    // What the tool list holds, and whether a row to unfold it belongs there at all.
     //
     // Folding pays only where one tool is the obvious one — the tool whose environment the project uses. The rest turns
     // on telling apart the two ways there can be no such tool.
-    //
-    // The row records the choice with the widget rather than swapping the rows in place. Editing the tree and reopening
-    // over it only worked while the widget still had that very tree: any rebuild — a cache that expired while the popup
-    // was open, a refresh — produced a fresh collapsed one, and the click appeared to do nothing.
     val toolRows = when {
       // Nothing is configured yet, so every tool is on offer, and folding them away would hide the point of the list.
       // This is the one moment the user picks a tool rather than changes an environment, which is why the heading above
@@ -711,15 +719,12 @@ class EvoPySdkSwitchPopupFactory(
       currentInterpreter == null -> allTools
       // Nothing to fold, so nothing to fold it with.
       allTools.size <= 1 -> allTools
-      // The user asked for the whole list, in its registered order, with the active tool among the others rather than
-      // lifted out of them. The row folds it back.
-      toolsExpanded -> allTools + showMoreRow(expanded = true, anyToolShown = true) { setToolsExpanded(false) }
       // The tool in use leads, and the rest fold behind the row under it.
-      activeTool != null -> listOf(activeTool, disclosure(anyToolShown = true))
+      activeTool != null -> foldedBehindDisclosure(lead = activeTool)
       // An interpreter is set but no node owns it — a remote one, or one of a flavor no tool claims. None of the tools
       // is worth singling out, so the whole list folds away; leaving them on screen made such a project's widget the
       // longest of any.
-      else -> listOf(disclosure(anyToolShown = false))
+      else -> foldedBehindDisclosure(lead = null)
     }
 
     return EvoTreeStaticNodeElement(

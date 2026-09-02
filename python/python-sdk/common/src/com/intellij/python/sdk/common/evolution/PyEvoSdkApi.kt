@@ -1,6 +1,7 @@
 package com.intellij.python.sdk.common.evolution
 
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
@@ -28,7 +29,7 @@ private val LOG: Logger = fileLogger()
  * call that actually switches the module interpreter.
  *
  * The interpreter model is the platform's [com.intellij.python.sdk.backend.PythonInterpreter] /
- * `PythonInterpreterPresentation` on the backend; on the wire it is flattened into [PyInterpreterDto]
+ * `PyInterpreterItem` on the backend; on the wire it is flattened into [PyInterpreterDto]
  * (display) plus a [PyInterpreterRef] (selection token). What every call is addressed to is a `PyProject`,
  * referenced by [ProjectId] plus its [EvoPyProjectDto.key] — the project's base dir, resolved on the backend
  * against a cached snapshot. A key is deliberately not a module name: a module rename would invalidate every
@@ -274,16 +275,16 @@ suspend fun requestEvoSdkConfigurationInProgress(projectId: ProjectId): Flow<Boo
   PyEvoSdkApi().sdkConfigurationInProgress(projectId)
 
 /**
- * Frontend-safe, serializable projection of a `PythonInterpreterPresentation` (an interpreter's display
+ * Frontend-safe, serializable projection of a `PyInterpreterItem` (an interpreter's display
  * label/icon), plus the [ref] needed to select it. All fields are pre-computed on the backend so the
  * frontend never resolves paths or spawns a process.
  */
 @ApiStatus.Internal
 @Serializable
 data class PyInterpreterDto(
-  /** Compact label, e.g. `myenv [3.12.1]` (from `PythonInterpreterPresentation.shortName`). */
+  /** Compact label, e.g. `myenv [3.12.1]` (from `PyInterpreterItem.shortName`). */
   val title: @Nls String,
-  /** Tooltip / interpreter binary path (from `PythonInterpreterPresentation.description`). */
+  /** Tooltip / interpreter binary path (from `PyInterpreterItem.description`). */
   val description: @Nls String,
   /** RPC-transferable icon; supplied by the backend via `Icon.rpcId()`. */
   val icon: IconId,
@@ -311,52 +312,6 @@ data class PyInterpreterDto(
   val activeNodeId: @NonNls String? = null,
 )
 
-/** Opaque, serializable selector telling the backend which interpreter [PyEvoSdkApi.selectInterpreter] must apply. */
-@ApiStatus.Internal
-@Serializable
-sealed interface PyInterpreterRef {
-  /** An interpreter that is already a registered PyCharm SDK, identified by its unique SDK name. */
-  @Serializable
-  data class ExistingSdk(val sdkName: @NonNls String) : PyInterpreterRef
-
-  /** A detected environment that is not yet an SDK; the backend creates it from its home path on select. */
-  @Serializable
-  data class DetectedPath(val homePath: @NonNls String) : PyInterpreterRef
-
-  /**
-   * A declared-but-not-yet-materialized environment (poetry per-version row, hatch declared env, or an
-   * "add new" version pick for uv/pip): the backend creates it via the tool's create logic, then assigns it.
-   * [token] is tool-specific — poetry: the base/system Python path; hatch: the declared env name; uv: the
-   * chosen Python version (empty = uv's default); pip: the chosen system Python's binary path. [folder] (uv/pip
-   * only) is the env folder location (absolute path of the auto-generated first-free `.venv{X}` in the section's
-   * folder); when null the backend uses the first free `.venv`, `.venv1`, … under the module base dir.
-   *
-   * [name] is the user-editable env name from the in-widget "add new" name field: for uv/pip it is the env **folder
-   * name** created inside [folder] (the containing dir); for conda it is the **env name**. `null` keeps the tool's
-   * default (the pre-filled name).
-   */
-  @Serializable
-  data class CreateEnv(
-    val token: @NonNls String,
-    val folder: @NonNls String? = null,
-    val name: @NonNls String? = null,
-    /**
-     * The Python version to install before creating anything, for a row that offered an interpreter the machine does
-     * not have (see [EvoAddNewOptionDto.installable]). The backend installs it and then carries on with [token] pointing
-     * at what landed, so a tool never has to know that installation was involved.
-     */
-    val installPythonVersion: @NonNls String? = null,
-  ) : PyInterpreterRef
-
-  /**
-   * Configure the module's interpreter using one of the IDE's setup options (the "Shortcuts" rows — the same options
-   * the "no interpreter configured" inspection ranks), identified by [toolId] (a `PyProjectSdkConfigurationExtension`
-   * tool id). The backend re-resolves that option for the module and applies it: it creates the env (or, when the
-   * option's tool isn't installed yet, installs the tool and then creates the env) under the SDK-configuration lock.
-   */
-  @Serializable
-  data class Autoconfigure(val toolId: @NonNls String) : PyInterpreterRef
-}
 
 /**
  * One `PyProject` as the frontend sees it — see [PyEvoSdkApi.pyProjects].

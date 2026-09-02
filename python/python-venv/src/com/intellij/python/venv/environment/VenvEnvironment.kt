@@ -45,6 +45,9 @@ data class VenvEnvironment(
    */
   override val isActivatable: Boolean = true
 
+  /** A virtual environment is created for one project, so its SDK must say which one. */
+  override val requiresAssociation: Boolean = true
+
   override fun activationScript(shellType: Shell.Type): ActivationScript? {
     val isWindows = pythonBinaryPath.getEelDescriptor().osFamily == EelOsFamily.Windows
     val scriptName = when (shellType) {

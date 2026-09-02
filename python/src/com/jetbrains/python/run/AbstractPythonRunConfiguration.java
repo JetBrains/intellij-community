@@ -35,7 +35,6 @@ import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.run.features.PyRunToolData;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -201,7 +200,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
             throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
           }
         }
-        else if (mySdk == null || !SdkExtKt.isSdkSeemsValid(mySdk)) {
+        // Only that the SDK is a Python one, which is what the project-SDK branch above checks too. Whether the
+        // interpreter actually runs is not asked here: this method runs on every validation pass of the run
+        // configuration editor, and answering it launches a process. A broken interpreter fails at launch instead,
+        // with the error the launch itself reports.
+        else if (mySdk == null || !PythonSdkUtil.isPythonSdk(mySdk)) {
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_valid_sdk"));
         }
       }

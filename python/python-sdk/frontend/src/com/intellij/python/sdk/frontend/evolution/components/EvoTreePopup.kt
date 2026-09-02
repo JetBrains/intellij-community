@@ -86,13 +86,10 @@ private const val PICKER_CLICK_SWALLOW_MS = 200L
 private const val VERSION_RESERVE_SAMPLE = "0.00.00rc0"
 
 
-/** Gap between a section header's caption and the rule that runs on from it. */
-private const val SEPARATOR_RULE_GAP = 6
-
 /**
  * Space (unscaled px) above a section header, so the rows under it read as a block rather than as one running list.
  *
- * Only the caption-then-rule look takes it, and only below the top row. A header at the top of a popup has nothing to be
+ * Only the caption-only look takes it, and only below the top row. A header at the top of a popup has nothing to be
  * separated from, and a plain header brings the platform's own allowance for the full-width rule it draws above itself.
  */
 private const val SEPARATOR_TOP_GAP = 6
@@ -134,7 +131,7 @@ private const val NEXT_STEP_TIGHT_INSET = 4
 private const val NEXT_STEP_VERSION_INSET = 8
 
 /**
- * Captions rendered as the platform's plain group header rather than this popup's caption-then-rule look.
+ * Captions rendered as the platform's plain group header rather than this popup's caption-only look.
  *
  * Both name the section that closes the popup below the tool list. Which of the two is there depends only on whether an
  * interpreter is set, so they are drawn the same way and the popup does not change shape when one replaces the other.
@@ -145,12 +142,15 @@ private val PLAIN_CAPTIONS: Set<String> = setOf(
 )
 
 /**
- * A group-header separator that runs the rule beside the caption rather than above it — `Python 3.14 ───────`.
+ * A group-header separator that writes the caption alone, with no rule — `Python 3.14`.
+ *
+ * The space above it is what separates the block, so a rule as well only adds a line of ink. A caption at the top of a
+ * popup takes no space either, and needs none.
  *
  * [plainCaptions] — and a section headed by a rule and no caption — opt back out of this custom look entirely,
  * rendering as the platform's own group header: a full-width rule with the caption below it. See [isPlain].
  */
-private class EvoGroupHeaderSeparator(
+private class EvoCaptionOnlySeparator(
   private val labelInsets: Insets,
   private val plainCaptions: Set<String>,
 ) : GroupHeaderSeparator(labelInsets) {
@@ -176,8 +176,8 @@ private class EvoGroupHeaderSeparator(
    * The caption's own height, without the allowance [GroupHeaderSeparator] makes for the rule it draws above the text.
    *
    * That rule is a full-width one on its own line, which `PopupListElementRenderer` turns on for every separator but the
-   * first — a line of height per section. This one runs the rule *beside* the caption instead (see [paintComponent]), so
-   * the allowance is dropped here rather than left as blank space above every header.
+   * first — a line of height per section. This one draws no rule at all (see [paintComponent]), so the allowance is
+   * dropped here rather than left as blank space above every header.
    */
   override fun getPreferredElementSize(): Dimension {
     if (isPlain) return super.getPreferredElementSize()   // includes the platform's allowance for the rule above
@@ -188,11 +188,11 @@ private class EvoGroupHeaderSeparator(
   }
 
   /**
-   * Paints the caption and, filling the rest of the line, the rule — `Python 3.14 ───────`.
+   * Paints the caption, and nothing else — `Python 3.14`.
    *
-   * Done here rather than by [GroupHeaderSeparator], whose rule sits above the caption on a line of its own: the two
-   * cannot be combined by configuration, only replaced. The caption itself is laid out exactly as the superclass lays it
-   * out, so a header too long for the popup is still clipped with an ellipsis rather than painted past the edge.
+   * Done here rather than by [GroupHeaderSeparator], which always draws its full-width rule above the caption and
+   * cannot be told not to. The caption itself is laid out exactly as the superclass lays it out, so a header too long
+   * for the popup is still clipped with an ellipsis rather than painted past the edge.
    */
   override fun paintComponent(g: Graphics) {
     if (isPlain) return super.paintComponent(g)
@@ -206,24 +206,13 @@ private class EvoGroupHeaderSeparator(
     bounds.y += labelInsets.top
     bounds.height -= labelInsets.top + labelInsets.bottom
     val metrics = g.fontMetrics
-    val iconR = Rectangle()
     val textR = Rectangle()
     val label = SwingUtilities.layoutCompoundLabel(
       metrics, caption, null, SwingConstants.CENTER, SwingConstants.LEFT, SwingConstants.CENTER, SwingConstants.LEFT,
-      bounds, iconR, textR, 0)
+      bounds, Rectangle(), textR, 0)
     UISettings.setupAntialiasing(g)
     g.color = textForeground
     g.drawString(label, textR.x, textR.y + metrics.ascent)
-
-    // Only when the caption was not clipped: a rule after an ellipsis would suggest there is room left on the line.
-    if (label != caption) return
-    val from = textR.x + textR.width + JBUI.scale(SEPARATOR_RULE_GAP)
-    val to = bounds.x + bounds.width
-    if (to <= from) return
-    // On the caption's strikethrough line, which is where the platform puts a rule it draws beside text.
-    val y = textR.y + metrics.ascent + metrics.getLineMetrics(label, g).strikethroughOffset.toInt()
-    g.color = foreground
-    g.fillRect(from, y, to - from, 1)
   }
 }
 
@@ -239,7 +228,7 @@ class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListEl
   override fun createSeparator(): SeparatorWithText {
     val labelInsets = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Popup.separatorLabelInsets()
                       else defaultItemComponentBorder.getBorderInsets(JLabel())
-    return EvoGroupHeaderSeparator(labelInsets, PLAIN_CAPTIONS)
+    return EvoCaptionOnlySeparator(labelInsets, PLAIN_CAPTIONS)
   }
 
   // The platform passes a null value during layout measurement, so the params must be nullable.
@@ -936,8 +925,8 @@ open class EvoTreePopup private constructor(
     return Rectangle(cell.x + topLeft.x, cell.y + topLeft.y, separator.width, separator.height)
   }
 
-  private fun findSeparator(c: Component): EvoGroupHeaderSeparator? {
-    if (c is EvoGroupHeaderSeparator) return c
+  private fun findSeparator(c: Component): EvoCaptionOnlySeparator? {
+    if (c is EvoCaptionOnlySeparator) return c
     if (c is Container) c.components.forEach { child -> findSeparator(child)?.let { return it } }
     return null
   }

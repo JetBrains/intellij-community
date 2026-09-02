@@ -20,7 +20,7 @@ import com.intellij.xdebugger.attach.XAttachPresentationGroup;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
-import com.jetbrains.python.sdk.SdkExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +67,9 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
     final List<XAttachDebugger> result = PythonSdkUtil.getAllLocalCPythons()
       .stream()
       .filter(sdk -> sdk != selectedSdk)
-      .filter(sdk -> SdkExtKt.isSdkSeemsValid(sdk))
+      // Runs each interpreter, which the Attach to Process action can afford: the platform asks once per running
+      // process, but this list is built once per invocation and cached under DEBUGGERS_KEY, off the EDT.
+      .filter(sdk -> PythonInterpreterExtKt.isInterpreterUsable(sdk))
       .sorted(PreferredSdkComparator.INSTANCE)
       .map(PyLocalAttachDebugger::new)
       .collect(Collectors.toList());

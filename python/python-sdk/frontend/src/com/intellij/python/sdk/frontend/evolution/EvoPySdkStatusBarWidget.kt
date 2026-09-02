@@ -37,6 +37,7 @@ import com.intellij.util.messages.MessageBusConnection
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.awt.RelativePoint
@@ -56,6 +57,16 @@ private fun popupTreeTtlMs(): Long = PyEvoRegistry.popupTreeCacheSeconds.toLong(
  * re-read that finds no change cost one RPC call and no probe.
  */
 private const val SHORTCUTS_TTL_MS: Long = 20_000
+
+/**
+ * How long to wait before probing the tools again when the last probe found none.
+ *
+ * A probe run while the IDE is still starting can come back empty for every tool, and that answer used to be cached
+ * as final — the popup then offered no "Change Environment" section until an open re-probed for the *next* one
+ * (PY-91967). A machine with genuinely no tools installed re-probes on this interval, which `PyExecutableCache`
+ * makes cheap.
+ */
+private const val EMPTY_NODES_RETRY_MS: Long = 5_000
 
 /** Fading Python logo for the neutral "loading" state (no specific tool yet); configuring uses the tool's own logo. */
 private val PYTHON_FADING_ICON: Icon = AnimatedIcon.Fading(AllIcons.Language.Python)
@@ -119,6 +130,8 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     val current: PyInterpreterDto?,
     val nodes: List<EvoNodeDto>,
     val associated: List<PyInterpreterDto>,
+    /** When [nodes] was last read (epoch ms); the [EMPTY_NODES_RETRY_MS] window is measured from this moment. */
+    val nodesAt: Long,
     /** "Shortcuts" rows (autoconfigure suggestions), fetched only when there is no current interpreter. */
     val shortcuts: List<EvoLeafDto>,
     /** When [shortcuts] was last read (epoch ms); the [SHORTCUTS_TTL_MS] window is measured from this moment. */
@@ -153,13 +166,13 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   }
 
   /**
-   * Set by [setToolsExpanded] so that the next popup is built holding every tool, and cleared as soon as it is read.
+   * Set by [expandTools] so that the next popup is built holding every tool, and cleared as soon as it is read.
    *
    * One-shot, because the choice belongs to the list the user is looking at rather than to the widget. Held as a
    * standing flag it outlived the tree it was made for: [dropPopupTree] was the only thing that cleared it, a plain
-   * reopen never calls that, and so one click on "Show more" left every later popup expanded for as long as the widget
-   * lived. Now it lasts exactly as long as the built tree — reopen within the reuse window and the expanded tree is
-   * reused, come back after it and the list is folded again.
+   * reopen never calls that, and so one click on "Show more…" left every later popup expanded for as long as the widget
+   * lived. Now it lasts exactly one popup: [createPopup] folds the tree again on every open it is not set for, so every
+   * open the user starts shows the folded list with the "Show more…" row.
    */
   private var expandToolsOnce: Boolean = false
 
@@ -251,6 +264,11 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     else if (cached.current == null && System.currentTimeMillis() - cached.shortcutsAt > SHORTCUTS_TTL_MS) {
       refreshShortcuts(target.key)
     }
+    // A probe that found no tools is not an answer, it is a probe that ran too early. Ask again rather than wait for
+    // the user to open the popup twice.
+    else if (cached.nodes.isEmpty() && System.currentTimeMillis() - cached.nodesAt > EMPTY_NODES_RETRY_MS) {
+      refreshNodes(target.key)
+    }
 
     if (configuring) {
       // Keep the widget enabled so its dynamic (self-animating) icon is painted directly — a disabled widget would
@@ -304,15 +322,24 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
         update()
       }
       try {
+        // The tools a machine has and the interpreter a project uses are unrelated questions, so they are asked at the
+        // same time rather than one after the other.
+        val nodesAsync = async { evoRpcOrNull { requestEvoNodes(projectId, key) }.orEmpty() }
+
+        // Published as soon as it is known, so the widget shows the interpreter without waiting on the tool probes.
+        // Waiting for all of it instead means one slow probe leaves the widget loading for as long as it takes.
         val interpreter = evoRpcOrNull { requestEvoCurrentInterpreter(projectId, key) }
         publish(Cached(stamp, interpreter, prev?.nodes.orEmpty(), prev?.associated.orEmpty(),
-                       prev?.shortcuts.orEmpty(), prev?.shortcutsAt ?: 0))
+                       prev?.nodesAt ?: 0, prev?.shortcuts.orEmpty(), prev?.shortcutsAt ?: 0))
 
-        val nodes = evoRpcOrNull { requestEvoNodes(projectId, key) }.orEmpty()
-        val associated = evoRpcOrNull { requestEvoAssociatedInterpreters(projectId, key) }.orEmpty()
         // The "Shortcuts" autoconfigure suggestions are only shown (and only worth computing) when there is no interpreter.
         val shortcuts = if (interpreter == null) evoRpcOrNull { requestEvoShortcuts(projectId, key) }.orEmpty() else emptyList()
-        publish(Cached(stamp, interpreter, nodes, associated, shortcuts, System.currentTimeMillis()))
+        val now = System.currentTimeMillis()
+        publish(Cached(stamp, interpreter, nodesAsync.await(), prev?.associated.orEmpty(), now, shortcuts, now))
+        // The associated interpreters fill a submenu, so the widget and the popup never wait for them: reading one
+        // costs a look at its interpreter, and a project with several system Pythons among them used to hold up the
+        // whole load for as long as that took (PY-91967).
+        refreshAssociated(key)
       }
       finally {
         loading.remove(key)
@@ -324,6 +351,35 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   /** Guards against stacking concurrent node re-probes (see [refreshNodes]). */
   @Volatile
   private var refreshingNodes: Boolean = false
+
+  /** Guards against stacking concurrent associated-interpreter reads (see [refreshAssociated]). */
+  @Volatile
+  private var refreshingAssociated: Boolean = false
+
+  /**
+   * Re-reads the associated interpreters for [key], keeping everything else that is shown.
+   *
+   * They fill a submenu of the popup, so this is deliberately fired and not awaited: nothing the status bar or the
+   * popup's own rows show depends on it, and reading one asks its interpreter for a version.
+   */
+  private fun refreshAssociated(key: String) {
+    if (refreshingAssociated) return
+    refreshingAssociated = true
+    scope.launch {
+      try {
+        val associated = evoRpcOrNull { requestEvoAssociatedInterpreters(project.projectId(), key) }.orEmpty()
+        val base = cache[key] ?: return@launch
+        // Compare by what a row names, not by the DTOs: an IconId is not guaranteed to be equal across fetches.
+        if (base.associated.map { it.ref } == associated.map { it.ref }) return@launch
+        cache[key] = base.copy(associated = associated)
+        if (popupTreeKey == key) dropPopupTree()
+        update()
+      }
+      finally {
+        refreshingAssociated = false
+      }
+    }
+  }
 
   /**
    * Re-probes just the available tool nodes for [key] (keeping the shown interpreter and the associated list), so a
@@ -341,7 +397,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
         // Compare by node ids (stable identity) — a newly available or removed tool changes this set; icon/label
         // identity is irrelevant and IconId equality is not guaranteed across fetches.
         if (base.nodes.map { it.id } == nodes.map { it.id }) return@launch
-        cache[key] = base.copy(nodes = nodes)
+        cache[key] = base.copy(nodes = nodes, nodesAt = System.currentTimeMillis())
         if (popupTreeKey == key) dropPopupTree()
         update()
       }
@@ -412,34 +468,32 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     // warm cache makes it near-instant; it only does real work after an install invalidated that cache.
     if (reusable == null) refreshNodes(target.key)
     PyEvoWidgetCollector.popupOpened(project, hasInterpreter = cached.current != null, toolCount = cached.nodes.size)
-    // Read and cleared here rather than where the tree is built, so a reused tree consumes it too — otherwise the flag
-    // would survive the popup it was set for and expand the next rebuild as well.
     val expandTools = expandToolsOnce
     expandToolsOnce = false
     val factory = EvoPySdkSwitchPopupFactory(project, target.key, target.name, structure.workspaceRootName(target),
                                              cached.current, cached.nodes, cached.associated, cached.shortcuts, scope,
-                                             toolsExpanded = expandTools,
-                                             setToolsExpanded = ::setToolsExpanded)
+                                             expandTools = ::expandTools)
     val tree = reusable ?: factory.buildTree(context).also { popupTree = it; popupTreeKey = target.key }
+    // Written on every open, not only where it changes: the tree is reused, so a fold left over from the last popup
+    // would decide this one. Every open the user starts is folded; only the reopen the "Show more…" row asks for is
+    // not, and [expandToolsOnce] lasts exactly that long.
+    tree.isFolded = !expandTools
     return factory.createPopup(tree, context) { popupClosedAt = System.currentTimeMillis() }
   }
 
   /**
-   * Folds the tool list away or unfolds it, and opens the popup again over the list that results.
+   * Unfolds the tool list, and opens the popup again over the whole list.
    *
-   * The tree is dropped rather than reused: it is the list the very row that asked for this was built into. The rebuild
-   * is what reads [expandToolsOnce], and it costs no environment scan — each tool node loads its own rows only when it
-   * is opened.
+   * The tree is kept, because it already holds every tool: unfolding shows the rows it was hiding. Rebuilding instead
+   * threw away whatever the tool nodes had loaded, so a submenu the user had already opened was scanned again.
    */
-  private fun setToolsExpanded(expanded: Boolean) {
-    expandToolsOnce = expanded
-    popupTree = null
-    popupTreeKey = null
+  private fun expandTools() {
+    expandToolsOnce = true
     reopenPopup()
   }
 
   /**
-   * Shows the popup again, for a row that changed the list it is showing — the "More Tools" row.
+   * Shows the popup again, for a row that changed the list it is showing — the "Show more…" row.
    *
    * A popup is laid out and placed once, so a list that gained rows has to be reopened rather than grown underneath the
    * user. Repeats what `EditorBasedStatusBarPopup.showPopup` does, because that method is private and takes the
@@ -479,4 +533,5 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
 
   private fun findModule(file: VirtualFile): Module? =
     ModuleManager.getInstance(project).modules.firstOrNull { it.moduleContentScope.contains(file) }
+
 }

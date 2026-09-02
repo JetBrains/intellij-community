@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import com.intellij.python.sdk.common.PyInterpreterRef
 
 /**
  * Usage statistics for the Evo Python interpreter widget — the status-bar widget and its popup.

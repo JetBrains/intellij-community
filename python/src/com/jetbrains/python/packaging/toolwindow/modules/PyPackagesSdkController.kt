@@ -24,7 +24,12 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.pyInterpreterPresentation
+import com.intellij.python.sdk.backend.asInterpreterRef
+import com.intellij.python.sdk.backend.findSdk
+import com.intellij.python.sdk.backend.pyInterpreterItems
+import com.intellij.python.sdk.common.PyInterpreterItem
+import com.intellij.ide.ui.icons.icon
+import com.intellij.openapi.application.readAction
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +39,7 @@ import javax.swing.JList
 import javax.swing.JScrollPane
 import javax.swing.ListSelectionModel
 import javax.swing.event.ListSelectionListener
-import com.jetbrains.python.sdk.pyInterpreterPresentation
+import kotlinx.coroutines.withContext
 
 internal class PyPackagesSdkController(private val project: Project) : Disposable.Default {
 
@@ -49,17 +54,18 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
   private val allSdks: List<Sdk>
     get() = ModuleManager.getInstance(project).modules.mapNotNull { it.pythonSdk }.distinct().sortedBy { it.name }
 
-  private val sdkListRenderer = object : SimpleListCellRenderer<Sdk>() {
-    override fun customize(list: JList<out Sdk>, value: Sdk, index: Int, selected: Boolean, hasFocus: Boolean) {
-      val presentation = value.pyInterpreterPresentation()
-      text = presentation.shortName
-      icon = presentation.icon
+  private val sdkListRenderer = object : SimpleListCellRenderer<PyInterpreterItem>() {
+    override fun customize(list: JList<out PyInterpreterItem>, value: PyInterpreterItem, index: Int, selected: Boolean, hasFocus: Boolean) {
+      text = value.shortName
+      icon = value.icon.icon()
     }
   }
 
   private val selectionListener = createSelectionListener()
 
-  private val sdkList: JBList<Sdk> = JBList(allSdks).apply {
+  // Empty until [refreshModuleListAndSelection] fills it: an item states whether its interpreter is usable, which
+  // takes running the interpreter, so the list cannot be built on the EDT.
+  private val sdkList: JBList<PyInterpreterItem> = JBList<PyInterpreterItem>(DefaultListModel()).apply {
     selectionMode = ListSelectionModel.SINGLE_SELECTION
     cellRenderer = sdkListRenderer
     addListSelectionListener(selectionListener)
@@ -81,55 +87,70 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
       .subscribe<FileEditorManagerListener>(FILE_EDITOR_MANAGER, fileEditorListener)
   }
 
-  @RequiresEdt
   fun refreshModuleListAndSelection() {
-    refreshModuleList()
-    restorePreviousSelection()
-  }
-
-  @RequiresEdt
-  private fun refreshModuleList() {
-    (sdkList.model as DefaultListModel<Sdk>).apply {
-      removeAllElements()
-      addAll(allSdks)
+    packagingScope.launch {
+      val items = loadItems()
+      withContext(Dispatchers.EDT) {
+        val previous = sdkList.selectedValue
+        refreshModuleList(items)
+        sdkList.selectedIndex = items.indexOf(previous)
+      }
     }
   }
 
+  /** The interpreters of every module, as the list holds them. Runs each interpreter, so never on the EDT. */
+  private suspend fun loadItems(): List<PyInterpreterItem> = readAction { allSdks }.pyInterpreterItems()
+
   @RequiresEdt
-  private fun restorePreviousSelection() {
-    val selectedModuleName = sdkList.selectedValue?.name
-    sdkList.selectedIndex = allSdks.indexOfFirst { it.name == selectedModuleName }
+  private fun refreshModuleList(items: List<PyInterpreterItem>) {
+    (sdkList.model as DefaultListModel<PyInterpreterItem>).apply {
+      removeAllElements()
+      addAll(items)
+    }
   }
 
   private fun updateSelectedSdkIndex(sdk: Sdk) {
     packagingScope.launch(Dispatchers.EDT) {
-      val index = (sdkList.model as DefaultListModel<Sdk>).indexOf(sdk)
+      val index = sdkList.indexOfInterpreter(sdk)
       sdkList.selectionModel.setSelectionInterval(index, index)
     }
   }
 
-  @RequiresEdt
   internal fun refreshAndSyncSelection(sdk: Sdk?) {
-    sdkList.removeListSelectionListener(selectionListener)
-    try {
-      refreshModuleList()
-      if (sdk != null) {
-        val index = (sdkList.model as DefaultListModel<Sdk>).indexOf(sdk)
-        if (index >= 0) {
-          sdkList.selectionModel.setSelectionInterval(index, index)
+    packagingScope.launch {
+      val items = loadItems()
+      withContext(Dispatchers.EDT) {
+        sdkList.removeListSelectionListener(selectionListener)
+        try {
+          refreshModuleList(items)
+          if (sdk != null) {
+            val index = sdkList.indexOfInterpreter(sdk)
+            if (index >= 0) {
+              sdkList.selectionModel.setSelectionInterval(index, index)
+            }
+          }
+        }
+        finally {
+          sdkList.addListSelectionListener(selectionListener)
         }
       }
     }
-    finally {
-      sdkList.addListSelectionListener(selectionListener)
-    }
+  }
+
+  /** Where [sdk] sits in the list, or -1 when the list does not hold it. Matched by the row's own ref. */
+  private fun JBList<PyInterpreterItem>.indexOfInterpreter(sdk: Sdk): Int {
+    val ref = sdk.asInterpreterRef()
+    return (0 until model.size).firstOrNull { model.getElementAt(it).ref == ref } ?: -1
   }
 
   private fun createSelectionListener(): ListSelectionListener {
     return ListSelectionListener { event ->
       if (!event.valueIsAdjusting) {
-        val selectedSdk = sdkList.selectedValue ?: return@ListSelectionListener
-        packagingScope.launch { toolWindowService.initForSdk(selectedSdk) }
+        val selected = sdkList.selectedValue ?: return@ListSelectionListener
+        packagingScope.launch {
+          val selectedSdk = readAction { selected.findSdk() } ?: return@launch
+          toolWindowService.initForSdk(selectedSdk)
+        }
       }
     }
   }

@@ -34,6 +34,14 @@ internal class EvoErrorException(message: String) : EvoLoadException(message)
 
 enum class State { CREATED, LOADING, DONE, ERROR, NOT_AVAILABLE }
 
+/**
+ * When a row is shown, in a list that a "Show more…" row folds — see [EvoTreeNodeElement.isFolded].
+ *
+ * [ALWAYS] for an ordinary row. A tool the folded list leaves out is [UNFOLDED], and the row that unfolds them is
+ * [FOLDED], so the two swap places without the tree being rebuilt.
+ */
+enum class ShownWhen { ALWAYS, FOLDED, UNFOLDED }
+
 /** [labelTooltip] is the full text behind an elided [label] (a section's folder path), shown when the header is hovered. */
 data class EvoTreeSection(
   val label: ListSeparator? = null,
@@ -48,6 +56,14 @@ sealed class EvoTreeElement(
   var state: State = State.CREATED,
 ) {
   val loadMutex = Mutex()
+
+  /**
+   * Whether the folded list shows this row, the unfolded one, or both — see [ShownWhen].
+   *
+   * A row the folded list leaves out is not loaded either, so a tool behind the "Show more…" row costs nothing until
+   * the user asks for it. See `EvoActionPopupStep.loadNewElements`.
+   */
+  var shownWhen: ShownWhen = ShownWhen.ALWAYS
 
   /**
    * The steps showing this element, told whenever its rows or its state change.
@@ -219,6 +235,22 @@ sealed class EvoTreeNodeElement(
   val sections = mutableListOf<EvoTreeSection>()
 
   /**
+   * Whether this node's rows are shown folded, hiding every [ShownWhen.UNFOLDED] row among them.
+   *
+   * Written on the node rather than baked into the sections, so one built tree serves both views. A popup is laid out
+   * and placed once, so the "Show more…" row still reopens the popup — but over this same tree, which keeps whatever
+   * its tool nodes have already loaded. Only the widget's own list folds; every other node leaves this alone.
+   */
+  var isFolded: Boolean = true
+
+  /** Whether [element] belongs in this node's list as it is folded right now. */
+  fun shows(element: EvoTreeElement): Boolean = when (element.shownWhen) {
+    ShownWhen.ALWAYS -> true
+    ShownWhen.FOLDED -> isFolded
+    ShownWhen.UNFOLDED -> !isFolded
+  }
+
+  /**
    * The caption above this node's submenu header, or null for the "add new" wording every such header used to carry.
    * Travels with the sections, so a node that absorbed a child keeps that child's heading.
    */
@@ -238,7 +270,7 @@ sealed class EvoTreeNodeElement(
   }
 
   /** Whether this node has any leaf to show — a guard against opening an empty submenu (which crashes Swing layout). */
-  fun hasContent(): Boolean = sections.any { it.elements.isNotEmpty() }
+  fun hasContent(): Boolean = sections.any { section -> section.elements.any { shows(it) } }
 }
 
 class EvoTreeStaticNodeElement(

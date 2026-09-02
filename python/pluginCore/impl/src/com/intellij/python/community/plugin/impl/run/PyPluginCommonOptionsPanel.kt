@@ -20,6 +20,7 @@ import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.selected
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm
+import com.intellij.python.sdk.common.PyInterpreterItem
 import com.jetbrains.python.sdk.PySdkListCellRenderer
 import javax.swing.JCheckBox
 import javax.swing.JRadioButton
@@ -30,7 +31,7 @@ internal class PyPluginCommonOptionsPanel {
   lateinit var useModuleSdkRadioButton: JRadioButton
   lateinit var moduleComboBox: ModulesComboBox
   lateinit var useSpecifiedSdkRadioButton: JRadioButton
-  lateinit var interpreterComboBox: ComboBox<Sdk>
+  lateinit var interpreterComboBox: ComboBox<PyInterpreterItem?>
   lateinit var interpreterOptionsTextField: RawCommandLineEditor
   lateinit var workingDirectoryTextField: TextFieldWithBrowseButton
   lateinit var pathMappingsRow: Row
@@ -65,7 +66,7 @@ internal class PyPluginCommonOptionsPanel {
           useSpecifiedSdkRadioButton = radioButton(PyBundle.message("runcfg.labels.interpreter"))
             .gap(RightGap.SMALL)
             .component
-          interpreterComboBox = comboBox(listOf<Sdk>(),
+          interpreterComboBox = comboBox(listOf<PyInterpreterItem?>(),
                                          PySdkListCellRenderer("<" + PyBundle.message("python.sdk.rendering.project.default") + ">"))
             .enabledIf(useSpecifiedSdkRadioButton.selected)
             .align(AlignX.FILL)

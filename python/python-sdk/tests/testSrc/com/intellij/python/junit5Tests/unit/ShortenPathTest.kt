@@ -2,9 +2,11 @@ package com.intellij.python.junit5Tests.unit
 
 import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.util.SystemProperties
-import com.intellij.python.sdk.backend.PythonInterpreterPresentation
+import com.intellij.ide.ui.icons.rpcId
 import com.intellij.python.sdk.backend.impl.isNameDerivedFromHomePath
-import com.intellij.python.sdk.backend.impl.shortenPath
+import com.intellij.python.sdk.common.PyInterpreterItem
+import com.intellij.python.sdk.common.PyInterpreterRef
+import com.intellij.python.sdk.common.shortenPath
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -122,58 +124,58 @@ class ShortenPathTest {
     assertFalse(isNameDerivedFromHomePath("", "/usr/bin/python"))
   }
 
-  // --- end-to-end: compactName via PythonInterpreterPresentation ---
+  // --- end-to-end: compactName via PyInterpreterItem ---
 
   @Test
   fun `path-derived venv name renders basename via shortName`() {
-    val pres = newPresentation(
+    val item = newItem(
       name = "~/.venvs/myenv",
       isPathDerivedName = true,
       suffix = "3.12.1",
     )
-    assertEquals("myenv [3.12.1]", pres.shortName)
+    assertEquals("myenv [3.12.1]", item.shortName)
   }
 
   @Test
   @DisplayName("PY-89560: SSH label is rendered as-is in the status bar shortName")
   fun `ssh label name renders as-is via shortName`() {
     val sshName = "SSH (sftp://user@host:22/usr/bin/python)"
-    val pres = newPresentation(
+    val item = newItem(
       name = sshName,
       isPathDerivedName = false,
       suffix = "3.12.1",
     )
-    assertEquals("$sshName [3.12.1]", pres.shortName)
-    assertFalse(pres.shortName.startsWith("python)"))
+    assertEquals("$sshName [3.12.1]", item.shortName)
+    assertFalse(item.shortName.startsWith("python)"))
   }
 
   @Test
   fun `long ssh label name is trimmed in middle rather than reduced to a segment`() {
     val sshName = "SSH (sftp://averylongusername@some.really.long.hostname.example.com:22/opt/python/3.12/bin/python3.12)"
-    val pres = newPresentation(
+    val item = newItem(
       name = sshName,
       isPathDerivedName = false,
       suffix = null,
     )
-    assertTrue(pres.shortName.startsWith("SSH"), "must preserve the SSH prefix")
-    assertTrue(pres.shortName.contains('…'), "must contain the middle-ellipsis marker")
-    assertTrue(pres.shortName.length <= 50)
+    assertTrue(item.shortName.startsWith("SSH"), "must preserve the SSH prefix")
+    assertTrue(item.shortName.contains('…'), "must contain the middle-ellipsis marker")
+    assertTrue(item.shortName.length <= 50)
   }
 
   @Test
   @DisplayName("a tool-supplied short label is shown as it stands and leaves the other names alone")
   fun `tool short name replaces the short name only`() {
     val cacheEnv = "~/Library/Caches/pypoetry/virtualenvs/myproject-AbCdEf12-py3.12"
-    val pres = newPresentation(
+    val item = newItem(
       name = cacheEnv,
       isPathDerivedName = true,
       suffix = "3.12.1",
       toolShortName = "Python 3.12.1",
     )
     // No suffix after it: the tool wrote the whole label, so appending the version would state it twice.
-    assertEquals("Python 3.12.1", pres.shortName)
-    assertEquals("$cacheEnv [3.12.1]", pres.fullName)
-    assertEquals(cacheEnv, pres.name)
+    assertEquals("Python 3.12.1", item.shortName)
+    assertEquals("$cacheEnv [3.12.1]", item.fullName)
+    assertEquals(cacheEnv, item.name)
   }
 
   // --- toSectionLabel: the Evo widget's section headers ---
@@ -202,17 +204,18 @@ class ShortenPathTest {
 
   private val noIcon: Icon = ImageIcon()
 
-  private fun newPresentation(
+  private fun newItem(
     name: String,
     isPathDerivedName: Boolean,
     suffix: String?,
     toolShortName: String? = null,
-  ) = PythonInterpreterPresentation(
+  ) = PyInterpreterItem(
+    ref = PyInterpreterRef.ExistingSdk(name),
     name = name,
     suffix = suffix,
     description = "irrelevant",
-    modifier = null,
-    icon = noIcon,
+    problem = null,
+    icon = noIcon.rpcId(),
     isPathDerivedName = isPathDerivedName,
     toolShortName = toolShortName,
   )

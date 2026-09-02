@@ -37,6 +37,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
@@ -131,7 +132,7 @@ public final class PythonSdkType extends SdkType {
   /**
    * This function doesn't support remote SDKs.
    *
-   * @deprecated Use {@link SdkExtKt#isSdkSeemsValid(Sdk)}
+   * @deprecated Use {@link PythonInterpreterExtKt#getPythonInfo(PythonInterpreter)}
    */
   @Override
   @Deprecated
@@ -462,7 +463,7 @@ public final class PythonSdkType extends SdkType {
     return path;
   }
   /**
-   * @deprecated use {@link PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * @deprecated use {@link PythonInterpreterExtKt#getPythonInfo(PythonInterpreter)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
    * or {@link SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
@@ -496,7 +497,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   /**
-   * @deprecated use {@link PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * @deprecated use {@link PythonInterpreterExtKt#getPythonInfo(PythonInterpreter)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
    * or {@link SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
@@ -556,7 +557,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   /**
-   * @deprecated use {@link PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * @deprecated use {@link PythonInterpreterExtKt#getPythonInfo(PythonInterpreter)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
    * or {@link SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */

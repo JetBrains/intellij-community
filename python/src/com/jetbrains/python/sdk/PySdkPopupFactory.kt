@@ -2,7 +2,9 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -16,11 +18,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.util.SlowOperations
+import com.intellij.python.sdk.backend.asInterpreterRef
+import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.util.ui.SwingHelper
+import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -28,18 +32,17 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.jetbrains.python.configuration.observeSdkConfigurationInProgress
 import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.codeCouldProbablyBeRunWithConfig
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
 class PySdkPopupFactory(val module: Module) {
 
   companion object {
-    @Deprecated("")
-    fun shortenNameInPopup(sdk: Sdk, maxLength: Int): @NlsSafe String = sdk.pyInterpreterPresentation().compactName(maxLength, keepPrefix = false)
-
     @ApiStatus.Internal
     fun createAndShow(module: Module) {
       DataManager.getInstance()
@@ -83,13 +86,15 @@ class PySdkPopupFactory(val module: Module) {
       Condition { it is SwitchToSdkAction && it.sdk == currentSdk },
     )
 
-    fun buildContent(): Pair<List<PopupFactoryImpl.ActionItem>, AnAction> {
-      val (group, addInterpreterGroup) = buildInterpreterActionGroup()
+    fun buildContent(interpreters: Map<PyRenderedSdkType, List<PyInterpreterItem>>): Pair<List<PopupFactoryImpl.ActionItem>, AnAction> {
+      val (group, addInterpreterGroup) = buildInterpreterActionGroup(interpreters)
       val items = ActionPopupStep.createActionItems(group, asyncContext, ActionPlaces.POPUP, PresentationFactory(), options)
       return items to addInterpreterGroup
     }
 
-    var content = buildContent()
+    // The interpreter rows arrive from `loadInterpreters` below. Deciding whether to flag one runs it, which must not
+    // happen on the EDT, so the popup opens with the rows that need no interpreter and fills the rest in.
+    var content = buildContent(emptyMap())
     val step = object : ActionPopupStep(content.first, title, Supplier { asyncContext }, ActionPlaces.POPUP, PresentationFactory(), options) {
       override fun getValues(): List<PopupFactoryImpl.ActionItem> = content.first
 
@@ -100,13 +105,26 @@ class PySdkPopupFactory(val module: Module) {
     val popup = ListPopupImpl(module.project, null, step, null).apply { setHandleAutoSelectionBeforeShow(true) }
 
     fun rerender() = (popup.list.model as? ListPopupModel<*>)?.syncModel()
+
+    // Replays its one value, so the collector below loads the rows as soon as the popup shows, and again whenever a
+    // configuration finishes and a newly created interpreter has to appear.
+    val reload = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
+    popup.content.launchOnShow("PySdkPopupFactory.interpreters") {
+      reload.collect {
+        val interpreters = withContext(Dispatchers.IO) {
+          module.project.getAssignablePythonSdks(module).groupInterpreterItemsByTypes(module)
+        }
+        withContext(Dispatchers.EDT) {
+          content = buildContent(interpreters)
+          rerender()
+        }
+      }
+    }
+
     observeSdkConfigurationInProgress(
       module.project, popup.content,
       { rerender() },
-      {
-        content = buildContent()
-        rerender()
-      },
+      { reload.tryEmit(Unit) },
     )
     return popup
   }
@@ -116,9 +134,9 @@ class PySdkPopupFactory(val module: Module) {
    * submenu, and the "Interpreter Settings" / "Manage Packages" actions. Returns the group together
    * with its "Add New Interpreter" sub-group so the step can recognize and grey it out.
    */
-  private fun buildInterpreterActionGroup(): Pair<DefaultActionGroup, AnAction> {
+  private fun buildInterpreterActionGroup(interpreters: Map<PyRenderedSdkType, List<PyInterpreterItem>>): Pair<DefaultActionGroup, AnAction> {
     val group = DefaultActionGroup()
-    addSwitchInterpreterActions(group)
+    addSwitchInterpreterActions(group, interpreters)
 
     val addInterpreterGroup = DefaultActionGroup(PyBundle.message("python.sdk.action.add.new.interpreter.text"), true)
     addInterpreterGroup.addAll(collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(module)) { })
@@ -135,43 +153,55 @@ class PySdkPopupFactory(val module: Module) {
     return group to addInterpreterGroup
   }
 
-  /** Adds the assignable interpreters to [group] as [SwitchToSdkAction]s, grouped by [PyRenderedSdkType] with separators. */
-  private fun addSwitchInterpreterActions(group: DefaultActionGroup) {
-    val moduleSdksByTypes = SlowOperations.knownIssue("PY-76167").use {
-      groupModuleSdksByTypes(module.project.getAssignablePythonSdks(module), module) {
-        !it.isSdkSeemsValid || !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(it))
-      }
-    }
+  /**
+   * Adds [interpreters] to [group] as [SwitchToSdkAction]s, grouped by [PyRenderedSdkType] with separators.
+   *
+   * Each row needs its interpreter's SDK as well as its item: to tell two interpreters of the same kind and path
+   * apart, to judge whether a target can run the module's code, and to assign it. An item whose interpreter is gone
+   * is dropped.
+   */
+  private fun addSwitchInterpreterActions(group: DefaultActionGroup, interpreters: Map<PyRenderedSdkType, List<PyInterpreterItem>>) {
     val targetModuleSitsOn = PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(module)
     PyRenderedSdkType.entries.forEachIndexed { index, type ->
       if (index != 0) group.addSeparator()
-      val sdksByType = moduleSdksByTypes[type]?.distinctBy {
-        it.sdkAdditionalData?.javaClass to it.homePath
-      } ?: return@forEachIndexed
+      val rows = interpreters[type]
+                   ?.withSdks()
+                   ?.distinctBy { (_, sdk) -> sdk.sdkAdditionalData?.javaClass to sdk.homePath }
+                 ?: return@forEachIndexed
 
-      val uniqueSdks = if (type == PyRenderedSdkType.REMOTE) {
-        sdksByType.filter {
+      val uniqueRows = if (type == PyRenderedSdkType.REMOTE) {
+        rows.filter { (_, sdk) ->
           targetModuleSitsOn == null ||
-          targetModuleSitsOn.codeCouldProbablyBeRunWithConfig(it.targetAdditionalData?.targetEnvironmentConfiguration)
+          targetModuleSitsOn.codeCouldProbablyBeRunWithConfig(sdk.targetAdditionalData?.targetEnvironmentConfiguration)
         }
       }
       else {
-        sdksByType.distinctBy { it.sdkAdditionalData?.javaClass to it.homePath }
+        rows
       }
 
-      group.addAll(uniqueSdks.map { SwitchToSdkAction(it) })
+      group.addAll(uniqueRows.map { (item, sdk) -> SwitchToSdkAction(item, sdk) })
     }
-    if (moduleSdksByTypes.isNotEmpty()) group.addSeparator()
+    if (interpreters.isNotEmpty()) group.addSeparator()
   }
 
-  private inner class SwitchToSdkAction(val sdk: Sdk) : DumbAwareAction() {
+  /**
+   * These rows paired with the SDK each one names, dropping a row whose interpreter is gone.
+   *
+   * Reads the SDK table once, so a whole list costs one pass rather than a lookup per row. A list is built off the EDT
+   * and the actions from it later, so an interpreter can be renamed or removed in between — that is the dropped row.
+   */
+  private fun List<PyInterpreterItem>.withSdks(): List<Pair<PyInterpreterItem, Sdk>> {
+    val byRef = PythonSdkUtil.getAllSdks().associateBy { it.asInterpreterRef() }
+    return mapNotNull { item -> byRef[item.ref]?.let { item to it } }
+  }
+
+  private inner class SwitchToSdkAction(item: PyInterpreterItem, val sdk: Sdk) : DumbAwareAction() {
 
     init {
-      val presentation = sdk.pyInterpreterPresentation()
       with (templatePresentation) {
-        setText(presentation.longName, false)
-        description = PyBundle.message("python.sdk.switch.to", presentation.description)
-        icon = presentation.icon
+        setText(item.longName, false)
+        description = PyBundle.message("python.sdk.switch.to", item.description)
+        icon = item.icon.icon()
       }
     }
 

@@ -7,18 +7,11 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.frameActivationCache.CacheKeys
-import com.jetbrains.python.frameActivationCache.getOrComputeOnFrameActivation
 import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.findPythonSdk
-import com.jetbrains.python.sdk.validatePythonAndGetInfo
-import com.jetbrains.python.sdk.version
 import com.intellij.python.sdk.backend.impl.enrichLocalPythonSdkWithHomeInfo
-import com.intellij.python.sdk.backend.impl.pythonEnvironmentCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * An [Sdk] paired with the outcome of [PythonEnvironment] detection.
@@ -32,11 +25,11 @@ import org.jetbrains.annotations.ApiStatus
  * and return `null` for all other cases, so callers that only want the common path can use them
  * without unwrapping.
  *
- * Obtain one via:
- *  - [Sdk.pythonInterpreter] — background-thread factory that triggers detection when the cache is cold;
- *    always returns a non-null wrapper.
- *  - [Sdk.pythonInterpreterOrNull] — synchronous read; returns `null` only when nothing has ever been
- *    cached for the SDK.
+ * Obtain one via [Sdk.pythonInterpreter], a background-thread factory that triggers detection when the cache is cold
+ * and always returns a non-null wrapper.
+ *
+ * Ask [getPythonInfo] what the interpreter is, and why it cannot be used when it cannot. That is the interpreter's
+ * own answer, so an SDK is never asked instead.
  */
 class PythonInterpreter internal constructor(
   internal val sdk: Sdk,
@@ -56,42 +49,7 @@ class PythonInterpreter internal constructor(
 
   val isActivatable: Boolean
     get() = pythonEnvironment?.isActivatable == true
-
-  override fun equals(other: Any?): Boolean {
-    return sdk == (other as? PythonInterpreter)?.sdk
-  }
-
-  override fun hashCode(): Int {
-    return sdk.hashCode()
-  }
 }
-
-/**
- * Python version.
- * SDK is either invalid (`python --version` returned an error) or has a [LanguageLevel].
- * Use `when` to check it.
- *
- * An environment that records its own version answers from that — see [PythonEnvironment.version] — so a virtualenv or
- * a conda environment costs nothing here. The interpreter is only run for one that records none: a system interpreter,
- * a Python 2.7-era `virtualenv`, or a remote machine, where environment detection does not reach yet. That answer is
- * cached until the user next activates the IDE.
- */
-suspend fun PythonInterpreter.getVersion(): PyResult<LanguageLevel> =
-  pythonEnvironment?.version?.let { LanguageLevel.fromPythonVersionSafe(it) }?.let { PyResult.success(it) }
-  ?: sdk.getOrComputeOnFrameActivation(PY_SDK_LANG_LEVEL_CACHE_KEY) {
-    sdk.validatePythonAndGetInfo().version
-  }
-
-/**
- * A [PythonInterpreter] wrapping whatever [PythonEnvironment] detection has already cached for this SDK,
- * or `null` when nothing has ever been cached (early startup, non-Python / remote SDK).
- *
- * Synchronous, no I/O. A non-null wrapper whose [PythonInterpreter.environmentResult] is a failure still
- * counts as "already attempted". For a guaranteed fresh result, call [pythonInterpreter] on a background
- * thread.
- */
-val Sdk.pythonInterpreterOrNull: PythonInterpreter?
-  get() = pythonEnvironmentCache?.let { PythonInterpreter(this, it) }
 
 /**
  * Ensures this SDK is enriched with [PythonEnvironment] information and returns a [PythonInterpreter].
@@ -100,9 +58,6 @@ val Sdk.pythonInterpreterOrNull: PythonInterpreter?
  *  - `null` — the SDK is non-Python or remote and was not enriched;
  *  - failure — detection ran but failed (e.g. bad home path);
  *  - success — the [PythonEnvironment] was detected.
- *
- * After a successful call on a local Python SDK, subsequent [pythonInterpreterOrNull] reads on this SDK
- * are non-null until the cache is refreshed.
  *
  * Triggers file I/O on the calling thread via the underlying detector; must not be called on EDT.
  *
@@ -118,7 +73,6 @@ suspend fun Sdk.pythonInterpreterAsync(forceRefresh: Boolean = false): PythonInt
   this@pythonInterpreterAsync.pythonInterpreter(forceRefresh)
 }
 
-private val PY_SDK_LANG_LEVEL_CACHE_KEY = CacheKeys<PyResult<LanguageLevel>>("PythonSdkLang")
 
 /**
  * Get [PythonInterpreter] if [PyProject] has it

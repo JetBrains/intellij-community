@@ -2,7 +2,7 @@
 package com.intellij.python.junit5Tests.unit
 
 import com.intellij.python.sdk.backend.evolution.ownedEnvBinaryIn
-import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.sdk.common.PyInterpreterRef
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test

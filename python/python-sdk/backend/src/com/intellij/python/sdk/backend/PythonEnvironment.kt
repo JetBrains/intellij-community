@@ -78,6 +78,17 @@ interface PythonEnvironment {
    */
   val libRoot: Path? get() = null
 
+  /**
+   * Whether this environment belongs to one project, so its SDK must record which one.
+   *
+   * False for an environment that many projects share: a system installation, or a base conda install. Such an
+   * environment records nothing about a project and must not be asked for one, so that is the default. True for an
+   * environment a project owns, where a missing project is a broken configuration rather than a legal state.
+   *
+   * @see com.intellij.python.sdk.backend.validate
+   */
+  val requiresAssociation: Boolean get() = false
+
   /** Whether anything must run to activate this environment. Answers for every shell, unlike the two below. */
   val isActivatable: Boolean get() = false
 
@@ -106,7 +117,8 @@ interface PythonEnvironment {
 }
 
 /**
- * A system-wide Python installation: no root of its own, no library of its own, nothing to activate.
+ * A system-wide Python installation: no root of its own, no library of its own, nothing to activate, and no project of
+ * its own. Every project on the machine may use it, so it keeps the default [requiresAssociation] of `false`.
  */
 data class SystemPythonEnvironment(
   /** Always null: a system interpreter records nothing about itself, so its version is only known by running it. */

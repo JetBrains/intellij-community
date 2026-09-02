@@ -74,13 +74,18 @@ open class EvoActionPopupStep(
   }
 
   /**
-   * Loads every element not loaded yet. A leaf's load only marks it [State.DONE] — but that is what [isSelectable]
-   * requires, so a row swapped in later is inert until this has run over it.
+   * Loads every element not loaded yet that this node shows. A leaf's load only marks it [State.DONE] — but that is
+   * what [isSelectable] requires, so a row swapped in later is inert until this has run over it.
+   *
+   * A row the folded list hides is skipped, because a tool node's load runs that tool. It is loaded when the user
+   * unfolds the list: that reopens the popup, and the new step runs this again over the rows now shown.
    */
   private fun loadNewElements() {
     val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return
     node.sections.forEach { section ->
-      section.elements.filter { it.state == State.CREATED }.forEach { it.load(project, scope, listeners) }
+      section.elements
+        .filter { it.state == State.CREATED && node.shows(it) }
+        .forEach { it.load(project, scope, listeners) }
     }
   }
 
@@ -178,9 +183,9 @@ open class EvoActionPopupStep(
 
   override fun getValues(): List<EvoTreeItem> =
     node.sections.flatMap { section ->
-      // A self-gating action that reported itself inapplicable is dropped before indexing, so the separator still
-      // lands on the first row actually shown.
-      val elements = section.elements.filter { it !is EvoTreeActionLeafElement || it.presentation.isVisible }
+      // A row the fold hides, and a self-gating action that reported itself inapplicable, are dropped before indexing,
+      // so the separator still lands on the first row actually shown.
+      val elements = section.elements.filter { node.shows(it) && (it !is EvoTreeActionLeafElement || it.presentation.isVisible) }
       // A section's header is painted into its first row's cell, so only that row carries the separator and its tooltip.
       elements.mapIndexed { index, element ->
         EvoTreeItem(element, section.label?.takeIf { index == 0 }, section.labelTooltip?.takeIf { index == 0 })

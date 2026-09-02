@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.NamedConfigurable
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -18,10 +19,12 @@ internal class PythonInterpreterDetailsConfigurable(
   project: Project,
   module: Module?,
   val sdk: Sdk,
+  /** What the tree row draws. Built off the EDT, because deciding whether to flag the interpreter runs it. */
+  val item: PyInterpreterItem,
   parentConfigurable: Configurable,
 ) : NamedConfigurable<Sdk>() {
 
-  private val underlyingConfigurable: Configurable = createPythonInterpreterConfigurable(project, module, sdk, parentConfigurable)
+  private val underlyingConfigurable: Configurable = createPythonInterpreterConfigurable(project, module, sdk, item, parentConfigurable)
 
   override fun isModified(): Boolean = underlyingConfigurable.isModified
 

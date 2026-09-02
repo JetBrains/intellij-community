@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +21,13 @@ public abstract class PyCustomSdkUiProvider {
     return ContainerUtil.getFirstItem(EP_NAME.getExtensionList());
   }
 
-  public abstract void customizeActiveSdkPanel(@NotNull Project project, @NotNull ComboBox mySdkCombo, @NotNull JPanel myMainPanel,
+  /**
+   * Adds this provider's controls to the "Python Interpreter" settings panel.
+   *
+   * @param selection what the panel has selected, and how to hear about changes. The panel's combo box is deliberately
+   *                  not passed: its items are not SDKs.
+   */
+  public abstract void customizeActiveSdkPanel(@NotNull Project project, @NotNull PyInterpreterSelection selection,
+                                               @NotNull JPanel myMainPanel,
                                                @NotNull GridBagConstraints c, @NotNull Disposable disposable);
 }

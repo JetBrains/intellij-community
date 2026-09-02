@@ -4,7 +4,7 @@ package com.jetbrains.env
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.env.python.PySDKRule
-import com.jetbrains.python.sdk.isSdkSeemsValid
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import org.junit.Assert
 import org.junit.Test
 import kotlin.time.Duration.Companion.minutes
@@ -23,9 +23,12 @@ abstract class PySdkFlavorTestBase {
 
   @Test
   fun testValid(): Unit =  timeoutRunBlocking(2.minutes) {
-    sdkRule.sdk.getPythonBinaryPath(projectRule.project).getOrThrow()
+    val sdk = sdkRule.sdk
+    sdk.getPythonBinaryPath(projectRule.project).getOrThrow()
+    // The flavor's own verdict, which this class is about, and which caches the file check it makes. Asking the
+    // interpreter instead would launch a process per repetition — see `PythonInterpreter.validate`.
     repeat(1000) {
-      Assert.assertTrue(sdkRule.sdk.isSdkSeemsValid)
+      Assert.assertTrue(sdk.pySdkAdditionalData.flavorAndData.sdkSeemsValid(sdk, null))
     }
   }
 }

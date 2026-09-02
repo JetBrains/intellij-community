@@ -63,7 +63,7 @@ import com.intellij.python.sdk.common.evolution.EvoNodeKind
 import com.intellij.python.sdk.common.evolution.EvoNodeStats
 import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
-import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.evoRefKind
 import com.intellij.python.sdk.common.evolution.evoReusesExistingEnv
 import com.intellij.python.sdk.backend.detectPythonEnvironment
@@ -107,7 +107,8 @@ import com.intellij.python.sdk.backend.PySdkBundle
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.isSdkConfigurationInProgress
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.pyInterpreterPresentation
+import com.intellij.python.sdk.backend.asItem
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 import fleet.rpc.remoteApiDescriptor
 import java.nio.file.Path
@@ -477,16 +478,16 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // The other way was here: a remote or target SDK (WSL, SSH, Docker) used to be left out, and is now reported like
     // any other. Nothing below reads the interpreter's machine — the presentation is the label the classic widget
     // shows, and the dependency file is resolved from the module.
-    val presentation = sdk.pyInterpreterPresentation()
+    val item = sdk.pythonInterpreterAsync().asItem()
     // `PythonPackageManager.forSdk` reads `sdk.pySdkAdditionalData`, which throws on an SDK created without any —
     // "buggy code" per its own message. Test the precondition instead of catching: an IllegalStateException cannot be
     // caught safely here, since ProcessCanceledException is one. Such an SDK has no dependency file to offer anyway.
     val manager = if (sdk.sdkAdditionalData is PythonSdkAdditionalData) PythonPackageManager.forSdk(pyProject.project, sdk) else null
     return PyInterpreterDto(
-      title = presentation.shortName,
-      description = presentation.description,
-      icon = presentation.icon.rpcId(),
-      ref = PyInterpreterRef.ExistingSdk(sdk.name),
+      title = item.shortName,
+      description = item.description,
+      icon = item.icon,
+      ref = item.ref,
       dependencyFileUrl = manager?.getRootDependenciesFile()?.virtualFile?.url,
       // Which node's tool made this interpreter, so the popup can promote that one tool and fold the rest away. Null
       // when no node claims its flavor, and the popup then lists them all.
@@ -591,12 +592,12 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       .filter { it.isAssociatedWithModule(module) }
       .distinctBy { it.sdkAdditionalData?.javaClass to it.homePath }
       .map { sdk ->
-        val presentation = sdk.pyInterpreterPresentation()
+        val item = sdk.pythonInterpreterAsync().asItem()
         PyInterpreterDto(
-          title = presentation.shortName,
-          description = presentation.description,
-          icon = presentation.icon.rpcId(),
-          ref = PyInterpreterRef.ExistingSdk(sdk.name),
+          title = item.shortName,
+          description = item.description,
+          icon = item.icon,
+          ref = item.ref,
         )
       }
   }
@@ -998,7 +999,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
                  ?: return null.also { LOG.info("Evo: no rebuild for '${sdk.name}', whose flavor no node claims") }
     val toolId = providers.firstOrNull { it.toolId.id == nodeId }?.toolId ?: return null
     val (provider, context) = toolContextFor(toolId, pyProject, eelFileSystem(pyProject)) ?: return null
-    val title = sdk.pyInterpreterPresentation().shortName
+    val title = sdk.pythonInterpreterAsync().asItem().shortName
     // Asked in the tool's own coroutine, so whatever it runs to answer — uv listing its Pythons, hatch its environments
     // — is reported under that tool rather than beside the widget's tree.
     val spec = toolScope(pyProject.project, traceId, nodeId, provider.label)

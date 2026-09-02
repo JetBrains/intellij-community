@@ -24,9 +24,14 @@ import com.jetbrains.python.PythonIdeLanguageCustomization
 import com.jetbrains.python.packaging.widget.resolvePythonWidgetContext
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.intellij.util.IconUtil
+import com.intellij.ide.ui.icons.icon
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.asItem
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.common.PyInterpreterItem
 import com.jetbrains.python.sdk.noInterpreterMarker
-import com.jetbrains.python.sdk.pyInterpreterPresentation
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.Nls
 import kotlinx.coroutines.launch
 
 private const val ID: String = "pythonInterpreterWidget"
@@ -69,6 +74,15 @@ private class PySdkStatusBar(project: Project, scope: CoroutineScope) : EditorBa
                                                                                                   scope = scope) {
   private var module: Module? = null
 
+  /**
+   * The last interpreter reading, and the SDK it was read for.
+   *
+   * Kept because [getWidgetState] runs inside a read action and reading an interpreter runs it, which must not happen
+   * under the read lock. A miss shows the SDK's own name and asks for the reading in the background.
+   */
+  @Volatile
+  private var lastRead: Pair<Sdk, PyInterpreterItem>? = null
+
   override fun install(statusBar: StatusBar) {
     super.install(statusBar)
     // statusBar.currentEditor resolves asynchronously via serviceAsync chain (with null as initial value);
@@ -81,16 +95,31 @@ private class PySdkStatusBar(project: Project, scope: CoroutineScope) : EditorBa
   override fun getWidgetState(file: VirtualFile?): WidgetState {
     val (module, sdk) = resolvePythonWidgetContext(project, file) ?: return WidgetState.HIDDEN
     this.module = module
-    return if (sdk == null) {
-      WidgetState("", noInterpreterMarker, true)
-    }
-    else {
+    if (sdk == null) return WidgetState("", noInterpreterMarker, true)
 
-      val presentation = sdk.pyInterpreterPresentation()
-      WidgetState(PyBundle.message("current.interpreter", presentation.description), presentation.shortName, true).also {
-        it.icon = IconUtil.desaturate(presentation.icon)
+    val item = lastRead?.takeIf { it.first == sdk }?.second
+    if (item == null) {
+      scope.launch {
+        lastRead = sdk to sdk.pythonInterpreterAsync().asItem()
+        update()
       }
+      return WidgetState(PyBundle.message("current.interpreter", sdk.homePath.orEmpty()), sdk.name, true)
     }
+
+    return WidgetState(tooltipFor(item), item.shortName, true).also {
+      it.icon = IconUtil.desaturate(item.icon.icon())
+    }
+  }
+
+  /**
+   * The widget tooltip: the interpreter path, and why it is flagged when it is.
+   *
+   * Until PY-91967 the reason reached `idea.log` only, so a crossed icon here said nothing about itself.
+   */
+  private fun tooltipFor(item: PyInterpreterItem): @Nls String {
+    val current = PyBundle.message("current.interpreter", item.description)
+    val reason = item.problem?.reason ?: return current
+    return "$current\n$reason"
   }
 
   override fun isEnabledForFile(file: VirtualFile?): Boolean = true

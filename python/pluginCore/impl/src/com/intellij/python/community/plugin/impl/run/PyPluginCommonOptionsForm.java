@@ -17,7 +17,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.common.PyInterpreterItem;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.jetbrains.python.sdk.PySdkRenderingKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -124,45 +127,46 @@ final class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public @Nullable String getSdkHome() {
-    Sdk selectedSdk = (Sdk)content.interpreterComboBox.getSelectedItem();
+    Sdk selectedSdk = getSdk();
     return selectedSdk == null ? null : selectedSdk.getHomePath();
   }
 
   @Override
   public @Nullable Sdk getSdk() {
-    return (Sdk)content.interpreterComboBox.getSelectedItem();
+    // The combo holds items, not SDKs. An item can outlive the interpreter it names, so this may be null.
+    Object selected = content.interpreterComboBox.getSelectedItem();
+    return selected instanceof PyInterpreterItem item ? PythonInterpreterExtKt.findSdk(item) : null;
   }
 
   @Override
   public void setSdkHome(String sdkHome) {
-    List<Sdk> sdkList = new ArrayList<>();
-    sdkList.add(null);
     final List<Sdk> allSdks = ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), new PreferredSdkComparator());
-    Sdk selection = null;
-    for (Sdk sdk : allSdks) {
-      String homePath = sdk.getHomePath();
-      if (homePath != null && sdkHome != null && FileUtil.pathsEqual(homePath, sdkHome)) selection = sdk;
-      sdkList.add(sdk);
+    final List<PyInterpreterItem> allItems = PySdkRenderingKt.interpreterItemsUnderProgress(allSdks, myProject);
+    List<PyInterpreterItem> rows = new ArrayList<>();
+    rows.add(null);
+    PyInterpreterItem selection = null;
+    for (int i = 0; i < allSdks.size(); i++) {
+      String homePath = allSdks.get(i).getHomePath();
+      if (homePath != null && sdkHome != null && FileUtil.pathsEqual(homePath, sdkHome)) selection = allItems.get(i);
+      rows.add(allItems.get(i));
     }
 
-    content.interpreterComboBox.setModel(new CollectionComboBoxModel<>(sdkList, selection));
+    content.interpreterComboBox.setModel(new CollectionComboBoxModel<>(rows, selection));
   }
 
   @Override
   public void setSdk(@Nullable Sdk sdk) {
-    List<Sdk> allSdks = PythonSdkUtil.getAllSdks();
-    List<Sdk> sdkList = new ArrayList<>(allSdks);
-    Sdk selection = null;
-    for (Sdk curSdk: allSdks) {
-      if (curSdk == sdk) {
-        selection = curSdk;
-      }
+    List<Sdk> allSdks = new ArrayList<>(PythonSdkUtil.getAllSdks());
+    // An SDK the table does not hold is still offered, so the configuration keeps naming what it was given.
+    if (sdk != null && !allSdks.contains(sdk)) {
+      allSdks.add(sdk);
     }
-    if (selection == null) {
-      sdkList.add(sdk);
-      selection = sdk;
+    List<PyInterpreterItem> rows = PySdkRenderingKt.interpreterItemsUnderProgress(allSdks, myProject);
+    PyInterpreterItem selection = null;
+    for (int i = 0; i < allSdks.size(); i++) {
+      if (allSdks.get(i) == sdk) selection = rows.get(i);
     }
-    content.interpreterComboBox.setModel(new CollectionComboBoxModel(sdkList, selection));
+    content.interpreterComboBox.setModel(new CollectionComboBoxModel<>(rows, selection));
   }
 
   @Override
@@ -255,7 +259,7 @@ final class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
       Module module = getModule();
       return module == null ? null : ModuleRootManager.getInstance(module).getSdk();
     }
-    Sdk sdk = (Sdk)content.interpreterComboBox.getSelectedItem();
+    Sdk sdk = getSdk();
     if (sdk == null) {
       return ProjectRootManager.getInstance(myProject).getProjectSdk();
     }

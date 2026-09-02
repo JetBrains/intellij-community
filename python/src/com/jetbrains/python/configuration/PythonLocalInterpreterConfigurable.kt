@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
@@ -29,8 +30,12 @@ import com.jetbrains.python.sdk.pySdkAdditionalData
  * Configurable for local Python interpreter.
  *
  */
-internal class PythonLocalInterpreterConfigurable(private val project: Project, private val module: Module?, private val sdk: Sdk) :
-  BoundConfigurable(sdk.name) {
+internal class PythonLocalInterpreterConfigurable(
+  private val project: Project,
+  private val module: Module?,
+  private val sdk: Sdk,
+  private val item: PyInterpreterItem,
+) : BoundConfigurable(sdk.name) {
   private val initialSdkHomePath = sdk.homePath
 
   private val interpreterPath = AtomicProperty(sdk.homePath ?: "")
@@ -49,6 +54,9 @@ internal class PythonLocalInterpreterConfigurable(private val project: Project, 
       ) { it.name }
         .bindText(interpreterPath)
         .align(AlignX.FILL)
+        // Why the list flags this interpreter, stated where it needs no hover. Until PY-91967 the reason reached
+        // `idea.log` only, so the marker in the list was the whole of what the user was told.
+        .apply { item.problem?.reason?.let { comment(it) } }
     }
     val sdkFlavor = PythonSdkFlavor.getFlavor(sdk)
     if (sdkFlavor is VirtualEnvSdkFlavor || sdkFlavor is CondaEnvSdkFlavor) {

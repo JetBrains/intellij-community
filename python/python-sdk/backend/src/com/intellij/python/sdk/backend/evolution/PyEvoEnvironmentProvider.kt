@@ -25,7 +25,7 @@ import com.intellij.python.sdk.common.evolution.EvoNodeKind
 import com.intellij.python.sdk.common.evolution.EvoRecreateDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
-import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyResult
@@ -37,7 +37,7 @@ import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.intellij.python.sdk.backend.PySdkBundle
-import com.intellij.python.sdk.backend.impl.shortenPath
+import com.intellij.python.sdk.common.shortenPath
 import com.jetbrains.python.venvReader.Directory
 import com.jetbrains.python.venvReader.PRUNED_SCAN_DIRS
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -705,7 +705,7 @@ fun evoInstallPythonLeaf(title: @Nls String, version: @NlsSafe String): EvoLeafD
 /**
  * Builds a leaf for a declared-but-not-yet-materialized env (poetry per-version row, hatch declared env). Selecting
  * it creates the env via the tool's create logic and then assigns it; [token] is tool-specific — see
- * [com.intellij.python.sdk.common.evolution.PyInterpreterRef.CreateEnv].
+ * [com.intellij.python.sdk.common.PyInterpreterRef.CreateEnv].
  */
 @ApiStatus.Internal
 fun evoCreateEnvLeaf(

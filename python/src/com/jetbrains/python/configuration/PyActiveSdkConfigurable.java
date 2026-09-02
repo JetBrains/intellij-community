@@ -37,7 +37,11 @@ import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PyTransferredSdkRootsKt;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.SdkExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.jetbrains.python.sdk.PyInterpreterSelection;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.python.sdk.common.PyInterpreterItem;
+import com.intellij.python.sdk.common.PyInterpreterRef;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.ProjectExtKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -58,7 +62,7 @@ import java.util.function.Consumer;
 
 import static com.jetbrains.python.configuration.SdkConfigurationProgressObserverKt.observeSdkConfigurationInProgress;
 import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdk;
-import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
+import static com.jetbrains.python.sdk.PySdkRenderingKt.groupInterpreterItemsByTypesUnderProgress;
 import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote;
 
 @ApiStatus.Internal
@@ -189,7 +193,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to applying
       final Sdk currentSelectedSdk = getEditableSelectedSdk();
 
-      if (currentSelectedSdk != null && getEditableSdkUsingOriginal(currentSelectedSdk) != null) {
+      // `getEditableSelectedSdk` resolves the selected item against the live SDK table, so a non-null answer already
+      // means the previously selected interpreter is still there.
+      if (currentSelectedSdk != null) {
         // nothing has been selected but previously selected sdk still exists, stay with it
         updateSdkListAndSelect(currentSelectedSdk);
       }
@@ -218,7 +224,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Nullable
   private Sdk getEditableSelectedSdk() {
-    return (Sdk)mySdkCombo.getSelectedItem();
+    // The combo holds items, not SDKs. An item can outlive the interpreter it names, so this may be null.
+    return mySdkCombo.getSelectedItem() instanceof PyInterpreterItem item ? PythonInterpreterExtKt.findSdk(item) : null;
   }
 
   @Nullable
@@ -276,11 +283,11 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private void updateSdkListAndSelect(@Nullable Sdk selectedSdk) {
     final List<Sdk> allPythonSdks = getAvailableSdks();
 
+    final Map<PyRenderedSdkType, List<PyInterpreterItem>> moduleSdksByTypes =
+      groupInterpreterItemsByTypesUnderProgress(allPythonSdks, myModule, mySdkCombo);
+
     final List<Object> items = new ArrayList<>();
     items.add(null);
-
-    final Map<PyRenderedSdkType, List<Sdk>> moduleSdksByTypes =
-      groupModuleSdksByTypes(allPythonSdks, myModule, sdk -> !SdkExtKt.isSdkSeemsValid(sdk));
 
     final PyRenderedSdkType[] renderedSdkTypes = PyRenderedSdkType.values();
     for (int i = 0; i < renderedSdkTypes.length; i++) {
@@ -296,7 +303,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     items.add(getShowAll());
 
     mySdkCombo.setRenderer(new PySdkListCellRenderer());
-    final Sdk selection = getEditableSdkUsingOriginal(selectedSdk);
+    final PyInterpreterItem selection = findItemFor(moduleSdksByTypes, selectedSdk);
     mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
     // The call of `setSelectedItem` is required to notify `PyPathMappingsUiProvider` about initial setting of `Sdk` via `setModel` above
     // Fragile as it is vulnerable to changes of `setSelectedItem` method in respect to processing `ActionEvent`
@@ -304,12 +311,20 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     onSdkSelected();
   }
 
+  /**
+   * The item that names {@code sdk}, or null when the list has none.
+   * <p>
+   * Matched by interpreter name, because the "Python Interpreters" dialog may hand over an editable copy rather than
+   * the SDK the live table holds.
+   */
   @Nullable
-  private Sdk getEditableSdkUsingOriginal(@Nullable Sdk sdk) {
+  private static PyInterpreterItem findItemFor(@NotNull Map<PyRenderedSdkType, List<PyInterpreterItem>> itemsByType,
+                                               @Nullable Sdk sdk) {
     if (sdk == null) return null;
-    // The SDK may come from the "Python Interpreters" dialog as an editable copy; match the live table SDK by name.
-    for (Sdk available : getAvailableSdks()) {
-      if (available.getName().equals(sdk.getName())) return available;
+    PyInterpreterRef ref = PythonInterpreterExtKt.asInterpreterRef(sdk);
+    for (List<PyInterpreterItem> items : itemsByType.values()) {
+      PyInterpreterItem item = ContainerUtil.find(items, candidate -> ref.equals(candidate.getRef()));
+      if (item != null) return item;
     }
     return null;
   }
@@ -342,6 +357,25 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     );
   }
 
+  /**
+   * A {@link PyInterpreterSelection} over {@code combo}, so a {@link PyCustomSdkUiProvider} never sees the raw items.
+   * <p>
+   * The combo holds interpreters, separators, the "Show All" row and {@code null}; unwrapping that is this panel's job.
+   */
+  private static @NotNull PyInterpreterSelection selectionOf(@NotNull ComboBox<Object> combo) {
+    return new PyInterpreterSelection() {
+      @Override
+      public @Nullable Sdk getSelectedSdk() {
+        return combo.getSelectedItem() instanceof PyInterpreterItem item ? PythonInterpreterExtKt.findSdk(item) : null;
+      }
+
+      @Override
+      public void onChange(@NotNull Runnable listener) {
+        combo.addActionListener(e -> listener.run());
+      }
+    };
+  }
+
   private static @NotNull ComboBox<Object> buildSdkComboBox(@NotNull Runnable onShowAllSelected,
                                                             @NotNull Runnable onSdkSelected) {
     final ComboBox<Object> result = new ComboBox<>() {
@@ -371,7 +405,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
    * @param additionalAction either the gear button for the old UI or the link "Add Interpreter" for the new UI
    */
   private static @NotNull JPanel buildPanel(@NotNull Project project,
-                                            @NotNull ComboBox<?> sdkComboBox,
+                                            @NotNull ComboBox<Object> sdkComboBox,
                                             @NotNull JComponent additionalAction,
                                             @NotNull JPanel promotionPanel,
                                             @NotNull PackagesNotificationPanel packagesNotificationPanel,
@@ -401,7 +435,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     result.add(additionalAction, c);
 
     if (customizer != null) {
-      customizer.first.customizeActiveSdkPanel(project, sdkComboBox, result, c, customizer.second);
+      customizer.first.customizeActiveSdkPanel(project, selectionOf(sdkComboBox), result, c, customizer.second);
     }
 
     c.gridx = 0;

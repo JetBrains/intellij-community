@@ -23,10 +23,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.mapResult
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.intellij.python.sdk.backend.PySdkBundle
-import com.intellij.python.sdk.backend.impl.buildPresentationInfo
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -36,7 +33,6 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.Path
-import com.intellij.python.sdk.backend.PythonInterpreterPresentation
 
 @get:Internal
 val BASE_DIR: Key<Path> = Key.create("PYTHON_PROJECT_BASE_PATH")
@@ -96,30 +92,6 @@ fun Sdk.isRunAsRootViaSudo(): Boolean {
   return data is PyTargetAwareAdditionalData && data.isRunAsRootViaSudo()
 }
 
-/**
- * Returns whether this [Sdk] seems valid or not.
- *
- * The actual check logic is located in [PythonSdkFlavor.sdkSeemsValid] and its overrides. In general, the method check whether the path to
- * the Python binary stored in this [Sdk] exists and the corresponding file can be executed. This check can be performed both locally and
- * on a target. The latter case takes place when [PythonSdkAdditionalData] of this [Sdk] implements [PyTargetAwareAdditionalData] and the
- * corresponding target provides file system operations (see [com.jetbrains.python.pathValidation.ValidationRequest]).
- *
- *
- * @see PythonSdkFlavor.sdkSeemsValid
- */
-@get:Internal
-val Sdk.isSdkSeemsValid: Boolean
-  get() {
-    if (!isPythonSdk(this, true)) return false
-    if (this.sdkAdditionalData is PyInvalidSdk) {
-      return false
-    }
-
-    val pythonSdkAdditionalData = pySdkAdditionalData
-    if (!pythonSdkAdditionalData.hasValidWorkingDirectory()) return false
-    return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
-  }
-
 @Internal
 fun Sdk?.isTargetBased(): Boolean = this != null && targetEnvConfiguration != null
 
@@ -137,10 +109,6 @@ val Sdk.targetAdditionalData: PyTargetAwareAdditionalData?
 @get:Internal
 val Sdk.targetEnvConfiguration: TargetEnvironmentConfiguration?
   get():TargetEnvironmentConfiguration? = (sdkAdditionalData as? TargetBasedSdkAdditionalData)?.targetEnvironmentConfiguration
-
-
-@Internal
-fun Sdk.pyInterpreterPresentation(customName: String? = null): PythonInterpreterPresentation = buildPresentationInfo(customName)
 
 
 private val SDK_ERROR_REPORTED = Key.create<Boolean>("pySdkErrorReported")
@@ -207,16 +175,11 @@ fun Sdk.createSkeletonsRootDirectory(): Path? {
 }
 
 /**
- * Returns SDK validation info, but it is not cached, so you should use [PythonInterpreter.getVersion] instead.
+ * Returns SDK validation info, but it is not cached, so you should use
+ * [com.intellij.python.sdk.backend.getPythonInfo] instead.
  */
 @Internal
 suspend fun Sdk.validatePythonAndGetInfo(): PyResult<PythonInfo> = asBinToExecute().mapResult { it.validatePythonAndGetInfo() }
-
-/**
- * See [Sdk.validatePythonAndGetInfo]
- */
-@get:Internal
-val PyResult<PythonInfo>.version: PyResult<LanguageLevel> get() = mapSuccess { it.languageLevel }
 
 /** The activation environment for [this] SDK's interpreter; a failure if the SDK has no valid home path. */
 @Internal

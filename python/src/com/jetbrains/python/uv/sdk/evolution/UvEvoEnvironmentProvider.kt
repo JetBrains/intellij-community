@@ -23,7 +23,7 @@ import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoRecreateDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
-import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.uv.backend.PyUvBundle
 import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.backend.cli.uv.UvPythonEntry

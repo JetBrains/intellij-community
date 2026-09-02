@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
-import com.intellij.python.sdk.backend.PythonInterpreterPresentation;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.google.common.collect.ImmutableList;
@@ -385,8 +384,9 @@ public final class PythonSdkUpdater {
       final Sdk sdk = PythonInterpreterExtKt.getSdkAPI(pythonInterpreter);
       final @Nullable Path skeletonsPath = SdkExtKt.getSkeletonsPath(sdk);
       try {
-        final PythonInterpreterPresentation presentation = PythonInterpreterExtKt.getPresentation(pythonInterpreter);
-        LOG.info("Performing background update of skeletons for SDK " + presentation);
+        // The SDK's own name and path, not its presentation: building one runs the interpreter, which is far too much
+        // work for a log line.
+        LOG.info("Performing background update of skeletons for SDK " + sdk.getName() + " (" + sdk.getHomePath() + ")");
         indicator.setText(PyBundle.message("python.sdk.updating.skeletons"));
         PySkeletonRefresher.refreshSkeletonsOfSdk(myProject, skeletonsPath, sdk);
         if (PythonSdkUtil.isRemote(sdk)) {
@@ -400,14 +400,16 @@ public final class PythonSdkUpdater {
     }
 
     private void notifyOfGenerationFailure(@NotNull Exception exception, @NotNull PythonInterpreter pythonInterpreter) {
-      var presentation = PythonInterpreterExtKt.getPresentation(pythonInterpreter);
+      // The SDK name, which is what the interpreter's presentation would report here anyway, without running it. Read
+      // from the task's own SDK, which the rest of this method already uses.
+      var interpreterName = mySdk.getName();
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         LOG.warn(exception);
         return;
       }
       if (exception instanceof UnsupportedPythonSdkTypeException) {
         notifyWarning(PyBundle.message("sdk.gen.failed.notification.title"),
-                      PyBundle.message("remote.interpreter.support.is.not.available", presentation.getName()),
+                      PyBundle.message("remote.interpreter.support.is.not.available", interpreterName),
                       REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE);
       }
       else if (exception instanceof InvalidSdkException && PythonSdkUtil.isRemote(mySdk)) {
@@ -420,9 +422,9 @@ public final class PythonSdkUpdater {
       else {
         // The interpreter does not run: a user can delete or break it at any moment.
         // That is a problem of the environment, not a defect of the code, so it is a warning and a notification.
-        LOG.warn("Skeleton generation failed for " + presentation.getName(), exception);
+        LOG.warn("Skeleton generation failed for " + interpreterName, exception);
         if (pythonInterpreter.getPythonEnvironment() != null) {
-          notifyWarning(PyBundle.message("sdk.gen.failed.skeletons.title", presentation.getName()),
+          notifyWarning(PyBundle.message("sdk.gen.failed.skeletons.title", interpreterName),
                         PyBundle.message("sdk.gen.failed.interpreter.unavailable"),
                         REFRESH_SKELETONS_FAILED);
         }

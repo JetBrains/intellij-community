@@ -24,7 +24,7 @@ import com.intellij.python.pyproject.model.api.getPyProjectManager
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.findPythonSdk
-import com.intellij.python.sdk.backend.getVersion
+import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.kindId
 import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import kotlinx.coroutines.currentCoroutineContext
@@ -159,7 +159,7 @@ class PythonEnvironmentMcpToolset : McpToolset {
     } ?: throw McpExpectedError("File is not part of any module: $filePath")
   }
 
-  private suspend fun buildResult(interpreter: PythonInterpreter, filePath: String): GetPythonEnvironmentResult {
+  private fun buildResult(interpreter: PythonInterpreter, filePath: String): GetPythonEnvironmentResult {
     val env = interpreter.pythonEnvironment
               ?: throw McpExpectedError("$filePath is broken")
 
@@ -171,7 +171,7 @@ class PythonEnvironmentMcpToolset : McpToolset {
     val packageManager = interpreter.getPyProjectManager().id.id
 
     return GetPythonEnvironmentResult(
-      pythonVersion = interpreter.getVersion().successOrNull?.toString()?.let { "Python $it" } ?: "unknown",
+      pythonVersion = interpreter.getPythonInfo().successOrNull?.languageLevel?.toString()?.let { "Python $it" } ?: "unknown",
       environmentType = environmentType,
       executablePath = env.pythonBinaryPath.pathString,
       environmentPath = environmentPath?.pathString,

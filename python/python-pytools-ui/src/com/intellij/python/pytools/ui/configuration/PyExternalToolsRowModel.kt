@@ -4,10 +4,6 @@ package com.intellij.python.pytools.ui.configuration
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.entities
 import com.intellij.util.SlowOperations
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
@@ -20,14 +16,16 @@ import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.Version
 import com.intellij.python.pytools.findExecutableInSdk
-import com.jetbrains.python.sdk.pyInterpreterPresentation
+import com.intellij.python.sdk.backend.asItem
+import com.intellij.python.sdk.backend.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.python.pytools.ExternalPyTool
 import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
 import com.jetbrains.python.Result
+import com.jetbrains.python.project.PyProject.Companion.getPyProjects
+import com.jetbrains.python.sdk.findPythonSdk
 import com.intellij.python.pytools.validateCustomPath
-import com.intellij.python.sdk.backend.pythonInterpreter
-import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -314,20 +312,18 @@ internal data class ProjectSdkSnapshot(
 )
 
 /**
- * Take a snapshot of the project's Python SDKs. Modules are enumerated via the workspace-model
- * snapshot ([WorkspaceModel.currentSnapshot]) which is thread-safe without a read action; the
- * resulting list is unique and alphabetically ordered for stable downstream display.
+ * Take a snapshot of the project's Python SDKs.
+ *
+ * [getPyProjects] enumerates the Python projects only, and it awaits workspace-model synchronization with the on-disk
+ * JPS model first, so an interpreter the project does have is not missed while the model is still loading (PY-86494).
+ * The list is unique and alphabetically ordered, for stable downstream display.
  */
-internal fun snapshotProjectSdks(project: Project): List<ProjectSdkSnapshot> {
-  val moduleEntities = project.workspaceModel.currentSnapshot.entities<ModuleEntity>().toList()
-  val moduleManager = ModuleManager.getInstance(project)
-  return moduleEntities
-    .mapNotNull { moduleManager.findModuleByName(it.name) }
-    .mapNotNull { it.pythonSdk }
+internal suspend fun snapshotProjectSdks(project: Project): List<ProjectSdkSnapshot> =
+  project.getPyProjects()
+    .mapNotNull { it.residesOnModule.findPythonSdk() }
     .distinct()
     .sortedBy { it.name }
-    .map { sdk -> ProjectSdkSnapshot(sdk, sdk.pyInterpreterPresentation().shortName) }
-}
+    .map { ProjectSdkSnapshot(it, it.pythonInterpreterAsync().asItem().shortName) }
 
 /**
  * Compute [SdkAvailability] for [this] tool against a previously-taken [snapshotProjectSdks]

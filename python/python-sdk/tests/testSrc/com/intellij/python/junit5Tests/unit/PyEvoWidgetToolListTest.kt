@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.EvoNodeKind
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
-import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.frontend.evolution.EvoPySdkSwitchPopupFactory
 import com.intellij.python.sdk.frontend.evolution.components.EvoDisclosureRow
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeLeafElement
@@ -18,13 +18,14 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 /**
  * Guards the tool list the interpreter widget draws, as the popup gets it — the rows, and the row that folds them.
  *
  * Written against the built tree rather than against the rule behind it, because the two disagreed once: the rule said
- * "show every tool", the popup drew every tool *and* a "Show Less" row under them, and a test of the rule alone was
+ * "show every tool", the popup drew every tool *and* a fold-back row under them, and a test of the rule alone was
  * green while the widget was wrong. The disclosure row is what this asserts on, so it cannot be green again while a
  * toggle is on screen.
  */
@@ -48,6 +49,10 @@ class PyEvoWidgetToolListTest {
     )
 
   private fun tree(interpreter: PyInterpreterDto?, nodes: List<EvoNodeDto>, toolsExpanded: Boolean = false): EvoTreeStaticNodeElement =
+    build(interpreter, nodes).also { it.isFolded = !toolsExpanded }
+
+  /** The tree as the factory builds it, holding every tool — folded, which is how a popup opens. */
+  private fun build(interpreter: PyInterpreterDto?, nodes: List<EvoNodeDto>): EvoTreeStaticNodeElement =
     EvoPySdkSwitchPopupFactory(
       project = projectFixture.get(),
       pyProjectKey = "key",
@@ -59,24 +64,29 @@ class PyEvoWidgetToolListTest {
       shortcuts = emptyList(),
       // Never used by this: only a lazy tool node needs it, and nothing here opens one.
       scope = @OptIn(DelicateCoroutinesApi::class) GlobalScope,
-      toolsExpanded = toolsExpanded,
-      setToolsExpanded = {},
+      expandTools = {},
     ).buildTree(DataContext.EMPTY_CONTEXT)
 
-  /** Every row of the tree, in the order the popup lists them. */
+  /**
+   * Every row the popup lists, in order.
+   *
+   * Filtered by the fold, the way `EvoActionPopupStep.getValues` filters it: the tree holds every tool at all times, and
+   * the fold is what decides which of them a popup shows.
+   */
   private fun rows(tree: EvoTreeStaticNodeElement): List<String> =
-    tree.sections.flatMap { it.elements }.map { it.presentation.text.orEmpty() }
+    tree.sections.flatMap { it.elements }.filter { tree.shows(it) }.map { it.presentation.text.orEmpty() }
 
-  /** The text of the fold/unfold row, or null when the popup draws none — which is what most of this asserts. */
+  /** The text of the unfold row, or null when the popup draws none — which is what most of this asserts. */
   private fun toggle(tree: EvoTreeStaticNodeElement): String? =
     tree.sections.flatMap { it.elements }
+      .filter { tree.shows(it) }
       .filterIsInstance<EvoTreeLeafElement>()
       .firstOrNull { it.action is EvoDisclosureRow }
       ?.presentation?.text
 
   @Test
   fun `no interpreter shows every tool and no toggle`() {
-    // PY-91389: the widget drew all four tools and a "Show Less" under them, offering to fold a list that was never
+    // PY-91389: the widget drew all four tools and a fold-back row under them, offering to fold a list that was never
     // folded. Nothing is configured yet, so picking a tool is the whole point of this list.
     val tree = tree(interpreter = null, nodes = tools(4))
     assertEquals(listOf("uv", "poetry", "conda", "pip"), rows(tree).filter { it in setOf("uv", "poetry", "conda", "pip") })
@@ -91,11 +101,11 @@ class PyEvoWidgetToolListTest {
   }
 
   @Test
-  fun `the tool in use leads and the rest fold behind a Show More row`() {
+  fun `the tool in use leads and the rest fold behind a Show more row`() {
     val tree = tree(interpreter = interpreter(activeNodeId = "poetry"), nodes = tools(4))
     val shown = rows(tree).filter { it in setOf("uv", "poetry", "conda", "pip") }
     assertEquals(listOf("poetry"), shown)
-    assertTrue(toggle(tree)?.contains("More") == true, "expected a Show More row, got ${toggle(tree)}")
+    assertTrue(toggle(tree)?.contains("more", ignoreCase = true) == true, "expected a Show more row, got ${toggle(tree)}")
   }
 
   @Test
@@ -107,10 +117,26 @@ class PyEvoWidgetToolListTest {
   }
 
   @Test
-  fun `an unfolded list shows every tool and folds back`() {
+  fun `an unfolded list shows every tool and offers no row under them`() {
+    // Unfolding is one-way: the list the user asked for stands, and the next popup opens folded again by itself.
     val tree = tree(interpreter = interpreter(activeNodeId = "poetry"), nodes = tools(4), toolsExpanded = true)
     assertEquals(listOf("uv", "poetry", "conda", "pip"), rows(tree).filter { it in setOf("uv", "poetry", "conda", "pip") })
-    assertTrue(toggle(tree)?.contains("Less") == true, "expected a Show Less row, got ${toggle(tree)}")
+    assertEquals(null, toggle(tree))
+  }
+
+  @Test
+  @DisplayName("unfolding shows the rest of the tree it was already holding, rather than a tree of its own")
+  fun `one tree serves both the folded and the unfolded list`() {
+    // A rebuild threw away whatever the tool nodes had loaded, so a submenu the user had opened was scanned again.
+    val tree = build(interpreter = interpreter(activeNodeId = "poetry"), nodes = tools(4))
+    val held = tree.sections.flatMap { it.elements }
+
+    assertEquals(listOf("poetry"), rows(tree).filter { it in setOf("uv", "poetry", "conda", "pip") })
+
+    tree.isFolded = false
+
+    assertEquals(listOf("uv", "poetry", "conda", "pip"), rows(tree).filter { it in setOf("uv", "poetry", "conda", "pip") })
+    assertEquals(held, tree.sections.flatMap { it.elements }, "unfolding must not replace a single row")
   }
 
   @Test

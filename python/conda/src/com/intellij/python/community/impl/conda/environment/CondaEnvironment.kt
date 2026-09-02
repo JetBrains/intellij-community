@@ -43,6 +43,12 @@ data class CondaEnvironment(
 ) : PythonEnvironment {
   override val isActivatable: Boolean = true
 
+  /**
+   * A named environment is created for one project, so its SDK must say which one. The base installation is the whole
+   * of conda and every project may use it, so it requires nothing.
+   */
+  override val requiresAssociation: Boolean get() = !isBase
+
   override fun activationScript(shellType: Shell.Type): ActivationScript? {
     val osFamily = pythonBinaryPath.getEelDescriptor().osFamily
     val isWindows = osFamily == EelOsFamily.Windows

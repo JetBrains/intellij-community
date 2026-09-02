@@ -40,7 +40,8 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
-import com.jetbrains.python.sdk.pyInterpreterPresentation
+import com.intellij.python.sdk.backend.asItem
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.conda.CondaPackageRepository
@@ -90,7 +91,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import com.jetbrains.python.sdk.pyInterpreterPresentation
 
 @Service(Service.Level.PROJECT)
 internal class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {
@@ -452,7 +452,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
    * (PY-91300). The presentation is built off EDT: it probes SDK validity.
    */
   private suspend fun publishSdkToPanel(sdk: Sdk) {
-    val interpreterPath = sdk.pyInterpreterPresentation().fullName
+    val interpreterPath = sdk.pythonInterpreterAsync().asItem().fullName
     withContext(Dispatchers.EDT) {
       toolWindowPanel?.let {
         it.startLoadingSdk(sdk.name)

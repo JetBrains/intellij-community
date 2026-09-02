@@ -10,9 +10,20 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.pytools.PyTool
+import com.intellij.python.sdk.backend.impl.VERSION_NUMBER_RE
+import com.intellij.python.sdk.backend.impl.associationProblem
+import com.intellij.python.sdk.backend.impl.buildItem
+import com.intellij.python.sdk.common.PyInterpreterItem
+import com.intellij.python.sdk.common.PyInterpreterRef
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.sdk.pyInterpreterPresentation
+import com.jetbrains.python.PythonInfo
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
 
@@ -35,11 +46,97 @@ fun PythonInterpreter.findToolExecutable(tool: PyTool, executableName: String = 
     binary.resolveSibling(osFamily.executableName(executableName)).takeIf { it.isExecutable() }
   }
 
+/**
+ * The [Sdk] behind this interpreter, for a call site that must reach an `Sdk` API.
+ *
+ * Deliberately deprecated: it is the only way out, and every use of it is a use of the `Sdk` API that should be a
+ * `PythonInterpreter` extension instead. Never put an `Sdk` in a UI list — lists hold
+ * [com.intellij.python.sdk.common.PyInterpreterItem].
+ */
 @Deprecated("try to avoid Sdk API usage, use PythonInterpreter extensions instead", ReplaceWith("PythonInterpreterExt.kt"))
 fun PythonInterpreter.getSdkAPI(): Sdk = sdk
 
-val PythonInterpreter.presentation: PythonInterpreterPresentation
-  get() = sdk.pyInterpreterPresentation()
+/**
+ * What this interpreter is, from what is already recorded about it.
+ *
+ * Never runs the interpreter. A virtualenv states its version in `pyvenv.cfg` and a conda environment in its
+ * `conda-meta` entry; everything else answers from the version its SDK recorded when it was set up. That matters most
+ * for a remote interpreter: a project can hold many, and asking each one would mean a round trip per interpreter.
+ *
+ * A failure is the reason this interpreter cannot be used, and there are three: detection already failed, the SDK
+ * records no project for an environment that needs one, or nothing records a version. The verdict belongs here rather
+ * than beside the environment because an interpreter is an SDK *and* its environment — a sound environment reached
+ * through a misconfigured SDK is still not something a project can use.
+ *
+ * No recorded version means the interpreter was never set up successfully, so it is a failure like the other two, and
+ * not a report that the environment is unreachable right now. An interpreter that answered once keeps the version it
+ * gave: a probe that cannot reach its target leaves the recorded one alone rather than overwriting it — see
+ * `PythonSdkUpdater.updateSdkVersion`. So a Docker or SSH interpreter still states its version while its host is down.
+ *
+ * Nothing caches this: it reads a few fields, so computing it again is cheaper than remembering it.
+ */
+fun PythonInterpreter.getPythonInfo(): PyResult<PythonInfo> {
+  val detection = environmentResult
+  if (detection is Result.Failure) return detection
+  associationProblem()?.let { return it }
+
+  // The environment's own version first, since it is exact; then the SDK's, which carries a `Python ` prefix. A
+  // recorded version says nothing about free threading, so that stays at its default.
+  val recorded = pythonEnvironment?.version ?: sdk.versionString?.let { VERSION_NUMBER_RE.find(it)?.value }
+  return recorded
+           ?.let { LanguageLevel.fromPythonVersionSafe(it) }
+           ?.let { PyResult.success(PythonInfo(languageLevel = it, version = recorded)) }
+         ?: PyResult.localizedError(PySdkBundle.message("python.sdk.version.not.recorded", sdk.name))
+}
+
+/**
+ * This interpreter as a UI list holds it.
+ *
+ * Reads only what the interpreter and its SDK already record, including whether it can be used — so the `[invalid]`
+ * marker costs nothing and this needs no coroutine. Getting the [PythonInterpreter] in the first place is the part
+ * that must happen off the EDT.
+ *
+ * @param customName label to show instead of the SDK name.
+ */
+fun PythonInterpreter.asItem(customName: String? = null): PyInterpreterItem = buildItem(customName)
+
+/**
+ * Every SDK as a UI list holds it, resolved off the EDT, in order.
+ *
+ * This is how a list of interpreters is built. The work is detecting each environment, which is local file reads that
+ * [Sdk.pythonInterpreterAsync] caches per SDK — so the first list pays for it and later ones do not.
+ */
+suspend fun Iterable<Sdk>.pyInterpreterItems(): List<PyInterpreterItem> =
+  map { it.pythonInterpreterAsync().asItem() }
+
+/**
+ * Whether this SDK's interpreter can be used, for a Java caller that cannot suspend.
+ *
+ * From Kotlin call [getPythonInfo] instead, which also says why it cannot be used.
+ */
+@RequiresBackgroundThread
+@RequiresBlockingContext
+fun Sdk.isInterpreterUsable(): Boolean =
+  runBlockingMaybeCancellable { pythonInterpreterAsync().getPythonInfo() } is Result.Success
+
+/**
+ * The registered SDK this item names, or `null` when no SDK carries that name any more.
+ *
+ * A list is built once and applied later, so the interpreter it named can be renamed or removed in between. `null` is
+ * that case, and the caller decides what to tell the user.
+ */
+fun PyInterpreterItem.findSdk(): Sdk? {
+  val ref = ref as? PyInterpreterRef.ExistingSdk ?: return null
+  return PythonSdkUtil.findSdkByKey(ref.sdkName)
+}
+
+/**
+ * The ref an interpreter list row carries for this SDK.
+ *
+ * Use it to find the row that stands for an SDK, instead of resolving every row back to its SDK. A row compares by
+ * its ref alone, so the comparison needs no SDK at all.
+ */
+fun Sdk.asInterpreterRef(): PyInterpreterRef = PyInterpreterRef.ExistingSdk(name)
 
 /**
  * The Python `lib/` directory backing this SDK, or `null` when it cannot be located.

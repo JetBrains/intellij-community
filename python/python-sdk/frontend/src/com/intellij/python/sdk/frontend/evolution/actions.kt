@@ -23,7 +23,7 @@ import com.intellij.python.sdk.common.evolution.EvoBasePythonDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoSelectResultDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
-import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.EvoNodeIds
 import com.intellij.python.sdk.common.evolution.EvoNodeStats
 import com.intellij.python.sdk.common.evolution.EvoRecreateRequestDto
@@ -45,6 +45,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.function.BiFunction
+import com.intellij.util.ui.EmptyIcon
 
 /**
  * Remembers the tool node whose interpreter configuration is currently in progress, so the status-bar widget shows that
@@ -338,25 +339,24 @@ internal fun installActionRow(onChosen: () -> Unit): EvoTreeLeafElement {
 }
 
 /**
- * The row that folds the widget's tool list away and unfolds it again, running [onChosen] when picked.
+ * The row that unfolds the widget's tool list, running [onChosen] when picked.
  *
- * It reads as a disclosure rather than as a link: the text is the colour of the rows around it, and its icon is the
- * platform's own expand/collapse pair, which is what the rest of the IDE marks a foldable list with. A link colour said
- * "this goes somewhere else", which is the one thing this row does not do.
+ * It reads as a disclosure rather than as a link: the text is the colour of the rows around it, and it ends in an
+ * ellipsis, which is what the rest of the IDE marks a row that reveals more with. Its icon is empty, because every
+ * icon in this list stands for an interpreter or a tool and this row stands for neither. Empty rather than absent,
+ * so the text still starts where the text of the rows above it does.
+ *
+ * It only ever unfolds. An unfolded list carries no row to fold it back, because the list the user asked for is the
+ * one they want, and the next popup opens folded again anyway.
  *
  * An ordinary leaf, so choosing it closes the popup and runs [onChosen] afterwards — which is what a list that has to be
  * rebuilt from the top wants anyway.
  */
-internal fun showMoreRow(expanded: Boolean, anyToolShown: Boolean, onChosen: () -> Unit): EvoTreeLeafElement {
-  val key = when {
-    expanded -> "evo.sdk.status.bar.popup.show.less"
-    // "Show More" needs something above it to be more than. With no tool row shown — an interpreter no node owns, so
-    // none of them is the one in use — the row names what it opens instead.
-    anyToolShown -> "evo.sdk.status.bar.popup.show.more"
-    else -> "evo.sdk.status.bar.popup.show.all.tools"
-  }
-  val icon = if (expanded) AllIcons.Actions.Collapseall else AllIcons.Actions.Expandall
-  val action = object : AnAction({ PySdkFrontendBundle.message(key) }, { "" }, icon), DumbAware, EvoDisclosureRow {
+internal fun showMoreRow(anyToolShown: Boolean, onChosen: () -> Unit): EvoTreeLeafElement {
+  // "Show more" needs something above it to be more than. With no tool row shown — an interpreter no node owns, so
+  // none of them is the one in use — the row names what it opens instead.
+  val key = if (anyToolShown) "evo.sdk.status.bar.popup.show.more" else "evo.sdk.status.bar.popup.show.all.tools"
+  val action = object : AnAction({ PySdkFrontendBundle.message(key) }, { "" }, EmptyIcon.ICON_16), DumbAware, EvoDisclosureRow {
     override fun actionPerformed(e: AnActionEvent) = onChosen()
   }
   return EvoTreeLeafElement(action)

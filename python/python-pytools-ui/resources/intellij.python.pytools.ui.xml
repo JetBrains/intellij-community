@@ -19,6 +19,7 @@
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools"/>
     <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.python.sdk.common"/>
     <module name="intellij.python.uv.backend"/>
   </dependencies>
   <!-- endregion -->

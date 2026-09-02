@@ -1,9 +1,9 @@
 <idea-plugin visibility="internal">
   <!--Plugin for other (not PyCharm) IDEs, including IU-->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <!--Any IDE but NOT PyCharm-->
     <plugin id="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.guava"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
@@ -19,8 +19,9 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.python.community.impl"/>
-    <!-- endregion -->
+    <module name="intellij.python.sdk.common"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"

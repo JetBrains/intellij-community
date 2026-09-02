@@ -12,15 +12,13 @@ import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote
 import com.intellij.python.sdk.backend.pythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterOrNull
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 private val PYTHON_ENVIRONMENT_RESULT_KEY = Key.create<PyResult<PythonEnvironment>>("PYTHON_ENVIRONMENT_RESULT")
 
 /**
- * Internal cache primitive backing [PythonInterpreter]; call [pythonInterpreter] (or [pythonInterpreterOrNull] for the
- * synchronous cached view) from outside this file.
+ * Internal cache primitive backing [PythonInterpreter]; call [pythonInterpreter] from outside this file.
  *
  * Detects the [PythonEnvironment] from the file system layout around this SDK's home path and
  * stores the result in the SDK's [UserData][com.intellij.openapi.util.UserDataHolder]. Performs
@@ -56,15 +54,3 @@ internal fun Sdk.enrichLocalPythonSdkWithHomeInfo(forceRefresh: Boolean = false)
     putUserData(PYTHON_ENVIRONMENT_RESULT_KEY, it)
   }
 }
-
-/**
- * The cached [PythonEnvironment] detection result for this SDK, or `null` when nothing has ever
- * been written to the cache (the SDK has never been enriched, or is non-Python / remote).
- * A non-null entry may still be a failure; callers that only want success should either unwrap
- * with `successOrNull` or go through [PythonInterpreter].
- *
- * Module-internal accessor backing [PythonInterpreter]; other consumers should go through [pythonInterpreterOrNull]
- * (sync) or [pythonInterpreter] (background-thread enrichment).
- */
-internal val Sdk.pythonEnvironmentCache: PyResult<PythonEnvironment>?
-  get() = getUserData(PYTHON_ENVIRONMENT_RESULT_KEY)

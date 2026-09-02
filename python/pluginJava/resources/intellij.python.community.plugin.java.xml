@@ -20,6 +20,7 @@
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.plugin.impl"/>
+    <module name="intellij.python.sdk.common"/>
   </dependencies>
   <!-- endregion -->
 

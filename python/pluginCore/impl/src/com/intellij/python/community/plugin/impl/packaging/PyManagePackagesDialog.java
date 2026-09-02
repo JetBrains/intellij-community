@@ -14,7 +14,10 @@ import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.common.PyInterpreterItem;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
+import com.jetbrains.python.sdk.PySdkRenderingKt;
 import com.intellij.python.sdk.backend.PySdkBundle;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +43,13 @@ final class PyManagePackagesDialog extends DialogWrapper {
     setTitle(PyBundle.message("manage.python.packages"));
 
     List<Sdk> sdks = new ArrayList<>(ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), new PreferredSdkComparator()));
-    final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(sdks, sdk));
+    // The combo holds items, not SDKs: a row states whether its interpreter can be used, which takes running it.
+    List<PyInterpreterItem> items = PySdkRenderingKt.interpreterItemsUnderProgress(sdks, project);
+    PyInterpreterItem selected = null;
+    for (int i = 0; i < sdks.size(); i++) {
+      if (sdks.get(i).equals(sdk)) selected = items.get(i);
+    }
+    final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(items, selected));
     sdkComboBox.setRenderer(new PySdkListCellRenderer());
 
     PackagesNotificationPanel notificationPanel = new PyPackagesNotificationPanel();
@@ -59,9 +68,10 @@ final class PyManagePackagesDialog extends DialogWrapper {
     sdkComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        Sdk sdk = (Sdk) sdkComboBox.getSelectedItem();
-        packagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(project, sdk));
-        packagesPanel.updateNotifications(sdk);
+        // The combo holds items, not SDKs. An item can outlive the interpreter it names, so this may be null.
+        Sdk selected = sdkComboBox.getSelectedItem() instanceof PyInterpreterItem item ? PythonInterpreterExtKt.findSdk(item) : null;
+        packagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(project, selected));
+        packagesPanel.updateNotifications(selected);
       }
     });
 
