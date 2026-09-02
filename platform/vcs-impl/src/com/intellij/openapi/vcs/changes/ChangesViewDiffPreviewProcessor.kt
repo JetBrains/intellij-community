@@ -13,10 +13,8 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.ChangeWra
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.UnversionedFileWrapper
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeListNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserUnversionedFilesNode
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
@@ -25,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.vcs.changes.ui.findAmendNode
 import com.intellij.openapi.vcs.changes.ui.findChangeListNode
+import com.intellij.openapi.vcs.changes.ui.findDiffGroupNode
 import com.intellij.openapi.vcs.changes.ui.isUnderTag
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.openapi.vfs.VirtualFile
@@ -126,9 +125,7 @@ internal object ChangesViewDiffPreviewHandler : ChangesTreeDiffPreviewHandler() 
 
   override fun iterateChangesFromSameGroup(tree: ChangesTree, change: Wrapper): JBIterable<Wrapper> {
     val node = TreeUtil.findNodeWithObject(tree.root, change.userObject) as? ChangesBrowserNode<*>
-    val groupNode = generateSequence(node) { it.parent }
-                      .firstOrNull { it is ChangesBrowserChangeListNode || it is ChangesBrowserUnversionedFilesNode }
-                    ?: return iterateSelectedChanges(tree)
+    val groupNode = node?.findDiffGroupNode() ?: return iterateSelectedChanges(tree)
     val model = VcsTreeModelData.allUnder(groupNode)
     return wrap(tree.project, model.iterateNodes(), model.iterateUserObjects(FilePath::class.java))
   }
