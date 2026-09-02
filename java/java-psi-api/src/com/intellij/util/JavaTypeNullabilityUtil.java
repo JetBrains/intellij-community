@@ -91,7 +91,7 @@ public final class JavaTypeNullabilityUtil {
     TypeNullability declared = type.getNullability();
     if (!(type instanceof PsiClassType)) return declared;
     PsiClassType classType = (PsiClassType)type;
-    if (!isUnspecified(declared)) {
+    if (!declared.isUnknownNullability()) {
       return declared;
     }
     if (!(classType.resolve() instanceof PsiTypeParameter)) return declared;
@@ -161,12 +161,8 @@ public final class JavaTypeNullabilityUtil {
 
   private static @NotNull TypeNullability keepUnspecified(@NotNull TypeNullability fromBound,
                                                           @Nullable TypeNullability atUsage) {
-    if (atUsage == null || !isUnspecified(atUsage)) return fromBound;
+    if (atUsage == null || !atUsage.isUnknownNullability()) return fromBound;
     return fromBound.nullability() != Nullability.NULLABLE ? atUsage : fromBound;
-  }
-
-  public static boolean isUnspecified(@NotNull TypeNullability nullability) {
-    return nullability.nullability() == Nullability.UNKNOWN;
   }
 
   /**
@@ -175,7 +171,7 @@ public final class JavaTypeNullabilityUtil {
    * support of the respective framework, see {@link NullableNotNullManager#shouldGoThroughUnspecifiedNullnessAnnotation};
    * currently only JSpecify's {@code @NullnessUnspecified} qualifies.
    * <p>
-   * This is a syntactic question -- "is such an annotation written here" -- and not the same as {@link #isUnspecified}, which
+   * This is a syntactic question -- "is such an annotation written here" -- and not the same as {@link TypeNullability#isUnknownNullability()}, which
    * asks whether the nullness of the type is unspecified. Use this one only where the presence of the annotation itself matters.
    *
    * @param nullability nullability to check

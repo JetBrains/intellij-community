@@ -3,7 +3,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.util.JavaTypeNullabilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +110,7 @@ public final class TypeNullability {
     //
     // createCache() returns Cache<@NullnessUnspecified Object> for a CacheFactory<Object>, but Cache<@Nullable Object>
     // for a CacheFactory<@Nullable Object>.
-    if (JavaTypeNullabilityUtil.isUnspecified(this) &&
+    if (isUnknownNullability() &&
         nullability.nullability() == Nullability.NULLABLE &&
         !(nullability.source() instanceof NullabilitySource.ExtendsBound)) {
       return nullability;
@@ -151,7 +150,7 @@ public final class TypeNullability {
     // captured type parameter. For `Super<T extends @Nullable Object>` the upper bound of the capture of
     // `? extends @NullnessUnspecified Object` stays UNKNOWN
     TypeNullability unspecified = this.nullability() == Nullability.UNKNOWN ? this : other;
-    if (JavaTypeNullabilityUtil.isUnspecified(unspecified)) {
+    if (unspecified.isUnknownNullability()) {
       return unspecified;
     }
     return this.nullability() == Nullability.NULLABLE ? this : other;
@@ -246,5 +245,12 @@ public final class TypeNullability {
       return new NullabilityAnnotationInfo(((NullabilitySource.ContainerAnnotation)source).annotation(), nullability(), true);
     }
     return null;
+  }
+
+  /**
+   * @return true if this object represents unknown nullability, false otherwise
+   */
+  public boolean isUnknownNullability() {
+    return myNullability == Nullability.UNKNOWN;
   }
 }
