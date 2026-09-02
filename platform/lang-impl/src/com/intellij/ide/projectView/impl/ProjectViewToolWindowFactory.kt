@@ -25,6 +25,7 @@ class ProjectViewToolWindowFactory : ToolWindowFactory, DumbAware {
     get() = AllIcons.Toolwindows.ToolWindowProject
 
   override suspend fun isApplicableAsync(project: Project): Boolean {
-    return !serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_PROJECT_VIEW)
+    return !serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_PROJECT_VIEW) &&
+           !isProjectViewSplitAsync()
   }
 }

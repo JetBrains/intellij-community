@@ -3,6 +3,11 @@
 package com.intellij.ide.projectView.impl
 
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import org.jetbrains.annotations.ApiStatus
 
 fun isProjectViewSplit(): Boolean = Registry.`is`("project.view.toolwindow.split", defaultValue = false)
+
+suspend fun isProjectViewSplitAsync(): Boolean {
+  return RegistryManager.getInstanceAsync().`is`("project.view.toolwindow.split")
+}
