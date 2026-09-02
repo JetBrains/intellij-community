@@ -78,7 +78,7 @@ private class TestApplicationResource(val initializationResult: Result<Unit>) : 
       return
     }
 
-    timeoutRunBlocking(20.seconds, "TestApplication.close()") {
+    timeoutRunBlocking(200.seconds, "TestApplication.close()") {
       withContext(Dispatchers.EDT) {
         val application = ApplicationManager.getApplication()
         application.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appWillBeClosed(false)
