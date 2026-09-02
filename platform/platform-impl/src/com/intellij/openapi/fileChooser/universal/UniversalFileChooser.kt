@@ -233,6 +233,8 @@ object UniversalFileChooser {
     @Suppress("OPT_IN_USAGE")
     private val scope = GlobalScope.childScope("UniversalFileChooser")
 
+    private val renameAction = RenameFileAction(::getActiveFileView)
+
     private val topToolbar: ActionToolbar
     private val toolbarActionGroup: DefaultActionGroup
     private val popupActionGroup: DefaultActionGroup
@@ -324,6 +326,8 @@ object UniversalFileChooser {
       }
 
       registerFocusPathAction(disposable)
+      // The action already holds the shortcut of the platform Rename action.
+      renameAction.registerCustomShortcutSet(this, disposable)
     }
 
     private fun registerFocusPathAction(disposable: Disposable) {
@@ -465,6 +469,7 @@ object UniversalFileChooser {
         if (projectAction != null) add(projectAction)
         addSeparator()
         add(createDirectoryAction)
+        add(renameAction)
         add(deleteAction)
         addSeparator()
         add(refreshAction)
@@ -716,7 +721,7 @@ object UniversalFileChooser {
       val contributor: UniversalFileChooserContributor,
       descriptor: FileChooserDescriptor,
       disposable: Disposable,
-      private val project: Project,
+      internal val project: Project,
       okAction: Runnable,
       val scope: CoroutineScope,
       private val topToolbar: ActionToolbar,
@@ -860,11 +865,10 @@ object UniversalFileChooser {
         tree.addKeyListener(object : KeyAdapter() {
           override fun keyPressed(e: KeyEvent) {
             if (e.isConsumed) return
-            if (e.keyCode == KeyEvent.VK_DELETE && e.modifiersEx == 0) {
-              if (canDeleteSelectedFile()) {
-                deleteSelectedFile()
-                e.consume()
-              }
+            if (e.modifiersEx != 0) return
+            if (e.keyCode == KeyEvent.VK_DELETE && canDeleteSelectedFile()) {
+              deleteSelectedFile()
+              e.consume()
             }
           }
         })
@@ -1281,7 +1285,7 @@ object UniversalFileChooser {
   }
 
   @Suppress("ForbiddenInSuspectContextMethod") // ModalityState.any() is required.
-  private fun runOnEdt(runnable: Runnable) {
+  internal fun runOnEdt(runnable: Runnable) {
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
   }
 
