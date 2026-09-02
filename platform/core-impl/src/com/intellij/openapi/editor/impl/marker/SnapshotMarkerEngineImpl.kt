@@ -17,6 +17,7 @@ import org.jetbrains.annotations.TestOnly
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
 import java.util.Collections
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.LongConsumer
 
@@ -38,12 +39,12 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
   /** Weakly tracks snapshots whose parent edit invalidated at least one marker. */
   private val snapshotsWithInvalidatedMarkers: MutableSet<DocumentSnapshot> =
     Collections.newSetFromMap(CollectionFactory.createConcurrentWeakIdentityMap<DocumentSnapshot, Boolean>())
-  /// collection of [SnapshotMarkerRootStore] that need to be updated on [DocumentSnapshot] change
-  private val rootStores: MutableSet<SnapshotMarkerRootStore> = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakIdentityMap<SnapshotMarkerRootStore, Boolean>())
+  /** collection of [SnapshotMarkerRootStore] that need to be updated on [DocumentSnapshot] change */
+  private val rootStores: ConcurrentMap<SnapshotMarkerRootStore, Boolean> = CollectionFactory.createConcurrentWeakIdentityMap<SnapshotMarkerRootStore, Boolean>()
 
   @ApiStatus.Internal
   fun registerRootStore(store: SnapshotMarkerRootStore) {
-    rootStores.add(store)
+    rootStores.put(store, true)
   }
 
   @ApiStatus.Internal
@@ -93,7 +94,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
     else {
       snapshotsWithInvalidatedMarkers.remove(afterSnapshot) // to call snapshotsWithInvalidatedMarkers.processQueue()
     }
-    rootStores.forEach { it.applyPatch(beforeSnapshot, afterSnapshot, patch) }
+    rootStores.keys.forEach { it.applyPatch(beforeSnapshot, afterSnapshot, patch) }
   }
 
   /** Returns true if the snapshot derivation invalidated at least one marker. */
@@ -105,7 +106,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
       "Snapshots must share the same text instance"
     }
     publishRoot(beforeSnapshot, afterSnapshot) { it }
-    rootStores.forEach { it.inherit(beforeSnapshot, afterSnapshot) }
+    rootStores.keys.forEach { it.inherit(beforeSnapshot, afterSnapshot) }
   }
 
   /**
@@ -125,12 +126,12 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
 
     val primaryRoot = markerRoot(markerSnapshot).get() as PMarkerRootImpl
     val metadataRoot = markerRoot(metadataSnapshot).get() as PMarkerRootImpl
-    val hasExternalPrimaryRoot = rootStores.any { it.containsSnapshot(markerSnapshot) }
+    val hasExternalPrimaryRoot = rootStores.keys.any { it.containsSnapshot(markerSnapshot) }
     if (primaryRoot === PMarkerRootImpl.empty() && !hasExternalPrimaryRoot) return metadataSnapshot
 
     val mergedRoot = primaryRoot.mergeValidMarkersFrom(metadataRoot)
     val mergedSnapshot = (metadataSnapshot as DocumentSnapshotImpl).copyWithMarkerRoot(mergedRoot)
-    rootStores.forEach { it.merge(markerSnapshot, metadataSnapshot, mergedSnapshot) }
+    rootStores.keys.forEach { it.merge(markerSnapshot, metadataSnapshot, mergedSnapshot) }
     return mergedSnapshot
   }
 
@@ -219,6 +220,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
         ret = purgeRangeMarker(fileRoot.rootReference(), reference.markerId)
       }
     }
+    ret = ret || (rootStores as ReferenceQueueable).processQueue()
     return ret
   }
 
