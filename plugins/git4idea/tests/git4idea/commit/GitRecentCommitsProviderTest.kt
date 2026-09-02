@@ -1,34 +1,46 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit
 
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.log.util.VcsUserUtil
 import git4idea.GitDisposable
 import git4idea.isRemoteBranchProtected
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.makeCommit
+import git4idea.test.prepareRemoteRepo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class GitRecentCommitsProviderTest : GitSingleRepoTest() {
-  private val scope: CoroutineScope get() = GitDisposable.getInstance(project).coroutineScope
+@TestApplication
+class GitRecentCommitsProviderTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
 
-  fun `test recent commits are returned`() {
+  private val GitSingleRepoContext.scope: CoroutineScope get() = GitDisposable.getInstance(project).coroutineScope
+
+  @Test
+  fun `test recent commits are returned`(): Unit = with(context) {
     var loadedCommits = runBlocking { GitRecentCommitsProvider(project, scope, 1).getRecentCommits(repo.root) }
-    assertSize(1, loadedCommits)
+    assertThat(loadedCommits).hasSize(1)
 
     makeCommit("file.txt")
     loadedCommits = runBlocking { GitRecentCommitsProvider(project, scope, 1).getRecentCommits(repo.root) }
-    assertSize(1, loadedCommits)
+    assertThat(loadedCommits).hasSize(1)
 
     repeat(3) { makeCommit("file.txt") }
     loadedCommits = runBlocking { GitRecentCommitsProvider(project, scope, 2).getRecentCommits(repo.root) }
-    assertSize(2, loadedCommits)
+    assertThat(loadedCommits).hasSize(2)
 
     loadedCommits = runBlocking { GitRecentCommitsProvider(project, scope, 100).getRecentCommits(repo.root) }
-    assertSize(5, loadedCommits)
+    assertThat(loadedCommits).hasSize(5)
   }
 
-  fun `test can load commits from all users`() {
+  @Test
+  fun `test can load commits from all users`(): Unit = with(context) {
     makeCommit("file.txt")
     makeCommit(VcsUserUtil.createUser("Richard Roe", "richard.roe@example.com"), "file.txt")
 
@@ -36,14 +48,15 @@ class GitRecentCommitsProviderTest : GitSingleRepoTest() {
     val myCommits = runBlocking {
       provider.getRecentCommits(repo.root) // current user only by default
     }
-    assertSize(2, myCommits)
+    assertThat(myCommits).hasSize(2)
 
     val providerAllUsers = GitRecentCommitsProvider(project, scope, 100, userScope = GitRecentCommitsProvider.UserScope.ALL_USERS)
     val allCommits = runBlocking { providerAllUsers.getRecentCommits(repo.root) }
-    assertSize(3, allCommits)
+    assertThat(allCommits).hasSize(3)
   }
 
-  fun `test stop at first merge commit`() {
+  @Test
+  fun `test stop at first merge commit`(): Unit = with(context) {
     makeCommit("base.txt")
     git("checkout -b feature")
     makeCommit("feature.txt")
@@ -57,61 +70,65 @@ class GitRecentCommitsProviderTest : GitSingleRepoTest() {
     val commitsBeforeMerge = runBlocking {
       providerStopAtMerge.getRecentCommits(repo.root)
     }
-    assertSameElements(commitsBeforeMerge.map { it.id.asString() }, listOf(afterMerge1, afterMerge2))
+    assertThat(commitsBeforeMerge.map { it.id.asString() }).containsExactlyInAnyOrder(afterMerge1, afterMerge2)
 
     val providerAll = GitRecentCommitsProvider(project, scope, 100)
     val allCommits = runBlocking { providerAll.getRecentCommits(repo.root) }
-    assertSize(6, allCommits)
+    assertThat(allCommits).hasSize(6)
   }
 
-  fun `test unpublished filter includes only unpublished commits`() {
+  @Test
+  fun `test unpublished filter includes only unpublished commits`(): Unit = with(context) {
     makeCommit("published.txt")
     prepareRemoteRepo(repo)
     git("push -u origin master")
 
     repo.update()
-    assertTrue(isRemoteBranchProtected(listOf(repo), "origin/master"))
+    assertThat(isRemoteBranchProtected(listOf(repo), "origin/master")).isTrue()
 
     val olderUnpublished = makeCommit("older-unpublished.txt")
     val newerUnpublished = makeCommit("newer-unpublished.txt")
     val head = makeCommit("head.txt")
 
     val providerUnpublished = GitRecentCommitsProvider(project, scope, 100, unpublishedOnly = true)
-    assertSameElements(listOf(head, newerUnpublished, olderUnpublished),
-                       runBlocking { providerUnpublished.getRecentCommits(repo.root) }.map { it.id.asString() })
+    assertThat(runBlocking { providerUnpublished.getRecentCommits(repo.root) }.map { it.id.asString() })
+      .containsExactlyInAnyOrder(head, newerUnpublished, olderUnpublished)
   }
 
-  fun `test unpublished filter returns empty when head is published`() {
+  @Test
+  fun `test unpublished filter returns empty when head is published`(): Unit = with(context) {
     makeCommit("published.txt")
     makeCommit("head.txt")
     prepareRemoteRepo(repo)
     git("push -u origin master")
 
     repo.update()
-    assertTrue(isRemoteBranchProtected(listOf(repo), "origin/master"))
+    assertThat(isRemoteBranchProtected(listOf(repo), "origin/master")).isTrue()
 
     val providerUnpublished = GitRecentCommitsProvider(project, scope, 100, unpublishedOnly = true)
-    assertEmpty(runBlocking { providerUnpublished.getRecentCommits(repo.root) })
+    assertThat(runBlocking { providerUnpublished.getRecentCommits(repo.root) }).isEmpty()
   }
 
-  fun `test unpublished filter includes commits published only to unprotected branch`() {
+  @Test
+  fun `test unpublished filter includes commits published only to unprotected branch`(): Unit = with(context) {
     makeCommit("base.txt")
     prepareRemoteRepo(repo)
     git("push -u origin master")
 
     repo.update()
-    assertTrue(isRemoteBranchProtected(listOf(repo), "origin/master"))
+    assertThat(isRemoteBranchProtected(listOf(repo), "origin/master")).isTrue()
 
     git("checkout -b feature")
     val editableTarget = makeCommit("editable.txt")
     git("push -u origin feature")
 
     repo.update()
-    assertFalse(isRemoteBranchProtected(listOf(repo), "origin/feature"))
+    assertThat(isRemoteBranchProtected(listOf(repo), "origin/feature")).isFalse()
 
     val head = makeCommit("head.txt")
 
     val providerUnpublished = GitRecentCommitsProvider(project, scope, 100, unpublishedOnly = true)
-    assertSameElements(listOf(head, editableTarget), runBlocking { providerUnpublished.getRecentCommits(repo.root) }.map { it.id.asString() })
+    assertThat(runBlocking { providerUnpublished.getRecentCommits(repo.root) }.map { it.id.asString() })
+      .containsExactlyInAnyOrder(head, editableTarget)
   }
 }

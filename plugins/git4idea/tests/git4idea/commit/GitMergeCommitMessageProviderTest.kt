@@ -1,42 +1,54 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.LineSeparator
 import com.intellij.vcs.commit.CommitMessage
 import com.intellij.vcs.commit.DefaultCommitMessagePolicy
+import com.intellij.vcs.test.refresh
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.GitUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.config.GitConfigUtil
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.TestGitImpl
 import git4idea.test.checkout
+import git4idea.test.file
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import org.mockito.Mockito.times
 
-class GitMergeCommitMessageProviderTest: GitSingleRepoTest() {
+@TestApplication
+class GitMergeCommitMessageProviderTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
   private val mergeMessageProvider = GitMergeCommitMessagePolicy()
   private val commitMessageControllerMock = Mockito.mock<DefaultCommitMessagePolicy.CommitMessageController>()
 
-  override fun setUp() {
-    super.setUp()
-    mergeMessageProvider.initAsyncMessageUpdate(project, commitMessageControllerMock, project)
+  @BeforeEach
+  fun setUp(): Unit = with(context) {
+    mergeMessageProvider.initAsyncMessageUpdate(project, commitMessageControllerMock, disposable)
   }
 
-  override fun tearDown() {
-    try {
-      Mockito.verifyNoMoreInteractions(commitMessageControllerMock)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    Mockito.verifyNoMoreInteractions(commitMessageControllerMock)
   }
 
-  fun `test merge message set and reset based on MERGE_MSG`() {
+  @Test
+  fun `test merge message set and reset based on MERGE_MSG`(): Unit = with(context) {
     val newBranch = "new-branch"
     prepareConflict(newBranch)
     git("merge $newBranch", ignoreExitCode = true)
@@ -45,8 +57,8 @@ class GitMergeCommitMessageProviderTest: GitSingleRepoTest() {
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
 
     val message = checkNotNull(mergeMessageProvider.getMessage(project))
-    assertTrue(message.disposable)
-    assertTrue(message.text, message.text.startsWith("Merge branch 'new-branch'"))
+    assertThat(message.disposable).isTrue()
+    assertThat(message.text).startsWith("Merge branch 'new-branch'")
 
     verifyCommitMessageSet(message)
 
@@ -55,11 +67,12 @@ class GitMergeCommitMessageProviderTest: GitSingleRepoTest() {
     VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot)
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
 
-    assertNull(mergeMessageProvider.getMessage(project))
+    assertThat(mergeMessageProvider.getMessage(project)).isNull()
     Mockito.verify(commitMessageControllerMock, times(1)).tryRestoreCommitMessage()
   }
 
-  fun `test merge message set with proper comment char during rebase`() {
+  @Test
+  fun `test merge message set with proper comment char during rebase`(): Unit = with(context) {
     val commentChar = "!"
     GitConfigUtil.setValue(project, repo.root, GitConfigUtil.CORE_COMMENT_CHAR, commentChar)
 
@@ -79,15 +92,16 @@ class GitMergeCommitMessageProviderTest: GitSingleRepoTest() {
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
 
     val message = checkNotNull(mergeMessageProvider.getMessage(project))
-    assertTrue(message.disposable)
-    assertTrue(message.text.lines().none { it.startsWith(GitUtil.COMMENT_CHAR) })
-    assertTrue(message.text, message.text.contains("$commentChar Conflicts:"))
+    assertThat(message.disposable).isTrue()
+    assertThat(message.text.lines()).noneMatch { it.startsWith(GitUtil.COMMENT_CHAR) }
+    assertThat(message.text).contains("$commentChar Conflicts:")
 
     verifyCommitMessageSet(message)
   }
 
 
-  fun `test merge message based on MERGE_MSG + SQUASH_MSG`() {
+  @Test
+  fun `test merge message based on MERGE_MSG + SQUASH_MSG`(): Unit = with(context) {
     val newBranch = "new-branch"
     prepareConflict(newBranch)
     git("merge --squash $newBranch", ignoreExitCode = true)
@@ -96,9 +110,9 @@ class GitMergeCommitMessageProviderTest: GitSingleRepoTest() {
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
 
     val message = checkNotNull(mergeMessageProvider.getMessage(project))
-    assertTrue(message.disposable)
-    assertTrue(message.text, message.text.startsWith("Squashed commit of the following:"))
-    assertTrue(message.text, message.text.contains("# Conflicts:"))
+    assertThat(message.disposable).isTrue()
+    assertThat(message.text).startsWith("Squashed commit of the following:")
+    assertThat(message.text).contains("# Conflicts:")
 
     verifyCommitMessageSet(message)
   }
@@ -107,7 +121,7 @@ class GitMergeCommitMessageProviderTest: GitSingleRepoTest() {
     Mockito.verify(commitMessageControllerMock, times(1)).setCommitMessage(message)
   }
 
-  private fun prepareConflict(otherBranch: String) {
+  private fun GitSingleRepoContext.prepareConflict(otherBranch: String) {
     val file = file("test")
     file.create("initial\n").addCommit("initial")
     git("checkout -b $otherBranch")
