@@ -12,7 +12,6 @@ import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
-import com.intellij.projectModel.LibraryOrSdkDependencyEdge
 import com.intellij.projectModel.ModuleDependenciesGraph
 import com.intellij.projectModel.ModuleDependenciesGraphService
 
@@ -36,7 +35,7 @@ internal class ModuleDependenciesGraphServiceImpl(project: Project): ModuleDepen
 
   private class LoadedDependents(
     val moduleDirectDependents: Map<ModuleId, List<ModuleDependencyEdge>>,
-    val libraryDependents: Map<SymbolicEntityId<*>, List<LibraryOrSdkDependencyEdge>>,
+    val libraryDependents: Map<SymbolicEntityId<*>, Map<ModuleId, Int>>,
   )
 
   private class UnloadedDirectDependents(
@@ -48,8 +47,8 @@ internal class ModuleDependenciesGraphServiceImpl(project: Project): ModuleDepen
     private val unloaded: UnloadedDirectDependents,
   ) : ModuleDependenciesGraph {
 
-    override fun getLibraryOrSdkDependants(libraryOrSdk: SymbolicEntityId<*>): Collection<LibraryOrSdkDependencyEdge> {
-      return loaded.libraryDependents[libraryOrSdk] ?: emptyList()
+    override fun getLibraryOrSdkDependants(libraryOrSdk: SymbolicEntityId<*>): Map<ModuleId, Int> {
+      return loaded.libraryDependents[libraryOrSdk] ?: emptyMap()
     }
 
     override fun getModuleDependants(module: ModuleEntity): Collection<ModuleEntity> {
@@ -97,7 +96,7 @@ internal class ModuleDependenciesGraphServiceImpl(project: Project): ModuleDepen
   companion object {
     private fun buildLoadedDependents(storage: EntityStorage): LoadedDependents {
       val dependentsMap = HashMap<ModuleId, MutableList<ModuleDependencyEdge>>()
-      val libraryDependentsMap = HashMap<SymbolicEntityId<*>, MutableList<LibraryOrSdkDependencyEdge>>()
+      val libraryDependentsMap = HashMap<SymbolicEntityId<*>, MutableMap<ModuleId, Int>>()
 
       for (module in storage.entities(ModuleEntity::class.java)) {
         module.dependencies.forEachIndexed { index, dep ->
@@ -108,12 +107,12 @@ internal class ModuleDependenciesGraphServiceImpl(project: Project): ModuleDepen
                 .add(ModuleDependencyEdge(module, dep.exported))
             }
             is LibraryDependency -> {
-              libraryDependentsMap.computeIfAbsent(dep.library) { mutableListOf() }
-                .add(LibraryOrSdkDependencyEdge(module, index))
+              libraryDependentsMap.computeIfAbsent(dep.library) { HashMap() }
+                .putIfAbsent(module.symbolicId, index)
             }
             is SdkDependency -> {
-              libraryDependentsMap.computeIfAbsent(dep.sdk) { mutableListOf() }
-                .add(LibraryOrSdkDependencyEdge(module, index))
+              libraryDependentsMap.computeIfAbsent(dep.sdk) { HashMap() }
+                .putIfAbsent(module.symbolicId, index)
             }
             else -> {}
           }

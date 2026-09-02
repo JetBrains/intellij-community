@@ -358,6 +358,57 @@ class ProjectAndLibrariesScopeCompareTest {
   }
 
 
+  @Test
+  fun commonModuleDecidesOrderWhenDependantListSizesDiffer() {
+    val root1 = projectModel.baseProjectDir.newVirtualDirectory("root1")
+    val root2 = projectModel.baseProjectDir.newVirtualDirectory("root2")
+    val file1 = projectModel.baseProjectDir.newVirtualFile("root1/A.class")
+    val file2 = projectModel.baseProjectDir.newVirtualFile("root2/B.class")
+
+    val libX = projectModel.addProjectLevelLibrary("libX") { it.addRoot(root1, OrderRootType.CLASSES) }
+    val libY = projectModel.addProjectLevelLibrary("libY") { it.addRoot(root2, OrderRootType.CLASSES) }
+
+    val moduleA = projectModel.createModule("moduleA")
+    val moduleB = projectModel.createModule("moduleB")
+
+    ModuleRootModificationUtil.updateModel(moduleA) { model ->
+      model.addLibraryEntry(libX)
+    }
+    ModuleRootModificationUtil.updateModel(moduleB) { model ->
+      model.addLibraryEntry(libY)
+      model.addLibraryEntry(libX)
+    }
+
+    assertEquals(-1, scope.compare(file1, file2),
+                 "moduleB depends on both libraries and puts libY first, so the root2 file comes first")
+  }
+
+  @Test
+  fun modulesThatDisagreeOnOrderReturnZero() {
+    val root1 = projectModel.baseProjectDir.newVirtualDirectory("root1")
+    val root2 = projectModel.baseProjectDir.newVirtualDirectory("root2")
+    val file1 = projectModel.baseProjectDir.newVirtualFile("root1/A.class")
+    val file2 = projectModel.baseProjectDir.newVirtualFile("root2/B.class")
+
+    val libX = projectModel.addProjectLevelLibrary("libX") { it.addRoot(root1, OrderRootType.CLASSES) }
+    val libY = projectModel.addProjectLevelLibrary("libY") { it.addRoot(root2, OrderRootType.CLASSES) }
+
+    val moduleA = projectModel.createModule("moduleA")
+    val moduleB = projectModel.createModule("moduleB")
+
+    ModuleRootModificationUtil.updateModel(moduleA) { model ->
+      model.addLibraryEntry(libX)
+      model.addLibraryEntry(libY)
+    }
+    ModuleRootModificationUtil.updateModel(moduleB) { model ->
+      model.addLibraryEntry(libY)
+      model.addLibraryEntry(libX)
+    }
+
+    assertEquals(0, scope.compare(file1, file2),
+                 "the two modules order the libraries differently, so the scope gives no answer")
+  }
+
   companion object {
     private fun addModuleLibrariesInOrder(module: Module, vararg roots: VirtualFile) {
       ModuleRootModificationUtil.updateModel(module) { model ->

@@ -4,6 +4,7 @@ package com.intellij.projectModel
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import org.jetbrains.annotations.ApiStatus
 
@@ -19,12 +20,6 @@ interface ModuleDependenciesGraphService {
 }
 
 @ApiStatus.Internal
-data class LibraryOrSdkDependencyEdge(
-  val dependent: ModuleEntity,
-  val orderNumber: Int,
-)
-
-@ApiStatus.Internal
 interface ModuleDependenciesGraph {
   /**
    * Returns [ModuleEntity]s which depend on the given module taking into account exported dependencies.
@@ -32,9 +27,9 @@ interface ModuleDependenciesGraph {
   fun getModuleDependants(module: ModuleEntity): Collection<ModuleEntity>
 
   /**
-   * Returns a collection of [LibraryOrSdkDependencyEdge] which contains a dependent on give [SymbolicEntityId] module and its order number.
+   * Returns each module that depends on [libraryOrSdk], with the order number of that dependency.
    */
-  fun getLibraryOrSdkDependants(libraryOrSdk: SymbolicEntityId<*>): Collection<LibraryOrSdkDependencyEdge>
+  fun getLibraryOrSdkDependants(libraryOrSdk: SymbolicEntityId<*>): Map<ModuleId, Int>
 
   /**
    * Returns unloaded [ModuleEntity]s that transitively depend on [module].
