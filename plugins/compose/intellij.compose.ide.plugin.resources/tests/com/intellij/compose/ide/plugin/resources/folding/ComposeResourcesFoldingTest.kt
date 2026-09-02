@@ -5,13 +5,10 @@ import com.intellij.compose.ide.plugin.resources.ComposeResourcesAllSourceSets
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesCodeInsightTestCase
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.utils.editor.reloadFromDisk
 import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -99,20 +96,6 @@ class ComposeResourcesFoldingTest : ComposeResourcesCodeInsightTestCase() {
       finally {
         revertUnsavedDocuments()
       }
-    }
-  }
-
-  /**
-   * The Gradle fixture restores the snapshotted files on the disk, but it cannot restore an unsaved document of
-   * [canonicalProjectFile]: that document belongs to a second virtual file for the same path, and the rollback then
-   * fails with a memory-disk conflict.
-   */
-  private fun revertUnsavedDocuments() {
-    val fileDocumentManager = FileDocumentManager.getInstance()
-    val unsavedDocuments = fileDocumentManager.unsavedDocuments
-    if (unsavedDocuments.isEmpty()) return
-    runWriteAction {
-      unsavedDocuments.forEach { it.reloadFromDisk() }
     }
   }
 

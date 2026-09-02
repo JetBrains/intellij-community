@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.test.assertNotNull as kAssertNotNull
 
 @ComposeResourcesAllSourceSets
@@ -89,15 +88,7 @@ internal class CreateStringResourceQuickFixTest : ComposeResourcesCodeInsightTes
   }
 }
 
-internal fun List<VirtualFile>.findTestFiles(project: Project, sourceSetName: String): Pair<VirtualFile, VirtualFile> {
-  val sourceKtFile = first {
-    it.path.endsWith("composeApp/src/$sourceSetName/kotlin/org/example/project/test.$sourceSetName.kt")
-  }
-
-  return sourceKtFile to findStringsXmlFile(project, sourceSetName)
-}
-
-private fun findStringsXmlFile(project: Project, sourceSetName: String): VirtualFile {
+internal fun findStringsXmlFile(project: Project, sourceSetName: String): VirtualFile {
   val module = ModuleManager.getInstance(project).modules.first {
     it.name.endsWith(".$sourceSetName") || (sourceSetName == "androidMain" && it.name.endsWith(".main"))
   }

@@ -5,12 +5,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.ThreadLeakTracker
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.utils.editor.reloadFromDisk
 import com.intellij.util.io.DigestUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
@@ -81,6 +84,30 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
 
   protected fun snapshotProjectFile(relativePath: String) {
     gradleFixture.fileFixture.snapshot(relativePath)
+  }
+
+  /**
+   * The inverse of [canonicalProjectFile]. The Gradle model path can already be canonical, hence the real-path
+   * normalization on both sides.
+   */
+  protected fun projectRelativePath(file: VirtualFile): String =
+    projectRoot.toNioPath()
+      .toRealPath()
+      .relativize(file.toNioPath().toRealPath())
+      .invariantSeparatorsPathString
+
+  /**
+   * The Gradle fixture restores the snapshotted files on the disk, but it cannot restore an unsaved document of
+   * [canonicalProjectFile]: that document belongs to a second virtual file for the same path, and the rollback then
+   * fails with a memory-disk conflict.
+   */
+  protected fun revertUnsavedDocuments() {
+    val fileDocumentManager = FileDocumentManager.getInstance()
+    val unsavedDocuments = fileDocumentManager.unsavedDocuments
+    if (unsavedDocuments.isEmpty()) return
+    runWriteAction {
+      unsavedDocuments.forEach { it.reloadFromDisk() }
+    }
   }
 
   companion object {
