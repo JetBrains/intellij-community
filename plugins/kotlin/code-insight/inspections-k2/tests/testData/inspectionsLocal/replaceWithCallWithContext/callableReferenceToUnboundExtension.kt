@@ -1,0 +1,18 @@
+// "Replace 'with' with 'context'" "true"
+// WITH_RUNTIME
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
+// LANGUAGE_VERSION: 2.5
+
+context(s: String)
+fun Int.g() {
+    s.uppercase()
+}
+
+context(_: String)
+fun getG() = Int::g
+
+fun main() {
+    <caret>with("hi") {
+        print(getG())
+    }
+}

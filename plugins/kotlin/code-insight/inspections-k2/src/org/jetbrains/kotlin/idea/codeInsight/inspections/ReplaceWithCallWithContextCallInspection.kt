@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames.WITH_CALL
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -91,13 +90,6 @@ internal class ReplaceWithCallWithContextCallInspection :
         val problem = bodyExpression.anyDescendantOfType<KtElement> { node ->
             when (node) {
                 is KtThisExpression -> node.resolveSuccessfulSymbol() == receiverParameter
-                is KtCallableReferenceExpression -> {
-                    val singleCall = node.callableReference.resolveSuccessfulExpressionCall()?.simple
-                    singleCall?.dispatchReceiver.isReceiver(receiverParameter) ||
-                            singleCall?.extensionReceiver.isReceiver(receiverParameter)
-                    //TODO: HERE also handle context argument when KT-73145 Callable references to declarations with context parameters will be available from 2.5
-                }
-
                 is KtSimpleNameExpression -> {
                     val singleCall = node.resolveSuccessfulExpressionCall()?.simple
                     if (singleCall != null) {

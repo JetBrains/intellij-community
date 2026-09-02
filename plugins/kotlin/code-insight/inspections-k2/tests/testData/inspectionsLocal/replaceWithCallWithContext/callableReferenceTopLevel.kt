@@ -1,9 +1,7 @@
 // "Replace 'with' with 'context'" "true"
 // WITH_RUNTIME
-// COMPILER_ARGUMENTS: -Xcontext-parameters
-// LANGUAGE_VERSION: 2.4
-// K2_ERROR: CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION
-// K2_AFTER_ERROR: CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
+// LANGUAGE_VERSION: 2.5
 
 context(x: String)
 fun shout(): String {

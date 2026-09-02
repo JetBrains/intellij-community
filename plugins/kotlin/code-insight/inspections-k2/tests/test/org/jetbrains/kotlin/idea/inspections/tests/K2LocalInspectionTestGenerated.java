@@ -22178,14 +22178,34 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
-            @TestMetadata("callableReference.kt")
-            public void testCallableReference() throws Exception {
-                runTest("testData/inspectionsLocal/replaceWithCallWithContext/callableReference.kt");
+            @TestMetadata("callableReferenceBoundExtensionReceiver.kt")
+            public void testCallableReferenceBoundExtensionReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/callableReferenceBoundExtensionReceiver.kt");
             }
 
-            @TestMetadata("callableReferenceWithContext.kt")
-            public void testCallableReferenceWithContext() throws Exception {
-                runTest("testData/inspectionsLocal/replaceWithCallWithContext/callableReferenceWithContext.kt");
+            @TestMetadata("callableReferenceBoundToDispatchReceiver.kt")
+            public void testCallableReferenceBoundToDispatchReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/callableReferenceBoundToDispatchReceiver.kt");
+            }
+
+            @TestMetadata("callableReferenceToBoundMember.kt")
+            public void testCallableReferenceToBoundMember() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/callableReferenceToBoundMember.kt");
+            }
+
+            @TestMetadata("callableReferenceToUnboundExtension.kt")
+            public void testCallableReferenceToUnboundExtension() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/callableReferenceToUnboundExtension.kt");
+            }
+
+            @TestMetadata("callableReferenceTopLevel.kt")
+            public void testCallableReferenceTopLevel() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/callableReferenceTopLevel.kt");
+            }
+
+            @TestMetadata("callableReferenceWithImplicitDispatchReceiver.kt")
+            public void testCallableReferenceWithImplicitDispatchReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/replaceWithCallWithContext/callableReferenceWithImplicitDispatchReceiver.kt");
             }
 
             @TestMetadata("contextNotEnabled.kt")
