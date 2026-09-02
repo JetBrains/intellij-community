@@ -679,31 +679,40 @@ private fun createPackagingTasks(
         startSignal = startSignal,
         layoutDeferred = layoutDeferred,
         resultDeferred = scope.async(start = coroutineStart) {
-          startSignal?.await()
-          val taskResult = captureTaskResult {
-            withTelemetrySpan(
-              telemetry = telemetry,
-              name = "package target: ${target.id}",
-              configure = { span ->
-                span.setAttribute("packaging.target.id", target.id)
-              },
-            ) {
-              ensureBlockingValidationsSucceededOrAbort(blockingTasks)
-              moduleOutputDeferred.await()
-              val suiteContext = suiteContextDeferred.await()
-              val context = createDerivedBuildContext(
-                sharedCompilationContext = suiteContext.compilationContext,
-                target = target,
-                projectHome = spec.homePath,
-                buildOutputRoot = suiteContext.tempDir.resolve(target.id),
-              )
-              computePackageResult(context = context, layoutDeferred = layoutDeferred)
+          try {
+            startSignal?.await()
+            val taskResult = captureTaskResult {
+              withTelemetrySpan(
+                telemetry = telemetry,
+                name = "package target: ${target.id}",
+                configure = { span ->
+                  span.setAttribute("packaging.target.id", target.id)
+                },
+              ) {
+                ensureBlockingValidationsSucceededOrAbort(blockingTasks)
+                moduleOutputDeferred.await()
+                val suiteContext = suiteContextDeferred.await()
+                val context = createDerivedBuildContext(
+                  sharedCompilationContext = suiteContext.compilationContext,
+                  target = target,
+                  projectHome = spec.homePath,
+                  buildOutputRoot = suiteContext.tempDir.resolve(target.id),
+                )
+                computePackageResult(context = context, layoutDeferred = layoutDeferred)
+              }
+            }
+            // the task can fail before it computes the layout, and a LAYOUT validation waits for the layout alone.
+            // `completeExceptionally` does nothing when the layout is there already.
+            taskResult.failure?.let { layoutDeferred.completeExceptionally(it) }
+            taskResult
+          }
+          finally {
+            // `captureTaskResult` rethrows a cancellation, so a cancelled task reaches no line above that completes the
+            // layout. A LAYOUT validation must abort then, not wait for a layout that never comes.
+            if (!layoutDeferred.isCompleted) {
+              layoutDeferred.completeExceptionally(IllegalStateException("Packaging of '${target.id}' was cancelled before it computed the layout"))
             }
           }
-          // the task can fail before it computes the layout, and a LAYOUT validation waits for the layout alone.
-          // `completeExceptionally` does nothing when the layout is there already.
-          taskResult.failure?.let { layoutDeferred.completeExceptionally(it) }
-          taskResult
         },
       )
     )
