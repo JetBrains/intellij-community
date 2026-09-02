@@ -8,20 +8,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.kotlinx-serialization-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:2.5.0-dev-6438">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-dev-6438/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-6438.jar">
-              <sha256sum>ba27c8fcceb8967e521323d3e52a57c1efa09420152ac1f164b33665786d4248</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
+      <library name="kotlinc.kotlinx-serialization-compiler-plugin">
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-dev-6438/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-6438.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.255-dev-255/kotlinx-serialization-compiler-plugin-for-ide-2.5.255-dev-255.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-dev-6438/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-dev-6438-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.255-dev-255/kotlinx-serialization-compiler-plugin-for-ide-2.5.255-dev-255-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

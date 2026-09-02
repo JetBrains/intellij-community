@@ -14,17 +14,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common"],
+    exports = ["@lib//:kotlinc-kotlin-scripting-common"],
     runtime_deps = [
         # do not sort,
-        "@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common",
+        "@lib//:kotlinc-kotlin-scripting-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
     ],
 )
 
 content_module_jar(
-    libraries = ["@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common"],
+    libraries = ["@lib//:kotlinc-kotlin-scripting-common"],
     module = ":libraries-kotlinc-kotlin-scripting-common",
 )
 
@@ -38,7 +38,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinc.kotlin.scripting.common",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common"],
+    exports = ["@lib//:kotlinc-kotlin-scripting-common"],
     runtime_deps = [
         # do not sort,
         ":libraries-kotlinc-kotlin-scripting-common",

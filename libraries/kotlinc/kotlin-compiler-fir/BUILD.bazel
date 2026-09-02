@@ -14,16 +14,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir"],
+    exports = ["@lib//:kotlinc-kotlin-compiler-fir"],
     runtime_deps = [
         # do not sort,
-        "@lib//:libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir",
+        "@lib//:kotlinc-kotlin-compiler-fir",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
     ],
 )
 
 content_module_jar(
-    libraries = ["@lib//:libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir"],
+    libraries = ["@lib//:kotlinc-kotlin-compiler-fir"],
     module = ":libraries-kotlinc-kotlin-compiler-fir",
 )
 
@@ -37,7 +37,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinc.kotlin.compiler.fir",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir"],
+    exports = ["@lib//:kotlinc-kotlin-compiler-fir"],
     runtime_deps = [
         # do not sort,
         ":libraries-kotlinc-kotlin-compiler-fir",
