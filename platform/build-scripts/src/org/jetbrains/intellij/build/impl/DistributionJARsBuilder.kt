@@ -842,7 +842,9 @@ internal suspend fun layoutDistribution(
   val entries = coroutineScope {
     val tasks = ArrayList<Deferred<Collection<DistributionFileEntry>>>(3)
     val outputDir = targetDir.resolve(LIB_DIRECTORY)
-    tasks.add(async(CoroutineName("pack $outputDir")) {
+    // `Dispatchers.IO`, because the layout computation under `JarPackager.pack` blocks. It reads a module
+    // output, a library root and a file attribute. The plugin path already arrives here on `Dispatchers.IO`.
+    tasks.add(async(Dispatchers.IO + CoroutineName("pack $outputDir")) {
       spanBuilder("pack").setAttribute("outputDir", outputDir.toString()).use {
         JarPackager.pack(
           includedModules = includedModules,
