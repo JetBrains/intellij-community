@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
 
-class ChangeSignatureQuickFixesRegistrar: KotlinQuickFixRegistrar() {
+class ChangeSignatureQuickFixesRegistrar : KotlinQuickFixRegistrar() {
 
     private val changeSignature = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(ChangeSignatureFixFactory.addParameterFactory)
@@ -15,6 +15,7 @@ class ChangeSignatureQuickFixesRegistrar: KotlinQuickFixRegistrar() {
         registerFactory(ReorderParametersFixFactory.unInitializedParameter)
         registerFactory(ChangeParameterTypeFixFactory.typeMismatchFactory)
         registerFactory(ChangeParameterTypeFixFactory.nullForNotNullTypeFactory)
+        registerFactory(CompanionBlockMemberExtensionFixFactory.companionBlockMemberExtension)
     }
 
     override val list: KotlinQuickFixesList = changeSignature

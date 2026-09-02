@@ -10778,6 +10778,26 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/modifiers/cannotMakeClassAnnotation.kt");
             }
 
+            @TestMetadata("companionBlockMemberExtensionConvertReceiverToContextParameter.kt")
+            public void testCompanionBlockMemberExtensionConvertReceiverToContextParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/companionBlockMemberExtensionConvertReceiverToContextParameter.kt");
+            }
+
+            @TestMetadata("companionBlockMemberExtensionConvertReceiverToParameter.kt")
+            public void testCompanionBlockMemberExtensionConvertReceiverToParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/companionBlockMemberExtensionConvertReceiverToParameter.kt");
+            }
+
+            @TestMetadata("companionBlockMemberExtensionRemoveReceiver.kt")
+            public void testCompanionBlockMemberExtensionRemoveReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/companionBlockMemberExtensionRemoveReceiver.kt");
+            }
+
+            @TestMetadata("companionBlockMemberExtensionRemoveReceiverUnavailable.kt")
+            public void testCompanionBlockMemberExtensionRemoveReceiverUnavailable() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/companionBlockMemberExtensionRemoveReceiverUnavailable.kt");
+            }
+
             @TestMetadata("finalInterface.kt")
             public void testFinalInterface() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/modifiers/finalInterface.kt");

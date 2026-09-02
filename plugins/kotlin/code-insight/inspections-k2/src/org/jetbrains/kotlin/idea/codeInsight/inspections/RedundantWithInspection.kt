@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ReceiverParameterChangeSignatureUtils
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -108,7 +109,7 @@ class RedundantWithInspection : KotlinApplicableInspectionBase<KtCallExpression,
         val functionLiteral = lambda.functionLiteral
         val used = functionLiteral.anyDescendantOfType<KtElement> {
             (it as? KtReturnExpression)?.getLabelName() == "with"
-        } || isReceiverUsedInside(functionLiteral, emptySet())
+        } || ReceiverParameterChangeSignatureUtils.isReceiverUsedInside(functionLiteral, emptySet())
 
         if (!used) {
             if (lambdaBody.statements.size > 1 && element.isUsedAsExpression && element.getStrictParentOfType<KtFunction>()?.bodyExpression?.safeDeparenthesize() != element) return null
