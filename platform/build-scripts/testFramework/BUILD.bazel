@@ -20,6 +20,11 @@ jvm_library(
     kotlinc_opts = ":custom_testFramework",
     module_name = "intellij.platform.buildScripts.testFramework",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/byte-buddy",
+        "//libraries/byte-buddy/agent",
+    ],
     deps = [
         # do not sort,
         "//platform/build-scripts",
@@ -111,6 +116,8 @@ jvm_library(
         "//platform/util/zip:zip_test_lib",
         "//platform/distribution-content:distribution-content_test_lib",
         "//platform/build-scripts/licenses:licenses_test_lib",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
+        "//libraries/byte-buddy/agent:agent_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.testFramework` end

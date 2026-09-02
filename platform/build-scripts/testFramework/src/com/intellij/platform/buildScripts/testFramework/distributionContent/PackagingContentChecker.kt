@@ -4,6 +4,7 @@
 package com.intellij.platform.buildScripts.testFramework.distributionContent
 
 import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildScripts.testFramework.createBuildOptionsForTest
 import com.intellij.platform.buildScripts.testFramework.customizeBuildOptionsForPackagingContentTest
@@ -62,6 +63,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 internal data class PackageResult(
@@ -272,6 +274,7 @@ class PackagingSuiteFixture private constructor(
     }
 
     private fun createSharedFixture(spec: PackagingSuiteSpec): PackagingSuiteFixture {
+      installCoroutineDebugProbes()
       val traceSettings = resolvePackagingSuiteTraceSettings(spec)
       val telemetry = createSuiteTelemetry(spec = spec, traceSettings = traceSettings)
       val tracerOverride = traceSettings.takeUnless { it.enabled }?.let { TraceManager.pushTracer(packagingSuiteNoopTracer) }
@@ -425,7 +428,7 @@ class PackagingSuiteFixture private constructor(
     for (task in tasksWithContentChecks) {
       val expectedContentYamlPath = requireNotNull(task.spec.contentYamlPath)
       tests.add(DynamicTest.dynamicTest(task.spec.id) {
-        runBlocking {
+        awaitOnTestThread("platform content check of '${task.spec.id}'") {
           withTelemetrySpan(
             telemetry = telemetry,
             name = "platform content check: ${task.spec.id}",
@@ -513,7 +516,7 @@ class PackagingSuiteFixture private constructor(
   private fun isOptimizedFullSuiteScheduling(): Boolean = spec.taskScheduling == PackagingSuiteTaskScheduling.FULL_SUITE_OPTIMIZED
 
   override fun close() {
-    runBlocking { scopeJob.cancelAndJoin() }
+    awaitOnTestThread("cancellation of the fixture scope") { scopeJob.cancelAndJoin() }
     try {
       if (suiteContextDeferred.isCompleted) {
         runCatching { runBlocking { suiteContextDeferred.await().compilationContext.messages.close() } }
@@ -542,17 +545,37 @@ private fun startBlockingValidationTasks(validationTasks: List<ValidationTask>) 
 private val HANG_DUMP_DELAY = 10.minutes
 
 /**
+ * Installs the coroutine debug probes, so that [dumpCoroutines] sees the coroutines of the fixture.
+ *
+ * Call it before the fixture scope creates a coroutine. The probes ignore a coroutine that was created before the install.
+ * A test JVM loads the no-op `DebugProbesKt` of the Kotlin stdlib, so the install redefines that class with ByteBuddy.
+ * This module therefore has `byte-buddy` and `byte-buddy-agent` on its runtime classpath. Without them the install
+ * reports success and captures nothing.
+ */
+internal fun installCoroutineDebugProbes() {
+  enableCoroutineDump().onFailure {
+    System.err.println("Packaging suite: cannot install the coroutine debug probes, so a hang dump will be empty: $it")
+  }
+}
+
+/**
  * Runs [block] on the test thread and waits for it.
  *
  * A test factory waits here for work on the fixture scope. A suspension that never resumes is invisible in a thread dump,
- * because every dispatcher thread is idle. So after [HANG_DUMP_DELAY] this prints a coroutine dump once and keeps
- * waiting, and the dump names the suspension.
+ * because every dispatcher thread is idle. So after [dumpDelay] this passes a coroutine dump to [report] once and keeps
+ * waiting, and the dump names the suspension. The fixture calls [installCoroutineDebugProbes] when it is created.
  */
-private fun <T> awaitOnTestThread(what: String, block: suspend () -> T): T {
+internal fun <T> awaitOnTestThread(
+  what: String,
+  dumpDelay: Duration = HANG_DUMP_DELAY,
+  report: (String) -> Unit = System.err::println,
+  block: suspend () -> T,
+): T {
   return runBlocking {
     val dump = launch {
-      delay(HANG_DUMP_DELAY)
-      System.err.println("Packaging suite: $what is still running after $HANG_DUMP_DELAY. Coroutine dump:\n${dumpCoroutines()}")
+      delay(dumpDelay)
+      val coroutineDump = dumpCoroutines() ?: "the coroutine debug probes are not installed"
+      report("Packaging suite: $what is still running after $dumpDelay. Coroutine dump:\n$coroutineDump")
     }
     try {
       block()

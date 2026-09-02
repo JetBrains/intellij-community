@@ -66,5 +66,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="module" module-name="intellij.platform.distributionContent" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.licenses" />
+    <orderEntry type="module" module-name="intellij.libraries.byte.buddy" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.byte.buddy.agent" scope="RUNTIME" />
   </component>
 </module>
