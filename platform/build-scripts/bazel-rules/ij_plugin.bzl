@@ -24,7 +24,7 @@ def _ij_plugin_impl(ctx):
 
     plugin_version = _computePluginVersion(explicit_plugin_version, ide_build_number)
     use_exact_build_compatibility = force_exact_build_compatibility or ctx.attr.until_build == "$since_build"
-    since_build = _computeSinceBuild(ctx.attr.since_build, ide_build_number, ide_stability_level, use_exact_build_compatibility)
+    since_build = _computeSinceBuild(ctx.attr.since_build, ide_build_number, use_exact_build_compatibility)
     until_build = _computeUntilBuild(ctx.attr.until_build, since_build, ide_build_number, ide_stability_level, use_exact_build_compatibility)
 
     plugin_descriptor_jar = plugin_descriptor_module_info.all_output_jars[0]
@@ -111,13 +111,13 @@ def _computePluginVersion(explicit_plugin_version, ide_build_number):
         return ide_build_number
     return _build_number_from_file
 
-def _computeSinceBuild(since_build, ide_build_number, ide_stability_level, use_exact_build_compatibility):
+def _computeSinceBuild(since_build, ide_build_number, use_exact_build_compatibility):
     if since_build != "$auto":
         return since_build
     if not ide_build_number:
         return _build_number_from_file
     components = ide_build_number.split(".")
-    if use_exact_build_compatibility or ide_stability_level != "release" or len(components) <= 2:
+    if use_exact_build_compatibility or len(components) <= 2:
         return ide_build_number
     return ".".join(components[:-1])
 

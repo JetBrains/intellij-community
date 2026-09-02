@@ -71,6 +71,13 @@ ij_plugin_settings_test_target(
 )
 
 ij_plugin_settings_test_target(
+    name = "smoke-plugin-eap-settings",
+    ide_build_number = "263.1234.56",
+    ide_stability_level = "EAP",
+    plugin = ":smoke-plugin",
+)
+
+ij_plugin_settings_test_target(
     name = "smoke-plugin-release-settings",
     ide_build_number = "263.12345.67",
     ide_stability_level = "release",

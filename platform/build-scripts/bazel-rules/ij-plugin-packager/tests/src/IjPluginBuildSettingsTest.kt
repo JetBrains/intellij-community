@@ -28,6 +28,12 @@ internal class IjPluginBuildSettingsTest {
       expectedUntilBuild = "263.*",
     )
     assertPluginDescriptor(
+      configuration = "eap",
+      expectedVersion = "263.1234.56",
+      expectedSinceBuild = "263.1234",
+      expectedUntilBuild = "263.1234.*",
+    )
+    assertPluginDescriptor(
       configuration = "release",
       expectedVersion = "1.2.3",
       expectedSinceBuild = "263.12345",
