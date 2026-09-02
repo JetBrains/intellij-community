@@ -31,6 +31,7 @@ import kotlin.io.path.readText
  * * `--content_module module_name:path_to_jar[,path_to_jar...]`: includes a plugin content module in the distribution; the first path contains the module XML descriptor, if
  *   additional paths are specified, they are packed together with the content module;
  *   Specify each module only once.
+ * * `--non_classpath_data relative_output_path:input_path`: copies a file or directory to the relative path in the plugin distribution;
  * * `--packed_modules path`: enables generation of the `packed-modules.yaml` file, which names each jar in the distribution and the modules packed into it;
  * * `--plugin_version version`: updates `<version>` tag in `plugin.xml` with the provided version;
  * * `--since_build build`: updates `since-build` attribute in `<idea-version>` tag in `plugin.xml` with the provided value;
@@ -58,6 +59,7 @@ object IjPluginPackager {
     var descriptorModule: ModuleArgument? = null
     var packedModulesPath: Path? = null
     val contentModuleArguments = HashMap<String, ModuleArgument>()
+    val nonClasspathData = ArrayList<NonClasspathDataArgument>()
     var pluginVersion: String? = null
     var sinceBuild: String? = null
     var untilBuild: String? = null
@@ -79,6 +81,7 @@ object IjPluginPackager {
           require(packedModulesPath == null) { "--packed_modules must be specified only once" }
           packedModulesPath = baseDir.resolve(args[index + 1])
         }
+        "--non_classpath_data" -> nonClasspathData.add(parseNonClasspathDataArgument(args[index + 1], baseDir))
         "--plugin_version" -> {
           require(pluginVersion == null) { "--plugin_version must be specified only once" }
           pluginVersion = args[index + 1]
@@ -145,6 +148,7 @@ object IjPluginPackager {
       }
     }
     packedModulesWriter?.addModule(descriptorOutputJar, descriptorModuleArgument.name)
+    copyNonClasspathData(nonClasspathData, outputDirectory)
     packedModulesWriter?.write()
   }
 
@@ -221,6 +225,20 @@ object IjPluginPackager {
     return ModuleArgument(
       name = argument.substring(0, separatorIndex),
       jars = paths.map { baseDir.resolve(it) },
+    )
+  }
+
+  private fun parseNonClasspathDataArgument(argument: String, baseDir: Path): NonClasspathDataArgument {
+    val separatorIndex = argument.indexOf(':')
+    require(separatorIndex > 0 && separatorIndex < argument.lastIndex) {
+      "Expected a non-classpath data argument in the form relative_output_path:input_path. Got: $argument"
+    }
+    val outputPath = argument.substring(0, separatorIndex)
+    val relativeOutputPath = Path.of(outputPath)
+    require(!relativeOutputPath.isAbsolute) { "Non-classpath data output path must be relative: $outputPath" }
+    return NonClasspathDataArgument(
+      relativeOutputPath = relativeOutputPath,
+      source = baseDir.resolve(argument.substring(separatorIndex + 1)),
     )
   }
 

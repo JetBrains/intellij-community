@@ -54,6 +54,7 @@ def _ij_plugin_impl(ctx):
         [plugin_descriptor_jar],
         format_each = plugin_descriptor_module_info.module_name + ":%s",
     )
+    _add_non_classpath_data(args, inputs, plugin_descriptor_module_info)
     for content_module in ctx.attr.content_modules:
         content_module_info = _plugin_module_info(content_module)
         content_module_jars = content_module_info.all_output_jars
@@ -64,6 +65,12 @@ def _ij_plugin_impl(ctx):
             join_with = ",",
         )
         inputs.extend(content_module_jars)
+        _add_non_classpath_data(
+            args,
+            inputs,
+            content_module_info,
+            root_output_directory = "modules/" + content_module_info.module_name,
+        )
 
     java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]
     ctx.actions.run(
@@ -100,7 +107,17 @@ def _plugin_module_info(target):
     return _PluginModuleInfo(
         module_name = kt_jvm_info.module_name,
         all_output_jars = kt_jvm_info.all_output_jars,
+        non_classpath_data = [],
     )
+
+def _add_non_classpath_data(args, inputs, module_info, root_output_directory = ""):
+    for data in module_info.non_classpath_data:
+        relative_path = data.relative_path
+        if root_output_directory:
+            relative_path = root_output_directory + "/" + relative_path
+        args.add("--non_classpath_data")
+        args.add(data.file, format = relative_path + ":%s")
+        inputs.append(data.file)
 
 _build_number_from_file = "$build_number_from_file"
 

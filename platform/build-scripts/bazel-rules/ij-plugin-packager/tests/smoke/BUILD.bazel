@@ -4,12 +4,22 @@ load("//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_mod
 load(":build_settings_test.bzl", "ij_plugin_settings_test_target")
 
 # A minimal plugin used to check that `ij_plugin` rule and the packager worker actually work.
-
-jvm_library(
+ij_plugin_module(
     name = "descriptor-module",
     module_name = "intellij.ijPluginPackagerSmoke",
-    resource_strip_prefix = "descriptor",
-    resources = glob(["descriptor/**/*"]),
+    non_classpath_data = {
+        ":descriptor-data-txt-files": "descriptor-data-txt-files/",
+        ":descriptor/data/third.bin": "third-renamed.txt",
+        ":descriptor/data/first.txt": "new-parent/",
+        ":descriptor/data": "descriptor-data-dir",
+    },
+    resource_strip_prefix = "descriptor/resources",
+    resources = glob(["descriptor/resources/**/*"]),
+)
+
+filegroup(
+    name = "descriptor-data-txt-files",
+    srcs = glob(["descriptor/data/**/*.txt"]),
 )
 
 jvm_library(
@@ -29,17 +39,20 @@ jvm_library(
 ij_plugin_module(
     name = "library-content-module",
     module_name = "intellij.ijPluginPackagerSmoke.library",
+    non_classpath_data = {
+        ":library/data/library-data.txt": "library-data.txt",
+    },
     packed_deps = [
         "@lib//:libraries-asm-tools-asm-tools",  # java_library
         "@lib//:libraries-assertj-core-assert_j",  # jvm_import
     ],
-    resource_strip_prefix = "library",
-    resources = glob(["library/**/*"]),
+    resource_strip_prefix = "library/resources",
+    resources = glob(["library/resources/**/*"]),
 )
 
 ij_plugin(
     name = "smoke-plugin",
-    descriptor_module = ":descriptor-module",
+    descriptor_module = ":descriptor-module_plugin_module",
     content_modules = [
         ":embedded-content-module",
         ":optional-content-module",
@@ -49,7 +62,7 @@ ij_plugin(
 
 ij_plugin(
     name = "smoke-plugin-with-restricted-compatibility-range",
-    descriptor_module = ":descriptor-module",
+    descriptor_module = ":descriptor-module_plugin_module",
     content_modules = [
         ":embedded-content-module",
         ":optional-content-module",

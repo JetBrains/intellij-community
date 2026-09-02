@@ -7,12 +7,17 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.bazel.jvm.WorkRequest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
 import java.io.StringWriter
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
+import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.writeText
 
 internal class IjPluginPackagerTest {
@@ -52,6 +57,13 @@ internal class IjPluginPackagerTest {
       zip("optional-module.jar") {
         file("optional.module.xml", optionalModuleXml)
       }
+      file("LICENSE.txt", "license")
+      dir("additional-data") {
+        file("README.md", "documentation")
+        dir("bin") {
+          file("launcher", "launcher")
+        }
+      }
     }.generate(inputDirectory)
 
     // paths are relative to the base directory of the request, like they are when the packager runs as a worker
@@ -67,6 +79,10 @@ internal class IjPluginPackagerTest {
         "embedded.module:input/embedded-module.jar",
         "--content_module",
         "optional.module:input/optional-module.jar",
+        "--non_classpath_data",
+        "LICENSE.txt:input/LICENSE.txt",
+        "--non_classpath_data",
+        "docs:input/additional-data",
       ),
       baseDir = tempDirectory,
     )
@@ -97,6 +113,13 @@ internal class IjPluginPackagerTest {
           contentModules:
           - name: optional.module
       """.trimIndent())
+      file("LICENSE.txt", "license")
+      dir("docs") {
+        file("README.md", "documentation")
+        dir("bin") {
+          file("launcher", "launcher")
+        }
+      }
       dir("lib") {
         zip("descriptor.jar") {
           file("__index__")
@@ -190,6 +213,86 @@ internal class IjPluginPackagerTest {
   }
 
   @Test
+  fun preservesSymlinkToFileUnderDataSource(@TempDir tempDirectory: Path) {
+    assumeTrue(OS.current() != OS.WINDOWS)
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    val dataDirectory = Files.createDirectories(inputDirectory.resolve("data"))
+    val target = Files.writeString(dataDirectory.resolve("target.txt"), "target")
+    Files.createSymbolicLink(dataDirectory.resolve("link.txt"), target)
+
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--non_classpath_data",
+        "data:input/data",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    val outputLink = tempDirectory.resolve("output/data/link.txt")
+    assertTrue(outputLink.isSymbolicLink())
+    assertEquals(Path.of("target.txt"), Files.readSymbolicLink(outputLink))
+    assertEquals("target", Files.readString(outputLink))
+  }
+
+  @Test
+  fun reportsErrorIfSymlinkPointsOutsideDataSource(@TempDir tempDirectory: Path) {
+    assumeTrue(OS.current() != OS.WINDOWS)
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    val dataDirectory = Files.createDirectories(inputDirectory.resolve("data"))
+    val externalTarget = Files.writeString(inputDirectory.resolve("external.txt"), "external")
+    val link = Files.createSymbolicLink(dataDirectory.resolve("link.txt"), externalTarget)
+
+    val error = assertThrows(IllegalStateException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar",
+          "--non_classpath_data",
+          "data:input/data",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertEquals(
+      "Cannot copy symlink $link because its target ${externalTarget.toRealPath()} is outside the source directory ${dataDirectory.toRealPath()}",
+      error.message,
+    )
+    assertFalse(Files.exists(tempDirectory.resolve("output/data/link.txt"), LinkOption.NOFOLLOW_LINKS))
+  }
+
+  @Test
+  fun reportsErrorIfNonClasspathDataOverwritesOutputFile(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    Files.writeString(inputDirectory.resolve("data1.txt"), "data")
+    Files.writeString(inputDirectory.resolve("data2.txt"), "data")
+
+    val error = assertThrows(IllegalStateException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar",
+          "--non_classpath_data",
+          "data.txt:input/data1.txt",
+          "--non_classpath_data",
+          "data.txt:input/data2.txt",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertTrue(error.message?.contains("because the output file already exists") == true, error.message)
+  }
+
+  @Test
   fun readsArgumentsFromParamsFile(@TempDir tempDirectory: Path) {
     val inputDirectory = tempDirectory.resolve("input")
     directoryContent {
@@ -248,5 +351,15 @@ internal class IjPluginPackagerTest {
 
     assertEquals(3, exitCode)
     assertTrue(writer.toString().contains("--flagfile="), writer.toString())
+  }
+
+  private fun createDescriptorJar(inputDirectory: Path) {
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", "<idea-plugin><id>my.plugin</id></idea-plugin>")
+        }
+      }
+    }.generate(inputDirectory)
   }
 }
