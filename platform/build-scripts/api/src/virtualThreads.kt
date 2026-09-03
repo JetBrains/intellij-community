@@ -70,13 +70,58 @@ internal fun <T> startFork(name: String, parentContext: CoroutineContext, block:
 }
 
 /**
- * Waits for a future that other awaiters share. A cancelled awaiter cancels only its own copy, and the shared
- * computation goes on.
+ * Starts [block] on a virtual thread of its own, and returns the future of its result.
  *
- * The plain `await` cancels the future when the awaiter is cancelled. That is right for a one-shot future only.
+ * This is the primitive of a shared computation, such as an entry of `AsyncCache`, that outlives its first caller.
+ * The computation is not a child of that caller: once it starts it runs to its end, and every caller only waits with
+ * [joinShared]. A fan-out inside the pipeline uses [taskScope] instead.
+ *
+ * The body runs inside the single-flight computations of the caller, so a recursive wait for the same key fails fast.
+ * It carries no telemetry context. A caller whose computation opens a span wraps the block itself, the way
+ * `sharedLazy` does with `captureTelemetryContext`.
+ */
+@ApiStatus.Internal
+fun <T> startSharedComputation(name: String, owner: Any?, block: () -> T): CompletableFuture<T> {
+  val future = CompletableFuture<T>()
+  val inherited = currentSingleFlightOwners()
+  Thread.ofVirtual().name(name).start {
+    try {
+      future.complete(withSingleFlightOwners(inherited = inherited, owner = owner, body = block))
+    }
+    catch (e: Throwable) {
+      future.completeExceptionally(e)
+    }
+  }
+  return future
+}
+
+/**
+ * Waits for a future that other waiters share, without blocking the thread.
+ *
+ * For a caller that is still a coroutine and must stay cancellable. A cancelled waiter cancels only its own copy, so
+ * the shared computation goes on. The blocking twin is [joinShared].
  */
 @ApiStatus.Internal
 suspend fun <T> CompletableFuture<T>.awaitShared(): T = copy().await()
+
+/**
+ * Waits for a future that other waiters share, and throws its failure as the computation threw it.
+ *
+ * `join` needs no defensive copy, because it cancels nothing: a waiter that goes away changes nothing for the
+ * computation or for the other waiters. `join` also ignores an interrupt and re-asserts the flag before it returns,
+ * which is the rule of the pipeline already. Only a group cancels a fork, and a blocking body does not see that
+ * cancel. Do not replace it with `get`, whose `InterruptedException` a fork group would count as a failure.
+ */
+@ApiStatus.Internal
+fun <T> CompletableFuture<T>.joinShared(): T {
+  try {
+    return join()
+  }
+  catch (e: CompletionException) {
+    // `await` throws the cause, and every caller of this cache expects the same
+    throw e.cause ?: e
+  }
+}
 
 /** The exception of a future that completed exceptionally, without the `CompletionException` wrapper of `join`. */
 @ApiStatus.Internal
@@ -97,7 +142,8 @@ fun CompletableFuture<*>.failureOrNull(): Throwable? {
 @ApiStatus.Internal
 @Suppress("SSBasedInspection") // a build script has no progress indicator, so `runBlocking` is the right entry
 fun <T> runBlockingOnVirtualThreads(block: suspend CoroutineScope.() -> T): T {
-  return runBlocking(buildVirtualThreadDispatcher) { block() }
+  // the only blocking-to-coroutine boundary of a build, so the single-flight guard is seeded here and nowhere else
+  return runBlocking(buildVirtualThreadDispatcher + singleFlightContextElement()) { block() }
 }
 
 /**

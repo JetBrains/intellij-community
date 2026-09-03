@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.impl.support
 import com.intellij.openapi.util.SystemInfoRt
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -241,7 +240,6 @@ class BuildContextSingleFlightCache<V>(
   private val cache = WeakHashMap<BuildContext, CacheEntry<V>>()
 
   suspend fun getOrLoad(context: BuildContext): V {
-    val currentContext = currentCoroutineContext()
     val (entry, isOwner) = lock.withLock {
       cache.get(context)?.let {
         return@withLock it to false
@@ -256,12 +254,12 @@ class BuildContextSingleFlightCache<V>(
     }
 
     if (!isOwner) {
-      checkRecursiveSingleFlightAwait(currentContext, entry.owner, operationName, completed = entry.result.isCompleted)
+      checkRecursiveSingleFlightAwait(entry.owner, operationName, completed = entry.result.isCompleted)
       return entry.result.await()
     }
 
     try {
-      entry.result.complete(withContext(singleFlightComputationContext(currentContext, entry.owner)) { loader(context) })
+      entry.result.complete(withContext(singleFlightComputationContext(entry.owner)) { loader(context) })
     }
     catch (t: Throwable) {
       entry.result.completeExceptionally(t)

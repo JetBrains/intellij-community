@@ -3,100 +3,98 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.lang.ZipFile
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.junit.jupiter.api.Test
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiConsumer
 import java.util.function.Predicate
-import kotlin.coroutines.ContinuationInterceptor
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 internal class ModuleOutputZipFilePoolTest {
   @Test
   fun `cached lookup times out with clear error`() {
     val file = Path.of("module-output.zip")
     val entryPath = "META-INF/plugin.xml"
+    val release = CountDownLatch(1)
 
-    assertThatThrownBy {
-      runBlocking(Dispatchers.Default) {
-        val pool = ModuleOutputZipFilePool(
-          scope = this,
-          cacheReadTimeout = 100.milliseconds,
-          zipFileLoader = {
-            CompletableDeferred<ZipFile?>().await()
-          },
-        )
+    try {
+      assertThatThrownBy {
+        runBlockingOnVirtualThreads {
+          val pool = ModuleOutputZipFilePool(
+            scope = this,
+            cacheReadTimeout = 100.milliseconds,
+            zipFileLoader = {
+              release.await()
+              null
+            },
+          )
 
-        withTimeout(5.seconds) {
           pool.getData(file, entryPath)
         }
       }
+        .isInstanceOf(IllegalStateException::class.java)
+        .hasMessageContaining("Timed out after 100ms")
+        .hasMessageContaining(entryPath)
+        .hasMessageContaining(file.toString())
+        // The thread dump goes to stderr. A message that carries it is truncated by the build server,
+        // and the truncation deletes the stack trace.
+        .hasMessageNotContaining("AsyncCache: ")
+        .hasMessageNotContaining("at java.")
     }
-      .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("Timed out after 100ms")
-      .hasMessageContaining(entryPath)
-      .hasMessageContaining(file.toString())
-      // The coroutine dump goes to stderr. A message that carries it is truncated by the build server,
-      // and the truncation deletes the stack trace.
-      .hasMessageNotContaining("StandaloneCoroutine")
-      .hasMessageNotContaining("DeferredCoroutine")
+    finally {
+      release.countDown()
+    }
   }
 
   @Test
-  fun `cached lookup loads on a virtual thread and not on the dispatcher of the caller`() {
+  fun `cached lookup loads on a thread of its own`() {
     val file = Path.of("module-output.zip")
     val entryPath = "META-INF/plugin.xml"
     val expectedData = "<idea-plugin/>".encodeToByteArray()
 
-    runBlocking(Dispatchers.Default) {
-      val loaderInterceptor = CompletableDeferred<ContinuationInterceptor?>()
-      val loaderThreadIsVirtual = CompletableDeferred<Boolean>()
+    runBlockingOnVirtualThreads {
+      val callerThread = Thread.currentThread()
+      val loaderThread = arrayOfNulls<Thread>(1)
       val pool = ModuleOutputZipFilePool(
         scope = this,
         zipFileLoader = {
-          loaderInterceptor.complete(currentCoroutineContext()[ContinuationInterceptor])
-          loaderThreadIsVirtual.complete(Thread.currentThread().isVirtual)
+          loaderThread[0] = Thread.currentThread()
           zipFile(mapOf(entryPath to expectedData))
         },
       )
 
       assertThat(pool.getData(file, entryPath)).isEqualTo(expectedData)
-      assertThat(loaderInterceptor.await()).isNotSameAs(Dispatchers.Default)
-      assertThat(loaderThreadIsVirtual.await()).isTrue()
+      val loader = loaderThread[0]!!
+      assertThat(loader).isNotSameAs(callerThread)
+      assertThat(loader.isVirtual).isTrue()
+      assertThat(loader.name).startsWith("AsyncCache: ")
     }
   }
 
   @Test
-  fun `uncached lookup loads on the dispatcher of the caller`() {
+  fun `uncached lookup loads on the thread of the caller`() {
     val file = Path.of("module-output.zip")
     val entryPath = "META-INF/plugin.xml"
     val expectedData = "<idea-plugin/>".encodeToByteArray()
 
-    runBlocking(Dispatchers.Default) {
-      val loaderInterceptor = CompletableDeferred<ContinuationInterceptor?>()
-      val pool = ModuleOutputZipFilePool(
-        scope = null,
-        zipFileLoader = {
-          loaderInterceptor.complete(currentCoroutineContext()[ContinuationInterceptor])
-          zipFile(mapOf(entryPath to expectedData))
-        },
-      )
+    val loaderThread = arrayOfNulls<Thread>(1)
+    val pool = ModuleOutputZipFilePool(
+      scope = null,
+      zipFileLoader = {
+        loaderThread[0] = Thread.currentThread()
+        zipFile(mapOf(entryPath to expectedData))
+      },
+    )
 
-      assertThat(pool.getData(file, entryPath)).isEqualTo(expectedData)
-      assertThat(loaderInterceptor.await()).isSameAs(Dispatchers.Default)
-    }
+    assertThat(pool.getData(file, entryPath)).isEqualTo(expectedData)
+    assertThat(loaderThread[0]).isSameAs(Thread.currentThread())
   }
 
   @Test
@@ -104,7 +102,7 @@ internal class ModuleOutputZipFilePoolTest {
     val file = Path.of("module-output.zip")
 
     assertThatThrownBy {
-      runBlocking(Dispatchers.Default) {
+      runBlockingOnVirtualThreads {
         val pool = ModuleOutputZipFilePool(
           scope = this,
           zipFileLoader = {
@@ -125,50 +123,41 @@ internal class ModuleOutputZipFilePoolTest {
     val entryPath = "META-INF/plugin.xml"
     val expectedData = "<idea-plugin/>".encodeToByteArray()
 
-    runBlocking(Dispatchers.Default) {
-      val started = CompletableDeferred<Unit>()
-      val release = CompletableDeferred<Unit>()
+    runBlockingOnVirtualThreads {
+      val started = CountDownLatch(1)
+      val release = CountDownLatch(1)
       val loadCount = AtomicInteger(0)
       val pool = ModuleOutputZipFilePool(
         scope = this,
         cacheReadTimeout = 100.milliseconds,
         zipFileLoader = {
           loadCount.incrementAndGet()
-          started.complete(Unit)
+          started.countDown()
           release.await()
           zipFile(mapOf(entryPath to expectedData))
         },
       )
 
-      supervisorScope {
-        val firstAttempt = async {
-          pool.getData(file, entryPath)
-        }
-
-        withTimeout(5.seconds) {
-          started.await()
-        }
-
-        var failure: Throwable? = null
+      val failure = arrayOfNulls<Throwable>(1)
+      val firstAttempt = Thread.ofVirtual().start {
         try {
-          firstAttempt.await()
+          pool.getData(file, entryPath)
         }
         catch (t: Throwable) {
-          failure = t
+          failure[0] = t
         }
-
-        assertThat(failure)
-          .isInstanceOf(IllegalStateException::class.java)
-          .hasMessageContaining("Timed out after 100ms")
       }
 
-      release.complete(Unit)
+      assertThat(started.await(5, TimeUnit.SECONDS)).isTrue()
+      firstAttempt.join()
 
-      assertThat(
-        withTimeout(5.seconds) {
-          pool.getData(file, entryPath)
-        }
-      ).isEqualTo(expectedData)
+      assertThat(failure[0])
+        .isInstanceOf(IllegalStateException::class.java)
+        .hasMessageContaining("Timed out after 100ms")
+
+      release.countDown()
+
+      assertThat(pool.getData(file, entryPath)).isEqualTo(expectedData)
       assertThat(loadCount.get()).isEqualTo(1)
     }
   }

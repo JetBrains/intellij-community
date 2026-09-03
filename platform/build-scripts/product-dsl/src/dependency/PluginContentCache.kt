@@ -12,6 +12,7 @@ import org.jetbrains.intellij.build.productLayout.discovery.PluginXmlOverride
 import org.jetbrains.intellij.build.productLayout.discovery.extractPluginContent
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 
 /**
  * Interface for plugin content retrieval with on-demand discovery support.
@@ -85,9 +86,10 @@ internal class PluginContentCache(
     pluginXmlOverride: PluginXmlOverride? = null,
   ): PluginContentInfo? {
     val effectiveOverride = pluginXmlOverride ?: pluginXmlOverrides[plugin]
+    // the loader still suspends, so it needs an entry of its own back into coroutines
     return cache.getOrPut(plugin) {
       val source = if (isTest) PluginSource.TEST else PluginSource.BUNDLED
-      extractPluginContent(
+      runBlockingOnVirtualThreads { extractPluginContent(
         pluginName = plugin.value,
         outputProvider = outputProvider,
         xIncludeCache = xIncludeCache,
@@ -97,7 +99,7 @@ internal class PluginContentCache(
         source = source,
         pluginXmlOverride = effectiveOverride,
         errorSink = errorSink,
-      )
+      ) }
     }
   }
 
@@ -126,9 +128,10 @@ internal class PluginContentCache(
    * @return PluginContentInfo if module has META-INF/plugin.xml, null otherwise
    */
   override suspend fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
+    // the loader still suspends, so it needs an entry of its own back into coroutines
     return cache.getOrPut(pluginModule) {
       // Not pre-warmed → discovered on-demand during dependency resolution
-      extractPluginContent(
+      runBlockingOnVirtualThreads { extractPluginContent(
         pluginName = pluginModule.value,
         outputProvider = outputProvider,
         xIncludeCache = xIncludeCache,
@@ -138,7 +141,7 @@ internal class PluginContentCache(
         source = PluginSource.DISCOVERED,
         pluginXmlOverride = pluginXmlOverrides[pluginModule],
         errorSink = errorSink,
-      )
+      ) }
     }
   }
 }

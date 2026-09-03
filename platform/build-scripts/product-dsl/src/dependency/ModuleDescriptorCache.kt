@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.model.error.ErrorCategory
 import org.jetbrains.intellij.build.productLayout.model.error.UnsuppressedPipelineError
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.productLayout.util.resolveXIncludeBytes
 import java.nio.file.Files
 import java.nio.file.Path
@@ -71,8 +72,9 @@ internal class ModuleDescriptorCache(
    * @param moduleName The module name to analyze
    */
   suspend fun getOrAnalyze(moduleName: String): DescriptorInfo? {
+    // the loader still suspends, so it needs an entry of its own back into coroutines
     return cache.getOrPut(moduleName) {
-      analyzeModule(moduleName)
+      runBlockingOnVirtualThreads { analyzeModule(moduleName) }
     }
   }
 

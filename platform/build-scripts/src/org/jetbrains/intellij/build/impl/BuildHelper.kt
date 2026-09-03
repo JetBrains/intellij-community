@@ -9,11 +9,14 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.Subtask
 import org.jetbrains.intellij.build.TaskScope
+import org.jetbrains.intellij.build.awaitShared
 import org.jetbrains.intellij.build.executeStep
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.blockingUse
+import org.jetbrains.intellij.build.telemetry.captureTelemetryContext
 import java.nio.file.Path
 import java.util.function.Predicate
 
@@ -69,8 +72,9 @@ interface SuspendingLazy<T> {
 /**
  * Computes a value on the first `await()` and shares the result with all concurrent awaiters.
  *
- * A cancelled caller stops waiting, and the computation continues for the other callers. Successful values and ordinary
- * failures are reused.
+ * The computation runs on a virtual thread of its own, under the telemetry context of the caller that started it.
+ * A caller that stops waiting changes nothing for the other callers. Successful values and ordinary failures are
+ * reused.
  */
 fun <T> suspendingLazy(coroutineName: String, initializer: suspend () -> T): SuspendingLazy<T> {
   return AsyncCacheBackedSuspendingLazy(coroutineName = coroutineName, initializer = initializer)
@@ -83,8 +87,13 @@ private class AsyncCacheBackedSuspendingLazy<T>(
   private val key = NamedSuspendingLazyKey(coroutineName)
   private val cache = AsyncCache<NamedSuspendingLazyKey, T>()
 
-  /** The fork of the cache carries the name of the lazy as its coroutine name. */
-  override suspend fun await(): T = cache.getOrPut(key, initializer)
+  /** The computation of the cache carries the name of the lazy as its thread name. */
+  override suspend fun await(): T {
+    // the initializer still suspends, so it needs an entry of its own back into coroutines
+    val load = captureTelemetryContext { runBlockingOnVirtualThreads { initializer() } }
+    // `awaitShared` and not `getOrPut`, so an awaiter stays cancellable and does not block its thread
+    return cache.sharedFuture(key, load).awaitShared()
+  }
 }
 
 private class NamedSuspendingLazyKey(private val name: String) {

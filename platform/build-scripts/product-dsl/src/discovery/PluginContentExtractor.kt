@@ -19,6 +19,7 @@ import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.model.error.XIncludeResolutionError
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.resolveDescriptor
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
@@ -203,18 +204,21 @@ internal suspend fun extractPluginContent(
   val xIncludeResolver: suspend (String) -> ByteArray? = resolver@{ path ->
     // Use cache which handles deduplication. The loader returns null on failure,
     // which we then convert to an error. Failures are cached as null to avoid retrying.
+    // the loader still suspends, so it needs an entry of its own back into coroutines
     val data = xIncludeCache.getOrPut(path) {
-      when (val result = resolveXInclude(path = path, jpsModule = jpsModule, outputProvider = outputProvider, prefix = prefix)) {
-        is XIncludeResult.Success -> result.data
-        is XIncludeResult.Failure -> {
-          // Emit error immediately to errorSink
-          errorSink.emit(XIncludeResolutionError(
-            context = "Plugin content extraction",
-            pluginName = pluginName,
-            xIncludePath = result.path,
-            debugInfo = result.debugInfo,
-          ))
-          null
+      runBlockingOnVirtualThreads {
+        when (val result = resolveXInclude(path = path, jpsModule = jpsModule, outputProvider = outputProvider, prefix = prefix)) {
+          is XIncludeResult.Success -> result.data
+          is XIncludeResult.Failure -> {
+            // Emit error immediately to errorSink
+            errorSink.emit(XIncludeResolutionError(
+              context = "Plugin content extraction",
+              pluginName = pluginName,
+              xIncludePath = result.path,
+              debugInfo = result.debugInfo,
+            ))
+            null
+          }
         }
       }
     }

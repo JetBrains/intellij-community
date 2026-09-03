@@ -52,6 +52,7 @@ import org.jetbrains.intellij.build.productLayout.stats.recordGenerationTiming
 import org.jetbrains.intellij.build.productLayout.traversal.collectPluginContentModules
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleNames
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePolicy
 import org.jetbrains.intellij.build.productLayout.util.resolveXIncludeBytes
@@ -1266,7 +1267,7 @@ internal object ModelBuildingStage {
     return spec.copy(spec = updatedSpec)
   }
 
-  private suspend fun collectAliasesFromDeprecatedIncludes(
+  private fun collectAliasesFromDeprecatedIncludes(
     spec: ProductModulesContentSpec,
     outputProvider: ModuleOutputProvider,
     includeAliasCache: AsyncCache<String, Set<PluginId>>,
@@ -1281,13 +1282,16 @@ internal object ModelBuildingStage {
     for (include in spec.deprecatedXmlIncludes) {
       val moduleName = include.contentModuleName.value
       val cacheKey = "$moduleName:${include.resourcePath}"
+      // the loader still suspends, so it needs an entry of its own back into coroutines
       val aliases = includeAliasCache.getOrPut(cacheKey) {
-        collectAliasesFromDeprecatedInclude(
-          include = include,
-          outputProvider = outputProvider,
-          prefix = prefixFilter(moduleName),
-          skipXIncludePaths = skipXIncludePaths,
-        )
+        runBlockingOnVirtualThreads {
+          collectAliasesFromDeprecatedInclude(
+            include = include,
+            outputProvider = outputProvider,
+            prefix = prefixFilter(moduleName),
+            skipXIncludePaths = skipXIncludePaths,
+          )
+        }
       }
       result.addAll(aliases)
     }
@@ -1295,7 +1299,7 @@ internal object ModelBuildingStage {
     return result
   }
 
-  private suspend fun collectAliasesFromModuleDescriptors(
+  private fun collectAliasesFromModuleDescriptors(
     moduleNames: Set<ContentModuleName>,
     descriptorCache: ModuleDescriptorCache,
     aliasCache: AsyncCache<ContentModuleName, Set<PluginId>>,
@@ -1306,10 +1310,13 @@ internal object ModelBuildingStage {
 
     val aliases = LinkedHashSet<PluginId>()
     for (moduleName in moduleNames) {
+      // the loader still suspends, so it needs an entry of its own back into coroutines
       val aliasSet = aliasCache.getOrPut(moduleName) {
-        val descriptor = descriptorCache.getOrAnalyze(moduleName.value)
-        val pluginAliases = descriptor?.pluginAliases ?: emptyList()
-        pluginAliases.mapTo(LinkedHashSet()) { PluginId(it) }
+        runBlockingOnVirtualThreads {
+          val descriptor = descriptorCache.getOrAnalyze(moduleName.value)
+          val pluginAliases = descriptor?.pluginAliases ?: emptyList()
+          pluginAliases.mapTo(LinkedHashSet()) { PluginId(it) }
+        }
       }
       aliases.addAll(aliasSet)
     }

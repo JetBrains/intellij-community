@@ -1,26 +1,19 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.util
 
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -28,37 +21,34 @@ import kotlin.time.Duration.Companion.seconds
 class AsyncCacheTest {
   @Test
   fun `basic caching - value is loaded once and cached`() {
-    runBlocking(Dispatchers.Default) {
-      val loadCount = AtomicInteger(0)
-      val cache = AsyncCache<String, String>()
+    val loadCount = AtomicInteger(0)
+    val cache = AsyncCache<String, String>()
 
-      val result1 = cache.getOrPut("key") {
-        loadCount.incrementAndGet()
-        "value"
-      }
-      val result2 = cache.getOrPut("key") {
-        loadCount.incrementAndGet()
-        "should-not-be-called"
-      }
-
-      assertThat(result1).isEqualTo("value")
-      assertThat(result2).isEqualTo("value")
-      assertThat(loadCount.get()).isEqualTo(1)
+    val result1 = cache.getOrPut("key") {
+      loadCount.incrementAndGet()
+      "value"
     }
+    val result2 = cache.getOrPut("key") {
+      loadCount.incrementAndGet()
+      "should-not-be-called"
+    }
+
+    assertThat(result1).isEqualTo("value")
+    assertThat(result2).isEqualTo("value")
+    assertThat(loadCount.get()).isEqualTo(1)
   }
 
   @Test
   fun `concurrent requests for same key share computation`() {
-    runBlocking(Dispatchers.Default) {
+    runBlockingOnVirtualThreads {
       val loadCount = AtomicInteger(0)
       val cache = AsyncCache<String, String>()
 
-      // Launch 10 concurrent requests for the same key
       val deferreds = (1..10).map {
         async {
           cache.getOrPut("shared-key") {
             loadCount.incrementAndGet()
-            delay(50.milliseconds) // Simulate some work
+            Thread.sleep(50)
             "computed-value"
           }
         }
@@ -75,83 +65,73 @@ class AsyncCacheTest {
 
   @Test
   fun `null values are cached correctly`() {
-    runBlocking(Dispatchers.Default) {
-      val loadCount = AtomicInteger(0)
-      val cache = AsyncCache<String, String?>()
+    val loadCount = AtomicInteger(0)
+    val cache = AsyncCache<String, String?>()
 
-      val result1 = cache.getOrPut("nullable-key") {
-        loadCount.incrementAndGet()
-        null
-      }
-      val result2 = cache.getOrPut("nullable-key") {
-        loadCount.incrementAndGet()
-        "should-not-be-called"
-      }
-
-      assertThat(result1).isNull()
-      assertThat(result2).isNull()
-      assertThat(loadCount.get()).isEqualTo(1)
+    val result1 = cache.getOrPut("nullable-key") {
+      loadCount.incrementAndGet()
+      null
     }
+    val result2 = cache.getOrPut("nullable-key") {
+      loadCount.incrementAndGet()
+      "should-not-be-called"
+    }
+
+    assertThat(result1).isNull()
+    assertThat(result2).isNull()
+    assertThat(loadCount.get()).isEqualTo(1)
   }
 
   @Test
   fun `exceptions ARE cached - subsequent calls get same exception`() {
-    runBlocking(Dispatchers.Default) {
-      val loadCount = AtomicInteger(0)
-      val cache = AsyncCache<String, String>()
+    val loadCount = AtomicInteger(0)
+    val cache = AsyncCache<String, String>()
 
-      // First call fails
-      assertThatThrownBy {
-        runBlocking {
-          cache.getOrPut("failing-key") {
-            loadCount.incrementAndGet()
-            throw IllegalStateException("Load failed")
-          }
-        }
+    // First call fails
+    assertThatThrownBy {
+      cache.getOrPut("failing-key") {
+        loadCount.incrementAndGet()
+        throw IllegalStateException("Load failed")
       }
-        .isInstanceOf(IllegalStateException::class.java)
-        .hasMessage("Load failed")
-      assertThat(loadCount.get()).isEqualTo(1)
-
-      // Second call gets SAME cached failure - no retry
-      assertThatThrownBy {
-        runBlocking {
-          cache.getOrPut("failing-key") {
-            loadCount.incrementAndGet()
-            "should-not-be-called"
-          }
-        }
-      }
-        .isInstanceOf(IllegalStateException::class.java)
-        .hasMessage("Load failed")
-      assertThat(loadCount.get()).isEqualTo(1) // NO retry - still 1
     }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessage("Load failed")
+    assertThat(loadCount.get()).isEqualTo(1)
+
+    // Second call gets SAME cached failure - no retry
+    assertThatThrownBy {
+      cache.getOrPut("failing-key") {
+        loadCount.incrementAndGet()
+        "should-not-be-called"
+      }
+    }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessage("Load failed")
+    assertThat(loadCount.get()).isEqualTo(1) // NO retry - still 1
   }
 
   @Test
   fun `different keys are cached independently`() {
-    runBlocking(Dispatchers.Default) {
-      val cache = AsyncCache<String, Int>()
+    val cache = AsyncCache<String, Int>()
 
-      val result1 = cache.getOrPut("key1") { 1 }
-      val result2 = cache.getOrPut("key2") { 2 }
-      val result3 = cache.getOrPut("key1") { 999 } // Should return cached value
+    val result1 = cache.getOrPut("key1") { 1 }
+    val result2 = cache.getOrPut("key2") { 2 }
+    val result3 = cache.getOrPut("key1") { 999 } // Should return cached value
 
-      assertThat(result1).isEqualTo(1)
-      assertThat(result2).isEqualTo(2)
-      assertThat(result3).isEqualTo(1) // Not 999
-    }
+    assertThat(result1).isEqualTo(1)
+    assertThat(result2).isEqualTo(2)
+    assertThat(result3).isEqualTo(1) // Not 999
   }
 
   @Test
   fun `concurrent access with different keys works correctly`() {
-    runBlocking(Dispatchers.Default) {
+    runBlockingOnVirtualThreads {
       val cache = AsyncCache<Int, String>()
 
       val deferreds = (1..100).map { key ->
         async {
           cache.getOrPut(key) {
-            delay(10.milliseconds)
+            Thread.sleep(10)
             "value-$key"
           }
         }
@@ -168,20 +148,17 @@ class AsyncCacheTest {
 
   @Test
   fun `failed computation with concurrent waiters - all see exception`() {
-    runBlocking(Dispatchers.Default) {
+    runBlockingOnVirtualThreads {
       val loadCount = AtomicInteger(0)
       val cache = AsyncCache<String, String>()
 
-      // Launch multiple concurrent requests that will all fail
       val deferreds = (1..5).map {
         async {
           assertThatThrownBy {
-            runBlocking {
-              cache.getOrPut("failing-key") {
-                val count = loadCount.incrementAndGet()
-                delay(20.milliseconds)
-                throw IllegalStateException("Failed attempt $count")
-              }
+            cache.getOrPut("failing-key") {
+              val count = loadCount.incrementAndGet()
+              Thread.sleep(20)
+              throw IllegalStateException("Failed attempt $count")
             }
           }
             .isInstanceOf(IllegalStateException::class.java)
@@ -198,11 +175,9 @@ class AsyncCacheTest {
       assertThat(loadCount.get()).isEqualTo(1)
 
       assertThatThrownBy {
-        runBlocking {
-          cache.getOrPut("failing-key") {
-            loadCount.incrementAndGet()
-            "should-not-be-called"
-          }
+        cache.getOrPut("failing-key") {
+          loadCount.incrementAndGet()
+          "should-not-be-called"
         }
       }
         .isInstanceOf(IllegalStateException::class.java)
@@ -212,73 +187,56 @@ class AsyncCacheTest {
   }
 
   @Test
-  fun `cache works in nested scope`() {
-    runBlocking(Dispatchers.Default) {
-      coroutineScope {
-        val cache = AsyncCache<String, String>()
-
-        val result = cache.getOrPut("key") { "value" }
-
-        assertThat(result).isEqualTo("value")
-      }
-    }
-  }
-
-  @Test
   fun `rapid sequential access uses cache`() {
-    runBlocking(Dispatchers.Default) {
-      val loadCount = AtomicInteger(0)
-      val cache = AsyncCache<String, Int>()
+    val loadCount = AtomicInteger(0)
+    val cache = AsyncCache<String, Int>()
 
-      repeat(1000) {
-        val result = cache.getOrPut("rapid-key") {
-          loadCount.incrementAndGet()
-          42
-        }
-        assertThat(result).isEqualTo(42)
+    repeat(1000) {
+      val result = cache.getOrPut("rapid-key") {
+        loadCount.incrementAndGet()
+        42
       }
-
-      assertThat(loadCount.get()).isEqualTo(1)
+      assertThat(result).isEqualTo(42)
     }
+
+    assertThat(loadCount.get()).isEqualTo(1)
   }
 
   @Test
   fun `complex value types are cached correctly`() {
-    runBlocking(Dispatchers.Default) {
-      val cache = AsyncCache<String, List<String>>()
-      val expected = listOf("a", "b", "c")
+    val cache = AsyncCache<String, List<String>>()
+    val expected = listOf("a", "b", "c")
 
-      val result1 = cache.getOrPut("complex") { expected }
-      val result2 = cache.getOrPut("complex") { listOf("x", "y", "z") }
+    val result1 = cache.getOrPut("complex") { expected }
+    val result2 = cache.getOrPut("complex") { listOf("x", "y", "z") }
 
-      assertThat(result1).isEqualTo(expected)
-      assertThat(result2).isSameAs(result1) // Should be the exact same cached instance
-    }
+    assertThat(result1).isEqualTo(expected)
+    assertThat(result2).isSameAs(result1) // Should be the exact same cached instance
   }
 
   @Test
   fun `fails fast on direct recursive await for same key`() {
-    runBlocking(Dispatchers.Default) {
-      val cache = AsyncCache<String, Int>()
+    val cache = AsyncCache<String, Int>()
 
-      assertFailsFast {
-        cache.getOrPut("loop") {
-          cache.getOrPut("loop") { 42 }
-        }
+    assertFailsFast {
+      // the timeout bounds the test: a guard that does not fire would deadlock on the entry of the caller
+      cache.getOrPut("loop", timeout = 10.seconds) {
+        cache.getOrPut("loop", timeout = 10.seconds) { 42 }
       }
     }
   }
 
   @Test
   fun `fails fast on child coroutine recursive await for same key`() {
-    runBlocking(Dispatchers.Default) {
-      val cache = AsyncCache<String, Int>()
+    val cache = AsyncCache<String, Int>()
 
-      assertFailsFast {
-        cache.getOrPut("loop") {
+    assertFailsFast {
+      cache.getOrPut("loop", timeout = 10.seconds) {
+        // the guard travels into the coroutine, see `singleFlightContextElement`
+        runBlockingOnVirtualThreads {
           coroutineScope {
             async {
-              cache.getOrPut("loop") { 42 }
+              cache.getOrPut("loop", timeout = 10.seconds) { 42 }
             }.await()
           }
         }
@@ -288,164 +246,64 @@ class AsyncCacheTest {
 
   @Test
   fun `close cancels pending computations and processes completed values`() {
-    runBlocking(Dispatchers.Default) {
-      val cache = AsyncCache<String, String>()
-      val started = CompletableDeferred<Unit>()
-      val release = CompletableDeferred<Unit>()
-      val pending = async {
+    val cache = AsyncCache<String, String>()
+    val started = CountDownLatch(1)
+    val release = CountDownLatch(1)
+    val failure = arrayOfNulls<Throwable>(1)
+    val pending = Thread.ofVirtual().start {
+      try {
         cache.getOrPut("pending") {
-          started.complete(Unit)
+          started.countDown()
           release.await()
           "pending"
         }
       }
-
-      started.await()
-      assertThat(cache.getOrPut("completed") { "completed" }).isEqualTo("completed")
-
-      val completed = ArrayList<String>()
-      cache.close { completed.add(it) }
-      release.complete(Unit)
-
-      var failure: Throwable? = null
-      try {
-        pending.await()
-      }
       catch (t: Throwable) {
-        failure = t
+        failure[0] = t
       }
-
-      assertThat(completed).containsExactly("completed")
-      assertThat(failure).isInstanceOf(CancellationException::class.java)
     }
+
+    assertThat(started.await(5, TimeUnit.SECONDS)).isTrue()
+    assertThat(cache.getOrPut("completed") { "completed" }).isEqualTo("completed")
+
+    val completed = ArrayList<String>()
+    cache.close { completed.add(it) }
+    release.countDown()
+    pending.join()
+
+    assertThat(completed).containsExactly("completed")
+    assertThat(failure[0]).isInstanceOf(CancellationException::class.java)
   }
 
+  /**
+   * A timeout is the only way a caller stops waiting now. It must leave the entry alone, so the computation still
+   * serves every other caller.
+   */
   @Test
-  fun `owner cancellation does not cancel the shared computation`() {
-    runBlocking(Dispatchers.Default) {
-      val cache = AsyncCache<String, String>()
-      val loadCount = AtomicInteger(0)
-      val started = CompletableDeferred<Unit>()
-      val release = CompletableDeferred<Unit>()
-      val owner = async {
-        cache.getOrPut("key") {
-          loadCount.incrementAndGet()
-          started.complete(Unit)
-          release.await()
-          "value"
-        }
-      }
+  fun `a caller that times out leaves the computation for the others`() {
+    val cache = AsyncCache<String, String>()
+    val loadCount = AtomicInteger(0)
+    val started = CountDownLatch(1)
+    val release = CountDownLatch(1)
 
-      withTimeout(5.seconds) {
-        started.await()
-      }
-      val waiter = async {
-        cache.getOrPut("key") { "should-not-be-called" }
-      }
-      // let the waiter reach its await before the owner goes away
-      delay(100.milliseconds)
-      owner.cancel()
-      owner.join()
-      assertThat(owner.isCancelled).isTrue()
-
-      release.complete(Unit)
-      assertThat(withTimeout(5.seconds) { waiter.await() }).isEqualTo("value")
-      assertThat(
-        withTimeout(5.seconds) {
-          cache.getOrPut("key") { "should-not-be-called" }
-        }
-      ).isEqualTo("value")
-      assertThat(loadCount.get()).isEqualTo(1)
-    }
-  }
-
-  @Test
-  fun `owner cancelled before the computation is dispatched does not poison the key`() {
-    val gate = CountDownLatch(1)
-    Executors.newSingleThreadExecutor { Thread(it, "AsyncCacheTest gate") }.asCoroutineDispatcher().use { singleThread ->
-      runBlocking(Dispatchers.Default) {
-        val cache = AsyncCache<String, String>()
-        val loadCount = AtomicInteger(0)
-        // the only thread of the dispatcher is busy, so nothing dispatched to it runs until the gate opens
-        singleThread.dispatch(EmptyCoroutineContext, Runnable { gate.await() })
-
-        // UNDISPATCHED runs the owner here until it suspends in `getOrPut`, with its computation queued behind the gate
-        val owner = launch(singleThread, start = CoroutineStart.UNDISPATCHED) {
-          cache.getOrPut("key") {
-            loadCount.incrementAndGet()
-            "value"
-          }
-        }
-        owner.cancel()
-        gate.countDown()
-        owner.join()
-
-        assertThat(
-          withTimeout(5.seconds) {
-            cache.getOrPut("key") {
-              loadCount.incrementAndGet()
-              "value"
-            }
-          }
-        ).isEqualTo("value")
-        assertThat(loadCount.get()).isEqualTo(1)
-      }
-    }
-  }
-
-  @Test
-  fun `non-owner waiter cancellation does not poison cached computation`() {
-    runBlocking(Dispatchers.Default) {
-      val cache = AsyncCache<String, String>()
-      val loadCount = AtomicInteger(0)
-      val started = CompletableDeferred<Unit>()
-      val release = CompletableDeferred<Unit>()
-      val owner = async {
-        cache.getOrPut("key") {
-          loadCount.incrementAndGet()
-          started.complete(Unit)
-          release.await()
-          "value"
-        }
-      }
-
-      withTimeout(5.seconds) {
-        started.await()
-      }
-
-      val waiter = async {
-        cache.getOrPut("key") { "should-not-be-called" }
-      }
-      waiter.cancel()
-
-      var failure: Throwable? = null
-      try {
-        waiter.await()
-      }
-      catch (t: Throwable) {
-        failure = t
-      }
-
-      assertThat(failure).isInstanceOf(CancellationException::class.java)
-      release.complete(Unit)
-      assertThat(owner.await()).isEqualTo("value")
-      assertThat(
-        withTimeout(5.seconds) {
-          cache.getOrPut("key") { "should-not-be-called" }
-        }
-      ).isEqualTo("value")
-      assertThat(loadCount.get()).isEqualTo(1)
-    }
-  }
-
-  private fun assertFailsFast(block: suspend () -> Unit) {
     assertThatThrownBy {
-      runBlocking(Dispatchers.Default) {
-        withTimeout(1.seconds) {
-          block()
-        }
+      cache.getOrPut("key", timeout = 100.milliseconds) {
+        loadCount.incrementAndGet()
+        started.countDown()
+        release.await()
+        "value"
       }
-    }
+    }.isInstanceOf(TimeoutException::class.java)
+
+    assertThat(started.await(5, TimeUnit.SECONDS)).isTrue()
+    release.countDown()
+
+    assertThat(cache.getOrPut("key") { "should-not-be-called" }).isEqualTo("value")
+    assertThat(loadCount.get()).isEqualTo(1)
+  }
+
+  private fun assertFailsFast(block: () -> Unit) {
+    assertThatThrownBy { block() }
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("Recursive await")
       .hasMessageContaining("loop")
