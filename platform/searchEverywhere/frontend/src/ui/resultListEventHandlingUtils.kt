@@ -129,7 +129,7 @@ private fun SeResultList.indexToAdd(newItem: SeItemData, searchPattern: String):
       itemProviderPriority = SeResultList.prioritizedProvidersPriorities[item.providerId] ?: 0,
       itemIsExactMatch =  item.isExactMatch,
       itemWeight = item.weight,
-      prioritizeExactMatch = Registry.`is`("search.everywhere.exact.match.priority", false)
+      prioritizeExactMatch = Registry.`is`("search.everywhere.exact.match.priority", false) && newItem.providerId == item.providerId
     )
   } ?: lastIndexToInsertItem
 }
