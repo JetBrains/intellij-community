@@ -6,13 +6,17 @@ import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.bazel.runfiles.BazelLabel
+import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApiHelpers
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.PathUtil
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
@@ -39,7 +43,6 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
 
   private companion object {
     private fun getClassPathForClass(clazz: Class<*>): String {
-      val mavenPath = getMavenRepositoryPath()
       val helperModuleName = getJpsModuleNameForClass(clazz)
       logger.value.info("helper module name: $helperModuleName")
 
@@ -51,8 +54,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
 
       val libraries = dependencies
         .libraries
-        .flatMap { it.getPaths(JpsOrderRootType.COMPILED) }
-        .map { Path(it.pathString.replace('$' + PathMacrosImpl.MAVEN_REPOSITORY + '$', mavenPath)) }
+        .flatMap { getLibraryJars(it) }
 
       val modules: List<Path> = getJpsModulesOutput(clazz, dependencies.modules.map { it.name })
 
@@ -65,6 +67,24 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
           }
         }
         .joinToString(File.pathSeparator)
+    }
+
+    /**
+     * Returns the compiled jars of [library].
+     *
+     * Bazel does not fill the Maven repository, so the jars come from the Bazel runfiles under Bazel.
+     * The Maven repository holds the jars for a JPS run.
+     */
+    private fun getLibraryJars(library: JpsLibrary): List<Path> {
+      if (!BazelRunfiles.isRunningFromBazel) {
+        val mavenPath = getMavenRepositoryPath()
+        return library.getPaths(JpsOrderRootType.COMPILED)
+          .map { Path(it.pathString.replace('$' + PathMacrosImpl.MAVEN_REPOSITORY + '$', mavenPath)) }
+      }
+      val moduleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
+      val libraryInfo = ArchivedCompilationContextUtil.findLibraryInfo(library.name, moduleName)
+                        ?: error("Library ${library.name} is not in the Bazel output")
+      return libraryInfo.jarTargets.map { BazelRunfiles.getFileByLabel(BazelLabel.fromString(it)) }
     }
 
     private fun module(helperModuleName: String): JpsModule {
