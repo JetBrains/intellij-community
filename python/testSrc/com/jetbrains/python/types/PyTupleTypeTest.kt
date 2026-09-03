@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -39,6 +39,63 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
     fun `single element tuple literal`() = test("""
       expr = (1,)
       #└ TYPE tuple[Literal[1]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91999"])
+    fun `tuple literal splicing a list literal`() = test("""
+      expr = (*[1, "s"], )
+      # └ TYPE tuple[int, str]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91999"])
+    fun `tuple with spliced list literal and surrounding elements`() = test("""
+      expr = (True, *[1, "s"], None)
+      # └ TYPE tuple[Literal[True], int, str, None]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91999"])
+    fun `tuple literal splicing a parenthesized list literal`() = test("""
+      expr = (*([1, "s"]), )
+      # └ TYPE tuple[int, str]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91999"])
+    fun `tuple literal splicing multiple list literals`() = test("""
+      expr = (*[1], *["s"], *[True])
+      # └ TYPE tuple[int, str, bool]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91999"])
+    fun `tuple literal mixing tuple splice and list splice`() = test("""
+      expr = (*(1, "s"), *[2])
+      # └ TYPE tuple[Literal[1], Literal["s"], int]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91999"])
+    fun `tuple literal splicing an empty list literal`() = test("""
+      expr = (*[], )
+      # └ TYPE tuple[()]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91999"])
+    fun `tuple literal splicing a list literal with nested star falls back to variadic`() = test("""
+      def f(xs: list[int]):
+          expr = (*[1, *xs], )
+      #   └ TYPE tuple[*tuple[int, ...]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91999"])
+    fun `tuple literal splicing a set literal stays variadic`() = test("""
+      expr = (*{1, "s"}, )
+      # └ TYPE tuple[*tuple[int | str, ...]]
       """.trimIndent())
 
     @Test

@@ -2,22 +2,24 @@
 package com.jetbrains.python.psi.impl
 
 import com.intellij.lang.ASTNode
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyElementVisitor
+import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyTupleExpression
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.types.PyABCUtil
 import com.jetbrains.python.psi.types.PyAnyType
-import com.jetbrains.python.psi.types.PyTypeChecker
-import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl
-import com.jetbrains.python.psi.types.getLiteralType
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.getLiteralType
 import com.jetbrains.python.psi.types.isAnyOrUnknown
 
 class PyTupleExpressionImpl(astNode: ASTNode) : PySequenceExpressionImpl(astNode), PyTupleExpression {
@@ -35,6 +37,14 @@ class PyTupleExpressionImpl(astNode: ASTNode) : PySequenceExpressionImpl(astNode
           // A fixed-length tuple operand splices its elements in directly: `(1, *a)` with `a: tuple[int, int]` is `tuple[int, int, int]`.
           if (operandType is PyTupleType && !operandType.isHomogeneous) {
             addAll(operandType.elementTypes)
+            continue
+          }
+          // `(*[1, "s"],)` is `tuple[int, str]`
+          val unwrappedStarOperand = PyPsiUtils.flattenParens(starOperand)
+          if (unwrappedStarOperand is PyListLiteralExpression && unwrappedStarOperand.elements.none { it is PyStarExpression }) {
+            for (listElement in unwrappedStarOperand.elements) {
+              add(PyTypeUtil.widenLiteralAndNumeric(context.getType(listElement)))
+            }
             continue
           }
           // Any other iterable contributes an unbounded `*tuple[T, ...]` portion of its item type.
