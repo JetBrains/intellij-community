@@ -743,4 +743,61 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       """);
     assertEquals("NULLABLE (@Nullable)", type.getNullability().toString());
   }
+
+  /**
+   * The nullness written at the usage of a type variable in a return type must reach the type parameter of the
+   * enclosing call, whose type argument is inferred from that return type.
+   */
+  public void testNullableReturnTypeOfNestedCall() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    PsiFile file = myFixture.configureByText("Test.java", """
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+
+      class Outer {
+        static <X> void outer(X actual) {}
+      }
+
+      @NullMarked
+      class Sample {
+        static class Base {}
+
+        static <T extends @Nullable Base> @Nullable T nullableReturn(Class<T> cls) { return null; }
+
+        static <T extends @Nullable Base> T parametricReturn(Class<T> cls) { return null; }
+
+        static void test() {
+          Outer.outer(nullableReturn(Base.class));
+          Outer.outer(parametricReturn(Base.class));
+        }
+      }
+      """);
+    List<PsiMethodCallExpression> calls = new ArrayList<>();
+    PsiTreeUtil.processElements(file, PsiMethodCallExpression.class, call -> {
+      if ("outer".equals(call.getMethodExpression().getReferenceName())) calls.add(call);
+      return true;
+    });
+    assertEquals(2, calls.size());
+    assertEquals("NULLABLE (@Nullable)", argumentNullabilityOf(calls.get(0)));
+    assertEquals("NULLABLE (@Nullable)", parameterNullabilityOf(calls.get(0)));
+    // The @Nullable bound alone does not make the return type nullable: T is instantiated with the non-null Base
+    assertEquals("NOT_NULL (@NullMarked on class Sample)", argumentNullabilityOf(calls.get(1)));
+    assertEquals("NOT_NULL (@NullMarked on class Sample)", parameterNullabilityOf(calls.get(1)));
+  }
+
+  private static @NotNull String argumentNullabilityOf(@NotNull PsiMethodCallExpression call) {
+    PsiType type = call.getArgumentList().getExpressions()[0].getType();
+    assertNotNull(type);
+    return type.getNullability().toString();
+  }
+
+  private static @NotNull String parameterNullabilityOf(@NotNull PsiMethodCallExpression call) {
+    JavaResolveResult result = call.resolveMethodGenerics();
+    PsiMethod method = (PsiMethod)result.getElement();
+    assertNotNull(method);
+    PsiType parameterType = result.getSubstitutor().substitute(method.getParameterList().getParameters()[0].getType());
+    assertNotNull(parameterType);
+    return parameterType.getNullability().toString();
+  }
 }

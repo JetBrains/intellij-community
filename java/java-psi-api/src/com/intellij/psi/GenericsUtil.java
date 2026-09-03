@@ -66,7 +66,10 @@ public final class GenericsUtil {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type1) || TypeConversionUtil.isPrimitiveAndNotNull(type2)) return null;
     if (TypeConversionUtil.isNullType(type1)) return type2.withNullability(TypeNullability.NULLABLE_MANDATED);
     if (TypeConversionUtil.isNullType(type2)) return type1.withNullability(TypeNullability.NULLABLE_MANDATED);
-    if (Comparing.equal(type1, type2)) return type1;
+    if (Comparing.equal(type1, type2)) {
+      TypeNullability nullability = type1.getNullability().join(type2.getNullability());
+      return nullability.equals(type1.getNullability()) ? type1 : type1.withNullability(nullability);
+    }
     return getLeastUpperBound(type1, type2, new LinkedHashSet<>(), manager);
   }
 

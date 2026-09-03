@@ -399,6 +399,31 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
+  public void testJSpecifyNullableReturnInference() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    myFixture.addClass("""
+                         package org.assertj.core.api;
+                         public class AbstractAssert {}""");
+    myFixture.addClass("""
+                         package org.assertj.core.api;
+                         public class ObjectAssert<T> extends AbstractAssert {
+                           public ObjectAssert(T obj) {}
+                           public ObjectAssert<T> isNull() { return this; }
+                           public ObjectAssert<T> isNotNull() { return this; }
+                         }""");
+    myFixture.addClass("""
+                         package org.assertj.core.api;
+                         public class Assertions {
+                           public static <T> ObjectAssert<T> assertThat(T actual) { return new ObjectAssert<>(actual); }
+                         }""");
+    // The stub above is source, so the suggestion would report every nullable argument of assertThat
+    doTestWith((dfi, cvi) -> {
+      dfi.SUGGEST_NULLABLE_ANNOTATIONS = false;
+      cvi.REPORT_CONSTANT_REFERENCE_VALUES = false;
+    });
+  }
+
   public void testJSpecifyDeconstructionTypeArgument() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);

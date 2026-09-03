@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilitySource;
 import com.intellij.codeInsight.TypeNullability;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.CommonClassNames;
@@ -91,6 +92,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
     if (inferenceVariable != null) {
       PsiType bound = adjustBoundNullity(myT, myS);
       InferenceVariable.addBound(myS, bound, InferenceBound.UPPER, session);
+      recordUsageNullability(session);
       return true;
     }
     inferenceVariable = session.getInferenceVariable(myT);
@@ -189,6 +191,37 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
     }
 
     return true;
+  }
+
+  /**
+   * {@code a <: T} with both {@code a} and {@code T} inference variables records the relation on {@code a} alone.
+   * A nullness written at the usage of {@code a} is lost with it. The incorporation phase then instantiates
+   * {@code T} from the instantiation of {@code a} only, and the usage never reaches {@code T}.
+   * <p>
+   * Such a nullness holds for every instantiation of {@code a}, because {@code @Nullable a} unions null into the
+   * type. {@code T} must accept null too, so record the usage as a separate lower bound of {@code T}. The case this
+   * exists for (everything in a {@code @NullMarked} scope):
+   * <pre>{@code
+   * class Lib {}
+   *
+   * static <X> void consume(X value) {}
+   *
+   * static <T extends @Nullable Lib> @Nullable T get(Class<T> cls) { return null; }
+   *
+   * void test() {
+   *   // T is the non-null Lib, but the return type is @Nullable Lib, so X must be @Nullable Lib too
+   *   consume(get(Lib.class));
+   * }}</pre>
+   * A nullness inherited from the bound of the type parameter is not recorded. It does not hold for every
+   * instantiation. The plain {@code T} of a {@code T get()} declared as {@code T extends @Nullable Lib} is the
+   * non-null {@code Lib} once {@code T} is instantiated with the non-null {@code Lib}.
+   */
+  private void recordUsageNullability(@NotNull InferenceSession session) {
+    if (session.getInferenceVariable(myT) == null) return;
+    TypeNullability nullability = myS.getNullability();
+    if (nullability.nullability() == Nullability.NULLABLE && !(nullability.source() instanceof NullabilitySource.ExtendsBound)) {
+      InferenceVariable.addBound(myT, myS, InferenceBound.LOWER, session);
+    }
   }
 
   private static @NotNull PsiType adjustBoundNullity(@NotNull PsiType bound, @NotNull PsiType other) {
