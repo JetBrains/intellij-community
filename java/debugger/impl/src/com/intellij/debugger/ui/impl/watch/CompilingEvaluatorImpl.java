@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -44,6 +45,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -66,30 +68,10 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
   @Override
   public @NotNull Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException {
     if (myCompiledClasses == null) {
-      List<String> options = new ArrayList<>();
-      options.add("-encoding");
-      options.add("UTF-8");
-      List<File> platformClasspath = new ArrayList<>();
-      List<File> classpath = new ArrayList<>();
-      ReadAction.runBlocking(() -> {
-        AnnotationProcessingConfiguration profile = null;
-        if (myModule != null) {
-          assert myProject.equals(myModule.getProject()) : myModule + " is from another project";
-          profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(myModule);
-          ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-          for (String s : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
-            classpath.add(new File(s));
-          }
-          for (String s : rootManager.orderEntries().compileOnly().sdkOnly().getPathsList().getPathList()) {
-            platformClasspath.add(new File(s));
-          }
-
-          if (myLanguageLevel != null && myLanguageLevel.isPreview()) {
-            options.add(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
-          }
-        }
-        JavaBuilder.addAnnotationProcessingOptions(options, profile);
-      });
+      CompilerInputs compilerInputs = ReadAction.nonBlocking(this::collectCompilerInputs).executeSynchronously();
+      List<String> options = new ArrayList<>(compilerInputs.options());
+      Set<File> platformClasspath = compilerInputs.platformClasspath();
+      Set<File> classpath = compilerInputs.classpath();
 
       Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
       JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
@@ -134,6 +116,37 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       }
     }
     return myCompiledClasses;
+  }
+
+  @RequiresReadLock
+  private @NotNull CompilerInputs collectCompilerInputs() {
+    List<String> options = new ArrayList<>();
+    options.add("-encoding");
+    options.add("UTF-8");
+    Set<File> platformClasspath = new LinkedHashSet<>();
+    Set<File> classpath = new LinkedHashSet<>();
+    AnnotationProcessingConfiguration profile = null;
+    if (myModule != null) {
+      assert myProject.equals(myModule.getProject()) : myModule + " is from another project";
+      profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(myModule);
+      ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+      for (String path : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
+        classpath.add(new File(path));
+      }
+      for (String path : rootManager.orderEntries().compileOnly().sdkOnly().getPathsList().getPathList()) {
+        platformClasspath.add(new File(path));
+      }
+    }
+
+    if (myLanguageLevel != null && myLanguageLevel.isPreview()) {
+      options.add(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+    }
+    JavaBuilder.addAnnotationProcessingOptions(options, profile);
+    return new CompilerInputs(
+      List.copyOf(options),
+      Collections.unmodifiableSet(platformClasspath),
+      Collections.unmodifiableSet(classpath)
+    );
   }
 
   private File generateTempSourceFile(File workingDir) throws IOException {
@@ -207,5 +220,10 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     }
 
     return null;
+  }
+
+  private record CompilerInputs(@NotNull List<String> options,
+                                @NotNull Set<File> platformClasspath,
+                                @NotNull Set<File> classpath) {
   }
 }
