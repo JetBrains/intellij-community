@@ -139,6 +139,33 @@ internal class SpecificationInspectionTest : BaseTestCase() {
   }
 
   @Test
+  fun `test skill reference files are analyzed without a link`() {
+    val projectFile = myFixture.addFileToProject("references/beautiful.md", """
+      Some text here. Beautiful text.
+    """.trimIndent())
+
+    val file = myFixture.configureByText("SKILL.md", """
+      This is the <warning descr="Text can be either beautiful or awful"><caret>awful</warning> text.
+    """.trimIndent())
+
+    val statement1 = ContradictionAnalyzer.Statement(
+      NOT_USED, "Text can be either beautiful or awful",
+      16, 25, emptyList(), projectFile.virtualFile.path
+    )
+    val statement2 = ContradictionAnalyzer.Statement(
+      NOT_USED, "Text can be either beautiful or awful",
+      12, 17, emptyList(), file.virtualFile.path
+    )
+    val statements = listOf(statement1, statement2)
+
+    myFixture.enableInspections(SpecificationContradictionTestInspection(listOf(
+      LlmContradiction(Contradiction(statements), 12, 17))
+    ))
+    myFixture.checkHighlighting()
+    assertNotNull(myFixture.getAvailableIntention("Navigate to contradiction at beautiful.md:L1"))
+  }
+
+  @Test
   fun `test specification gutter marker is not added to injected markdown`() {
     val text = """
       ---

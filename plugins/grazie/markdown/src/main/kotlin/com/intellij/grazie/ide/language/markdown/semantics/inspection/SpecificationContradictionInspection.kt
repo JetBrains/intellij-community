@@ -12,6 +12,8 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.ide.language.markdown.semantics.inspection.quickfix.SpecificationReplacementQuickFix
+import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.getSkillFiles
+import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isSkillFile
 import com.intellij.grazie.ide.language.markdown.semantics.utils.SpecificationUtils.isSpecificationLikeFile
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PsiNavigationSupport
@@ -26,6 +28,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
@@ -36,15 +39,20 @@ open class SpecificationContradictionInspection : SpecificationBaseInspection<Co
   override fun getDependencies(root: PsiFile): Set<PsiFile> = getAndCacheDependencies(root)
     .asSequence()
     .mapNotNull { root.manager.findFile(it) }
-    .filter { isSpecificationLikeFile(it) }
+    .filter { isDependency(it) }
     .toSet()
+
+  private fun isDependency(file: PsiFile): Boolean {
+    if (!file.language.isKindOf(MarkdownLanguage.INSTANCE)) return false
+    return isSpecificationLikeFile(file) || isSkillFile(file)
+  }
 
   private fun getAndCacheDependencies(root: PsiFile): Set<VirtualFile> {
     val project = root.project
     val cache = CachedValuesManager.getManager(project).getCachedValue(project) {
       CachedValueProvider.Result.create(
         ConcurrentHashMap<VirtualFile, Set<VirtualFile>>(),
-        PsiModificationTracker.MODIFICATION_COUNT
+        PsiModificationTracker.getInstance(project).forLanguages { it.isKindOf(MarkdownLanguage.INSTANCE) }
       )
     }
 
@@ -52,7 +60,8 @@ open class SpecificationContradictionInspection : SpecificationBaseInspection<Co
     var files = cache[file]
     if (files != null) return files
 
-    files = MarkdownFileGraphUtils.getDependencySet(root) { isSpecificationLikeFile(it) }
+    val linked = MarkdownFileGraphUtils.getDependencySet(root) { isDependency(it) }
+    files = linked + linked.flatMap { getSkillFiles(it) }
     for (file in files) {
       cache.putIfAbsent(file, files)
     }
