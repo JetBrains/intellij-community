@@ -18,10 +18,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 /// It has an asynchronous interface because most of the methods should be invoked strictly inside the internal thread.
 ///
 /// Typical usage is something like the following:
-///
 /// ```
-///   if (WinShellIntegration.isAvailable) {
-///     WinShellIntegration wsi = WinShellIntegration.getInstance();
+///   WinShellIntegration wsi = WinShellIntegration.getInstance();
+///   if (wsi != null) {
 ///     Future<> future = wsi.postShellTask((WinShellIntegration.ShellContext ctx) -> {
 ///       ctx.someMethod1();
 ///       ctx.someMethod2();
@@ -52,12 +51,10 @@ final class WinShellIntegration implements Disposable {
     void run(@NotNull ShellContext ctx);
   }
 
-  /// Indicates the features provided by this class are available to use.
-  /// If `false`, then [#getInstance] will return `null` always.
-  static final boolean isAvailable =
+  private static final boolean isAvailable =
     OS.CURRENT == OS.Windows && Boolean.getBoolean("ide.native.launcher") && !Boolean.getBoolean("ide.win.shell.integration.disabled");
 
-  /// @return `null` if ![#isAvailable]
+  /// @return `null` if the service is unavailable
   static @Nullable WinShellIntegration getInstance() {
     return isAvailable ? ApplicationManager.getApplication().getService(WinShellIntegration.class) : null;
   }
@@ -118,7 +115,7 @@ final class WinShellIntegration implements Disposable {
 
     static {
       var lib = PathManager.findBinFile("WinShellIntegrationBridge.dll");
-      assert lib != null : "Shell Integration lib missing; bin=" + NioFiles.list(PathManager.getBinDir());
+      if (lib == null) throw new IllegalStateException("Shell Integration lib is not in " + NioFiles.list(PathManager.getBinDir()));
       System.load(lib.toString());
     }
   }
