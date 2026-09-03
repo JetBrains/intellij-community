@@ -28,16 +28,29 @@ class StatusBarWidgetSettings : SerializablePersistentStateComponent<StatusBarSt
   fun setEnabled(factory: StatusBarWidgetFactory, newValue: Boolean) {
     if (factory.isEnabledByDefault == newValue) {
       updateState {
-        StatusBarState(it.widgets - factory.id)
+        it.copy(widgets = it.widgets - factory.id)
       }
     }
     else {
       updateState {
-        StatusBarState(it.widgets + (factory.id to newValue))
+        it.copy(widgets = it.widgets + (factory.id to newValue))
       }
     }
+  }
+
+  fun setWidgetOrder(widgetOrder: Map<String, Int>) {
+    updateState { state ->
+      state.copy(widgetOrder = widgetOrder)
+    }
+  }
+
+  fun getWidgetOrder(): Map<String, Int> {
+    return state.widgetOrder
   }
 }
 
 @Internal
-data class StatusBarState(@JvmField val widgets: Map<String, Boolean> = emptyMap())
+data class StatusBarState(
+  @JvmField val widgets: Map<String, Boolean> = emptyMap(),
+  @JvmField val widgetOrder: Map<String, Int> = emptyMap(),
+)
