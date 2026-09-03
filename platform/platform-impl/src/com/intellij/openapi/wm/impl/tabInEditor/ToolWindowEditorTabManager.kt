@@ -23,6 +23,13 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<ToolWindowEditorTabManager>()
 
+/**
+ * Manages tool window content shown as editor tabs in a project.
+ *
+ * @see [ToolWindowEditorTabFile]
+ * @see [ToolWindowEditorTabSession]
+ * @see [ToolWindowEditorTabPresentation]
+ */
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ToolWindowEditorTabManager(

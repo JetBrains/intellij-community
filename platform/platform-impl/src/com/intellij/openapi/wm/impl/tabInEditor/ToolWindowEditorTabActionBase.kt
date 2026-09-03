@@ -10,6 +10,12 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Base class for actions that operate on tool window content shown in an editor tab.
+ *
+ * To make an action available in the editor tab context menu,
+ * register it in the `<group id="EditorTabPopupMenu">` action group.
+ */
 @ApiStatus.Internal
 @ApiStatus.Experimental
 abstract class ToolWindowEditorTabActionBase : DumbAwareAction() {
@@ -31,14 +37,29 @@ abstract class ToolWindowEditorTabActionBase : DumbAwareAction() {
     update(e, context.toolWindow, context.content)
   }
 
-  abstract fun update(
+  /**
+   * Called from [DumbAwareAction.actionPerformed] if the event is associated
+   * with a [ToolWindowEditorTabFile].
+   *
+   * @param e the current action event
+   * @param content the content associated with the current editor tab
+   */
+  abstract fun actionPerformed(
     e: AnActionEvent,
-    toolWindow: ToolWindow,
     content: Content,
   )
 
-  abstract fun actionPerformed(
+  /**
+   * Called from [DumbAwareAction.update] if the event is associated
+   * with a [ToolWindowEditorTabFile].
+   *
+   * @param e the current action event
+   * @param toolWindow the tool window associated with the current editor tab
+   * @param content the content associated with the current editor tab
+   */
+  abstract fun update(
     e: AnActionEvent,
+    toolWindow: ToolWindow,
     content: Content,
   )
 

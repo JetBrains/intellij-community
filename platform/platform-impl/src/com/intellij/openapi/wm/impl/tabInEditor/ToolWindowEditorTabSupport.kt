@@ -10,6 +10,13 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+/**
+ * Provides support for showing tool window content in the editor tab.
+ *
+ * Register an implementation using the `com.intellij.toolWindowEditorTabSupport`
+ * extension point. The extension is keyed by tool window ID: the extension `key`
+ * must match the ID of the tool window.
+ */
 @ApiStatus.Experimental
 @ApiStatus.Internal
 interface ToolWindowEditorTabSupport {
@@ -42,6 +49,16 @@ interface ToolWindowEditorTabSupport {
   fun getTabPresentationFlow(project: Project, content: Content): Flow<ToolWindowEditorTabPresentation>
 }
 
+/**
+ * Describes the presentation of tool window content shown in the editor tab.
+ *
+ * Instances are emitted by [ToolWindowEditorTabSupport.getTabPresentationFlow].
+ * Each emitted value replaces the current presentation of the corresponding editor tab.
+ *
+ * @param title the title of the editor tab
+ * @param icon the icon of the editor tab, or `null` if no icon should be shown
+ * @param tooltip the tooltip of the editor tab, or `null` if no tooltip should be shown
+ */
 @ApiStatus.Experimental
 @ApiStatus.Internal
 data class ToolWindowEditorTabPresentation(
