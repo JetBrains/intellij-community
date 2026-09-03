@@ -1,193 +1,142 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.vcs.changes
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.util.BeforeAfter;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
+import com.intellij.util.BeforeAfter
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+private val LOG = logger<ChangeListsIndexes>()
 
-class ChangeListsIndexes {
-  private static final Logger LOG = Logger.getInstance(ChangeListsIndexes.class);
+internal class ChangeListsIndexes {
+  private var dataMap: MutableMap<FilePath, Data> = HashMap()
+  private var changes: MutableSet<Change> = HashSet()
 
-  private Map<FilePath, Data> myMap;
-  private Set<Change> myChanges;
+  fun getChanges(): Set<Change> = changes
 
-  ChangeListsIndexes() {
-    myMap = new HashMap<>();
-    myChanges = new HashSet<>();
+  fun getAffectedPaths(): Set<FilePath> = dataMap.keys
+
+  fun copyFrom(idx: ChangeListsIndexes) {
+    dataMap = HashMap(idx.dataMap)
+    changes = HashSet(idx.changes)
   }
 
-  public void copyFrom(@NotNull ChangeListsIndexes idx) {
-    myMap = new HashMap<>(idx.myMap);
-    myChanges = new HashSet<>(idx.myChanges);
+  fun clear() {
+    dataMap = HashMap()
+    changes = HashSet()
   }
 
-  public void clear() {
-    myMap = new HashMap<>();
-    myChanges = new HashSet<>();
+  private fun add(file: FilePath, change: Change, status: FileStatus, key: AbstractVcs?, number: VcsRevisionNumber) {
+    dataMap[file] = Data(status, change, key, number)
+    LOG.debug { "Set status $status for $file" }
   }
 
-
-  private void add(@NotNull FilePath file,
-                   @NotNull Change change,
-                   @NotNull FileStatus status,
-                   @Nullable AbstractVcs key,
-                   @NotNull VcsRevisionNumber number) {
-    myMap.put(file, new Data(status, change, key, number));
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Set status " + status + " for " + file);
-    }
+  private fun remove(file: FilePath) {
+    dataMap.remove(file)
+    LOG.debug { "Clear status for $file" }
   }
 
-  private void remove(@NotNull FilePath file) {
-    myMap.remove(file);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Clear status for " + file);
-    }
-  }
+  fun getChange(file: FilePath): Change? = dataMap[file]?.change
 
-  public @Nullable Change getChange(@NotNull FilePath file) {
-    Data data = myMap.get(file);
-    return data != null ? data.change : null;
-  }
+  fun getStatus(file: FilePath): FileStatus? = dataMap[file]?.status
 
-  public @Nullable FileStatus getStatus(@NotNull FilePath file) {
-    Data data = myMap.get(file);
-    return data != null ? data.status : null;
-  }
+  fun changeAdded(change: Change, key: AbstractVcs?) {
+    changes.add(change)
 
-  public void changeAdded(@NotNull Change change, @Nullable AbstractVcs key) {
-    myChanges.add(change);
-
-    ContentRevision afterRevision = change.getAfterRevision();
-    ContentRevision beforeRevision = change.getBeforeRevision();
+    val afterRevision = change.afterRevision
+    val beforeRevision = change.beforeRevision
 
     if (beforeRevision != null && afterRevision != null) {
-      add(afterRevision.getFile(), change, change.getFileStatus(), key, beforeRevision.getRevisionNumber());
+      add(afterRevision.file, change, change.fileStatus, key, beforeRevision.revisionNumber)
 
-      if (!Objects.equals(beforeRevision.getFile(), afterRevision.getFile())) {
-        add(beforeRevision.getFile(), change, FileStatus.DELETED, key, beforeRevision.getRevisionNumber());
+      if (beforeRevision.file != afterRevision.file) {
+        add(beforeRevision.file, change, FileStatus.DELETED, key, beforeRevision.revisionNumber)
       }
     }
     else if (afterRevision != null) {
-      add(afterRevision.getFile(), change, change.getFileStatus(), key, VcsRevisionNumber.NULL);
+      add(afterRevision.file, change, change.fileStatus, key, VcsRevisionNumber.NULL)
     }
     else if (beforeRevision != null) {
-      add(beforeRevision.getFile(), change, change.getFileStatus(), key, beforeRevision.getRevisionNumber());
+      add(beforeRevision.file, change, change.fileStatus, key, beforeRevision.revisionNumber)
     }
   }
 
-  public void changeRemoved(@NotNull Change change) {
-    boolean wasRemoved = myChanges.remove(change);
-    if (LOG.isDebugEnabled() && !wasRemoved) {
-      LOG.debug("Change wasn't removed: " + change);
+  fun changeRemoved(change: Change) {
+    val wasRemoved = changes.remove(change)
+    if (LOG.isDebugEnabled && !wasRemoved) {
+      LOG.debug("Change wasn't removed: $change")
     }
 
-    ContentRevision afterRevision = change.getAfterRevision();
-    ContentRevision beforeRevision = change.getBeforeRevision();
+    val afterRevision = change.afterRevision
+    val beforeRevision = change.beforeRevision
 
     if (afterRevision != null) {
-      remove(afterRevision.getFile());
+      remove(afterRevision.file)
     }
     if (beforeRevision != null) {
-      remove(beforeRevision.getFile());
+      remove(beforeRevision.file)
     }
   }
 
-  public @NotNull Set<Change> getChanges() {
-    return myChanges;
+  fun getVcsFor(change: Change): AbstractVcs? {
+    return getVcsForRevision(change.afterRevision) ?: getVcsForRevision(change.beforeRevision)
   }
 
-  public @Nullable AbstractVcs getVcsFor(@NotNull Change change) {
-    AbstractVcs vcs = getVcsForRevision(change.getAfterRevision());
-    if (vcs != null) return vcs;
-    return getVcsForRevision(change.getBeforeRevision());
-  }
-
-  private @Nullable AbstractVcs getVcsForRevision(@Nullable ContentRevision revision) {
-    if (revision != null) {
-      Data data = myMap.get(revision.getFile());
-      return data != null ? data.vcs : null;
-    }
-    return null;
+  private fun getVcsForRevision(revision: ContentRevision?): AbstractVcs? {
+    if (revision == null) return null
+    return dataMap[revision.file]?.vcs
   }
 
   /**
-   * this method is called after each local changes refresh and collects all:
-   * - paths that are new in local changes
-   * - paths that are no more changed locally
-   * - paths that were and are changed, but base revision has changed (ex. external update)
-   * (for RemoteRevisionsCache and annotation listener)
+   * Collects every path that changed between this index and [newIndexes].
+   *
+   * A local changes refresh calls this method. It collects:
+   * - a path that is new in the local changes
+   * - a path that is no longer changed locally
+   * - a path that stays changed, but got a new base revision, for example after an external update
+   *
+   * [RemoteRevisionsCache] and the annotation listener consume the result.
    */
-  public void getDelta(ChangeListsIndexes newIndexes,
-                       Set<? super BaseRevision> toRemove,
-                       Set<? super BaseRevision> toAdd,
-                       Set<? super BeforeAfter<BaseRevision>> toModify) {
-    Map<FilePath, Data> oldMap = myMap;
-    Map<FilePath, Data> newMap = newIndexes.myMap;
+  fun getDelta(
+    newIndexes: ChangeListsIndexes,
+    toRemove: MutableSet<in BaseRevision>,
+    toAdd: MutableSet<in BaseRevision>,
+    toModify: MutableSet<in BeforeAfter<BaseRevision>>,
+  ) {
+    val oldMap = dataMap
+    val newMap = newIndexes.dataMap
 
-    for (Map.Entry<FilePath, Data> entry : oldMap.entrySet()) {
-      FilePath s = entry.getKey();
-      Data oldData = entry.getValue();
-      Data newData = newMap.get(s);
+    for ((path, oldData) in oldMap) {
+      val newData = newMap[path]
 
       if (newData != null) {
         if (!oldData.sameRevisions(newData)) {
-          toModify.add(new BeforeAfter<>(createBaseRevision(s, oldData), createBaseRevision(s, newData)));
+          toModify.add(BeforeAfter(createBaseRevision(path, oldData), createBaseRevision(path, newData)))
         }
       }
       else {
-        toRemove.add(createBaseRevision(s, oldData));
+        toRemove.add(createBaseRevision(path, oldData))
       }
     }
 
-    for (Map.Entry<FilePath, Data> entry : newMap.entrySet()) {
-      FilePath s = entry.getKey();
-      Data newData = entry.getValue();
-
-      if (!oldMap.containsKey(s)) {
-        toAdd.add(createBaseRevision(s, newData));
+    for ((path, newData) in newMap) {
+      if (!oldMap.containsKey(path)) {
+        toAdd.add(createBaseRevision(path, newData))
       }
     }
   }
 
-  private static BaseRevision createBaseRevision(@NotNull FilePath path, @NotNull Data data) {
-    return new BaseRevision(data.vcs, data.revision, path);
-  }
+  private fun createBaseRevision(path: FilePath, data: Data): BaseRevision = BaseRevision(data.vcs, data.revision, path)
 
-  public @NotNull Set<FilePath> getAffectedPaths() {
-    return myMap.keySet();
-  }
-
-  private static class Data {
-    public final @NotNull FileStatus status;
-    public final @NotNull Change change;
-    public final @Nullable AbstractVcs vcs;
-    public final @NotNull VcsRevisionNumber revision;
-
-    Data(@NotNull FileStatus status,
-         @NotNull Change change,
-         @Nullable AbstractVcs vcs,
-         @NotNull VcsRevisionNumber revision) {
-      this.status = status;
-      this.change = change;
-      this.vcs = vcs;
-      this.revision = revision;
-    }
-
-    public boolean sameRevisions(@NotNull Data data) {
-      return Comparing.equal(vcs, data.vcs) && Comparing.equal(revision, data.revision);
-    }
+  private class Data(
+    val status: FileStatus,
+    val change: Change,
+    val vcs: AbstractVcs?,
+    val revision: VcsRevisionNumber,
+  ) {
+    fun sameRevisions(data: Data): Boolean = vcs == data.vcs && revision == data.revision
   }
 }
