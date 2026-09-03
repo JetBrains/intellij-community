@@ -6342,17 +6342,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains/markdown-jvm-0.7.9.jar_copy",
-    src = "@org_jetbrains-markdown-jvm-0_7_9_http//file",
-    out = "org.jetbrains/markdown-jvm-0.7.9.jar",
+    name = "org.jetbrains/markdown-jvm-0.7.10.jar_copy",
+    src = "@org_jetbrains-markdown-jvm-0_7_10_http//file",
+    out = "org.jetbrains/markdown-jvm-0.7.10.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "jetbrains-markdown",
-    jar = "@org_jetbrains-markdown-jvm-0_7_9_http//file",
-    source_jar = "@org_jetbrains-markdown-jvm-0_7_9-sources_http//file",
+    jar = "@org_jetbrains-markdown-jvm-0_7_10_http//file",
+    source_jar = "@org_jetbrains-markdown-jvm-0_7_10-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

@@ -5062,17 +5062,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains-markdown-jvm-0_7_9_http",
-    downloaded_file_path = "markdown-jvm-0.7.9.jar",
-    sha256 = "9b1ca85117f982f2b8d9e940f8738478946dd235775d3802beb2b1b79b4bb0a8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/markdown-jvm/0.7.9/markdown-jvm-0.7.9.jar",
+    name = "org_jetbrains-markdown-jvm-0_7_10_http",
+    downloaded_file_path = "markdown-jvm-0.7.10.jar",
+    sha256 = "41ddccb019905885ed50b1821da48b00b8787be7b485697aeb66b5c0ac46e02e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/markdown-jvm/0.7.10/markdown-jvm-0.7.10.jar",
 )
 
 http_file(
-    name = "org_jetbrains-markdown-jvm-0_7_9-sources_http",
-    downloaded_file_path = "markdown-jvm-0.7.9-sources.jar",
-    sha256 = "48c675fedffa4f275409d1ab11f041da10fb30a066f985ebda9dce475873f845",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/markdown-jvm/0.7.9/markdown-jvm-0.7.9-sources.jar",
+    name = "org_jetbrains-markdown-jvm-0_7_10-sources_http",
+    downloaded_file_path = "markdown-jvm-0.7.10-sources.jar",
+    sha256 = "84590cb1f8c719e4b9a97645b89ce91c893ad62703b2232603a3d4ab63792bca",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/markdown-jvm/0.7.10/markdown-jvm-0.7.10-sources.jar",
 )
 
 http_file(
