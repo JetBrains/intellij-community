@@ -13,6 +13,4 @@ internal object IdeConstants {
 
   const val PLATFORM_LOADER_MODULE = "intellij.platform.runtime.loader"
   const val GATEWAY_PLUGIN_MODULE = "intellij.gateway.plugin"
-
-  const val DEFAULT_CWM_PASSWORD = "qwerty123"
 }

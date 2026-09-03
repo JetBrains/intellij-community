@@ -50,7 +50,6 @@ fun runIdeFrontendLocally(product: Product, frontendProcessLifespanScope: Corout
       ),
       environment = mapOf(
         "CWM_NO_TIMEOUTS" to "1",
-        "CWM_CLIENT_PASSWORD" to IdeConstants.DEFAULT_CWM_PASSWORD,
       ),
       specifyUserHomeExplicitly = false,
     )
