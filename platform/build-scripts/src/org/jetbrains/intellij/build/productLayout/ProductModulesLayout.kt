@@ -53,7 +53,10 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
  *
  * @see ProductModulesLayout.compatiblePluginsToIgnore
  */
-val COMPATIBLE_PLUGINS_TO_IGNORE: PersistentList<String> = persistentListOf()
+val COMPATIBLE_PLUGINS_TO_IGNORE: PersistentList<String> = persistentListOf(
+  // it registers a file type named Dart, Lua, Rust and Swift, and takes the name from the real plugin
+  "intellij.lsp.client.playground",
+)
 
 /**
  * The main modules of the plugins that get no searchable options in any product.
