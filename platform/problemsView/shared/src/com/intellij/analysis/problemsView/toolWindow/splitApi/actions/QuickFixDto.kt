@@ -30,5 +30,4 @@ data class QuickFixDto(
 data class QuickFixModelDto(
   val quickFixModelId: String,
   val quickFixes: List<QuickFixDto>,
-  val offset: Int,
 )

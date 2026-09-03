@@ -12,7 +12,6 @@ import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.MarkupModelEx
@@ -69,7 +68,7 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
 
     return pendingQuickFixModel.copy(
       file = file,
-      offset = info.actualStartOffset,
+      highlighterId = highlighterId,
       quickFixes = quickFixes,
     )
   }
@@ -126,14 +125,15 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
   suspend fun executeQuickFix(quickFixModelId: String, intentionId: String) {
     val quickFixModel = currentQuickFixModel.get()?.takeIf { it.quickFixModelId == quickFixModelId } ?: return
     val file = quickFixModel.file ?: return
+    val highlighterId = quickFixModel.highlighterId ?: return
     val action = quickFixModel.findQuickFixById(intentionId) ?: return
 
     if (!currentQuickFixModel.compareAndSet(quickFixModel, null)) return
 
-    executeQuickFix(file, quickFixModel.offset, action)
+    executeQuickFix(file, highlighterId, action)
   }
 
-  private suspend fun executeQuickFix(file: VirtualFile, offset: Int, action: IntentionAction) {
+  private suspend fun executeQuickFix(file: VirtualFile, highlighterId: Long, action: IntentionAction) {
     val context = readAction {
       if (!file.isValid) return@readAction null
       val editor = ProblemsViewEditorUtils.getEditor(file, project) ?: return@readAction null
@@ -143,16 +143,18 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
 
     val (psiFile, editor) = context
 
-    withContext(Dispatchers.EDT) invoke@{
-      val targetEditor = ProblemsViewEditorUtils.openEditorIfNeeded(file, project, editor) ?: return@invoke
-      if (!file.isValid || targetEditor.isDisposed) return@invoke
+    withContext(Dispatchers.EDT) {
+      val targetEditor = ProblemsViewEditorUtils.openEditorIfNeeded(file, project, editor) ?: return@withContext
+      if (!file.isValid || targetEditor.isDisposed) return@withContext
+      val highlighter = findHighlighter(file, highlighterId) ?: return@withContext
+      val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return@withContext
 
       ShowIntentionActionsHandler.chooseActionAndInvoke(
         psiFile,
         targetEditor,
         action,
         action.text,
-        offset,
+        info.actualStartOffset,
         IntentionSource.PROBLEMS_VIEW
       )
     }
@@ -164,8 +166,7 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
 
     return QuickFixModelDto(
       quickFixModelId,
-      quickFixes.map(::convertIntentionActionToDto),
-      offset
+      quickFixes.map(::convertIntentionActionToDto)
     )
   }
 

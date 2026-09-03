@@ -24,7 +24,7 @@ internal data class IntentionActionWithIds(
 internal data class BackendQuickFixModel(
   val quickFixModelId: String,
   val file: VirtualFile? = null,
-  val offset: Int = -1,
+  val highlighterId: Long? = null,
   val quickFixes: List<IntentionActionWithIds> = emptyList(),
 ) {
 
