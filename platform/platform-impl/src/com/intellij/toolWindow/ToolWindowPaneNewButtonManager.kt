@@ -9,7 +9,7 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.ToolWindowImpl
-import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.DevicePoint
 import java.awt.BorderLayout
@@ -37,9 +37,14 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     get() = true
 
   init {
-    val extension = ToolWindowExtension.getInstance()
-    top = extension?.createTopToolWindowToolbar(paneId, isPrimary)
-    bottom = extension?.createBottomToolWindowToolbar(paneId, isPrimary)
+    if (ToolWindowStripeExtension.exists) {
+      top = ToolWindowStripeExtension.createTopToolWindowToolbar(paneId, isPrimary)
+      bottom = ToolWindowStripeExtension.createBottomToolWindowToolbar(paneId, isPrimary)
+    }
+    else {
+      top = null
+      bottom = null
+    }
 
     allToolbars().forEach {
       it.addVisibleButtonsListener { updateToolStripesVisibility() }
@@ -162,7 +167,7 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     if (horizontalToolbar != null && horizontalToolbar.isVisible && horizontalToolbar.isShowing) {
       return horizontalToolbar.height
     }
-    // New UI without ToolWindowExtension only shows stripes on the LEFT + RIGHT. There is no TOP, and while BOTTOM is used, it is shown on the left, so has no height
+    // New UI without ToolWindowStripeExtension only shows stripes on the LEFT + RIGHT. There is no TOP, and while BOTTOM is used, it is shown on the left, so has no height
     return 0
   }
 
@@ -234,7 +239,7 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
   }
 
   private fun getHorizontalToolbar(anchor: ToolWindowAnchor): ToolWindowToolbar? {
-    if (ToolWindowExtension.exists) {
+    if (ToolWindowStripeExtension.exists) {
       return when (anchor) {
         ToolWindowAnchor.TOP -> top
         ToolWindowAnchor.BOTTOM -> bottom

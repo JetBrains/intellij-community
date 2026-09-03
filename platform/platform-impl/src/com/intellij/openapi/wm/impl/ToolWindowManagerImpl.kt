@@ -70,7 +70,7 @@ import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.toolWindow.ToolWindowEntry
 import com.intellij.toolWindow.ToolWindowEventSource
-import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.ToolWindowProperty
@@ -1068,8 +1068,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
     }
 
-    // The new UI (without a ToolWindowExtension) does not have top stripes, and their presence is considered an error
-    if (isNewUi && info.anchor == ToolWindowAnchor.TOP && !ToolWindowExtension.exists) {
+    // The new UI (without a ToolWindowStripeExtension) does not have top stripes, and their presence is considered an error
+    if (isNewUi && info.anchor == ToolWindowAnchor.TOP && !ToolWindowStripeExtension.exists) {
       info.anchor = ToolWindowAnchor.LEFT
     }
 

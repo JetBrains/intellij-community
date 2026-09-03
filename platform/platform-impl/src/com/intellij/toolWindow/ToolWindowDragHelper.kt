@@ -28,7 +28,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.getToolbarAnchor
 import com.intellij.openapi.wm.impl.isInternal
 import com.intellij.openapi.wm.safeToolWindowPaneId
-import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.MouseDragHelper
@@ -727,7 +727,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     val stripe = dragSourcePane.getStripeFor(devicePoint, preferredStripe)
                  ?: getTargetStripeForOtherPanes(devicePoint, preferredStripe)
     // TODO: If we want to get rid of the top stripe, we should remove it in the button managers
-    return if (stripe?.anchor == TOP && !ToolWindowExtension.exists) null else stripe
+    return if (stripe?.anchor == TOP && !ToolWindowStripeExtension.exists) null else stripe
   }
 
   /**

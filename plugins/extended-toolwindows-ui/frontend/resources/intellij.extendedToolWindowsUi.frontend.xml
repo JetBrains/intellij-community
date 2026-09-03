@@ -12,6 +12,6 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <toolWindowExtension implementation="com.intellij.extendedToolWindowsUi.frontend.ToolWindowExtensionImpl"/>
+    <toolWindowStripeExtension implementation="com.intellij.extendedToolWindowsUi.frontend.ToolWindowStripeExtensionImpl"/>
   </extensions>
 </idea-plugin>

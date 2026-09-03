@@ -5,13 +5,12 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.toolWindow.ResizeStripeManager
-import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.ui.icons.HoledIcon
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
@@ -25,8 +24,7 @@ import javax.swing.UIManager
 /**
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
-open class SquareStripeButtonLook(private val button: AbstractSquareStripeButton) : IdeaActionButtonLook() {
+internal open class SquareStripeButtonLook(private val button: AbstractSquareStripeButton) : IdeaActionButtonLook() {
   companion object {
 
     fun getIconPadding(c: Component): Insets {
@@ -35,9 +33,9 @@ open class SquareStripeButtonLook(private val button: AbstractSquareStripeButton
     }
 
     fun getIconPadding(toolbarAnchor: ToolWindowAnchorEnum): Insets {
-      val extension = ToolWindowExtension.getInstance()
+      val extension = ToolWindowStripeExtension.getInstance()
       if (extension != null) {
-        return extension.getIconPadding(toolbarAnchor)
+        return extension.getIconPadding(toolbarAnchor.toolWindowAnchor)
       }
 
       return when (toolbarAnchor) {
@@ -45,7 +43,7 @@ open class SquareStripeButtonLook(private val button: AbstractSquareStripeButton
         ToolWindowAnchorEnum.RIGHT,
           -> JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(
           toolbarAnchor == ToolWindowAnchorEnum.LEFT, ResizeStripeManager.isShowNames())
-        else -> JBUI.emptyInsets() // Not possible without ToolWindowExtension
+        else -> JBUI.emptyInsets() // Not possible without ToolWindowStripeExtension
       }
     }
 

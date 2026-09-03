@@ -13,7 +13,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.LayoutData
 import com.intellij.openapi.wm.impl.SquareStripeButton
-import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBPanel
@@ -39,7 +39,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
   lateinit var defaults: List<String>
 
   /**
-   * With the ToolWindowExtension the bottomStripe is unused
+   * With the ToolWindowStripeExtension the bottomStripe is unused
    */
   internal abstract val bottomStripe: StripeV2
   internal abstract val topStripe: StripeV2
@@ -64,7 +64,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     bottomStripe.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
     topWrapper.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
 
-    if (ToolWindowExtension.exists) {
+    if (ToolWindowStripeExtension.exists) {
       topWrapper.add(topStripe, BorderLayout.CENTER)
       add(topWrapper, BorderLayout.CENTER)
     }
@@ -102,7 +102,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
 
   fun initMoreButton(project: Project) {
     if (isPrimary) {
-      if (ToolWindowExtension.exists) {
+      if (ToolWindowStripeExtension.exists) {
           topStripe.moreButton = moreButton
       }
       else {
@@ -142,7 +142,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     if (topStripe.containsPoint(screenPoint)) {
       return topStripe
     }
-    if (!ToolWindowExtension.exists && bottomStripe.containsPoint(screenPoint)) {
+    if (!ToolWindowStripeExtension.exists && bottomStripe.containsPoint(screenPoint)) {
       return bottomStripe
     }
     return null
@@ -212,8 +212,8 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
 
     override fun containsPoint(screenPoint: Point): Boolean {
       if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
-        // With ToolWindowExtension the whole column height is the drop zone
-        val halfColumn = !ToolWindowExtension.exists
+        // With ToolWindowStripeExtension the whole column height is the drop zone
+        val halfColumn = !ToolWindowStripeExtension.exists
 
         if (!toolBar.isShowing) {
           val bounds = Rectangle(rootPane.locationOnScreen, rootPane.size)

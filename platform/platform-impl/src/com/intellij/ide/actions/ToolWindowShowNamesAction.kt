@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.toolWindow.ResizeStripeManager
-import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 
 internal class ToolWindowShowNamesAction : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
   init {
@@ -27,6 +27,6 @@ internal class ToolWindowShowNamesAction : DumbAwareToggleAction(), ActionRemote
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    e.presentation.isEnabledAndVisible = !ToolWindowExtension.exists
+    e.presentation.isEnabledAndVisible = !ToolWindowStripeExtension.exists
   }
 }

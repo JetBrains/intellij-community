@@ -28,8 +28,8 @@ import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowLeftToolbar
 import com.intellij.toolWindow.ToolWindowRightToolbar
 import com.intellij.toolWindow.ToolWindowToolbar
-import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowHorizontalToolbar
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
@@ -44,7 +44,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
@@ -58,8 +57,7 @@ import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.UIManager
 
-@ApiStatus.Internal
-abstract class AbstractSquareStripeButton(
+internal abstract class AbstractSquareStripeButton(
   action: AnAction, presentation: Presentation,
   minimumSize: Supplier<Dimension>? = null
 ) :
@@ -79,8 +77,7 @@ abstract class AbstractSquareStripeButton(
   }
 }
 
-@ApiStatus.Internal
-class SquareStripeButton(val toolWindow: ToolWindowImpl) :
+internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
   AbstractSquareStripeButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), null) {
 
   companion object {
@@ -145,10 +142,10 @@ class SquareStripeButton(val toolWindow: ToolWindowImpl) :
     return when (anchor.toEnum()) {
       ToolWindowAnchorEnum.RIGHT -> HelpTooltip.Alignment.LEFT
       ToolWindowAnchorEnum.LEFT -> HelpTooltip.Alignment.RIGHT
-      ToolWindowAnchorEnum.TOP -> HelpTooltip.Alignment.BOTTOM // Only with the ToolWindowExtension
+      ToolWindowAnchorEnum.TOP -> HelpTooltip.Alignment.BOTTOM // Only with the ToolWindowStripeExtension
       ToolWindowAnchorEnum.BOTTOM,
         -> {
-        if (ToolWindowExtension.exists) HelpTooltip.Alignment.TOP
+        if (ToolWindowStripeExtension.exists) HelpTooltip.Alignment.TOP
         else {
           if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
         }
@@ -175,18 +172,16 @@ class SquareStripeButton(val toolWindow: ToolWindowImpl) :
   }
 
   private fun createSquareStripeButtonLook(): SquareStripeButtonLook {
-    val extension = ToolWindowExtension.getInstance()
-
-    return if (extension == null) {
+    return if (ToolWindowStripeExtension.exists) {
+      ToolWindowStripeExtension.createSquareStripeButtonLook(this)
+    }
+    else {
       if (myShowName) SquareStripeButtonLookHorizontalText(this) else SquareStripeButtonLook(this)
-    } else {
-      extension.createSquareStripeButtonLook(this)
     }
   }
 }
 
-@ApiStatus.Internal
-abstract class SquareStripeButtonLookExtension(protected val button: SquareStripeButton): SquareStripeButtonLook(button) {
+internal abstract class SquareStripeButtonLookExtension(protected val button: SquareStripeButton): SquareStripeButtonLook(button) {
 
   abstract fun getPreferredSize(size: Dimension): Dimension
 
@@ -344,12 +339,12 @@ private fun createPresentation(toolWindow: ToolWindowImpl): Presentation {
 }
 
 internal fun getStripeToolbarButtonIconSize(): Int {
-  val extension = ToolWindowExtension.getInstance() ?: return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
+  val extension = ToolWindowStripeExtension.getInstance() ?: return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
   return JBUIScale.scale(extension.getStripeIconUnscaledSize())
 }
 
 internal fun getStripeToolbarButtonSize(moreButton: Boolean): Dimension {
-  val extension = ToolWindowExtension.getInstance()
+  val extension = ToolWindowStripeExtension.getInstance()
   return if (extension == null) JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() else extension.getButtonMinSize(moreButton)
 }
 
@@ -440,26 +435,18 @@ internal fun Component.getToolbarAnchor(): ToolWindowAnchorEnum? {
 /**
  * A helper enum to avoid dead code in when/if constructions
  */
-@ApiStatus.Internal
-enum class ToolWindowAnchorEnum {
-  TOP,
-  LEFT,
-  BOTTOM,
-  RIGHT,
+internal enum class ToolWindowAnchorEnum(val toolWindowAnchor: ToolWindowAnchor) {
+  TOP(ToolWindowAnchor.TOP),
+  LEFT(ToolWindowAnchor.LEFT),
+  BOTTOM(ToolWindowAnchor.BOTTOM),
+  RIGHT(ToolWindowAnchor.RIGHT)
 }
 
-@ApiStatus.Internal
-fun ToolWindowAnchorEnum.isHorizontal(): Boolean {
+internal fun ToolWindowAnchorEnum.isHorizontal(): Boolean {
   return this == ToolWindowAnchorEnum.TOP || this == ToolWindowAnchorEnum.BOTTOM
 }
 
-@ApiStatus.Internal
-fun ToolWindowAnchor.toEnum(): ToolWindowAnchorEnum {
-  return when (this) {
-    ToolWindowAnchor.LEFT -> ToolWindowAnchorEnum.LEFT
-    ToolWindowAnchor.RIGHT -> ToolWindowAnchorEnum.RIGHT
-    ToolWindowAnchor.TOP -> ToolWindowAnchorEnum.TOP
-    ToolWindowAnchor.BOTTOM -> ToolWindowAnchorEnum.BOTTOM
-    else -> throw IllegalStateException("Unknown anchor: $this")
-  }
+internal fun ToolWindowAnchor.toEnum(): ToolWindowAnchorEnum {
+  return ToolWindowAnchorEnum.entries.find { it.toolWindowAnchor === this }
+         ?: throw IllegalStateException("Unknown anchor: $this")
 }

@@ -6,7 +6,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook.Companion.getIconPadding
 import com.intellij.toolWindow.MoreSquareStripeButton
 import com.intellij.toolWindow.StripeButtonManager
-import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.drag.DragButton
@@ -97,18 +97,18 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
 
   /**
    * When true, split (side) buttons are grouped behind a [StripeButtonSeparator]. Only the New-UI vertical LEFT/RIGHT stripes
-   * do this, and only when no [ToolWindowExtension] is present; with the extension every stripe uses the Classic gap instead
+   * do this, and only when no [ToolWindowStripeExtension] is present; with the extension every stripe uses the Classic gap instead
    * (non-split at the start, split flush to the far end, no separator).
    */
   private val useStripeButtonSeparator: Boolean
-    get() = isNewStripes && (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) && !ToolWindowExtension.exists
+    get() = isNewStripes && (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) && !ToolWindowStripeExtension.exists
 
   /**
    * When true, split buttons are pushed to the far end of the stripe with a Classic-style gap. This holds for Classic UI and
-   * for NewUI stripe with [ToolWindowExtension]
+   * for NewUI stripe with [ToolWindowStripeExtension]
    */
   protected val useSplitGap: Boolean
-    get() = !isNewStripes || ToolWindowExtension.exists
+    get() = !isNewStripes || ToolWindowStripeExtension.exists
 
   private val stripeButtonManagerComparator by lazy(LazyThreadSafetyMode.NONE) { createButtonLayoutComparator(isNewStripes, anchor, isHorizontal()) }
 
@@ -163,7 +163,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
   @JvmField
   protected var computedPreferredSize: Dimension? = null
 
-  // Used only with [ToolWindowExtension] in LEFT/RIGHT stripes
+  // Used only with [ToolWindowStripeExtension] in LEFT/RIGHT stripes
   internal var moreButton: MoreSquareStripeButton? = null
     set(value) {
       if (field === value) return
@@ -248,7 +248,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     isFinishingDrop = true
     dragButton?.toolWindow?.let {
       var order = lastLayoutData.dragInsertPosition
-      if (isNewStripes && anchor == ToolWindowAnchor.BOTTOM && !ToolWindowExtension.exists) {
+      if (isNewStripes && anchor == ToolWindowAnchor.BOTTOM && !ToolWindowStripeExtension.exists) {
         order++
       }
       val isSplit = if (useSplitGap) lastLayoutData.dragToSide else lastLayoutData.isSplit
@@ -287,9 +287,8 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     }
 
     val dragButton = dragButton
-    dropRectangle.location.also { SwingUtilities.convertPointToScreen(it, this) }
     val processDrop = dragButton != null && !noDrop
-    if ((!isNewStripes || ToolWindowExtension.exists) && dragButton != null) {
+    if ((!isNewStripes || ToolWindowStripeExtension.exists) && dragButton != null) {
       data.shouldSwapCoordinates = anchor.isHorizontal != dragButton.toolWindow.anchor.isHorizontal
     }
     data.fitSize = toFitWith ?: JBUI.emptySize()
@@ -416,8 +415,8 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       layoutMoreButton(data, visibleMoreButton, setBounds, moreY)
     }
 
-    // With a ToolWindowExtension the More button is a child of the stripe, and the preferred size doesn't take the More button into account
-    if (ToolWindowExtension.exists && visibleMoreButton != null && buttonsToLayOut.isEmpty()) {
+    // With a ToolWindowStripeExtension the More button is a child of the stripe, and the preferred size doesn't take the More button into account
+    if (ToolWindowStripeExtension.exists && visibleMoreButton != null && buttonsToLayOut.isEmpty()) {
       visibleMoreButton.preferredSize.let {
         data.size.width = it.width
         data.size.height = it.height
@@ -542,7 +541,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     }
 
     if (data.horizontal) {
-      // Classic UI or NewUI with ToolWindowExtension
+      // Classic UI or NewUI with ToolWindowStripeExtension
       drawRectangle.width = data.eachX - drawRectangle.x
       drawRectangle.height = data.fitSize.height
       if (data.dragToSide) {

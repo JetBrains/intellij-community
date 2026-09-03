@@ -1335,7 +1335,7 @@ public final class JBUI {
         return 20;
       }
 
-      public static @NotNull Insets stripeToolbarButtonIconPadding(boolean left, boolean showNames) {
+      public static @NotNull JBInsets stripeToolbarButtonIconPadding(boolean left, boolean showNames) {
         return insets(stripeToolbarButtonIconPaddingKey(left, showNames), defaultStripeToolbarButtonIconPadding());
       }
 

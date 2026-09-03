@@ -412,6 +412,21 @@ c:com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen
 - *:selectTab(com.intellij.openapi.wm.WelcomeScreenTab):V
 *:com.intellij.toolWindow.ToolWindowSplitContentProvider
 - a:createContentCopy(com.intellij.openapi.project.Project,com.intellij.ui.content.Content):com.intellij.ui.content.Content
+*:com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
+- *sf:Companion:com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension$Companion
+- *sf:ICON_UNSCALED_SIZE:I
+- *s:exists():Z
+- a:getButtonMinSize(Z):java.awt.Dimension
+- a:getIconPadding(com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.util.ui.JBInsets
+- *s:getInstance():com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
+- a:getStripeIconUnscaledSize():I
+- a:isStripeResizable():Z
+- a:isToolWindowNameVisible():Z
+*f:com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension$Companion
+- sf:ICON_UNSCALED_SIZE:I
+- f:exists():Z
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:getInstance():com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 *a:com.intellij.ui.ToolbarActionTracker
 - com.intellij.openapi.Disposable
 - sf:ARROW_SHIFT:I

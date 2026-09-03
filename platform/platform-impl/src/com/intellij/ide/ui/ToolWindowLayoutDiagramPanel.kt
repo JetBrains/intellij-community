@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
-import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import java.awt.Color
@@ -13,7 +13,7 @@ import java.awt.RenderingHints
 import javax.swing.JPanel
 
 private fun getShowToolWindowNames(): Boolean {
-  val extension = ToolWindowExtension.getInstance() ?: return UISettings.getInstance().showToolWindowsNames
+  val extension = ToolWindowStripeExtension.getInstance() ?: return UISettings.getInstance().showToolWindowsNames
   return extension.isToolWindowNameVisible()
 }
 

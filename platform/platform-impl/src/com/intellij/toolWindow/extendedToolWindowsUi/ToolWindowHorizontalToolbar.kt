@@ -1,15 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow.extendedToolWindowsUi
 
-import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.islands.isIslandTheme
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.toolWindow.MoreSquareStripeButton
 import com.intellij.toolWindow.ToolWindowToolbar
+import com.intellij.ui.IslandsState
 import com.intellij.ui.JBColor
 import com.intellij.ui.UIBundle
 import com.intellij.ui.border.CustomLineBorder
@@ -105,16 +104,12 @@ private class BottomStripeBorderHelper(private val toolBar: ToolWindowHorizontal
                                    if (isBottomLineNeeded()) 1 else 0, 0)
   }
 
-  private fun islandsLikeTheme(): Boolean {
-    return LafManager.getInstance().currentUIThemeLookAndFeel?.id == "JetBrainsHighContrastTheme" || isIslandTheme()
-  }
-
   private fun isTopLineNeeded(): Boolean {
-    return !islandsLikeTheme()
+    return !IslandsState.isEnabled()
   }
 
   private fun isBottomLineNeeded(): Boolean {
-    return islandsLikeTheme() && UISettings.getInstance().showStatusBar
+    return IslandsState.isEnabled() && UISettings.getInstance().showStatusBar
   }
 
   private fun updateBorder() {

@@ -5,21 +5,22 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook
-import com.intellij.openapi.wm.impl.ToolWindowAnchorEnum
 import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
-import java.awt.Insets
 
-@ApiStatus.Internal
-interface ToolWindowExtension {
+@ApiStatus.Experimental
+interface ToolWindowStripeExtension {
 
   companion object {
-    val EP_NAME: ExtensionPointName<ToolWindowExtension> = ExtensionPointName.create("com.intellij.toolWindowExtension")
+    val EP_NAME: ExtensionPointName<ToolWindowStripeExtension> = ExtensionPointName.create("com.intellij.toolWindowStripeExtension")
+
+    const val ICON_UNSCALED_SIZE: Int = 16
 
     @JvmStatic
-    fun getInstance(): ToolWindowExtension? {
+    fun getInstance(): ToolWindowStripeExtension? {
       return if (ExperimentalUI.isNewUI()) EP_NAME.extensionList.firstOrNull() else null
     }
 
@@ -29,6 +30,18 @@ interface ToolWindowExtension {
     @JvmStatic
     @get:JvmName("exists")
     val exists: Boolean by lazy { getInstance() != null }
+
+    internal fun createSquareStripeButtonLook(button: SquareStripeButton): SquareStripeButtonLook {
+      return SquareStripeButtonLookVerticalText(button)
+    }
+
+    internal fun createTopToolWindowToolbar(paneId: String, isPrimary: Boolean): ToolWindowToolbar {
+      return ToolWindowHorizontalToolbar(paneId, ToolWindowAnchor.TOP, isPrimary)
+    }
+
+    internal fun createBottomToolWindowToolbar(paneId: String, isPrimary: Boolean): ToolWindowToolbar {
+      return ToolWindowHorizontalToolbar(paneId, ToolWindowAnchor.BOTTOM, isPrimary)
+    }
   }
 
   fun isStripeResizable(): Boolean
@@ -37,17 +50,8 @@ interface ToolWindowExtension {
 
   fun getStripeIconUnscaledSize(): Int
 
-  fun createSquareStripeButtonLook(button: SquareStripeButton): SquareStripeButtonLook
-
-  fun getIconPadding(toolbarAnchor: ToolWindowAnchorEnum): Insets
+  fun getIconPadding(toolbarAnchor: ToolWindowAnchor): JBInsets
 
   fun getButtonMinSize(moreButton: Boolean): Dimension
 
-  fun createTopToolWindowToolbar(paneId: String, isPrimary: Boolean): ToolWindowToolbar? {
-    return ToolWindowHorizontalToolbar(paneId, ToolWindowAnchor.TOP, isPrimary)
-  }
-
-  fun createBottomToolWindowToolbar(paneId: String, isPrimary: Boolean): ToolWindowToolbar? {
-    return ToolWindowHorizontalToolbar(paneId, ToolWindowAnchor.BOTTOM, isPrimary)
-  }
 }

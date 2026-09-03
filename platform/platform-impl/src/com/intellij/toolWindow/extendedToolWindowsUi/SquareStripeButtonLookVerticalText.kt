@@ -1,22 +1,17 @@
-package com.intellij.extendedToolWindowsUi.frontend
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.toolWindow.extendedToolWindowsUi
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionButtonComponent
-import com.intellij.openapi.application.impl.islands.isIslandTheme
 import com.intellij.openapi.wm.impl.SquareStripeButton
-import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.openapi.wm.impl.SquareStripeButtonLookExtension
 import com.intellij.openapi.wm.impl.ToolWindowAnchorEnum
 import com.intellij.openapi.wm.impl.isHorizontal
 import com.intellij.openapi.wm.impl.toEnum
 import com.intellij.toolWindow.StripeButtonUi
-import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.util.height
-import com.intellij.ui.util.width
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -25,88 +20,12 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.awt.Insets
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.UIManager
 
-internal class ToolWindowExtensionImpl : ToolWindowExtension {
-
-  override fun isStripeResizable(): Boolean {
-    return false
-  }
-
-  override fun isToolWindowNameVisible(): Boolean {
-    return true
-  }
-
-  override fun getStripeIconUnscaledSize(): Int {
-    return ICON_UNSCALED_SIZE
-  }
-
-  override fun createSquareStripeButtonLook(button: SquareStripeButton): SquareStripeButtonLook {
-    return SquareStripeButtonLookVerticalText(button)
-  }
-
-  override fun getIconPadding(toolbarAnchor: ToolWindowAnchorEnum): Insets {
-    // Assume the paddings are symmetrical, so use the left padding as the reference
-    // This allows customization and works well for both Islands and non-Islands themes
-    val paddings = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(true, false)
-    val sidePadding = JBUIScale.scale(4)
-    val left = paddings.left
-    val right = paddings.right
-
-    return when (toolbarAnchor) {
-      ToolWindowAnchorEnum.LEFT ->
-        @Suppress("UseDPIAwareInsets")
-        Insets(sidePadding, left, sidePadding, right)
-
-      ToolWindowAnchorEnum.RIGHT ->
-        @Suppress("UseDPIAwareInsets")
-        Insets(sidePadding, right, sidePadding, left) // Inverse
-
-      ToolWindowAnchorEnum.TOP ->
-        @Suppress("UseDPIAwareInsets")
-        Insets(left, sidePadding, right, sidePadding)
-
-      ToolWindowAnchorEnum.BOTTOM ->
-        @Suppress("UseDPIAwareInsets")
-        Insets(right, sidePadding, left, sidePadding)
-    }
-  }
-
-  override fun getButtonMinSize(moreButton: Boolean): Dimension {
-    val size = getStripeButtonUnscaledSize()
-
-    val heightCorrection: Int
-    if (moreButton) {
-      // The visible part of More button should be square
-      val padding = getIconPadding(ToolWindowAnchorEnum.LEFT) // should be the same correction with ToolWindowAnchorEnum.RIGHT
-      heightCorrection = padding.height - padding.width
-    }
-    else {
-      heightCorrection = 0
-    }
-
-    return JBDimension(size, size + heightCorrection)
-  }
-
-  private fun getStripeButtonUnscaledSize(): Int {
-    var result = if (compactMode) 28 else 32
-    if (!isIslandTheme()) {
-      result += 3
-    }
-    return result
-  }
-}
-
-private const val ICON_UNSCALED_SIZE = 16
-
-private val compactMode: Boolean
-  get() = UISettings.getInstance().compactMode
-
-private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : SquareStripeButtonLookExtension(button) {
+internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : SquareStripeButtonLookExtension(button) {
 
   private fun getForegroundColor(): Color {
     return if (toolWindow.isActive) StripeButtonUi.SELECTED_FOREGROUND_COLOR else StripeButtonUi.FOREGROUND_COLOR
@@ -141,7 +60,7 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
     val renderedIcon = if (!toolWindow.isActive || color == null) icon else toStrokeIcon(icon, color)
 
     // Avoid "dancing" for icons with badges, see com.intellij.openapi.wm.impl.SquareStripeButtonLook.getIconPosition
-    val labelIconSize = JBUIScale.scale(ICON_UNSCALED_SIZE)
+    val labelIconSize = JBUIScale.scale(ToolWindowStripeExtension.ICON_UNSCALED_SIZE)
     val iconPosition = getIconPosition(buttonWrapper, renderedIcon)
     val labelIconPosition = getIconPosition(buttonWrapper, EmptyIcon.create(labelIconSize))
 
@@ -160,7 +79,7 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
     val f = getTextFont()
     val fm = button.getFontMetrics(f)
     val text = getStripeText()
-    val verticalOffset = JBUIScale.scale(if (compactMode) 1 else 2)
+    val verticalOffset = JBUIScale.scale(if (UISettings.getInstance().compactMode) 1 else 2)
     val leftStripeVerticalOffset = JBUIScale.scale(1)
 
     UIUtil.useSafely(g!!) { g2 ->
@@ -232,7 +151,7 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
     return UIUtil.computeStringWidth(button, button.getFontMetrics(getTextFont()), getStripeText())
   }
 
-  private fun getTextFont() = if (compactMode) JBFont.create(button.font).lessOn(1f) else button.font
+  private fun getTextFont() = if (UISettings.getInstance().compactMode) JBFont.create(button.font).lessOn(1f) else button.font
 
   private fun getStripeText(): String {
     // Don't use short title the plugin
@@ -240,7 +159,7 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
   }
 
   private fun getButtonScaledInsets(): ButtonScaledInsets {
-    return if (compactMode)
+    return if (UISettings.getInstance().compactMode)
       ButtonScaledInsets(leftRightExtraInset = JBUIScale.scale(6), iconLabelInset = JBUIScale.scale(4))
     else ButtonScaledInsets(leftRightExtraInset = JBUIScale.scale(4), iconLabelInset = JBUIScale.scale(6))
   }
