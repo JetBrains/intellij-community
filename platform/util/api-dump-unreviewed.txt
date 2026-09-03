@@ -110,9 +110,6 @@ f:com.intellij.execution.process.ProcessWaitFor
 - <init>(java.lang.Process,com.intellij.execution.TaskExecutor,java.lang.String):V
 - waitFor():V
 - waitFor(J,java.util.concurrent.TimeUnit):Z
-f:com.intellij.jna.JnaLoader
-- <init>():V
-- s:load(com.intellij.openapi.diagnostic.Logger):V
 f:com.intellij.openapi.CompositeDisposable
 - remove(com.intellij.openapi.Disposable):V
 com.intellij.openapi.Forceable

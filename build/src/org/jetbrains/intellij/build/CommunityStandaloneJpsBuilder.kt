@@ -84,7 +84,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
   layout.withModule("intellij.java.rt", "idea_rt.jar")
   layout.withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
   layout.withModuleLibrary("netty-codec-protobuf", "intellij.libraries.netty.codec.protobuf", "")
-  layout.withModuleLibrary("jna", "intellij.libraries.jna", "")
   layout.withModuleLibrary("jetbrains-annotations", "intellij.libraries.jetbrains.annotations", "")
   layout.withModuleLibrary("zstd-jni", "intellij.libraries.zstd.jni", "")
   layout.withModuleLibrary("jps-javac-extension", "intellij.libraries.jps.javac.extension", "")

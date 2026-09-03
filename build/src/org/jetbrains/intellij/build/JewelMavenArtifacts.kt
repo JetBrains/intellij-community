@@ -39,6 +39,15 @@ private val JEWEL_STANDALONE_REQUIRED_ICONS_MODULES: Set<String> = setOf(
   "intellij.platform.icons.impl",
 )
 
+/**
+ * Library modules with a source root. [isLibraryModule] does not count them, so each is published
+ * as an artifact under `com.jetbrains.intellij.libraries`. Jewel uses only their Maven libraries,
+ * so the Jewel POMs inline those libraries and skip the module artifact.
+ */
+private val INLINED_LIBRARY_MODULES: Set<String> = setOf(
+  "intellij.libraries.jna",
+)
+
 private val CORE: PersistentMap<String, String> = persistentHashMapOf(
   "intellij.platform.jewel.foundation" to "jewel-foundation",
   "intellij.platform.jewel.markdown.core" to "jewel-markdown-core",
@@ -103,6 +112,12 @@ internal object JewelMavenArtifacts {
    */
   fun isPublishedPlatformDependency(module: JpsModule): Boolean =
     module.name in JEWEL_STANDALONE_REQUIRED_ICONS_MODULES
+
+  /**
+   * The library modules that the Jewel POMs inline, see [INLINED_LIBRARY_MODULES].
+   */
+  fun isInlinedLibraryModule(module: JpsModule): Boolean =
+    module.name in INLINED_LIBRARY_MODULES
 
   fun patchCoordinates(module: JpsModule, coordinates: MavenCoordinates): MavenCoordinates {
     check(isPublishedJewelModule(module))
@@ -241,7 +256,7 @@ internal object JewelMavenArtifacts {
       .flatMap { it.modulesTree() }
       .distinct().forEach { module ->
         val artifact = mavenArtifacts.singleOrNull { (it) -> it.name == module.name }
-        if (!module.isLibraryModule()) {
+        if (!module.isLibraryModule() && !isInlinedLibraryModule(module)) {
           checkNotNull(artifact) {
             "No maven artifact is created for the module ${module.name}:\n$mavenArtifacts"
           }

@@ -88,8 +88,6 @@ com.intellij.execution.process.ProcessOutputTypes
 f:com.intellij.execution.process.ProcessWaitFor
 - detach():V
 - setTerminationCallback(com.intellij.util.Consumer):V
-f:com.intellij.jna.JnaLoader
-- s:isLoaded():Z
 f:com.intellij.openapi.CompositeDisposable
 - com.intellij.openapi.Disposable
 - <init>():V

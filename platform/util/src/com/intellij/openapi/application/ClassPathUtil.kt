@@ -8,8 +8,6 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.text.CharArrayCharSequence
-import com.sun.jna.TypeMapper
-import com.sun.jna.platform.FileUtils
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.json.JsonElement
@@ -56,8 +54,6 @@ object ClassPathUtil {
       Document::class.java,  // JDOM
       Appender::class.java,  // Log4J
       Object2IntMap::class.java,  // fastutil
-      TypeMapper::class.java,  // JNA
-      FileUtils::class.java,  // JNA (jna-platform)
       PatternMatcher::class.java,  // OROMatcher
       LZ4Factory::class.java,  // LZ4-Java
       ReaderConfig::class.java,  // Aalto XML

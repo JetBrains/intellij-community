@@ -418,7 +418,7 @@ private fun scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
     val log = logDeferred.await()
 
     span("system libs loading", Dispatchers.IO) {
-      JnaLoader.load(log)
+      JnaLoader.load()
     }
 
     val appInfo = appInfoDeferred.await()

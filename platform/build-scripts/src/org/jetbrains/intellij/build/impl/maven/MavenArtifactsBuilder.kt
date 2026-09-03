@@ -410,6 +410,9 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
               dependencies += depArtifact.dependencies
             }
           }
+          else if (context.productProperties.mavenArtifacts.inlineModuleDependency(module, depModule)) {
+            dependencies += depArtifact.dependencies
+          }
           else {
             dependencies.add(MavenArtifactDependency(coordinates = depArtifact.coordinates, includeTransitiveDeps = true, excludedDependencies = emptyList(), scope = scope))
           }

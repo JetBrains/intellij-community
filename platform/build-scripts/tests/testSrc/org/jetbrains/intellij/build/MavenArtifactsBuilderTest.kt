@@ -115,6 +115,27 @@ class MavenArtifactsBuilderTest {
   }
 
   /**
+   * `intellij.libraries.jna` has a source root, so the build publishes it as `com.jetbrains.intellij.libraries:jna`.
+   * The Jewel Standalone artifacts go to Maven Central and cannot depend on that artifact, so their POMs
+   * inline the JNA library instead. Jewel loads the library with its own `JnaLoader`.
+   */
+  @Test
+  fun `jewel int-ui-standalone pom inlines the jna library module`() {
+    val moduleName = "intellij.platform.jewel.intUi.standalone"
+    val artifactData = builder.generateMavenArtifactData(listOf(moduleName), ignoreNonMavenizable = false)
+    val dependencies = artifactData.entries.single { it.key.name == moduleName }.value.dependencies
+    val coordinates = dependencies.map { it.coordinates }
+    Assert.assertTrue(
+      "$moduleName must declare net.java.dev.jna:jna-platform, but declares $coordinates",
+      coordinates.any { it.groupId == "net.java.dev.jna" && it.artifactId == "jna-platform" },
+    )
+    Assert.assertTrue(
+      "$moduleName must not depend on a com.jetbrains.intellij.libraries artifact, but declares $coordinates",
+      coordinates.none { it.groupId == "com.jetbrains.intellij.libraries" },
+    )
+  }
+
+  /**
    * Every entry of the allowlist must correspond to an existing compile-only edge, otherwise it is dead and must be removed.
    */
   @Test

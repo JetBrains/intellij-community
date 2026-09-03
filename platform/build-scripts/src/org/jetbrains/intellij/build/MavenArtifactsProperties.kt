@@ -83,6 +83,16 @@ class MavenArtifactsProperties {
   @ApiStatus.Internal
   var patchDependencies: (JpsModule, List<MavenArtifactDependency>) -> List<MavenArtifactDependency> = { _, dependencies -> dependencies }
 
+  /**
+   * Returns `true` when the POM of the first module inlines the second module like a library module:
+   * the library dependencies of the second module replace its own artifact.
+   * A library module with a source root is published as an artifact of its own,
+   * see [org.jetbrains.intellij.build.impl.libraries.isLibraryModule].
+   * A module published to Maven Central cannot depend on that artifact.
+   */
+  @ApiStatus.Internal
+  var inlineModuleDependency: (module: JpsModule, dependency: JpsModule) -> Boolean = { _, _ -> false }
+
   @ApiStatus.Internal
   var addPomMetadata: (JpsModule, Model) -> Unit = { _, _ -> }
 

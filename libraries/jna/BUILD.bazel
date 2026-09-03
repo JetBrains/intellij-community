@@ -4,9 +4,14 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
     name = "jna",
     srcs = glob(
-        [],
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
         allow_empty = True,
     ),
+    kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.jna",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -14,7 +19,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jna-jna"],
-    runtime_deps = ["@lib//:libraries-jna-jna"],
+    deps = ["@lib//:libraries-jna-jna"],
 )
 
 jvm_library(
