@@ -39,9 +39,29 @@ internal class CondaEnvironmentTest {
     assertEquals("conda", conda.kindId)
   }
 
+  /**
+   * A Miniconda base install ships `python-build`, `python-dotenv` and `python-installer` beside `python`. They match
+   * the same glob, and a directory listing is in no set order, so the version must come from the `python` package
+   * alone. Reading whichever entry came first reported a version of `build`, and the interpreter then looked invalid.
+   */
+  @Test
+  fun condaVersionAmongPythonPrefixedPackages(@TempDir root: Path) {
+    val binary = createConda(
+      root,
+      "python-build-1.5.1-py312hca03da5_0.json",
+      "python-dotenv-1.2.2-py312hca03da5_0.json",
+      "python-installer-1.0.1-py312hca03da5_0.json",
+      "python-3.12.14-h64886fc_0.json",
+    )
+
+    val conda = assertInstanceOf(CondaEnvironment::class.java, binary.detectPythonEnvironment().orThrow())
+
+    assertEquals("3.12.14", conda.version)
+  }
+
   @Test
   fun condaWithoutPython(@TempDir root: Path) {
-    val binary = createConda(root, "numpy-2.3.4-py314h0_0.json")
+    val binary = createConda(root, "numpy-2.3.4-py314h0_0.json", "python-dotenv-1.2.2-py312hca03da5_0.json")
 
     val conda = assertInstanceOf(CondaEnvironment::class.java, binary.detectPythonEnvironment().orThrow())
 

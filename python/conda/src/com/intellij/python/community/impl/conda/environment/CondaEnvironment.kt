@@ -150,11 +150,20 @@ internal class CondaEnvironmentProvider : PythonEnvironmentProvider {
  *
  * conda writes one JSON file per installed package, named `<package>-<version>-<build>.json`. The name carries the
  * version, so the directory listing is the whole of the work and the file is never opened.
+ *
+ * Only the `python` package states the interpreter's version. `python-build`, `python-dotenv` and `python-installer`
+ * ship with a Miniconda base install and match the same glob, and a directory listing is in no set order, so the
+ * package name is compared rather than stripped as a prefix. A package name may hold a `-` of its own, so the name is
+ * everything before the last two segments.
  */
 private fun condaPythonVersion(condaMeta: Path): String? =
   try {
-    condaMeta.listDirectoryEntries("python-*.json")
-      .firstNotNullOfOrNull { it.fileName.toString().removePrefix("python-").substringBefore('-').takeIf(String::isNotBlank) }
+    condaMeta.listDirectoryEntries("python-*.json").firstNotNullOfOrNull { entry ->
+      val segments = entry.fileName.toString().removeSuffix(".json").split('-')
+      if (segments.size < 3) return@firstNotNullOfOrNull null
+      val packageName = segments.subList(0, segments.size - 2).joinToString("-")
+      if (packageName != "python") null else segments[segments.size - 2].takeIf(String::isNotBlank)
+    }
   }
   catch (e: IOException) {
     fileLogger().warn("Failed to list $condaMeta", e)
