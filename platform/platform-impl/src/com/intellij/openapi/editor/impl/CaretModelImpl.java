@@ -47,6 +47,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 
 @ElfCandidate
 public final class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable, Dumpable, InlayModel.Listener {
@@ -57,8 +58,9 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   private final DocumentEx document;
   private final EventDispatcher<CaretListener> caretListeners;
   private final EventDispatcher<CaretActionListener> caretActionListeners;
-  private final RangeMarkerTree<CaretImpl.PositionMarker> positionMarkerTree;
-  private final RangeMarkerTree<CaretImpl.SelectionMarker> selectionMarkerTree;
+  private final @Nullable RangeMarkerTree<CaretImpl.LegacyPositionMarker> positionMarkerTree;
+  private final @Nullable RangeMarkerTree<CaretImpl.LegacySelectionMarker> selectionMarkerTree;
+  private final @Nullable SnapshotCaretMarkerStorage snapshotMarkerStorage;
   private final ThreadLocal<CaretImpl> currentCaret = new ThreadLocal<>(); // active caret in the context of 'runForEachCaret' call
   private final LinkedList<CaretImpl> allCarets = new LinkedList<>();
   private volatile @NotNull CaretImpl primaryCaret;
@@ -73,8 +75,11 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     this.document = editor.getElfDocument();
     this.caretListeners = EventDispatcher.create(CaretListener.class);
     this.caretActionListeners = EventDispatcher.create(CaretActionListener.class);
-    this.positionMarkerTree = new RangeMarkerTree<>(document);
-    this.selectionMarkerTree = new RangeMarkerTree<>(document);
+    this.snapshotMarkerStorage = document instanceof DocumentImpl documentImpl && RangeMarkerStorageImpl.Holder.USE_PMARKER_IMPLEMENTATION
+                                 ? new SnapshotCaretMarkerStorage(documentImpl, this::snapshotMarkersChanged)
+                                 : null;
+    this.positionMarkerTree = snapshotMarkerStorage == null ? new RangeMarkerTree<>(document) : null;
+    this.selectionMarkerTree = snapshotMarkerStorage == null ? new RangeMarkerTree<>(document) : null;
     this.primaryCaret = new CaretImpl(editor, this);
     this.allCarets.add(primaryCaret);
     editor.addPropertyChangeListener(
@@ -373,10 +378,16 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent e) {
-    if (!isInBulkUpdate() && e.isWholeTextReplaced()) {
+    boolean cacheLogicalPosition = !isInBulkUpdate() && e.isWholeTextReplaced();
+    if (cacheLogicalPosition || snapshotMarkerStorage != null) {
       for (CaretImpl caret : allCarets) {
-        // logical position will be needed to restore caret position via diff
-        caret.updateCachedStateIfNeeded();
+        if (cacheLogicalPosition) {
+          // logical position will be needed to restore caret position via diff
+          caret.updateCachedStateIfNeeded();
+        }
+        if (snapshotMarkerStorage != null) {
+          caret.beforeSnapshotMarkerChange();
+        }
       }
     }
     documentInUpdate = true;
@@ -399,10 +410,15 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     for (CaretImpl caret : allCarets) {
       Disposer.dispose(caret);
     }
-    //noinspection SuspiciousPackagePrivateAccess
-    selectionMarkerTree.dispose(document);
-    //noinspection SuspiciousPackagePrivateAccess
-    positionMarkerTree.dispose(document);
+    if (snapshotMarkerStorage != null) {
+      snapshotMarkerStorage.dispose();
+    }
+    else {
+      //noinspection SuspiciousPackagePrivateAccess
+      getSelectionMarkerTree().dispose(document);
+      //noinspection SuspiciousPackagePrivateAccess
+      getPositionMarkerTree().dispose(document);
+    }
   }
 
   @Override
@@ -568,12 +584,27 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     return documentInUpdate;
   }
 
-  RangeMarkerTree<CaretImpl.PositionMarker> getPositionMarkerTree() {
-    return positionMarkerTree;
+  RangeMarkerTree<CaretImpl.LegacyPositionMarker> getPositionMarkerTree() {
+    return Objects.requireNonNull(positionMarkerTree);
   }
 
-  RangeMarkerTree<CaretImpl.SelectionMarker> getSelectionMarkerTree() {
-    return selectionMarkerTree;
+  RangeMarkerTree<CaretImpl.LegacySelectionMarker> getSelectionMarkerTree() {
+    return Objects.requireNonNull(selectionMarkerTree);
+  }
+
+  @Nullable SnapshotCaretMarkerStorage getSnapshotMarkerStorage() {
+    return snapshotMarkerStorage;
+  }
+
+  @TestOnly
+  boolean isUsingSnapshotMarkerStorage() {
+    return snapshotMarkerStorage != null;
+  }
+
+  private void snapshotMarkersChanged(@NotNull DocumentEvent event) {
+    for (CaretImpl caret : allCarets) {
+      caret.snapshotMarkersChanged(event);
+    }
   }
 
   private void mergeOverlappingCaretsAndSelections() {

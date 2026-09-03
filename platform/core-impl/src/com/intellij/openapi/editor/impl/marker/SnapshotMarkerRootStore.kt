@@ -24,17 +24,22 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
   private val document: DocumentImpl,
   private val emptyRoot: PMarkerRoot = PMarkerRootImpl.empty(),
   private val onMarkersInvalidated: ((LongList) -> Unit)? = null,
+  private val onDocumentChanged: ((DocumentEvent) -> Unit)? = null,
 ) {
   private val roots: ConcurrentMap<DocumentSnapshot, RootState> = CollectionFactory.createConcurrentWeakIdentityMap()
 
-  private val documentListener: PrioritizedDocumentListener? = onMarkersInvalidated?.let {
+  private val documentListener: PrioritizedDocumentListener? = if (onMarkersInvalidated != null || onDocumentChanged != null) {
     object : PrioritizedDocumentListener {
       override fun getPriority(): Int = EditorDocumentPriorities.RANGE_MARKER
 
       override fun documentChanged(event: DocumentEvent) {
-        onMarkersInvalidated(roots[document.core.snapshot()]?.invalidatedMarkerIds ?: LongLists.EMPTY_LIST)
+        onMarkersInvalidated?.invoke(roots[document.core.snapshot()]?.invalidatedMarkerIds ?: LongLists.EMPTY_LIST)
+        onDocumentChanged?.invoke(event)
       }
     }
+  }
+  else {
+    null
   }
 
   init {
