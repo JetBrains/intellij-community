@@ -6,6 +6,7 @@ import com.android.ide.common.vectordrawable.VdPreview
 import com.android.ide.common.vectordrawable.VdPreview.TargetSize
 import com.android.tools.idea.rendering.GutterIconFactory
 import com.android.utils.XmlUtils
+import com.intellij.compose.ide.plugin.resources.COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer.RenderResult
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcesDrawablePreviewRenderer
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -37,7 +38,7 @@ class ComposeResourcesGutterIconTest : BasePlatformTestCase() {
   private val maxWidth get() = JBUI.scale(16)
 
   fun `test XML produces matching icon`() {
-    val path = "plugins/compose/intellij.compose.ide.plugin.resources/testData/vectordrawable/test_fill_gradient.xml"
+    val path = "$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH/vectordrawable/test_fill_gradient.xml"
     val file = File(PlatformTestUtil.getCommunityPath(), path)
     assertTrue("Test image not found: ${file.absolutePath}", file.exists())
 

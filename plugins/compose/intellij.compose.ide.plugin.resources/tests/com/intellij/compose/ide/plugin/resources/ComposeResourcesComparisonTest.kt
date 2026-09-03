@@ -164,7 +164,7 @@ class ComposeResourcesComparisonTest : BasePlatformTestCase() {
   }
 
   private fun loadLocalTestData(fileName: String): String? {
-    val path = "plugins/compose/intellij.compose.ide.plugin.resources/testData/vectordrawable/$fileName"
+    val path = "$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH/vectordrawable/$fileName"
     val file = File(PlatformTestUtil.getCommunityPath(), path)
     return file.takeIf { it.exists() }?.readText()
   }

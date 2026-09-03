@@ -21,7 +21,7 @@ internal const val ANDROID_MAIN = "androidMain"
 internal const val IOS_MAIN = "iosMain"
 internal val SOURCE_SETS = setOf(COMMON_MAIN, ANDROID_MAIN, IOS_MAIN)
 
-@TestRoot("../../../community/plugins/compose/intellij.compose.ide.plugin.resources/testData")
+@TestRoot("../../../community/$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH")
 @TestMetadata("")
 abstract class ComposeResourcesTestCase : KotlinGradleImportingTestCase() {
   @Parameterized.Parameter(1)
@@ -46,7 +46,7 @@ abstract class ComposeResourcesTestCase : KotlinGradleImportingTestCase() {
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).fixture
     _codeInsightTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture)
     codeInsightTestFixture.setUp()
-    codeInsightTestFixture.testDataPath = PathManagerEx.getCommunityHomePath() + "/plugins/compose/intellij.compose.ide.plugin.resources/testData/"
+    codeInsightTestFixture.testDataPath = PathManagerEx.getCommunityHomePath() + "/$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH/"
   }
 
   override fun tearDownFixtures() {

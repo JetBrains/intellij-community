@@ -2,7 +2,6 @@
 package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.common.runAll
@@ -13,8 +12,6 @@ import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import org.junit.jupiter.api.Assumptions.assumeFalse
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.params.Parameter
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ValueSource
@@ -63,7 +60,9 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
   }
 
   companion object {
-    private val COMPOSE_RESOURCES_PROJECT = GradleTestFixtureBuilder.create("ComposeResources") {
+    private const val COMPOSE_RESOURCES_PROJECT_NAME = "ComposeResources"
+
+    private val COMPOSE_RESOURCES_PROJECT = GradleTestFixtureBuilder.create(COMPOSE_RESOURCES_PROJECT_NAME) {
       excludeFilePatterns(
         "glob:**/composeApp/src/commonMain/root.png",
         "glob:**/composeApp/src/commonMain/test.png",
@@ -71,9 +70,9 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
       )
       withFile(".gradle/testDataFingerprint", composeResourcesTestDataFingerprint())
       withFiles { projectRoot ->
-        val testDataRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(
-          composeResourcesTestDataRoot().toString()
-        ) ?: error("Cannot find ComposeResources test data")
+        val testDataRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(
+          composeResourcesProjectRoot()
+        ) ?: error("Cannot find $COMPOSE_RESOURCES_PROJECT_NAME test data")
         edtWriteAction {
           VfsUtil.copyDirectory(this, testDataRoot, projectRoot) { file ->
             val relativePath = requireNotNull(VfsUtil.getRelativePath(file, testDataRoot)) {
@@ -86,11 +85,11 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
       }
     }
 
-    private fun composeResourcesTestDataRoot(): Path =
-      Path.of(PathManagerEx.getCommunityHomePath(), "plugins/compose/intellij.compose.ide.plugin.resources/testData/ComposeResources")
+    private fun composeResourcesProjectRoot(): Path =
+      composeResourcesTestDataRoot().resolve(COMPOSE_RESOURCES_PROJECT_NAME)
 
     private fun composeResourcesTestDataFingerprint(): String {
-      val root = composeResourcesTestDataRoot()
+      val root = composeResourcesProjectRoot()
       val digest = DigestUtil.sha256()
       Files.walk(root).use { paths ->
         paths
