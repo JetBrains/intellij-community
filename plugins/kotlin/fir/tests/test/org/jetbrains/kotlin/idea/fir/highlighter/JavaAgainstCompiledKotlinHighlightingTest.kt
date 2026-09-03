@@ -2,12 +2,10 @@
 package org.jetbrains.kotlin.idea.fir.highlighter
 
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -27,13 +25,25 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/highlighterJavaAgainstCompiledKotlin")
 @RunWith(JUnit38ClassRunner::class)
 class JavaAgainstCompiledKotlinHighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
+    val mockLibraryFacility = MockLibraryFacility(IDEA_TEST_DATA_DIR.resolve("highlighterJavaAgainstCompiledKotlin/library"))
+
+    override fun setUp() {
+        super.setUp()
+        mockLibraryFacility.setUp(module)
+    }
+
+    override fun tearDown() {
+        try {
+            mockLibraryFacility.tearDown(module)
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
+    }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        val libraryJar = KotlinCompilerStandalone(
-            listOf(IDEA_TEST_DATA_DIR.resolve("highlighterJavaAgainstCompiledKotlin/library"))
-        ).compile().toPath()
-
-        return KotlinJdkAndLibraryProjectDescriptor(listOf(TestKotlinArtifacts.kotlinStdlib, libraryJar))
+        return JAVA_21
     }
 
     fun testImplicitlyTypedLambda() {
