@@ -36,6 +36,7 @@ import com.intellij.util.io.awaitExit
 import com.intellij.util.system.OS
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.TraceContext
 import com.jetbrains.python.getOrThrow
 import java.awt.datatransfer.DataFlavor
 import java.nio.file.Files
@@ -50,6 +51,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -59,6 +61,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.io.TempDir
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.coroutines.coroutineContext
 
 @PyEnvTestCase
 class ProcessOutputControllerServiceTest {
@@ -552,54 +555,39 @@ class ProcessOutputControllerServiceTest {
   }
 
   @Test
-  fun `collectTopicEvents builds tree with nested contexts and root-level processes`(): Unit = timeoutRunBlocking(5.minutes) {
+  fun `collectTopicEvents builds tree with nested contexts and root-level processes`(
+    @TempDir cwd: Path,
+    @PythonBinaryPath python: PythonBinary,
+  ): Unit = timeoutRunBlocking(5.minutes) {
     val service = projectFixture.get().service<ProcessOutputControllerService>()
-    val parentContextUuid = TraceContextUuid("test-parent-context")
-    val parentContext = TraceContextDto(
-      title = "context X",
-      timestamp = 1_000L,
-      uuid = parentContextUuid,
-      kind = TraceContextKind.INTERACTIVE,
-      parentUuid = null,
-    )
-    val childContextUuid = TraceContextUuid("test-child-context")
-    val childContext = TraceContextDto(
-      title = "context Y",
-      timestamp = 2_000L,
-      uuid = childContextUuid,
-      kind = TraceContextKind.INTERACTIVE,
-      parentUuid = parentContext.uuid,
-    )
+    val binOnEel = BinOnEel(python, cwd)
+    val parentContext = TraceContext("parent context")
+    val childContext = TraceContext("child context", parentContext)
 
-    val testId = 900_000
-    val process1 = createProcessDto(testId + 1, traceContext = null)
-    val process2 = createProcessDto(testId + 2, traceContext = parentContext.uuid)
-    val process3 = createProcessDto(testId + 3, traceContext = childContext.uuid)
-    val process4 = createProcessDto(testId + 4, traceContext = parentContext.uuid)
+    val process1 = binOnEel.runTestScripFile(cwd)
+    val process2 = binOnEel.runTestScripFile(cwd, context = parentContext)
+    val process3 = binOnEel.runTestScripFile(cwd, context = childContext)
+    val process4 = binOnEel.runTestScripFile(cwd, context = parentContext)
 
     val allowedIds =
       setOf(
-        ProcessTreeNode.Id.Context(parentContextUuid),
-        ProcessTreeNode.Id.Context(childContextUuid),
-        ProcessTreeNode.Id.Process(testId + 1),
-        ProcessTreeNode.Id.Process(testId + 2),
-        ProcessTreeNode.Id.Process(testId + 3),
-        ProcessTreeNode.Id.Process(testId + 4),
+        parentContext.treeId,
+        childContext.treeId,
+        process1.treeId,
+        process2.treeId,
+        process3.treeId,
+        process4.treeId,
       )
 
-    // sending new process events
-    sendNewProcessEvent(process1, emptyList())
-    sendNewProcessEvent(process2, listOf(parentContext))
-    sendNewProcessEvent(process3, listOf(parentContext, childContext))
-    sendNewProcessEvent(process4, listOf(parentContext))
-
     // wait until all processes appear loggedProcesses
-    waitUntil({
-      """
-        expected to see ids: ${setOf(process1.id, process2.id, process3.id, process4.id)}
-        actual ids: ${service.loggedProcesses.value.map { it.data.id }.toSet()}
-      """.trimIndent()
-    }) {
+    waitUntil(
+      {
+        idMismatchDiagMessage(
+          expected = setOf(process1.id, process2.id, process3.id, process4.id),
+          actual = service.loggedProcesses.value.map { it.data.id }
+        )
+      }
+    ) {
       val ids = service.loggedProcesses.value.map { it.data.id }.toSet()
       setOf(process1.id, process2.id, process3.id, process4.id).all { it in ids }
     }
@@ -609,7 +597,7 @@ class ProcessOutputControllerServiceTest {
     waitUntil {
       rootLevel = service.treeSectionState.treeRoot.value
       rootLevel.size >= 2
-      && rootLevel.any { it is ProcessTreeNode.Context && it.uuid == parentContext.uuid }
+      && rootLevel.any { it is ProcessTreeNode.Context && it.uuid.uuid == parentContext.uuid.toString() }
       && rootLevel.any { it is ProcessTreeNode.Process && it.loggedProcess.data.id == process1.id }
     }
 
@@ -619,7 +607,7 @@ class ProcessOutputControllerServiceTest {
     assertEquals(2, top.size)
     val parentContextNode = top[0] as ProcessTreeNode.Context
     val process1Node = top[1] as ProcessTreeNode.Process
-    assertEquals(parentContext.uuid, parentContextNode.uuid)
+    assertEquals(parentContext.uuid.toString(), parentContextNode.uuid.uuid)
     assertEquals(process1.id, process1Node.loggedProcess.data.id)
 
     // parentContext's children: process4, childContext, process2
@@ -627,7 +615,7 @@ class ProcessOutputControllerServiceTest {
     assertEquals(3, parentContextChildren.size)
     assertEquals(process4.id, (parentContextChildren[0] as ProcessTreeNode.Process).loggedProcess.data.id)
     val childContextNode = parentContextChildren[1] as ProcessTreeNode.Context
-    assertEquals(childContext.uuid, childContextNode.uuid)
+    assertEquals(childContext.uuid.toString(), childContextNode.uuid.uuid)
     assertEquals(process2.id, (parentContextChildren[2] as ProcessTreeNode.Process).loggedProcess.data.id)
 
     // childContext's children: process3
@@ -637,32 +625,26 @@ class ProcessOutputControllerServiceTest {
   }
 
   @Test
-  fun `collectTopicEvents applies search query to tree`(): Unit = timeoutRunBlocking(5.minutes) {
+  fun `collectTopicEvents applies search query to tree`(
+    @TempDir cwd: Path,
+    @PythonBinaryPath python: PythonBinary,
+  ): Unit = timeoutRunBlocking(5.minutes) {
     val service = projectFixture.get().service<ProcessOutputControllerService>()
+    val binOnEel = BinOnEel(python, cwd)
+    val pythonProcess = binOnEel.runTestScripFile(cwd, "testpython.py", "print('test python')")
+    val nodeProcess = binOnEel.runTestScripFile(cwd, "testnode.py", "print('test node')")
+    val cargoProcess = binOnEel.runTestScripFile(cwd, "testcargo.py", "print('test cargo')")
 
-    val testId = 800_000
-    val pythonProcess = createProcessDto(testId + 1, listOf("bin", "python"))
-    val nodeProcess = createProcessDto(testId + 2, listOf("bin", "node"))
-    val cargoProcess = createProcessDto(testId + 3, listOf("bin", "cargo"))
+    val allowedIds = setOf(pythonProcess.treeId, nodeProcess.treeId, cargoProcess.treeId)
 
-    val allowedIds =
-      setOf(
-        ProcessTreeNode.Id.Process(pythonProcess.id),
-        ProcessTreeNode.Id.Process(nodeProcess.id),
-        ProcessTreeNode.Id.Process(cargoProcess.id),
-      )
-
-    // sending new process events
-    sendNewProcessEvent(pythonProcess, emptyList())
-    sendNewProcessEvent(nodeProcess, emptyList())
-    sendNewProcessEvent(cargoProcess, emptyList())
-
-    waitUntil({
-      """
-        expected to see ids: ${setOf(pythonProcess.id, nodeProcess.id, cargoProcess.id)}
-        actual ids: ${service.loggedProcesses.value.map { it.data.id }.toSet()}
-      """.trimIndent()
-    }) {
+    waitUntil(
+      {
+        idMismatchDiagMessage(
+          expected = setOf(pythonProcess.id, nodeProcess.id, cargoProcess.id),
+          actual = service.loggedProcesses.value.map { it.data.id }
+        )
+      }
+    ) {
       val ids = service.loggedProcesses.value.map { it.data.id }.toSet()
       setOf(pythonProcess.id, nodeProcess.id, cargoProcess.id).all { it in ids }
     }
@@ -676,20 +658,27 @@ class ProcessOutputControllerServiceTest {
     }
 
     // default empty search: all three processes are visible
-    waitUntil {
+    waitUntil(
+      {
+        idMismatchDiagMessage(
+          expected = setOf(pythonProcess.id, nodeProcess.id, cargoProcess.id),
+          actual = processIdsInTree()
+        )
+      }
+    ) {
       processIdsInTree() == setOf(pythonProcess.id, nodeProcess.id, cargoProcess.id)
     }
 
     // "python" matches only the python exe
-    service.search("python")
+    service.search("testpython")
     waitUntil { processIdsInTree() == setOf(pythonProcess.id) }
 
     // search is case-insensitive: "NODE" still matches the node exe
-    service.search("NODE")
+    service.search("TESTNODE")
     waitUntil { processIdsInTree() == setOf(nodeProcess.id) }
 
-    // substring match: "arg" is a substring of "cargo" only
-    service.search("arg")
+    // substring match: "estcarg" is a substring of "testcargo" only
+    service.search("estcarg")
     waitUntil { processIdsInTree() == setOf(cargoProcess.id) }
 
     // tree is empty when no matches were found
@@ -704,46 +693,27 @@ class ProcessOutputControllerServiceTest {
   }
 
   @Test
-  fun `collectTopicEvents applies SHOW_BACKGROUND_PROCESSES filter to tree`(): Unit = timeoutRunBlocking(5.minutes) {
+  fun `collectTopicEvents applies SHOW_BACKGROUND_PROCESSES filter to tree`(
+    @TempDir cwd: Path,
+    @PythonBinaryPath python: PythonBinary,
+  ): Unit = timeoutRunBlocking(5.minutes) {
     val service = projectFixture.get().service<ProcessOutputControllerService>()
+    val binOnEel = BinOnEel(python, cwd)
+    val backgroundContext = NON_INTERACTIVE_ROOT_TRACE_CONTEXT
+    val interactiveContext = TraceContext("interactive context")
 
-    val backgroundContextUuid = TraceContextUuid("test-background-context")
-    val backgroundContext = TraceContextDto(
-      title = "background context",
-      timestamp = 1_000L,
-      uuid = backgroundContextUuid,
-      kind = TraceContextKind.NON_INTERACTIVE,
-      parentUuid = null,
-    )
-    val interactiveContextUuid = TraceContextUuid("test-interactive-context")
-    val interactiveContext = TraceContextDto(
-      title = "interactive context",
-      timestamp = 2_000L,
-      uuid = interactiveContextUuid,
-      kind = TraceContextKind.INTERACTIVE,
-      parentUuid = null,
-    )
+    val backgroundProcess = binOnEel.runTestScripFile(cwd, context = backgroundContext)
+    val interactiveProcess = binOnEel.runTestScripFile(cwd, context = interactiveContext)
+    val allowedIds = setOf(interactiveContext.treeId, backgroundProcess.treeId) //
 
-    val testId = 700_000
-    val backgroundProcess = createProcessDto(testId + 1, traceContext = backgroundContextUuid)
-    val interactiveProcess = createProcessDto(testId + 2, traceContext = interactiveContextUuid)
-
-    val allowedIds =
-      setOf(
-        ProcessTreeNode.Id.Context(interactiveContextUuid),
-        ProcessTreeNode.Id.Process(backgroundProcess.id),
-      )
-
-    // sending new process events
-    sendNewProcessEvent(backgroundProcess, listOf(backgroundContext))
-    sendNewProcessEvent(interactiveProcess, listOf(interactiveContext))
-
-    waitUntil({
-      """
-        expected to see ids: ${setOf(backgroundProcess.id, interactiveProcess.id)}
-        actual ids: ${service.loggedProcesses.value.map { it.data.id }.toSet()}
-      """.trimIndent()
-    }) {
+    waitUntil(
+      {
+        idMismatchDiagMessage(
+          expected = setOf(backgroundProcess.id, interactiveProcess.id),
+          actual = service.loggedProcesses.value.map { it.data.id }
+        )
+      }
+    ) {
       val ids = service.loggedProcesses.value.map { it.data.id }.toSet()
       setOf(backgroundProcess.id, interactiveProcess.id).all { it in ids }
     }
@@ -757,22 +727,19 @@ class ProcessOutputControllerServiceTest {
 
     // by default, background processes are hidden
     waitUntil {
-      nodeIdsInTree() == setOf(ProcessTreeNode.Id.Context(interactiveContextUuid))
+      nodeIdsInTree() == setOf(interactiveContext.treeId)
     }
 
     // enabling the filter makes background processes visible
     service.treeSectionState.filters[TreeFilter.Item.SHOW_BACKGROUND_PROCESSES] = true
     waitUntil {
-      nodeIdsInTree() == setOf(
-        ProcessTreeNode.Id.Context(interactiveContextUuid),
-        ProcessTreeNode.Id.Process(backgroundProcess.id),
-      )
+      nodeIdsInTree() == setOf(interactiveContext.treeId, backgroundProcess.treeId)
     }
 
     // disabling it again hides the background process
     service.treeSectionState.filters[TreeFilter.Item.SHOW_BACKGROUND_PROCESSES] = false
     waitUntil {
-      nodeIdsInTree() == setOf(ProcessTreeNode.Id.Context(interactiveContextUuid))
+      nodeIdsInTree() == setOf(interactiveContext.treeId)
     }
   }
 
@@ -816,8 +783,8 @@ class ProcessOutputControllerServiceTest {
       }
     }
 
-    suspend fun runBin(binOnEel: BinOnEel, args: Args): LoggedProcessDto =
-      withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+    suspend fun runBin(binOnEel: BinOnEel, args: Args, context: TraceContext? = NON_INTERACTIVE_ROOT_TRACE_CONTEXT): LoggedProcessDto =
+      withContext(context ?: currentCoroutineContext()) {
         val process = ExecService().executeGetProcess(
           binOnEel,
           args,
@@ -839,6 +806,25 @@ class ProcessOutputControllerServiceTest {
 
         process.loggedProcess
       }
+
+    private suspend fun BinOnEel.runTestScripFile(
+      cwd: Path,
+      filename: String = MAIN_PY,
+      fileContent: String = "print('hello, world')",
+      context: TraceContext? = null,
+    ): LoggedProcessDto {
+      val filePath = cwd.resolve(filename)
+
+      edtWriteAction {
+        Files.deleteIfExists(filePath)
+
+        val file = Files.createFile(filePath)
+
+        file.toFile().writeText(fileContent)
+      }
+
+      return runBin(this, Args(filename), context)
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun exitInfoCollectorCoroutinesCount(): Int =
@@ -878,25 +864,18 @@ class ProcessOutputControllerServiceTest {
       return event
     }
 
-    fun createProcessDto(
-      id: Int,
-      exeParts: List<String> = listOf("bin", "exe"),
-      traceContext: TraceContextUuid? = null,
-    ): LoggedProcessDto =
-      LoggedProcessDto(
-        weight = null,
-        traceContextUuid = traceContext,
-        pid = null,
-        startedAt = Instant.fromEpochMilliseconds(0),
-        cwd = null,
-        exe = ExecutableDto(
-          path = exeParts.joinToString("/"),
-          parts = exeParts,
-        ),
-        args = emptyList(),
-        env = emptyMap(),
-        target = "",
-        id = id,
-      )
+    private fun idMismatchDiagMessage(expected: Collection<Int>, actual: Collection<Int>) =
+      """
+        expected to see ids: ${expected}
+        actual ids: ${actual}
+      """.trimIndent()
+
+    private val TraceContext.treeId
+      get() =
+        ProcessTreeNode.Id.Context(TraceContextUuid(uuid.toString()))
+
+    private val LoggedProcessDto.treeId
+      get() =
+        ProcessTreeNode.Id.Process(id)
   }
 }
