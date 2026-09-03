@@ -3,8 +3,8 @@
 
 package org.jetbrains.intellij.build.dev
 
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import java.nio.file.Files
 import java.nio.file.Path
@@ -63,15 +63,13 @@ fun materializeProjectModelTree(manifest: Path, target: Path): Path {
   // a project model is tens of thousands of small files, and copying them one after another costs as much as the assembly
   // that follows
   runBlockingOnVirtualThreads {
-    for (chunk in rows.chunked(512)) {
-      launch {
-        for (row in chunk) {
-          when (row.action) {
-            // a missing source fails here rather than quietly producing a thinner project model
-            "copy" -> Path.of(row.source).copyTo(row.destination)
-            "create" -> Files.createFile(row.destination)
-            else -> error("Unknown project model manifest action '${row.action}' for '${row.destination}'")
-          }
+    rows.chunked(512).forEachConcurrent { chunk ->
+      for (row in chunk) {
+        when (row.action) {
+          // a missing source fails here rather than quietly producing a thinner project model
+          "copy" -> Path.of(row.source).copyTo(row.destination)
+          "create" -> Files.createFile(row.destination)
+          else -> error("Unknown project model manifest action '${row.action}' for '${row.destination}'")
         }
       }
     }

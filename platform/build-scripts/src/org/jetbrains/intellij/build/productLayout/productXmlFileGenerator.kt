@@ -2,11 +2,9 @@
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.pluginGraph.TargetName
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.dev.createProductProperties
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import org.jetbrains.intellij.build.productLayout.discovery.PRODUCT_REGISTRY_PATH
@@ -27,28 +25,24 @@ suspend fun discoverAllProducts(projectRoot: Path, outputProvider: ModuleOutputP
   val jsonContent = Files.readString(projectRoot.resolve(PRODUCT_REGISTRY_PATH))
   val productToConfiguration = Json.decodeFromString<ProductConfigurationRegistry>(jsonContent).products
 
-  return coroutineScope {
-    productToConfiguration.map { (productName, productConfig) ->
-      async {
-        val productProperties = createProductProperties(
-          productConfiguration = productConfig,
-          outputProvider = outputProvider,
-          projectDir = projectRoot,
-          platformPrefix = productName,
-        )
-        DiscoveredProduct(
-          name = productName,
-          config = productConfig,
-          properties = productProperties,
-          spec = productProperties.getProductContentDescriptor(),
-          pluginXmlPath = productConfig.pluginXmlPath,
-          bundledModuleSetPluginModules = productProperties.productLayout.bundledPluginModules
-            .asSequence()
-            .filter(::isModuleSetPluginModuleName)
-            .map { TargetName(it) }
-            .toList(),
-        )
-      }
-    }.awaitAll()
+  return productToConfiguration.entries.mapConcurrent { (productName, productConfig) ->
+    val productProperties = createProductProperties(
+      productConfiguration = productConfig,
+      outputProvider = outputProvider,
+      projectDir = projectRoot,
+      platformPrefix = productName,
+    )
+    DiscoveredProduct(
+      name = productName,
+      config = productConfig,
+      properties = productProperties,
+      spec = productProperties.getProductContentDescriptor(),
+      pluginXmlPath = productConfig.pluginXmlPath,
+      bundledModuleSetPluginModules = productProperties.productLayout.bundledPluginModules
+        .asSequence()
+        .filter(::isModuleSetPluginModuleName)
+        .map { TargetName(it) }
+        .toList(),
+    )
   }
 }

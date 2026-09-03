@@ -4,8 +4,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
 import io.opentelemetry.api.trace.SpanBuilder
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
@@ -74,25 +72,19 @@ interface SuspendingLazy<T> {
  * A cancelled caller stops waiting, and the computation continues for the other callers. Successful values and ordinary
  * failures are reused.
  */
-fun <T> suspendingLazy(coroutineName: String, initializer: suspend CoroutineScope.() -> T): SuspendingLazy<T> {
+fun <T> suspendingLazy(coroutineName: String, initializer: suspend () -> T): SuspendingLazy<T> {
   return AsyncCacheBackedSuspendingLazy(coroutineName = coroutineName, initializer = initializer)
 }
 
 private class AsyncCacheBackedSuspendingLazy<T>(
   coroutineName: String,
-  private val initializer: suspend CoroutineScope.() -> T,
+  private val initializer: suspend () -> T,
 ) : SuspendingLazy<T> {
   private val key = NamedSuspendingLazyKey(coroutineName)
   private val cache = AsyncCache<NamedSuspendingLazyKey, T>()
 
-  override suspend fun await(): T {
-    // the fork of the cache carries the name of the lazy as its coroutine name
-    return cache.getOrPut(key) {
-      coroutineScope {
-        initializer(this)
-      }
-    }
-  }
+  /** The fork of the cache carries the name of the lazy as its coroutine name. */
+  override suspend fun await(): T = cache.getOrPut(key, initializer)
 }
 
 private class NamedSuspendingLazyKey(private val name: String) {
