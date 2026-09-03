@@ -160,8 +160,9 @@ class BatchSpanProcessor(
     }
   }
 
-  suspend fun scheduleFlush() {
-    flushRequested.send(FlushRequest(exportOnly = true))
+  /** The channel is unlimited, so the send always succeeds at once and the caller needs no coroutine. */
+  fun scheduleFlush() {
+    flushRequested.trySend(FlushRequest(exportOnly = true))
   }
 
   override fun forceFlush(): CompletableResultCode {

@@ -82,31 +82,33 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
      * Wraps a [span] into a TeamCity block linked to a parent flow of a parent span via a new subflow.
      */
     @ApiStatus.Internal
-    suspend fun <T> withBlock(span: Span, operation: suspend () -> T): T {
-      if (!TeamCityHelper.isUnderTeamCity || span !is ReadableSpan) {
-        return operation()
-      }
+    inline fun <T> withBlock(span: Span, operation: () -> T): T {
+      // the method is inlined - avoid using `operation` more than once
+      val readableSpan = if (TeamCityHelper.isUnderTeamCity) span as? ReadableSpan else null
 
       // no parent attribute in [ServiceMessageTypes.BLOCK_OPENED], start a new subflow to link it to the parent flow (if any)
-      val parentFlowId = span.parentSpanContext?.takeIf { it.isValid }?.spanId
+      val parentFlowId = readableSpan?.parentSpanContext?.takeIf { it.isValid }?.spanId
       if (parentFlowId != null) {
-        val attributes = java.util.Map.of("parent", parentFlowId)
-        println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.FLOW_STARTED, attributes = attributes))
+        println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.FLOW_STARTED, attributes = java.util.Map.of("parent", parentFlowId)))
       }
 
-      val attributes = java.util.Map.of("name", span.name)
-      println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.BLOCK_OPENED, attributes = attributes))
+      val attributes = readableSpan?.let { java.util.Map.of("name", it.name) }
+      if (attributes != null) {
+        println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.BLOCK_OPENED, attributes = attributes))
+      }
       try {
         return operation()
       }
       finally {
-        println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.BLOCK_CLOSED, attributes = attributes))
+        if (attributes != null) {
+          println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.BLOCK_CLOSED, attributes = attributes))
 
-        if (parentFlowId != null) {
-          println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.FLOW_FINSIHED, attributes = java.util.Map.of()))
+          if (parentFlowId != null) {
+            println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.FLOW_FINSIHED, attributes = java.util.Map.of()))
+          }
+
+          TraceManager.scheduleExportPendingSpans()
         }
-
-        TraceManager.scheduleExportPendingSpans()
       }
     }
   }

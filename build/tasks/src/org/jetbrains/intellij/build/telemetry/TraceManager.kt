@@ -141,7 +141,7 @@ object TraceManager {
     batchSpanProcessor?.forceShutdown()
   }
 
-  suspend fun scheduleExportPendingSpans() {
+  fun scheduleExportPendingSpans() {
     if (isEnabled) {
       batchSpanProcessor?.scheduleFlush()
     }

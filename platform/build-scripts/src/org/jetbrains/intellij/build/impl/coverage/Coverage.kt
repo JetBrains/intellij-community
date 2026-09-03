@@ -10,7 +10,7 @@ import com.intellij.util.io.Compressor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
-import org.jetbrains.intellij.build.telemetry.block
+import org.jetbrains.intellij.build.telemetry.blockingBlock
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -34,9 +34,9 @@ interface Coverage {
 
   fun enable(jvmOptions: MutableList<String>, systemProperties: MutableMap<String, String>)
 
-  suspend fun generateReport()
+  fun generateReport()
 
-  suspend fun aggregateAndReport(dataToMerge: List<Path>)
+  fun aggregateAndReport(dataToMerge: List<Path>)
 }
 
 @OptIn(ExperimentalPathApi::class)
@@ -196,18 +196,18 @@ internal class CoverageImpl(
     systemProperties[ErrorReporter.LOG_LEVEL_SYSTEM_PROPERTY] = "info"
   }
 
-  override suspend fun generateReport() {
-    block("Generating a coverage report") {
+  override fun generateReport() {
+    blockingBlock("Generating a coverage report") {
       generateReport(outputRoots = outputRoots, sourceRoots = sourceRoots)
       publishReport()
     }
   }
 
-  override suspend fun aggregateAndReport(dataToMerge: List<Path>) {
+  override fun aggregateAndReport(dataToMerge: List<Path>) {
     require(dataToMerge.any()) {
       "No coverage data files to merge"
     }
-    block("Merging coverage data files") {
+    blockingBlock("Merging coverage data files") {
       @Suppress("IO_FILE_USAGE")
       AggregatorApi.merge(
         dataToMerge.map { it.toFile() },
