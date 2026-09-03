@@ -1,16 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.system.NativeAccess;
 import com.intellij.util.system.OS;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
 import kotlin.NotImplementedError;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +93,7 @@ public final class UnixProcessManager {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static int getCurrentProcessId() {
-    return Java8Helper.C_LIB != null ? Java8Helper.C_LIB.getpid() : 0;
+    return CurrentProcess.pid();
   }
 
   /**
@@ -166,14 +164,7 @@ public final class UnixProcessManager {
   }
 
   private static int sendSignalImpl(int pid, int signal) {
-    checkCLib();
-    return Java8Helper.C_LIB.kill(pid, signal);
-  }
-
-  private static void checkCLib() {
-    if (Java8Helper.C_LIB == null) {
-      throw new IllegalStateException("Couldn't load c library, OS: " + OS.CURRENT + ", isUnix: " + (OS.CURRENT != OS.Windows));
-    }
+    return NativeAccess.getInstance().kill(pid, signal);
   }
 
   /** @deprecated iterate over {@link Process#descendants()} */
@@ -207,10 +198,7 @@ public final class UnixProcessManager {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static boolean sendSignalToProcessTree(int processId, int signal) {
-    checkCLib();
-
-    int ourPid = Java8Helper.C_LIB.getpid();
-    return sendSignalToProcessTree(processId, signal, ourPid);
+    return sendSignalToProcessTree(processId, signal, CurrentProcess.pid());
   }
 
   /** @deprecated iterate over {@link Process#descendants()} */
@@ -366,28 +354,5 @@ public final class UnixProcessManager {
       }
       sendSignal(pid, signal);
     }
-  }
-}
-
-final class Java8Helper {
-  interface CLib extends Library {
-    int getpid();
-
-    int kill(int pid, int signal);
-  }
-
-  static final CLib C_LIB;
-
-  static {
-    CLib lib = null;
-    try {
-      if (OS.CURRENT != OS.Windows && JnaLoader.isLoaded()) {
-        lib = Native.load("c", CLib.class);
-      }
-    }
-    catch (Throwable t) {
-      Logger.getInstance(UnixProcessManager.class).warn("Can't load standard library", t);
-    }
-    C_LIB = lib;
   }
 }

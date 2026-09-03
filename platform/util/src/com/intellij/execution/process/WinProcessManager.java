@@ -5,17 +5,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.CurrentJavaVersion;
-import com.intellij.util.ReflectionUtil;
-import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.WinNT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 /// Do not call this class directly - use [OSProcessUtil] or [Process] API instead.
 @ApiStatus.Internal
@@ -30,14 +25,11 @@ public final class WinProcessManager {
   public static int getProcessId(Process process) {
     String processClassName = process.getClass().getName();
     if (processClassName.equals("java.lang.Win32Process") || processClassName.equals("java.lang.ProcessImpl")) {
+      if (CurrentJavaVersion.currentJavaVersion().feature < 9) {
+        throw new IllegalStateException("Java 9 or later is required to get PID from instance of " + process.getClass());
+      }
       try {
-        if (CurrentJavaVersion.currentJavaVersion().feature >= 9) {
-          return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
-        }
-        else {
-          long handle = Objects.requireNonNull(ReflectionUtil.getField(process.getClass(), process, long.class, "handle"));
-          return Kernel32.INSTANCE.GetProcessId(new WinNT.HANDLE(Pointer.createConstant(handle)));
-        }
+        return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
       }
       catch (Throwable t) {
         throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
@@ -51,7 +43,7 @@ public final class WinProcessManager {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static int getCurrentProcessId() {
-    return Kernel32.INSTANCE.GetCurrentProcessId();
+    return CurrentProcess.pid();
   }
 
   public static boolean kill(@NotNull Process process, boolean tree) {
