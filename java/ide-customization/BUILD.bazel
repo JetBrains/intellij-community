@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.ide.customization` start
@@ -70,6 +71,17 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//fleet/rpc:rpc_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "ide-customization_plugin",
+    descriptor_module = ":ide-customization",
+    content_modules = [
+        # do not sort,
+        "//java/ide-customization/training",
+        "//java/ide-customization/backend",
+    ],
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.java.ide.customization` end
 

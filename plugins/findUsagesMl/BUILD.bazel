@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -70,6 +71,12 @@ jvm_library(
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "findUsagesMl_plugin",
+    descriptor_module = ":findUsagesMl",
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.findUsagesMl` end
 

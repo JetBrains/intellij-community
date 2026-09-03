@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.extendedToolWindowsUi` start
@@ -26,6 +27,13 @@ jvm_library(
     module_name = "intellij.extendedToolWindowsUi",
     visibility = ["//visibility:public"],
     runtime_deps = [":extendedToolWindowsUi"],
+)
+
+ij_plugin(
+    name = "extendedToolWindowsUi_plugin",
+    descriptor_module = ":extendedToolWindowsUi",
+    content_modules = ["//plugins/extended-toolwindows-ui/frontend"],
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.extendedToolWindowsUi` end
 

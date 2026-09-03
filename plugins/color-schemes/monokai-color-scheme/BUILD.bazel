@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.color.scheme.monokai` start
@@ -30,6 +31,12 @@ jvm_library(
         ":color-scheme-monokai",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "color-scheme-monokai_plugin",
+    descriptor_module = ":color-scheme-monokai",
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.color.scheme.monokai` end
 

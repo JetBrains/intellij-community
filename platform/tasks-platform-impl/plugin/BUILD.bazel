@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.tasks.plugin` start
@@ -26,6 +27,19 @@ jvm_library(
     module_name = "intellij.platform.tasks.plugin",
     visibility = ["//visibility:public"],
     runtime_deps = [":plugin"],
+)
+
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//platform/tasks-platform-api:tasks",
+        "//platform/tasks-platform-impl:tasks-impl",
+        "//platform/tasks-platform-impl/tasks.impl.bookmarks",
+        "//platform/tasks-platform-impl/tasks.impl.debugger",
+    ],
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.platform.tasks.plugin` end
 

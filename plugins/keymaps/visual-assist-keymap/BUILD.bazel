@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.keymap.visualAssist` start
@@ -30,6 +31,12 @@ jvm_library(
         ":keymap-visualAssist",
         "//platform/platform-impl:ide-impl_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "keymap-visualAssist_plugin",
+    descriptor_module = ":keymap-visualAssist",
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.keymap.visualAssist` end
 

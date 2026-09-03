@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -83,6 +84,12 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/lang-api:lang_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "remote-control_plugin",
+    descriptor_module = ":remote-control",
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.remoteControl` end
 

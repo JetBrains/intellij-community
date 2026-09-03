@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.misc.plugin` start
@@ -26,6 +27,12 @@ jvm_library(
     module_name = "intellij.libraries.misc.plugin",
     visibility = ["//visibility:public"],
     runtime_deps = [":plugin"],
+)
+
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.libraries.misc.plugin` end
 

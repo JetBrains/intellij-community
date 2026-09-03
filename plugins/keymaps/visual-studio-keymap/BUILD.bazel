@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.keymap.visualStudio` start
@@ -31,6 +32,12 @@ jvm_library(
         ":keymap-visualStudio",
         "//platform/platform-impl:ide-impl_test_lib",
     ],
+)
+
+ij_plugin(
+    name = "keymap-visualStudio_plugin",
+    descriptor_module = ":keymap-visualStudio",
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.keymap.visualStudio` end
 
