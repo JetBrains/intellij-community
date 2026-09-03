@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl;
 
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,6 +48,7 @@ public class PsiToDocumentSynchronizer {
   private final PsiDocumentManagerEx myPsiDocumentManager;
   private final MessageBus myBus;
   private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new ConcurrentHashMap<>();
+  private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMapForExclusiveModification = new ConcurrentHashMap<>();
 
   private volatile Document mySyncDocument;
 
@@ -58,8 +60,13 @@ public class PsiToDocumentSynchronizer {
   }
 
   public @Nullable DocumentChangeTransaction getTransaction(@NotNull Document document) {
-    Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(document);
+    Pair<DocumentChangeTransaction, Integer> pair = getTransactionsMap().get(document);
     return Pair.getFirst(pair);
+  }
+
+  // todo: once the proper split of document gets merged, we need to unify remove the duplicating map, and instead have only a single map from a lower-level document
+  private Map<Document, Pair<DocumentChangeTransaction, Integer>> getTransactionsMap() {
+    return InternalPsiVersioning.isInForkedTimeline() ? myTransactionsMapForExclusiveModification : myTransactionsMap;
   }
 
   public boolean isInSynchronization(@NotNull Document document) {
@@ -69,6 +76,7 @@ public class PsiToDocumentSynchronizer {
   @TestOnly
   void cleanupForNextTest() {
     myTransactionsMap.clear();
+    myTransactionsMapForExclusiveModification.clear();
     mySyncDocument = null;
   }
 
@@ -106,7 +114,7 @@ public class PsiToDocumentSynchronizer {
 
     performAtomically(psiFile, () -> syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event));
 
-    boolean insideTransaction = myTransactionsMap.containsKey(document);
+    boolean insideTransaction = getTransactionsMap().containsKey(document);
     if (!insideTransaction) {
       document.setModificationStamp(psiFile.getViewProvider().getModificationStamp());
     }
@@ -182,7 +190,7 @@ public class PsiToDocumentSynchronizer {
 
   public void startTransaction(@NotNull Project project, @NotNull Document doc, @NotNull PsiFile scope) {
     LOG.assertTrue(!project.isDisposed());
-    Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
+    Pair<DocumentChangeTransaction, Integer> pair = getTransactionsMap().get(doc);
     Pair<DocumentChangeTransaction, Integer> prev = pair;
     if (pair == null) {
       PsiFile psiFile = scope.getContainingFile();
@@ -194,7 +202,7 @@ public class PsiToDocumentSynchronizer {
     else {
       pair = new Pair<>(pair.getFirst(), pair.getSecond().intValue() + 1);
     }
-    LOG.assertTrue(myTransactionsMap.put(doc, pair) == prev);
+    LOG.assertTrue(getTransactionsMap().put(doc, pair) == prev);
   }
 
   public boolean commitTransaction(@NotNull Document document){
@@ -243,20 +251,20 @@ public class PsiToDocumentSynchronizer {
   }
 
   private @Nullable DocumentChangeTransaction removeTransaction(@NotNull Document doc) {
-    Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
+    Pair<DocumentChangeTransaction, Integer> pair = getTransactionsMap().get(doc);
     if(pair == null) return null;
     int nestedCount = pair.getSecond().intValue();
     if(nestedCount > 0){
       pair = Pair.create(pair.getFirst(), nestedCount - 1);
-      myTransactionsMap.put(doc, pair);
+      getTransactionsMap().put(doc, pair);
       return null;
     }
-    myTransactionsMap.remove(doc);
+    getTransactionsMap().remove(doc);
     return pair.getFirst();
   }
 
   public boolean isDocumentAffectedByTransactions(@NotNull Document document) {
-    return myTransactionsMap.containsKey(document);
+    return getTransactionsMap().containsKey(document);
   }
 
   @ApiStatus.Internal
