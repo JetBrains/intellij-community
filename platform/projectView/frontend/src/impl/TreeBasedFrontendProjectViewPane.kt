@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.frontend.impl
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.SelectInTarget
 import com.intellij.ide.ui.UISettings
@@ -12,7 +13,6 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
