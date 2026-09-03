@@ -1,8 +1,8 @@
 // COMPILER_ARGUMENTS: -Xcompanion-blocks
 
 class Foo {
-    <caret>companion {
-        fun bar() {
+    companion {
+        <caret>fun bar() {
         }
     }
 }

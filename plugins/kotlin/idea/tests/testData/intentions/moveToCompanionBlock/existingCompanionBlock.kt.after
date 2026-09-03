@@ -5,8 +5,8 @@ class Foo {
         fun existing() {
         }
 
-        fun bar() {
+        <caret>fun bar() {
         }
     }
 
-<caret>}
+}

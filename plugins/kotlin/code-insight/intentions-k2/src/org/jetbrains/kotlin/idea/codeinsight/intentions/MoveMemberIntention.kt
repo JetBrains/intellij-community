@@ -58,6 +58,10 @@ internal abstract class MoveMemberIntention(textGetter: Supplier<@IntentionName 
             }
 
             override fun openFilesAfterMoving(movedElements: List<SmartPsiElementPointer<KtNamedDeclaration>>) {
+                movedElements.singleOrNull()?.element?.takeIf { it.isValid }?.let { movedElement ->
+                    editor?.takeIf { !it.isDisposed }?.caretModel?.moveToOffset(movedElement.startOffset)
+                }
+
                 if (declarationWithAddedParameters?.isValid != true) return
                 declarationWithAddedParameters.invokeRenameOnFirstParameter(editor)
             }

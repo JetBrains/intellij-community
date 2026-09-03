@@ -1,7 +1,7 @@
 // COMPILER_ARGUMENTS: -Xcompanion-blocks
 
 class Foo {
-    <caret>companion {
-        val bar: Int = 1
+    companion {
+        <caret>val bar: Int = 1
     }
 }

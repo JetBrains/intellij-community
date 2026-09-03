@@ -3,7 +3,7 @@
 // K2_AFTER_ERROR: MUST_BE_INITIALIZED
 
 class Foo {
-    <caret>companion {
-        val bar: Int =
+    companion {
+        <caret>val bar: Int =
     }
 }

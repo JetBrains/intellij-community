@@ -5,11 +5,11 @@ class Foo {
         fun foo() {
         }
 
-        fun bar() {
+        <caret>fun bar() {
         }
     }
 
-    <caret>companion {
+    companion {
         fun baz() {
         }
     }
