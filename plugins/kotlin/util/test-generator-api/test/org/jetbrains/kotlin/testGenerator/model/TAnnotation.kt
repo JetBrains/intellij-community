@@ -5,12 +5,15 @@ sealed class TAnnotationValue {
     companion object {
         fun from(value: Any): TAnnotationValue {
             return when (value) {
+                is TAnnotationValue -> value
                 is String -> StringValue(value)
                 is Class<*> -> ClassValue(value)
                 is Enum<*> -> EnumValue(value)
                 else -> error("Unexpected annotation value: $value")
             }
         }
+
+        fun named(name: String, value: Any): TAnnotationValue = NamedValue(name, from(value))
     }
 
     abstract fun render(): String
@@ -25,6 +28,10 @@ sealed class TAnnotationValue {
 
     class EnumValue(private val value: Enum<*>): TAnnotationValue() {
         override fun render() = value.name
+    }
+
+    class NamedValue(private val name: String, private val value: TAnnotationValue): TAnnotationValue() {
+        override fun render() = "$name = ${value.render()}"
     }
 }
 

@@ -27,6 +27,7 @@ data class TModel(
     val ignored: Boolean,
     val runWithClass: Class<*>,
     val methodAnnotations: List<TAnnotation>,
+    val methodAnnotationsByTestDataPath: Map<String, List<TAnnotation>>,
     val setUpStatements: List<String>,
 )
 
@@ -83,9 +84,11 @@ fun MutableTSuite.model(
     bucketSize: Int = 20,
     runWithClass: Class<*> = JUnit3RunnerWithInners::class.java,
     methodAnnotations: List<TAnnotation> = emptyList(),
+    methodAnnotationsByTestDataPath: Map<String, List<TAnnotation>> = emptyMap(),
     setUpStatements: List<String> = emptyList()
 ) {
     methodAnnotations.forEach { imports += it.className }
+    methodAnnotationsByTestDataPath.values.flatten().forEach { imports += it.className }
 
     models += TModel(
         path = path,
@@ -102,6 +105,7 @@ fun MutableTSuite.model(
         ignored = isIgnored,
         runWithClass = runWithClass,
         methodAnnotations = methodAnnotations,
+        methodAnnotationsByTestDataPath = methodAnnotationsByTestDataPath,
         setUpStatements = setUpStatements,
     )
 }

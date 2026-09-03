@@ -87,8 +87,7 @@ class SuiteElement private constructor(
                     model.passTestDataPath,
                     file,
                     model.ignored,
-                    model.
-                    methodAnnotations
+                    model.methodAnnotations + model.methodAnnotationsByTestDataPath[path].orEmpty()
                 )
             }
 
