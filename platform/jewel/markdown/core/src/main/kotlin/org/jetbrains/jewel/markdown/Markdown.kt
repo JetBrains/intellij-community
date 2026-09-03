@@ -11,12 +11,14 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineDispatcher
@@ -28,6 +30,7 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.markdown.extensions.markdownBlockRenderer
+import org.jetbrains.jewel.markdown.extensions.markdownMode
 import org.jetbrains.jewel.markdown.extensions.markdownProcessor
 import org.jetbrains.jewel.markdown.extensions.markdownStyling
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
@@ -166,11 +169,17 @@ public fun Markdown(
     onUrlClick: (String) -> Unit = {},
     blockRenderer: MarkdownBlockRenderer = JewelTheme.markdownBlockRenderer,
 ) {
+    val synchronizer = (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
+    val contentPositionModifier =
+        remember(synchronizer) {
+            if (synchronizer == null) Modifier else Modifier.onGloballyPositioned(synchronizer::acceptContentPosition)
+        }
+
     // We keep the existing behavior in terms of where the rawMarkdown semantic is applied to
     MaybeSelectable(selectable, Modifier.thenIf(selectable) { semantics { rawMarkdown = markdown } }) {
         @Suppress("ModifierNotUsedAtRoot") // Intentional
         Column(
-            modifier.thenIf(!selectable) { semantics { rawMarkdown = markdown } },
+            modifier.thenIf(!selectable) { semantics { rawMarkdown = markdown } }.then(contentPositionModifier),
             verticalArrangement = Arrangement.spacedBy(blockRenderer.rootStyling.blockVerticalSpacing),
         ) {
             for (block in markdownBlocks) {
@@ -260,6 +269,9 @@ public fun LazyMarkdown(
     blockRenderer: MarkdownBlockRenderer = JewelTheme.markdownBlockRenderer,
 ) {
     val blockVerticalSpacing = blockRenderer.rootStyling.blockVerticalSpacing
+
+    val synchronizer = (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
+    if (synchronizer != null) SideEffect { synchronizer.acceptItemBlocks(blocks) }
 
     MaybeSelectable(selectable, modifier) {
         LazyColumn(state = state, contentPadding = contentPadding) {
