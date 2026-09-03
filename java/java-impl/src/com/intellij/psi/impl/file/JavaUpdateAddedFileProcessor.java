@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
+import com.intellij.ide.fileTemplates.CreateFromTemplateHandler;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
@@ -15,6 +16,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Maxim.Mossienko
@@ -23,6 +25,18 @@ public final class JavaUpdateAddedFileProcessor extends UpdateAddedFileProcessor
   @Override
   public boolean canProcessElement(final @NotNull PsiFile file) {
     return file instanceof PsiClassOwner && !JavaProjectRootsUtil.isOutsideJavaSourceRoot(file);
+  }
+
+  /**
+   * {@link #update} only sets the package of the file, so a reference changes its meaning only when the original names
+   * another package.
+   *
+   * <p>A file template renders the package of the target directory, so the package does not change. The file also has
+   * no earlier reference target that a reader expects to survive. See IDEA-390207.</p>
+   */
+  @Override
+  public boolean mustKeepReferences(@NotNull PsiFile element, @Nullable PsiFile originalElement) {
+    return originalElement == null || originalElement.getUserData(CreateFromTemplateHandler.CREATED_FROM_TEMPLATE) == null;
   }
 
   @Override

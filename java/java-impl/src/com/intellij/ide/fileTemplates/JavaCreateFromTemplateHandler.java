@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -52,6 +52,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
       highest = implicitClassesMinimumLevel;
     }
     psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, highest);
+    psiFile.putUserData(CREATED_FROM_TEMPLATE, Boolean.TRUE);
 
     if (!(psiFile instanceof PsiJavaFile psiJavaFile)){
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.file;
 
@@ -23,6 +23,20 @@ public abstract class UpdateAddedFileProcessor {
 
   public abstract void update(PsiFile element, @Nullable PsiFile originalElement) throws IncorrectOperationException;
 
+  /**
+   * Tells whether the added file must keep the reference targets that it had before {@link #update}.
+   *
+   * <p>An update can change the package of the file, and that changes what a short reference resolves to. A
+   * {@code true} makes {@link #updateAddedFiles} record the target of every reference before the update and restore it
+   * afterwards, through {@link ChangeUtil#encodeInformation} and {@link ChangeUtil#decodeInformation}. That round trip
+   * resolves every reference of the file, so it is expensive.</p>
+   *
+   * <p>Answer {@code false} when the update cannot change what a reference means.</p>
+   */
+  public boolean mustKeepReferences(@NotNull PsiFile element, @Nullable PsiFile originalElement) {
+    return true;
+  }
+
   public static @Nullable UpdateAddedFileProcessor forElement(@NotNull PsiFile element) {
     for(UpdateAddedFileProcessor processor: EP_NAME.getExtensionList()) {
       if (processor.canProcessElement(element)) {
@@ -38,7 +52,8 @@ public abstract class UpdateAddedFileProcessor {
       PsiFile original = iterator.hasNext() ? iterator.next() : null;
       UpdateAddedFileProcessor processor = forElement(copyPsi);
       if (processor != null) {
-        TreeElement tree = (TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi);
+        TreeElement tree =
+          processor.mustKeepReferences(copyPsi, original) ? (TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi) : null;
         if (tree != null) {
           ChangeUtil.encodeInformation(tree);
         }

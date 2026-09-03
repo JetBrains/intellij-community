@@ -1,12 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +22,16 @@ import java.util.Map;
  */
 public interface CreateFromTemplateHandler {
   ExtensionPointName<CreateFromTemplateHandler> EP_NAME = ExtensionPointName.create("com.intellij.createFromTemplateHandler");
+
+  /**
+   * Marks the in-memory {@link PsiFile} that a handler made from a template.
+   *
+   * <p>A handler must set the key before it adds the file to a directory. The template renders the package of the
+   * target directory, so the added file needs no update of a reference. A consumer can use the key to skip work that
+   * only a real original file needs.</p>
+   */
+  @ApiStatus.Internal
+  Key<Boolean> CREATED_FROM_TEMPLATE = Key.create("CREATED_FROM_TEMPLATE");
 
   /**
    * @return {@code true} if this handler can handle a given template
