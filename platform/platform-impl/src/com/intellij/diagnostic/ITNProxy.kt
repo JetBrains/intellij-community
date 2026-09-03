@@ -367,7 +367,9 @@ object ITNProxy {
 
       if (errorBean.isAutoReportedByPlatform) {
         append(builder, "report.automatic", "true")
-        append(builder, "report.automatic.source", ExceptionAutoReportUtil.getAutoReportSource(event.throwable))
+        if (event.throwable != null) {
+          append(builder, "report.automatic.source", ExceptionAutoReportUtil.getAutoReportSource(event.throwable))
+        }
 
         ExceptionAutoReportUtil.getAutoReportTag()?.let {
           append(builder, "report.automatic.tag", it)
