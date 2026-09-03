@@ -3,15 +3,25 @@ package git4idea.actions.addCommit
 
 import com.intellij.dvcs.push.ui.VcsPushDialog
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitStandardRemoteBranch
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.file
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
+import git4idea.test.prepareRemoteRepo
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger
 
-class GitAddCommitToRemoteBranchOperationTest : GitSingleRepoTest() {
-  override fun hasRemoteGitOperation() = true
+@TestApplication
+class GitAddCommitToRemoteBranchOperationTest {
+  private val fixture = gitSingleRepoContextFixture(hasRemoteGitOperation = true)
+  private val context: GitSingleRepoContext get() = fixture.get()
 
-  fun `test cherry-pick single commit to remote branch`() {
+  @Test
+  fun `test cherry-pick single commit to remote branch`(): Unit = with(context) {
     val remoteBranchBareName = "my-remote-branch"
     val remoteBranchRemoteRef = "refs/heads/$remoteBranchBareName"
 
@@ -21,7 +31,7 @@ class GitAddCommitToRemoteBranchOperationTest : GitSingleRepoTest() {
 
     // Verify ref exists in the remote
     val remoteRefs = git("--git-dir '${remoteRepo}' show-ref --verify --quiet $remoteBranchRemoteRef")
-    assertTrue("Remote branch ref should exist", remoteRefs.isEmpty())
+    assertThat(remoteRefs).describedAs("Remote branch ref should exist").isEmpty()
 
     repo.update()
     val remoteBranch = repo.branches.remoteBranches
@@ -43,13 +53,14 @@ class GitAddCommitToRemoteBranchOperationTest : GitSingleRepoTest() {
     }
 
     val remoteCommitMessages = git("--git-dir '${remoteRepo}' log --pretty=format:%s $remoteBranchRemoteRef")
-    assertEquals("""
+    assertThat(remoteCommitMessages).isEqualTo("""
       Add feature
       initial
-    """.trimIndent(), remoteCommitMessages)
+    """.trimIndent())
   }
 
-  fun `test cherry-pick same commit twice does not create empty commit`() {
+  @Test
+  fun `test cherry-pick same commit twice does not create empty commit`(): Unit = with(context) {
     val remoteBranchBareName = "my-remote-branch"
     val remoteBranchRemoteRef = "refs/heads/$remoteBranchBareName"
 
@@ -74,17 +85,17 @@ class GitAddCommitToRemoteBranchOperationTest : GitSingleRepoTest() {
     runBlocking {
       GitAddCommitToRemoteBranchOperation(project, repo, listOf(middleCommit), remoteBranch, this).execute()
     }
-    assertEquals("Push dialog must be shown on the first run", 1, pushDialogShown.get())
+    assertThat(pushDialogShown.get()).describedAs("Push dialog must be shown on the first run").isEqualTo(1)
 
     runBlocking {
       GitAddCommitToRemoteBranchOperation(project, repo, listOf(middleCommit), remoteBranch, this).execute()
     }
-    assertEquals("Push dialog must not be shown when there is nothing to add", 1, pushDialogShown.get())
+    assertThat(pushDialogShown.get()).describedAs("Push dialog must not be shown when there is nothing to add").isEqualTo(1)
 
     val remoteCommitMessages = git("--git-dir '${remoteRepo}' log --pretty=format:%s $remoteBranchRemoteRef")
-    assertEquals("""
+    assertThat(remoteCommitMessages).isEqualTo("""
       Add feature
       initial
-    """.trimIndent(), remoteCommitMessages)
+    """.trimIndent())
   }
 }
