@@ -37,7 +37,7 @@ class AssignmentVisitor(private val borderOffset: Int,
 
   override fun visitPyWithStatement(node: PyWithStatement) {
     if (node.textOffset > borderOffset) return
-    node.withItems.filter { it.expression != null && it.target != null }.forEach {
+    node.withItems.filter { it.target != null }.forEach {
       fullNames[it.target!!.text] = getResolvedExpression(it.expression).resolvedExpression
     }
     super.visitPyWithStatement(node)

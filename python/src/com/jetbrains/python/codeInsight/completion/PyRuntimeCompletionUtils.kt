@@ -88,7 +88,7 @@ internal object PyRuntimeCompletionUtils {
     if (child.elementType != PyTokenTypes.DOT && child.elementType != PyTokenTypes.LBRACKET && child.elementType != PyTokenTypes.RBRACKET) {
       return when (child) {
         is PyStringLiteralExpression -> {
-          return (child as PyStringLiteralExpressionImpl).stringValue
+          (child as PyStringLiteralExpressionImpl).stringValue
         }
         is PyStringElement -> {
           child.content
@@ -401,8 +401,7 @@ internal object PyRuntimeCompletionUtils {
 
       if (lambdaExpression != null && callInnerReferenceExpression is PyQualifiedExpression) {
         if (lambdaExpression.parameterList.parameters.any { it.name == element.name }) {
-          val callInnerReferencePyExpression = callInnerReferenceExpression as? PyQualifiedExpression
-          return callInnerReferencePyExpression?.let { PyPsiUtils.getFirstQualifier(it) }
+          return callInnerReferenceExpression.let { PyPsiUtils.getFirstQualifier(it) }
         }
       }
     }

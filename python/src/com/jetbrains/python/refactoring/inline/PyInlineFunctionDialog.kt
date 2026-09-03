@@ -45,6 +45,7 @@ public class PyInlineFunctionDialog(project: Project,
     }
     return text
   }
+  @Deprecated("Deprecated in Java")
   override fun getBorderTitle(): String  = PyPsiBundle.message("refactoring.inline.all.border.title")
   override fun getInlineAllText(): String = PyPsiBundle.message("refactoring.inline.all.remove.declaration")
   override fun getKeepTheDeclarationText(): String = PyPsiBundle.message("refactoring.inline.all.keep.declaration")

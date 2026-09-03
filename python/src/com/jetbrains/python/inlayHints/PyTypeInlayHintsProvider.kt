@@ -112,6 +112,7 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
       val typeEvalContext = resolveContext.typeEvalContext
       val function = element.parent as? PyFunction ?: return
       if (element == function.nameIdentifier && function.annotationValue == null && function.typeCommentAnnotation == null) {
+        @Suppress("USELESS_IS_CHECK")  // When guard
         val type = when (val type = typeEvalContext.getReturnType(function)) {
           is Any? if function.isAsync -> (type as? PyClassType)?.typeArguments?.getOrNull(2)
           else -> type

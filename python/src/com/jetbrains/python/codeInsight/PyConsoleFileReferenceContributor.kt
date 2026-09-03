@@ -74,7 +74,7 @@ class PyConsoleFileReferenceContributor : PsiReferenceContributor() {
       val project = file.project
       val module = ModuleUtilCore.findModuleForFile(file)
       val settingsProvider = PyConsoleOptions.getInstance(project).pythonConsoleSettings
-      val workingDirPath = PydevConsoleRunnerFactory.getWorkingDir(project, module, null, settingsProvider) ?: return null
+      val workingDirPath = PydevConsoleRunnerFactory.getWorkingDir(project, module, null, settingsProvider)
       val workingDir =  StandardFileSystems.local().findFileByPath(workingDirPath) ?: return null
       return PsiManager.getInstance(project).findDirectory(workingDir)
     }
