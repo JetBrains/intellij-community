@@ -121,6 +121,14 @@ class ChangeListManagerImpl(
   private var disabledWorkerState: List<LocalChangeListImpl>? = null
 
   private var initialUpdate = true
+
+  /**
+   * Written under [dataLock], and read without a lock.
+   *
+   * Nobody mutates a [VcsException] after it is published here, so a reader always sees a complete exception.
+   * It is not consistent with [worker]; read it under [dataLock] when both are needed.
+   */
+  @Volatile
   private var _updateException: VcsException? = null
 
   @Volatile
@@ -595,9 +603,7 @@ class ChangeListManagerImpl(
           }
         }
 
-        synchronized(dataLock) {
-          if (_updateException != null) break
-        }
+        if (_updateException != null) break
       }
     }
     finally {
@@ -750,10 +756,7 @@ class ChangeListManagerImpl(
       }
     }
 
-  override fun getUpdateException(): VcsException? =
-    synchronized(dataLock) {
-      _updateException
-    }
+  override fun getUpdateException(): VcsException? = _updateException
 
   override fun isFileAffected(file: VirtualFile): Boolean {
     if (!file.isInLocalFileSystem) return false
