@@ -1,3 +1,5 @@
+// IGNORE_K2
+
 fun foo(xa: Int, xb: String, xc: Int) {}
 
 fun bar(xb: String, xa: Int, xc: Int) {

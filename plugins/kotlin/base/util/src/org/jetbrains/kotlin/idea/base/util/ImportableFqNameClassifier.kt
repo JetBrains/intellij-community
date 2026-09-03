@@ -42,7 +42,7 @@ class ImportableFqNameClassifier(
         notToBeUsedInKotlin
     }
 
-    fun classify(fqName: FqName, isPackage: Boolean): Classification {
+    fun classify(fqName: FqName, isPackage: Boolean, packageFqName: FqName = fqName.parent()): Classification {
         if (isPackage) {
             return when {
                 isImportedWithPreciseImport(fqName) -> Classification.preciseImport
@@ -54,7 +54,7 @@ class ImportableFqNameClassifier(
         return when {
             fqName.isJavaClassNotToBeUsedInKotlin() -> Classification.notToBeUsedInKotlin
 
-            fqName.parent() == file.packageFqName -> Classification.fromCurrentPackage
+            packageFqName == file.packageFqName -> Classification.fromCurrentPackage
 
             isImportedByDefault(fqName) -> Classification.defaultImport
 

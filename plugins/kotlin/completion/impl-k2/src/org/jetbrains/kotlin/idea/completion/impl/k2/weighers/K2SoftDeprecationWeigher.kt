@@ -2,8 +2,7 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
-import com.intellij.codeInsight.lookup.WeighingContext
+import com.intellij.codeInsight.lookup.WeighingContext as PlatformWeighingContext
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
@@ -16,22 +15,23 @@ import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesFunctionCall
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.codeInsight.isSoftDeprecatedEnumValuesMethod
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.SoftDeprecationWeigher
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_ENUMS_PACKAGE
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
-internal object K2SoftDeprecationWeigher {
+internal object K2SoftDeprecationWeigher: KotlinLookupElementWeigher(SoftDeprecationWeigher.WEIGHER_ID), KotlinSectionContextWeigher {
 
     private var LookupElement.isSoftDeprecated: Boolean
             by NotNullableUserDataProperty(Key("KOTLIN_SOFT_DEPRECATED"), false)
 
-    context(_: KaSession)
-    fun addWeight(
-        lookupElement: LookupElement,
-        symbol: KaCallableSymbol,
-        languageVersionSettings: LanguageVersionSettings,
-    ) {
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<*>)
+    override fun addWeight(lookupElement: LookupElement, symbolWithOrigin: KtSymbolWithOrigin<*>?) {
+        val symbol = symbolWithOrigin?.symbol as? KaCallableSymbol ?: return
+        val languageVersionSettings = sectionContext.weighingContext.languageVersionSettings
+
         lookupElement.isSoftDeprecated = isLibrarySoftDeprecatedMethod(symbol, languageVersionSettings)
                 || isEnumValuesSoftDeprecatedMethod(symbol, languageVersionSettings)
     }
@@ -67,11 +67,8 @@ internal object K2SoftDeprecationWeigher {
         return isEnumValuesFunctionCall(symbol) && findTopLevelCallables(enumValuesCallable.packageName, enumValuesCallable.callableName).any()
     }
 
-    object Weigher : LookupElementWeigher(SoftDeprecationWeigher.WEIGHER_ID) {
-
-        override fun weigh(
-            element: LookupElement,
-            context: WeighingContext,
-        ): Boolean = element.isSoftDeprecated
-    }
+    override fun weigh(
+        element: LookupElement,
+        context: PlatformWeighingContext,
+    ): Boolean = element.isSoftDeprecated
 }

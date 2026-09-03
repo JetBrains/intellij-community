@@ -2,25 +2,24 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.isDeprecated
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
-internal object DeprecatedWeigher {
-    const val WEIGHER_ID = "kotlin.deprecated"
+internal object DeprecatedWeigher: KotlinLookupElementWeigher("kotlin.deprecated"), KotlinSectionContextWeigher {
+
     private var LookupElement.isDeprecated: Boolean by NotNullableUserDataProperty(Key("KOTLIN_DEPRECATED"), false)
 
     @OptIn(KaExperimentalApi::class)
-    context(_: KaSession)
-    fun addWeight(lookupElement: LookupElement, symbol: KaSymbol) {
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<*>)
+    override fun addWeight(lookupElement: LookupElement, symbolWithOrigin: KtSymbolWithOrigin<*>?) {
+        val symbol = symbolWithOrigin?.symbol ?: return
         lookupElement.isDeprecated = symbol.isDeprecated
     }
 
-    object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): Boolean = element.isDeprecated
-    }
+    override fun weigh(element: LookupElement): Boolean = element.isDeprecated
 }

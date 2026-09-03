@@ -2,14 +2,12 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
 import org.jetbrains.kotlin.psi.UserDataProperty
 
-internal object PreferAbstractForOverrideWeigher {
-    private const val WEIGHER_ID = "kotlin.preferAbstractForOverride"
+internal object PreferAbstractForOverrideWeigher: KotlinLookupElementWeigher("kotlin.preferAbstractForOverride") {
 
     private enum class Weight {
         NOT_IMPLEMENTED,
@@ -23,7 +21,5 @@ internal object PreferAbstractForOverrideWeigher {
 
     private var LookupElement.overrideType by UserDataProperty(Key<Weight>("KOTLIN_COMPLETION_OVERRIDE_TYPE"))
 
-    object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): Comparable<*> = element.overrideType ?: Weight.IMPLEMENTED
-    }
+    override fun weigh(element: LookupElement): Comparable<*> = element.overrideType ?: Weight.IMPLEMENTED
 }

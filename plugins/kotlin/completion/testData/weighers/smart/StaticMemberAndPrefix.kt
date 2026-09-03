@@ -1,3 +1,5 @@
+// IGNORE_K2
+
 interface Z {
     companion object {
         val instance: Z? = null

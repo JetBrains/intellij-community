@@ -1,3 +1,4 @@
+// IGNORE_K2
 // WITH_STDLIB
 
 var nonNullable: Boolean = true

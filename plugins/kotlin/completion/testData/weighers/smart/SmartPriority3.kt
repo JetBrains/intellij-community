@@ -1,3 +1,5 @@
+// IGNORE_K2
+
 class C {
     companion object {
         val INSTANCE = C()

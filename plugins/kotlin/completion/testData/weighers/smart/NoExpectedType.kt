@@ -1,3 +1,4 @@
+// IGNORE_K2
 interface I {
     fun takeXxx(): Int = 0
     fun takeYyy(): Int = 0

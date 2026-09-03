@@ -5,26 +5,26 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.psi.UserDataProperty
 
-object VariableOrFunctionWeigher {
+internal object VariableOrFunctionWeigher: KotlinLookupElementWeigher("kotlin.variableOrFunction"), KotlinSectionContextWeigher {
+
     private enum class Weight {
         VARIABLE,
         FUNCTION
     }
 
-    const val WEIGHER_ID = "kotlin.variableOrFunction"
     private var LookupElement.variableOrFunction by UserDataProperty(Key<Weight>("KOTLIN_VARIABLE_OR_FUNCTION_WEIGHT"))
 
-    context(_: KaSession)
-fun addWeight(lookupElement: LookupElement, symbol: KaSymbol) {
-        when (symbol) {
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<*>)
+    override fun addWeight(lookupElement: LookupElement, symbolWithOrigin: KtSymbolWithOrigin<*>?) {
+        when (symbolWithOrigin?.symbol) {
             is KaVariableSymbol -> {
                 lookupElement.variableOrFunction = Weight.VARIABLE
             }
@@ -36,7 +36,5 @@ fun addWeight(lookupElement: LookupElement, symbol: KaSymbol) {
         }
     }
 
-    object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): Comparable<*>? = element.variableOrFunction
-    }
+    override fun weigh(element: LookupElement): Comparable<*>? = element.variableOrFunction
 }

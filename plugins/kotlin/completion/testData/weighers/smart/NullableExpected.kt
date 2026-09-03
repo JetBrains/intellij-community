@@ -1,3 +1,5 @@
+// IGNORE_K2
+
 var global: C = C()
 
 abstract class C {

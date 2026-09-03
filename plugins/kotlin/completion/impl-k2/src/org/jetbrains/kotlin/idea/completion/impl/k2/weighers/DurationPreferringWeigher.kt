@@ -2,12 +2,12 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -16,9 +16,8 @@ import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 /**
  * Prefer Duration-based overloads (e.g., delay(Duration)) over Long-based ones (e.g., delay(Long)).
  */
-internal object DurationPreferringWeigher {
-    const val WEIGHER_ID = "kotlin.durationPreferring"
-    
+internal object DurationPreferringWeigher: KotlinLookupElementWeigher("kotlin.durationPreferring"), KotlinSectionContextWeigher {
+
     private const val DURATION_TYPE_FQ_NAME = "kotlin.time.Duration"
     private const val LONG_TYPE_FQ_NAME = "kotlin.Long"
 
@@ -26,9 +25,9 @@ internal object DurationPreferringWeigher {
     private var LookupElement.durationRank: Int
             by NotNullableUserDataProperty(Key("KOTLIN_DURATION_PREFER_RANK"), 1)
 
-    context(_: KaSession)
-    fun addWeight(lookupElement: LookupElement, symbol: KaSymbol) {
-        val function = symbol as? KaFunctionSymbol ?: return
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<*>)
+    override fun addWeight(lookupElement: LookupElement, symbolWithOrigin: KtSymbolWithOrigin<*>?) {
+        val function = symbolWithOrigin?.symbol as? KaFunctionSymbol ?: return
         val callableId = function.callableId ?: return
 
         // Check if this function is one of the supported Duration-accepting functions
@@ -44,9 +43,7 @@ internal object DurationPreferringWeigher {
         }
     }
 
-    object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): Int = element.durationRank
-    }
+    override fun weigh(element: LookupElement): Int = element.durationRank
 
     private val supportedDurationFunctions = setOf(
         // kotlinx.coroutines functions

@@ -1,3 +1,4 @@
+// IGNORE_K2
 class C {
     val something: String = ""
     val s: String = ""

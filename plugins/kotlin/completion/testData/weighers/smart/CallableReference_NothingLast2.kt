@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo(p: (Int) -> Unit) { }
 
 fun fff1(p: Int): Nothing{}

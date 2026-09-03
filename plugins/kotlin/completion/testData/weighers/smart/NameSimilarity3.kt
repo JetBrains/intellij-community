@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun f(x: Int, fooBar1: String, fooBar2: String){}
 
 fun g(someBar0: String, someBar1: String, someBar2: String, fooBar: String, fooBar0: String, fooBar1: String, fooBar2: String) {

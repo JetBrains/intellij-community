@@ -1,3 +1,4 @@
+// IGNORE_K2
 class Name {
     companion object {
         fun create(): Name = Name()

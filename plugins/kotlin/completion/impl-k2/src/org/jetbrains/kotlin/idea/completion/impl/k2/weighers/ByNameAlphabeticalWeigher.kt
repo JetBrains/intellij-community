@@ -2,13 +2,9 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinLookupObject
 
-object ByNameAlphabeticalWeigher {
-    object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): String? = (element.`object` as? KotlinLookupObject)?.shortName?.asString()
-    }
+internal object ByNameAlphabeticalWeigher: KotlinLookupElementWeigher("kotlin.byNameAlphabetical") {
 
-    const val WEIGHER_ID = "kotlin.byNameAlphabetical"
+    override fun weigh(element: LookupElement): String? = (element.`object` as? KotlinLookupObject)?.shortName?.asString()
 }

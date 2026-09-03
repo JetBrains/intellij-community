@@ -1,11 +1,11 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.UserDataProperty
  * Further, whenever named arguments are being used, we prefer named arguments with lower index, as these
  * are more likely to be used by the user next.
  */
-internal object PreferNamedArgumentCompletionWeigher {
+internal object PreferNamedArgumentCompletionWeigher: KotlinLookupElementWeigher("kotlin.preferNamedArgumentCompletion"), KotlinSectionContextWeigher {
 
     private sealed class Weight : Comparable<Weight> {
         override fun compareTo(other: Weight): Int {
@@ -35,24 +35,19 @@ internal object PreferNamedArgumentCompletionWeigher {
 
     private var LookupElement.preferNamedArgument: Weight? by UserDataProperty(Key("PREFER_NAMED_ARGUMENT_WEIGHT"))
 
-    object Weigher : LookupElementWeigher(Weigher.WEIGHER_ID) {
-        private const val WEIGHER_ID = "kotlin.preferNamedArgumentCompletion"
+    override fun weigh(element: LookupElement): Comparable<*> = element.preferNamedArgument ?: Weight.Default
 
-        override fun weigh(element: LookupElement): Comparable<*> = element.preferNamedArgument ?: Weight.Default
-    }
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<*>)
+    override fun addWeight(lookupElement: LookupElement, symbolWithOrigin: KtSymbolWithOrigin<*>?) {
+        val lookupObject = lookupElement.`object` as? NamedArgumentLookupObject ?: return
 
-    context(_: KaSession, scopeContext: K2CompletionSectionContext<*>)
-    fun addWeight(element: LookupElement) {
-        val lookupObject = element.`object` as? NamedArgumentLookupObject ?: return
-
-        val argument = scopeContext.positionContext.position.parent.parent as? KtValueArgument ?: return
+        val argument = sectionContext.positionContext.position.parent.parent as? KtValueArgument ?: return
         val argumentList = argument.parent as? KtValueArgumentList ?: return
 
         // We only strongly prefer named arguments if named arguments are already being used
         // or are highly likely to be used in the case of a multi-line argument list.
         if (!argumentList.isMultiLine() && argumentList.arguments.none { it.isNamed() }) return
 
-        val weight = Weight.PreferNamedArgument(lookupObject.argumentIndex)
-        element.preferNamedArgument = weight
+        lookupElement.preferNamedArgument = Weight.PreferNamedArgument(lookupObject.argumentIndex)
     }
 }

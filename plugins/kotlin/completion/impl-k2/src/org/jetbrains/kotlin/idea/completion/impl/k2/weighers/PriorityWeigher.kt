@@ -3,14 +3,10 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.priority
 
-internal object PriorityWeigher {
-    const val WEIGHER_ID = "kotlin.priority"
+internal object PriorityWeigher : KotlinLookupElementWeigher("kotlin.priority") {
 
-    object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): ItemPriority = element.priority ?: ItemPriority.DEFAULT
-    }
+    override fun weigh(element: LookupElement): ItemPriority = element.priority ?: ItemPriority.DEFAULT
 }

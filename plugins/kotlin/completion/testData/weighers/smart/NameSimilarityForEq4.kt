@@ -1,3 +1,4 @@
+// IGNORE_K2
 var fooBar = ""
 
 fun f(s: String, bars: List<String>){

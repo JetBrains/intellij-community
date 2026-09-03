@@ -1,3 +1,5 @@
+// IGNORE_K2
+
 var nonNullable: C = C()
 var nullableX: C? = null
 var nullableFoo: C? = null

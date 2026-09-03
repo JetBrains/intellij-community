@@ -18,13 +18,13 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../completion/testData/weighers/basic")
-public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWeigherTest {
+public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicCompletionWeigherTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/weighers/basic/contextualReturn")
-    public abstract static class ContextualReturn extends AbstractHighLevelWeigherTest {
+    public abstract static class ContextualReturn extends AbstractBasicCompletionWeigherTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/weighers/basic/contextualReturn/noReturnType")
-        public static class NoReturnType extends AbstractHighLevelWeigherTest {
+        public static class NoReturnType extends AbstractBasicCompletionWeigherTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -87,7 +87,7 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/weighers/basic/contextualReturn/withReturnType")
-        public static class WithReturnType extends AbstractHighLevelWeigherTest {
+        public static class WithReturnType extends AbstractBasicCompletionWeigherTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -181,7 +181,7 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/weighers/basic/expectedInfo")
-    public static class ExpectedInfo extends AbstractHighLevelWeigherTest {
+    public static class ExpectedInfo extends AbstractBasicCompletionWeigherTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -264,10 +264,10 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/weighers/basic/expectedType")
-    public abstract static class ExpectedType extends AbstractHighLevelWeigherTest {
+    public abstract static class ExpectedType extends AbstractBasicCompletionWeigherTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/weighers/basic/expectedType/typesWithInstances")
-        public static class TypesWithInstances extends AbstractHighLevelWeigherTest {
+        public static class TypesWithInstances extends AbstractBasicCompletionWeigherTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -310,7 +310,7 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/weighers/basic/expectedType")
-        public static class Uncategorized extends AbstractHighLevelWeigherTest {
+        public static class Uncategorized extends AbstractBasicCompletionWeigherTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -379,7 +379,7 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/weighers/basic/namedArguments")
-    public static class NamedArguments extends AbstractHighLevelWeigherTest {
+    public static class NamedArguments extends AbstractBasicCompletionWeigherTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -412,7 +412,7 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/weighers/basic/parameterNameAndType")
-    public static class ParameterNameAndType extends AbstractHighLevelWeigherTest {
+    public static class ParameterNameAndType extends AbstractBasicCompletionWeigherTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -460,7 +460,7 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/weighers/basic")
-    public static class Uncategorized extends AbstractHighLevelWeigherTest {
+    public static class Uncategorized extends AbstractBasicCompletionWeigherTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

@@ -2,16 +2,12 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
-object VariableOrParameterNameWithTypeWeigher {
-    object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): Int = element.nameWithTypePriority
-    }
+internal object VariableOrParameterNameWithTypeWeigher: KotlinLookupElementWeigher("kotlin.NameWithTypePriority") {
 
     var LookupElement.nameWithTypePriority by NotNullableUserDataProperty(Key<Int>("NAME_WITH_TYPE_PRIORITY"), 0)
 
-    const val WEIGHER_ID = "kotlin.NameWithTypePriority"
+    override fun weigh(element: LookupElement): Int = element.nameWithTypePriority
 }

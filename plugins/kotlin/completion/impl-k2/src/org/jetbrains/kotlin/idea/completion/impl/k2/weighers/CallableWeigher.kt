@@ -5,13 +5,11 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.psi.UserDataProperty
 
-object CallableWeigher {
-    const val WEIGHER_ID = "kotlin.callableWeigher"
+internal object CallableWeigher: KotlinLookupElementWeigher("kotlin.callableWeigher") {
 
     private enum class Weight1 {
         LOCAL,
@@ -29,33 +27,32 @@ object CallableWeigher {
         OTHER
     }
 
-    object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): Comparable<*>? {
-            val weight = element.callableWeight ?: return null
-            val w1 = when (weight.kind) {
-                CallableMetadataProvider.CallableKind.LOCAL -> Weight1.LOCAL
 
-                CallableMetadataProvider.CallableKind.THIS_CLASS_MEMBER,
-                CallableMetadataProvider.CallableKind.BASE_CLASS_MEMBER,
-                CallableMetadataProvider.CallableKind.THIS_TYPE_EXTENSION,
-                CallableMetadataProvider.CallableKind.BASE_TYPE_EXTENSION -> Weight1.MEMBER_OR_EXTENSION
+    override fun weigh(element: LookupElement): Comparable<*>? {
+        val weight = element.callableWeight ?: return null
+        val w1 = when (weight.kind) {
+            CallableMetadataProvider.CallableKind.LOCAL -> Weight1.LOCAL
 
-                CallableMetadataProvider.CallableKind.GLOBAL -> Weight1.GLOBAL_OR_STATIC
+            CallableMetadataProvider.CallableKind.THIS_CLASS_MEMBER,
+            CallableMetadataProvider.CallableKind.BASE_CLASS_MEMBER,
+            CallableMetadataProvider.CallableKind.THIS_TYPE_EXTENSION,
+            CallableMetadataProvider.CallableKind.BASE_TYPE_EXTENSION -> Weight1.MEMBER_OR_EXTENSION
 
-                CallableMetadataProvider.CallableKind.TYPE_PARAMETER_EXTENSION -> Weight1.TYPE_PARAMETER_EXTENSION
+            CallableMetadataProvider.CallableKind.GLOBAL -> Weight1.GLOBAL_OR_STATIC
 
-                CallableMetadataProvider.CallableKind.RECEIVER_CAST_REQUIRED -> Weight1.RECEIVER_CAST_REQUIRED
-            }
-            val w2 = when (weight.kind) {
-                CallableMetadataProvider.CallableKind.THIS_CLASS_MEMBER -> Weight2.THIS_CLASS_MEMBER
-                CallableMetadataProvider.CallableKind.BASE_CLASS_MEMBER -> Weight2.BASE_CLASS_MEMBER
-                CallableMetadataProvider.CallableKind.THIS_TYPE_EXTENSION -> Weight2.THIS_TYPE_EXTENSION
-                CallableMetadataProvider.CallableKind.BASE_TYPE_EXTENSION -> Weight2.BASE_TYPE_EXTENSION
-                else -> Weight2.OTHER
-            }
+            CallableMetadataProvider.CallableKind.TYPE_PARAMETER_EXTENSION -> Weight1.TYPE_PARAMETER_EXTENSION
 
-            return CompoundWeight3(w1, weight.scopeIndex ?: Int.MAX_VALUE, w2)
+            CallableMetadataProvider.CallableKind.RECEIVER_CAST_REQUIRED -> Weight1.RECEIVER_CAST_REQUIRED
         }
+        val w2 = when (weight.kind) {
+            CallableMetadataProvider.CallableKind.THIS_CLASS_MEMBER -> Weight2.THIS_CLASS_MEMBER
+            CallableMetadataProvider.CallableKind.BASE_CLASS_MEMBER -> Weight2.BASE_CLASS_MEMBER
+            CallableMetadataProvider.CallableKind.THIS_TYPE_EXTENSION -> Weight2.THIS_TYPE_EXTENSION
+            CallableMetadataProvider.CallableKind.BASE_TYPE_EXTENSION -> Weight2.BASE_TYPE_EXTENSION
+            else -> Weight2.OTHER
+        }
+
+        return CompoundWeight3(w1, weight.scopeIndex ?: Int.MAX_VALUE, w2)
     }
 
     internal var LookupElement.callableWeight: CallableMetadataProvider.CallableMetadata? by UserDataProperty(Key("KOTLIN_CALLABlE_WEIGHT"))

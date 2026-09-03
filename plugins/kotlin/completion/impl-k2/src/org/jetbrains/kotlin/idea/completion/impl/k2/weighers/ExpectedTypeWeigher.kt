@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -29,24 +28,27 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 
-internal object ExpectedTypeWeigher {
-    object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): MatchesExpectedType =
-            element.matchesExpectedType ?: MatchesExpectedType.NON_TYPABLE
-    }
+internal object ExpectedTypeWeigher: KotlinLookupElementWeigher("kotlin.expected.type"), KotlinSectionContextWeigher {
 
-    context(_: KaSession)
-    fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KaSymbol?) {
+    override fun weigh(element: LookupElement): MatchesExpectedType =
+        element.matchesExpectedType ?: MatchesExpectedType.NON_TYPABLE
+
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<*>)
+    override fun addWeight(lookupElement: LookupElement, symbolWithOrigin: KtSymbolWithOrigin<*>?) {
+        val symbol = symbolWithOrigin?.symbol
+
         // The expected type was already set elsewhere, we prefer these results
         if (lookupElement.matchesExpectedType != null) return
 
         // In case of flexible types, we choose the upper bound here to be more lenient for weighing purposes
-        val expectedType = context.expectedType?.upperBoundIfFlexible()
+        val expectedType = sectionContext.weighingContext.expectedType?.upperBoundIfFlexible()
 
         lookupElement.matchesExpectedType = when {
             symbol != null -> symbol.matchesExpectedType(expectedType)
@@ -157,8 +159,6 @@ internal object ExpectedTypeWeigher {
             }
         }
     }
-
-    const val WEIGHER_ID = "kotlin.expected.type"
 }
 
 

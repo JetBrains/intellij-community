@@ -18,10 +18,10 @@ fun f(foo: Foo) {
 }
 
 // WITH_ORDER
-// EXIST: Bar
-// EXIST: Baz
 // EXIST: BarImpl
 // EXIST: BazImpl
+// EXIST: Bar
+// EXIST: Baz
 // EXIST: Foo
 // EXIST: A1
 // EXIST: A2

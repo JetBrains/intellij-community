@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.NameUtil
@@ -13,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.LazyCompletionSessionProperty
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -24,8 +24,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
-internal object PreferMatchingArgumentNameWeigher {
-    private const val WEIGHER_ID = "kotlin.preferMatchingArgumentName"
+internal object PreferMatchingArgumentNameWeigher: KotlinLookupElementWeigher("kotlin.preferMatchingArgumentName"), KotlinSectionContextWeigher {
 
     @OptIn(KaExperimentalApi::class)
     private var K2CompletionSectionContext<*>.callCandidates: List<KaFunctionCall<*>> by LazyCompletionSessionProperty {
@@ -88,23 +87,21 @@ internal object PreferMatchingArgumentNameWeigher {
         }
     }
 
-    context(_: KaSession, scopeContext: K2CompletionSectionContext<*>)
-    fun addWeight(element: LookupElement) {
-        if (element.`object` is NamedArgumentLookupObject) return
-        val nameExpression = scopeContext.positionContext.position.parent as? KtSimpleNameExpression ?: return
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<*>)
+    override fun addWeight(lookupElement: LookupElement, symbolWithOrigin: KtSymbolWithOrigin<*>?) {
+        if (lookupElement.`object` is NamedArgumentLookupObject) return
+        val nameExpression = sectionContext.positionContext.position.parent as? KtSimpleNameExpression ?: return
 
         val availableReferenceNames = getAvailableReferenceNames(nameExpression)
         if (availableReferenceNames.isEmpty()) return
 
-        val bestMatch = availableReferenceNames.minOf { calcNameSimilarity(it.asString(), element.lookupString) }
+        val bestMatch = availableReferenceNames.minOf { calcNameSimilarity(it.asString(), lookupElement.lookupString) }
         if (bestMatch != WEIGHT_UNRELATED) {
-            element.matchingArgumentName = bestMatch
+            lookupElement.matchingArgumentName = bestMatch
         }
     }
 
     private var LookupElement.matchingArgumentName: Float? by UserDataProperty(Key("KOTLIN_MATCHING_ARGUMENT_NAME_WEIGHT"))
 
-    object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): Comparable<*> = element.matchingArgumentName ?: WEIGHT_UNRELATED
-    }
+    override fun weigh(element: LookupElement): Comparable<*> = element.matchingArgumentName ?: WEIGHT_UNRELATED
 }

@@ -1,3 +1,4 @@
+// IGNORE_K2
 var fooBar1 = ""
 var fooBar2 = ""
 

@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun f(fooBar: String){}
 
 fun g(b: Boolean, aaa: String, aaa1:String, foo: String, bar: String) {

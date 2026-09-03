@@ -53,7 +53,8 @@ import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelJ
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelSmartCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionCharFilterTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionIncrementalResolveTest
-import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
+import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractBasicCompletionWeigherTest
+import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractSmartCompletionWeigherTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirKotlinToKotlinMultiDollarStringsCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralKotlinToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralTextToKotlinCopyPasteTest
@@ -534,8 +535,12 @@ private fun assembleWorkspace(): TWorkspace = workspace() {
             model("dumb")
         }
 
-        testClass<AbstractHighLevelWeigherTest> {
+        testClass<AbstractBasicCompletionWeigherTest> {
             model("weighers/basic", pattern = KT_OR_KTS_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractSmartCompletionWeigherTest> {
+            model("weighers/smart", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
         testClass<AbstractHighLevelMultiFileJvmBasicCompletionTest> {

@@ -39,6 +39,3 @@ abstract class AbstractCompletionWeigherTest(val completionType: CompletionType,
         }
     }
 }
-
-abstract class AbstractBasicCompletionWeigherTest : AbstractCompletionWeigherTest(CompletionType.BASIC, "weighers/basic")
-abstract class AbstractSmartCompletionWeigherTest : AbstractCompletionWeigherTest(CompletionType.SMART, "weighers/smart")

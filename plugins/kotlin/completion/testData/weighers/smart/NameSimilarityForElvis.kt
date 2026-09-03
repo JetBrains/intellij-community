@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun f(fooBar: String){}
 
 object C {

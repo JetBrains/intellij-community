@@ -2,15 +2,17 @@
 
 package org.jetbrains.kotlin.idea.fir.completion.wheigher
 
+import com.intellij.codeInsight.completion.CompletionType
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
-import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractBasicCompletionWeigherTest
+import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractCompletionWeigherTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.util.invalidateCaches
 
-abstract class AbstractHighLevelWeigherTest : AbstractBasicCompletionWeigherTest() {
+abstract class AbstractHighLevelWeigherTest(completionType: CompletionType, relativeTestDataPath: String):
+    AbstractCompletionWeigherTest(completionType, relativeTestDataPath) {
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -27,3 +29,5 @@ abstract class AbstractHighLevelWeigherTest : AbstractBasicCompletionWeigherTest
         )
     }
 }
+abstract class AbstractBasicCompletionWeigherTest : AbstractHighLevelWeigherTest(CompletionType.BASIC, "weighers/basic")
+abstract class AbstractSmartCompletionWeigherTest : AbstractHighLevelWeigherTest(CompletionType.SMART, "weighers/smart")

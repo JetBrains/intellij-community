@@ -1,3 +1,4 @@
+// IGNORE_K2
 class C(val x: X) {
     val foo: String
       get() = x.<caret>

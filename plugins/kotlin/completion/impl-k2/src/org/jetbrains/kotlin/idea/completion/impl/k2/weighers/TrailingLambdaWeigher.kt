@@ -2,14 +2,12 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
-internal object TrailingLambdaWeigher : LookupElementWeigher(
-    /* id = */ "kotlin.hasTrailingLambda",
-    /* negated = */ true,
-    /* dependsOnPrefix = */ false,
+internal object TrailingLambdaWeigher : KotlinLookupElementWeigher(
+    id = "kotlin.hasTrailingLambda",
+    negated = true,
 ) {
 
     internal var LookupElement.hasTrailingLambda: Boolean by NotNullableUserDataProperty(

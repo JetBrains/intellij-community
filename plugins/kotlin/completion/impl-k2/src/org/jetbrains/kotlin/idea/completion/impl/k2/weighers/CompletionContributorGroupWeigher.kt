@@ -3,21 +3,12 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.psi.UserDataProperty
 
-
-internal object CompletionContributorGroupWeigher {
-    object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): Comparable<*>? =
-            element.groupPriority
-    }
+internal object CompletionContributorGroupWeigher: KotlinLookupElementWeigher("kotlin.group.id") {
 
     var LookupElement.groupPriority by UserDataProperty(Key<Int>("GROUP_PRIORITY"))
 
-
-    const val WEIGHER_ID = "kotlin.group.id"
+    override fun weigh(element: LookupElement): Comparable<*>? = element.groupPriority
 }
-
-
