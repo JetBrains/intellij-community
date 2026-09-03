@@ -175,7 +175,7 @@ internal suspend fun patchPluginDescriptorFromPlan(request: DevDistPluginDescrip
  * Every refusal must be found. A refusal that reaches no `<module/>` is a plan the descriptor has moved away from, so
  * this fails and names what it could not find.
  */
-private suspend fun embedContentModulesFromPlan(
+private fun embedContentModulesFromPlan(
   rootElement: Element,
   request: DevDistPluginDescriptorRequest,
   pluginCache: ScopedCachedDescriptorContainer,
@@ -394,7 +394,7 @@ private object RefusingModuleOutputProvider : ModuleOutputProvider {
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = refuse("getModuleOutputRoots")
 
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? =
+  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? =
     refuse("readFileContentFromModuleOutput($relativePath)")
 
   private fun refuse(what: String): Nothing {

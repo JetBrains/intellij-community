@@ -768,7 +768,7 @@ internal fun createTestModuleOutputProvider(project: JpsProject): ModuleOutputPr
 
     override fun getAllModules(): List<JpsModule> = project.modules
 
-    override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
+    override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
       throw UnsupportedOperationException("Not needed for this test")
     }
 
@@ -1016,7 +1016,7 @@ private fun stubModuleOutputProvider(): ModuleOutputProvider {
 
     override fun getProjectLibraryToModuleMap(): Map<String, String> = emptyMap()
 
-    override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
+    override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
       throw UnsupportedOperationException("Stub")
     }
 

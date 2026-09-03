@@ -59,8 +59,8 @@ interface ModuleOutputProvider {
    * @param moduleNamePrefix if specified, only searches in modules whose name starts with this prefix
    * @param processedModules if specified, skips modules that are already in this set (and adds searched modules to it)
    */
-  suspend fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String? = null, processedModules: MutableSet<String>? = null): ByteArray? = null
+  fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String? = null, processedModules: MutableSet<String>? = null): ByteArray? = null
 
   @Experimental
-  suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
+  fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
 }

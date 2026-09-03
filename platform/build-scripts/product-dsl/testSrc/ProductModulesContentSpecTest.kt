@@ -484,7 +484,7 @@ private class MockModuleOutputProvider : ModuleOutputProvider {
   override val useTestCompilationOutput: Boolean
     get() = throw UnsupportedOperationException("Not available in mock")
 
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     throw UnsupportedOperationException("Not available in mock")
   }
 

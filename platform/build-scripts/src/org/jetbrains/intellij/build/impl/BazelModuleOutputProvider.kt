@@ -331,12 +331,12 @@ internal class BazelModuleOutputProvider(
   private val zipFilePool = ModuleOutputZipFilePool(scope)
 
   /**
-   * Suspend version of [readFileContentFromModuleOutput] using cached zip file instances.
+   * Reads through the pool of cached zip file instances.
    *
    * A probe by contract - it returns `null` for a module that does not have the file - so it reads only the module
    * outputs this build declares; see [BazelBuildInputs.resolveIfDeclared].
    */
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     for (moduleOutput in getModuleOutputRootsImpl(module, forTests, declaredOnly = true)) {
       zipFilePool.getData(moduleOutput, relativePath)?.let { return it }
     }
@@ -484,7 +484,7 @@ internal class BazelModuleOutputProvider(
     }
   }
 
-  override suspend fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {
+  override fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {
     return findFileInAnyModuleOutput(
       modules = state.modules,
       relativePath = relativePath,
@@ -506,7 +506,7 @@ internal class BazelModuleOutputProvider(
  * If [moduleNamePrefix] is specified, only searches in modules whose name starts with the prefix.
  * If [processedModules] is specified, skips modules already in the set and adds searched modules to it.
  */
-internal suspend fun findFileInAnyModuleOutput(
+internal fun findFileInAnyModuleOutput(
   modules: Iterable<JpsModule>,
   relativePath: String,
   provider: ModuleOutputProvider,

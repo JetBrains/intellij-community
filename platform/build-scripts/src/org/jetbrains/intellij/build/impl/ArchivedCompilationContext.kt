@@ -61,7 +61,7 @@ private class ArchivedModuleOutputProvider(
     return outputRoots
   }
 
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     for (moduleOutput in getModuleOutputRoots(module, forTests)) {
       if (!moduleOutput.startsWith(storage.archivedOutputDirectory)) {
         return delegateOutputProvider.readFileContentFromModuleOutput(module, relativePath, forTests)
@@ -71,7 +71,7 @@ private class ArchivedModuleOutputProvider(
     return null
   }
 
-  override suspend fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {
+  override fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {
     for ((unarchivedPath, archivedPath) in storage.getMapping()) {
       val moduleName = unarchivedPath.fileName.toString()
       if (moduleNamePrefix != null && !moduleName.startsWith(moduleNamePrefix)) {

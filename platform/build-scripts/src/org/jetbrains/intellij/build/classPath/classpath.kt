@@ -262,7 +262,7 @@ data class PluginBuildDescriptor(
  * is the sum the composer arrives at once every fragment is in - see `writePluginClassPathCount`.
  */
 @Suppress("BlockingMethodInNonBlockingContext")
-internal suspend fun writePluginClassPathPrefix(
+internal fun writePluginClassPathPrefix(
   out: DataOutputStream,
   isJarOnly: Boolean,
   platformLayout: PlatformLayout,
@@ -289,7 +289,7 @@ internal fun writePluginClassPathCount(out: DataOutputStream, pluginCount: Int) 
 }
 
 @VisibleForTesting
-suspend fun createCachedProductDescriptor(
+fun createCachedProductDescriptor(
   platformLayout: PlatformLayout,
   platformDescriptorCache: ScopedCachedDescriptorContainer,
   context: BuildContext,

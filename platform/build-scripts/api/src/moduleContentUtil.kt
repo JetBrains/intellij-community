@@ -49,7 +49,7 @@ enum class DescriptorSearchPass {
   MODULE_OUTPUT,
 }
 
-suspend fun getUnprocessedPluginXmlContent(module: JpsModule, outputProvider: ModuleOutputProvider): ByteArray {
+fun getUnprocessedPluginXmlContent(module: JpsModule, outputProvider: ModuleOutputProvider): ByteArray {
   return requireNotNull(findUnprocessedDescriptorContent(module = module, path = PLUGIN_XML_RELATIVE_PATH, outputProvider = outputProvider)) {
     "META-INF/plugin.xml not found in ${module.name} module output"
   }
@@ -59,7 +59,7 @@ suspend fun getUnprocessedPluginXmlContent(module: JpsModule, outputProvider: Mo
  * Both passes against one module, for a caller that has a single candidate and so has nothing to separate them over.
  * A caller with several candidates must loop over [DescriptorSearchPass] itself and call [readDescriptor].
  */
-suspend fun findUnprocessedDescriptorContent(module: JpsModule, path: String, outputProvider: ModuleOutputProvider): ByteArray? {
+fun findUnprocessedDescriptorContent(module: JpsModule, path: String, outputProvider: ModuleOutputProvider): ByteArray? {
   for (pass in DescriptorSearchPass.entries) {
     readDescriptor(module = module, path = path, outputProvider = outputProvider, pass = pass)?.let {
       return it
@@ -69,7 +69,7 @@ suspend fun findUnprocessedDescriptorContent(module: JpsModule, path: String, ou
 }
 
 /** The bytes of [path] in [module], as seen by [pass], or `null` if that pass does not have them. */
-suspend fun readDescriptor(module: JpsModule, path: String, outputProvider: ModuleOutputProvider, pass: DescriptorSearchPass): ByteArray? {
+fun readDescriptor(module: JpsModule, path: String, outputProvider: ModuleOutputProvider, pass: DescriptorSearchPass): ByteArray? {
   try {
     return when (pass) {
       // Production roots only: the module output below reaches test output solely when
@@ -178,7 +178,7 @@ class DescriptorDependencyWalk(
     "DescriptorDependencyWalk(includePrefix=$includePrefix, excludeRecursionPrefix=$excludeRecursionPrefix, recursive=$recursive)"
 }
 
-suspend fun findFileInModuleDependenciesRecursive(
+fun findFileInModuleDependenciesRecursive(
   module: JpsModule,
   relativePath: String,
   provider: ModuleOutputProvider,
@@ -244,7 +244,7 @@ suspend fun findFileInModuleDependenciesRecursive(
  * @param walk How to read the module dependencies of [module]. `null` reads no dependency.
  * @param searchAnyModuleOutput Whether the last resort may open the output of every module in the project.
  */
-suspend fun resolveDescriptor(
+fun resolveDescriptor(
   module: JpsModule,
   path: String,
   outputProvider: ModuleOutputProvider,

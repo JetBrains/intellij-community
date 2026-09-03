@@ -309,7 +309,7 @@ private class TestOutputProvider(
 
   override fun getModuleImlFile(module: JpsModule): Path = error("Not needed for this test")
 
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     if (relativePath != DESCRIPTOR_PATH) {
       return null
     }
@@ -317,7 +317,7 @@ private class TestOutputProvider(
     return content?.toByteArray()
   }
 
-  override suspend fun findFileInAnyModuleOutput(
+  override fun findFileInAnyModuleOutput(
     relativePath: String,
     moduleNamePrefix: String?,
     processedModules: MutableSet<String>?,

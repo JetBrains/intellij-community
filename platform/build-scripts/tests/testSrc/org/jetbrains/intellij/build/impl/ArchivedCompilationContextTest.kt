@@ -235,6 +235,6 @@ internal class ArchivedCompilationContextTest {
       return if (!forTests && module == this.module) listOf(moduleOutputRoot) else emptyList()
     }
 
-    override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? = null
+    override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? = null
   }
 }

@@ -119,7 +119,7 @@ private object EmptyModuleOutputProvider : ModuleOutputProvider {
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = emptyList()
 
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? = null
+  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? = null
 }
 
 private class SelectiveTestOutputProvider(private val selectedModule: JpsModule) : ModuleOutputProvider by EmptyModuleOutputProvider {
@@ -141,7 +141,7 @@ private class RecordingOutputProvider(
 
   override fun isTestCompilationOutputEnabled(module: JpsModule): Boolean = testCompilationOutputEnabled
 
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     requestedForTests.add(forTests)
     return if (forTests) testOutput else productionOutput
   }

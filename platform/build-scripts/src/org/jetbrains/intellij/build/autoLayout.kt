@@ -160,7 +160,7 @@ internal suspend fun computeModuleSourcesByContent(
 
 internal fun generateInclusionReasonForContentModule(pluginMainModule: String): String = "<- $pluginMainModule (plugin content)"
 
-private suspend fun computeOutputJarPath(
+private fun computeOutputJarPath(
   moduleName: String,
   loadingRule: String?,
   modulesWithCustomPath: Set<String>,
@@ -207,7 +207,7 @@ private suspend fun computeOutputJarPath(
   }
 }
 
-private suspend fun checkNeedsSeparateJar(
+private fun checkNeedsSeparateJar(
   moduleName: String,
   pluginLayout: PluginLayout,
   frontendModuleFilter: FrontendModuleFilter,
@@ -270,7 +270,7 @@ private fun hasPackContentIntoPluginJarMarker(descriptorData: ByteArray?): Boole
   return descriptorData != null && PACK_CONTENT_INTO_PLUGIN_JAR_MARKER_REGEX.containsMatchIn(descriptorData.decodeToString())
 }
 
-private suspend fun findContentModuleDescriptorData(
+private fun findContentModuleDescriptorData(
   moduleName: String,
   module: JpsModule?,
   context: BuildContext,

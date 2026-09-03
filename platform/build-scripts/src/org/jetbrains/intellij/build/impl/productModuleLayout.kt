@@ -157,7 +157,7 @@ internal suspend fun filterAndProcessContentModules(
   }
 }
 
-private suspend fun processProductModule(
+private fun processProductModule(
   moduleElement: Element,
   layout: PlatformLayout,
   result: LinkedHashSet<ModuleItem>,

@@ -44,7 +44,7 @@ class PluginContentCacheTest {
 
       val pluginName = TargetName("intellij.product.plugin")
       val outputProvider = object : ModuleOutputProvider by createTestModuleOutputProvider(jps.project) {
-        override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? = null
+        override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? = null
       }
 
       val staleErrorSink = ErrorSink()
