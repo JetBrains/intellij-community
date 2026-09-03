@@ -13,16 +13,15 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.VirtualThreadTasks
+import org.jetbrains.intellij.build.virtualThreadTasks
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
@@ -60,13 +59,14 @@ import tools.jackson.jr.ob.JSON
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.io.path.invariantSeparatorsPathString
 
 internal suspend fun buildNonBundledPlugins(
   pluginsToPublish: Set<PluginLayout>,
   compressPluginArchive: Boolean,
-  buildPlatformLibJob: Deferred<List<DistributionFileEntry>>?,
+  buildPlatformLibJob: CompletableFuture<List<DistributionFileEntry>>?,
   state: DistributionBuilderState,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   isUpdateFromSources: Boolean,
@@ -74,25 +74,27 @@ internal suspend fun buildNonBundledPlugins(
   context: BuildContext,
 ): List<PluginBuildResult> {
   return context.executeStep(spanBuilder("build non-bundled plugins").setAttribute("count", state.pluginsToPublish.size.toLong()), BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
-    buildNonBundledPlugins(
-      scope = this,
-      pluginsToPublish = pluginsToPublish,
-      compressPluginArchive = compressPluginArchive,
-      buildPlatformLibJob = buildPlatformLibJob,
-      state = state,
-      searchableOptionSet = searchableOptionSet,
-      isUpdateFromSources = isUpdateFromSources,
-      descriptorCacheContainer = descriptorCacheContainer,
-      context = context,
-    )
+    virtualThreadTasks {
+      buildNonBundledPlugins(
+        tasks = this,
+        pluginsToPublish = pluginsToPublish,
+        compressPluginArchive = compressPluginArchive,
+        buildPlatformLibJob = buildPlatformLibJob,
+        state = state,
+        searchableOptionSet = searchableOptionSet,
+        isUpdateFromSources = isUpdateFromSources,
+        descriptorCacheContainer = descriptorCacheContainer,
+        context = context,
+      )
+    }
   } ?: emptyList()
 }
 
 private suspend fun buildNonBundledPlugins(
-  scope: CoroutineScope,
+  tasks: VirtualThreadTasks,
   pluginsToPublish: Set<PluginLayout>,
   compressPluginArchive: Boolean,
-  buildPlatformLibJob: Deferred<List<DistributionFileEntry>>?,
+  buildPlatformLibJob: CompletableFuture<List<DistributionFileEntry>>?,
   state: DistributionBuilderState,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   isUpdateFromSources: Boolean,
@@ -108,7 +110,7 @@ private suspend fun buildNonBundledPlugins(
     null
   }
   else {
-    scope.async(CoroutineName("build keymap plugins")) {
+    tasks.fork("build keymap plugins") {
       buildKeymapPlugins(targetDir = context.nonBundledPluginsToBePublished, context = context)
     }
   }
@@ -240,14 +242,14 @@ private suspend fun buildNonBundledPlugins(
   if (prepareCustomPluginRepository) {
     val list = pluginSpecs.sortedBy { it.pluginZip }
     if (list.isNotEmpty()) {
-      scope.launch {
+      tasks.fork("generate plugin repository meta file") {
         generatePluginRepositoryMetaFile(pluginSpecs = list, targetDir = context.nonBundledPlugins, buildNumber = context.buildNumber)
       }
     }
 
     val pluginsToBePublished = list.filter { it.pluginZip.startsWith(context.nonBundledPluginsToBePublished) }
     if (pluginsToBePublished.isNotEmpty()) {
-      scope.launch {
+      tasks.fork("generate plugin repository meta file for the published plugins") {
         generatePluginRepositoryMetaFile(pluginSpecs = pluginsToBePublished, targetDir = context.nonBundledPluginsToBePublished, buildNumber = context.buildNumber)
       }
     }

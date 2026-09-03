@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -19,6 +18,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.impl.testBuildBundledPluginsForAllPlatforms
 import org.jetbrains.intellij.build.impl.testLayoutBundledPlugins
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CompletableFuture
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.nio.file.Path
@@ -74,7 +74,7 @@ class BundledPluginBuilderTest {
     assertThatThrownBy {
       runBlocking(Dispatchers.Default) {
         val (context, state) = createMinimalBundledPluginBuildState()
-        val buildPlatformJob = CompletableDeferred<List<DistributionFileEntry>>().also {
+        val buildPlatformJob = CompletableFuture<List<DistributionFileEntry>>().also {
           it.completeExceptionally(IllegalStateException(failureMessage))
         }
 

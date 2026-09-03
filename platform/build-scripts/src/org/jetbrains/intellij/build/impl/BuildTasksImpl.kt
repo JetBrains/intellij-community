@@ -14,12 +14,8 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
@@ -41,6 +37,7 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
+import org.jetbrains.intellij.build.VirtualThreadTaskPolicy
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.add64IfNeeded
@@ -72,6 +69,7 @@ import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.virtualThreadTasks
 import org.jetbrains.intellij.build.zipSourcesOfModules
 import java.nio.file.FileSystems
 import java.nio.file.FileVisitResult
@@ -331,7 +329,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
       updateExecutablePermissions(context.paths.distAllDir, matchers)
     }
 
-    supervisorScope {
+    virtualThreadTasks(VirtualThreadTaskPolicy.RUN_ALL) {
       SUPPORTED_DISTRIBUTIONS.mapNotNull { (os, arch, libcImpl) ->
         if (!context.shouldBuildDistributionForOS(os, arch)) {
           return@mapNotNull null
@@ -345,7 +343,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
           return@mapNotNull null
         }
 
-        async(CoroutineName("$stepId build step")) {
+        fork("$stepId build step") {
           spanBuilder(stepId).use {
             val osAndArchSpecificDistDirectory = getOsAndArchSpecificDistDirectory(osFamily = os, arch = arch, libc = libcImpl, context = context)
             builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
@@ -354,26 +352,8 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
           }
         }
       }
-    }.collectCompletedOrError()
+    }.map { it.resultNow() }
   } ?: emptyList()
-}
-
-// call only after supervisorScope
-private fun <T> List<Deferred<T>>.collectCompletedOrError(): List<T> {
-  var error: Throwable? = null
-  for (deferred in this) {
-    val e = deferred.getCompletionExceptionOrNull() ?: continue
-    if (error == null) {
-      error = e
-    }
-    else {
-      error.addSuppressed(e)
-    }
-  }
-
-  error?.let { throw it }
-
-  return map { it.getCompleted() }
 }
 
 private fun copyDependenciesFile(context: BuildContext): Path {
@@ -463,10 +443,10 @@ internal fun additionalProperties(): VmProperties = VmProperties(mapOf("user.hom
 suspend fun buildDistributions(context: BuildContext): Unit = block("build distributions") {
   context.reportDistributionBuildNumber()
 
-  coroutineScope {
-    launch { checkProductProperties(context) }
+  virtualThreadTasks {
+    fork("check product properties") { checkProductProperties(context) }
 
-    launch { copyDependenciesFile(context) }
+    fork("copy dependencies file") { copyDependenciesFile(context) }
   }
 
   logFreeDiskSpace("before compilation", context)
@@ -475,9 +455,9 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
 
   val distributionState = context.distributionState()
 
-  coroutineScope {
+  virtualThreadTasks {
     // the headless IDE start is expensive, so it runs beside the JAR packing
-    launch(CoroutineName("provided module list")) { context.builtinModules() }
+    fork("provided module list") { context.builtinModules() }
 
     createMavenArtifactJob(distributionState.platformLayout, context)
 
@@ -498,7 +478,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
         descriptorCacheContainer = distributionState.platformLayout.descriptorCacheContainer,
         context = context,
       )
-      return@coroutineScope
+      return@virtualThreadTasks
     }
 
     val contentReport = spanBuilder("build platform and plugin JARs").use {
@@ -515,7 +495,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
 
     lookForJunkFiles(context = context, paths = listOf(context.paths.distAllDir) + distDirs.map { it.outDir })
 
-    launch(Dispatchers.IO + CoroutineName("generate software bill of materials")) {
+    fork("generate software bill of materials") {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
         SoftwareBillOfMaterialsImpl(context = context, distributions = distDirs, distributionFiles = contentReport.bundled().toList()).generate()
       }

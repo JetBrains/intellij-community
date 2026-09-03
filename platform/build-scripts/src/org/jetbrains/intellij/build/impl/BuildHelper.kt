@@ -13,12 +13,14 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.VirtualThreadTasks
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.function.Predicate
 
 fun CoroutineScope.createSkippableJob(
@@ -28,6 +30,20 @@ fun CoroutineScope.createSkippableJob(
   task: suspend () -> Unit,
 ): Job {
   return launch(CoroutineName("$stepId build step")) {
+    context.executeStep(spanBuilder, stepId) {
+      task()
+    }
+  }
+}
+
+/** The [VirtualThreadTasks] form of [createSkippableJob]. The future holds `null` when the step is skipped or fails. */
+fun VirtualThreadTasks.createSkippableJob(
+  spanBuilder: SpanBuilder,
+  stepId: String,
+  context: BuildContext,
+  task: suspend () -> Unit,
+): CompletableFuture<Unit?> {
+  return fork("$stepId build step") {
     context.executeStep(spanBuilder, stepId) {
       task()
     }

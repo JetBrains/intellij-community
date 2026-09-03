@@ -4,15 +4,14 @@
 package org.jetbrains.intellij.build.impl.plugins
 
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
+import java.util.concurrent.CompletableFuture
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DistFile
+import org.jetbrains.intellij.build.virtualThreadTasks
 import org.jetbrains.intellij.build.InMemoryDistFileContent
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
@@ -89,20 +88,20 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
   state: DistributionBuilderState,
   pluginLayouts: Set<PluginLayout>,
   isUpdateFromSources: Boolean,
-  buildPlatformJob: Deferred<List<DistributionFileEntry>>,
+  buildPlatformJob: CompletableFuture<List<DistributionFileEntry>>,
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
   layoutOnly: Boolean = false,
   includeAdditionalPlugins: Boolean = true,
-): BundledPluginsBuildResult = coroutineScope {
-  val additionalDeferred: Deferred<List<Pair<Path, List<Path>>>?> = if (includeAdditionalPlugins) {
-    async(CoroutineName("build additional plugins")) {
+): BundledPluginsBuildResult = virtualThreadTasks {
+  val additionalDeferred: CompletableFuture<List<Pair<Path, List<Path>>>?> = if (includeAdditionalPlugins) {
+    fork("build additional plugins") {
       copyAdditionalPlugins(pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY), context = context)
     }
   }
   else {
-    CompletableDeferred(value = null)
+    CompletableFuture.completedFuture(null)
   }
 
   val pluginDirs = getPluginDirs(context, isUpdateFromSources)
@@ -189,7 +188,7 @@ private suspend fun buildOsSpecificBundledPlugins(
   state: DistributionBuilderState,
   plugins: Set<PluginLayout>,
   isUpdateFromSources: Boolean,
-  buildPlatformJob: Deferred<List<DistributionFileEntry>>,
+  buildPlatformJob: CompletableFuture<List<DistributionFileEntry>>,
   context: BuildContext,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
@@ -245,7 +244,7 @@ internal suspend fun buildBundledPlugins(
   state: DistributionBuilderState,
   plugins: Collection<PluginLayout>,
   isUpdateFromSources: Boolean,
-  buildPlatformJob: Deferred<List<DistributionFileEntry>>,
+  buildPlatformJob: CompletableFuture<List<DistributionFileEntry>>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
