@@ -2174,6 +2174,8 @@ c:com.intellij.util.text.UniqueNameGenerator
 f:com.intellij.util.text.XmlCharsetDetector
 - s:extractXmlEncodingFromProlog(java.lang.CharSequence):java.lang.String
 - s:extractXmlEncodingFromProlog(B[]):java.lang.String
+f:com.intellij.util.text.simpleGlob.SimpleGlobKt
+- sf:simpleGlobsToRe(java.util.List):java.util.List
 f:com.intellij.util.ui.EDT
 - s:assertIsEdt():V
 - s:isCurrentThreadEdt():Z
