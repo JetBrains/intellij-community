@@ -302,11 +302,15 @@ abstract class ToolWindowHeader internal constructor(
 
     if (isNewUi) {
       val scrolled = ClientProperty.isTrue(nearestDecorator, SimpleToolWindowPanel.SCROLLED_STATE)
-      val contentCount = (nearestDecorator?.contentManager ?: toolWindow.contentManager).contentCount
+      val contentManager = nearestDecorator?.contentManager ?: toolWindow.contentManager
       drawBottomLine = (toolWindow.anchor == ToolWindowAnchor.BOTTOM
-                        || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && contentCount > 1)
+                        || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && contentManager.contentCount > 1)
                         || toolWindow.hasTopToolbar()
                         || scrolled)
+      // A content that starts with its own toolbar can opt to join the header without a divider.
+      if (drawBottomLine && ClientProperty.isTrue(contentManager.selectedContent?.component, ToolWindowContentUi.HIDE_HEADER_BOTTOM_LINE)) {
+        drawBottomLine = false
+      }
     }
 
     val active = !isNewUi && isActive

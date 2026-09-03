@@ -97,6 +97,10 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   public static final @NonNls String HIDE_ID_LABEL = "HideIdLabel";
   // when client property is set to true in a toolwindow component, the toolbar is always visible in the tool window header
   public static final @NonNls Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
+  // when client property is set to true on the content component, the tool window header draws no bottom separator line,
+  // so a content that starts with its own toolbar joins the header without a divider
+  @ApiStatus.Internal
+  public static final Key<Boolean> HIDE_HEADER_BOTTOM_LINE = Key.create("HideHeaderBottomLine");
   private static final @NonNls String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
   @ApiStatus.Internal public static final String HEADER_ICON = "HeaderIcon";
