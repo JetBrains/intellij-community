@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.util
 
+import com.intellij.util.ref.GCUtil
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -9,11 +10,13 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import java.lang.ref.WeakReference
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -300,6 +303,31 @@ class AsyncCacheTest {
 
     assertThat(cache.getOrPut("key") { "should-not-be-called" }).isEqualTo("value")
     assertThat(loadCount.get()).isEqualTo(1)
+  }
+
+  /** A dead virtual thread keeps its task, so the computation must drop its loader before it runs it. */
+  @Test
+  fun `a finished computation keeps nothing alive through its thread`() {
+    val loaderThread = AtomicReference<Thread>()
+    val payload = loadWithAPayload(loaderThread)
+    val thread = loaderThread.get()
+
+    GCUtil.tryGcSoftlyReachableObjects()
+
+    // the thread stays reachable through this local until here
+    assertThat(thread.isVirtual).isTrue()
+    assertThat(payload.get()).isNull()
+  }
+
+  /** The payload is reachable only from the loader, so only the dead thread can keep it. */
+  private fun loadWithAPayload(loaderThread: AtomicReference<Thread>): WeakReference<Any> {
+    val payload = Any()
+    val cache = AsyncCache<String, Int>()
+    cache.getOrPut("key") {
+      loaderThread.set(Thread.currentThread())
+      payload.hashCode()
+    }
+    return WeakReference(payload)
   }
 
   private fun assertFailsFast(block: () -> Unit) {

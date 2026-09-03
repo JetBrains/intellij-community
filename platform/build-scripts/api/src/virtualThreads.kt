@@ -6,9 +6,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.future.asCompletableFuture
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.Executors
+import java.util.concurrent.Executor
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 
@@ -28,8 +28,44 @@ import kotlin.coroutines.CoroutineContext
  *
  * Every fork and every build entry point runs its coroutines here, so no CPU work of the build reaches the kotlinx scheduler.
  */
-internal val buildVirtualThreadDispatcher: CoroutineDispatcher =
-  Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("build-", 0).factory()).asCoroutineDispatcher()
+internal val buildVirtualThreadDispatcher: CoroutineDispatcher = virtualThreadPerResumeDispatcher("build-")
+
+/**
+ * Creates a dispatcher with one virtual thread per resume. [threadNamePrefix] names the threads, with a counter.
+ *
+ * A finished thread keeps no task, see [ForgetfulTask]. `close` releases nothing, because no thread outlives its resume.
+ */
+@ApiStatus.Internal
+fun virtualThreadPerResumeDispatcher(threadNamePrefix: String): ExecutorCoroutineDispatcher = VirtualThreadPerResumeDispatcher(threadNamePrefix)
+
+private class VirtualThreadPerResumeDispatcher(threadNamePrefix: String) : ExecutorCoroutineDispatcher() {
+  private val threadFactory = Thread.ofVirtual().name(threadNamePrefix, 0).factory()
+
+  override val executor: Executor = Executor { task -> threadFactory.newThread(ForgetfulTask(task)).start() }
+
+  override fun dispatch(context: CoroutineContext, block: Runnable) {
+    executor.execute(block)
+  }
+
+  override fun close() {
+  }
+}
+
+/**
+ * The body of a virtual thread. It drops its task before it runs the task.
+ *
+ * A dead virtual thread keeps its task through its continuation. A span, a debug probe or a logger can hold the
+ * thread. Such a reference would keep the whole coroutine alive.
+ */
+private class ForgetfulTask(task: Runnable) : Runnable {
+  private var task: Runnable? = task
+
+  override fun run() {
+    val task = task ?: return
+    this.task = null
+    task.run()
+  }
+}
 
 /**
  * What a group of forks does when one of them fails.
@@ -84,7 +120,7 @@ internal fun <T> startFork(name: String, parentContext: CoroutineContext, block:
 fun <T> startSharedComputation(name: String, owner: Any?, block: () -> T): CompletableFuture<T> {
   val future = CompletableFuture<T>()
   val inherited = currentSingleFlightOwners()
-  Thread.ofVirtual().name(name).start {
+  val body = Runnable {
     try {
       future.complete(withSingleFlightOwners(inherited = inherited, owner = owner, body = block))
     }
@@ -92,6 +128,7 @@ fun <T> startSharedComputation(name: String, owner: Any?, block: () -> T): Compl
       future.completeExceptionally(e)
     }
   }
+  Thread.ofVirtual().name(name).start(ForgetfulTask(body))
   return future
 }
 

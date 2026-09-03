@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.util.ref.GCUtil
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.extension.kotlin.asContextElement
@@ -17,10 +18,12 @@ import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import java.lang.ref.WeakReference
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -331,5 +334,33 @@ class TaskScopeTest {
 
     assertThat(threads).hasSizeGreaterThan(1)
     assertThat(threads).allSatisfy { assertThat(it).startsWith("build-") }
+  }
+
+  /** A dead virtual thread keeps its task, so the dispatcher must drop the task before it runs it. */
+  @Test
+  fun `a finished fork keeps nothing alive through its thread`() {
+    val forkThread = AtomicReference<Thread>()
+    val payload = runForkThatCapturesAPayload(forkThread)
+    val thread = forkThread.get()
+
+    GCUtil.tryGcSoftlyReachableObjects()
+
+    // the thread stays reachable through this local until here
+    assertThat(thread.name).startsWith("build-")
+    assertThat(payload.get()).isNull()
+  }
+
+  /** The payload is reachable only from the fork body, so only the dead thread can keep it. */
+  private fun runForkThatCapturesAPayload(forkThread: AtomicReference<Thread>): WeakReference<Any> {
+    val payload = Any()
+    runBlocking {
+      taskScope {
+        fork("holder") {
+          forkThread.set(Thread.currentThread())
+          payload.hashCode()
+        }
+      }
+    }
+    return WeakReference(payload)
   }
 }
