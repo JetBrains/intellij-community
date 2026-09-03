@@ -44,7 +44,6 @@ internal fun runIdeBackend(backendDescription: IdeBackendInEnvDescription, corou
   )
   val debugPort = 5006
   val environment = mapOf(
-    "CWM_HOST_PASSWORD" to IdeConstants.DEFAULT_CWM_PASSWORD,
     "CWM_NO_TIMEOUTS" to "1",
     "ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE" to "false",
     "DISPLAY" to ":0",
@@ -119,7 +118,7 @@ private class BackendStatusFromStdout(private val processOutputFlows: ProcessOut
 }
 
 private fun cwmHostNoLobby(bindToHost: String, projectPath: PathInLaunchEnvironment?) =
-  listOfNotNull("cwmHostNoLobby", "-l", bindToHost, projectPath)
+  listOfNotNull("serverMode", "--no-join-token", "-l", bindToHost, projectPath)
 
 private class IdeaPathsProvider : PathsProvider {
   override val productId: String
