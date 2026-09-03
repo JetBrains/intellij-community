@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.frontend.editor.livepreview
 
-import com.intellij.codeInsight.documentation.render.DocRenderItemUpdater
-import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -20,8 +18,6 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
-import com.intellij.openapi.editor.event.VisibleAreaEvent
-import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -45,8 +41,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.util.SequencedMap
-import java.util.SequencedSet
 
 private val AllowedEditorKinds = setOf(EditorKind.MAIN_EDITOR, EditorKind.UNTYPED)
 
@@ -65,9 +59,8 @@ class MarkdownLivePreviewReconciler private constructor(
   private var specSet: MarkdownLivePreviewSpecSet? = null
 
   /**
-   * The regions we own, keyed by the concealed range each was created for. The keys go stale as soon as the
-   * document changes - regions move with the text - so [reconcileNow] re-keys them from the regions
-   * themselves. Every path that trusts the keys first checks the spec set against the document version.
+   * The regions we own, keyed by the range each conceals. Regions move with the text, so [reconcileNow]
+   * re-keys them from the regions themselves before it trusts the keys.
    */
   private val ownedRegions = LinkedHashMap<TextRange, FoldRegion>()
   private val ownedHorizontalRules = LinkedHashMap<TextRange, RangeHighlighter>()
@@ -78,16 +71,10 @@ class MarkdownLivePreviewReconciler private constructor(
 
   /** Set while we are mutating folds ourselves, so our own listeners do not reenter. */
   private var updating = false
-
   private var reconcileScheduled = false
-  private var disposed = false
 
   init {
-    installListeners()
-  }
-
-  @Suppress("ObjectLiteralToLambda")
-  private fun installListeners() {
+    Disposer.register(this, imageRenderer)
     editor.caretModel.addCaretListener(object : CaretListener {
       override fun caretPositionChanged(event: CaretEvent) = onCaretChanged()
       override fun caretAdded(event: CaretEvent) = onCaretChanged()
@@ -96,9 +83,6 @@ class MarkdownLivePreviewReconciler private constructor(
     editor.selectionModel.addSelectionListener(object : SelectionListener {
       override fun selectionChanged(event: SelectionEvent) = onCaretChanged()
     }, this)
-    editor.scrollingModel.addVisibleAreaListener(object : VisibleAreaListener {
-      override fun visibleAreaChanged(e: VisibleAreaEvent) = imageRenderer.updateGeometry()
-    }, this)
     editor.document.addDocumentListener(object : BulkAwareDocumentListener {
       override fun documentChangedNonBulk(event: DocumentEvent) = scheduleReconcile()
       override fun bulkUpdateFinished(document: Document) = scheduleReconcile()
@@ -106,9 +90,7 @@ class MarkdownLivePreviewReconciler private constructor(
     editor.foldingModel.addListener(object : FoldingListener {
       override fun onFoldProcessingEnd() = scheduleReconcile()
     }, this)
-
-    val connection = project.messageBus.connect(this)
-    connection.subscribe(MarkdownSettings.ChangeListener.TOPIC, object : MarkdownSettings.ChangeListener {
+    project.messageBus.connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, object : MarkdownSettings.ChangeListener {
       override fun settingsChanged(settings: MarkdownSettings) = scheduleReconcile()
     })
   }
@@ -119,8 +101,7 @@ class MarkdownLivePreviewReconciler private constructor(
    */
   @RequiresEdt
   fun publishSpecs(specSet: MarkdownLivePreviewSpecSet) {
-    val previousSpecSet = this.specSet
-    if (previousSpecSet != null && !previousSpecSet.documentVersion.matchesDocument(specSet.documentVersion)) {
+    if (this.specSet?.documentVersion?.matchesDocument(specSet.documentVersion) != true) {
       imageRenderer.resetRequestedImages()
     }
     this.specSet = specSet
@@ -129,9 +110,7 @@ class MarkdownLivePreviewReconciler private constructor(
 
   @TestOnly
   @RequiresEdt
-  fun hasCurrentSpecs(): Boolean {
-    return specSet?.documentVersion?.matches(editor.document, project) == true
-  }
+  fun hasCurrentSpecs(): Boolean = currentSpecSet() != null
 
   /**
    * Brings the fold regions fully in line with the current specs and caret positions, adding and removing
@@ -140,141 +119,102 @@ class MarkdownLivePreviewReconciler private constructor(
    */
   @RequiresEdt
   fun reconcileNow() {
-    if (disposed || updating || editor.isDisposed || editor.document.isInBulkUpdate) return
+    if (updating || editor.isDisposed || editor.document.isInBulkUpdate) return
     if (!isLivePreviewEnabled()) {
       removeAllOwned()
       return
     }
-    val specSet = this.specSet ?: return
-    if (!specSet.documentVersion.matches(editor.document, project)) return
+    val specSet = currentSpecSet() ?: return
     val revealed = revealedElementIndices(specSet)
-    val (regions, lines) = buildOwnedState(specSet, revealed)
-    reconcileConcealRegions(regions)
-    reconcileLineRegions(lines)
-    reconcileImageRegions()
+    val desired = desiredRegions(specSet, revealed)
+    reconcileFoldRegions(desired)
+    reconcileHorizontalRules(desired)
     revealedElements = revealed
   }
 
-  private fun buildOwnedState(specSet: MarkdownLivePreviewSpecSet, revealed: Set<Int>): OwnedState {
-    val regions = LinkedHashMap<TextRange, OwnedRegion>()
-    val lines = LinkedHashSet<TextRange>()
-    specSet.elements.forEachIndexed { index, spec ->
-      if (index in revealed) return@forEachIndexed
-      when (spec) {
-        is MarkdownLivePreviewSpec.Conceal -> spec.conceals.forEach { regions[it.toTextRange()] = OwnedRegion.Text(null) }
-        is MarkdownLivePreviewSpec.HorizontalRule -> {
-          val range = spec.range.toTextRange()
-          regions[range] = OwnedRegion.HorizontalRule
-          lines.add(range)
-        }
-        is MarkdownLivePreviewSpec.Image -> {
-          val image = spec.source
-          if (image == null) {
-            imageRenderer.requestImage(spec.destination)
-            return@forEachIndexed
-          }
-          regions[spec.range.toTextRange()] = OwnedRegion.Image(spec.destination, image, specSet.documentVersion.elementsHash)
-        }
-        is MarkdownLivePreviewSpec.Bullet -> regions[spec.concealRange.toTextRange()] = OwnedRegion.Text(spec.placeholderText)
-      }
-    }
-    return OwnedState(regions, lines)
-  }
-
+  /**
+   * Deletes the line break between an image and the caret instead of a character of the hidden image source.
+   * Returns false when the caret is not next to an image, so the default handler runs.
+   */
   @RequiresEdt
   fun handleBackspace(): Boolean {
-    if (disposed || editor.isDisposed || editor.selectionModel.hasSelection()) return false
-    val caretOffset = editor.caretModel.offset
+    if (editor.isDisposed || editor.selectionModel.hasSelection()) return false
     val document = editor.document
-    val foldRegion = findImageFoldRegion(caretOffset, document) ?: return false
-    revealOwnedRegions(setOf(foldRegion.currentRange()))
-    val deleteStart = if (foldRegion.endOffset == caretOffset) caretOffset else caretOffset - 1
-    runWriteAction { document.deleteString(deleteStart, deleteStart + 1) }
+    val text = document.charsSequence
+    val caretOffset = editor.caretModel.offset
+    val lineBreak = when {
+      caretOffset > 0 && text[caretOffset - 1] == '\n' -> caretOffset - 1
+      caretOffset < text.length && text[caretOffset] == '\n' -> caretOffset
+      else -> return false
+    }
+    val region = ownedRegions.values.firstOrNull { it is CustomFoldRegion && it.isValid && it.endOffset == lineBreak } ?: return false
+    removeOwned(listOf(region.currentRange()))
+    runWriteAction { document.deleteString(lineBreak, lineBreak + 1) }
     return true
   }
 
-  private fun reconcileConcealRegions(desired: SequencedMap<TextRange, OwnedRegion>) {
-    // Re-key by where the regions actually are now, which is how a region survives an edit that only
-    // shifted it, and how a region the clipboard brought back gets picked up instead of duplicated.
-    val existing = LinkedHashMap<TextRange, FoldRegion>()
-    for (region in ownedRegions.values) {
-      if (region.isValid) existing[region.currentRange()] = region
-    }
+  // Not @RequiresEdt: Disposer may call this from any thread, and it only drops state.
+  override fun dispose() {
+    specSet = null
+  }
 
-    for ((range, wanted) in desired) {
-      if (wanted !is OwnedRegion.Image) continue
-      val item = (existing[range] as? CustomFoldRegion)?.markdownImageRenderItem() ?: continue
-      if (item.destination == wanted.destination) {
-        imageRenderer.updateItem(item, wanted.image, wanted.elementsHash)
-      }
-    }
+  private fun currentSpecSet(): MarkdownLivePreviewSpecSet? {
+    return specSet?.takeIf { it.documentVersion.matches(editor.document, project) }
+  }
 
-    val toRemove = existing.entries
-      .filter { (range, region) ->
-        val wanted = desired[range]
-        wanted == null || !wanted.matches(region)
-      }
-      .map { it.value }
-    val toAdd = desired.filter { (range, wanted) ->
-      val existingRegion = existing[range]
-      existingRegion == null || !wanted.matches(existingRegion)
-    }
-    val next = LinkedHashMap(existing)
-    if (toRemove.isNotEmpty() || toAdd.isNotEmpty()) {
-      toRemove.forEach { next.remove(it.currentRange()) }
-      runFoldBatch {
-        toRemove.forEach { editor.foldingModel.removeFoldRegion(it) }
-        for ((range, wanted) in toAdd) {
-          val region = when (wanted) {
-            is OwnedRegion.Text -> concealRange(range, wanted.placeholderText)
-            is OwnedRegion.HorizontalRule -> concealRange(range, null)
-            is OwnedRegion.Image -> createImageRegion(range, wanted.destination, wanted.image, wanted.elementsHash)
-            else -> null
-          }
-          if (region != null) next[range] = region
+  private fun desiredRegions(specSet: MarkdownLivePreviewSpecSet, revealed: Set<Int>): Map<TextRange, OwnedRegion> {
+    val regions = LinkedHashMap<TextRange, OwnedRegion>()
+    specSet.elements.forEachIndexed { index, spec ->
+      if (index in revealed) return@forEachIndexed
+      when (spec) {
+        is MarkdownLivePreviewSpec.Conceal -> spec.conceals.forEach { regions[it.toTextRange()] = OwnedRegion.Text("") }
+        is MarkdownLivePreviewSpec.HorizontalRule -> regions[spec.range.toTextRange()] = OwnedRegion.HorizontalRule
+        is MarkdownLivePreviewSpec.Bullet -> regions[spec.concealRange.toTextRange()] = OwnedRegion.Text(spec.placeholderText)
+        is MarkdownLivePreviewSpec.Image -> {
+          if (spec.source == null) imageRenderer.requestImage(spec.destination)
+          else regions[spec.range.toTextRange()] = OwnedRegion.Image(spec.destination, specSet.documentVersion.elementsHash)
         }
       }
     }
-    ownedRegions.clear()
-    ownedRegions.putAll(next)
+    return regions
   }
 
-  private fun reconcileLineRegions(desired: SequencedSet<TextRange>) {
-    val paintableRules = desired.filterTo(LinkedHashSet()) { range ->
-      val region = ownedRegions[range] ?: return@filterTo false
-      region.isValid && region.placeholderText.isEmpty()
-    }
-    val existingRules = LinkedHashMap<TextRange, RangeHighlighter>()
-    for (highlighter in ownedHorizontalRules.values) {
-      if (highlighter.isValid) existingRules[highlighter.textRange] = highlighter
-    }
-    val obsoleteRules = existingRules.filterKeys { it !in paintableRules }.values
-    for (rule in obsoleteRules) {
-      rule.dispose()
-    }
-    val nextRules = LinkedHashMap<TextRange, RangeHighlighter>()
-    for (range in paintableRules) {
-      val existingRule = existingRules[range]
-      if (existingRule != null) {
-        nextRules[range] = existingRule
+  private fun reconcileFoldRegions(desired: Map<TextRange, OwnedRegion>) {
+    // Re-key by where the regions are now. A shifted region then survives its edit, and a region the
+    // clipboard brought back is adopted instead of duplicated.
+    val existing = ownedRegions.values.filter { it.isValid }.associateBy { it.currentRange() }
+    val kept = LinkedHashMap<TextRange, FoldRegion>()
+    val missing = LinkedHashMap<TextRange, OwnedRegion>()
+    for ((range, wanted) in desired) {
+      val region = existing[range]
+      if (region == null || !wanted.matches(region)) {
+        missing[range] = wanted
+        continue
       }
-      else {
-        val newRule = createHorizontalRule(range)
-        if (newRule != null) nextRules[range] = newRule
+      kept[range] = region
+      if (wanted is OwnedRegion.Image) imageRenderer.updateRegion(region, wanted.elementsHash)
+    }
+    val obsolete = existing.filterKeys { it !in kept }.values
+    ownedRegions.clear()
+    ownedRegions.putAll(kept)
+    if (obsolete.isEmpty() && missing.isEmpty()) return
+    runFoldBatch {
+      obsolete.forEach(editor.foldingModel::removeFoldRegion)
+      for ((range, wanted) in missing) {
+        ownedRegions[range] = createRegion(range, wanted) ?: continue
       }
     }
-    ownedHorizontalRules.clear()
-    ownedHorizontalRules.putAll(nextRules)
   }
 
-  // Deliberately not @RequiresEdt: Disposer may call this from any thread, and it only drops state.
-  override fun dispose() {
-    disposed = true
-    ownedRegions.clear()
+  private fun reconcileHorizontalRules(desired: Map<TextRange, OwnedRegion>) {
+    val wanted = desired.filterValues { it == OwnedRegion.HorizontalRule }.keys
+      .filterTo(LinkedHashSet()) { ownedRegions[it]?.isValid == true }
+    val existing = ownedHorizontalRules.values.filter { it.isValid }.associateBy { it.textRange }
+    existing.filterKeys { it !in wanted }.values.forEach { it.dispose() }
     ownedHorizontalRules.clear()
-    revealedElements = emptySet()
-    specSet = null
-    Disposer.dispose(imageRenderer)
+    for (range in wanted) {
+      ownedHorizontalRules[range] = existing[range] ?: createHorizontalRule(range)
+    }
   }
 
   private fun onCaretChanged() {
@@ -282,57 +222,36 @@ class MarkdownLivePreviewReconciler private constructor(
     scheduleReconcile()
   }
 
-  /** Removes the regions of every element a caret or selection has just reached.  */
+  /** Removes the regions of every element a caret or selection has just reached. */
   private fun revealNow() {
-    if (disposed || updating || editor.isDisposed) return
+    if (updating || editor.isDisposed) return
     val document = editor.document
-    // While a bulk change runs the fold tree is not maintained at all, so leave it alone entirely.
-    if (document.isInBulkUpdate) return
-    // The folding model is a document listener in its own right, so its tree may still be catching up.
-    if (document.isInEventsHandling) return
-    val specSet = this.specSet ?: return
-    if (!specSet.documentVersion.matches(document, project)) return
+    // While a bulk change runs, the fold tree is not maintained. During event handling the folding model
+    // may still be catching up, since it is a document listener itself.
+    if (document.isInBulkUpdate || document.isInEventsHandling) return
     if (!isLivePreviewEnabled()) return
-
+    val specSet = currentSpecSet() ?: return
     val revealed = revealedElementIndices(specSet)
     val newlyRevealed = revealed - revealedElements
     if (newlyRevealed.isEmpty()) return
-
-    val rangesToRemove = HashSet<TextRange>()
-    for (index in newlyRevealed) {
-      when (val spec = specSet.elements[index]) {
-        is MarkdownLivePreviewSpec.Conceal -> spec.conceals.mapTo(rangesToRemove) { it.toTextRange() }
-        is MarkdownLivePreviewSpec.HorizontalRule -> rangesToRemove.add(spec.range.toTextRange())
-        is MarkdownLivePreviewSpec.Image -> rangesToRemove.add(spec.range.toTextRange())
-        is MarkdownLivePreviewSpec.Bullet -> rangesToRemove.add(spec.concealRange.toTextRange())
-      }
-    }
-    revealOwnedRegions(rangesToRemove)
-    revealOwnedHorizontalRules(rangesToRemove)
+    removeOwned(newlyRevealed.flatMap { specSet.elements[it].concealedRanges() })
     revealedElements = revealedElements + newlyRevealed
   }
 
-  private fun revealOwnedRegions(ranges: Set<TextRange>) {
-    val toRemove = ArrayList<Pair<TextRange, FoldRegion>>()
-    for (range in ranges) {
-      val region = ownedRegions[range] ?: continue
-      if (region.isValid) toRemove.add(range to region)
-    }
-    if (toRemove.isEmpty()) return
-    runFoldBatch { toRemove.forEach { editor.foldingModel.removeFoldRegion(it.second) } }
-    toRemove.forEach { ownedRegions.remove(it.first) }
+  /** Removes the owned regions and rules at [ranges], which must be current document ranges. */
+  private fun removeOwned(ranges: Collection<TextRange>) {
+    val regions = ranges.mapNotNull { ownedRegions.remove(it) }.filter { it.isValid }
+    ranges.mapNotNull { ownedHorizontalRules.remove(it) }.filter { it.isValid }.forEach { it.dispose() }
+    if (regions.isNotEmpty()) runFoldBatch { regions.forEach(editor.foldingModel::removeFoldRegion) }
   }
 
-  private fun revealOwnedHorizontalRules(ranges: Set<TextRange>) {
-    val toRemove = ownedHorizontalRules.filter { (range, highlighter) ->
-      range in ranges && highlighter.isValid
-    }
-    toRemove.values.forEach { it.dispose() }
-    toRemove.keys.forEach { ownedHorizontalRules.remove(it) }
+  private fun removeAllOwned() {
+    removeOwned(ownedRegions.keys.toList() + ownedHorizontalRules.keys)
+    revealedElements = emptySet()
   }
 
   private fun scheduleReconcile() {
-    if (disposed || reconcileScheduled) return
+    if (reconcileScheduled || editor.isDisposed) return
     reconcileScheduled = true
     ApplicationManager.getApplication().invokeLater(
       {
@@ -361,81 +280,30 @@ class MarkdownLivePreviewReconciler private constructor(
     return revealed
   }
 
-  private fun concealRange(range: TextRange, placeholderText: String?): FoldRegion? {
+  private fun createRegion(range: TextRange, wanted: OwnedRegion): FoldRegion? {
+    return when (wanted) {
+      is OwnedRegion.Text -> createTextRegion(range, wanted.placeholderText)
+      OwnedRegion.HorizontalRule -> createTextRegion(range, "")
+      is OwnedRegion.Image -> imageRenderer.createRegion(range, wanted.destination, wanted.elementsHash)
+    }
+  }
+
+  private fun createTextRegion(range: TextRange, placeholderText: String): FoldRegion? {
     val foldingModel = editor.foldingModel
-    val foldedText = placeholderText.orEmpty()
     val existing = foldingModel.getFoldRegion(range.startOffset, range.endOffset)
-    if (existing != null) {
+    val region = when {
+      // The folding model can refuse a region: folding may be off, or a boundary may split a character pair.
+      existing == null -> foldingModel.createFoldRegion(range.startOffset, range.endOffset, placeholderText, null, true)
       // A region is already here, most likely restored from the clipboard together with pasted text. The
       // folding model refuses a second region over the same range, so adopt this one instead.
-      if (!existing.isValid || existing is CustomFoldRegion || !existing.shouldNeverExpand() ||
-          existing.placeholderText != foldedText) {
-        return null
-      }
-      if (placeholderText != null) existing.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true)
-      return existing
-    }
-    // Can come back null for reasons beyond a caret being in the way - folding switched off, or a boundary
-    // that would split a character pair - so never assume the region exists.
-    val region = foldingModel.createFoldRegion(range.startOffset, range.endOffset, foldedText, null, true) ?: return null
-    if (placeholderText != null) region.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true)
+      existing.isValid && existing !is CustomFoldRegion && existing.shouldNeverExpand() && existing.placeholderText == placeholderText -> existing
+      else -> null
+    } ?: return null
+    if (placeholderText.isNotEmpty()) region.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true)
     return region
   }
 
-  private fun createImageRegion(range: TextRange, destination: String, image: VirtualFileId, elementsHash: Int): CustomFoldRegion? {
-    if (range.isEmpty) return null
-    val document = editor.document
-    val item = imageRenderer.createItem(range, destination, image, elementsHash)
-    val foldingModel = editor.foldingModel
-    foldingModel.getRegionsOverlappingWith(range.startOffset, range.endOffset)
-      .asSequence()
-      .filter { it !is CustomFoldRegion }
-      .filter { (it.startOffset == range.startOffset && it.endOffset > range.endOffset) ||
-                (it.startOffset < range.startOffset && it.endOffset == range.endOffset) }
-      .forEach(foldingModel::removeFoldRegion)
-    val region = editor.foldingModel.addCustomLinesFolding(
-      document.getLineNumber(range.startOffset),
-      document.getLineNumber((range.endOffset - 1).coerceAtLeast(range.startOffset)),
-      item.renderer
-    )
-    if (region == null) {
-      item.dispose()
-      return null
-    }
-    item.foldRegion = region
-    DocRenderItemUpdater.updateRenderers(listOf(item), false)
-    return region
-  }
-
-  private fun findImageFoldRegion(caretOffset: Int, document: Document): CustomFoldRegion? {
-    val imageEndOffset = when {
-      caretOffset > 0 && document.charsSequence[caretOffset - 1] == '\n' -> caretOffset - 1
-      caretOffset < document.textLength && document.charsSequence[caretOffset] == '\n' -> caretOffset
-      else -> return null
-    }
-    val foldRegion = ownedRegions.values.asSequence()
-      .filterIsInstance<CustomFoldRegion>()
-      .firstOrNull { it.endOffset == imageEndOffset && it.markdownImageRenderItem() != null } ?: return null
-    return foldRegion
-  }
-
-  private fun reconcileImageRegions() {
-    val regions = ownedRegions.values.filterIsInstance<CustomFoldRegion>().filter { it.isValid }
-    regions.forEach { it.repaint() }
-  }
-
-  private fun removeAllOwned() {
-    val regions = ownedRegions.values.filter { it.isValid }
-    ownedHorizontalRules.values.filter { it.isValid }.forEach { it.dispose() }
-    ownedRegions.clear()
-    ownedHorizontalRules.clear()
-    revealedElements = emptySet()
-    if (regions.isEmpty()) return
-    runFoldBatch { regions.forEach { editor.foldingModel.removeFoldRegion(it) } }
-  }
-
-  private fun createHorizontalRule(range: TextRange): RangeHighlighter? {
-    if (range.isEmpty) return null
+  private fun createHorizontalRule(range: TextRange): RangeHighlighter {
     val highlighter = editor.markupModel.addRangeHighlighter(
       MarkdownHighlighterColors.HRULE, range.startOffset, range.endOffset,
       HighlighterLayer.ADDITIONAL_SYNTAX, HighlighterTargetArea.EXACT_RANGE,
@@ -476,8 +344,6 @@ class MarkdownLivePreviewReconciler private constructor(
     return MarkdownSettings.getInstance(project).enableLivePreview && editor.editorKind in AllowedEditorKinds
   }
 
-  private fun FoldRegion.currentRange(): TextRange = TextRange(startOffset, endOffset)
-
   private class CaretSnapshot(private val caret: Caret) {
     private val offset = caret.offset
     private val selectionStart = caret.selectionStart
@@ -503,16 +369,40 @@ class MarkdownLivePreviewReconciler private constructor(
     fun getOrCreate(editor: Editor): MarkdownLivePreviewReconciler? {
       if (editor !is EditorEx || editor.isDisposed) return null
       val project = editor.project ?: return null
-      val existing = editor.getUserData(KEY)
-      if (existing != null) return existing
-      val reconciler = MarkdownLivePreviewReconciler(project, editor)
-      editor.putUserData(KEY, reconciler)
-      Disposer.register(reconciler) { editor.putUserData(KEY, null) }
-      EditorUtil.disposeWithEditor(editor, reconciler)
-      return reconciler
+      editor.getUserData(KEY)?.let { return it }
+      return MarkdownLivePreviewReconciler(project, editor).also {
+        editor.putUserData(KEY, it)
+        EditorUtil.disposeWithEditor(editor, it)
+      }
     }
 
     fun getExisting(editor: Editor): MarkdownLivePreviewReconciler? = editor.getUserData(KEY)
+  }
+}
+
+private fun FoldRegion.currentRange(): TextRange = TextRange(startOffset, endOffset)
+
+/** The ranges an element hides, and which its owned regions are keyed by. */
+private fun MarkdownLivePreviewSpec.concealedRanges(): List<TextRange> {
+  return when (this) {
+    is MarkdownLivePreviewSpec.Conceal -> conceals.map { it.toTextRange() }
+    is MarkdownLivePreviewSpec.Bullet -> listOf(concealRange.toTextRange())
+    is MarkdownLivePreviewSpec.HorizontalRule, is MarkdownLivePreviewSpec.Image -> listOf(range.toTextRange())
+  }
+}
+
+/** What one owned fold region should look like. */
+private sealed interface OwnedRegion {
+  data class Text(val placeholderText: String) : OwnedRegion
+  data object HorizontalRule : OwnedRegion
+  data class Image(val destination: String, val elementsHash: Int) : OwnedRegion
+
+  fun matches(region: FoldRegion): Boolean {
+    return when (this) {
+      is Text -> region !is CustomFoldRegion && region.placeholderText == placeholderText
+      HorizontalRule -> region !is CustomFoldRegion && region.placeholderText.isEmpty()
+      is Image -> (region as? CustomFoldRegion)?.markdownImageRenderItem()?.destination == destination
+    }
   }
 }
 
@@ -524,14 +414,10 @@ class MarkdownLivePreviewReconciler private constructor(
  * mouse events, or install an editor component. This keeps the normal caret and selection machinery in
  * charge of revealing the source when the line is touched.
  *
- * The renderer cannot use the highlighter's logical range to determine the stripe width. The source may be
- * longer than the viewport, may be soft-wrapped, and may be horizontally scrolled; the requested rule is
- * always the width of the currently visible editor area. Likewise, geometry and color are read on every
- * paint so ordinary editor repainting reflects scrolling, resizing, font changes, and color-scheme changes
- * without dedicated listeners or cached state.
- *
- * The vertical position is the center of the existing visual line, so the stripe adds no line height. A
- * child graphics context isolates the renderer's color and rendering state from other editor painters.
+ * The rule spans the visible editor area rather than the highlighter's range, which may be soft-wrapped or
+ * scrolled out of view. Geometry and color are read on every paint, so ordinary repainting covers scrolling,
+ * resizing, font changes and color-scheme changes. The stripe sits at the center of the visual line and so
+ * adds no line height.
  */
 private object MarkdownHorizontalRuleRenderer : CustomHighlighterRenderer {
   override fun paint(editor: Editor, highlighter: RangeHighlighter, graphics: Graphics) {
@@ -554,32 +440,6 @@ private object MarkdownHorizontalRuleRenderer : CustomHighlighterRenderer {
     }
     finally {
       child.dispose()
-    }
-  }
-}
-
-private data class OwnedState(
-  val regions: SequencedMap<TextRange, OwnedRegion>,
-  val lines: SequencedSet<TextRange>,
-)
-
-private sealed interface OwnedRegion {
-  fun matches(region: FoldRegion): Boolean
-
-  data object HorizontalRule : OwnedRegion {
-    override fun matches(region: FoldRegion): Boolean = region !is CustomFoldRegion && region.placeholderText.isEmpty()
-  }
-
-  data class Text(val placeholderText: String?) : OwnedRegion {
-    override fun matches(region: FoldRegion): Boolean {
-      return region !is CustomFoldRegion && region.placeholderText == placeholderText.orEmpty()
-    }
-  }
-
-  data class Image(val destination: String, val image: VirtualFileId, val elementsHash: Int) : OwnedRegion {
-    override fun matches(region: FoldRegion): Boolean {
-      val item = (region as? CustomFoldRegion)?.markdownImageRenderItem() ?: return false
-      return item.destination == destination
     }
   }
 }

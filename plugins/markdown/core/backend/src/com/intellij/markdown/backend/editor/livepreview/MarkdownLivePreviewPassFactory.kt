@@ -29,10 +29,8 @@ internal class MarkdownLivePreviewPassFactory:
 
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (!psiFile.language.isMarkdownLanguage()) return null
-    val documentVersion = MarkdownLivePreviewDocumentVersion.capture(editor.document, psiFile.project)
-    if (editor.livePreviewSpecSetFlow().value?.documentVersion?.matchesDocument(documentVersion) == true) {
-      return null
-    }
+    val currentVersion = editor.livePreviewSpecSetFlow().value?.documentVersion
+    if (currentVersion?.matches(editor.document, psiFile.project) == true) return null
     return MarkdownLivePreviewPass(editor, psiFile)
   }
 }
@@ -44,15 +42,11 @@ private class MarkdownLivePreviewPass(editor: Editor, psiFile: PsiFile):
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     val elements = computeLivePreviewSpecs(myFile)
-    specSet = MarkdownLivePreviewSpecSet(
-      MarkdownLivePreviewDocumentVersion.capture(myEditor.document, myFile.project).withElements(elements),
-      elements,
-    )
+    val documentVersion = MarkdownLivePreviewDocumentVersion.capture(myDocument, myProject).withElements(elements)
+    specSet = MarkdownLivePreviewSpecSet(documentVersion, elements)
   }
 
   override fun doApplyInformationToEditor() {
-    val specSet = specSet ?: return
-    if (!specSet.documentVersion.matches(myEditor.document, myFile.project)) return
-    myEditor.livePreviewSpecSetFlow().value = specSet
+    myEditor.livePreviewSpecSetFlow().value = specSet ?: return
   }
 }

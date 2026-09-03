@@ -1,11 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.backend.editor.livepreview
 
-import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -37,172 +34,67 @@ internal class MarkdownLivePreviewImageManager(
   private val project: Project,
   private val editor: Editor,
 ) : Disposable {
-  private sealed interface LoadRequest {
-    data class Cached(val source: VirtualFile) : LoadRequest
-    data class Pending(val deferred: Deferred<VirtualFile?>) : LoadRequest
-    data object Rejected : LoadRequest
-  }
-
-  private val document = FileDocumentManager.getInstance().getFile(editor.document)
+  private val file = FileDocumentManager.getInstance().getFile(editor.document)
     ?: error("Markdown live preview editor has no document file")
   private val loadedSources = ConcurrentHashMap<String, VirtualFile>()
   private val loadingSources = ConcurrentHashMap<String, Deferred<VirtualFile?>>()
-  private val rejectedSources = ConcurrentHashMap.newKeySet<String>()
   private val coroutineScope = MarkdownApplicationScope.createChildScope()
 
-  @Volatile
-  private var disposed = false
-
   init {
-    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: List<VFileEvent>) {
-        invalidate(events)
-      }
+    project.messageBus.connect(coroutineScope).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) = reload(events.mapNotNullTo(HashSet()) { it.file })
     })
-    coroutineScope.launch(Dispatchers.Default) {
+    coroutineScope.launch {
       editor.livePreviewSpecSetFlow().collect { specSet ->
-        retainCachedSources(specSet)
+        loadedSources.keys.retainAll(specSet?.imageDestinations().orEmpty())
       }
     }
   }
 
-  suspend fun load(destination: String): VirtualFileId? {
-    val source = loadSource(destination)
-    val sourceId = source?.rpcId()
-    publishSource(destination, sourceId)
-    return sourceId
+  suspend fun load(destination: String) {
+    val source = loadedSources[destination]?.takeIf { it.isValid } ?: startLoading(destination).await()
+    publishSource(destination, source)
   }
 
-  private suspend fun loadSource(destination: String): VirtualFile? {
-    if (disposed) return null
-
-    val cachedSource = loadedSources[destination]
-    val request = when {
-      cachedSource != null && cachedSource.isValid -> LoadRequest.Cached(cachedSource)
-      else -> {
-        if (cachedSource != null) loadedSources.remove(destination, cachedSource)
-        rejectedSources.remove(destination)
-        startLoading(destination)?.let(LoadRequest::Pending) ?: LoadRequest.Rejected
-      }
-    }
-
-    return when (request) {
-      is LoadRequest.Cached -> request.source
-      is LoadRequest.Pending -> request.deferred.await()
-      LoadRequest.Rejected -> null
-    }
-  }
-
-  private fun startLoading(destination: String): Deferred<VirtualFile?>? {
-    val deferred = coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-      loadImage(destination)
-    }
-    val existing = loadingSources.putIfAbsent(destination, deferred)
-    if (existing != null) {
-      deferred.cancel()
-      return existing
-    }
-    if (disposed) {
-      if (loadingSources.remove(destination, deferred)) deferred.cancel()
-      return null
-    }
-    deferred.start()
-    return deferred
+  private fun startLoading(destination: String): Deferred<VirtualFile?> {
+    return loadingSources.computeIfAbsent(destination) {
+      coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) { loadImage(destination) }
+    }.also { it.start() }
   }
 
   private suspend fun loadImage(destination: String): VirtualFile? {
     try {
-      val source = try {
-        withBackgroundProgress(project, MarkdownBundle.message("markdown.image.loading"), cancellable = true) {
-          MarkdownImageLoader.load(project, document, destination)
-        }
+      val source = withBackgroundProgress(project, MarkdownBundle.message("markdown.image.loading"), cancellable = true) {
+        MarkdownImageLoader.load(project, file, destination)
       }
-      catch (throwable: Throwable) {
-        rethrowControlFlowException(throwable)
-        LOG.warn("Failed to load Markdown image $destination", throwable)
-        null
-      }
-
-      if (!disposed) {
-        if (source == null) {
-          loadedSources.remove(destination)
-          rejectedSources.add(destination)
-        }
-        else {
-          rejectedSources.remove(destination)
-          loadedSources[destination] = source
-        }
-      }
-      return if (disposed) null else source
+      if (source == null) loadedSources.remove(destination) else loadedSources[destination] = source
+      return source
     }
     finally {
       loadingSources.remove(destination)
     }
   }
 
-  private fun retainCachedSources(specSet: MarkdownLivePreviewSpecSet?) {
-    val destinations = specSet?.elements
-      ?.filterIsInstance<MarkdownLivePreviewSpec.Image>()
-      ?.mapTo(HashSet()) { it.destination }
-      ?: emptySet()
-    loadedSources.keys.retainAll(destinations)
-    rejectedSources.retainAll(destinations)
-  }
-
-  private fun invalidate(events: List<VFileEvent>) {
-    if (disposed) return
-    val files = events.mapNotNull { it.file }.toSet()
-    if (files.isEmpty()) return
-
-    val currentSpecSet = editor.livePreviewSpecSetFlow().value ?: return
-    val destinations = currentSpecSet.elements
-      .filterIsInstance<MarkdownLivePreviewSpec.Image>()
-      .mapTo(LinkedHashSet()) { it.destination }
-
-    val destinationsToReload = destinations.filterTo(LinkedHashSet()) { destination ->
-      destination in rejectedSources || loadedSources[destination] in files
-    }
-    val reloads = destinationsToReload.mapNotNull { destination ->
-      rejectedSources.remove(destination)
-      loadedSources.remove(destination)
-      startLoading(destination)?.let { destination to it }
-    }
-
-    reloads.forEach { (destination, deferred) ->
-      coroutineScope.launch(Dispatchers.Default) {
-        val source = try {
-          deferred.await()
-        }
-        catch (throwable: Throwable) {
-          rethrowControlFlowException(throwable)
-          LOG.warn("Failed to refresh Markdown image $destination", throwable)
-          null
-        }
-        publishSource(destination, source?.rpcId())
-      }
+  /** Reloads every image that is still unresolved or whose source is one of [changedFiles]. */
+  private fun reload(changedFiles: Set<VirtualFile>) {
+    if (changedFiles.isEmpty()) return
+    val destinations = editor.livePreviewSpecSetFlow().value?.imageDestinations() ?: return
+    for (destination in destinations) {
+      val source = loadedSources[destination]
+      if (source != null && source !in changedFiles) continue
+      val deferred = startLoading(destination)
+      coroutineScope.launch { publishSource(destination, deferred.await()) }
     }
   }
 
-  private fun publishSource(destination: String, sourceId: VirtualFileId?) {
-    if (disposed) return
-    val specFlow = editor.livePreviewSpecSetFlow()
-    specFlow.update { currentSpecSet ->
-      if (currentSpecSet == null || disposed) return@update currentSpecSet
-      val updatedElements = currentSpecSet.elements.map { spec ->
-        if (spec is MarkdownLivePreviewSpec.Image && spec.destination == destination && spec.source != sourceId) {
-          spec.copy(source = sourceId)
-        }
-        else {
-          spec
-        }
+  private fun publishSource(destination: String, source: VirtualFile?) {
+    val sourceId = source?.rpcId()
+    editor.livePreviewSpecSetFlow().update { specSet ->
+      if (specSet == null) return@update null
+      val elements = specSet.elements.map { spec ->
+        if (spec is MarkdownLivePreviewSpec.Image && spec.destination == destination) spec.copy(source = sourceId) else spec
       }
-      val documentVersion = currentSpecSet.documentVersion.withElements(updatedElements, sourceHash(updatedElements))
-      if (currentSpecSet.elements != updatedElements || currentSpecSet.documentVersion != documentVersion) {
-        MarkdownLivePreviewSpecSet(documentVersion, updatedElements)
-      }
-      else {
-        currentSpecSet
-      }
+      MarkdownLivePreviewSpecSet(specSet.documentVersion.withElements(elements, sourceHash(elements)), elements)
     }
   }
 
@@ -213,17 +105,13 @@ internal class MarkdownLivePreviewImageManager(
   }
 
   override fun dispose() {
-    if (disposed) return
-    disposed = true
-    loadedSources.clear()
-    loadingSources.values.forEach { it.cancel() }
-    loadingSources.clear()
-    rejectedSources.clear()
     coroutineScope.cancel()
   }
 }
 
-private val LOG = logger<MarkdownLivePreviewImageManager>()
+private fun MarkdownLivePreviewSpecSet.imageDestinations(): Set<String> {
+  return elements.filterIsInstance<MarkdownLivePreviewSpec.Image>().mapTo(HashSet()) { it.destination }
+}
 
 private val IMAGE_MANAGER_KEY = Key.create<MarkdownLivePreviewImageManager>("markdown.live.preview.image.manager")
 

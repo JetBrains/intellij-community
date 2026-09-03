@@ -21,6 +21,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.EditorMouseFixture
 import com.intellij.util.DocumentUtil
@@ -340,17 +341,14 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   }
 
   fun testSiblingPrefixPathOutsideProjectRestoresItsSource() {
-    val content = "![alt](../../../project-other/image.png)\n\ntail"
-    val source = myFixture.addFileToProject("project/docs/test.md", content).virtualFile
-    val siblingImage = myFixture.addFileToProject("../project-other/image.png", "").virtualFile
-    ApplicationManager.getApplication().runWriteAction { siblingImage.setBinaryContent(pngBytes(60, 30)) }
-    PsiTestUtil.addContentRoot(myFixture.module, source.parent!!.parent!!)
-    myFixture.configureFromExistingVirtualFile(source)
-    myFixture.editor.caretModel.moveToOffset(content.length)
-    myFixture.doHighlighting()
+    // The light project root is `temp:///src`, so `temp:///src-other` shares its name prefix and lies outside it.
+    // The fixture cleans `temp:///src` only, so the test deletes the sibling itself.
+    val image = addBinaryFile("../src-other/image.png", pngBytes(60, 30))
+    Disposer.register(testRootDisposable) { VfsTestUtil.deleteFile(image.parent) }
+    configureProjectFile("![alt](../../src-other/image.png)\n\ntail")
 
     assertEquals(1, computeLivePreviewSpecs(myFixture.file).filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
-    PlatformTestUtil.waitWithEventsDispatching("Sibling image fold was not removed", { imageRegions().isEmpty() }, 10)
+    waitForNoImageRegion()
   }
 
   fun testFileUriOutsideProjectRestoresItsSource() {
