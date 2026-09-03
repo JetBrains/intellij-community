@@ -3,7 +3,6 @@
 
 package com.intellij.platform.eel.provider
 
-import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
@@ -79,20 +78,7 @@ fun EelPath.asNioPath(): @MultiRoutingFileSystemPath Path {
 @Throws(EelPathException::class)
 @ApiStatus.Experimental
 fun Path.asEelPath(): EelPath {
-  @OptIn(EelDelicateApi::class)
-  return asEelPath(getEelDescriptor())
-}
-
-/**
- * **Do not use this function** ! Use [asEelPath] instead.
- * This function will be dropped soon.
- *
- * [descriptor] should be exactly `this.getEelDescriptor()`. This method exists only to avoid calling `getEelDescriptor()` twice.
- */
-@Throws(EelPathException::class)
-@ApiStatus.Internal
-@EelDelicateApi
-fun Path.asEelPath(descriptor: EelDescriptor): EelPath {
+  val descriptor = getEelDescriptor()
   if (descriptor is LocalEelDescriptor) {
     return EelPath.parse(toString(), descriptor)
   }
