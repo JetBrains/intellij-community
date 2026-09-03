@@ -276,11 +276,7 @@ jvm_library(
     ),
     module_name = "intellij.groovy.tests",
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//plugins/groovy/groovy-psi:psi",
-        "//plugins/groovy/testFramework",
-    ],
+    exports = ["//plugins/groovy/groovy-psi:psi"],
     runtime_deps = [
         # do not sort,
         "//plugins/groovy/langInjection",
@@ -308,8 +304,6 @@ jvm_library(
         # do not sort,
         "//plugins/groovy/groovy-psi:psi",
         "//plugins/groovy/groovy-psi:psi_test_lib",
-        "//plugins/groovy/testFramework",
-        "//plugins/groovy/testFramework:testFramework_test_lib",
     ],
     runtime_deps = [
         # do not sort,

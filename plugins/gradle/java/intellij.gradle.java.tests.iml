@@ -74,7 +74,7 @@
     <orderEntry type="module" module-name="intellij.gradle.java.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java.groovy.toml" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java.properties" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
