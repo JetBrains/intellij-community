@@ -14,7 +14,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin"],
-    runtime_deps = ["@lib//:libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
+    ],
 )
 
 jvm_library(
@@ -28,7 +33,12 @@ jvm_library(
     module_name = "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin"],
-    runtime_deps = [":libraries-kotlinc-kotlinx-serialization-compiler-plugin"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-kotlinx-serialization-compiler-plugin",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin` end
 

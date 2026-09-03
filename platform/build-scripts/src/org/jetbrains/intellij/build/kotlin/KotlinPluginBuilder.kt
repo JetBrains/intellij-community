@@ -26,7 +26,6 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
      * Module which contains META-INF/plugin.xml
      */
     const val MAIN_KOTLIN_PLUGIN_MODULE: String = "intellij.kotlin.plugin"
-    private const val SERIALIZATION_COMPILER_PLUGIN_MODULE = "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin"
 
     private val KOTLINC_LIBRARY_MODULES = java.util.List.of(
       "intellij.libraries.kotlinc.analysis.api",
@@ -54,6 +53,7 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
       "intellij.libraries.kotlinc.parcelize.compiler.plugin",
       "intellij.libraries.kotlinc.scripting.compiler.plugin",
       "intellij.libraries.kotlinc.assignment.compiler.plugin",
+      "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin",
     )
 
     private val LIBRARIES_UNPACKED = java.util.List.of(
@@ -101,10 +101,6 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
 
   fun basePluginsAndLibraries(spec: PluginLayout.PluginLayoutSpec) {
     spec.withModules(KOTLINC_LIBRARY_MODULES)
-    spec.withModule(
-      SERIALIZATION_COMPILER_PLUGIN_MODULE,
-      "kotlinc.kotlinx-serialization-compiler-plugin.jar",
-    )
     for (libraryName in LIBRARIES_UNPACKED) {
       spec.withProjectLibraryUnpackedIntoJar(libraryName, spec.mainJarName)
     }

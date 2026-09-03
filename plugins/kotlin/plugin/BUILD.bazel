@@ -29,6 +29,7 @@ dev_dist_plugin(
         "intellij.libraries.kotlinc.kotlin.scripting.compiler.impl",
         "intellij.libraries.kotlinc.kotlin.scripting.dependencies",
         "intellij.libraries.kotlinc.kotlin.scripting.jvm",
+        "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin",
         "intellij.libraries.kotlinc.lombok.compiler.plugin",
         "intellij.libraries.kotlinc.low.level.api.fir",
         "intellij.libraries.kotlinc.noarg.compiler.plugin",
@@ -37,12 +38,6 @@ dev_dist_plugin(
         "intellij.libraries.kotlinc.scripting.compiler.plugin",
         "intellij.libraries.kotlinc.symbol.light.classes",
     ],
-    jars = {
-        "kotlinc.kotlinx-serialization-compiler-plugin.jar": {
-            "libraries": ["@lib//:libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin"],
-            "modules": ["intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin"],
-        },
-    },
     libraries = [
         "@lib//:javax-inject",
         "@lib//:kotlinc-kotlin-build-tools-api",
@@ -74,6 +69,7 @@ dev_dist_plugin(
         "@lib//:libraries-kotlinc-kotlin-scripting-compiler-impl-kotlinc-kotlin-scripting-compiler-impl",
         "@lib//:libraries-kotlinc-kotlin-scripting-dependencies-kotlinc-kotlin-scripting-dependencies",
         "@lib//:libraries-kotlinc-kotlin-scripting-jvm-kotlinc-kotlin-scripting-jvm",
+        "@lib//:libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin",
         "@lib//:libraries-kotlinc-lombok-compiler-plugin-kotlinc-lombok-compiler-plugin",
         "@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir",
         "@lib//:libraries-kotlinc-noarg-compiler-plugin-kotlinc-noarg-compiler-plugin",
