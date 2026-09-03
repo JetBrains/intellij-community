@@ -117,7 +117,7 @@ class DevDistPluginDescriptorTest {
   fun `the argument grammar round trips`(@TempDir dir: Path) {
     val request = parseDevDistPluginDescriptorRequest(listOf(
       "--out=${dir.resolve("out.xml")}",
-      "--main-module=intellij.cwm",
+      "--main-module=intellij.remoteDevelopment.plugin",
       "--source=${dir.resolve("plugin.xml")}",
       "--build-number-file=${dir.resolve("build.txt")}",
       "--release-date=20260101",
@@ -131,15 +131,15 @@ class DevDistPluginDescriptorTest {
       "--separate-jar=intellij.b",
       "--plugin-descriptor=intellij.a.xml=${dir.resolve("a.xml")}",
       "--platform-descriptor=x/y.xml=${dir.resolve("y.xml")}",
-      "--plugin-module=intellij.cwm",
+      "--plugin-module=intellij.remoteDevelopment.plugin",
       "--platform-module=intellij.platform.ide.impl",
     ))
 
-    assertThat(request.mainModule).isEqualTo("intellij.cwm")
-    // Derived, and the plan states a deviation only. `intellij.cwm` takes `cwm-plugin` in the real plan; here nothing
-    // states one, so the derived name is what the request carries.
-    assertThat(request.directoryName).isEqualTo("cwm")
-    assertThat(request.mainJarName).isEqualTo("cwm.jar")
+    assertThat(request.mainModule).isEqualTo("intellij.remoteDevelopment.plugin")
+    // The plan states only deviations. The real plan maps `intellij.remoteDevelopment.plugin` to `cwm-plugin`.
+    // This request has no mapping, so it uses the derived name.
+    assertThat(request.directoryName).isEqualTo("remoteDevelopment-plugin")
+    assertThat(request.mainJarName).isEqualTo("remoteDevelopment-plugin.jar")
     assertThat(request.isEap).isTrue()
     assertThat(request.exactVersion).isTrue()
     assertThat(request.retainProductDescriptor).isTrue()
@@ -148,7 +148,7 @@ class DevDistPluginDescriptorTest {
     assertThat(request.separateJarModules).containsExactly("intellij.b")
     assertThat(request.pluginDescriptors).containsOnlyKeys("intellij.a.xml")
     assertThat(request.platformDescriptors).containsOnlyKeys("x/y.xml")
-    assertThat(request.pluginModules).containsExactly("intellij.cwm")
+    assertThat(request.pluginModules).containsExactly("intellij.remoteDevelopment.plugin")
     assertThat(request.platformModules).containsExactly("intellij.platform.ide.impl")
   }
 
