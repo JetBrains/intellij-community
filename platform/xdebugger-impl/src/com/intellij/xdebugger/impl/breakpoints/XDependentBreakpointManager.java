@@ -31,8 +31,8 @@ public final class XDependentBreakpointManager {
     myEventPublisher = breakpointManager.getProject().getMessageBus().syncPublisher(XDependentBreakpointListener.TOPIC);
   }
 
-  // called from XBreakpointManagerImpl with lock
   @NotNull List<XBreakpoint<?>> onBreakpointRemoved(final @NotNull XBreakpoint<?> breakpoint) {
+    assert myBreakpointManager.isStateLockHeldByCurrentThread();
     XDependentBreakpointInfo info = mySlave2Info.remove(breakpoint);
     if (info != null) {
       myMaster2Info.remove(info.myMasterBreakpoint, info);
@@ -129,6 +129,16 @@ public final class XDependentBreakpointManager {
     myEventPublisher.dependencySet(slave, master);
   }
 
+  void copyMasterBreakpoint(@NotNull XBreakpoint<?> source, @NotNull XBreakpoint<?> copy) {
+    assert myBreakpointManager.isStateLockHeldByCurrentThread();
+    XDependentBreakpointInfo info = mySlave2Info.get(source);
+    if (info == null) {
+      return;
+    }
+    addDependency(info.myMasterBreakpoint, (XBreakpointBase<?, ?, ?>)copy, info.myLeaveEnabled);
+    myEventPublisher.dependencySet(copy, info.myMasterBreakpoint);
+  }
+
   public void clearMasterBreakpoint(@NotNull XBreakpoint<?> slave) {
     boolean dependencyCleared = withStateLock(() -> {
       XDependentBreakpointInfo info = mySlave2Info.remove(slave);
@@ -144,6 +154,7 @@ public final class XDependentBreakpointManager {
   }
 
   private void addDependency(@NotNull XBreakpointBase<?, ?, ?> master, final XBreakpointBase<?, ?, ?> slave, final boolean leaveEnabled) {
+    assert myBreakpointManager.isStateLockHeldByCurrentThread();
     XDependentBreakpointInfo info = new XDependentBreakpointInfo(master, slave, leaveEnabled);
     mySlave2Info.put(slave, info);
     myMaster2Info.putValue(master, info);
