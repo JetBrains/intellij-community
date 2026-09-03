@@ -6,6 +6,7 @@ import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.utils.Git
+import com.intellij.ide.starter.utils.abortOnUnavailableGitRemote
 import com.intellij.ide.starter.utils.withRetryBlocking
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
@@ -85,38 +86,51 @@ data class GitProjectInfo(
   val projectPath: Path
     get() = repositoryRootDir.let(projectHomeRelativePath)
 
-  private fun cloneRepo(projectHome: Path) {
-    Git.clone(repoUrl = repositoryUrl, destinationDir = projectHome, branchName = branchName, shallow = shallow, withSubmodules = withSubmodules, timeout = downloadTimeout)
+  @OptIn(ExperimentalPathApi::class)
+  private fun cleanupAndCloneRepo(repoRoot: Path) {
+    logOutput("Deleting $repoRoot and cloning $repositoryUrl ...")
+    // `deleteRecursively` does nothing on an absent path.
+    withRetryBlocking("Failed to delete $repoRoot", retries = 3,
+                      rollback = { execHardRemove(repoRoot) }) { repoRoot.deleteRecursively() }
+
+    Git.clone(repoUrl = repositoryUrl,
+              destinationDir = repoRoot,
+              branchName = branchName,
+              shallow = shallow,
+              withSubmodules = withSubmodules,
+              timeout = downloadTimeout)
   }
 
-  private fun setupRepositoryState(projectHome: Path) {
+  /** Moves the checkout in [repoRoot] to [branchName] and [commitHash]. */
+  private fun setupRepositoryState(repoRoot: Path) {
     if (!isReusable) {
-      Git.reset(repositoryDirectory = projectHome)
-      Git.clean(projectHome)
+      Git.reset(repositoryDirectory = repoRoot)
+      Git.clean(repoRoot)
     }
-    val localBranch = Git.getLocalGitBranch(projectHome)
+    val localBranch = Git.getLocalGitBranch(repoRoot)
     if (branchName.isNotEmpty() && localBranch != branchName) {
-      Git.checkout(repositoryDirectory = projectHome, branchName = branchName)
+      Git.checkout(repositoryDirectory = repoRoot, branchName = branchName)
     }
 
-    if (commitHash.isNotEmpty() && Git.getLocalCurrentCommitHash(projectHome) != commitHash) {
+    if (commitHash.isNotEmpty() && Git.getLocalCurrentCommitHash(repoRoot) != commitHash) {
       // When branchName is empty, getLocalBranches returns [""] on empty output, so contains("") would
       // be a false positive. Guard with branchName.isNotEmpty() so we always pull when branch is unknown.
-      val hasCommit = branchName.isNotEmpty() && Git.getLocalBranches(projectHome, commitHash).contains(branchName)
-      if (!hasCommit) Git.pull(projectHome)
-      Git.reset(repositoryDirectory = projectHome, commitHash = commitHash)
+      val hasCommit = branchName.isNotEmpty() && Git.getLocalBranches(repoRoot, commitHash).contains(branchName)
+      if (!hasCommit) Git.pull(repoRoot)
+      Git.reset(repositoryDirectory = repoRoot, commitHash = commitHash)
     }
     else if (commitHash.isEmpty() && branchName.isNotEmpty()) {
-      Git.fetch(projectHome)
-      Git.reset(repositoryDirectory = projectHome, commitHash = "origin/$branchName")
+      Git.fetch(repoRoot)
+      Git.reset(repositoryDirectory = repoRoot, commitHash = "origin/$branchName")
     }
     else if (commitHash.isEmpty() && branchName.isEmpty()) {
-      Git.fetch(projectHome)
-      Git.reset(repositoryDirectory = projectHome, commitHash = "FETCH_HEAD")
+      Git.fetch(repoRoot)
+      Git.reset(repositoryDirectory = repoRoot, commitHash = "FETCH_HEAD")
     }
   }
 
-  private fun isGitMetadataExist(repoRoot: Path) = repoRoot.listDirectoryEntries(".git").isNotEmpty()
+  /** [repoRoot] holds a git checkout of the test project. A corrupted checkout counts as no checkout. */
+  private fun isCheckout(repoRoot: Path) = repoRoot.exists() && repoRoot.listDirectoryEntries(".git").isNotEmpty()
 
   private fun execHardRemove(dir: Path) {
     logOutput("Trying to remove the directory $dir with OS command line ...")
@@ -145,58 +159,41 @@ data class GitProjectInfo(
   }
 
   @OptIn(ExperimentalPathApi::class)
-  private fun projectRootDirectorySetup(repoRoot: Path) = when {
-    !repoRoot.exists() -> cloneRepo(repoRoot)
+  private fun processReusable(repoRoot: Path) {
+    if (isReusable) return
 
-    repoRoot.exists() -> {
-      when {
-        // for some reason the repository is corrupted => delete directory with repo completely for clean checkout
-        !isGitMetadataExist(repoRoot) -> {
-          repoRoot.deleteRecursively()
-          Unit
-        }
+    //keeping `.git`, so [setupRepositoryState] restores the files without a download.
+    repoRoot.listDirectoryEntries().filterNot { it.endsWith(".git") }.forEach { entry ->
+      try {
+        entry.deleteRecursively()
+      }
+      catch (e: Exception) {
+        logError("Failed to delete $entry. Trying to remove it with an OS command.", e)
+        execHardRemove(entry)
+      }
+    }
+  }
 
-        // simple remove everything, except the.git directory - it will speed up subsequent git clean / reset (no need to redownload repo)
-        !isReusable -> repoRoot.listDirectoryEntries().filterNot { it.endsWith(".git") }
-          .forEach {
-            try {
-              it.deleteRecursively()
-            }
-            catch (e: Exception) {
-              logError("Failed to delete directory with git metadata. " +
-                       "Trying to remove it via OS commands. $it", e)
+  override fun downloadAndUnpackProject(): Path {
+    try {
+      if (isCheckout(repositoryRootDir)) processReusable(repositoryRootDir) else cleanupAndCloneRepo(repositoryRootDir)
+      setupRepositoryState(repositoryRootDir)
+    }
+    catch (failure: Exception) {
+      logError("Failed to setup the test project git repository state as: $this. " +
+               "Trying one more time from clean checkout.", failure)
 
-              execHardRemove(it)
-            }
-          }
-
-        else -> Unit
+      try {
+        cleanupAndCloneRepo(repositoryRootDir)
+        setupRepositoryState(repositoryRootDir)
+      }
+      catch (retryFailure: Exception) {
+        retryFailure.addSuppressed(failure)
+        abortOnUnavailableGitRemote(repositoryUrl, retryFailure)
+        throw retryFailure
       }
     }
 
-    else -> Unit
-  }
-
-  @OptIn(ExperimentalPathApi::class)
-  override fun downloadAndUnpackProject(): Path {
-    try {
-      projectRootDirectorySetup(repositoryRootDir)
-      setupRepositoryState(repositoryRootDir)
-    }
-    catch (ex: Exception) {
-      logError(buildString {
-        appendLine("Failed to setup the test project git repository state as: ${this@GitProjectInfo}")
-        appendLine("Trying one more time from clean checkout")
-      }, ex)
-
-      withRetryBlocking("Failed to delete $repositoryRootDir", retries = 3,
-                        rollback = { execHardRemove(repositoryRootDir) }) { repositoryRootDir.deleteRecursively() }
-
-      cloneRepo(repositoryRootDir)
-      setupRepositoryState(repositoryRootDir)
-    }
-
-    // checkout directory locally, but start
     return remoteRepositoryRootDir.let(projectHomeRelativePath)
   }
 

@@ -35,6 +35,8 @@ import com.intellij.ide.starter.runner.IDEProcess
 import com.intellij.ide.starter.runner.LocalIDEProcess
 import com.intellij.ide.starter.runner.NoOpDevBuildServerRunner
 import com.intellij.ide.starter.runner.RemDevTestContainer
+import com.intellij.ide.starter.runner.NoTestAborter
+import com.intellij.ide.starter.runner.TestAborter
 import com.intellij.ide.starter.runner.TestContainer
 import com.intellij.ide.starter.runner.TestContainerImpl
 import com.intellij.ide.starter.runner.targets.LocalOnlyTargetResolver
@@ -102,6 +104,9 @@ private var _di = DI {
   bindSingleton<ScrambleToolProvider> { object : ScrambleToolProvider {} }
   bindSingleton<DevBuildServerRunner> { NoOpDevBuildServerRunner }
   bindSingleton<CodeOwnerResolver> { NoOpCodeOwnerResolver }
+  bindSingleton<TestAborter> {
+    ServiceLoader.load(TestAborter::class.java, TestAborter::class.java.classLoader).firstOrNull() ?: NoTestAborter
+  }
 
   // Discover and bind all IDE product IdeInfo via ServiceLoader
   val ideProducts = ServiceLoader.load(IdeProductInit::class.java, IdeProductInit::class.java.classLoader).toList()
