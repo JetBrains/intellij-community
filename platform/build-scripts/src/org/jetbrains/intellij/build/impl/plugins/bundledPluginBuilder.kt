@@ -13,7 +13,7 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
-import org.jetbrains.intellij.build.awaitShared
+import org.jetbrains.intellij.build.Subtask
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.generatePluginClassPath
 import org.jetbrains.intellij.build.classPath.generatePluginClassPathFromPrebuiltPluginFiles
@@ -42,7 +42,6 @@ import org.jetbrains.intellij.build.virtualThreadTasks
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 
 private const val OS_SPECIFIC_PLUGIN_BUILD_CONCURRENCY: Int = 2
 
@@ -87,20 +86,20 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
   state: DistributionBuilderState,
   pluginLayouts: Set<PluginLayout>,
   isUpdateFromSources: Boolean,
-  buildPlatformJob: CompletableFuture<List<DistributionFileEntry>>,
+  platformEntriesProvider: suspend () -> List<DistributionFileEntry>,
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
   layoutOnly: Boolean = false,
   includeAdditionalPlugins: Boolean = true,
 ): BundledPluginsBuildResult = virtualThreadTasks {
-  val additionalPluginsJob: CompletableFuture<List<Pair<Path, List<Path>>>?> = if (includeAdditionalPlugins) {
+  val additionalPluginsJob: Subtask<List<Pair<Path, List<Path>>>?>? = if (includeAdditionalPlugins) {
     fork("build additional plugins") {
       copyAdditionalPlugins(pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY), context = context)
     }
   }
   else {
-    CompletableFuture.completedFuture(null)
+    null
   }
 
   val pluginDirs = getPluginDirs(context, isUpdateFromSources)
@@ -108,7 +107,7 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
     state = state,
     plugins = pluginLayouts,
     isUpdateFromSources = isUpdateFromSources,
-    buildPlatformJob = buildPlatformJob,
+    platformEntriesProvider = platformEntriesProvider,
     searchableOptionSet = searchableOptionSetDescriptor,
     descriptorCacheContainer = descriptorCacheContainer,
     context = context,
@@ -118,7 +117,7 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
     state = state,
     plugins = pluginLayouts,
     isUpdateFromSources = isUpdateFromSources,
-    buildPlatformJob = buildPlatformJob,
+    platformEntriesProvider = platformEntriesProvider,
     context = context,
     searchableOptionSet = searchableOptionSetDescriptor,
     pluginDirs = pluginDirs,
@@ -129,8 +128,9 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
   val descriptors = common + specific.values.flatten()
   val additionalPlugins: List<Pair<Path, List<Path>>>?
   if (!layoutOnly) {
-    buildPlatformJob.awaitShared()
-    additionalPlugins = additionalPluginsJob.awaitShared()
+    // the platform must be complete before the plugin info is written
+    platformEntriesProvider()
+    additionalPlugins = additionalPluginsJob?.await()
     val layoutsOfPluginsToScramble = collectLayoutsOfPluginsToScramble(pluginLayouts)
     writePluginInfo(
       pluginDirs = pluginDirs,
@@ -145,7 +145,7 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
   }
   else {
     // Force the additional plugin copy to complete; plugin-info may be written separately by the caller after scramble.
-    additionalPlugins = additionalPluginsJob.awaitShared()
+    additionalPlugins = additionalPluginsJob?.await()
   }
   BundledPluginsBuildResult(descriptors = descriptors, additionalPlugins = additionalPlugins)
 }
@@ -187,7 +187,7 @@ private suspend fun buildOsSpecificBundledPlugins(
   state: DistributionBuilderState,
   plugins: Set<PluginLayout>,
   isUpdateFromSources: Boolean,
-  buildPlatformJob: CompletableFuture<List<DistributionFileEntry>>,
+  platformEntriesProvider: suspend () -> List<DistributionFileEntry>,
   context: BuildContext,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
@@ -220,7 +220,7 @@ private suspend fun buildOsSpecificBundledPlugins(
                 arch = task.dist.arch,
                 targetDir = task.targetDir,
                 state = state,
-                platformEntriesProvider = buildPlatformJob::awaitShared,
+                platformEntriesProvider = platformEntriesProvider,
                 searchableOptionSet = searchableOptionSet,
                 descriptorCacheContainer = descriptorCacheContainer,
                 context = context,
@@ -243,7 +243,7 @@ internal suspend fun buildBundledPlugins(
   state: DistributionBuilderState,
   plugins: Collection<PluginLayout>,
   isUpdateFromSources: Boolean,
-  buildPlatformJob: CompletableFuture<List<DistributionFileEntry>>,
+  platformEntriesProvider: suspend () -> List<DistributionFileEntry>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
@@ -268,7 +268,7 @@ internal suspend fun buildBundledPlugins(
         arch = null,
         targetDir = targetDir,
         state = state,
-        platformEntriesProvider = buildPlatformJob::awaitShared,
+        platformEntriesProvider = platformEntriesProvider,
         searchableOptionSet = searchableOptionSet,
         descriptorCacheContainer = descriptorCacheContainer,
         context = context,

@@ -16,11 +16,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
@@ -33,6 +28,7 @@ import org.jetbrains.intellij.build.io.writeToFileChannelFully
 import org.jetbrains.intellij.build.io.writeZipUsingTempFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.virtualThreadTasks
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.FileVisitResult
@@ -52,8 +48,8 @@ import kotlin.io.path.relativeTo
 internal fun isMacLibrary(name: String): Boolean =
   name.endsWith(".jnilib") || name.endsWith(".dylib") || name.endsWith(".so") || name.endsWith(".tbd")
 
-internal fun recursivelySignMacBinaries(
-  coroutineScope: CoroutineScope,
+/** Signs the binaries under [root] and repacks the archives under it whose binaries are not signed. */
+internal suspend fun recursivelySignMacBinaries(
   root: Path,
   context: BuildContext,
   executableFileMatchers: Collection<PathMatcher> = emptyList(),
@@ -79,14 +75,16 @@ internal fun recursivelySignMacBinaries(
     }
   })
 
-  coroutineScope.launch(CoroutineName("signing macOS binaries")) {
-    val binariesToSign = binaries.filter { isMacBinary(it) && !isSigned(it) }
-    signMacBinaries(binariesToSign, context)
-  }
+  virtualThreadTasks {
+    fork("signing macOS binaries") {
+      val binariesToSign = binaries.filter { isMacBinary(it) && !isSigned(it) }
+      signMacBinaries(binariesToSign, context)
+    }
 
-  for (file in archives) {
-    coroutineScope.launch(CoroutineName("signing macOS binaries in ${file.relativeTo(root)}")) {
-      signAndRepackZipIfMacSignaturesAreMissing(file, context)
+    for (file in archives) {
+      fork("signing macOS binaries in ${file.relativeTo(root)}") {
+        signAndRepackZipIfMacSignaturesAreMissing(file, context)
+      }
     }
   }
 }
@@ -207,8 +205,8 @@ internal suspend fun signMacBinaries(
 
 private fun isMacBinary(path: Path): Boolean = isMacBinary(Files.newByteChannel(path))
 
-internal suspend fun isSigned(path: Path): Boolean = withContext(Dispatchers.IO) {
-  Files.newByteChannel(path).use {
+internal suspend fun isSigned(path: Path): Boolean {
+  return Files.newByteChannel(path).use {
     isSigned(byteChannel = it, binaryId = path.toString())
   }
 }

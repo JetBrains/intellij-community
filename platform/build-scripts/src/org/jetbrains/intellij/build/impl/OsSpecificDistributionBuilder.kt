@@ -5,8 +5,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.io.PosixFilePermissionsUtil
 import com.intellij.util.text.nullize
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
@@ -150,19 +148,11 @@ interface OsSpecificDistributionBuilder {
   suspend fun createChecksumAndGpgSignFiles(context: BuildContext, buildArtifact: suspend () -> Path): Path {
     val artifactFile = buildArtifact.invoke()
 
-    coroutineScope {
-      val checksums = Checksums.compute(artifactFile, Checksums.Algorithm.SHA256, Checksums.Algorithm.SHA512)
-
-      launch {
-        checksums.verifyOrWriteChecksumFile(Checksums.Algorithm.SHA256).also {
-          context.notifyArtifactBuilt(it)
-          sign(context, it)
-        }
-        checksums.verifyOrWriteChecksumFile(Checksums.Algorithm.SHA512).also {
-          context.notifyArtifactBuilt(it)
-          sign(context, it)
-        }
-      }
+    val checksums = Checksums.compute(artifactFile, Checksums.Algorithm.SHA256, Checksums.Algorithm.SHA512)
+    for (algorithm in listOf(Checksums.Algorithm.SHA256, Checksums.Algorithm.SHA512)) {
+      val checksumFile = checksums.verifyOrWriteChecksumFile(algorithm)
+      context.notifyArtifactBuilt(checksumFile)
+      sign(context, checksumFile)
     }
 
     return artifactFile

@@ -12,8 +12,6 @@ import io.opentelemetry.api.common.AttributeKey
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -60,6 +58,7 @@ import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.virtualThreadTasks
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -225,16 +224,14 @@ class JarPackager private constructor(
         context = context,
       )
 
-      return coroutineScope {
+      return virtualThreadTasks {
         if (buildAssetResult.sourceToNativeFiles.isNotEmpty()) {
-          launch(CoroutineName("pack native presigned files")) {
-            packNativePresignedFiles(
-              nativeFiles = buildAssetResult.sourceToNativeFiles,
-              dryRun = dryRun,
-              context = context,
-              toRelativePath = { libName, fileName -> "lib/${context.productProperties.presignedNativeLibs.getOrDefault(libName, libName)}/$fileName" },
-            )
-          }
+          packNativePresignedFiles(
+            nativeFiles = buildAssetResult.sourceToNativeFiles,
+            dryRun = dryRun,
+            context = context,
+            toRelativePath = { libName, fileName -> "lib/${context.productProperties.presignedNativeLibs.getOrDefault(libName, libName)}/$fileName" },
+          )
         }
 
         val list = mutableListOf<DistributionFileEntry>()

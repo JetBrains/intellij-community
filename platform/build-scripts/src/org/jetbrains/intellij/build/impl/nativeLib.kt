@@ -8,11 +8,6 @@ import com.intellij.util.lang.ZipFile
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -22,12 +17,14 @@ import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.SignNativeFileMode
 import org.jetbrains.intellij.build.SignTool
+import org.jetbrains.intellij.build.VirtualThreadTasks
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.impl.NativeFileArchitecture.AARCH_64
 import org.jetbrains.intellij.build.impl.NativeFileArchitecture.UNIVERSAL
 import org.jetbrains.intellij.build.impl.NativeFileArchitecture.X_64
 import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import org.jetbrains.intellij.build.isWindows
+import org.jetbrains.intellij.build.virtualThreadTasks
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -137,7 +134,8 @@ private val posixExecutableFileAttribute = PosixFilePermissions.asFileAttribute(
   )
 )
 
-internal fun CoroutineScope.packNativePresignedFiles(
+/** Forks one task per source archive into the group of the caller. */
+internal fun VirtualThreadTasks.packNativePresignedFiles(
   nativeFiles: Map<ZipSource, List<String>>,
   dryRun: Boolean,
   context: BuildContext,
@@ -145,7 +143,7 @@ internal fun CoroutineScope.packNativePresignedFiles(
 ) {
   for ((source, paths) in nativeFiles) {
     val sourceFile = source.file
-    launch(Dispatchers.IO + CoroutineName("pack native presigned file $sourceFile")) {
+    fork("pack native presigned file $sourceFile") {
       unpackNativeLibraries(
         sourceFile = sourceFile,
         paths = paths,
@@ -241,13 +239,13 @@ private suspend fun unpackNativeLibraries(
 
   if (signTool.signNativeFileMode == SignNativeFileMode.PREPARE) {
     val versionOption = mapOf(SignTool.LIB_VERSION_OPTION_NAME to libVersion)
-    coroutineScope {
-      launch(CoroutineName("signing macOS binaries")) {
+    virtualThreadTasks {
+      fork("signing macOS binaries") {
         unsignedFiles.get(OsFamily.MACOS)?.let {
           signMacBinaries(files = it, context = context, additionalOptions = versionOption, checkPermissions = false)
         }
       }
-      launch(CoroutineName("signing Windows binaries")) {
+      fork("signing Windows binaries") {
         unsignedFiles.get(OsFamily.WINDOWS)?.let {
           @Suppress("SpellCheckingInspection")
           context.signFiles(

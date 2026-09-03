@@ -5,18 +5,16 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.lang.JavaVersion
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.DataInputStream
 import java.io.InputStream
 import java.nio.channels.FileChannel
+import java.nio.file.FileVisitOption
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -24,8 +22,7 @@ import java.util.EnumSet
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipException
-import kotlin.io.path.name
-import kotlin.io.path.relativeTo
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * <p>
@@ -74,10 +71,10 @@ suspend fun checkClassFiles(
                                      forbiddenSubPathExceptions = forbiddenSubPathExceptions)
       val errors = ConcurrentLinkedQueue<String>()
       if (Files.isDirectory(root)) {
-        coroutineScope {
-          checker.apply {
-            visitDirectory(directory = root, relativePath = "", errors = errors)
-          }
+        // follow links, so a symlinked directory is checked like a real one
+        val files = Files.walk(root, FileVisitOption.FOLLOW_LINKS).use { stream -> stream.filter { !Files.isDirectory(it) }.toList() }
+        files.forEachConcurrent { file ->
+          checker.visitFile(file = file, relativePath = root.relativize(file).invariantSeparatorsPathString, errors = errors)
         }
       }
       else {
@@ -118,24 +115,6 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
   val checkedJarCount = AtomicInteger()
   val checkedClassCount = AtomicInteger()
 
-  fun CoroutineScope.visitDirectory(directory: Path, relativePath: String, errors: MutableCollection<String>) {
-    Files.newDirectoryStream(directory).use { dirStream ->
-      // closure must be used, otherwise variables are not captured by FJT
-      for (child in dirStream) {
-        if (Files.isDirectory(child)) {
-          launch(CoroutineName("verifying class files in ${child.relativeTo(directory)}")) {
-            visitDirectory(directory = child, relativePath = join(relativePath, "/", child.name), errors = errors)
-          }
-        }
-        else {
-          launch(CoroutineName("verifying class files in ${child.relativeTo(directory)}")) {
-            visitFile(file = child, relativePath = join(relativePath, "/", child.name), errors = errors)
-          }
-        }
-      }
-    }
-  }
-
   fun visitFile(file: Path, relativePath: String, errors: MutableCollection<String>) {
     val fullPath = file.toString()
     if (fullPath.endsWith(".zip") || fullPath.endsWith(".jar")) {
@@ -169,7 +148,7 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
           val childZipPath = "$zipPath!/$name"
           try {
             visitZip(zipPath = childZipPath,
-                     zipRelPath = join(zipRelPath, "!/", name),
+                     zipRelPath = join(zipRelPath, name),
                      file = ZipFile(SeekableInMemoryByteChannel(file.getInputStream(entry).readAllBytes())),
                      errors = errors)
           }
@@ -178,7 +157,7 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
           }
         }
         else if (name.endsWith(".class")) {
-          val relativePath = join(zipRelPath, "!/", name)
+          val relativePath = join(zipRelPath, name)
 
           checkIfSubPathIsForbidden(reportedPath = relativePath, classFilePath = name, errors = errors)
 
@@ -241,7 +220,8 @@ private fun isMultiVersion(path: String): Boolean {
 
 private fun classVersion(version: String) = if (version.isEmpty()) -1 else JavaVersion.parse(version).feature + 44  // 1.1 = 45
 
-private fun join(prefix: String, separator: String, suffix: String) = if (prefix.isEmpty()) suffix else (prefix + separator + suffix)
+/** The path of an entry inside a zip that is itself an entry: `outer.jar!/inner.class`. */
+private fun join(prefix: String, suffix: String) = if (prefix.isEmpty()) suffix else "$prefix!/$suffix"
 
 private data class Rule(@JvmField val path: String, @JvmField val version: Int) {
   @Volatile

@@ -17,9 +17,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
@@ -28,6 +25,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.VirtualThreadTaskPolicy
 import org.jetbrains.intellij.build.downloadAsText
 import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.impl.BundledRuntime
@@ -47,6 +45,7 @@ import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
+import org.jetbrains.intellij.build.virtualThreadTasks
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -231,9 +230,7 @@ class SoftwareBillOfMaterialsImpl(
       Span.current().addEvent("SBOM document generated", Attributes.of(AttributeKey.stringKey("file"), doc.toString()))
       context.notifyArtifactBuilt(doc)
     }
-    withContext(Dispatchers.IO) {
-      checkNtiaConformance(documents, context)
-    }
+    checkNtiaConformance(documents, context)
   }
 
   private suspend fun generateFromDistributions(): List<Path> {
@@ -448,17 +445,15 @@ class SoftwareBillOfMaterialsImpl(
   }
 
   private val distributionFilesChecksums = suspendingLazy("distribution files checksums") {
-    withContext(Dispatchers.IO) {
-      distributionFiles.asSequence()
-        .filterIsInstance<LibraryFileEntry>()
-        .map { it.path }.distinct()
-        // non-bundled plugins, for example
-        .filterNot { it.startsWith(context.paths.tempDir) }
-        .toList()
-        .mapConcurrent {
-          Checksums.compute(it)
-        }
-    }
+    distributionFiles.asSequence()
+      .filterIsInstance<LibraryFileEntry>()
+      .map { it.path }.distinct()
+      // non-bundled plugins, for example
+      .filterNot { it.startsWith(context.paths.tempDir) }
+      .toList()
+      .mapConcurrent {
+        Checksums.compute(it)
+      }
   }
 
   private suspend fun generatePackagesForDistributionFiles(document: SpdxDocument, distributionDir: Path): Map<Path, SpdxPackage?> {
@@ -484,48 +479,46 @@ class SoftwareBillOfMaterialsImpl(
   }
 
   private suspend fun getMavenLibraries(): List<MavenLibrary> {
-    return withContext(Dispatchers.IO) {
-      val usedModulesNames = getIncludedModules(distributionFiles.asSequence()).toHashSet()
-      val usedModules = context.project.modules.filterTo(LinkedHashSet()) {
-        usedModulesNames.contains(it.name)
-      }
-      val librariesBundledInDistributions = distributionFiles.asSequence()
-        .filterIsInstance<LibraryFileEntry>()
-        .associateBy {
-          when (it) {
-            is ProjectLibraryEntry -> it.data.libraryName
-            is ModuleLibraryFileEntry -> it.libraryName
-          }
-        }
-      usedModules.asSequence().flatMap { module ->
-        JpsJavaExtensionService.dependencies(module)
-          .includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
-          .libraries.asSequence()
-      }.distinctBy {
-        it.mavenDescriptor?.mavenId ?: it.name
-      }.toList().mapConcurrent { library ->
-        val libraryName = getLibraryFileName(library)
-        withContext(CoroutineName("maven library $libraryName")) {
-          val libraryEntry = librariesBundledInDistributions.get(libraryName)
-          val libraryFile = libraryEntry?.libraryFile ?: return@withContext null
-          val libraryLicense = context.productProperties.allLibraryLicenses.firstOrNull {
-            it.getLibraryNames().contains(libraryName)
-          } ?: return@withContext null
-          val mavenDescriptor = library.mavenDescriptor
-          if (mavenDescriptor != null) {
-            mavenLibrary(mavenDescriptor = mavenDescriptor, libraryFile = libraryFile, libraryEntry = libraryEntry, libraryLicense = libraryLicense)
-          }
-          else {
-            MavenLibrary(
-              path = libraryFile,
-              library = libraryLicense,
-              entry = libraryEntry,
-              sha256Checksum = sha256Hex(libraryFile),
-            ).takeIf { it.coordinates != null }
-          }
-        }
-      }.mapNotNull { it }
+    val usedModulesNames = getIncludedModules(distributionFiles.asSequence()).toHashSet()
+    val usedModules = context.project.modules.filterTo(LinkedHashSet()) {
+      usedModulesNames.contains(it.name)
     }
+    val librariesBundledInDistributions = distributionFiles.asSequence()
+      .filterIsInstance<LibraryFileEntry>()
+      .associateBy {
+        when (it) {
+          is ProjectLibraryEntry -> it.data.libraryName
+          is ModuleLibraryFileEntry -> it.libraryName
+        }
+      }
+    return usedModules.asSequence().flatMap { module ->
+      JpsJavaExtensionService.dependencies(module)
+        .includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
+        .libraries.asSequence()
+    }.distinctBy {
+      it.mavenDescriptor?.mavenId ?: it.name
+    }.toList().mapConcurrent { library ->
+      val libraryName = getLibraryFileName(library)
+      withContext(CoroutineName("maven library $libraryName")) {
+        val libraryEntry = librariesBundledInDistributions.get(libraryName)
+        val libraryFile = libraryEntry?.libraryFile ?: return@withContext null
+        val libraryLicense = context.productProperties.allLibraryLicenses.firstOrNull {
+          it.getLibraryNames().contains(libraryName)
+        } ?: return@withContext null
+        val mavenDescriptor = library.mavenDescriptor
+        if (mavenDescriptor != null) {
+          mavenLibrary(mavenDescriptor = mavenDescriptor, libraryFile = libraryFile, libraryEntry = libraryEntry, libraryLicense = libraryLicense)
+        }
+        else {
+          MavenLibrary(
+            path = libraryFile,
+            library = libraryLicense,
+            entry = libraryEntry,
+            sha256Checksum = sha256Hex(libraryFile),
+          ).takeIf { it.coordinates != null }
+        }
+      }
+    }.mapNotNull { it }
   }
 
   private val JpsLibrary.mavenDescriptor: JpsMavenRepositoryLibraryDescriptor?
@@ -1003,9 +996,9 @@ class SoftwareBillOfMaterialsImpl(
         workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker"),
       )
     }
-    supervisorScope {
+    virtualThreadTasks(VirtualThreadTaskPolicy.RUN_ALL) {
       for (document in documents) {
-        launch(CoroutineName("NTIA conformance check for ${document.name}")) {
+        fork("NTIA conformance check for ${document.name}") {
           try {
             context.runProcess(
               args = listOf(

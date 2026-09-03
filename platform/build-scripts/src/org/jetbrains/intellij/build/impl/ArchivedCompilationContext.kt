@@ -2,9 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
@@ -12,6 +9,7 @@ import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.TestingOptions
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.impl.compilation.ArchivedCompilationOutputStorage
 import org.jetbrains.intellij.build.impl.compilation.createArchivedStorage
 import org.jetbrains.jps.model.module.JpsModule
@@ -30,10 +28,8 @@ class ArchivedCompilationContext internal constructor(
 
   override val outputProvider: ModuleOutputProvider = ArchivedModuleOutputProvider(delegateOutputProvider = delegate.outputProvider, storage = storage, scope = outputProviderScope)
 
-    override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<Path> {
-    return coroutineScope {
-      delegate.getModuleRuntimeClasspath(module, forTests).map { async { storage.getArchived(it) } }.awaitAll().filterNotNull()
-    }
+  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<Path> {
+    return delegate.getModuleRuntimeClasspath(module, forTests).mapConcurrent { storage.getArchived(it) }.filterNotNull()
   }
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, scope: CoroutineScope?): CompilationContext {

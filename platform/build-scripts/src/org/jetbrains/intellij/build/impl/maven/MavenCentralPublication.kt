@@ -3,11 +3,7 @@ package org.jetbrains.intellij.build.impl.maven
 
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -23,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.impl.Checksums
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -199,25 +196,17 @@ class MavenCentralPublication(
   }
 
   private suspend fun generateOrVerifyChecksums() {
-    coroutineScope {
-      for (artifact in artifacts) {
-        for (file in artifact.distributionFiles.minus(artifact.checksums.toSet())) {
-          launch(CoroutineName("checksums for $file")) {
-            val checksumAlgorithms = listOf(
-              Checksums.Algorithm.SHA1,
-              Checksums.Algorithm.SHA256,
-              Checksums.Algorithm.SHA512,
-              Checksums.Algorithm.MD5
-            )
-            val checksums = Checksums.compute(
-              file,
-              *checksumAlgorithms.toTypedArray(),
-            )
-            checksumAlgorithms.forEach {
-              generateOrVerifyChecksum(checksums, it)
-            }
-          }
-        }
+    val checksumAlgorithms = listOf(
+      Checksums.Algorithm.SHA1,
+      Checksums.Algorithm.SHA256,
+      Checksums.Algorithm.SHA512,
+      Checksums.Algorithm.MD5
+    )
+    val files = artifacts.flatMap { artifact -> artifact.distributionFiles.minus(artifact.checksums.toSet()) }
+    files.forEachConcurrent { file ->
+      val checksums = Checksums.compute(file, *checksumAlgorithms.toTypedArray())
+      for (algorithm in checksumAlgorithms) {
+        checksums.verifyOrWriteChecksumFile(algorithm, false)
       }
     }
     val missing = artifacts.asSequence()
@@ -231,12 +220,6 @@ class MavenCentralPublication(
 
   @VisibleForTesting
   class SuppliedSignatures(message: String) : RuntimeException(message)
-
-  private fun CoroutineScope.generateOrVerifyChecksum(checksums: Checksums, algorithm: Checksums.Algorithm) {
-    launch(CoroutineName("checksum ${algorithm.name} for ${checksums.path}")) {
-      checksums.verifyOrWriteChecksumFile(algorithm, false)
-    }
-  }
 
   /**
    * https://central.sonatype.org/publish/publish-portal-upload/

@@ -2,10 +2,6 @@
 package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -73,17 +69,18 @@ internal suspend fun buildSearchableOptions(
     val targetDirectory = context.paths.searchableOptionDir
     // Resolve bundled Maven inputs before traverseUI starts an external process. Under Bazel these are
     // read directly from declared runfiles; other builds retain their normal download-cache behavior.
-    withContext(Dispatchers.IO) {
-      launch(CoroutineName("resolve maven4 libs")) {
+    // The nested group ends before the product starts.
+    virtualThreadTasks {
+      fork("resolve maven4 libs") {
         BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
       }
-      launch(CoroutineName("resolve maven3 libs")) {
+      fork("resolve maven3 libs") {
         BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot)
       }
-      launch(CoroutineName("download maven distribution")) {
+      fork("download maven distribution") {
         BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
       }
-      launch(CoroutineName("resolve maven telemetry dependencies")) {
+      fork("resolve maven telemetry dependencies") {
         BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
       }
     }

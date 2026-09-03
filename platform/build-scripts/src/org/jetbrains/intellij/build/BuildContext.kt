@@ -6,7 +6,6 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
@@ -213,11 +212,15 @@ internal val BuildContext.isLanguageServer: Boolean
 internal fun BuildContext.add64IfNeeded(s: String): String =
   if (isLanguageServer) s else "${s}64"
 
+/**
+ * Runs a build step under a span, unless the step is skipped or fails. The step is a group of forks: a `fork` inside it
+ * starts a task on a virtual thread, and the step ends when every fork has ended.
+ */
 suspend inline fun <T> CompilationContext.executeStep(
   spanBuilder: SpanBuilder,
   stepId: String,
   coroutineContext: CoroutineContext = EmptyCoroutineContext,
-  crossinline step: suspend CoroutineScope.(Span) -> T,
+  crossinline step: suspend VirtualThreadTasks.(Span) -> T,
 ): T? {
   return spanBuilder.use(coroutineContext) { span ->
     try {
@@ -228,7 +231,7 @@ suspend inline fun <T> CompilationContext.executeStep(
         null
       }
       else {
-        step(span)
+        virtualThreadTasks { step(span) }
       }
     }
     catch (e: CancellationException) {

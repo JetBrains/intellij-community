@@ -13,10 +13,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.annotations.ApiStatus
@@ -116,7 +112,7 @@ suspend fun buildNonBundledPlugins(mainPluginModules: List<String>, context: Bui
   buildNonBundledPlugins(
     pluginsToPublish = pluginsToPublish,
     compressPluginArchive = context.options.compressZipFiles,
-    buildPlatformLibJob = null /* buildPlatformLibJob */,
+    platformEntriesProvider = null,
     state = distState,
     searchableOptionSet = searchableOptionSet,
     isUpdateFromSources = false,
@@ -223,19 +219,17 @@ fun createIdeaPropertyFile(context: BuildContext): CharSequence {
 private suspend fun layoutShared(context: BuildContext) {
   spanBuilder("copy files shared among all distributions").use {
     val licenseOutDir = context.paths.distAllDir.resolve("license")
-    withContext(Dispatchers.IO) {
-      copyDir(context.paths.communityHomeDir.resolve("license"), licenseOutDir)
-      for (additionalDirWithLicenses in context.productProperties.additionalDirectoriesWithLicenses) {
-        copyDir(additionalDirWithLicenses, licenseOutDir)
-      }
-      context.applicationInfo.svgRelativePath?.let { svgRelativePath ->
-        val from = findBrandingResource(svgRelativePath, context)
-        val to = context.paths.distAllDir.resolve("bin/${context.productProperties.baseFileName}.svg")
-        Files.createDirectories(to.parent)
-        Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
-      }
-      context.productProperties.copyAdditionalFiles(context.paths.distAllDir, context)
+    copyDir(context.paths.communityHomeDir.resolve("license"), licenseOutDir)
+    for (additionalDirWithLicenses in context.productProperties.additionalDirectoriesWithLicenses) {
+      copyDir(additionalDirWithLicenses, licenseOutDir)
     }
+    context.applicationInfo.svgRelativePath?.let { svgRelativePath ->
+      val from = findBrandingResource(svgRelativePath, context)
+      val to = context.paths.distAllDir.resolve("bin/${context.productProperties.baseFileName}.svg")
+      Files.createDirectories(to.parent)
+      Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
+    }
+    context.productProperties.copyAdditionalFiles(context.paths.distAllDir, context)
   }
   checkClassFiles(root = context.paths.distAllDir, isDistAll = true, context)
 }
@@ -304,15 +298,16 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
     setLastModifiedTime(context.paths.distAllDir, context)
 
     if (context.isMacCodeSignEnabled) {
-      withContext(Dispatchers.IO) {
+      // the OS-specific builds below pack `distAll`, so the signing must end before they start
+      virtualThreadTasks {
         for (file in Files.newDirectoryStream(context.paths.distAllDir).use { stream ->
           stream.filter { !it.endsWith("help") && !it.endsWith("license") && !it.endsWith("lib") }
         }) {
-          launch(CoroutineName("recursively signing macOS binaries in ${file.relativeTo(context.paths.distAllDir)}")) {
+          fork("recursively signing macOS binaries in ${file.relativeTo(context.paths.distAllDir)}") {
             // todo exclude plugins - layoutAdditionalResources should perform codesign -
             //  that's why we process files and zip in plugins (but not JARs)
             // and also kotlin compiler includes JNA
-            recursivelySignMacBinaries(coroutineScope = this, file, context)
+            recursivelySignMacBinaries(file, context)
           }
         }
       }
@@ -354,7 +349,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
           }
         }
       }
-    }.map { it.resultNow() }
+    }.map { it.await() }
   } ?: emptyList()
 }
 
@@ -473,7 +468,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
       buildNonBundledPlugins(
         pluginsToPublish = pluginsToPublish,
         compressPluginArchive = context.options.compressZipFiles,
-        buildPlatformLibJob = null,
+        platformEntriesProvider = null,
         state = distributionState,
         searchableOptionSet = buildSearchableOptions(context),
         isUpdateFromSources = false,
@@ -1163,7 +1158,7 @@ internal suspend fun buildAdditionalAuthoringArtifacts(productRunner: IntellijPr
     )
     val temporaryBuildDirectory = context.paths.tempDir
     for (command in commands) {
-      launch(CoroutineName("build ${command.first}")) {
+      fork("build ${command.first}") {
         val targetPath = temporaryBuildDirectory.resolve(command.first).resolve(command.second)
         productRunner.runProduct(
           args = listOf(command.first, targetPath.toString()),

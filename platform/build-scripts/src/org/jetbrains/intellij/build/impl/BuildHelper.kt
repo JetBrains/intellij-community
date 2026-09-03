@@ -4,15 +4,12 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
 import io.opentelemetry.api.trace.SpanBuilder
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.Subtask
 import org.jetbrains.intellij.build.VirtualThreadTasks
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.copyDir
@@ -20,29 +17,15 @@ import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.blockingUse
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import java.util.function.Predicate
 
-fun CoroutineScope.createSkippableJob(
-  spanBuilder: SpanBuilder,
-  stepId: String,
-  context: BuildContext,
-  task: suspend () -> Unit,
-): Job {
-  return launch(CoroutineName("$stepId build step")) {
-    context.executeStep(spanBuilder, stepId) {
-      task()
-    }
-  }
-}
-
-/** The [VirtualThreadTasks] form of [createSkippableJob]. The future holds `null` when the step is skipped or fails. */
+/** Forks a build step into the group. The subtask holds `null` when the step is skipped or fails. */
 fun VirtualThreadTasks.createSkippableJob(
   spanBuilder: SpanBuilder,
   stepId: String,
   context: BuildContext,
   task: suspend () -> Unit,
-): CompletableFuture<Unit?> {
+): Subtask<Unit?> {
   return fork("$stepId build step") {
     context.executeStep(spanBuilder, stepId) {
       task()
@@ -96,18 +79,17 @@ fun <T> suspendingLazy(coroutineName: String, initializer: suspend CoroutineScop
 }
 
 private class AsyncCacheBackedSuspendingLazy<T>(
-  private val coroutineName: String,
+  coroutineName: String,
   private val initializer: suspend CoroutineScope.() -> T,
 ) : SuspendingLazy<T> {
   private val key = NamedSuspendingLazyKey(coroutineName)
   private val cache = AsyncCache<NamedSuspendingLazyKey, T>()
 
   override suspend fun await(): T {
+    // the fork of the cache carries the name of the lazy as its coroutine name
     return cache.getOrPut(key) {
-      withContext(CoroutineName(coroutineName)) {
-        coroutineScope {
-          initializer(this)
-        }
+      coroutineScope {
+        initializer(this)
       }
     }
   }

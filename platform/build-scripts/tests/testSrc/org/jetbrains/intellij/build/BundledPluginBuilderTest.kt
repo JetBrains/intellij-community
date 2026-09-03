@@ -14,14 +14,12 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SupportedDistribution
 import org.jetbrains.intellij.build.impl.createTestDistributionBuilderState
 import org.jetbrains.intellij.build.impl.plugins.collectOsSpecificBundledPluginBuildTasks
-import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.testBuildBundledPluginsForAllPlatforms
 import org.jetbrains.intellij.build.impl.testLayoutBundledPlugins
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration.Companion.seconds
 
 class BundledPluginBuilderTest {
@@ -74,14 +72,10 @@ class BundledPluginBuilderTest {
     assertThatThrownBy {
       runBlocking(Dispatchers.Default) {
         val (context, state) = createMinimalBundledPluginBuildState()
-        val buildPlatformJob = CompletableFuture<List<DistributionFileEntry>>().also {
-          it.completeExceptionally(IllegalStateException(failureMessage))
-        }
-
         testBuildBundledPluginsForAllPlatforms(
           state = state,
           pluginLayouts = emptySet(),
-          buildPlatformJob = buildPlatformJob,
+          platformEntriesProvider = { throw IllegalStateException(failureMessage) },
           descriptorCacheContainer = state.platformLayout.descriptorCacheContainer,
           context = context,
           includeAdditionalPlugins = false,

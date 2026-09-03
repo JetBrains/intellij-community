@@ -8,6 +8,7 @@ import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ContentModuleFilter
+import org.jetbrains.intellij.build.Subtask
 import org.jetbrains.intellij.build.VirtualThreadTasks
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
@@ -15,7 +16,6 @@ import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import kotlin.text.contains
 
 /**
@@ -23,7 +23,7 @@ import kotlin.text.contains
  */
 private fun getToolModules(): List<String> = listOf("intellij.java.rt", "intellij.platform.starter", "intellij.tools.updater")
 
-internal fun VirtualThreadTasks.createMavenArtifactJob(platformLayout: PlatformLayout, context: BuildContext): CompletableFuture<Unit?>? {
+internal fun VirtualThreadTasks.createMavenArtifactJob(platformLayout: PlatformLayout, context: BuildContext): Subtask<Unit?>? {
   val mavenArtifacts = context.productProperties.mavenArtifacts
   if (!mavenArtifacts.forIdeModules &&
       mavenArtifacts.additionalModules.isEmpty() &&

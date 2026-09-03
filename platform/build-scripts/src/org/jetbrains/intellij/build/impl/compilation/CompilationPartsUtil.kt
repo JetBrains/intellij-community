@@ -9,11 +9,6 @@ import com.intellij.util.lang.ImmutableZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -28,6 +23,7 @@ import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.virtualThreadTasks
 import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.file.FileSystemException
@@ -183,7 +179,7 @@ private suspend fun packCompilationResult(zipDir: Path, context: CompilationCont
     }
   }
 
-  spanBuilder("build zip archives").use(Dispatchers.IO) {
+  spanBuilder("build zip archives").use {
     items.forEachConcurrent { item ->
       item.hash = packAndComputeHash(addDirEntriesMode = addDirEntriesMode, name = item.name, archive = item.archive, source = item.output)
     }
@@ -376,7 +372,7 @@ suspend fun fetchAndUnpackCompiledClasses(
   }
 
   val start = System.nanoTime()
-  spanBuilder("unpack compiled classes archives").use(Dispatchers.IO) {
+  spanBuilder("unpack compiled classes archives").use {
     toUnpack.forEachConcurrent(Runtime.getRuntime().availableProcessors().coerceAtLeast(4)) { item ->
       spanBuilder("unpack").setAttribute("name", item.name).blockingUse {
         unpackCompilationPartArchive(item, saveHash)
@@ -439,11 +435,16 @@ private suspend fun checkPreviouslyUnpackedDirectories(
   }
 
   val start = System.nanoTime()
-  withContext(Dispatchers.IO) {
-    val name = "remove stalled directories not present in metadata"
-    launch(CoroutineName(name)) {
-      spanBuilder(name).setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).blockingUse {
-        removeStalledDirs(metadata, classOutput)
+  val name = "remove stalled directories not present in metadata"
+  virtualThreadTasks {
+    fork(name) {
+      val stalledDirs = spanBuilder(name).setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).blockingUse {
+        collectStalledDirs(metadata, classOutput)
+      }
+      stalledDirs.forEachConcurrent { dir ->
+        spanBuilder("delete stalled dir").setAttribute("dir", dir.toString()).blockingUse {
+          dir.deleteRecursively()
+        }
       }
     }
 
@@ -491,10 +492,10 @@ private suspend fun checkPreviouslyUnpackedDirectories(
   return System.nanoTime() - start
 }
 
-private fun CoroutineScope.removeStalledDirs(
+private fun collectStalledDirs(
   metadata: CompilationPartsMetadata,
   classOutput: Path,
-) {
+): List<Path> {
   val expectedDirectories = HashSet(metadata.files.keys)
   // we need to traverse with depth 2 since the first level is [production, test]
   val stalledDirs = mutableListOf<Path>()
@@ -519,13 +520,7 @@ private fun CoroutineScope.removeStalledDirs(
     }
   }
 
-  for (dir in stalledDirs) {
-    launch(CoroutineName("delete stalled dir $dir")) {
-      spanBuilder("delete stalled dir").setAttribute("dir", dir.toString()).blockingUse {
-        dir.deleteRecursively()
-      }
-    }
-  }
+  return stalledDirs
 }
 
 internal data class PackAndUploadItem(

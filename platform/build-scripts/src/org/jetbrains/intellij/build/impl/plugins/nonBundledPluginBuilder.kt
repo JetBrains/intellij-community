@@ -23,7 +23,6 @@ import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.VirtualThreadTasks
-import org.jetbrains.intellij.build.awaitShared
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
@@ -59,14 +58,13 @@ import tools.jackson.jr.ob.JSON
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.io.path.invariantSeparatorsPathString
 
 internal suspend fun buildNonBundledPlugins(
   pluginsToPublish: Set<PluginLayout>,
   compressPluginArchive: Boolean,
-  buildPlatformLibJob: CompletableFuture<List<DistributionFileEntry>>?,
+  platformEntriesProvider: (suspend () -> List<DistributionFileEntry>)?,
   state: DistributionBuilderState,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   isUpdateFromSources: Boolean,
@@ -79,7 +77,7 @@ internal suspend fun buildNonBundledPlugins(
         tasks = this,
         pluginsToPublish = pluginsToPublish,
         compressPluginArchive = compressPluginArchive,
-        buildPlatformLibJob = buildPlatformLibJob,
+        platformEntriesProvider = platformEntriesProvider,
         state = state,
         searchableOptionSet = searchableOptionSet,
         isUpdateFromSources = isUpdateFromSources,
@@ -94,7 +92,7 @@ private suspend fun buildNonBundledPlugins(
   tasks: VirtualThreadTasks,
   pluginsToPublish: Set<PluginLayout>,
   compressPluginArchive: Boolean,
-  buildPlatformLibJob: CompletableFuture<List<DistributionFileEntry>>?,
+  platformEntriesProvider: (suspend () -> List<DistributionFileEntry>)?,
   state: DistributionBuilderState,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   isUpdateFromSources: Boolean,
@@ -150,7 +148,7 @@ private suspend fun buildNonBundledPlugins(
       arch = arch,
       targetDir = targetDir,
       state = state,
-      platformEntriesProvider = buildPlatformLibJob?.let { it::awaitShared },
+      platformEntriesProvider = platformEntriesProvider,
       searchableOptionSet = searchableOptionSet,
       descriptorCacheContainer = descriptorCacheContainer,
       context = context,
@@ -234,7 +232,7 @@ private suspend fun buildNonBundledPlugins(
   }
 
   buildKeymapPluginsTask?.let {
-    for ((pluginZip, pluginXml) in it.awaitShared()) {
+    for ((pluginZip, pluginXml) in it.await()) {
       pluginSpecs.add(PluginRepositorySpec(pluginZip = pluginZip, pluginXml = pluginXml))
     }
   }

@@ -10,10 +10,10 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.Subtask
+import org.jetbrains.intellij.build.VirtualThreadTasks
 import org.jetbrains.intellij.build.downloadAsBytes
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.createSkippableJob
@@ -37,8 +37,10 @@ import kotlin.text.Charsets.UTF_8
 /**
  * Download a default version of feature usage statistics metadata to be bundled with IDE.
  */
-internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher: ModuleOutputPatcher,
-                                                                                context: BuildContext): Job? {
+internal fun VirtualThreadTasks.createStatisticsRecorderBundledMetadataProviderTask(
+  moduleOutputPatcher: ModuleOutputPatcher,
+  context: BuildContext,
+): Subtask<Unit?>? {
   val featureUsageStatisticsPropertiesList = context.proprietaryBuildTools.featureUsageStatisticsProperties ?: return null
   return createSkippableJob(
     spanBuilder("bundle a default version of feature usage statistics"),

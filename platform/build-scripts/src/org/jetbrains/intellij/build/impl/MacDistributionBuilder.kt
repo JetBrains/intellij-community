@@ -7,11 +7,7 @@ import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
@@ -48,6 +44,7 @@ import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.isLanguageServer
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.virtualThreadTasks
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -120,15 +117,13 @@ class MacDistributionBuilder(
   }
 
   override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
-    withContext(Dispatchers.IO) {
-      doCopyFilesForOsDistribution(targetPath = targetPath, arch = arch, copyDistFiles = true)
-    }
+    doCopyFilesForOsDistribution(targetPath = targetPath, arch = arch, copyDistFiles = true)
   }
 
-  override suspend fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path> = withContext(Dispatchers.IO) {
+  override suspend fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path> {
     // `add`, not `+`: `Path` is an `Iterable<Path>` of its own name elements, so `List<Path> + Path` appends
     // those elements instead of the path
-    buildList {
+    return buildList {
       addAll(copyNativeBinDir(context.paths.communityHomeDir.resolve("bin/mac"), binDir, fileFilter = customizer.binFilesFilter))
       add(copyRestarterToDir(binDir, OsFamily.MACOS, arch, context))
     }
@@ -188,9 +183,7 @@ class MacDistributionBuilder(
   }
 
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
-    withContext(Dispatchers.IO) {
-      doCopyFilesForOsDistribution(osAndArchSpecificDistPath, arch, false)
-    }
+    doCopyFilesForOsDistribution(osAndArchSpecificDistPath, arch, false)
 
     context.executeStep(spanBuilder("build macOS artifacts").setAttribute("arch", arch.name), BuildOptions.MAC_ARTIFACTS_STEP) {
       setLastModifiedTime(osAndArchSpecificDistPath, context)
@@ -224,10 +217,8 @@ class MacDistributionBuilder(
 
       val productJson = generateProductJson(arch = arch, withRuntime = true, context = context)
       val productJsonWithoutRuntime = generateProductJson(arch = arch, withRuntime = false, context = context)
-      withContext(Dispatchers.IO) {
-        macZipProductInfoJson.writeText(productJson)
-        macZipWithoutRuntimeProductInfoJson.writeText(productJsonWithoutRuntime)
-      }
+      macZipProductInfoJson.writeText(productJson)
+      macZipWithoutRuntimeProductInfoJson.writeText(productJsonWithoutRuntime)
 
       buildMacZip(
         macDistributionBuilder = builder,
@@ -281,11 +272,11 @@ class MacDistributionBuilder(
   private suspend fun signMacBinaries(osAndArchSpecificDistPath: Path, runtimeDist: Path, arch: JvmArchitecture) {
     val binariesToSign = customizer.getBinariesToSign(context, arch).map(osAndArchSpecificDistPath::resolve)
     val matchers = generateExecutableFilesMatchers(includeRuntime = false, arch).keys
-    withContext(Dispatchers.IO) {
-      signMacBinaries(binariesToSign, context)
+    signMacBinaries(binariesToSign, context)
+    virtualThreadTasks {
       for (dir in listOf(osAndArchSpecificDistPath, runtimeDist)) {
-        launch(CoroutineName("recursively signing macOS binaries in $dir")) {
-          recursivelySignMacBinaries(coroutineScope = this, dir, context, matchers)
+        fork("recursively signing macOS binaries in $dir") {
+          recursivelySignMacBinaries(dir, context, matchers)
         }
       }
     }
@@ -353,7 +344,7 @@ class MacDistributionBuilder(
     macZip: Path, macZipProductInfoJson: Path,
     macZipWithoutRuntime: Path, macZipWithoutRuntimeProductInfoJson: Path,
   ) {
-    spanBuilder("build macOS artifacts for the specific arch").setAttribute("arch", arch.name).use(Dispatchers.IO) {
+    spanBuilder("build macOS artifacts for the specific arch").setAttribute("arch", arch.name).use {
       val notarize =
         (System.getProperty("intellij.build.mac.notarize")?.toBoolean() ?: !context.isStepSkipped(BuildOptions.MAC_NOTARIZE_STEP)) &&
         !context.isStepSkipped(BuildOptions.MAC_SIGN_STEP)
@@ -369,7 +360,7 @@ class MacDistributionBuilder(
     notarize: Boolean,
   ) {
     val archStr = arch.name
-    coroutineScope {
+    virtualThreadTasks {
       val taskId = "${BuildOptions.MAC_ARTIFACTS_STEP}_jre_${archStr}"
       createSkippableJob(spanBuilder("build DMG with Runtime").setAttribute("arch", archStr), taskId, context) {
         signAndBuildDmg(macZip, macZipProductInfoJson, isRuntimeBundled = true, suffix(arch), arch, notarize)
@@ -457,7 +448,7 @@ class MacDistributionBuilder(
       .setAttribute("zipRoot", zipRoot)
       .setAttribute(AttributeKey.stringArrayKey("directories"), directories.map { it.toString() })
       .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFileMatchers.values.toList())
-      .use(Dispatchers.IO) {
+      .use {
         val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativePathString ->
           val relativePath = Path.of(relativePathString)
           if (executableFileMatchers.any { it.key.matches(relativePath) } || (SystemInfoRt.isUnix && Files.isExecutable(file))) {
@@ -772,7 +763,7 @@ class MacDistributionBuilder(
 
     val tempSit = Files.createTempDirectory(context.paths.tempDir, "sit-")
     try {
-      spanBuilder("extracting ${sitFile.name}").use(Dispatchers.IO) {
+      spanBuilder("extracting ${sitFile.name}").use {
         Decompressor.Zip(sitFile)
           .withZipExtensions()
           .extract(tempSit)
@@ -780,7 +771,7 @@ class MacDistributionBuilder(
       generateInstallationIntegrityManifest(tempSit.resolve(sitRoot), OsFamily.MACOS, arch, context)
     }
     finally {
-      withContext(Dispatchers.IO + NonCancellable) {
+      withContext(NonCancellable) {
         @OptIn(ExperimentalPathApi::class)
         tempSit.deleteRecursively()
       }
