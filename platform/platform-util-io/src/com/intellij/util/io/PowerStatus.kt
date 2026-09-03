@@ -1,15 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
-import com.intellij.jna.JnaLoader
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
-import com.sun.jna.Library
-import com.sun.jna.Native
-import com.sun.jna.Pointer
-import com.sun.jna.Structure
-import com.sun.jna.win32.StdCallLibrary
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -33,8 +27,8 @@ internal interface PowerService {
     val service: PowerService by lazy {
       try {
         when {
-          SystemInfo.isWindows && JnaLoader.isLoaded() -> WinPowerService()
-          SystemInfo.isMac && JnaLoader.isLoaded() -> MacPowerService()
+          SystemInfo.isWindows -> WinPowerService()
+          SystemInfo.isMac -> MacPowerService()
           SystemInfo.isLinux -> LinuxPowerService()
           else -> NullPowerService()
         }
@@ -52,134 +46,33 @@ private class NullPowerService : PowerService {
 }
 
 //<editor-fold desc="Windows implementation">
-@Suppress("ClassName", "PropertyName", "FunctionName", "unused")
 private class WinPowerService : PowerService {
   override fun status(): PowerStatus {
-    val status = SYSTEM_POWER_STATUS()
-    if (!kernel32.GetSystemPowerStatus(status)) {
-      throw IOException("GetSystemPowerStatus(): ${kernel32.GetLastError()}")
-    }
-    else {
-      if (PowerService.LOG.isDebugEnabled) PowerService.LOG.debug("ACLineStatus=${status.ACLineStatus}")
-      return when (status.ACLineStatus.toInt()) {
-        0 -> PowerStatus.BATTERY
-        1 -> PowerStatus.AC
-        else -> PowerStatus.UNKNOWN
-      }
+    val acLineStatus = WindowsPower.acLineStatus()
+    if (PowerService.LOG.isDebugEnabled) PowerService.LOG.debug("ACLineStatus=${acLineStatus}")
+    return when (acLineStatus) {
+      0 -> PowerStatus.BATTERY
+      1 -> PowerStatus.AC
+      else -> PowerStatus.UNKNOWN
     }
   }
-
-  @Structure.FieldOrder("ACLineStatus", "BatteryFlag", "BatteryLifePercent", "SystemStatusFlag", "BatteryLifeTime", "BatteryFullLifeTime")
-  class SYSTEM_POWER_STATUS : Structure() {
-    @JvmField var ACLineStatus: Byte = 0
-    @JvmField var BatteryFlag: Byte = 0
-    @JvmField var BatteryLifePercent: Byte = 0
-    @JvmField var SystemStatusFlag: Byte = 0
-    @JvmField var BatteryLifeTime: Int = 0
-    @JvmField var BatteryFullLifeTime: Int = 0
-  }
-
-  private interface Kernel32 : StdCallLibrary {
-    fun GetSystemPowerStatus(result: SYSTEM_POWER_STATUS): Boolean
-    fun GetLastError(): Int
-  }
-
-  private val kernel32 = Native.load("kernel32", Kernel32::class.java)
 }
 //</editor-fold>
 
 //<editor-fold desc="macOS implementation">
-@Suppress("FunctionName", "unused")
 private class MacPowerService : PowerService {
   /**
-   * In IOKit, "power sources" include batteries and UPS devices.
-   * The method returns "BATTERY" in the following cases:
-   * - when a system has a battery which is discharging
-   * - when a system has no discharging batteries but has a discharging UPS
+   * IOKit names the source that supplies the machine now. A discharging UPS counts as a battery.
+   * Every other answer is [PowerStatus.AC], because a machine without a battery runs on the AC line.
    */
-  override fun status() =
-    ioKit.IOPSCopyPowerSourcesInfo().use { psBlob ->
-      ioKit.IOPSCopyPowerSourcesList(psBlob).use { psList ->
-        var batteryState: PowerStatus? = null
-        var upsState: PowerStatus? = null
-
-        val count = ioKit.CFArrayGetCount(psList)
-        if (PowerService.LOG.isDebugEnabled) PowerService.LOG.debug("count=${count}")
-        for (i in 0 until count) {
-          val ps = ioKit.IOPSGetPowerSourceDescription(psBlob, ioKit.CFArrayGetValueAtIndex(psList, i))
-          if (isTrue(ioKit.CFDictionaryGetValue(ps, kIOPSIsPresentKey))) {
-            val type = ioKit.CFDictionaryGetValue(ps, kIOPSTypeKey)
-            val state = ioKit.CFDictionaryGetValue(ps, kIOPSPowerSourceStateKey)
-            if (PowerService.LOG.isDebugEnabled) PowerService.LOG.debug("${i}: type='${str(type)}' state='${str(state)}'")
-            if (strEquals(type, kIOPSInternalBatteryType)) {
-              batteryState = if (strEquals(state, kIOPSBatteryPowerValue)) PowerStatus.BATTERY else PowerStatus.AC
-              break
-            }
-            else if (strEquals(type, kIOPSUPSType) && upsState === null) {
-              upsState = if (strEquals(state, kIOPSBatteryPowerValue)) PowerStatus.BATTERY else PowerStatus.AC
-            }
-          }
-        }
-
-        when {
-          batteryState === PowerStatus.BATTERY -> PowerStatus.BATTERY
-          upsState !== null -> upsState
-          else -> PowerStatus.AC
-        }
-      }
-    } ?: PowerStatus.UNKNOWN
-
-  private interface IOKit : Library {
-    fun IOPSCopyPowerSourcesInfo(): Pointer?
-    fun IOPSCopyPowerSourcesList(psBlob: Pointer): Pointer?
-    fun IOPSGetPowerSourceDescription(psBlob: Pointer, psName:Pointer): Pointer
-
-    fun CFRelease(p: Pointer)
-    fun CFArrayGetCount(array: Pointer): Long
-    fun CFArrayGetValueAtIndex(array: Pointer, idx: Long): Pointer
-    fun CFDictionaryGetValue(dict: Pointer, key: Pointer): Pointer?
-    fun CFStringCreateWithCharacters(alloc: Pointer?, chars: CharArray, numChars: Long): Pointer
-    fun CFStringCompare(str1: Pointer, str2: Pointer, flags: Long): Long
-    fun CFStringGetLength(str: Pointer): Long
-    fun CFStringGetCharacters(str: Pointer, range: CFRange, buffer: CharArray)
-    fun CFBooleanGetValue(ref: Pointer): Short
-  }
-
-  @Structure.FieldOrder("location", "length")
-  class CFRange : Structure(), Structure.ByValue {
-    @JvmField var location: Long = 0
-    @JvmField var length: Long = 0
-  }
-
-  private val ioKit: IOKit = Native.load("IOKit", IOKit::class.java)
-  private val kIOPSIsPresentKey = CFSTR("Is Present")
-  private val kIOPSTypeKey = CFSTR("Type")
-  private val kIOPSInternalBatteryType = CFSTR("InternalBattery")
-  private val kIOPSUPSType = CFSTR("UPS")
-  private val kIOPSPowerSourceStateKey = CFSTR("Power Source State")
-  private val kIOPSBatteryPowerValue = CFSTR("Battery Power")
-  private val kCFCompareEqualTo = 0L
-
-  @Suppress("SpellCheckingInspection")
-  private fun CFSTR(str: String) = ioKit.CFStringCreateWithCharacters(null, str.toCharArray(), str.length.toLong())
-
-  private fun isTrue(p: Pointer?) = p !== null && ioKit.CFBooleanGetValue(p).toInt() != 0
-
-  private fun strEquals(p: Pointer?, str: Pointer) = p !== null && ioKit.CFStringCompare(p, str, 0L) == kCFCompareEqualTo
-
-  private fun str(str: Pointer?): String =
-    if (str === null) "<null>"
-    else {
-      val range = CFRange()
-      range.length = ioKit.CFStringGetLength(str)
-      val buffer = CharArray(range.length.toInt())
-      ioKit.CFStringGetCharacters(str, range, buffer)
-      String(buffer)
+  override fun status(): PowerStatus {
+    val type = MacPower.providingPowerSourceType()
+    if (PowerService.LOG.isDebugEnabled) PowerService.LOG.debug("providingPowerSourceType=${type}")
+    return when (type) {
+      MacPower.BATTERY_POWER, MacPower.UPS_POWER -> PowerStatus.BATTERY
+      else -> PowerStatus.AC
     }
-
-  private inline fun <T> Pointer?.use(block: (Pointer) -> T): T? =
-    if (this === null) null
-    else try { block(this) } finally { ioKit.CFRelease(this) }
+  }
 }
 //</editor-fold>
 
