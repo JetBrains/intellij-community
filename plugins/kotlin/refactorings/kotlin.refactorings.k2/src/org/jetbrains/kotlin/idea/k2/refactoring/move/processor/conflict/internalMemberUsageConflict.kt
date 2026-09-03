@@ -57,7 +57,7 @@ internal fun checkInternalMemberUsages(
     elementsToMove.forEach { it.accept(memberCollector) }
 
     for (memberToCheck in membersToCheck) {
-        for (reference in ReferencesSearch.search(memberToCheck).asIterable()) {
+        ReferencesSearch.search(memberToCheck).forEach { reference ->
             val element = reference.element
             val usageModule = ModuleUtilCore.findModuleForPsiElement(element) ?: continue
             if (usageModule != targetModule && targetModule !in usageModule.implementedModules && !element.willBeMoved(elementsToMove)) {

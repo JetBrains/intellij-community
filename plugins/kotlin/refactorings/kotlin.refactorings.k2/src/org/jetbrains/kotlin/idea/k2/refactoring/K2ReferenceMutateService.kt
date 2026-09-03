@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.removeQualifier
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
@@ -162,7 +163,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         val qualifier = qualifier
 
         if (qualifier != null && qualifier.qualifier == null && qualifier.text == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE) {
-            deleteQualifier()
+            removeQualifier()
         } else {
             qualifier?.removeRootPrefix()
         }
@@ -244,7 +245,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         } else {
             val parentFqn = fqName.parent()
             if (parentFqn.isRoot) {
-                deleteQualifier()
+                removeQualifier()
             } else {
                 qualifier?.replaceWith(parentFqn, targetElement) // do recursive short name replacement to preserve type arguments
             }
