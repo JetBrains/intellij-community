@@ -6,11 +6,13 @@ import com.intellij.ide.starter.runner.TestAborter
 import com.intellij.ide.starter.utils.Git
 import com.intellij.ide.starter.utils.GitRemoteException
 import com.intellij.ide.starter.utils.abortOnUnavailableGitRemote
+import com.intellij.ide.starter.utils.gitRepositoryName
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -21,6 +23,7 @@ import org.opentest4j.TestAbortedException
 import java.nio.file.Path
 
 private const val REPOSITORY_URL = "https://github.com/jitpack/android-example.git"
+private const val REPOSITORY_NAME = "jitpack/android-example"
 
 /** Does what `JUnit5TestAborter` does, without a dependency on that module. */
 private object AbortingTestAborter : TestAborter {
@@ -55,9 +58,32 @@ class GitRemoteFailureTest {
     }
 
     reported.single().kind shouldBe SyntheticTestKind.TEST_INFRA_EXCEPTION
-    reported.single().testName shouldContain REPOSITORY_URL
+    reported.single().testName shouldContain REPOSITORY_NAME
     reported.single().testName shouldContain "git-fetch"
+    reported.single().message shouldContain REPOSITORY_URL
     reported.single().details shouldContain "GitRemoteException"
+  }
+
+  @Test
+  fun `the name of the reported test holds no url`() {
+    val failure = GitRemoteException("git-clone")
+
+    val reported = failuresReportedWhile {
+      shouldThrow<TestAbortedException> { abortOnUnavailableGitRemote(REPOSITORY_URL, failure) }
+    }
+
+    // `generifyErrorMessage` replaces a url with `<LINK>`, which hides the repository.
+    reported.single().testName shouldNotContain "://"
+    reported.single().testName shouldNotContain "github.com"
+  }
+
+  @Test
+  fun `the repository name drops the scheme, the host and the git suffix`() {
+    gitRepositoryName("https://github.com/DataGrip/dumps.git") shouldBe "DataGrip/dumps"
+    gitRepositoryName("https://github.com/DataGrip/dumps") shouldBe "DataGrip/dumps"
+    gitRepositoryName("ssh://git@github.com/junit-team/junit5.git") shouldBe "junit-team/junit5"
+    gitRepositoryName("git@github.com:junit-team/junit5.git") shouldBe "junit-team/junit5"
+    gitRepositoryName("https://git.jetbrains.team/a/b/c.git") shouldBe "a/b/c"
   }
 
   @Test
