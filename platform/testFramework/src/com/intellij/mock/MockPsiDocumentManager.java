@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.function.Supplier;
 
 public class MockPsiDocumentManager extends PsiDocumentManager {
   @Override
@@ -134,6 +135,11 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   @Override
   public void performLaterWhenAllCommitted(@NotNull ModalityState modalityState,
                                            @NotNull Runnable runnable) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public <T> T allowIsolatedCommits(@NotNull Document document, @NotNull Supplier<? extends T> action) {
     throw new UnsupportedOperationException();
   }
 }

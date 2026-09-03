@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.EventListener;
+import java.util.function.Supplier;
 
 /**
  * Manages the relationship between documents and PSI trees.
@@ -122,6 +123,17 @@ public abstract class PsiDocumentManager {
    * a write-safe context (see {@link com.intellij.openapi.application.TransactionGuard}).
    * For other documents, it can be called in background thread with read access. It's the responsibility of the caller to properly
    * synchronize that PSI and ensure no other threads are reading or modifying it concurrently.
+   *
+   * <h4>Versioned environment</h4>
+   * <b> Warning: experimental functionality! </b> <br>
+   * It is possible to call this function inside {@link com.intellij.psi.util.PsiVersioningService#executeWithTimeline}.
+   * In this case, the function will update the isolated snapshot referenced by previously acquired {@link com.intellij.psi.util.PsiVersioningService#forkTimeline}.
+   * Key differences:
+   * <ol>
+   *   <li> PSI tree change events are not sent. It means that {@link PsiTreeChangeListener} listeners will not be invoked.</li>
+   *   <li> Smart pointers are not updated. </li>
+   * </ol>
+   * The commit performed this way is referenced to as <i>lightweight document commit</i>.
    *
    * @param document the document to commit.
    */
@@ -268,4 +280,21 @@ public abstract class PsiDocumentManager {
    * If the project is disposed before this moment, the {@code runnable} is not executed.
    */
   public abstract void performLaterWhenAllCommitted(@NotNull ModalityState modalityState, @NotNull Runnable runnable);
+
+  /**
+   * Runs {@code action} so that {@link #commitDocument} of {@code document} inside it needs no write-intent lock.
+   * Only the block of this method sees the result of such a commit.
+   * Outside the block, PSI shows the last commit that a write action published.
+   * <p>
+   * When the caller already holds a lock, this method runs {@code action} directly.
+   * <p>
+   * When this block is reentered several times consecutively, and there was no commit of {@code document} between enterings,
+   * then the result of committed document is reused in all the blocks.
+   *
+   * @param document the document that owns the isolated timeline of the block
+   * @param action   the computation to run on the isolated timeline
+   * @return the value that {@code action} returns
+   */
+  @ApiStatus.Experimental
+  public abstract <T> T allowIsolatedCommits(@NotNull Document document, @NotNull Supplier<? extends T> action);
 }

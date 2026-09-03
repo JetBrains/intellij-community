@@ -89,6 +89,7 @@ a:com.intellij.psi.impl.PsiDocumentManagerBase
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.event.DocumentListener
 - com.intellij.psi.PsiDocumentManager
+- *:allowIsolatedCommits(com.intellij.openapi.editor.Document,java.util.function.Supplier):java.lang.Object
 - *:getPsiFile(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 *:com.intellij.psi.impl.PsiDocumentTransactionListenerBackgroundable
 - com.intellij.psi.impl.PsiDocumentTransactionListener

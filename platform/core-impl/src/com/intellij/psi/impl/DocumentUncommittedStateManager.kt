@@ -2,6 +2,8 @@
 package com.intellij.psi.impl
 
 import com.intellij.injected.editor.DocumentWindow
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -12,13 +14,16 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.isInForkedTimeline
 import com.intellij.psi.impl.source.tree.mvcc.PsiVersionCleanable
+import com.intellij.psi.util.PsiVersioningService
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.TestOnly
+import java.lang.ref.WeakReference
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
 /**
@@ -37,6 +42,71 @@ internal class DocumentUncommittedStateManager : PsiVersionCleanable {
   private val stateKey = Key.create<DocumentState>("UNCOMMITTED_DOCUMENT_STATE")
 
   private val liveStates: MutableMap<DocumentState, Boolean> = CollectionFactory.createConcurrentWeakMap()
+
+  private val timelineLock = Any()
+
+  private val isolatedTimelines: ConcurrentMap<Document, IsolatedTimeline>
+    get() {
+      require(Thread.holdsLock(timelineLock))
+      return _isolatedTimelines
+    }
+
+  private val _isolatedTimelines: ConcurrentMap<Document, IsolatedTimeline> = CollectionFactory.createConcurrentWeakMap()
+
+  /**
+   * A tracker of live timelines, that is needed for garbage collection after document ceases to be strongly reachable.
+   */
+  private val liveTimelines: MutableSet<IsolatedTimeline>
+    get() {
+      require(Thread.holdsLock(timelineLock))
+      return _liveTimelines
+    }
+
+  private val _liveTimelines: MutableSet<IsolatedTimeline> = ConcurrentHashMap.newKeySet()
+
+  companion object {
+    private val LOG = Logger.getInstance(DocumentUncommittedStateManager::class.java)
+  }
+
+  /**
+   * A shared object that represents an accessor to isolated document commits.
+   *
+   * The purpose is the following:
+   * ```kotlin
+   * allowIsolatedCommits { commitDocument() }
+   * allowIsolatedCommits { document.getPsiFile() }
+   * ```
+   * The computation in the second `allowIsolatedCommits` sees the result computed in the first one
+   */
+  private class IsolatedTimeline(val version: PsiVersioningService.OpaquePsiVersion, val document: WeakReference<Document>) {
+    // initially, the holders equal to one because they are shared between different blocks.
+    private val holders = AtomicInteger(1)
+
+    fun acquire() {
+      val newValue = holders.incrementAndGet()
+      if (newValue >= 3) {
+        // at this point, it is not expected that a single timeline is used by two clients concurrently
+        try {
+          LOG.error("Too much parallelism")
+        } catch (_: Throwable) {
+          // do nothing -- protection against broken IDE in tests
+        }
+      }
+    }
+
+    /**
+     * Called when a client no longer needs timeline
+     */
+    fun release() {
+      if (holders.decrementAndGet() == 0) {
+        PsiVersioningService.forgetForkedTimeline(version)
+      }
+    }
+
+    fun getNumberOfHolders(): Int {
+      return holders.get()
+    }
+  }
 
   /**
    * The text that a PSI tree matches, together with the document events that came after it.
@@ -237,6 +307,7 @@ internal class DocumentUncommittedStateManager : PsiVersionCleanable {
     if (document is DocumentImpl && document.isWriteThreadOnly) {
       ThreadingAssertions.assertWriteAccess()
     }
+    terminateIsolatedTimeline(document)
     val state = peek(document) ?: return null
     val main = state.main
     state.main = null
@@ -250,6 +321,10 @@ internal class DocumentUncommittedStateManager : PsiVersionCleanable {
       state.main = null
       state.forked.clear()
     }
+    synchronized(timelineLock) {
+      // just erasing all timelines
+      removeTimelines { true }
+    }
   }
 
   /**
@@ -262,5 +337,154 @@ internal class DocumentUncommittedStateManager : PsiVersionCleanable {
     for (state in liveStates.keys) {
       state.forked.keys.removeIf { version -> version < minVersion }
     }
+    // cleaning up timelines that correspond to strongly unreachable references
+    removeTimelines { it.document.get() == null }
+  }
+
+  /**
+   * Runs [action] on the isolated timeline of [document].
+   * See [com.intellij.psi.PsiDocumentManager.allowIsolatedCommits] for the contract.
+   *
+   * The timeline outlives the block when the block committed [document], so the next call reuses it.
+   * A block that committed nothing retires the timeline, because a later call has nothing to reuse.
+   * A frozen forked version holds the cleanup barrier of the whole application, so an unused fork must not stay.
+   */
+  fun <T> allowIsolatedCommits(document: Document, action: Supplier<out T>): T {
+    val application = ApplicationManager.getApplication()
+    val actualDocument = if (document is DocumentWindow) document.delegate else document
+    if (application.isWriteIntentLockAcquired) {
+      // The caller holds a lock, so a commit inside goes to the main timeline.
+      // A fork here would install a version that conflicts with the version of the lock.
+      return action.get()
+    }
+    if (application.isReadAccessAllowed) {
+      throw IllegalStateException("Isolated commits are not allowed under read lock")
+    }
+    if (isInForkedTimeline()) {
+      assertIsolatedTimelineOf(actualDocument)
+      return action.get()
+    }
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      // so we are in `freezePsiVersion`
+      LOG.error("Commits are not permitted in `freezePsiVersion`")
+      return action.get()
+    }
+    val timeline = initPreacquiredTimeline(actualDocument)
+    try {
+      return PsiVersioningService.executeWithTimeline(timeline.version) {
+        try {
+          action.get()
+        } finally {
+          // we need to check for side effects here because in this block we still have a forked timeline
+          handleTimelineWithoutSideEffects(actualDocument, timeline)
+        }
+      }
+    } finally {
+      // this `release` is paired with pre-acquisition in `initTimeline`
+      // Normally, the number of holders in `timeline` is now `1` -- the timeline is going to be reused between versions.
+      timeline.release()
+    }
+  }
+
+  /**
+   * Imagine the following scenario: someone decided to run action with allowed isolated commits, but no commits happened.
+   * In this case we do not need to maintain the isolated timeline, as it holds nothing.
+   */
+  private fun handleTimelineWithoutSideEffects(document: Document, timeline: IsolatedTimeline) {
+    if (doesForkedBaselineExist(document)) {
+      return
+    }
+    synchronized(timelineLock) {
+      if (doesForkedBaselineExist(document)) {
+        return@handleTimelineWithoutSideEffects
+      }
+      val removalSuccessful = isolatedTimelines.remove(document, timeline)
+      if (!removalSuccessful) {
+        // can happen with concurrent publish
+        return
+      }
+      liveTimelines.remove(timeline)
+      timeline.release()
+    }
+  }
+
+  private fun doesForkedBaselineExist(document: Document): Boolean {
+    val state = peek(document) ?: return false
+    return state.forked.containsKey(InternalPsiVersioning.getCurrentPsiVersion())
+  }
+
+  /**
+   * Reports an error when the current forked timeline does not belong to [document].
+   *
+   * A nested call keeps the timeline of the outer call, so the two documents would share it.
+   */
+  private fun assertIsolatedTimelineOf(document: Document) = synchronized(timelineLock) {
+    val installed = PsiVersioningService.currentOpaqueVersion() ?: return@synchronized
+    val captured = isolatedTimelines[document]?.version
+    if (installed == captured) {
+      return@synchronized
+    }
+    if (captured == null) {
+      LOG.error("The document '$document' has no isolated timeline, but the current computation runs in '$installed'")
+    }
+    else {
+      LOG.error("Timeline mismatch: the current computation runs in '$installed', but the document '$document' uses '$captured'")
+    }
+  }
+
+  /**
+   * Returns timeline with number of holders of at least `2`
+   */
+  private fun initPreacquiredTimeline(document: Document): IsolatedTimeline = synchronized(timelineLock) {
+    val existing = isolatedTimelines[document]
+    if (existing != null) {
+      require(existing.getNumberOfHolders() > 0) {
+        "Registered timelines must have at least one holder"
+      }
+      existing.acquire()
+      return@synchronized existing
+    }
+    val created = IsolatedTimeline(PsiVersioningService.forkTimeline(), WeakReference(document))
+    // Publish the record before the map entry, so a concurrent publish can always find it and release it.
+    liveTimelines.add(created)
+    val installed = isolatedTimelines.putIfAbsent(document, created)
+    if (installed != null) {
+      error("Breach of mutual exclusion: the document '$document' already has an associated timeline")
+    }
+    InternalPsiVersioning.recordVersionedChange(this)
+    created.acquire()
+    return created
+  }
+
+  /**
+   * Releases the isolated timeline of [document], because a publish ended it.
+   *
+   * A publish retires the record that the map holds now, whichever record that is.
+   */
+  private fun terminateIsolatedTimeline(document: Document) = synchronized(timelineLock) {
+    val removedTimeline = isolatedTimelines.remove(document)
+    if (removedTimeline == null) {
+      // no one used isolated commits for this document
+      return@synchronized
+    }
+    val removalFromLiveTimelines = liveTimelines.remove(removedTimeline)
+    check(removalFromLiveTimelines) { "Timeline not found" }
+    removedTimeline.release()
+  }
+
+  /**
+   * Releases the isolated timeline of each document that satisfies [predicate]
+   */
+  private fun removeTimelines(predicate: (IsolatedTimeline) -> Boolean) = synchronized(timelineLock) {
+    val snapshot = liveTimelines.toList()
+    val timelinesToBeRemoved = mutableSetOf<IsolatedTimeline>()
+    for (timeline in snapshot) {
+      if (predicate(timeline)) {
+        timelinesToBeRemoved.add(timeline)
+      }
+    }
+    liveTimelines.removeAll(timelinesToBeRemoved)
+    timelinesToBeRemoved.forEach { it.release() }
+    isolatedTimelines.values.removeIf { it in timelinesToBeRemoved }
   }
 }

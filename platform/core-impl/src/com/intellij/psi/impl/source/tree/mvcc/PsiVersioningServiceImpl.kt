@@ -28,7 +28,19 @@ internal class PsiVersioningServiceImpl : PsiVersioningService {
     }
   }
 
-  class OpaquePsiVersionImpl(val actualVersion: Long) : PsiVersioningService.OpaquePsiVersion
+  class OpaquePsiVersionImpl(val actualVersion: Long) : PsiVersioningService.OpaquePsiVersion {
+    override fun equals(other: Any?): Boolean {
+      return other is OpaquePsiVersionImpl && actualVersion == other.actualVersion
+    }
+
+    override fun hashCode(): Int {
+      return actualVersion.hashCode()
+    }
+
+    override fun toString(): String {
+      return "OpaquePsiVersion($actualVersion)"
+    }
+  }
 
   override fun doForkTimeline(): PsiVersioningService.OpaquePsiVersion {
     require(getCurrentVersion() % InternalPsiVersioning.MAIN_TIMELINE_DELTA == 0L) {
@@ -64,6 +76,13 @@ internal class PsiVersioningServiceImpl : PsiVersioningService {
     }
     InternalPsiVersioning.PsiVersionRegistry.instance.forgetFrozenVersionUnsafe(opaqueVersion.actualVersion)
     InternalPsiVersioning.PsiVersionRegistry.instance.forgetFrozenVersionUnsafe(opaqueVersion.actualVersion - InternalPsiVersioning.FORKED_TIMELINE_DELTA)
+  }
+
+  override fun doGetCurrentOpaqueVersion(): PsiVersioningService.OpaquePsiVersion? {
+    if (!InternalPsiVersioning.isInForkedTimeline()) {
+      return null
+    }
+    return OpaquePsiVersionImpl(getCurrentVersion())
   }
 
   override fun <T> doExecuteWithTimeline(

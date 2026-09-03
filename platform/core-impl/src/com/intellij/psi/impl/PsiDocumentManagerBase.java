@@ -100,6 +100,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implements DocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance(PsiDocumentManagerBase.class);
@@ -1563,4 +1564,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
   }
 
+  @ApiStatus.Experimental
+  @Override
+  public <T> T allowIsolatedCommits(@NotNull Document document, @NotNull Supplier<? extends T> action) {
+    return myUncommittedState.allowIsolatedCommits(document, action);
+  }
 }

@@ -401,6 +401,7 @@ com.intellij.psi.PsiDirectory
 - com.intellij.psi.PsiFileSystemItem
 - *:findFile(java.lang.String,com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.PsiFile
 a:com.intellij.psi.PsiDocumentManager
+- *a:allowIsolatedCommits(com.intellij.openapi.editor.Document,java.util.function.Supplier):java.lang.Object
 - *a:getCachedPsiFile(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 - *a:getPsiFile(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 - *:hasEventSystemEnabledUncommittedDocuments():Z
@@ -479,6 +480,7 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - *sf:Companion:com.intellij.psi.util.PsiVersioningService$Companion
 - *s:createVersionedPsiElements(com.intellij.lang.ASTNode,kotlin.jvm.functions.Function0):java.lang.Object
 - *s:createVersionedPsiElements(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function0):java.lang.Object
+- *s:currentOpaqueVersion():com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion
 - *s:executeWithTimeline(com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion,kotlin.jvm.functions.Function0):java.lang.Object
 - *s:forgetForkedTimeline(com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion):V
 - *s:forkTimeline():com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion
@@ -486,6 +488,7 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 *f:com.intellij.psi.util.PsiVersioningService$Companion
 - f:createVersionedPsiElements(com.intellij.lang.ASTNode,kotlin.jvm.functions.Function0):java.lang.Object
 - f:createVersionedPsiElements(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function0):java.lang.Object
+- f:currentOpaqueVersion():com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion
 - f:executeWithTimeline(com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion,kotlin.jvm.functions.Function0):java.lang.Object
 - f:forgetForkedTimeline(com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion):V
 - f:forkTimeline():com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion

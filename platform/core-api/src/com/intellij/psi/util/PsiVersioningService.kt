@@ -100,6 +100,15 @@ interface PsiVersioningService {
     fun forgetForkedTimeline(opaqueVersion: OpaquePsiVersion): Unit = getInstance().doForgetForkedTimeline(opaqueVersion)
 
     /**
+     * Returns the key of the version that the current computation uses.
+     * If the current computation runs not in [executeWithTimeline], then this function returns `null`
+     *
+     * Use the result only to compare it with another key, for example in an assertion.
+     */
+    @JvmStatic
+    fun currentOpaqueVersion(): OpaquePsiVersion? = getInstance().doGetCurrentOpaqueVersion()
+
+    /**
      * Runs [action] where each access to versioned structures interacts with [opaqueVersion].
      *
      * We can graphically represent the effect of this function as the following:
@@ -139,6 +148,9 @@ interface PsiVersioningService {
 
   @ApiStatus.Internal
   fun doForgetForkedTimeline(opaqueVersion: OpaquePsiVersion): Unit = Unit
+
+  @ApiStatus.Internal
+  fun doGetCurrentOpaqueVersion(): OpaquePsiVersion? = IgnoredOpaquePsiVersion
 
   @ApiStatus.Internal
   fun <T> doExecuteWithTimeline(opaqueVersion: OpaquePsiVersion, action: () -> T): T = action()
