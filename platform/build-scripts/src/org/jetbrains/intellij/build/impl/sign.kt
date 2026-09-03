@@ -28,7 +28,7 @@ import org.jetbrains.intellij.build.io.writeToFileChannelFully
 import org.jetbrains.intellij.build.io.writeZipUsingTempFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.FileVisitResult
@@ -75,7 +75,7 @@ internal suspend fun recursivelySignMacBinaries(
     }
   })
 
-  virtualThreadTasks {
+  taskScope {
     fork("signing macOS binaries") {
       val binariesToSign = binaries.filter { isMacBinary(it) && !isSigned(it) }
       signMacBinaries(binariesToSign, context)

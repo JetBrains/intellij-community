@@ -23,11 +23,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class VirtualThreadTasksTest {
+class TaskScopeTest {
   @Test
   fun `a fork runs on a virtual thread and returns its value`() {
     val (isVirtual, threadName) = runBlocking {
-      virtualThreadTasks {
+      taskScope {
         fork("worker") { Thread.currentThread().isVirtual to Thread.currentThread().name }.await()
       }
     }
@@ -40,7 +40,7 @@ class VirtualThreadTasksTest {
   fun `the group waits for a fork that nobody awaits`() {
     val done = CompletableFuture<Unit>()
     runBlocking {
-      virtualThreadTasks {
+      taskScope {
         fork("late") {
           delay(100.milliseconds)
           done.complete(Unit)
@@ -56,7 +56,7 @@ class VirtualThreadTasksTest {
     val siblingCancelled = CompletableFuture<Unit>()
     assertThatThrownBy {
       runBlocking {
-        virtualThreadTasks {
+        taskScope {
           fork("sibling") {
             try {
               awaitCancellation()
@@ -84,7 +84,7 @@ class VirtualThreadTasksTest {
   fun `a failure of a fork that the block does not await wins over the cancellation the block sees`() {
     assertThatThrownBy {
       runBlocking {
-        virtualThreadTasks {
+        taskScope {
           val slow = fork("slow") { awaitCancellation() }
           fork("failing") {
             delay(50.milliseconds)
@@ -102,7 +102,7 @@ class VirtualThreadTasksTest {
   fun `a second failure is attached as suppressed under fail fast`() {
     assertThatThrownBy {
       runBlocking {
-        virtualThreadTasks {
+        taskScope {
           fork("first") { throw IllegalStateException("first") }
           fork("second") {
             // a blocking body does not see the cancel, so its own failure is kept
@@ -125,7 +125,7 @@ class VirtualThreadTasksTest {
     val forkFailed = CompletableFuture<Unit>()
     assertThatThrownBy {
       runBlocking {
-        virtualThreadTasks(VirtualThreadTaskPolicy.RUN_ALL) {
+        taskScope(TaskScopePolicy.RUN_ALL) {
           fork("failing") {
             try {
               throw IllegalStateException("the fork failed")
@@ -153,7 +153,7 @@ class VirtualThreadTasksTest {
     val lateForkRan = AtomicBoolean()
     assertThatThrownBy {
       runBlocking {
-        virtualThreadTasks {
+        taskScope {
           val group = this
           fork("starter") {
             try {
@@ -184,7 +184,7 @@ class VirtualThreadTasksTest {
     val slowEnded = AtomicBoolean()
     assertThatThrownBy {
       runBlocking {
-        virtualThreadTasks {
+        taskScope {
           fork("slow") {
             Thread.sleep(300)
             slowEnded.set(true)
@@ -202,7 +202,7 @@ class VirtualThreadTasksTest {
     val slowFinished = CompletableFuture<Unit>()
     assertThatThrownBy {
       runBlocking {
-        virtualThreadTasks(VirtualThreadTaskPolicy.RUN_ALL) {
+        taskScope(TaskScopePolicy.RUN_ALL) {
           fork("failing") { throw IllegalStateException("first") }
           fork("slow") {
             delay(200.milliseconds)
@@ -230,7 +230,7 @@ class VirtualThreadTasksTest {
     val forkCancelled = CompletableFuture<Unit>()
     runBlocking {
       val job = launch {
-        virtualThreadTasks {
+        taskScope {
           fork("endless") {
             try {
               awaitCancellation()
@@ -258,7 +258,7 @@ class VirtualThreadTasksTest {
     val forkEnded = AtomicBoolean()
     val forkResult = runBlocking {
       val callerScope = this
-      virtualThreadTasks {
+      taskScope {
         val fork = fork("shared") {
           forkReleased.await()
           forkEnded.set(true)
@@ -281,10 +281,10 @@ class VirtualThreadTasksTest {
   /** The span helpers install the telemetry context as a coroutine context element, and a fork inherits that element. */
   @Test
   fun `a fork sees the telemetry context of the caller`() {
-    val key = ContextKey.named<String>("VirtualThreadTasksTest")
+    val key = ContextKey.named<String>("TaskScopeTest")
     val seen = runBlocking {
       withContext(Context.current().with(key, "from the caller").asContextElement()) {
-        virtualThreadTasks {
+        taskScope {
           fork("reader") { Context.current().get(key) }.await()
         }
       }
@@ -297,7 +297,7 @@ class VirtualThreadTasksTest {
   fun `the coroutines of a fork body run on more than one thread`() {
     val threads = ConcurrentHashMap.newKeySet<String>()
     runBlocking {
-      virtualThreadTasks {
+      taskScope {
         fork("parent") {
           repeat(8) {
             launch {

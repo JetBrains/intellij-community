@@ -36,7 +36,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import java.nio.file.Path
 
 private class ScrambleTask(@JvmField val descriptor: PluginBuildDescriptor)
@@ -97,7 +97,7 @@ internal suspend fun buildPlugins(
     val laidOutDescriptors = additionalScrambleDescriptorsProvider?.let { provider ->
       provider() + descriptors
     } ?: descriptors
-    virtualThreadTasks {
+    taskScope {
       for (scrambleTask in scrambleTasks) {
         fork("scramble plugin ${scrambleTask.descriptor.buildResult.mainModule}") {
           scrambleTool.scramblePlugin(
@@ -137,7 +137,7 @@ internal suspend fun scrambleAlreadyLaidOutPlugins(
     PluginBuildDescriptor(layout, plugin)
   }
   if (toScramble.isEmpty()) return
-  virtualThreadTasks {
+  taskScope {
     for (descriptor in toScramble) {
       fork("scramble plugin ${descriptor.buildResult.mainModule}") {
         scrambleTool.scramblePlugin(
@@ -168,7 +168,7 @@ private suspend fun buildPlugin(
   copyFiles: Boolean,
   pluginBuilt: (suspend (PluginLayout, Path) -> List<DistributionFileEntry>)?,
   prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar>,
-): Pair<PluginBuildResult, ScrambleTask?> = virtualThreadTasks {
+): Pair<PluginBuildResult, ScrambleTask?> = taskScope {
   val directoryName = pluginLayout.directoryName
   val pluginDir = targetDir.resolve(directoryName)
   val moduleOutputPatcher = ModuleOutputPatcher()

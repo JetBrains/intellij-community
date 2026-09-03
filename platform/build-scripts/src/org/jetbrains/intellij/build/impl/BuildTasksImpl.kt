@@ -33,7 +33,7 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
-import org.jetbrains.intellij.build.VirtualThreadTaskPolicy
+import org.jetbrains.intellij.build.TaskScopePolicy
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.add64IfNeeded
@@ -67,7 +67,7 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import org.jetbrains.intellij.build.zipSourcesOfModules
 import java.nio.file.FileSystems
 import java.nio.file.FileVisitResult
@@ -299,7 +299,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
 
     if (context.isMacCodeSignEnabled) {
       // the OS-specific builds below pack `distAll`, so the signing must end before they start
-      virtualThreadTasks {
+      taskScope {
         for (file in Files.newDirectoryStream(context.paths.distAllDir).use { stream ->
           stream.filter { !it.endsWith("help") && !it.endsWith("license") && !it.endsWith("lib") }
         }) {
@@ -326,7 +326,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
       updateExecutablePermissions(context.paths.distAllDir, matchers)
     }
 
-    virtualThreadTasks(VirtualThreadTaskPolicy.RUN_ALL) {
+    taskScope(TaskScopePolicy.RUN_ALL) {
       SUPPORTED_DISTRIBUTIONS.mapNotNull { (os, arch, libcImpl) ->
         if (!context.shouldBuildDistributionForOS(os, arch)) {
           return@mapNotNull null
@@ -440,7 +440,7 @@ internal fun additionalProperties(): VmProperties = VmProperties(mapOf("user.hom
 suspend fun buildDistributions(context: BuildContext): Unit = block("build distributions") {
   context.reportDistributionBuildNumber()
 
-  virtualThreadTasks {
+  taskScope {
     fork("check product properties") { checkProductProperties(context) }
 
     fork("copy dependencies file") { copyDependenciesFile(context) }
@@ -452,7 +452,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
 
   val distributionState = context.distributionState()
 
-  virtualThreadTasks {
+  taskScope {
     // the headless IDE start is expensive, so it runs beside the JAR packing
     fork("provided module list") { context.builtinModules() }
 
@@ -475,7 +475,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
         descriptorCacheContainer = distributionState.platformLayout.descriptorCacheContainer,
         context = context,
       )
-      return@virtualThreadTasks
+      return@taskScope
     }
 
     val contentReport = spanBuilder("build platform and plugin JARs").use {
@@ -1128,7 +1128,7 @@ private suspend fun lookForJunkFiles(context: BuildContext, paths: List<Path>) {
   val junk = CollectionFactory.createCaseInsensitiveStringSet(setOf("__MACOSX", ".DS_Store"))
   val result = Collections.synchronizedSet(mutableSetOf<Path>())
 
-  virtualThreadTasks {
+  taskScope {
     for (file in paths) {
       fork("look for junk files in $file") {
         Files.walk(file).use { stream ->

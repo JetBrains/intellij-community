@@ -35,7 +35,7 @@ internal val buildVirtualThreadDispatcher: CoroutineDispatcher =
  * What a group of forks does when one of them fails.
  */
 @ApiStatus.Internal
-enum class VirtualThreadTaskPolicy {
+enum class TaskScopePolicy {
   /** The first failure cancels the other forks. This is the behaviour of `coroutineScope`. */
   FAIL_FAST,
 
@@ -47,7 +47,7 @@ enum class VirtualThreadTaskPolicy {
  * Starts [block] as a root coroutine on [buildVirtualThreadDispatcher], and returns the future of its result.
  *
  * This is the primitive of a shared computation, such as an entry of `AsyncCache`, that outlives its first caller.
- * A fan-out inside the pipeline uses [virtualThreadTasks] instead.
+ * A fan-out inside the pipeline uses [taskScope] instead.
  *
  * The body inherits the elements of [parentContext] except its job and its dispatcher, so it sees the telemetry span
  * and the single-flight element of the caller, under a [CoroutineName] of [name]. A cancelled future cancels the
@@ -113,14 +113,14 @@ class Subtask<T> internal constructor(private val deferred: Deferred<T>) {
 }
 
 /**
- * A group of forks that [virtualThreadTasks] joins when its block ends.
+ * A group of forks that [taskScope] joins when its block ends.
  *
  * It replaces `coroutineScope` with `async` and `launch` children. A fork is a root coroutine on virtual threads,
  * and the group holds no queue, so a scheduler cannot lose a fork.
  */
 @ApiStatus.Internal
-class VirtualThreadTasks internal constructor(
-  private val policy: VirtualThreadTaskPolicy,
+class TaskScope internal constructor(
+  private val policy: TaskScopePolicy,
   /** The context of the coroutine that opened the group. Every fork inherits it, see [forkOnVirtualThread]. */
   private val parentContext: CoroutineContext,
 ) {
@@ -147,7 +147,7 @@ class VirtualThreadTasks internal constructor(
     deferred.invokeOnCompletion { e ->
       if (e != null && !(cancelRequested && e is CancellationException)) {
         failures.add(e)
-        if (policy == VirtualThreadTaskPolicy.FAIL_FAST) {
+        if (policy == TaskScopePolicy.FAIL_FAST) {
           cancelAll()
         }
       }
@@ -222,11 +222,11 @@ class VirtualThreadTasks internal constructor(
  * This is the replacement for `coroutineScope` and `supervisorScope` in the packaging pipeline.
  */
 @ApiStatus.Internal
-suspend fun <T> virtualThreadTasks(
-  policy: VirtualThreadTaskPolicy = VirtualThreadTaskPolicy.FAIL_FAST,
-  block: suspend VirtualThreadTasks.() -> T,
+suspend fun <T> taskScope(
+  policy: TaskScopePolicy = TaskScopePolicy.FAIL_FAST,
+  block: suspend TaskScope.() -> T,
 ): T {
-  val tasks = VirtualThreadTasks(policy = policy, parentContext = currentCoroutineContext())
+  val tasks = TaskScope(policy = policy, parentContext = currentCoroutineContext())
   val result = try {
     tasks.block()
   }

@@ -220,7 +220,7 @@ suspend inline fun <T> CompilationContext.executeStep(
   spanBuilder: SpanBuilder,
   stepId: String,
   coroutineContext: CoroutineContext = EmptyCoroutineContext,
-  crossinline step: suspend VirtualThreadTasks.(Span) -> T,
+  crossinline step: suspend TaskScope.(Span) -> T,
 ): T? {
   return spanBuilder.use(coroutineContext) { span ->
     try {
@@ -231,7 +231,7 @@ suspend inline fun <T> CompilationContext.executeStep(
         null
       }
       else {
-        virtualThreadTasks { step(span) }
+        taskScope { step(span) }
       }
     }
     catch (e: CancellationException) {

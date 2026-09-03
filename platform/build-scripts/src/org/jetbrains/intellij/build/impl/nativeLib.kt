@@ -17,14 +17,14 @@ import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.SignNativeFileMode
 import org.jetbrains.intellij.build.SignTool
-import org.jetbrains.intellij.build.VirtualThreadTasks
+import org.jetbrains.intellij.build.TaskScope
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.impl.NativeFileArchitecture.AARCH_64
 import org.jetbrains.intellij.build.impl.NativeFileArchitecture.UNIVERSAL
 import org.jetbrains.intellij.build.impl.NativeFileArchitecture.X_64
 import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import org.jetbrains.intellij.build.isWindows
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -135,7 +135,7 @@ private val posixExecutableFileAttribute = PosixFilePermissions.asFileAttribute(
 )
 
 /** Forks one task per source archive into the group of the caller. */
-internal fun VirtualThreadTasks.packNativePresignedFiles(
+internal fun TaskScope.packNativePresignedFiles(
   nativeFiles: Map<ZipSource, List<String>>,
   dryRun: Boolean,
   context: BuildContext,
@@ -239,7 +239,7 @@ private suspend fun unpackNativeLibraries(
 
   if (signTool.signNativeFileMode == SignNativeFileMode.PREPARE) {
     val versionOption = mapOf(SignTool.LIB_VERSION_OPTION_NAME to libVersion)
-    virtualThreadTasks {
+    taskScope {
       fork("signing macOS binaries") {
         unsignedFiles.get(OsFamily.MACOS)?.let {
           signMacBinaries(files = it, context = context, additionalOptions = versionOption, checkPermissions = false)

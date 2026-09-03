@@ -25,7 +25,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
-import org.jetbrains.intellij.build.VirtualThreadTaskPolicy
+import org.jetbrains.intellij.build.TaskScopePolicy
 import org.jetbrains.intellij.build.downloadAsText
 import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.impl.BundledRuntime
@@ -45,7 +45,7 @@ import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -996,7 +996,7 @@ class SoftwareBillOfMaterialsImpl(
         workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker"),
       )
     }
-    virtualThreadTasks(VirtualThreadTaskPolicy.RUN_ALL) {
+    taskScope(TaskScopePolicy.RUN_ALL) {
       for (document in documents) {
         fork("NTIA conformance check for ${document.name}") {
           try {

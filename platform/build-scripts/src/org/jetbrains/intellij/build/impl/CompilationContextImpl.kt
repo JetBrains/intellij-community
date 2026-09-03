@@ -38,7 +38,7 @@ import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
@@ -430,7 +430,7 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
 
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", mavenRepositoryPath)
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-    virtualThreadTasks {
+    taskScope {
       loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, null, { it: Runnable -> fork("loading project") { it.run() } }, false)
     }
     span.setAllAttributes(

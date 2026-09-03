@@ -13,7 +13,7 @@ import io.opentelemetry.api.trace.StatusCode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.Subtask
-import org.jetbrains.intellij.build.VirtualThreadTasks
+import org.jetbrains.intellij.build.TaskScope
 import org.jetbrains.intellij.build.downloadAsBytes
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.createSkippableJob
@@ -37,7 +37,7 @@ import kotlin.text.Charsets.UTF_8
 /**
  * Download a default version of feature usage statistics metadata to be bundled with IDE.
  */
-internal fun VirtualThreadTasks.createStatisticsRecorderBundledMetadataProviderTask(
+internal fun TaskScope.createStatisticsRecorderBundledMetadataProviderTask(
   moduleOutputPatcher: ModuleOutputPatcher,
   context: BuildContext,
 ): Subtask<Unit?>? {

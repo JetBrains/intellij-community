@@ -22,7 +22,7 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
-import org.jetbrains.intellij.build.VirtualThreadTasks
+import org.jetbrains.intellij.build.TaskScope
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
@@ -53,7 +53,7 @@ import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import tools.jackson.jr.ob.JSON
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -72,7 +72,7 @@ internal suspend fun buildNonBundledPlugins(
   context: BuildContext,
 ): List<PluginBuildResult> {
   return context.executeStep(spanBuilder("build non-bundled plugins").setAttribute("count", state.pluginsToPublish.size.toLong()), BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
-    virtualThreadTasks {
+    taskScope {
       buildNonBundledPlugins(
         tasks = this,
         pluginsToPublish = pluginsToPublish,
@@ -89,7 +89,7 @@ internal suspend fun buildNonBundledPlugins(
 }
 
 private suspend fun buildNonBundledPlugins(
-  tasks: VirtualThreadTasks,
+  tasks: TaskScope,
   pluginsToPublish: Set<PluginLayout>,
   compressPluginArchive: Boolean,
   platformEntriesProvider: (suspend () -> List<DistributionFileEntry>)?,

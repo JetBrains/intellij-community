@@ -8,7 +8,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.Subtask
-import org.jetbrains.intellij.build.VirtualThreadTasks
+import org.jetbrains.intellij.build.TaskScope
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
@@ -18,7 +18,7 @@ import java.nio.file.Path
 import java.util.function.Predicate
 
 /** Forks a build step into the group. The subtask holds `null` when the step is skipped or fails. */
-fun VirtualThreadTasks.createSkippableJob(
+fun TaskScope.createSkippableJob(
   spanBuilder: SpanBuilder,
   stepId: String,
   context: BuildContext,

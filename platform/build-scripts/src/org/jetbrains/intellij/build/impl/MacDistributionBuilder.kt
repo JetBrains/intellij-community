@@ -44,7 +44,7 @@ import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.isLanguageServer
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -273,7 +273,7 @@ class MacDistributionBuilder(
     val binariesToSign = customizer.getBinariesToSign(context, arch).map(osAndArchSpecificDistPath::resolve)
     val matchers = generateExecutableFilesMatchers(includeRuntime = false, arch).keys
     signMacBinaries(binariesToSign, context)
-    virtualThreadTasks {
+    taskScope {
       for (dir in listOf(osAndArchSpecificDistPath, runtimeDist)) {
         fork("recursively signing macOS binaries in $dir") {
           recursivelySignMacBinaries(dir, context, matchers)
@@ -360,7 +360,7 @@ class MacDistributionBuilder(
     notarize: Boolean,
   ) {
     val archStr = arch.name
-    virtualThreadTasks {
+    taskScope {
       val taskId = "${BuildOptions.MAC_ARTIFACTS_STEP}_jre_${archStr}"
       createSkippableJob(spanBuilder("build DMG with Runtime").setAttribute("arch", archStr), taskId, context) {
         signAndBuildDmg(macZip, macZipProductInfoJson, isRuntimeBundled = true, suffix(arch), arch, notarize)

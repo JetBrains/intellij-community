@@ -52,7 +52,7 @@ private suspend fun <T> runOnVirtualThreads(items: List<T>, concurrency: Int, ac
 
   val name = currentCoroutineContext()[CoroutineName]?.name ?: "concurrent"
   val nextIndex = AtomicInteger()
-  virtualThreadTasks {
+  taskScope {
     repeat(minOf(concurrency, items.size)) { worker ->
       fork("$name worker $worker") {
         while (true) {

@@ -58,7 +58,7 @@ import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -224,7 +224,7 @@ class JarPackager private constructor(
         context = context,
       )
 
-      return virtualThreadTasks {
+      return taskScope {
         if (buildAssetResult.sourceToNativeFiles.isNotEmpty()) {
           packNativePresignedFiles(
             nativeFiles = buildAssetResult.sourceToNativeFiles,

@@ -70,7 +70,7 @@ internal suspend fun buildSearchableOptions(
     // Resolve bundled Maven inputs before traverseUI starts an external process. Under Bazel these are
     // read directly from declared runfiles; other builds retain their normal download-cache behavior.
     // The nested group ends before the product starts.
-    virtualThreadTasks {
+    taskScope {
       fork("resolve maven4 libs") {
         BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
       }

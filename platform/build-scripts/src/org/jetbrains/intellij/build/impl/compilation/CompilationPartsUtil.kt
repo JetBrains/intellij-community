@@ -23,7 +23,7 @@ import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.file.FileSystemException
@@ -436,7 +436,7 @@ private suspend fun checkPreviouslyUnpackedDirectories(
 
   val start = System.nanoTime()
   val name = "remove stalled directories not present in metadata"
-  virtualThreadTasks {
+  taskScope {
     fork(name) {
       val stalledDirs = spanBuilder(name).setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).blockingUse {
         collectStalledDirs(metadata, classOutput)

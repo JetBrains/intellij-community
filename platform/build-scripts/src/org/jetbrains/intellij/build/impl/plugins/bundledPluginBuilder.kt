@@ -38,7 +38,7 @@ import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.nio.file.Path
@@ -92,7 +92,7 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
   context: BuildContext,
   layoutOnly: Boolean = false,
   includeAdditionalPlugins: Boolean = true,
-): BundledPluginsBuildResult = virtualThreadTasks {
+): BundledPluginsBuildResult = taskScope {
   val additionalPluginsJob: Subtask<List<Pair<Path, List<Path>>>?>? = if (includeAdditionalPlugins) {
     fork("build additional plugins") {
       copyAdditionalPlugins(pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY), context = context)

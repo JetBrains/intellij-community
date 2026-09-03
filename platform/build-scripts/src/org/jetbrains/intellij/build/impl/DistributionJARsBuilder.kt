@@ -23,7 +23,7 @@ import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
-import org.jetbrains.intellij.build.VirtualThreadTasks
+import org.jetbrains.intellij.build.TaskScope
 import org.jetbrains.intellij.build.Subtask
 import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
@@ -55,7 +55,7 @@ import org.jetbrains.intellij.build.productLayout.createPluginLayoutSet
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -70,7 +70,7 @@ import kotlin.io.path.listDirectoryEntries
 internal suspend fun buildDistribution(
   context: BuildContext,
   isUpdateFromSources: Boolean = false,
-): ContentReport = virtualThreadTasks {
+): ContentReport = taskScope {
   val state = context.distributionState()
   val platformLayout = state.platformLayout
   validateModuleStructure(platformLayout, context)
@@ -86,7 +86,7 @@ internal suspend fun buildDistribution(
     }
   }
 
-  val contentReport = virtualThreadTasks {
+  val contentReport = taskScope {
     // must be completed before plugin building
     val searchableOptionSet = context.executeStep(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP) {
       buildSearchableOptions(productRunner.await(), context)
@@ -246,7 +246,7 @@ internal suspend fun buildDistribution(
     }
   }
 
-  virtualThreadTasks {
+  taskScope {
     fork("generate content report") {
       spanBuilder("generate content report").use {
         Files.createDirectories(context.paths.artifactDir)
@@ -625,7 +625,7 @@ internal suspend fun layoutPlatformDistribution(
   val selectedModules = includedModules ?: platform.includedModules
   val selectedModuleNames = selectedModules.mapTo(HashSet(), ModuleItem::moduleName)
   if (copyFiles) {
-    virtualThreadTasks {
+    taskScope {
       if (selectedModuleNames.contains("intellij.platform.ide.impl")) {
         createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher, context)
       }
@@ -707,7 +707,7 @@ fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture,
   )
 }
 
-private fun VirtualThreadTasks.createBuildBrokenPluginListJob(context: BuildContext): Subtask<Unit?> {
+private fun TaskScope.createBuildBrokenPluginListJob(context: BuildContext): Subtask<Unit?> {
   val buildString = context.fullBuildNumber
   return createSkippableJob(
     spanBuilder("build broken plugin list").setAttribute("buildNumber", buildString),
@@ -721,7 +721,7 @@ private fun VirtualThreadTasks.createBuildBrokenPluginListJob(context: BuildCont
   }
 }
 
-private fun VirtualThreadTasks.createBuildThirdPartyLibraryListJob(entries: Sequence<DistributionFileEntry>, context: BuildContext) {
+private fun TaskScope.createBuildThirdPartyLibraryListJob(entries: Sequence<DistributionFileEntry>, context: BuildContext) {
   createSkippableJob(
     spanBuilder("generate table of licenses for used third-party libraries"),
     BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context
@@ -805,7 +805,7 @@ internal suspend fun layoutDistribution(
   context: BuildContext,
 ): Pair<List<DistributionFileEntry>, Path> {
   if (copyFiles) {
-    virtualThreadTasks {
+    taskScope {
       val includedModuleNames = includedModules.mapTo(HashSet(), ModuleItem::moduleName)
       val relevantModuleExcludes = layout.moduleExcludes.filterKeys(includedModuleNames::contains)
       if (relevantModuleExcludes.isNotEmpty()) {
@@ -827,7 +827,7 @@ internal suspend fun layoutDistribution(
     }
   }
 
-  val entries = virtualThreadTasks {
+  val entries = taskScope {
     val tasks = ArrayList<Subtask<Collection<DistributionFileEntry>>>(2)
     val outputDir = targetDir.resolve(LIB_DIRECTORY)
     // a virtual thread, because the layout computation under `JarPackager.pack` blocks. It reads a module

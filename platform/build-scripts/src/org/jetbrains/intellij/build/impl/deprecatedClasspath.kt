@@ -11,7 +11,7 @@ import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.descriptorResolveContext
 import org.jetbrains.intellij.build.classPath.resolveIncludes
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
-import org.jetbrains.intellij.build.virtualThreadTasks
+import org.jetbrains.intellij.build.taskScope
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
@@ -94,7 +94,7 @@ private fun isFromLocalMavenRepo(path: Path) = path.startsWith(MAVEN_REPO)
 private suspend fun generateProjectStructureMapping(
   platformLayout: PlatformLayout,
   context: BuildContext,
-): Pair<List<DistributionFileEntry>, List<PluginBuildResult>> = virtualThreadTasks {
+): Pair<List<DistributionFileEntry>, List<PluginBuildResult>> = taskScope {
   val moduleOutputPatcher = ModuleOutputPatcher()
   val libDirLayout = fork("layout platform distribution") {
     sortEntries(JarPackager.pack(
