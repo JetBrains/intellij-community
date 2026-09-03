@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.groovy.testFramework.BaseTest;
+import com.intellij.groovy.testFramework.GroovyAssertions;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.util.BaseTest;
-import org.jetbrains.plugins.groovy.util.GroovyAssertions;
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.junit.Assert;
 import org.junit.Test;

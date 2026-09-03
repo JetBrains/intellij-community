@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.typing;
 
+import com.intellij.groovy.testFramework.TypingTest;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.util.LightProjectTest;
-import org.jetbrains.plugins.groovy.util.TypingTest;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -1,6 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.groovy.testFramework.GroovyAssertions;
+import com.intellij.groovy.testFramework.ResolveTest;
+import com.intellij.groovy.testFramework.TypingTest;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiTypeParameter;
@@ -16,10 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.util.GroovyAssertions;
 import org.jetbrains.plugins.groovy.util.LightProjectTest;
-import org.jetbrains.plugins.groovy.util.ResolveTest;
-import org.jetbrains.plugins.groovy.util.TypingTest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;

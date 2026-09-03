@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.swing;
 
+import com.intellij.groovy.testFramework.ResolveTest;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.util.LightProjectTest;
-import org.jetbrains.plugins.groovy.util.ResolveTest;
 import org.junit.Assert;
 import org.junit.Test;
 

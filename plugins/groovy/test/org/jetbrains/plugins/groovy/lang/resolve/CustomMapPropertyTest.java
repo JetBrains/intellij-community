@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.groovy.testFramework.ExpressionTest;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
-import org.jetbrains.plugins.groovy.util.ExpressionTest;
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.junit.Before;
 import org.junit.Test;

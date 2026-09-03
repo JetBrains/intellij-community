@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.groovy.testFramework.ResolveTest;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.UsefulTestCase;
 import junit.framework.TestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.util.Groovy25Test;
-import org.jetbrains.plugins.groovy.util.ResolveTest;
 import org.junit.Test;
 
 public class Groovy25ResolveTest extends Groovy25Test implements ResolveTest {

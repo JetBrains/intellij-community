@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.util;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.groovy.testFramework;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo;
 
 import java.util.Collection;
 
+import static com.intellij.groovy.testFramework.GroovyAssertions.assertType;
 import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
 import static com.intellij.testFramework.UsefulTestCase.assertEquals;
 import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
@@ -22,7 +23,6 @@ import static com.intellij.testFramework.UsefulTestCase.assertNotNull;
 import static com.intellij.testFramework.UsefulTestCase.assertNull;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo;
-import static org.jetbrains.plugins.groovy.util.GroovyAssertions.assertType;
 
 public interface ResolveTest extends BaseTest {
 
