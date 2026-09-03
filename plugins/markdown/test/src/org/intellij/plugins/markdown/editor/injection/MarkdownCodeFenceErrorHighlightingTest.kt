@@ -30,6 +30,30 @@ class MarkdownCodeFenceErrorHighlightingTest : BasePlatformTestCase() {
     myFixture.testHighlighting(true, false, false, getTestName(true) + ".md")
   }
 
+  fun testIndentedCodeFenceError() {
+    settings.showProblemsInCodeBlocks = true
+    myFixture.testHighlighting(true, false, false, getTestName(true) + ".md")
+  }
+
+  fun testIndentedCodeFenceErrorsHidden() {
+    settings.showProblemsInCodeBlocks = false
+    myFixture.testHighlighting(true, false, false, getTestName(true) + ".md")
+  }
+
+  fun testIndentedCodeFenceHideProblemsIntention() {
+    settings.showProblemsInCodeBlocks = true
+    myFixture.configureByText(
+      "test.md",
+      """
+            ```json
+            |<caret>
+            ```
+      """.trimIndent(),
+    )
+
+    assertNotNull(myFixture.getAvailableIntention("Hide problems in code fences"))
+  }
+
   override fun tearDown() {
     try {
       settings.showProblemsInCodeBlocks = oldShowErrorsSetting

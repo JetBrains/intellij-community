@@ -13,6 +13,7 @@ import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter
 import org.intellij.plugins.markdown.extensions.common.highlighter.buildHighlightedFenceContent
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 
 internal class DefaultCodeFenceGeneratingProvider(
@@ -64,10 +65,13 @@ internal class DefaultCodeFenceGeneratingProvider(
   }
 
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
-    val indentBefore = node.getTextInNode(text).commonPrefixWith(" ".repeat(10)).length
+    val indentColumns =
+      node.children.firstOrNull { it.type == MarkdownTokenTypes.CODE_FENCE_START }
+        ?.let { MarkdownCodeFenceUtils.getIndentationInfo(it.getTextInNode(text)).columns }
+      ?: 0
 
     visitor.consumeHtml("<pre class=\"code-fence\" ${HtmlGenerator.getSrcPosAttribute(node)}>")
-    addCopyButton(visitor, collectFenceText(node, text).trim())
+    addCopyButton(visitor, collectFenceText(node, text, indentColumns).trim())
 
     var state = 0
 
@@ -84,8 +88,8 @@ internal class DefaultCodeFenceGeneratingProvider(
     val codeFenceContent = StringBuilder()
     for (child in childrenToConsider) {
       if (state == 1 && child.type in listOf(MarkdownTokenTypes.CODE_FENCE_CONTENT, MarkdownTokenTypes.EOL)) {
-        codeFenceRawContent.append(HtmlGenerator.trimIndents(codeFenceRawText(text, child), indentBefore))
-        codeFenceContent.append(HtmlGenerator.trimIndents(codeFenceText(text, child), indentBefore))
+        codeFenceRawContent.append(HtmlGenerator.trimIndents(codeFenceRawText(text, child), indentColumns))
+        codeFenceContent.append(HtmlGenerator.trimIndents(codeFenceText(text, child), indentColumns))
         lastChildWasContent = child.type == MarkdownTokenTypes.CODE_FENCE_CONTENT
       }
       if (state == 0 && child.type == MarkdownTokenTypes.FENCE_LANG) {
@@ -114,18 +118,18 @@ internal class DefaultCodeFenceGeneratingProvider(
     visitor.consumeHtml("</code></pre>")
   }
 
-  private fun collectFenceText(node: ASTNode, allText: String): String {
+  private fun collectFenceText(node: ASTNode, allText: String, indentColumns: Int): String {
     return buildString {
-      collectFenceText(this, node, allText)
+      collectFenceText(this, node, allText, indentColumns)
     }
   }
 
-  private fun collectFenceText(builder: StringBuilder, node: ASTNode, allText: String) {
+  private fun collectFenceText(builder: StringBuilder, node: ASTNode, allText: String, indentColumns: Int) {
     if (node.type == MarkdownTokenTypes.CODE_FENCE_CONTENT || node.type == MarkdownTokenTypes.EOL) {
-      builder.append(codeFenceRawText(allText, node))
+      builder.append(HtmlGenerator.trimIndents(codeFenceRawText(allText, node), indentColumns))
     }
     for (child in node.children) {
-      collectFenceText(builder, child, allText)
+      collectFenceText(builder, child, allText, indentColumns)
     }
   }
 

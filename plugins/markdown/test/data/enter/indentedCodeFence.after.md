@@ -1,0 +1,5 @@
+    ```java
+    class C {
+        <caret>
+    }
+    ```

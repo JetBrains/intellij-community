@@ -63,6 +63,66 @@ public class MarkdownHtmlGenerationTest extends BasePlatformTestCase {
     doTestByHtmlFile();
   }
 
+  public void testIndentedCodeFenceWithLongIndent() {
+    String content = "            ```\n            line\n            ```";
+    PsiFile mdFile = myFixture.configureByText("test.md", content);
+    String html = MarkdownUtil.INSTANCE.generateMarkdownHtml(mdFile.getVirtualFile(), mdFile.getText(), getProject());
+
+    assertFalse(html.contains(">  line"));
+  }
+
+  public void testTabIndentedCodeFenceTrimsIndent() {
+    String content = "\t```\n\tline\n\t```";
+    PsiFile mdFile = myFixture.configureByText("test.md", content);
+    String html = MarkdownUtil.INSTANCE.generateMarkdownHtml(mdFile.getVirtualFile(), mdFile.getText(), getProject());
+
+    assertFalse(html.contains("\tline"));
+    assertTrue(html.contains("line"));
+  }
+
+  public void testMixedSpaceAndTabIndentedCodeFenceTrimsIndent() {
+    String content = "  \t```\n  \tline\n  \t```";
+    PsiFile mdFile = myFixture.configureByText("test.md", content);
+    String html = MarkdownUtil.INSTANCE.generateMarkdownHtml(mdFile.getVirtualFile(), mdFile.getText(), getProject());
+
+    assertTrue(html.contains(">line\n"));
+    assertFalse(html.contains("> line\n"));
+  }
+
+  public void testIndentedCodeFenceCopyContentMatchesPreview() {
+    String content = "    ```\n    line\n        nested\n    ```";
+    PsiFile mdFile = myFixture.configureByText("test.md", content);
+    String html = MarkdownUtil.INSTANCE.generateMarkdownHtml(mdFile.getVirtualFile(), mdFile.getText(), getProject());
+
+    String expectedContent = java.util.Base64.getEncoder().encodeToString("line\n    nested".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    assertTrue(html.contains("data-fence-content=\"" + expectedContent + "\""));
+  }
+
+  public void testFootnoteContinuationUsesMinimumIndent() {
+    String content = "See[^note]\n\n[^note]: First paragraph.\n\n        outer\n    inner\n";
+    PsiFile mdFile = myFixture.configureByText("test.md", content);
+    String html = MarkdownUtil.INSTANCE.generateMarkdownHtml(mdFile.getVirtualFile(), mdFile.getText(), getProject());
+
+    assertTrue(html.contains("<pre><code>outer\n</code></pre><p>inner"));
+  }
+
+  public void testFootnoteFenceUsesOpeningIndent() {
+    String content = "See[^note]\n\n[^note]: First paragraph.\n\n        ```java\n    fence code\n        ```\n";
+    PsiFile mdFile = myFixture.configureByText("test.md", content);
+    String html = MarkdownUtil.INSTANCE.generateMarkdownHtml(mdFile.getVirtualFile(), mdFile.getText(), getProject());
+
+    assertTrue(html.contains("<pre><code class=\"language-java\">fence code\n</code></pre>"));
+  }
+
+  public void testNestedIndentedCodeFenceUsesOpeningIndent() {
+    String content = "- item\n\n      ```\n      line\n      ```";
+    PsiFile mdFile = myFixture.configureByText("test.md", content);
+    String html = MarkdownUtil.INSTANCE.generateMarkdownHtml(mdFile.getVirtualFile(), mdFile.getText(), getProject());
+
+    String expectedContent = java.util.Base64.getEncoder().encodeToString("line".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    assertTrue(html.contains("data-fence-content=\"" + expectedContent + "\""));
+  }
+
   public void testXmlTags() {
     doTestByHtmlFile();
   }
@@ -141,6 +201,22 @@ public class MarkdownHtmlGenerationTest extends BasePlatformTestCase {
   }
 
   public void testFootnoteLabelWithSpaceUnaffected() {
+    doTestByHtmlFile();
+  }
+
+  public void testFootnoteTabIndentedContinuation() {
+    doTestByHtmlFile();
+  }
+
+  public void testFootnoteBlockquoteEqualIndentFenceOutside() {
+    doTestByHtmlFile();
+  }
+
+  public void testFootnoteBlockquoteIndentedFenceContinuation() {
+    doTestByHtmlFile();
+  }
+
+  public void testFootnoteBodyWithDefinedReference() {
     doTestByHtmlFile();
   }
 

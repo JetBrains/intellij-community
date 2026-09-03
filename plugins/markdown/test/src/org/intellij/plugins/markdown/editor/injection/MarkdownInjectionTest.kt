@@ -13,14 +13,19 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser.guessLanguageForInjection
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
+import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes.MARKDOWN_TEMPLATE_DATA
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeBlock
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.junit.jupiter.api.assertDoesNotThrow
 
@@ -65,6 +70,282 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
         }
         ```
       """.trimIndent(), true)
+  }
+
+  fun `test indented fence with lang`() {
+    val text = """
+      World
+
+          ```java
+          class C {
+              void test() {}
+          }
+          ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
+    assertNotNull(codeFence)
+    assertSame(MarkdownElementTypes.CODE_FENCE, codeFence!!.node.elementType)
+    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
+    assertNotNull(injectedElement)
+    assertEquals("class C {\n    void test() {}\n}", injectedElement!!.containingFile.text)
+  }
+
+  fun `test indented fence with blank content does not throw`() {
+    val text = "    ```java\n    \n    ```"
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
+    assertNotNull(codeFence)
+    val injectedFiles = assertDoesNotThrow {
+      InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(codeFence!!)
+    }
+    assertNotNull(injectedFiles)
+  }
+
+  fun `test indented fence groups line separators with content`() {
+    val text = "    ```java\n    class C {}\n    class D {}\n    ```"
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
+    assertNotNull(codeFence)
+    val injectedFiles = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(codeFence!!)
+    assertNotNull(injectedFiles)
+    val injectedDocument = PsiDocumentManager.getInstance(project)
+      .getDocument(injectedFiles!!.first().first.containingFile) as DocumentWindow
+    assertEquals(2, injectedDocument.hostRanges.size)
+  }
+
+  fun `test tab-indented fence with lang`() {
+    val text = listOf("\t```java", "\tclass C {}", "\t```").joinToString("\n")
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
+    assertNotNull(codeFence)
+    assertEquals("\t", MarkdownCodeFenceUtils.getIndent(codeFence!!))
+    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
+    assertNotNull(injectedElement)
+    assertEquals("class C {}", injectedElement!!.containingFile.text)
+  }
+
+  fun `test indented tilde fence without language is a code fence`() {
+    val text = """
+          ~~~
+          class C {}
+          ~~~
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
+    assertNotNull(codeFence)
+    assertSame(MarkdownElementTypes.CODE_FENCE, codeFence!!.node.elementType)
+    assertNull(InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C")))
+  }
+
+  fun `test incomplete indented fence stays a code block`() {
+    val text = """
+      World
+
+          ```java
+          class C {}
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    assertNotNull(PsiTreeUtil.findChildOfType(file, MarkdownCodeBlock::class.java))
+    assertNull(PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java))
+    assertNull(InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C")))
+  }
+
+  fun `test incomplete indented fence does not consume following paragraph`() {
+    val text = """
+          ```java
+          class C {}
+      paragraph
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    assertNotNull(PsiTreeUtil.findChildOfType(file, MarkdownCodeBlock::class.java))
+    assertNotNull(PsiTreeUtil.findChildOfType(file, MarkdownParagraph::class.java))
+    assertNull(PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java))
+  }
+
+  fun `test indented fence in blockquote`() {
+    val text = """
+      >
+      >     ```java
+      >     class C {
+      >     void test() {}
+      >     }
+      >     ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
+    assertNotNull(codeFence)
+    assertSame(MarkdownElementTypes.CODE_FENCE, codeFence!!.node.elementType)
+    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
+    assertNotNull(injectedElement)
+    assertEquals("class C {\nvoid test() {}\n}", injectedElement!!.containingFile.text)
+  }
+
+  fun `test indented fence in blockquote preserves nested indentation`() {
+    val text = """
+      >     ```java
+      >     class C {
+      >         void test() {}
+      >     }
+      >     ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
+    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
+    assertNotNull(injectedElement)
+    assertEquals("class C {\n    void test() {}\n}", injectedElement!!.containingFile.text)
+
+    val escaper = codeFence.createLiteralTextEscaper()
+    val decoded = StringBuilder()
+    assertTrue(escaper.decode(escaper.relevantTextRange, decoded))
+    assertEquals("class C {\n    void test() {}\n}", decoded.toString())
+  }
+
+  fun `test indented fence in list preserves nested indentation`() {
+    val text = """
+      - item
+
+            ```java
+            class C {
+                void test() {}
+            }
+            ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
+    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
+    assertNotNull(injectedElement)
+    assertEquals("class C {\n    void test() {}\n}", injectedElement!!.containingFile.text)
+
+    val escaper = codeFence.createLiteralTextEscaper()
+    val decoded = StringBuilder()
+    assertTrue(escaper.decode(escaper.relevantTextRange, decoded))
+    assertEquals("class C {\n    void test() {}\n}", decoded.toString())
+  }
+
+  fun `test indented fence in nested containers`() {
+    val text = """
+      > - item
+      >
+      >       ```java
+      >       class C {}
+      >       ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)
+    assertNotNull(codeFence)
+    assertSame(MarkdownElementTypes.CODE_FENCE, codeFence!!.node.elementType)
+    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
+    assertNotNull(injectedElement)
+    assertEquals("class C {}", injectedElement!!.containingFile.text)
+  }
+
+  fun `test updating indented fence in blockquote preserves prefixes`() {
+    val text = """
+      >
+      >     ```java
+      >     class C {
+      >     void test() {}
+      >     }
+      >     ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
+    WriteCommandAction.runWriteCommandAction(project) {
+      codeFence.updateText("class C {\n    void test() {}\n}")
+    }
+
+    assertEquals(
+      """
+        >
+        >     ```java
+        >     class C {
+        >         void test() {}
+        >     }
+        >     ```
+      """.trimIndent(),
+      file.text,
+    )
+  }
+
+  fun `test updating blockquoted fence with opening indentation preserves prefixes`() {
+    val text = ">   ```java\n>   class C {}\n>   ```"
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
+    WriteCommandAction.runWriteCommandAction(project) {
+      codeFence.updateText("class C {\n  }\n}")
+    }
+
+    assertEquals(">   ```java\n>   class C {\n>     }\n>   }\n>   ```", file.text)
+  }
+
+  fun `test updating indented fence in list preserves prefixes`() {
+    val text = "- item\n\n      ```java\n      class C {}\n      ```"
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
+    WriteCommandAction.runWriteCommandAction(project) {
+      codeFence.updateText("class D {\n}")
+    }
+
+    assertEquals("- item\n\n      ```java\n      class D {\n      }\n      ```", file.text)
+  }
+
+  fun `test updating top-level indented fence preserves indentation`() {
+    val text = "    ```java\n    class C {}\n    ```"
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
+    assertEquals("    ", MarkdownCodeFenceUtils.getIndent(codeFence))
+    WriteCommandAction.runWriteCommandAction(project) {
+      codeFence.updateText("class D {\n}")
+    }
+
+    assertEquals("    ```java\n    class D {\n    }\n    ```", file.text)
+  }
+
+  fun `test indented fence uses injected formatter`() {
+    val text = """
+          ```java
+          class C {
+          void test() {
+          int value=1;
+          }
+          }
+          ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))!!
+    WriteCommandAction.runWriteCommandAction(project) {
+      CodeStyleManager.getInstance(project).reformatText(injectedElement.containingFile, listOf(injectedElement.containingFile.textRange))
+    }
+
+    assertEquals(
+      """
+            ```java
+            class C {
+                void test() {
+                    int value = 1;
+                }
+            }
+            ```
+      """.trimIndent(),
+      file.text,
+    )
   }
 
   fun `test fence does not ignore line separators`() {

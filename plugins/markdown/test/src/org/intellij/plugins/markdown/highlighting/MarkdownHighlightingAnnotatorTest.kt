@@ -56,6 +56,39 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "target.md", MarkdownHighlighterColors.LINK_DESTINATION)
   }
 
+  fun testIndentedFenceUsesFenceHighlighting() {
+    val text = """
+      World
+
+          ```java
+          class C {}
+          ```
+    """.trimIndent()
+    myFixture.configureByText("test.md", text)
+    val highlights = myFixture.doHighlighting()
+
+    assertElementHighlightedWithKey(highlights, "```", MarkdownHighlighterColors.CODE_FENCE_MARKER)
+    assertElementHighlightedWithKey(highlights, "java", MarkdownHighlighterColors.CODE_FENCE_LANGUAGE)
+    assertElementHighlightedWithKey(
+      highlights,
+      "class C {}",
+      MarkdownHighlighterColors.CODE_BLOCK,
+      HighlightingState.NOT_HIGHLIGHTED,
+    )
+  }
+
+  fun testEmptyIndentedFenceUsesFenceHighlighting() {
+    val text = """
+          ```java
+          ```
+    """.trimIndent()
+    myFixture.configureByText("test.md", text)
+    val highlights = myFixture.doHighlighting()
+
+    assertElementHighlightedWithKey(highlights, "```", MarkdownHighlighterColors.CODE_FENCE_MARKER)
+    assertElementHighlightedWithKey(highlights, "java", MarkdownHighlighterColors.CODE_FENCE_LANGUAGE)
+  }
+
   fun testCodeSpansKeepCodeSpanHighlightingInsideHeaders() {
     myFixture.configureByText("test.md", "`Standalone`\n#### Header `Code`")
     val highlights = myFixture.doHighlighting()

@@ -115,16 +115,79 @@ object MarkdownCodeFenceUtils {
    * Get indent for this code fence.
    *
    * If code-fence is blockquoted indent may include `>` char.
-   * Note that indent should be used only for non top-level fences,
-   * top-level fences should use indentation from formatter.
    */
   @JvmStatic
   fun getIndent(element: MarkdownCodeFence): String? {
     val document = PsiDocumentManager.getInstance(element.project).getDocument(element.containingFile) ?: return null
-    val offset = element.textOffset
+    val opening = element.children.firstOrNull { it.elementType == MarkdownTokenTypes.CODE_FENCE_START }
+                 ?: return ""
+    val openingIndent = getIndentationInfo(opening.text)
+    val offset = if (openingIndent.columns >= 4) opening.textOffset + openingIndent.length else element.textOffset
     val lineStartOffset = document.getLineStartOffset(document.getLineNumber(offset))
-    return document.getText(TextRange.create(lineStartOffset, offset)).replace("[^> ]".toRegex(), " ")
+    return document.getText(TextRange.create(lineStartOffset, offset)).replace("[^>\\t ]".toRegex(), " ")
   }
+
+  /** Get indentation between the active container and the opening marker. */
+  @JvmStatic
+  fun getOpeningIndent(element: MarkdownCodeFence): String {
+    val opening = element.children.firstOrNull { it.elementType == MarkdownTokenTypes.CODE_FENCE_START } ?: return ""
+    return opening.text.substring(0, getIndentationInfo(opening.text).length)
+  }
+
+  @Internal
+  data class IndentationInfo(val length: Int, val columns: Int)
+
+  /** Return the leading indentation length and columns in [text]. */
+  @Internal
+  @JvmStatic
+  fun getIndentationInfo(text: CharSequence, maxColumns: Int = Int.MAX_VALUE): IndentationInfo {
+    var columns = 0
+    var length = 0
+    while (length < text.length && columns < maxColumns) {
+      when (text[length]) {
+        ' ' -> columns++
+        '\t' -> columns += 4 - columns % 4
+        else -> break
+      }
+      length++
+    }
+    return IndentationInfo(length, columns)
+  }
+
+  /**
+   * Get the opening fence indentation in columns, relative to the active container.
+   *
+   * Content tokens already start after container constraints. Match that base on the opening
+   * line so list continuation lines without an on-line marker still strip the correct indent.
+   */
+  @Internal
+  @JvmStatic
+  fun getOpeningIndentationColumns(element: MarkdownCodeFence): Int {
+    val opening = element.children.firstOrNull { it.elementType == MarkdownTokenTypes.CODE_FENCE_START } ?: return 0
+    val openingIndent = getIndentationInfo(opening.text)
+    if (openingIndent.columns >= 4) {
+      return openingIndent.columns
+    }
+    val document = PsiDocumentManager.getInstance(element.project).getDocument(element.containingFile) ?: return 0
+    val openingLineStart = document.getLineStartOffset(document.getLineNumber(opening.textOffset))
+    val openingStart = opening.textOffset + openingIndent.length
+    val constraintsChars = findContainerConstraintsChars(element, document)
+    val indentStart = openingLineStart + constraintsChars
+    if (indentStart > openingStart) {
+      return 0
+    }
+    val indentText = document.getText(TextRange.create(indentStart, openingStart))
+    return getIndentationInfo(indentText).columns.takeIf { it >= 4 } ?: 0
+  }
+
+  private fun findContainerConstraintsChars(element: MarkdownCodeFence, document: com.intellij.openapi.editor.Document): Int {
+    val anchor = element.children.firstOrNull { it.elementType == MarkdownTokenTypes.CODE_FENCE_CONTENT }
+                 ?: element.children.firstOrNull { it.elementType == MarkdownTokenTypes.CODE_FENCE_END }
+                 ?: return 0
+    val lineStart = document.getLineStartOffset(document.getLineNumber(anchor.textOffset))
+    return (anchor.textOffset - lineStart).coerceAtLeast(0)
+  }
+
 
   @Internal
   @JvmStatic

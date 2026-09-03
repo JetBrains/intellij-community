@@ -66,6 +66,23 @@ class MarkdownCodeFenceManipulatorSanityTest: LightPlatformCodeInsightTestCase()
     doReplacementTest(commonContent, expected, replacement = "replaced", range = null)
   }
 
+  fun `test replace all content in indented code fence`() {
+    // language=Markdown
+    val content = """
+          ```java
+          Some text inside code fence
+          And some more text on the next line
+          ```
+    """.trimIndent()
+    // language=Markdown
+    val expected = """
+          ```java
+          replaced
+          ```
+    """.trimIndent()
+    doReplacementTest(content, expected, replacement = "replaced", range = null)
+  }
+
   // IDEA-291426
   fun `test replace inside double blockquote simple one line`() {
     // language=Markdown

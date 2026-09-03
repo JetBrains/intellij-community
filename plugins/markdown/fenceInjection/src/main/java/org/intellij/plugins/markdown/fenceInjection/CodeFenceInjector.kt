@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
@@ -42,8 +43,12 @@ internal open class CodeFenceInjector : MultiHostInjector {
     if (!canBeInjected(language)) {
       return
     }
+    val places = createInjectionPlaces(host)
+    if (places.isEmpty()) {
+      return
+    }
     registrar.startInjecting(language, extension)
-    injectInMultiplePlaces(host, registrar, language)
+    injectInMultiplePlaces(host, registrar, language, places)
     registrar.makeInspectionsLenient(true)
     registrar.doneInjecting()
   }
@@ -64,10 +69,18 @@ internal open class CodeFenceInjector : MultiHostInjector {
    *
    * But the problem is that not all formatters are ready to work in the injected context, so we should do it with great care.
    */
-  private fun injectInMultiplePlaces(host: MarkdownCodeFence, registrar: MultiHostRegistrar, language: Language) {
-    val elements = MarkdownCodeFence.obtainFenceContent(host, withWhitespaces = false) ?: return
-    val places = createInjectionPlaces(elements)
+  private fun createInjectionPlaces(host: MarkdownCodeFence): List<InjectionPlace> {
+    val elements = MarkdownCodeFence.obtainFenceContent(host, withWhitespaces = false) ?: return emptyList()
+    val openingIndentColumns = MarkdownCodeFenceUtils.getOpeningIndentationColumns(host)
+    return if (openingIndentColumns == 0) {
+      createInjectionPlaces(elements)
+    }
+    else {
+      createIndentedInjectionPlaces(elements, openingIndentColumns)
+    }
+  }
 
+  private fun injectInMultiplePlaces(host: MarkdownCodeFence, registrar: MultiHostRegistrar, language: Language, places: List<InjectionPlace>) {
     val surroundings = FenceSurroundingsProvider.EP_NAME.extensionList.find { it.language == language }?.getCodeFenceSurroundings()
     if (places.size == 1) {
       val place = places.single()
@@ -104,6 +117,30 @@ internal open class CodeFenceInjector : MultiHostInjector {
       } else {
         val range = TextRange(group.first().startOffsetInParent, group.last().startOffsetInParent + group.last().textLength)
         places += InjectionPlace(range, prefix)
+        prefix = ""
+      }
+    }
+    return places
+  }
+
+  private fun createIndentedInjectionPlaces(elements: List<PsiElement>, openingIndentColumns: Int): List<InjectionPlace> {
+    val places = mutableListOf<InjectionPlace>()
+    var prefix = ""
+    for (element in elements) {
+      if (element is PsiWhiteSpace) {
+        if (places.isEmpty()) {
+          prefix += element.text
+        }
+        else {
+          val last = places.last()
+          places[places.lastIndex] = last.copy(suffix = last.suffix + element.text)
+        }
+        continue
+      }
+      val startOffset = element.startOffsetInParent + MarkdownCodeFenceUtils.getIndentationInfo(element.text, openingIndentColumns).length
+      val endOffset = element.startOffsetInParent + element.textLength
+      if (startOffset <= endOffset) {
+        places += InjectionPlace(TextRange(startOffset, endOffset), prefix)
         prefix = ""
       }
     }

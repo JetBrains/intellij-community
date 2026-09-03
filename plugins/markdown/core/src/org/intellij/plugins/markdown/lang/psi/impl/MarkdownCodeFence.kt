@@ -17,6 +17,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.IncorrectOperationException
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.structureView.MarkdownBasePresentation
@@ -115,12 +116,20 @@ class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elemen
       }
       val contentRange = obtainContentTextRange(element)
       val indent = MarkdownCodeFenceUtils.getIndent(element) ?: ""
+      val openingIndent = MarkdownCodeFenceUtils.getOpeningIndent(element)
+      val contentIndent = when {
+        MarkdownCodeFenceUtils.getIndentationInfo(openingIndent).columns >= 4 -> indent
+        indent.isEmpty() -> ""
+        else -> indent + openingIndent
+      }
       val text = collectText(element)
       val updatedText = when {
-        text.isNullOrEmpty() || range.startOffset < contentRange.startOffset -> appendIndent(content, indent)
-        else -> replaceWithIndent(text, content, range = createShiftedChangeRange(range, contentRange, text.length), indent)
+        text.isNullOrEmpty() || range.startOffset < contentRange.startOffset -> appendIndent(content, contentIndent)
+        else -> replaceWithIndent(text, content, range = createShiftedChangeRange(range, contentRange, text.length), contentIndent)
       }
-      val fenceElement = MarkdownPsiElementFactory.createCodeFence(element.project, element.fenceLanguage, updatedText, indent)
+      val fenceElement = MarkdownPsiElementFactory.createCodeFence(
+        element.project, element.fenceLanguage, updatedText, contentIndent, openingIndent
+      )
       return element.replace(fenceElement) as MarkdownCodeFence
     }
 
@@ -184,9 +193,16 @@ class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elemen
     private fun obtainFenceContentMask(element: MarkdownCodeFence): BooleanArray {
       return CachedValuesManager.getCachedValue(element, FENCE_CONTENT_MASK_KEY) {
         val mask = BooleanArray(element.textLength)
+        val indentationColumns = MarkdownCodeFenceUtils.getOpeningIndentationColumns(element)
         obtainFenceContent(element, withWhitespaces = false)?.forEach { child ->
           val range = child.textRangeInParent
-          for (offset in range.startOffset until range.endOffset) {
+          val startOffset = if (child.node.elementType == MarkdownTokenTypes.CODE_FENCE_CONTENT) {
+            range.startOffset + MarkdownCodeFenceUtils.getIndentationInfo(child.text, indentationColumns).length
+          }
+          else {
+            range.startOffset
+          }
+          for (offset in startOffset until range.endOffset) {
             mask[offset] = true
           }
         }

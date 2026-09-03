@@ -13,15 +13,16 @@ import org.intellij.markdown.ast.visitors.RecursiveVisitor
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.LinkMap
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager
 import org.intellij.plugins.markdown.util.isFootnoteLabelText
 import java.net.URI
 
 internal class FootnoteMap private constructor(
   private val entries: Map<String, FootnoteEntry>,
-  // Start offsets of CODE_BLOCK nodes that are multi-paragraph continuations of a footnote:
+  // Start offsets of code nodes that are multi-paragraph continuations of a footnote:
   //   [^note]: First paragraph.          ← PARAGRAPH (definition)
-  //       This continuation is indented. ← CODE_BLOCK sibling (4-space indent → parsed as code)
+  //       This continuation is indented. ← CODE_BLOCK or CODE_FENCE sibling
   // These are consumed into the footnote body and suppressed from normal rendering.
   private val continuationBlocks: Set<Int>,
 ) {
@@ -72,11 +73,12 @@ internal class FootnoteMap private constructor(
       val linkMap = LinkMap.buildLinkMap(parsedTree, content)
       val providers = MarkdownParserManager.FLAVOUR.createHtmlGeneratingProviders(linkMap, baseUri).toMutableMap()
       if (fullMap != null) {
-        // Build a local map for suppression: identifies which PARAGRAPH/CODE_BLOCK nodes in this
+        // Build a local map for suppression: identifies which PARAGRAPH, CODE_BLOCK, and CODE_FENCE nodes in this
         // body are footnote definitions/continuations that should be hidden (they go into the list).
         val localMap = build(parsedTree, content)
         providers[MarkdownElementTypes.PARAGRAPH] = FootnoteNodeSuppressor(localMap, providers[MarkdownElementTypes.PARAGRAPH]!!)
         providers[MarkdownElementTypes.CODE_BLOCK] = FootnoteNodeSuppressor(localMap, providers[MarkdownElementTypes.CODE_BLOCK]!!)
+        providers[MarkdownElementTypes.CODE_FENCE] = FootnoteNodeSuppressor(localMap, providers[MarkdownElementTypes.CODE_FENCE]!!)
         // Render footnote references using the full map so numbers are correct across all levels.
         providers[MarkdownElementTypes.SHORT_REFERENCE_LINK] = FootnoteReferenceProvider(fullMap, providers[MarkdownElementTypes.SHORT_REFERENCE_LINK]!!)
         providers[MarkdownElementTypes.FULL_REFERENCE_LINK] = FootnoteReferenceProvider(fullMap, providers[MarkdownElementTypes.FULL_REFERENCE_LINK]!!)
@@ -86,22 +88,33 @@ internal class FootnoteMap private constructor(
     }
 
     private fun extractRawParagraphContent(paragraphNode: ASTNode, text: String): String {
+      // Drop only through the definition label and its colon, then trim leading whitespace/EOL.
+      // This preserves a body that starts with a defined reference (e.g., "[^a]: [^b]").
       val contentNodes = paragraphNode.children
         .dropWhile { it.type != MarkdownTokenTypes.COLON }
-        .drop(1)
-      return contentNodes.joinToString("") { it.getTextInNode(text).toString() }.trim()
+        .drop(1)  // Skip the colon itself
+        .dropWhile { it.type == MarkdownTokenTypes.WHITE_SPACE || it.type == MarkdownTokenTypes.EOL }
+      val body = contentNodes.joinToString("") { it.getTextInNode(text).toString() }.trim()
+      return body
     }
 
     private fun extractRawContinuationBlock(codeBlockNode: ASTNode, text: String): String {
+      val blockText = codeBlockNode.getTextInNode(text).toString()
+      val containerPrefix = getContainerPrefix(codeBlockNode, text)
+      val lines = blockText.lines().map { stripContainerPrefix(it, containerPrefix) }
+      val indentationColumns = if (codeBlockNode.type == MarkdownElementTypes.CODE_FENCE) {
+        lines.firstOrNull()?.let { MarkdownCodeFenceUtils.getIndentationInfo(it).columns } ?: 0
+      }
+      else {
+        lines.asSequence()
+          .filter { it.isNotBlank() }
+          .minOfOrNull { MarkdownCodeFenceUtils.getIndentationInfo(it).columns } ?: 0
+      }
       val groups = mutableListOf<MutableList<String>>()
       var currentGroup = mutableListOf<String>()
       var hasBlank = false
-      for (line in codeBlockNode.getTextInNode(text).toString().lines()) {
-        val stripped = when {
-          line.startsWith("    ") -> line.drop(4)
-          line.startsWith("\t") -> line.drop(1)
-          else -> line
-        }
+      for (line in lines) {
+        val stripped = stripIndentation(line, indentationColumns)
         if (stripped.isBlank()) {
           if (currentGroup.isNotEmpty()) hasBlank = true
         } else {
@@ -117,15 +130,40 @@ internal class FootnoteMap private constructor(
       return groups.joinToString("\n\n") { it.joinToString("\n") }
     }
 
+    private fun getContainerPrefix(node: ASTNode, text: String): String {
+      val lineStart = text.lastIndexOf('\n', node.startOffset - 1) + 1
+      return text.substring(lineStart, node.startOffset)
+    }
+
+    private fun stripContainerPrefix(line: String, prefix: String): String {
+      if (prefix.isEmpty()) return line
+      if (line.startsWith(prefix)) return line.removePrefix(prefix)
+      val prefixWithoutTrailingSpace = prefix.trimEnd()
+      return if (prefixWithoutTrailingSpace.isNotEmpty() && line.startsWith(prefixWithoutTrailingSpace)) {
+        line.removePrefix(prefixWithoutTrailingSpace)
+      }
+      else {
+        line
+      }
+    }
+
+    private fun stripIndentation(line: String, columnsToStrip: Int): String {
+      val offset = MarkdownCodeFenceUtils.getIndentationInfo(line, columnsToStrip).length
+      return line.substring(offset)
+    }
+
     private fun extractDefinitionLabel(node: ASTNode, text: String): String? {
       return when (node.type) {
         MarkdownElementTypes.PARAGRAPH -> {
-          val firstChild = node.children.firstOrNull() ?: return null
+          val firstChild = node.children.firstOrNull { it.type != MarkdownTokenTypes.WHITE_SPACE && it.type != MarkdownTokenTypes.EOL }
+                           ?: return null
           val linkLabel = when (firstChild.type) {
             MarkdownElementTypes.SHORT_REFERENCE_LINK -> firstChild.findChildOfType(MarkdownElementTypes.LINK_LABEL)
             MarkdownElementTypes.LINK_LABEL -> firstChild
             else -> return null
           }
+          // A bare reference like "[^note]" has no trailing colon: keep it a reference, not a definition.
+          if (firstChild.endOffset >= text.length || text[firstChild.endOffset] != ':') return null
           linkLabel?.let { extractFootnoteLabel(it, text) }
         }
         MarkdownElementTypes.LINK_DEFINITION -> {
@@ -158,12 +196,19 @@ internal class FootnoteMap private constructor(
           val label = extractDefinitionLabel(node, text)
           if (label != null) {
             val siblings = node.parent?.children.orEmpty()
-            val codeBlocks = siblings.drop(siblings.indexOf(node) + 1)
-              .takeWhile { it.type == MarkdownElementTypes.CODE_BLOCK || it.children.isEmpty() }
-              .filter { it.type == MarkdownElementTypes.CODE_BLOCK }
+            val continuationNodes = siblings.drop(siblings.indexOf(node) + 1)
+              .takeWhile {
+                when {
+                  it.children.isEmpty() -> true
+                  it.type == MarkdownElementTypes.CODE_BLOCK || it.type == MarkdownElementTypes.CODE_FENCE ->
+                    isIndentedContinuation(node, it, text)
+                  else -> false
+                }
+              }
+              .filter { it.type == MarkdownElementTypes.CODE_BLOCK || it.type == MarkdownElementTypes.CODE_FENCE }
             val bodyMarkdown = buildString {
               append(extractDefinitionBody(node, text))
-              for (block in codeBlocks) {
+              for (block in continuationNodes) {
                 continuationBlocks.add(block.startOffset)
                 append("\n\n")
                 append(extractRawContinuationBlock(block, text))
@@ -202,6 +247,37 @@ internal class FootnoteMap private constructor(
         if (endOffset < text.length && text[endOffset] == ':') continue  // skip definitions
         if (label in definitions && label !in referenceOrder) referenceOrder.add(label)
       }
+    }
+
+    private fun isIndentedContinuation(definition: ASTNode, block: ASTNode, text: String): Boolean {
+      return leadingIndentation(definition, text) < leadingIndentation(block, text)
+    }
+
+    private fun leadingIndentation(node: ASTNode, text: String): Int {
+      val startOffset = when (node.type) {
+        MarkdownElementTypes.CODE_FENCE -> node.children.firstOrNull { it.type == MarkdownTokenTypes.CODE_FENCE_START }?.let {
+          it.startOffset + MarkdownCodeFenceUtils.getIndentationInfo(it.getTextInNode(text)).length
+        }
+        MarkdownElementTypes.PARAGRAPH -> node.children.firstOrNull { it.type != MarkdownTokenTypes.WHITE_SPACE && it.type != MarkdownTokenTypes.EOL }?.startOffset
+        else -> null
+      } ?: node.startOffset
+      val lineStart = text.lastIndexOf('\n', startOffset - 1) + 1
+      if (node.type == MarkdownElementTypes.CODE_BLOCK) {
+        val lineEnd = text.indexOf('\n', startOffset).takeUnless { it == -1 } ?: text.length
+        return MarkdownCodeFenceUtils.getIndentationInfo(text.subSequence(startOffset, lineEnd)).columns
+      }
+      // Count every character up to the node, including a container marker (list bullet,
+      // blockquote '>') on the same line. Continuation lines carry only whitespace there,
+      // so this puts the definition and its sibling blocks on the same column baseline.
+      return columnPosition(text, lineStart, startOffset)
+    }
+
+    private fun columnPosition(text: String, lineStart: Int, offset: Int): Int {
+      var columns = 0
+      for (index in lineStart until offset) {
+        columns += if (text[index] == '\t') 4 - columns % 4 else 1
+      }
+      return columns
     }
 
     @Suppress("RegExpRedundantEscape")

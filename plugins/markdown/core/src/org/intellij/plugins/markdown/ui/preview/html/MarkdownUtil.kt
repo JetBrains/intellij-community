@@ -57,6 +57,7 @@ object MarkdownUtil {
     map[MarkdownElementTypes.SHORT_REFERENCE_LINK] = FootnoteReferenceProvider(footnoteMap, map[MarkdownElementTypes.SHORT_REFERENCE_LINK]!!)
     map[MarkdownElementTypes.PARAGRAPH] = FootnoteNodeSuppressor(footnoteMap, map[MarkdownElementTypes.PARAGRAPH]!!)
     map[MarkdownElementTypes.CODE_BLOCK] = FootnoteNodeSuppressor(footnoteMap, map[MarkdownElementTypes.CODE_BLOCK]!!)
+    map[MarkdownElementTypes.CODE_FENCE] = FootnoteNodeSuppressor(footnoteMap, map[MarkdownElementTypes.CODE_FENCE]!!)
 
     val mainHtml = HtmlGenerator(text, parsedTree, map, true).generateHtml()
 

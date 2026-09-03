@@ -60,13 +60,26 @@ public final class MarkdownPsiElementFactory {
                                                            @Nullable String language,
                                                            @NotNull String text,
                                                            @Nullable String indent) {
-    String content = "```" + StringUtil.notNullize(language) + "\n" +
+    return createCodeFence(project, language, text, indent, "");
+  }
+
+  public static @NotNull MarkdownCodeFence createCodeFence(@NotNull Project project,
+                                                           @Nullable String language,
+                                                           @NotNull String text,
+                                                           @Nullable String indent,
+                                                           @NotNull String openingIndent) {
+    String contentIndent = StringUtil.notNullize(indent);
+    String containerIndent = !openingIndent.isEmpty() && contentIndent.endsWith(openingIndent)
+                             ? contentIndent.substring(0, contentIndent.length() - openingIndent.length())
+                             : "";
+    String openingPrefix = containerIndent.indexOf('>') >= 0 ? containerIndent : "";
+    String content = openingPrefix + openingIndent + "```" + StringUtil.notNullize(language) + "\n" +
                      text + "\n" +
-                     StringUtil.notNullize(indent) + "```";
+                     contentIndent + "```";
 
     final MarkdownFile file = createFile(project, content);
 
-    return (MarkdownCodeFence)file.getFirstChild();
+    return Objects.requireNonNull(PsiTreeUtil.findChildOfType(file, MarkdownCodeFence.class));
   }
 
   public static @NotNull MarkdownPsiElement createTextElement(@NotNull Project project, @NotNull String text) {
