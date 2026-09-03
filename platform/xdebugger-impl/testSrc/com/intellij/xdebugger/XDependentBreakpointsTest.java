@@ -50,6 +50,43 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
   }
 
   @Test
+  public void testRemovingSlaveClearsDependency() {
+    XLineBreakpoint<?> master = createMaster();
+    XLineBreakpoint<?> slave = createSlave();
+    myDependentBreakpointManager.setMasterBreakpoint(slave, master, true);
+
+    removeBreakPoint(myBreakpointManager, slave);
+
+    assertEmpty(myDependentBreakpointManager.getSlaveBreakpoints(master));
+    assertEmpty(myDependentBreakpointManager.getAllSlaveBreakpoints());
+  }
+
+  @Test
+  public void testSetMasterBreakpointUpdatesExistingDependency() {
+    XLineBreakpoint<?> firstMaster = createMaster();
+    XLineBreakpoint<?> secondMaster =
+      addLineBreakpoint(myBreakpointManager, "file://second-master", 3, new MyBreakpointProperties("second-master"));
+    XLineBreakpoint<?> slave = createSlave();
+    myDependentBreakpointManager.setMasterBreakpoint(slave, firstMaster, true);
+
+    myDependentBreakpointManager.setMasterBreakpoint(slave, firstMaster, false);
+
+    assertSame(firstMaster, myDependentBreakpointManager.getMasterBreakpoint(slave));
+    assertFalse(myDependentBreakpointManager.isLeaveEnabled(slave));
+    assertTrue(myDependentBreakpointManager.isMasterOrSlave(firstMaster));
+    assertTrue(myDependentBreakpointManager.isMasterOrSlave(slave));
+
+    myDependentBreakpointManager.setMasterBreakpoint(slave, secondMaster, true);
+
+    assertSame(secondMaster, myDependentBreakpointManager.getMasterBreakpoint(slave));
+    assertTrue(myDependentBreakpointManager.isLeaveEnabled(slave));
+    assertFalse(myDependentBreakpointManager.isMasterOrSlave(firstMaster));
+    assertTrue(myDependentBreakpointManager.isMasterOrSlave(secondMaster));
+    assertEmpty(myDependentBreakpointManager.getSlaveBreakpoints(firstMaster));
+    assertSame(slave, assertOneElement(myDependentBreakpointManager.getSlaveBreakpoints(secondMaster)));
+  }
+
+  @Test
   public void testSerialize() {
     XLineBreakpoint<?> master = createMaster();
     XLineBreakpoint<?> slave = createSlave();

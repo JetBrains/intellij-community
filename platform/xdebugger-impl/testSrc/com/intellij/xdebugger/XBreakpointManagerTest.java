@@ -100,6 +100,29 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
   }
 
   @Test
+  public void testCopyLineBreakpointCopiesStateAndDependency() {
+    XLineBreakpoint<MyBreakpointProperties> master =
+      addLineBreakpoint(myBreakpointManager, "file://master", 1, new MyBreakpointProperties("master"));
+    XLineBreakpoint<MyBreakpointProperties> source =
+      addLineBreakpoint(myBreakpointManager, "file://source", 2, new MyBreakpointProperties("source"));
+    source.setCondition("condition");
+    source.setSuspendPolicy(SuspendPolicy.THREAD);
+    myBreakpointManager.getDependentBreakpointManager().setMasterBreakpoint(source, master, true);
+
+    XLineBreakpoint<MyBreakpointProperties> copy = myBreakpointManager.copyLineBreakpoint(source, "file://copy", 3);
+
+    assertNotNull(copy);
+    assertEquals("file://copy", copy.getFileUrl());
+    assertEquals(3, copy.getLine());
+    assertEquals("source", copy.getProperties().myOption);
+    assertNotSame(source.getProperties(), copy.getProperties());
+    assertEquals("condition", copy.getConditionExpression().getExpression());
+    assertEquals(SuspendPolicy.THREAD, copy.getSuspendPolicy());
+    assertSame(master, myBreakpointManager.getDependentBreakpointManager().getMasterBreakpoint(copy));
+    assertTrue(myBreakpointManager.getDependentBreakpointManager().isLeaveEnabled(copy));
+  }
+
+  @Test
   public void testSameLineBreakpointsCanCoexistByPlacement() {
     VirtualFile file = getTempDir().createVirtualFile("coexisting-breakpoints.txt");
     XLineBreakpoint<MyBreakpointProperties> onLine =
@@ -152,6 +175,23 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertSame(onLine, assertOneElement(myBreakpointManager.findBreakpointsAtLine(MY_LINE_BREAKPOINT_TYPE, file, 0)));
     assertSame(restored, assertOneElement(myBreakpointManager.findBreakpointsAtLine(MY_LINE_BREAKPOINT_TYPE, file, 0,
                                                                                     XLineBreakpointVerticalPlacement.INTER_LINE)));
+  }
+
+  @Test
+  public void testRestoreRemovedBreakpointRestoresDependency() {
+    VirtualFile file = getTempDir().createVirtualFile("dependent-breakpoints.txt");
+    XLineBreakpoint<MyBreakpointProperties> master =
+      addLineBreakpoint(myBreakpointManager, file.getUrl(), 0, new MyBreakpointProperties("master"));
+    XLineBreakpoint<MyBreakpointProperties> slave =
+      addLineBreakpoint(myBreakpointManager, file.getUrl(), 1, new MyBreakpointProperties("slave"));
+    myBreakpointManager.getDependentBreakpointManager().setMasterBreakpoint(slave, master, true);
+
+    myBreakpointManager.rememberRemovedBreakpoint((XBreakpointBase<?, ?, ?>)slave);
+    removeBreakPoint(myBreakpointManager, slave);
+    XLineBreakpoint<?> restored = assertInstanceOf(myBreakpointManager.restoreLastRemovedBreakpoint(), XLineBreakpoint.class);
+
+    assertSame(master, myBreakpointManager.getDependentBreakpointManager().getMasterBreakpoint(restored));
+    assertTrue(myBreakpointManager.getDependentBreakpointManager().isLeaveEnabled(restored));
   }
 
   @Test
