@@ -33,19 +33,26 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
 
 @TestApplication
-class BuildTreeConsoleViewTest {
+@ParameterizedClass
+@ValueSource(booleans = [false, true])
+class BuildTreeConsoleViewTest(singleConsole: Boolean) {
 
   private val buildDescriptor = DefaultBuildDescriptor(Any(), "test descriptor", "fake path", 1L)
 
+  // the flag is read in the BuildTreeConsoleView constructor
   private val treeConsoleView by testFixture {
     val project = projectFixture().init()
     val view = withContext(Dispatchers.EDT) {
-      BuildTreeConsoleView(project, buildDescriptor, BuildTextConsoleView(project, true, emptyList()))
+      BuildTreeConsoleView(project, buildDescriptor, BuildTextConsoleView(project, true, emptyList()), object : BuildViewSettingsProvider {
+        override fun isExecutionViewHidden(): Boolean = false
+        override fun isSingleBuildConsoleView(): Boolean = singleConsole
+      })
     }
     initialized(view) {
       Disposer.dispose(view)

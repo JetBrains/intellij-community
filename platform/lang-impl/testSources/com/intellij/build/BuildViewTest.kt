@@ -27,13 +27,22 @@ import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.util.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JComponent
 
 @TestApplication
-class BuildViewTest {
+@ParameterizedClass
+@ValueSource(booleans = [false, true])
+class BuildViewTest(val singleConsole: Boolean) {
+
+  private val settingsProvider: BuildViewSettingsProvider = object : BuildViewSettingsProvider {
+    override fun isExecutionViewHidden(): Boolean = false
+    override fun isSingleBuildConsoleView(): Boolean = singleConsole
+  }
 
   private val projectFixture = projectFixture()
   private val project by projectFixture
@@ -94,7 +103,7 @@ class BuildViewTest {
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(BuildProgressDescriptorImpl(buildDescriptor))
+      .start(BuildProgressDescriptorImpl(buildDescriptor), settingsProvider)
         .fileMessage("message 1", "message 1 descriptive text", INFO, FilePosition(Path.of("aFile1.java"), 0, 0))
         .fileMessage("message 1.1", "message 1.1 descriptive text", WARNING, FilePosition(Path.of("aFile1.java"), 0, 0))
         .fileMessage("message 2", "message 2 descriptive text", WARNING, FilePosition(Path.of(tempDirectory, "project/aFile2.java"), 0, 0))
@@ -154,7 +163,7 @@ class BuildViewTest {
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(BuildProgressDescriptorImpl(buildDescriptor))
+      .start(BuildProgressDescriptorImpl(buildDescriptor), settingsProvider)
         .message("Root message", "Text of the root message console", INFO, null)
       .progress("Running…")
         .startChildProgress("Inner progress")
@@ -191,7 +200,7 @@ class BuildViewTest {
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(BuildProgressDescriptorImpl(buildDescriptor))
+      .start(BuildProgressDescriptorImpl(buildDescriptor), settingsProvider)
         .message("Root message", "Text of the root message console", INFO, null)
       .progress("Running…")
         .startChildProgress("Inner progress")
@@ -226,7 +235,7 @@ class BuildViewTest {
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(BuildProgressDescriptorImpl(buildDescriptor))
+      .start(BuildProgressDescriptorImpl(buildDescriptor), settingsProvider)
         .output("Build greeting\n", ProcessOutputType.STDOUT)
         .message("Root message", "Text of the root message console", INFO, null)
       .progress("Running…")
@@ -296,7 +305,7 @@ class BuildViewTest {
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start("started", BuildProgressDescriptorImpl(buildDescriptor))
+      .start("started", BuildProgressDescriptorImpl(buildDescriptor), settingsProvider)
         .presentable("my event", presentationData)
       .finish("finished", SuccessResultImpl())
     // @formatter:on
