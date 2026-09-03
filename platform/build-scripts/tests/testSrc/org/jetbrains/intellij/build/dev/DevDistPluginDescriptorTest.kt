@@ -136,7 +136,7 @@ class DevDistPluginDescriptorTest {
     ))
 
     assertThat(request.mainModule).isEqualTo("intellij.remoteDevelopment.plugin")
-    // The plan states only deviations. The real plan maps `intellij.remoteDevelopment.plugin` to `cwm-plugin`.
+    // The plan states only deviations. The real plan maps `intellij.remoteDevelopment.plugin` to `remdev-plugin`.
     // This request has no mapping, so it uses the derived name.
     assertThat(request.directoryName).isEqualTo("remoteDevelopment-plugin")
     assertThat(request.mainJarName).isEqualTo("remoteDevelopment-plugin.jar")
