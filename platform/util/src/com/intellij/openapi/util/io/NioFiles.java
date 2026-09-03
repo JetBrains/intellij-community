@@ -1,14 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.BitUtil;
+import com.intellij.util.system.NativeAccess;
 import com.intellij.util.system.OS;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.WinBase;
-import com.sun.jna.platform.win32.WinNT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -253,17 +249,12 @@ public final class NioFiles {
     }
     catch (NoSuchFileException | AccessDeniedException e) { throw e; }
     catch (FileSystemException e) {
-      if (OS.CURRENT == OS.Windows && JnaLoader.isLoaded() && isNtfsReparsePoint(path)) {
+      if (OS.CURRENT == OS.Windows && Boolean.TRUE.equals(NativeAccess.getInstance().isReparsePoint(path))) {
         LOG.debug(e);
         return BROKEN_SYMLINK;
       }
       throw e;
     }
-  }
-
-  private static boolean isNtfsReparsePoint(Path path) {
-    int attrs = Kernel32.INSTANCE.GetFileAttributes(path.toString());
-    return attrs != WinBase.INVALID_FILE_ATTRIBUTES && BitUtil.isSet(attrs, WinNT.FILE_ATTRIBUTE_REPARSE_POINT);
   }
 
   /**
