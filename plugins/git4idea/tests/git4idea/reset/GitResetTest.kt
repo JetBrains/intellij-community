@@ -19,35 +19,46 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.test.assertSuccessfulNotification
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.file
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.last
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class GitResetTest : GitSingleRepoTest() {
+@TestApplication
+class GitResetTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
 
-  fun `test file is refreshed on hard reset`() {
+  @Test
+  fun `test file is refreshed on hard reset`(): Unit = with(context) {
     val (oldHash, vf) = prepare()
 
     GitResetOperation(project, mapOf(repo to oldHash), GitResetMode.HARD, EmptyProgressIndicator()).execute()
 
     assertSuccessfulNotification("Reset successful")
-    assertEquals("Branch is on incorrect point", oldHash.asString(), last())
-    assertEquals("VirtualFile wasn't refreshed", "initial", String(vf.contentsToByteArray()))
+    assertThat(last()).describedAs("Branch is on incorrect point").isEqualTo(oldHash.asString())
+    assertThat(String(vf.contentsToByteArray())).describedAs("VirtualFile wasn't refreshed").isEqualTo("initial")
   }
 
-  fun `test file status is refreshed on soft reset`() {
+  @Test
+  fun `test file status is refreshed on soft reset`(): Unit = with(context) {
     val (oldHash, vf) = prepare()
 
     GitResetOperation(project, mapOf(repo to oldHash), GitResetMode.SOFT, EmptyProgressIndicator()).execute()
 
     assertSuccessfulNotification("Reset successful")
-    assertEquals("Branch is on incorrect point", oldHash.asString(), last())
+    assertThat(last()).describedAs("Branch is on incorrect point").isEqualTo(oldHash.asString())
     changeListManager.ensureUpToDate()
-    assertEquals("File status wasn't refreshed", FileStatus.MODIFIED, changeListManager.getChange(vf)!!.fileStatus)
+    assertThat(changeListManager.getChange(vf)!!.fileStatus).describedAs("File status wasn't refreshed").isEqualTo(FileStatus.MODIFIED)
   }
 
-  private fun prepare(): Pair<Hash, VirtualFile> {
+  private fun GitSingleRepoContext.prepare(): Pair<Hash, VirtualFile> {
     val file = file("f.txt").create().write("initial")
     val prevHash = HashImpl.build(file.addCommit("created").hash())
     file.append("more" + System.lineSeparator())
