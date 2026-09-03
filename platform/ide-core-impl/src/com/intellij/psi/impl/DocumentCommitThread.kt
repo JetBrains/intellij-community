@@ -40,11 +40,11 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SingleRootFileViewProvider
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
 import com.intellij.psi.text.BlockSupport
 import com.intellij.util.SmartList
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
@@ -237,14 +237,19 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     return DocumentCommitKind.Lightweight(document.freeze(), watermark)
   }
 
-  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  // requires read lock or forked version
   // returns finish commit Runnable (to be invoked later in EDT) or null on failure
   private fun commitUnderProgress(task: CommitTask, commitTaskKind: DocumentCommitKind, documentManager: PsiDocumentManagerEx): () -> Unit {
     if (commitTaskKind is DocumentCommitKind.Asynchronous) {
       ApplicationManager.getApplication().assertIsNonDispatchThread()
     }
     val document = task.myDocumentRef.get()
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    when (commitTaskKind) {
+      is DocumentCommitKind.Lightweight -> if (!InternalPsiVersioning.isInForkedTimeline()) {
+        LOG.error("Lightweight commit is permitted only in forked timeline")
+      }
+      else -> ApplicationManager.getApplication().assertReadAccessAllowed()
+    }
     if (document == null) return {}
     val project = task.myProject
     val finishProcessors = SmartList<BooleanRunnable>()
@@ -303,7 +308,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
 
       val success = documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors, commitTaskKind,
                                                 task.myReason)
-      if (commitTaskKind !is DocumentCommitKind.Asynchronous) {
+      if (commitTaskKind is DocumentCommitKind.Synchronous) {
         assert(success)
       }
       if (commitTaskKind is DocumentCommitKind.Synchronous || (success && commitTaskKind !is DocumentCommitKind.Lightweight)) {
@@ -455,7 +460,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
   }
 
   // returns runnable to execute under the write action in AWT to finish the commit
-  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  // requires read lock or forked version
   private fun doCommit(
     task: CommitTask,
     commitTaskKind: DocumentCommitKind,
@@ -469,7 +474,9 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     if (commitTaskKind is DocumentCommitKind.Asynchronous) {
       ApplicationManager.getApplication().assertIsNonDispatchThread()
     }
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    if (commitTaskKind !is DocumentCommitKind.Lightweight && !InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      ApplicationManager.getApplication().assertReadAccessAllowed()
+    }
     val newDocumentText = document.getImmutableCharSequence()
 
     val data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY)
@@ -514,7 +521,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
         return@BooleanRunnable false
       }
 
-      if (!ApplicationManager.getApplication().isWriteAccessAllowed() && documentManager.isEventSystemEnabled(document)) {
+      if (commitTaskKind !is DocumentCommitKind.Lightweight && !ApplicationManager.getApplication().isWriteAccessAllowed() && documentManager.isEventSystemEnabled(document)) {
         val vFile = viewProvider.getVirtualFile()
         LOG.error("Write action expected" + "; document=" + document + "; file=" + psiFile + " of " + psiFile.javaClass + "; file.valid=" + psiFile.isValid() + "; file.eventSystemEnabled=" + viewProvider.supportsSendingPsiEvents() + "; viewProvider=" + viewProvider + " of " + viewProvider.javaClass + "; language=" + psiFile.getLanguage() + "; vFile=" + vFile + " of " + vFile.javaClass + "; free-threaded=" + AbstractFileViewProvider.isFreeThreaded(viewProvider))
       }

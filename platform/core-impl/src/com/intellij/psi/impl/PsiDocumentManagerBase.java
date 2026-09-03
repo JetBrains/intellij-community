@@ -507,7 +507,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   public void commitDocument(@NotNull Document doc) {
     Document document = getTopLevelDocument(doc);
 
-    if (isEventSystemEnabled(document)) {
+    if (!InternalPsiVersioning.isInForkedTimeline() && isEventSystemEnabled(document)) {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteSafeEnvironment();
     }
 
@@ -539,7 +539,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
                               @NotNull DocumentCommitKind commitKind,
                               @NotNull Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
-    if (isEventSystemEnabled(document)) {
+    if (!commitKind.isLightweight() && isEventSystemEnabled(document)) {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteSafeEnvironment();
     }
     boolean[] ok = {true};
@@ -572,7 +572,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
                                                @NotNull @Unmodifiable List<? extends BooleanRunnable> finishProcessors,
                                                @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
                                                @NotNull DocumentCommitKind commitKind) {
-    if (isEventSystemEnabled(document)) {
+    if (!commitKind.isLightweight() && isEventSystemEnabled(document)) {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteSafeEnvironment();
     }
     if (myProject.isDisposed()) return false;
@@ -827,6 +827,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   // return true when action is run, false when it's queued to run later
   @RequiresEdt
   private boolean performWhenAllCommitted(@NotNull ModalityState modality, @NotNull Runnable action) {
+    assertWeAreOutsideVersionedEnvironment("performWhenAllCommitted()");
     ThreadingAssertions.assertEventDispatchThread();
     assertWeAreOutsideAfterCommitHandler();
 
@@ -856,6 +857,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
   @Override
   public void performLaterWhenAllCommitted(@NotNull ModalityState modalityState, @NotNull Runnable runnable) {
+    assertWeAreOutsideVersionedEnvironment("performLaterWhenAllCommitted()");
     Runnable whenAllCommitted = new Runnable() {
       @Override
       public void run() {
@@ -987,6 +989,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   public boolean hasEventSystemEnabledUncommittedDocuments() {
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-319884, EA-831652, IDEA-301732, EA-659436, IDEA-307614, EA-773260")) {
       return ContainerUtil.exists(myUncommittedDocuments, document -> isEventSystemEnabled(document));
+    }
+  }
+
+  /**
+   * Both {@code performWhenAllCommitted} methods need the main timeline queue of uncommitted documents, and they schedule a
+   * commit that publishes to the main timeline. A versioned computation must not use either, so this method rejects the call.
+   */
+  private static void assertWeAreOutsideVersionedEnvironment(@NotNull String methodName) {
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      throw new IncorrectOperationException("You must not call " + methodName + " in a versioned environment");
     }
   }
 
