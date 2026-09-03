@@ -37,10 +37,74 @@ class OutdatedTableOfContentsInspectionTest: LightPlatformCodeInsightFixture4Tes
     """)
   }
 
+  @Test
+  fun `toc without omitted header is not reported`() {
+    doTest("""
+      # Header 1
+
+      <!-- omit from toc -->
+      # Header 2
+
+      # Header 3 <!-- omit in toc -->
+
+      <!-- TOC -->
+      * [Header 1](#header-1)
+      <!-- TOC -->
+    """)
+  }
+
+  @Test
+  fun `header separated from the comment by a blank line stays in toc`() {
+    doTest("""
+      # Header 1
+
+      <!-- omit from toc -->
+
+      # Header 2
+
+      <warning descr="$description"><!-- TOC -->
+      * [Header 1](#header-1)
+      <!-- TOC --></warning>
+    """)
+  }
+
+  @Test
+  fun `quick fix removes the entry of an omitted header`() {
+    doFixTest(
+      before = """
+        # Header 1
+
+        # Header 2 <!-- omit from toc -->
+
+        <warning descr="$description"><!-- TOC -->
+        * [Header 1](#header-1)
+        * [Header 2](#header-2)
+        <!-- TOC --></warning>
+      """,
+      after = """
+        # Header 1
+
+        # Header 2 <!-- omit from toc -->
+
+        <!-- TOC -->
+        * [Header 1](#header-1)
+        <!-- TOC -->
+      """
+    )
+  }
+
   private fun doTest(content: String) {
     myFixture.enableInspections(OutdatedTableOfContentsInspection())
     myFixture.configureByText("test.md", content.trimIndent())
     myFixture.checkHighlighting()
+  }
+
+  private fun doFixTest(before: String, after: String) {
+    doTest(before)
+    val name = MarkdownBundle.message("markdown.outdated.table.of.contents.quick.fix.name")
+    val fix = myFixture.getAllQuickFixes().single { it.text == name }
+    myFixture.launchAction(fix)
+    myFixture.checkResult(after.trimIndent())
   }
 
   private val description

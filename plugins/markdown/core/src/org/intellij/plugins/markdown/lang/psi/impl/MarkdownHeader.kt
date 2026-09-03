@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import org.intellij.markdown.html.entities.Entities
+import org.intellij.plugins.markdown.editor.toc.TableOfContentsMarkers
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.util.children
@@ -150,6 +151,9 @@ class MarkdownHeader: MarkdownHeaderImpl {
 
   private fun traverseNameText(builder: StringBuilder, elements: Sequence<PsiElement>, imageText: (MarkdownImage) -> String) {
     for (child in elements) {
+      if (TableOfContentsMarkers.isHtmlComment(child)) {
+        continue
+      }
       when (child) {
         is LeafPsiElement -> builder.append(child.text)
         is MarkdownInlineLink -> traverseNameText(builder, child.linkText?.contentElements.orEmpty(), imageText)
@@ -162,11 +166,16 @@ class MarkdownHeader: MarkdownHeaderImpl {
   private fun buildRawAnchorText(): String? {
     val contentHolder = findContentHolder() ?: return null
     val children = contentHolder.children().dropWhile { it.hasType(MarkdownTokenTypeSets.WHITE_SPACES) }
+    var hasComment = false
     val text = buildString {
       var count = 0
       for (child in children) {
         if (child.hasType(MarkdownTokenTypeSets.WHITE_SPACES)) {
           append(" ")
+          continue
+        }
+        if (TableOfContentsMarkers.isHtmlComment(child)) {
+          hasComment = true
           continue
         }
         when (child) {
@@ -177,7 +186,8 @@ class MarkdownHeader: MarkdownHeaderImpl {
         count += 1
       }
     }
-    val replaced = replaceEntities(text).lowercase().replace(garbageRegex, "").replace(" ", "-")
+    val cleanedText = if (hasComment) text.trimEnd() else text
+    val replaced = replaceEntities(cleanedText).lowercase().replace(garbageRegex, "").replace(" ", "-")
 
     return when {
       AdvancedSettings.getBoolean("markdown.squash.multiple.dashes.in.header.anchors") -> replaced.replace(Regex("-{2,}"), "-")

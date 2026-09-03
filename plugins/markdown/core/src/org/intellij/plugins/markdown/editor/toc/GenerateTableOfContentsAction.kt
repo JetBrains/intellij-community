@@ -122,7 +122,7 @@ class GenerateTableOfContentsAction: AnAction() {
 
     private fun collectHeaders(file: MarkdownFile): Sequence<MarkdownHeader> {
       val topLevelElements = collectTopLevelElements(file)
-      return topLevelElements.filterIsInstance<MarkdownHeader>()
+      return topLevelElements.filterIsInstance<MarkdownHeader>().filterNot(TableOfContentsMarkers::isOmittedFromToc)
     }
 
     private fun StringBuilder.appendHeader(header: MarkdownHeader, indentSize: Int) {
