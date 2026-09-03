@@ -1275,7 +1275,7 @@ public class JavaDocInfoGenerator {
 
   private void generateAuthorAndVersionSections(StringBuilder buffer, PsiDocComment docComment) {
     generateSingleTagSection(buffer, docComment, "version", JavaBundle.messagePointer("javadoc.version"));
-    generateAuthorSection(buffer, docComment);
+    generateMultiTagSection(buffer, docComment, "author", JavaBundle.messagePointer("javadoc.author"));
   }
 
   private void generateApiSection(StringBuilder buffer, PsiDocComment comment) {
@@ -2545,8 +2545,29 @@ public class JavaDocInfoGenerator {
     }
   }
 
+  /// Variant of [#generateSingleTagSection(StringBuilder, PsiDocComment, String, Supplier)] that accounts for multiple instance of the same tag
+  private void generateMultiTagSection(StringBuilder buffer,
+                                       PsiDocComment comment,
+                                       String tagName,
+                                       Supplier<String> computePresentableName) {
+    PsiDocTag[] tags = comment.findTagsByName(tagName);
+    if (tags.length > 0) {
+      startHeaderSection(buffer, computePresentableName.get());
+      myPrinter.printParagraph(buffer);
+      for (int i = 0; i < tags.length; i++) {
+        StringBuilder tmp = new StringBuilder();
+        generateValue(tmp, tags[i].getDataElements(), ourEmptyElementsProvider);
+        buffer.append(tmp.toString().trim());
+        if (i < tags.length - 1) {
+          buffer.append(", ");
+        }
+      }
+      myPrinter.printSectionEnd(buffer);
+    }
+  }
+
   private void generateSinceSection(StringBuilder buffer, PsiDocComment comment) {
-    generateSingleTagSection(buffer, comment, "since", JavaBundle.messagePointer("javadoc.since"));
+    generateMultiTagSection(buffer, comment, "since", JavaBundle.messagePointer("javadoc.since"));
   }
 
   protected void generateSeeAlsoSection(StringBuilder buffer, PsiDocComment comment) {
@@ -2577,23 +2598,6 @@ public class JavaDocInfoGenerator {
         if (i < tags.length - 1) {
           buffer.append(",");
           myPrinter.printLineBreak(buffer);
-        }
-      }
-      myPrinter.printSectionEnd(buffer);
-    }
-  }
-
-  protected void generateAuthorSection(StringBuilder buffer, PsiDocComment comment) {
-    PsiDocTag[] tags = comment.findTagsByName("author");
-    if (tags.length > 0) {
-      startHeaderSection(buffer, JavaBundle.message("javadoc.author"));
-      myPrinter.printParagraph(buffer);
-      for (int i = 0; i < tags.length; i++) {
-        StringBuilder tmp = new StringBuilder();
-        generateValue(tmp, tags[i].getDataElements(), ourEmptyElementsProvider);
-        buffer.append(tmp.toString().trim());
-        if (i < tags.length - 1) {
-          buffer.append(", ");
         }
       }
       myPrinter.printSectionEnd(buffer);

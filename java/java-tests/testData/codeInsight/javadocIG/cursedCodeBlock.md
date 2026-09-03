@@ -59,7 +59,7 @@ public interface GenericInterface<A>
  
 
 **Since:**
- 1.6  
+1.6  
 
 **Author:**
 Igor Kushnirskiy  

@@ -78,7 +78,7 @@ implements java.io.Serializable, Comparable<String>, CharSequence
  
 
 **Since:**
-   JDK1.0  
+JDK1.0  
 
 **See Also:**
 [`Object.toString()`](java.lang.Object#toString--),  

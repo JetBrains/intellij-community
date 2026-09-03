@@ -44,8 +44,7 @@ sum result
 [`IllegalArgumentException`](java.lang.IllegalArgumentException) &ndash; invalid input  
 
 **Since:**
- 1.0
- 
+1.0, 0.9.2  
 
 **Version:**
  2.0

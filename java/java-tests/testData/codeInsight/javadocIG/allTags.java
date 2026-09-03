@@ -20,6 +20,7 @@ class X {
    * @exception IllegalArgumentException invalid input
    * @see Math#E
    * @since 1.0
+   * @since 0.9.2
    * @author John Doe
    * @version 2.0
    * @deprecated use {@link Math#addExact}
