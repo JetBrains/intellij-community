@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.convertDestructuringToPositionalForm
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
 import org.jetbrains.kotlin.idea.codeinsight.utils.getDestructuredClassType
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFullValueClassDestructuring
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
@@ -43,6 +44,7 @@ private val MAP_ENTRY_NAMES = listOf("key", "value")
  *
  * Examples that do NOT warn:
  * - `for ((key, value) in mapOf(...))`    — Map.Entry destructuring
+ * - A full value class destructuring
  */
 internal class CustomComponentDestructuringMigrationInspection : AbstractKotlinInspection() {
 
@@ -66,6 +68,8 @@ internal class CustomComponentDestructuringMigrationInspection : AbstractKotlinI
         if (declaration.entries.isEmpty()) return
 
         val requiresPositionBasedDestructuringMigration = analyze(declaration) {
+            if (declaration.isFullValueClassDestructuring()) return@analyze false
+
             val primaryParameters = extractPrimaryParameters(declaration)
             // Warn when a custom componentN extension is needed (not a data class, or
             // more entries than the data-class parameters), unless the destructuring

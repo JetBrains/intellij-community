@@ -14,9 +14,14 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtParameter
@@ -51,6 +56,24 @@ fun extractDataClassParameters(type: KaClassType): List<KaValueParameterSymbol>?
 
         constructorSymbol.valueParameters
     } else null
+}
+
+/**
+ * Returns true for a full value class destructuring declaration.
+ *
+ * Old JVM inline value classes stay out of this check.
+ */
+@ApiStatus.Internal
+context(_: KaSession)
+fun KtDestructuringDeclaration.isFullValueClassDestructuring(): Boolean {
+    val type = getDestructuredClassType() ?: return false
+    if (type.isMarkedNullable) return false
+    val classSymbol = type.expandedSymbol as? KaNamedClassSymbol ?: return false
+    if (!classSymbol.isInline) return false
+    val ktClass = classSymbol.psi as? KtClass ?: return false
+    if (!ktClass.hasModifier(KtTokens.VALUE_KEYWORD)) return false
+    if (!ktClass.languageVersionSettings.supportsFeature(LanguageFeature.FullValueClasses)) return false
+    return KotlinPsiHeuristics.findAnnotation(ktClass, StandardKotlinNames.Jvm.JvmInline) == null
 }
 
 /**
