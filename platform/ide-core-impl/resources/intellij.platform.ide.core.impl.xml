@@ -469,6 +469,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Switches submenu in File - New to popup step" />
     <registryKey key="ide.allow.folder.as.project" defaultValue="false"
                  description="Allow opening folder as project without modules" />
+    <registryKey key="ide.project.open.without.module" defaultValue="false"
+                 description="Open a project with no module: directory project configurators do not run, and JPS files do not contribute modules" />
     <notificationGroup id="Automatic Module Unloading" displayType="BALLOON" bundle="messages.ProjectBundle"
                        key="notification.group.automatic.module.unloading"/>
     <registryKey key="sdk.detector.enabled" defaultValue="true" description="Toggles SDK detection features"/>

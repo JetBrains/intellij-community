@@ -120,6 +120,7 @@ import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.isLoadedFromCacheButHasNoModules
+import com.intellij.platform.isProjectOpenWithoutModule
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
@@ -1179,6 +1180,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   open suspend fun configureWorkspace(project: Project, projectStoreBaseDir: Path, options: OpenProjectTask): Module? {
     if (isBackgroundActivitiesSuppressed(project)) {
+      return null
+    }
+
+    if (isProjectOpenWithoutModule()) {
       return null
     }
 
