@@ -274,6 +274,11 @@ abstract class AbstractEntityCodeGenTest {
     doTest()
   }
 
+  @Test
+  fun testSuperInterfaces() {
+    doTest()
+  }
+
   private fun doTestAndCheckErrorMessage(expectedMessage: String) {
     val exception = Assertions.assertThrows(IllegalStateException::class.java) {
       doTest()

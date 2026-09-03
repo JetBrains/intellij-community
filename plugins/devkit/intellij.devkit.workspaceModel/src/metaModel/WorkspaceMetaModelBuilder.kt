@@ -148,11 +148,38 @@ internal class WorkspaceMetaModelBuilder(
       with(kaSession) {
         var extPropertyId = 0
         for ((classSymbol, objType) in entityTypes) {
-          val properties = classSymbol.declaredMemberScope.callables
+          val extendedAbstract = mutableSetOf<String>()
+          val superProperties = mutableListOf<KaPropertySymbol>()
+
+          val superSymbols = classSymbol.superTypes.map { it.expandedSymbol }.filterIsInstance<KaClassSymbol>()
+          for (superSymbol in superSymbols) {
+            if (isEntityInterface(superSymbol)) {
+              val superClass = findObjClass(superSymbol)
+              objType.addSuperType(superClass)
+              extendedAbstract.add(superClass.name)
+            }
+            else {
+              val properties = classSymbol.memberScope.callables
+                .filterIsInstance<KaPropertySymbol>().toList()
+                .filter { it.containingModule == kaModule }
+              superProperties.addAll(properties)
+            }
+            if (isEntitySource(superSymbol)) {
+              throw MetaModelBuilderException("${classSymbol.javaClassFqn} should not extend WorkspaceEntity and EntitySource at the same time",
+                                              classSymbol.sourcePsiSafe())
+            }
+          }
+          if (extendedAbstract.size > 1) {
+            throw MetaModelBuilderException("${classSymbol.javaClassFqn} should not extend multiple @Abstract entities: " +
+                                            extendedAbstract.joinToString(", "), classSymbol.sourcePsiSafe())
+          }
+
+          val declaredProperties = classSymbol.declaredMemberScope.callables
             .filterIsInstance<KaPropertySymbol>().toList()
             .filter { it.containingModule == kaModule }
+          val allProperties = (declaredProperties + superProperties).distinctBy { it.name }
 
-          for ((propertyId, propertySymbol) in properties.withIndex()) {
+          for ((propertyId, propertySymbol) in allProperties.withIndex()) {
             val kind = computeKind(propertySymbol)
             if (kind !is ObjProperty.ValueKind.Computable ||
                 // We can't simply skip all `Computable` because some of them are SymbolicIds
@@ -162,28 +189,11 @@ internal class WorkspaceMetaModelBuilder(
               try {
                 val ownProperty = createOwnProperty(propertySymbol, propertyId, objType)
                 objType.addField(ownProperty)
-              } catch (e: InternalMetaModelBuilderException) {
+              }
+              catch (e: InternalMetaModelBuilderException) {
                 entityMetaError("Unsupported property type '${e.message}'", propertySymbol.sourcePsiSafe() ?: classSymbol.sourcePsiSafe())
               }
             }
-          }
-
-          val extendedAbstract = mutableSetOf<String>()
-          classSymbol.superTypes
-            .map { it.expandedSymbol }
-            .filterIsInstance<KaClassSymbol>()
-            .forEach { superSymbol ->
-              if (isEntityInterface(superSymbol)) {
-                val superClass = findObjClass(superSymbol)
-                objType.addSuperType(superClass)
-                extendedAbstract.add(superClass.name)
-              }
-              if (isEntitySource(superSymbol)) {
-                throw MetaModelBuilderException("${classSymbol.javaClassFqn} should not extend WorkspaceEntity and EntitySource at the same time", classSymbol.sourcePsiSafe())
-              }
-            }
-          if (extendedAbstract.size > 1) {
-            throw MetaModelBuilderException("${classSymbol.javaClassFqn} should not extend multiple @Abstract entities: ${extendedAbstract.joinToString(", ")}", classSymbol.sourcePsiSafe())
           }
 
           compiledObjModule.addType(objType)
@@ -195,7 +205,8 @@ internal class WorkspaceMetaModelBuilder(
           try {
             val extPropertyMeta = createExtProperty(extProperty, receiverClass, extPropertyId++)
             compiledObjModule.addExtension(extPropertyMeta)
-          } catch (e: InternalMetaModelBuilderException) {
+          }
+          catch (e: InternalMetaModelBuilderException) {
             entityMetaError("Unsupported property type '${e.message}'", extProperty.sourcePsiSafe())
           }
         }
@@ -221,10 +232,10 @@ internal class WorkspaceMetaModelBuilder(
               try {
                 val inheritorValueType = classSymbolToValueType(inheritorSymbol, hashMapOf(javaClassFqn to blobType), true)
                 inheritors.add(inheritorValueType)
-              } catch (e: InternalMetaModelBuilderException) {
+              }
+              catch (e: InternalMetaModelBuilderException) {
                 entityMetaError("Unsupported type '${e.message}'", inheritorSymbol.sourcePsiSafe())
               }
-              
             }
           }
         }
@@ -393,6 +404,5 @@ internal class WorkspaceMetaModelBuilder(
         }
   }
 
-  // TODO: Kirill does not understand why it exists
   private fun Sequence<ValueType.ClassProperty<*>>.withoutEnumFields() = filterNot { it.name == "name" || it.name == "ordinal" }
 }
