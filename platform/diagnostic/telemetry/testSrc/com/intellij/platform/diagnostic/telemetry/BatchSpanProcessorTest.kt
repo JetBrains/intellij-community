@@ -10,11 +10,13 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Collections
+import kotlin.time.Duration.Companion.seconds
 
 class BatchSpanProcessorTest {
   /**
@@ -83,5 +85,36 @@ class BatchSpanProcessorTest {
     processor.forceShutdown()
 
     exported shouldBe listOf("first", "last")
+  }
+
+  /**
+   * The shutdown closes the queue. A span that ends later must not stay in the queue, because a queued span keeps its
+   * whole coroutine chain reachable. A flush after the shutdown must return at once, because no worker serves it.
+   */
+  @Test
+  fun `a span that ends after the shutdown is dropped and a flush returns at once`(): Unit = runBlocking {
+    val exported = Collections.synchronizedList(ArrayList<String>())
+    val exporter = object : AsyncSpanExporter {
+      override suspend fun export(spans: Collection<SpanData>) {
+        spans.mapTo(exported) { it.name }
+      }
+    }
+
+    @Suppress("RAW_SCOPE_CREATION")
+    val processor = BatchSpanProcessor(coroutineScope = CoroutineScope(SupervisorJob()), spanExporters = listOf(exporter))
+    val tracer = SdkTracerProvider.builder().addSpanProcessor(processor).build().get("test")
+
+    tracer.spanBuilder("before").startSpan().end()
+    // a cancellation that reaches the worker before its first dispatch skips its body, so the flush starts the worker first
+    processor.flush()
+    processor.forceShutdown()
+    exported shouldBe listOf("before")
+
+    tracer.spanBuilder("after").startSpan().end()
+    withTimeout(5.seconds) {
+      processor.flush()
+    }
+
+    exported shouldBe listOf("before")
   }
 }

@@ -200,6 +200,11 @@ object JaegerJsonSpanExporterManager {
     }
   }
 
+  /** Closes the current trace file. The span processor stays alive, and a later span goes to no file. */
+  suspend fun closeOutput() {
+    jaegerJsonSpanExporter.getAndSet(null)?.shutdown()
+  }
+
   suspend fun setOutput(file: Path, addShutDownHook: Boolean = true) {
     jaegerJsonSpanExporter.getAndSet(JaegerJsonSpanExporter(file = file, serviceName = "build"))?.shutdown()
     if (addShutDownHook && shutdownHookAdded.compareAndSet(false, true)) {

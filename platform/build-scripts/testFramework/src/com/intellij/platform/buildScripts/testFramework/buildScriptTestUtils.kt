@@ -351,7 +351,9 @@ internal suspend fun <T> doRunTestBuild(
     closeKtorClient()
 
     if (traceFile != null) {
-      TraceManager.shutdown()
+      // the span processor is shared by every test of the JVM, so only the file of this test closes
+      TraceManager.flush()
+      JaegerJsonSpanExporterManager.closeOutput()
       println("Performance report is written to $traceFile")
     }
 

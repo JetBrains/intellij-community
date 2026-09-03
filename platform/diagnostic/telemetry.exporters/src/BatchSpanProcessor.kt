@@ -84,6 +84,8 @@ class BatchSpanProcessor(
       }
       catch (e: CancellationException) {
         withContext(NonCancellable) {
+          // a closed queue still hands out its buffered spans, and rejects every later span
+          queue.close()
           try {
             drainQueueInto(batch)
             exportCurrentBatch(batch)
@@ -97,6 +99,8 @@ class BatchSpanProcessor(
                 logger<BatchSpanProcessor>().error("Failed to shutdown", e)
               }
             }
+            flushRequested.close()
+            completePendingFlushRequests()
           }
         }
         throw e
@@ -111,6 +115,14 @@ class BatchSpanProcessor(
       if (batch.size >= maxExportBatchSize) {
         exportCurrentBatch(batch)
       }
+    }
+  }
+
+  /** Completes each flush request that was sent before the channel was closed, so its [flush] call returns. */
+  private fun completePendingFlushRequests() {
+    while (true) {
+      val request = flushRequested.tryReceive().getOrNull() ?: break
+      request.job.complete(Unit)
     }
   }
 
@@ -135,6 +147,7 @@ class BatchSpanProcessor(
 
   override fun isStartRequired(): Boolean = false
 
+  /** After the shutdown the queue is closed, so a span that ends later is dropped. */
   override fun onEnd(span: ReadableSpan) {
     if (span.spanContext.isSampled) {
       queue.trySend(span)
