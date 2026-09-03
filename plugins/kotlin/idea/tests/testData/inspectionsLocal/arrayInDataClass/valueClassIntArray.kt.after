@@ -1,0 +1,16 @@
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -XXLanguage:+CustomEqualsInValueClasses
+
+@JvmInline
+value class A(val a: IntArray) {
+    override fun equals(other: Any?): Boolean {
+        if (other !is A) return false
+        if (!a.contentEquals(other.a)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return a.contentHashCode()
+    }
+}

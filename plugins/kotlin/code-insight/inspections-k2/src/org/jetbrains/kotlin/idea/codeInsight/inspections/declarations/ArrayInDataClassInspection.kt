@@ -6,17 +6,17 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
+import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinEqualsHashCodeToStringSymbolUtils.matchesEqualsMethodSignature
+import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinEqualsHashCodeToStringSymbolUtils.matchesHashCodeMethodSignature
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
@@ -24,17 +24,16 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.classVisitor
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParameter, ArrayInDataClassInspection.Context>() {
     class Context(
         val equals: String?,
         val hashCode: String?,
+        val classKindText: String,
     )
 
-    override fun getProblemDescription(element: KtParameter, context: Context): String {
-        return KotlinBundle.message("array.property.in.data.class.it.s.recommended.to.override.equals.hashcode")
-    }
+    override fun getProblemDescription(element: KtParameter, context: Context): String =
+        KotlinBundle.message("array.property.in.class.it.s.recommended.to.override.equals.hashcode", context.classKindText)
 
     override fun createQuickFix(element: KtParameter, context: Context): KotlinModCommandQuickFix<KtParameter> {
         return object : KotlinModCommandQuickFix<KtParameter>() {
@@ -54,14 +53,14 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
 
             private fun generateFunctionDeclarationInClass(factory: KtPsiFactory, containingClass: KtClass, text: String) {
                 val function = factory.createFunction(text)
-                shortenReferences(containingClass.addDeclaration(function))
+                shortenReferences(containingClass.addMemberDeclaration(function))
             }
         }
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> {
         return classVisitor { klass ->
-            if (!klass.isData()) return@classVisitor
+            if (klass.arrayPropertyClassKind() == null) return@classVisitor
             val constructor = klass.primaryConstructor ?: return@classVisitor
 
             for (parameter in constructor.valueParameters) {
@@ -79,45 +78,53 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
         val parameterType = element.symbol.returnType
         if (!parameterType.isArrayOrPrimitiveArray) return null
         val containingClass = element.containingClass() ?: return null
+        val classKind = containingClass.arrayPropertyClassKind() ?: return null
 
         return when (checkOverriddenEqualsAndHashCode(containingClass)) {
             EqualsHashCodeOverrides.HAS_EQUALS_AND_HASHCODE -> null
             EqualsHashCodeOverrides.HAS_EQUALS -> {
                 val text = GenerateEqualsAndHashCodeUtils.generateHashCode(containingClass)
-                Context(equals = null, hashCode = text)
+                Context(equals = null, hashCode = text, classKindText = classKind.text)
             }
+
             EqualsHashCodeOverrides.HAS_HASHCODE -> {
                 val text = GenerateEqualsAndHashCodeUtils.generateEquals(containingClass)
-                Context(equals = text, hashCode = null)
+                Context(equals = text, hashCode = null, classKindText = classKind.text)
             }
+
             EqualsHashCodeOverrides.HAS_NONE -> {
                 val equalsText = GenerateEqualsAndHashCodeUtils.generateEquals(containingClass)
                 val hashCodeText = GenerateEqualsAndHashCodeUtils.generateHashCode(containingClass)
-                Context(equalsText, hashCodeText)
+                Context(equalsText, hashCodeText, classKind.text)
             }
         }
     }
 
-    private fun checkOverriddenEqualsAndHashCode(klass: KtClass): EqualsHashCodeOverrides {
-        var overriddenEquals = false
-        var overriddenHashCode = false
-        for (declaration in klass.declarations) {
-            if (declaration !is KtFunction) continue
-            if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) continue
-            if (declaration.nameAsName == OperatorNameConventions.EQUALS && declaration.valueParameters.size == 1) {
-                analyze(declaration) {
-                    val parameterType = (declaration.symbol as? KaFunctionSymbol)?.valueParameters?.singleOrNull()?.returnType
-                    if (parameterType?.isNullableAnyType() == true) {
-                        overriddenEquals = true
-                    }
-                }
-            }
-            if (declaration.nameAsName == OperatorNameConventions.HASH_CODE && declaration.valueParameters.isEmpty()) {
-                overriddenHashCode = true
-            }
+    private fun KtClass.arrayPropertyClassKind(): ArrayPropertyClassKind? {
+        return when {
+            isData() -> ArrayPropertyClassKind.DATA
+            isValue() -> ArrayPropertyClassKind.VALUE
+            else -> null
         }
+    }
+
+    context(_: KaSession)
+    private fun checkOverriddenEqualsAndHashCode(klass: KtClass): EqualsHashCodeOverrides {
+        val functionSymbols = klass.declarations.mapNotNull { declaration ->
+            (declaration as? KtFunction)?.symbol as? KaNamedFunctionSymbol
+        }
+        val overriddenEquals = functionSymbols.any { matchesEqualsMethodSignature(it) }
+        val overriddenHashCode = functionSymbols.any { matchesHashCodeMethodSignature(it) }
 
         return EqualsHashCodeOverrides.of(overriddenEquals, overriddenHashCode)
+    }
+
+    private enum class ArrayPropertyClassKind(private val messageKey: String) {
+        DATA("array.property.in.class.kind.data.class"),
+        VALUE("array.property.in.class.kind.value.class");
+
+        val text: String
+            get() = KotlinBundle.message(messageKey)
     }
 
     private enum class EqualsHashCodeOverrides {

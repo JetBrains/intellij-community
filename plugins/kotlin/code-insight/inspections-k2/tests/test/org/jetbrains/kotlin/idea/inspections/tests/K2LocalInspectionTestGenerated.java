@@ -11597,6 +11597,41 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         public void testNonOverrideHashCode() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/nonOverrideHashCode.kt");
         }
+
+        @TestMetadata("valueClassGenericArray.kt")
+        public void testValueClassGenericArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/valueClassGenericArray.kt");
+        }
+
+        @TestMetadata("valueClassIntArray.kt")
+        public void testValueClassIntArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/valueClassIntArray.kt");
+        }
+
+        @TestMetadata("valueClassJustEquals.kt")
+        public void testValueClassJustEquals() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/valueClassJustEquals.kt");
+        }
+
+        @TestMetadata("valueClassJustHashCode.kt")
+        public void testValueClassJustHashCode() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/valueClassJustHashCode.kt");
+        }
+
+        @TestMetadata("valueClassMixedParameters.kt")
+        public void testValueClassMixedParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/valueClassMixedParameters.kt");
+        }
+
+        @TestMetadata("valueClassNegativeEqualsHashCodeOverrides.kt")
+        public void testValueClassNegativeEqualsHashCodeOverrides() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/valueClassNegativeEqualsHashCodeOverrides.kt");
+        }
+
+        @TestMetadata("valueClassNegativeNonArray.kt")
+        public void testValueClassNegativeNonArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayInDataClass/valueClassNegativeNonArray.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

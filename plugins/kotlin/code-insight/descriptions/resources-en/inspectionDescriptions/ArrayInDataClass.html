@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports properties with an <code>Array</code> type in a <code>data</code> class without overridden <code>equals()</code> or <code>hashCode()</code>.
+Reports properties with an <code>Array</code> type in a <code>data class</code> or a <code>value class</code> without overridden <code>equals()</code> or <code>hashCode()</code>.
 <p>
     Array parameters are compared by reference equality, which is likely an unexpected behavior.
     It is strongly recommended to override <code>equals()</code> and <code>hashCode()</code> in such cases.
@@ -28,6 +28,7 @@ Reports properties with an <code>Array</code> type in a <code>data</code> class 
       }
   }
 </code></pre>
+<p>For a <code>value class</code>, the quick-fix generates value class specific <code>equals()</code>.</p>
 <!-- tooltip end -->
 </body>
 </html>
