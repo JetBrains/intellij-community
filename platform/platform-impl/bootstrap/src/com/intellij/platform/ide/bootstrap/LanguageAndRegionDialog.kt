@@ -24,6 +24,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
+import com.intellij.util.system.WindowsRegistry
 import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBDimension
@@ -32,8 +33,6 @@ import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.UIUtil
-import com.sun.jna.platform.win32.Advapi32Util
-import com.sun.jna.platform.win32.WinReg
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -237,7 +236,7 @@ internal fun getLanguageAndRegionDialogIfNeeded(): (suspend () -> Boolean)? {
   var matchingRegion = Region.NOT_SET
   if (OS.CURRENT == OS.Windows) {
     try {
-      val region = Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, "Control Panel\\International\\Geo", "Name")
+      val region = WindowsRegistry.getString(WindowsRegistry.Hive.CURRENT_USER, "Control Panel\\International\\Geo", "Name")
       matchingRegion = regionMapping.keys.find { region == regionMapping[it] } ?: Region.NOT_SET
     }
     catch (e: Throwable) {

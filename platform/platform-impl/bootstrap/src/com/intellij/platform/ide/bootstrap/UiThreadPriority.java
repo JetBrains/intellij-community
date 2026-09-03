@@ -1,15 +1,20 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap;
 
-import com.intellij.jna.JnaLoader;
 import com.intellij.util.system.OS;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLibrary;
-import com.sun.jna.platform.win32.Kernel32;
+import com.intellij.util.system.WindowsSystemLibraries;
 
 import javax.swing.SwingUtilities;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SymbolLookup;
+import java.lang.invoke.MethodHandle;
+
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 final class UiThreadPriority {
   @SuppressWarnings("EnumSwitchStatementWhichMissesCases")
@@ -41,13 +46,13 @@ final class UiThreadPriority {
     var currentThread = Thread.currentThread();
 
     int jvmPriorityBefore = currentThread.getPriority();
-    int nativePriorityBefore = debug && JnaLoader.isLoaded() ? Kernel32.INSTANCE.GetThreadPriority(Kernel32.INSTANCE.GetCurrentThread()) : -1;
+    int nativePriorityBefore = debug ? WindowsThread.currentPriority() : -1;
 
     currentThread.setPriority(Thread.MAX_PRIORITY);  // the actual work
 
     if (debug) {
-      int nativeThreadId = JnaLoader.isLoaded() ? Kernel32.INSTANCE.GetCurrentThreadId() : -1;
-      int nativePriorityAfter = JnaLoader.isLoaded() ? Kernel32.INSTANCE.GetThreadPriority(Kernel32.INSTANCE.GetCurrentThread()) : -1;
+      int nativeThreadId = WindowsThread.currentId();
+      int nativePriorityAfter = WindowsThread.currentPriority();
       int jvmPriorityAfter = currentThread.getPriority();
 
       /*
@@ -74,15 +79,57 @@ final class UiThreadPriority {
   private static final class DarwinPThread {
     static final int QOS_CLASS_USER_INTERACTIVE = 0x21;
 
-    static native int pthread_set_qos_class_self_np(int qosClass, int relPriority);
+    private static final Linker LINKER = Linker.nativeLinker();
+
+    /** {@code int pthread_set_qos_class_self_np(qos_class_t qosClass, int relativePriority)}; {@code qos_class_t} is an {@code unsigned int} enum */
+    static final MethodHandle PTHREAD_SET_QOS_CLASS_SELF_NP = LINKER.downcallHandle(
+      LINKER.defaultLookup().findOrThrow("pthread_set_qos_class_self_np"), FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT));
+
+    /** @return 0, or the {@code errno} value the call returns */
+    static int setUserInteractiveQosClassSelf() {
+      try {
+        return (int)PTHREAD_SET_QOS_CLASS_SELF_NP.invokeExact(QOS_CLASS_USER_INTERACTIVE, 0);
+      }
+      catch (Throwable t) {
+        throw new IllegalStateException(t);
+      }
+    }
+  }
+
+  /** {@code kernel32.dll} downcalls for the debug output; {@code HANDLE} is an address. */
+  private static final class WindowsThread {
+    private static final Linker LINKER = Linker.nativeLinker();
+    private static final SymbolLookup KERNEL32 = WindowsSystemLibraries.lookup("kernel32.dll");
+
+    /** {@code HANDLE GetCurrentThread()}, a pseudo handle that needs no close */
+    static final MethodHandle GET_CURRENT_THREAD = LINKER.downcallHandle(KERNEL32.findOrThrow("GetCurrentThread"), FunctionDescriptor.of(ADDRESS));
+    /** {@code DWORD GetCurrentThreadId()} */
+    static final MethodHandle GET_CURRENT_THREAD_ID = LINKER.downcallHandle(KERNEL32.findOrThrow("GetCurrentThreadId"), FunctionDescriptor.of(JAVA_INT));
+    /** {@code int GetThreadPriority(HANDLE)} */
+    static final MethodHandle GET_THREAD_PRIORITY = LINKER.downcallHandle(KERNEL32.findOrThrow("GetThreadPriority"), FunctionDescriptor.of(JAVA_INT, ADDRESS));
+
+    static int currentPriority() {
+      try {
+        MemorySegment thread = (MemorySegment)GET_CURRENT_THREAD.invokeExact();
+        return (int)GET_THREAD_PRIORITY.invokeExact(thread);
+      }
+      catch (Throwable t) {
+        throw new IllegalStateException(t);
+      }
+    }
+
+    static int currentId() {
+      try {
+        return (int)GET_CURRENT_THREAD_ID.invokeExact();
+      }
+      catch (Throwable t) {
+        throw new IllegalStateException(t);
+      }
+    }
   }
 
   private static void setUserInteractiveQosClassForCurrentThread() {
-    if (!JnaLoader.isLoaded()) return;
-
-    var libc = NativeLibrary.getInstance(null);
-    Native.register(DarwinPThread.class, libc);
-    var ret = DarwinPThread.pthread_set_qos_class_self_np(DarwinPThread.QOS_CLASS_USER_INTERACTIVE, 0);
+    var ret = DarwinPThread.setUserInteractiveQosClassSelf();
     if (ret != 0) {
       var currentThread = Thread.currentThread();
       logError("Unable to set QoS class for thread #" + currentThread.getId() + " (" + currentThread.getName() + "): " + ret);
