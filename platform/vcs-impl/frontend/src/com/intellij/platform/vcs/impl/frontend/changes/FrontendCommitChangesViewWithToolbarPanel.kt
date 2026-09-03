@@ -127,29 +127,40 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     when (event) {
       is BackendChangesViewEvent.InclusionChanged -> inclusionModel.applyBackendState(event.inclusionState)
       is BackendChangesViewEvent.RefreshRequested -> scheduleRefresh(event.withDelay, event.refreshCounter)
-      is BackendChangesViewEvent.SelectPath -> withContext(Dispatchers.UiWithModelAccess) {
-        selectPath(event.path)
+      is BackendChangesViewEvent.SelectPath -> {
+        val selected = withContext(Dispatchers.UiWithModelAccess) {
+          selectPath(event.path)
+        }
+        if (!selected) {
+          withContext(Dispatchers.UiWithModelAccess) {
+            diffableSelectionHelper.tryUpdateSelection()
+            val selection = diffableSelectionHelper.diffableSelection.value
+            ChangesViewDiffApi.getInstance().notifySelectionUpdated(project.projectId(), selection)
+          }
+        }
       }
     }
   }
 
   @VisibleForTesting
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun selectPath(path: ChangesTreePath) {
+  fun selectPath(path: ChangesTreePath): Boolean {
     // Navigating inside an explicit selection of 2+ files must not collapse it to a single node: only the previewed
     // file changes, as in monolith mode.
-    if (diffableSelectionHelper.moveWithinExplicitSelection(path)) return
+    if (diffableSelectionHelper.moveWithinExplicitSelection(path)) return true
 
     if (path.changeId == null) {
+      if (!changesView.containsFile(path.filePath.filePath)) return false
       changesView.selectFile(path.filePath.filePath)
+      return true
     }
-    else {
-      val node = VcsTreeModelData.all(changesView).iterateNodes().find { node ->
-        val userObject = node.userObject
-        userObject is Change && path.matchesChange(userObject)
-      }
-      TreeUtil.selectNode(changesView, node)
-    }
+
+    val node = VcsTreeModelData.all(changesView).iterateNodes().find { node ->
+      val userObject = node.userObject
+      userObject is Change && path.matchesChange(userObject)
+    } ?: return false
+    TreeUtil.selectNode(changesView, node)
+    return true
   }
 
   private fun ChangesTreePath.matchesChange(change: Change): Boolean =
@@ -171,4 +182,3 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     }
   }
 }
-

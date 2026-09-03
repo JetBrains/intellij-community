@@ -53,6 +53,24 @@ internal class FrontendCommitChangesViewWithToolbarTest : ChangesViewTestBase() 
     }
   }
 
+  fun `test selecting a removed change is ignored`() {
+    val removed = change(path("removed.txt"))
+    val remaining = change(path("remaining.txt"))
+    val list = LocalChangeListImpl.Builder(project, "Default").setDefault(true)
+      .setChanges(listOf(remaining))
+      .build()
+
+    val model = buildModel(view, listOf(list), emptyList())
+    updateModel(view, model)
+
+    testPanel { panel ->
+      panel.selectPath(checkNotNull(ChangesTreePath.create(remaining)))
+      panel.selectPath(checkNotNull(ChangesTreePath.create(removed)))
+
+      assertSelection(remaining)
+    }
+  }
+
   fun `test navigating inside a multiple selection keeps it`() {
     val c1 = change(path("c1.txt"))
     val c2 = change(path("c2.txt"))
