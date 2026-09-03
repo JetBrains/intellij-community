@@ -61,7 +61,7 @@ internal class GHPRCreationServiceImpl(private val requestExecutor: GithubApiReq
                                                 GithubIssueState.open,
                                                 baseBranch?.nameForRemoteOperations,
                                                 headRepo.owner + ":" + headBranch.nameForRemoteOperations,
-        // only the first match is used, so fetch a single result
+                                                // only the first match is used, so fetch a single result
                                                 GithubRequestPagination(pageSize = 1)
       )).items.firstOrNull()?.toPRIdentifier()
 

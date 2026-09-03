@@ -79,6 +79,9 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
         listOf(GHOpenPullRequestExistingTabNotificationAction(project, projectMapping, account, singlePr.toPRIdentifier()))
       }
       else -> {
+        // A single head branch can back multiple open PRs when they target different base
+        // branches (base is unconstrained here), so this case is reachable. It's ambiguous,
+        // so offer nothing.
         emptyList()
       }
     }
@@ -143,12 +146,11 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
     val remoteBranchName = branch.nameForRemoteOperations
 
     return try {
-      executor.executeSuspend(PullRequests.find(repository,
-                                                GithubIssueState.open,
-                                                baseRef = null,
-                                                headRef = repository.repositoryPath.owner + ":" + remoteBranchName,
-        // only the 0/1/>1 distinction matters, so two results are enough
-                                                pagination = GithubRequestPagination(pageSize = 2))
+      executor.executeSuspend(
+        PullRequests.find(repository, GithubIssueState.open, baseRef = null,
+                          headRef = repository.repositoryPath.owner + ":" + remoteBranchName,
+                          // only the 0/1/>1 distinction matters, so two results are enough
+                          pagination = GithubRequestPagination(pageSize = 2))
       ).items
     }
     catch (ce: CancellationException) {
