@@ -94,7 +94,7 @@ internal class MarkdownComposePanel(
     val scheme = PreviewStyleScheme.fromCurrentTheme()
     val fontSize = scheme.fontSize.sp / scheme.scale
     val scrollState = rememberScrollState(0)
-    val scrollingSynchronizer = remember(scrollState) { ScrollingSynchronizer.create(scrollState) }
+    val scrollingSynchronizer = remember(scrollState) { ScrollingSynchronizer.createContinuous(scrollState) }
     val markdownStyling = remember(scheme, fontSize) { JcefLikeMarkdownStyling(scheme, fontSize) }
     val markdownMode = remember(scrollingSynchronizer) {
       MarkdownMode.EditorPreview(scrollingSynchronizer)
