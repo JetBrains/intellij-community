@@ -58,6 +58,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.ObjectIntMap;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1261,10 +1262,7 @@ public final class TypeConversionUtil {
         // compatibility feature: allow to assign raw types to generic ones
         return allowUncheckedConversion;
       }
-      if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion) &&
-          !agreeByTypeParameterBound(typeLeft, typeRight, rp, rightSubstitutor, allowUncheckedConversion)) {
-        return false;
-      }
+      if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion, rp, rightSubstitutor)) return false;
     }
     return true;
   }
@@ -1288,13 +1286,57 @@ public final class TypeConversionUtil {
     if (!(typeRight instanceof PsiWildcardType) || ((PsiWildcardType)typeRight).isExtends()) return false;
     PsiType leftBound = ((PsiWildcardType)typeLeft).getBound();
     if (leftBound == null) return false;
+    return agreeByTypeParameterBound(leftBound, rightParameter, rightSubstitutor, allowUncheckedConversion, new HashSet<>());
+  }
+
+  /**
+   * A declared bound can be another type parameter of the same declaration, as {@code S} is in
+   * {@code <R extends CharSequence, S extends R>}. The type argument for that other parameter is then a wildcard
+   * without an upper bound of its own, so the walk continues over the declared bounds of that parameter. It ends at
+   * {@code CharSequence}, which makes {@code StrangeDouble<?,?>} a subtype of
+   * {@code StrangeDouble<?,? extends CharSequence>}, as it is for javac.
+   *
+   * @param visited the parameters the walk already passed, to stop it on a cyclic bound
+   * @return true if every type argument for {@code rightParameter} is assignable to {@code leftBound}
+   */
+  private static boolean agreeByTypeParameterBound(@NotNull PsiType leftBound,
+                                                   @NotNull PsiTypeParameter rightParameter,
+                                                   @NotNull PsiSubstitutor rightSubstitutor,
+                                                   boolean allowUncheckedConversion,
+                                                   @NotNull Set<PsiTypeParameter> visited) {
+    if (!visited.add(rightParameter)) return false;
     for (PsiClassType bound : rightParameter.getExtendsListTypes()) {
       if (isAssignable(leftBound, rightSubstitutor.substitute(bound), allowUncheckedConversion, false)) return true;
+      PsiClass boundClass = bound.resolve();
+      if (boundClass instanceof PsiTypeParameter &&
+          agreeByTypeParameterBound(leftBound, (PsiTypeParameter)boundClass, rightSubstitutor, allowUncheckedConversion, visited)) {
+        return true;
+      }
     }
     return false;
   }
 
   private static final RecursionGuard<PsiType> ourGuard = RecursionManager.createGuard("isAssignable");
+
+  /**
+   * Same as {@link #typesAgree(PsiType, PsiType, boolean)}, but the declared bound of the type parameter the right
+   * type argument belongs to is taken into account as well. Use this overload wherever the type argument is known,
+   * because {@code Bounded<? super String>} agrees with {@code Bounded<? extends CharSequence>} only through the
+   * bound of the parameter {@code Bounded} declares.
+   *
+   * @param rightParameter   the type parameter {@code typeRight} is the type argument for
+   * @param rightSubstitutor the substitutor of the type {@code typeRight} comes from
+   * @see #agreeByTypeParameterBound
+   */
+  @ApiStatus.Internal
+  public static boolean typesAgree(@NotNull PsiType typeLeft,
+                                   @NotNull PsiType typeRight,
+                                   boolean allowUncheckedConversion,
+                                   @NotNull PsiTypeParameter rightParameter,
+                                   @NotNull PsiSubstitutor rightSubstitutor) {
+    return typesAgree(typeLeft, typeRight, allowUncheckedConversion) ||
+           agreeByTypeParameterBound(typeLeft, typeRight, rightParameter, rightSubstitutor, allowUncheckedConversion);
+  }
 
   public static boolean typesAgree(final @NotNull PsiType typeLeft,
                                    final @NotNull PsiType typeRight,

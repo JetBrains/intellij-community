@@ -338,7 +338,7 @@ public final class JavaGenericsUtil {
           return true;
         }
       }
-      if (!TypeConversionUtil.typesAgree(lTypeArg, rTypeArg, true)) return true;
+      if (!TypeConversionUtil.typesAgree(lTypeArg, rTypeArg, true, rParameter, rSubstitutor)) return true;
     }
     return false;
   }

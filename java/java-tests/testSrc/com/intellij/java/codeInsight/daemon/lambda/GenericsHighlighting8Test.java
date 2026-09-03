@@ -1221,4 +1221,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA386630(){ doTest(); }
 
   public void testWildcardContainmentWithTypeParameterBound(){ doTest(); }
+
+  public void testWildcardContainmentWithTypeVariableBound(){ doTest(); }
+
+  public void testWildcardContainmentUncheckedConversion(){ doTest(true); }
 }
