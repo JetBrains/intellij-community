@@ -9,8 +9,6 @@ import com.intellij.ide.scratch.RootType
 import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -169,16 +167,11 @@ private class UpdateSession(
         }
       })
 
-      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-        // deep = true because files may have children too, e.g. with Show Members, and children inherit file colors
-        override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-          emitFileChanged(file, true)
+      launch(CoroutineName("Consuming updates requested using ProjectViewUpdateRequestsService")) {
+        ProjectViewUpdateRequestsService.getInstance(project).updates.collect { update ->
+          emitFileChanged(update.file, update.deep)
         }
-
-        override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-          emitFileChanged(file, true)
-        }
-      })
+      }
 
       launch(CoroutineName("Project View updates consumer")) {
         processEvents()

@@ -3,9 +3,9 @@ package com.intellij.platform.projectView.rpc
 
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.projectView.actions.EditorChoice
+import com.intellij.platform.projectView.impl.FileUpdateDTO
 import com.intellij.platform.projectView.pane.ProjectViewNodePathImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorDTO
-import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
@@ -30,6 +30,8 @@ interface ProjectViewRpc : RemoteApi<Unit> {
   suspend fun findNodeForOpenedFile(projectId: ProjectId, paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePathImpl?
 
   suspend fun findNodeForSelectIn(projectId: ProjectId, selectInRequest: SelectInRequestDTO): ProjectViewNodePathImpl?
+
+  suspend fun getFileUpdateRequestChannel(projectId: ProjectId): SendChannel<FileUpdateDTO>
 
   companion object {
     suspend fun getInstance(): ProjectViewRpc = LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<ProjectViewRpc>())

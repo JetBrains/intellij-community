@@ -5,6 +5,8 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneService
+import com.intellij.platform.projectView.impl.FileUpdateDTO
+import com.intellij.platform.projectView.impl.ProjectViewUpdateRequestsService
 import com.intellij.platform.projectView.pane.ProjectViewNodePathImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorDTO
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -65,5 +67,9 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
       selectInRequest: SelectInRequestDTO,
   ): ProjectViewNodePathImpl? {
     return BackendProjectViewPaneService.getInstance(projectId.findProject()).findNodeForSelectIn(selectInRequest) as ProjectViewNodePathImpl?
+  }
+
+  override suspend fun getFileUpdateRequestChannel(projectId: ProjectId): SendChannel<FileUpdateDTO> {
+    return ProjectViewUpdateRequestsService.getInstance(projectId.findProject()).createRpcChannel()
   }
 }

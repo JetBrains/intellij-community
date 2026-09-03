@@ -14,9 +14,12 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowId
@@ -25,6 +28,7 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSupportImpl
 import com.intellij.platform.projectView.frontend.actions.SplitProjectViewAutoscrollFromSource
+import com.intellij.platform.projectView.frontend.impl.FrontendProjectViewUpdateRequestsService
 import com.intellij.platform.projectView.frontend.impl.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregator
@@ -130,9 +134,9 @@ internal class ProjectViewToolWindowServiceImpl(
       launch(CoroutineName("Managing PV TW content")) {
         paneContentManager.manageContent()
       }
+      val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
       launch(CoroutineName("Pane management")) {
         val managementScope = this
-        val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
         val activeJobs = CopyOnWriteArraySet<ManagePaneJob>()
         aggregator.getPaneDescriptorsFlow().collect { paneDescriptors ->
           LOG.debug { "Pane descriptors updated: $paneDescriptors" }
@@ -204,6 +208,23 @@ internal class ProjectViewToolWindowServiceImpl(
       }
       launch(CoroutineName("Always select opened file")) {
         SplitProjectViewAutoscrollFromSource.getInstance(project).manage()
+      }
+      launch(CoroutineName("File open/close updates to backend")) {
+        project.messageBus.connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+          // deep = true because files may have children too, e.g. with Show Members, and children inherit file colors
+          override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+            requestUpdate(file)
+          }
+
+          override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+            requestUpdate(file)
+          }
+
+          private fun requestUpdate(file: VirtualFile) {
+            FrontendProjectViewUpdateRequestsService.getInstance(project).requestUpdate(file, true)
+          }
+        })
+        awaitCancellation() // keep the subscription alive
       }
     }
   }
