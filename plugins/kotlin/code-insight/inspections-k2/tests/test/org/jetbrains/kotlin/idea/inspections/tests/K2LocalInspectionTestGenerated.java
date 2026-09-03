@@ -17395,6 +17395,154 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                     runTest("testData/inspectionsLocal/coroutines/suspendCoroutineLacksCancellationGuarantees/nonLambdaArgument.kt");
                 }
             }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow")
+            public static class SuspiciousMutableCollectionInStateFlow extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("arrayListConstructor.kt")
+                public void testArrayListConstructor() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/arrayListConstructor.kt");
+                }
+
+                @TestMetadata("arrayListOfFactory.kt")
+                public void testArrayListOfFactory() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/arrayListOfFactory.kt");
+                }
+
+                @TestMetadata("explicitDeclaredType.kt")
+                public void testExplicitDeclaredType() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/explicitDeclaredType.kt");
+                }
+
+                @TestMetadata("explicitTypeArgument.kt")
+                public void testExplicitTypeArgument() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/explicitTypeArgument.kt");
+                }
+
+                @TestMetadata("expressionBodyFunction.kt")
+                public void testExpressionBodyFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/expressionBodyFunction.kt");
+                }
+
+                @TestMetadata("functionArgument.kt")
+                public void testFunctionArgument() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/functionArgument.kt");
+                }
+
+                @TestMetadata("functionReturnType.kt")
+                public void testFunctionReturnType() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/functionReturnType.kt");
+                }
+
+                @TestMetadata("hashMapOfFactory.kt")
+                public void testHashMapOfFactory() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/hashMapOfFactory.kt");
+                }
+
+                @TestMetadata("importAlias.kt")
+                public void testImportAlias() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/importAlias.kt");
+                }
+
+                @TestMetadata("intValue.kt")
+                public void testIntValue() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/intValue.kt");
+                }
+
+                @TestMetadata("localVariable.kt")
+                public void testLocalVariable() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/localVariable.kt");
+                }
+
+                @TestMetadata("mutableCollectionTypeArgument.kt")
+                public void testMutableCollectionTypeArgument() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/mutableCollectionTypeArgument.kt");
+                }
+
+                @TestMetadata("mutableListOf.kt")
+                public void testMutableListOf() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/mutableListOf.kt");
+                }
+
+                @TestMetadata("mutableListOfWithElements.kt")
+                public void testMutableListOfWithElements() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/mutableListOfWithElements.kt");
+                }
+
+                @TestMetadata("mutableListSubtype.kt")
+                public void testMutableListSubtype() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/mutableListSubtype.kt");
+                }
+
+                @TestMetadata("mutableMapOf.kt")
+                public void testMutableMapOf() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/mutableMapOf.kt");
+                }
+
+                @TestMetadata("mutableSetOf.kt")
+                public void testMutableSetOf() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/mutableSetOf.kt");
+                }
+
+                @TestMetadata("mutableSharedFlow.kt")
+                public void testMutableSharedFlow() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/mutableSharedFlow.kt");
+                }
+
+                @TestMetadata("namedArgument.kt")
+                public void testNamedArgument() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/namedArgument.kt");
+                }
+
+                @TestMetadata("readOnlyDeclaredTypeWithMutableArgument.kt")
+                public void testReadOnlyDeclaredTypeWithMutableArgument() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/readOnlyDeclaredTypeWithMutableArgument.kt");
+                }
+
+                @TestMetadata("readOnlyListExplicit.kt")
+                public void testReadOnlyListExplicit() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/readOnlyListExplicit.kt");
+                }
+
+                @TestMetadata("readOnlyListInferred.kt")
+                public void testReadOnlyListInferred() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/readOnlyListInferred.kt");
+                }
+
+                @TestMetadata("readOnlyMap.kt")
+                public void testReadOnlyMap() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/readOnlyMap.kt");
+                }
+
+                @TestMetadata("shadowedReadOnlyFactory.kt")
+                public void testShadowedReadOnlyFactory() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/shadowedReadOnlyFactory.kt");
+                }
+
+                @TestMetadata("starImport.kt")
+                public void testStarImport() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/starImport.kt");
+                }
+
+                @TestMetadata("toMutableListCall.kt")
+                public void testToMutableListCall() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/toMutableListCall.kt");
+                }
+
+                @TestMetadata("userDefinedMutableStateFlow.kt")
+                public void testUserDefinedMutableStateFlow() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/userDefinedMutableStateFlow.kt");
+                }
+
+                @TestMetadata("variableArgument.kt")
+                public void testVariableArgument() throws Exception {
+                    runTest("testData/inspectionsLocal/coroutines/suspiciousMutableCollectionInStateFlow/variableArgument.kt");
+                }
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
