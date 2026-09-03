@@ -5,11 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.system.CpuArch
-import com.sun.jna.platform.win32.Advapi32Util
-import com.sun.jna.platform.win32.Win32Exception
-import com.sun.jna.platform.win32.WinError
-import com.sun.jna.platform.win32.WinNT
-import com.sun.jna.platform.win32.WinReg
+import com.intellij.util.system.WindowsRegistry
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -73,27 +69,26 @@ class OsRegistryConfigProvider(private val configName: String) {
 
     // these WOW64 keys are ignored by 32-bit Windows, see https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry-key-security-and-access-rights
     val uris = listOf(
-      "HKLM_64" to { Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE, regKey, regValue, WinNT.KEY_WOW64_64KEY) },
-      "HKLM_32" to { Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE, regKey, regValue, WinNT.KEY_WOW64_32KEY) },
+      "HKLM_64" to { WindowsRegistry.getString(WindowsRegistry.Hive.LOCAL_MACHINE, regKey, regValue, WindowsRegistry.View.WOW64_64) },
+      "HKLM_32" to { WindowsRegistry.getString(WindowsRegistry.Hive.LOCAL_MACHINE, regKey, regValue, WindowsRegistry.View.WOW64_32) },
 
-      "HKCU_64" to { Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, regKey, regValue, WinNT.KEY_WOW64_64KEY) },
-      "HKCU_32" to { Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, regKey, regValue, WinNT.KEY_WOW64_32KEY) }
+      "HKCU_64" to { WindowsRegistry.getString(WindowsRegistry.Hive.CURRENT_USER, regKey, regValue, WindowsRegistry.View.WOW64_64) },
+      "HKCU_32" to { WindowsRegistry.getString(WindowsRegistry.Hive.CURRENT_USER, regKey, regValue, WindowsRegistry.View.WOW64_32) }
     )
 
-    fun Pair<String, () -> String>.readable() = "${this.first}\\$regKey\\$regValue"
+    fun Pair<String, () -> String?>.readable() = "${this.first}\\$regKey\\$regValue"
 
     logger.info("Looking for '$regValue' value in ${uris.map { it.readable() }}")
 
     return uris.firstNotNullOfOrNull {
       val uri = try {
         logger.debug("Searching for '${it.readable()}' in registry")
-        it.second()
+        it.second().also { value -> if (value == null) logger.debug("registry entry not found at ${it.readable()}") }
       }
       catch (t: Throwable) {
         when (t) {
-          is Win32Exception -> {
-            if (t.errorCode == WinError.ERROR_FILE_NOT_FOUND) logger.debug("registry entry not found at ${it.readable()}")
-            else logger.warn("Failed to get registry entry at '${it.readable()}', HRESULT=${t.hr.toInt()}", t)
+          is WindowsRegistry.RegistryException -> {
+            logger.warn("Failed to get registry entry at '${it.readable()}', error=${t.errorCode}", t)
           }
           else -> {
             logger.warn("Failed to get registry entry at '${it.readable()}'", t)

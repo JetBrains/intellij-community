@@ -6,15 +6,6 @@ import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.execution.ParametersListUtil
-import com.sun.jna.Memory
-import com.sun.jna.platform.win32.Kernel32
-import com.sun.jna.platform.win32.WinBase
-import com.sun.jna.platform.win32.WinDef
-import com.sun.jna.platform.win32.WinError
-import com.sun.jna.platform.win32.WinNT
-import com.sun.jna.platform.win32.WinUser
-import com.sun.jna.ptr.IntByReference
-import com.sun.jna.ptr.PointerByReference
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
@@ -24,20 +15,14 @@ import java.time.Duration
 object WindowsFileUtil {
   private val LOG = Logger.getInstance(javaClass)
 
+  /** @return the process handle; the caller owns it when [waitForProcess] is `null` */
   fun windowsCreateProcess(
     executable: Path,
     workingDirectory: Path,
     parameters: List<String>,
     environment: Map<String, String> = emptyMap(),
     waitForProcess: Duration? = null
-  ) : WinNT.HANDLE {
-
-    val si = WinBase.STARTUPINFO().apply {
-      dwFlags = WinBase.STARTF_USESHOWWINDOW
-      wShowWindow = WinDef.WORD(WinUser.SW_NORMAL.toLong())
-    }
-    val pi = WinBase.PROCESS_INFORMATION()
-
+  ) : Long {
     val commandLine = ParametersListUtil.join(listOf(executable.toString()) + parameters)
 
     val environmentBlock = run {
@@ -51,13 +36,7 @@ object WindowsFileUtil {
       val environmentBlockBuilder = StringBuilder()
       fullEnvironment
         .forEach { (key, value) -> environmentBlockBuilder.append("$key=$value${Char.MIN_VALUE}") }
-      val environmentBlockStr = environmentBlockBuilder.append(Char.MIN_VALUE).toString()
-
-      val environmentBytes = environmentBlockStr.toByteArray(Charsets.UTF_16LE)
-      val environmentBlock = Memory(environmentBytes.size.toLong())
-      environmentBlock.write(0, environmentBytes, 0, environmentBytes.size)
-
-      environmentBlock
+      environmentBlockBuilder.append(Char.MIN_VALUE).toString()
     }
 
     val envString = environmentBlock?.let { "System.getenv()+{${environment.map { "${it.key}=${it.value}" }.joinToString()}}, "}
@@ -76,73 +55,41 @@ object WindowsFileUtil {
 
     LOG.info("Calling $createProcessDebugParams")
 
-    @Suppress("LocalVariableName")
-    val CREATE_UNICODE_PROCESS_ENVIRONMENT = WinDef.DWORD(0x00000400)
-
-    if (!Kernel32.INSTANCE.CreateProcessW(
-        /* lpApplicationName    = */ null,
-        /* lpCommandLine        = */ (commandLine + "\u0000").toCharArray(),
-        /* lpProcessAttributes  = */ null,
-        /* lpThreadAttributes   = */ null,
-        /* bInheritHandles      = */ false,
-        /* dwCreationFlags      = */ CREATE_UNICODE_PROCESS_ENVIRONMENT,
-        /* lpEnvironment        = */ environmentBlock,
-        /* lpCurrentDirectory   = */ workingDirectory.toString() + "\u0000",
-        /* lpStartupInfo        = */ si,
-        /* lpProcessInformation = */ pi)) {
-
-      val lastError = Kernel32.INSTANCE.GetLastError()
-
-      val lpBuffer = PointerByReference()
-      val result = Kernel32.INSTANCE.FormatMessage(
-        Kernel32.FORMAT_MESSAGE_ALLOCATE_BUFFER or Kernel32.FORMAT_MESSAGE_FROM_SYSTEM or Kernel32.FORMAT_MESSAGE_IGNORE_INSERTS,
-        null,
-        lastError,
-        Kernel32.LANG_USER_DEFAULT,
-        lpBuffer,
-        0,
-        null
-      )
-
-      val buffer = lpBuffer.value
-      val errorTextBuffer = buffer.getCharArray(0, result)
-      Kernel32.INSTANCE.LocalFree(buffer)
-
-      val message = String(errorTextBuffer)
-      throw IOException("$createProcessDebugParams returned error $lastError: $message")
+    val hProcess = try {
+      WindowsProcesses.createProcess(commandLine, environmentBlock, workingDirectory.toString(), WindowsProcesses.SW_NORMAL)
     }
-
+    catch (e: IOException) {
+      throw IOException("$createProcessDebugParams returned ${e.message}", e)
+    }
 
     /*
      * known reasons for a null hProcess:
      *   1) CreateProcess didn't result in creation of a new process
      *   2) lpCommandLine first / lpWorkingDir arg is a symlink and was not resolved
      */
-    require(pi.hProcess != null) {
+    require(hProcess != 0L) {
       "hProcess should not be null in our case"
     }
 
     if (waitForProcess != null) {
-      val exitCode = IntByReference(WinBase.INFINITE)
-
-      val waitRc = Kernel32.INSTANCE.WaitForSingleObject(pi.hProcess, WinBase.INFINITE)
-      if (waitRc == WinError.WAIT_TIMEOUT) {
+      val waitRc = WindowsProcesses.waitForSingleObject(hProcess, WindowsProcesses.INFINITE)
+      if (waitRc == WindowsProcesses.WAIT_TIMEOUT) {
         throw IOException("$createProcessDebugParams: timeout waiting for process to exit")
       }
 
-      Kernel32.INSTANCE.GetExitCodeProcess(pi.hProcess, exitCode)
-      Kernel32.INSTANCE.CloseHandle(pi.hProcess)
+      val exitCode = WindowsProcesses.getExitCodeProcess(hProcess)
+      WindowsProcesses.closeHandle(hProcess)
 
-      if (exitCode.value == WinBase.INFINITE) {
+      if (exitCode == null) {
         throw IOException("$createProcessDebugParams: could not read exit code")
       }
 
-      if (exitCode.value != 0) {
-        throw IOException("$createProcessDebugParams: non-zero exit code: ${exitCode.value}")
+      if (exitCode != 0) {
+        throw IOException("$createProcessDebugParams: non-zero exit code: $exitCode")
       }
     }
 
-    return pi.hProcess
+    return hProcess
   }
 
   fun createJunction(junctionFile: Path, targetFile: Path) {

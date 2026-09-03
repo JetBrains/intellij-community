@@ -38,6 +38,7 @@ import com.intellij.remoteDev.util.FileManifestUtil
 import com.intellij.remoteDev.util.ProductInfo
 import com.intellij.remoteDev.util.SubProgressIndicatorBase
 import com.intellij.remoteDev.util.WindowsFileUtil
+import com.intellij.remoteDev.util.WindowsProcesses
 import com.intellij.remoteDev.util.addPathSuffix
 import com.intellij.remoteDev.util.createSubProgress
 import com.intellij.remoteDev.util.onTerminationOrNow
@@ -60,10 +61,6 @@ import com.jetbrains.infra.pgpVerifier.Sha256ChecksumSignatureVerifier
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reactive.fire
-import com.sun.jna.platform.win32.Kernel32
-import com.sun.jna.platform.win32.WinBase
-import com.sun.jna.platform.win32.WinNT
-import com.sun.jna.ptr.IntByReference
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.ByteArrayInputStream
@@ -873,30 +870,21 @@ object CodeWithMeClientDownloader {
         environment = clientEnvironment
       )
 
-      @Suppress("LocalVariableName")
-      val STILL_ACTIVE = 259
-
       application.executeOnPooledThread {
-        val exitCode = IntByReference(STILL_ACTIVE)
-        while (exitCode.value == STILL_ACTIVE) {
-          Kernel32.INSTANCE.GetExitCodeProcess(hProcess, exitCode)
+        while (WindowsProcesses.getExitCodeProcess(hProcess) == WindowsProcesses.STILL_ACTIVE) {
           Thread.sleep(1000)
         }
         processLifetimeDef.terminate()
       }
 
       lifetime.onTerminationOrNow {
-        val exitCode = IntByReference(WinBase.INFINITE)
-        Kernel32.INSTANCE.GetExitCodeProcess(hProcess, exitCode)
-
-        if (exitCode.value == STILL_ACTIVE)
+        if (WindowsProcesses.getExitCodeProcess(hProcess) == WindowsProcesses.STILL_ACTIVE)
           LOG.info("Terminating cwm guest process")
         else return@onTerminationOrNow
 
-        if (!Kernel32.INSTANCE.TerminateProcess(hProcess, 1)) {
-          val error = Kernel32.INSTANCE.GetLastError()
-          val hResult = WinNT.HRESULT(error)
-          LOG.error("Failed to terminate cwm guest process, HRESULT=${"0x%x".format(hResult)}")
+        val error = WindowsProcesses.terminateProcess(hProcess, 1)
+        if (error != 0) {
+          LOG.error("Failed to terminate cwm guest process, error=${"0x%x".format(error)}")
         }
       }
     }
