@@ -60,13 +60,14 @@ private const val PROJECTS_DIR_NAME = "projects"
 suspend fun openProjectForLightProduct(
   path: Path,
   projectStoreSeed: String,
+  materializeProject: Boolean,
   showWelcomeScreen: Boolean = true,
   beforeInit: (Project) -> Unit = {},
   eelMachineInitializer: suspend (EelDescriptor) -> EelMachine? = ::defaultLightEelMachineInitializer,
 ): Project? {
   val eelDescriptor = path.getEelDescriptor()
 
-  val projectFile = createLightProjectStoreDir(projectStoreSeed)
+  val projectFile = if (materializeProject) path else createLightProjectStoreDir(projectStoreSeed)
 
   // The platform checks trust on the store directory, not on [path] (see `ProjectManagerImpl.checkTrustedState`).
   // A trust answer recorded for [path] cannot cover the store directory. Copy the known state,
@@ -99,8 +100,10 @@ suspend fun openProjectForLightProduct(
     return null
   }
 
-  @Suppress("UnsafeOpenServiceCast")
-  (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).setProjectHidden(project, true)
+  if (!materializeProject) {
+    @Suppress("UnsafeOpenServiceCast")
+    (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).setProjectHidden(project, true)
+  }
   CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, false)
 
   project.setRemoteProjectBaseNioPath(path.asEelPath().toString())
