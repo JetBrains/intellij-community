@@ -222,7 +222,10 @@ class KtCompilerPluginsCache private constructor(
 
         fun new(project: Project, onlyBundledPluginsEnabled: Boolean): KtCompilerPluginsCache {
             val pluginsClassLoader: UrlClassLoader = UrlClassLoader.build().apply {
-                parent(KaModule::class.java.classLoader)
+                // current classloader includes all attached AA libraries, so should work as parent classloader
+                // more clean would be to take classloader of analysis-api-k2 library, but it's an implementation detail
+                // only api library itself is not enough because compiler plugins might depend on implementations
+                parent(KtCompilerPluginsCache::class.java.classLoader)
                 val compilerArguments = ModuleManager.getInstance(project).modules.map { it.getCompilerArguments() }
                 val pluginClasspaths = collectSubstitutedPluginClasspaths(project, onlyBundledPluginsEnabled, compilerArguments)
                 files(pluginClasspaths)
