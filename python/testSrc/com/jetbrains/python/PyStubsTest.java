@@ -8,6 +8,7 @@ import com.jetbrains.python.allure.Subsystems;
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
+import com.intellij.idea.TestFor;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -319,6 +320,18 @@ public class PyStubsTest extends PyTestCase {
     final PyImportElement importElement = importTargets.get(0);
     final QualifiedName importQName = importElement.getImportedQName();
     assertSameElements(importQName.getComponents(), "os", "path");
+
+    assertNotParsed(file);
+  }
+
+  @TestFor(issues = "PY-91818")
+  public void testLazyRelativeImportStatement() {
+    final PyFileImpl file = (PyFileImpl)getTestFile();
+
+    final List<PyFromImportStatement> fromImports = file.getFromImports();
+    assertEquals(2, fromImports.size());
+    assertEquals(1, fromImports.getFirst().getRelativeLevel());
+    assertEquals(2, fromImports.get(1).getRelativeLevel());
 
     assertNotParsed(file);
   }

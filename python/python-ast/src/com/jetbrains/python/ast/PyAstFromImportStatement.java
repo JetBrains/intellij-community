@@ -70,7 +70,9 @@ public interface PyAstFromImportStatement extends PyAstImportStatementBase,
   default int getRelativeLevel() {
     int result = 0;
     ASTNode seeker = getNode().getFirstChildNode();
-    while (seeker != null && (seeker.getElementType() == PyTokenTypes.FROM_KEYWORD || seeker.getElementType() == TokenType.WHITE_SPACE)) {
+    while (seeker != null && (seeker.getElementType() == PyTokenTypes.LAZY_KEYWORD ||
+                              seeker.getElementType() == PyTokenTypes.FROM_KEYWORD ||
+                              seeker.getElementType() == TokenType.WHITE_SPACE)) {
       seeker = seeker.getTreeNext();
     }
     while (seeker != null && seeker.getElementType() == PyTokenTypes.DOT) {
