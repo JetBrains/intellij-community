@@ -22,7 +22,6 @@ import com.intellij.platform.util.coroutines.filterConcurrent
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.util.io.awaitExit
 import com.intellij.util.lang.UrlClassLoader
-import com.intellij.util.text.nullize
 import io.opentelemetry.api.trace.Span
 import jetbrains.buildServer.messages.serviceMessages.BlockClosed
 import jetbrains.buildServer.messages.serviceMessages.BlockOpened
@@ -1615,6 +1614,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.polySymbols.tests",
   "intellij.platform.problemView.backend.tests",
   "intellij.platform.problemView.ui.tests",
+  "intellij.platform.projectView.tests",
   "intellij.platform.runtime.product.tests",
   "intellij.platform.runtime.repository.tests",
   "intellij.platform.searchEverywhere.backend.tests",

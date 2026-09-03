@@ -1004,6 +1004,8 @@ jvm_library(
         "//platform/recentFiles/tests:tests_test_lib",
         "//platform/problemsView/ui:problemView-ui-tests",
         "//platform/problemsView/ui:problemView-ui-tests_test_lib",
+        "//platform/projectView/tests",
+        "//platform/projectView/tests:tests_test_lib",
         "//platform/sqlite:sqlite-tests",
         "//platform/sqlite:sqlite-tests_test_lib",
         "//platform/statistics/devkit:devkit-tests",
