@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.testFramework.assertion.consoleText
 import org.assertj.core.api.Assertions
 import org.gradle.util.GradleVersion
@@ -13,11 +14,24 @@ import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.junit.jupiter.params.ParameterizedTest
 
+/** Runs [action] with the `gradle.build.toolwindow.single.console` registry flag set to [enabled], restoring the previous value afterwards. */
+internal inline fun withSingleConsole(enabled: Boolean, action: () -> Unit) {
+  val registryValue = Registry.get("gradle.build.toolwindow.single.console")
+  val previousValue = registryValue.asString()
+  registryValue.setValue(enabled)
+  try {
+    action()
+  }
+  finally {
+    registryValue.setValue(previousValue)
+  }
+}
+
 class GradleExecutionOutputTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
-  @AllGradleVersionsSource
-  fun `test task execution output without failures`(gradleVersion: GradleVersion) {
+  @AllGradleVersionsSource("true, false")
+  fun `test task execution output without failures`(gradleVersion: GradleVersion, singleConsole: Boolean) = withSingleConsole(singleConsole) {
     testJavaProject(gradleVersion) {
       writeText("build.gradle", buildScript(gradleVersion, GradleDsl.GROOVY) {
         registerTask("task") {
@@ -48,8 +62,8 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource
-  fun `test task execution output with one failure`(gradleVersion: GradleVersion) {
+  @AllGradleVersionsSource("true, false")
+  fun `test task execution output with one failure`(gradleVersion: GradleVersion, singleConsole: Boolean) = withSingleConsole(singleConsole) {
     testJavaProject(gradleVersion) {
       writeText("build.gradle", buildScript(gradleVersion, GradleDsl.GROOVY) {
         registerTask("failingTask") {
@@ -93,8 +107,8 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource
-  fun `test task execution output with two failures`(gradleVersion: GradleVersion) {
+  @AllGradleVersionsSource("true, false")
+  fun `test task execution output with two failures`(gradleVersion: GradleVersion, singleConsole: Boolean) = withSingleConsole(singleConsole) {
     testJavaProject(gradleVersion) {
       writeText("build.gradle", buildScript(gradleVersion, GradleDsl.GROOVY) {
         registerTask("failingTask1") {

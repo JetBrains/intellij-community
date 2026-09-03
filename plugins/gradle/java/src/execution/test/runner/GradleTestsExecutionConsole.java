@@ -14,6 +14,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,6 +73,11 @@ public class GradleTestsExecutionConsole extends SMTRunnerConsoleView implements
   @Override
   public boolean isExecutionViewHidden() {
     return true;
+  }
+
+  @Override
+  public boolean isSingleBuildConsoleView() {
+    return Registry.is("gradle.build.toolwindow.single.console");
   }
 
   @Override

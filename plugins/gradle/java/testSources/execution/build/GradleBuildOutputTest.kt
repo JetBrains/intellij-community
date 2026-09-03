@@ -18,8 +18,8 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
 
   @Disabled("IDEA-387217")
   @ParameterizedTest
-  @AllGradleVersionsSource
-  fun `test build script errors on Build`(gradleVersion: GradleVersion) {
+  @AllGradleVersionsSource("true, false")
+  fun `test build script errors on Build`(gradleVersion: GradleVersion, singleConsole: Boolean) = withSingleConsole(singleConsole) {
     val fixtureBuilder = GradleTestFixtureBuilder.create("GradleExecutionOutputTest.test build script errors on Build") {
       withSettingsFile(gradleVersion) {
         setProjectName("project")
