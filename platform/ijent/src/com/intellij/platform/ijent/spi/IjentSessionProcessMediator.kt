@@ -21,15 +21,20 @@ import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPo
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.NORMAL
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.FileInputStream
@@ -185,7 +190,7 @@ class IjentSessionProcessMediator private constructor(
      * Beware that [parentScope] receives [IjentUnavailableException.CommunicationFailure] if IJent _suddenly_ exits, f.i., after SIGKILL.
      * Nothing happens with [parentScope] if IJent exits expectedly, f.i., after [com.intellij.platform.ijent.IjentApi.close].
      */
-    @OptIn(DelicateCoroutinesApi::class)
+    @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
     fun create(
       parentScope: ParentOfIjentScopes,
       ijentProcessScope: IjentScope,
@@ -211,22 +216,50 @@ class IjentSessionProcessMediator private constructor(
 
       val mediator = IjentSessionProcessMediator(ijentProcessScope, process, exitsOnStdinEof)
 
-      val awaiterScope = ijentProcessScope.s.launch(context = context + ijentProcessScope.s.coroutineNameAppended("exit awaiter scope")) {
-        @Suppress("checkedExceptions") val exitCode = process.exitCode.await()
-        IjentLogger.LIFETIME_LOG.debug { "IJent process $ijentLabel exited with code $exitCode" }
-        IjentSessionMediatorUtils.ijentProcessExitCodeHandler(
-          ijentLabel,
-          lastStderrMessages,
-          exitCode,
-          isExpectedProcessExit(exitCode),
-        )
+      val awaiterScope = ijentProcessScope.s.launch(
+        context = context + ijentProcessScope.s.coroutineNameAppended("exit awaiter scope"),
+        start = CoroutineStart.UNDISPATCHED,
+      ) {
+        @Suppress("checkedExceptions")
+        val exitCode = try {
+          process.exitCode.await()
+        }
+        catch (cancelled: CancellationException) {
+          // A channel coroutine can fail just before the process publishes its exit code. Give finalizer cleanup a
+          // bounded chance to expose the authoritative code, without letting a broken facade hold the scope forever.
+          withContext(NonCancellable) {
+            withTimeoutOrNull(5.seconds) { process.exitCode.await() }
+          } ?: throw cancelled
+        }
+
+        // Cancellation may race the suspendable expected-exit check and stderr collection. Once the code is known,
+        // classification and publication must complete atomically with respect to session cancellation.
+        withContext(NonCancellable) {
+          IjentLogger.LIFETIME_LOG.debug { "IJent process $ijentLabel exited with code $exitCode" }
+          IjentSessionMediatorUtils.ijentProcessExitCodeHandler(
+            ijentLabel,
+            lastStderrMessages,
+            exitCode,
+            isExpectedProcessExit(exitCode),
+          )
+        }
       }
 
-      val finalizerScope = ijentProcessScope.s.launch(context = context + ijentProcessScope.s.coroutineNameAppended("finalizer scope")) {
+      val finalizerScope = ijentProcessScope.s.launch(
+        context = context + ijentProcessScope.s.coroutineNameAppended("finalizer scope"),
+        start = CoroutineStart.UNDISPATCHED,
+      ) {
         IjentSessionMediatorUtils.ijentProcessFinalizer(ijentLabel) { ijentProcessFinalizer(ijentLabel, mediator) }
       }
 
       awaiterScope.invokeOnCompletion { err ->
+        val exitReason = ijentProcessScope.s.coroutineContext[IjentScope.IjentContext.Key]
+          ?.exitReason
+          ?.takeIf { it.isCompleted }
+          ?.getCompleted()
+        if (exitReason is IjentUnavailableException.ClosedByApplication) {
+          ijentProcessScope.s.cancel(CancellationException(exitReason.message))
+        }
         finalizerScope.cancel(if (err != null) CancellationException(err.message, err) else null)
       }
 

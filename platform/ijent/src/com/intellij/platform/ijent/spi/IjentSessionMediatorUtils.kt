@@ -21,6 +21,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
@@ -50,6 +51,7 @@ import kotlin.time.toKotlinDuration
 object IjentSessionMediatorUtils {
   private val loggedErrors = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap<Throwable, Boolean>())
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   fun createProcessScope(parentScope: ParentOfIjentScopes, ijentLabel: String): IjentScope {
     val context = IjentThreadPool.coroutineContext
     // Prevents from logging the error by the default exception handler.
@@ -73,26 +75,28 @@ object IjentSessionMediatorUtils {
       trickySupervisorScope.cancel()
 
       if (err != null) {
-        // Safety net: make sure the canonical exit reason is set even if neither the exit-code handler nor the
-        // finalizer managed to publish it. The authoritative producers run before the scope completes, so this
-        // call is normally a no-op (completeExitReason is idempotent and first-completer-wins).
-        (IjentUnavailableException.unwrapFromCancellationExceptions(err) as? IjentUnavailableException)?.let {
-          ijentProcessScope.coroutineContext[IjentScope.IjentContext.Key]?.completeExitReason(it)
-        }
+        val actualError = IjentUnavailableException.unwrapFromCancellationExceptions(err)
+        val ijentContext = ijentProcessScope.coroutineContext[IjentScope.IjentContext.Key]!!
 
-        val propagateToParentScope = when (err) {
-          is IjentUnavailableException -> when (err) {
+        (actualError as? IjentUnavailableException)?.let(ijentContext::completeExitReason)
+        val errorToPropagate =
+          if (actualError is IOException && ijentContext.exitReason.isCompleted) ijentContext.exitReason.getCompleted()
+          else actualError
+
+        val propagateToParentScope = when (errorToPropagate) {
+          is CancellationException -> false
+          is IjentUnavailableException -> when (errorToPropagate) {
             is IjentUnavailableException.ClosedByApplication -> false
-            is IjentUnavailableException.CommunicationFailure -> !err.exitedExpectedly
+            is IjentUnavailableException.CommunicationFailure -> !errorToPropagate.exitedExpectedly
           }
           else -> !closedByApplication
         }
 
         if (propagateToParentScope) {
           try {
-            err.addSuppressed(Throwable("Rethrown from here"))
+            errorToPropagate.addSuppressed(Throwable("Rethrown from here"))
             parentScope.s.launch(start = CoroutineStart.UNDISPATCHED) {
-              throw err
+              throw errorToPropagate
             }
           }
           catch (_: Throwable) {
@@ -100,7 +104,7 @@ object IjentSessionMediatorUtils {
           }
 
           // TODO Callers should be able to define their own exception handlers.
-          logIjentError(ijentLabel, err)
+          logIjentError(ijentLabel, errorToPropagate)
         }
         else {
           IjentLogger.LIFETIME_LOG.debug(err) { "Ignored a failure of IJent $ijentLabel, its scope was already being shut down" }
@@ -302,39 +306,33 @@ object IjentSessionMediatorUtils {
     exitCode: Int,
     isExitExpected: Boolean,
   ): Nothing {
-    val error = if (isExitExpected) {
-      IjentUnavailableException.CommunicationFailure("IJent process exited successfully", null).apply { exitedExpectedly = true }
+    if (isExitExpected) {
+      val error = IjentUnavailableException.ClosedByApplication("IJent process exited successfully", null)
+      currentCoroutineContext()[IjentScope.IjentContext.Key]?.completeExitReason(error)
+      IjentLogger.LIFETIME_LOG.debug { error.message }
+      // Carrying the domain exception as the cancellation cause makes expected shutdown look like a test failure.
+      throw CancellationException(error.message)
     }
     else {
-      val stderr = StringBuilder()
-      // This code blocks the whole coroutine scope, so it should
-      withContext(NonCancellable) {
+      val error = withContext(NonCancellable) {
+        val stderr = StringBuilder()
         val timeoutResult: Unit? = withTimeoutOrNull(1.seconds) {
           collectLines(lastStderrMessages, stderr)
         }
-        if (timeoutResult == null) {
-          stderr.append("\n<didn't collect the whole stderr>")
+        if (timeoutResult == null) stderr.append("\n<didn't collect the whole stderr>")
+
+        IjentUnavailableException.CommunicationFailure(
+          "The process $ijentLabel suddenly exited with the code $exitCode",
+          null,
+          Attachment("stderr", stderr.toString()),
+        ).also {
+          currentCoroutineContext()[IjentScope.IjentContext.Key]?.completeExitReason(it)
         }
       }
-      IjentUnavailableException.CommunicationFailure(
-        "The process $ijentLabel suddenly exited with the code $exitCode",
-        null,
-        Attachment("stderr", stderr.toString()),
-      )
-    }
-
-    // Publish the canonical, fully-enriched exit reason (the stderr Attachment is already attached) before the
-    // scope gets cancelled, so boundary code can resolve and rethrow exactly this instance.
-    currentCoroutineContext()[IjentScope.IjentContext.Key]?.completeExitReason(error)
-
-    // TODO IJPL-198706 When IJent unexpectedly terminates, users should be asked for further actions.
-    if (isExitExpected) {
-      IjentLogger.OTHER_LOG.info(error)
-    }
-    else {
+      // TODO IJPL-198706 When IJent unexpectedly terminates, users should be asked for further actions.
       IjentLogger.OTHER_LOG.warn(error)
+      throw error
     }
-    throw error
   }
 
   private suspend fun collectLines(lastStderrMessages: SharedFlow<String?>, stderr: StringBuilder) {
@@ -364,13 +362,13 @@ object IjentSessionMediatorUtils {
         throw existingIjentUnavailableException
       }
 
-      val cause = actualErrors.firstOrNull() ?: err
-      val message =
-        if (cause is CancellationException) "The coroutine scope of $ijentLabel was cancelled"
-        else "IJent communication terminated due to an error"
-      val error = IjentUnavailableException.ClosedByApplication(message, cause)
-      currentCoroutineContext()[IjentScope.IjentContext.Key]?.completeExitReason(error)
-      throw error
+      if (actualErrors.isEmpty()) {
+        // A plain cancellation is an application-initiated close; publish the canonical reason but keep the control flow.
+        val closed = IjentUnavailableException.ClosedByApplication("The coroutine scope of $ijentLabel was cancelled", err)
+        currentCoroutineContext()[IjentScope.IjentContext.Key]?.completeExitReason(closed)
+      }
+      // A real failure is not an application close; the exit-code handler publishes the authoritative reason.
+      throw err
     }
     finally {
       withContext(NonCancellable) {

@@ -31,6 +31,7 @@ import io.kotest.matchers.string.include
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -42,6 +43,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.yield
@@ -199,6 +201,56 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
 
     session.close()
     strategy.shellProcess.destroyed.await()
+  }
+
+  @Test
+  fun `expected process exit cancels the session without failing its parent`(): Unit = timeoutRunBlocking(10.seconds) {
+    val parentScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val remotePath = "C:\\remote\\ijent.exe"
+    val strategy = TestShellStrategy(parentScope, usePowerShell = true, pathMapper = { remotePath })
+    val session = strategy.createIjentSession(strategy.successfulProvider(remotePath))
+    val completion = CompletableDeferred<Throwable?>()
+    session.sessionCoroutineScope.s.coroutineContext.job.invokeOnCompletion { completion.complete(it) }
+
+    try {
+      strategy.shellProcess.exitNormally()
+
+      completion.await().shouldBeInstanceOf<Throwable>()
+      session.sessionCoroutineScope.s.coroutineContext[IjentScope.IjentContext.Key]!!
+        .resolveExitReason(1.seconds)
+        .shouldBeInstanceOf<IjentUnavailableException.ClosedByApplication>()
+      session.sessionCoroutineScope.s.isActive shouldBe false
+      parentScope.isActive shouldBe true
+    }
+    finally {
+      parentScope.cancel()
+    }
+  }
+
+  @Test
+  @ExtendWith(LoggedErrorProcessorEnabler.DoNoRethrowErrors::class)
+  fun `unexpected process exit still fails the parent`(): Unit = timeoutRunBlocking(10.seconds) {
+    val parentFailure = CompletableDeferred<Throwable>()
+    val parentScope = CoroutineScope(
+      SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error -> parentFailure.complete(error) }
+    )
+    val remotePath = "C:\\remote\\ijent.exe"
+    val strategy = TestShellStrategy(parentScope, usePowerShell = true, pathMapper = { remotePath })
+    val session = strategy.createIjentSession(strategy.successfulProvider(remotePath))
+    val completion = CompletableDeferred<Throwable?>()
+    session.sessionCoroutineScope.s.coroutineContext.job.invokeOnCompletion { completion.complete(it) }
+
+    try {
+      strategy.shellProcess.exitUnexpectedly()
+
+      val completionError = completion.await().shouldBeInstanceOf<Throwable>()
+      IjentUnavailableException.resolveDeadSessionReason(completionError, session.sessionCoroutineScope, 1.seconds)
+        .shouldBeInstanceOf<IjentUnavailableException.CommunicationFailure>()
+      parentFailure.await().shouldBeInstanceOf<IjentUnavailableException.CommunicationFailure>()
+    }
+    finally {
+      parentScope.cancel()
+    }
   }
 
   @Test
@@ -501,11 +553,19 @@ private class TestShellProcessFacade(
 
   override suspend fun destroyForcibly() {
     destroyFailure?.let { throw it }
-    finish()
+    finish(0)
   }
 
   override suspend fun destroy() {
-    finish()
+    finish(0)
+  }
+
+  suspend fun exitNormally() {
+    finish(0)
+  }
+
+  suspend fun exitUnexpectedly() {
+    finish(42)
   }
 
   private suspend fun respondTo(command: String) {
@@ -544,12 +604,12 @@ private class TestShellProcessFacade(
     if (processBoundary != null) stdoutPipe.sink.sendWholeText("$processBoundary$lineEnding")
   }
 
-  private suspend fun finish() {
+  private suspend fun finish(exitCode: Int) {
     if (!alive.compareAndSet(true, false)) return
 
+    exitCodeImpl.complete(exitCode)
     stdoutPipe.sink.close(null)
     stderrPipe.sink.close(null)
-    exitCodeImpl.complete(0)
     destroyed.complete(Unit)
   }
 

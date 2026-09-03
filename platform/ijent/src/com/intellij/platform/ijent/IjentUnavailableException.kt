@@ -82,10 +82,37 @@ sealed class IjentUnavailableException : EelUnavailableException, ExceptionWithA
     suspend fun resolveDeadSessionReason(
       initialError: Throwable,
       timeout: Duration = DEAD_SESSION_RESOLVE_TIMEOUT,
+    ): Throwable = resolveDeadSessionReason(
+      initialError,
+      currentCoroutineContext()[IjentScope.IjentContext.Key],
+      timeout,
+    )
+
+    /**
+     * Resolves a dead-session failure against the authoritative context of [ijentScope].
+     *
+     * Unlike the ambient overload, this is suitable for API calls made from a caller scope that is independent from
+     * the IJent session being used.
+     */
+    @Internal
+    suspend fun resolveDeadSessionReason(
+      initialError: Throwable,
+      ijentScope: IjentScope,
+      timeout: Duration = DEAD_SESSION_RESOLVE_TIMEOUT,
+    ): Throwable = resolveDeadSessionReason(
+      initialError,
+      ijentScope.s.coroutineContext[IjentScope.IjentContext.Key],
+      timeout,
+    )
+
+    private suspend fun resolveDeadSessionReason(
+      initialError: Throwable,
+      ijentContext: IjentScope.IjentContext?,
+      timeout: Duration,
     ): Throwable {
       val unwrapped = unwrapFromCancellationExceptions(initialError)
       if (unwrapped is IjentUnavailableException) return unwrapped
-      val ijentContext = currentCoroutineContext()[IjentScope.IjentContext.Key] ?: return unwrapped
+      ijentContext ?: return unwrapped
       val resolved = withContext(NonCancellable) { ijentContext.resolveExitReason(timeout) }
       return resolved ?: unwrapped
     }

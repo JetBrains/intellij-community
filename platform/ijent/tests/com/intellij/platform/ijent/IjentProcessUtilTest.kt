@@ -5,6 +5,7 @@ package com.intellij.platform.ijent
 
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.ijent.IjentUnavailableException.CommunicationFailure
+import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -15,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -35,6 +37,25 @@ import kotlin.time.Duration.Companion.seconds
  */
 class IjentProcessUtilTest {
   @Test
+  fun `expected process exit stores ClosedByApplication without attaching it to cancellation`(): Unit {
+    val ijentContext = IjentScope.IjentContext()
+
+    runBlocking(ijentContext) {
+      val thrown = shouldThrow<CancellationException> {
+        IjentSessionMediatorUtils.ijentProcessExitCodeHandler(
+          ijentLabel = "test",
+          lastStderrMessages = MutableSharedFlow<String?>(),
+          exitCode = -1,
+          isExitExpected = true,
+        )
+      }
+
+      thrown.cause shouldBe null
+      ijentContext.resolveExitReason(1.seconds).shouldBeInstanceOf<IjentUnavailableException.ClosedByApplication>()
+    }
+  }
+
+  @Test
   fun `resolveDeadSessionReason returns the unwrapped IjentUnavailableException immediately`(): Unit = runBlocking {
     val canonical = CommunicationFailure("direct", null)
     val wrapped = CancellationException("cancelled", canonical)
@@ -52,6 +73,28 @@ class IjentProcessUtilTest {
       ijentContext.completeExitReason(canonical)
 
       IjentUnavailableException.resolveDeadSessionReason(IOException("low level"), 1.seconds) shouldBe canonical
+    }
+  }
+
+  @Test
+  fun `resolveDeadSessionReason uses the dead IJent context outside its coroutine scope`(): Unit {
+    val parentScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val ijentScope = IjentSessionMediatorUtils.createProcessScope(ParentOfIjentScopes(parentScope), "test IJent")
+    val canonical = IjentUnavailableException.ClosedByApplication("closed", null)
+
+    try {
+      ijentScope.s.coroutineContext[IjentScope.IjentContext.Key]!!.completeExitReason(canonical)
+
+      runBlocking {
+        IjentUnavailableException.resolveDeadSessionReason(
+          CancellationException("unrelated cancellation"),
+          ijentScope,
+          1.seconds,
+        ) shouldBe canonical
+      }
+    }
+    finally {
+      parentScope.cancel()
     }
   }
 
