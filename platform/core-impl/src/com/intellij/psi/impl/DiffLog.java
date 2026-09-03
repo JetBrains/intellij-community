@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -25,7 +24,6 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
-import com.intellij.psi.impl.source.tree.mvcc.VersionedPsiConsistencyException;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +124,9 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         event.setOldChild(psiOldChild);
         PsiElement psiNewChild = getPsi(myNewChild, psiFile);
         event.setNewChild(psiNewChild);
-        ((PsiManagerEx)psiFile.getManager()).beforeChildReplacement(event);
+        if (!InternalPsiVersioning.isInForkedTimeline()) {
+          ((PsiManagerEx)psiFile.getManager()).beforeChildReplacement(event);
+        }
       }
 
       if (!(myOldChild instanceof FileElement) || !(myNewChild instanceof FileElement)) {
@@ -168,7 +168,9 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         event.setParent(psiParent);
         event.setChild(psiChild);
         event.setFile(psiFile);
-        ((PsiManagerEx)psiFile.getManager()).beforeChildRemoval(event);
+        if (!InternalPsiVersioning.isInForkedTimeline()) {
+          ((PsiManagerEx)psiFile.getManager()).beforeChildRemoval(event);
+        }
       }
 
       changeEvent.addElementaryChange(myOldParent);
@@ -205,7 +207,9 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         event.setParent(psiParent);
         event.setChild(psiChild);
         event.setFile(psiFile);
-        ((PsiManagerEx)psiFile.getManager()).beforeChildAddition(event);
+        if (!InternalPsiVersioning.isInForkedTimeline()) {
+          ((PsiManagerEx)psiFile.getManager()).beforeChildAddition(event);
+        }
       }
 
       changeEvent.addElementaryChange(myOldParent);

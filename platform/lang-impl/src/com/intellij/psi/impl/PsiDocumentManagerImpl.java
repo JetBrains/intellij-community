@@ -97,11 +97,11 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
 
   @Override
-  protected boolean finishCommitInWriteAction(@NotNull Document document,
-                                              @NotNull List<? extends BooleanRunnable> finishProcessors,
-                                              @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
-                                              boolean synchronously) {
-    boolean success = super.finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, synchronously);
+  protected boolean finishCommitWithPublishing(@NotNull Document document,
+                                               @NotNull List<? extends BooleanRunnable> finishProcessors,
+                                               @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
+                                               @NotNull DocumentCommitKind commitKind) {
+    boolean success = super.finishCommitWithPublishing(document, finishProcessors, reparseInjectedProcessors, commitKind);
     PsiFile file = getCachedPsiFile(document);
     if (file != null) {
       InjectedLanguageManagerImpl.clearInvalidInjections(file);

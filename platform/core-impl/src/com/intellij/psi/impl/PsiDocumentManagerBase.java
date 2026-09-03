@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -72,7 +73,6 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SlowOperations;
@@ -98,8 +98,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -118,9 +116,18 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   private final PsiManager myPsiManager;
   private final DocumentCommitProcessor myDocumentCommitProcessor;
 
+  /**
+   * The main timeline queue of the documents that wait for a commit. A forked timeline never reads it and never changes it.
+   * Use {@link #isInUncommittedSet} for a per-timeline answer.
+   */
   private final Set<Document> myUncommittedDocuments = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap());
   private final Map<Document, Throwable> myUncommittedDocumentTraces = CollectionFactory.createConcurrentWeakMap();
-  private /*non-static*/ final Key<UncommittedInfo> UNCOMMITTED_INFO_KEY = Key.create("UNCOMMITTED_INFO");
+  /**
+   * The uncommitted state of every document, per timeline. It lives outside versioned storage on purpose: the main
+   * version counter advances in each write action, while this state must span every write action until the document is
+   * published. See {@link DocumentUncommittedStateManager}.
+   */
+  private final DocumentUncommittedStateManager myUncommittedState = new DocumentUncommittedStateManager();
 
   private boolean myPerformBackgroundCommit = true;
 
@@ -505,7 +512,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
 
     if (!isCommitted(document)) {
-      doCommit(document);
+      if (InternalPsiVersioning.isInForkedTimeline()) {
+        doCommitLightweight(document);
+      } else {
+        doCommit(document);
+      }
     }
   }
 
@@ -525,23 +536,23 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   public boolean finishCommit(@NotNull Document document,
                               @NotNull @Unmodifiable List<? extends BooleanRunnable> finishProcessors,
                               @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
-                              boolean synchronously,
+                              @NotNull DocumentCommitKind commitKind,
                               @NotNull Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
     if (isEventSystemEnabled(document)) {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteSafeEnvironment();
     }
     boolean[] ok = {true};
-    if (synchronously) {
-      ok[0] = finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, true);
+    if (!commitKind.isAsynchronous()) {
+      ok[0] = finishCommitWithPublishing(document, finishProcessors, reparseInjectedProcessors, commitKind);
     }
     else {
       ApplicationManager.getApplication().runWriteAction(() -> {
-        ok[0] = finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, false);
+        ok[0] = finishCommitWithPublishing(document, finishProcessors, reparseInjectedProcessors, commitKind);
       });
     }
 
-    if (ok[0]) {
+    if (ok[0] && !commitKind.isLightweight()) {
       // run after commit actions outside write action
       runAfterCommitActions(document);
       if (DebugUtil.DO_EXPENSIVE_CHECKS && !ApplicationManagerEx.isInStressTest()) {
@@ -551,10 +562,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     return ok[0];
   }
 
-  protected boolean finishCommitInWriteAction(@NotNull Document document,
-                                              @NotNull @Unmodifiable List<? extends BooleanRunnable> finishProcessors,
-                                              @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
-                                              boolean synchronously) {
+  /**
+   * The final stage of document commit, which publishes the reparsed tree.
+   * If {@code commitKind} is not {@link DocumentCommitKind.Lightweight},
+   * then this method runs publishing of PSI events
+   */
+  @ApiStatus.Internal
+  protected boolean finishCommitWithPublishing(@NotNull Document document,
+                                               @NotNull @Unmodifiable List<? extends BooleanRunnable> finishProcessors,
+                                               @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
+                                               @NotNull DocumentCommitKind commitKind) {
     if (isEventSystemEnabled(document)) {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteSafeEnvironment();
     }
@@ -562,7 +579,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     assert !(document instanceof DocumentWindow);
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    if (virtualFile != null) {
+    if (virtualFile != null && !commitKind.isLightweight()) {
       SmartPointerManagerEx.getInstanceEx(myProject).fastenBelts(virtualFile);
     }
 
@@ -573,15 +590,19 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
       try {
         success.set(ProgressManager.getInstance().computeInNonCancelableSection(() -> {
           if (viewProviders.isEmpty()) {
-            handleCommitWithoutPsi(document);
+            if (!commitKind.isLightweight()) {
+              handleCommitWithoutPsi(document);
+            }
             return true;
           }
-          return commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, synchronously, virtualFile);
+          return commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, commitKind, virtualFile);
         }));
       }
       catch (Throwable e) {
         try {
-          forceReload(virtualFile, viewProviders);
+          if (!commitKind.isLightweight()) {
+            forceReload(virtualFile, viewProviders);
+          }
         }
         finally {
           LOG.error("Exception while committing " + viewProviders + ", eventSystemEnabled=" + isEventSystemEnabled(document), e);
@@ -589,11 +610,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
       }
       finally {
         if (success.get()) {
-          myUncommittedDocuments.remove(document);
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("finishCommitInWriteAction: " + document + " became committed");
+          if (commitKind.isLightweight()) {
+            // The commit records the state of this timeline itself, with the baseline that it carries.
+            LOG.debug("lightweight finishCommitInWriteAction: " + document + " became committed");
           }
-          myUncommittedDocumentTraces.remove(document);
+          else {
+            myUncommittedDocuments.remove(document);
+            if (LOG.isTraceEnabled()) {
+              LOG.trace("finishCommitInWriteAction: " + document + " became committed");
+            }
+            myUncommittedDocumentTraces.remove(document);
+          }
         }
       }
     });
@@ -603,8 +630,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   private boolean commitToExistingPsi(@NotNull Document document,
                                       @NotNull @Unmodifiable List<? extends BooleanRunnable> finishProcessors,
                                       @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
-                                      boolean synchronously,
+                                      @NotNull DocumentCommitKind commitKind,
                                       @Nullable VirtualFile virtualFile) {
+    boolean synchronously = !commitKind.isAsynchronous();
     for (BooleanRunnable finishRunnable : finishProcessors) {
       boolean success = finishRunnable.run();
       if (synchronously) {
@@ -614,9 +642,19 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
         return false;
       }
     }
-    clearUncommittedInfo(document);
-    if (virtualFile != null) {
-      SmartPointerManagerEx.getInstanceEx(myProject).updatePointerTargetsAfterReparse(virtualFile);
+    if (commitKind instanceof DocumentCommitKind.Lightweight) {
+      // A lightweight commit does not publish, so it must not end the pending state of the main timeline and must not
+      // move the smart pointers, which are not versioned. It records its own baseline instead, and it must do that
+      // before `contentsSynchronized` below, because the content of a view provider is the last committed text of the
+      // current timeline.
+      DocumentCommitKind.Lightweight lightweight = (DocumentCommitKind.Lightweight)commitKind;
+      myUncommittedState.recordForkedCommit(document, lightweight.getFrozen(), lightweight.getEventWatermark());
+    }
+    else {
+      publishCommit(document);
+      if (virtualFile != null) {
+        SmartPointerManagerEx.getInstanceEx(myProject).updatePointerTargetsAfterReparse(virtualFile);
+      }
     }
     List<FileViewProvider> viewProviders = getCachedViewProviders(document);
     for (FileViewProvider viewProvider : viewProviders) {
@@ -684,6 +722,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
 
     return true;
+  }
+
+  private void doCommitLightweight(@NotNull Document document) {
+    if (!InternalPsiVersioning.isInForkedTimeline()) {
+      throw new IllegalStateException("Lightweight commit is allowed only in forked timeline");
+    }
+    executeInsideCommit(() -> myDocumentCommitProcessor.commitSynchronouslyLightweight(document, myProject));
   }
 
   private void doCommit(@NotNull Document document, @NotNull PsiFile psiFile) {
@@ -1003,24 +1048,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
         throw new AssertionError("host committed: " + isCommitted(delegate) + ", window=" + window);
       }
 
-      UncommittedInfo info = getUncommittedInfo(delegate);
-      DocumentWindow answer = info == null ? null : info.myFrozenWindows.get(window);
-      if (answer == null) answer = freezeWindow(window);
-      if (info != null) answer = ConcurrencyUtil.cacheOrGet(info.myFrozenWindows, window, answer);
-      return (DocumentEx)answer;
+      return (DocumentEx)myUncommittedState.getFrozenWindow(delegate, window, () -> freezeWindow(window));
     }
 
     assert document instanceof DocumentImpl;
-    UncommittedInfo info = getUncommittedInfo(document);
-    return info != null ? info.myFrozen : ((DocumentImpl)document).freeze();
-  }
-
-  private @Nullable UncommittedInfo getUncommittedInfo(@NotNull Document document) {
-    return document.getUserData(UNCOMMITTED_INFO_KEY);
-  }
-
-  private void associateUncommittedInfo(Document document, UncommittedInfo info) {
-    document.putUserData(UNCOMMITTED_INFO_KEY, info);
+    FrozenDocument frozen = myUncommittedState.getLastCommittedText(document);
+    return frozen != null ? frozen : ((DocumentImpl)document).freeze();
   }
 
   protected @NotNull DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
@@ -1031,11 +1064,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   @ApiStatus.Internal
   public @NotNull @Unmodifiable List<DocumentEvent> getEventsSinceCommit(@NotNull Document document) {
     assert document instanceof DocumentImpl : document;
-    UncommittedInfo info = getUncommittedInfo(document);
-    if (info != null) {
-      return new ArrayList<>(info.myEvents);
-    }
-    return Collections.emptyList();
+    return myUncommittedState.getEventsSinceCommit(document);
   }
 
   @Override
@@ -1059,7 +1088,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   @ApiStatus.Internal
   @Override
   public boolean isInUncommittedSet(@NotNull Document document) {
-    return myUncommittedDocuments.contains(getTopLevelDocument(document));
+    Document topLevelDocument = getTopLevelDocument(document);
+    if (InternalPsiVersioning.isInForkedTimeline()) {
+      // `myUncommittedDocuments` belongs to the main timeline, so a forked timeline must not read it. The holder answers
+      // per timeline: the document waits for a commit while events exist after the baseline of this timeline.
+      return myUncommittedState.hasPendingEvents(topLevelDocument);
+    }
+    return myUncommittedDocuments.contains(topLevelDocument);
   }
 
   @Override
@@ -1089,8 +1124,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
 
-    if (document instanceof DocumentImpl && getUncommittedInfo(document) == null) {
-      associateUncommittedInfo(document, new UncommittedInfo((DocumentImpl)document));
+    if (document instanceof DocumentImpl) {
+      myUncommittedState.startBaselineIfAbsent((DocumentImpl)document);
     }
 
     List<FileViewProvider> viewProviders = getCachedViewProviders(document);
@@ -1142,7 +1177,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
 
     if (!isRelevant) {
-      clearUncommittedInfo(document);
+      publishCommit(document);
       return;
     }
 
@@ -1169,7 +1204,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
 
     if (commitNecessary) {
-      assert !(document instanceof DocumentWindow);
+      assert document instanceof DocumentImpl : document;
       myUncommittedDocuments.add(document);
       if (LOG.isTraceEnabled()) {
         LOG.trace("documentChanged: " + event + " -> " + document + " became uncommitted");
@@ -1185,7 +1220,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
       }
     }
     else {
-      clearUncommittedInfo(document);
+      publishCommit(document);
     }
 
     // optimisation: avoid documents piling up during batch processing
@@ -1212,6 +1247,27 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
         clearUncommittedDocuments();
       }
     }
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void beforeElfDocumentChange(@NotNull DocumentEvent event, @Nullable DocumentEvent revertingEvent) {
+    if (!Elf.getElf().isInElfScope()) {
+      return;
+    }
+    Document document = event.getDocument();
+    if (document instanceof DocumentImpl) {
+      myUncommittedState.startBaselineIfAbsent((DocumentImpl)document);
+    }
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void elfDocumentChanged(@NotNull DocumentEvent event, @Nullable DocumentEvent revertingEvent) {
+    if (!Elf.getElf().isInElfScope()) {
+      return;
+    }
+    myUncommittedState.appendEvent(event);
   }
 
   @Override
@@ -1257,18 +1313,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
-      UncommittedInfo info = getUncommittedInfo(event.getDocument());
-      if (info != null) {
-        info.myEvents.add(event);
-      }
+      myUncommittedState.appendEvent(event);
     }
   }
 
   @ApiStatus.Internal
   @Override
   public void handleCommitWithoutPsi(@NotNull Document document) {
-    UncommittedInfo prevInfo = clearUncommittedInfo(document);
-    if (prevInfo == null) {
+    if (!publishCommit(document)) {
       return;
     }
 
@@ -1310,13 +1362,29 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     runAfterCommitActions(document);
   }
 
-  private @Nullable UncommittedInfo clearUncommittedInfo(@NotNull Document document) {
-    UncommittedInfo info = getUncommittedInfo(document);
-    if (info != null) {
-      document.putUserData(UNCOMMITTED_INFO_KEY, null);
-      SmartPointerManagerEx.getInstanceEx(myProject).updatePointers(document, info.myFrozen, info.myEvents);
+  /**
+   * Ends the pending state of {@code document}, because the commit is now published, and moves the smart pointers of the
+   * main timeline onto the new text.
+   *
+   * @return whether the document had a pending state
+   */
+  private boolean publishCommit(@NotNull Document document) {
+    if (InternalPsiVersioning.isInForkedTimeline()) {
+      LOG.error("A forked timeline must not publish a commit: " + document);
+      return false;
     }
-    return info;
+    DocumentUncommittedStateManager.Baseline baseline = myUncommittedState.publishCommit(document);
+    if (baseline == null) {
+      return false;
+    }
+    SmartPointerManagerEx.getInstanceEx(myProject).updatePointers(document, baseline.getFrozen(), baseline.getEventsSince());
+    return true;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public int getUncommittedEventCount(@NotNull Document document) {
+    return myUncommittedState.currentEventCount(document);
   }
 
   private boolean isRelevant(@NotNull VirtualFile virtualFile) {
@@ -1392,6 +1460,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   @Override
   public void clearUncommittedDocuments() {
     myUncommittedDocuments.clear();
+    myUncommittedState.forgetEverything();
     myUncommittedDocumentTraces.clear();
     mySynchronizer.cleanupForNextTest();
   }
@@ -1431,16 +1500,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
     finally {
       ourIsFullReparseInProgress.remove();
-    }
-  }
-
-  private static final class UncommittedInfo {
-    private final FrozenDocument myFrozen;
-    private final List<DocumentEvent> myEvents = new ArrayList<>();
-    private final ConcurrentMap<DocumentWindow, DocumentWindow> myFrozenWindows = new ConcurrentHashMap<>();
-
-    private UncommittedInfo(@NotNull DocumentImpl original) {
-      myFrozen = original.freeze();
     }
   }
 
@@ -1491,4 +1550,5 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
       myUnitTestMode = old;
     }
   }
+
 }

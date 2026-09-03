@@ -22,4 +22,9 @@ final class MockDocumentCommitProcessor implements DocumentCommitProcessor {
                                    @NotNull ModalityState modality) {
 
   }
+
+  @Override
+  public void commitSynchronouslyLightweight(@NotNull Document document, @NotNull Project project) {
+
+  }
 }

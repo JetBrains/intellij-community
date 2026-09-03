@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -49,8 +49,15 @@ public abstract class PsiDocumentManagerEx extends PsiDocumentManager implements
   public abstract boolean finishCommit(@NotNull Document document,
                                        @NotNull @Unmodifiable List<? extends BooleanRunnable> finishProcessors,
                                        @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
-                                       boolean synchronously,
+                                       @NotNull DocumentCommitKind commitKind,
                                        @NotNull Object reason);
+
+  /**
+   * Returns the number of document events that accumulated since {@code document} was last committed.
+   * It is important for implementation details {@link DocumentCommitKind.Lightweight}.
+   */
+  @ApiStatus.Internal
+  public abstract int getUncommittedEventCount(@NotNull Document document);
 
   public abstract void forceReload(@Nullable VirtualFile virtualFile,
                                    @NotNull @Unmodifiable List<? extends FileViewProvider> viewProviders);

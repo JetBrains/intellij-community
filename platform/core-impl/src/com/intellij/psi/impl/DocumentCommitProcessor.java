@@ -18,4 +18,6 @@ public interface DocumentCommitProcessor {
                             @NotNull Document document,
                             @NonNls @NotNull Object reason,
                             @NotNull ModalityState modality);
+
+  void commitSynchronouslyLightweight(@NotNull Document document, @NotNull Project project);
 }

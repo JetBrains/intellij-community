@@ -45,6 +45,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -204,7 +205,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
 
     boolean isFromCommit = manager.isCommitInProgress();
-    boolean isPhysicalPsiChange = !isFromCommit && !synchronizer.isIgnorePsiEvents();
+    boolean isPhysicalPsiChange = !isFromCommit && !synchronizer.isIgnorePsiEvents() && !InternalPsiVersioning.isInsideVersioningButNotLocks();
     if (isPhysicalPsiChange) {
       reparseParallelTrees(containingFileByTree, synchronizer);
     }
@@ -299,7 +300,11 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     VirtualFile vFile = psiFile == null ? null : psiFile.getViewProvider().getVirtualFile();
     if (psiFile != null) {
-      SmartPointerManagerEx.getInstanceEx(myProject).fastenBelts(vFile);
+      if (!InternalPsiVersioning.isInForkedTimeline()) {
+        SmartPointerManagerEx.getInstanceEx(myProject).fastenBelts(vFile);
+      }
+      // `beforeAstChange` performs switch to strong references for `FileTrees`
+      // this operation is well-defined and needed for correct behavior of versioning
       if (psiFile instanceof PsiFileImpl) {
         ((PsiFileImpl)psiFile).beforeAstChange();
       }
@@ -360,6 +365,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   private void sendBeforeChildrenChangeEvent(@NotNull PsiElement scope) {
+    if (InternalPsiVersioning.isInForkedTimeline()) {
+      return;
+    }
     if (!shouldFirePhysicalPsiEvents(scope)) {
       getPsiManager().beforeChange(false);
       return;
@@ -381,6 +389,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   @ApiStatus.Internal
   public static boolean shouldFirePhysicalPsiEvents(@NotNull PsiElement scope) {
     if (!scope.isPhysical()) return false;
+    if (InternalPsiVersioning.isInForkedTimeline()) {
+      return false;
+    }
 
     PsiFile file = scope.getContainingFile();
     PsiElement hostElement = FileContextUtil.getFileContext(file);
@@ -388,6 +399,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   private void sendAfterChildrenChangedEvent(@NotNull PsiFile scope, int oldLength) {
+    if (InternalPsiVersioning.isInForkedTimeline()) {
+      return;
+    }
     if (!shouldFirePhysicalPsiEvents(scope)) {
       getPsiManager().afterChange(false);
       return;

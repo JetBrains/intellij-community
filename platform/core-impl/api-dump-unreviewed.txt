@@ -1353,7 +1353,6 @@ a:com.intellij.psi.impl.PsiDocumentManagerBase
 - dispose():V
 - doPostponedOperationsAndUnblockDocument(com.intellij.openapi.editor.Document):V
 - documentChanged(com.intellij.openapi.editor.event.DocumentEvent):V
-- p:finishCommitInWriteAction(com.intellij.openapi.editor.Document,java.util.List,java.util.List,Z):Z
 - p:freezeWindow(com.intellij.injected.editor.DocumentWindow):com.intellij.injected.editor.DocumentWindow
 - getCachedDocument(com.intellij.psi.PsiFile):com.intellij.openapi.editor.Document
 - f:getCachedPsiFile(com.intellij.openapi.editor.Document):com.intellij.psi.PsiFile
