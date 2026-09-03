@@ -47,14 +47,7 @@ internal class LocalChangesViewProxy(
   }
 
   override fun scheduleRefreshNow(callback: Runnable?) {
-    if (callback == null) {
-      panel.scheduleRefreshNow()
-    }
-    else {
-      panel.scheduleRefreshNow {
-        callback.run()
-      }
-    }
+    panel.scheduleRefreshNow(if (callback == null) null else callback::run)
   }
 
   override fun scheduleDelayedRefresh() {
