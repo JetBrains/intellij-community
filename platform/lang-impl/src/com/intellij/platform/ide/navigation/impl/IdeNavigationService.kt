@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.editorSuppressionCoroutineContext
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorComposite
+import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.navigateAndSelectEditor
@@ -135,6 +136,14 @@ private suspend fun navigate(project: Project, requests: Collection<NavigationRe
 }
 
 /**
+ * Holds the window which the first right-split request of a batch created.
+ * Every later request of the same batch opens in that window.
+ */
+private class RightSplitWindow {
+  var value: EditorWindow? = null
+}
+
+/**
  * Navigates to all sources from [requests], or navigates to first non-source request.
  */
 private suspend fun doNavigate(project: Project, requests: Collection<NavigationRequest>, options: NavigationOptions): Boolean {
@@ -142,6 +151,7 @@ private suspend fun doNavigate(project: Project, requests: Collection<Navigation
   var nonSourceRequest: Pair<NavigationRequest, NavigationOptions.Impl>? = null
 
   options as NavigationOptions.Impl
+  val rightSplitWindow = if (options.openInRightSplit) RightSplitWindow() else null
   var navigatedSourcesCounter = 0
   for (requestFromNavigatable in requests) {
     if (maxSourceRequests in 1..navigatedSourcesCounter) {
@@ -153,7 +163,8 @@ private suspend fun doNavigate(project: Project, requests: Collection<Navigation
     else {
       options.openInRightSplit(false) as NavigationOptions.Impl
     }
-    if (tryNavigateToSource(project = project, request = requestFromNavigatable, options = requestOptions)) {
+    if (tryNavigateToSource(project = project, request = requestFromNavigatable, options = requestOptions,
+                            rightSplitWindow = rightSplitWindow)) {
       navigatedSourcesCounter++
     }
     else if (nonSourceRequest == null) {
@@ -179,6 +190,7 @@ private suspend fun tryNavigateToSource(
   project: Project,
   request: NavigationRequest,
   options: NavigationOptions.Impl,
+  rightSplitWindow: RightSplitWindow? = null,
 ): Boolean {
   when (request) {
     is SourceNavigationRequest -> {
@@ -191,6 +203,7 @@ private suspend fun tryNavigateToSource(
           project = project,
           offset = request.targetOffset(caretShift),
           knownType = knownType,
+          rightSplitWindow = rightSplitWindow,
         )
       }
       return true
@@ -339,6 +352,7 @@ private suspend fun navigateToSourceImpl(
   project: Project,
   offset: Int,
   knownType: FileType?,
+  rightSplitWindow: RightSplitWindow? = null,
 ) {
   val file = request.file
   // the type resolved in the background is reused; the remaining case is a type unknown to the IDE, which the user is asked about
@@ -360,7 +374,7 @@ private suspend fun navigateToSourceImpl(
         }
       }
 
-      if (openFile(request = request, project = project, options = options, offset = offset)) {
+      if (openFile(request = request, project = project, options = options, offset = offset, rightSplitWindow = rightSplitWindow)) {
         return
       }
     }
@@ -374,6 +388,7 @@ private suspend fun openFile(
   project: Project,
   request: SourceNavigationRequest,
   offset: Int,
+  rightSplitWindow: RightSplitWindow? = null,
 ): Boolean {
   var hostOffset = offset
   val originalFile = request.file
@@ -390,12 +405,16 @@ private suspend fun openFile(
     }
   }
 
+  // the split is already there, so the request states it explicitly instead of asking for another one
+  val targetWindow = rightSplitWindow?.value?.takeIf { !it.isDisposed && !options.openInRightSplit }
   val composite = fileEditorManager.openFile(
     file = file,
     options = FileEditorOpenOptions(
-      reuseOpen = true,
+      // an open editor of the same file must not win over the split the batch opens into
+      reuseOpen = targetWindow == null,
       requestFocus = options.requestFocus,
       openMode = if (options.openInRightSplit) FileEditorManagerImpl.OpenMode.RIGHT_SPLIT else FileEditorManagerImpl.OpenMode.DEFAULT,
+      window = targetWindow,
       forceFocus = options.forceFocus,
     ),
   )
@@ -403,6 +422,12 @@ private suspend fun openFile(
   val fileEditors = composite.allEditors
   if (fileEditors.isEmpty()) {
     return false
+  }
+
+  if (rightSplitWindow != null && options.openInRightSplit) {
+    rightSplitWindow.value = withContext(Dispatchers.EDT) {
+      fileEditorManager.windows.firstOrNull { it.getComposite(file) === composite }
+    }
   }
 
   val elementRange = if (options.preserveCaret) request.elementRangeMarker?.takeIf { it.isValid }?.textRange else null

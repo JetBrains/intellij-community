@@ -778,6 +778,34 @@ class FileEditorManagerTest {
   }
 
   /**
+   * A requested window wins over an editor of the same file which is already open elsewhere.
+   */
+  @Test
+  fun testRequestedWindowWinsOverAnAlreadyOpenEditor(): Unit = timeoutRunBlocking {
+    val (file, secondaryWindow) = withContext(Dispatchers.UiWithModelAccess) {
+      createSecondaryWindowWithSecondFileSelected()
+    }
+    assertThat(secondaryWindow.fileList).doesNotContain(file)
+
+    manager.openFile(file = file, options = FileEditorOpenOptions(reuseOpen = true, window = secondaryWindow))
+    assertThat(secondaryWindow.fileList).contains(file)
+  }
+
+  /**
+   * Without a requested window, the manager reuses the open editor.
+   * A right-split batch overrides this behavior.
+   */
+  @Test
+  fun testAlreadyOpenEditorIsReusedWithoutARequestedWindow(): Unit = timeoutRunBlocking {
+    val (file, secondaryWindow) = withContext(Dispatchers.UiWithModelAccess) {
+      createSecondaryWindowWithSecondFileSelected()
+    }
+
+    manager.openFile(file = file, options = FileEditorOpenOptions(reuseOpen = true))
+    assertThat(secondaryWindow.fileList).doesNotContain(file)
+  }
+
+  /**
    * An editor a deferred selection notification can still reference after the file has been closed:
    * unlike a real text editor, [Mock.MyFileEditor] never becomes invalid.
    */

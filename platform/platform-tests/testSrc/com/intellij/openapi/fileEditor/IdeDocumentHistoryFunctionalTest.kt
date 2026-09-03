@@ -24,12 +24,10 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.awaitPendingNavigation
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
-import io.ktor.server.routing.CompositeRouteSelector
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 
 internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase() {
@@ -433,6 +431,38 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
       assertThat(result.get()).isTrue()
       assertThat(fileEditorManager.windowSplitCount).isEqualTo(2)
       assertThat(fileEditorManager.currentWindow!!.fileList).contains(target1, target2)
+    }
+  }
+
+  fun testBatchOpensAlreadyOpenSourcesInRightSplit() {
+    withNavigationRequests(isAsync = true) {
+      val target1 = myFixture.addFileToProject("target1.txt", "target1").virtualFile
+      val target2 = myFixture.addFileToProject("target2.txt", "target2").virtualFile
+      myFixture.configureByText("source.txt", "source<caret>")
+      myFixture.openFileInEditor(target1)
+      myFixture.openFileInEditor(target2)
+      val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+      val initialWindow = fileEditorManager.currentWindow!!
+      val result = AtomicReference<Boolean>()
+      val requests = listOf(
+        createNavigationRequest(target1, 0),
+        createNavigationRequest(target2, 0),
+      )
+
+      coroutineScope.launch {
+        result.set(
+          project.serviceAsync<NavigationService>().navigate(
+            requests,
+            NavigationOptions.defaultOptions().openInRightSplit(true),
+          )
+        )
+      }
+
+      waitUntil("Navigation result was not produced") { result.get() != null }
+      assertThat(result.get()).isTrue()
+      assertThat(fileEditorManager.windowSplitCount).isEqualTo(2)
+      val splitWindow = fileEditorManager.windows.single { it !== initialWindow }
+      assertThat(splitWindow.fileList).contains(target1, target2)
     }
   }
 

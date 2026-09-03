@@ -16,6 +16,13 @@ data class FileEditorOpenOptions(
   @JvmField val index: Int = -1,
   @JvmField val isExactState: Boolean = false,
   @Internal @JvmField val openMode: FileEditorManagerImpl.OpenMode? = null,
+  /**
+   * Takes precedence over [openMode]; when `null` or disposed, the window is chosen by the implementation.
+   *
+   * NB: do not retain it, the window may get disposed of.
+   * Ignored by Remote Development client managers (windows are a local concept).
+   */
+  @Internal @JvmField val window: EditorWindow? = null,
   @Internal @JvmField val waitForCompositeOpen: Boolean = true,
   // it makes sense only if openMode == NEW_WINDOW
   @Internal @JvmField val isSingletonEditorInWindow: Boolean = false,

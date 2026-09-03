@@ -1117,46 +1117,50 @@ open class FileEditorManagerImpl(
       ) ?: FileEditorComposite.EMPTY
     }
 
-    val mode = options.openMode
-    if (mode == OpenMode.NEW_WINDOW) {
-      return withContext(Dispatchers.EDT) {
-        if (forbidSplitFor(file)) {
-          closeFile(file)
-        }
-        (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(
-          file = file,
-          fileEditorManager = this@FileEditorManagerImpl,
-          isSingletonEditorInWindow = false,
-        ) { editorWindow ->
-          if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
-            closeFile(file = file)
+    // an explicitly requested window takes precedence over the open mode; a disposed window falls back to the open mode
+    val requestedWindow = options.window?.takeIf { !it.isDisposed }
+    if (requestedWindow == null) {
+      val mode = options.openMode
+      if (mode == OpenMode.NEW_WINDOW) {
+        return withContext(Dispatchers.EDT) {
+          if (forbidSplitFor(file)) {
+            closeFile(file)
           }
+          (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(
+            file = file,
+            fileEditorManager = this@FileEditorManagerImpl,
+            isSingletonEditorInWindow = false,
+          ) { editorWindow ->
+            if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
+              closeFile(file = file)
+            }
 
-          doOpenFile(file = file, windowToOpenIn = editorWindow, options = options)
+            doOpenFile(file = file, windowToOpenIn = editorWindow, options = options)
+          }
         }
       }
-    }
-    else if (mode == OpenMode.RIGHT_SPLIT) {
-      // the split is created before the composite is opened (see EditorWindow.split)
-      if (!canOpenFileAsync(file)) {
-        return FileEditorComposite.EMPTY
-      }
-      withContext(Dispatchers.EDT) {
-        openInRightSplit(file,
-                         options.requestFocus,
-                         options.forceFocus,
-                         internalHint = options.internalHint)
-      }?.let { composite ->
-        if (composite is EditorComposite) {
-          composite.waitForAvailable()
+      else if (mode == OpenMode.RIGHT_SPLIT) {
+        // the split is created before the composite is opened (see EditorWindow.split)
+        if (!canOpenFileAsync(file)) {
+          return FileEditorComposite.EMPTY
         }
-        return composite
+        withContext(Dispatchers.EDT) {
+          openInRightSplit(file,
+                           options.requestFocus,
+                           options.forceFocus,
+                           internalHint = options.internalHint)
+        }?.let { composite ->
+          if (composite is EditorComposite) {
+            composite.waitForAvailable()
+          }
+          return composite
+        }
       }
     }
 
     val composite: FileEditorComposite? = withContext(Dispatchers.EDT) {
       writeIntentReadAction {
-        val window = getWindowToOpen(options, file)
+        val window = requestedWindow?.takeIf { !it.isDisposed } ?: getWindowToOpen(options, file)
         if (forbidSplitFor(file) && !window.isFileOpen(file)) {
           closeFile(file)
         }
