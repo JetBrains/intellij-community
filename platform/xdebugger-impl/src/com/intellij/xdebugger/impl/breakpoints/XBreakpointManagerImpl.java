@@ -570,52 +570,60 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   @ApiStatus.Internal
   public @NotNull BreakpointManagerState saveState(@NotNull BreakpointManagerState state) {
     assert !myLock.isHeldByCurrentThread();
-    // create default breakpoints map without locking
-    Map<XBreakpointType, XBreakpointBase> defaultBreakpointsMap = StreamEx.of(createDefaultBreakpoints()).toMap(XBreakpointBase::getType, Function.identity());
+    // collect breakpoint states without locking
+    Map<XBreakpointType<?, ?>, XBreakpointBase<?, ?, ?>> defaultBreakpointsMap =
+      StreamEx.of(createDefaultBreakpoints()).toMap(XBreakpointBase::getType, Function.identity());
+    Map<XBreakpointBase<?, ?, ?>, BreakpointState> breakpointStates = new LinkedHashMap<>();
+    for (XBreakpointBase<?, ?, ?> breakpoint : getAllBreakpoints()) {
+      breakpointStates.put(breakpoint, breakpoint.getState());
+    }
 
-    return withLockMaybeCancellable(myLock, () -> {
-      myDependentBreakpointManager.saveState();
-
-      List<BreakpointState> defaultBreakpoints = new SmartList<>();
-      for (Set<XBreakpointBase<?, ?, ?>> typeDefaultBreakpoints : myDefaultBreakpoints.values()) {
-        if (!ContainerUtil.exists(typeDefaultBreakpoints,
-                                  breakpoint -> differsFromDefault(defaultBreakpointsMap, breakpoint.getType(), breakpoint.getState()))) {
-          continue;
-        }
-        for (XBreakpointBase<?, ?, ?> breakpoint : typeDefaultBreakpoints) {
-          final BreakpointState breakpointState = breakpoint.getState();
-          defaultBreakpoints.add(breakpointState);
-        }
-      }
-
-      List<BreakpointState> breakpoints = new SmartList<>();
-      for (XBreakpointBase breakpoint : myBreakpoints.values()) {
-        breakpoints.add(breakpoint.getState());
-      }
-
-      List<BreakpointState> breakpointsDefaults = new SmartList<>();
-      for (Map.Entry<XBreakpointType, BreakpointState> entry : myBreakpointsDefaults.entrySet()) {
-        if (statesAreDifferent(entry.getValue(), createBreakpointDefaults(entry.getKey()), false)) {
-          breakpointsDefaults.add(entry.getValue());
-        }
-      }
-
-      state.getDefaultBreakpoints().clear();
-      state.getDefaultBreakpoints().addAll(defaultBreakpoints);
-      state.getBreakpoints().clear();
-      state.getBreakpoints().addAll(breakpoints);
-      state.getBreakpointsDefaults().clear();
-      state.getBreakpointsDefaults().addAll(breakpointsDefaults);
-
-      state.setBreakpointsDialogProperties(myBreakpointsDialogSettings);
-      state.setDefaultGroup(myDefaultGroup);
-      return state;
-    });
+    withLockMaybeCancellable(myLock, () -> saveStateImpl(state, defaultBreakpointsMap, breakpointStates));
+    return state;
   }
 
-  private static <P extends XBreakpointProperties> boolean differsFromDefault(Map<XBreakpointType, XBreakpointBase> defaultBreakpoints,
-                                                                              XBreakpointType<?, P> type,
-                                                                              BreakpointState state) {
+  private void saveStateImpl(@NotNull BreakpointManagerState state,
+                             Map<XBreakpointType<?, ?>, XBreakpointBase<?, ?, ?>> defaultBreakpointsMap,
+                             Map<XBreakpointBase<?, ?, ?>, BreakpointState> breakpointStates) {
+    assert myLock.isHeldByCurrentThread();
+    myDependentBreakpointManager.saveState();
+
+    List<BreakpointState> defaultBreakpoints = new SmartList<>();
+    for (Set<XBreakpointBase<?, ?, ?>> typeDefaultBreakpoints : myDefaultBreakpoints.values()) {
+      if (!ContainerUtil.exists(typeDefaultBreakpoints,
+                                breakpoint -> differsFromDefault(defaultBreakpointsMap,
+                                                                 breakpoint.getType(),
+                                                                 breakpointStates.get(breakpoint)))) {
+        continue;
+      }
+      for (XBreakpointBase<?, ?, ?> breakpoint : typeDefaultBreakpoints) {
+        defaultBreakpoints.add(breakpointStates.get(breakpoint));
+      }
+    }
+
+    List<BreakpointState> breakpoints = ContainerUtil.map(myBreakpoints.values(), breakpointStates::get);
+
+    List<BreakpointState> breakpointsDefaults = new SmartList<>();
+    for (Map.Entry<XBreakpointType, BreakpointState> entry : myBreakpointsDefaults.entrySet()) {
+      if (statesAreDifferent(entry.getValue(), createBreakpointDefaults(entry.getKey()), false)) {
+        breakpointsDefaults.add(entry.getValue());
+      }
+    }
+
+    state.getDefaultBreakpoints().clear();
+    state.getDefaultBreakpoints().addAll(defaultBreakpoints);
+    state.getBreakpoints().clear();
+    state.getBreakpoints().addAll(breakpoints);
+    state.getBreakpointsDefaults().clear();
+    state.getBreakpointsDefaults().addAll(breakpointsDefaults);
+
+    state.setBreakpointsDialogProperties(myBreakpointsDialogSettings);
+    state.setDefaultGroup(myDefaultGroup);
+  }
+
+  private static boolean differsFromDefault(Map<XBreakpointType<?, ?>, XBreakpointBase<?, ?, ?>> defaultBreakpoints,
+                                            XBreakpointType<?, ?> type,
+                                            BreakpointState state) {
     var defaultBreakpoint = defaultBreakpoints.get(type);
     if (defaultBreakpoint == null) {
       return false;
@@ -746,8 +754,14 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   private void loadBreakpoint(@NotNull PreparedBreakpoint preparedBreakpoint, boolean defaultBreakpoint) {
+    loadBreakpoint(preparedBreakpoint, defaultBreakpoint, false);
+  }
+
+  private XBreakpointBase<?, ?, ?> loadBreakpoint(@NotNull PreparedBreakpoint preparedBreakpoint, boolean defaultBreakpoint, boolean initUI) {
     assert myLock.isHeldByCurrentThread();
-    addBreakpoint(preparedBreakpoint.breakpointFactory().get(), defaultBreakpoint, false);
+    XBreakpointBase<?, ?, ?> breakpoint = preparedBreakpoint.breakpointFactory().get();
+    addBreakpoint(breakpoint, defaultBreakpoint, initUI);
+    return breakpoint;
   }
 
   public XBreakpointsDialogState getBreakpointsDialogSettings() {
@@ -827,29 +841,37 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   public <T extends XBreakpointProperties> XLineBreakpoint<T> copyLineBreakpoint(@NotNull XLineBreakpoint<T> source,
                                                                                  @NotNull String fileUrl,
                                                                                  int line) {
+    assert !myLock.isHeldByCurrentThread();
+    if (!(source instanceof XLineBreakpointImpl<?>)) {
+      return null;
+    }
+    LineBreakpointState sourceState = ((XLineBreakpointImpl<?>)source).getState();
+
+    Element element = XmlSerializer.serialize(sourceState);
+    LineBreakpointState newState =
+      element == null ? new LineBreakpointState() : XmlSerializer.deserialize(element, LineBreakpointState.class);
+    newState.setLine(line);
+    newState.setFileUrl(fileUrl);
+    newState.setDependencyState(null);
+
+    XBreakpointType<?, ?> type = findBreakpointType(newState);
+    if (type == null) {
+      return null;
+    }
+    PreparedBreakpoint preparedBreakpoint = prepareBreakpoint(type, newState);
+
     return withLockMaybeCancellable(myLock, () -> {
-      if (!(source instanceof XLineBreakpointImpl<?>)) {
+      if (!myAllBreakpoints.contains(source)) {
         return null;
       }
-      myDependentBreakpointManager.saveState();
-      final LineBreakpointState sourceState = ((XLineBreakpointImpl<?>)source).getState();
-
-      Element element = XmlSerializer.serialize(sourceState);
-      LineBreakpointState newState =
-        element == null ? new LineBreakpointState() : XmlSerializer.deserialize(element, LineBreakpointState.class);
-      newState.setLine(line);
-      newState.setFileUrl(fileUrl);
 
       //noinspection unchecked
-      XLineBreakpointImpl<T> breakpoint = (XLineBreakpointImpl<T>)createBreakpoint(newState);
-      if (breakpoint != null) {
-        addBreakpoint(breakpoint, false, true);
-        final XBreakpoint<?> masterBreakpoint = myDependentBreakpointManager.getMasterBreakpoint(source);
-        if (masterBreakpoint != null) {
-          myDependentBreakpointManager.setMasterBreakpoint(breakpoint, masterBreakpoint, sourceState.getDependencyState().isLeaveEnabled());
-        }
+      XLineBreakpointImpl<T> breakpoint = (XLineBreakpointImpl<T>)loadBreakpoint(preparedBreakpoint, false, true);
+      XBreakpoint<?> masterBreakpoint = myDependentBreakpointManager.getMasterBreakpoint(source);
+      if (masterBreakpoint != null) {
+        myDependentBreakpointManager.setMasterBreakpoint(breakpoint, masterBreakpoint,
+                                                         myDependentBreakpointManager.isLeaveEnabled(source));
       }
-
       return breakpoint;
     });
   }
