@@ -15,6 +15,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-frontend:frontend"],
 )
 
 jvm_library(
@@ -26,7 +27,11 @@ jvm_library(
     ),
     module_name = "intellij.extendedToolWindowsUi",
     visibility = ["//visibility:public"],
-    runtime_deps = [":extendedToolWindowsUi"],
+    runtime_deps = [
+        # do not sort,
+        ":extendedToolWindowsUi",
+        "//platform/platform-frontend:frontend_test_lib",
+    ],
 )
 
 ij_plugin(
