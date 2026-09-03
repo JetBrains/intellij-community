@@ -4,6 +4,8 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
 import io.opentelemetry.api.trace.SpanBuilder
+import io.opentelemetry.context.Context
+import io.opentelemetry.extension.kotlin.asContextElement
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
@@ -16,7 +18,6 @@ import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.blockingUse
-import org.jetbrains.intellij.build.telemetry.captureTelemetryContext
 import java.nio.file.Path
 import java.util.function.Predicate
 
@@ -89,8 +90,10 @@ private class AsyncCacheBackedSuspendingLazy<T>(
 
   /** The computation of the cache carries the name of the lazy as its thread name. */
   override suspend fun await(): T {
+    // the computation runs on a thread of its own, so a span of the initializer gets its parent from here
+    val telemetryContext = Context.current().asContextElement()
     // the initializer still suspends, so it needs an entry of its own back into coroutines
-    val load = captureTelemetryContext { runBlockingOnVirtualThreads { initializer() } }
+    val load = { runBlockingOnVirtualThreads(telemetryContext) { initializer() } }
     // `awaitShared` and not `getOrPut`, so an awaiter stays cancellable and does not block its thread
     return cache.sharedFuture(key, load).awaitShared()
   }

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import io.opentelemetry.sdk.trace.ReadableSpan
+import io.opentelemetry.sdk.trace.SdkTracerProvider
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +14,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
+import org.jetbrains.intellij.build.telemetry.use
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
@@ -123,6 +127,26 @@ class SuspendingLazyTest {
     assertFailsFast {
       lazyValue.await()
     }
+  }
+
+  /** The initializer runs on a thread of its own, so the lazy must pass the telemetry context of its first awaiter along. */
+  @Test
+  fun initializerSeesTheSpanOfTheFirstAwaiter() {
+    val tracer = SdkTracerProvider.builder().build().get("SuspendingLazyTest")
+    val lazyValue = suspendingLazy("traced value") {
+      val child = tracer.spanBuilder("child").startSpan()
+      child.end()
+      (child as ReadableSpan).parentSpanContext
+    }
+
+    val (parentContext, seenParentContext) = runBlockingOnVirtualThreads {
+      tracer.spanBuilder("parent").use { parent ->
+        parent.spanContext to lazyValue.await()
+      }
+    }
+
+    assertThat(parentContext.isValid).isTrue()
+    assertThat(seenParentContext).isEqualTo(parentContext)
   }
 
   private fun assertFailsFast(block: suspend () -> Unit) {

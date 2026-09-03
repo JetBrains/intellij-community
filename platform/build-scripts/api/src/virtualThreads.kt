@@ -22,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executor
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * A dispatcher with one virtual thread per resume.
@@ -113,8 +114,8 @@ internal fun <T> startFork(name: String, parentContext: CoroutineContext, block:
  * [joinShared]. A fan-out inside the pipeline uses [taskScope] instead.
  *
  * The body runs inside the single-flight computations of the caller, so a recursive wait for the same key fails fast.
- * It carries no telemetry context. A caller whose computation opens a span wraps the block itself, the way
- * `sharedLazy` does with `captureTelemetryContext`.
+ * It carries no telemetry context. A caller whose computation opens a span passes the telemetry context into the
+ * entry it runs, see [runBlockingOnVirtualThreads].
  */
 @ApiStatus.Internal
 fun <T> startSharedComputation(name: String, owner: Any?, block: () -> T): CompletableFuture<T> {
@@ -175,12 +176,14 @@ fun CompletableFuture<*>.failureOrNull(): Throwable? {
  *
  * It replaces `runBlocking(Dispatchers.Default)`. The calling thread only waits; every resume of [block] and of its
  * children runs on [buildVirtualThreadDispatcher], so the kotlinx scheduler gets no CPU work of the build.
+ * [context] adds elements to the coroutine, such as the telemetry context of the caller that starts a shared computation.
+ * The dispatcher and the single-flight guard of this entry win over the same elements of [context].
  */
 @ApiStatus.Internal
 @Suppress("SSBasedInspection") // a build script has no progress indicator, so `runBlocking` is the right entry
-fun <T> runBlockingOnVirtualThreads(block: suspend CoroutineScope.() -> T): T {
+fun <T> runBlockingOnVirtualThreads(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
   // the only blocking-to-coroutine boundary of a build, so the single-flight guard is seeded here and nowhere else
-  return runBlocking(buildVirtualThreadDispatcher + singleFlightContextElement()) { block() }
+  return runBlocking(context + buildVirtualThreadDispatcher + singleFlightContextElement()) { block() }
 }
 
 /**

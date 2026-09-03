@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.telemetry
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
-import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
@@ -35,19 +34,6 @@ suspend inline fun <T> SpanBuilder.block(
       }
     }
   }
-}
-
-/**
- * Wraps [block] so it runs under the telemetry context of the calling thread.
- *
- * A computation that the build starts on a thread of its own has no context of its own, so a span it opens would be
- * a root of the trace. The capture happens now, on this thread. The wrapped block installs the context wherever it
- * runs. This is what `span.asContextElement()` does for a coroutine.
- */
-@Internal
-fun <T> captureTelemetryContext(block: () -> T): () -> T {
-  val context = Context.current()
-  return { context.makeCurrent().use { block() } }
 }
 
 /**

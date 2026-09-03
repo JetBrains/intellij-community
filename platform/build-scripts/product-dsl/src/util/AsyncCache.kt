@@ -28,8 +28,8 @@ import kotlin.time.Duration
  * The loader runs inside the single-flight computations of the caller, so a recursive [getOrPut] of the same key
  * fails fast.
  *
- * The loader runs on a thread of its own, so a loader that needs the telemetry context of its first caller captures
- * that context itself. See `captureTelemetryContext`.
+ * The loader runs on a thread of its own and carries no telemetry context. A loader that opens a span passes the
+ * context of its first caller into the entry it runs. See `runBlockingOnVirtualThreads`.
  *
  * This prevents expensive repeated computations and thundering herd scenarios when
  * operations fail.
