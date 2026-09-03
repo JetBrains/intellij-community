@@ -13,9 +13,8 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
+import com.intellij.util.system.WindowsRegistry
 import com.sun.jna.Callback
-import com.sun.jna.platform.win32.Advapi32Util
-import com.sun.jna.platform.win32.WinReg
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -142,7 +141,7 @@ private class MacOSDetector(override val syncFunction: BiConsumer<Boolean, Boole
 
 private class WindowsDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>?) : AsyncDetector() {
   override val detectionSupported: Boolean
-    get() = SystemInfo.isWin10OrNewer && JnaLoader.isLoaded()
+    get() = SystemInfo.isWin10OrNewer
 
   companion object {
     @NonNls const val REGISTRY_PATH = "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"
@@ -157,8 +156,7 @@ private class WindowsDetector(override val syncFunction: BiConsumer<Boolean, Boo
 
   override fun isDark(): Boolean {
     try {
-      return Advapi32Util.registryValueExists(WinReg.HKEY_CURRENT_USER, REGISTRY_PATH, REGISTRY_VALUE) &&
-             Advapi32Util.registryGetIntValue(WinReg.HKEY_CURRENT_USER, REGISTRY_PATH, REGISTRY_VALUE) == 0
+      return WindowsRegistry.getInt(WindowsRegistry.Hive.CURRENT_USER, REGISTRY_PATH, REGISTRY_VALUE) == 0
     }
     catch (_: Throwable) {}
     return false

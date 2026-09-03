@@ -1,17 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
-import com.sun.jna.Library
-import com.sun.jna.Memory
-import com.sun.jna.Native
-import com.sun.jna.Pointer
-import com.sun.jna.Structure
-import com.sun.jna.platform.win32.Kernel32
-import com.sun.jna.ptr.IntByReference
-import com.sun.jna.win32.StdCallLibrary
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
@@ -155,8 +147,6 @@ private class DummyMemoryUtil : PlatformMemoryUtil() {
 
 
 private class LinuxMemoryUtil : PlatformMemoryUtil() {
-  private val libc: LibC = Native.load("c", LibC::class.java)
-
   override fun newMemoryStatsProvider(): MemoryStatsProvider {
     return object : MemoryStatsProvider() {
       override fun getCurrentProcessMemoryStatsInner(): MemoryStats? = getCurrentProcessMemoryStatsLinux()
@@ -204,19 +194,11 @@ private class LinuxMemoryUtil : PlatformMemoryUtil() {
   override fun trimLinuxNativeHeap() {
     try {
       // See https://github.com/openjdk/jdk/blob/3145278847428ad3a855a3e2c605b77f74ebe113/src/hotspot/os/linux/os_linux.cpp#L5484
-      libc.malloc_trim(0)
+      LinuxMalloc.trim()
     } catch (e: UnsatisfiedLinkError) {
       // Possibly not a glibc?
       LOG.error("Failed to trim native heap", e)
     }
-  }
-
-  @Suppress("FunctionName")
-  interface LibC : Library {
-    /**
-     * See https://man7.org/linux/man-pages/man3/malloc_trim.3.html
-     */
-    fun malloc_trim(pad: Long): Boolean
   }
 
   private companion object {
@@ -225,33 +207,16 @@ private class LinuxMemoryUtil : PlatformMemoryUtil() {
 }
 
 private class WindowsMemoryUtil : PlatformMemoryUtil() {
-  private val kernel32: Kernel32 = Kernel32.INSTANCE
-  private val psapi: Psapi = Native.load("psapi", Psapi::class.java)
-
   override fun newMemoryStatsProvider(): MemoryStatsProvider = WindowsMemoryStatsProvider()
 
   private inner class WindowsMemoryStatsProvider : MemoryStatsProvider() {
-    private var memoryCounters: ProcessMemoryCountersEx2? = ProcessMemoryCountersEx2().apply {
-      cb = size()
-    }
-
     override fun getCurrentProcessMemoryStatsInner(): MemoryStats? {
-      val memoryCounters = memoryCounters ?: return null
-      val processHandle = kernel32.GetCurrentProcess().pointer
-      val success = psapi.GetProcessMemoryInfo(processHandle, memoryCounters, memoryCounters.size())
-      if (!success) return null
-      memoryCounters.read()
-
+      val counters = WindowsProcessMemory.read() ?: return null
       return WindowsMemoryStats(
-        workingSetSize = memoryCounters.WorkingSetSize,
-        privateWorkingSetSize = memoryCounters.PrivateWorkingSetSize,
-        privateUsage = memoryCounters.PrivateUsage,
+        workingSetSize = counters.workingSetSize,
+        privateWorkingSetSize = counters.privateWorkingSetSize,
+        privateUsage = counters.privateUsage,
       ).toMemoryStats()
-    }
-
-    override fun close() {
-      memoryCounters?.close()
-      memoryCounters = null
     }
   }
 
@@ -307,110 +272,20 @@ private class WindowsMemoryUtil : PlatformMemoryUtil() {
       fileMappingsRam = workingSetSize - privateWorkingSetSize,
     )
   }
-
-  @Suppress("FunctionName")
-  private interface Psapi : StdCallLibrary {
-    /**
-     * See https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getprocessmemoryinfo
-     */
-    fun GetProcessMemoryInfo(process: Pointer, counters: ProcessMemoryCountersEx2, size: Int): Boolean
-  }
-
-  /**
-   * See https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex2
-   *
-   * ## Requirements
-   * Minimum supported client	Windows 10 22H2 with September 2023 cumulative update or
-   * Windows 11 22H2 with September 2023 cumulative update
-   */
-  @Suppress("PropertyName", "unused")
-  @Structure.FieldOrder(
-    "cb",
-    "PageFaultCount",
-    "PeakWorkingSetSize",
-    "WorkingSetSize",
-    "QuotaPeakPagedPoolUsage",
-    "QuotaPagedPoolUsage",
-    "QuotaPeakNonPagedPoolUsage",
-    "QuotaNonPagedPoolUsage",
-    "PagefileUsage",
-    "PeakPagefileUsage",
-    "PrivateUsage",
-    "PrivateWorkingSetSize",
-    "SharedCommitUsage",
-  )
-  class ProcessMemoryCountersEx2 : Structure(), AutoCloseable {
-    @JvmField
-    var cb: Int = 0
-
-    @JvmField
-    var PageFaultCount: Int = 0
-
-    @JvmField
-    var PeakWorkingSetSize: Long = 0
-
-    @JvmField
-    var WorkingSetSize: Long = 0
-
-    @JvmField
-    var QuotaPeakPagedPoolUsage: Long = 0
-
-    @JvmField
-    var QuotaPagedPoolUsage: Long = 0
-
-    @JvmField
-    var QuotaPeakNonPagedPoolUsage: Long = 0
-
-    @JvmField
-    var QuotaNonPagedPoolUsage: Long = 0
-
-    @JvmField
-    var PagefileUsage: Long = 0
-
-    @JvmField
-    var PeakPagefileUsage: Long = 0
-
-    @JvmField
-    var PrivateUsage: Long = 0
-
-    @JvmField
-    var PrivateWorkingSetSize: Long = 0
-
-    @JvmField
-    var SharedCommitUsage: Long = 0
-
-    override fun close() {
-      (pointer as? Memory)?.close()
-    }
-  }
 }
 
 private class MacosMemoryUtil : PlatformMemoryUtil() {
-  private val libc = Native.load("System", Libc::class.java)
-
   override fun newMemoryStatsProvider(): MemoryStatsProvider = MacosMemoryStatsProvider()
 
   private inner class MacosMemoryStatsProvider : MemoryStatsProvider() {
-    private var info: TaskVMInfo? = TaskVMInfo()
-
     override fun getCurrentProcessMemoryStatsInner(): MemoryStats? {
-      val info = info ?: return null
-      val size = IntByReference(info.size() / 4)
-      val result = libc.task_info(libc.mach_task_self(), TASK_VM_INFO, info.pointer, size)
-      if (result != 0) return null
-      info.read()
-
+      val info = MacTaskMemory.read() ?: return null
       return MacosMemoryStats(
-        physFootprint = info.phys_footprint,
-        residentSize = info.resident_size,
+        physFootprint = info.physFootprint,
+        residentSize = info.residentSize,
         internal = info.internal,
         external = info.external,
       ).toMemoryStats()
-    }
-
-    override fun close() {
-      info?.close()
-      info = null
     }
   }
 
@@ -439,204 +314,5 @@ private class MacosMemoryUtil : PlatformMemoryUtil() {
       ramPlusSwapMinusFileMappings = physFootprint,
       fileMappingsRam = external,
     )
-  }
-
-  @Suppress("FunctionName")
-  interface Libc : Library {
-    fun mach_task_self(): Int
-    fun task_info(task: Int, flavor: Int, taskInfo: Pointer, taskInfoCount: IntByReference): Int
-  }
-
-  @Suppress("PropertyName", "unused")
-  @Structure.FieldOrder(
-    "virtual_size",
-    "region_count",
-    "page_size",
-    "resident_size",
-    "resident_size_peak",
-    "device",
-    "device_peak",
-    "internal",
-    "internal_peak",
-    "external",
-    "external_peak",
-    "reusable",
-    "reusable_peak",
-    "purgeable_volatile_pmap",
-    "purgeable_volatile_resident",
-    "purgeable_volatile_virtual",
-    "compressed",
-    "compressed_peak",
-    "compressed_lifetime",
-    "phys_footprint",
-    "min_address",
-    "max_address",
-    "ledger_phys_footprint_peak",
-    "ledger_purgeable_nonvolatile",
-    "ledger_purgeable_novolatile_compressed",
-    "ledger_purgeable_volatile",
-    "ledger_purgeable_volatile_compressed",
-    "ledger_tag_network_nonvolatile",
-    "ledger_tag_network_nonvolatile_compressed",
-    "ledger_tag_network_volatile",
-    "ledger_tag_network_volatile_compressed",
-    "ledger_tag_media_footprint",
-    "ledger_tag_media_footprint_compressed",
-    "ledger_tag_media_nofootprint",
-    "ledger_tag_media_nofootprint_compressed",
-    "ledger_tag_graphics_footprint",
-    "ledger_tag_graphics_footprint_compressed",
-    "ledger_tag_graphics_nofootprint",
-    "ledger_tag_graphics_nofootprint_compressed",
-    "ledger_tag_neural_footprint",
-    "ledger_tag_neural_footprint_compressed",
-    "ledger_tag_neural_nofootprint",
-    "ledger_tag_neural_nofootprint_compressed",
-    "limit_bytes_remaining",
-    "decompressions",
-  )
-  class TaskVMInfo : Structure(), AutoCloseable {
-    @JvmField
-    var virtual_size: Long = 0
-
-    @JvmField
-    var region_count: Int = 0
-
-    @JvmField
-    var page_size: Int = 0
-
-    @JvmField
-    var resident_size: Long = 0
-
-    @JvmField
-    var resident_size_peak: Long = 0
-
-    @JvmField
-    var device: Long = 0
-
-    @JvmField
-    var device_peak: Long = 0
-
-    @JvmField
-    var internal: Long = 0
-
-    @JvmField
-    var internal_peak: Long = 0
-
-    @JvmField
-    var external: Long = 0
-
-    @JvmField
-    var external_peak: Long = 0
-
-    @JvmField
-    var reusable: Long = 0
-
-    @JvmField
-    var reusable_peak: Long = 0
-
-    @JvmField
-    var purgeable_volatile_pmap: Long = 0
-
-    @JvmField
-    var purgeable_volatile_resident: Long = 0
-
-    @JvmField
-    var purgeable_volatile_virtual: Long = 0
-
-    @JvmField
-    var compressed: Long = 0
-
-    @JvmField
-    var compressed_peak: Long = 0
-
-    @JvmField
-    var compressed_lifetime: Long = 0
-
-    @JvmField
-    var phys_footprint: Long = 0
-
-    @JvmField
-    var min_address: Long = 0
-
-    @JvmField
-    var max_address: Long = 0
-
-    @JvmField
-    var ledger_phys_footprint_peak: Long = 0
-
-    @JvmField
-    var ledger_purgeable_nonvolatile: Long = 0
-
-    @JvmField
-    var ledger_purgeable_novolatile_compressed: Long = 0
-
-    @JvmField
-    var ledger_purgeable_volatile: Long = 0
-
-    @JvmField
-    var ledger_purgeable_volatile_compressed: Long = 0
-
-    @JvmField
-    var ledger_tag_network_nonvolatile: Long = 0
-
-    @JvmField
-    var ledger_tag_network_nonvolatile_compressed: Long = 0
-
-    @JvmField
-    var ledger_tag_network_volatile: Long = 0
-
-    @JvmField
-    var ledger_tag_network_volatile_compressed: Long = 0
-
-    @JvmField
-    var ledger_tag_media_footprint: Long = 0
-
-    @JvmField
-    var ledger_tag_media_footprint_compressed: Long = 0
-
-    @JvmField
-    var ledger_tag_media_nofootprint: Long = 0
-
-    @JvmField
-    var ledger_tag_media_nofootprint_compressed: Long = 0
-
-    @JvmField
-    var ledger_tag_graphics_footprint: Long = 0
-
-    @JvmField
-    var ledger_tag_graphics_footprint_compressed: Long = 0
-
-    @JvmField
-    var ledger_tag_graphics_nofootprint: Long = 0
-
-    @JvmField
-    var ledger_tag_graphics_nofootprint_compressed: Long = 0
-
-    @JvmField
-    var ledger_tag_neural_footprint: Long = 0
-
-    @JvmField
-    var ledger_tag_neural_footprint_compressed: Long = 0
-
-    @JvmField
-    var ledger_tag_neural_nofootprint: Long = 0
-
-    @JvmField
-    var ledger_tag_neural_nofootprint_compressed: Long = 0
-
-    @JvmField
-    var limit_bytes_remaining: Long = 0
-
-    @JvmField
-    var decompressions: Int = 0
-
-    override fun close() {
-      (pointer as? Memory)?.close()
-    }
-  }
-
-  private companion object {
-    const val TASK_VM_INFO: Int = 22
   }
 }
