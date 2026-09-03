@@ -1069,7 +1069,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   companion object {
     private const val WARNING_START = "<weak_warning>"
     private const val WARNING_END = "</weak_warning>"
-    private val DEFAULT_FIXTURE = GradleTestFixtureBuilder.create("groovy_dsl_avoid_named_arguments") { gradleVersion ->
+    private val DEFAULT_FIXTURE = GradleTestFixtureBuilder.create("groovy_avoid_named_arguments") { gradleVersion ->
       withBuildFile(gradleVersion) {
         withJavaPlugin()
         withPrefix {

@@ -630,7 +630,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   companion object {
-    private val DEFAULT_FIXTURE = GradleTestFixtureBuilder.create("groovy_dsl_redundant_kotlin_stdlib") { gradleVersion ->
+    private val DEFAULT_FIXTURE = GradleTestFixtureBuilder.create("groovy_redundant_kotlin_stdlib") { gradleVersion ->
       withBuildFile(gradleVersion) {
         withKotlinJvmPlugin()
         withPrefix {
@@ -644,7 +644,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
       }
     }
     private val WITH_VERSION_CATALOGS_FIXTURE = GradleTestFixtureBuilder.create(
-      "groovy_dsl_redundant_kotlin_stdlib_with_version_catalogs"
+      "grvy_redundant_kotlin_stdlib_ver_catalogs"
     ) { gradleVersion ->
       assertThatVersionCatalogsAreSupported(gradleVersion)
       withFile(
@@ -679,7 +679,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
         }
       }
     }
-    private val DISABLED_DEFAULT_STDLIB_FIXTURE = GradleTestFixtureBuilder.create("groovy_dsl_disabled_default_stdlib") { gradleVersion ->
+    private val DISABLED_DEFAULT_STDLIB_FIXTURE = GradleTestFixtureBuilder.create("groovy_disabled_default_stdlib") { gradleVersion ->
       withBuildFile(gradleVersion) {
         withKotlinJvmPlugin()
       }
