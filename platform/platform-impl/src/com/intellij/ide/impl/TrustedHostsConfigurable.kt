@@ -2,6 +2,7 @@
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.application.ApplicationManager
@@ -23,6 +24,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -58,23 +60,28 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
   /**
    * One list over both trust stores: the user-managed trusted locations ([TrustedPathsSettings])
    * followed by the projects and files explicitly trusted from the confirmation dialogs ([TrustedPaths]).
+   * A system path (see [TrustedProjects.isSystemTrustedPath]) is trusted implicitly and is not listed.
    */
-  private fun getMergedTrustedPaths(): List<String> {
+  @VisibleForTesting
+  internal fun getMergedTrustedPaths(): List<String> {
     val settingsPaths = TrustedPathsSettings.getInstance().getTrustedPaths()
     val settingsPathSet = settingsPaths.toSet()
-    return settingsPaths + TrustedPaths.getInstance().getExplicitlyTrustedPaths().filter { it !in settingsPathSet }
+    return settingsPaths + TrustedPaths.getInstance().getExplicitlyTrustedPaths()
+      .filter { it !in settingsPathSet && !isSystemTrustedPath(it) }
   }
 
   /**
    * Entries stay in the store they came from; new entries go to the user-managed trusted locations.
    * The trust events are fired for the difference, so trust caches, editor banners, and open editors refresh
    * the same way as when trust is granted from the confirmation dialogs.
+   * A stale record of a system path is invisible to the diff, so it is dropped without an untrust event.
    */
-  private fun applyMergedTrustedPaths(paths: List<String>) {
+  @VisibleForTesting
+  internal fun applyMergedTrustedPaths(paths: List<String>) {
     val trustedPathsSettings = TrustedPathsSettings.getInstance()
     val trustedPaths = TrustedPaths.getInstance()
     val settingsBefore = trustedPathsSettings.getTrustedPaths().toSet()
-    val explicitBefore = trustedPaths.getExplicitlyTrustedPaths()
+    val explicitBefore = trustedPaths.getExplicitlyTrustedPaths().filterNot { isSystemTrustedPath(it) }
     val explicitBeforeSet = explicitBefore.toSet()
     val afterSet = paths.toSet()
 
@@ -102,6 +109,16 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
       return null
     }
     return TrustedProjectsLocator.locateProject(nioPath, project = null)
+  }
+
+  private fun isSystemTrustedPath(path: String): Boolean {
+    val nioPath = try {
+      Path.of(path)
+    }
+    catch (_: InvalidPathException) {
+      return false
+    }
+    return TrustedProjects.isSystemTrustedPath(nioPath)
   }
 
   private fun Row.trustedLocationConfigurable(

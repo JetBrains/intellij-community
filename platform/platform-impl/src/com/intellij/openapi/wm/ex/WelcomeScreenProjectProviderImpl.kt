@@ -5,7 +5,6 @@ import com.intellij.diagnostic.WindowsDefenderChecker
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -26,7 +25,7 @@ internal class WelcomeScreenProjectSupportImpl : WelcomeScreenProjectSupport {
     if (!projectPath.exists(LinkOption.NOFOLLOW_LINKS)) {
       projectPath.createDirectories()
     }
-    TrustedProjects.setProjectTrusted(projectPath, true)
+    // the path is a system path, so TrustedProjects trusts it implicitly, without a persistent record
     serviceAsync<WindowsDefenderChecker>().markProjectPath(projectPath, /*skip =*/ true)
 
     val project = extension.doCreateOrOpenWelcomeScreenProjectForInternalUsage(projectPath, projectToClose)
