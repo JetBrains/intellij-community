@@ -3,6 +3,7 @@ package com.jetbrains.performancePlugin.remotedriver
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.jetbrains.performancePlugin.remotedriver.robot.IdeRobot
 import com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelCreator
 import com.jetbrains.performancePlugin.remotedriver.xpath.convertToHtml
@@ -39,4 +40,8 @@ class RobotService : Disposable {
     "static/img/show.png",
     "static/img/locator.png",
   )
+
+  companion object {
+    fun getInstance(): RobotService = service<RobotService>()
+  }
 }

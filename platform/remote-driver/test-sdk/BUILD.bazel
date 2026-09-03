@@ -22,7 +22,6 @@ jvm_library(
         "//platform/remote-driver/client",
         "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
-        "//platform/remote-driver/model",
     ],
     runtime_deps = ["//platform/consoleView"],
     deps = [
