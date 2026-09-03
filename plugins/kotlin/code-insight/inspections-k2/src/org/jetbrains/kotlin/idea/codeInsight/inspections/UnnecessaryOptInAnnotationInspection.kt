@@ -6,8 +6,10 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -38,6 +40,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.types.varargArrayType
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -112,7 +115,8 @@ internal class UnnecessaryOptInAnnotationInspection :
         val markerCollector = MarkerCollector(moduleApiVersion)
         owner.accept(OptInMarkerVisitor(), markerCollector)
 
-        val unusedMarkers = resolvedMarkers.filter { markerCollector.isUnused(it.classId) }
+        val moduleOptIns = element.languageVersionSettings.getFlag(AnalysisFlags.optIn)
+        val unusedMarkers = resolvedMarkers.filter { it.classId.asFqNameString() in moduleOptIns || markerCollector.isUnused(it.classId) }
         if (unusedMarkers.isEmpty()) return null
 
         return Context(unusedMarkers, allRedundant = annotationEntryArguments.size == unusedMarkers.size)

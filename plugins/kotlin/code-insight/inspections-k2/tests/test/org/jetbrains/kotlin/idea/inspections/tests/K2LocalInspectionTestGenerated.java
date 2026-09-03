@@ -30853,6 +30853,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantImportAlias.kt");
         }
 
+        @TestMetadata("redundantModuleOptIn.kt")
+        public void testRedundantModuleOptIn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantModuleOptIn.kt");
+        }
+
         @TestMetadata("redundantOnClass.kt")
         public void testRedundantOnClass() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantOnClass.kt");
