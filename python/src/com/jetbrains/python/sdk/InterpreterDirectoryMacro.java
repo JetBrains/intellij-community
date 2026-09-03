@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
 import com.intellij.ide.macro.Macro;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 
-public final class InterpreterDirectoryMacro extends Macro implements PathMacro {
+final class InterpreterDirectoryMacro extends Macro implements PathMacro {
   @Override
   public @NotNull String getName() {
     return "PyInterpreterDirectory";

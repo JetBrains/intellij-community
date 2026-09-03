@@ -30,8 +30,8 @@ import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.ParameterizedCachedValue
-import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
 import com.intellij.python.pyproject.model.api.ModuleSdkState
+import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
 import com.intellij.python.pyproject.model.api.getModuleSdkState
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
@@ -58,8 +58,7 @@ import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.Icon
 
-@ApiStatus.Internal
-abstract class DialogAction(
+internal abstract class DialogAction(
   dynamicText: Supplier<@NlsActions.ActionText String>,
   val icon: Icon,
   val target: @Nls String,
@@ -82,8 +81,7 @@ abstract class DialogAction(
   }
 }
 
-@ApiStatus.Internal
-fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>): List<DialogAction> {
+internal fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>): List<DialogAction> {
   // If module resides on this target, we can't use any target except same target and target types that explicitly allow that
   // example: on ``\\wsl$`` you can only use wsl target and dockers
   val targetModuleSitsOn = when (moduleOrProject) {

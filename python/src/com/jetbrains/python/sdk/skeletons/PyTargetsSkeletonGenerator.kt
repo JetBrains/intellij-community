@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.skeletons
 
 import com.intellij.execution.process.CapturingProcessHandler
@@ -17,8 +17,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.python.community.execService.impl.processLaunchers.uploadMeasureTime
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.python.community.execService.impl.processLaunchers.uploadMeasureTime
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -34,7 +34,7 @@ import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.setPosixFilePermissions
 
-class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, currentFolder: String?, project: Project?) :
+internal class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, currentFolder: String?, project: Project?) :
   PySkeletonGenerator(skeletonPath, pySdk, currentFolder) {
   private val pyRequest: HelpersAwareTargetEnvironmentRequest = checkNotNull(
     // TODO Get rid of the dependency on the default project

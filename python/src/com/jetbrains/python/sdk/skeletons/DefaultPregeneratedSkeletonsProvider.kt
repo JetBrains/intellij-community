@@ -1,8 +1,4 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Converted from Java. Notes on the conversion:
-//  - Static helpers became top-level functions: extension classes registered through extension
-//    points may not carry non-trivial companion objects (lint rule), so they cannot live on the class.
-//  - File I/O migrated from `java.io.File` to `java.nio.file.Path`
 package com.jetbrains.python.sdk.skeletons
 
 import com.google.common.annotations.VisibleForTesting
@@ -16,11 +12,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.community.impl.conda.environment.CondaEnvironment
+import com.intellij.python.sdk.backend.pythonInterpreter
 import com.intellij.util.io.ZipUtil
 import com.jetbrains.python.PyBundle
-import com.intellij.python.community.impl.conda.environment.CondaEnvironment
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.intellij.python.sdk.backend.pythonInterpreter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
@@ -76,7 +72,7 @@ private fun findPregeneratedSkeletonsRoot(): Path? {
 }
 
 @VisibleForTesting
-fun isApplicableZippedSkeletonsFileName(prebuiltSkeletonsName: String, fileName: String): Boolean = try {
+internal fun isApplicableZippedSkeletonsFileName(prebuiltSkeletonsName: String, fileName: String): Boolean = try {
   fileName.matches(Regex(".*$prebuiltSkeletonsName\\.?\\d*\\.zip"))
 }
 catch (_: PatternSyntaxException) {

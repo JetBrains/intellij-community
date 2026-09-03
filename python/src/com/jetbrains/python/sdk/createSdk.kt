@@ -39,8 +39,7 @@ import org.jetbrains.annotations.ApiStatus
  * Request to create a sdk either eel or target-based.
  * Once created, call [createSdk]
  */
-@ApiStatus.Internal
-sealed interface SdkCreationRequest<P, D : SdkAdditionalData> {
+internal sealed interface SdkCreationRequest<P, D : SdkAdditionalData> {
   val path: P
   val data: D
 
@@ -95,8 +94,7 @@ suspend fun createSdk(
 /**
  * Please use [com.jetbrains.python.sdk.add.v2.FileSystem.setupSdk] instead
  */
-@ApiStatus.Internal
-suspend fun SdkCreationRequest<*, *>.createSdk(
+internal suspend fun SdkCreationRequest<*, *>.createSdk(
   suggestedSdkName: String? = null,
   advancedOpts: SdkCreationAdvancedOpts = SdkCreationAdvancedOpts.DEFAULT,
 ): Result<Sdk, MessageError> = createSdkImpl(this, suggestedSdkName, advancedOpts)
