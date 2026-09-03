@@ -54,7 +54,7 @@ class Os private constructor() {
   val isLinux: Boolean
     get() = this.type == Type.Linux
 
-  val linuxDistroId: String?
+  val linuxDistroId: LinuxDistroId?
     get() = if (isLinux) getLinuxDistroId() else null
 
   val isUnix: Boolean
@@ -70,10 +70,16 @@ class Os private constructor() {
   }
 }
 
+// Pair of `ID` and `ID_LIKE` from `/etc/os-release`
+data class LinuxDistroId(
+  val id: String,
+  val idLike: String?,
+)
+
 internal fun getName(): String = linkToActual()
 
 internal fun getVersion(): String = linkToActual()
 
 internal fun getArch(): String = linkToActual()
 
-internal fun getLinuxDistroId(): String? = linkToActual()
+internal fun getLinuxDistroId(): LinuxDistroId? = linkToActual()

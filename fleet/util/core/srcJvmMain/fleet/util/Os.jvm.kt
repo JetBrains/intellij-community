@@ -17,18 +17,18 @@ internal fun getVersionJvm(): String = System.getProperty("os.version").lowercas
 internal fun getArchJvm(): String = System.getProperty("os.arch")
 
 @Actual
-internal fun getLinuxDistroIdJvm(): String? = cachedLinuxDistroId
+internal fun getLinuxDistroIdJvm(): LinuxDistroId? = cachedLinuxDistroId
 
-// Only `ID` is exposed on purpose: `VERSION_ID` is a build stamp on rolling distros, so reporting it would
+// Only `ID` and `ID_LIKE` are exposed on purpose: `VERSION_ID` is a build stamp on rolling distros, so reporting it would
 // fingerprint rather than version.
-private val cachedLinuxDistroId: String? by lazy {
+private val cachedLinuxDistroId: LinuxDistroId? by lazy {
   try {
-    val id = readOsReleaseId()
+    val ids = readOsReleaseId()
     when {
       // MX ships Debian's os-release verbatim, so /etc/lsb-release is the only thing naming it.
-      id == "debian" && isMxLinux() -> "mx"
-      id != null -> id
-      else -> readKeyValueFile(Path.of("/etc/lsb-release"))?.get("DISTRIB_ID")?.lowercase()?.takeIf { it.isNotEmpty() }
+      ids?.id == "debian" && isMxLinux() -> LinuxDistroId("mx", "debian")
+      ids != null -> ids
+      else -> readKeyValueFile(Path.of("/etc/lsb-release"))?.get("DISTRIB_ID")?.lowercase()?.takeIf { it.isNotEmpty() }?.let { LinuxDistroId(it, null) }
     }
   }
   catch (_: Exception) {
@@ -38,11 +38,12 @@ private val cachedLinuxDistroId: String? by lazy {
 
 // Per the os-release spec /etc/os-release must be used exclusively when it exists, even if it turns out to be
 // unreadable or to carry no ID; /usr/lib/os-release is a fallback only for its absence.
-private fun readOsReleaseId(): String? =
-  (readKeyValueFile(Path.of("/etc/os-release")) ?: readKeyValueFile(Path.of("/usr/lib/os-release")))
-    ?.get("ID")
-    ?.lowercase()
-    ?.takeIf { it.isNotEmpty() }
+private fun readOsReleaseId(): LinuxDistroId? {
+  val parsed = (readKeyValueFile(Path.of("/etc/os-release")) ?: readKeyValueFile(Path.of("/usr/lib/os-release"))) ?: return null
+  val id = parsed["ID"]?.lowercase()?.takeIf { it.isNotEmpty() } ?: return null
+  val idLike = parsed["ID_LIKE"]?.lowercase()?.takeIf { it.isNotEmpty() }
+  return LinuxDistroId(id, idLike)
+}
 
 // Same approach as fastfetch: src/detection/os/os_linux.c, "Hack for MX Linux" (fastfetch-cli/fastfetch#847).
 private fun isMxLinux(): Boolean =

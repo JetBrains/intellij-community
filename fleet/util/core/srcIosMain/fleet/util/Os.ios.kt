@@ -19,4 +19,4 @@ internal fun getVersionNative(): String = NSProcessInfo.processInfo.operatingSys
 internal fun getArchNative(): String = Platform.cpuArchitecture.name.lowercase()
 
 @Actual
-internal fun getLinuxDistroIdNative(): String? = null
+internal fun getLinuxDistroIdNative(): LinuxDistroId? = null
