@@ -1,6 +1,5 @@
 package com.intellij.ide.starter.project
 
-import com.intellij.ide.starter.config.Const
 import com.intellij.ide.starter.ide.IDETestContext
 import java.net.URI
 import kotlin.time.Duration

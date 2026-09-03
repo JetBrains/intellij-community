@@ -28,6 +28,7 @@ data class GitProjectInfo(
   /**
    * SSH or HTTPS url.
    * Bear in mind, that it should be either available without authentication or you should have an ssh keys on the machine.
+   * HTTPS is a subject to rate limit.
    */
   val repositoryUrl: String,
 
