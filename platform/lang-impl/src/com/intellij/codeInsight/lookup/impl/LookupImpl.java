@@ -1503,8 +1503,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     ThreadingAssertions.assertEventDispatchThread();
     assert myHidden;
 
+    // set the trace before the markers go away, so that a concurrent reader of the offsets sees it
+    disposeTrace = new Throwable("the lookup was disposed here");
     myOffsets.disposeMarkers();
-    disposeTrace = new Throwable();
     if (LOG.isDebugEnabled()) {
       LOG.debug("Disposing lookup:", disposeTrace);
     }

@@ -7,13 +7,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.function.Supplier;
 
 public final class LookupOffsets implements DocumentListener {
   private static final Logger LOG = Logger.getInstance(LookupOffsets.class);
@@ -21,7 +19,7 @@ public final class LookupOffsets implements DocumentListener {
   private @NotNull String myAdditionalPrefix = "";
 
   private boolean myStableStart;
-  private @Nullable Supplier<String> myStartMarkerDisposeInfo = null;
+  private @Nullable Throwable myStartMarkerDisposeTrace = null;
   private @NotNull RangeMarker myLookupStartMarker;
   private int myRemovedPrefix;
   private @NotNull RangeMarker myLookupOriginalStartMarker;
@@ -45,7 +43,7 @@ public final class LookupOffsets implements DocumentListener {
       int start = calculateStartOffset(0, true);
       myLookupStartMarker.dispose();
       myLookupStartMarker = createLeftGreedyMarker(start);
-      myStartMarkerDisposeInfo = null;
+      myStartMarkerDisposeTrace = null;
     }
 
     if (!myLookupOriginalStartMarker.isValid()) {
@@ -55,10 +53,8 @@ public final class LookupOffsets implements DocumentListener {
       myLookupOriginalStartMarker = createLeftGreedyMarker(start);
     }
     // capture the trace in the case when range marker is still invalid by some reasons
-    if (myStartMarkerDisposeInfo == null && !myLookupStartMarker.isValid()) {
-      Throwable throwable = new Throwable();
-      String eString = e.toString();
-      myStartMarkerDisposeInfo = () -> eString + "\n" + ExceptionUtil.getThrowableText(throwable);
+    if (myStartMarkerDisposeTrace == null && !myLookupStartMarker.isValid()) {
+      myStartMarkerDisposeTrace = new Throwable("the lookup start marker is invalid after " + e);
     }
   }
 
@@ -119,7 +115,7 @@ public final class LookupOffsets implements DocumentListener {
 
     myLookupStartMarker.dispose();
     myLookupStartMarker = createLeftGreedyMarker(start);
-    myStartMarkerDisposeInfo = null;
+    myStartMarkerDisposeTrace = null;
   }
 
   private int calculateStartOffset(int minLookupItemPrefixLength, boolean considerPrefixes) {
@@ -131,14 +127,28 @@ public final class LookupOffsets implements DocumentListener {
     return start;
   }
 
-  int getLookupStart(@Nullable Throwable disposeTrace) {
+  int getLookupStart(@Nullable Throwable lookupDisposeTrace) {
     if (!myLookupStartMarker.isValid()) {
-      throw new AssertionError(
-        "Invalid lookup start: " + myLookupStartMarker + ", " + myEditor +
-        ", disposeTrace=" + (disposeTrace == null ? null : ExceptionUtil.getThrowableText(disposeTrace)) +
-        "\n================\n start dispose trace=" + (myStartMarkerDisposeInfo == null ? null : myStartMarkerDisposeInfo.get()));
+      throw invalidStartError("Invalid lookup start: " + myLookupStartMarker + ", " + myEditor, lookupDisposeTrace);
     }
     return myLookupStartMarker.getStartOffset();
+  }
+
+  /**
+   * Makes the error for an invalid lookup start marker.
+   * The message holds one line. Each trace goes to the suppressed exceptions, because a trace in a message is hard to read.
+   *
+   * @param lookupDisposeTrace the place where the lookup was disposed, or {@code null} if the lookup is alive
+   */
+  private @NotNull AssertionError invalidStartError(@NotNull String message, @Nullable Throwable lookupDisposeTrace) {
+    AssertionError error = new AssertionError(message + " (see the suppressed exceptions)");
+    if (lookupDisposeTrace != null) {
+      error.addSuppressed(lookupDisposeTrace);
+    }
+    if (myStartMarkerDisposeTrace != null) {
+      error.addSuppressed(myStartMarkerDisposeTrace);
+    }
+    return error;
   }
 
   int getLookupOriginalStart() {
@@ -147,8 +157,7 @@ public final class LookupOffsets implements DocumentListener {
 
   boolean performGuardedChange(@NotNull Runnable change) {
     if (!myLookupStartMarker.isValid()) {
-      throw new AssertionError("Invalid start: " + myEditor + ", trace=" + (myStartMarkerDisposeInfo == null ? null : myStartMarkerDisposeInfo
-        .get()));
+      throw invalidStartError("Invalid start: " + myEditor, null);
     }
     change.run();
     return myLookupStartMarker.isValid();
