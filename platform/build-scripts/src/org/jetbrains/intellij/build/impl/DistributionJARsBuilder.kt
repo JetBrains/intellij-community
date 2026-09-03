@@ -166,7 +166,7 @@ internal suspend fun buildDistribution(
           pluginLayouts = coScramblePluginLayouts,
           isUpdateFromSources = isUpdateFromSources,
           // never await platform here (would deadlock); per-plugin scramble runs after platform scramble below
-          buildPlatformJob = CompletableFuture.completedFuture(emptyList<DistributionFileEntry>()),
+          buildPlatformJob = CompletableFuture.completedFuture(emptyList()),
           searchableOptionSetDescriptor = searchableOptionSet,
           descriptorCacheContainer = platformLayout.descriptorCacheContainer,
           context = context,
@@ -218,7 +218,7 @@ internal suspend fun buildDistribution(
         pluginLayouts = remainingPluginLayouts,
         isUpdateFromSources = false,
         // remaining plugins are laid out after platform scramble; per-plugin scramble runs below
-        buildPlatformJob = CompletableFuture.completedFuture(emptyList<DistributionFileEntry>()),
+        buildPlatformJob = CompletableFuture.completedFuture(emptyList()),
         searchableOptionSetDescriptor = searchableOptionSet,
         descriptorCacheContainer = platformLayout.descriptorCacheContainer,
         context = context,
@@ -478,7 +478,7 @@ suspend fun testLayoutBundledPlugins(
     pluginLayouts = pluginLayouts,
     isUpdateFromSources = false,
     // never await platform here (would deadlock)
-    buildPlatformJob = CompletableFuture.completedFuture(emptyList<DistributionFileEntry>()),
+    buildPlatformJob = CompletableFuture.completedFuture(emptyList()),
     searchableOptionSetDescriptor = null,
     descriptorCacheContainer = descriptorCacheContainer,
     context = context,
@@ -820,15 +820,13 @@ internal suspend fun layoutDistribution(
         }
       }
 
+      Files.createDirectories(targetDir)
       // patchers must be executed _before_ packing, because patchers patch the module output
-      fork("prepare $targetDir") {
-        Files.createDirectories(targetDir)
-        val patchers = layout.patchers
-        if (!patchers.isEmpty()) {
-          spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).use {
-            for (patcher in patchers) {
-              patcher(moduleOutputPatcher, platformLayout, context)
-            }
+      val patchers = layout.patchers
+      if (!patchers.isEmpty()) {
+        spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).use {
+          for (patcher in patchers) {
+            patcher(moduleOutputPatcher, platformLayout, context)
           }
         }
       }

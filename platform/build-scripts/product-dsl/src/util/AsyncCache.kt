@@ -106,7 +106,7 @@ private inline fun <V> processPendingEntry(entry: CacheEntry<V>, action: (V) -> 
     action(result.resultNow())
   }
   else {
-    result.cancel(true)
+    result.cancel(false)
   }
 }
 

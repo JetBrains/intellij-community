@@ -51,7 +51,7 @@ val seen = mutableSetOf<String>()
 ## Function Body Style
 
 - **Don't use expression body if the body is multiline** - use block body with explicit `return` instead.
-  Exception: an expression body that is a single `runBlocking(Dispatchers.Default) { ... }` wrapper is allowed.
+  Exception: an expression body that is a single `runBlockingOnVirtualThreads { ... }` wrapper is allowed.
 
 ```kotlin
 // Preferred
@@ -73,7 +73,7 @@ fun process(items: List<Item>): Result =
 Allowed pattern (intentional):
 
 ```text
-fun computeInBackground(): Result = runBlocking(Dispatchers.Default) {
+fun computeInBackground(): Result = runBlockingOnVirtualThreads {
   val value = loadValue()
   transform(value)
 }

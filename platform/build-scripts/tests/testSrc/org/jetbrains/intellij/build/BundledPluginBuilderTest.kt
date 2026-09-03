@@ -18,10 +18,10 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.impl.testBuildBundledPluginsForAllPlatforms
 import org.jetbrains.intellij.build.impl.testLayoutBundledPlugins
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CompletableFuture
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration.Companion.seconds
 
 class BundledPluginBuilderTest {

@@ -131,7 +131,7 @@ class VirtualThreadTasks internal constructor(private val policy: VirtualThreadT
   internal fun cancelAll() {
     cancelRequested = true
     for (future in futures) {
-      future.cancel(true)
+      future.cancel(false)
     }
   }
 
