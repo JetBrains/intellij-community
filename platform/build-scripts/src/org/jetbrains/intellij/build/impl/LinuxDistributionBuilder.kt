@@ -205,7 +205,7 @@ class LinuxDistributionBuilder(
     )
   }
 
-  override suspend fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> {
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> {
     val base = customizer.generateExecutableFilesPatterns(includeRuntime, arch, libc, context)
     val pluginPatterns = collectPluginExecutablePatterns(context, OsFamily.LINUX, arch, libc)
     return base + pluginPatterns

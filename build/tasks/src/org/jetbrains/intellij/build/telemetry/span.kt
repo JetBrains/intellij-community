@@ -55,13 +55,18 @@ suspend inline fun <T> SpanBuilder.use(
 }
 
 /**
+ * The non-suspend twin of [use]. It makes the span current on the calling thread, so a span that [operation] starts
+ * gets this span as its parent.
+ *
  * See [com.intellij.platform.diagnostic.telemetry.helpers.use]
  */
 @Internal
-inline fun <T> SpanBuilder.blockingUse(crossinline operation: (Span) -> T, ): T {
+inline fun <T> SpanBuilder.blockingUse(crossinline operation: (Span) -> T): T {
   return startSpan().useWithoutActiveScope { span ->
     TeamCityBuildMessageLogger.withFlow(span) {
-      operation(span)
+      span.makeCurrent().use {
+        operation(span)
+      }
     }
   }
 }

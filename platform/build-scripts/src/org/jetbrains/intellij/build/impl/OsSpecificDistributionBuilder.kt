@@ -91,9 +91,9 @@ interface OsSpecificDistributionBuilder {
 
   suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path
 
-  suspend fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> = emptySequence()
+  fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> = emptySequence()
 
-  suspend fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl = targetLibcImpl): Map<PathMatcher, String> {
+  fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl = targetLibcImpl): Map<PathMatcher, String> {
     val fileSystem = FileSystems.getDefault()
     return generateExecutableFilesPatterns(includeRuntime, arch, libc)
       .distinct()

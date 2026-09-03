@@ -342,7 +342,7 @@ class MacDistributionBuilder(
     substitutePlaceholdersInInfoPlist(macDistDir, docTypes, arch)
   }
 
-  override suspend fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> {
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> {
     val base = customizer.generateExecutableFilesPatterns(includeRuntime, arch, context)
     val pluginPatterns = collectPluginExecutablePatterns(context, OsFamily.MACOS, arch, libc)
     return base + pluginPatterns

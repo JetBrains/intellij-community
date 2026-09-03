@@ -30,19 +30,19 @@ open class BuildStepTeamCityListener(testInfo: TestInfo) : BuildStepListener() {
     ))
   }
 
-  override suspend fun onStart(stepId: String, messages: BuildMessages) {
+  override fun onStart(stepId: String, messages: BuildMessages) {
     super.onStart(stepId, messages)
     reportTestEvent(ServiceMessageTypes.TEST_STARTED, stepId)
     messages.warning("This test is automatically generated from the build step '$stepId'")
     messages.warning("To run it locally, please invoke '$testName'")
   }
 
-  override suspend fun onSkipping(stepId: String, messages: BuildMessages) {
+  override fun onSkipping(stepId: String, messages: BuildMessages) {
     super.onSkipping(stepId, messages)
     reportTestEvent(ServiceMessageTypes.TEST_IGNORED, stepId)
   }
 
-  override suspend fun onFailure(stepId: String, failure: Throwable, messages: BuildMessages) {
+  override fun onFailure(stepId: String, failure: Throwable, messages: BuildMessages) {
     // no need to throw the build step failure, just reporting it to TeamCity as a test failure,
     // providing an option to mute it without muting the main test
     reportTestEvent(
@@ -52,7 +52,7 @@ open class BuildStepTeamCityListener(testInfo: TestInfo) : BuildStepListener() {
     )
   }
 
-  override suspend fun onCompletion(stepId: String, messages: BuildMessages) {
+  override fun onCompletion(stepId: String, messages: BuildMessages) {
     super.onCompletion(stepId, messages)
     reportTestEvent(testEvent = ServiceMessageTypes.TEST_FINISHED, stepId = stepId)
   }

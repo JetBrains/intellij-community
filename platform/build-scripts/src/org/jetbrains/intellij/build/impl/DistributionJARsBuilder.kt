@@ -58,6 +58,7 @@ import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.intellij.build.productLayout.createPluginLayoutSet
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.virtualThreadTasks
 import org.jetbrains.jps.util.JpsPathUtil
@@ -496,13 +497,14 @@ suspend fun validateModuleStructure(platform: PlatformLayout, context: BuildCont
   }
 }
 
+/** Stays `suspend` because the additional plugin paths come from a suspend member of the product properties. The copy itself blocks on the virtual thread. */
 suspend fun copyAdditionalPlugins(pluginDir: Path, context: BuildContext): List<Pair<Path, List<Path>>>? {
   val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
   if (additionalPluginPaths.isEmpty()) {
     return null
   }
 
-  return spanBuilder("copy additional plugins").use(Dispatchers.IO) {
+  return spanBuilder("copy additional plugins").blockingUse {
     val allEntries = mutableListOf<Pair<Path, List<Path>>>()
     for (sourceDir in additionalPluginPaths) {
       val targetDir = pluginDir.resolve(sourceDir.fileName)

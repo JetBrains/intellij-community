@@ -8,8 +8,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
@@ -206,13 +204,11 @@ private suspend fun generateRepositoryForDistribution(
       errors.joinToString("\n ")
     )
   }
-  withContext(Dispatchers.IO) {
-    saveModuleRepository(
-      descriptors = distDescriptors,
-      pluginHeaders = pluginHeaders,
-      targetDirectory = targetDirectory.resolve(RUNTIME_REPOSITORY_MODULES_DIR_NAME)
-    )
-  }
+  saveModuleRepository(
+    descriptors = distDescriptors,
+    pluginHeaders = pluginHeaders,
+    targetDirectory = targetDirectory.resolve(RUNTIME_REPOSITORY_MODULES_DIR_NAME)
+  )
 }
 
 /**

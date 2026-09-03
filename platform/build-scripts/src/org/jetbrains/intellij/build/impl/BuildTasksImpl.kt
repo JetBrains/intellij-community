@@ -41,6 +41,7 @@ import org.jetbrains.intellij.build.VirtualThreadTaskPolicy
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.add64IfNeeded
+import org.jetbrains.intellij.build.blockingExecuteStep
 import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.executeStep
@@ -68,6 +69,7 @@ import org.jetbrains.intellij.build.isLanguageServer
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.virtualThreadTasks
 import org.jetbrains.intellij.build.zipSourcesOfModules
@@ -259,8 +261,8 @@ private fun findBrandingResource(relativePath: String, context: BuildContext): P
   )
 }
 
-suspend fun updateExecutablePermissions(destinationDir: Path, executableFilesMatchers: Collection<PathMatcher>) {
-  spanBuilder("update executable permissions").setAttribute("dir", "$destinationDir").use(Dispatchers.IO) {
+fun updateExecutablePermissions(destinationDir: Path, executableFilesMatchers: Collection<PathMatcher>) {
+  spanBuilder("update executable permissions").setAttribute("dir", "$destinationDir").blockingUse {
     val executable = EnumSet.of(
       PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
       PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
@@ -371,7 +373,7 @@ private fun checkProjectLibraries(names: Collection<String>, fieldName: String, 
   }
 }
 
-private suspend fun buildSourcesArchive(contentReport: ContentReport, context: BuildContext) {
+private fun buildSourcesArchive(contentReport: ContentReport, context: BuildContext) {
   val productProperties = context.productProperties
   val archiveName = "${productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)}-sources.zip"
   val openSourceModules = getIncludedModules(contentReport.bundled()).filter { moduleName ->
@@ -517,7 +519,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
 }
 
 @Suppress("DEPRECATION")
-private suspend fun checkProductProperties(context: BuildContext) {
+private fun checkProductProperties(context: BuildContext) {
   checkProductLayout(context)
 
   val properties = context.productProperties
@@ -579,7 +581,7 @@ private suspend fun checkProductProperties(context: BuildContext) {
       listOfNotNull(macCustomizer.icnsPathForAlternativeIconForEAP),
       "productProperties.macCustomizer.icnsPathForAlternativeIconForEAP"
     )
-    context.executeStep(spanBuilder("check .dmg images"), BuildOptions.MAC_DMG_STEP) {
+    context.blockingExecuteStep(spanBuilder("check .dmg images"), BuildOptions.MAC_DMG_STEP) {
       checkPaths(listOfNotNull(macCustomizer.dmgImagePath), "productProperties.macCustomizer.dmgImagePath")
       checkPaths(listOfNotNull(macCustomizer.dmgImagePathForEAP), "productProperties.macCustomizer.dmgImagePathForEAP")
     }
@@ -942,7 +944,7 @@ internal fun getLinuxFrameClass(context: BuildContext): String {
   return if (name.startsWith("jetbrains-")) name else "jetbrains-$name"
 }
 
-private suspend fun crossPlatformZip(
+private fun crossPlatformZip(
   distResults: List<DistributionForOsTaskResult>,
   targetFile: Path,
   productJson: String,
@@ -1131,9 +1133,9 @@ private suspend fun lookForJunkFiles(context: BuildContext, paths: List<Path>) {
   val junk = CollectionFactory.createCaseInsensitiveStringSet(setOf("__MACOSX", ".DS_Store"))
   val result = Collections.synchronizedSet(mutableSetOf<Path>())
 
-  withContext(Dispatchers.IO + CoroutineName("Looking for junk files")) {
+  virtualThreadTasks {
     for (file in paths) {
-      launch {
+      fork("look for junk files in $file") {
         Files.walk(file).use { stream ->
           stream.forEach { path ->
             if (path.fileName.toString() in junk) {
@@ -1180,8 +1182,8 @@ internal suspend fun buildAdditionalAuthoringArtifacts(productRunner: IntellijPr
   }
 }
 
-internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext) {
-  spanBuilder("update last modified time").setAttribute("dir", directory.toString()).use(Dispatchers.IO) {
+internal fun setLastModifiedTime(directory: Path, context: BuildContext) {
+  spanBuilder("update last modified time").setAttribute("dir", directory.toString()).blockingUse {
     val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
     Files.walkFileTree(directory, object : SimpleFileVisitor<Path>() {
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {

@@ -8,13 +8,10 @@ import com.intellij.util.io.DigestUtil.sha1
 import com.intellij.util.io.DigestUtil.sha256
 import com.intellij.util.io.DigestUtil.sha512
 import com.intellij.util.io.bytesToHex
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -48,35 +45,33 @@ class Checksums private constructor(
   val md5sum: String get() = results.getValue(Algorithm.MD5)
 
   companion object {
-    suspend fun compute(file: Path, vararg algorithms: Algorithm = arrayOf(Algorithm.SHA1, Algorithm.SHA256)): Checksums {
+    fun compute(file: Path, vararg algorithms: Algorithm = arrayOf(Algorithm.SHA1, Algorithm.SHA256)): Checksums {
       require(algorithms.any())
-      return withContext(Dispatchers.IO + CoroutineName("checksums for $file")) {
-        val digests = algorithms.associateWith { it.newDigest() }
-        val buffer = ByteArray(512 * 1024)
-        Files.newInputStream(file).use { input ->
-          while (true) {
-            val sz = input.read(buffer)
-            if (sz <= 0) {
-              break
-            }
-            for (digest in digests.values) {
-              digest.update(buffer, 0, sz)
-            }
+      val digests = algorithms.associateWith { it.newDigest() }
+      val buffer = ByteArray(512 * 1024)
+      Files.newInputStream(file).use { input ->
+        while (true) {
+          val sz = input.read(buffer)
+          if (sz <= 0) {
+            break
           }
-          Checksums(
-            path = file,
-            results = digests.mapValues { entry ->
-              bytesToHex(entry.value.digest())
-            },
-          )
+          for (digest in digests.values) {
+            digest.update(buffer, 0, sz)
+          }
         }
       }
+      return Checksums(
+        path = file,
+        results = digests.mapValues { entry ->
+          bytesToHex(entry.value.digest())
+        },
+      )
     }
   }
 
-  suspend fun verifyOrWriteChecksumFile(algorithm: Algorithm, withFileName: Boolean = true): Path {
+  fun verifyOrWriteChecksumFile(algorithm: Algorithm, withFileName: Boolean = true): Path {
     val extension = algorithm.name.lowercase()
-    return spanBuilder("checksum").setAttribute("file", "$path").setAttribute("extension", extension).use {
+    return spanBuilder("checksum").setAttribute("file", "$path").setAttribute("extension", extension).blockingUse {
       val checksum = getChecksumValue(algorithm)
       val checksumFile = path.resolveSibling("${path.name}.$extension")
       if (Files.exists(checksumFile)) {

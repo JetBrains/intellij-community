@@ -11,11 +11,11 @@ import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_P
  */
 @ApiStatus.Internal
 open class BuildStepListener {
-  open suspend fun onStart(stepId: String, messages: BuildMessages) {}
+  open fun onStart(stepId: String, messages: BuildMessages) {}
 
-  open suspend fun onSkipping(stepId: String, messages: BuildMessages) {}
+  open fun onSkipping(stepId: String, messages: BuildMessages) {}
 
-  open suspend fun onFailure(stepId: String, failure: Throwable, messages: BuildMessages) {
+  open fun onFailure(stepId: String, failure: Throwable, messages: BuildMessages) {
     val description = buildString {
       append("'$stepId' build step failed")
       append(" (Please don't mute this problem!") // mute scope may be too broad muting similar failures in other build configuration
@@ -26,5 +26,5 @@ open class BuildStepListener {
     messages.reportBuildProblem(description = description, identity = stepId)
   }
 
-  open suspend fun onCompletion(stepId: String, messages: BuildMessages) {}
+  open fun onCompletion(stepId: String, messages: BuildMessages) {}
 }

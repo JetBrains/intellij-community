@@ -79,7 +79,7 @@ internal class ModuleOutputZipFilePoolTest {
   }
 
   @Test
-  fun `uncached lookup loads on the IO dispatcher`() {
+  fun `uncached lookup loads on the dispatcher of the caller`() {
     val file = Path.of("module-output.zip")
     val entryPath = "META-INF/plugin.xml"
     val expectedData = "<idea-plugin/>".encodeToByteArray()
@@ -95,7 +95,7 @@ internal class ModuleOutputZipFilePoolTest {
       )
 
       assertThat(pool.getData(file, entryPath)).isEqualTo(expectedData)
-      assertThat(loaderInterceptor.await()).isSameAs(Dispatchers.IO)
+      assertThat(loaderInterceptor.await()).isSameAs(Dispatchers.Default)
     }
   }
 

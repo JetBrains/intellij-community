@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.impl.DistributionBuilderState
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
@@ -219,6 +220,41 @@ suspend inline fun <T> CompilationContext.executeStep(
   crossinline step: suspend CoroutineScope.(Span) -> T,
 ): T? {
   return spanBuilder.use(coroutineContext) { span ->
+    try {
+      options.buildStepListener.onStart(stepId, messages)
+      if (isStepSkipped(stepId)) {
+        span.addEvent("skip '$stepId' step")
+        options.buildStepListener.onSkipping(stepId, messages)
+        null
+      }
+      else {
+        step(span)
+      }
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      span.recordException(e)
+      options.buildStepListener.onFailure(stepId, e, messages)
+      null
+    }
+    finally {
+      options.buildStepListener.onCompletion(stepId, messages)
+    }
+  }
+}
+
+/**
+ * The non-suspend twin of [executeStep] for a step that only blocks. The step runs on the calling thread, which is
+ * a virtual thread in a build.
+ */
+inline fun <T> CompilationContext.blockingExecuteStep(
+  spanBuilder: SpanBuilder,
+  stepId: String,
+  crossinline step: (Span) -> T,
+): T? {
+  return spanBuilder.blockingUse { span ->
     try {
       options.buildStepListener.onStart(stepId, messages)
       if (isStepSkipped(stepId)) {

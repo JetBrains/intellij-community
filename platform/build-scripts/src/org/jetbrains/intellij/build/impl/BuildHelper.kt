@@ -18,7 +18,7 @@ import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.function.Predicate
@@ -59,10 +59,10 @@ fun copyDirWithFileFilter(fromDir: Path, targetDir: Path, fileFilter: Predicate<
   return copyDir(sourceDir = fromDir, targetDir = targetDir, fileFilter = fileFilter)
 }
 
-suspend fun zip(targetFile: Path, dir: Path, context: CompilationContext) {
+fun zip(targetFile: Path, dir: Path, context: CompilationContext) {
   spanBuilder("pack")
     .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
-    .use {
+    .blockingUse {
       org.jetbrains.intellij.build.io.zipWithPackageIndex(targetFile = targetFile, dir = dir)
     }
 }

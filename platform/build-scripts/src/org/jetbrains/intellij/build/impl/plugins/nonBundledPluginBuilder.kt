@@ -53,6 +53,7 @@ import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
 import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.virtualThreadTasks
 import tools.jackson.jr.ob.JSON
@@ -297,7 +298,7 @@ private fun satisfiesOsArchRestrictions(plugin: PluginLayout, osFamily: OsFamily
   }
 }
 
-private suspend fun archivePlugin(
+private fun archivePlugin(
   source: Path,
   target: Path,
   compress: Boolean,
@@ -310,11 +311,11 @@ private suspend fun archivePlugin(
     .setAttribute("input", source.toString())
     .setAttribute("outputFile", target.toString())
     .setAttribute("optimizedZip", optimizedZip)
-    .use {
+    .blockingUse {
       archivePlugin(optimized = optimizedZip, target = target, compress = compress, source = source, context = context)
     }
   if (withBlockMap) {
-    spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).use {
+    spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).blockingUse {
       buildBlockMap(target, json.value)
     }
   }

@@ -6,11 +6,9 @@ import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.lang.ZipFile
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import java.io.IOException
@@ -30,7 +28,7 @@ import kotlin.time.Duration.Companion.minutes
 class ModuleOutputZipFilePool(
   scope: CoroutineScope?,
   private val cacheReadTimeout: Duration = 2.minutes,
-  private val zipFileLoader: suspend (Path) -> ZipFile? = ::loadZipFile,
+  private val zipFileLoader: suspend (Path) -> ZipFile? = { loadZipFile(it) },
 ) {
   private val cache: AsyncCache<Path, ZipFile?>? = scope?.let {
     AsyncCache<Path, ZipFile?>().also { cache ->
@@ -42,12 +40,11 @@ class ModuleOutputZipFilePool(
 
   suspend fun getData(file: Path, entryPath: String): ByteArray? {
     try {
-      // `AsyncCache` runs the load on a virtual thread, so the caller's dispatcher plays no part
+      // `AsyncCache` runs the load on a virtual thread. Without a cache the load runs inline, and a build caller is
+      // on a virtual thread too.
       return withTimeout(cacheReadTimeout) {
         if (cache == null) {
-          withContext(Dispatchers.IO) {
-            zipFileLoader(file)?.use { it.getData(entryPath) }
-          }
+          zipFileLoader(file)?.use { it.getData(entryPath) }
         }
         else {
           cache.getOrPut(file) { zipFileLoader(file) }?.getData(entryPath)
@@ -76,17 +73,15 @@ class ModuleOutputZipFilePool(
   }
 
   private companion object {
-    suspend fun loadZipFile(file: Path): ZipFile? {
-      return withContext(Dispatchers.IO) {
-        try {
-          ImmutableZipFile.load(file)
+    fun loadZipFile(file: Path): ZipFile? {
+      try {
+        return ImmutableZipFile.load(file)
+      }
+      catch (e: IOException) {
+        if (Files.notExists(file)) {
+          return null
         }
-        catch (e: IOException) {
-          if (Files.notExists(file)) {
-            return@withContext null
-          }
-          throw e
-        }
+        throw e
       }
     }
   }
