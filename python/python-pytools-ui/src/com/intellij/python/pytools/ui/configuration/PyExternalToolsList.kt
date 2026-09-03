@@ -46,7 +46,10 @@ internal interface RowHost {
   fun isUpgradeAvailable(row: ToolRow): Boolean
   /** The version an Upgrade would move [row] to, when known. */
   fun upgradeTargetVersion(row: ToolRow): String?
-  /** Ensure background state (path/version probe) is fresh for a row the user just expanded. */
+  /**
+   * The user just expanded [row]. The host collapses every other row, then makes sure the background
+   * state (the path and version probe) is fresh.
+   */
   fun onRowExpanded(row: ToolRow)
   fun browsePath(row: ToolRow)
   fun installOnPath(row: ToolRow)
@@ -172,6 +175,8 @@ internal class PyExternalToolsList(
   override fun upgradeTargetVersion(row: ToolRow): String? = uv.latestVersionFor(row)
 
   override fun onRowExpanded(row: ToolRow) {
+    // Keep one row open at a time. Many open rows make the page hard to read.
+    rowPanels.forEach { (other, panel) -> if (other !== row) panel.collapse() }
     probeRow(row)
   }
 

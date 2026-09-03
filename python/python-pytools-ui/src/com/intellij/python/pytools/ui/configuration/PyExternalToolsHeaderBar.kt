@@ -45,12 +45,12 @@ internal fun buildHeaderBar(): JComponent {
     // Don't index "Tool" / "Lookup" as global Settings search hits — they describe layout, not options.
     ClientProperty.put(this, SearchUtil.SEARCH_SKIP_COMPONENT_KEY, true)
     add(HeaderText(PyToolsUiBundle.message("settings.external.tools.column.name")), BorderLayout.WEST)
-    // Mirror each row's right side so the caption's right edge lines up with the chain's right edge,
-    // just left of the toggle column.
+    // Mirror each row's right side so the caption's left edge lines up with the chain's first step.
     val right = JPanel().apply {
       isOpaque = false
       layout = BoxLayout(this, BoxLayout.X_AXIS)
-      add(HeaderText(PyToolsUiBundle.message("settings.external.tools.column.mode")))
+      add(minWidthPanel(chainColumnWidth(),
+                        HeaderText(PyToolsUiBundle.message("settings.external.tools.column.mode"))))
       add(Box.createHorizontalStrut(columnGap()))
       add(Box.createHorizontalStrut(toggleColumnWidth()))
     }

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.OnOffButton
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -17,16 +18,40 @@ import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.UIManager
+import kotlin.math.max
 
 /**
  * Shared column geometry so the "Lookup" caption in the header bar lines up with the lookup-chain
- * text in every row: both lay their right side out as `[chain][gap][toggle column]`, right-anchored,
- * so the chain and caption share a right edge a fixed [columnGap] from the toggle regardless of the
- * chain's length.
+ * text in every row: both lay their right side out as `[chain column][gap][toggle column]`,
+ * right-anchored, and both put their text at the **left** edge of the chain column. The caption
+ * therefore stands directly above the chain's first step in every row.
  */
-internal fun toggleColumnWidth(): Int = JBUI.scale(64)
+internal fun toggleColumnWidth(): Int = OnOffButton().preferredSize.width
 
 internal fun columnGap(): Int = JBUI.scale(12)
+
+/**
+ * Width of the lookup-chain column: the width of a chain with no `(matched/total)` environment
+ * count, which is what a single-environment project shows. The measurement renders the real chain
+ * HTML for each possible bold step and takes the widest, so a translated label and the bold active
+ * step both count.
+ *
+ * The column is a **minimum**, not a clamp — see [minWidthPanel]. A project with several
+ * environments adds the count to every row, so those rows grow by the same amount and stay aligned
+ * with each other. Only the header caption then sits a little right of the chain's first step.
+ */
+internal fun chainColumnWidth(): Int {
+  // One variant per bold step: the active step is the first that resolves, so vary which one does.
+  val variants = listOf(
+    Triple(ChainStepStatus.FOUND, ChainStepStatus.FOUND, ChainStepStatus.FOUND),
+    Triple(ChainStepStatus.NOT_FOUND, ChainStepStatus.FOUND, ChainStepStatus.FOUND),
+    Triple(ChainStepStatus.NOT_FOUND, ChainStepStatus.NOT_FOUND, ChainStepStatus.FOUND),
+  )
+  return variants.maxOf { (sdk, path, uvx) ->
+    val html = lookupChainHtml(sdkStatus = sdk, sdkMatched = 1, sdkTotal = 1, pathStatus = path, uvxStatus = uvx)
+    JBLabel(html).preferredSize.width
+  }
+}
 
 /**
  * Tooltip for the executable path label: the full path, the probed version, a below-minimum-version
@@ -85,6 +110,27 @@ internal fun checkNoPathErrors(rows: List<ToolRow>) {
     PyToolsUiBundle.message("settings.external.tools.path.apply.error", invalid.tool.presentableName, invalid.pathError!!)
   )
 }
+
+/**
+ * Wrap [comp] in a left-anchored panel at least [width] wide, which grows when [comp] needs more.
+ * Holds a column's left edge steady without ever clipping longer content.
+ */
+internal fun minWidthPanel(width: Int, comp: JComponent): JComponent =
+  object : JPanel(BorderLayout()) {
+    init {
+      isOpaque = false
+      add(comp, BorderLayout.WEST)
+    }
+
+    override fun getMinimumSize(): Dimension = Dimension(width, super.getMinimumSize().height)
+
+    override fun getPreferredSize(): Dimension {
+      val preferred = super.getPreferredSize()
+      return Dimension(max(width, preferred.width), preferred.height)
+    }
+    // The maximum size stays unbounded on purpose. A caller lays this panel out in a BoxLayout row
+    // of a fixed height, and the content must stretch to that height to centre itself in it.
+  }
 
 /** Wrap [comp] in a panel pinned to [width], anchored (WEST by default) within that width. */
 internal fun fixedWidthPanel(width: Int, comp: JComponent, anchor: String = BorderLayout.WEST): JComponent =

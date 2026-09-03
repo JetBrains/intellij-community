@@ -92,8 +92,8 @@ internal class PyExternalToolRowPanel(
   private val detailHolder = JPanel(BorderLayout())
   private val sdkSectionHolder = JPanel(BorderLayout())
   private val pathSectionHolder = JPanel(BorderLayout())
-  private val body = JPanel(VerticalLayout(JBUI.scale(6))).apply {
-    border = JBUI.Borders.empty(0, JBUI.scale(28), JBUI.scale(6), JBUI.scale(8))
+  private val body = JPanel(VerticalLayout(6)).apply {
+    border = JBUI.Borders.empty(0, 28, 10, 8)
     isVisible = false
     add(detailHolder)
     add(sdkSectionHolder)
@@ -121,18 +121,20 @@ internal class PyExternalToolRowPanel(
       add(summaryLabel)
       add(Box.createHorizontalGlue())
     }
-    // Right side, mirroring the header bar: the chain sits at its natural width immediately left of
-    // the fixed toggle column, so its right edge is a constant small gap from the toggle regardless
-    // of the chain's length (with or without the "(m/n)" env count).
+    // Right side, mirroring the header bar: the chain sits left-anchored in a fixed chain column,
+    // so its first step starts at a constant x and the header's "Lookup" caption stands above it,
+    // with or without the "(m/n)" env count.
     val rightCluster = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.X_AXIS)
       isOpaque = false
-      add(chainLabel)
+      add(minWidthPanel(chainColumnWidth(), chainLabel))
       add(Box.createHorizontalStrut(columnGap()))
       add(fixedWidthPanel(toggleColumnWidth(), toggle, BorderLayout.EAST))
     }
     val header = JPanel(BorderLayout()).apply {
-      border = JBUI.Borders.empty(6, 8)
+      // The toggle carries its own internal padding and sets the row height. Keep this inset
+      // small, or the row grows far past the single text line it shows.
+      border = JBUI.Borders.empty(2, 8)
       isOpaque = false
       add(leftCluster, BorderLayout.CENTER)
       add(rightCluster, BorderLayout.EAST)
@@ -150,6 +152,11 @@ internal class PyExternalToolRowPanel(
   }
 
   // ---------- Expand / collapse ----------
+
+  /** Collapse this row. The list calls it to keep one row expanded at a time. */
+  fun collapse() {
+    setExpanded(false)
+  }
 
   private fun setExpanded(value: Boolean) {
     if (expanded == value) return
@@ -229,7 +236,7 @@ internal class PyExternalToolRowPanel(
       sdkSectionHolder.isVisible = false
       return
     }
-    val entries = JPanel(VerticalLayout(JBUI.scale(2)))
+    val entries = JPanel(VerticalLayout(2))
     avail.entries.forEach { entries.add(sdkEntryLine(it)) }
     sdkSectionHolder.add(sectionLabel(PyToolsUiBundle.message("settings.external.tools.body.env")), BorderLayout.WEST)
     sdkSectionHolder.add(entries, BorderLayout.CENTER)
@@ -331,7 +338,7 @@ internal class PyExternalToolRowPanel(
 
   private fun sectionLabel(@NlsSafe text: String): JComponent = JBLabel(text).apply {
     verticalAlignment = SwingConstants.TOP
-    border = JBUI.Borders.emptyRight(JBUI.scale(8))
+    border = JBUI.Borders.emptyRight(8)
     preferredSize = Dimension(JBUI.scale(52), preferredSize.height)
     minimumSize = preferredSize
   }

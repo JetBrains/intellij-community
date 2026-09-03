@@ -33,8 +33,12 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.Scrollable
 
-/** Fixed width of the Tool column, shared by the header caption and every row so they line up. */
-internal fun pmToolColumnWidth(): Int = JBUI.scale(180)
+/**
+ * Fixed width of the Tool column, shared by the header caption and every row so they line up.
+ * The column holds an icon, a gap, and a bold manager name. Today's longest name leaves room to
+ * spare at this width, and the Path column starts closer to the names.
+ */
+internal fun pmToolColumnWidth(): Int = JBUI.scale(120)
 
 /** Callbacks a [PyPackageManagerRowPanel] needs from its owning list. */
 internal interface PmHost {
