@@ -5,6 +5,7 @@ import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
@@ -115,9 +116,15 @@ class TaskScopeTest {
   fun `a second failure is attached as suppressed under fail fast`() {
     assertThatThrownBy {
       runBlocking {
+        val secondStarted = CompletableDeferred<Unit>()
         taskScope {
-          fork("first") { throw IllegalStateException("first") }
+          fork("first") {
+            // a fork that is cancelled before it starts has no failure of its own, so the first failure waits for the second body
+            secondStarted.await()
+            throw IllegalStateException("first")
+          }
           fork("second") {
+            secondStarted.complete(Unit)
             // a blocking body does not see the cancel, so its own failure is kept
             Thread.sleep(100)
             throw IllegalArgumentException("second")
