@@ -11,7 +11,9 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.wm.IdeFrame
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Allows querying project init state
@@ -76,10 +78,19 @@ class HeadlessProjectFrameAllocator : ProjectFrameAllocator {
 }
 
 private val IDE_FRAME_DEFERRED_KEY = Key.create<CompletableDeferred<IdeFrame?>>("Project.IdeFrameDeferred")
+private val POST_OPEN_EDITORS_DEFERRED_KEY = Key.create<CompletableDeferred<Unit>>("Project.PostOpenEditorsDeferred")
 
 internal fun Project.getOrCreateIdeFrameDeferred(): CompletableDeferred<IdeFrame?> {
-  val newDeferred = CompletableDeferred<IdeFrame?>()
-  val actualDeferred = (this as UserDataHolderEx).putUserDataIfAbsent(IDE_FRAME_DEFERRED_KEY, newDeferred)
+  return getOrCreateDeferred(IDE_FRAME_DEFERRED_KEY)
+}
+
+internal fun Project.getOrCreatePostOpenEditorsDeferred(): CompletableDeferred<Unit> {
+  return getOrCreateDeferred(POST_OPEN_EDITORS_DEFERRED_KEY)
+}
+
+private fun <T> Project.getOrCreateDeferred(key: Key<CompletableDeferred<T>>): CompletableDeferred<T> {
+  val newDeferred = CompletableDeferred<T>()
+  val actualDeferred = (this as UserDataHolderEx).putUserDataIfAbsent(key, newDeferred)
   if (newDeferred === actualDeferred) {
     this.whenDisposedOrNow {
       if (!newDeferred.isCompleted) {
@@ -89,3 +100,12 @@ internal fun Project.getOrCreateIdeFrameDeferred(): CompletableDeferred<IdeFrame
   }
   return actualDeferred
 }
+
+/**
+ * Work includes the empty editor state presentation and the [Project] view focus restore.
+ *
+ * @return `null` when the [Project] was opened without a frame
+ */
+@TestOnly
+@Internal
+fun Project.getPostOpenEditorsDeferred(): Deferred<Unit>? = getUserData(POST_OPEN_EDITORS_DEFERRED_KEY)

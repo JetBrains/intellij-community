@@ -136,6 +136,7 @@ internal class IdeProjectFrameAllocator(
   private val deferredProjectFrameHelper = CompletableDeferred<IdeProjectFrameHelper>()
 
   override suspend fun preInitProject(project: Project) {
+    project.getOrCreatePostOpenEditorsDeferred()
     (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob?.join()
   }
 
@@ -296,6 +297,7 @@ internal class IdeProjectFrameAllocator(
               // `postOpenEditors` never ran, or never reached its own release
               releaseStartupEmptyStatePresentationHold(project)
             }
+            project.getOrCreatePostOpenEditorsDeferred().complete(Unit)
           }
         }
       }
