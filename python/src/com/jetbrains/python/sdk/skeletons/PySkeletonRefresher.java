@@ -122,8 +122,6 @@ public final class PySkeletonRefresher {
       throw new InvalidSdkException(PyBundle.message("sdk.gen.cannot.create.skeleton.dir", mySdk.getHomePath()), e);
     }
 
-    mySkeletonsGenerator.prepare();
-
     myGeneratorVersion = readGeneratorVersion();
 
     final PyPregeneratedSkeletons preGeneratedSkeletons =
@@ -233,7 +231,6 @@ public final class PySkeletonRefresher {
       .commandBuilder()
       .extraSysPath(getExtraSyspath())
       .runGeneration(myIndicator);
-    finishSkeletonsGeneration();
     LOG.info("Rebuilding skeletons for binaries took " + (System.currentTimeMillis() - startTime) + " ms");
     return result;
   }
@@ -322,11 +319,6 @@ public final class PySkeletonRefresher {
       return false;
     }
   }
-
-  private void finishSkeletonsGeneration() {
-    mySkeletonsGenerator.finishSkeletonsGeneration();
-  }
-
 
   private List<String> getExtraSyspath() {
     if (myExtraSyspath == null) {

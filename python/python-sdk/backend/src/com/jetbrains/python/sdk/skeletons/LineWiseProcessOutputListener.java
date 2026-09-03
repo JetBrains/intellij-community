@@ -9,7 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public interface LineWiseProcessOutputListener {
-  class Adapter extends ProcessAdapter {
+  final class Adapter extends ProcessAdapter {
     private final StringBuilder myStdoutLine = new StringBuilder();
     private final StringBuilder myStderrLine = new StringBuilder();
     private final LineWiseProcessOutputListener myListener;

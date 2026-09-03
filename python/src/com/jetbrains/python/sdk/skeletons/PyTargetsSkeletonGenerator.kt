@@ -24,7 +24,6 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import com.jetbrains.python.sdk.InvalidSdkException
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
 import java.nio.file.Files
@@ -65,9 +64,6 @@ internal class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, curren
    */
   private inner class TargetedBuilder(private val sdk: Sdk, private val skeletonsLocalRootPath: Path) : Builder() {
     override fun runProcessWithLineOutputListener(listener: LineWiseProcessOutputListener): ProcessOutput = doRunProcess(listener)
-
-    @Throws(InvalidSdkException::class)
-    override fun runProcess(): ProcessOutput = doRunProcess(listener = null)
 
     private fun doRunProcess(listener: LineWiseProcessOutputListener?): ProcessOutput {
       val generatorScriptExecution = prepareHelperScriptExecution(

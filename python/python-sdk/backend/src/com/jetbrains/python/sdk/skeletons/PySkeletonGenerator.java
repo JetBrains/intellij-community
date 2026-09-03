@@ -8,7 +8,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,65 +21,26 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
- * This class serves two purposes. First, it's a wrapper around "generator3" helper script
- * that is used to generate stub ".py" definitions for binary modules. The wrapper helps to
- * launch it using multitude of existing options (see {@link #commandBuilder()}), communicate
- * with a running generator instance and interpret its results. Second, it's an extension
- * necessary to customize generation steps for various interpreter flavors supported in PyCharm,
- * first of all, remote ones (see {@link com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory} EP).
+ * This class is a wrapper around the "generator3" helper script.
+ * The script generates a stub ".py" definition for a binary module.
+ * The wrapper starts the script with the options that {@link #commandBuilder()} provides.
+ * It also communicates with the running script and reads its results.
  * <p>
- * Conceptually there are two distinct modes for launching the generator:
- * <ul>
- * <li>In the main mode it actually produces stubs for binaries either explicitly specified or
- * automatically discovered in {@code sys.path}. As generation goes it communicates with
- * the IDE in JSON chunks containing progress indication, log messages and intermediate results, e.g.
- * <p>{@code {"type": "progress", "text": "_hashlib", "fraction": 0.2, "minor": true}}</p>
- * or
- * <p>{"type": "generation_result", "module_origin": "/usr/lib/python2.7/lib-dynload/_hashlib.so", "module_name": "_hashlib", "generation_status": "GENERATED"}</p>
- * <p>
- * To fully support this mode with real-time progress indication all inheritors must support
- * reading process' stdout/stderr interactively line by line by implementing
- * {@link #runProcessWithLineOutputListener(String, List, Map, String, int, LineWiseProcessOutputListener)}.
- * The provided {@link LineWiseProcessOutputListener} will handle all the service lines written to stdout.
- * <p>
- * Example of generator invocation in the main mode:
+ * Example of a generator call:
  * <pre>
  * {@code
- * new PySkeletonGenerator(skeletonsPath, sdk, workingDir)
+ * refresher.getGenerator()
  *     .commandBuilder()
  *     // customize command line options and environment
  *     .runGeneration(progressIndicator)
  * }
  * </pre>
- * </li>
- * <li>
- * The second mode is intended for all the other commands supported by the script but not directly related to generation, e.g.
- * listing source files found in {@code sys.path} and zipping them in an archive (which is used by some remote interpreters).
- * These commands normally don't use any special service commands and don't have intermediate results, therefore one can
- * simply run them as:
- * <pre>
- * {@code
- * new PySkeletonGenerator(skeletonsPath, sdk, workingDir)
- *     .commandBuilder()
- *     // customize command line options and environment
- *     .runProcess()
- * }
- * and manually interpret process' output and exit code as needed.
- * </pre>
- * </li>
  *
  * @see Builder
  */
@@ -114,73 +74,6 @@ public abstract class PySkeletonGenerator {
   }
 
   public abstract @NotNull Builder commandBuilder();
-
-
-  /**
-   * Builder object serving as a facade for the command-line interface of the generator,
-   * allowing to additionally customize how it's going to be launched and performing the
-   * default initialization before the run.
-   */
-  public abstract class Builder {
-    protected final List<String> myExtraSysPath = new ArrayList<>();
-    protected final List<String> myExtraArgs = new ArrayList<>();
-    protected String myWorkingDir;
-    protected String myTargetModuleName;
-    protected String myTargetModulePath;
-    protected boolean myPrebuilt = false;
-    protected int myTimeout;
-    protected String myStdin;
-
-    protected Builder() {
-    }
-
-    public @NotNull Builder extraSysPath(@NotNull List<String> roots) {
-      myExtraSysPath.addAll(roots);
-      return this;
-    }
-
-    public @NotNull Builder extraArgs(@NotNull List<String> args) {
-      myExtraArgs.addAll(args);
-      return this;
-    }
-
-    public @NotNull Builder extraArgs(String @NotNull ... args) {
-      return extraArgs(Arrays.asList(args));
-    }
-
-    public @NotNull Builder workingDir(@NotNull String path) {
-      myWorkingDir = path;
-      return this;
-    }
-
-    public @NotNull Builder inPrebuildingMode() {
-      myPrebuilt = true;
-      return this;
-    }
-
-    public @NotNull Builder targetModule(@NotNull String name, @Nullable String path) {
-      myTargetModuleName = name;
-      myTargetModulePath = path;
-      return this;
-    }
-
-    public @Nullable String getStdin() {
-      return myStdin;
-    }
-
-    public int getTimeout(int defaultTimeout) {
-      return myTimeout > 0 ? myTimeout : defaultTimeout;
-    }
-
-    public abstract @NotNull ProcessOutput runProcess() throws InvalidSdkException;
-
-    public @NotNull List<GenerationResult> runGeneration(@Nullable ProgressIndicator indicator) throws InvalidSdkException, ExecutionException {
-      return PySkeletonGenerator.this.runGeneration(this, indicator);
-    }
-
-    public abstract @NotNull ProcessOutput runProcessWithLineOutputListener(@NotNull LineWiseProcessOutputListener listener)
-      throws InvalidSdkException, ExecutionException;
-  }
 
   protected @NotNull List<GenerationResult> runGeneration(@NotNull Builder builder, @Nullable ProgressIndicator indicator)
     throws InvalidSdkException, ExecutionException {
@@ -246,18 +139,68 @@ public abstract class PySkeletonGenerator {
     return results;
   }
 
-  public void finishSkeletonsGeneration() {
-  }
+  /**
+   * @return true if the binary module {@code name} is present for this SDK.
+   */
+  public abstract boolean exists(@NotNull String name);
 
-  public boolean exists(final @NotNull String name) {
-    return new File(name).exists();
-  }
-
-  final public @NotNull Path getSkeletonsPath() {
+  public final @NotNull Path getSkeletonsPath() {
     return mySkeletonsPath;
   }
 
-  public void prepare() {
+  /**
+   * Builder object serving as a facade for the command-line interface of the generator,
+   * allowing to additionally customize how it's going to be launched and performing the
+   * default initialization before the run.
+   */
+  public abstract class Builder {
+    protected final List<String> myExtraSysPath = new ArrayList<>();
+    protected final List<String> myExtraArgs = new ArrayList<>();
+    protected String myWorkingDir;
+    protected String myTargetModuleName;
+    protected String myTargetModulePath;
+    protected boolean myPrebuilt = false;
+
+    protected Builder() {
+    }
+
+    public final @NotNull Builder extraSysPath(@NotNull List<String> roots) {
+      myExtraSysPath.addAll(roots);
+      return this;
+    }
+
+    public final @NotNull Builder extraArgs(@NotNull List<String> args) {
+      myExtraArgs.addAll(args);
+      return this;
+    }
+
+    public final @NotNull Builder extraArgs(String @NotNull ... args) {
+      return extraArgs(Arrays.asList(args));
+    }
+
+    public final @NotNull Builder workingDir(@NotNull String path) {
+      myWorkingDir = path;
+      return this;
+    }
+
+    public final @NotNull Builder inPrebuildingMode() {
+      myPrebuilt = true;
+      return this;
+    }
+
+    public final @NotNull Builder targetModule(@NotNull String name, @Nullable String path) {
+      myTargetModuleName = name;
+      myTargetModulePath = path;
+      return this;
+    }
+
+    public final @NotNull List<GenerationResult> runGeneration(@Nullable ProgressIndicator indicator)
+      throws InvalidSdkException, ExecutionException {
+      return PySkeletonGenerator.this.runGeneration(this, indicator);
+    }
+
+    public abstract @NotNull ProcessOutput runProcessWithLineOutputListener(@NotNull LineWiseProcessOutputListener listener)
+      throws InvalidSdkException, ExecutionException;
   }
 
   protected final @NotNull @NlsSafe String formatGeneratorFailureMessage(@NotNull ProcessOutput process) {
@@ -277,7 +220,7 @@ public abstract class PySkeletonGenerator {
     return sb.toString();
   }
 
-  public void refreshGeneratedSkeletons() {
+  public final void refreshGeneratedSkeletons() {
     VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(getSkeletonsPath());
     assert skeletonsVFile != null;
     skeletonsVFile.refresh(false, true);
@@ -291,7 +234,7 @@ public abstract class PySkeletonGenerator {
   }
 
   @SuppressWarnings("unused")
-  public static class GenerationResult {
+  public static final class GenerationResult {
     @SerializedName("module_name")
     private String myModuleName;
     @SerializedName("module_origin")
@@ -314,27 +257,5 @@ public abstract class PySkeletonGenerator {
     public boolean isBuiltin() {
       return myModuleOrigin.equals("(built-in)");
     }
-  }
-
-  public static void sendLineToProcessInput(@NotNull BaseProcessHandler<?> handler, @NotNull String line) throws ExecutionException {
-    final OutputStream input = handler.getProcessInput();
-    try {
-      sendLineToStream(input, line);
-    }
-    catch (IOException e) {
-      throw new ExecutionException(e);
-    }
-  }
-
-  protected static void sendLineToStream(@NotNull OutputStream input, @NotNull String line) throws IOException {
-    // Using platform-specific notion of a line separator (PrintStream, PrintWriter, BufferedWriter#newLine()) is
-    // unreliable in case of remote interpreters where target and host OS might differ.
-
-    // Closing the underlying input stream should be handled by its owner.
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final BufferedWriter writer =
-      new BufferedWriter(new OutputStreamWriter(input, StandardCharsets.UTF_8));
-    writer.write(line);
-    writer.write('\n');
-    writer.flush();
   }
 }
