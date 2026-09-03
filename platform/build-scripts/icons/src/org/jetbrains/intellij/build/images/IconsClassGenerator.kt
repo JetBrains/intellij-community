@@ -47,6 +47,8 @@ internal data class IconClassInfo(
   @JvmField val mappings: Map<String, String>? = null,
   @JvmField val isInternal: Boolean = false,
   @JvmField val jewelPackageName: String? = null,
+  @JvmField val kotlinOutFile: Path? = null,
+  @JvmField val kotlinPackageName: String? = null,
 )
 
 internal open class IconsClassGenerator(
@@ -101,19 +103,22 @@ internal open class IconsClassGenerator(
       "intellij.platform.icons" -> {
         val packageName = "com.intellij.icons"
         val jewelPackageName = "org.jetbrains.jewel.ui.icons"
+        val kotlinPackageName = "com.intellij.platform.icons"
         val className = "AllIcons"
 
         val dir = utilUi.getSourceRoots(JavaSourceRootType.SOURCE).first().path.toAbsolutePath().resolve("com/intellij/icons")
         val outFile = dir.resolve("$className.java")
         val jewelDir = jewelUiModule.getSourceRoots(JavaSourceRootType.SOURCE).first { it.path.toString().contains("generated") }.path.toAbsolutePath().resolve(jewelPackageName.replace(".", "/"))
         val jewelOutFile = jewelDir.resolve("${className}Keys.java")
+        val kotlinDir = module.getSourceRoots(JavaSourceRootType.SOURCE).first { it.path.toString().contains("generated") }.path.toAbsolutePath().resolve(kotlinPackageName.replace(".", "/"))
+        val kotlinOutFile = kotlinDir.resolve("$className.kt")
 
         val imageCollector = ImageCollector(projectHome = projectHome, moduleConfig = moduleConfig)
         val images = imageCollector.collect(module = module, includePhantom = true)
         imageCollector.printUsedIconRobots()
 
         val (allImages, mappings) = imageCollector.mergeImages(images, module)
-        return listOf(IconClassInfo(packageName = packageName, className = className, outFile = outFile, jewelOutFile = jewelOutFile, images = allImages, mappings = mappings, jewelPackageName = jewelPackageName))
+        return listOf(IconClassInfo(packageName = packageName, className = className, outFile = outFile, jewelOutFile = jewelOutFile, images = allImages, mappings = mappings, jewelPackageName = jewelPackageName, kotlinOutFile = kotlinOutFile, kotlinPackageName = kotlinPackageName))
       }
       "intellij.android.artwork" -> {
         val packageName = "icons"
@@ -222,6 +227,9 @@ internal open class IconsClassGenerator(
     processModuleClasses(module, moduleConfig, iconClassesInfo, SwingIconClassSpecificsGenerator)
     if (moduleConfig?.generateJewelIcons == true) {
       processModuleClasses(module, moduleConfig, iconClassesInfo, JewelIconClassSpecificsGenerator)
+    }
+    if (moduleConfig?.generateNewApiKotlinIcons == true) {
+      processModuleClasses(module, moduleConfig, iconClassesInfo, KotlinNewApiIconClassSpecificsGenerator)
     }
   }
 
@@ -339,12 +347,11 @@ internal open class IconsClassGenerator(
     }
 
     result.append(copyrightComment)
-    append(result, "package ${iconClassSpecificsGenerator.pickPackageName(info)};\n", 0)
+    iconClassSpecificsGenerator.appendPackageStatement(this, result, iconClassSpecificsGenerator.pickPackageName(info))
     iconClassSpecificsGenerator.appendCustomImports(this, result)
     result.append('\n')
     if (images.any(ImageInfo::scheduledForRemoval)) {
-      append(result, "import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;", 0)
-      result.append('\n')
+      iconClassSpecificsGenerator.appendScheduledForRemovalImport(this, result)
     }
 
     // `IconsGeneratedSourcesFilter` depends on the following comment;
@@ -363,12 +370,7 @@ internal open class IconsClassGenerator(
 
     val realClassName = iconClassSpecificsGenerator.amendIconClassName(info.className)
 
-    result.append("public")
-    // backward compatibility
-    if (iconClassSpecificsGenerator.shouldClassBeFinal(info)) {
-      result.append(" final")
-    }
-    result.append(" class ").append(realClassName).append(" {\n")
+    iconClassSpecificsGenerator.appendTopLevelTypeDeclaration(this, result, info, realClassName)
 
     iconClassSpecificsGenerator.appendTopLevelStatements(this, result, info, images)
 
@@ -432,11 +434,7 @@ internal open class IconsClassGenerator(
           if (result.length < 2 || result[result.length - 1] != '\n' || result[result.length - 2] != '{') {
             result.append('\n')
           }
-          val annotation = iconClassSpecificsGenerator.classAnnotation
-          if (!annotation.isNullOrBlank()) {
-            append(result, annotation, level)
-          }
-          append(result, "public static final class $className {", level)
+          iconClassSpecificsGenerator.appendNestedTypeDeclaration(this, result, className, level)
           val lengthBeforeBody = result.length
           processIcons(group, mappings, result, depth + 1, iconClassSpecificsGenerator, topLevelClass)
           if (lengthBeforeBody == result.length) {
@@ -477,29 +475,17 @@ internal open class IconsClassGenerator(
       return
     }
 
+    if (!iconClassSpecificsGenerator.includeImage(image)) {
+      return
+    }
+
     processedIcons.incrementAndGet()
     if (image.phantom) {
       processedPhantom.incrementAndGet()
     }
 
     val level = if (image.flat) 1 else depth
-    if (image.used || image.deprecated) {
-      val deprecationComment = image.deprecation?.comment
-      if (deprecationComment != null) {
-        // if first in block, do not add yet another extra newline
-        if (result[result.length - 1] != '\n' || result[result.length - 2] != '\n') {
-          result.append('\n')
-        }
-        append(result, "/** @deprecated $deprecationComment */", level)
-      }
-      append(result, "@SuppressWarnings(\"unused\")", level)
-    }
-    if (image.deprecated) {
-      append(result, "@Deprecated", level)
-    }
-    if (image.scheduledForRemoval) {
-      append(result, "@ScheduledForRemoval", level)
-    }
+    iconClassSpecificsGenerator.appendMemberAnnotations(this, result, image, level)
 
     // backward compatibility - use a streaming camel case for StudioIcons
     val iconName = generateIconFieldName(file)
@@ -792,6 +778,57 @@ internal open class IconsClassGenerator(
     fun appendIconProperty(generator: IconsClassGenerator, result: StringBuilder, topLevelClass: String, javaDoc: String, image: ImageInfo, iconName: CharSequence, key: Int, mappings: Map<String, String>?, level: Int)
     fun appendDeprecationReplacementClass(generator: IconsClassGenerator, result: StringBuilder, iconName: CharSequence, deprecation: DeprecationData, level: Int)
     fun appendDeprecationReplacementReferenceClass(generator: IconsClassGenerator, result: StringBuilder, iconName: CharSequence, deprecation: DeprecationData, level: Int)
+
+    // Whether to emit the given image. Java generators keep every image.
+    // A Kotlin generator drops deprecated icons.
+    fun includeImage(image: ImageInfo): Boolean = true
+
+    // The default methods below emit Java syntax. A Kotlin generator overrides them.
+    fun appendPackageStatement(generator: IconsClassGenerator, result: StringBuilder, packageName: String?) {
+      generator.append(result, "package $packageName;\n", 0)
+    }
+
+    fun appendScheduledForRemovalImport(generator: IconsClassGenerator, result: StringBuilder) {
+      generator.append(result, "import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;", 0)
+      result.append('\n')
+    }
+
+    fun appendTopLevelTypeDeclaration(generator: IconsClassGenerator, result: StringBuilder, info: IconClassInfo, realClassName: String) {
+      result.append("public")
+      // backward compatibility
+      if (shouldClassBeFinal(info)) {
+        result.append(" final")
+      }
+      result.append(" class ").append(realClassName).append(" {\n")
+    }
+
+    fun appendNestedTypeDeclaration(generator: IconsClassGenerator, result: StringBuilder, className: CharSequence, level: Int) {
+      val annotation = classAnnotation
+      if (!annotation.isNullOrBlank()) {
+        generator.append(result, annotation, level)
+      }
+      generator.append(result, "public static final class $className {", level)
+    }
+
+    fun appendMemberAnnotations(generator: IconsClassGenerator, result: StringBuilder, image: ImageInfo, level: Int) {
+      if (image.used || image.deprecated) {
+        val deprecationComment = image.deprecation?.comment
+        if (deprecationComment != null) {
+          // if first in block, do not add yet another extra newline
+          if (result[result.length - 1] != '\n' || result[result.length - 2] != '\n') {
+            result.append('\n')
+          }
+          generator.append(result, "/** @deprecated $deprecationComment */", level)
+        }
+        generator.append(result, "@SuppressWarnings(\"unused\")", level)
+      }
+      if (image.deprecated) {
+        generator.append(result, "@Deprecated", level)
+      }
+      if (image.scheduledForRemoval) {
+        generator.append(result, "@ScheduledForRemoval", level)
+      }
+    }
   }
 
   private object SwingIconClassSpecificsGenerator : IconClassSpecificsGenerator {
@@ -905,6 +942,79 @@ internal open class IconsClassGenerator(
 
     override fun appendDeprecationReplacementReferenceClass(generator: IconsClassGenerator, result: StringBuilder, iconName: CharSequence, deprecation: DeprecationData, level: Int) {
       generator.append(result, "$classAnnotation\npublic static final @NotNull IntelliJIconKey $iconName = ${deprecation.replacementReference};", level)
+    }
+  }
+
+  // Generates a Kotlin icon class that uses the new icons API (`imageIcon`).
+  // The result type is the platform-agnostic `com.intellij.platform.icons.Icon`.
+  // It is consumable both by Swing (`toSwingIcon`) and by Compose/Jewel standalone.
+  private object KotlinNewApiIconClassSpecificsGenerator : IconClassSpecificsGenerator {
+    override val classAnnotation: String? = null
+
+    // The class is a set of icon descriptors. The suffix keeps it apart from the Swing `AllIcons`.
+    override fun amendIconClassName(originalName: String): String = "${originalName}Descriptors"
+
+    override fun pickOutFile(iconClassInfo: IconClassInfo): Path {
+      val file = iconClassInfo.kotlinOutFile ?: error("kotlinOutFile is not set for '${iconClassInfo.className}'")
+      return file.resolveSibling("${amendIconClassName(iconClassInfo.className)}.kt")
+    }
+
+    override fun pickPackageName(iconClassInfo: IconClassInfo): String? = iconClassInfo.kotlinPackageName
+
+    override fun shouldClassBeFinal(iconClassInfo: IconClassInfo): Boolean = true
+
+    // Drop deprecated icons. The descriptor class holds only current icons.
+    override fun includeImage(image: ImageInfo): Boolean = !image.deprecated
+
+    override fun appendCustomImports(generator: IconsClassGenerator, result: StringBuilder) {
+      generator.append(result, "import com.intellij.platform.icons.Icon", 0)
+      result.append('\n')
+      generator.append(result, "import com.intellij.platform.icons.imageIcon", 0)
+    }
+
+    override fun appendTopLevelStatements(generator: IconsClassGenerator, result: StringBuilder, info: IconClassInfo, images: Collection<ImageInfo>) {
+      // No top-level statements needed. The new API needs no `load` helper.
+    }
+
+    override fun appendPackageStatement(generator: IconsClassGenerator, result: StringBuilder, packageName: String?) {
+      generator.append(result, "package $packageName\n", 0)
+    }
+
+    override fun appendScheduledForRemovalImport(generator: IconsClassGenerator, result: StringBuilder) {
+      // Kotlin uses a fully-qualified annotation. No import is needed.
+    }
+
+    override fun appendTopLevelTypeDeclaration(generator: IconsClassGenerator, result: StringBuilder, info: IconClassInfo, realClassName: String) {
+      result.append("object ").append(realClassName).append(" {\n")
+    }
+
+    override fun appendNestedTypeDeclaration(generator: IconsClassGenerator, result: StringBuilder, className: CharSequence, level: Int) {
+      generator.append(result, "object $className {", level)
+    }
+
+    override fun appendMemberAnnotations(generator: IconsClassGenerator, result: StringBuilder, image: ImageInfo, level: Int) {
+      // The descriptor class carries no annotations.
+    }
+
+    override fun appendIconProperty(generator: IconsClassGenerator, result: StringBuilder, topLevelClass: String, javaDoc: String, image: ImageInfo, iconName: CharSequence, key: Int, mappings: Map<String, String>?, level: Int) {
+      val imagePathCodeParameter = image.sourceCodeParameterName
+      // The new API is New UI only. Use the mapped New UI path when it exists.
+      val path = mappings?.get(imagePathCodeParameter) ?: imagePathCodeParameter
+      generator.append(
+        result, "${javaDoc}val $iconName: Icon = imageIcon(\"$path\", $topLevelClass::class.java.classLoader)", level
+      )
+    }
+
+    override fun appendDeprecatedIconPropertyMapping(generator: IconsClassGenerator, result: StringBuilder, javaDoc: String, oldName: String, iconName: CharSequence, level: Int) {
+      // The descriptor class holds no deprecated icon aliases.
+    }
+
+    override fun appendDeprecationReplacementClass(generator: IconsClassGenerator, result: StringBuilder, iconName: CharSequence, deprecation: DeprecationData, level: Int) {
+      // Deprecated icons are dropped, so this is never called.
+    }
+
+    override fun appendDeprecationReplacementReferenceClass(generator: IconsClassGenerator, result: StringBuilder, iconName: CharSequence, deprecation: DeprecationData, level: Int) {
+      // Deprecated icons are dropped, so this is never called.
     }
   }
 }

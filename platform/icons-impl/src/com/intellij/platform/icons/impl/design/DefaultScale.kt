@@ -30,6 +30,7 @@ class DefaultFactorScale(override val factor: Double) : FactorScale {
 class DefaultFitAreaScale(override val width: IconUnit, override val height: IconUnit, override val relative: Boolean) :
     FitAreaScale {
     override fun toFactor(density: Float, originalWidth: Int, originalHeight: Int, contextScale: Float): Float {
+        if (originalWidth <= 0 || originalHeight <= 0) return 0f
         val scaling = DefaultScalingContext(density, if (relative) contextScale else 1f)
         val realWidth = width.asFractionalPixels(scaling)
         val realHeight = height.asFractionalPixels(scaling)
@@ -68,6 +69,7 @@ class DefaultFillAreaScale(
     override val relative: Boolean,
 ) : FillAreaScale {
     override fun toFactor(density: Float, originalWidth: Int, originalHeight: Int, contextScale: Float): Float {
+        if (originalWidth <= 0 || originalHeight <= 0) return 0f
         val scaling = DefaultScalingContext(density, if (relative) contextScale else 1f)
         val realWidth = width.asFractionalPixels(scaling)
         val realHeight = height.asFractionalPixels(scaling)

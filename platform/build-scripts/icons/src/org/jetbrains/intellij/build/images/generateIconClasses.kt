@@ -36,7 +36,11 @@ data class IntellijIconClassGeneratorModuleConfig(
   /**
    * Enables generation of icon keys for Jewel.
    */
-  val generateJewelIcons: Boolean = false
+  val generateJewelIcons: Boolean = false,
+  /**
+   * Enables generation of a new-API Kotlin icon class. The class uses `imageIcon`.
+   */
+  val generateNewApiKotlinIcons: Boolean = false
 )
 
 abstract class IconClasses {

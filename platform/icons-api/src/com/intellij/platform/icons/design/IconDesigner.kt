@@ -42,3 +42,7 @@ interface IconAnimationDesigner {
     fun frame(duration: Long, builder: IconDesigner.() -> Unit)
     fun frame(fadeIn: Long, stay: Long, fadeOut: Long, builder: IconDesigner.() -> Unit)
 }
+
+fun IconAnimationDesigner.iconFrame(duration: Long, icon: Icon) = frame(duration) { icon(icon) }
+fun IconAnimationDesigner.iconsFrames(duration: Long, icons: List<Icon>) = icons.forEach { iconFrame(duration, it) }
+fun IconAnimationDesigner.iconsFrames(duration: Long, vararg icons: Icon) = iconsFrames(duration, icons.toList())

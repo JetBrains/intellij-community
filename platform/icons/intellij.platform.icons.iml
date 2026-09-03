@@ -5,8 +5,11 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/compatibilityResources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/generated" isTestSource="false" generated="true" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api" scope="PROVIDED" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="copyright">
