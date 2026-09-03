@@ -77,6 +77,36 @@ class SnapshotRangeHighlighterImplTest {
   }
 
   @Test
+  fun `compound root merges separate highlighter trees`() {
+    val document = DocumentImpl("one\ntwo", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val exactHighlighter = model.addRangeHighlighter(
+        1, 2, 1, null, HighlighterTargetArea.EXACT_RANGE
+      ) as SnapshotRangeMarkerImpl
+      val lineHighlighter = model.addRangeHighlighter(
+        5, 6, 1, null, HighlighterTargetArea.LINES_IN_RANGE
+      ) as SnapshotRangeMarkerImpl
+      val rootReference = exactHighlighter.currentRootReference()
+      val mergedRoot = CompoundPMarkerRoot.empty().mergeValidMarkersFrom(rootReference.get()) as CompoundPMarkerRoot
+
+      val exactMarkers = mergedRoot.exactRangeRoot.overlappingIterator(0, document.textLength, 0)
+        .asSequence()
+        .mapNotNull { it.markerReference?.get() }
+        .toList()
+      val lineMarkers = mergedRoot.linesInRangeRoot.overlappingIterator(0, document.textLength, 0)
+        .asSequence()
+        .mapNotNull { it.markerReference?.get() }
+        .toList()
+      Assertions.assertThat(exactMarkers).containsExactly(exactHighlighter)
+      Assertions.assertThat(lineMarkers).containsExactly(lineHighlighter)
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
   fun `highlighter resolves against separate snapshot branches`() {
     val document = DocumentImpl("abcdef", true)
     val model = MarkupModelImpl(document)
@@ -128,11 +158,12 @@ class SnapshotRangeHighlighterImplTest {
         model.addRangeHighlighter(index, index + 1, 1, null, HighlighterTargetArea.EXACT_RANGE)
       }
       val rootReference = (highlighters.first() as SnapshotRangeMarkerImpl).currentRootReference()
-      val root = rootReference.get()
+      val compoundRoot = rootReference.get() as CompoundPMarkerRoot
+      val exactRangeRoot = compoundRoot.exactRangeRoot
       var readEntryCount = 0
-      val countingRoot = object : PMarkerRoot by root {
+      val countingRoot = object : PMarkerRoot by exactRangeRoot {
         override fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<PMarkerRoot.MarkerEntry> {
-          val iterator = root.overlappingIterator(startOffset, endOffset, tastePreference)
+          val iterator = exactRangeRoot.overlappingIterator(startOffset, endOffset, tastePreference)
           return object : Iterator<PMarkerRoot.MarkerEntry> {
             override fun hasNext(): Boolean = iterator.hasNext()
 
@@ -143,7 +174,7 @@ class SnapshotRangeHighlighterImplTest {
           }
         }
       }
-      check(rootReference.compareAndSet(root, countingRoot))
+      check(rootReference.compareAndSet(compoundRoot, compoundRoot.withExactRangeRoot(countingRoot)))
 
       model.overlappingIterator(0, document.textLength).use { iterator ->
         Assertions.assertThat(readEntryCount).isEqualTo(1)

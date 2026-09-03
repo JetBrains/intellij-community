@@ -1,30 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
-import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSnapshot
-import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.ex.MarkupIterator
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
-import it.unimi.dsi.fastutil.longs.LongArrayList
+import it.unimi.dsi.fastutil.longs.LongList
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
 import java.util.Comparator
 import java.util.NoSuchElementException
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.LongConsumer
 
 /**
  * Stores and updates the snapshot highlighters for one markup model.
@@ -36,11 +29,6 @@ internal class SnapshotHighlighterStorage(
   init {
     check(model.document === document)
   }
-  /**
-   * Maps each document snapshot to this model's two persistent highlighter roots.
-   * The map uses snapshot identity and weak keys. It keeps each root value strongly while its key is live.
-   */
-  private val highlighterRoots: ConcurrentMap<DocumentSnapshot, HighlighterRoots> = CollectionFactory.createConcurrentWeakIdentityMap()
 
   /** Receives registry references after their highlighters become unreachable. */
   private val highlighterQueue: ReferenceQueue<SnapshotRangeHighlighterImpl> = ReferenceQueue()
@@ -54,74 +42,40 @@ internal class SnapshotHighlighterStorage(
   /** A positive value prevents nested changes during removal notifications on the current thread. */
   private val removalDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
 
-  /** Handles highlighters that become invalid after a document change. */
-  private val documentListener: PrioritizedDocumentListener = object : PrioritizedDocumentListener {
-    override fun getPriority(): Int = EditorDocumentPriorities.RANGE_MARKER
-
-    override fun documentChanged(event: DocumentEvent) {
-      highlightersChanged()
-    }
-  }
-
-  /** Propagates this storage's roots when the snapshot engine derives or merges document snapshots. */
-  private val rootStore: SnapshotMarkerRootStore = object : SnapshotMarkerRootStore {
-    override fun containsSnapshot(snapshot: DocumentSnapshot): Boolean = highlighterRoots.containsKey(snapshot)
-
-    override fun applyPatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentTextPatch) {
-      applyHighlighterPatch(beforeSnapshot, afterSnapshot, patch)
-    }
-
-    override fun inherit(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot) {
-      inheritHighlighterRoots(beforeSnapshot, afterSnapshot)
-    }
-
-    override fun merge(markerSnapshot: DocumentSnapshot, metadataSnapshot: DocumentSnapshot, mergedSnapshot: DocumentSnapshot) {
-      mergeHighlighterRoots(markerSnapshot, metadataSnapshot, mergedSnapshot)
-    }
-  }
-
-  init {
-    SnapshotMarkerEngineImpl.registerRootStore(rootStore)
-    document.addDocumentListener(documentListener)
-  }
+  private val rootStore = SnapshotMarkerRootStore(
+    document,
+    emptyRoot = CompoundPMarkerRoot.empty(),
+    onMarkersInvalidated = ::highlightersChanged,
+  )
 
   fun dispose() {
-    document.removeDocumentListener(documentListener)
-    SnapshotMarkerEngineImpl.unregisterRootStore(rootStore)
+    rootStore.dispose()
     highlightersById.clear()
-    highlighterRoots.clear()
   }
 
   fun add(highlighter: SnapshotRangeHighlighterImpl, startOffset: Int, endOffset: Int, spec: MarkerSpec) {
     assertMayChange()
     processHighlighterQueue()
-    val rootReference = rootReference(currentSnapshot(), highlighter.targetAreaForStorage())
+    val snapshot = currentSnapshot()
     val markerId = highlighter.idForStorage()
     val previous = highlightersById.putIfAbsent(markerId, HighlighterReference(highlighter, highlighterQueue))
     check(previous == null) { "Highlighter $markerId is already registered" }
     val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(highlighter, retainStrong = true)
-    while (true) {
-      val oldRoot = rootReference.get()
-      val newRoot = oldRoot.insert(markerId, startOffset, endOffset, spec, highlighter.flavorFlags, markerReference)
-      if (rootReference.compareAndSet(oldRoot, newRoot)) {
-        model.invalidateHighlighterCache()
-        return
-      }
+    rootStore.updateRoot(snapshot) {
+      it.insert(markerId, startOffset, endOffset, spec, highlighter.flavorFlags, markerReference)
     }
+    model.invalidateHighlighterCache()
   }
 
-  fun rootReference(snapshot: DocumentSnapshot, targetArea: HighlighterTargetArea): AtomicReference<PMarkerRoot> {
-    return highlighterRoots.computeIfAbsent(snapshot) { HighlighterRoots() }.rootReference(targetArea)
+  fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
+    return rootStore.rootReference(snapshot)
   }
 
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   fun updateFlavor(highlighter: SnapshotRangeHighlighterImpl) {
-    val rootReference = highlighter.currentRootReference()
-    while (true) {
-      val oldRoot = rootReference.get()
-      val newRoot = oldRoot.updateFlavor(highlighter.idForStorage(), highlighter.flavorFlags)
-      if (newRoot === oldRoot || rootReference.compareAndSet(oldRoot, newRoot)) return
+    rootStore.updateRoot(currentSnapshot()) {
+      it.updateFlavor(highlighter.idForStorage(), highlighter.flavorFlags)
     }
   }
 
@@ -185,66 +139,23 @@ internal class SnapshotHighlighterStorage(
   }
 
   fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Byte): MarkupIterator<RangeHighlighterEx> {
-    val roots = highlighterRoots[currentSnapshot()] ?: return MarkupIterator.emptyIterator()
-    val exact = markupIterator(roots.exactRoot.get(), startOffset, endOffset, tastePreference)
+    val snapshot = currentSnapshot()
+    val roots = rootStore.root(snapshot) as? CompoundPMarkerRoot ?: return MarkupIterator.emptyIterator()
+    val exact = markupIterator(roots.exactRangeRoot, startOffset, endOffset, tastePreference)
     val lineRange = MarkupModelImpl.roundToLineBoundaries(document, startOffset, endOffset)
-    val lines = markupIterator(roots.lineRoot.get(), lineRange.startOffset, lineRange.endOffset, tastePreference)
+    val lines = markupIterator(roots.linesInRangeRoot, lineRange.startOffset, lineRange.endOffset, tastePreference)
     return MarkupIterator.mergeIterators(exact, lines, RangeHighlighterEx.BY_AFFECTED_START_OFFSET)
   }
 
-  private fun highlightersChanged() {
+  private fun highlightersChanged(invalidatedMarkerIds: LongList) {
     processHighlighterQueue()
-    val roots = highlighterRoots[currentSnapshot()] ?: return
-    for (markerId in roots.invalidatedMarkerIds) {
+    val size = invalidatedMarkerIds.size
+    for (i in 0 until size) {
+      val markerId = invalidatedMarkerIds.getLong(i)
       val highlighter = highlightersById.get(markerId)?.get() ?: continue
       beforeRemoved(highlighter)
       afterRemoved(highlighter)
     }
-  }
-
-  private fun applyHighlighterPatch(
-    beforeSnapshot: DocumentSnapshot,
-    afterSnapshot: DocumentSnapshot,
-    patch: DocumentTextPatch,
-  ) {
-    val beforeRoots = highlighterRoots[beforeSnapshot] ?: return
-    val invalidatedMarkerIds = LongArrayList()
-    val invalidatedMarkerConsumer = LongConsumer { markerId -> invalidatedMarkerIds.add(markerId) }
-    val exactRoot = beforeRoots.exactRoot.get().applyPatch(
-      patch, beforeSnapshot.text(), afterSnapshot.text(), invalidatedMarkerConsumer
-    )
-    val lineRoot = beforeRoots.lineRoot.get().applyPatch(
-      patch, beforeSnapshot.text(), afterSnapshot.text(), invalidatedMarkerConsumer
-    )
-    val afterRoots = HighlighterRoots(exactRoot, lineRoot, invalidatedMarkerIds.toLongArray())
-    highlighterRoots.putIfAbsent(afterSnapshot, afterRoots)
-  }
-
-  private fun inheritHighlighterRoots(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot) {
-    val beforeRoots = highlighterRoots[beforeSnapshot] ?: return
-    highlighterRoots.putIfAbsent(afterSnapshot, copyRoots(beforeRoots))
-  }
-
-  private fun mergeHighlighterRoots(
-    markerSnapshot: DocumentSnapshot,
-    metadataSnapshot: DocumentSnapshot,
-    mergedSnapshot: DocumentSnapshot,
-  ) {
-    val markerRoots = highlighterRoots[markerSnapshot]
-    val metadataRoots = highlighterRoots[metadataSnapshot]
-    if (markerRoots == null && metadataRoots == null) return
-    if (markerRoots == null) {
-      highlighterRoots.putIfAbsent(mergedSnapshot, copyRoots(checkNotNull(metadataRoots)))
-      return
-    }
-    if (metadataRoots == null) {
-      highlighterRoots.putIfAbsent(mergedSnapshot, copyRoots(markerRoots))
-      return
-    }
-    highlighterRoots.putIfAbsent(mergedSnapshot, HighlighterRoots(
-      markerRoots.exactRoot.get().mergeValidMarkersFrom(metadataRoots.exactRoot.get()),
-      markerRoots.lineRoot.get().mergeValidMarkersFrom(metadataRoots.lineRoot.get()),
-    ))
   }
 
   private fun leaveRemoval() {
@@ -319,10 +230,6 @@ internal class SnapshotHighlighterStorage(
       if (marker is SnapshotRangeHighlighterImpl) return marker
     }
     return null
-  }
-
-  private fun copyRoots(roots: HighlighterRoots): HighlighterRoots {
-    return HighlighterRoots(roots.exactRoot.get(), roots.lineRoot.get())
   }
 
   private class HighlighterReference(

@@ -66,7 +66,7 @@ internal class SnapshotRangeHighlighterImpl private constructor(
   private var batchChangeStatus: Int = 0
 
   override fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
-    return storage.rootReference(snapshot, targetArea)
+    return storage.rootReference(snapshot)
   }
 
   override fun currentRootReference(): AtomicReference<PMarkerRoot> {
