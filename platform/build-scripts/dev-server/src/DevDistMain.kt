@@ -5,8 +5,6 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.platform.devIdeConfig.DevIdeConfig
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
@@ -199,14 +197,12 @@ private suspend fun assembleDevDistribution(options: CommandLineOptions) {
     )
   )
 
-  withContext(Dispatchers.IO) {
-    dropEmptyTempDir(runDir)
-    // What the distribution is, not just where it is: a consumer that needs a different product or a plugin module
-    // this assembly did not build in is looking at the wrong distribution, and `DevIdeConfig` is where it can find
-    // that out. The relative-home rule and the file format live there too, with the readers.
-    if (fragment.isComplete) {
-      DevIdeConfig.write(checkNotNull(ideConfigFile) { "--ide-config is required for a complete distribution" }, runDir, mainClassName, platformPrefix, additionalModules)
-    }
+  dropEmptyTempDir(runDir)
+  // What the distribution is, not just where it is: a consumer that needs a different product or a plugin module
+  // this assembly did not build in is looking at the wrong distribution, and `DevIdeConfig` is where it can find
+  // that out. The relative-home rule and the file format live there too, with the readers.
+  if (fragment.isComplete) {
+    DevIdeConfig.write(checkNotNull(ideConfigFile) { "--ide-config is required for a complete distribution" }, runDir, mainClassName, platformPrefix, additionalModules)
   }
 
   planFile?.let {

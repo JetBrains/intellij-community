@@ -4,9 +4,7 @@ package org.jetbrains.intellij.build.jarCache
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.SourceAndCacheStrategy
 import org.jetbrains.intellij.build.ZipSource
@@ -108,7 +106,7 @@ internal suspend fun produceAndCache(
   tempFilePrefix: String,
   metadataTouchTracker: MetadataTouchTracker,
   cleanupCandidateIndex: CleanupCandidateIndex,
-): Path = withContext(Dispatchers.IO) {
+): Path {
   Files.createDirectories(paths.entryShardDir)
   val tempPayloadFileName = buildTempSiblingFileName(
     baseFileName = paths.payloadFile.fileName.toString(),
@@ -157,7 +155,7 @@ internal suspend fun produceAndCache(
     copyCacheEntryPayload(targetFile = targetFile, cacheFile = paths.payloadFile)
   }
 
-  if (producer.useCacheAsTargetFile) paths.payloadFile else targetFile
+  return if (producer.useCacheAsTargetFile) paths.payloadFile else targetFile
 }
 
 private suspend fun reconcileMetadataPublishFailure(

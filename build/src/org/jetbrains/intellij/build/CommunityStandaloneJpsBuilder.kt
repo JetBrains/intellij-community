@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.NioFiles
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.impl.BaseLayout
@@ -126,10 +125,8 @@ suspend fun buildCommunityStandaloneJpsBuilder(
 
   val buildNumber = context.fullBuildNumber
 
-  val tempDir = withContext(Dispatchers.IO) {
-    Files.createDirectories(targetDir)
-    Files.createTempDirectory(targetDir, "jps-standalone-community-")
-  }
+  Files.createDirectories(targetDir)
+  val tempDir = Files.createTempDirectory(targetDir, "jps-standalone-community-")
   try {
     JarPackager.pack(
       includedModules = layout.includedModules,
@@ -144,23 +141,21 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     )
 
     val targetFile = targetDir.resolve("standalone-jps-$buildNumber.zip")
-    withContext(Dispatchers.IO) {
-      buildJar(
-        targetFile = tempDir.resolve("jps-build-test-$buildNumber.jar"),
-        moduleNames = listOf(
-          "intellij.platform.jps.build",
-          "intellij.platform.jps.model.tests",
-          "intellij.platform.jps.model.serialization.tests"
-        ),
-        context = context,
-      )
-      zipWithCompression(targetFile = targetFile, dirs = mapOf(tempDir to ""))
-    }
+    buildJar(
+      targetFile = tempDir.resolve("jps-build-test-$buildNumber.jar"),
+      moduleNames = listOf(
+        "intellij.platform.jps.build",
+        "intellij.platform.jps.model.tests",
+        "intellij.platform.jps.model.serialization.tests"
+      ),
+      context = context,
+    )
+    zipWithCompression(targetFile = targetFile, dirs = mapOf(tempDir to ""))
 
     context.notifyArtifactBuilt(targetFile)
   }
   finally {
-    withContext(Dispatchers.IO + NonCancellable) {
+    withContext(NonCancellable) {
       NioFiles.deleteRecursively(tempDir)
     }
   }

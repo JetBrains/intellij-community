@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.jarCache
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
@@ -108,25 +106,23 @@ internal suspend fun cleanupLocalDiskJarCache(
   metadataTouchTracker: MetadataTouchTracker,
   withCacheEntryLock: suspend (Long, suspend () -> Unit) -> Unit,
 ) {
-  withContext(Dispatchers.IO) {
-    try {
-      if (!isTimeForCleanup(lastCleanupMarkerFile = lastCleanupMarkerFile, cleanupInterval = cleanupInterval)) {
-        return@withContext
-      }
+  try {
+    if (!isTimeForCleanup(lastCleanupMarkerFile = lastCleanupMarkerFile, cleanupInterval = cleanupInterval)) {
+      return
+    }
 
-      cleanupEntries(
-        entriesDir = entriesDir,
-        currentTime = System.currentTimeMillis(),
-        maxTimeMs = maxAccessTimeAge.inWholeMilliseconds,
-        cleanupCandidateIndex = cleanupCandidateIndex,
-        metadataTouchTracker = metadataTouchTracker,
-        withCacheEntryLock = withCacheEntryLock,
-      )
-      Files.writeString(lastCleanupMarkerFile, LocalDateTime.now().toString())
-    }
-    catch (_: IOException) {
-      // cleanup is best-effort
-    }
+    cleanupEntries(
+      entriesDir = entriesDir,
+      currentTime = System.currentTimeMillis(),
+      maxTimeMs = maxAccessTimeAge.inWholeMilliseconds,
+      cleanupCandidateIndex = cleanupCandidateIndex,
+      metadataTouchTracker = metadataTouchTracker,
+      withCacheEntryLock = withCacheEntryLock,
+    )
+    Files.writeString(lastCleanupMarkerFile, LocalDateTime.now().toString())
+  }
+  catch (_: IOException) {
+    // cleanup is best-effort
   }
 }
 
@@ -208,59 +204,57 @@ private suspend fun cleanupEntries(
   metadataTouchTracker: MetadataTouchTracker,
   withCacheEntryLock: suspend (Long, suspend () -> Unit) -> Unit,
 ) {
-  withContext(Dispatchers.IO) {
-    val staleThreshold = currentTime - maxTimeMs
-    val scanCursorFile = entriesDir.resolveSibling(cleanupScanCursorFileName)
-    val candidates = collectCandidatesForCleanup(
-      entriesDir = entriesDir,
-      scanCursorFile = scanCursorFile,
-      cleanupCandidateIndex = cleanupCandidateIndex,
-    )
-    val overflowCandidates = collectOverflowCandidatesByTarget(
-      entriesDir = entriesDir,
-      candidates = candidates,
-      currentTime = currentTime,
-      metadataTouchTracker = metadataTouchTracker,
-    )
-    for (candidate in candidates) {
-      val entryStem = candidate.entryStem
-      val key = getCacheKeyFromEntryStem(entryStem)
-      val entryShardDir = entriesDir.resolve(candidate.shardDirName)
-      val paths = getCacheEntryPathsByStem(entryShardDir = entryShardDir, entryStem = entryStem)
+  val staleThreshold = currentTime - maxTimeMs
+  val scanCursorFile = entriesDir.resolveSibling(cleanupScanCursorFileName)
+  val candidates = collectCandidatesForCleanup(
+    entriesDir = entriesDir,
+    scanCursorFile = scanCursorFile,
+    cleanupCandidateIndex = cleanupCandidateIndex,
+  )
+  val overflowCandidates = collectOverflowCandidatesByTarget(
+    entriesDir = entriesDir,
+    candidates = candidates,
+    currentTime = currentTime,
+    metadataTouchTracker = metadataTouchTracker,
+  )
+  for (candidate in candidates) {
+    val entryStem = candidate.entryStem
+    val key = getCacheKeyFromEntryStem(entryStem)
+    val entryShardDir = entriesDir.resolve(candidate.shardDirName)
+    val paths = getCacheEntryPathsByStem(entryShardDir = entryShardDir, entryStem = entryStem)
 
-      if (key == null) {
+    if (key == null) {
+      deleteEntryFiles(paths)
+      continue
+    }
+
+    // Cleanup sees only persisted entry names. Recover the lsb from stored key prefix
+    // ("<lsb>-<msb>") and feed it into StripedMutex.getLockByHash.
+    val lockHash = parseLeastSignificantBitsFromKey(key)
+    if (lockHash == null) {
+      // Entries with malformed key prefix are unreachable by computeIfAbsent, so remove
+      // them directly instead of keeping garbage forever.
+      deleteEntryFiles(paths)
+      continue
+    }
+
+    val isOverflowCandidate = overflowCandidates.contains(candidate.dedupKey)
+    if (!isOverflowCandidate && !shouldInspectEntryUnderLock(paths = paths, staleThreshold = staleThreshold)) {
+      continue
+    }
+
+    withCacheEntryLock(lockHash) {
+      if (isOverflowCandidate) {
         deleteEntryFiles(paths)
-        continue
+        return@withCacheEntryLock
       }
 
-      // Cleanup sees only persisted entry names. Recover the lsb from stored key prefix
-      // ("<lsb>-<msb>") and feed it into StripedMutex.getLockByHash.
-      val lockHash = parseLeastSignificantBitsFromKey(key)
-      if (lockHash == null) {
-        // Entries with malformed key prefix are unreachable by computeIfAbsent, so remove
-        // them directly instead of keeping garbage forever.
-        deleteEntryFiles(paths)
-        continue
-      }
-
-      val isOverflowCandidate = overflowCandidates.contains(candidate.dedupKey)
-      if (!isOverflowCandidate && !shouldInspectEntryUnderLock(paths = paths, staleThreshold = staleThreshold)) {
-        continue
-      }
-
-      withCacheEntryLock(lockHash) {
-        if (isOverflowCandidate) {
-          deleteEntryFiles(paths)
-          return@withCacheEntryLock
-        }
-
-        cleanupEntry(
-          paths = paths,
-          staleThreshold = staleThreshold,
-          currentTime = currentTime,
-          metadataTouchTracker = metadataTouchTracker,
-        )
-      }
+      cleanupEntry(
+        paths = paths,
+        staleThreshold = staleThreshold,
+        currentTime = currentTime,
+        metadataTouchTracker = metadataTouchTracker,
+      )
     }
   }
 }

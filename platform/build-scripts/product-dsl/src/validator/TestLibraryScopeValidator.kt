@@ -5,8 +5,6 @@ package org.jetbrains.intellij.build.productLayout.validator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.ContentSourceKind
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
 import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
@@ -126,9 +124,8 @@ internal object TestLibraryScopeValidator : PipelineNode {
       if (active.isNotEmpty()) {
         val module = outputProvider.findModule(contentModuleName.value) ?: continue
         val imlFile = outputProvider.getModuleImlFile(module)
-        val current = withContext(Dispatchers.IO) {
-          Files.readString(imlFile)
-        }
+        @Suppress("BlockingMethodInNonBlockingContext") // the build runs on virtual threads
+        val current = Files.readString(imlFile)
         val fixed = applyTestLibraryScopeFixes(current, active)
         model.fileUpdater.writeIfChanged(imlFile, current, fixed)
       }

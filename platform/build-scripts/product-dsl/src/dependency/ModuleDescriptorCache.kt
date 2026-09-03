@@ -9,8 +9,6 @@ import com.intellij.platform.pluginGraph.baseModuleName
 import com.intellij.platform.pluginGraph.toDescriptorFileName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.debug
@@ -33,7 +31,6 @@ import java.nio.file.Path
  * Uses a coroutine-friendly Deferred-based cache pattern:
  * - First caller for a module creates a Deferred via async
  * - Subsequent callers await the same Deferred without blocking
- * - File I/O runs on Dispatchers.IO to avoid blocking coroutine threads
  */
 internal class ModuleDescriptorCache(
   private val outputProvider: ModuleOutputProvider,
@@ -105,7 +102,8 @@ internal class ModuleDescriptorCache(
       return null
     }
 
-    val content = withContext(Dispatchers.IO) { Files.readString(descriptorPath) }
+    @Suppress("BlockingMethodInNonBlockingContext") // the build runs on virtual threads
+    val content = Files.readString(descriptorPath)
 
     if (content.contains("<!-- todo: register this as a content module (IJPL-210868)")) {
       return null

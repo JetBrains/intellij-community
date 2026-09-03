@@ -6,8 +6,6 @@ import com.jetbrains.notary.auth.AppStoreConnectAPIKey
 import com.jetbrains.notary.extensions.StatusPollingConfiguration
 import com.jetbrains.notary.extensions.notarize
 import com.jetbrains.notary.models.SubmissionResponse
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions.Companion.MAC_NOTARIZE_STEP
@@ -46,13 +44,10 @@ internal suspend fun notarize(sitFile: Path, context: BuildContext) {
       ignoreServerError = true,
       ignoreTimeoutExceptions = true,
     )
-    val result = withContext(Dispatchers.IO) {
-      // only .zip or .dmg files can be notarized
-      val zipFile = Files.move(sitFile, sitFile.resolveSibling(sitFile.nameWithoutExtension + ".zip"), StandardCopyOption.REPLACE_EXISTING)
-      val result = notaryApiClient.notarize(zipFile, statusPollingConfiguration)
-      Files.move(zipFile, sitFile)
-      result
-    }
+    // only .zip or .dmg files can be notarized
+    val zipFile = Files.move(sitFile, sitFile.resolveSibling(sitFile.nameWithoutExtension + ".zip"), StandardCopyOption.REPLACE_EXISTING)
+    val result = notaryApiClient.notarize(zipFile, statusPollingConfiguration)
+    Files.move(zipFile, sitFile)
     val logs = json.encodeToString(result.logs)
     context.messages.info("Notarization logs:\n$logs")
     val logFile = context.paths.artifactDir

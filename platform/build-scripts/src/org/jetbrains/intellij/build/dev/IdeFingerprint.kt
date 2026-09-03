@@ -3,8 +3,6 @@ package org.jetbrains.intellij.build.dev
 
 import com.dynatrace.hash4j.hashing.Hashing
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import java.nio.file.Files
@@ -34,17 +32,15 @@ internal class IdeFingerprintEntry(
   @JvmField val executable: Boolean = false,
 )
 
-internal suspend fun writeIdeFingerprint(
+internal fun writeIdeFingerprint(
   entries: Sequence<DistributionFileEntry>,
   runDir: Path,
   projectDir: Path,
 ) {
   val debug = if (System.getProperty("intellij.build.fingerprint.debug").toBoolean()) StringBuilder() else null
   val fingerprint = computeIdeFingerprint(entries = entries, runDir = runDir, projectDir = projectDir, debug = debug)
-  withContext(Dispatchers.IO) {
-    Files.writeString(runDir.resolve("fingerprint.txt"), fingerprint)
-    debug?.let { Files.writeString(runDir.resolve("fingerprint-debug.txt"), it) }
-  }
+  Files.writeString(runDir.resolve("fingerprint.txt"), fingerprint)
+  debug?.let { Files.writeString(runDir.resolve("fingerprint-debug.txt"), it) }
   Span.current().addEvent("IDE fingerprint: $fingerprint")
 }
 

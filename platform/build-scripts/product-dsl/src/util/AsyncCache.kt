@@ -59,7 +59,7 @@ class AsyncCache<K : Any, V> {
           // the mapping function only starts a coroutine, so it is short under the lock of the map
           val owner = Any()
           val entry = cache.computeIfAbsent(key) {
-            val result = forkOnVirtualThread(name = "AsyncCache: $key", context = singleFlightComputationContext(currentContext, owner)) {
+            val result = forkOnVirtualThread(name = "AsyncCache: $key", parentContext = currentContext + singleFlightComputationContext(currentContext, owner)) {
               loader()
             }
             CacheEntry(result = result, owner = owner)

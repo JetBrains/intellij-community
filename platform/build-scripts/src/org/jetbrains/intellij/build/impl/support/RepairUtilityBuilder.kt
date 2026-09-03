@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.impl.support
 import com.intellij.openapi.util.SystemInfoRt
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -70,10 +69,8 @@ suspend fun bundleRepairUtility(os: OsFamily, arch: JvmArchitecture, distributio
     }
     val repairUtilityTarget = distributionDir.resolve(binary.relativeTargetPath)
     Span.current().addEvent("copy $path to $repairUtilityTarget")
-    withContext(Dispatchers.IO) {
-      Files.createDirectories(repairUtilityTarget.parent)
-      Files.copy(path, repairUtilityTarget, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
-    }
+    Files.createDirectories(repairUtilityTarget.parent)
+    Files.copy(path, repairUtilityTarget, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
   }
 }
 
@@ -92,33 +89,31 @@ suspend fun generateInstallationIntegrityManifest(unpackedDistribution: Path, os
     val binaryPath = repairUtilityProjectHome(context)?.resolve(manifestGenerator.relativeSourcePath)
     requireNotNull(binaryPath)
     val tmpDir = context.paths.tempDir.resolve(REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
-    withContext(Dispatchers.IO) {
-      Files.createDirectories(tmpDir)
-      try {
-        runProcess(
-          args = listOf(binaryPath.toString(), "hashes", "-g", "--path", unpackedDistribution.toString()),
-          workingDir = tmpDir,
-        )
-      }
-      catch (e: Throwable) {
-        context.messages.warning("Manifest generation failed, listing unpacked distribution content for debug:")
-        Files.walk(unpackedDistribution).use { files ->
-          files.forEach { filePath: Path ->
-            context.messages.warning(filePath.toString())
-          }
-        }
-        throw e
-      }
-
-      val manifest = tmpDir.resolve("manifest.json")
-      if (Files.notExists(manifest)) {
-        val repairLog = tmpDir.resolve("repair.log")
-        context.messages.logErrorAndThrow("Unable to generate installation integrity manifest: ${Files.readString(repairLog)}")
-      }
-      val baseName = baseArtifactName(context)
-      val artifact = context.paths.artifactDir.resolve("${baseName}${distributionBinary.distributionSuffix}.manifest")
-      Files.move(manifest, artifact, StandardCopyOption.REPLACE_EXISTING)
+    Files.createDirectories(tmpDir)
+    try {
+      runProcess(
+        args = listOf(binaryPath.toString(), "hashes", "-g", "--path", unpackedDistribution.toString()),
+        workingDir = tmpDir,
+      )
     }
+    catch (e: Throwable) {
+      context.messages.warning("Manifest generation failed, listing unpacked distribution content for debug:")
+      Files.walk(unpackedDistribution).use { files ->
+        files.forEach { filePath: Path ->
+          context.messages.warning(filePath.toString())
+        }
+      }
+      throw e
+    }
+
+    val manifest = tmpDir.resolve("manifest.json")
+    if (Files.notExists(manifest)) {
+      val repairLog = tmpDir.resolve("repair.log")
+      context.messages.logErrorAndThrow("Unable to generate installation integrity manifest: ${Files.readString(repairLog)}")
+    }
+    val baseName = baseArtifactName(context)
+    val artifact = context.paths.artifactDir.resolve("${baseName}${distributionBinary.distributionSuffix}.manifest")
+    Files.move(manifest, artifact, StandardCopyOption.REPLACE_EXISTING)
   }
 }
 
@@ -191,15 +186,13 @@ private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
         context.messages.info("$envVar=$url")
       }
       buildLock.withLock {
-        withContext(Dispatchers.IO) {
-          retryWithExponentialBackOff {
-            runProcess(
-              args = listOf("bash", "build.sh"), workingDir = projectHome,
-              additionalEnvVariables = distributionUrls,
-              timeout = 5.minutes,
-              inheritOut = true,
-            )
-          }
+        retryWithExponentialBackOff {
+          runProcess(
+            args = listOf("bash", "build.sh"), workingDir = projectHome,
+            additionalEnvVariables = distributionUrls,
+            timeout = 5.minutes,
+            inheritOut = true,
+          )
         }
       }
     }
@@ -214,13 +207,11 @@ private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
     val executablePermissions = setOf(
       OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE
     )
-    withContext(Dispatchers.IO) {
-      for (file in binaryPaths.values) {
-        if (Files.notExists(file)) {
-          context.messages.logErrorAndThrow("$file doesn't exist")
-        }
-        Files.setPosixFilePermissions(file, executablePermissions)
+    for (file in binaryPaths.values) {
+      if (Files.notExists(file)) {
+        context.messages.logErrorAndThrow("$file doesn't exist")
       }
+      Files.setPosixFilePermissions(file, executablePermissions)
     }
     binaryPaths
   }

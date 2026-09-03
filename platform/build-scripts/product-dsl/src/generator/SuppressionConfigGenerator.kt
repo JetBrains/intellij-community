@@ -5,8 +5,6 @@ package org.jetbrains.intellij.build.productLayout.generator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.productLayout.config.ContentModuleSuppression
 import org.jetbrains.intellij.build.productLayout.config.PluginSuppression
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
@@ -157,9 +155,8 @@ internal object SuppressionConfigGenerator : PipelineNode {
     // Actual write happens only when the run is error-free and commit is allowed.
     if (configPath != null && model.updateSuppressions) {
       val newJsonContent = SuppressionConfig.serializeToString(newConfig)
-      val oldJsonContent = withContext(Dispatchers.IO) {
-        if (Files.exists(configPath)) Files.readString(configPath) else ""
-      }
+      @Suppress("BlockingMethodInNonBlockingContext") // the build runs on virtual threads
+      val oldJsonContent = if (Files.exists(configPath)) Files.readString(configPath) else ""
       model.fileUpdater.writeIfChanged(configPath, oldJsonContent, newJsonContent)
     }
 

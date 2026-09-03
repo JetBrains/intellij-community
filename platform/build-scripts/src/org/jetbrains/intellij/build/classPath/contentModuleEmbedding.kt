@@ -22,8 +22,6 @@ package org.jetbrains.intellij.build.classPath
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jdom.CDATA
 import org.jdom.Element
 import org.jdom.Namespace
@@ -235,23 +233,21 @@ internal suspend fun resolveAndCacheDescriptorForEmbeddedProduct(
     context = descriptorResolveContext(context),
   )
 
-  withContext(Dispatchers.IO) {
-    resolveIncludes(element = xml, elementResolver = xIncludeResolver)
+  resolveIncludes(element = xml, elementResolver = xIncludeResolver)
 
-    for (contentElement in xml.getChildren("content")) {
-      for (moduleElement in contentElement.getChildren("module")) {
-        val moduleName = moduleElement.getAttributeValue("name") ?: continue
-        embedContentModule(
-          moduleElement = moduleElement,
-          pluginDescriptorContainer = pluginDescriptorContainer,
-          xIncludeResolver = xIncludeResolver,
-          moduleName = moduleName,
-          dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
-          pluginLayout = pluginLayout,
-          frontendModuleFilter = context.getFrontendModuleFilter(),
-          outputProvider = context.outputProvider,
-        )
-      }
+  for (contentElement in xml.getChildren("content")) {
+    for (moduleElement in contentElement.getChildren("module")) {
+      val moduleName = moduleElement.getAttributeValue("name") ?: continue
+      embedContentModule(
+        moduleElement = moduleElement,
+        pluginDescriptorContainer = pluginDescriptorContainer,
+        xIncludeResolver = xIncludeResolver,
+        moduleName = moduleName,
+        dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
+        pluginLayout = pluginLayout,
+        frontendModuleFilter = context.getFrontendModuleFilter(),
+        outputProvider = context.outputProvider,
+      )
     }
   }
   val patchedContent = JDOMUtil.write(xml).encodeToByteArray()

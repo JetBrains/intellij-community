@@ -13,7 +13,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.intellij.build.BuildContext
@@ -351,10 +350,8 @@ private fun archivePlugin(optimized: Boolean, target: Path, compress: Boolean, s
 
 private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): List<Pair<Path, ByteArray>> {
   val keymapDir = context.paths.communityHomeDir.resolve("platform/platform-resources/src/keymaps")
-  withContext(Dispatchers.IO) {
-    Files.createDirectories(targetDir)
-  }
-  return spanBuilder("build keymap plugins").use(Dispatchers.IO) {
+  Files.createDirectories(targetDir)
+  return spanBuilder("build keymap plugins").use {
     listOf(
       arrayOf("Mac OS X", "Mac OS X 10.5+"),
       arrayOf("Default for GNOME"),

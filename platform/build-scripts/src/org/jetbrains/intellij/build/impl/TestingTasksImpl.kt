@@ -28,7 +28,6 @@ import jetbrains.buildServer.messages.serviceMessages.BlockClosed
 import jetbrains.buildServer.messages.serviceMessages.BlockOpened
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildCancellationException
 import org.jetbrains.intellij.build.BuildMessages
@@ -629,11 +628,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       messages.info("Tests from bucket ${options.bucketIndex + 1} of ${options.bucketsCount} will be executed")
     }
     spanBuilder("test classpath and runtime info").use {
-      withContext(Dispatchers.IO) {
-        val runtime = getRuntimeExecutablePath().toString()
-        messages.info("Runtime: $runtime")
-        runProcess(args = listOf(runtime, "-version"), inheritOut = true, inheritErrToOut = true)
-      }
+      val runtime = getRuntimeExecutablePath().toString()
+      messages.info("Runtime: $runtime")
+      runProcess(args = listOf(runtime, "-version"), inheritOut = true, inheritErrToOut = true)
 
       messages.info("Runtime options: $allJvmArgs")
       messages.info("System properties: $systemProperties")
@@ -763,7 +760,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
     val ideaSystemPath = Path.of("$tempDir/system")
     if (cleanSystemDir) {
-      spanBuilder("idea.system.path cleanup").use(Dispatchers.IO) {
+      spanBuilder("idea.system.path cleanup").use {
         try {
           NioFiles.deleteRecursively(ideaSystemPath)
         }

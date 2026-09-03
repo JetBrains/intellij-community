@@ -651,8 +651,7 @@ internal fun createPackagingSuiteScope(
 /**
  * Creates the dispatcher of a fixture scope. Every resume runs on a new virtual thread, so no task waits in a worker queue.
  *
- * The caller closes it when the fixture closes. A `withContext(Dispatchers.IO)` block inside the build still runs on the
- * kotlinx scheduler, and the resume after it comes back here.
+ * The caller closes it when the fixture closes.
  */
 internal fun createPackagingSuiteDispatcher(): ExecutorCoroutineDispatcher {
   return Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("packaging-suite-", 0).factory()).asCoroutineDispatcher()

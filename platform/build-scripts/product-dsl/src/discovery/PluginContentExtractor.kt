@@ -9,8 +9,6 @@ import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginSystem.parser.impl.elements.ContentModuleElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.DescriptorDependencyWalk
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
@@ -176,6 +174,7 @@ internal fun extractLegacyDepends(content: String): List<LegacyDepends> {
  *               should use [computePluginContentFromDslSpec] instead of this function.
  * @param errorSink Sink for emitting xi:include resolution errors
  */
+@Suppress("BlockingMethodInNonBlockingContext") // the build runs on virtual threads
 internal suspend fun extractPluginContent(
   pluginName: String,
   outputProvider: ModuleOutputProvider,
@@ -196,7 +195,7 @@ internal suspend fun extractPluginContent(
   }
   else {
     pluginXmlPath = findFileInModuleSources(module = jpsModule, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = onlyProductionSources) ?: return null
-    content = withContext(Dispatchers.IO) { Files.readString(pluginXmlPath) }
+    content = Files.readString(pluginXmlPath)
   }
 
   val prefix = prefixFilter(pluginName)

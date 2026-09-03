@@ -4,8 +4,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -50,79 +48,77 @@ internal suspend fun buildNsisInstaller(
 
   val useBigNsis = context.options.useNsisBigInstaller ?: customizer.useBigNsisInstaller
 
-  withContext(Dispatchers.IO) {
-    val box = context.paths.tempDir.resolve("winInstaller${suffix}")
+  val box = context.paths.tempDir.resolve("winInstaller${suffix}")
 
-    val (nsisDir, nsisBin) = prepareNsis(context, box, useBigNsis)
+  val (nsisDir, nsisBin) = prepareNsis(context, box, useBigNsis)
 
-    val nsiConfDir = box.resolve("nsi-conf")
-    Files.createDirectories(nsiConfDir)
-    NioFiles.copyRecursively(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
+  val nsiConfDir = box.resolve("nsi-conf")
+  Files.createDirectories(nsiConfDir)
+  NioFiles.copyRecursively(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
 
-    if (OsFamily.currentOs != OsFamily.WINDOWS) {
-      val ideaNsiPath = nsiConfDir.resolve("idea.nsi")
-      Files.writeString(ideaNsiPath, BuildUtils.replaceAll(
-        text = Files.readString(ideaNsiPath),
-        replacements = mapOf($$"${IMAGES_LOCATION}\\" to $$"${IMAGES_LOCATION}/"),
-        marker = "")
+  if (OsFamily.currentOs != OsFamily.WINDOWS) {
+    val ideaNsiPath = nsiConfDir.resolve("idea.nsi")
+    Files.writeString(ideaNsiPath, BuildUtils.replaceAll(
+      text = Files.readString(ideaNsiPath),
+      replacements = mapOf($$"${IMAGES_LOCATION}\\" to $$"${IMAGES_LOCATION}/"),
+      marker = "")
+    )
+  }
+
+  val generator = NsisFileListGenerator()
+  generator.addDirectory(context.paths.distAllDir)
+  generator.addDirectory(winDistPath)
+  generator.addDirectory(additionalDirectoryToInclude)
+  generator.addDirectory(runtimeDir)
+  generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh"))
+  generator.generateUninstallerFile(nsiConfDir.resolve("un_idea_win.nsh"))
+
+  prepareConfigurationFiles(nsiConfDir, uninstallerFileName, customizer, context, arch)
+  for (file in customizer.customNsiConfigurationFiles) {
+    val copy = nsiConfDir.resolve(file.fileName)
+    Files.copy(file, copy, StandardCopyOption.REPLACE_EXISTING)
+    copy.setLastModifiedTime(FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
+  }
+
+  val nsiLogDir = context.paths.buildOutputDir.resolve("log/nsi${suffix}")
+  NioFiles.deleteRecursively(nsiLogDir)
+  NioFiles.copyRecursively(nsiConfDir, nsiLogDir)
+
+  spanBuilder("run NSIS tool to build .exe installer for Windows").use {
+    val timeout = 2.hours
+    if (OsFamily.currentOs == OsFamily.WINDOWS) {
+      runProcess(
+        args = listOf(
+          nsisBin.toString(),
+          "/V2",
+          "/DCOMMUNITY_DIR=${communityHome}",
+          "/DIPR=${customizer.associateIpr}",
+          "/DOUT_DIR=${context.paths.artifactDir}",
+          "/DOUT_FILE=${installerFileName}",
+          "${nsiConfDir}/idea.nsi",
+        ),
+        workingDir = box,
+        timeout = timeout,
+        attachStdOutToException = true,
       )
     }
-
-    val generator = NsisFileListGenerator()
-    generator.addDirectory(context.paths.distAllDir)
-    generator.addDirectory(winDistPath)
-    generator.addDirectory(additionalDirectoryToInclude)
-    generator.addDirectory(runtimeDir)
-    generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh"))
-    generator.generateUninstallerFile(nsiConfDir.resolve("un_idea_win.nsh"))
-
-    prepareConfigurationFiles(nsiConfDir, uninstallerFileName, customizer, context, arch)
-    for (file in customizer.customNsiConfigurationFiles) {
-      val copy = nsiConfDir.resolve(file.fileName)
-      Files.copy(file, copy, StandardCopyOption.REPLACE_EXISTING)
-      copy.setLastModifiedTime(FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
-    }
-
-    val nsiLogDir = context.paths.buildOutputDir.resolve("log/nsi${suffix}")
-    NioFiles.deleteRecursively(nsiLogDir)
-    NioFiles.copyRecursively(nsiConfDir, nsiLogDir)
-
-    spanBuilder("run NSIS tool to build .exe installer for Windows").use {
-      val timeout = 2.hours
-      if (OsFamily.currentOs == OsFamily.WINDOWS) {
-        runProcess(
-          args = listOf(
-            nsisBin.toString(),
-            "/V2",
-            "/DCOMMUNITY_DIR=${communityHome}",
-            "/DIPR=${customizer.associateIpr}",
-            "/DOUT_DIR=${context.paths.artifactDir}",
-            "/DOUT_FILE=${installerFileName}",
-            "${nsiConfDir}/idea.nsi",
-          ),
-          workingDir = box,
-          timeout = timeout,
-          attachStdOutToException = true,
-        )
-      }
-      else {
-        @Suppress("SpellCheckingInspection")
-        runProcess(
-          args = listOf(
-            nsisBin.toString(),
-            "-V2",
-            "-DCOMMUNITY_DIR=${communityHome}",
-            "-DIPR=${customizer.associateIpr}",
-            "-DOUT_DIR=${context.paths.artifactDir}",
-            "-DOUT_FILE=${installerFileName}",
-            "${nsiConfDir}/idea.nsi",
-          ),
-          workingDir = box,
-          timeout = timeout,
-          additionalEnvVariables = mapOf("NSISDIR" to nsisDir.toString(), "LC_CTYPE" to "C.UTF-8"),
-          attachStdOutToException = true,
-        )
-      }
+    else {
+      @Suppress("SpellCheckingInspection")
+      runProcess(
+        args = listOf(
+          nsisBin.toString(),
+          "-V2",
+          "-DCOMMUNITY_DIR=${communityHome}",
+          "-DIPR=${customizer.associateIpr}",
+          "-DOUT_DIR=${context.paths.artifactDir}",
+          "-DOUT_FILE=${installerFileName}",
+          "${nsiConfDir}/idea.nsi",
+        ),
+        workingDir = box,
+        timeout = timeout,
+        additionalEnvVariables = mapOf("NSISDIR" to nsisDir.toString(), "LC_CTYPE" to "C.UTF-8"),
+        attachStdOutToException = true,
+      )
     }
   }
 
@@ -134,9 +130,7 @@ internal suspend fun buildNsisInstaller(
   context.notifyArtifactBuilt(installerFile)
 
   val installerProductInfoJsonFile = installerFile.resolveProductInfoJsonSibling()
-  withContext(Dispatchers.IO) {
-    copyFile(productInfoJsonFile, installerProductInfoJsonFile)
-  }
+  copyFile(productInfoJsonFile, installerProductInfoJsonFile)
   context.notifyArtifactBuilt(installerProductInfoJsonFile)
 
   if (customizer.publishUninstaller) {

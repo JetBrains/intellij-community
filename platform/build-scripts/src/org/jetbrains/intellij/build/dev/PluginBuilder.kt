@@ -5,8 +5,6 @@ package org.jetbrains.intellij.build.dev
 
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -126,9 +124,7 @@ private suspend fun buildPluginDescriptorsForDevMode(
 ): List<PluginBuildResult> {
   if (plugins.isEmpty()) return emptyList()
   val pluginRootDir = runDir.resolve("plugins")
-  withContext(Dispatchers.IO) {
-    Files.createDirectories(pluginRootDir)
-  }
+  Files.createDirectories(pluginRootDir)
   val platform = platformLayout.await()
   val spanName = if (layoutOnly) "lay out plugins" else "build plugins"
   return spanBuilder(spanName).setAttribute(AttributeKey.longKey("count"), plugins.size.toLong()).use {

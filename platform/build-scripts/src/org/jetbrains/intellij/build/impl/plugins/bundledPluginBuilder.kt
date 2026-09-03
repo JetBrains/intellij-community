@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.impl.plugins
 
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DistFile
@@ -314,50 +313,46 @@ private suspend fun writePluginInfo(
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
 ) {
-  val (commonClassPath, additionalClassPath) = withContext(Dispatchers.IO + CoroutineName("generate bundled plugin classpath")) {
-    generatePluginClassPath(
-      pluginEntries = common,
-      descriptorFileProvider = descriptorCacheContainer,
-      platformLayout = platformLayout,
-      layoutsOfPluginsToScramble = layoutsOfPluginsToScramble,
-      context = context,
-    ) to additional?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
-  }
+  val commonClassPath = generatePluginClassPath(
+    pluginEntries = common,
+    descriptorFileProvider = descriptorCacheContainer,
+    platformLayout = platformLayout,
+    layoutsOfPluginsToScramble = layoutsOfPluginsToScramble,
+    context = context,
+  )
+  val additionalClassPath = additional?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
 
   for ((supportedDist) in pluginDirs) {
     val specificList = specific.get(supportedDist)
-    val data = withContext(Dispatchers.IO + CoroutineName("serialize bundled plugin classpath")) {
-      val specificClasspath = specificList?.let {
-        generatePluginClassPath(
-          pluginEntries = it,
-          descriptorFileProvider = descriptorCacheContainer,
-          platformLayout = platformLayout,
-          layoutsOfPluginsToScramble = layoutsOfPluginsToScramble,
-          context = context,
-        )
-      }
+    val specificClasspath = specificList?.let {
+      generatePluginClassPath(
+        pluginEntries = it,
+        descriptorFileProvider = descriptorCacheContainer,
+        platformLayout = platformLayout,
+        layoutsOfPluginsToScramble = layoutsOfPluginsToScramble,
+        context = context,
+      )
+    }
 
-      val byteOut = ByteArrayOutputStream()
-      DataOutputStream(byteOut).use { out ->
-        val pluginCount = common.size + (additional?.size ?: 0) + (specificList?.size ?: 0)
-        writePluginClassPathPrefix(
-          out = out,
-          isJarOnly = true,
-          platformLayout = platformLayout,
-          descriptorCacheContainer = descriptorCacheContainer,
-          context = context,
-        )
-        writePluginClassPathCount(out = out, pluginCount = pluginCount)
-        out.write(commonClassPath)
-        additionalClassPath?.let { out.write(it) }
-        specificClasspath?.let { out.write(it) }
-      }
-      byteOut.toByteArray()
+    val byteOut = ByteArrayOutputStream()
+    DataOutputStream(byteOut).use { out ->
+      val pluginCount = common.size + (additional?.size ?: 0) + (specificList?.size ?: 0)
+      writePluginClassPathPrefix(
+        out = out,
+        isJarOnly = true,
+        platformLayout = platformLayout,
+        descriptorCacheContainer = descriptorCacheContainer,
+        context = context,
+      )
+      writePluginClassPathCount(out = out, pluginCount = pluginCount)
+      out.write(commonClassPath)
+      additionalClassPath?.let { out.write(it) }
+      specificClasspath?.let { out.write(it) }
     }
 
     context.addDistFile(
       DistFile(
-        content = InMemoryDistFileContent(data),
+        content = InMemoryDistFileContent(byteOut.toByteArray()),
         relativePath = PLUGIN_CLASSPATH,
         os = supportedDist.os,
         libcImpl = supportedDist.libcImpl,

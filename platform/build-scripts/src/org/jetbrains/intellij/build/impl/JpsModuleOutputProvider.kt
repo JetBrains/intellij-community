@@ -3,8 +3,6 @@
 
 package org.jetbrains.intellij.build.impl
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.jps.model.JpsProject
@@ -54,7 +52,7 @@ internal class JpsModuleOutputProvider(
     }
     val file = outputDir.resolve(relativePath)
     try {
-      return withContext(Dispatchers.IO) { Files.readAllBytes(file) }
+      return Files.readAllBytes(file)
     }
     catch (_: NoSuchFileException) {
       return null

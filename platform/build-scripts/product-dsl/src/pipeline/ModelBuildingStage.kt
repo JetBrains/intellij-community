@@ -16,11 +16,9 @@ import com.intellij.platform.pluginGraph.isTestDescriptor
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.findFileInModuleSources
@@ -496,7 +494,8 @@ internal object ModelBuildingStage {
       checkedProductCount++
       val xIncludePrefix = xIncludePrefixFilter(pluginModule.value)
       val descriptorCheckStartNano = System.nanoTime()
-      val pluginXmlData = withContext(Dispatchers.IO) { Files.readAllBytes(pluginXmlPath) }
+      @Suppress("BlockingMethodInNonBlockingContext") // the build runs on virtual threads
+      val pluginXmlData = Files.readAllBytes(pluginXmlPath)
       val problems = findDescriptorProblems(
         pluginXmlData = pluginXmlData,
         module = module,

@@ -3,8 +3,6 @@ package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.downloadFileToCacheLocation
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFileToCacheLocation
@@ -56,19 +54,19 @@ object KotlinCompilerDependencyDownloader {
     return extractFileToCacheLocation(communityRoot, kotlinDistJar)
   }
 
-  suspend fun downloadKotlinJpsPlugin(communityRoot: BuildDependenciesCommunityRoot): Path = withContext(Dispatchers.IO) {
+  suspend fun downloadKotlinJpsPlugin(communityRoot: BuildDependenciesCommunityRoot): Path {
     val kotlinJpsPluginVersion = getKotlinJpsPluginVersion(communityRoot)
     val kotlinJpsPluginUrl = getUriForMavenArtifact(getMavenRepositoryUrl(), ARTIFACT_GROUP_ID, "kotlin-jps-plugin-classpath", kotlinJpsPluginVersion, "jar")
 
     if (shouldUseMavenLocal()) {
       val kotlinJpsPluginJar = kotlinJpsPluginUrl.toPath()
       check(kotlinJpsPluginJar.exists()) { "kotlin-jps-plugin-classpath was not found in the local Maven repository" }
-      return@withContext kotlinJpsPluginJar
+      return kotlinJpsPluginJar
     }
 
     val cacheLocation = getTargetFile(communityRoot, kotlinJpsPluginUrl.toString())
     if (cacheLocation.exists()) {
-      return@withContext cacheLocation
+      return cacheLocation
     }
 
     // Download file by hand since calling entire ktor/cio/coroutines stuff *before* loading JPS plugin into classpath
@@ -82,7 +80,7 @@ object KotlinCompilerDependencyDownloader {
       }
     }
     Files.move(tmpLocation, cacheLocation, StandardCopyOption.ATOMIC_MOVE)
-    return@withContext cacheLocation
+    return cacheLocation
   }
 
   fun getKotlinJpsPluginVersion(communityRoot: BuildDependenciesCommunityRoot): String {
