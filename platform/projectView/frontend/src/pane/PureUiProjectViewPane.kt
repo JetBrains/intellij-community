@@ -3,6 +3,8 @@ package com.intellij.platform.projectView.frontend.pane
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.EditorChoice
@@ -24,7 +26,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -46,12 +47,30 @@ internal class PureUiProjectViewPaneService(
   private val modelByDescriptor = MutableStateFlow<Map<ProjectViewPaneDescriptorImpl, FrontendProjectViewPaneModel>?>(null)
 
   init {
-    scope.launch(CoroutineName("Mange pure UI pane models")) {
-      supervisorScope {
-        val modelFlows = PURE_UI_EP.extensionList.map { it.getPaneModelsFlow(project) }
-        combine(modelFlows) { modelsByProvider -> modelsByProvider.flatMap { it } }.collect { models ->
-          modelByDescriptor.value = models.associateBy { describe(it) }
+    scope.launch(CoroutineName("Fetch pure UI pane descriptors")) {
+      val modelFlows = PURE_UI_EP.extensionList.mapNotNull {
+        try {
+          it.getPaneModelsFlow(project)
         }
+        catch (e: Throwable) {
+          rethrowControlFlowException(e)
+          LOG.warn("The pure UI extension's getPaneModelsFlow() is broken, skipping: $it", e)
+          null
+        }
+      }
+      combine(modelFlows) { modelsByProvider -> modelsByProvider.flatMap { it } }.collect { models ->
+        modelByDescriptor.value = models
+          .mapNotNull { 
+            try {
+              describe(it) to it
+            }
+            catch (e: Throwable) {
+              rethrowControlFlowException(e)
+              LOG.warn("The pure UI extension's describe() is broken, skipping: $it", e)
+              null
+            }
+          }
+          .toMap()
       }
     }
   }
@@ -90,3 +109,5 @@ internal class PureUiProjectViewPaneService(
     return null
   }
 }
+
+private val LOG = logger<PureUiProjectViewPaneService>()
