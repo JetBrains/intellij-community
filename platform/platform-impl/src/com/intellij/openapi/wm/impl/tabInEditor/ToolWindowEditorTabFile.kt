@@ -24,6 +24,8 @@ import org.jetbrains.annotations.ApiStatus
  * creates a session for this file.
  *
  * Persistent files are identified by [persistentPath] and may be restored across IDE sessions.
+ * Persistence is available only for tool windows that provide a
+ * [ToolWindowEditorTabPersistenceProvider], and only for content accepted by that provider.
  * Files with no persistent path are transient and exist only for the lifetime of the corresponding
  * editor tab.
  *
