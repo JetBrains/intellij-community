@@ -42,20 +42,26 @@ private class JavaDocFragmentCacheService {
 
   private fun findIdsFromComment(docComment: PsiDocComment?): List<JavaDocFragmentData> {
     val text = docComment?.text ?: return listOf()
-    if (" id=" !in text && " ID=" !in text) return listOf()
-    val offset = docComment.textOffset
-    return findIdsFromText(text)
-      .map { JavaDocFragmentData(it.name, it.offset + offset) }
+    return listOf(findIdsFromText(text, docComment.textOffset), findIdsFromSystemProperties(docComment)).flatten()
   }
 
-  private fun findIdsFromText(docText: String): List<JavaDocFragmentData> {
+  /** Collect usages of `{@systemProperty ...}` tags as ids since the `javadoc` tool creates ids from them */
+  private fun findIdsFromSystemProperties(docComment: PsiDocComment): List<JavaDocFragmentData> {
+    val properties = PsiDocComment.findInlineTagByName(docComment, "systemProperty")
+    return properties.filter { it.valueElement != null }.map {
+      JavaDocFragmentData(it.valueElement!!.text, it.textOffset)
+    }
+  }
+
+  private fun findIdsFromText(docText: String, offset: Int): List<JavaDocFragmentData> {
+    if (" id=" !in docText && " ID=" !in docText) return listOf()
     val results = ArrayList<JavaDocFragmentData>()
     val matcher = ID_PATTERN.matcher(docText)
 
     while (matcher.find()) {
       val id = matcher.group(1)
       if (id != null && !id.isBlank()) {
-        results.add(JavaDocFragmentData(id, matcher.start(1)))
+        results.add(JavaDocFragmentData(id, offset + matcher.start(1)))
       }
     }
 
