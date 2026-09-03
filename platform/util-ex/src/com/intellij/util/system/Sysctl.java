@@ -18,6 +18,7 @@ import static java.lang.foreign.ValueLayout.JAVA_LONG;
 
 /**
  * Read access to the BSD {@code sysctl} tree through a {@code sysctlbyname} downcall. macOS only: the symbol is looked up on the first call.
+ * A string value and an {@code int} value have separate readers, because the kernel returns each with its own size.
  */
 @ApiStatus.Internal
 public final class Sysctl {
@@ -45,6 +46,25 @@ public final class Sysctl {
         return null;
       }
       return value.getString(0);
+    }
+  }
+
+  /**
+   * Reads an {@code int} value, for example {@code sysctl.proc_translated}.
+   *
+   * @return the value, or {@code null} when the name is unknown or the value is not 4 bytes long
+   */
+  @LowLevelLocalMachineAccess
+  public static @Nullable Integer intByName(@NotNull String name) {
+    try (Arena arena = Arena.ofConfined()) {
+      MemorySegment nameSegment = arena.allocateFrom(name);
+      MemorySegment value = arena.allocate(JAVA_INT);
+      MemorySegment size = arena.allocate(JAVA_LONG);
+      size.set(JAVA_LONG, 0, JAVA_INT.byteSize());
+      if (sysctlByName(nameSegment, value, size) != 0 || size.get(JAVA_LONG, 0) != JAVA_INT.byteSize()) {
+        return null;
+      }
+      return value.get(JAVA_INT, 0);
     }
   }
 

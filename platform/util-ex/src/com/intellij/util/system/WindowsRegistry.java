@@ -13,7 +13,6 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
@@ -122,21 +121,16 @@ public final class WindowsRegistry {
   }
 
   /**
-   * Downcalls into {@code advapi32.dll}, looked up by its absolute path. {@code HKEY} is {@code long},
+   * Downcalls into {@code advapi32.dll}. {@code HKEY} is {@code long},
    * {@code LSTATUS} and {@code DWORD} are {@code int}.
    */
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
-    private static final SymbolLookup ADVAPI32 = SymbolLookup.libraryLookup(systemRoot().resolve("System32").resolve("advapi32.dll"), Arena.global());
+    private static final SymbolLookup ADVAPI32 = WindowsSystemLibraries.lookup("advapi32.dll");
 
     /** {@code LSTATUS RegGetValueW(HKEY, LPCWSTR subKey, LPCWSTR value, DWORD flags, LPDWORD type, PVOID data, LPDWORD size)} */
     static final MethodHandle REG_GET_VALUE = LINKER.downcallHandle(
       ADVAPI32.findOrThrow("RegGetValueW"),
       FunctionDescriptor.of(JAVA_INT, JAVA_LONG, ADDRESS, ADDRESS, JAVA_INT, ADDRESS, ADDRESS, ADDRESS));
-
-    private static @NotNull Path systemRoot() {
-      String systemRoot = System.getenv("SystemRoot");
-      return Path.of(systemRoot != null ? systemRoot : "C:\\Windows");
-    }
   }
 }
