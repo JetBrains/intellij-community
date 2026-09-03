@@ -22,6 +22,10 @@ jps_test(
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test` start
 create_kotlinc_options(
     name = "custom_kotlin-jvm-debugger-test",
+    opt_in = [
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    ],
     x_context_parameters = True,
 )
 

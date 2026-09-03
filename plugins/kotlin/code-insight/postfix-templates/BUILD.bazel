@@ -6,7 +6,11 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 ### auto-generated section `build intellij.kotlin.codeInsight.postfixTemplates` start
 create_kotlinc_options(
     name = "custom_postfix-templates",
-    opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
+    opt_in = [
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
     x_context_parameters = True,
 )
 
@@ -119,7 +123,11 @@ exports_files(
 ### auto-generated section `build intellij.kotlin.codeInsight.postfixTemplates.tests` start
 create_kotlinc_options(
     name = "custom_kotlin-codeInsight-postfixTemplates-tests",
-    opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
+    opt_in = [
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
     x_context_parameters = True,
 )
 

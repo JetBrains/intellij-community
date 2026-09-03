@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 
-@OptIn(KaIdeApi::class)
 internal class KaIdeModuleConverter: KaModuleConverter {
     override fun asOpenApiModule(module: KaModule): Module? {
         return (module as? KaSourceModule)?.openapiModule

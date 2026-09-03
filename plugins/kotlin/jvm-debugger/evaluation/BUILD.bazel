@@ -1,7 +1,19 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build kotlin.jvm-debugger.evaluation` start
+create_kotlinc_options(
+    name = "custom_evaluation",
+    opt_in = [
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    ],
+    x_context_parameters = True,
+)
+
 jvm_library(
     name = "evaluation",
     srcs = glob(
@@ -12,6 +24,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_evaluation",
     module_name = "kotlin.jvm-debugger.evaluation",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -64,6 +77,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_evaluation",
     module_name = "kotlin.jvm-debugger.evaluation",
     visibility = ["//visibility:public"],
     runtime_deps = [

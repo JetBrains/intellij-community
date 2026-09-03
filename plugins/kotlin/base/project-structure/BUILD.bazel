@@ -11,6 +11,7 @@ create_kotlinc_options(
         "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
         "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
         "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
     ],
 )
@@ -162,6 +163,7 @@ create_kotlinc_options(
         "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
         "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
         "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
         "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
     ],
 )

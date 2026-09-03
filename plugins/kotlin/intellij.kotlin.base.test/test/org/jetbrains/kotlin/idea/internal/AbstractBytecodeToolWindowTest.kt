@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.internal
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.jvm.shared.bytecode.BytecodeGenerationResult
@@ -34,7 +32,6 @@ abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTes
 
         val bytecode = runBlocking(Dispatchers.Default) {
             readAction {
-                @OptIn(KaExperimentalApi::class, KaIdeApi::class)
                 KotlinBytecodeToolWindow.getBytecodeForFile(file, showOffsets = false) {
                     if (InTextDirectivesUtils.getPrefixedBoolean(mainFileText, "// INLINE:") == false) {
                         disableInline(true)

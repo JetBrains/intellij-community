@@ -7,7 +7,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -86,7 +85,6 @@ internal class ImportMemberIntention :
     }
 }
 
-@OptIn(KaIdeApi::class)
 context(_: KaSession)
 private fun computeContext(file: KtFile, symbol: KaSymbol): ImportMemberIntention.Context? {
     return when (symbol) {

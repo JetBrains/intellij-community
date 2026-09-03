@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.k2.quickfi
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandAction
-import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaCompilerPluginDiagnostic0
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -33,7 +32,6 @@ internal object IncorrectTransientFixFactory {
         val isImportNeeded: Boolean,
     ) : PsiUpdateModCommandAction<KtAnnotationEntry>(element) {
 
-        @OptIn(KaIdeApi::class)
         override fun invoke(
             context: ActionContext,
             element: KtAnnotationEntry,

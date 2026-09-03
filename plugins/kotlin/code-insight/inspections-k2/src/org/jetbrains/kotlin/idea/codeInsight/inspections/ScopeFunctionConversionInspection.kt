@@ -13,8 +13,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -124,7 +122,6 @@ class ScopeFunctionConversionInspection : AbstractKotlinInspection() {
  * @param expression The call expression to check
  * @return List of counterpart function names that are valid conversions
  */
-@OptIn(KaExperimentalApi::class)
 private fun getCounterparts(expression: KtCallExpression): List<String> {
     val callee = expression.calleeExpression as? KtNameReferenceExpression ?: return emptyList()
     val calleeName = callee.getReferencedName()
@@ -306,7 +303,6 @@ private class ReceiverToParameterVisitor(
     private val session: KaSession
 ) : KtTreeVisitorVoid() {
 
-    @OptIn(KaExperimentalApi::class)
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         super.visitSimpleNameExpression(expression)
         // Skip operation references like '+', '-', etc.
@@ -396,7 +392,6 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
         lambda.accept(visitor)
     }
 
-    @OptIn(KaIdeApi::class)
     override fun postprocessLambda(lambda: KtLambdaArgument) {
         shortenReferences(
             lambda,
@@ -473,7 +468,6 @@ private class ParameterToReceiverVisitor(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         super.visitSimpleNameExpression(expression)
 
@@ -564,7 +558,6 @@ private class ParameterToReceiverVisitor(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun visitThisExpression(expression: KtThisExpression) {
         // Handle 'this' expressions that need to be qualified
         val implicitReceiverValue = context(session) {
@@ -613,7 +606,6 @@ class ConvertScopeFunctionToReceiver(counterpartName: String) : ConvertScopeFunc
      * Performs additional processing on the lambda after the conversion.
      * For conversion to receiver, we want to remove redundant 'this' references but keep 'this@' labels.
      */
-    @OptIn(KaIdeApi::class)
     override fun postprocessLambda(lambda: KtLambdaArgument) {
         shortenReferences(
             lambda,

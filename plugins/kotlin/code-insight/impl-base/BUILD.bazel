@@ -7,8 +7,9 @@ create_kotlinc_options(
     name = "custom_kotlin-codeInsight-shared",
     opt_in = [
         "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
         "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
         "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
     ],
     x_context_parameters = True,

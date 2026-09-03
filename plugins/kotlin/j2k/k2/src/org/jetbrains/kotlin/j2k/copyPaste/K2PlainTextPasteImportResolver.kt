@@ -21,7 +21,6 @@ import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
@@ -259,7 +258,6 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KaIdeApi::class)
     context(session: KaSession)
     private fun canBeImported(symbol: KaDeclarationSymbol, visibilityChecker: KaUseSiteVisibilityChecker): Boolean {
         return symbol.importableFqName != null && visibilityChecker.isVisible(symbol)

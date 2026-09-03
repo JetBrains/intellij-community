@@ -5,6 +5,10 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 ### auto-generated section `build intellij.kotlin.compilerPlugins.assignment.fixes` start
 create_kotlinc_options(
     name = "custom_kotlin-compilerPlugins-assignment-fixes",
+    opt_in = [
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    ],
     x_context_parameters = True,
 )
 
