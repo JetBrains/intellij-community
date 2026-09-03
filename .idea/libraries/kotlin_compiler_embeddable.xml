@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlin-compiler-embeddable" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.20-RC2">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.20-RC3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.20-RC2/kotlin-compiler-embeddable-2.4.20-RC2.jar">
-          <sha256sum>2654e7834a9e3c12e4626e2d5ace62f38682f9cdd348dba48a6bbde3479d6db2</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.20-RC3/kotlin-compiler-embeddable-2.4.20-RC3.jar">
+          <sha256sum>8b5e606e085246cf3f45e94bc5f19703330cd4336f8018a51ed5f5c41df05b48</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.20-RC2/kotlin-compiler-embeddable-2.4.20-RC2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.20-RC3/kotlin-compiler-embeddable-2.4.20-RC3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.20-RC2/kotlin-compiler-embeddable-2.4.20-RC2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.20-RC3/kotlin-compiler-embeddable-2.4.20-RC3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
