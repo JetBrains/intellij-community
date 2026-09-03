@@ -32,6 +32,7 @@
     "intellij.platform.lang",
     "intellij.platform.lang.core",
     "intellij.platform.lang.impl",
+    "intellij.platform.lsp.impl",
     "intellij.platform.editor.ex",
     "intellij.platform.editor.ui",
     "intellij.platform.frontend.split",
