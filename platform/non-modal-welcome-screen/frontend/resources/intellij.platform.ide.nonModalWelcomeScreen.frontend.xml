@@ -6,6 +6,7 @@
     <module name="intellij.platform.compose"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
@@ -13,6 +14,7 @@
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectView"/>
     <module name="intellij.platform.projectView.frontend"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
 
