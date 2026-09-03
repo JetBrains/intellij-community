@@ -14,8 +14,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
-import com.sun.jna.platform.win32.Advapi32Util;
-import com.sun.jna.platform.win32.WinReg;
+import com.intellij.util.system.WindowsRegistry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -261,8 +260,16 @@ public abstract class WslDistributionManager implements Disposable {
     }
 
     public void updateDistroInfo() {
-      if (Advapi32Util.registryKeyExists(WinReg.HKEY_CURRENT_USER, DISTRO_KEY)) {
-        Set<String> guids = Set.of(Advapi32Util.registryGetKeys(WinReg.HKEY_CURRENT_USER, DISTRO_KEY));
+      String[] keys;
+      try {
+        keys = WindowsRegistry.subKeys(WindowsRegistry.Hive.CURRENT_USER, DISTRO_KEY);
+      }
+      catch (WindowsRegistry.RegistryException e) {
+        Logger.getInstance(WslDistributionManager.class).warn(e);
+        return;
+      }
+      if (keys != null) {
+        Set<String> guids = Set.of(keys);
         synchronized (LOCK) {
           if (!myCurrentGuids.equals(guids)) {
             incModificationCount();

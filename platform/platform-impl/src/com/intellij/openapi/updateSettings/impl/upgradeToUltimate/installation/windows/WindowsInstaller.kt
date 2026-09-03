@@ -14,8 +14,7 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.SystemProperties
 import com.intellij.util.applyIf
 import com.intellij.util.io.delete
-import com.sun.jna.platform.win32.KnownFolders
-import com.sun.jna.platform.win32.Shell32Util
+import com.intellij.ui.win.WindowsShell
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.nio.file.Path
@@ -100,14 +99,10 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
   }
   
   override fun getUltimateInstallationDirectory(): Path? {
-    return try {
-      Shell32Util.getKnownFolderPath(KnownFolders.FOLDERID_UserProgramFiles)?.toNioPathOrNull()
-    }
-    catch (e: Exception) {
-      val localAppData = Shell32Util.getKnownFolderPath(KnownFolders.FOLDERID_LocalAppData).toNioPathOrNull()
-                         ?: SystemProperties.getUserHome().toNioPathOrNull()?.resolve("AppData/Local")
-      localAppData?.resolve("Programs")
-    }
+    WindowsShell.knownFolderPath(WindowsShell.FOLDERID_USER_PROGRAM_FILES)?.toNioPathOrNull()?.let { return it }
+    val localAppData = WindowsShell.knownFolderPath(WindowsShell.FOLDERID_LOCAL_APP_DATA)?.toNioPathOrNull()
+                       ?: SystemProperties.getUserHome().toNioPathOrNull()?.resolve("AppData/Local")
+    return localAppData?.resolve("Programs")
   }
 }
 

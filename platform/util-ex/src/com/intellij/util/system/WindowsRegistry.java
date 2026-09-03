@@ -115,6 +115,54 @@ public final class WindowsRegistry {
     }
   }
 
+  /**
+   * @return the names of the direct subkeys, or {@code null} when the key does not exist
+   */
+  public static @NotNull String @Nullable [] subKeys(@NotNull Hive hive, @NotNull String key) throws RegistryException {
+    try (Arena arena = Arena.ofConfined()) {
+      MemorySegment openedKey = arena.allocate(JAVA_LONG);
+      int status = openKey(hive.handle, arena.allocateFrom(key, StandardCharsets.UTF_16LE), KEY_READ, openedKey);
+      if (status == ERROR_FILE_NOT_FOUND) {
+        return null;
+      }
+      if (status != ERROR_SUCCESS) {
+        throw new RegistryException("RegOpenKeyExW(" + key + ")", status);
+      }
+      long handle = openedKey.get(JAVA_LONG, 0);
+      try {
+        MemorySegment count = arena.allocate(JAVA_INT);
+        MemorySegment maxNameLength = arena.allocate(JAVA_INT);
+        status = (int)Handles.REG_QUERY_INFO_KEY.invokeExact(handle, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL, count, maxNameLength,
+                                                             MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL);
+        if (status != ERROR_SUCCESS) {
+          throw new RegistryException("RegQueryInfoKeyW(" + key + ")", status);
+        }
+        int capacity = maxNameLength.get(JAVA_INT, 0) + 1;
+        MemorySegment name = arena.allocate(2L * capacity);
+        MemorySegment nameLength = arena.allocate(JAVA_INT);
+        String[] result = new String[count.get(JAVA_INT, 0)];
+        for (int i = 0; i < result.length; i++) {
+          nameLength.set(JAVA_INT, 0, capacity);
+          status = (int)Handles.REG_ENUM_KEY_EX.invokeExact(handle, i, name, nameLength, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL);
+          if (status != ERROR_SUCCESS) {
+            throw new RegistryException("RegEnumKeyExW(" + key + ", " + i + ")", status);
+          }
+          result[i] = new String(name.asSlice(0, 2L * nameLength.get(JAVA_INT, 0)).toArray(JAVA_BYTE), StandardCharsets.UTF_16LE);
+        }
+        return result;
+      }
+      catch (RegistryException e) {
+        throw e;
+      }
+      catch (Throwable t) {
+        throw new IllegalStateException(t);
+      }
+      finally {
+        int ignored = closeKey(handle);
+      }
+    }
+  }
+
   private static @Nullable String toString(byte @Nullable [] data) {
     if (data == null) {
       return null;
@@ -209,6 +257,16 @@ public final class WindowsRegistry {
     static final MethodHandle REG_OPEN_KEY_EX = LINKER.downcallHandle(
       ADVAPI32.findOrThrow("RegOpenKeyExW"),
       FunctionDescriptor.of(JAVA_INT, JAVA_LONG, ADDRESS, JAVA_INT, JAVA_INT, ADDRESS));
+
+    /** {@code LSTATUS RegQueryInfoKeyW(HKEY, LPWSTR class, LPDWORD classLength, LPDWORD reserved, LPDWORD subKeys, LPDWORD maxSubKeyLength, LPDWORD maxClassLength, LPDWORD values, LPDWORD maxValueNameLength, LPDWORD maxValueLength, LPDWORD securityDescriptor, PFILETIME lastWriteTime)} */
+    static final MethodHandle REG_QUERY_INFO_KEY = LINKER.downcallHandle(
+      ADVAPI32.findOrThrow("RegQueryInfoKeyW"),
+      FunctionDescriptor.of(JAVA_INT, JAVA_LONG, ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS));
+
+    /** {@code LSTATUS RegEnumKeyExW(HKEY, DWORD index, LPWSTR name, LPDWORD nameLength, LPDWORD reserved, LPWSTR class, LPDWORD classLength, PFILETIME lastWriteTime)} */
+    static final MethodHandle REG_ENUM_KEY_EX = LINKER.downcallHandle(
+      ADVAPI32.findOrThrow("RegEnumKeyExW"),
+      FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_INT, ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS));
 
     /** {@code LSTATUS RegCloseKey(HKEY)} */
     static final MethodHandle REG_CLOSE_KEY = LINKER.downcallHandle(ADVAPI32.findOrThrow("RegCloseKey"), FunctionDescriptor.of(JAVA_INT, JAVA_LONG));

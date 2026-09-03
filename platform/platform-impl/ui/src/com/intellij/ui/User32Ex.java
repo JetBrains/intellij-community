@@ -38,6 +38,40 @@ public final class User32Ex {
   public static final int SPI_GETFOREGROUNDLOCKTIMEOUT = 0x2000;
   /** {@code SPI_SETFOREGROUNDLOCKTIMEOUT} */
   public static final int SPI_SETFOREGROUNDLOCKTIMEOUT = 0x2001;
+  /** {@code SM_REMOTESESSION} for {@link #getSystemMetrics} */
+  public static final int SM_REMOTESESSION = 0x1000;
+
+  /** {@code GetSystemMetrics}; 0 for an unknown index */
+  public static int getSystemMetrics(int index) {
+    try {
+      return (int)Handles.GET_SYSTEM_METRICS.invokeExact(index);
+    }
+    catch (Throwable t) {
+      throw new IllegalStateException(t);
+    }
+  }
+
+  /**
+   * @return {@code WINDOWPLACEMENT.rcNormalPosition} as left, top, right and bottom, or {@code null} when the call fails
+   */
+  public static int @Nullable [] getWindowNormalPosition(long window) {
+    try (Arena arena = Arena.ofConfined()) {
+      MemorySegment placement = arena.allocate(WINDOWPLACEMENT_SIZE);
+      placement.set(JAVA_INT, 0, WINDOWPLACEMENT_SIZE);
+      int succeeded = (int)Handles.GET_WINDOW_PLACEMENT.invokeExact(MemorySegment.ofAddress(window), placement);
+      if (succeeded == 0) {
+        return null;
+      }
+      return placement.asSlice(WINDOWPLACEMENT_NORMAL_POSITION_OFFSET, 16).toArray(JAVA_INT);
+    }
+    catch (Throwable t) {
+      throw new IllegalStateException(t);
+    }
+  }
+
+  /** {@code WINDOWPLACEMENT { UINT length, flags, showCmd; POINT ptMinPosition, ptMaxPosition; RECT rcNormalPosition; }}, 44 bytes */
+  private static final int WINDOWPLACEMENT_SIZE = 44;
+  private static final int WINDOWPLACEMENT_NORMAL_POSITION_OFFSET = 28;
 
   /** @return the offset of the best icon in an {@code .ico} image, or 0 when there is none */
   public static int lookupIconIdFromDirectoryEx(@NotNull MemorySegment resourceBits, boolean icon, int width, int height, int flags) {
@@ -241,6 +275,10 @@ public final class User32Ex {
     static final MethodHandle GET_WINDOW_TEXT_LENGTH = downcall("GetWindowTextLengthW", FunctionDescriptor.of(JAVA_INT, ADDRESS));
     /** {@code int GetWindowTextW(HWND, LPWSTR buffer, int capacity)} */
     static final MethodHandle GET_WINDOW_TEXT = downcall("GetWindowTextW", FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT));
+    /** {@code int GetSystemMetrics(int index)} */
+    static final MethodHandle GET_SYSTEM_METRICS = downcall("GetSystemMetrics", FunctionDescriptor.of(JAVA_INT, JAVA_INT));
+    /** {@code BOOL GetWindowPlacement(HWND, WINDOWPLACEMENT *)} */
+    static final MethodHandle GET_WINDOW_PLACEMENT = downcall("GetWindowPlacement", FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
     /** {@code BOOL EnumWindows(WNDENUMPROC, LPARAM)} */
     static final MethodHandle ENUM_WINDOWS = downcall("EnumWindows", FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_LONG));
     /** {@code BOOL CALLBACK WNDENUMPROC(HWND, LPARAM)} */

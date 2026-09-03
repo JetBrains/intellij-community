@@ -16,15 +16,12 @@ import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.win.WindowsShell;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.system.OS;
-import com.sun.jna.platform.win32.Shell32;
-import com.sun.jna.platform.win32.ShlObj;
-import com.sun.jna.platform.win32.WinDef;
-import com.sun.jna.platform.win32.WinError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,13 +94,10 @@ final class GotoDesktopDirAction extends FileChooserAction implements LightEditC
   static Path getDesktopDirectory() {
     SlowOperations.assertNonCancelableSlowOperationsAreAllowed();
 
-    if (OS.CURRENT == OS.Windows && JnaLoader.isLoaded()) {
-      var path = new char[WinDef.MAX_PATH];
-      var res = Shell32.INSTANCE.SHGetFolderPath(null, ShlObj.CSIDL_DESKTOP, null, ShlObj.SHGFP_TYPE_CURRENT, path);
-      if (WinError.S_OK.equals(res)) {
-        var len = 0;
-        while (len < path.length && path[len] != 0) len++;
-        return Path.of(new String(path, 0, len));
+    if (OS.CURRENT == OS.Windows) {
+      var path = WindowsShell.knownFolderPath(WindowsShell.FOLDERID_DESKTOP);
+      if (path != null) {
+        return Path.of(path);
       }
     }
     else if (OS.CURRENT == OS.macOS && JnaLoader.isLoaded()) {

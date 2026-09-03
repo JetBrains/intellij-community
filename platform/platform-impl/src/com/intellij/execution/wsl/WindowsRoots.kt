@@ -4,9 +4,6 @@ package com.intellij.execution.wsl
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfoRt
-import com.sun.jna.platform.win32.Kernel32
-import com.sun.jna.platform.win32.Kernel32Util
-import com.sun.jna.platform.win32.WinBase
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -17,12 +14,9 @@ import java.nio.file.Path
  */
 fun listWindowsLocalDriveRoots(): List<Path> {
   if (!SystemInfoRt.isWindows) {
-    Logger.getInstance(Kernel32::class.java).warn("listWindowsRoots called not on windows!")
+    Logger.getInstance(WindowsDrives::class.java).warn("listWindowsRoots called not on windows!")
     return emptyList()
   }
-  val kernel32 = Kernel32.INSTANCE
   //https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdrivetypea
-  return Kernel32Util.getLogicalDriveStrings()
-    .filter { kernel32.GetDriveType(it) == WinBase.DRIVE_FIXED }
-    .map { Path.of(it) }
+  return WindowsDrives.fixedDriveRoots().map { Path.of(it) }
 }
