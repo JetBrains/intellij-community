@@ -3,7 +3,6 @@ package com.intellij.credentialStore
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.credentialStore.keePass.InMemoryCredentialStore
-import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Conditions
@@ -117,7 +116,7 @@ private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
 
 internal class MacOsCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): CredentialStore? = when {
-    isMacOsCredentialStoreSupported && JnaLoader.isLoaded() -> NativeCredentialStoreWrapper(KeyChainCredentialStore())
+    isMacOsCredentialStoreSupported -> NativeCredentialStoreWrapper(KeyChainCredentialStore())
     else -> null
   }
 }
@@ -130,7 +129,7 @@ internal class LinuxCredentialStoreFactory : CredentialStoreFactory {
         KWalletCredentialStore.create()
       else
         null
-      if (res == null && JnaLoader.isLoaded()) {
+      if (res == null) {
         try {
           res = SecretCredentialStore.create("com.intellij.credentialStore.Credential")
         }

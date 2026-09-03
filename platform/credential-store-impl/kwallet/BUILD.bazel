@@ -73,8 +73,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jna",
-        "//libraries/jna:jna_test_lib",
         "//libraries/guava",
         "//libraries/guava:guava_test_lib",
         "//libraries/bouncy-castle-provider",

@@ -3,7 +3,6 @@ package com.intellij.credentialStore
 
 import com.intellij.credentialStore.gpg.Pgp
 import com.intellij.credentialStore.windows.WindowsCryptUtils
-import com.intellij.jna.JnaLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.toByteArray
 import org.jetbrains.annotations.ApiStatus
@@ -92,9 +91,7 @@ internal fun createBuiltInOrCrypt32EncryptionSupport(isCrypt32: Boolean): Encryp
     if (!SystemInfo.isWindows) {
       throw IllegalArgumentException("Crypt32 encryption is supported only on Windows")
     }
-    if (JnaLoader.isLoaded()) {
-      return WindowsCrypt32EncryptionSupport(builtInEncryptionKey)
-    }
+    return WindowsCrypt32EncryptionSupport(builtInEncryptionKey)
   }
 
   return AesEncryptionSupport(builtInEncryptionKey)
