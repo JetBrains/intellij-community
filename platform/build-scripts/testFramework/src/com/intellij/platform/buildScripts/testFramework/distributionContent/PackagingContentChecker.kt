@@ -18,6 +18,7 @@ import io.opentelemetry.api.trace.TracerProvider
 import io.opentelemetry.context.Context
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelAndJoin
@@ -66,6 +68,7 @@ import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.Executors
 import kotlin.concurrent.thread
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
@@ -261,6 +264,7 @@ private val packagingSuiteNoopTracer = TracerProvider.noop().get("packaging-suit
 class PackagingSuiteFixture private constructor(
   private val spec: PackagingSuiteSpec,
   private val scopeJob: Job,
+  private val packagingDispatcher: ExecutorCoroutineDispatcher,
   private val diagnostics: PackagingSuiteHangDiagnostics,
   private val tempDir: Path,
   private val telemetry: PackagingSuiteTelemetry?,
@@ -294,7 +298,8 @@ class PackagingSuiteFixture private constructor(
 
       val scopeJob = SupervisorJob()
       val diagnostics = PackagingSuiteHangDiagnostics()
-      val scope = createPackagingSuiteScope(job = scopeJob, diagnostics = diagnostics)
+      val packagingDispatcher = createPackagingSuiteDispatcher()
+      val scope = createPackagingSuiteScope(job = scopeJob, diagnostics = diagnostics, dispatcher = packagingDispatcher)
       var tempDirForCleanup: Path? = null
       try {
         val tempDir = Files.createTempDirectory("${spec.name}-packaging-suite-").also { tempDirForCleanup = it }
@@ -360,6 +365,7 @@ class PackagingSuiteFixture private constructor(
         return PackagingSuiteFixture(
           spec = spec,
           scopeJob = scopeJob,
+          packagingDispatcher = packagingDispatcher,
           diagnostics = diagnostics,
           tempDir = tempDir,
           telemetry = telemetry,
@@ -373,6 +379,7 @@ class PackagingSuiteFixture private constructor(
       }
       catch (t: Throwable) {
         runCatching { runBlocking { scopeJob.cancelAndJoin() } }
+        runCatching { packagingDispatcher.close() }
         runCatching { tracerOverride?.close() }
         telemetry?.rootSpan?.end()
         runCatching { runBlocking { TraceManager.flush() } }
@@ -566,6 +573,7 @@ class PackagingSuiteFixture private constructor(
     }
     finally {
       runCatching { tracerOverride?.close() }
+      runCatching { packagingDispatcher.close() }
     }
   }
 }
@@ -627,13 +635,27 @@ internal class PackagingSuiteHangDiagnostics {
 }
 
 /**
- * Creates a scope that reports an exception of the coroutine machinery to [diagnostics].
+ * Creates a scope that runs on [dispatcher] and reports an exception of the coroutine machinery to [diagnostics].
  *
  * The fixture and its test use it, so both report such an exception the same way.
  */
-internal fun createPackagingSuiteScope(job: Job, diagnostics: PackagingSuiteHangDiagnostics): CoroutineScope {
+internal fun createPackagingSuiteScope(
+  job: Job,
+  diagnostics: PackagingSuiteHangDiagnostics,
+  dispatcher: CoroutineDispatcher = Dispatchers.Default,
+): CoroutineScope {
   @Suppress("RAW_SCOPE_CREATION")
-  return CoroutineScope(job + Dispatchers.Default + diagnostics.exceptionHandler)
+  return CoroutineScope(job + dispatcher + diagnostics.exceptionHandler)
+}
+
+/**
+ * Creates the dispatcher of a fixture scope. Every resume runs on a new virtual thread, so no task waits in a worker queue.
+ *
+ * The caller closes it when the fixture closes. A `withContext(Dispatchers.IO)` block inside the build still runs on the
+ * kotlinx scheduler, and the resume after it comes back here.
+ */
+internal fun createPackagingSuiteDispatcher(): ExecutorCoroutineDispatcher {
+  return Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("packaging-suite-", 0).factory()).asCoroutineDispatcher()
 }
 
 /**
@@ -825,7 +847,7 @@ private fun describeHang(
   return buildString {
     appendLine("Packaging suite: $what made no progress for $probeInterval after $elapsed, so the wait aborts.")
     appendLine("The coroutine dump did not change, no coroutine runs, and every worker of the scheduler is parked.")
-    appendLine("Dispatchers.Default: ${describeDefaultDispatcher()}")
+    appendLine("kotlinx scheduler, used by Dispatchers.IO: ${describeDefaultDispatcher()}")
     appendLine("Exceptions that escaped the coroutine machinery: ${diagnostics.describeEscapedExceptions()}")
     appendLine("Coroutine dump:")
     appendLine(sample.coroutineDump)
@@ -859,7 +881,7 @@ private fun scheduleFullSuiteWork(
   val remainingPackagingTasks = packagingTasks.filter { it !in targetValidationPackagingTasks }
   val pluginCheckTasksByPackagingTask = pluginCheckTasks.associateBy { it.packagingTask }
 
-  scope.launch(Dispatchers.Default) {
+  scope.launch {
     startRemainingTasksWithRollingReplenishment(
       startedTasks = targetValidationPackagingTasks,
       remainingTasks = remainingPackagingTasks,
@@ -1033,7 +1055,7 @@ private fun createPluginCheckTasks(
   return packagingTasks.map { task ->
     PluginCheckTask(
       packagingTask = task,
-      resultDeferred = scope.async(Dispatchers.Default, start = CoroutineStart.LAZY) {
+      resultDeferred = scope.async(start = CoroutineStart.LAZY) {
         if (!task.spec.checkPlugins) {
           return@async TaskResult(value = emptyList())
         }
