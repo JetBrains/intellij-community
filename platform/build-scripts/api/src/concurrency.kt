@@ -6,7 +6,9 @@ import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 
-private val BUILD_CONCURRENCY: Int = (Runtime.getRuntime().availableProcessors() * 2).coerceIn(4, 16)
+/** The number of workers of a fan-out in the build. A caller that runs its own workers bounds them with it too. */
+@ApiStatus.Internal
+val BUILD_CONCURRENCY: Int = (Runtime.getRuntime().availableProcessors() * 2).coerceIn(4, 16)
 
 /**
  * Runs [action] for every item on up to [concurrency] virtual threads, and waits for all of them.

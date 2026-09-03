@@ -15,8 +15,10 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.BUILD_CONCURRENCY
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -430,8 +432,22 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
 
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", mavenRepositoryPath)
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
+    // the loader submits two runnables per module, so the workers bound the parallelism and not the fork count
+    val tasks = Channel<Runnable>(Channel.UNLIMITED)
     taskScope {
-      loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, null, { it: Runnable -> fork("loading project") { it.run() } }, false)
+      repeat(BUILD_CONCURRENCY) { worker ->
+        fork("loading project worker $worker") {
+          for (task in tasks) {
+            task.run()
+          }
+        }
+      }
+      try {
+        loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, null, { task: Runnable -> tasks.trySend(task).getOrThrow() }, false)
+      }
+      finally {
+        tasks.close()
+      }
     }
     span.setAllAttributes(
       Attributes.of(
