@@ -113,6 +113,10 @@ object Git {
     if (shallow) arguments.addAll(listOf("--depth", "1"))
     if (withSubmodules) arguments.add("--recurse-submodules")
 
+    // The retry drops each throwable, so keep the output for the message.
+    val stdoutRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]")
+    val stderrRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]")
+
     withRetryBlocking("Git clone $repoUrl failed", rollback = {
       logOutput("Deleting $destinationDir ...")
 
@@ -123,11 +127,16 @@ object Git {
         workDir = destinationDir.parent.toAbsolutePath(),
         timeout = timeout,
         args = arguments,
-        stdoutRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
-        stderrRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+        stdoutRedirect = stdoutRedirect,
+        stderrRedirect = stderrRedirect,
         onlyEnrichExistedEnvVariables = true
       ).start()
-    } ?: throw SetupException("Git clone $repoUrl failed")
+    } ?: throw SetupException(buildString {
+      appendLine("Git clone $repoUrl failed")
+      appendLine("The last output of `$cmdName`:")
+      appendLine(stderrRedirect.read())
+      appendLine(stdoutRedirect.read())
+    })
   }
 
   fun status(projectDir: Path): Int {
@@ -300,8 +309,8 @@ object Git {
       workDir = repositoryDirectory.toAbsolutePath(),
       timeout = 10.minutes,
       args = arguments,
-      stdoutRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
-      stderrRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+      stdoutRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]"),
+      stderrRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]"),
       onlyEnrichExistedEnvVariables = true
     ).start()
   }
@@ -314,8 +323,8 @@ object Git {
       workDir = repositoryDirectory.toAbsolutePath(),
       timeout = 10.minutes,
       args = listOf("git", "pull"),
-      stdoutRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
-      stderrRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+      stdoutRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]"),
+      stderrRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]"),
       onlyEnrichExistedEnvVariables = true
     ).start()
   }
@@ -365,8 +374,8 @@ object Git {
       workDir = repositoryDirectory.toAbsolutePath(),
       timeout = 10.minutes,
       args = arguments,
-      stdoutRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
-      stderrRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+      stdoutRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]"),
+      stderrRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]"),
       onlyEnrichExistedEnvVariables = true
     ).start()
   }
