@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Pair
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Dispatchers
 import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
@@ -186,7 +185,7 @@ suspend fun collectPluginDescriptors(
       }
       // Each read parses one descriptor and resolves its includes, so the reads run in parallel. The map keeps the
       // project order, because a later duplicate key must win the same way it did in a sequential loop.
-      val descriptors = candidates.mapConcurrent(workerDispatcher = Dispatchers.IO) { jpsModule ->
+      val descriptors = candidates.mapConcurrent { jpsModule ->
         readPluginDescriptor(
           moduleName = jpsModule.name,
           skipImplementationDetails = skipImplementationDetails,

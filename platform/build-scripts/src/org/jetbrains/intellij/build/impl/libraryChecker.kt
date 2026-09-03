@@ -106,7 +106,7 @@ private suspend fun checkUrls(type: String, urls: Map<String, List<LibraryLicens
     .followRedirects(HttpClient.Redirect.ALWAYS)
     .build()
 
-  urlsAndLicensesGroupedByHost.values.mapConcurrent(workerDispatcher = Dispatchers.IO) { group ->
+  urlsAndLicensesGroupedByHost.values.mapConcurrent { group ->
     group.mapConcurrent(concurrency = maxParallelPerHosts) { (url, libraries) ->
       try {
         val request = HttpRequest.newBuilder(URI(url))

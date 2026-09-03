@@ -111,7 +111,7 @@ suspend fun packAndUploadToServer(context: CompilationContext, zipDir: Path, con
     }.map { (name, output) ->
       PackAndUploadItem(output = Path.of(""), name = name, archive = output!!)
     }.apply {
-      forEachConcurrent(workerDispatcher = Dispatchers.IO) { item ->
+      forEachConcurrent { item ->
         spanBuilder("compute hash").setAttribute("name", item.name).blockingUse {
           item.hash = computeHash(item.archive)
         }
@@ -329,10 +329,7 @@ suspend fun fetchAndUnpackCompiledClasses(
       }
       true
     }
-      .forEachConcurrent(
-        concurrency = Runtime.getRuntime().availableProcessors().coerceAtLeast(4),
-        workerDispatcher = Dispatchers.IO,
-      ) { item ->
+      .forEachConcurrent(concurrency = Runtime.getRuntime().availableProcessors().coerceAtLeast(4)) { item ->
         val file = item.file
         when {
           Files.notExists(file) -> toDownload.add(item)
@@ -450,7 +447,7 @@ private suspend fun checkPreviouslyUnpackedDirectories(
       }
     }
 
-    items.forEachConcurrent(workerDispatcher = Dispatchers.IO) { item ->
+    items.forEachConcurrent { item ->
       val out = item.output
       if (Files.notExists(out)) {
         span.addEvent("output directory doesn't exist", Attributes.of(AttributeKey.stringKey("name"), item.name, AttributeKey.stringKey("outDir"), out.toString()))

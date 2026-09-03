@@ -3,7 +3,6 @@ package com.intellij.platform.buildScripts.testFramework.pluginModel
 
 import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
-import kotlinx.coroutines.Dispatchers
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
@@ -97,7 +96,7 @@ private suspend fun collectContentModulesByMainModule(
   mainModules: Collection<String>,
   outputProvider: ModuleOutputProvider,
 ): Map<String, List<String>> {
-  return mainModules.mapConcurrent(workerDispatcher = Dispatchers.IO) { mainModule ->
+  return mainModules.mapConcurrent { mainModule ->
     val module = outputProvider.findModule(mainModule) ?: return@mapConcurrent null
     val pluginXml = findFileInModuleSources(module = module, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true)
                     ?: return@mapConcurrent null
@@ -131,7 +130,7 @@ private suspend fun collectMainModulesWithPluginDescriptor(
   mainModules: Collection<String>,
   outputProvider: ModuleOutputProvider,
 ): Set<String> {
-  return mainModules.mapConcurrent(workerDispatcher = Dispatchers.IO) { mainModule ->
+  return mainModules.mapConcurrent { mainModule ->
     val module = outputProvider.findModule(mainModule) ?: return@mapConcurrent null
     val descriptorContent = outputProvider.readFileContentFromModuleOutput(
       module = module,

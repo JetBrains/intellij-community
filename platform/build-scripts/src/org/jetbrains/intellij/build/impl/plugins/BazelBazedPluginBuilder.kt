@@ -8,7 +8,6 @@ import com.intellij.platform.distributionContent.FileEntry
 import com.intellij.platform.distributionContent.ModuleEntry
 import com.intellij.platform.distributionContent.deserializeContentData
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.Dispatchers
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
@@ -93,7 +92,7 @@ internal suspend fun buildPluginsByBazel(
     }
 
   val buildResults = spanBuilder("copy plugins built by Bazel").use {
-    plugins.mapConcurrent(workerDispatcher = Dispatchers.IO) { plugin ->
+    plugins.mapConcurrent { plugin ->
       if (!plugin.pluginDistributionDirectory.exists()) {
         buildContext.messages.logErrorAndThrow("Cannot copy the plugin distribution for '${plugin.mainModule}' because '${plugin.pluginDistributionDirectory}' does not exist")
       }

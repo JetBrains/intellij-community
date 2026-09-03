@@ -14,8 +14,10 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * A dispatcher with one virtual thread per resume.
@@ -44,6 +46,7 @@ enum class VirtualThreadTaskPolicy {
  * [buildVirtualThreadDispatcher]. A cancelled future interrupts the body thread, and the interrupt cancels the body.
  */
 @ApiStatus.Internal
+@Suppress("SSBasedInspection") // a build script has no progress indicator, so `runBlocking` is the right entry
 fun <T> forkOnVirtualThread(name: String, block: suspend CoroutineScope.() -> T): CompletableFuture<T> {
   val future = CompletableFuture<T>()
   val telemetryContext = Context.current()
@@ -77,13 +80,23 @@ fun <T> forkOnVirtualThread(name: String, block: suspend CoroutineScope.() -> T)
 class VirtualThreadTasks internal constructor(private val policy: VirtualThreadTaskPolicy) {
   private val futures = CopyOnWriteArrayList<CompletableFuture<*>>()
 
+  /**
+   * The failure that ended the first fork. A [CancellationException] that a fork throws itself counts, because
+   * `CompletableFuture.isCancelled` cannot tell it from a cancellation by [cancelAll].
+   */
+  private val firstFailure = AtomicReference<Throwable?>()
+
+  @Volatile
+  private var cancelRequested = false
+
   /** Starts [block] on a new virtual thread. See [forkOnVirtualThread]. */
   fun <T> fork(name: String, block: suspend CoroutineScope.() -> T): CompletableFuture<T> {
     val future = forkOnVirtualThread(name, block)
     futures.add(future)
-    if (policy == VirtualThreadTaskPolicy.FAIL_FAST) {
-      future.whenComplete { _, e ->
-        if (e != null && !future.isCancelled) {
+    future.whenComplete { _, e ->
+      if (e != null && !cancelRequested) {
+        firstFailure.compareAndSet(null, e)
+        if (policy == VirtualThreadTaskPolicy.FAIL_FAST) {
           cancelAll()
         }
       }
@@ -92,6 +105,7 @@ class VirtualThreadTasks internal constructor(private val policy: VirtualThreadT
   }
 
   internal fun cancelAll() {
+    cancelRequested = true
     for (future in futures) {
       future.cancel(true)
     }
@@ -100,8 +114,8 @@ class VirtualThreadTasks internal constructor(private val policy: VirtualThreadT
   /**
    * Waits for every fork, including a fork that another fork adds meanwhile.
    *
-   * Throws the first failure with the other failures suppressed. A cancelled fork counts as a failure only when no
-   * fork failed on its own. When the caller is cancelled, every fork is cancelled.
+   * Throws the first failure with the other failures suppressed. A fork that the group cancelled is not a failure.
+   * When the caller is cancelled, every fork is cancelled.
    */
   internal suspend fun joinAll() {
     while (true) {
@@ -124,28 +138,24 @@ class VirtualThreadTasks internal constructor(private val policy: VirtualThreadT
       }
     }
 
-    var failure: Throwable? = null
-    var cancellation: Throwable? = null
+    val first = firstFailure.get() ?: return
     for (future in futures) {
-      if (future.isCancelled) {
-        if (cancellation == null) {
-          cancellation = runCatching { future.join() }.exceptionOrNull()
-        }
-        continue
-      }
-      if (!future.isCompletedExceptionally) {
-        continue
-      }
-      val e = future.exceptionNow()
-      if (failure == null) {
-        failure = e
-      }
-      else {
-        failure.addSuppressed(e)
+      val e = future.failureOrNull() ?: continue
+      if (e !== first && e !is CancellationException) {
+        first.addSuppressed(e)
       }
     }
-    (failure ?: cancellation)?.let { throw it }
+    throw first
   }
+}
+
+/** The exception of a future that completed exceptionally, without the `CompletionException` wrapper of `join`. */
+private fun CompletableFuture<*>.failureOrNull(): Throwable? {
+  if (!isCompletedExceptionally) {
+    return null
+  }
+  val e = runCatching { join() }.exceptionOrNull() ?: return null
+  return (e as? CompletionException)?.cause ?: e
 }
 
 /**

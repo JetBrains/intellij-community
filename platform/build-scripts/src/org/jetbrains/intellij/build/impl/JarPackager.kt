@@ -12,7 +12,6 @@ import io.opentelemetry.api.common.AttributeKey
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -1043,7 +1042,7 @@ private suspend fun buildJars(
     return emptyBuildJarsResult()
   }
 
-  val list = assets.mapConcurrent(workerDispatcher = Dispatchers.IO) { asset ->
+  val list = assets.mapConcurrent { asset ->
     withContext(CoroutineName("build jar for ${asset.relativePath}")) {
       buildAsset(
         asset = asset,

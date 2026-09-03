@@ -9,7 +9,6 @@ import com.intellij.platform.distributionContent.readDevDistExtraMembers
 import com.intellij.platform.pluginSystem.testFramework.MissingModuleSetDescriptorException
 import com.intellij.platform.pluginSystem.testFramework.buildStalePackagingDataMessage
 import com.intellij.platform.pluginSystem.testFramework.resolveModuleSet
-import kotlinx.coroutines.Dispatchers
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.mapConcurrent
@@ -108,7 +107,7 @@ private suspend fun collectMainModulesWithPluginDescriptor(
     mainModules.add(item.mainModule)
   }
 
-  return mainModules.mapConcurrent(workerDispatcher = Dispatchers.IO) { mainModule ->
+  return mainModules.mapConcurrent { mainModule ->
     val module = outputProvider.findModule(mainModule) ?: return@mapConcurrent null
     val descriptorContent = outputProvider.readFileContentFromModuleOutput(
       module = module,

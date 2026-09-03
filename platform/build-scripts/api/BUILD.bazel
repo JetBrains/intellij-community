@@ -25,6 +25,8 @@ jvm_library(
         "//platform/util/zip",
         "//libraries/kotlinx/coroutines/core",
         "@community//build:zip",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry-extension-kotlin",
     ],
 )
 
@@ -49,6 +51,8 @@ jvm_library(
         "//platform/util/zip:zip_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "@community//build:zip_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.api` end

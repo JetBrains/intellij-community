@@ -9,7 +9,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -65,7 +64,7 @@ internal suspend fun buildPlugins(
 
   val (pluginsBuildInProcess, pluginsBuildByBazel) = partitionPluginsByBuildingMethod(plugins, context)
 
-  val resultsForPluginsBuiltInProcess = pluginsBuildInProcess.mapConcurrent(workerDispatcher = Dispatchers.IO) { pluginLayout ->
+  val resultsForPluginsBuiltInProcess = pluginsBuildInProcess.mapConcurrent { pluginLayout ->
     withContext(CoroutineName("Build plugin (module=${pluginLayout.mainModule})")) {
       buildPlugin(
         pluginLayout = pluginLayout,
