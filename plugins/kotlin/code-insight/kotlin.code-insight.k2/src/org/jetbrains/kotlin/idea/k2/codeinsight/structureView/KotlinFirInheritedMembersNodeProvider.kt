@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.structureView
 import com.intellij.ide.util.InheritedMembersNodeProvider
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.psi.NavigatablePsiElement
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -21,9 +22,11 @@ class KotlinFirInheritedMembersNodeProvider : InheritedMembersNodeProvider<TreeE
         analyze(ktClassOrObject) {
             
             val children = mutableListOf<TreeElement>()
-            val descriptor = ktClassOrObject.symbol as? KaClassSymbol ?: return listOf()
+            val classSymbol = ktClassOrObject.symbol as? KaClassSymbol ?: return listOf()
 
-            for (memberSymbol in descriptor.memberScope.declarations) {
+            val inheritedMembers = classSymbol.memberScope.declarations
+                .minus(classSymbol.declaredMemberScope.declarations.toSet())
+            for (memberSymbol in inheritedMembers) {
                 if (memberSymbol.origin == KaSymbolOrigin.INTERSECTION_OVERRIDE) continue
                 if (memberSymbol is KaClassSymbol) continue
                 val psi = memberSymbol.psi
