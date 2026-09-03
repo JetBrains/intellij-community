@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.GotoContributorsAvailabilitySer
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSession
@@ -20,8 +21,12 @@ class SeClassesTabFactory : SeEssentialTabFactory {
   override val name: String get() = SeClassesTab.NAME
   override val priority: Int get() = SeClassesTab.PRIORITY
 
+  override fun isAvailable(project: Project?): Boolean =
+    project != null && !WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
+
   override suspend fun getTab(scope: CoroutineScope, project: Project?, session: SeSession, initEvent: AnActionEvent, registerShortcut: (AnAction) -> Unit): SeTab? {
     project ?: return null
+    if (!isAvailable(project)) return null
     if (!GotoContributorsAvailabilityService.getInstance(project).awaitHasClassContributors()) return null
 
     val delegate = SeTabDelegate.create(project,

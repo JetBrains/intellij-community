@@ -118,7 +118,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val tabCustomizer = SeTabsCustomizer.getInstance()
     val initialTabs = visibleTabsState?.map { tab ->
       SeDummyTabVm(tab)
-    } ?: tabFactories.filterIsInstance<SeEssentialTabFactory>().mapNotNull { factory ->
+    } ?: tabFactories.filterIsInstance<SeEssentialTabFactory>().filter { it.isAvailable(project) }.mapNotNull { factory ->
       tabCustomizer.customizeTabInfo(factory.id, SeTabInfo(factory.priority, factory.name))?.let { factory.id to it }
     }.sortedBy { (_, info) ->
       -info.priority
