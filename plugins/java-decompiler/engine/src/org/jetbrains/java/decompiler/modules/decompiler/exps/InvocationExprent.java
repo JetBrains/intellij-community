@@ -255,6 +255,20 @@ public class InvocationExprent extends Exprent {
     return new InvocationExprent(this);
   }
 
+  /**
+   * The constant pool holds the owner of a call on an array as a type descriptor.
+   * An example is {@code [Ljava/lang/String;} for {@code String[].clone()}.
+   * Every other owner is an internal class name.
+   *
+   * @return the type of the class that declares the method
+   */
+  private VarType getOwnerType() {
+    if (!className.isEmpty() && className.charAt(0) == '[') {
+      return new VarType(className, true);
+    }
+    return new VarType(CodeConstants.TYPE_OBJECT, 0, className);
+  }
+
   @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buf = new TextBuffer();
@@ -327,7 +341,7 @@ public class InvocationExprent extends Exprent {
           }
 
           VarType rightType = instance.getExprType();
-          VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, className);
+          VarType leftType = getOwnerType();
 
           if (!leftType.equals(rightType) &&
               (rightType.equals(VarType.VARTYPE_OBJECT) ||
