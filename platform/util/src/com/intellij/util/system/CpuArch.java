@@ -1,17 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.system;
 
-import com.intellij.jna.JnaLoader;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.WinBuildNumber;
-import com.sun.jna.Native;
-import com.sun.jna.platform.mac.SystemB;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.WinNT;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.win32.StdCallLibrary;
-import com.sun.jna.win32.W32APIOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,49 +71,13 @@ public enum CpuArch {
   //<editor-fold desc="Emulated environment detection">
   // https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment
   private static boolean isUnderRosetta() {
-    try {
-      if (JnaLoader.isLoaded()) {
-        IntByReference p = new IntByReference();
-        SystemB.size_t.ByReference size = new SystemB.size_t.ByReference(SystemB.INT_SIZE);
-        if (SystemB.INSTANCE.sysctlbyname("sysctl.proc_translated", p.getPointer(), size, null, SystemB.size_t.ZERO) != -1) {
-          return p.getValue() == 1;
-        }
-      }
-    }
-    catch (Throwable t) {
-      Logger.getInstance(CpuArch.class).error(t);
-    }
-
-    return false;
+    return Boolean.TRUE.equals(NativeAccess.getInstance().isTranslatedProcess());
   }
 
   // https://learn.microsoft.com/en-us/windows/win32/api/wow64apiset/nf-wow64apiset-iswow64process2
   private static boolean matchesWindowsNativeArch() {
-    try {
-      if (JnaLoader.isLoaded()) {
-        Long buildNumber = WinBuildNumber.getWinBuildNumber();
-        if (buildNumber != null && buildNumber >= 16299) {
-          Kernel32Ext kernel32Ext = Native.load("kernel32", Kernel32Ext.class, W32APIOptions.DEFAULT_OPTIONS);
-          WinNT.HANDLE hProcess = Kernel32.INSTANCE.GetCurrentProcess();
-          IntByReference processMachine = new IntByReference(0), nativeMachine = new IntByReference(0);
-          if (kernel32Ext.IsWow64Process2(hProcess, processMachine, nativeMachine)) {
-            int arch = nativeMachine.getValue();
-            if (arch == 0x014C) return CURRENT == X86;
-            if (arch == 0x8664) return CURRENT == X86_64;
-            if (arch == 0xAA64) return CURRENT == ARM64;
-          }
-        }
-      }
-    }
-    catch (Throwable t) {
-      Logger.getInstance(CpuArch.class).error(t);
-    }
-
-    return true;
-  }
-
-  private interface Kernel32Ext extends StdCallLibrary, WinNT {
-    boolean IsWow64Process2(HANDLE hProcess, IntByReference pProcessMachine, IntByReference pNativeMachine);
+    CpuArch nativeArch = NativeAccess.getInstance().getWindowsNativeArch();
+    return nativeArch == null || nativeArch == CURRENT;
   }
   //</editor-fold>
 }
