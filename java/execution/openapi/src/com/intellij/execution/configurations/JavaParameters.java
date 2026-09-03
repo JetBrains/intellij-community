@@ -3,9 +3,9 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.OrderRootsEnumerator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathsList;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -76,22 +75,25 @@ public class JavaParameters extends SimpleJavaParameters {
     setDefaultCharset(module.getProject());
     configureEnumerator(OrderEnumerator.orderEntries(module).recursively(), classPathType, jdk).collectPaths(getClassPath());
     configureJavaLibraryPath(OrderEnumerator.orderEntries(module).recursively());
-    configureJavaEnablePreviewProperty(OrderEnumerator.orderEntries(module).recursively(), jdk);
+    configureJavaEnablePreviewProperty(module, jdk);
   }
 
-  private void configureJavaEnablePreviewProperty(OrderEnumerator orderEnumerator, Sdk jdk) {
-    ParametersList vmParameters = getVMParametersList();
-    if (vmParameters.hasParameter(JAVA_ENABLE_PREVIEW_PROPERTY) || !JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_11)) {
-      return;
+  private void configureJavaEnablePreviewProperty(Module module, Sdk jdk) {
+    if (needsJavaEnablePreviewProperty(jdk) && JavaExecutionUtil.compilesPreviewFeatures(module)) {
+      getVMParametersList().add(JAVA_ENABLE_PREVIEW_PROPERTY);
     }
-    orderEnumerator.forEachModule(module -> {
-      LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
-      if (languageLevel.isPreview()) {
-        vmParameters.add(JAVA_ENABLE_PREVIEW_PROPERTY);
-        return false;
-      }
-      return true;
-    });
+  }
+
+  private void configureJavaEnablePreviewProperty(Project project, Sdk jdk) {
+    if (needsJavaEnablePreviewProperty(jdk) && JavaExecutionUtil.compilesPreviewFeatures(project)) {
+      getVMParametersList().add(JAVA_ENABLE_PREVIEW_PROPERTY);
+    }
+  }
+
+  /** Whether the flag is still missing, and whether the JDK is new enough to accept it. */
+  private boolean needsJavaEnablePreviewProperty(Sdk jdk) {
+    return !getVMParametersList().hasParameter(JAVA_ENABLE_PREVIEW_PROPERTY) &&
+           JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_11);
   }
 
   private void configureJavaLibraryPath(OrderEnumerator enumerator) {
@@ -168,7 +170,7 @@ public class JavaParameters extends SimpleJavaParameters {
     setDefaultCharset(project);
     configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType, jdk).collectPaths(getClassPath());
     configureJavaLibraryPath(OrderEnumerator.orderEntries(project));
-    configureJavaEnablePreviewProperty(OrderEnumerator.orderEntries(project), jdk);
+    configureJavaEnablePreviewProperty(project, jdk);
   }
 
   private static OrderRootsEnumerator configureEnumerator(OrderEnumerator enumerator, int classPathType, Sdk jdk) {
