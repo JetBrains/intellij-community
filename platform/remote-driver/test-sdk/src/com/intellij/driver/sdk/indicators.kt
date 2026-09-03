@@ -2,6 +2,7 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.service
+import com.intellij.driver.sdk.remoteDev.isLightSession
 import com.intellij.openapi.diagnostic.logger
 import java.time.Instant
 import kotlin.collections.emptyList
@@ -69,7 +70,8 @@ internal fun Driver.waitForIndicators(projectGet: () -> Project?, timeout: Durat
   waitFor("Indicators with waitSmartLongEnough=$waitSmartLongEnough", timeout) {
     val project = runCatching { projectGet.invoke() }.getOrNull()
     val projectReady = (project != null && isProjectOpened(project))
-    val indicatorsVisible = projectReady && areIndicatorsVisible(project)
+    val lightSession = projectReady && isLightSession()
+    val indicatorsVisible = projectReady && if (lightSession) getProgressIndicators(project).isNotEmpty() else areIndicatorsVisible(project)
     if (!projectReady) {
       logger<Driver>().info("The project is not opened.")
     }
@@ -81,7 +83,7 @@ internal fun Driver.waitForIndicators(projectGet: () -> Project?, timeout: Durat
       return@waitFor false
     }
 
-    if (waitSmartLongEnough) {
+    if (waitSmartLongEnough && !lightSession) {
       val start = smartLongEnoughStart
       if (start == null) {
         smartLongEnoughStart = Instant.now()
