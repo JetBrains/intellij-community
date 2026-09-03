@@ -95,7 +95,17 @@ class PySdkPathsTest {
       module.pythonSdk = it
     }
 
-    runWriteActionAndWait { sdk.pySdkAdditionalData }.apply { setAddedPathsFromVirtualFiles(setOf(moduleRoot)) }
+    // Associated like its sibling `sysPathEntryIsModuleRoot`, because `updateSdkPaths` classifies a path against the
+    // roots of the module the SDK names, and a mock SDK names none.
+    sdk.associateWith(moduleRoot)
+    // Committed through the modificator, so the next commit of this SDK keeps the path. Written in place it was
+    // dropped by whichever commit came first, and this test then passed because nothing was left to classify.
+    runWriteActionAndWait {
+      sdk.sdkModificator.apply {
+        (sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(setOf(moduleRoot))
+        commitChanges()
+      }
+    }
 
     updateSdkPaths(sdk)
 
