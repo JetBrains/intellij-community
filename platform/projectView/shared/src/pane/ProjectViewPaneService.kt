@@ -236,6 +236,13 @@ private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descrip
   suspend inline fun <T> withPaneActive(code: () -> T): T {
     subscriberCount.update { it + 1 }
     return try {
+      // Await until the pane is actually "up and running."
+      // This is needed because otherwise some calls won't be able to do anything meaningful.
+      // For example, findNodeForSelectIn() on a `TreeBasedProjectViewPaneModel` would immediately return `null`,
+      // because `currentTreeState.load()` would be `null` if the pane has no state yet.
+      // After the pane gets into a "some state initialized" state, though, it's the calling code that's responsible
+      // for suspending and waiting for whatever is necessary to do the job.
+      // There might be a better way to design this, though. Maybe, for example, `currentTreeState` should be a flow.
       stateBuilder.awaitInitialized()
       code()
     }
