@@ -41,4 +41,5 @@ public final class DevkitCoreIcons {
   /** 16x16 */ public static final @NotNull Icon Service = load("icons/expui/service.svg", 865613742, 2);
   /** 16x16 */ public static final @NotNull Icon SharedModule = load("icons/expui/sharedModule.svg", 1430081738, 2);
   /** 16x16 */ public static final @NotNull Icon State = load("icons/expui/state.svg", 889951373, 2);
+  /** 16x16 */ public static final @NotNull Icon UpdateIdeFromSources = load("icons/expui/updateIdeFromSources.svg", 1336866577, 2);
 }
