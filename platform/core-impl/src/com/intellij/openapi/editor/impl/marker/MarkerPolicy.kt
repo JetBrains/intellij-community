@@ -23,6 +23,9 @@ fun interface MarkerPolicy {
     beforeText: DocumentText,
     afterText: DocumentText,
   ): MarkerTransformResult
+
+  /** Applies policy rules after a text move retargets [entry]. */
+  fun afterRetarget(entry: MarkerEntry, text: DocumentText): MarkerTransformResult = MarkerTransformResult.Valid(entry)
 }
 
 /**
@@ -31,7 +34,11 @@ fun interface MarkerPolicy {
 @ApiStatus.Internal
 sealed interface MarkerTransformResult {
   data class Valid(val entry: MarkerEntry) : MarkerTransformResult
-  data class Invalid(val reason: String) : MarkerTransformResult
+  data class Invalid(
+    val reason: String,
+    /** The final marker state. Use it when the edit moves the marker before invalidation. */
+    val entry: MarkerEntry? = null,
+  ) : MarkerTransformResult
 }
 
 /**

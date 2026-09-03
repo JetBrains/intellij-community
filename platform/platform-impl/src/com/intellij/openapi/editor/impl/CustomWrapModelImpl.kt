@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.ElfCandidate
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
+import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.customwrap.CustomWrapImpl
 import com.intellij.util.DocumentUtil
 import com.intellij.util.EventDispatcher
@@ -22,6 +23,8 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
                                                                      Dumpable, Disposable {
   private val document = editor.elfDocument
   private val tree: CustomWrapTree = CustomWrapTree(document)
+  @Volatile
+  private var snapshotStorage: SnapshotCustomWrapStorage? = null
   private val eventDispatcher = EventDispatcher.create(CustomWrapModel.Listener::class.java)
   private var isInsideBatchMutation = false
 
@@ -37,11 +40,11 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
     eventDispatcher.removeListener(listener)
   }
 
-  private fun notifyAdded(wrap: CustomWrapImpl) {
+  private fun notifyAdded(wrap: CustomWrap) {
     eventDispatcher.multicaster.customWrapAdded(wrap)
   }
 
-  private fun notifyRemoved(wrap: CustomWrapImpl) {
+  internal fun notifyRemoved(wrap: CustomWrap) {
     eventDispatcher.multicaster.customWrapRemoved(wrap)
   }
 
@@ -60,42 +63,53 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
     if (!isValidCustomWrapOffset(offset, document)) {
       return null
     }
-    val wrap = CustomWrapImpl(offset, document, this, indentInColumns, priority)
-    tree.addInterval(wrap, offset, offset, false, false, false, 0)
+    val wrap = if (RangeMarkerStorageImpl.Holder.USE_PMARKER_IMPLEMENTATION) {
+      getOrCreateSnapshotStorage().create(offset, indentInColumns, priority)
+    }
+    else {
+      CustomWrapImpl(offset, document, this, indentInColumns, priority).also {
+        tree.addInterval(it, offset, offset, greedyToLeft = false, greedyToRight = false, stickingToRight = false, layer = 0)
+      }
+    }
     notifyAdded(wrap)
     return wrap
   }
 
   override fun getWraps(): List<CustomWrap> {
-    val result = ArrayList<CustomWrapImpl>()
+    val result = ArrayList<CustomWrap>()
     tree.processAll {
       result.add(it)
       true
     }
+    snapshotStorage?.collectAll()?.let(result::addAll)
     result.sortWith(CUSTOM_WRAP_COMPARATOR)
     return result
   }
 
-  override fun getWrapsInRange(startOffset: Int, endOffset: Int): List<CustomWrapImpl> {
-    val result = ArrayList<CustomWrapImpl>()
+  override fun getWrapsInRange(startOffset: Int, endOffset: Int): List<CustomWrap> {
+    val result = ArrayList<CustomWrap>()
     tree.processOverlappingWith(startOffset, endOffset) {
       result.add(it)
       true
     }
+    snapshotStorage?.collectInRange(startOffset, endOffset)?.let(result::addAll)
     result.sortWith(CUSTOM_WRAP_COMPARATOR)
     return result
   }
 
-  override fun getWrapsAtOffset(offset: Int): List<CustomWrapImpl> {
+  override fun getWrapsAtOffset(offset: Int): List<CustomWrap> {
     return getWrapsInRange(offset, offset)
   }
 
   override fun removeWrap(wrap: CustomWrap): Boolean {
     require(isInsideBatchMutation) { "#removeWrap must be called inside #runBatchMutation" }
+    if (wrap is SnapshotCustomWrap) {
+      return snapshotStorage?.remove(wrap) == true
+    }
     return tree.removeInterval(wrap as CustomWrapImpl)
   }
 
-  override fun hasWraps(): Boolean = tree.size() > 0
+  override fun hasWraps(): Boolean = tree.size() > 0 || snapshotStorage?.hasWraps() == true
 
   override fun <T> runBatchMutation(mutation: CustomWrapModel.Mutator.() -> T): T {
     if (isInsideBatchMutation) {
@@ -122,7 +136,7 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
     return result
   }
 
-  private var wrapsAtCaret: List<CustomWrapImpl> = emptyList()
+  private var wrapsAtCaret: List<CustomWrap> = emptyList()
 
   override fun beforeDocumentChange(event: DocumentEvent) {
     if (document.isInBulkUpdate) return
@@ -136,13 +150,13 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
         val caretVisualLine = editor.caretModel.visualPosition.line
         val softWrapVisualLine = editor.offsetToVisualLine(offset, true)
         val shouldStickToRight = caretVisualLine == softWrapVisualLine
-        wraps.forEach { it.isStickingToRight = shouldStickToRight }
+        wraps.forEach { (it as RangeMarkerEx).setStickingToRight(shouldStickToRight) }
       }
     }
   }
 
   override fun documentChanged(event: DocumentEvent) {
-    wrapsAtCaret.forEach { it.isStickingToRight = false }
+    wrapsAtCaret.forEach { (it as RangeMarkerEx).setStickingToRight(false) }
     wrapsAtCaret = emptyList()
   }
 
@@ -184,6 +198,17 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
 
   override fun dispose() {
     tree.dispose(document)
+    snapshotStorage?.dispose()
+  }
+
+  @Synchronized
+  private fun getOrCreateSnapshotStorage(): SnapshotCustomWrapStorage {
+    var storage = snapshotStorage
+    if (storage == null) {
+      storage = SnapshotCustomWrapStorage(this, document as DocumentImpl)
+      snapshotStorage = storage
+    }
+    return storage
   }
 
   private inner class CustomWrapTree(document: Document) : HardReferencingRangeMarkerTree<CustomWrapImpl>(document) {
@@ -215,7 +240,7 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
 
 private val LOG = logger<CustomWrapModelImpl>()
 
-private val CUSTOM_WRAP_COMPARATOR = compareBy<CustomWrapImpl> { it.offset }.thenBy { it.priority }
+private val CUSTOM_WRAP_COMPARATOR = compareBy<CustomWrap> { it.offset }.thenBy { it.priority }
 
 @ApiStatus.Internal
 fun isValidCustomWrapOffset(offset: Int, document: Document): Boolean =

@@ -189,7 +189,7 @@ open class PMarkerRootImpl private constructor(
     for (entry in middleEntries) {
       when (val update = transform(editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer)) {
         is MarkerTransformResult.Valid -> transformedMiddle.add(update.entry)
-        is MarkerTransformResult.Invalid -> editor.putInvalid(entry, update.reason)
+        is MarkerTransformResult.Invalid -> editor.putInvalid(update.entry ?: entry, update.reason)
       }
     }
 
@@ -205,7 +205,9 @@ open class PMarkerRootImpl private constructor(
       // inserted copy before the deletion half of moveText is applied.
       val moveStart = patch.moveOffset()
       val moveEnd = moveStart + newLength
-      newRoot = retargetContainedMarkers(editor, newRoot, moveStart, moveEnd, editStart - moveStart)
+      newRoot = retargetContainedMarkers(
+        editor, newRoot, moveStart, moveEnd, editStart - moveStart, afterText, invalidatedMarkerConsumer
+      )
     }
     editor.setParent(newRoot, NULL_NODE)
     return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount())
@@ -225,7 +227,7 @@ open class PMarkerRootImpl private constructor(
     for (entry in entries) {
       when (val update = transform(editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer)) {
         is MarkerTransformResult.Valid -> transformedEntries.add(update.entry)
-        is MarkerTransformResult.Invalid -> editor.putInvalid(entry, update.reason)
+        is MarkerTransformResult.Invalid -> editor.putInvalid(update.entry ?: entry, update.reason)
       }
     }
     if (!isSortedByPosition(transformedEntries)) transformedEntries.sortWith(ENTRY_COMPARATOR)
@@ -235,7 +237,9 @@ open class PMarkerRootImpl private constructor(
     if (oldLength == 0 && patch.moveOffset() != patch.startOffset()) {
       val moveStart = patch.moveOffset()
       val moveEnd = moveStart + patch.newFragment().length
-      newRoot = retargetContainedMarkers(editor, newRoot, moveStart, moveEnd, patch.startOffset() - moveStart)
+      newRoot = retargetContainedMarkers(
+        editor, newRoot, moveStart, moveEnd, patch.startOffset() - moveStart, afterText, invalidatedMarkerConsumer
+      )
     }
     editor.setParent(newRoot, NULL_NODE)
     return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount())
@@ -888,7 +892,7 @@ open class PMarkerRootImpl private constructor(
           result
         }
         is MarkerTransformResult.Invalid -> {
-          editor.putInvalid(entry, update.reason)
+          editor.putInvalid(update.entry ?: entry, update.reason)
           val result = joinDisjoint(editor, newLeft, newRight)
           editor.setParent(result, NULL_NODE)
           result
@@ -920,6 +924,8 @@ open class PMarkerRootImpl private constructor(
       moveStart: Int,
       moveEnd: Int,
       offsetDelta: Int,
+      afterText: DocumentText,
+      invalidatedMarkerConsumer: LongConsumer,
     ): Long {
       val affected = ArrayList<MarkerEntry>()
       collectContainedEntries(editor, rootId, 0, moveStart, moveEnd, affected)
@@ -931,21 +937,65 @@ open class PMarkerRootImpl private constructor(
           startOffset = entry.startOffset + offsetDelta,
           endOffset = entry.endOffset + offsetDelta,
         )
-        editor.putValid(
-          entry.markerId,
-          ValidNode(
-            entry = retargeted,
-            parentId = NULL_NODE,
-            leftId = NULL_NODE,
-            rightId = NULL_NODE,
-            height = 1,
-            maximumEndOffset = retargeted.endOffset,
-            lazyOffsetDelta = 0,
-            subtreeFlavorFlags = retargeted.flavorFlags,
-          )
-        )
-        result = insertAvl(editor, result, entry.markerId)
+        when (val update = afterRetarget(editor, retargeted, afterText, invalidatedMarkerConsumer)) {
+          is MarkerTransformResult.Valid -> {
+            val updatedEntry = update.entry
+            editor.putValid(
+              entry.markerId,
+              ValidNode(
+                entry = updatedEntry,
+                parentId = NULL_NODE,
+                leftId = NULL_NODE,
+                rightId = NULL_NODE,
+                height = 1,
+                maximumEndOffset = updatedEntry.endOffset,
+                lazyOffsetDelta = 0,
+                subtreeFlavorFlags = updatedEntry.flavorFlags,
+              )
+            )
+            result = insertAvl(editor, result, entry.markerId)
+          }
+          is MarkerTransformResult.Invalid -> editor.putInvalid(update.entry ?: retargeted, update.reason)
+        }
         editor.setParent(result, NULL_NODE)
+      }
+      return result
+    }
+
+    private fun afterRetarget(
+      editor: MapBatchEditor,
+      entry: MarkerEntry,
+      afterText: DocumentText,
+      invalidatedMarkerConsumer: LongConsumer,
+    ): MarkerTransformResult {
+      return processTransformResult(
+        editor,
+        entry,
+        entry.spec.policy.afterRetarget(entry, afterText),
+        invalidatedMarkerConsumer,
+      )
+    }
+
+    private fun processTransformResult(
+      editor: MapBatchEditor,
+      entry: MarkerEntry,
+      result: MarkerTransformResult,
+      invalidatedMarkerConsumer: LongConsumer,
+    ): MarkerTransformResult {
+      val updatedEntry = when (result) {
+        is MarkerTransformResult.Valid -> result.entry
+        is MarkerTransformResult.Invalid -> result.entry
+      }
+      if (updatedEntry != null) {
+        check(updatedEntry.markerId == entry.markerId) {
+          "Marker policy changed marker ID ${entry.markerId} to ${updatedEntry.markerId}"
+        }
+      }
+      if (result is MarkerTransformResult.Valid) {
+        editor.replacePolicy(entry.spec.policy, result.entry.spec.policy)
+      }
+      else {
+        invalidatedMarkerConsumer.accept(entry.markerId)
       }
       return result
     }
@@ -1028,17 +1078,12 @@ open class PMarkerRootImpl private constructor(
       afterText: DocumentText,
       invalidatedMarkerConsumer: LongConsumer,
     ): MarkerTransformResult {
-      val result = entry.spec.policy.transform(entry, patch, beforeText, afterText)
-      if (result is MarkerTransformResult.Valid) {
-        check(result.entry.markerId == entry.markerId) {
-          "Marker policy changed marker ID ${entry.markerId} to ${result.entry.markerId}"
-        }
-        editor.replacePolicy(entry.spec.policy, result.entry.spec.policy)
-      }
-      else {
-        invalidatedMarkerConsumer.accept(entry.markerId)
-      }
-      return result
+      return processTransformResult(
+        editor,
+        entry,
+        entry.spec.policy.transform(entry, patch, beforeText, afterText),
+        invalidatedMarkerConsumer,
+      )
     }
   }
 }
