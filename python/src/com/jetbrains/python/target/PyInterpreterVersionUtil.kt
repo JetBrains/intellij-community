@@ -8,6 +8,7 @@ import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.remote.RemoteSdkException
+import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
@@ -15,20 +16,23 @@ import com.jetbrains.python.ui.pyMayBeModalBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-private fun PyTargetAwareAdditionalData.getBinaryToExec(): BinaryToExec {
-  val configuration = targetEnvironmentConfiguration
-  val binaryToExec = if (configuration == null) {
-    BinOnEel(Path.of(interpreterPath))
-  }
-  else {
-    BinOnTarget(interpreterPath, configuration)
-  }
-  return binaryToExec
+/**
+ * What to run for this interpreter, or `null` when it records no path to run.
+ *
+ * An SDK still being set up has none yet: `interpreterPath` comes from the target, and the caller can reach this while
+ * the target is still being asked. It used to be dereferenced regardless, which turned that moment into a
+ * `NullPointerException` from inside a version probe.
+ */
+private fun PyTargetAwareAdditionalData.getBinaryToExec(): BinaryToExec? {
+  val interpreterPath = interpreterPath ?: return null
+  val configuration = targetEnvironmentConfiguration ?: return BinOnEel(Path.of(interpreterPath))
+  return BinOnTarget(interpreterPath, configuration)
 }
 
-@ApiStatus.Internal
-internal suspend fun PyTargetAwareAdditionalData.getInterpreterVersion(): PyResult<LanguageLevel> =
-  getBinaryToExec().validatePythonAndGetInfo().mapSuccess { it.languageLevel }
+internal suspend fun PyTargetAwareAdditionalData.getInterpreterVersion(): PyResult<LanguageLevel> {
+  val binary = getBinaryToExec() ?: return PyResult.localizedError(message("python.sdk.target.interpreter.path.not.recorded"))
+  return binary.validatePythonAndGetInfo().mapSuccess { it.languageLevel }
+}
 
 
 @ApiStatus.Internal
