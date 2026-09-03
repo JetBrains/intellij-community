@@ -568,7 +568,7 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
       var dominatorClassSubgraphSize = 0L
       var dominatorClassInstanceCount = 0L
       nodeList.forEach {
-        dominatorClassInstanceCount += it.instances.size
+        dominatorClassInstanceCount += it.instanceCount
         dominatorClassSubgraphSize += it.totalSizeInDwords.toLong() * 4
       }
       allDominatorsCount += dominatorClassInstanceCount

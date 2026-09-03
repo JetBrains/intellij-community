@@ -28,9 +28,9 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.CollectionFactory
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntIterators
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.ArrayDeque
+import java.util.BitSet
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
@@ -55,6 +55,9 @@ class GCRootPathsTree(
   }
 
   private val topNode = RootNode(analysisContext.classStore)
+  // A parent path assigns each non-root object to one node.
+  // One bitmap can therefore replace the sets in all regular nodes.
+  private val registeredObjectsBits = BitSet(analysisContext.navigator.instanceCount.toInt() + 1)
   private var countOfIgnoredObjects = 0
 
   // registerObject runs once per nominated object. Reuse one map probe and one
@@ -258,10 +261,13 @@ class GCRootPathsTree(
         batch.elementIds[rootIndex], size, batch.elementSizes[rootIndex], classForWalkedElement(batch, rootIndex),
         batch.elementRefs[rootIndex], batch.elementDisposed[rootIndex])
       for (e in rootIndex - 1 downTo start) {
+        val objectId = batch.elementIds[e]
         probeEdge.classDefinition = classForWalkedElement(batch, e)
         probeEdge.refIndex = batch.elementRefs[e]
         probeEdge.disposed = batch.elementDisposed[e]
-        currentNode = currentNode.addEdge(batch.elementIds[e], size, batch.elementSizes[e], probeEdge)
+        val isFirstRegistration = !registeredObjectsBits.get(objectId)
+        registeredObjectsBits.set(objectId)
+        currentNode = currentNode.addEdge(isFirstRegistration, size, batch.elementSizes[e], probeEdge)
       }
     }
   }
@@ -346,9 +352,9 @@ class GCRootPathsTree(
     var pathsCount: Int = 0
     var pathsSize: Int = 0
     var totalSizeInDwords: Int = 0
-    val instances: IntOpenHashSet = IntOpenHashSet(1)
+    var instanceCount: Int = 0
 
-    fun addEdge(objectId: Int,
+    fun addEdge(isFirstRegistration: Boolean,
                 objectSize: Int,
                 subgraphSizeInDwords: Int,
                 probe: Edge): RegularNode {
@@ -370,8 +376,8 @@ class GCRootPathsTree(
         node.pathsSize += objectSize
       }
 
-      val added = node.instances.add(objectId)
-      if (added) {
+      if (isFirstRegistration) {
+        node.instanceCount++
         if (node.totalSizeInDwords + subgraphSizeInDwords.toLong() > Int.MAX_VALUE) {
           node.totalSizeInDwords = Int.MAX_VALUE
         }
@@ -418,7 +424,7 @@ class GCRootPathsTree(
       else {
         val newNode = RegularNode()
         val pair = Pair(newNode, Edge(classDefinition, refIndex, disposed))
-        newNode.instances.add(objectId)
+        newNode.instanceCount = 1
         edges.put(objectId, pair)
         node = newNode
         node.totalSizeInDwords = subgraphSizeInDwords
@@ -521,7 +527,7 @@ class GCRootPathsTree(
                               (100.0 * node.pathsCount / totalInstanceCount).toInt(),
                               node.pathsSize,
                               node.totalSizeInDwords.toLong() * 4,
-                              node.instances.size,
+                              node.instanceCount,
                               Status.getStatus(refIndex, node.edges == null, disposed),
                               disposed,
                               RefIndexUtil.getFieldDescription(refIndex, parentClass, classStore),
@@ -756,7 +762,7 @@ class GCRootPathsTree(
                         (100.0 * node.pathsCount / totalInstanceCount).toInt(),
                         node.pathsSize,
                         node.totalSizeInDwords.toLong() * 4,
-                        node.instances.size,
+                        node.instanceCount,
                         Status.getStatus(java.lang.Byte.toUnsignedInt(chainEndEdge.refIndex),
                                          chainEndNode.edges.isNullOrEmpty(),
                                          edge.disposed),
