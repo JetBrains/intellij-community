@@ -265,7 +265,7 @@ class BuildContextSingleFlightCache<V>(
     }
 
     if (!isOwner) {
-      checkRecursiveSingleFlightAwait(currentContext, entry.owner, operationName, entry.result)
+      checkRecursiveSingleFlightAwait(currentContext, entry.owner, operationName, completed = entry.result.isCompleted)
       return entry.result.await()
     }
 

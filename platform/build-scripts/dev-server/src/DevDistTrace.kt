@@ -3,9 +3,8 @@
 package org.jetbrains.intellij.build.devServer
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -101,7 +100,7 @@ internal fun runDevDistJob(
     return
   }
 
-  runBlocking(Dispatchers.Default) {
+  runBlockingOnVirtualThreads {
     if (consoleSpansWhenNotMeasuring) {
       block()
     }

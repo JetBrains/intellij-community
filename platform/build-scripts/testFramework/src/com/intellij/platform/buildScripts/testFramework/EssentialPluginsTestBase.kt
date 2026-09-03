@@ -2,21 +2,20 @@
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.util.xml.dom.readXmlAsModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.collectPluginDescriptors
 import org.jetbrains.intellij.build.impl.createBuildContext
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import java.nio.file.Path
 
 fun runEssentialPluginsTest(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools,
-): Unit = runBlocking(Dispatchers.Default) {
+): Unit = runBlockingOnVirtualThreads {
   val buildContext = createBuildContext(
     projectHome = homePath,
     productProperties = productProperties,

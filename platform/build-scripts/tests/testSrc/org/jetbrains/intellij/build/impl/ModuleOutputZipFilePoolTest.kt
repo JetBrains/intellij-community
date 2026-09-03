@@ -55,23 +55,26 @@ internal class ModuleOutputZipFilePoolTest {
   }
 
   @Test
-  fun `cached lookup loads on the IO dispatcher`() {
+  fun `cached lookup loads on a virtual thread and not on the dispatcher of the caller`() {
     val file = Path.of("module-output.zip")
     val entryPath = "META-INF/plugin.xml"
     val expectedData = "<idea-plugin/>".encodeToByteArray()
 
     runBlocking(Dispatchers.Default) {
       val loaderInterceptor = CompletableDeferred<ContinuationInterceptor?>()
+      val loaderThreadIsVirtual = CompletableDeferred<Boolean>()
       val pool = ModuleOutputZipFilePool(
         scope = this,
         zipFileLoader = {
           loaderInterceptor.complete(currentCoroutineContext()[ContinuationInterceptor])
+          loaderThreadIsVirtual.complete(Thread.currentThread().isVirtual)
           zipFile(mapOf(entryPath to expectedData))
         },
       )
 
       assertThat(pool.getData(file, entryPath)).isEqualTo(expectedData)
-      assertThat(loaderInterceptor.await()).isSameAs(Dispatchers.IO)
+      assertThat(loaderInterceptor.await()).isNotSameAs(Dispatchers.Default)
+      assertThat(loaderThreadIsVirtual.await()).isTrue()
     }
   }
 

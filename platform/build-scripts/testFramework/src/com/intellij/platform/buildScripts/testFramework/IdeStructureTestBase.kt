@@ -4,8 +4,6 @@
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.openapi.application.PathManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension
 import org.jetbrains.intellij.build.BuildContext
@@ -13,6 +11,7 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.ModuleStructureValidator
 import org.jetbrains.intellij.build.impl.createDistributionBuilderState
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -32,7 +31,7 @@ abstract class IdeStructureTestBase {
 
   private fun createBuildContext(): BuildContext {
     val productProperties = createProductProperties(projectHome)
-    return runBlocking(Dispatchers.Default) {
+    return runBlockingOnVirtualThreads {
       createBuildContext(homeDir = projectHome, productProperties = productProperties, buildTools = createBuildTools())
     }
   }
@@ -40,7 +39,7 @@ abstract class IdeStructureTestBase {
   @Test
   fun moduleStructureValidation(softly: SoftAssertions) {
     val context = createBuildContext()
-    val state = runBlocking {
+    val state = runBlockingOnVirtualThreads {
       createDistributionBuilderState(context = context)
     }
 
@@ -50,7 +49,7 @@ abstract class IdeStructureTestBase {
     }
 
     val validator = ModuleStructureValidator(context, state.platformLayout.includedModules)
-    val errors = runBlocking { validator.validate() }
+    val errors = runBlockingOnVirtualThreads { validator.validate() }
     val expectedMissingModuleMessages = missingModulesException.mapTo(HashSet()) {
       "Missing dependency found: ${it.fromModule} -> ${it.toModule} [${it.scope.name}]"
     }

@@ -42,16 +42,15 @@ class ModuleOutputZipFilePool(
 
   suspend fun getData(file: Path, entryPath: String): ByteArray? {
     try {
-      // `Dispatchers.IO` comes first because `AsyncCache` runs the load on the dispatcher of the caller.
-      // A caller on `Dispatchers.Default` makes the load wait for a thread that the packaging work holds.
-      return withContext(Dispatchers.IO) {
-        withTimeout(cacheReadTimeout) {
-          if (cache == null) {
+      // `AsyncCache` runs the load on a virtual thread, so the caller's dispatcher plays no part
+      return withTimeout(cacheReadTimeout) {
+        if (cache == null) {
+          withContext(Dispatchers.IO) {
             zipFileLoader(file)?.use { it.getData(entryPath) }
           }
-          else {
-            cache.getOrPut(file) { zipFileLoader(file) }?.getData(entryPath)
-          }
+        }
+        else {
+          cache.getOrPut(file) { zipFileLoader(file) }?.getData(entryPath)
         }
       }
     }

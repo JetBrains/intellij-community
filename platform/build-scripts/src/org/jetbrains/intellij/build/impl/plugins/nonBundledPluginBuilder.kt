@@ -14,18 +14,17 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.VirtualThreadTasks
-import org.jetbrains.intellij.build.virtualThreadTasks
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
+import org.jetbrains.intellij.build.VirtualThreadTasks
+import org.jetbrains.intellij.build.awaitShared
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
@@ -55,6 +54,7 @@ import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.virtualThreadTasks
 import tools.jackson.jr.ob.JSON
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -150,7 +150,7 @@ private suspend fun buildNonBundledPlugins(
       arch = arch,
       targetDir = targetDir,
       state = state,
-      platformEntriesProvider = buildPlatformLibJob?.let { it::await },
+      platformEntriesProvider = buildPlatformLibJob?.let { it::awaitShared },
       searchableOptionSet = searchableOptionSet,
       descriptorCacheContainer = descriptorCacheContainer,
       context = context,
@@ -234,8 +234,8 @@ private suspend fun buildNonBundledPlugins(
   }
 
   buildKeymapPluginsTask?.let {
-    for (item in it.await()) {
-      pluginSpecs.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
+    for ((pluginZip, pluginXml) in it.awaitShared()) {
+      pluginSpecs.add(PluginRepositorySpec(pluginZip = pluginZip, pluginXml = pluginXml))
     }
   }
 

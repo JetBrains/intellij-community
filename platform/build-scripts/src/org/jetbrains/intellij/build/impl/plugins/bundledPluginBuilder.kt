@@ -6,17 +6,15 @@ package org.jetbrains.intellij.build.impl.plugins
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
-import java.util.concurrent.CompletableFuture
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DistFile
-import org.jetbrains.intellij.build.virtualThreadTasks
 import org.jetbrains.intellij.build.InMemoryDistFileContent
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
+import org.jetbrains.intellij.build.awaitShared
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.generatePluginClassPath
 import org.jetbrains.intellij.build.classPath.generatePluginClassPathFromPrebuiltPluginFiles
@@ -41,9 +39,11 @@ import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.virtualThreadTasks
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 
 private const val OS_SPECIFIC_PLUGIN_BUILD_CONCURRENCY: Int = 2
 
@@ -95,7 +95,7 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
   layoutOnly: Boolean = false,
   includeAdditionalPlugins: Boolean = true,
 ): BundledPluginsBuildResult = virtualThreadTasks {
-  val additionalDeferred: CompletableFuture<List<Pair<Path, List<Path>>>?> = if (includeAdditionalPlugins) {
+  val additionalPluginsJob: CompletableFuture<List<Pair<Path, List<Path>>>?> = if (includeAdditionalPlugins) {
     fork("build additional plugins") {
       copyAdditionalPlugins(pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY), context = context)
     }
@@ -130,8 +130,8 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
   val descriptors = common + specific.values.flatten()
   val additionalPlugins: List<Pair<Path, List<Path>>>?
   if (!layoutOnly) {
-    buildPlatformJob.await()
-    additionalPlugins = additionalDeferred.await()
+    buildPlatformJob.awaitShared()
+    additionalPlugins = additionalPluginsJob.awaitShared()
     val layoutsOfPluginsToScramble = collectLayoutsOfPluginsToScramble(pluginLayouts)
     writePluginInfo(
       pluginDirs = pluginDirs,
@@ -146,7 +146,7 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
   }
   else {
     // Force the additional plugin copy to complete; plugin-info may be written separately by the caller after scramble.
-    additionalPlugins = additionalDeferred.await()
+    additionalPlugins = additionalPluginsJob.awaitShared()
   }
   BundledPluginsBuildResult(descriptors = descriptors, additionalPlugins = additionalPlugins)
 }
@@ -221,7 +221,7 @@ private suspend fun buildOsSpecificBundledPlugins(
                 arch = task.dist.arch,
                 targetDir = task.targetDir,
                 state = state,
-                platformEntriesProvider = buildPlatformJob::await,
+                platformEntriesProvider = buildPlatformJob::awaitShared,
                 searchableOptionSet = searchableOptionSet,
                 descriptorCacheContainer = descriptorCacheContainer,
                 context = context,
@@ -269,7 +269,7 @@ internal suspend fun buildBundledPlugins(
         arch = null,
         targetDir = targetDir,
         state = state,
-        platformEntriesProvider = buildPlatformJob::await,
+        platformEntriesProvider = buildPlatformJob::awaitShared,
         searchableOptionSet = searchableOptionSet,
         descriptorCacheContainer = descriptorCacheContainer,
         context = context,

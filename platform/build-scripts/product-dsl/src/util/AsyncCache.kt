@@ -4,14 +4,13 @@
 package org.jetbrains.intellij.build.productLayout.util
 
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
+import org.jetbrains.intellij.build.awaitShared
 import org.jetbrains.intellij.build.checkRecursiveSingleFlightAwait
+import org.jetbrains.intellij.build.failureOrNull
+import org.jetbrains.intellij.build.forkOnVirtualThread
 import org.jetbrains.intellij.build.singleFlightComputationContext
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -21,12 +20,12 @@ import java.util.concurrent.ConcurrentHashMap
  * If a loader throws a non-cancellation exception, that failed computation is cached,
  * and all later calls for the same key will receive the same exception without retrying.
  *
- * A computation is not a child of the caller that started it. Once started, it runs to completion, and every caller
- * only waits for it. A caller that is cancelled, before or after the computation was dispatched, stops waiting and
- * changes nothing for the other callers. Only [close], or a loader that throws [CancellationException] itself,
- * cancels a computation. Such an entry is evicted, and the next lookup retries.
+ * A computation runs on its own virtual thread and is not a child of the caller that started it. Once started, it
+ * runs to completion, and every caller only waits for it. A caller that is cancelled stops waiting and changes
+ * nothing for the other callers. Only [close], or a loader that throws [CancellationException] itself, cancels
+ * a computation. Such an entry is evicted, and the next lookup retries.
  *
- * The computation inherits the context of the caller without its [Job], so it runs on the dispatcher of the caller.
+ * The loader sees the single-flight context of the caller, so a recursive `getOrPut` of the same key fails fast.
  *
  * This prevents expensive repeated computations and thundering herd scenarios when
  * operations fail.
@@ -44,7 +43,7 @@ class AsyncCache<K : Any, V> {
         }
         is CacheEntry<*> -> {
           val entry = existing as CacheEntry<V>
-          if (entry.result.isCompleted && entry.result.getCompletionExceptionOrNull() is CancellationException) {
+          if (entry.result.isDone && entry.result.failureOrNull() is CancellationException) {
             cache.remove(key, entry)
             continue
           }
@@ -52,31 +51,33 @@ class AsyncCache<K : Any, V> {
             currentContext = currentContext,
             owner = entry.owner,
             operationName = "AsyncCache entry for key '$key'",
-            deferred = entry.result,
+            completed = entry.result.isDone,
           )
-          return entry.result.await()
+          return entry.result.awaitShared()
         }
         else -> {
+          // the mapping function only starts a coroutine, so it is short under the lock of the map
           val owner = Any()
-          @Suppress("RAW_SCOPE_CREATION")
-          val computation = CoroutineScope(currentContext.minusKey(Job) + singleFlightComputationContext(currentContext, owner))
-            .async(start = CoroutineStart.LAZY) { loader() }
-          val entry = CacheEntry(result = computation, owner = owner)
-          if (cache.putIfAbsent(key, entry) == null) {
-            computation.invokeOnCompletion { cause ->
-              // a failure stays in the map, so every later caller gets the same exception without a retry
-              when (cause) {
-                null -> cache.replace(key, entry, CachedValue(computation.getCompleted()))
-                is CancellationException -> cache.remove(key, entry)
-                else -> {}
-              }
+          val entry = cache.computeIfAbsent(key) {
+            val result = forkOnVirtualThread(name = "AsyncCache: $key", context = singleFlightComputationContext(currentContext, owner)) {
+              loader()
             }
-            computation.start()
-            return computation.await()
+            CacheEntry(result = result, owner = owner)
           }
-          else {
-            computation.cancel()
+          if (entry !is CacheEntry<*> || entry.owner !== owner) {
+            // another caller won the race; the next round of the loop reads its entry or its value
+            continue
           }
+          entry as CacheEntry<V>
+          entry.result.whenComplete { value, e ->
+            // a failure stays in the map, so every later caller gets the same exception without a retry
+            when (e) {
+              null -> cache.replace(key, entry, CachedValue(value))
+              is CancellationException -> cache.remove(key, entry)
+              else -> {}
+            }
+          }
+          return entry.result.awaitShared()
         }
       }
     }
@@ -101,16 +102,17 @@ class AsyncCache<K : Any, V> {
 
 private inline fun <V> processPendingEntry(entry: CacheEntry<V>, action: (V) -> Unit) {
   val result = entry.result
-  if (result.isCompleted && result.getCompletionExceptionOrNull() == null) {
-    action(result.getCompleted())
+  if (result.isDone && !result.isCompletedExceptionally) {
+    action(result.resultNow())
   }
   else {
-    result.cancel()
+    result.cancel(true)
   }
 }
 
+/** [result] is the future of the fork that runs the loader. A cancel of it cancels the loader. */
 private class CacheEntry<V>(
-  @JvmField val result: Deferred<V>,
+  @JvmField val result: CompletableFuture<V>,
   @JvmField val owner: Any,
 )
 

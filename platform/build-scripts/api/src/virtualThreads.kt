@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.future
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
@@ -18,11 +19,13 @@ import java.util.concurrent.CompletionException
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * A dispatcher with one virtual thread per resume.
  *
- * A fork body runs its coroutines here, so no CPU work of the build reaches the kotlinx scheduler.
+ * Every fork and every build entry point runs its coroutines here, so no CPU work of the build reaches the kotlinx scheduler.
  */
 internal val buildVirtualThreadDispatcher: CoroutineDispatcher =
   Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("build-", 0).factory()).asCoroutineDispatcher()
@@ -35,46 +38,63 @@ enum class VirtualThreadTaskPolicy {
   /** The first failure cancels the other forks. This is the behaviour of `coroutineScope`. */
   FAIL_FAST,
 
-  /** Every fork runs to its end. The first failure is thrown with the others suppressed. This is the behaviour of `supervisorScope`. */
+  /** Every fork runs to its end. Then the first failure is thrown with the others suppressed. */
   RUN_ALL,
 }
 
 /**
- * Runs [block] on a new virtual thread, and returns the future of its result.
+ * Starts [block] as a root coroutine on [buildVirtualThreadDispatcher], and returns the future of its result.
  *
- * The body sees the OpenTelemetry context of the caller and a [CoroutineName] of [name]. Its coroutines run on
- * [buildVirtualThreadDispatcher]. A cancelled future interrupts the body thread, and the interrupt cancels the body.
+ * The body sees the OpenTelemetry context of the caller and a [CoroutineName] of [name]. A cancelled future cancels
+ * the body. An awaiter that must not cancel the body on its own cancellation uses [awaitShared].
+ */
+@ApiStatus.Internal
+fun <T> forkOnVirtualThread(
+  name: String,
+  context: CoroutineContext = EmptyCoroutineContext,
+  block: suspend CoroutineScope.() -> T,
+): CompletableFuture<T> {
+  @Suppress("RAW_SCOPE_CREATION") // a fork is a root, like the `runBlocking` entry it replaces; the future owns its lifetime
+  val scope = CoroutineScope(buildVirtualThreadDispatcher + CoroutineName(name) + Context.current().asContextElement() + context)
+  return scope.future { block() }
+}
+
+/**
+ * Waits for a future that other awaiters share. A cancelled awaiter cancels only its own copy, and the shared
+ * computation goes on.
+ *
+ * The plain `await` cancels the future when the awaiter is cancelled. That is right for a one-shot future only.
+ */
+@ApiStatus.Internal
+suspend fun <T> CompletableFuture<T>.awaitShared(): T = copy().await()
+
+/** The exception of a future that completed exceptionally, without the `CompletionException` wrapper of `join`. */
+@ApiStatus.Internal
+fun CompletableFuture<*>.failureOrNull(): Throwable? {
+  if (!isCompletedExceptionally) {
+    return null
+  }
+  val e = runCatching { join() }.exceptionOrNull() ?: return null
+  return (e as? CompletionException)?.cause ?: e
+}
+
+/**
+ * The entry of a build script: runs [block] on virtual threads and blocks the calling thread until it ends.
+ *
+ * It replaces `runBlocking(Dispatchers.Default)`. The calling thread only waits; every resume of [block] and of its
+ * children runs on [buildVirtualThreadDispatcher], so the kotlinx scheduler gets no CPU work of the build.
  */
 @ApiStatus.Internal
 @Suppress("SSBasedInspection") // a build script has no progress indicator, so `runBlocking` is the right entry
-fun <T> forkOnVirtualThread(name: String, block: suspend CoroutineScope.() -> T): CompletableFuture<T> {
-  val future = CompletableFuture<T>()
-  val telemetryContext = Context.current()
-  val thread = Thread.ofVirtual().name(name).unstarted {
-    try {
-      val value = runBlocking(buildVirtualThreadDispatcher + CoroutineName(name) + telemetryContext.asContextElement()) {
-        block()
-      }
-      future.complete(value)
-    }
-    catch (e: Throwable) {
-      future.completeExceptionally(e)
-    }
-  }
-  future.whenComplete { _, _ ->
-    if (future.isCancelled) {
-      thread.interrupt()
-    }
-  }
-  thread.start()
-  return future
+fun <T> runBlockingOnVirtualThreads(block: suspend CoroutineScope.() -> T): T {
+  return runBlocking(buildVirtualThreadDispatcher) { block() }
 }
 
 /**
  * A group of forks that [virtualThreadTasks] joins when its block ends.
  *
- * It replaces `coroutineScope` with `async` and `launch` children. A fork is a virtual thread, and the group holds no
- * queue, so a scheduler cannot lose a fork.
+ * It replaces `coroutineScope` with `async` and `launch` children. A fork is a root coroutine on virtual threads,
+ * and the group holds no queue, so a scheduler cannot lose a fork.
  */
 @ApiStatus.Internal
 class VirtualThreadTasks internal constructor(private val policy: VirtualThreadTaskPolicy) {
@@ -89,9 +109,13 @@ class VirtualThreadTasks internal constructor(private val policy: VirtualThreadT
   @Volatile
   private var cancelRequested = false
 
-  /** Starts [block] on a new virtual thread. See [forkOnVirtualThread]. */
+  @Volatile
+  private var closed = false
+
+  /** Starts [block] on virtual threads. See [forkOnVirtualThread]. */
   fun <T> fork(name: String, block: suspend CoroutineScope.() -> T): CompletableFuture<T> {
-    val future = forkOnVirtualThread(name, block)
+    check(!closed) { "The group of forks has ended, so it cannot start '$name'" }
+    val future = forkOnVirtualThread(name = name, block = block)
     futures.add(future)
     future.whenComplete { _, e ->
       if (e != null && !cancelRequested) {
@@ -112,30 +136,35 @@ class VirtualThreadTasks internal constructor(private val policy: VirtualThreadT
   }
 
   /**
-   * Waits for every fork, including a fork that another fork adds meanwhile.
+   * Waits for every fork, including a fork that another fork adds meanwhile, and closes the group.
    *
    * Throws the first failure with the other failures suppressed. A fork that the group cancelled is not a failure.
    * When the caller is cancelled, every fork is cancelled.
    */
   internal suspend fun joinAll() {
-    while (true) {
-      val pending = futures.filter { !it.isDone }
-      if (pending.isEmpty()) {
-        break
-      }
-      try {
-        CompletableFuture.allOf(*pending.toTypedArray()).await()
-      }
-      catch (e: CancellationException) {
-        // `allOf` also throws this when a fork was cancelled, so only the caller's own cancellation ends the wait
-        if (!currentCoroutineContext().isActive) {
-          cancelAll()
-          throw e
+    try {
+      while (true) {
+        val pending = futures.filter { !it.isDone }
+        if (pending.isEmpty()) {
+          break
+        }
+        try {
+          CompletableFuture.allOf(*pending.toTypedArray()).await()
+        }
+        catch (e: CancellationException) {
+          // `allOf` also throws this when a fork was cancelled, so only the caller's own cancellation ends the wait
+          if (!currentCoroutineContext().isActive) {
+            cancelAll()
+            throw e
+          }
+        }
+        catch (_: Throwable) {
+          // a fork failed; the loop below reports it after every fork ended
         }
       }
-      catch (_: Throwable) {
-        // a fork failed; the loop below reports it after every fork ended
-      }
+    }
+    finally {
+      closed = true
     }
 
     val first = firstFailure.get() ?: return
@@ -147,15 +176,6 @@ class VirtualThreadTasks internal constructor(private val policy: VirtualThreadT
     }
     throw first
   }
-}
-
-/** The exception of a future that completed exceptionally, without the `CompletionException` wrapper of `join`. */
-private fun CompletableFuture<*>.failureOrNull(): Throwable? {
-  if (!isCompletedExceptionally) {
-    return null
-  }
-  val e = runCatching { join() }.exceptionOrNull() ?: return null
-  return (e as? CompletionException)?.cause ?: e
 }
 
 /**

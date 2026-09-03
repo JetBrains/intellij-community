@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -22,14 +21,15 @@ fun singleFlightComputationContext(currentContext: CoroutineContext, owner: Any)
   return activeComputations?.add(owner) ?: ActiveSingleFlightComputations(setOf(owner))
 }
 
+/** Fails when the caller runs inside the computation of [owner] and that computation is not [completed] yet. */
 @Internal
 fun checkRecursiveSingleFlightAwait(
   currentContext: CoroutineContext,
   owner: Any,
   operationName: String,
-  deferred: Deferred<*>,
+  completed: Boolean,
 ) {
-  check(deferred.isCompleted || currentContext[ActiveSingleFlightComputations]?.contains(owner) != true) {
+  check(completed || currentContext[ActiveSingleFlightComputations]?.contains(owner) != true) {
     "Recursive await of '$operationName' detected"
   }
 }

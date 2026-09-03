@@ -8,9 +8,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -39,6 +36,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.virtualThreadTasks
 import java.nio.file.Path
 
 private class ScrambleTask(@JvmField val descriptor: PluginBuildDescriptor)
@@ -99,9 +97,9 @@ internal suspend fun buildPlugins(
     val laidOutDescriptors = additionalScrambleDescriptorsProvider?.let { provider ->
       provider() + descriptors
     } ?: descriptors
-    coroutineScope {
+    virtualThreadTasks {
       for (scrambleTask in scrambleTasks) {
-        launch(CoroutineName("scramble plugin ${scrambleTask.descriptor.buildResult.mainModule}")) {
+        fork("scramble plugin ${scrambleTask.descriptor.buildResult.mainModule}") {
           scrambleTool.scramblePlugin(
             request = PluginScrambleRequest(
               currentDescriptor = scrambleTask.descriptor,
@@ -139,9 +137,9 @@ internal suspend fun scrambleAlreadyLaidOutPlugins(
     PluginBuildDescriptor(layout, plugin)
   }
   if (toScramble.isEmpty()) return
-  coroutineScope {
+  virtualThreadTasks {
     for (descriptor in toScramble) {
-      launch(CoroutineName("scramble plugin ${descriptor.buildResult.mainModule}")) {
+      fork("scramble plugin ${descriptor.buildResult.mainModule}") {
         scrambleTool.scramblePlugin(
           request = PluginScrambleRequest(
             currentDescriptor = descriptor,
@@ -156,7 +154,7 @@ internal suspend fun scrambleAlreadyLaidOutPlugins(
   }
 }
 
-private suspend fun CoroutineScope.buildPlugin(
+private suspend fun buildPlugin(
   pluginLayout: PluginLayout,
   targetDir: Path,
   state: DistributionBuilderState,
@@ -170,14 +168,14 @@ private suspend fun CoroutineScope.buildPlugin(
   copyFiles: Boolean,
   pluginBuilt: (suspend (PluginLayout, Path) -> List<DistributionFileEntry>)?,
   prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar>,
-): Pair<PluginBuildResult, ScrambleTask?> {
+): Pair<PluginBuildResult, ScrambleTask?> = virtualThreadTasks {
   val directoryName = pluginLayout.directoryName
   val pluginDir = targetDir.resolve(directoryName)
   val moduleOutputPatcher = ModuleOutputPatcher()
 
   if (pluginLayout.mainModule != BUILT_IN_HELP_MODULE_NAME) {
     if (context.options.skipCheckOutputOfPluginModules) {
-      launch {
+      fork("check output of plugin modules for ${pluginLayout.mainModule}") {
         checkOutputOfPluginModules(
           mainPluginModule = pluginLayout.mainModule,
           includedModules = pluginLayout.includedModules,
@@ -247,7 +245,7 @@ private suspend fun CoroutineScope.buildPlugin(
     }
   }
 
-  return buildResult to scrambleTask
+  buildResult to scrambleTask
 }
 
 private fun checkOutputOfPluginModules(

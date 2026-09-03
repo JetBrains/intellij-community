@@ -3,10 +3,9 @@
 
 package org.jetbrains.intellij.build.dev
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -63,7 +62,7 @@ fun materializeProjectModelTree(manifest: Path, target: Path): Path {
 
   // a project model is tens of thousands of small files, and copying them one after another costs as much as the assembly
   // that follows
-  runBlocking(Dispatchers.IO) {
+  runBlockingOnVirtualThreads {
     for (chunk in rows.chunked(512)) {
       launch {
         for (row in chunk) {

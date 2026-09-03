@@ -10,8 +10,6 @@ import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.util.containers.FList
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
@@ -19,6 +17,7 @@ import org.jetbrains.intellij.build.hasModuleOutputPath
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
 import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COMPACT_PATH
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import java.io.IOException
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
@@ -320,7 +319,7 @@ private fun loadProductModules(productModulesModule: String, outputProvider: Mod
   val debugName = "($relativePath file in $productModulesModule)"
 
   @Suppress("RAW_RUN_BLOCKING")
-  val content = runBlocking(Dispatchers.IO) {
+  val content = runBlockingOnVirtualThreads {
     outputProvider.readFileContentFromModuleOutput(outputProvider.findRequiredModule(productModulesModule), relativePath)
   } ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
   try {

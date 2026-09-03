@@ -10,15 +10,12 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
-import org.jetbrains.intellij.build.VirtualThreadTasks
-import org.jetbrains.intellij.build.virtualThreadTasks
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.InMemoryDistFileContent
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -31,6 +28,8 @@ import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
+import org.jetbrains.intellij.build.VirtualThreadTasks
+import org.jetbrains.intellij.build.awaitShared
 import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
@@ -60,6 +59,7 @@ import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.intellij.build.productLayout.createPluginLayoutSet
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.virtualThreadTasks
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -149,14 +149,14 @@ internal suspend fun buildDistribution(
         context = context,
       )
 
-      val platformItems = buildPlatformJob.await()
+      val platformItems = buildPlatformJob.awaitShared()
       val bundledPluginItems = bundledPluginsResult.descriptors
       context.bootClassPathJarNames = generateCoreClassPath(platformLayout, context, platformItems, bundledPluginItems)
 
-      ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems, nonBundledPlugins = buildNonBundledPlugins.await())
+      ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems, nonBundledPlugins = buildNonBundledPlugins.awaitShared())
     }
     else {
-      val additionalPluginsDeferred = fork("build additional plugins") {
+      val additionalPluginsJob = fork("build additional plugins") {
         copyAdditionalPlugins(pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY), context = context)
       }
       // Lay out only co-scramble plugins and their explicit scramble-classpath closure before platform scramble.
@@ -176,8 +176,8 @@ internal suspend fun buildDistribution(
       }
 
       val layoutsOfPluginsToScramble = collectLayoutsOfPluginsToScramble(pluginLayouts)
-      val coScrambleEntriesDeferred: CompletableFuture<List<ScrambleTool.CoScrambleEntry>> = fork("collect co-scramble entries") {
-        collectCoScrambleEntries(coScramblePluginLayoutJob.await().descriptors, layoutsOfPluginsToScramble = layoutsOfPluginsToScramble)
+      val coScrambleEntriesJob: CompletableFuture<List<ScrambleTool.CoScrambleEntry>> = fork("collect co-scramble entries") {
+        collectCoScrambleEntries(coScramblePluginLayoutJob.awaitShared().descriptors, layoutsOfPluginsToScramble = layoutsOfPluginsToScramble)
       }
 
       val buildPlatformJob: CompletableFuture<List<DistributionFileEntry>> = fork("build platform lib") {
@@ -188,8 +188,8 @@ internal suspend fun buildDistribution(
             searchableOptionSet = searchableOptionSet,
             context = context,
             isUpdateFromSources = isUpdateFromSources,
-            coScrambleEntriesProvider = { coScrambleEntriesDeferred.await() },
-            classpathDirsProvider = { collectAllPluginClasspathDirs(coScramblePluginLayoutJob.await().descriptors) },
+            coScrambleEntriesProvider = { coScrambleEntriesJob.awaitShared() },
+            classpathDirsProvider = { collectAllPluginClasspathDirs(coScramblePluginLayoutJob.awaitShared().descriptors) },
           )
         }
       }
@@ -208,8 +208,8 @@ internal suspend fun buildDistribution(
         )
       }
 
-      val coScramblePluginsResult = coScramblePluginLayoutJob.await()
-      val platformItems = buildPlatformJob.await()
+      val coScramblePluginsResult = coScramblePluginLayoutJob.awaitShared()
+      val platformItems = buildPlatformJob.awaitShared()
       val remainingPluginLayouts = pluginLayouts.asSequence()
         .filter { !coScramblePluginLayouts.contains(it) }
         .toCollection(LinkedHashSet())
@@ -239,7 +239,7 @@ internal suspend fun buildDistribution(
         state = state,
         isUpdateFromSources = false,
         descriptors = bundledPluginItems,
-        additionalPlugins = additionalPluginsDeferred.await(),
+        additionalPlugins = additionalPluginsJob.awaitShared(),
         layoutsOfPluginsToScramble = layoutsOfPluginsToScramble,
         descriptorCacheContainer = platformLayout.descriptorCacheContainer,
         context = context,
@@ -247,7 +247,7 @@ internal suspend fun buildDistribution(
 
       context.bootClassPathJarNames = generateCoreClassPath(platformLayout, context, platformItems, bundledPluginItems)
 
-      ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems, nonBundledPlugins = buildNonBundledPlugins.await())
+      ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems, nonBundledPlugins = buildNonBundledPlugins.awaitShared())
     }
   }
 

@@ -1,11 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.createCommunityBuildContext
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import java.nio.file.Path
 
 /**
@@ -31,7 +30,7 @@ object OpenSourceCommunityUpdateFromSourcesBuildTarget {
 
     // when IDEA CE is updated from IDEA, a UE sources project should be loaded from IDEA UE directory
     val projectHome = System.getProperty("devIdeaHome")?.let { Path.of(it) } ?: COMMUNITY_ROOT.communityRoot
-    runBlocking(Dispatchers.Default) {
+    runBlockingOnVirtualThreads {
       createBuildTasks(createCommunityBuildContext(options, projectHome))
         .buildUnpackedDistribution(options.outRootDir!!.resolve(distOutputRelativePath))
     }

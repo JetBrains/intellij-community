@@ -15,10 +15,8 @@ import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -31,6 +29,7 @@ import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
 import org.jetbrains.intellij.build.impl.buildNonBundledPlugins
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.impl.createBuildContext
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -177,7 +176,7 @@ fun runTestBuild(
   build: suspend (BuildContext) -> Unit = { buildDistributions(context = it) },
   onSuccess: suspend (BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
-): Unit = runBlocking(Dispatchers.Default) {
+): Unit = runBlockingOnVirtualThreads {
   if (isReproducibilityTestAllowed && BuildArtifactsReproducibilityTest.isEnabled) {
     val reproducibilityTest = BuildArtifactsReproducibilityTest()
     repeat(reproducibilityTest.iterations) { iterationNumber ->
@@ -215,7 +214,7 @@ fun runTestBuild(
         setupTracer = false,
         proprietaryBuildTools = buildTools,
         options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo).also { buildOptionsCustomizer(it) },
-        scope = this@runBlocking,
+        scope = this@runBlockingOnVirtualThreads,
       ),
       writeTelemetry = true,
       checkIntegrityOfEmbeddedFrontend = checkIntegrityOfEmbeddedFrontend,
@@ -239,7 +238,7 @@ fun runNonBundledPluginsBuildTest(
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
   onSuccess: suspend (BuildContext) -> Unit = {},
-): Unit = runBlocking(Dispatchers.Default) {
+): Unit = runBlockingOnVirtualThreads {
   doRunTestBuild(
     context = createBuildContext(
       projectHome = homeDir,
@@ -249,7 +248,7 @@ fun runNonBundledPluginsBuildTest(
       options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir).also {
         buildOptionsCustomizer(it)
       },
-      scope = this@runBlocking,
+      scope = this@runBlockingOnVirtualThreads,
     ),
     traceSpanName = traceSpanName,
     writeTelemetry = true,
