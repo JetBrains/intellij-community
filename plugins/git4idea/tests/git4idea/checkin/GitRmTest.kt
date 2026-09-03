@@ -15,33 +15,42 @@
  */
 package git4idea.checkin
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.VcsVFSListener
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.test.updateChangeListManager
 import com.intellij.vcsUtil.VcsUtil.getFilePath
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
+import kotlinx.coroutines.Dispatchers
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import java.io.File
 
-class GitRmTest : GitSingleRepoTest() {
-
-  override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + VcsVFSListener::class.java.name)
+@TestApplication
+class GitRmTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
 
   // IDEA-75590
-  fun `test empty directories are not removed on git rm`() {
+  @Test
+  fun `test empty directories are not removed on git rm`(): Unit = with(context) {
     val nestedDir = File(projectPath, "lib/subdir")
-    assertTrue("Directory $nestedDir wasn't created", nestedDir.mkdirs())
+    assertThat(nestedDir.mkdirs()).describedAs("Directory $nestedDir wasn't created").isTrue()
     val file = File(nestedDir, "f.txt")
-    assertTrue("File $file wasn't created", file.createNewFile())
+    assertThat(file.createNewFile()).describedAs("File $file wasn't created").isTrue()
     git("add .")
     git("commit -m 'added file'")
     val vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
-    assertNotNull("VirtualFile not found for file $file", vf)
+    assertThat(vf).describedAs("VirtualFile not found for file $file").isNotNull()
     vf!!
 
-    runInEdtAndWait {
+    timeoutRunBlocking(context = Dispatchers.EDT) {
       CommandProcessor.getInstance().executeCommand(project, {
         runWriteAction {
           vf.delete(this)
@@ -50,10 +59,10 @@ class GitRmTest : GitSingleRepoTest() {
     }
     updateChangeListManager()
 
-    assertFalse("File wasn't deleted", file.exists())
-    assertTrue("Directory shouldn't have been deleted", nestedDir.exists())
+    assertThat(file).describedAs("File wasn't deleted").doesNotExist()
+    assertThat(nestedDir).describedAs("Directory shouldn't have been deleted").exists()
     val change = changeListManager.getChange(getFilePath(vf))
-    assertNotNull(change)
-    assertEquals(FileStatus.DELETED, change!!.fileStatus)
+    assertThat(change).isNotNull()
+    assertThat(change!!.fileStatus).isEqualTo(FileStatus.DELETED)
   }
 }
