@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui
 
 import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -20,9 +21,11 @@ object MarkdownNotifications {
     project: Project?,
     id: @NonNls String?,
     @NlsContexts.NotificationTitle title: String = "",
-    @NlsContexts.NotificationContent message: String
+    @NlsContexts.NotificationContent message: String,
+    listener: NotificationListener? = null
   ) {
     val notification = group.createNotification(title, message, NotificationType.ERROR)
+    listener?.let { notification.setListener(it) }
     id?.let { notification.setDisplayId(it) }
     notification.notify(project)
   }

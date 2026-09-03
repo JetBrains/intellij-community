@@ -6,6 +6,9 @@ import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.actions.OpenFileAction
+import com.intellij.ide.actions.ShowSettingsUtilImpl
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationListener
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -27,6 +30,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider
 import org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider
 import org.intellij.plugins.markdown.lang.MarkdownFileType
+import org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable
 import org.intellij.plugins.markdown.settings.pandoc.PandocExecutableDetector
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettings
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
@@ -34,6 +38,7 @@ import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewBrowserActions
 import java.io.File
+import javax.swing.event.HyperlinkEvent
 
 /**
  * Utilities used mainly for import/export from markdown.
@@ -129,7 +134,15 @@ object MarkdownImportExportUtils {
         MarkdownNotifications.showError(
           project,
           id = MarkdownExportProvider.Companion.NotificationIds.exportFailed,
-          message = "[${vFileToImport.name}] $errorMessage"
+          message = "[${vFileToImport.name}] $errorMessage",
+          listener = if (error is ProcessNotCreatedException) object : NotificationListener.Adapter() {
+            override fun hyperlinkActivated(notification: Notification, event: HyperlinkEvent) {
+              if (event.description == "settings") {
+                ShowSettingsUtilImpl.showSettingsDialog(project, MarkdownSettingsConfigurable.ID, "")
+                notification.expire()
+              }
+            }
+          } else null
         )
       }
 
@@ -154,7 +167,9 @@ object MarkdownImportExportUtils {
    * returns a platform-independent cmd to perform the converting of docx to markdown using pandoc.
    */
   private fun getConvertDocxToMdCommandLine(file: VirtualFile, mediaSrc: String, targetFile: String, project: Project): GeneralCommandLine {
-    val pandoc = PandocSettings.getInstance(project).pathToPandoc ?: PandocExecutableDetector.detect(project) ?: "pandoc"
+    val pandoc = PandocSettings.getInstance(project).pathToPandoc?.takeIf { it.isNotBlank() }
+      ?: PandocExecutableDetector.detect(project)?.takeIf { it.isNotBlank() }
+      ?: "pandoc"
     return GeneralCommandLine(
       pandoc,
       "--extract-media=$mediaSrc",
