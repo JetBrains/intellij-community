@@ -169,7 +169,6 @@ object ExceptionAutoReportUtil {
     val cls = submitter.javaClass
     return cls == ITNReporter::class.java
            || cls.name == $$"com.intellij.rustrover.RustRoverMessagePoolAutoReporter$MyITNReporter"
-           && ApplicationManager.getApplication().isEAP
   }
 
   fun isFreeze(throwable: Throwable): Boolean {
