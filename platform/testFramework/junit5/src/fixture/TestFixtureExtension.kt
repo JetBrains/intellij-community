@@ -139,6 +139,7 @@ internal class TestFixtureExtension : BeforeAllCallback,
 
       @OptIn(DelicateCoroutinesApi::class)
       val testScope = GlobalScope.childScope(context.displayName, exceptionHandler)
+      context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension_$static", testScope)
       val pendingFixtures = ArrayList<Deferred<*>>()
 
       val classToTestInstance = collectTestInstances(context)
@@ -158,7 +159,6 @@ internal class TestFixtureExtension : BeforeAllCallback,
       }
 
       awaitFixtureInitialization(testScope, pendingFixtures)
-      context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension_$static", testScope)
     }
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.testFramework.junit5.fixture
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.awaitAll
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -153,13 +154,29 @@ class LookupFixtureExtension : BeforeAllCallback, BeforeEachCallback, AfterAllCa
     }
 
     suspend fun ExtensionContext.registerImplicitFixtures(implicitFixtures: List<LookupFixture>, static: Boolean) {
-      val scopeStore = getStore(Namespace.GLOBAL)
-      val testScope = (scopeStore.get("TestFixtureExtension_$static")) as CoroutineScope
-      val pendingFixtures = implicitFixtures.map { (it.implementation as TestFixtureImpl<*>).init(testScope, TestContextImpl(this, null)) }
+      val testScope = getTestFixtureScope(static)
+      val testContext = asTestContext()
+      val pendingFixtures = implicitFixtures.map { (it.implementation).run { initFixture(testScope, testContext) } }
 
       pendingFixtures.awaitAll()
 
       getLookupFixtureManager().addLookupFixtures(implicitFixtures)
+    }
+
+    @ApiStatus.Internal
+    fun <T> TestFixture<T>.initFixture(context: ExtensionContext, static: Boolean): Deferred<Pair<T, CoroutineScope>> =
+      initFixture(context.getTestFixtureScope(static), context.asTestContext())
+    private fun <T> TestFixture<T>.initFixture(
+      testScope: CoroutineScope,
+      testContext: TestContext,
+    ): Deferred<Pair<T, CoroutineScope>> = (this as TestFixtureImpl<T>).init(testScope, testContext)
+
+    private fun ExtensionContext.asTestContext(): TestContext = TestContextImpl(this, null)
+
+    private fun ExtensionContext.getTestFixtureScope(static: Boolean): CoroutineScope {
+      val scopeStore = getStore(Namespace.GLOBAL)
+      return scopeStore.get("TestFixtureExtension_$static", CoroutineScope::class.java)
+             ?: throw IllegalStateException("TestFixtureExtension scope not found. Check that TestFixtureExtension is registered before this")
     }
   }
 
