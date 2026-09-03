@@ -145,7 +145,7 @@ class TaskScope internal constructor(
     forks.add(deferred)
     // the handler runs at once when the fork has ended already, and it must not throw
     deferred.invokeOnCompletion { e ->
-      if (e != null && !(cancelRequested && e is CancellationException)) {
+      if (e != null && !isRequestedCancellation(e)) {
         failures.add(e)
         if (policy == TaskScopePolicy.FAIL_FAST) {
           cancelAll()
@@ -154,7 +154,7 @@ class TaskScope internal constructor(
     }
     if (cancelRequested) {
       // a fork that a cancelled fork starts must not outlive the cancel
-      deferred.cancel()
+      deferred.cancel(TaskScopeCancellationException(this))
     }
     return Subtask(deferred)
   }
@@ -162,8 +162,12 @@ class TaskScope internal constructor(
   internal fun cancelAll() {
     cancelRequested = true
     for (fork in forks) {
-      fork.cancel()
+      fork.cancel(TaskScopeCancellationException(this))
     }
+  }
+
+  private fun isRequestedCancellation(e: Throwable): Boolean {
+    return e is TaskScopeCancellationException && e.taskScope === this
   }
 
   /**
@@ -212,6 +216,10 @@ class TaskScope internal constructor(
     }
   }
 }
+
+private class TaskScopeCancellationException(
+  @JvmField val taskScope: TaskScope,
+) : CancellationException("The group of forks cancelled the fork")
 
 /**
  * Runs [block] with a group of forks, and waits for every fork before it returns.

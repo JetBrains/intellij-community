@@ -79,6 +79,19 @@ class TaskScopeTest {
     assertThat(siblingCancelled.orTimeout(5, TimeUnit.SECONDS).join()).isEqualTo(Unit)
   }
 
+  @Test
+  fun `a cancellation thrown by a fork is a failure`() {
+    val failure = CancellationException("the fork cancelled itself")
+
+    assertThatThrownBy {
+      runBlocking {
+        taskScope {
+          fork("failing") { throw failure }
+        }
+      }
+    }.isSameAs(failure)
+  }
+
   /** The block awaits a fork that the group cancels because a sibling failed. The failure is thrown, not the cancellation. */
   @Test
   fun `a failure of a fork that the block does not await wins over the cancellation the block sees`() {
