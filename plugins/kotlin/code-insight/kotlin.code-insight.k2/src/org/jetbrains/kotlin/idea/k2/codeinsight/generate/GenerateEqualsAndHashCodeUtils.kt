@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.DefaultMemberFilters
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KotlinEqualsHashCodeGeneratorExtension
@@ -117,8 +117,10 @@ object GenerateEqualsAndHashCodeUtils {
         collectHashCodeContextFromExtensions(contextMap, info)
 
         val methodText = VelocityGeneratorHelper
-            .velocityGenerateCode(klass, sortedVariables,
-                contextMap, KotlinEqualsHashCodeTemplatesManager.getInstance().defaultHashcodeTemplate.template, false)
+            .velocityGenerateCode(
+                klass, sortedVariables,
+                contextMap, KotlinEqualsHashCodeTemplatesManager.getInstance().defaultHashcodeTemplate.template, false
+            )
             ?: return null
 
         val function = KtPsiFactory.contextual(klass).createFunction(methodText)
@@ -147,12 +149,14 @@ object GenerateEqualsAndHashCodeUtils {
 
         val toStringFunction = findToStringMethodForClass(klass.symbol as KaClassSymbol)
 
-        contextMap["generateSuper"] = toStringFunction != null && (toStringFunction.containingSymbol as? KaClassSymbol)?.classId != StandardClassIds.Any
+        contextMap["generateSuper"] =
+            toStringFunction != null && (toStringFunction.containingSymbol as? KaClassSymbol)?.classId != StandardClassIds.Any
 
         val methodText = VelocityGeneratorHelper
             .velocityGenerateCode(
                 klass, declarations, contextMap,
-                template, false) ?: return null
+                template, false
+            ) ?: return null
 
 
         val function = KtPsiFactory.contextual(klass).createFunction(methodText)
@@ -171,10 +175,10 @@ object GenerateEqualsAndHashCodeUtils {
         if (klass.hasActualModifier()) {
             val expectClass = klass.expectDeclarationIfAny() as? KtClassOrObject ?: return
             if (expectClass.declarations.any { declaration ->
-                declaration is KtNamedFunction &&
-                        declaration.name == function.name &&
-                        declaration.valueParameters.size == function.valueParameters.size
-            }) {
+                    declaration is KtNamedFunction &&
+                            declaration.name == function.name &&
+                            declaration.valueParameters.size == function.valueParameters.size
+                }) {
                 function.addModifier(KtTokens.ACTUAL_KEYWORD)
             }
         }
@@ -222,18 +226,19 @@ object GenerateEqualsAndHashCodeUtils {
 }
 
 context(_: KaSession)
-private fun List<KtNamedDeclaration>.sortedWithPrimitiveFirst(): List<KtNamedDeclaration> = sortedWith(object : Comparator<KtNamedDeclaration> {
-    override fun compare(o1: KtNamedDeclaration, o2: KtNamedDeclaration): Int {
-        val isBacking1 = o1.propertyHasBackingField()
-        val isBacking2 = o2.propertyHasBackingField()
-        val fieldCompare = -isBacking1.compareTo(isBacking2)
-        if (fieldCompare != 0) return fieldCompare
-        check (o1 is KtDeclarationWithReturnType && o2 is KtDeclarationWithReturnType)
-        return -(o1.returnType.classId in KaStandardTypeClassIds.PRIMITIVES).compareTo(
-            o2.returnType.classId in KaStandardTypeClassIds.PRIMITIVES
-        )
-    }
-})
+private fun List<KtNamedDeclaration>.sortedWithPrimitiveFirst(): List<KtNamedDeclaration> =
+    sortedWith(object : Comparator<KtNamedDeclaration> {
+        override fun compare(o1: KtNamedDeclaration, o2: KtNamedDeclaration): Int {
+            val isBacking1 = o1.propertyHasBackingField()
+            val isBacking2 = o2.propertyHasBackingField()
+            val fieldCompare = -isBacking1.compareTo(isBacking2)
+            if (fieldCompare != 0) return fieldCompare
+            check(o1 is KtDeclarationWithReturnType && o2 is KtDeclarationWithReturnType)
+            return -(o1.returnType.classId in KaStandardTypeClassIds.PRIMITIVES).compareTo(
+                o2.returnType.classId in KaStandardTypeClassIds.PRIMITIVES
+            )
+        }
+    })
 
 context(_: KaSession)
 private fun KtNamedDeclaration.propertyHasBackingField(): Boolean {
@@ -242,6 +247,7 @@ private fun KtNamedDeclaration.propertyHasBackingField(): Boolean {
         is KaValueParameterSymbol -> {
             symbol.primaryConstructorProperty?.hasBackingField == true
         }
+
         else -> false
     }
 }

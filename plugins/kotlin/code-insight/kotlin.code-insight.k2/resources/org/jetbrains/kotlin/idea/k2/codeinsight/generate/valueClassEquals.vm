@@ -1,12 +1,7 @@
 #set($paramName = $helper.getUniqueLocalVarName($baseParamName, $fields, $settings))
 override fun equals(${paramName}: Any?): Boolean {
-#addEqualsPrologue()
-#if ($fields.size() > 0)
-
-    #if (!$checkParameterWithInstanceof)
     #addClassInstance()
-
-    #end
+#if ($fields.size() > 0)
     #foreach($field in $fields)
         #addFieldComparison($field)
     #end
@@ -35,7 +30,7 @@ return true
 ##
 #macro(addClassInstance)
     #set($wildcards = "#generateWildcards()")
-$paramName as $classname$wildcards
+    if ($paramName !is $classname$wildcards) return false
 #end
 ##
 #macro(generateWildcards)
@@ -53,7 +48,6 @@ $paramName as $classname$wildcards
 #end
 ##
 #macro(addEqualsPrologue)
-if(this === ${paramName}) return true
     #addInstanceOfToText()
     #if ($superHasEquals)
     if(!super.equals(${paramName})) return false

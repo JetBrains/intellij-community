@@ -29,6 +29,25 @@ class KotlinEqualsHashCodeTemplatesManager : EqualsHashCodeTemplatesManagerBase(
         }
     }
 
+    private fun getValueClassTemplates(): List<TemplateResource> {
+        try {
+            return listOf(
+                TemplateResource(
+                    "$VALUE_CLASS_TEMPLATE_NAME equals",
+                    readFile(VALUE_CLASS_EQUALS, KotlinEqualsHashCodeTemplatesManager::class.java),
+                    true
+                ),
+                TemplateResource(
+                    "$VALUE_CLASS_TEMPLATE_NAME hashCode",
+                    readFile(VALUE_CLASS_HASHCODE, KotlinEqualsHashCodeTemplatesManager::class.java),
+                    true
+                )
+            )
+        } catch (e: IOException) {
+            throw TemplateResourceException("Error loading value class templates", e)
+        }
+    }
+
     override fun getEqualsImplicitVars(project: Project): Map<String, PsiType> {
         val map = GenerateEqualsHelper.getEqualsImplicitVars(project)
         addPlatformVariables(map)
@@ -54,12 +73,20 @@ class KotlinEqualsHashCodeTemplatesManager : EqualsHashCodeTemplatesManagerBase(
         val extensionTemplates = mutableSetOf<TemplateResource>()
 
         try {
-            val alternativeDefaultTemplate = applicableExtension?.alternativeDefaultTemplateFor(ktClass)
+            val valueClass = ktClass.isValue()
+            val alternativeDefaultTemplate =
+                applicableExtension?.alternativeDefaultTemplateFor(ktClass) ?: VALUE_CLASS_TEMPLATE_NAME.takeIf { valueClass }
             applicableExtension?.getTemplatesFor(ktClass)
                 ?.forEach { additionalTemplate ->
                     addTemplate(additionalTemplate)
                     extensionTemplates.add(additionalTemplate)
                 }
+            if (valueClass) {
+                getValueClassTemplates().forEach { additionalTemplate ->
+                    addTemplate(additionalTemplate)
+                    extensionTemplates.add(additionalTemplate)
+                }
+            }
             if (alternativeDefaultTemplate != null) {
                 previousDefaultTemplate = defaultTemplate
                 setDefaultTemplate(alternativeDefaultTemplate)
@@ -76,6 +103,9 @@ class KotlinEqualsHashCodeTemplatesManager : EqualsHashCodeTemplatesManagerBase(
     companion object {
         private const val DEFAULT_EQUALS = "defaultEquals.vm"
         private const val DEFAULT_HASHCODE = "defaultHashcode.vm"
+        private const val VALUE_CLASS_EQUALS = "valueClassEquals.vm"
+        private const val VALUE_CLASS_HASHCODE = "valueClassHashcode.vm"
+        private const val VALUE_CLASS_TEMPLATE_NAME = "IntelliJ Value Class"
 
         fun getInstance(): KotlinEqualsHashCodeTemplatesManager {
             return ApplicationManager.getApplication().getService(

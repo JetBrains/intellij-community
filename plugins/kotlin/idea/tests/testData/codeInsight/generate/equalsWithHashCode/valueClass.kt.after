@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CustomEqualsInValueClasses
+value class Foo(val i: Int) {
+    <selection><caret></selection>override fun equals(other: Any?): Boolean {
+        if (other !is Foo) return false
+        if (i != other.i) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return i
+    }
+}

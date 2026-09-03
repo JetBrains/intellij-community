@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils.confirmMemberRewrite
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils.generateEquals
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils.generateHashCode
-import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -51,7 +50,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Inf
                 && !targetClass.isEnum()
                 && !targetClass.isAnnotation()
                 && !targetClass.isInterface()
-                && !targetClass.isInlineOrValue()
+                && targetClass.canGenerateEqualsAndHashCode()
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -82,7 +81,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Inf
             Triple(
                 preInfo,
                 properties.map { createMemberInfo(it) },
-                LinkedHashMap(properties.keysToMap<KtNamedDeclaration, KotlinMemberInfo> { createMemberInfo(it) }),
+                LinkedHashMap(properties.keysToMap { createMemberInfo(it) }),
             )
         } ?: return null
 
@@ -142,8 +141,12 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Inf
         }
 
         val anchor = with(targetClass.declarations) { lastIsInstanceOrNull<KtNamedFunction>() ?: lastOrNull() }
-        var members: List<KtDeclaration>? = null
-        project.executeWriteCommand(commandName) { members = insertMembersAfterAndReformat(editor, targetClass, prototypes, anchor) }
-        return members ?: emptyList()
+        return project.executeWriteCommand(commandName, null) {
+            insertMembersAfterAndReformat(editor, targetClass, prototypes, anchor)
+        }
+    }
+
+    private fun KtClass.canGenerateEqualsAndHashCode(): Boolean {
+        return !isInlineOrValue() || isValue()
     }
 }
