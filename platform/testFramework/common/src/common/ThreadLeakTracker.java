@@ -276,6 +276,7 @@ public final class ThreadLeakTracker {
            || isJMXRemoteCall(stackTrace)
            || isBuildLogCall(stackTrace)
            || isVirtualThreadUnblocker(stackTrace)
+           || isVirtualThreadPoller(stackTrace)
            || isJfrPeriodicTasks(stackTrace)
            || isIjentMediatorThread(stackTrace)
            || windowsCompletionPortLeakForDocker(stackTrace)
@@ -454,6 +455,19 @@ public final class ThreadLeakTracker {
     // at java.base/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:148)
     return stackTrace[0].getClassName().equals("java.lang.VirtualThread") && stackTrace[0].getMethodName().equals("takeVirtualThreadListToUnblock")
       && stackTrace[1].getClassName().equals("java.lang.VirtualThread") && stackTrace[1].getMethodName().equals("unblockVirtualThreads");
+  }
+
+  /**
+   * The JDK starts the poller threads ("MasterPoller", "Read-Poller", "Write-Poller") when a virtual thread first blocks on a socket.
+   * They live until the JVM exits.
+   */
+  private static boolean isVirtualThreadPoller(StackTraceElement[] stackTrace) {
+    // at java.base/sun.nio.ch.EPoll.wait(Native Method)
+    // at java.base/sun.nio.ch.EPollPoller.poll(EPollPoller.java:74)
+    // at java.base/sun.nio.ch.Poller.pollerLoop(Poller.java:248)
+    // at java.base/java.lang.Thread.run(Thread.java:1474)
+    // at java.base/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:148)
+    return ContainerUtil.exists(stackTrace, element -> element.getClassName().equals("sun.nio.ch.Poller"));
   }
 
   /**
