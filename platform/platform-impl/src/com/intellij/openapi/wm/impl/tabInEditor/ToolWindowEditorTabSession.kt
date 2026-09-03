@@ -81,7 +81,7 @@ class ToolWindowEditorTabSession(
     return true
   }
 
-  fun close(releaseContent: Boolean) {
+  internal fun close(releaseContent: Boolean) {
     coroutineScope.cancel()
     if (releaseContent) {
       content.release()
