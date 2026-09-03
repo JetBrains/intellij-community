@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.core.stackFrame
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.xdebugger.impl.frame.XStackFrameWithCustomBackgroundColor
 import com.intellij.xdebugger.ui.DebuggerColors
@@ -33,10 +34,10 @@ class InlineStackFrame(
         get() = (descriptor.frameProxy as? InlineStackFrameProxyImpl)?.inlineDepth
 
     override fun getBackgroundColor(): Color? =
-        EditorColorsManager.getInstance()
-            .schemeForCurrentUITheme
-            .getAttributes(DebuggerColors.INLINE_STACK_FRAMES)
-            .backgroundColor
+        serviceIfCreated<EditorColorsManager>()
+            ?.schemeForCurrentUITheme
+            ?.getAttributes(DebuggerColors.INLINE_STACK_FRAMES)
+            ?.backgroundColor
 
     override fun toString(): String {
         val mainString = super.toString()
