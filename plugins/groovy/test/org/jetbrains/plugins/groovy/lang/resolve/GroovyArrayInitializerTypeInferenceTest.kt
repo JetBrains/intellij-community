@@ -5,6 +5,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer
+import org.jetbrains.plugins.groovy.util.GroovyAssertions.assertType
 
 class GroovyArrayInitializerTypeInferenceTest : LightGroovyTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor {

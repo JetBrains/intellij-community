@@ -26,6 +26,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.allowNestedContext;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.allowNestedContextOnce;
+import static org.jetbrains.plugins.groovy.util.GroovyAssertions.assertType;
 
 @CompileStatic
 public class TypeInferenceTest extends TypeInferenceTestBase {

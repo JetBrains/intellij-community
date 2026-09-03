@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.util.BaseTest;
+import org.jetbrains.plugins.groovy.util.GroovyAssertions;
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.junit.Assert;
 import org.junit.Test;
@@ -20,8 +20,8 @@ public class SpreadOperatorTest extends GroovyLatestTest implements BaseTest {
     GroovyResolveResult[] results = expression.multiResolve(false);
     Assert.assertEquals(1, results.length);
     Assert.assertNotNull(results[0].getSpreadState());
-    LightGroovyTestCase.assertType(JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<byte[]>>>",
-                                   expression.getType());
+    GroovyAssertions.assertType(JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<byte[]>>>",
+                                expression.getType());
   }
 
   @Test
@@ -30,8 +30,8 @@ public class SpreadOperatorTest extends GroovyLatestTest implements BaseTest {
     GroovyResolveResult[] results = expression.multiResolve(false);
     Assert.assertEquals(1, results.length);
     Assert.assertNotNull(results[0].getSpreadState());
-    LightGroovyTestCase.assertType(JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<byte[]>>>",
-                                   expression.getType());
+    GroovyAssertions.assertType(JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<byte[]>>>",
+                                expression.getType());
   }
 
   @Test
@@ -39,7 +39,7 @@ public class SpreadOperatorTest extends GroovyLatestTest implements BaseTest {
     GrMethodCall expression = lastExpression("[[['a']]]*.getBytes()", GrMethodCall.class);
     GroovyResolveResult[] results = expression.multiResolveGroovy(false);
     Assert.assertEquals(0, results.length);
-    LightGroovyTestCase.assertType(null, expression.getType());
+    GroovyAssertions.assertType(null, expression.getType());
   }
 
   @Test
@@ -47,6 +47,6 @@ public class SpreadOperatorTest extends GroovyLatestTest implements BaseTest {
     GrMethodCall expression = lastExpression("[[['a']]].getBytes()", GrMethodCall.class);
     GroovyResolveResult[] results = expression.multiResolveGroovy(false);
     Assert.assertEquals(0, results.length);
-    LightGroovyTestCase.assertType(null, expression.getType());
+    GroovyAssertions.assertType(null, expression.getType());
   }
 }

@@ -5,14 +5,11 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiType;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.util.GroovyAssertions;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -233,10 +230,6 @@ public abstract class LightGroovyTestCase extends LightJavaCodeInsightFixtureTes
                            public void setName(java.lang.String name) { /* compiled code */ }
                          }
                          """);
-  }
-
-  public static void assertType(@Nullable String expected, @Nullable PsiType actual) {
-    GroovyAssertions.assertType(expected, actual);
   }
 
   public String getTestName() {

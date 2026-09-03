@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.util.GroovyAssertions;
 
 
 public class GrAutoCloneTransformationSupportTest extends LightGroovyTestCase {
@@ -91,6 +92,6 @@ public class GrAutoCloneTransformationSupportTest extends LightGroovyTestCase {
     PsiFile file = myFixture.configureByText("_.groovy", text);
     GrReferenceExpression ref =(GrReferenceExpression) file.findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
     PsiType actual = ref.getType();
-    LightGroovyTestCase.assertType(expectedType, actual);
+    GroovyAssertions.assertType(expectedType, actual);
   }
 }

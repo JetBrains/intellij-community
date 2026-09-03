@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
@@ -39,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference;
+import org.jetbrains.plugins.groovy.util.GroovyAssertions;
 import org.jetbrains.plugins.groovy.util.LightProjectTest;
 import org.jetbrains.plugins.groovy.util.ResolveTest;
 import org.junit.Assert;
@@ -958,7 +958,7 @@ public class ResolveMethodTest extends LightProjectTest implements ResolveTest {
 
     PsiParameter[] parameters = resolved.getParameterList().getParameters();
     Assert.assertEquals(1, parameters.length);
-    LightGroovyTestCase.assertType("java.lang.String", parameters[0].getType());
+    GroovyAssertions.assertType("java.lang.String", parameters[0].getType());
   }
 
   @Test

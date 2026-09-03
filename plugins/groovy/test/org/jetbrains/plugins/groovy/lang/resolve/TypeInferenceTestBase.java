@@ -7,12 +7,12 @@ import com.intellij.psi.PsiType;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt;
+import org.jetbrains.plugins.groovy.util.GroovyAssertions;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
@@ -38,7 +38,7 @@ public abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
     GrReferenceExpression ref =
       (GrReferenceExpression)file.findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
     PsiType actual = ref.getType();
-    LightGroovyTestCase.assertType(type, actual);
+    GroovyAssertions.assertType(type, actual);
   }
 
   protected void doTest(String text, @NotNull Class<? extends GrExpression> clazz, @Nullable String type) {
@@ -46,14 +46,14 @@ public abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
     PsiElement ref = file.findElementAt(myFixture.getEditor().getCaretModel().getOffset());
     GrExpression target = getParentOfType(ref, clazz);
     PsiType actual = target.getType();
-    LightGroovyTestCase.assertType(type, actual);
+    GroovyAssertions.assertType(type, actual);
   }
 
   protected void doExprTest(String text, @Nullable String expectedType) {
     GroovyFile file = (GroovyFile)myFixture.configureByText("_.groovy", text);
     GrStatement lastStatement = file.getStatements()[file.getStatements().length - 1];
     UsefulTestCase.assertInstanceOf(lastStatement, GrExpression.class);
-    LightGroovyTestCase.assertType(expectedType, ((GrExpression)lastStatement).getType());
+    GroovyAssertions.assertType(expectedType, ((GrExpression)lastStatement).getType());
   }
 
   protected void doCSExprTest(String text, @Nullable String expectedType) {
@@ -68,7 +68,7 @@ public abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
     GrStatement lastStatement = statements[statements.length - 1];
     GrExpression expression = UsefulTestCase.assertInstanceOf(lastStatement, GrExpression.class);
     PsiType actual = expression.getType();
-    LightGroovyTestCase.assertType(expectedType, actual);
+    GroovyAssertions.assertType(expectedType, actual);
   }
 
   @Override

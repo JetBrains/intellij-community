@@ -5,6 +5,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.util.GroovyAssertions.assertType
 
 class GroovyForInClauseInferenceTest : LightGroovyTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor {
