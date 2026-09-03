@@ -289,6 +289,7 @@ abstract class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
  public void testImplicitConstructor() { doTestClass(); }
  public void testCommatHtmlEntity() { doTestClass(); }
  public void testDeprecatedTagNoAnnotationMarkdown() { doTestClass(); }
+ public void testIncreasinglyIndentedListMarkdown() { doTestClass(); }
 
   public void testRepeatableAnnotations() {
     useJava8();
