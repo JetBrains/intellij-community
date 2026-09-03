@@ -1,0 +1,17 @@
+class AC : AutoCloseable {
+    fun read() {
+        print("read")
+    }
+    override fun close() {
+        print("close")
+    }
+}
+
+fun c() {
+    var string = AC().use { s ->
+        var string = "string"
+        s.read()
+        string
+    }
+    println(string)
+}
