@@ -8,10 +8,8 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.ui.RunnerLayoutUi
 import com.intellij.execution.ui.layout.PlaceInGrid
-import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -75,14 +73,8 @@ class DebuggerConnection(
         }
     }
 
-    private fun coroutinePanelIsRegistered(ui: RunnerLayoutUi): Boolean {
-        if (ui !is RunnerLayoutUiImpl) return false
-        val contentUi = ui.contentUI
-        val content = invokeAndWaitIfNeeded {
-            contentUi.findContent(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
-        }
-        return content != null
-    }
+    private fun coroutinePanelIsRegistered(ui: RunnerLayoutUi): Boolean =
+        ui.findContent(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT) != null
 
     override fun processStopped(debugProcess: XDebugProcess) {
         ApplicationManager.getApplication().invokeLater {
