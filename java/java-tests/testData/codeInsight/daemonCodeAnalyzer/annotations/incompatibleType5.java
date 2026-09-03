@@ -1,3 +1,6 @@
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
 @interface Ann {
     Class type();
 }
@@ -10,4 +13,10 @@ class C {
 
   @Ann(type = C.class)
   void good() { }
+}
+@Target(ElementType.TYPE)
+@interface Round {
+  Class<?> value();
+}
+@Round(<error descr="Attribute value must be a class literal">(String.class)</error>) class X {
 }

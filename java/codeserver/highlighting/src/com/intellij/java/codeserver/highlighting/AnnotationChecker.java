@@ -672,8 +672,10 @@ final class AnnotationChecker {
   void checkMemberValueType(@NotNull PsiAnnotationMemberValue value,
                             @NotNull PsiType expectedType,
                             @NotNull PsiAnnotationMethod method) {
-    if (expectedType instanceof PsiClassType && expectedType.equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
-      if (!(value instanceof PsiClassObjectAccessExpression)) {
+    if (expectedType instanceof PsiClassType classType) {
+      PsiClass aClass = classType.resolve();
+      if (aClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(aClass.getQualifiedName()) 
+          && !(value instanceof PsiClassObjectAccessExpression)) {
         myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_NON_CLASS_LITERAL.create(value));
         return;
       }
