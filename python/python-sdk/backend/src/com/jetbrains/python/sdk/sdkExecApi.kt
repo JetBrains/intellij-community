@@ -33,7 +33,7 @@ import java.nio.file.Path
 // Various functions to execute code against SDK
 
 // See function it calls for more info
-@ApiStatus.Internal
+@Internal
 @CheckReturnValue
 suspend fun ExecService.execGetStdout(
   sdk: Sdk,
@@ -46,7 +46,7 @@ suspend fun ExecService.execGetStdout(
 }
 
 // See function it calls for more info
-@ApiStatus.Internal
+@Internal
 @CheckReturnValue
 suspend fun <T> ExecService.execute(
   sdk: Sdk,
@@ -63,20 +63,7 @@ suspend fun <T> ExecService.execute(
 /**
  * Executes [helper] on [sdk] (copies it to the remote machine if needed)
  */
-@ApiStatus.Internal
-@CheckReturnValue
-suspend fun ExecService.executeHelper(
-  sdk: Sdk,
-  helper: HelperName,
-  helperArgs: List<String> = emptyList(),
-  options: ExecOptions = ExecOptions(),
-  procListener: PyProcessListener? = null,
-): PyResult<String> = executeHelper(sdk, helper, Args(*helperArgs.toTypedArray()), options, procListener)
-
-/**
- * Executes [helper] on [sdk] (copies it to the remote machine if needed)
- */
-@ApiStatus.Internal
+@Internal
 @CheckReturnValue
 suspend fun ExecService.executeHelper(
   sdk: Sdk,
@@ -88,7 +75,7 @@ suspend fun ExecService.executeHelper(
 
 
 // See function it calls for more info
-@ApiStatus.Internal
+@Internal
 @CheckReturnValue
 suspend fun ExecService.executeGetProcess(
   sdk: Sdk,
@@ -105,7 +92,7 @@ suspend fun ExecService.executeGetProcess(
 /**
  * Converts SDK to [com.intellij.python.community.execService.BinOnTarget] to be used by [com.intellij.python.community.execService.ExecService]
  */
-@ApiStatus.Internal
+@Internal
 fun Sdk.asBinToExecute(): Result<BinaryToExec, MessageError> {
   val binaryToExec = when (val additionalData = pySdkAdditionalData) {
     is PyTargetAwareAdditionalData -> {
