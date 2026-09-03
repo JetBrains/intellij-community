@@ -1,47 +1,37 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.ui.User32Ex
-import com.sun.jna.platform.win32.WinDef
-import com.sun.jna.ptr.IntByReference
 import fleet.util.logging.logger
 import org.jetbrains.annotations.ApiStatus
 
 private val logger = logger<User32Ex>()
 
+/** @return the top-level windows of the process whose title contains [windowName], as `HWND` values */
 @ApiStatus.Internal
-fun User32Ex.findWindowsWithText(pid: UInt, windowName: String): List<WinDef.HWND> {
-  val result = mutableListOf<WinDef.HWND>()
+fun findWindowsWithText(pid: UInt, windowName: String): List<Long> {
+  val result = mutableListOf<Long>()
   findProcessWindow(pid) { hWnd ->
-    val lengthNoTerminatingZero = GetWindowTextLength(hWnd)
-    if (lengthNoTerminatingZero == 0) { return@findProcessWindow false }
-
-    val lengthWithZero = lengthNoTerminatingZero + 1
-    val textArray = CharArray(lengthWithZero)
-    val finalTextSize = GetWindowText(hWnd, textArray, lengthWithZero)
-    if (finalTextSize == 0) {
-      return@findProcessWindow false
-    }
-
-    val name = String(textArray, 0, finalTextSize)
-    if (name.contains(windowName))
+    val name = User32Ex.getWindowText(hWnd)
+    if (name.isNotEmpty() && name.contains(windowName)) {
       result.add(hWnd)
+    }
     false
   }
   return result
 }
 
+/** @return the main window of the process as an `HWND`, or `null`. Follows `System.Diagnostics.MainWindowFinder.IsMainWindow` from .NET 8. */
 @ApiStatus.Internal
-// Implemented according to System.Diagnostics.MainWindowFinder.IsMainWindow implementation from .NET 8
-fun User32Ex.findMainWindow(pid: UInt): WinDef.HWND? {
+fun findMainWindow(pid: UInt): Long? {
   return findProcessWindow(pid) { hWnd ->
-    val winOwner = GetWindow(hWnd, /*GW_OWNER*/4)
-    if (winOwner != null) {
+    val winOwner = User32Ex.getWindow(hWnd, User32Ex.GW_OWNER)
+    if (winOwner != 0L) {
       logger.trace { "There's owner ($winOwner) of current window ($hWnd). Continue enumeration" }
       return@findProcessWindow false
     }
 
-    if (!IsWindowVisible(hWnd)) {
+    if (!User32Ex.isWindowVisible(hWnd)) {
       logger.trace { "Window is not visible. Continue enumeration" }
       return@findProcessWindow false
     }
@@ -52,37 +42,32 @@ fun User32Ex.findMainWindow(pid: UInt): WinDef.HWND? {
 private const val STOP_ENUMERATION = false
 private const val CONTINUE_ENUMERATION = true
 
+/** @return the first top-level window of the process that [filter] accepts, as an `HWND`, or `null` */
 @ApiStatus.Internal
-fun User32Ex.findProcessWindow(pid: UInt, filter: ((WinDef.HWND) -> Boolean)): WinDef.HWND? {
+fun findProcessWindow(pid: UInt, filter: ((Long) -> Boolean)): Long? {
   logger.trace { "Start looking for a window of process \"$pid\"" }
 
-  var winHandle: WinDef.HWND? = null
+  var winHandle: Long? = null
   val pidAsInt = pid.toInt()
-  EnumWindows(object : User32Ex.EnumThreadWindowsCallback {
-    override fun callback(hWnd: WinDef.HWND?, lParam: IntByReference?): Boolean {
-      if (hWnd == null) {
-        logger.trace { "Window handle is null. Continue enumeration" }
-        return CONTINUE_ENUMERATION
-      }
-
-      val processIdReference = IntByReference()
-      if (!GetWindowThreadProcessId(hWnd, processIdReference)) {
-        logger.error { "kernel32:GetWindowThreadProcessId wasn't successful. Continue enumeration" }
-        return CONTINUE_ENUMERATION
-      }
-
-      if (processIdReference.value != pidAsInt) {
-        logger.trace { "Window : $hWnd, pid : ${processIdReference.value}. Continue enumeration" }
-        return CONTINUE_ENUMERATION
-      }
-
-      if (!filter(hWnd))
-        return CONTINUE_ENUMERATION
-
-      winHandle = hWnd
-      return STOP_ENUMERATION
+  User32Ex.enumWindows { hWnd ->
+    val processId = User32Ex.getWindowProcessId(hWnd)
+    if (processId == 0) {
+      logger.error { "user32:GetWindowThreadProcessId wasn't successful. Continue enumeration" }
+      return@enumWindows CONTINUE_ENUMERATION
     }
-  }, null)
+
+    if (processId != pidAsInt) {
+      logger.trace { "Window : $hWnd, pid : $processId. Continue enumeration" }
+      return@enumWindows CONTINUE_ENUMERATION
+    }
+
+    if (!filter(hWnd)) {
+      return@enumWindows CONTINUE_ENUMERATION
+    }
+
+    winHandle = hWnd
+    STOP_ENUMERATION
+  }
 
   return winHandle
 }

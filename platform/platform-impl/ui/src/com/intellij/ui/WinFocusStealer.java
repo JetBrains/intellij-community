@@ -1,13 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.system.WindowsRegistry;
 import com.intellij.util.ui.UIUtil;
-import com.sun.jna.platform.win32.Advapi32Util;
-import com.sun.jna.platform.win32.WinDef;
-import com.sun.jna.platform.win32.WinReg;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.SwingUtilities;
@@ -27,24 +24,16 @@ import java.awt.event.AWTEventListener;
 public final class WinFocusStealer implements AWTEventListener {
   private static final Logger LOG = Logger.getInstance(WinFocusStealer.class);
   private static final int DEFAULT_TIMEOUT_MS = 200000; // default registry value on Windows 10 as of time this code is written
-  private final boolean myEnabled;
   private Boolean myUpdateScheduled;
 
   private WinFocusStealer() {
-    if (JnaLoader.isLoaded()) {
-      myEnabled = true;
-      doUpdate(false); // make sure to restore the default state if the IDE crashed after enabling focus stealing
-      SwingUtilities.invokeLater(() -> Toolkit.getDefaultToolkit().addAWTEventListener(this,
-                                                                                       AWTEvent.KEY_EVENT_MASK |
-                                                                                       AWTEvent.MOUSE_EVENT_MASK |
-                                                                                       AWTEvent.MOUSE_MOTION_EVENT_MASK |
-                                                                                       AWTEvent.MOUSE_WHEEL_EVENT_MASK |
-                                                                                       AWTEvent.INPUT_METHOD_EVENT_MASK));
-    }
-    else {
-      myEnabled = false;
-      LOG.info("JNA isn't available, focus stealing logic is disabled");
-    }
+    doUpdate(false); // make sure to restore the default state if the IDE crashed after enabling focus stealing
+    SwingUtilities.invokeLater(() -> Toolkit.getDefaultToolkit().addAWTEventListener(this,
+                                                                                     AWTEvent.KEY_EVENT_MASK |
+                                                                                     AWTEvent.MOUSE_EVENT_MASK |
+                                                                                     AWTEvent.MOUSE_MOTION_EVENT_MASK |
+                                                                                     AWTEvent.MOUSE_WHEEL_EVENT_MASK |
+                                                                                     AWTEvent.INPUT_METHOD_EVENT_MASK));
   }
 
   /**
@@ -57,7 +46,7 @@ public final class WinFocusStealer implements AWTEventListener {
    */
   public static void setFocusStealingEnabled(boolean value) {
     WinFocusStealer stealer = ApplicationManager.getApplication().getService(WinFocusStealer.class);
-    if (stealer != null && stealer.myEnabled) stealer.update(value); // the service is null on non-Windows machines
+    if (stealer != null) stealer.update(value); // the service is null on non-Windows machines
   }
 
   private void update(boolean enabled) {
@@ -86,9 +75,12 @@ public final class WinFocusStealer implements AWTEventListener {
   private static int readRegistryTimeoutValue() {
     int targetTimeout = DEFAULT_TIMEOUT_MS;
     try {
-      targetTimeout = Advapi32Util.registryGetIntValue(WinReg.HKEY_CURRENT_USER, "Control Panel\\Desktop", "ForegroundLockTimeout");
+      Integer value = WindowsRegistry.getInt(WindowsRegistry.Hive.CURRENT_USER, "Control Panel\\Desktop", "ForegroundLockTimeout");
+      if (value != null) {
+        targetTimeout = value;
+      }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("ForegroundLockTimeout read from registry: " + targetTimeout);
+        LOG.debug("ForegroundLockTimeout: " + targetTimeout + (value == null ? " (default)" : " (registry)"));
       }
     }
     catch (Exception e) {
@@ -100,10 +92,9 @@ public final class WinFocusStealer implements AWTEventListener {
   private static int readCurrentTimeoutValue() {
     int currentTimeout = DEFAULT_TIMEOUT_MS;
     try {
-      WinDef.UINTByReference result = new WinDef.UINTByReference();
-      if (User32Ex.INSTANCE.SystemParametersInfo(new WinDef.UINT(0x2000 /* SPI_GETFOREGROUNDLOCKTIMEOUT */),
-                                             new WinDef.UINT(), result, new WinDef.UINT())) {
-        currentTimeout = result.getValue().intValue();
+      Integer result = User32Ex.systemParametersInfoUInt(User32Ex.SPI_GETFOREGROUNDLOCKTIMEOUT);
+      if (result != null) {
+        currentTimeout = result;
         if (LOG.isDebugEnabled()) {
           LOG.debug("Current foreground lock timeout: " + currentTimeout);
         }
@@ -120,8 +111,7 @@ public final class WinFocusStealer implements AWTEventListener {
 
   private static boolean writeCurrentTimeoutValue(int value) {
     try {
-      if (User32Ex.INSTANCE.SystemParametersInfo(new WinDef.UINT(0x2001 /* SPI_SETFOREGROUNDLOCKTIMEOUT */),
-                                                 new WinDef.UINT(), new WinDef.UINT(value), new WinDef.UINT())) {
+      if (User32Ex.systemParametersInfoSetUInt(User32Ex.SPI_SETFOREGROUNDLOCKTIMEOUT, value)) {
         LOG.info("Foreground lock timeout set to " + value);
         return true;
       }

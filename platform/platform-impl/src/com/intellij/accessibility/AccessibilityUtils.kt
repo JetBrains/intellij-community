@@ -17,7 +17,6 @@ import com.intellij.ui.mac.foundation.ID
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.RawSwingDispatcher
-import com.sun.jna.platform.win32.WinDef
 import kotlinx.coroutines.withContext
 import java.awt.Component
 import javax.accessibility.AccessibleRole
@@ -65,7 +64,7 @@ object AccessibilityUtils {
   }
 
   private fun isScreenReaderDetected(): Boolean = when (OS.CURRENT) {
-    OS.Windows -> JnaLoader.isLoaded() && isWindowsScreenReaderEnabled()
+    OS.Windows -> isWindowsScreenReaderEnabled()
     OS.macOS -> JnaLoader.isLoaded() && isMacVoiceOverEnabled()
     OS.Linux -> JnaLoader.isLoaded() && LinuxAccessibilitySupport.isLinuxScreenReaderEnabled()
     else -> false
@@ -94,9 +93,7 @@ object AccessibilityUtils {
 
   // `SPI_GETSCREENREADER` system parameter (https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfoa#SPI_GETSCREENREADER)
   private fun isWindowsScreenReaderEnabled(): Boolean {
-    val isActive = WinDef.BOOLByReference()
-    val retValue = User32Ex.INSTANCE.SystemParametersInfo(WinDef.UINT(0x0046), WinDef.UINT(0), isActive, WinDef.UINT(0))
-    return retValue && isActive.value.booleanValue()
+    return User32Ex.systemParametersInfoBool(User32Ex.SPI_GETSCREENREADER) == true
   }
 
   suspend fun enableScreenReaderSupportIfNeeded() {

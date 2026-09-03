@@ -1,17 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.EDT;
 import com.sun.jna.Function;
-import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid;
 import com.sun.jna.platform.win32.ObjBase;
 import com.sun.jna.platform.win32.Ole32;
 import com.sun.jna.platform.win32.Ole32Util;
-import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinError;
 import com.sun.jna.platform.win32.WinNT;
@@ -23,6 +21,9 @@ import sun.awt.AWTAccessor;
 import javax.swing.JFrame;
 import java.awt.Window;
 import java.awt.peer.ComponentPeer;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.lang.reflect.Method;
 
 /**
@@ -38,7 +39,7 @@ final class Win7TaskBar {
   private static final int TaskBarList_SetProgressState = 10;
   private static final int TaskBarList_SetOverlayIcon = 18;
 
-  private static final WinDef.DWORD ICO_VERSION = new WinDef.DWORD(0x00030000);
+  private static final int ICO_VERSION = 0x00030000;
   private static final WinDef.DWORD DWORD_ZERO = new WinDef.DWORD(0);
   private static final WinDef.DWORD TBPF_NOPROGRESS = DWORD_ZERO;
   private static final WinDef.DWORD TBPF_NORMAL = new WinDef.DWORD(0x2);
@@ -118,7 +119,7 @@ final class Win7TaskBar {
     mySetOverlayIcon.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), icon, Pointer.NULL});
 
     if (dispose) {
-      User32.INSTANCE.DestroyIcon(icon);
+      User32Ex.destroyIcon(Pointer.nativeValue(icon.getPointer()));
     }
   }
 
@@ -127,13 +128,15 @@ final class Win7TaskBar {
       return null;
     }
 
-    try (Memory memory = new Memory(ico.length)) {
-      memory.write(0, ico, 0, ico.length);
+    // CreateIconFromResourceEx copies the bits, so the arena can close right after the call
+    try (Arena arena = Arena.ofConfined()) {
+      MemorySegment memory = arena.allocateFrom(ValueLayout.JAVA_BYTE, ico);
 
       int nSize = 100;
-      int offset = User32Ex.INSTANCE.LookupIconIdFromDirectoryEx(memory, true, nSize, nSize, 0);
+      int offset = User32Ex.lookupIconIdFromDirectoryEx(memory, true, nSize, nSize, 0);
       if (offset != 0) {
-        return User32Ex.INSTANCE.CreateIconFromResourceEx(memory.share(offset), DWORD_ZERO, true, ICO_VERSION, nSize, nSize, 0);
+        long icon = User32Ex.createIconFromResourceEx(memory.asSlice(offset), 0, true, ICO_VERSION, nSize, nSize, 0);
+        return icon != 0 ? new WinDef.HICON(new Pointer(icon)) : null;
       }
 
       return null;
@@ -145,7 +148,7 @@ final class Win7TaskBar {
       return;
     }
 
-    User32Ex.INSTANCE.FlashWindow(getHandle(frame), true);
+    User32Ex.flashWindow(getHandleValue(frame), true);
   }
 
   static void setForegroundWindow(@NotNull Window window) {
@@ -153,18 +156,23 @@ final class Win7TaskBar {
       return;
     }
 
-    User32Ex.INSTANCE.SetForegroundWindow(getHandle(window));
+    User32Ex.setForegroundWindow(getHandleValue(window));
   }
 
   private static WinDef.HWND getHandle(@NotNull Window window) {
+    long handle = getHandleValue(window);
+    return handle != 0 ? new WinDef.HWND(new Pointer(handle)) : null;
+  }
+
+  private static long getHandleValue(@NotNull Window window) {
     try {
       ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(window);
       Method getHWnd = peer.getClass().getMethod("getHWnd");
-      return new WinDef.HWND(new Pointer((Long)getHWnd.invoke(peer)));
+      return (Long)getHWnd.invoke(peer);
     }
     catch (Throwable e) {
       LOG.error(e);
-      return null;
+      return 0;
     }
   }
 }

@@ -7,7 +7,6 @@ import com.intellij.ide.CliResult;
 import com.intellij.ide.SpecialConfigFiles;
 import com.intellij.idea.AppExitCodes;
 import com.intellij.idea.LoggerFactory;
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.DelegatingLogger;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
@@ -18,7 +17,6 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.ui.User32Ex;
 import com.intellij.util.Suppressions;
 import com.intellij.util.system.OS;
-import com.sun.jna.platform.win32.WinDef;
 import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -371,9 +369,9 @@ public final class DirectoryLock {
   }
 
   private void allowActivation() {
-    if (OS.CURRENT == OS.Windows && JnaLoader.isLoaded()) {
+    if (OS.CURRENT == OS.Windows) {
       try {
-        User32Ex.INSTANCE.AllowSetForegroundWindow(new WinDef.DWORD(remotePID()));
+        User32Ex.allowSetForegroundWindow(remotePID());
       }
       catch (Throwable t) {
         LOG.debug(t);
