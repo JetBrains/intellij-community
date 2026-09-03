@@ -51,4 +51,31 @@ public class JavaDocFragmentAnchorCacheTest extends LightJavaCodeInsightTestCase
                            new JavaDocFragmentData("fooMethod", 227)
     );
   }
+
+  public void testIndexesSystemProperties() {
+    @Language("JAVA") String text = """
+      package p;
+      /// {@systemProperty hihi.haha}
+      public class A {
+        /// {@systemProperty myconst}
+        public static final int MY_CONST = 0;
+      
+        /// {@systemProperty foo.bar}
+        void bar() {}
+      }
+      """;
+    configureFromFileText("A.java", text);
+    Project project = getProject();
+
+    PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass("p.A", GlobalSearchScope.projectScope(project));
+    assertNotNull(psiClass);
+
+    Collection<JavaDocFragmentData> anchors = JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(project, psiClass);
+    assertNotNull(anchors);
+    assertContainsElements(anchors,
+                           new JavaDocFragmentData("hihi.haha", 15),
+                           new JavaDocFragmentData("myconst", 66),
+                           new JavaDocFragmentData("foo.bar", 139)
+    );
+  }
 }
