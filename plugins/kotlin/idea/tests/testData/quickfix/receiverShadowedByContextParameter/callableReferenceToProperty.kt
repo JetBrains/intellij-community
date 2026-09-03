@@ -1,17 +1,15 @@
-// "Surround with 'with(this) { ... }'" "true"
+// "Use 'f' as receiver" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
 
 class Foo {
-    fun String.bar() {
-    }
+    val baz = 1
 }
 
-fun withFoo(f: context(Foo) () -> Unit) {}
-
 fun Foo.test() {
-    withFoo {
-        with(th<caret>is) { ""?.bar() }
+    context(f: Foo)
+    fun local() {
+        val ref = ::ba<caret>z
     }
 }
 

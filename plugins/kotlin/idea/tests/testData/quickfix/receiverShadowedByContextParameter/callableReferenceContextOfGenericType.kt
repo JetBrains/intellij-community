@@ -1,18 +1,16 @@
-// "Use 'contextOf<Foo>()' as receiver" "true"
+// "Use 'contextOf<List<String>>()' as receiver" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // WITH_STDLIB
-// API_VERSION: 2.2
 // K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
 
-interface Foo {
-    fun bar() {
-    }
+fun List<String>.bar() {
 }
 
-fun Foo.test() {
-    val o = object : Foo {}
-    context(o) {
-        contextOf<Foo>().bar<caret>()
+fun withList(f: context(List<String>) () -> Unit) {}
+
+fun List<String>.test() {
+    withList {
+        val ref = ::ba<caret>r
     }
 }
 

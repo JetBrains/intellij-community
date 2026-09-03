@@ -1,5 +1,7 @@
 // "Use 'this' as receiver" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
+// WITH_STDLIB
+// K2_ERROR: NONE_APPLICABLE
 // K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
 
 class Foo {
@@ -11,7 +13,7 @@ fun withFoo(f: context(Foo) () -> Unit) {}
 
 fun Foo.test() {
     withFoo {
-        this.bar<caret>()
+        run(this::ba<caret>r)
     }
 }
 

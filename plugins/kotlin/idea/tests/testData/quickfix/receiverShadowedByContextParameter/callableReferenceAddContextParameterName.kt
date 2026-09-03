@@ -7,12 +7,10 @@ class Foo {
     }
 }
 
-fun withFoo(f: context(Foo) () -> Unit) {}
-
 fun Foo.test() {
     context(f: Foo)
     fun local() {
-        bar<caret>()
+        val ref = ::ba<caret>r
     }
 }
 

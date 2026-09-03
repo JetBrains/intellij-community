@@ -1,18 +1,20 @@
-// "Use 'f' as receiver" "true"
+// "Use 'this@Foo' as receiver" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
+// WITH_STDLIB
 // K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
+
+fun withFoo(f: context(Foo) () -> Unit) {}
 
 class Foo {
     fun bar() {
     }
-}
 
-fun withFoo(f: context(Foo) () -> Unit) {}
-
-fun Foo.test() {
-    context(f: Foo)
-    fun local() {
-        bar<caret>()
+    fun test() {
+        with("inner receiver") {
+            withFoo {
+                this@Foo.bar()
+            }
+        }
     }
 }
 

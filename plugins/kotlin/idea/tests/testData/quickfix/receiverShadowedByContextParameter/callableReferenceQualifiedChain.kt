@@ -1,18 +1,20 @@
-// "Surround with 'with(f) { ... }'" "true"
+// "Use 'f' as receiver" "true"
 // COMPILER_ARGUMENTS: -Xcontext-parameters
+// WITH_STDLIB
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
 // K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
 
 class Foo {
-    fun String.bar() {
+    fun bar() {
     }
 }
-
-fun withFoo(f: context(Foo) () -> Unit) {}
 
 fun Foo.test() {
     context(f: Foo)
     fun local() {
-        with(f<caret>) { "".bar() }
+        ::ba<caret>r.invoke()
     }
 }
 
