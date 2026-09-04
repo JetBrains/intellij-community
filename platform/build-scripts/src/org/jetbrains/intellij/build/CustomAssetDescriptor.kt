@@ -10,5 +10,5 @@ internal interface CustomAssetDescriptor {
 
   val platformSpecific: SupportedDistribution?
 
-  suspend fun getSources(context: BuildContext): Sequence<LazySource>?
+  fun getSources(context: BuildContext): Sequence<LazySource>?
 }

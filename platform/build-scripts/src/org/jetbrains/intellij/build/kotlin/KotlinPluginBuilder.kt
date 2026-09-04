@@ -221,8 +221,8 @@ private class KotlinPluginVersion(private val kind: KotlinPluginBuilder.KotlinPl
   override val versionSuffix: String
     get() = "-$kind"
 
-  override suspend fun evaluate(
-    pluginXmlSupplier: suspend () -> String,
+  override fun evaluate(
+    pluginXmlSupplier: () -> String,
     ideBuildVersion: String,
     context: BuildContext,
   ): PluginVersionEvaluatorResult {

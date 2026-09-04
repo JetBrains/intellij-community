@@ -507,7 +507,7 @@ class JarPackager private constructor(
     }
   }
 
-  private suspend fun handleCustomAssets(layout: PluginLayout, jarAsset: Lazy<AssetDescriptor>) {
+  private fun handleCustomAssets(layout: PluginLayout, jarAsset: Lazy<AssetDescriptor>) {
     for (customAsset in layout.customAssets) {
       if (customAsset.platformSpecific != null) {
         continue
@@ -529,7 +529,7 @@ class JarPackager private constructor(
     }
   }
 
-  private suspend fun addSearchableOptionSources(
+  private fun addSearchableOptionSources(
     layout: BaseLayout?,
     moduleName: String,
     module: JpsModule,

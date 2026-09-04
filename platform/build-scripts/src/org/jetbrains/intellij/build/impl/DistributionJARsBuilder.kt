@@ -678,7 +678,7 @@ internal suspend fun layoutPlatformDistribution(
     }
 }
 
-private suspend fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {
+private fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {
   if (!context.productProperties.reassignAltClickToMultipleCarets) {
     return
   }

@@ -160,7 +160,7 @@ private suspend fun buildNonBundledPlugins(
         val outputProvider = context.outputProvider
         val pluginModule = outputProvider.findRequiredModule(plugin.mainModule)
         var cachedPluginXml: String? = null
-        val pluginXmlSupplier: suspend () -> String = {
+        val pluginXmlSupplier: () -> String = {
           cachedPluginXml ?: getUnprocessedPluginXmlContent(pluginModule, outputProvider)
             .decodeToString()
             .also { cachedPluginXml = it }

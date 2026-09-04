@@ -401,7 +401,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
         override val platformSpecific: SupportedDistribution?
           get() = null
 
-        override suspend fun getSources(context: BuildContext): Sequence<LazySource>? {
+        override fun getSources(context: BuildContext): Sequence<LazySource>? {
           return sequenceOf(lazySourceSupplier(context) ?: return null)
         }
       }
@@ -412,7 +412,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
         override val platformSpecific: SupportedDistribution
           get() = platform
 
-        override suspend fun getSources(context: BuildContext): Sequence<LazySource>? {
+        override fun getSources(context: BuildContext): Sequence<LazySource>? {
           return sequenceOf(lazySourceSupplier(context) ?: return null)
         }
       }
@@ -850,7 +850,7 @@ data class PluginVersionEvaluatorResult(@JvmField val pluginVersion: String, @Jv
  * Think twice before using this API.
  */
 fun interface PluginVersionEvaluator {
-  suspend fun evaluate(pluginXmlSupplier: suspend () -> String, ideBuildVersion: String, context: BuildContext): PluginVersionEvaluatorResult
+  fun evaluate(pluginXmlSupplier: () -> String, ideBuildVersion: String, context: BuildContext): PluginVersionEvaluatorResult
 }
 
 /**
@@ -866,8 +866,8 @@ interface DataPluginVersionEvaluator : PluginVersionEvaluator {
 
 /** [DataPluginVersionEvaluator] with nothing beyond the suffix. */
 class SuffixedPluginVersion(override val versionSuffix: String) : DataPluginVersionEvaluator {
-  override suspend fun evaluate(
-    pluginXmlSupplier: suspend () -> String,
+  override fun evaluate(
+    pluginXmlSupplier: () -> String,
     ideBuildVersion: String,
     context: BuildContext,
   ): PluginVersionEvaluatorResult = PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion + versionSuffix)
