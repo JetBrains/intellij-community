@@ -202,10 +202,6 @@ com.intellij.openapi.editor.ex.EditorMarkupModel
 com.intellij.openapi.editor.ex.FoldingListener
 - *:beforeFoldRegionDisposed(com.intellij.openapi.editor.FoldRegion):V
 - *:onCustomFoldRegionPropertiesChange(com.intellij.openapi.editor.CustomFoldRegion,I):V
-*:com.intellij.openapi.editor.ex.FoldingListener$ChangeFlags
-- sf:GUTTER_ICON_PROVIDER_CHANGED:I
-- sf:HEIGHT_CHANGED:I
-- sf:WIDTH_CHANGED:I
 com.intellij.openapi.editor.impl.EditorGutterListener
 - java.util.EventListener
 - *:hoverEnded(com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent):V

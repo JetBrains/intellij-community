@@ -176,7 +176,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   @Override
   public void onCustomFoldRegionPropertiesChange(@NotNull CustomFoldRegion region, int flags) {
-    if ((flags & ChangeFlags.WIDTH_CHANGED) == 0 || myDocument.isInBulkUpdate() || checkDirty()) return;
+    if ((flags & InlayModel.ChangeFlags.WIDTH_CHANGED) == 0 || myDocument.isInBulkUpdate() || checkDirty()) return;
     int startOffset = region.getStartOffset();
     if (myFoldingModel.getCollapsedRegionAtOffset(startOffset) != region) return;
     int visualLine = myView.offsetToVisualLine(startOffset, false);

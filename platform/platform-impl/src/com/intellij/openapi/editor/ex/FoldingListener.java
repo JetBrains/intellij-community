@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.ex;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.InlayModel;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public interface FoldingListener {
    */
   @ApiStatus.Experimental
   default void onCustomFoldRegionPropertiesChange(@NotNull CustomFoldRegion region,
-                                                  @MagicConstant(flagsFromClass = ChangeFlags.class) int flags) {
+                                                  @MagicConstant(flagsFromClass = InlayModel.ChangeFlags.class) int flags) {
   }
 
   /**
@@ -63,12 +64,5 @@ public interface FoldingListener {
   }
 
   default void onFoldInitializationStatusChanged(boolean initInProgress) {
-  }
-
-  @ApiStatus.Experimental
-  interface ChangeFlags {
-    int WIDTH_CHANGED = 0x1;
-    int HEIGHT_CHANGED = 0x2;
-    int GUTTER_ICON_PROVIDER_CHANGED = 0x4;
   }
 }

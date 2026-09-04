@@ -39,6 +39,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.MultiMap;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -616,13 +617,13 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     myFoldTree.rebuild();
   }
 
-  void onCustomFoldRegionPropertiesChange(@NotNull CustomFoldRegion foldRegion, int flags) {
+  void onCustomFoldRegionPropertiesChange(@NotNull CustomFoldRegion foldRegion, @MagicConstant(flagsFromClass = InlayModel.ChangeFlags.class) int flags) {
     for (FoldingListener listener : myListeners) {
       listener.onCustomFoldRegionPropertiesChange(foldRegion, flags);
     }
-    boolean widthChanged = (flags & FoldingListener.ChangeFlags.WIDTH_CHANGED) != 0;
-    boolean heightChanged = (flags & FoldingListener.ChangeFlags.HEIGHT_CHANGED) != 0;
-    boolean gutterMarkChanged = (flags & FoldingListener.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED) != 0;
+    boolean widthChanged = (flags & InlayModel.ChangeFlags.WIDTH_CHANGED) != 0;
+    boolean heightChanged = (flags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0;
+    boolean gutterMarkChanged = (flags & InlayModel.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED) != 0;
     if (myIsBatchFoldingProcessing) {
       myRegionWidthChanged |= widthChanged;
       myRegionHeightChanged |= heightChanged;
@@ -893,10 +894,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
 
     @Override
-    protected int compareEqualStartIntervals(
-      @NotNull IntervalNode<FoldRegionImpl> i1,
-      @NotNull IntervalNode<FoldRegionImpl> i2
-    ) {
+    protected int compareEqualStartIntervals(@NotNull IntervalNode<FoldRegionImpl> i1, @NotNull IntervalNode<FoldRegionImpl> i2) {
       int baseResult = super.compareEqualStartIntervals(i1, i2);
       if (baseResult != 0) {
         return baseResult;
@@ -921,13 +919,11 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     @ApiStatus.Internal
     @Override
-    protected void collectAffectedMarkersAndShiftSubtrees(
-      @Nullable IntervalNode<FoldRegionImpl> root,
-      int start,
-      int end,
-      int lengthDelta,
-      @NotNull List<? super IntervalNode<FoldRegionImpl>> affected
-    ) {
+    protected void collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<FoldRegionImpl> root,
+                                                          int start,
+                                                          int end,
+                                                          int lengthDelta,
+                                                          @NotNull List<? super IntervalNode<FoldRegionImpl>> affected) {
       if (inCollectCall) {
         super.collectAffectedMarkersAndShiftSubtrees(root, start, end, lengthDelta, affected);
         return;
@@ -960,7 +956,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       }
     }
 
-    private static @NotNull FoldRegionImpl getRegion(@NotNull IntervalNode<FoldRegionImpl> node) {
+    private static @NotNull FoldRegionImpl getRegion(@NotNull IntervalNode<? extends FoldRegionImpl> node) {
       assert node.intervals.size() == 1;
       FoldRegionImpl region = node.intervals.getFirst().get();
       assert region != null;
@@ -983,7 +979,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       }
 
       @Override
-      protected void addIntervalsFrom(@NotNull IntervalTreeImpl.IntervalNode<FoldRegionImpl> otherNode) {
+      protected void addIntervalsFrom(@NotNull IntervalNode<FoldRegionImpl> otherNode) {
         FoldRegionImpl region = getRegion(this);
         FoldRegionImpl otherRegion = getRegion(otherNode);
         if (otherRegion.mySizeBeforeUpdate > region.mySizeBeforeUpdate) {
@@ -994,7 +990,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         }
         else {
           otherNode.setValid(false);
-          ((RangeMarkerTree.RMNode<FoldRegionImpl>)otherNode).onRemoved();
+          ((RMNode<FoldRegionImpl>)otherNode).onRemoved();
         }
       }
     }
