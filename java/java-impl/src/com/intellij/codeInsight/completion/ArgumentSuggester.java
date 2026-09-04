@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -17,7 +18,6 @@ import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.IconManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
@@ -95,7 +95,7 @@ final class ArgumentSuggester {
     public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
       presentation.setTypeText(myType.getPresentableText());
-      presentation.setIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method));
+      presentation.setIcon(myMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY));
     }
 
     @Override
