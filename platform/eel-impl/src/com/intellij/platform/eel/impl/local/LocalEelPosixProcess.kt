@@ -83,11 +83,11 @@ internal class LocalEelPosixProcess private constructor(
 
   /**
    * The behavior of this method has one significant difference from [Process.destroy].
-   * Although both methods send `SIGTERM` to the process, [Process.destroy] also closes all stdio channels,
+   * Although both methods send signal to the process, [Process.destroy] also closes all stdio channels,
    * making it impossible to read data after sending the signal.
-   * In contrast, the API user may send and receive data through stdio after invoking [terminate].
+   * In contrast, the API user may send and receive data through stdio after invoking [EelProcess.terminate].
    */
-  override suspend fun terminate() {
-    sendSignalToProcessGroup(process, UnixSignal.SIGTERM, platform)
+  override suspend fun sendSignal(sig: UnixSignal) {
+    sendSignalToProcessGroup(process, sig, platform)
   }
 }

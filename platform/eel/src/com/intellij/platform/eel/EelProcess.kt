@@ -105,10 +105,18 @@ sealed interface EelProcess {
 @ApiStatus.NonExtendable
 interface EelPosixProcess : EelProcess {
   /**
-   * Requests graceful shutdown by sending `SIGTERM`, which the process may handle or ignore. Use [kill] to force termination.
+   * Sends [sig] to process and its group
    */
   @ApiStatus.Experimental
-  suspend fun terminate()
+  suspend fun sendSignal(sig: UnixSignal)
+}
+
+/**
+ * Requests graceful shutdown by sending `SIGTERM`, which the process may handle or ignore. Use [kill] to force termination.
+ */
+@ApiStatus.Experimental
+suspend fun EelPosixProcess.terminate() {
+  sendSignal(UnixSignal.SIGTERM)
 }
 
 /**

@@ -292,7 +292,7 @@ f:com.intellij.platform.eel.EelPlatformKt
 - a:getUserInfo():com.intellij.platform.eel.EelUserPosixInfo
 *:com.intellij.platform.eel.EelPosixProcess
 - com.intellij.platform.eel.EelProcess
-- *a:terminate(kotlin.coroutines.Continuation):java.lang.Object
+- *a:sendSignal(com.intellij.platform.eel.UnixSignal,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelProcess
 - convertToJavaProcess():java.lang.Process
 - *a:getExitCode():com.intellij.platform.eel.SafeDeferred
@@ -331,6 +331,7 @@ f:com.intellij.platform.eel.EelPlatformKt
 - a:getUser():java.lang.String
 *f:com.intellij.platform.eel.EelProcessKt
 - *sf:convertToJVMProcess(com.intellij.platform.eel.EelProcess):java.lang.Process
+- *sf:terminate(com.intellij.platform.eel.EelPosixProcess,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelProcessManagementApi
 - *a:getDescriptor():com.intellij.platform.eel.EelDescriptor
 - *a:kill(J,kotlin.coroutines.Continuation):java.lang.Object

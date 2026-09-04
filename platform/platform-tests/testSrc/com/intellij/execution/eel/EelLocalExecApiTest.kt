@@ -9,7 +9,6 @@ import com.intellij.execution.eel.processOutputReader.OutStream.STDERR
 import com.intellij.execution.eel.processOutputReader.OutStream.STDOUT
 import com.intellij.execution.eel.processOutputReader.OutputType
 import com.intellij.execution.eel.processOutputReader.ProcessOutputReader
-import com.intellij.execution.process.UnixSignal
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelExecApi.Pty
@@ -19,6 +18,7 @@ import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.ThrowsChecked
+import com.intellij.platform.eel.UnixSignal
 import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.impl.local.getShellFromPasswdRecords
@@ -27,6 +27,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.eel.spawnProcess
+import com.intellij.platform.eel.terminate
 import com.intellij.platform.eel.where
 import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.ttyAndExit.Command
