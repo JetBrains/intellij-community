@@ -519,7 +519,9 @@ public class JavaCoverageEngine extends CoverageEngine {
 
     for (VirtualFile root : roots) {
       if (root == null) continue;
-      classFiles.addAll(ClassFilesLocator.collectClassFiles(root.toNioPath(), packageVmName, classNames));
+      Path localRoot = CoverageOutputRoots.toLocalPathOrNull(root);
+      if (localRoot == null) continue;
+      classFiles.addAll(ClassFilesLocator.collectClassFiles(localRoot, packageVmName, classNames));
     }
     return classFiles;
   }

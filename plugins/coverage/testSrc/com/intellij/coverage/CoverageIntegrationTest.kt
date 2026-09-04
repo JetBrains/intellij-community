@@ -16,6 +16,7 @@ import com.intellij.coverage.analysis.collectOutputRoots
 import com.intellij.coverage.xml.XMLReportAnnotator
 import com.intellij.idea.ExcludeFromTestDiscovery
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
@@ -188,6 +189,20 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
 
   @Test
   fun `test jacoco reads classes from jar filesystem roots`() = assertHitsWithJarFileSystemRoots { loadJaCoCoSuite() }
+
+  @Test
+  fun `test corresponding output paths use jar filesystem roots`() = withJarFileSystemOutputRoot { module ->
+    val sourceFile = runBlocking {
+      readAction {
+        JavaPsiFacade.getInstance(myProject).findClass("foo.FooClass", GlobalSearchScope.projectScope(myProject))!!.containingFile
+      }
+    }
+    val engine = CoverageEngine.EP_NAME.findExtensionOrFail(JavaCoverageEngine::class.java)
+
+    val outputPaths = engine.getCorrespondingOutputPaths(sourceFile, module, loadIJSuite())
+
+    assertTrue(outputPaths.any { it.fileName.toString() == "FooClass.class" })
+  }
 
   @Test
   fun testJaCoCoWithoutUnloaded() = runBlocking {
@@ -444,6 +459,10 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   }
 
   private fun assertHitsWithJarFileSystemRoots(loadSuite: () -> CoverageSuitesBundle) {
+    withJarFileSystemOutputRoot { assertHits(loadSuite()) }
+  }
+
+  private fun withJarFileSystemOutputRoot(action: (Module) -> Unit) {
     val module = ModuleManager.getInstance(myProject).findModuleByName("simple") ?: error("Module 'simple' is not found")
     val originalOutputUrl = CompilerModuleExtension.getInstance(module)?.compilerOutputUrl ?: error("Module output URL is not configured")
     val originalOutputPath = Path.of(VfsUtilCore.urlToPath(originalOutputUrl))
@@ -452,7 +471,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
       createJarFromDirectory(originalOutputPath, jarOutput)
       val jarRootUrl = "jar://" + jarOutput.toString().replace('\\', '/') + "!/"
       PsiTestUtil.setCompilerOutputPath(module, jarRootUrl, false)
-      assertHits(loadSuite())
+      action(module)
     }
     finally {
       PsiTestUtil.setCompilerOutputPath(module, originalOutputUrl, false)

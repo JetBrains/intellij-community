@@ -9,8 +9,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.openapi.vfs.toNioPathOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
@@ -50,7 +50,7 @@ internal fun collectOutputRoots(
   return modules.flatMap { module ->
     CoverageOutputRoots.getRoots(coverageDataManager, module, includeTests)
       .asSequence()
-      .mapNotNull(::toLocalPathOrNull)
+      .mapNotNull(CoverageOutputRoots::toLocalPathOrNull)
       .filter(::isValidOutputRoot)
       .distinct()
       .map { root -> ModuleRequest(module, root, packageEntries) }
@@ -72,6 +72,18 @@ object CoverageOutputRoots {
     }
     return roots ?: VirtualFile.EMPTY_ARRAY
   }
+
+  @JvmStatic
+  fun toLocalPathOrNull(root: VirtualFile): Path? {
+    val fileSystem = root.fileSystem
+    val localRoot = if (fileSystem is ArchiveFileSystem) {
+      fileSystem.getLocalByEntry(root)
+    }
+    else {
+      root
+    }
+    return localRoot?.toNioPathOrNull()
+  }
 }
 
 private fun List<String>.removeSubPackages(): List<String> {
@@ -92,14 +104,3 @@ private fun String.isInPackage(packageName: String): Boolean {
 private fun isValidOutputRoot(root: Path): Boolean {
   return Files.isDirectory(root) || Files.isRegularFile(root) && root.fileName.toString().endsWith(".jar", ignoreCase = true)
 }
-
-private fun toLocalPathOrNull(root: VirtualFile): Path? {
-  val localRoot = if (root.fileSystem is JarFileSystem) {
-    JarFileSystem.getInstance().getVirtualFileForJar(root)
-  }
-  else {
-    root
-  }
-  return localRoot?.toNioPathOrNull()
-}
-
