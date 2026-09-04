@@ -320,13 +320,25 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey MoveToBottomRight = new IntelliJIconKey("actions/moveToBottomRight.svg", "expui/actions/moveToBottomRight.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey MoveToLeft = new IntelliJIconKey("expui/actions/moveToLeft.svg", "expui/actions/moveToLeft.svg", AllIconsKeys.class);
+    /** 16x16 */
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MoveToLeftBottom = new IntelliJIconKey("actions/moveToLeftBottom.svg", "expui/actions/moveToLeftBottom.svg", AllIconsKeys.class);
+    /** 16x16 */
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey MoveToLeftSideBySide = new IntelliJIconKey("expui/actions/moveToLeftSideBySide.svg", "expui/actions/moveToLeftSideBySide.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MoveToLeftTop = new IntelliJIconKey("actions/moveToLeftTop.svg", "expui/actions/moveToLeftTop.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey MoveToRight = new IntelliJIconKey("expui/actions/moveToRight.svg", "expui/actions/moveToRight.svg", AllIconsKeys.class);
+    /** 16x16 */
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MoveToRightBottom = new IntelliJIconKey("actions/moveToRightBottom.svg", "expui/actions/moveToRightBottom.svg", AllIconsKeys.class);
+    /** 16x16 */
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey MoveToRightSideBySide = new IntelliJIconKey("expui/actions/moveToRightSideBySide.svg", "expui/actions/moveToRightSideBySide.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MoveToRightTop = new IntelliJIconKey("actions/moveToRightTop.svg", "expui/actions/moveToRightTop.svg", AllIconsKeys.class);

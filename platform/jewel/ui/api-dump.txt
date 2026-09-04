@@ -2652,9 +2652,13 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Actions
 - sf:MoveToBottomLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToBottomRight:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToButton:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:MoveToLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToLeftBottom:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:MoveToLeftSideBySide:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToLeftTop:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:MoveToRight:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToRightBottom:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:MoveToRightSideBySide:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToRightTop:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToTopLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:MoveToTopRight:org.jetbrains.jewel.ui.icon.IntelliJIconKey

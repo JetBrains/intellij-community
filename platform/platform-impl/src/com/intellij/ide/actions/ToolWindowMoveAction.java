@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -150,9 +151,46 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
 
   private final @NotNull Anchor myAnchor;
 
+  private static @Nls String getToolWindowMoveActionText(@NotNull Anchor anchor) {
+    if (anchor == Anchor.LeftTop && UISettings.getInstance().getLeftHorizontalSplit()) {
+      return UIBundle.message("tool.window.move.to.left.action.name");
+    }
+    else if (anchor == Anchor.LeftBottom && UISettings.getInstance().getLeftHorizontalSplit()) {
+      return UIBundle.message("tool.window.move.to.left.action.name") +
+             " " +
+             UIBundle.message("tool.window.move.to.side.by.side.action.name");
+    }
+    else if (anchor == Anchor.RightTop && UISettings.getInstance().getRightHorizontalSplit()) {
+      return UIBundle.message("tool.window.move.to.right.action.name") +
+             " " +
+             UIBundle.message("tool.window.move.to.side.by.side.action.name");
+    }
+    else if (anchor == Anchor.RightBottom && UISettings.getInstance().getRightHorizontalSplit()) {
+      return UIBundle.message("tool.window.move.to.right.action.name");
+    }
+
+    return anchor.toString();
+  }
+
+  private static Icon getToolWindowMoveActionIcon(@NotNull Anchor anchor) {
+    if (anchor == Anchor.LeftTop && UISettings.getInstance().getLeftHorizontalSplit()) {
+      return AllIcons.Actions.MoveToLeft;
+    }
+    else if (anchor == Anchor.LeftBottom && UISettings.getInstance().getLeftHorizontalSplit()) {
+      return AllIcons.Actions.MoveToLeftSideBySide;
+    }
+    else if (anchor == Anchor.RightTop && UISettings.getInstance().getRightHorizontalSplit()) {
+      return AllIcons.Actions.MoveToRightSideBySide;
+    }
+    else if (anchor == Anchor.RightBottom && UISettings.getInstance().getRightHorizontalSplit()) {
+      return AllIcons.Actions.MoveToRight;
+    }
+    return anchor.getIcon();
+  }
+
   @ApiStatus.Internal
   public ToolWindowMoveAction(@NotNull Anchor anchor) {
-    super(() -> anchor.toString(), null, () -> anchor.getIcon());
+    super(() -> getToolWindowMoveActionText(anchor), null, () -> getToolWindowMoveActionIcon(anchor));
 
     myAnchor = anchor;
   }

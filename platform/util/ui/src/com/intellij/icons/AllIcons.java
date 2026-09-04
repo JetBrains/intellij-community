@@ -121,9 +121,13 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon MoveTo2 = load("expui/actions/moveToWindow.svg", "actions/MoveTo2.svg", 1643543562, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToBottomLeft = load("expui/actions/moveToBottomLeft.svg", "actions/moveToBottomLeft.svg", -571630777, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToBottomRight = load("expui/actions/moveToBottomRight.svg", "actions/moveToBottomRight.svg", 1506844169, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToLeft = load("expui/actions/moveToLeft.svg", 358177339, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToLeftBottom = load("expui/actions/moveToLeftBottom.svg", "actions/moveToLeftBottom.svg", -1888615188, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToLeftSideBySide = load("expui/actions/moveToLeftSideBySide.svg", 702015993, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToLeftTop = load("expui/actions/moveToLeftTop.svg", "actions/moveToLeftTop.svg", 1131863880, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToRight = load("expui/actions/moveToRight.svg", -1778696656, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToRightBottom = load("expui/actions/moveToRightBottom.svg", "actions/moveToRightBottom.svg", 2029282363, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToRightSideBySide = load("expui/actions/moveToRightSideBySide.svg", 2109229586, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToRightTop = load("expui/actions/moveToRightTop.svg", "actions/moveToRightTop.svg", 2034850953, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToTopLeft = load("actions/moveToTopLeft.svg", 1557541143, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToTopRight = load("actions/moveToTopRight.svg", 1602400676, 2);

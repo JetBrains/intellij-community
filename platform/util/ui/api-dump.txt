@@ -106,9 +106,13 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:MoveToBottomLeft:javax.swing.Icon
 - sf:MoveToBottomRight:javax.swing.Icon
 - sf:MoveToButton:javax.swing.Icon
+- sf:MoveToLeft:javax.swing.Icon
 - sf:MoveToLeftBottom:javax.swing.Icon
+- sf:MoveToLeftSideBySide:javax.swing.Icon
 - sf:MoveToLeftTop:javax.swing.Icon
+- sf:MoveToRight:javax.swing.Icon
 - sf:MoveToRightBottom:javax.swing.Icon
+- sf:MoveToRightSideBySide:javax.swing.Icon
 - sf:MoveToRightTop:javax.swing.Icon
 - sf:MoveToTopLeft:javax.swing.Icon
 - sf:MoveToTopRight:javax.swing.Icon
