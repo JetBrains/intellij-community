@@ -207,7 +207,9 @@ public final class SdkDownloadTracker {
       }
     };
 
-    PendingDownload pd = new PendingDownload(sdk, task, tracker) {
+    var pd = new PendingDownload(sdk, task, tracker) {
+      private Job mySdkSetupJob = null;
+
       @Override
       protected void runTask(@Nullable Project project,
                              @NotNull @NlsContexts.ProgressTitle String title,
@@ -225,6 +227,21 @@ public final class SdkDownloadTracker {
         throw new RuntimeException("Failed to download and configure " + type.getPresentableName() + " for "
                          + myEditableSdks.copy() + ". " + exception.getMessage(), exception);
       }
+
+      @Override
+      protected void disposeOnCompletion(@NotNull Job sdkSetupJob) {
+        // the default impl disposes the download asynchronously after the job completes
+        // the blocking mode must return only after the SDKs are configured and the download is unregistered
+        // if we return earlier, the caller sees the SDK as "downloading" and cannot use it
+        mySdkSetupJob = sdkSetupJob;
+      }
+
+      void waitDownloadIfNeeded() {
+        Job job = mySdkSetupJob;
+        if (job == null) return;
+        SdkDownloadTrackerKt.waitForJob(job);
+        disposeNow(true);
+      }
     };
     myPendingTasks.add(pd);
     tracker.invokeLater(() -> sdks.forEach(pd::configureSdk));
@@ -235,6 +252,7 @@ public final class SdkDownloadTracker {
     }
 
     pd.startDownloadIfNeeded(null, sdk);
+    pd.waitDownloadIfNeeded();
   }
 
   // we need to track the "best" modality state to trigger SDK update on completion,
@@ -391,15 +409,19 @@ public final class SdkDownloadTracker {
       }
       finally {
         if (completionJob != null) {
-          completionJob.invokeOnCompletion(ignored -> {
-            disposeNow(true);
-            return Unit.INSTANCE;
-          });
+          disposeOnCompletion(completionJob);
         }
         else {
           disposeNow(!failed);
         }
       }
+    }
+
+    protected void disposeOnCompletion(@NotNull Job sdkSetupJob) {
+      sdkSetupJob.invokeOnCompletion(ignored -> {
+        disposeNow(true);
+        return Unit.INSTANCE;
+      });
     }
 
     protected void handleDownloadError(@NotNull SdkType type, @NotNull @Nls String title, @NotNull IOException exception) {

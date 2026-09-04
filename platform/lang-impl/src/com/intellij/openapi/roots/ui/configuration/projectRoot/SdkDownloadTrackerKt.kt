@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
@@ -46,6 +47,13 @@ internal fun runWithIndicator(
         }
       }
     }
+  }
+}
+
+@RequiresBackgroundThread
+internal fun waitForJob(job: Job) {
+  runBlockingMaybeCancellable {
+    job.join()
   }
 }
 
