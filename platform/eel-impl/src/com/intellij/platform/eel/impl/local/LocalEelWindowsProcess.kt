@@ -11,11 +11,15 @@ import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.impl.ToJvmConvertableProcess
+import com.intellij.platform.eel.impl.local.windowsProcessApi.WindowsProcess
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.util.io.awaitExit
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
+import java.io.IOException
 
 internal class LocalEelWindowsProcess private constructor(
   private val process: Process,
@@ -39,6 +43,14 @@ internal class LocalEelWindowsProcess private constructor(
       process.awaitExit()
     }
   )
+
+  override suspend fun ensureProcessStarted() {
+    val windowsProcess = process as? WindowsProcess
+                         ?: throw IOException("The process ${process.pid()} is not suspendable")
+    withContext(Dispatchers.IO) {
+      windowsProcess.resumeSuspended()
+    }
+  }
 
   override suspend fun kill() {
     LocalProcessService.getInstance().killWinProcessRecursively(process.pid().toInt())

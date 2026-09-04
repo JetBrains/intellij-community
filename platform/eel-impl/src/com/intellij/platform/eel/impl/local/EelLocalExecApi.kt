@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil.getPathDirs
 import com.intellij.execution.process.LocalProcessService
 import com.intellij.execution.process.LocalPtyOptions
+import com.intellij.execution.process.RawCommandLineString
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -31,6 +32,11 @@ import com.intellij.platform.eel.environmentVariablesAwaitReporter
 import com.intellij.platform.eel.impl.base.EelExecApiEnvironmentVariableCache
 import com.intellij.platform.eel.impl.base.bindProcessToScopeIfSet
 import com.intellij.platform.eel.impl.base.commandLineForDebug
+import com.intellij.platform.eel.impl.base.lpCommandLine
+import com.intellij.platform.eel.impl.base.needsCreateProcessW
+import com.intellij.platform.eel.impl.local.windowsProcessApi.WindowsProcess
+import com.intellij.platform.eel.impl.local.windowsProcessApi.WindowsProcessCreationException
+import com.intellij.platform.eel.impl.local.windowsProcessApi.WindowsProcessException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
@@ -264,7 +270,10 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
   override suspend fun spawnProcess(
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
   ): EelWindowsProcess {
-    val process = executeImpl(generatedBuilder)
+    val windowsOptions = generatedBuilder as? EelExecWindowsApi.ExecuteProcessWindowsOptions
+    val process =
+      if (windowsOptions != null && windowsOptions.needsCreateProcessW) executeWindowsImpl(windowsOptions)
+      else executeImpl(generatedBuilder)
     val commandLineForDebug = generatedBuilder.commandLineForDebug
     // `create` suspends, so cancellation here would leave a running process that no caller can kill.
     val r = try {
@@ -443,20 +452,118 @@ private suspend fun startProcessImpl(
     throw e
   }
   catch (e: IOException) {
-    val errorCode = errorPattern.find(e.message ?: e.toString())?.let { result ->
-      if (result.groupValues.size == 2) {
-        try {
-          result.groupValues[1].toInt()
-        }
-        catch (_: NumberFormatException) {
-          null
-        }
+    throw ExecuteProcessException(errnoFromJvmMessage(e), e.toString())
+  }
+}
+
+/**
+ * Recovers the OS error code the JVM buried in the message of [e]. See [errorPattern].
+ */
+private fun errnoFromJvmMessage(e: IOException): Int =
+  errorPattern.find(e.message ?: e.toString())?.let { result ->
+    if (result.groupValues.size == 2) {
+      try {
+        result.groupValues[1].toInt()
       }
-      else {
+      catch (_: NumberFormatException) {
         null
       }
-    } ?: -3003 // Just a random code which isn't used by any OS and not zero
-    throw ExecuteProcessException(errorCode, e.toString())
+    }
+    else {
+      null
+    }
+  } ?: -3003 // Just a random code which isn't used by any OS and not zero
+
+
+/**
+ * The arguments for `CreateProcessW` as one string: [EelExecWindowsApi.ExecuteProcessWindowsOptions.commandLine] as the caller
+ * wrote it, or the quoted [EelExecApi.ExecuteProcessOptions.args] when the caller gave a list.
+ *
+ * [CommandLineUtil.toCommandLine] quotes the list the same way for `ProcessBuilder`, so both spawn paths give the child one shape.
+ */
+private val EelExecWindowsApi.ExecuteProcessWindowsOptions.windowsArguments: String
+  get() = commandLine.ifEmpty { CommandLineUtil.toCommandLine(exe, args, Platform.WINDOWS).drop(1).joinToString(" ") }
+
+/**
+ * Spawns a process through `CreateProcessW`. [EelLocalExecWindowsApi.spawnProcess] sends the options here when
+ * [needsCreateProcessW] is `true`.
+ *
+ * A pty goes through pty4j, which accepts a raw command line already. Everything else goes through [WindowsProcess], because
+ * `ProcessBuilder` builds the command line itself and cannot pass one through unchanged.
+ */
+private suspend fun executeWindowsImpl(
+  builder: EelExecWindowsApi.ExecuteProcessWindowsOptions,
+): Process = withContext(Dispatchers.IO) {
+  if (builder.commandLine.isNotEmpty() && builder.args.isNotEmpty()) {
+    throw ExecuteProcessException(
+      -3004,
+      "The options set both an argument list and a command line. Set one of the two: args=${builder.args}, commandLine=${builder.commandLine}",
+    )
+  }
+
+  // Inherit env vars because lack of `PATH` might break things
+  val environment = System.getenv().toMutableMap()
+  environment.putAll(builder.env)
+
+  // Windows reads `argv[0]` from the first token of the command line, so this string begins with the quoted `exe`.
+  val lpCommandLine = lpCommandLine(builder.exe, builder.windowsArguments)
+
+  try {
+    when (val interactionOptions = builder.interactionOptions) {
+      is EelExecApi.Pty -> {
+        builder.requireNoRedirection()
+        if (builder.newConsole) {
+          throw ExecuteProcessException(-3004, "A process with a pty cannot have a console of its own")
+        }
+        if (builder.startSuspended) {
+          throw ExecuteProcessException(-3004, "A process with a pty cannot start suspended")
+        }
+        // pty4j takes the whole command line, and the first token of it names the program.
+        LocalProcessService.getInstance().startPtyProcess(
+          RawCommandLineString(lpCommandLine),
+          builder.workingDirectory?.toString(),
+          environment,
+          LocalPtyOptions.defaults().builder().also {
+            it.consoleMode(!interactionOptions.echo)
+            it.initialColumns(interactionOptions.columns)
+            it.initialRows(interactionOptions.rows)
+          }.build(),
+          false,
+        )
+      }
+      else -> {
+        WindowsProcess(
+          exePath = builder.exe,
+          commandLine = lpCommandLine,
+          environment = environment,
+          directory = builder.workingDirectory?.toString(),
+          redirection = WindowsProcess.Redirection(
+            stdIn = builder.stdIn,
+            stdOut = builder.stdOut,
+            stdErr = effectiveStdErr(interactionOptions, builder.stdErr),
+          ),
+          startSuspended = builder.startSuspended,
+          newConsole = builder.newConsole,
+        )
+      }
+    }
+  }
+  catch (e: ExecuteProcessException) {
+    // Already the right exception. It is an `IOException` too, so it must not fall through to the wrapping below.
+    throw e
+  }
+  catch (e: WindowsProcessCreationException) {
+    throw ExecuteProcessException(e.errorCode, e.toString())
+  }
+  catch (e: WindowsProcessException) {
+    throw ExecuteProcessException(e.errorCode, e.toString())
+  }
+  catch (e: IllegalArgumentException) {
+    // `WindowsProcess` rejects a combination of options it cannot honour.
+    throw ExecuteProcessException(-3004, e.toString())
+  }
+  catch (e: IOException) {
+    throw ExecuteProcessException(errnoFromJvmMessage(e), e.toString())
   }
 }
 

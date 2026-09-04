@@ -17,9 +17,9 @@ import org.jetbrains.annotations.CheckReturnValue
 
 /**
  * Gets the same environment variables on the remote machine as the user would get.
- * 
+ *
  * *Notice:* use [EelExecApi.expandPathEnvVar] or [EelOsFamily.expandPathEnvVar] for `PATH`.
- * 
+ *
  * See also [EelExecPosixApi.PosixEnvironmentVariablesOptions].
  */
 @GeneratedBuilder.Result
@@ -31,8 +31,11 @@ fun EelExecApi.environmentVariables(): EelExecApiHelpers.EnvironmentVariables =
 
 /**
  * @param exe Either an *absolute* path to the executable file or a binary name.
- *  
- *  When it's a binary name, the corresponginf executable is searched in the environment variable `PATH`.
+ *
+ *  When it's a binary name, the corresponding executable is searched in the environment variable `PATH`.
+ *
+ *  The Windows options that need `CreateProcessW` are the one exception: the implementation passes this value as
+ *  `lpApplicationName`, which searches nothing. See [EelExecWindowsApi.ExecuteProcessWindowsOptions].
  */
 @GeneratedBuilder.Result
 @Deprecated("Use spawnProcess instead")
@@ -47,19 +50,22 @@ fun EelExecApi.execute(
 
 /**
  * Executes the process, returning either an [EelProcess] or an error provided by the remote operating system.
- * 
+ *
  * stdin, stdout and stderr of the process are always forwarded, if there are.
- * 
+ *
  * The method may throw a RuntimeException only in critical cases like connection loss or a bug.
- * 
+ *
  * All arguments and all paths should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
  * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
- * 
+ *
  * See [ExecuteProcessOptions]
- * 
+ *
  * @param exe Either an *absolute* path to the executable file or a binary name.
- *  
- *  When it's a binary name, the corresponginf executable is searched in the environment variable `PATH`.
+ *
+ *  When it's a binary name, the corresponding executable is searched in the environment variable `PATH`.
+ *
+ *  The Windows options that need `CreateProcessW` are the one exception: the implementation passes this value as
+ *  `lpApplicationName`, which searches nothing. See [EelExecWindowsApi.ExecuteProcessWindowsOptions].
  */
 @GeneratedBuilder.Result
 @ApiStatus.Experimental
@@ -205,7 +211,7 @@ object EelExecApiHelpers {
 
     private var interactionOptions: EelExecApi.InteractionOptions? = null
 
-    private var ptyOrStdErrSettings: EelExecApi.InteractionOptions? = interactionOptions
+    private var ptyOrStdErrSettings: EelExecApi.PtyOrStdErrSettings? = interactionOptions
 
     private var scope: CoroutineScope? = null
 
@@ -245,7 +251,10 @@ object EelExecApiHelpers {
     /**
      * Either an *absolute* path to the executable file or a binary name.
      *
-     * When it's a binary name, the corresponginf executable is searched in the environment variable `PATH`.
+     * When it's a binary name, the corresponding executable is searched in the environment variable `PATH`.
+     *
+     * The Windows options that need `CreateProcessW` are the one exception: the implementation passes this value as
+     * `lpApplicationName`, which searches nothing. See [EelExecWindowsApi.ExecuteProcessWindowsOptions].
      */
     @ApiStatus.Experimental
     fun exe(arg: String): Execute = apply {
@@ -270,7 +279,7 @@ object EelExecApiHelpers {
 
     @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
     @ApiStatus.Internal
-    fun ptyOrStdErrSettings(arg: EelExecApi.InteractionOptions?): Execute = apply {
+    fun ptyOrStdErrSettings(arg: EelExecApi.PtyOrStdErrSettings?): Execute = apply {
       this.ptyOrStdErrSettings = arg
     }
 
@@ -360,7 +369,7 @@ object EelExecApiHelpers {
 
     private var interactionOptions: EelExecApi.InteractionOptions? = null
 
-    private var ptyOrStdErrSettings: EelExecApi.InteractionOptions? = interactionOptions
+    private var ptyOrStdErrSettings: EelExecApi.PtyOrStdErrSettings? = interactionOptions
 
     private var scope: CoroutineScope? = null
 
@@ -400,7 +409,10 @@ object EelExecApiHelpers {
     /**
      * Either an *absolute* path to the executable file or a binary name.
      *
-     * When it's a binary name, the corresponginf executable is searched in the environment variable `PATH`.
+     * When it's a binary name, the corresponding executable is searched in the environment variable `PATH`.
+     *
+     * The Windows options that need `CreateProcessW` are the one exception: the implementation passes this value as
+     * `lpApplicationName`, which searches nothing. See [EelExecWindowsApi.ExecuteProcessWindowsOptions].
      */
     @ApiStatus.Experimental
     fun exe(arg: String): SpawnProcess = apply {
@@ -425,7 +437,7 @@ object EelExecApiHelpers {
 
     @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
     @ApiStatus.Internal
-    fun ptyOrStdErrSettings(arg: EelExecApi.InteractionOptions?): SpawnProcess = apply {
+    fun ptyOrStdErrSettings(arg: EelExecApi.PtyOrStdErrSettings?): SpawnProcess = apply {
       this.ptyOrStdErrSettings = arg
     }
 

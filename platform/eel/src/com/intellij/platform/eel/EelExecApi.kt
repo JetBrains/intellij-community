@@ -82,7 +82,10 @@ sealed interface EelExecApi {
   }
 
   /**
-   * Options for [spawnProcess]: the executable plus how to run it (arguments, working directory, environment, terminal mode, lifetime).
+   * Options for [spawnProcess]: the executable, its arguments, and how to run it (working directory, environment, terminal mode,
+   * standard stream redirection, lifetime).
+   *
+   * [EelExecWindowsApi.ExecuteProcessWindowsOptions] extends this interface with a raw command line and two `CreateProcessW` flags.
    *
    * Normally built fluently via the [spawnProcess] builder rather than implemented directly.
    */
@@ -135,7 +138,10 @@ sealed interface EelExecApi {
     /**
      * Either an *absolute* path to the executable file or a binary name.
      *
-     * When it's a binary name, the corresponginf executable is searched in the environment variable `PATH`.
+     * When it's a binary name, the corresponding executable is searched in the environment variable `PATH`.
+     *
+     * The Windows options that need `CreateProcessW` are the one exception: the implementation passes this value as
+     * `lpApplicationName`, which searches nothing. See [EelExecWindowsApi.ExecuteProcessWindowsOptions].
      */
     @get:ApiStatus.Experimental
     val exe: String
@@ -512,7 +518,7 @@ sealed interface EelExecApi {
     val message: String
   }
 
-  @Deprecated("Switch to InteractionOptions", replaceWith = ReplaceWith("InteractionOptions"))
+  @Deprecated("Switch to InteractionOptions")
   @ApiStatus.Internal
   sealed interface PtyOrStdErrSettings
 
@@ -649,9 +655,16 @@ interface EelExecPosixApi : EelExecApi {
  */
 @ApiStatus.Experimental
 interface EelExecWindowsApi : EelExecApi {
+  /**
+   * Spawns a process on Windows. The builder exposes [ExecuteProcessWindowsOptions], so a caller can add a raw
+   * [ExecuteProcessWindowsOptions.commandLine] or one of the `CreateProcessW` flags to the shared options.
+   */
+  @Throws(ExecuteProcessException::class)
   @ThrowsChecked(ExecuteProcessException::class)
   @ApiStatus.Experimental
-  override suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelWindowsProcess
+  override suspend fun spawnProcess(
+    @GeneratedBuilder(ExecuteProcessWindowsOptions::class) generatedBuilder: ExecuteProcessOptions,
+  ): EelWindowsProcess
 
   @ApiStatus.Experimental
   override fun environmentVariables(
@@ -662,6 +675,56 @@ interface EelExecWindowsApi : EelExecApi {
   override val processManagement: EelProcessManagementWindowsApi
 
   interface WindowsEnvironmentVariablesOptions : EelExecApi.EnvironmentVariablesOptions
+
+  /**
+   * Options for [spawnProcess] on Windows: [EelExecApi.ExecuteProcessOptions] plus a raw [commandLine] and two `CreateProcessW` flags.
+   *
+   * Only `CreateProcessW` offers [commandLine], [startSuspended] and [newConsole]. When one of them is set, the implementation calls
+   * it directly, and it passes [exe] as `lpApplicationName`, which searches nothing. Without them, these options run the same way as
+   * [EelExecApi.ExecuteProcessOptions].
+   *
+   * Normally built fluently via the [spawnProcess] builder rather than implemented directly.
+   */
+  @ApiStatus.Experimental
+  interface ExecuteProcessWindowsOptions : ExecuteProcessOptions {
+    /**
+     * The arguments of the process, as one raw string, quoted by the caller. It replaces [args]: an implementation rejects options
+     * that set both with an [ExecuteProcessException].
+     *
+     * The string holds no `argv[0]`. The implementation builds the `lpCommandLine` of `CreateProcessW` from
+     * [EelExecApi.ExecuteProcessOptions.exe] and this string. It puts `exe` in double quotes, then it adds this string after
+     * a space. So the child reads `exe` back as its own `argv[0]`.
+     *
+     * The implementation changes no character of this string. Quote each argument that holds a space, a tab or a quote. An empty
+     * string, the default, means that [args] carry the arguments.
+     *
+     * [EelExecApi.ExecuteProcessOptions.exe] stays the authoritative path of the file to run. It goes to `CreateProcessW` as
+     * `lpApplicationName`. Windows therefore searches neither `PATH` nor the working directory for it. Pass an absolute path with
+     * its extension, and use [EelExecApi.findExeFilesInPath] first when you only have a name.
+     */
+    @get:ApiStatus.Experimental
+    val commandLine: String get() = ""
+
+    /**
+     * Creates the process with `CREATE_SUSPENDED`, so its main thread does not run until someone calls
+     * [EelWindowsProcess.ensureProcessStarted].
+     *
+     * This exists so a debugger or a profiler can attach before the program reaches `main`. The caller owns the window between the
+     * spawn and the [EelWindowsProcess.ensureProcessStarted] call: a process left suspended never exits, and
+     * [EelProcess.exitCode] never completes.
+     */
+    @get:ApiStatus.Experimental
+    val startSuspended: Boolean get() = false
+
+    /**
+     * Gives the process a console of its own (`CREATE_NEW_CONSOLE` and `CREATE_NEW_PROCESS_GROUP`) instead of hiding it
+     * (`CREATE_NO_WINDOW`).
+     *
+     * A new process group does not receive the CTRL+C that [EelProcess.interrupt] sends to this one.
+     */
+    @get:ApiStatus.Experimental
+    val newConsole: Boolean get() = false
+  }
 }
 
 /**

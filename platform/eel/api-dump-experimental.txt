@@ -206,6 +206,11 @@ f:com.intellij.platform.eel.EelExecPosixApiHelpersKt
 - *a:environmentVariables(com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions):com.intellij.platform.eel.EelExecApi$EnvironmentVariablesDeferred
 - *a:getProcessManagement():com.intellij.platform.eel.EelProcessManagementWindowsApi
 - *a:spawnProcess(com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.EelExecWindowsApi$ExecuteProcessWindowsOptions
+- com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions
+- *:getCommandLine():java.lang.String
+- *:getNewConsole():Z
+- *:getStartSuspended():Z
 *:com.intellij.platform.eel.EelExecWindowsApi$WindowsEnvironmentVariablesOptions
 - com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions
 *f:com.intellij.platform.eel.EelExecWindowsApiHelpers
@@ -224,12 +229,15 @@ f:com.intellij.platform.eel.EelExecPosixApiHelpersKt
 - <init>(com.intellij.platform.eel.EelExecWindowsApi,java.lang.String):V
 - *f:args(java.util.List):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - f:args(java.lang.String[]):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- *f:commandLine(java.lang.String):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - eelIt(kotlin.coroutines.Continuation):java.lang.Object
 - *f:env(java.util.Map):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - *f:exe(java.lang.String):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - getEelDescriptor():com.intellij.platform.eel.EelDescriptor
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- *f:newConsole(Z):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- *f:startSuspended(Z):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - *f:stdErr(com.intellij.platform.eel.EelExecApi$RedirectStdErrTo):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - *f:stdIn(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - *f:stdOut(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
@@ -523,6 +531,7 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - a:getUserInfo():com.intellij.platform.eel.EelUserWindowsInfo
 *:com.intellij.platform.eel.EelWindowsProcess
 - com.intellij.platform.eel.EelProcess
+- *a:ensureProcessStarted(kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.platform.eel.EnvironmentVariablesOptionsBuilder
 - <init>():V
 - f:build():com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions
@@ -551,6 +560,22 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - *f:stdIn(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 - *f:stdOut(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+*f:com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- <init>(java.lang.String):V
+- *f:args(java.util.List):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- f:args(java.lang.String[]):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- f:build():com.intellij.platform.eel.EelExecWindowsApi$ExecuteProcessWindowsOptions
+- *f:commandLine(java.lang.String):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- *f:env(java.util.Map):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- *f:exe(java.lang.String):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- *f:newConsole(Z):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- *f:startSuspended(Z):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- *f:stdErr(com.intellij.platform.eel.EelExecApi$RedirectStdErrTo):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- *f:stdIn(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- *f:stdOut(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
+- *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.ExecuteProcessWindowsOptionsBuilder
 *f:com.intellij.platform.eel.ExpandPathEnvVarKt
 - *sf:expandPathEnvVar(com.intellij.platform.eel.EelExecApi,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:expandPathEnvVar(com.intellij.platform.eel.EelOsFamily,java.util.Map):java.lang.String

@@ -7,6 +7,7 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesOptions
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.EelExecApi.Pty
+import com.intellij.platform.eel.EelExecWindowsApi.ExecuteProcessWindowsOptions
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
@@ -14,9 +15,15 @@ import org.jetbrains.annotations.ApiStatus
 
 
 /**
+ * Spawns a process on Windows. The builder exposes [ExecuteProcessWindowsOptions], so a caller can add a raw
+ * [ExecuteProcessWindowsOptions.commandLine] or one of the `CreateProcessW` flags to the shared options.
+ *
  * @param exe Either an *absolute* path to the executable file or a binary name.
- *  
- *  When it's a binary name, the corresponginf executable is searched in the environment variable `PATH`.
+ *
+ *  When it's a binary name, the corresponding executable is searched in the environment variable `PATH`.
+ *
+ *  The Windows options that need `CreateProcessW` are the one exception: the implementation passes this value as
+ *  `lpApplicationName`, which searches nothing. See [EelExecWindowsApi.ExecuteProcessWindowsOptions].
  */
 @GeneratedBuilder.Result
 @ApiStatus.Experimental
@@ -48,13 +55,19 @@ object EelExecWindowsApiHelpers {
   ) : EelOwnedBuilder<EelWindowsProcess> {
     private var args: List<String> = listOf()
 
+    private var commandLine: String = ""
+
     private var env: Map<String, String> = mapOf()
 
     private var interactionOptions: EelExecApi.InteractionOptions? = null
 
-    private var ptyOrStdErrSettings: EelExecApi.InteractionOptions? = interactionOptions
+    private var newConsole: Boolean = false
+
+    private var ptyOrStdErrSettings: EelExecApi.PtyOrStdErrSettings? = interactionOptions
 
     private var scope: CoroutineScope? = null
+
+    private var startSuspended: Boolean = false
 
     private var stdErr: EelExecApi.RedirectStdErrTo = EelExecApi.RedirectStdErrTo.Pipe
 
@@ -80,6 +93,26 @@ object EelExecWindowsApiHelpers {
     }
 
     /**
+     * The arguments of the process, as one raw string, quoted by the caller. It replaces [args]: an implementation rejects options
+     * that set both with an [ExecuteProcessException].
+     *
+     * The string holds no `argv[0]`. The implementation builds the `lpCommandLine` of `CreateProcessW` from
+     * [EelExecApi.ExecuteProcessOptions.exe] and this string. It puts `exe` in double quotes, then it adds this string after
+     * a space. So the child reads `exe` back as its own `argv[0]`.
+     *
+     * The implementation changes no character of this string. Quote each argument that holds a space, a tab or a quote. An empty
+     * string, the default, means that [args] carry the arguments.
+     *
+     * [EelExecApi.ExecuteProcessOptions.exe] stays the authoritative path of the file to run. It goes to `CreateProcessW` as
+     * `lpApplicationName`. Windows therefore searches neither `PATH` nor the working directory for it. Pass an absolute path with
+     * its extension, and use [EelExecApi.findExeFilesInPath] first when you only have a name.
+     */
+    @ApiStatus.Experimental
+    fun commandLine(arg: String): SpawnProcess = apply {
+      this.commandLine = arg
+    }
+
+    /**
      * By default, environment is always inherited, which may be unwanted. [ExecuteProcessOptions.env] allows
      * to alter some environment variables, it doesn't clear the variables from the parent. When the process should be started in an
      * environment like in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [ExecuteProcessOptions.env].
@@ -92,7 +125,10 @@ object EelExecWindowsApiHelpers {
     /**
      * Either an *absolute* path to the executable file or a binary name.
      *
-     * When it's a binary name, the corresponginf executable is searched in the environment variable `PATH`.
+     * When it's a binary name, the corresponding executable is searched in the environment variable `PATH`.
+     *
+     * The Windows options that need `CreateProcessW` are the one exception: the implementation passes this value as
+     * `lpApplicationName`, which searches nothing. See [EelExecWindowsApi.ExecuteProcessWindowsOptions].
      */
     @ApiStatus.Experimental
     fun exe(arg: String): SpawnProcess = apply {
@@ -115,9 +151,20 @@ object EelExecWindowsApiHelpers {
       this.interactionOptions = arg
     }
 
+    /**
+     * Gives the process a console of its own (`CREATE_NEW_CONSOLE` and `CREATE_NEW_PROCESS_GROUP`) instead of hiding it
+     * (`CREATE_NO_WINDOW`).
+     *
+     * A new process group does not receive the CTRL+C that [EelProcess.interrupt] sends to this one.
+     */
+    @ApiStatus.Experimental
+    fun newConsole(arg: Boolean): SpawnProcess = apply {
+      this.newConsole = arg
+    }
+
     @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
     @ApiStatus.Internal
-    fun ptyOrStdErrSettings(arg: EelExecApi.InteractionOptions?): SpawnProcess = apply {
+    fun ptyOrStdErrSettings(arg: EelExecApi.PtyOrStdErrSettings?): SpawnProcess = apply {
       this.ptyOrStdErrSettings = arg
     }
 
@@ -126,6 +173,19 @@ object EelExecWindowsApiHelpers {
      */
     fun scope(arg: CoroutineScope?): SpawnProcess = apply {
       this.scope = arg
+    }
+
+    /**
+     * Creates the process with `CREATE_SUSPENDED`, so its main thread does not run until someone calls
+     * [EelWindowsProcess.ensureProcessStarted].
+     *
+     * This exists so a debugger or a profiler can attach before the program reaches `main`. The caller owns the window between the
+     * spawn and the [EelWindowsProcess.ensureProcessStarted] call: a process left suspended never exits, and
+     * [EelProcess.exitCode] never completes.
+     */
+    @ApiStatus.Experimental
+    fun startSuspended(arg: Boolean): SpawnProcess = apply {
+      this.startSuspended = arg
     }
 
     /**
@@ -170,18 +230,22 @@ object EelExecWindowsApiHelpers {
 
     /**
      * Complete the builder and call [com.intellij.platform.eel.EelExecWindowsApi.spawnProcess]
-     * with an instance of [com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions].
+     * with an instance of [com.intellij.platform.eel.EelExecWindowsApi.ExecuteProcessWindowsOptions].
      */
+    @Throws(ExecuteProcessException::class)
     @ThrowsChecked(ExecuteProcessException::class)
     override suspend fun eelIt(): EelWindowsProcess =
       owner.spawnProcess(
-        ExecuteProcessOptionsImpl(
+        ExecuteProcessWindowsOptionsImpl(
           args = args,
+          commandLine = commandLine,
           env = env,
           exe = exe,
           interactionOptions = interactionOptions,
+          newConsole = newConsole,
           ptyOrStdErrSettings = ptyOrStdErrSettings,
           scope = scope,
+          startSuspended = startSuspended,
           stdErr = stdErr,
           stdIn = stdIn,
           stdOut = stdOut,

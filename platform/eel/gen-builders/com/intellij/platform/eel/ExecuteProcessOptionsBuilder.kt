@@ -17,7 +17,10 @@ class ExecuteProcessOptionsBuilder(
   /**
    * Either an *absolute* path to the executable file or a binary name.
    *
-   * When it's a binary name, the corresponginf executable is searched in the environment variable `PATH`.
+   * When it's a binary name, the corresponding executable is searched in the environment variable `PATH`.
+   *
+   * The Windows options that need `CreateProcessW` are the one exception: the implementation passes this value as
+   * `lpApplicationName`, which searches nothing. See [EelExecWindowsApi.ExecuteProcessWindowsOptions].
    */
   private var exe: String,
 ) {
@@ -27,7 +30,7 @@ class ExecuteProcessOptionsBuilder(
 
   private var interactionOptions: EelExecApi.InteractionOptions? = null
 
-  private var ptyOrStdErrSettings: EelExecApi.InteractionOptions? = interactionOptions
+  private var ptyOrStdErrSettings: EelExecApi.PtyOrStdErrSettings? = interactionOptions
 
   private var scope: CoroutineScope? = null
 
@@ -67,7 +70,10 @@ class ExecuteProcessOptionsBuilder(
   /**
    * Either an *absolute* path to the executable file or a binary name.
    *
-   * When it's a binary name, the corresponginf executable is searched in the environment variable `PATH`.
+   * When it's a binary name, the corresponding executable is searched in the environment variable `PATH`.
+   *
+   * The Windows options that need `CreateProcessW` are the one exception: the implementation passes this value as
+   * `lpApplicationName`, which searches nothing. See [EelExecWindowsApi.ExecuteProcessWindowsOptions].
    */
   @ApiStatus.Experimental
   fun exe(arg: String): ExecuteProcessOptionsBuilder = apply {
@@ -92,7 +98,7 @@ class ExecuteProcessOptionsBuilder(
 
   @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
   @ApiStatus.Internal
-  fun ptyOrStdErrSettings(arg: EelExecApi.InteractionOptions?): ExecuteProcessOptionsBuilder = apply {
+  fun ptyOrStdErrSettings(arg: EelExecApi.PtyOrStdErrSettings?): ExecuteProcessOptionsBuilder = apply {
     this.ptyOrStdErrSettings = arg
   }
 
@@ -164,7 +170,7 @@ internal class ExecuteProcessOptionsImpl(
   override val env: Map<String, String>,
   override val exe: String,
   override val interactionOptions: EelExecApi.InteractionOptions?,
-  override val ptyOrStdErrSettings: EelExecApi.InteractionOptions?,
+  override val ptyOrStdErrSettings: EelExecApi.PtyOrStdErrSettings?,
   override val scope: CoroutineScope?,
   override val stdErr: EelExecApi.RedirectStdErrTo,
   override val stdIn: EelExecApi.Redirect,

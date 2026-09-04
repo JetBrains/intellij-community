@@ -15,8 +15,11 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * @param exe Either an *absolute* path to the executable file or a binary name.
- *  
- *  When it's a binary name, the corresponginf executable is searched in the environment variable `PATH`.
+ *
+ *  When it's a binary name, the corresponding executable is searched in the environment variable `PATH`.
+ *
+ *  The Windows options that need `CreateProcessW` are the one exception: the implementation passes this value as
+ *  `lpApplicationName`, which searches nothing. See [EelExecWindowsApi.ExecuteProcessWindowsOptions].
  */
 @GeneratedBuilder.Result
 @ApiStatus.Experimental
@@ -52,7 +55,7 @@ object EelExecPosixApiHelpers {
 
     private var interactionOptions: EelExecApi.InteractionOptions? = null
 
-    private var ptyOrStdErrSettings: EelExecApi.InteractionOptions? = interactionOptions
+    private var ptyOrStdErrSettings: EelExecApi.PtyOrStdErrSettings? = interactionOptions
 
     private var scope: CoroutineScope? = null
 
@@ -92,7 +95,10 @@ object EelExecPosixApiHelpers {
     /**
      * Either an *absolute* path to the executable file or a binary name.
      *
-     * When it's a binary name, the corresponginf executable is searched in the environment variable `PATH`.
+     * When it's a binary name, the corresponding executable is searched in the environment variable `PATH`.
+     *
+     * The Windows options that need `CreateProcessW` are the one exception: the implementation passes this value as
+     * `lpApplicationName`, which searches nothing. See [EelExecWindowsApi.ExecuteProcessWindowsOptions].
      */
     @ApiStatus.Experimental
     fun exe(arg: String): SpawnProcess = apply {
@@ -117,7 +123,7 @@ object EelExecPosixApiHelpers {
 
     @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
     @ApiStatus.Internal
-    fun ptyOrStdErrSettings(arg: EelExecApi.InteractionOptions?): SpawnProcess = apply {
+    fun ptyOrStdErrSettings(arg: EelExecApi.PtyOrStdErrSettings?): SpawnProcess = apply {
       this.ptyOrStdErrSettings = arg
     }
 

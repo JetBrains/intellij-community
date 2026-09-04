@@ -7,6 +7,7 @@ import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.impl.convertToJavaProcessImpl
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 
 /**
  * A handle to a process started with [EelExecApi.spawnProcess], running inside the environment of the [EelExecApi] that launched it.
@@ -116,16 +117,28 @@ suspend fun EelPosixProcess.terminate() {
 /**
  * An [EelProcess] in a Windows environment, returned by [EelExecWindowsApi.spawnProcess].
  *
- * It currently adds nothing beyond [EelProcess]: Windows has no direct counterpart to POSIX's graceful `SIGTERM`, so there is no
- * `terminate` here — use [interrupt] (CTRL+C) or [kill]. The separate type exists for symmetry with [EelPosixProcess] and to host
- * future Windows-specific operations.
+ * It adds [ensureProcessStarted], which starts a process that was spawned with
+ * [EelExecWindowsApi.ExecuteProcessWindowsOptions.startSuspended].
+ *
+ * Windows has no direct counterpart to the graceful `SIGTERM` of POSIX, so there is no `terminate` here. Use [interrupt] (CTRL+C)
+ * or [kill].
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface EelWindowsProcess : EelProcess {
-  // Nothing yet.
+  /**
+   * Starts the main thread of a suspended process (`ResumeThread`). Call it exactly once, after whatever had to happen before the
+   * program runs.
+   *
+   * A suspended process never exits on its own, so [EelProcess.exitCode] stays incomplete until this call.
+   *
+   * @throws IOException when the process was not spawned suspended, was resumed already, or the OS refuses to resume it.
+   */
+  @Throws(IOException::class)
+  @ThrowsChecked(IOException::class)
+  @ApiStatus.Experimental
+  suspend fun ensureProcessStarted()
 }
-
 
 /**
  * Converts to the JVM [Process] which can be used instead of [EelProcess] for compatibility reasons.
