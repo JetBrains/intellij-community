@@ -39,17 +39,6 @@ internal class GrazieHttpClientAdaptor(private val delegate: SuspendableHTTPClie
     }
   }
 
-  override suspend fun receiveContinuousSSE(
-    url: String,
-    content: Multipart,
-    options: RequestOptions,
-    reconnect: Boolean,
-  ): Flow<ServerSentEvent> {
-    return handleJdkExceptions {
-      delegate.receiveContinuousSSE(url, content, options, reconnect)
-    }
-  }
-
   override suspend fun receiveLineStream(
     url: String,
     content: String,
