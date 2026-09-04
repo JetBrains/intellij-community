@@ -3001,11 +3001,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         Icon icon = scaleIcon(renderer.getIcon());
         int iconWidth = icon.getIconWidth();
         int centerX = x + iconWidth / 2;
-        xPos.put(x, centerX);
+        // Store the icon center in physical coordinates.
+        // A mirrored gutter flips the x axis, so a logical x is a wrong screen anchor.
+        int centerXOnComponent = convertX(centerX);
+        xPos.put(x, centerXOnComponent);
         int iconHeight = icon.getIconHeight();
         if (x <= cX && cX <= x + iconWidth &&
             y <= p.y && p.y <= y + iconHeight) {
-          result[0] = new PointInfo((GutterIconRenderer)renderer, new Point(centerX, y + iconHeight / 2));
+          result[0] = new PointInfo((GutterIconRenderer)renderer, new Point(centerXOnComponent, y + iconHeight / 2));
         }
       });
       if (result[0] != null) {
@@ -3071,7 +3074,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     int iconWidth = icon.getIconWidth();
     int rightX = getIconAreaOffset() + getIconsAreaWidth();
     if (x < rightX - iconWidth || x > rightX) return null;
-    PointInfo pointInfo = new PointInfo(renderer, new Point(rightX - iconWidth / 2,
+    PointInfo pointInfo = new PointInfo(renderer, new Point(convertX(rightX - iconWidth / 2),
                                                             inlayY + getTextAlignmentShiftForInlayIcon(icon, inlay) + iconHeight / 2));
     pointInfo.renderersInLine = 1;
     return pointInfo;
