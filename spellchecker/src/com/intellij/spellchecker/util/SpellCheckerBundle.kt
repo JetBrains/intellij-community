@@ -11,6 +11,7 @@ private const val BUNDLE: @NonNls String = "messages.SpellCheckerBundle"
 
 object SpellCheckerBundle {
   private val instance = DynamicBundle(SpellCheckerBundle::class.java, BUNDLE)
+
   @JvmStatic
   fun message(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): @Nls String {
     return instance.getMessage(key, *params)
@@ -18,6 +19,6 @@ object SpellCheckerBundle {
 
   @JvmStatic
   fun messagePointer(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): Supplier<@Nls String> {
-    return instance.getLazyMessage(key, params)
+    return instance.getLazyMessage(key, *params)
   }
 }
