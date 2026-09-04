@@ -319,6 +319,126 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
     assertThat(regular.text.split("\n")).isEqualTo(primaryLines)
   }
 
+  @Test
+  fun `a cursor move on the alternate screen moves only the alternate cursor`() = doTest { fixture ->
+    assumeGhostty()
+    val regular = fixture.view.outputModels.regular
+    val alternate = fixture.view.outputModels.alternative
+
+    // 60 lines push 36 rows into the primary scrollback, so the primary anchor sits well above 0. An
+    // alternate-screen cursor computed against that anchor would land tens of lines too low.
+    fixture.connector.feed((0 until 60).joinToString("\r\n") { "R%02d".format(it) })
+    fixture.assertOutputModelState(regular) { it.text.contains("R59") }
+    val regularCursorLine = regular.cursorLine()
+
+    fixture.connector.feed("${ESC}[?1049h${ESC}[H~ VIM ~")
+    fixture.assertOutputModelState(alternate) { it.text.contains("~ VIM ~") }
+
+    // Row 3, column 5 of the alternate screen, with nothing drawn: the position has to be reported on
+    // its own, against the alternate screen's own origin.
+    fixture.connector.feed("${ESC}[3;5H")
+
+    fixture.assertOutputModelState(alternate) { it.cursorLine() == 2L && it.cursorColumn() == 4L }
+    assertThat(regular.cursorLine())
+      .describedAs("the primary cursor must not follow the alternate screen")
+      .isEqualTo(regularCursorLine)
+  }
+
+  @Test
+  fun `a width shrink inside an alternate screen excursion keeps both models correct`() = doTest { fixture ->
+    assumeGhostty()
+    val regular = fixture.view.outputModels.regular
+    val alternate = fixture.view.outputModels.alternative
+
+    // 100-character lines take two rows each at 80 columns and three at 40, so the shrink below really
+    // reflows the primary screen while nothing is watching it.
+    val primaryLines = (0 until 60).map { "P%02d".format(it).padEnd(100, '-') }
+    fixture.connector.feed(primaryLines.joinToString("\r\n"))
+    fixture.assertOutputModelState(regular) { it.text.contains(primaryLines.last()) }
+
+    fixture.connector.feed("${ESC}[?1049h${ESC}[HALT")
+    fixture.assertOutputModelState(alternate) { it.text.contains("ALT") }
+
+    // The user drags the window narrow while the full-screen program is up. Ghostty reflows both
+    // screens; the primary reflow stays unreported until the program exits.
+    fixture.resizeAndAwait(columns = 40, rows = 10)
+
+    fixture.connector.feed("${ESC}[?1049l")
+
+    // One catch-up read has to restore the primary screen whole, reflowed to the new width. This reflow
+    // stays under HISTORY_REPLACE_LINES; for the shrink that does not, see
+    // TerminalEmulatorOutputProjectorTest#a width shrink performed on the alternate screen keeps the
+    // primary anchor on return.
+    fixture.assertOutputModelState(regular) { it.text.contains(primaryLines.last()) }
+    assertThat(regular.text.split("\n"))
+      .describedAs("a reflow discovered on the way back must neither lose nor duplicate a line")
+      .isEqualTo(primaryLines)
+    assertThat(alternate.text)
+      .describedAs("the alternate model must not pick up primary content")
+      .doesNotContain("P59")
+  }
+
+  @Test
+  fun `a switch that flips back inside one chunk reports neither the switch nor what it drew`() = doTest { fixture ->
+    assumeGhostty()
+    val regular = fixture.view.outputModels.regular
+    val alternate = fixture.view.outputModels.alternative
+
+    fixture.connector.feed("MAIN")
+    fixture.assertOutputModelState(regular) { it.text.contains("MAIN") }
+
+    // The whole round trip lands in one emulator.write, so no projection tick falls inside it. This is
+    // the same-tick coalescing gap GhosttyTerminalSession documents: the state never changes, so neither
+    // the switch nor the frame is reported. Pinned here so a change to it is a decision, not a surprise.
+    fixture.connector.feed("${ESC}[?1049hGHOST${ESC}[?1049lAFTER")
+
+    fixture.assertOutputModelState(regular) { it.text.contains("AFTER") }
+    assertThat(alternate.text).describedAs("the discarded alternate frame is never reported").doesNotContain("GHOST")
+    assertThat(regular.text.trimEnd()).isEqualTo("MAINAFTER")
+    assertThat(fixture.view.sessionModel.terminalState.value.isAlternateScreenBuffer)
+      .describedAs("the buffer flag never moved")
+      .isFalse()
+  }
+
+  @Test
+  fun `a resize inside an open synchronized output block still reaches the model`() = doTest { fixture ->
+    assumeGhostty()
+    val model = fixture.view.activeOutputModel()
+    val lines = (0 until 40).map { "R%02d".format(it).padEnd(100, '-') }
+
+    // DEC 2026 holds repaints back. Nothing closes this block, so every frame below reaches the model
+    // only through the watchdog that bounds it (SYNC_OUTPUT_TIMEOUT, 1000 ms).
+    fixture.connector.feed("${ESC}[?2026h" + lines.joinToString("\r\n"))
+    fixture.assertOutputModelState(model, timeout = 30.seconds) { it.text.contains(lines.last()) }
+
+    // A resize applies to the emulator at once, but its reflow is a frame like any other, so it is
+    // deferred too. It must not be dropped: the block may never close.
+    fixture.resizeAndAwait(columns = 40, rows = 10, timeout = 30.seconds)
+    assertThat(model.text.split("\n")).describedAs("the reflow inside the block").isEqualTo(lines)
+
+    fixture.connector.feed("${ESC}[?2026lTAIL")
+    fixture.assertOutputModelState(model) { it.text.endsWith("TAIL") }
+  }
+
+  @Test
+  fun `a resize while the output streams converges on the whole tail`() = doTest { fixture ->
+    assumeGhostty()
+    val model = fixture.view.activeOutputModel()
+
+    // The read loop consumes the feed in 4096-character chunks, so the resize below lands somewhere in
+    // the middle of it. Which frames the projector reports on the way is timing, and not assertable;
+    // the state it settles on is.
+    fixture.connector.feed((0 until 2_000).joinToString("\r\n") { "R%04d".format(it) })
+    fixture.resize(columns = 40, rows = 10)
+
+    fixture.assertOutputModelState(model, timeout = 30.seconds) {
+      it.text.split("\n").takeLast(2) == listOf("R1998", "R1999")
+    }
+    assertThat(model.cursorLine())
+      .describedAs("the cursor must settle on the last line the output produced")
+      .isEqualTo(model.getLineByOffset(model.endOffset).toAbsolute())
+  }
+
   // ---------------------------------------------------------------------------
   // (3) Exceeding the scrollback size — oldest lines are dropped
   // ---------------------------------------------------------------------------

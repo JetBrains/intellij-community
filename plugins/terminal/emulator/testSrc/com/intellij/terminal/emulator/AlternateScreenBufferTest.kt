@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.emulator
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 /**
@@ -50,6 +51,25 @@ class AlternateScreenBufferTest {
     session.expectFullRebuild()
     session.assertScreenLines("p3", "p4")
     session.assertScrollbackLines("p1", "p2")
+  }
+
+  @Test
+  fun scrollbackRowsReadsZeroWhileTheAlternateScreenIsActive() = session(10, 3) { session ->
+    // Four lines on a 3-row screen: one scrolls off.
+    session.write("p1").crlf().write("p2").crlf().write("p3").crlf().write("p4")
+    session.expectFullRebuild()
+    session.assertScrollbackLines("p1")
+
+    session.useAlternateBuffer(true)
+    repeat(10) { session.crlf().write("noise$it") }
+
+    assertThat(session.scrollbackRowCount())
+      .describedAs("the alternate screen scrolled 10 rows away and retained none of them")
+      .isZero()
+
+    session.useAlternateBuffer(false)
+    session.expectFullRebuild()
+    session.assertScrollbackLines("p1")
   }
 
   @Test

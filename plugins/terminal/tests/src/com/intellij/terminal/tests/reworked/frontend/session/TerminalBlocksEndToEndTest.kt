@@ -339,6 +339,27 @@ internal class TerminalBlocksEndToEndTest(emulatorType: TerminalEmulatorType) : 
     }
   }
 
+  @Test
+  fun `a resize on the alternate screen keeps the block boundaries after the program exits`() {
+    assumeGhostty()
+    doTest { fixture ->
+      val integration = fixture.feedResizeTestData()
+
+      fixture.connector.feed("$ESC[?1049h")
+      fixture.view.sessionModel.terminalState.first { it.isAlternateScreenBuffer }
+      fixture.resizeAndAwait(columns = 40, rows = 10)
+      fixture.connector.feed("$ESC[?1049l")
+      fixture.view.sessionModel.terminalState.first { !it.isAlternateScreenBuffer }
+
+      // The primary screen was reflowed while nothing was reading it, so the projector reports that
+      // reflow in one catch-up update when the program exits. A reflow adds no text, so the update must
+      // land past every finished block. `a resize on the alternate screen keeps the block boundaries`
+      // covers the same resize while the program is still running; this covers the way back.
+      fixture.assertBlocksModelState(integration.blocks) { it.blocks.size == RESIZE_ITERATIONS + 1 }
+      assertResizeBlocks(integration, "after leaving the alternate screen")
+    }
+  }
+
   @Disabled(
     "KNOWN GAP: a width shrink reports more finalized rows than HISTORY_REPLACE_LINES, because " +
     "the history mark measures how far the visible screen expanded, not how much output arrived. The " +
@@ -374,6 +395,35 @@ internal class TerminalBlocksEndToEndTest(emulatorType: TerminalEmulatorType) : 
           .describedAs("command of block $index after the width shrink")
           .isEqualTo("wide")
       }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // (5) An acknowledged gap: a replaced history collapses the blocks
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `a burst past the replace threshold collapses the finished blocks`() {
+    assumeGhostty()
+    doTest { fixture ->
+      val integration = fixture.initShellIntegration()
+      fixture.connector.feed(
+        (List(3) { commandSegments("echo hi", listOf("out")) }.flatten() + listOf(promptStartedOsc(), PROMPT))
+          .joinToString("")
+      )
+      fixture.assertBlocksModelState(integration.blocks) { it.blocks.size == 4 }
+
+      // One write that finalizes far more than HISTORY_REPLACE_LINES rows: the projector gives up on the
+      // history and reports the screen alone at index 0.
+      fixture.connector.feed("\r\n" + (0 until 2_000).joinToString("\r\n") { "burst-$it" })
+      fixture.assertOutputModelState(integration.model) { it.text.contains("burst-1999") }
+
+      // Every finished block is gone: one block is left, and it carries the command of the last one that
+      // was overwritten.
+      fixture.assertBlocksModelState(integration.blocks) { it.blocks.size == 1 }
+      assertThat(integration.block(0).executedCommand)
+        .describedAs("the surviving block inherits the overwritten command")
+        .isEqualTo("echo hi")
     }
   }
 

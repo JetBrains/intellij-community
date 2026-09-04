@@ -42,7 +42,10 @@ interface TerminalEmulator : AutoCloseable {
   // geometry
   val size: TerminalSize
 
-  /** Number of lines currently retained in scrollback (above the active screen). */
+  /**
+   * Number of lines currently retained in scrollback of the primary screen.
+   * The alternate screen has no scrollback, so this returns 0 while it is up.
+   */
   val scrollbackRows: Int
 
   /** Process bytes emitted by the child process (PTY output). */

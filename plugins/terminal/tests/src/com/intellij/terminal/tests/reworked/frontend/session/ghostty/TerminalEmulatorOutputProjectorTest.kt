@@ -851,6 +851,104 @@ internal class TerminalEmulatorOutputProjectorTest {
       assertThat(backEvent.text).contains("R4999")
     }
 
+  @Ignore(
+    "KNOWN GAP: the same width-shrink defect as `a width shrink that expands the screen past the " +
+    "replace threshold keeps the history`, reached through the alternate screen instead. The resize " +
+    "happens entirely while the alternate screen is up, so the primary reflow is discovered by the " +
+    "first projection after the switch back. Measured: isHistoryReplaced is true and the update is the " +
+    "visible screen alone, two logical lines starting at line 78, anchored at 0 - instead of lines 30 " +
+    "to 79 anchored at 30. This case also pins the fix's shape: whatever lets the projector tell a " +
+    "reflow from a burst has to survive an alternate-screen excursion, not just an in-place resize."
+  )
+  @Test
+  fun `a width shrink performed on the alternate screen keeps the primary anchor on return`() =
+    withProjector(columns = 200, rows = 50) {
+      // Each 200-character line fits one row, so 80 rows exist, 30 scroll off, and the screen starts on
+      // line 30.
+      val lines = numberedLines(count = 80, length = 200)
+      write(lines.joinToString("\r\n"))
+      assertThat(collectUpdate().startLineLogicalIndex).isEqualTo(0L)
+
+      write("$ESC[?1049h" + "ALT")
+      collectUpdate()
+
+      // A full-screen program is up, and the user drags the window narrow. Ghostty reflows the primary
+      // screen too, and the projector sees none of it until the program exits.
+      emulator.resize(TerminalSize(8, 50))
+      collectUpdate()
+
+      write("$ESC[?1049l")
+      val event = collectUpdate()
+
+      // Nothing was written to the primary screen, so its anchor must be the line the previous primary
+      // update's screen started on, and the text must still hold lines 30 to 79.
+      assertThat(projector.isHistoryReplaced).isFalse()
+      assertThat(event.startLineLogicalIndex).isEqualTo(30L)
+      assertThat(event.text.split('\n')).isEqualTo(lines.subList(30, 80))
+    }
+
+  @Test
+  fun `a replaced history is restored on the first primary update after the alternate screen`() =
+    withProjector(columns = 80, rows = 5, maxScrollbackBytes = 1) {
+      // maxScrollbackBytes is floored to two pages, so this burst finalizes far more than is retained.
+      write((0 until 5_000).joinToString("\r\n") { "R%04d".format(it) })
+      collectUpdate()
+      assertThat(projector.isHistoryReplaced).isTrue()
+
+      // The alternate screen neither reads nor clears the flag: it belongs to the primary screen.
+      write("$ESC[?1049h" + "ALT")
+      val altEvent = collectUpdate()
+      assertThat(projector.isHistoryReplaced).isTrue()
+      assertThat(altEvent.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(altEvent.text).contains("ALT")
+
+      write("$ESC[?1049l")
+      val backEvent = collectUpdate()
+
+      // Nothing was written to the primary screen while the program ran, so this update finalizes
+      // nothing - the signal the projector waits for to read the retained scrollback back in.
+      assertThat(projector.isHistoryReplaced).isFalse()
+      assertThat(backEvent.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(backEvent.text.split('\n'))
+        .describedAs("the whole retained scrollback, not just the screen")
+        .hasSizeGreaterThan(100)
+      assertThat(backEvent.text).contains("R4999")
+    }
+
+  @Test
+  fun `a second alternate screen reports its own frame, not the leftovers of the first`() =
+    withProjector(columns = 80, rows = 5) {
+      write("$ESC[?1049h$ESC[HA1\r\nA2\r\nA3")
+      assertThat(collectUpdate().text).isEqualTo("A1\nA2\nA3")
+
+      write("$ESC[?1049l")
+      collectUpdate()
+
+      // Mode 1049 clears the alternate screen on entry, so the second program's shorter frame must be
+      // the whole update. The output model replaces from the reported line to its end, so a stale
+      // "A2\nA3" tail here would stay in the document.
+      write("$ESC[?1049h$ESC[HB1")
+      val event = collectUpdate()
+
+      assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(event.text).isEqualTo("B1")
+    }
+
+  @Test
+  fun `a shrink of the alternate screen clips it, because Ghostty does not reflow it`() =
+    withProjector(columns = 20, rows = 5) {
+      write("$ESC[?1049h$ESC[H0123456789ABCDEFGHIJ")
+      assertThat(collectUpdate().text).isEqualTo("0123456789ABCDEFGHIJ")
+
+      // Ghostty resizes the alternate screen without a reflow, so the row is cut, not wrapped. A real
+      // full-screen program redraws on SIGWINCH; this pins what the projector reports until it does.
+      emulator.resize(TerminalSize(10, 5))
+      val event = collectUpdate()
+
+      assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(event.text).isEqualTo("0123456789")
+    }
+
   // --- computeCursor() and the alternate screen ------------------------------
 
   @Test
@@ -980,7 +1078,14 @@ internal class TerminalEmulatorOutputProjectorTest {
   private class Fixture(val emulator: TerminalEmulator, val projector: TerminalEmulatorOutputProjector) {
     fun write(text: String) = emulator.write(text)
 
-    fun collectUpdate(): TerminalContentUpdatedEvent = projector.buildContentUpdate()
+    fun collectUpdate(): TerminalContentUpdatedEvent {
+      return projector.buildContentUpdate().also {
+        assertThat(it.startLineLogicalIndex).describedAs("startLineLogicalIndex of $it").isNotNegative()
+        assertThat(it.cursorLogicalLineIndex)
+          .describedAs("cursorLogicalLineIndex of $it")
+          .isGreaterThanOrEqualTo(it.startLineLogicalIndex)
+      }
+    }
 
     fun getState(isShellIntegrationEnabled: Boolean = false, currentDirectory: String? = null): TerminalStateDto =
       projector.buildState(isShellIntegrationEnabled, currentDirectory)

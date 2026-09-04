@@ -83,6 +83,144 @@ class HistoryMarkTest {
       .describedAs("expected the scrollback cap to have evicted lines")
       .isLessThan(expected.size)
   }
+
+  // ---------------------------------------------------------------------------
+  // Resize
+  // ---------------------------------------------------------------------------
+  //
+  // A resize moves the history / active-screen boundary without a single write, so the mark reports a
+  // count that no output produced: positive when rows drop into scrollback, negative when they are pulled
+  // back onto the screen.
+
+  /** A height shrink drops the rows that no longer fit into scrollback, exactly as a scroll would. */
+  @Test
+  fun heightShrinkFinalizesTheRowsItPushesOffTheScreen() = session(20, 20) { session ->
+    val emulator = session.emulator
+    // 20 lines fill the 20-row screen exactly, so nothing has scrolled yet.
+    session.writeLinesWithCrlf((0 until 20).map { "R%02d".format(it) })
+
+    emulator.markHistoryBoundary().use { mark ->
+      assertThat(mark.finalizedLineCount()).isZero()
+      assertThat(emulator.scrollbackRows).isZero()
+
+      session.resize(20, 5)
+
+      assertThat(mark.finalizedLineCount()).isEqualTo(15)
+      assertThat(mark.newlyFinalized(emulator)).isEqualTo((0 until 15).map { "R%02d".format(it) })
+    }
+  }
+
+  /** The mirror image: growing the screen pulls those rows back out of scrollback to fill it. */
+  @Test
+  fun heightGrowthRecoveringRowsReportsANegativeCount() = session(20, 5) { session ->
+    val emulator = session.emulator
+    // 20 lines on a 5-row screen: 15 scroll off into scrollback.
+    session.writeLinesWithCrlf((0 until 20).map { "R%02d".format(it) })
+
+    emulator.markHistoryBoundary().use { mark ->
+      assertThat(mark.finalizedLineCount()).isZero()
+
+      session.resize(20, 20)
+
+      assertThat(mark.finalizedLineCount()).isEqualTo(-15)
+      assertThat(emulator.scrollbackRows).describedAs("all 15 rows are back on the screen").isZero()
+    }
+  }
+
+  /**
+   * A width shrink reflows every line into more rows. The mark follows the old screen top, so the count
+   * says how far the *visible screen* expanded — not how much output arrived, which is zero. A consumer
+   * that reads it as new output misjudges this by a wide margin.
+   */
+  @Test
+  fun widthShrinkReportsHowFarTheScreenExpanded() = session(40, 4) { session ->
+    val emulator = session.emulator
+    // Ten 40-character lines take one row each: six scroll off, four stay on the screen.
+    session.writeLinesWithCrlf((0 until 10).map { "L$it".padEnd(40, '-') })
+
+    emulator.markHistoryBoundary().use { mark ->
+      assertThat(mark.finalizedLineCount()).isZero()
+
+      // At 10 columns each line takes four rows, so the four screen rows become 16.
+      session.resize(10, 4)
+
+      assertThat(mark.finalizedLineCount()).isEqualTo(12)
+    }
+  }
+
+  /** The mirror image: a width growth joins rows, so the screen contracts and the count goes negative. */
+  @Test
+  fun widthGrowthJoiningRowsReportsANegativeCount() = session(10, 4) { session ->
+    val emulator = session.emulator
+    // Ten 20-character lines take two rows each at 10 columns: 16 rows scroll off, four stay.
+    session.writeLinesWithCrlf((0 until 10).map { "L$it".padEnd(20, '-') })
+
+    emulator.markHistoryBoundary().use { mark ->
+      assertThat(mark.finalizedLineCount()).isZero()
+
+      // At 40 columns each line fits one row, so the four screen rows become two.
+      session.resize(40, 4)
+
+      assertThat(mark.finalizedLineCount()).isEqualTo(-2)
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // The alternate screen
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The mark pins a line of the screen that was active when it was created or last [HistoryMark.reset].
+   * [TerminalEmulator.scrollbackRows] reports the screen that is active *now*. On the alternate screen
+   * the two describe different screens, so the count means nothing there.
+   *
+   * The count is exact again the moment the primary screen is active, so a consumer skips the mark
+   * while the alternate screen is up instead of trying to correct it.
+   */
+  @Test
+  fun finalizedLineCountIsNotUsableOnTheAlternateScreen() = session(20, 5) { session ->
+    val emulator = session.emulator
+    session.writeLinesWithCrlf((0 until 20).map { "R%02d".format(it) })
+
+    emulator.markHistoryBoundary().use { mark ->
+      assertThat(emulator.scrollbackRows).isEqualTo(15)
+      assertThat(mark.finalizedLineCount()).isZero()
+
+      session.useAlternateBuffer(true)
+
+      assertThat(emulator.scrollbackRows).describedAs("the alternate screen retains no scrollback").isZero()
+      assertThat(mark.finalizedLineCount())
+        .describedAs("a meaningless count: the primary scrollback, negated")
+        .isEqualTo(-15)
+
+      session.useAlternateBuffer(false)
+
+      assertThat(mark.finalizedLineCount()).describedAs("exact again on the primary screen").isZero()
+    }
+  }
+
+  /**
+   * The primary screen takes no writes while the alternate screen is up, but a resize still reflows it.
+   * The mark therefore reports that reflow on the first read after the switch back, and nothing of what
+   * the full-screen program drew.
+   */
+  @Test
+  fun markReportsOnlyThePrimaryReflowAfterAnAlternateScreenExcursion() = session(20, 5) { session ->
+    val emulator = session.emulator
+    session.writeLinesWithCrlf((0 until 20).map { "R%02d".format(it) })
+
+    emulator.markHistoryBoundary().use { mark ->
+      session.useAlternateBuffer(true)
+      session.writeLinesWithCrlf((0 until 30).map { "ALT$it" })
+      // The resize reflows both screens; only the primary one has a scrollback boundary to move.
+      session.resize(20, 10)
+      session.useAlternateBuffer(false)
+
+      // The 20 lines now fit a 10-row screen, so 10 stay in scrollback: the growth recovered 5 rows.
+      assertThat(emulator.scrollbackRows).isEqualTo(10)
+      assertThat(mark.finalizedLineCount()).isEqualTo(-5)
+    }
+  }
 }
 
 /** The `n` newest scrollback lines — the ones just reported finalized by [HistoryMark.finalizedLineCount]. */
