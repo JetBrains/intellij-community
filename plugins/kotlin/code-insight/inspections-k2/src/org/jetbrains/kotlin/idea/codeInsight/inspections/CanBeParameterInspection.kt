@@ -12,7 +12,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
@@ -119,7 +118,6 @@ internal class CanBeParameterInspection : AbstractKotlinInspection() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun referencesWithSameNameResolveToNonLocalVariable(klass: KtClass, parameter: KtParameter): Boolean {
 
         val properties = klass.getProperties().asSequence()

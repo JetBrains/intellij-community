@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -232,7 +231,6 @@ internal class ReceiverToParameterConverter(
 
     private fun KtExpression.deparenthesized(): KtElement = KtPsiUtil.safeDeparenthesize(this)
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getArgumentExpressionToProcess(callElement: KtCallElement): KtExpression? {
         val valueArgumentMapping = callElement.resolveSuccessfulCall()?.valueArgumentMapping ?: return null
@@ -266,7 +264,6 @@ internal class ReceiverToParameterConverter(
     ) {
         val lambdaSymbol = lambda.functionLiteral.symbol
         lambda.accept(object : KtTreeVisitorVoid() {
-            @OptIn(KaExperimentalApi::class)
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                 super.visitSimpleNameExpression(expression)
                 if (expression is KtOperationReferenceExpression) return

@@ -24,11 +24,11 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.directSupertypes
-import org.jetbrains.kotlin.analysis.api.types.classId
-import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.directSupertypes
+import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
@@ -64,7 +64,6 @@ object CreateKotlinCallableActionTextBuilder {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun descriptionOfCallableAsString(request: CreateMethodFromKotlinUsageRequest): String = when {
         request.isAbstractClassOrInterface -> KotlinBundle.message("text.abstract")
         request.isExtension -> KotlinBundle.message("text.extension")
@@ -73,7 +72,6 @@ object CreateKotlinCallableActionTextBuilder {
     }
 
     // text, receiverTypeText
-    @OptIn(KaExperimentalApi::class)
     fun renderReceiver(request: CreateMethodFromKotlinUsageRequest, container: KtElement): Pair<String, String> {
         analyze(request.call) {
             val receiverSymbol: KaSymbol?
@@ -120,7 +118,6 @@ object CreateKotlinCallableActionTextBuilder {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KaSymbol.renderAsReceiver(request: CreateMethodFromKotlinUsageRequest, ktType: KaType?, renderer: KaTypeRenderer): String? {
         val isAbstract = request.isAbstractClassOrInterface
@@ -162,7 +159,6 @@ object CreateKotlinCallableActionTextBuilder {
         classIdRenderer = createClassIdRenderer(false)
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun createClassIdRenderer(asRaw: Boolean): KaClassTypeQualifierRenderer = object : KaClassTypeQualifierRenderer {
         override fun renderClassTypeQualifier(
             analysisSession: KaSession,
@@ -189,7 +185,6 @@ object CreateKotlinCallableActionTextBuilder {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun renderTypeName(expectedType: ExpectedType, container: KtElement): String? {
         val ktType = if (expectedType is ExpectedKotlinType) expectedType.kaType else expectedType.toKtTypeWithNullability(container)

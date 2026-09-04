@@ -10,7 +10,6 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
@@ -50,7 +49,6 @@ class AutomaticOverloadsRenamer(function: KtNamedFunction, newName: String) : Au
     override fun isSelectedByDefault(): Boolean = true
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
     val name = nameAsName ?: return emptyList()
     @OptIn(KaAllowAnalysisOnEdt::class)

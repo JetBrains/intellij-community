@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -61,7 +60,6 @@ internal class ConvertArrayParameterToVarargIntention :
         return Presentation.of(actionName)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtParameter): KtTypeReference? {
         val symbol = element.symbol as? KaValueParameterSymbol ?: return null

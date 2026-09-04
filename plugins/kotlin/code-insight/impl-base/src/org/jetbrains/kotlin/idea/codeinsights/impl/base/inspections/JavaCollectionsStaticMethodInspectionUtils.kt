@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections
 
 import com.intellij.openapi.module.ModuleUtilCore
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -35,7 +34,6 @@ object JavaCollectionsStaticMethodInspectionUtils {
             )
         }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getMethodIfCanReplaceItWithStdlib(
         expression: KtDotQualifiedExpression,

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -19,7 +18,6 @@ import org.jetbrains.kotlin.psi.KtIsExpression
 import org.jetbrains.kotlin.types.Variance
 
 internal object ConvertToIsArrayOfCallFixFactory {
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createQuickFix(isExpression: KtIsExpression, type: KaType): ConvertToIsArrayOfCallFix? {
         if (!isExpression.platform.isJvm()) return null

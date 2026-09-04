@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.lookups
 
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -96,7 +95,6 @@ object TailTextProvider {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun StringBuilder.renderReceiverType(receiverType: KaType) {
         val renderedType = receiverType.renderVerbose()

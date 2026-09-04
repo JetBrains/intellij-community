@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.scopes.packageScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
@@ -40,7 +39,6 @@ internal class K2PackageCompletionContributor : K2SimpleCompletionContributor<Ko
             Registry.`is`("kotlin.k2.complete.top.level.packages", true)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession, context: K2CompletionSectionContext<KotlinRawPositionContext>)
     override fun complete() {
         val rootSymbol = context.positionContext.resolveReceiverToSymbols()

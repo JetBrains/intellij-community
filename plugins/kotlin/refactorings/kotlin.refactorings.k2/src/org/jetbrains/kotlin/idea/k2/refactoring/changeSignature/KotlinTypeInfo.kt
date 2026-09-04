@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.types.Variance
 
 data class KotlinTypeInfo(var text: String?, val context: KtElement) {
-    @OptIn(KaExperimentalApi::class)
     constructor(ktType: KaType, context: KtElement): this(analyze(context) { ktType.render(errorIgnoringRenderer, Variance.INVARIANT) }, context)
 }
 
@@ -69,7 +68,7 @@ private val errorIgnoringRenderer: KaTypeRenderer = KaTypeRendererForSource.WITH
     }
 }
 
-@OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
+@OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
 internal fun KtPsiFactory.createType(
     typeText: String,
     inheritedCallable: KtDeclaration?,

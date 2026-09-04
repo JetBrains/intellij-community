@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.constructor
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -536,7 +535,6 @@ object AssociateFunctionUtil {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.isReferenceTo(another: KaValueParameterSymbol): Boolean {
         val referenceExpression = this as? KtNameReferenceExpression ?: return false
@@ -544,7 +542,6 @@ object AssociateFunctionUtil {
         return symbol == another
     }
 
-    @OptIn(KaExperimentalApi::class)
     @ApiStatus.Internal
     context(_: KaSession)
     fun pair(expression: KtExpression): Pair<KtExpression, KtExpression>? {

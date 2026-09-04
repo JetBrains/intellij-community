@@ -98,7 +98,6 @@ internal class TrailingLambdaInsertionHandler private constructor(
          *
          * Do not use directly; instead, use [TrailingLambdaInsertionHandlerFactory] to get an instance.
          */
-        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         fun create(functionType: KaFunctionType): TrailingLambdaInsertionHandler? {
             if (TemplateManager.getInstance(useSiteModule.project) == null) return null
@@ -167,7 +166,6 @@ private data class TrailingLambdaParameterData(
     val typeText: String,
 )
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun buildTrailingLambdaParameterData(
     parameterTypes: List<KaType>,

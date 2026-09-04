@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
@@ -34,7 +33,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object CoroutineBlockingCallInspectionUtils {
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun isInSuspendLambdaOrFunction(ktElement: KtElement): Boolean {
         val lambdaArgument = ktElement.parentOfType<KtLambdaArgument>()
@@ -54,7 +52,6 @@ internal object CoroutineBlockingCallInspectionUtils {
         return JavaPsiFacade.getInstance(module.project).findClass(DISPATCHERS_FQN.asString(), searchScope) != null
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun isInsideFlowChain(call: KaSimpleCall<*, *>): Boolean {
         val symbol = call.symbol
@@ -68,7 +65,6 @@ internal object CoroutineBlockingCallInspectionUtils {
         return receiverFqName == FLOW_FQN || (receiverType == null && isFlowGenerator)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun isCalledInsideNonIoContext(call: KaSimpleOrMultiCall): Boolean {
         val symbol = (call as? KaSimpleCall<*, *>)?.symbol ?: return false
@@ -77,7 +73,6 @@ internal object CoroutineBlockingCallInspectionUtils {
         return isNonBlockingDispatcher(call)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun isNonBlockingDispatcher(call: KaSimpleCall<*, *>): Boolean {
         val dispatcherFqName = (call.getFirstArgumentExpression()?.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol)
@@ -93,7 +88,6 @@ internal object CoroutineBlockingCallInspectionUtils {
         containingKtFile.commitAndUnblockDocument()
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     tailrec fun KtExpression.findFlowOnCall(): KaFunctionCall<*>? {
         val dotQualifiedExpression = this.getStrictParentOfType<KtDotQualifiedExpression>() ?: return null
@@ -124,7 +118,6 @@ internal object CoroutineBlockingCallInspectionUtils {
     val COROUTINE_NAME = FqName("kotlinx.coroutines.CoroutineName")
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun KaSimpleCall<*, *>.getFirstArgumentExpression(): KtExpression? {
     if (this !is KaFunctionCall<*>) return null

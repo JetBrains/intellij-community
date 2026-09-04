@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.highlighting.analyzers
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -59,7 +58,6 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
      * 1) Its type specifier is marked with an annotation, that is marked by a dsl annotation
      * 2) The class or its superclasses' definition is marked by a dsl annotation
      */
-    @OptIn(KaExperimentalApi::class)
     private fun expressionHighlightType(expression: KtExpression): HighlightInfoType? {
         val dslAnnotation = context(session) {
             val functionCall = expression.resolveSuccessfulExpressionCall()?.function ?: return null

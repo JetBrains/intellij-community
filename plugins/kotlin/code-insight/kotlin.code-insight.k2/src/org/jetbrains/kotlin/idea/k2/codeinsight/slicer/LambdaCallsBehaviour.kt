@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.slicer
 
 import com.intellij.slicer.SliceUsage
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -21,7 +20,6 @@ import org.jetbrains.kotlin.resolution.KtResolvableCall
 data class LambdaCallsBehaviour(private val sliceProducer: SliceProducer) : KotlinSliceAnalysisMode.Behaviour {
     override fun processUsages(element: KtElement, parent: AbstractKotlinSliceUsage, uniqueProcessor: Processor<in SliceUsage>) {
         val processor = object : Processor<SliceUsage> {
-            @OptIn(KaExperimentalApi::class)
             override fun process(sliceUsage: SliceUsage): Boolean {
                 if (sliceUsage is KotlinSliceUsage && sliceUsage.mode.currentBehaviour === this@LambdaCallsBehaviour) {
                     val sliceElement = sliceUsage.element ?: return true

@@ -52,7 +52,6 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
-    @OptIn(KaExperimentalApi::class)
     override fun processCompanionObjectInternalReferences(
         companionObject: KtObjectDeclaration,
         referenceProcessor: Processor<PsiReference>
@@ -80,7 +79,6 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         })
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun callReceiverRefersToCompanionObject(call: KaSimpleCall<*, *>, companionObject: KtObjectDeclaration): Boolean {
         val implicitReceivers = call.getImplicitReceivers()
@@ -88,7 +86,6 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         return companionObjectSymbol in implicitReceivers.map { it.symbol }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {
         return KotlinPsiDeclarationRenderer.render(declaration) ?: analyzeInModalWindow(declaration, KotlinBundle.message(
           "find.usages.prepare.dialog.progress")) {
@@ -105,14 +102,12 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun renderDeclaration(method: KtDeclaration): String {
         return KotlinPsiDeclarationRenderer.render(method) ?: analyzeInModalWindow(method, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             method.symbol.render(noAnnotationsShortNameRenderer())
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean {
         val element = psiReference.element
         if (element !is KtElement) return false

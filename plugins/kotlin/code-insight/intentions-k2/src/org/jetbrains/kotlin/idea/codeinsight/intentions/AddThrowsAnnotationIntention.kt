@@ -7,7 +7,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -73,7 +72,6 @@ internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<K
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtThrowExpression): Context? {
         val type = element.thrownExpression?.expressionType ?: return null
@@ -169,7 +167,6 @@ internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<K
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KaType.asAnnotationArgumentText(): String {
     // Account for typealiases: we want to render `RuntimeException` instead of `java.lang.RuntimeException`

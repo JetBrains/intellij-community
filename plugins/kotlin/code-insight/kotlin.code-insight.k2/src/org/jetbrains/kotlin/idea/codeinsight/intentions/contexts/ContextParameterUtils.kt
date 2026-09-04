@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions.contexts
 
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -142,7 +141,6 @@ object ContextParameterUtils {
      * either via a direct reference to a context parameter or as an implicit context argument
      * of a resolved call.
      */
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     fun consumedContextParameters(
         body: KtExpression,

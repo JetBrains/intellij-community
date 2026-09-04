@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -41,7 +40,6 @@ internal class K2KotlinNameSuggestionProvider : KotlinNameSuggestionProvider() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun getNameForArgument(argument: KtValueArgument): String? {
         val callElement = (argument.parent as? KtValueArgumentList)?.parent as? KtCallElement ?: return null
         val arg = argument.getArgumentExpression() ?: return null

@@ -12,7 +12,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.asSafely
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -73,7 +72,6 @@ internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         return languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun computeContextType(elementContext: ElementContext): ContextType {
         val element = elementContext.element
         if (element !is KtCallExpression) return Unsure
@@ -135,7 +133,6 @@ internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         return this.isSubtypeOf(ClassId.topLevel(COROUTINE_CONTEXT))
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun checkBlockFriendlyDispatcherParameter(call: KaFunctionCall<*>): ContextType {
         val firstArgument = call.getFirstArgumentExpression()
@@ -161,7 +158,6 @@ internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     }
 
     // TODO add testdata to check this function
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun checkFunctionWithDefaultDispatcher(callExpression: KtCallExpression): ContextType {
         val receiverType =
@@ -201,7 +197,6 @@ internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         class RecursiveExpressionVisitor : PsiRecursiveElementVisitor() {
             var allowsBlocking: ContextType = Unsure
 
-            @OptIn(KaExperimentalApi::class)
             override fun visitElement(element: PsiElement) {
                 if (element is KtExpression) {
                     val callableSymbol = element.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol

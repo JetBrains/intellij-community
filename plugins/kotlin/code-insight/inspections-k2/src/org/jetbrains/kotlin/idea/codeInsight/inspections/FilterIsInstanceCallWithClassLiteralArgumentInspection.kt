@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -104,12 +103,10 @@ private fun KtValueArgument.isClassLiteral(): Boolean =
 private fun KtValueArgument.classLiteral(): KtClassLiteralExpression? =
     (getArgumentExpression() as? KtDotQualifiedExpression)?.receiverExpression as? KtClassLiteralExpression
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtElement.resolveToClassSymbol(): KaNamedClassSymbol? =
     (this as? KtResolvable)?.resolveSuccessfulSymbol() as? KaNamedClassSymbol
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtCallExpression.resolveToFunctionSymbol(): KaNamedFunctionSymbol? =
     this.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol

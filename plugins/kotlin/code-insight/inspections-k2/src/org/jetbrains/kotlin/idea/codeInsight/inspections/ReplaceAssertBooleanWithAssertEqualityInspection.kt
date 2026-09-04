@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -121,7 +120,6 @@ private fun optimizeImports(file: KtFile) {
         ?.forEach { it.delete() }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession?)
 private fun KtCallExpression.extractAssertionInfo(): Pair<String, IElementType>? {
     val assertionName = (calleeExpression as? KtNameReferenceExpression)?.getReferencedName() ?: return null

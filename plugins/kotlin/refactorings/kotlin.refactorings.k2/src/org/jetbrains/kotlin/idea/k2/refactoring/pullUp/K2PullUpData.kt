@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.pullUp
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
@@ -50,7 +49,6 @@ internal class K2PullUpData(
                 scopeWithKind.scope.classifiers.filterIsInstance<KaTypeParameterSymbol>()
             }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     fun getSourceToTargetClassSubstitutor(): KaSubstitutor =
         buildSubstitutor {

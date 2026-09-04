@@ -18,7 +18,6 @@ import com.intellij.psi.impl.light.LightParameterListBuilder
 import com.intellij.psi.impl.light.LightReferenceListBuilder
 import com.intellij.psi.impl.light.LightTypeParameterBuilder
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -32,15 +31,15 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.restore
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.utils.SmartSet
@@ -61,7 +60,6 @@ import org.jetbrains.uast.kotlin.internal.toPsiType
  * Analysis API symbol if it's resolved.
  */
 internal class UastFakeDeserializedSymbolLightMethod
-@OptIn(KaExperimentalApi::class)
 constructor(
     private val original: KaSymbolPointer<KaCallableSymbol>,
     name: String,
@@ -113,7 +111,6 @@ constructor(
             }
         }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun lookupTypeArgument(type: KaTypeParameterType): KaType? {
         for (symbolPointer in typeArgumentMapping.keys) {
@@ -193,7 +190,6 @@ constructor(
     ) : LightTypeParameterBuilder(name, owner, index) {
         private val myExtendsListPart = UastLazyPart<LightReferenceListBuilder>()
 
-        @OptIn(KaExperimentalApi::class)
         override fun getExtendsList(): LightReferenceListBuilder {
             val context = this@UastFakeDeserializedSymbolLightMethod.context
             return myExtendsListPart.getOrBuild {
@@ -238,7 +234,6 @@ constructor(
 
     private val parameterListPart = UastLazyPart<PsiParameterList>()
 
-    @OptIn(KaExperimentalApi::class)
     override fun getParameterList(): PsiParameterList =
         parameterListPart.getOrBuild {
             object : LightParameterListBuilder(context.manager, context.language) {

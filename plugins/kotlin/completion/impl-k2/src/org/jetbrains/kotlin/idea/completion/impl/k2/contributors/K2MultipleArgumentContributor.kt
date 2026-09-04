@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import kotlinx.serialization.Serializable
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
@@ -94,7 +93,6 @@ internal class K2MultipleArgumentContributor : K2SimpleCompletionContributor<Kot
     /**
      * Given the [callCandidates], calculates the signatures together with their missing arguments.
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getApplicableSignatures(callCandidates: List<KaCallCandidate>): List<MissingArgumentData> {
         val signatures: MutableList<MissingArgumentData> = mutableListOf()
@@ -155,7 +153,6 @@ internal class K2MultipleArgumentContributor : K2SimpleCompletionContributor<Kot
         return MultiArgumentSignatureData(completesAllArguments, tail, matchingVariableSymbols)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     override fun complete() {
         val callParent = context.positionContext.nameExpression.getAppropriateCallParent() ?: return

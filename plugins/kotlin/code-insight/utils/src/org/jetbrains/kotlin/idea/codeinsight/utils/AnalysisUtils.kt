@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
@@ -82,7 +81,6 @@ fun KaSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
     else -> null
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun KtCallExpression.isArrayOfFunction(): Boolean {
     val functionNames = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values.toSet() +
@@ -100,7 +98,6 @@ fun KtCallExpression.isArrayOfFunction(): Boolean {
  *
  * @return `true` if the expression is an implicit `invoke` call, `false` otherwise.
  */
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun KtCallExpression.isImplicitInvokeCall(): Boolean =
     tryResolveCall()?.single?.function is KaImplicitInvokeCall
@@ -144,7 +141,6 @@ context(_: KaSession)
 fun KaCallableSymbol.canBeUsedAsExtension(): Boolean =
     isExtension || this is KaVariableSymbol && (returnType as? KaFunctionType)?.hasReceiver == true
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun KtExpression.resolveExpression(): KaSymbol? {
     val reference = mainReference?:(this as? KtThisExpression)?.instanceReference?.mainReference

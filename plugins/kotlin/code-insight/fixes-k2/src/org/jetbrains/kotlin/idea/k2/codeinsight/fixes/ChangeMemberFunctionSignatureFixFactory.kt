@@ -11,7 +11,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -35,14 +34,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSubtypeOrSelf
-import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -110,7 +109,6 @@ internal object ChangeMemberFunctionSignatureFixFactory {
     /**
      * Changes function's signature to match superFunction's signature. Returns new descriptor.
      */
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun signatureToMatch(function: KaFunctionSymbol, superFunction: KaNamedFunctionSymbol): Signature {
         val superParameters = superFunction.valueParameters
@@ -158,7 +156,6 @@ internal object ChangeMemberFunctionSignatureFixFactory {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getSignature(
         substitutor: KaSubstitutor?,
@@ -246,7 +243,6 @@ internal object ChangeMemberFunctionSignatureFixFactory {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun renderParameterAnnotations(
         parameter: KaValueParameterSymbol,

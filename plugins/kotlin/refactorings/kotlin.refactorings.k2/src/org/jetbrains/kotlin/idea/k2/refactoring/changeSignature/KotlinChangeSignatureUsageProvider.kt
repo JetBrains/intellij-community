@@ -10,7 +10,6 @@ import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProvider
 import com.intellij.refactoring.changeSignature.JavaChangeInfo
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -68,7 +67,6 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
         return KotlinOverrideUsageInfo(unwrapped, baseMethod, isCaller(changeInfo, unwrapped))
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun createUsageInfo(
         changeInfo: ChangeInfo,
         reference: PsiReference,

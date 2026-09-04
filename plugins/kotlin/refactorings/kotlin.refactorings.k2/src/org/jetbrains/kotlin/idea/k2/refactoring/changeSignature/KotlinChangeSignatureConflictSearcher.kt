@@ -11,7 +11,6 @@ import com.intellij.refactoring.changeSignature.OverriderUsageInfo
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -156,7 +155,6 @@ class KotlinChangeSignatureConflictSearcher(
         return result
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun filterCandidates(function: KtCallableDeclaration, candidateSymbol: KaDeclarationSymbol): Boolean {
         if (candidateSymbol !is KaFunctionSymbol) return false

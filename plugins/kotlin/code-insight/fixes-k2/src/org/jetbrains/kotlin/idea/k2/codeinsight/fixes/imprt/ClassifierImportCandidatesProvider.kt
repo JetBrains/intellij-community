@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.psi.PsiClass
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -36,7 +35,6 @@ internal open class ClassifierImportCandidatesProvider(
         is KaClassSymbol -> this
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     override fun collectCandidates(
         name: Name,

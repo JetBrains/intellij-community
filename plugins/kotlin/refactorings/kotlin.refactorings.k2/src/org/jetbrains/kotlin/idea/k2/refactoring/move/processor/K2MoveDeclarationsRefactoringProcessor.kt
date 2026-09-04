@@ -21,7 +21,6 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -399,7 +398,6 @@ open class K2MoveDeclarationsRefactoringProcessor(
      * This function is used to preprocess the [originalDeclaration] before the move happens.
      * For example, we add a parameter for the outer instance here before moving the declaration.
      */
-    @OptIn(KaExperimentalApi::class)
     private fun preprocessDeclaration(
         originalDeclaration: KtNamedDeclaration
     ) {

@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -123,7 +122,6 @@ private fun checkFunctionCall(expression: KtCallExpression, nameToFqNameMap: Map
     return functionSymbol.callableId?.asSingleFqName() == fqName
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun resolveToFunctionSymbol(expression: KtCallExpression): KaNamedFunctionSymbol? =
     expression.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol

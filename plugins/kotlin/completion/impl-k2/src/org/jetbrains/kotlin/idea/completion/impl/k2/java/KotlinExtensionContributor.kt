@@ -41,15 +41,13 @@ import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
 import com.intellij.util.ProcessingContext
 import com.intellij.util.application
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.javaInterop.asKaType
-import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.KaUnificationSubstitutorPolicy
 import org.jetbrains.kotlin.analysis.api.session.analysisScope
-import org.jetbrains.kotlin.analysis.api.signatures.asSignature
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
-import org.jetbrains.kotlin.analysis.api.types.createSubtypingUnificationSubstitutor
+import org.jetbrains.kotlin.analysis.api.session.useSiteModule
+import org.jetbrains.kotlin.analysis.api.signatures.asSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -58,7 +56,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.session.useSiteModule
+import org.jetbrains.kotlin.analysis.api.types.KaUnificationSubstitutorPolicy
+import org.jetbrains.kotlin.analysis.api.types.createSubtypingUnificationSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -238,7 +237,6 @@ private class KotlinExtensionLookupItem(
 
 private const val EXTENSION_PRIORITY = -100.0
 
-@OptIn(KaExperimentalApi::class)
 private object KotlinExtensionCompletionProvider : CompletionProvider<CompletionParameters>() {
 
     private val enabledUserDataKey = Key.create<CachedValue<Boolean>>("KOTLIN_PLUGIN_ENABLED")

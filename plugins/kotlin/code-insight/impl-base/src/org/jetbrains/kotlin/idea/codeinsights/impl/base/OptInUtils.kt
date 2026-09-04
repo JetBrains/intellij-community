@@ -2,14 +2,13 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.evaluation.evaluateAsAnnotationValue
 import org.jetbrains.kotlin.analysis.api.components.isClassType
-import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluateAsAnnotationValue
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -52,7 +51,6 @@ private fun KtAnnotationEntry.getAnnotatedOptIns(): Set<ClassId> {
     return valueArguments.mapNotNull { it.getAnnotationClassValue() }.toSet()
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun ValueArgument.getAnnotationClassValue(): ClassId? =
     getArgumentExpression()

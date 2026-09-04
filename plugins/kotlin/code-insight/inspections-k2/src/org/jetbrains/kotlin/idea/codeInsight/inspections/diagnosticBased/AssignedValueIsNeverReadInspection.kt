@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
@@ -43,7 +42,6 @@ import org.jetbrains.kotlin.psi.simpleNameExpressionVisitor
 internal class AssignedValueIsNeverReadInspection : KotlinApplicableInspectionBase<KtSimpleNameExpression, Unit>() {
     data class Context(val hasSideEffects: Boolean)
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtSimpleNameExpression): Unit? {
         return element

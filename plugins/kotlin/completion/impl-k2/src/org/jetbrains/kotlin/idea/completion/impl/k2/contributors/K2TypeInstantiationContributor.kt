@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
@@ -270,7 +269,6 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
      * Note: this does not work in all cases and there are more complex cases that are not covered.
      * These cases will return [UnresolvedParameter] as a safe behavior which is sufficient for now.
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun substituteTypeArgumentsToMatchExpectedSupertype(
         inheritorSymbol: KaClassLikeSymbol,

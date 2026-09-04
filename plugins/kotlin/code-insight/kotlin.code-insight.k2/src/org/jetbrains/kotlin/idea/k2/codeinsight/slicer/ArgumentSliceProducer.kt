@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -30,7 +29,6 @@ data class ArgumentSliceProducer(
 
     override val testPresentation: String = "ARGUMENT #$parameterIndex".let { if (isExtension) "$it EXTENSION" else it }
 
-    @OptIn(KaExperimentalApi::class)
     private fun extractArgumentExpression(refElement: PsiElement): PsiElement? {
         val refParent = refElement.parent
         return when {

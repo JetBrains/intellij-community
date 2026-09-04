@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
@@ -58,7 +57,6 @@ internal class BooleanLiteralArgumentInspection(
         context: Context,
     ): @InspectionMessage String = KotlinBundle.message("boolean.literal.argument.without.parameter.name")
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtValueArgument): Context? {
         if (element.isNamed()) return null

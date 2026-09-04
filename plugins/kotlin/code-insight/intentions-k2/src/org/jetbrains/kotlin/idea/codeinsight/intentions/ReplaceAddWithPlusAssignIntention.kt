@@ -5,7 +5,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -38,7 +37,6 @@ internal class ReplaceAddWithPlusAssignIntention : KotlinApplicableModCommandAct
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean =
         element.callExpression?.valueArguments?.size == 1 && element.calleeName in setOf("add", "addAll")
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         if (element.isUsedAsExpression) return null

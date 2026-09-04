@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
@@ -71,7 +70,6 @@ internal class UnusedExpressionInspection : KotlinApplicableInspectionBase<KtExp
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun isAvailable(element: KtExpression): Boolean =
     element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)

@@ -12,7 +12,6 @@ import com.intellij.codeInsight.hints.filtering.Matcher
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsResultOfLambda
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -80,7 +79,6 @@ class KtLambdasHintsProvider(
 
         sink.whenOptionEnabled(SHOW_RETURN_EXPRESSIONS.name) {
             val isUsedAsResultOfLambda = analyze(lambdaExpression) {
-                @OptIn(KaExperimentalApi::class)
                 element.isUsedAsResultOfLambda
             }
             if (!isUsedAsResultOfLambda) return@whenOptionEnabled
@@ -166,7 +164,6 @@ class KtLambdasHintsProvider(
         return false
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun printReceiverParameter(
         lambdaExpression: KtLambdaExpression,

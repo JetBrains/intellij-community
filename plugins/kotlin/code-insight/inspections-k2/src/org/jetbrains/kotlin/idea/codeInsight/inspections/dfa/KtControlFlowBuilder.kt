@@ -91,7 +91,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.returnType
@@ -938,7 +937,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun processReturnExpression(expr: KtReturnExpression) {
         val returnedExpression = expr.returnedExpression
@@ -974,7 +972,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
      * the `let`, rather than from the parent method instead.
      * This is semantically equivalent and allows to get rid of some noise warnings.
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun findEffectiveTargetSymbol(expression: KtReturnExpression): KtFunctionLiteral? {
         val parentFunctionLiteral = expression.parentOfType<KtFunctionLiteral>()
@@ -1512,7 +1509,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun processQualifiedReferenceExpression(expr: KtQualifiedExpression) {
         val receiver = expr.receiverExpression
@@ -1573,7 +1569,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun processCallExpression(expr: KtCallExpression, qualifierOnStack: Boolean = false) {
         val call = expr.resolveSuccessfulCall()
@@ -1618,7 +1613,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return PsiTreeUtil.isAncestor(containingFunction, context, false)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getLambdaOccurrenceRange(expr: KtCallExpression, parameter: KaValueParameterSymbol): KaContractInvocationKind {
         val functionCall = expr.tryResolveCall()?.single?.function ?: return KaContractInvocationKind.UNKNOWN
@@ -1632,7 +1626,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return KaContractInvocationKind.UNKNOWN
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun inlineLambda(lambda: KtLambdaExpression, kind: KaContractInvocationKind) {
         /*
@@ -1685,7 +1678,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun inlineKnownLambdaCall(expr: KtCallExpression, lambda: KtLambdaExpression): Boolean {
         // TODO: non-qualified methods (run, repeat)
@@ -1761,7 +1753,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return false
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun inlineKnownMethod(expr: KtCallExpression, argCount: Int, qualifierOnStack: Boolean): Boolean {
         if (argCount == 0 && qualifierOnStack) {

@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.codeInspection.InspectionManager
-import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
@@ -16,7 +16,6 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -258,7 +257,6 @@ internal class IfExpressionWithIdenticalBranchesInspection :
             !PsiTreeUtil.isAncestor(this, targetLoop, false)
         }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtBlockExpression.hasReturnToOuterRun(): Boolean =
         anyDescendantOfType<KtReturnExpression> { expression ->

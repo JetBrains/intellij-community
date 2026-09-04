@@ -9,24 +9,23 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.signatures.asSignature
 import org.jetbrains.kotlin.analysis.api.signatures.substitute
-import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.emptySubstitutor
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.visibility.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -79,7 +78,6 @@ internal fun analyzePushDownConflicts(
     return conflicts
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun checkConflicts(
     conflicts: MultiMap<PsiElement, String>,
@@ -124,7 +122,6 @@ internal fun checkConflicts(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun checkMemberClashing(
     conflicts: MultiMap<PsiElement, String>,
@@ -179,7 +176,6 @@ private fun checkMemberClashing(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun checkSuperCalls(
     conflicts: MultiMap<PsiElement, String>,
@@ -213,7 +209,6 @@ private fun checkSuperCalls(
     )
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun checkExternalUsages(
     conflicts: MultiMap<PsiElement, String>,
@@ -268,7 +263,6 @@ private fun checkVisibility(
     )
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun isVisible(what: KaDeclarationSymbol, where: PsiElement): Boolean {
     val file = (where.containingFile as? KtFile)?.symbol ?: return false

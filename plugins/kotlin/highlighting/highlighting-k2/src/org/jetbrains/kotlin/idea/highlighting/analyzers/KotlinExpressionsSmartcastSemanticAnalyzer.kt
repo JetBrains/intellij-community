@@ -3,14 +3,13 @@ package org.jetbrains.kotlin.idea.highlighting.analyzers
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.dataflow.KaImplicitReceiverSmartCastKind
-import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.dataflow.implicitReceiverSmartCasts
-import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.expressions.expectedType
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -26,7 +25,6 @@ internal class KotlinExpressionsSmartcastSemanticAnalyzer(holder: HighlightInfoH
         highlightExpression(expression)
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun highlightExpression(expression: KtExpression): Unit = context(session) {
         expression.implicitReceiverSmartCasts.forEach {
             val receiverName = when (it.kind) {

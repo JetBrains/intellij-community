@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.substring
 
 import com.intellij.codeInspection.ProblemsHolder
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -27,7 +26,6 @@ abstract class ReplaceSubstringInspection: KotlinApplicableInspectionBase.Simple
     ): KtVisitor<*, *> = dotQualifiedExpressionVisitor {
         visitTargetElement(it, holder, isOnTheFly)
     }
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     protected fun resolvesToMethod(element: KtDotQualifiedExpression, fqMethodName: String): Boolean {
         val callableId = element.resolveSuccessfulSymbol()?.callableId?.asSingleFqName()

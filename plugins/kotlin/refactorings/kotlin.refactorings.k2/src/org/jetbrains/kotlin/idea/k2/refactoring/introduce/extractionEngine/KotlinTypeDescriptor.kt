@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
@@ -64,7 +63,6 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
 
     override fun createListType(argTypes: List<KaType>): KaType {
         return analyze(data.commonParent) {
-            @OptIn(KaExperimentalApi::class)
             typeCreator.classType(StandardClassIds.List) {
                 invariantTypeArgument {
                     if (argTypes.isNotEmpty()) argTypes.commonSupertype else builtinTypes.nullableAny
@@ -73,7 +71,6 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun createTuple(outputValues: List<OutputValue<KaType>>): KaType {
         analyze(data.commonParent) {
             val boxingClass = when (outputValues.size) {
@@ -94,7 +91,6 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
     override fun returnType(ktNamedDeclaration: KtNamedDeclaration): KaType =
         analyze(data.commonParent) { (ktNamedDeclaration as KtDeclarationWithReturnType).returnType }
 
-    @OptIn(KaExperimentalApi::class)
     override fun renderForMessage(ktNamedDeclaration: KtNamedDeclaration): String {
         return analyze(data.commonParent) {
             ktNamedDeclaration.symbol.render(KaDeclarationRendererForSource.WITH_SHORT_NAMES)
@@ -109,7 +105,6 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
 
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun renderTypeWithoutApproximation(kotlinType: KaType): String {
         return analyze(data.commonParent) {
             kotlinType.render(position = Variance.INVARIANT)
@@ -122,7 +117,6 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun renderType(
         type: KaType, isReceiver: Boolean, variance: Variance
     ): String = analyze(data.commonParent) {
@@ -155,7 +149,6 @@ fun isResolvableInScope(
    return getUnResolvableInScope(typeToCheck, scope, typeParameters) == null
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun getUnResolvableInScope(
     typeToCheck: KaType,

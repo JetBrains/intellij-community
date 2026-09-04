@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
@@ -24,7 +23,6 @@ fun KtExpression.isSideEffectFreeCondition(): Boolean =
     else -> false
   }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun KtSimpleNameExpression.isSideEffectFreeReference(): Boolean =
   when (val symbol = resolveSuccessfulSymbol()) {

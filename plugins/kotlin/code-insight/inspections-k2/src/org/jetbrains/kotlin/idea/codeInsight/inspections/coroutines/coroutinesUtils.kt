@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines
 
 import com.intellij.psi.util.descendantsOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -31,7 +30,6 @@ import org.jetbrains.kotlin.psi.KtReturnExpression
 /**
  * Finds a single (implicitly or explicitly) returned expression from [lambdaExpression].
  */
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun singleReturnedExpressionOrNull(lambdaExpression: KtLambdaExpression): KtExpression? {
     val singleStatement = lambdaExpression.singleStatementOrNull() ?: return null
@@ -49,7 +47,6 @@ internal fun singleReturnedExpressionOrNull(lambdaExpression: KtLambdaExpression
  * @param callableId The method that should be called on the parameter
  * @return true if the lambda has a single parameter and calls the specified method on it
  */
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun isLambdaWithSingleReturnedCallOnSingleParameter(
     lambdaExpression: KtLambdaExpression,
@@ -67,7 +64,6 @@ internal fun isLambdaWithSingleReturnedCallOnSingleParameter(
             explicitReceiverAccessSymbol == singleLambdaParameterSymbol
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun isIterableForEachFunctionCall(element: KtCallExpression): Boolean {
     val functionCall = element.resolveSuccessfulCall() ?: return false
@@ -83,7 +79,6 @@ private fun isIterableForEachFunction(symbol: KaFunctionSymbol): Boolean {
             symbol.receiverParameter?.returnType?.isSubtypeOf(StandardClassIds.Iterable) == true
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun isIterableMapFunctionCall(element: KtCallExpression): Boolean {
     val functionCall = element.resolveSuccessfulCall() ?: return false

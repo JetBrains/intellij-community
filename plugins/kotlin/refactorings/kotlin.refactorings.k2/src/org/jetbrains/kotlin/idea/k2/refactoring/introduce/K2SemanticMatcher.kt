@@ -5,7 +5,6 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.returnType
@@ -487,7 +486,6 @@ object K2SemanticMatcher {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun elementsMatchOrBothAreNull(targetElement: KtElement?, patternElement: KtElement?, context: MatchingContext): Boolean {
         if (targetElement == null || patternElement == null) return targetElement == null && patternElement == null
@@ -876,7 +874,6 @@ object K2SemanticMatcher {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun areCallsMatchingByResolve(
         targetExpression: KtExpression,
@@ -935,7 +932,6 @@ object K2SemanticMatcher {
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun areNonCallsMatchingByResolve(
         targetExpression: KtExpression,
@@ -1022,16 +1018,13 @@ object K2SemanticMatcher {
         null -> patternReceiver == null
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KaSimpleCall<*, *>.getTypeArguments(): List<KaType?> = symbol.typeParameters.map { typeArgumentsMapping[it] }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KaExplicitReceiverValue.getSymbolForThisExpressionOrNull(): KaSymbol? =
         (expression as? KtThisExpression)?.resolveSuccessfulSymbol()
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun areReferencesMatchingByResolve(
         targetReference: KtExpression,
@@ -1042,7 +1035,6 @@ object K2SemanticMatcher {
         (patternReference as? KtResolvable)?.resolveSuccessfulSymbol(),
     )
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun areReturnTargetsMatchingByResolve(
         targetExpression: KtReturnExpression,
@@ -1142,7 +1134,6 @@ object K2SemanticMatcher {
     private fun KtCallableDeclaration.isFunctionLiteralWithoutParameterSpecification(): Boolean =
         this is KtFunctionLiteral && !this.hasParameterSpecification()
 
-    @OptIn(KaExperimentalApi::class)
     private fun KaCallResolutionAttempt.isUnresolvedCall(): Boolean = errors.firstOrNull()?.diagnostic is KaFirDiagnostic.UnresolvedReference
 
     private fun KtExpression.isCalleeInCall(): Boolean = this == (parent as? KtCallElement)?.calleeExpression

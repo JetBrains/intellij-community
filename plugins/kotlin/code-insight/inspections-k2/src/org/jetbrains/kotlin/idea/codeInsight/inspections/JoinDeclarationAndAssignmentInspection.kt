@@ -13,12 +13,9 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -222,7 +219,6 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun canBeMovedToConstructor(element: KtProperty, initializer: KtExpression): Boolean {
         if (element.isLocal) return false
@@ -295,7 +291,6 @@ internal class JoinDeclarationAndAssignmentInspection :
 
     private fun List<PsiElement>.hasComments(): Boolean = any { it is PsiComment }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun findFirstAssignment(property: KtProperty): KtBinaryExpression? {
         if (property.typeReference == null) return null

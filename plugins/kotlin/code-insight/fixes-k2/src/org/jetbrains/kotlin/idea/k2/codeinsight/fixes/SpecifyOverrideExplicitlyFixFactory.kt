@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 internal object SpecifyOverrideExplicitlyFixFactory {
-    @OptIn(KaExperimentalApi::class)
     val specifyOverrideExplicitlyFixFactory =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.DelegatedMemberHidesSupertypeOverride ->
             val ktClass = diagnostic.psi
@@ -94,7 +93,6 @@ internal object SpecifyOverrideExplicitlyFixFactory {
             listOf(SpecifyOverrideExplicitlyFix(ktClass, elementContext))
         }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtDelegatedSuperTypeEntry.getSymbol(): KaNamedSymbol? {
         val nameReferenceExpression = delegateExpression as? KtNameReferenceExpression ?: return null

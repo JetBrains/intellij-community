@@ -10,7 +10,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -20,12 +19,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.arrayElementType
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
-import org.jetbrains.kotlin.analysis.api.types.classId
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
@@ -295,7 +293,6 @@ private fun String.isSubClassOf(baseInternalName: String?): Boolean {
     return baseInternalName == "java/lang/Object" || baseInternalName == "kotlin/Any"
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun getJvmSignature(symbol: KaCallableSymbol, isConstructor: Boolean): String? {
     val element = symbol.psi ?: return null
@@ -317,7 +314,6 @@ internal fun getJvmSignature(symbol: KaCallableSymbol, isConstructor: Boolean): 
     return "($contextReceivers$receiver$parameterTypes$continuationParameter)$returnType"
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun jvmName(type: KaType?, element: PsiElement): String? {
     if (type is KaTypeParameterType) return "Ljava/lang/Object;"

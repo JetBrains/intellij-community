@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -161,7 +160,6 @@ object ReplaceCallFixFactories {
         return nullableExpressionType?.isSubtypeOf(expectedType) != true && !expectedType.isMarkedNullable && expectedType.classId != KaStandardTypeClassIds.UNIT
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun nullableTypeIsAcceptableForValueArgument(expression: KtExpression, nullableExpressionType: KaType): Boolean {
         val argument = expression.getStrictParentOfType<KtValueArgument>() ?: return false
@@ -186,7 +184,6 @@ object ReplaceCallFixFactories {
         return symbol.isSubClassOf(mapSymbol)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createReplaceWithSafeCallForScopeFunctionFix(psi: PsiElement): ReplaceWithSafeCallForScopeFunctionFix? {
         val scopeFunctionLiteral = psi.getStrictParentOfType<KtFunctionLiteral>() ?: return null
@@ -222,7 +219,6 @@ object ReplaceCallFixFactories {
         return ReplaceWithSafeCallForScopeFunctionFix(scopeDotQualifiedExpression, shouldHaveNotNullType(scopeCallExpression))
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtCallExpression.scopeFunctionKind(): ScopeFunctionKind? {
         val methodName = tryResolveCall()?.single?.function?.symbol?.callableId?.asSingleFqName()

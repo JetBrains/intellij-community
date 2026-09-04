@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -83,7 +82,6 @@ internal class ReplaceCallWithBinaryOperatorInspection :
                 || identifier in OperatorNameConventions.BINARY_OPERATION_NAMES)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         val callExpression = element.selectorExpression as? KtCallExpression ?: return null
@@ -180,7 +178,6 @@ internal class ReplaceCallWithBinaryOperatorInspection :
     private fun getOperationToken(calleeExpression: KtSimpleNameExpression): KtSingleValueToken? {
         val identifier = calleeExpression.getReferencedNameAsName()
         val dotQualified = calleeExpression.parent.parent as? KtDotQualifiedExpression ?: return null
-        @OptIn(KaExperimentalApi::class)
         fun isOperatorOrCompatible(): Boolean {
             return (calleeExpression.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol)?.isOperator == true
         }
@@ -232,7 +229,6 @@ private fun KaCallableSymbol.isAnyEquals(): Boolean {
     return allOverriddenSymbolsWithSelf.any { it.callableId == KOTLIN_ANY_EQUALS_CALLABLE_ID }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtExpression.isAnyEquals(): Boolean {
     val symbol = resolveSuccessfulExpressionSymbol() as? KaFunctionSymbol ?: return false

@@ -86,7 +86,6 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
     context(_: KaSession)
     private fun getIconFor(candidate: ImportCandidate): Icon? = getIconFor(candidate.symbol)
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun renderCandidate(candidate: ImportCandidate): String = prettyPrint {
         val fqName = candidate.getFqName()
@@ -116,7 +115,6 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
         return KotlinAddImportActionFactory.getInstance().createAddImportFix(position, text, data.importVariants)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun createImportData(
         position: KtElement,
@@ -237,7 +235,6 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
     private fun ImportCandidate.getFqName(): FqName =
         fqName ?: error("Unexpected null for fully-qualified name of importable symbol")
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun createPriorityForImportCandidate(
         prioritizer: ImportPrioritizer,

@@ -6,7 +6,6 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -19,7 +18,6 @@ internal class ChangeContextFix : PsiUpdateModCommandQuickFix() {
         return KotlinBundle.message("intention.switch.context.to.dispatchers.io")
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val callExpression = element
             .parentsOfType<KtCallExpression>()

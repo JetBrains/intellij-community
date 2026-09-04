@@ -12,7 +12,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -127,7 +126,6 @@ internal class ForEachParameterNotUsedInspection :
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): UnusedForEachParameterInfo? {
         // Synthetic check: ...forEach { }
@@ -152,7 +150,6 @@ internal class ForEachParameterNotUsedInspection :
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtLambdaExpression.useLambdaParameter(): Boolean {
         var used = false

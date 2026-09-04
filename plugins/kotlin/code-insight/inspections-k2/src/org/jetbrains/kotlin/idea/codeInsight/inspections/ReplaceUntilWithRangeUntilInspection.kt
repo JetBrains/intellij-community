@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -40,7 +39,6 @@ class ReplaceUntilWithRangeUntilInspection : AbstractKotlinInspection() {
             }
         }
 
-    @OptIn(KaExperimentalApi::class)
     private fun visitRange(expression: KtExpression, holder: ProblemsHolder) {
         val rangeExpression = rangeExpressionByPsi(expression) ?: return
 

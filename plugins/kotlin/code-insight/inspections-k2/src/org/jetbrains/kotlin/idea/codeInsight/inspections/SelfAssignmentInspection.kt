@@ -5,12 +5,9 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -66,7 +63,6 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtBinaryExpression): String? {
         val left = element.left
@@ -108,7 +104,6 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         else -> null
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.receiverSymbol(): KaSymbol? {
         when (val receiverExpression = (this as? KtDotQualifiedExpression)?.receiverExpression) {
@@ -119,7 +114,6 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         return getImplicitReceiverSymbolIfExists()
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.getImplicitReceiverSymbolIfExists(): KaSymbol? {
         val implicitReceiver = tryResolveExpressionCall()?.single?.variable?.let {

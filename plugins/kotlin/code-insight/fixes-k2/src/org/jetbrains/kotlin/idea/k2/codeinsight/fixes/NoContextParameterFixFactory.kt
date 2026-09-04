@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KaScopeImplicitArgumentValue
@@ -57,7 +56,6 @@ internal data class ContextArgument(
         candidateName ?: "TODO(\"Provide $typeText\") as $typeFqNameText"
 }
 
-@OptIn(KaExperimentalApi::class)
 internal object NoContextParameterFixFactory {
     private val CONTEXT_FQ_NAME: FqName = FqName("kotlin.context")
     private val ANONYMOUS_NAME: Name = Name.identifier("_")
@@ -226,7 +224,6 @@ internal object NoContextParameterFixFactory {
             SurroundCallWithContextFix.Wrapper.WITH
         }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun findSurroundingContextCall(element: KtElement): KtCallExpression? {
         val parentCall = element.getStrictParentOfType<KtLambdaArgument>()?.parent as? KtCallExpression ?: return null
@@ -236,7 +233,6 @@ internal object NoContextParameterFixFactory {
         return if (resolvedFqName == null || resolvedFqName == CONTEXT_FQ_NAME) parentCall else null
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun findValueCandidates(
         useSite: KtElement,
@@ -265,7 +261,6 @@ internal object NoContextParameterFixFactory {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun innerContextScopeAlreadyContainsType(
         surroundingContextCall: KtCallExpression,

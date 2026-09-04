@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -33,7 +32,6 @@ object ReorderParametersFixFactory {
         createQuickFix(diagnostic)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun createQuickFix(diagnostic: KaFirDiagnostic<*>): List<ReorderParametersFix> {
         val function: KtNamedFunction = diagnostic.psi.parentOfType(withSelf = true) ?: return emptyList()

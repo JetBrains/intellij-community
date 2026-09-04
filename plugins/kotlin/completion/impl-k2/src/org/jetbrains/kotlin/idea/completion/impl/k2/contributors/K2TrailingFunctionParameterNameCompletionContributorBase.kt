@@ -118,7 +118,6 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession, context: K2CompletionSectionContext<P>)
     protected fun complete(
         position: KtElement,
@@ -255,7 +254,6 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession, context: K2CompletionSectionContext<P>)
     private fun KaNamedClassSymbol.getSignatures(
         parameterType: KaClassType,
@@ -431,7 +429,6 @@ internal data class CompoundInsertionHandler(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private val KaType.text: String
     get() = render(

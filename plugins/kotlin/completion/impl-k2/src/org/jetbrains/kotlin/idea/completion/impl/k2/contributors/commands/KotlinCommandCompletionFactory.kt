@@ -14,7 +14,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.asSafely
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
@@ -72,7 +71,6 @@ internal class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAw
 
     override fun supportFiltersWithDoublePrefix(): Boolean = false
 
-    @OptIn(KaExperimentalApi::class)
     override fun createFile(originalFile: PsiFile, text: String): PsiFile {
         val newFile =
             KtPsiFactory(originalFile.project, eventSystemEnabled = true, markGenerated = false).createFile(originalFile.name, text)
@@ -109,7 +107,6 @@ internal class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAw
     }
 
     class KotlinCommandCompletionModCommandPsiCopyHandler : ModCommandService.ModCommandPsiCopyHandler {
-        @OptIn(KaExperimentalApi::class)
         override fun createCopy(file: PsiFile): PsiFile? {
             if (file !is KtFile) return null
             if (ktCommandCompletionCopy.get(file) != true) return null

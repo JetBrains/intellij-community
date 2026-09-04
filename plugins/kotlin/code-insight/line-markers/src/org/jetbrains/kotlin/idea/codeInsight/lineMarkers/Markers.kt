@@ -13,7 +13,6 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -159,7 +158,6 @@ private class ActualExpectedPsiElementCellRenderer(private val onlyModuleNames: 
 }
 
 @Nls
-@OptIn(KaExperimentalApi::class)
 @Suppress("HardCodedStringLiteral")
 fun KaModule.nameForTooltip(): String {
     when (this) {
@@ -230,7 +228,6 @@ fun buildNavigateToExpectedDeclarationsPopup(element: PsiElement?, allNavigatabl
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 fun hasExpectForActual(declaration: KtDeclaration): Boolean {
     return analyze(declaration) {
         val symbol: KaDeclarationSymbol = declaration.symbol
@@ -242,7 +239,6 @@ fun KtDeclaration.allNavigatableExpectedDeclarations(): List<SmartPsiElementPoin
     return expectedDeclarationIfAny() + findMarkerBoundDeclarations().flatMap { it.expectedDeclarationIfAny() }
 }
 
-@OptIn(KaExperimentalApi::class)
 internal fun KtDeclaration.expectedDeclarationIfAny(): List<SmartPsiElementPointer<KtDeclaration>> {
     val declaration = this
     return analyze(this) {

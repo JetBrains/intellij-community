@@ -11,7 +11,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import kotlinx.serialization.Serializable
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionAttempt
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -88,7 +87,6 @@ private data class TypeArgsWithOffset(val args: KtTypeArgumentList, val offset: 
 
 private var UserDataHolder.argList: TypeArgsWithOffset? by UserDataProperty(Key("KotlinInsertTypeArgument.ARG_LIST"))
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun addParamTypesIfNeeded(position: PsiElement): PsiElement? {
     val callBeforeDot = position.getCallBeforeDot() ?: return null
@@ -207,7 +205,6 @@ private fun KaFunctionCall<*>.hasErrorTypeArgument(): Boolean {
     return typeArgumentsMapping.any { (_, type) -> type is KaErrorType }
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun KaCallResolutionAttempt.hasCandidateWithErrorTypes(): Boolean {
     val candidates = this.calls.filterIsInstance<KaFunctionCall<*>>()
     return candidates.any { it.hasErrorTypeArgument() }

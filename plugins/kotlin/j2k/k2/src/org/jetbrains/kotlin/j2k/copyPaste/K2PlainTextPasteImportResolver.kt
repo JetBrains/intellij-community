@@ -20,7 +20,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.ThreadingAssertions
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
@@ -222,7 +221,6 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
     private suspend fun PsiQualifiedReference.isResolved(): Boolean =
         readAction { this.resolve() } != null
 
-    @OptIn(KaExperimentalApi::class)
     private suspend fun findClassesByShortName(name: String): List<PsiClass> {
         return readAction {
             analyze(targetKotlinFile) {
@@ -241,7 +239,6 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private suspend fun findUniqueMemberByShortName(name: String): PsiMember? {
         return readAction {
             analyze(targetKotlinFile) {

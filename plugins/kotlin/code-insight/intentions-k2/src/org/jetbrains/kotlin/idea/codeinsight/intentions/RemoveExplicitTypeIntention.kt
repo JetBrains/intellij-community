@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
@@ -181,7 +180,6 @@ internal class RemoveExplicitTypeIntention :
     private fun KtConstantExpression.isTypeContextIndependent(typeReference: KtTypeReference): Boolean {
         val classId = inferClassIdByPsi() ?: return false
 
-        @OptIn(KaExperimentalApi::class)
         val initializerType = typeCreator.classType(classId)
 
         return initializerType.isSubtypeOf(typeReference.type)

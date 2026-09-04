@@ -297,7 +297,6 @@ class KotlinBytecodeToolWindow(
                 "No Kotlin source file is opened.\n" +
                 "*/"
 
-        @OptIn(KaExperimentalApi::class)
         fun getBytecodeForFile(
             ktFile: KtFile,
             showOffsets: Boolean,

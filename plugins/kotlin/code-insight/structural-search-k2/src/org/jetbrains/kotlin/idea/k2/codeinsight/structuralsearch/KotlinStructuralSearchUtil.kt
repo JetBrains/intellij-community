@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch
 import com.intellij.psi.PsiComment
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -29,7 +28,6 @@ internal fun getCommentText(comment: PsiComment): String {
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun KaType.renderNames(): Array<String> = arrayOf(
     render(KaTypeRendererForSource.WITH_SHORT_NAMES.with {
@@ -47,7 +45,6 @@ internal fun String.removeTypeParameters(): String {
 internal val MatchingHandler.withinHierarchyTextFilterSet: Boolean
     get() = this is SubstitutionHandler && (this.isSubtype || this.isStrictSubtype)
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun KtExpression.findDispatchReceiver(): KaType? {
     val symbol = resolveSuccessfulExpressionSymbol() ?: return null

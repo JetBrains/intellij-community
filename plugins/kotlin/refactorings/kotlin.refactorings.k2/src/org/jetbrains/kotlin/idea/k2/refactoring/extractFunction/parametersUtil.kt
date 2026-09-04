@@ -7,7 +7,6 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.text.UniqueNameGenerator
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.diagnostics
@@ -127,7 +126,6 @@ private class ParameterWithReference(val parameterOrigin: PsiNamedElement, val r
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun ExtractionData.inferParametersInfo(
     virtualBlock: KtBlockExpression,
@@ -264,7 +262,6 @@ internal fun ExtractionData.inferParametersInfo(
     return info
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun ExtractionData.registerParameter(
     info: ParametersInfo<KaType, MutableParameter>,
@@ -449,13 +446,11 @@ private fun ExtractionData.registerQualifierReplacements(
             val fqNameChild = if (name != null) fqName.child(Name.identifier(name)) else fqName
             parametersInfo.replacementMap.putValue(originalRef, FqNameReplacement(fqNameChild))
         } else {
-            @OptIn(KaExperimentalApi::class)
             parametersInfo.nonDenotableTypes.add(typeCreator.classType(referencedClassifierSymbol))
         }
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun getReferencedClassifierSymbol(
     thisSymbol: KaSymbol?,
@@ -493,7 +488,6 @@ private fun createOriginalType(
 ): KaType = when {
         extractFunctionRef -> analyze(originalDeclaration as KtNamedFunction) {
             val functionSymbol = originalDeclaration.symbol as KaNamedFunctionSymbol
-            @OptIn(KaExperimentalApi::class)
             typeCreator.functionType {
                 receiverType = functionSymbol.receiverParameter?.returnType
 
@@ -507,7 +501,6 @@ private fun createOriginalType(
         else -> parameterExpression?.expressionType ?: receiverToExtract?.type
     } ?: builtinTypes.nullableAny
 
-@OptIn(KaExperimentalApi::class)
 private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): List<ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KaType>> {
     val newReferences = body.collectDescendantsOfType<KtReferenceExpression> { it.resolveResult != null }
 

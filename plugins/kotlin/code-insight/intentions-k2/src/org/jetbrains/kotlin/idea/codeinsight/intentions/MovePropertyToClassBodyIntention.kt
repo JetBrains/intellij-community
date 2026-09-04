@@ -5,7 +5,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
@@ -116,7 +115,6 @@ class MovePropertyToClassBodyIntention : KotlinApplicableModCommandAction<KtPara
         return allowedTargetArguments.any { it.expression.isValueParameterTargetValue() }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun KtAnnotationEntry.isApplicableToConstructorParameter(): Boolean {
         analyze(this) {
             // Find all meta-annotations for this annotation to check if the annotation targets the constructor parameter

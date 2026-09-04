@@ -14,13 +14,11 @@ import org.jetbrains.kotlin.resolution.KtResolvable
 import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 @KaExperimentalApi
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 fun KtExpression.resolveSuccessfulExpressionCall(): KaSimpleOrMultiCall? =
     (this as? KtResolvableCall)?.resolveSuccessfulCall()
 
 @KaExperimentalApi
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 fun KtExpression.tryResolveExpressionCall(): KaCallResolutionAttempt? =
     (this as? KtResolvableCall)?.tryResolveCall()
@@ -28,7 +26,6 @@ fun KtExpression.tryResolveExpressionCall(): KaCallResolutionAttempt? =
 ////// resolve symbol
 
 @KaExperimentalApi
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 fun KtExpression.resolveSuccessfulExpressionSymbol(): KaSymbol? =
     (this as? KtResolvable)?.resolveSuccessfulSymbol()

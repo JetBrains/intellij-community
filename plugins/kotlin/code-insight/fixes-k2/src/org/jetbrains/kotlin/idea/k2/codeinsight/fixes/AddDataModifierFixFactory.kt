@@ -5,7 +5,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
@@ -61,7 +60,6 @@ internal object AddDataModifierFixFactory {
         val fqName: String,
     )
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getCallableSymbol(element: KtExpression): KaCallableSymbol? {
         return if (element is KtParameter && element.firstChild is KtDestructuringDeclaration) {
@@ -92,7 +90,6 @@ internal object AddDataModifierFixFactory {
 }
 
 @ApiStatus.Internal
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun KaDeclarationSymbol.isVisible(position: PsiElement): Boolean {
     val file = (position.containingFile as? KtFile)?.symbol ?: return false

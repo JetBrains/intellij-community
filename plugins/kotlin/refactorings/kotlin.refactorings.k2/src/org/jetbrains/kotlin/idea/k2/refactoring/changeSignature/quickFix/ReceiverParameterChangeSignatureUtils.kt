@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
@@ -156,7 +155,6 @@ object ReceiverParameterChangeSignatureUtils {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KaSimpleCall<*, *>.hasContextReceiverOfType(type: KaType): Boolean {
         val substitutor = buildSubstitutor {
@@ -173,7 +171,6 @@ object ReceiverParameterChangeSignatureUtils {
         return reifiedTypes.contains(element.resolveExpression())
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Boolean {
         if (element !is KtExpression) return false

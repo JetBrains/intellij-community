@@ -39,7 +39,6 @@ import org.intellij.plugins.intelliLang.inject.java.InjectionCache
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -742,7 +741,7 @@ private fun KtBinaryExpression.isSimpleStandardConcatenationExpression(): Boolea
     this.operationTokenOrNull == KtTokens.PLUS &&
             left.isSimpleConcatenationSubexpression() && right.isSimpleConcatenationSubexpression()
 
-@OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+@OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
 private fun PsiElement.isStandardConcatenationExpression(): Boolean {
     if (this !is KtBinaryExpression || this.operationTokenOrNull != KtTokens.PLUS) return false
     if (isSimpleStandardConcatenationExpression()) return true

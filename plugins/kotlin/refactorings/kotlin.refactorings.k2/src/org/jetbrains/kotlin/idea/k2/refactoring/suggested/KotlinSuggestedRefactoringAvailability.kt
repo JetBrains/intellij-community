@@ -13,7 +13,6 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import com.intellij.refactoring.suggested.SuggestedRenameData
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -53,7 +52,6 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
     SuggestedRefactoringAvailability(refactoringSupport) {
     private val HAS_USAGES = Key<Boolean>("KotlinSuggestedRefactoringAvailability.HAS_USAGES")
 
-    @OptIn(KaExperimentalApi::class)
     override fun amendStateInBackground(state: SuggestedRefactoringState): Iterator<SuggestedRefactoringState> {
         return iterator {
             if (state.additionalData[HAS_USAGES] == null) {
@@ -100,7 +98,6 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
         val newDeclaration = state.declaration as? KtCallableDeclaration ?: return state
         val oldDeclaration = state.restoredDeclarationCopy() as? KtCallableDeclaration ?: return state
 
-        @OptIn(KaExperimentalApi::class)
         oldDeclaration.containingKtFile.contextModule = newDeclaration.getKaModule(newDeclaration.project, useSiteModule = null)
 
         val descriptorWithOldSignature = allowAnalysisFromWriteAction { allowAnalysisOnEdt { analyzeCopy(oldDeclaration, KaDanglingFileResolutionMode.PREFER_SELF) { signatureTypes(oldDeclaration) } } } ?: return state
@@ -182,7 +179,6 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
         return oldTypeInCode to newTypeInCode
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KaType.fqText() = render(position = Variance.INVARIANT)
 

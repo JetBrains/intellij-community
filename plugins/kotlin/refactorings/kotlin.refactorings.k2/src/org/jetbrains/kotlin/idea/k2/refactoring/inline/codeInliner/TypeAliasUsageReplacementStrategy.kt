@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -73,7 +72,6 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     fun inlineIntoCall(usage: KtReferenceExpression): KtElement? {
         analyze(usage) {
             val importDirective = usage.getStrictParentOfType<KtImportDirective>()
@@ -126,7 +124,6 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
     }
 
 
-    @OptIn(KaExperimentalApi::class)
     private fun inlineIntoType(usage: KtUserType): KtElement? {
         analyze(usage) {
             val typeAliasSymbol = typeAlias.symbol

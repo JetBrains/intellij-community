@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ModCommandAction
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.constructor
@@ -51,7 +50,6 @@ internal object ActualAnnotationsNotMatchExpectFixFactory {
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     context (_: KaSession)
     private fun KtAnnotationEntry.getAnnotationClassId(): ClassId? {
         val resolvedExpectAnnotationCall = tryResolveCall()?.single?.constructor ?: return null

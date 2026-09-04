@@ -11,7 +11,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.computeExitPointSnapshot
@@ -198,7 +197,6 @@ class InflowSlicer(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun processExpression(expression: KtExpression) {
         val lambda = when (expression) {
             is KtLambdaExpression -> expression.functionLiteral

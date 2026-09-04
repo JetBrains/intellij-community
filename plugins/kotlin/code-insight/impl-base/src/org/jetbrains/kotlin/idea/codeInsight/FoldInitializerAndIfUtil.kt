@@ -9,7 +9,6 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.endOffset
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.diagnostics
@@ -61,7 +60,7 @@ data class FoldInitializerAndIfExpressionData(
 )
 
 @ApiStatus.Internal
-@OptIn(KaExperimentalApi::class, KaUnstableDiagnosticApi::class)
+@OptIn(KaUnstableDiagnosticApi::class)
 context(_: KaSession)
 fun prepareData(element: KtIfExpression, enforceNonNullableTypeIfPossible: Boolean = false): FoldInitializerAndIfExpressionData? {
     if (element.`else` != null) return null

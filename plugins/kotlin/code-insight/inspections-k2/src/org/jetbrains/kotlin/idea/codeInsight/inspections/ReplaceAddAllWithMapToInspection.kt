@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.runIf
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -84,7 +83,6 @@ internal class ReplaceAddAllWithMapToInspection : KotlinApplicableInspectionBase
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtExpression): Context? {
         val resolvedCall = element.resolveSuccessfulExpressionCall()?.function ?: return null
@@ -140,7 +138,6 @@ internal class ReplaceAddAllWithMapToInspection : KotlinApplicableInspectionBase
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun replacementOperation(argument: KtExpression?): Name? {
         val symbol = argument?.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol ?: return null

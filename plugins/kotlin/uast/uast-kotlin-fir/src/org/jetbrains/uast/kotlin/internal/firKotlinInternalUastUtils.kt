@@ -15,7 +15,6 @@ import com.intellij.psi.PsiTypes
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
@@ -162,7 +161,6 @@ internal fun toPsiClass(
     )
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun fakePsiMethodForReifiedInline(
     callableSymbol: KaCallableSymbol,
@@ -228,7 +226,6 @@ private fun KaCallableSymbol.isInline(): Boolean = when (this) {
     else -> false
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun toPsiMethod(
     functionSymbol: KaFunctionSymbol,
@@ -289,7 +286,6 @@ internal fun toPsiMethod(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun toPsiMethodForDeserialized(
     functionSymbol: KaFunctionSymbol,
@@ -422,7 +418,6 @@ private fun toPsiMethodForDeserialized(
     } else null
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun KaSimpleCall<*, *>?.typeArgumentsMappingOrEmptyMap(): Map<KaSymbolPointer<KaTypeParameterSymbol>, KaTypePointer<KaType>> =
     this?.typeArgumentsMapping
         ?.map { (typeParamSymbol, type) ->
@@ -459,7 +454,7 @@ internal fun toPsiType(
         config
     )
 
-@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+@OptIn(KaImplementationDetail::class)
 context(session: KaSession)
 internal fun toPsiType(
     ktType: KaType,
@@ -499,7 +494,6 @@ internal fun toPsiType(
     ) ?: UastErrorType
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun receiverType(
     ktCall: KaSimpleCall<*, *>,
@@ -570,7 +564,6 @@ internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KaType? {
 /**
  * Finds Java stub-based [PsiElement] for symbols that refer to declarations from [KaSymbolOrigin.LIBRARY]
  */
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal tailrec fun psiForUast(
     symbol: KaSymbol,

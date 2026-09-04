@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -117,7 +116,6 @@ class ConvertRangeCheckToTwoComparisonsInspection :
         else -> null
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun KtExpression.getRangeBinaryExpressionTypeValidated(): RangeKtExpressionType? {
         val basicType = getRangeBinaryExpressionType(this) ?: return null
 

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -77,7 +76,6 @@ internal fun createContextArgumentReplacementMapForFunctionCall(
 ): Map<Int, SmartPsiElementPointer<KtExpression>>? =
     createContextArgumentReplacementMap<KaFunctionCall<*>>(callElement)
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private inline fun <reified T : KaSimpleCall<*, *>> createContextArgumentReplacementMap(
     callElement: KtElement
@@ -126,7 +124,6 @@ internal fun collectContextParameterValues(
         }
     }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun isProvidedByEnclosingContext(expression: KtExpression): Boolean {
     val contextNames = setOf("with", "context")

@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -67,7 +66,6 @@ object ChangeParameterTypeFixFactory {
         createTypeMismatchFixes(psi, diagnostic.expectedType.withNullability(isMarkedNullable = true))
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun createTypeMismatchFixes(psi: KtExpression, targetType: KaType): List<KotlinQuickFixAction<*>> {
         val outermostExpression = psi.getOutermostParenthesizedExpressionOrThis()
@@ -90,7 +88,6 @@ object ChangeParameterTypeFixFactory {
         return listOfNotNull(createChangeParameterTypeFix(parameter, targetType, functionLikeSymbol))
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun createTypeMismatchFixesForDefinitelyNonNullable(
         psi: KtExpression,
@@ -128,7 +125,6 @@ object ChangeParameterTypeFixFactory {
         return probableConstructorParameterPsi?.symbol as? KaValueParameterSymbol
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun createChangeParameterTypeFix(
         parameter: KtParameter,

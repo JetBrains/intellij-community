@@ -10,7 +10,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.constructor
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -48,7 +47,6 @@ internal class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection
         })
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun isSuppressAnnotation(annotationEntry: KtAnnotationEntry): Boolean {
         val calleeExpression = annotationEntry.calleeExpression ?: return false
         if (calleeExpression.text != "Suppress") return false

@@ -14,7 +14,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.scopes.syntheticJavaPropertiesScope
@@ -45,7 +44,6 @@ import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.propertyVisitor
 
-@OptIn(KaExperimentalApi::class)
 class ConflictingExtensionPropertyInspection : KotlinApplicableInspectionBase<KtProperty, Boolean>() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> = propertyVisitor {
         visitTargetElement(it, holder, isOnTheFly)
@@ -131,7 +129,6 @@ class ConflictingExtensionPropertyInspection : KotlinApplicableInspectionBase<Kt
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression?.isMethodCall(method: KaCallableSymbol): Boolean = when (this) {
         is KtCallExpression -> resolveSuccessfulSymbol()?.matches(method) == true
@@ -143,7 +140,6 @@ class ConflictingExtensionPropertyInspection : KotlinApplicableInspectionBase<Kt
         else -> false
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression?.isSetterMethodCall(method: KaCallableSymbol, valueParameterName: Name): Boolean = when (this) {
         is KtCallExpression -> {

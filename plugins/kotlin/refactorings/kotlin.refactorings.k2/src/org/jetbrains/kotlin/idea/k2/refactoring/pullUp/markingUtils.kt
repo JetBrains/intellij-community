@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.pullUp
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -44,7 +43,6 @@ private var KtElement.newFqName: FqName? by CopyablePsiUserDataProperty(Key.crea
 private var KtElement.replaceWithTargetThis: Boolean? by CopyablePsiUserDataProperty(Key.create("REPLACE_WITH_TARGET_THIS"))
 private var KtElement.newTypeTextByTargetClass: MutableMap<FqName, () -> String?>? by CopyablePsiUserDataProperty(Key.create("NEW_TYPE_TEXT_MAP"))
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun markElements(
     declaration: KtNamedDeclaration,
@@ -60,7 +58,6 @@ internal fun markElements(
             override fun visitThisExpression(expression: KtThisExpression): Unit = visitSuperOrThis(expression)
             override fun visitSuperExpression(expression: KtSuperExpression): Unit = visitSuperOrThis(expression)
 
-            @OptIn(KaExperimentalApi::class)
             private fun visitSuperOrThis(expression: KtInstanceExpressionWithLabel) {
                 val callee = expression.getQualifiedExpressionForReceiver()?.selectorExpression?.getCalleeExpressionIfAny() ?: return
                 val calleeTarget = callee.resolveSuccessfulExpressionSymbol() ?: return
@@ -70,7 +67,6 @@ internal fun markElements(
                 }
             }
 
-            @OptIn(KaExperimentalApi::class)
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                 val resolvedCall = expression.resolveSuccessfulExpressionCall()?.simple ?: return
                 val receiverValue = resolvedCall.extensionReceiver ?: resolvedCall.dispatchReceiver ?: return

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
@@ -95,7 +94,6 @@ internal class KotlinRecursiveCallLineMarkerProvider : AbstractKotlinLineMarkerP
         return false
     }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun checkDispatchReceiver(target: CallTarget): Boolean {
         var dispatchReceiver = (target.call as? KaSimpleCall<*, *>)?.dispatchReceiver ?: return true

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.ui.LayeredIcon
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.javaGetterName
 import org.jetbrains.kotlin.analysis.api.components.javaSetterName
@@ -35,18 +34,17 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.QuotedNamesAwareInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider.getTailTextForVariableCall
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.addImportIfRequired
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.updateLookupElementBuilderToInsertTypeQualifierOnSuper
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withCallableSignatureInfo
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
 
 internal object VariableLookupElementFactory {
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun createLookup(
         signature: KaVariableSignature<*>,
@@ -134,7 +132,6 @@ internal object VariableLookupElementFactory {
         return lookupElement
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun markIfSyntheticJavaProperty(
         lookupElementBuilder: LookupElementBuilder,

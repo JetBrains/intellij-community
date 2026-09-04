@@ -33,7 +33,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -181,7 +180,6 @@ object K2CreatePropertyFromUsageBuilder {
                 val classId =
                     (defaultContainerPsi as? KtClassOrObject)?.takeUnless { it is KtEnumEntry }?.presentableClassId ?: (defaultContainerPsi as? PsiClass)?.classIdIfNonLocal
                 if (classId != null) {
-                    @OptIn(KaExperimentalApi::class)
                     val targetClassType = typeCreator.classType(if (static) ClassId.fromString(classId.asFqNameString() + ".Companion") else classId)
                     requests.add(wrapperForKtFile to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, targetClassType, isExtension = true))
                 }
@@ -311,7 +309,7 @@ object K2CreatePropertyFromUsageBuilder {
 
         private var declarationText: String = computeDeclarationText()
 
-        @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
+        @OptIn(KaAllowAnalysisOnEdt::class)
         private fun computeDeclarationText(): String {
             val container = pointer.element ?: return ""
             val psiFactory = KtPsiFactory(container.project)

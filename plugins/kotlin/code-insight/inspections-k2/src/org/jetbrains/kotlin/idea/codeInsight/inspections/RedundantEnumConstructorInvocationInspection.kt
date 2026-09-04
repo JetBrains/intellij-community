@@ -6,12 +6,11 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.diagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtEnumEntry
@@ -67,7 +66,6 @@ private fun KtSuperTypeCallEntry.hasAnyErrors(): Boolean {
     )
 
     return elementsToCheck.any { element ->
-        @OptIn(KaExperimentalApi::class)
         val diagnostics = element.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         diagnostics.any { it.severity == KaSeverity.ERROR }
     }

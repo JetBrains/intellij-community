@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -202,7 +201,6 @@ private fun KtDotQualifiedExpression.deleteFirstReceiver(): KtExpression {
     return this
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtFunctionLiteral.valueParameterReferences(callExpression: KtCallExpression): List<KtNameReferenceExpression> {
     val valueParameterSymbol = symbol.valueParameters.singleOrNull() ?: return emptyList()
@@ -266,14 +264,12 @@ private fun KtCallExpression.isApplicable(parameterName: String): Boolean {
 private fun KtExpression.nameUsed(name: String, except: KtNameReferenceExpression? = null): Boolean =
     anyDescendantOfType<KtNameReferenceExpression> { it != except && it.getReferencedName() == name }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtDotQualifiedExpression.hasFunctionVariableCall(): Boolean {
     val calleeExpression = callExpression?.calleeExpression ?: return false
     return calleeExpression.resolveSuccessfulExpressionCall()?.variable != null
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtDotQualifiedExpression.getHasNullableReceiverExtensionCall(): Boolean {
     val hasNullableType = selectorExpression?.resolveSuccessfulExpressionCall()?.simple?.let { resolvedCall ->

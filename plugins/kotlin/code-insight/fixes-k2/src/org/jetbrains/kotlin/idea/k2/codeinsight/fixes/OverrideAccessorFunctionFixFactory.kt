@@ -5,7 +5,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -33,7 +32,6 @@ import org.jetbrains.kotlin.types.Variance
 import java.util.Locale.getDefault
 
 object OverrideAccessorFunctionFixFactory {
-    @OptIn(KaExperimentalApi::class)
     val nothingToOverrideFixFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.NothingToOverride> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NothingToOverride ->
         val property =
             (diagnostic.psi as? KtProperty)?.takeIf { it.hasModifier(KtTokens.OVERRIDE_KEYWORD) } ?: return@ModCommandBased emptyList()

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isDefinitelyNull
@@ -108,7 +107,6 @@ object AddExclExclCallFixFactories {
         return listOfNotNull(target.asAddExclExclCallFix(hasImplicitReceiver = hasImplicitReceiver))
     }
 
-    @OptIn(KaExperimentalApi::class)
     val iteratorOnNullableFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.IteratorOnNullable> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.IteratorOnNullable ->
         val expression = diagnostic.psi
         val type = expression.expressionType

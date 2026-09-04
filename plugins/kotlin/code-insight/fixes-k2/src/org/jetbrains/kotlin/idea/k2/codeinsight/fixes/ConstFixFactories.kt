@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.returnType
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object ConstFixFactories {
-    @OptIn(KaExperimentalApi::class)
     val addConstModifierFixFactory =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NonConstValUsedInConstantExpression ->
             val expression = when (val psi = diagnostic.psi) {

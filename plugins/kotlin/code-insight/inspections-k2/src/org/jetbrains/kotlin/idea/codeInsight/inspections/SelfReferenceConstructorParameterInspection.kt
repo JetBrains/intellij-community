@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -48,7 +47,6 @@ internal class SelfReferenceConstructorParameterInspection :
         context: Context,
     ): @InspectionMessage String = KotlinBundle.message("constructor.has.non.null.self.reference.parameter")
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtPrimaryConstructor): Context? {
         val parameterList = element.valueParameterList ?: return null

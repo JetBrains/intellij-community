@@ -1,6 +1,5 @@
 package org.jetbrains.kotlin.idea.highlighting
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -16,7 +15,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument as utilsIsI
 
 class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPointsHandlerFactory() {
 
-    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun getRelevantReturnDeclaration(returnExpression: KtReturnExpression): KtDeclarationWithBody? {
         val psi = allowAnalysisOnEdt {
             analyze(returnExpression) {

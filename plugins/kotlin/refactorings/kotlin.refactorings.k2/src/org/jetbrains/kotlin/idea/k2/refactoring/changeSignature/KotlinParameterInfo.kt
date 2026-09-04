@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -241,7 +240,6 @@ class KotlinParameterInfo(
             defaultValueParameterReferences[ref] = parameterIndex
         }
 
-        @OptIn(KaExperimentalApi::class)
         private fun targetToCollect(expression: KtSimpleNameExpression): Int? {
 
             analyze(expression) {

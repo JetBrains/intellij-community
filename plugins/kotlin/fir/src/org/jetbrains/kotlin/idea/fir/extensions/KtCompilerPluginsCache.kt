@@ -23,7 +23,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.orNull
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.areCompilerPluginsSupported
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -92,7 +91,6 @@ class KtCompilerPluginsCache private constructor(
             .any { it.extensions[extension]?.isNotEmpty() == true }
     }
 
-    @OptIn(KaExperimentalApi::class)
     fun <T : Any> getRegisteredExtensions(
         module: KaModule,
         extensionType: ExtensionPointDescriptor<T>
@@ -129,7 +127,6 @@ class KtCompilerPluginsCache private constructor(
         @Suppress("UNCHECKED_CAST") return registrars as List<T>
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun computeExtensionStorage(
         classLoader: ClassLoader,
         module: KaModule

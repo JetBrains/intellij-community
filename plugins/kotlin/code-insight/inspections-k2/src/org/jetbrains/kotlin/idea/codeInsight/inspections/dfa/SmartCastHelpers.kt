@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.dfa
 
 import com.intellij.psi.SyntaxTraverser
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.dataflow.implicitReceiverSmartCasts
@@ -36,7 +35,7 @@ import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
 import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.KtWhileExpression
 
-@OptIn(KaNonPublicApi::class, KaExperimentalApi::class)
+@OptIn(KaNonPublicApi::class)
 context(_: KaSession)
 internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
     val values = getValuesInExpression(expr)
@@ -75,7 +74,6 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
         }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun getValuesInExpression(expr: KtExpression): Map<KaSymbol, KaType> {
     val map = hashMapOf<KaSymbol, KaType>()

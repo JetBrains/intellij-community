@@ -17,7 +17,6 @@ import com.intellij.psi.JvmPsiConversionHelper
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.javaInterop.asKaType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -51,7 +50,6 @@ internal class ChangeMethodParameters(
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun getText(): String = allowAnalysisOnEdt { getTextPresentation() }
 
-    @OptIn(KaExperimentalApi::class)
     private fun getTextPresentation(): @IntentionName String {
         val target = element ?: return KotlinBundle.message("fix.change.signature.unavailable")
 
@@ -211,7 +209,7 @@ internal class ChangeMethodParameters(
         shortenReferences(valueParameterList)
     }
 
-    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     private fun generateParameterList(
         project: Project,
         psiFactory: KtPsiFactory,

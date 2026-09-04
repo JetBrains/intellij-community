@@ -9,7 +9,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
@@ -138,13 +137,11 @@ internal object ChangeTypeQuickFixFactories {
         getSuperCallableSymbol = { it.superVariable as KaPropertySymbol },
     )
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getActualType(ktType: KaType, position: KtElement): KaType {
         return ktType.toFunctionType() ?: ktType.approximateToDenotableSupertypeOrSelf(position)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtElement.returnTypeWithCandidate(candidateType: KaType): KaType {
         val (initializers, functionOrGetter) = when (this) {
@@ -181,7 +178,6 @@ internal object ChangeTypeQuickFixFactories {
         return if (returnTypes.isNotEmpty()) returnTypes.commonSupertype else candidateType
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun KtProperty.getPropertyInitializerType(): KaType? {
         val initializer = initializer
@@ -261,7 +257,6 @@ internal object ChangeTypeQuickFixFactories {
         return UpdateTypeQuickFix(target, targetType, typeInfo)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     internal fun createTypeFixesForCalledDeclaration(
         expression: KtExpression,
@@ -283,7 +278,6 @@ internal object ChangeTypeQuickFixFactories {
         return this.allOverriddenSymbols.toSet().size <= 1
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createUpdateTypeFixForCalledFunction(
         resolvedCall: KaSimpleOrMultiCall,
@@ -297,7 +291,6 @@ internal object ChangeTypeQuickFixFactories {
         return UpdateTypeQuickFix(calledFunction, TargetType.CALLED_FUNCTION, createTypeInfo(expectedType))
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun KaFunctionType.changeReturnType(newReturnType: KaType) : KaFunctionType {
         val type = this
@@ -312,7 +305,6 @@ internal object ChangeTypeQuickFixFactories {
     }
 
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createUpdateTypeFixesForCalledVariable(
         resolvedCall: KaSimpleOrMultiCall,
@@ -326,7 +318,6 @@ internal object ChangeTypeQuickFixFactories {
         return registerVariableTypeFixes(calledVariable, getActualType(actualType, expression), expectedType)
     }
 
-    @OptIn(KaExperimentalApi::class)
     val returnTypeNullableTypeMismatch =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
             val returnExpr = diagnostic.psi.parentOfType<KtReturnExpression>()
@@ -359,7 +350,6 @@ internal object ChangeTypeQuickFixFactories {
             createRequireReturnTypeFix(diagnostic.psi)
         }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createRequireReturnTypeFix(returnExpr: KtReturnExpression): List<ModCommandAction> {
         val psi = returnExpr.resolveSuccessfulSymbol()?.psi
@@ -463,7 +453,6 @@ internal object ChangeTypeQuickFixFactories {
             }
         }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun registerExpressionTypeFixes(
         expression: KtExpression,
@@ -646,7 +635,6 @@ internal object ChangeTypeQuickFixFactories {
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun isValReassignment(assignment: KtBinaryExpression): Boolean {
     val left = assignment.left ?: return false

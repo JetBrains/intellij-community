@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
@@ -82,7 +81,6 @@ internal sealed class CoroutineContextJobStatus {
             return expression.detectStatus()
         }
 
-        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         private fun KtExpression?.detectStatus(): CoroutineContextJobStatus {
             val expression = this ?: return Unknown

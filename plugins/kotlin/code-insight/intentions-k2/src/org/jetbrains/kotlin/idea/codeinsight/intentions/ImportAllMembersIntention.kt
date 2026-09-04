@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -78,7 +77,6 @@ internal class ImportAllMembersIntention :
         (element is KtExpression && element.isOnTheLeftOfQualificationDot && !element.isInImportDirective()) ||
                 element is KtUserType
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtElement): Context? {
         if (element.actualReference == null) {
@@ -191,7 +189,6 @@ val KtElement.elementToImport: KtElement?
         else -> null
     }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression): Boolean {
     val selectorExpression: KtExpression? = qualifiedAccess.getQualifiedExpressionForReceiver()?.selectorExpression
@@ -218,7 +215,6 @@ private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = importDirecti
     val importedEnumFqName = importDirective.importedFqName ?: return false
     if ((importDirective.importedReference?.mainReference?.resolve() as? KtClass)?.isEnum() != true) return false
 
-    @OptIn(KaExperimentalApi::class)
     fun KtExpression.isFqNameInEnumStaticMethods(): Boolean {
         if (getQualifiedExpressionForSelector() != null) return false
         if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false

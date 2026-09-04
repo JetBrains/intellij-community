@@ -16,7 +16,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
@@ -80,7 +79,6 @@ private fun KtFile.importDirectivesToBeRemoved(): List<KtImportDirective> {
     return importDirectives.filter { it.isImportToBeRemoved() }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtFile.hasAnnotationToSuppressDeprecation(): Boolean {
     val suppressAnnotationEntry = annotationEntries.firstOrNull {
@@ -95,7 +93,6 @@ private fun KtFile.hasAnnotationToSuppressDeprecation(): Boolean {
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtImportDirective.isImportToBeRemoved(): Boolean {
     if (isAllUnder) return false

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
@@ -15,7 +14,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
-import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates as collectAnalysisCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -56,9 +54,9 @@ import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
+import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates as collectAnalysisCallCandidates
 
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun collectCallCandidates(callElement: KtElement): List<KaCallCandidate> {
     val (candidates, explicitReceiver) = when (callElement) {
@@ -77,7 +75,6 @@ fun collectCallCandidates(callElement: KtElement): List<KaCallCandidate> {
     return candidates.filter { filterCandidate(it, callElement, explicitReceiver, visibilityChecker) }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun filterCandidate(
     candidateInfo: KaCallCandidate,
@@ -91,7 +88,6 @@ private fun filterCandidate(
     return filterCandidateByReceiverTypeAndVisibility(signature, callElement, explicitReceiver, visibilityChecker)
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun filterCandidateByReceiverTypeAndVisibility(
     signature: KaFunctionSignature<KaFunctionSymbol>,
@@ -185,7 +181,6 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
     return listOf(adjustedType)
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KaNamedClassSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KaType =
     typeCreator.classType(this) {
@@ -210,7 +205,6 @@ private val ARRAY_OF_FUNCTION_NAMES: Set<Name> = setOf(ArrayFqNames.ARRAY_OF_FUN
         ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values +
         ArrayFqNames.EMPTY_ARRAY
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun isArrayOfCall(callElement: KtCallElement): Boolean {
     val resolvedCall = callElement.tryResolveCall()?.single?.function ?: return false
@@ -238,7 +232,6 @@ fun KtReference.resolveToExpandedSymbol(): KaSymbol? = when (val symbol = resolv
 /**
  * @return implicit receivers of [this], including implicit receivers with smart casts, which are unwrapped to [KaImplicitReceiverValue]
  */
-@OptIn(KaExperimentalApi::class)
 fun KaSimpleCall<*, *>.getImplicitReceivers(): List<KaImplicitReceiverValue> =
     listOfNotNull(dispatchReceiver, extensionReceiver)
     .map { it.unwrapSmartCasts() }

@@ -73,7 +73,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.expressions.functionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -510,7 +509,6 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun KtFunction.getLambdaCallMethod(): KtCallExpression? = parentOfType<KtCallExpression>()
 
-    @OptIn(KaExperimentalApi::class)
     private fun KtCallExpression.getBytecodeMethodName(): String? = runDumbAnalyze(this, fallback = null) f@{
         val symbol = this.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol ?: return@f null
         getByteCodeMethodName(symbol)
@@ -1004,7 +1002,6 @@ private fun findTargetClasses(outerClass: ReferenceType, lineAt: Int): List<Refe
     return targetClasses
 }
 
-@OptIn(KaExperimentalApi::class)
 private suspend fun KtFunction.isSamLambda(): Boolean {
     if (this !is KtFunctionLiteral && this !is KtNamedFunction) {
         return false

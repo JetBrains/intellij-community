@@ -9,7 +9,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
@@ -81,7 +80,6 @@ internal class UnusedContextParameterCallInspection :
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> =
         callExpressionVisitor { visitTargetElement(it, holder, isOnTheFly) }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): BodyContext? {
         if (element.resolveSuccessfulSymbol()?.callableId != contextCallableId) return null
@@ -119,7 +117,6 @@ internal class UnusedContextParameterCallInspection :
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isSideEffectFree(expression: KtExpression): Boolean {
         return when (val unwrapped = KtPsiUtil.deparenthesize(expression)) {

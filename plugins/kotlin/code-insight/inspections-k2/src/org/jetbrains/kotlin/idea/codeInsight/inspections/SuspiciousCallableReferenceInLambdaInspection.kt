@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -103,7 +102,6 @@ class SuspiciousCallableReferenceInLambdaInspection : KotlinApplicableInspection
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun shouldUseNamedArguments(
         params: List<KaValueParameterSymbol>,
         args: List<KtValueArgument>
@@ -113,7 +111,6 @@ class SuspiciousCallableReferenceInLambdaInspection : KotlinApplicableInspection
         return hasDefaults && params.size - 1 > args.size || argsAreNamed
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isValidFunctionCallContext(element: KtLambdaExpression): Boolean {
         val functionCall = element.getStrictParentOfType<KtCallExpression>()
@@ -213,7 +210,6 @@ class SuspiciousCallableReferenceInLambdaInspection : KotlinApplicableInspection
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun buildReferenceText(element: KtLambdaExpression, callableRefExpr: KtCallableReferenceExpression): String {
     val callableReference = callableRefExpr.callableReference
@@ -233,7 +229,6 @@ private fun buildReferenceText(element: KtLambdaExpression, callableRefExpr: KtC
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun canMove(lambdaExpression: KtLambdaExpression): Boolean {
     val body = lambdaExpression.bodyExpression?.statements?.singleOrNull() as? KtCallableReferenceExpression ?: return false

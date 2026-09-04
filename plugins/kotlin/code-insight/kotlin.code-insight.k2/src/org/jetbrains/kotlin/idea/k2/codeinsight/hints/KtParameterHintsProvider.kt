@@ -33,9 +33,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.endOffset
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -104,7 +102,6 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun collectFromParameters(
         callElement: KtCallElement,
@@ -159,7 +156,6 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun calculateValueParametersWithNames(
         functionSymbol: KaFunctionSymbol,
@@ -327,7 +323,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             .map { MissingValueParameter(symbol = null, it) }
     }
 
-    @OptIn(KaExperimentalApi::class, KaUnstableDiagnosticApi::class)
+    @OptIn(KaUnstableDiagnosticApi::class)
     context(_: KaSession)
     private fun KtCallElement.noValueForParameterNames(): Set<Name> =
         buildSet {

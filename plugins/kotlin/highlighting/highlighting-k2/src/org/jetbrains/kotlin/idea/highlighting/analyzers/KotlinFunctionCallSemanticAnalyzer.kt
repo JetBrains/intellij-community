@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.highlighting.analyzers
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
@@ -47,7 +46,6 @@ internal open class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHold
             ?.let { highlightElement(callee, it) }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun expressionHighlightType(expression: KtBinaryExpression): HighlightInfoType? {
         context(session) {
             val call = expression.resolveSuccessfulCall()?.simple ?: return null
@@ -60,7 +58,6 @@ internal open class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHold
     private fun KtReferenceExpression.isAssignment() =
         (this as? KtOperationReferenceExpression)?.operationSignTokenType == KtTokens.EQ
 
-    @OptIn(KaExperimentalApi::class)
     private fun expressionHighlightType(expression: KtCallExpression, callee: KtExpression): HighlightInfoType? {
         context(session) {
             val call = expression.tryResolveCall()?.single ?: return null
@@ -69,7 +66,6 @@ internal open class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHold
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun getDefaultHighlightInfoTypeForCall(call: KaSimpleOrMultiCall): HighlightInfoType? {
         if (call !is KaFunctionCall<*>) return null
         val type = when (val function = call.symbol) {
@@ -98,7 +94,6 @@ internal open class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHold
         private val KOTLIN_SUSPEND_BUILT_IN_FUNCTION_FQ_NAME_CALLABLE_ID =
             CallableId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("suspend"))
 
-        @OptIn(KaExperimentalApi::class)
         context(session: KaSession)
         internal fun getHighlightInfoTypeForCallFromExtension(expression: KtExpression, call: KaSimpleOrMultiCall): HighlightInfoType? {
             val highlightInfoType =

@@ -10,7 +10,6 @@ import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -33,10 +32,8 @@ internal class CreatePropertyFromKotlinUsageRequest (
 ) : CreateFieldRequest {
     private val referencePointer = referenceExpression.createSmartPointer()
     private val returnType: List<ExpectedType> = initializeReturnType(referenceExpression)
-    @OptIn(KaExperimentalApi::class)
     val receiverTypeString: String? = getReceiverTypeString(referenceExpression, receiverType, K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS)
 
-    @OptIn(KaExperimentalApi::class)
     val receiverTypeNameString: String? = getReceiverTypeString(referenceExpression, receiverType, K2CreateFunctionFromUsageUtil.WITH_SHORT_NAMES_FOR_CREATE_ELEMENTS)
 
     private fun initializeReturnType(referenceExpression: KtNameReferenceExpression): List<ExpectedType> {
@@ -51,7 +48,6 @@ internal class CreatePropertyFromKotlinUsageRequest (
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun getReceiverTypeString(
         referenceExpression: KtNameReferenceExpression, receiverType: KaType?, renderer: KaTypeRenderer
     ): String? {

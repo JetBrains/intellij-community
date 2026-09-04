@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.PsiComment
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -49,7 +48,6 @@ object NamedArgumentUtils {
      * Associates each argument of [call] with its argument name if `argumentName = argument` is valid for all arguments. Optionally,
      * starts at [startArgument] if it's not `null`.
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun associateArgumentNamesStartingAt(
         call: KtCallElement,
@@ -81,7 +79,6 @@ object NamedArgumentUtils {
      * The method also works for [argument] that is [KtLambdaArgument], since
      * the argument name can be used after moving [KtLambdaArgument] inside parentheses.
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun getStableNameFor(argument: KtValueArgument): Name? {
         val callElement: KtCallElement = getCallElement(argument) ?: return null
@@ -112,7 +109,6 @@ object NamedArgumentUtils {
         return null
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun isMappingBroken(resolvedCall: KaFunctionCall<*>, argument: KtValueArgument): Boolean {
         val valueArgumentMapping = resolvedCall.valueArgumentMapping

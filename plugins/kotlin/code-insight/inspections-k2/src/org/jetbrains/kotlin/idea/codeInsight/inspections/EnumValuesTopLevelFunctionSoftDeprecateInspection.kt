@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -48,7 +47,6 @@ internal class EnumValuesTopLevelFunctionSoftDeprecateInspection : EnumValuesSof
     context(_: KaSession)
     override fun isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean = true
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     override fun createQuickFix(callExpression: KtCallExpression, symbol: KaFunctionSymbol): LocalQuickFix? {
         if (symbol.callableId?.callableName != StandardKotlinNames.Enum.enumValues.shortName()) return null

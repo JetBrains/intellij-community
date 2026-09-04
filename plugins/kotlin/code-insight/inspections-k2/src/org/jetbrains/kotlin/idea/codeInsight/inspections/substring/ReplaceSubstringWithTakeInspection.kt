@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.elementType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -44,7 +43,6 @@ internal class ReplaceSubstringWithTakeInspection : ReplaceSubstringInspection()
         return Unit
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getNextCallReceiverType(element: KtDotQualifiedExpression): KaType? {
         // take() consumes `CharSequence`/`String` and returns `CharSequence`/`String` as well;

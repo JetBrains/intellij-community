@@ -17,7 +17,6 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -102,7 +101,6 @@ internal class UnnecessaryVariableInspection : AbstractKotlinInspection() {
         val enclosingElement = KtPsiUtil.getEnclosingElementForLocalDeclaration(property) ?: return null
         val initializer = property.initializer ?: return null
 
-        @OptIn(KaExperimentalApi::class)
         context(session: KaSession)
         fun isExactCopy(): Boolean {
             if (property.isVar || initializer !is KtNameReferenceExpression || property.typeReference != null) return false
@@ -130,7 +128,6 @@ internal class UnnecessaryVariableInspection : AbstractKotlinInspection() {
             return nameValidator.validate(copyName)
         }
 
-        @OptIn(KaExperimentalApi::class)
         context(session: KaSession)
         fun isReturnOnly(): Boolean {
             val nextStatement = property.getNextSiblingIgnoringWhitespaceAndComments() as? KtReturnExpression ?: return false

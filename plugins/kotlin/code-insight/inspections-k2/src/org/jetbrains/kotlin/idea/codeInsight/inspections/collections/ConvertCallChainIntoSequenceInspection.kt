@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.isClassType
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -157,7 +156,6 @@ private fun KtQualifiedExpression.findCallChain(): CallChain? {
     return CallChain(qualified, lastCall, calls.size)
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun collectCallExpression(expression: KtQualifiedExpression): List<KtCallExpression> {
     val calls = mutableListOf<KtCallExpression>()
 

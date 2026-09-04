@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
@@ -43,7 +42,6 @@ abstract class KotlinPsiDiagnosticBasedInspectionBase<
         diagnostic: D,
     ): C?
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     final override fun prepareContext(element: E): C? =
         element.directDiagnostics(filter = diagnosticFilter)

@@ -10,12 +10,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -137,7 +135,6 @@ internal class RevertExplicitBackingFieldsInspection :
                 }
             }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isReferenceTo(ref: KtNameReferenceExpression, property: KtProperty): Boolean {
         val propertySymbol = property.symbol
@@ -162,7 +159,6 @@ internal class RevertExplicitBackingFieldsInspection :
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun computeInitializerText(backingField: KtBackingField): String? {
         val initializer = backingField.initializer ?: return null

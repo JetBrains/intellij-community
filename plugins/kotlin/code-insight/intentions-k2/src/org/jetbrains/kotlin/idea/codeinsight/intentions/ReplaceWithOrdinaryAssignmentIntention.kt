@@ -8,7 +8,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -39,7 +38,6 @@ internal class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModComma
     context(session: KaSession)
     override fun prepareContext(element: KtBinaryExpression): Unit? = isApplicableTo(element).asUnit
 
-    @OptIn(KaExperimentalApi::class)
     private fun isApplicableTo(element: KtBinaryExpression): Boolean {
         val operationReference = element.operationReference
         if (element.operationToken !in KtTokens.AUGMENTED_ASSIGNMENTS) return false

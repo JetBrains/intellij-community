@@ -67,7 +67,6 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.keysToMap
 
 @Nls
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun KaDeclarationSymbol.renderForConflicts(): String = renderForConflict(CallableRenderer)
 
@@ -81,7 +80,6 @@ private val NoModifierListRenderer = object : KaModifierListRenderer {
     ): Unit = Unit
 }
 
-@OptIn(KaExperimentalApi::class)
 private val CallableRenderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
     valueParameterRenderer = KaValueParameterSymbolRenderer.TYPE_ONLY
     modifiersRenderer = modifiersRenderer.with {
@@ -91,7 +89,6 @@ private val CallableRenderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.w
     bodyMemberScopeProvider = KaRendererBodyMemberScopeProvider.NONE
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun getClashingMemberInTargetClass(
     data: K2PullUpData,
@@ -156,7 +153,6 @@ private fun renderParameter(parameter: KtParameter): String = buildString {
     append(parameter.typeReference?.text)
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun KaValueParameterSymbol.renderSymbol(): String {
     val keyword = if (isVal) "val" else "var"
@@ -176,7 +172,6 @@ private fun PsiClass.isSourceOrTarget(data: K2PullUpData): Boolean {
     return element == data.sourceClass || element == data.targetClass
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun checkAccidentalOverrides(
     data: K2PullUpData,
@@ -225,7 +220,6 @@ private fun checkInnerClassToInterface(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun checkVisibility(
     data: K2PullUpData, memberInfo: KotlinMemberInfo, memberSymbol: KaDeclarationSymbol, conflicts: MultiMap<PsiElement, String>

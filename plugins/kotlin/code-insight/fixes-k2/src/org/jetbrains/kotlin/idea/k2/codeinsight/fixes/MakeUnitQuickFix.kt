@@ -7,7 +7,6 @@ import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiBasedModCommandAction
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -140,7 +139,6 @@ private fun replaceExpressionBody(
     body.replace(newBody)
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun KtNamedFunction.collectTargetedReturnExpressions(): List<KtReturnExpression> = buildList {
     val targetFunction = this@collectTargetedReturnExpressions
 

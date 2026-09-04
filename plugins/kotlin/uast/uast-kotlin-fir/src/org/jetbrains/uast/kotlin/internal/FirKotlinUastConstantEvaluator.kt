@@ -3,7 +3,6 @@ package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiVariable
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
@@ -37,7 +36,6 @@ internal object FirKotlinUastConstantEvaluator {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.unwrapKotlinValPropertyReference(): KtExpression? {
         if (this !is KtNameReferenceExpression) return this

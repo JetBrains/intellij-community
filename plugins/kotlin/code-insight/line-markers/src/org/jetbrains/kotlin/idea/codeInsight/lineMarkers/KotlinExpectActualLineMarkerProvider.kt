@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
@@ -180,7 +179,6 @@ internal fun getModulesStringForMarkerTooltip(navigatableDeclarations: Collectio
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 private val KaModule.moduleName: String
     get() = (this as? KaSourceModule)?.name ?: moduleDescription
 

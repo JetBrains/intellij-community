@@ -7,7 +7,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.diagnostics
@@ -46,7 +45,6 @@ class SpecifyTypeExplicitlyIntention @JvmOverloads constructor(private val useTe
         return element.typeReference == null && (element as? KtNamedFunction)?.hasBlockBody() != true
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun skip(element: KtCallableDeclaration): Boolean =
         element.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)

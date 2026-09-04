@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -134,7 +132,6 @@ internal object KotlinChangeSignatureUsageSearcher {
         analyze(ktCallableDeclaration) {
             val declarationSymbol = ktCallableDeclaration.symbol as KaCallableSymbol
             ktCallableDeclaration.accept(object : KtTreeVisitorVoid() {
-                @OptIn(KaExperimentalApi::class)
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                     val memberCall = expression.resolveSuccessfulExpressionCall()?.simple ?: return
 
@@ -175,7 +172,6 @@ internal object KotlinChangeSignatureUsageSearcher {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     internal fun findReceiverReferences(ktCallableDeclaration: KtCallableDeclaration, result: MutableList<in UsageInfo>, changeInfo: KotlinChangeInfo) {
         analyze(ktCallableDeclaration) {
             val originalReceiverInfo = changeInfo.newParameters.find { it.oldIndex == 0 && !it.wasContextParameter }.takeIf { changeInfo.oldReceiverInfo != null } ?: changeInfo.oldReceiverInfo

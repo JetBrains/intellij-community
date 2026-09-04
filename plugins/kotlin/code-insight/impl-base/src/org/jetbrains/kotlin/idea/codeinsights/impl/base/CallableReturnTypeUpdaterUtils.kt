@@ -21,7 +21,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
@@ -249,7 +248,6 @@ object CallableReturnTypeUpdaterUtils {
         override fun getResult(element: TypeInfo.Type): String = element.longTypeRepresentation
     }
 
-    @OptIn(KaExperimentalApi::class)
     @ApiStatus.Internal
     context(session: KaSession)
     fun <T> calculateAllTypes(
@@ -311,7 +309,6 @@ object CallableReturnTypeUpdaterUtils {
         symbol.isLocal
 
     @ApiStatus.Internal
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun getTypeInfo(declaration: KtCallableDeclaration, useSmartCastType: Boolean = false, useTemplate: Boolean = true): TypeInfo {
         val calculateAllTypes = calculateAllTypes(declaration, useSmartCastType = useSmartCastType) { declarationType, allTypes, cannotBeNull ->
@@ -399,7 +396,6 @@ object CallableReturnTypeUpdaterUtils {
                 useTemplate: Boolean = false
             ): TypeInfo = TypeInfo(createTypeByKtType(ktType), otherTypes.map { createTypeByKtType(it) }.toList(), useTemplate)
 
-            @OptIn(KaExperimentalApi::class)
             context(_: KaSession)
             internal fun createTypeByKtType(ktType: KaType): Type = Type(
                 isUnit = ktType.classId == KaStandardTypeClassIds.UNIT && !ktType.isMarkedNullable,

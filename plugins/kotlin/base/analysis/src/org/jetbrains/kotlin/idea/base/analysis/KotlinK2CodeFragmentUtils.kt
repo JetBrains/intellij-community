@@ -2,12 +2,10 @@
 package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
 import org.jetbrains.kotlin.psi.KtExpression
 
 object KotlinK2CodeFragmentUtils {
-    @OptIn(KaExperimentalApi::class)
     val RUNTIME_TYPE_EVALUATOR_K2: Key<(KtExpression) -> KaTypePointer<KaType>?> = Key.create("RUNTIME_TYPE_EVALUATOR_K2")
 }

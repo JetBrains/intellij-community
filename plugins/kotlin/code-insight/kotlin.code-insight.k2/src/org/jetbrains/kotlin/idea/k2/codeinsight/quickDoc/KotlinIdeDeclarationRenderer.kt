@@ -106,7 +106,6 @@ internal class KotlinIdeDeclarationRenderer(
     private var highlightingManager: KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes> = KotlinIdeDescriptorRendererHighlightingManager.NO_HIGHLIGHTING,
     private val rootSymbol: KaDeclarationSymbol? = null
 ) {
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun renderFunctionTypeParameter(parameter: KtParameter): String = prettyPrint {
         parameter.nameAsName?.let { name -> withSuffix(highlight(": ") { asColon }) { append(highlight(name.renderName()) { asParameter }) } }
@@ -198,7 +197,6 @@ internal class KotlinIdeDeclarationRenderer(
 
 
     //todo rewrite after KT-66192 is implemented
-    @OptIn(KaExperimentalApi::class)
     inner class ContextParametersListRendererWithHighlighting: KaContextReceiverListRenderer {
         override fun renderContextReceivers(
             analysisSession: KaSession,

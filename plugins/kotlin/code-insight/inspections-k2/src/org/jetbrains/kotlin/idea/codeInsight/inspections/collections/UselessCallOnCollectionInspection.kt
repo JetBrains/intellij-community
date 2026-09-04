@@ -6,10 +6,8 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.isClassType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -70,7 +68,6 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
     protected inner class UselessFilterConversion(
         override val targetCallableId: CallableId,
     ) : QualifiedFunctionCallConversion {
-        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         override fun createProblemDescriptor(
             manager: InspectionManager,
@@ -122,7 +119,6 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
             else -> null
         }
 
-        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         override fun createProblemDescriptor(
             manager: InspectionManager,
@@ -195,7 +191,6 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         private val replacementName: String
             get() = replacementCallableId.callableName.asString()
 
-        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         override fun createProblemDescriptor(
             manager: InspectionManager,
@@ -234,7 +229,6 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.isLambdaReturningNotNull(): Boolean {
         val expression = if (this is KtLabeledExpression) this.baseExpression else this

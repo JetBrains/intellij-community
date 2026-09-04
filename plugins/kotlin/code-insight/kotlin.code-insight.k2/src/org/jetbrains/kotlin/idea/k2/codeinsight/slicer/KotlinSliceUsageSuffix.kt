@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.slicer
 
 import com.intellij.slicer.SliceUsage
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
@@ -44,7 +43,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.types.Variance
 
-@OptIn(KaExperimentalApi::class)
 object KotlinSliceUsageSuffix {
     //private val descriptorRenderer = DescriptorRenderer.ONLY_NAMES_WITH_SHORT_TYPES.withOptions {
     //  withoutReturnType = true
@@ -52,7 +50,6 @@ object KotlinSliceUsageSuffix {
     //  valueParametersHandler = TruncatedValueParametersHandler(maxParameters = 2)
     //}
 
-    @OptIn(KaExperimentalApi::class)
     @Nls
     fun containerSuffix(sliceUsage: SliceUsage): String? {
         val element = sliceUsage.element ?: return null

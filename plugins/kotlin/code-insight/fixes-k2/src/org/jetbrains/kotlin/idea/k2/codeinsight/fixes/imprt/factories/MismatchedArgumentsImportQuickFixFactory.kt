@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
 import com.intellij.psi.util.ReadActionCachedValue
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -107,7 +106,6 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
      * 
      * Does in-the-air resolution with [KtFileWithReplacedImports], so can be expensive.
      */    
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun resolvesWithoutErrors(originalCallExpression: KtElement, candidate: ImportCandidate): Boolean {
         val containingFile = originalCallExpression.containingKtFile

@@ -28,7 +28,6 @@ import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
@@ -180,7 +179,6 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
             readAction {
                 val declaration = pointer.element ?: return@readAction
                 analyze(declaration) {
-                    @OptIn(KaExperimentalApi::class)
                     declaration.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                 }
             }
@@ -283,7 +281,6 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
             val restoredPsi = diagnosticPsiPointer.element as? KtElement ?: return@registerLazyFixes
 
             analyze(restoredPsi) {
-                @OptIn(KaExperimentalApi::class)
                 val restoredDiagnostics = restoredPsi
                     .directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                     .filter { it.factoryName == diagnosticFactoryName }

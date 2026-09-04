@@ -4,12 +4,9 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocationKind
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -96,7 +93,6 @@ private fun findCallExprThatCausesUnlabeledNonLocalBreakOrContinueAmbiguity(jump
     .mapNotNull { checkAmbiguityForUnlabeledNonLocalBreakOrContinue(it) }
     .firstOrNull()
 
-@OptIn(KaExperimentalApi::class)
 private fun checkAmbiguityForUnlabeledNonLocalBreakOrContinue(functionLiteral: PsiElement): AmbiguousCallInfo? {
     val callExpression = functionLiteral.findMatchingCallExpr() ?: return null
     analyze(callExpression) {
@@ -114,7 +110,6 @@ private fun checkAmbiguityForUnlabeledNonLocalBreakOrContinue(functionLiteral: P
     return null
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun KaNamedFunctionSymbol.hasNoCallsInPlaceContract(lambdaParameterName: Name): Boolean =
     contractEffects.none {
         it is KaContractCallsInPlaceContractEffectDeclaration

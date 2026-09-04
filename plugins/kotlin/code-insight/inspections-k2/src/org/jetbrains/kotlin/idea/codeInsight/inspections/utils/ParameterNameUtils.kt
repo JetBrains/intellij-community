@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.utils
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -94,7 +93,6 @@ internal fun hasImplicitItConflicts(lambdaArgument: KtLambdaArgument): Boolean {
  * @param lambdaArgument The lambda argument to find a name for
  * @return A unique parameter name
  */
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun findUniqueParameterName(lambdaArgument: KtLambdaArgument): String {
     // Create a name validator to check if suggested names are valid

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.errors
@@ -27,7 +26,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object ChangeToUseSpreadOperatorFixFactory {
 
-    @OptIn(KaExperimentalApi::class)
     val changeToUseSpreadOperatorFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         val element = diagnostic.psi as? KtReferenceExpression ?: return@ModCommandBased emptyList()
         val callExpression = element.getStrictParentOfType<KtCallExpression>() ?: return@ModCommandBased emptyList()
@@ -58,7 +56,6 @@ private fun KaType.unwrap(): KaType {
  *
  * For instance, given Pair<T, Pair<Int, U>>, the function returns Pair<*, Pair<Int, *>>.
  */
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun substituteErrorAndTypeParameterTypesWithStarTypeProjections(type: KaType): KaType? {
     return when (type) {

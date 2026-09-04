@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -29,7 +28,6 @@ internal class ReplacePrintlnWithLoggingInspection : AbstractKotlinInspection() 
         fun CallableId.isPrintFunction(): Boolean = this in printFunctions
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean,

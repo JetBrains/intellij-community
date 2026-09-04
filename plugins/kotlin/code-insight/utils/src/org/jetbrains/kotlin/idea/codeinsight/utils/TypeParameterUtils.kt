@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -19,7 +18,6 @@ object TypeParameterUtils {
         return collectTypeParametersOnWhichReturnTypeDepends(callElement).isNotEmpty()
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun collectTypeParametersOnWhichReturnTypeDepends(callElement: KtResolvableCall): Set<KaTypeParameterSymbol> {
         val call = callElement.tryResolveCall()?.single?.function ?: return emptySet()

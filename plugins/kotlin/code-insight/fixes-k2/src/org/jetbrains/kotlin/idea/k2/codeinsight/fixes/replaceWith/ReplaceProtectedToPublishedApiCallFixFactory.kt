@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith
 
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
@@ -37,7 +36,6 @@ internal object ReplaceProtectedToPublishedApiCallFixFactory {
     private val String.newNameQuoted: String
         get() = "`$newName`"
 
-    @OptIn(KaExperimentalApi::class)
     private val signatureRenderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
         parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.NO_DEFAULT_VALUE
         propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
@@ -54,7 +52,6 @@ internal object ReplaceProtectedToPublishedApiCallFixFactory {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createQuickFix(
         element: KtElement,

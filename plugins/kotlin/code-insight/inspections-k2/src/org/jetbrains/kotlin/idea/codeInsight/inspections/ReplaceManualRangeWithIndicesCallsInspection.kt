@@ -13,7 +13,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.scopes.declarationScope
@@ -149,7 +148,6 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
      * Returns a [RangeExpression] only if it resolves to a Kotlin stdlib range function.
      * This prevents false positives when custom `until`/`rangeTo` functions are defined.
      */
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun rangeExpressionByAnalyze(expression: KtExpression): RangeExpression? =
         rangeExpressionByPsi(expression)?.takeIf {
@@ -244,7 +242,6 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
         return (this as? KtConstantExpression)?.text?.toIntOrNull() == value
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun resolveReceiverType(expression: KtExpression): KaType? {
         val variableCall = expression.resolveSuccessfulExpressionCall()?.variable ?: return null
@@ -254,7 +251,6 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
         return variableCall.dispatchReceiver?.type ?: variableCall.extensionReceiver?.type
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun hasPropertyOfType(type: KaType, propertyName: String, expectedReturnType: ClassId): Boolean {
         val typeScope = type.scope?.declarationScope ?: return false

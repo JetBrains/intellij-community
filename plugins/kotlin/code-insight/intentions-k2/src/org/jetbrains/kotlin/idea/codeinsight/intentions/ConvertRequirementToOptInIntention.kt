@@ -6,7 +6,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -55,7 +54,6 @@ internal class ConvertRequirementToOptInIntention :
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("intention.family.name.convert.requirement.to.optin")
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtAnnotationEntry): Context? {
         if (element.parent.parent is KtParameter) return null // inapplicable on those elements

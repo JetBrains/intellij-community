@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hints.declarative.HintFormat
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -41,7 +40,6 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         collectForRanges(element, sink)
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun collectForKotlinTime(element: PsiElement, sink: InlayTreeSink) {
         val expression = element as? KtDotQualifiedExpression ?: return
         val selectorExpression = expression.selectorExpression ?: return
@@ -94,7 +92,6 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isApplicableForRanges(binaryExpression: KtBinaryExpression, leftExp: KtExpression, rightExp: KtExpression): Boolean {
         val functionCallOrNull = binaryExpression.tryResolveCall()?.single?.function

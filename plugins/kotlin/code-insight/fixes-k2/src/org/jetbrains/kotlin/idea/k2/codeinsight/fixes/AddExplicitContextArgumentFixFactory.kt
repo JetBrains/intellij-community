@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.modcommand.PsiUpdateModCommandAction
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -37,7 +36,6 @@ internal object AddExplicitContextArgumentFixFactory {
         val nameSuggestions: Map<Name, Name>
     )
 
-    @OptIn(KaExperimentalApi::class)
     val overloadResolutionAmbiguity = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OverloadResolutionAmbiguity ->
         val psi = diagnostic.psi
         val callExpression = (psi as? KtCallExpression)

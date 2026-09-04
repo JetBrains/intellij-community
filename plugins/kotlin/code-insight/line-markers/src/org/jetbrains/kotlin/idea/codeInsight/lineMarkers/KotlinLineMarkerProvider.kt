@@ -24,7 +24,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Function
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
@@ -163,7 +162,6 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
             return
         }
 
-        @OptIn(KaExperimentalApi::class)
         analyze(declaration) {
             var callableSymbol = declaration.symbol as? KaCallableSymbol ?: return
             if (callableSymbol is KaValueParameterSymbol) {
@@ -324,7 +322,6 @@ object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
     override fun `fun`(element: PsiElement): String? {
         val declaration = element.getParentOfType<KtCallableDeclaration>(false) ?: return null
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD) && !declaration.isEffectivelyActual()) return null
-        @OptIn(KaExperimentalApi::class)
         analyze(declaration) {
             var callableSymbol = declaration.symbol as? KaCallableSymbol ?: return null
             if (callableSymbol is KaValueParameterSymbol) {

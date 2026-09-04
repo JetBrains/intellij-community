@@ -12,7 +12,6 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.defaultInitializer
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
@@ -67,7 +66,6 @@ object K2CreateLocalVariableFromUsageBuilder {
         override fun getText(): String = KotlinBundle.message("fix.create.from.usage.local.variable", propertyName)
         private var declarationText: String = computeDeclarationText()
 
-        @OptIn(KaExperimentalApi::class)
         private fun computeDeclarationText(): String {
             val refExpr = pointer.element ?: return ""
             val assignment = refExpr.getAssignmentByLHS()

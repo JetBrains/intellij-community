@@ -7,7 +7,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -73,7 +72,6 @@ internal class ReplaceWithEnumMapInspection :
         context: Context,
     ): @InspectionMessage String = KotlinBundle.message("replaceable.with.enummap")
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         val symbol = element.resolveSuccessfulSymbol()

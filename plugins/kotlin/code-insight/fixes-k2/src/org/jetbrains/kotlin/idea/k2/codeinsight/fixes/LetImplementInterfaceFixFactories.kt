@@ -8,7 +8,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.application
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -89,7 +88,6 @@ internal object LetImplementInterfaceFixFactories {
         return LetImplementInterfaceFix(expressionTypeDeclaration, elementContext)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun buildElementContext(
         element: KtClassOrObject,
@@ -119,7 +117,6 @@ internal object LetImplementInterfaceFixFactories {
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun renderShort(type: KaType): String = type.render(
         renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,

@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -193,7 +192,6 @@ class IntroduceBackingPropertyIntention :
         return if (property.nameIdentifier?.text?.startsWith('`') == true) "`_${property.name}`" else "_${property.name}"
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun collectFieldReferences(element: KtElement): List<SmartPsiElementPointer<KtSimpleNameExpression>> {
         val fieldReferences = mutableListOf<SmartPsiElementPointer<KtSimpleNameExpression>>()

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
@@ -86,7 +85,6 @@ internal class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotl
                         && (symbol.backingFieldSymbol?.annotations?.contains(JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID) == true)
             }
 
-        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         private fun KaClassLikeSymbol.buildStarProjectedType(): KaType = this.defaultTypeWithStarProjections
 
@@ -106,7 +104,6 @@ internal class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotl
         override fun KtTypeReference.hasSuperClass(superTypeClassId: ClassId): Boolean =
             type.hasSuperTypeClassId(superTypeClassId)
 
-        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         override fun KtCallExpression.resolveToConstructedClass(): KtClassOrObject? =
             (this.resolveSuccessfulSymbol() as? KaConstructorSymbol)

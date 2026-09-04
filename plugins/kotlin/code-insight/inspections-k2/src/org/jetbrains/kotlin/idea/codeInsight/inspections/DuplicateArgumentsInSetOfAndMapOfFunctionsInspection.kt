@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -90,7 +89,6 @@ internal class DuplicateArgumentsInSetOfAndMapOfFunctionsInspection :
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getDuplicateArguments(element: KtCallExpression): Map<Any?, List<SmartPsiElementPointer<KtExpression>>> {
         val callableId = element.tryResolveCall()?.single?.function

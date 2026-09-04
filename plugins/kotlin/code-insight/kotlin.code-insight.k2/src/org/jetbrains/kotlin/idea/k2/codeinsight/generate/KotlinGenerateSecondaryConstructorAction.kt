@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
@@ -73,7 +72,6 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
 
     private fun shouldPreselect(element: PsiElement) = element is KtProperty && !element.isVar
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun chooseSuperConstructors(classSymbol: KaClassSymbol): List<ClassMember> {
         val superClassSymbol = getSuperClassSymbolNoAny(classSymbol) ?: return emptyList()
@@ -186,7 +184,6 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun generateConstructor(
         klass: KtClass,

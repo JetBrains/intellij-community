@@ -13,7 +13,6 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.RelationType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.isClassType
@@ -155,7 +154,6 @@ internal fun KaVariableSymbol.toSpecialField(): SpecialField? {
     return field
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun KtExpression.getKotlinType(): KaType? {
     var parent = this.parent
@@ -253,7 +251,6 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
     val lambdaArgument = expr.lambdaArguments.singleOrNull() ?: return null

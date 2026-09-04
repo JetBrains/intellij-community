@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -58,9 +57,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection(
 
     protected open fun isDeprecatedExpression(callExpression: KtCallExpression): Boolean = callExpression.text == "values()"
 
-    @OptIn(KaExperimentalApi::class)
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
-        @OptIn(KaExperimentalApi::class)
         callExpressionVisitor(fun(callExpression: KtCallExpression) {
             if (holder.file !is KtFile) return
             if (!isEnumValuesSoftDeprecateEnabled(holder.file as KtFile)) return
@@ -155,7 +152,6 @@ abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection(
         return ReplaceFixType.WITH_CAST
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getCallableMethodIdString(expression: KtExpression?): String? {
         return (expression?.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol)?.callableId?.toString()

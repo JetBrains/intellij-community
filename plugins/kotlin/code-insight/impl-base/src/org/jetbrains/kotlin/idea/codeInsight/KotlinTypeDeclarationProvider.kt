@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -139,7 +138,6 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider
         return PsiElement.EMPTY_ARRAY
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun KtElement.resolvePsiOfTypeAtCallSite(): PsiElement? =
         analyze(this) {
             val memberCall = (this as? KtResolvableCall)?.tryResolveCall()?.single?.simple ?: return@analyze null

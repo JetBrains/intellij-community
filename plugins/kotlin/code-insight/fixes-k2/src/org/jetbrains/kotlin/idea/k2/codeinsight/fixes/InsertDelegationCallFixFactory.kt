@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.isSuccessful
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
@@ -60,7 +59,6 @@ internal object InsertDelegationCallFixFactory {
         private val isThis: Boolean,
     ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtSecondaryConstructor>(element) {
 
-        @OptIn(KaExperimentalApi::class)
         override fun invoke(
             context: ActionContext,
             element: KtSecondaryConstructor,

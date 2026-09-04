@@ -6,7 +6,6 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionAttempt
@@ -99,12 +98,10 @@ interface KotlinCallTargetProcessor {
      * Processes a call that resolved as an error.
      * If false is returned from this function, no further elements will be processed.
      */
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     fun processUnresolvedCall(element: KtElement, callInfo: KaCallResolutionAttempt?): Boolean
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun (context(KaSession) (CallTarget) -> Unit).toCallTargetProcessor(): KotlinCallTargetProcessor {
     val processor = this
     return object : KotlinCallTargetProcessor {
@@ -185,7 +182,6 @@ object KotlinCallProcessor {
         return current
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun handle(element: KtElement, processor: KotlinCallTargetProcessor): Boolean {
         analyze(element) {
             val resolutionAttempt: KaCallResolutionAttempt? = (element as? KtResolvableCall)?.tryResolveCall()
@@ -202,7 +198,6 @@ object KotlinCallProcessor {
     }
 
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     fun processResolvedCall(targetProcessor: KotlinCallTargetProcessor, element: KtElement, call: KaSimpleOrMultiCall): Boolean {
         with(targetProcessor) {

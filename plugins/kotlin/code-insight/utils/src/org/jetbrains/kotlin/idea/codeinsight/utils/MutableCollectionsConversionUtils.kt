@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -60,7 +59,6 @@ object MutableCollectionsConversionUtils {
         val classId: ClassId,
     ) : MutableCollectionCall
 
-    @OptIn(KaExperimentalApi::class)
     private fun callableName(
         initializer: KtExpression,
     ): MutableCollectionCall? = analyze(initializer) {

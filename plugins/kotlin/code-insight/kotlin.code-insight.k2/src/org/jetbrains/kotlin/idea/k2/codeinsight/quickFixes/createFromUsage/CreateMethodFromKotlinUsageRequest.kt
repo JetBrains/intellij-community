@@ -7,7 +7,6 @@ import com.intellij.lang.jvm.actions.ExpectedParameter
 import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -41,7 +40,6 @@ internal class CreateMethodFromKotlinUsageRequest private constructor(
 ) : CreateExecutableFromKotlinUsageRequest<KtElement>(functionCall, expectedParameters, modifiers), CreateMethodRequest {
 
     internal val targetClass: PsiElement? = initializeTargetClass(receiverExpression, functionCall)
-    @OptIn(KaExperimentalApi::class)
     internal val receiverTypePointer: KaTypePointer<KaType>? = receiverType?.createPointer()
 
     private fun initializeTargetClass(receiverExpression: KtExpression?, functionCall: KtElement): PsiElement? {

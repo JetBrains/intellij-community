@@ -28,18 +28,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.siblings
 import com.intellij.util.ThreeState
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.computeMissingCases
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -506,7 +503,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             FirErrors.IMPOSSIBLE_IS_CHECK_ERROR,
         ).map { it.name }
 
-        @OptIn(KaExperimentalApi::class)
         private fun isCompilationWarning(anchor: KtElement): Boolean {
             val hasWarning = analyze(anchor) {
                 anchor.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
@@ -517,7 +513,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return REPEATING_COMPILATION_WARNINGS.any { checker.isSuppressedFor(anchor, it) }
         }
 
-        @OptIn(KaExperimentalApi::class)
         private fun isCallToBuiltInMethod(call: KtCallExpression, methodName: String): Boolean {
             return analyze(call) {
                 val functionCall: KaFunctionCall<*> = call.tryResolveCall()?.single?.function ?: return@analyze false
@@ -541,7 +536,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return isCallToBuiltInMethod(call, "also")
         }
 
-        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         private fun isAssertion(parent: PsiElement?, value: Boolean): Boolean {
             return when (parent) {
@@ -631,7 +625,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return analyze(expression) { shouldSuppress(constant, expression, true) }
         }
 
-        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         private fun shouldSuppress(value: ConstantValue, expression: KtExpression, ignoreSmartCasts: Boolean): Boolean {
             var parent = expression.parent

@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -74,7 +73,6 @@ class RedundantLambdaArrowInspection : KotlinApplicableInspectionBase.Simple<KtL
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtLambdaExpression): Unit? {
         val functionLiteral = element.functionLiteral
@@ -117,7 +115,6 @@ class RedundantLambdaArrowInspection : KotlinApplicableInspectionBase.Simple<KtL
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun KtCallExpression.nestedCallsAreUnchanged(lambdaExpression: KtLambdaExpression): Boolean {
     val bodyStart = lambdaExpression.bodyExpression!!.startOffsetInParent
     val qualifiedExpression = parent as? KtQualifiedExpression

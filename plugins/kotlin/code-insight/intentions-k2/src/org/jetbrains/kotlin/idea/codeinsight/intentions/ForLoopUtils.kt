@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -45,7 +44,6 @@ object ForLoopUtils {
     internal typealias ReturnsToReplace = List<SmartPsiElementPointer<KtReturnExpression>>
     internal typealias ContinuesToReplace = List<SmartPsiElementPointer<KtContinueExpression>>
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun KtLambdaExpression.computeReturnsToReplace(): ReturnsToReplace {
         val lambdaBody = bodyExpression ?: return emptyList()
@@ -75,7 +73,6 @@ object ForLoopUtils {
             !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
         }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun suggestLoopVariableName(lambda: KtLambdaExpression, factory: KtPsiFactory): KtParameter {
         val body = lambda.bodyExpression
@@ -93,7 +90,6 @@ object ForLoopUtils {
         return factory.createLoopParameter(suggestedName)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun replaceImplicitItReferences(lambda: KtLambdaExpression, newParameter: KtParameter, factory: KtPsiFactory) {
         val body = lambda.bodyExpression ?: return
@@ -156,7 +152,6 @@ object ForLoopUtils {
         return body.referencesSymbol(loopParameter.symbol)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.referencesSymbol(symbol: KaSymbol): Boolean =
         anyDescendantOfType<KtNameReferenceExpression> { ref ->
@@ -205,7 +200,6 @@ object ForLoopUtils {
      *
      * Returns false for `Long`/`Short`/`Byte`/`Char` ranges — those don't fit `repeat(Int, …)`.
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun KtBinaryExpression.isZeroBasedRange(): Boolean {
         val left = left ?: return false

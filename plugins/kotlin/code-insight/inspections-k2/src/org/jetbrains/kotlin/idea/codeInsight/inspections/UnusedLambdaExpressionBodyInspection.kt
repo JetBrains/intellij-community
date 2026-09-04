@@ -7,7 +7,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -42,7 +41,6 @@ internal class UnusedLambdaExpressionBodyInspection : KotlinApplicableInspection
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean = true
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         if (element.isUsedAsExpression || (element.parent as? KtCallExpression)?.calleeExpression == element) {

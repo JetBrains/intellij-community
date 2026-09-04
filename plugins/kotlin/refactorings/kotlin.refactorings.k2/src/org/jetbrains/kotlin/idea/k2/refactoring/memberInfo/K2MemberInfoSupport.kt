@@ -36,7 +36,6 @@ class K2MemberInfoSupport : KotlinMemberInfoSupport {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun renderMemberInfo(member: KtNamedDeclaration): String {
         analyze(member) {
             val memberSymbol = member.symbol

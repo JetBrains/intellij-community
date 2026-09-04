@@ -20,7 +20,6 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
@@ -194,7 +193,6 @@ private fun convertProperty(
     originalProperty.replace(psiFactory.createFunction(property.text))
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun prepareContext(
     element: KtProperty,

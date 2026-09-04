@@ -2,13 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.visibility.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.visibility.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -38,7 +37,6 @@ internal object OptInFixUtils {
     fun findAnnotation(classId: ClassId): KaNamedClassSymbol? =
         findClass(classId) as? KaNamedClassSymbol
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun annotationIsVisible(annotation: KaNamedClassSymbol, from: KtElement): Boolean {
         val file = from.containingKtFile.symbol

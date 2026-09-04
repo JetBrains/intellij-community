@@ -13,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
@@ -206,7 +205,7 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KaNonPublicApi::class)
+    @OptIn(KaNonPublicApi::class)
     protected fun isCorrectAndHaveAccessibleModifiers(
         declaration: KtNamedDeclaration,
         expectedFile: KtFile,
@@ -307,7 +306,6 @@ internal class CreateExpectedClassFix(
     targetFile: KtFile?,
     commonModule: Module,
 ) : CreateExpectedFix<KtClassOrObject>(declaration, targetExpectedClass, commonModule, targetFile) {
-    @OptIn(KaExperimentalApi::class)
     override fun generate(
         project: Project,
         targetExpectedClass: KtClassOrObject?,
@@ -498,7 +496,6 @@ internal class CreateExpectedCallableMemberFix(
     targetFile: KtFile?,
     commonModule: Module,
 ) : CreateExpectedFix<KtNamedDeclaration>(declaration, targetExpectedClass, commonModule, targetFile) {
-    @OptIn(KaExperimentalApi::class)
     override fun generate(
         project: Project,
         targetExpectedClass: KtClassOrObject?,

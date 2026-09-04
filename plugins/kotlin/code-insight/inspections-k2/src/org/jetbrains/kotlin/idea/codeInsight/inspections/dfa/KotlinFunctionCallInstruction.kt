@@ -28,7 +28,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.RelationType
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractConditionalContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractConstantValue
@@ -106,7 +105,6 @@ class KotlinFunctionCallInstruction(
         return result.toTypedArray()
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun processContracts(
         interpreter: DataFlowInterpreter,
@@ -145,7 +143,6 @@ class KotlinFunctionCallInstruction(
         return resultValue
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KaContractBooleanExpression.toCondition(
         factory: DfaValueFactory,
@@ -169,7 +166,6 @@ class KotlinFunctionCallInstruction(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KaContractParameterValue.findDfaValue(
         callDescriptor: KaFunctionCall<*>,
@@ -193,7 +189,6 @@ class KotlinFunctionCallInstruction(
         is KaContractOwnerParameterValue -> arguments.qualifier
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun KaContractEffectDeclaration.toContractReturnValue(): ContractReturnValue? {
         return when (this) {
             is KaContractReturnsNotNullEffectDeclaration -> ContractReturnValue.returnNotNull()
@@ -210,7 +205,6 @@ class KotlinFunctionCallInstruction(
 
     data class MethodEffect(val dfaValue: DfaValue, val pure: Boolean)
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getMethodReturnValue(
         factory: DfaValueFactory,
@@ -306,12 +300,10 @@ class KotlinFunctionCallInstruction(
         return DfaCallArguments(qualifier, args.toTypedArray(), MutationSignature.unknown())
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getPsiMethod(): PsiMethod? =
         call.tryResolveExpressionCall()?.single?.function?.symbol?.psi?.toLightMethods()?.singleOrNull()
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getExpressionDfType(expr: KtExpression): DfType {
         val constructedClass = (expr.tryResolveExpressionCall()?.single?.simple

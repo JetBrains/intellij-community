@@ -7,7 +7,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -85,7 +84,6 @@ internal class SuspiciousJavaClassCallableReferenceInspection :
         return element.callableReference.getReferencedNameAsName() == JvmStandardClassIds.Callables.JavaClass.callableName
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallableReferenceExpression): Context? {
         val resolvedCall = element.resolveSuccessfulCall() ?: return null

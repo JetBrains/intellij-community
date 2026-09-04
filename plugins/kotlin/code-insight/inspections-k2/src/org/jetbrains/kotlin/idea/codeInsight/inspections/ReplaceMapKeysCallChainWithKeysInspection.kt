@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -73,7 +72,6 @@ internal class ReplaceMapKeysCallChainWithKeysInspection : KotlinApplicableInspe
         return PsiTreeUtil.findChildOfType(lambdaExpression, PsiComment::class.java) == null
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtQualifiedExpression): Unit? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
@@ -130,7 +128,6 @@ private fun KtCallExpression.singleLambdaExpression(): KtLambdaExpression? {
     return (argument as? KtLambdaArgument)?.getLambdaExpression() ?: argument.getArgumentExpression() as? KtLambdaExpression
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtLambdaExpression.mapsMapEntryToKey(): Boolean {
     val lambdaParameterSymbol = functionLiteral.symbol.valueParameters.singleOrNull() ?: return false

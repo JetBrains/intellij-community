@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -76,7 +75,6 @@ class KotlinDeclarationNameValidator(
         } != null
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun hasConflict(identifier: Name): Boolean = analyze(visibleDeclarationsContext) {
         when (target) {
             KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER, KotlinNameSuggestionProvider.ValidatorTarget.FUNCTION -> {

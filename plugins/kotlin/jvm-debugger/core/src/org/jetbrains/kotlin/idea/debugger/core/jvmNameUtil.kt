@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.core
 import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
@@ -34,7 +33,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 
 @ApiStatus.Internal
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 fun methodName(symbol: KaFunctionSymbol): String? = when (symbol) {
     is KaNamedFunctionSymbol -> getByteCodeMethodName(symbol)

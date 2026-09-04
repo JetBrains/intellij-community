@@ -25,7 +25,6 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.map2Array
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -161,7 +160,6 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         return NonCodeUsageSearchInfo(isInside, element)
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun findCallsWithContextParameters(
         result: MutableList<in UsageInfo>,
         element: KtParameter,
@@ -310,7 +308,6 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         })
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun isPassThroughParameter(
         refElement: PsiElement,
         parameter: KtParameter

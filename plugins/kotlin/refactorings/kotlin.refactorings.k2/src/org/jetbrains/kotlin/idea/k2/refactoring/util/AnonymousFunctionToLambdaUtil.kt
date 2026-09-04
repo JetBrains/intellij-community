@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 import com.intellij.openapi.util.Key
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -74,7 +73,6 @@ object AnonymousFunctionToLambdaUtil {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun prepareAnonymousFunctionToLambdaContext(element: KtNamedFunction): KtExpression? {
         if (element.receiverTypeReference != null && element.expectedType == null) return null
@@ -162,7 +160,6 @@ object AnonymousFunctionToLambdaUtil {
             isEmpty = !markReturnExpressions()
         }
 
-        @OptIn(KaExperimentalApi::class)
         private fun markReturnExpressions(): Boolean {
             var hasReturn = false
             analyze(function) {

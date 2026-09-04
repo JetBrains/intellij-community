@@ -19,7 +19,6 @@ import org.jetbrains.java.generate.element.AbstractElement
 import org.jetbrains.java.generate.element.ClassElement
 import org.jetbrains.java.generate.element.FieldElement
 import org.jetbrains.java.generate.element.MethodElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.components.returnType
@@ -138,7 +137,6 @@ object KotlinElementFactory {
         return me
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun setElementInfo(element: AbstractElement, type: KaType, modifiersList: KtModifierList?) {
         val typeSymbol = type.symbol

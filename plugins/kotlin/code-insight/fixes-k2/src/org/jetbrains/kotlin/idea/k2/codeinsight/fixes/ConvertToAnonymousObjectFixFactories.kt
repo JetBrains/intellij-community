@@ -5,7 +5,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -106,7 +105,6 @@ private data class TypeArguments(
     val types: List<KaType>,
 )
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun prepareFunctionText(
     lambda: KtLambdaExpression,
@@ -166,7 +164,6 @@ private fun prepareFunctionText(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun getFunctionalInterfaceSymbol(
     diagnostic: KaFirDiagnostic.InterfaceAsFunction,
@@ -184,7 +181,6 @@ private fun computeInterfaceName(call: KtCallExpression, classSymbol: KaNamedCla
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun computeTypeArguments(
     element: KtCallExpression,

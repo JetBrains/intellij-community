@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -51,7 +50,6 @@ import org.jetbrains.kotlin.types.Variance
 
 class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
 
-    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid = dotQualifiedExpressionVisitor(fun(dotQualifiedExpression) {
         val callExpression = dotQualifiedExpression.callExpression ?: return
         val calleeExpression = callExpression.calleeExpression ?: return
@@ -104,7 +102,6 @@ class ReplaceAssociateFunctionFix(
         newExpression?.let { dotQualifiedExpression.replace(newExpression) }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun createAssociateWithExpression(expressionData: ExpressionData, updater: ModPsiUpdater): KtExpression? =
         with(expressionData) {
             var keySelectorTypeRendered: String? = null

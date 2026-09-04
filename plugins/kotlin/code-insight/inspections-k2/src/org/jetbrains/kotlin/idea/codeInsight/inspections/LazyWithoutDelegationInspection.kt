@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -107,7 +106,6 @@ internal class LazyWithoutDelegationInspection :
         return refs.map { ref -> findLazyValueAccessor(ref) ?: return null }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun findLazyValueAccessor(ref: KtNameReferenceExpression): KtDotQualifiedExpression? {
         val propertyAccess = generateSequence(ref.getOutermostParenthesizedExpressionOrThis()) { expression ->

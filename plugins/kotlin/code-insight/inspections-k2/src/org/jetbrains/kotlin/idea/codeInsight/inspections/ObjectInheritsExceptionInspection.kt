@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -65,7 +64,6 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
     private class ChangeObjectToClassQuickFix : PsiUpdateModCommandQuickFix() {
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("inspection.object.exception.to.class.quick.fix.name")
 
-        @OptIn(KaExperimentalApi::class)
         override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
             val objectDeclaration =
                 (element as? LeafPsiElement)?.let { it.parent as? KtObjectDeclaration } ?: return

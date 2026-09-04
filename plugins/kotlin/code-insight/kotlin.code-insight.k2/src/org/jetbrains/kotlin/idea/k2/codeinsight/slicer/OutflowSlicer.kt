@@ -10,7 +10,6 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
@@ -194,7 +193,6 @@ class OutflowSlicer(
         processCalls(function, includeOverriders = false, CallSliceProducer)
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun processExpression(expression: KtExpression) {
         val expressionWithValue = when (expression) {
             is KtFunctionLiteral -> expression.parent as KtLambdaExpression
@@ -330,7 +328,6 @@ class OutflowSlicer(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     fun processSelectorExpression(selectorExpression: KtExpression, expressionWithValue: KtExpression) {
         analyze(selectorExpression) {
             val singleCall = selectorExpression.tryResolveExpressionCall()?.single?.simple
@@ -352,7 +349,6 @@ class OutflowSlicer(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun processImplicitInvokeCall(functionCall: KaSimpleCall<*, *>, idx: Int) {
         val receiverValue = functionCall.dispatchReceiver as? KaExplicitReceiverValue ?: return
@@ -373,7 +369,6 @@ class OutflowSlicer(
         receiverExpression.passToProcessor(newMode)
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun KtExpression.processDereferences() {
         if (!parentUsage.params.showInstanceDereferences) return
 

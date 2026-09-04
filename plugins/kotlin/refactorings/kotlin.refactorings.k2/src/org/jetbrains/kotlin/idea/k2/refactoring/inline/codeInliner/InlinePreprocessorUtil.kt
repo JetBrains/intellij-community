@@ -6,7 +6,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMember
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.dispatchReceiverType
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -236,7 +235,6 @@ internal fun insertExplicitTypeArguments(codeToInline: MutableCodeToInline) {
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 internal fun removeContracts(codeToInline: MutableCodeToInline) {
     for (statement in codeToInline.statementsBefore) {
         analyze(statement) {
@@ -253,7 +251,6 @@ internal fun removeContracts(codeToInline: MutableCodeToInline) {
 /**
  * Mark parameter/receiver usages inside the function. To use the marks during parameter -> argument substitution
  */
-@OptIn(KaExperimentalApi::class)
 internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, originalDeclaration: KtDeclaration) {
     val isAnonymousFunction = originalDeclaration is KtNamedFunction && originalDeclaration.nameIdentifier == null
     val isAnonymousFunctionWithReceiver = isAnonymousFunction && originalDeclaration.receiverTypeReference != null
@@ -353,7 +350,6 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
             )
         }
 
-        @OptIn(KaExperimentalApi::class)
         fun markToDeleteReceiver(receiverExpression: KtThisExpression) {
             analyze(receiverExpression) {
                 val originalCallableSymbol = ((originalDeclaration as? KtPropertyAccessor)?.property ?: originalDeclaration).symbol as? KaCallableSymbol ?: return
@@ -446,7 +442,6 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
 /**
  * If function consists of single `null`, insert cast to ensure the type
  */
-@OptIn(KaExperimentalApi::class)
 internal fun specifyNullTypeExplicitly(codeToInline: MutableCodeToInline, originalDeclaration: KtDeclaration) {
     val mainExpression = codeToInline.mainExpression
     if (mainExpression?.isNull() == true) {

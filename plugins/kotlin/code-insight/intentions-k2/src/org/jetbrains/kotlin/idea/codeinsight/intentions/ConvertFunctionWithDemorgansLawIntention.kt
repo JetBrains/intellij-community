@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -76,7 +75,6 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
         return Presentation.of(KotlinBundle.message("replace.0.with.1", fromFunctionName, toFunctionName))
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): ConvertFunctionWithDemorgansLawContext? {
         val (fromFunctionName, _, _, negatePredicate) = conversions[element.calleeExpression?.text] ?: return null

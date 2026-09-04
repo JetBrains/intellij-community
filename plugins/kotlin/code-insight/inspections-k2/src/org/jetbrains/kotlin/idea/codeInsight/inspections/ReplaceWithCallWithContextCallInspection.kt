@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
@@ -64,7 +63,6 @@ internal class ReplaceWithCallWithContextCallInspection :
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): ReplaceContext? {
         if (element.resolveSuccessfulSymbol()?.callableId != WITH_CALLABLE_ID) return null
@@ -79,7 +77,6 @@ internal class ReplaceWithCallWithContextCallInspection :
         return ReplaceContext(labeledReturns)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isReceiverOnlyUsedAsContextArgument(
         lambda: KtLambdaExpression,

@@ -22,7 +22,6 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.startOffset
 import org.jdom.Element
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -124,7 +123,6 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun checkCallableReferenceExpression(callableReferenceExpression: KtCallableReferenceExpression, holder: ProblemsHolder) {
 
         val callableReference = callableReferenceExpression.callableReference
@@ -189,7 +187,6 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
      * dontReplaceSetterIfSameIdentifierExistsInScope
      * replaceGetterInBlockExpression
      */
-    @OptIn(KaExperimentalApi::class)
     private fun checkCallExpression(callExpression: KtCallExpression, holder: ProblemsHolder) {
 
         val expressionParent = callExpression.parent
@@ -468,7 +465,6 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     /**
      * Fixes the case from KTIJ-21051
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType: KaType, propertyName: String): Boolean {
         val fieldWithSameName = receiverType.scope?.declarationScope?.callables(Name.identifier(propertyName))
@@ -477,7 +473,6 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         return fieldWithSameName != null
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun getSyntheticProperty(
         propertyNames: List<String>,
@@ -524,7 +519,6 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun propertyResolvesToSyntheticProperty(
         callExpression: KtExpression,

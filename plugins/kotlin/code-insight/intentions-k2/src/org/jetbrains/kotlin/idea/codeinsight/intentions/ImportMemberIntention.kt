@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -57,7 +56,6 @@ internal class ImportMemberIntention :
     override fun isApplicableByPsi(element: KtElement): Boolean =
         (element is KtDotQualifiedExpression && !element.isInImportDirective()) || element is KtUserType
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtElement): Context? {
         val reference = element.actualReference ?: return null

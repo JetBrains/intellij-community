@@ -15,7 +15,6 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.application
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -289,7 +288,6 @@ internal object InitializePropertyQuickFixFactories {
             createFixes(diagnostic.psi)
         }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createFixes(
         property: KtProperty,

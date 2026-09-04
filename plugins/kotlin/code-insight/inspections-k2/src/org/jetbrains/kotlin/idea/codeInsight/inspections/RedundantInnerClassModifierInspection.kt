@@ -21,7 +21,6 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.util.containers.OrderedSet
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -115,7 +114,6 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun hasOuterClassMemberReference(targetClass: KtClass, outerClasses: Set<KtClass>): Boolean {
         val outerClassSymbols by lazy {
@@ -136,7 +134,6 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtNameReferenceExpression.isReferenceToOuterClass(
         innerClass: KtClass,
@@ -187,7 +184,6 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
         return outerClassSymbols.any { outer -> outer.isSubClassOf(referenceClassDescriptor) }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtQualifiedExpression.hasThisReceiverOfOuterClass(outerClassSymbols: List<KaClassSymbol>): Boolean {
         return parent !is KtQualifiedExpression

@@ -8,10 +8,8 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -61,7 +59,6 @@ internal class ReplaceWithOperatorAssignmentInspection :
         return right.left != null && right.right != null
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtBinaryExpression): Context? {
         val left = element.left ?: return null
@@ -155,7 +152,6 @@ private fun checkExpressionRepeat(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun isPrimitiveOperation(expression: KtBinaryExpression): Boolean {
     val operationSymbol = expression.operationReference

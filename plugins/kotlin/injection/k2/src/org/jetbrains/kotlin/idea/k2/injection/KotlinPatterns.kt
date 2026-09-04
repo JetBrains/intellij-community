@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.k2.injection
 
 import com.intellij.patterns.StandardPatterns
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -33,7 +32,6 @@ internal object KotlinPatterns : StandardPatterns() {
     fun receiver() = KotlinReceiverPattern()
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KaType.renderFullyQualifiedName() = render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
 

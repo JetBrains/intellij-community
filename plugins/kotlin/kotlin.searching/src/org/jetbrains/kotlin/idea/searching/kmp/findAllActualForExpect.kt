@@ -8,7 +8,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getExpectsForActual
@@ -88,7 +87,6 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
     }.map { it.createSmartPointer() }
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun KtDeclaration.matchesWithExpect(expectDeclaration: KtDeclaration, compatibleOnly: Boolean): Boolean {
     val declaration = this
     if (compatibleOnly) {

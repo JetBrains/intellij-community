@@ -5,7 +5,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -89,7 +88,6 @@ class FilterIsInstanceResultIsAlwaysEmptyInspection: AbstractKotlinInspection() 
      *
      * The same logic can be applied to the case when T is `final` instead.
      */
-    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid {
         return callExpressionVisitor { ktCall ->
             analyze(ktCall) {

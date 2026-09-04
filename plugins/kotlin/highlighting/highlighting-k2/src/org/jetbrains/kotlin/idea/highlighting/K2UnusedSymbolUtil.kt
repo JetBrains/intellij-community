@@ -31,7 +31,6 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
 import com.siyeh.ig.psiutils.SerializationUtils
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.constructor
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -256,7 +255,6 @@ object K2UnusedSymbolUtil {
             // Kotlin Notebook injections do check references
             && containingFile.virtualFile !is VirtualFileWindow
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun isHiddenFromResolution(declaration: KtNamedDeclaration): Boolean {
         val anno = declaration.findAnnotation(
@@ -338,7 +336,6 @@ object K2UnusedSymbolUtil {
     }
 
     // variation of IDEA's AnnotationUtil.checkAnnotatedUsingPatterns()
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun checkAnnotatedUsingPatterns(declaration: KtNamedDeclaration, annotationPatterns: Collection<String>): Boolean {
         if (declaration.annotationEntries.isEmpty()) return false
@@ -493,7 +490,6 @@ object K2UnusedSymbolUtil {
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun hasReferences(
         project: Project,
@@ -586,7 +582,6 @@ object K2UnusedSymbolUtil {
      * In the above code, CC is not referenced by any expressions other than `import C.CC.value`,
      * but `C.CC.value` is used by `fun value() = value`, so we cannot delete `import C.CC.value`, and we have to keep CC.
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun checkPrivateDeclaration(
         declaration: KtNamedDeclaration,
@@ -704,14 +699,12 @@ object K2UnusedSymbolUtil {
         return containingFile.anyDescendantOfType(PsiReferenceExpression::isQualifiedNameInEnumStaticMethods)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtImportDirective.resolveReferenceToSymbol(): KaSymbol? = when (importedReference) {
         is KtReferenceExpression -> importedReference as KtReferenceExpression
         else -> importedReference?.getChildOfType<KtReferenceExpression>()
     }?.resolveSuccessfulSymbol()
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtImportDirective.isUsedStarImportOfEnumStaticFunctions(): Boolean {
         if (importPath?.isAllUnder != true) return false
@@ -721,7 +714,6 @@ object K2UnusedSymbolUtil {
 
         val enumStaticMethods = ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES.map { FqName("$importedEnumFqName.$it") }
 
-        @OptIn(KaExperimentalApi::class)
         fun KtExpression.isNameInEnumStaticMethods(): Boolean {
             if (getQualifiedExpressionForSelector() != null) return false
             if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false
@@ -848,7 +840,6 @@ object K2UnusedSymbolUtil {
         return hasTextUsages
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun createQuickFixes(declaration: KtNamedDeclaration): List<IntentionAction> {
         if (declaration is KtParameter) {

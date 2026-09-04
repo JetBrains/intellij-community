@@ -9,7 +9,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
@@ -65,7 +64,6 @@ internal class EmptyRangeInspection : KotlinApplicableInspectionBase<KtElement, 
         return createProblemDescriptor(element, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly, *fixes)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isAvailable(element: KtElement): Boolean =
         //checks if the reference expressions are used in the range

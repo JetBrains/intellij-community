@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -122,11 +121,9 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun registerLocalReferences(elements: List<PsiElement>) {
         val registerDeclarationAccessVisitor = object : KtVisitorVoid() {
-            @OptIn(KaExperimentalApi::class)
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                 if (expression.parent is KtValueArgumentName) {
                     // usage of parameter in form of named argument is not counted
@@ -160,7 +157,6 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                 }
             }
 
-            @OptIn(KaExperimentalApi::class)
             override fun visitBinaryExpression(expression: KtBinaryExpression) {
                 val call = expression.resolveSuccessfulCall() ?: return
                 if (call is KaFunctionCall<*>) {

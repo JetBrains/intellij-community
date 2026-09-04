@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -34,7 +33,6 @@ internal class ConvertTrimIndentToTrimMarginIntention :
         return template.text.startsWith("\"\"\"") && template.isSurroundedByLineBreaksOrBlanks()
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Unit? {
         val callee = element.calleeExpression ?: return null

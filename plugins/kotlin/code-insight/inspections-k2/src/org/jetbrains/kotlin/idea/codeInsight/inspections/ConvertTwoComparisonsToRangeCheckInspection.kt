@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.applyIf
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
@@ -218,7 +217,6 @@ internal class ConvertTwoComparisonsToRangeCheckInspection : KotlinApplicableIns
         return KtPsiFactory(project).createExpression(constantVal.toDouble().toString())
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtBinaryExpression): Context? {
         val psiContext = element.getPsiContext() ?: return null

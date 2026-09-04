@@ -15,7 +15,6 @@ import com.sun.jdi.ClassType
 import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.eval4j.jdi.asValue
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -36,7 +35,6 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 @ApiStatus.Internal
-@OptIn(KaExperimentalApi::class)
 abstract class KotlinK2RuntimeTypeEvaluator(
     editor: Editor?,
     private val expression: KtExpression,

@@ -10,7 +10,6 @@ import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.diagnostics
@@ -133,7 +132,6 @@ sealed class ChangeVisibilityModifierIntention(
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtDeclaration): Unit? {
         // Skip the visibility-change intention when there is an [EXPLICIT_FIELD_VISIBILITY_MUST_BE_LESS_PERMISSIVE],

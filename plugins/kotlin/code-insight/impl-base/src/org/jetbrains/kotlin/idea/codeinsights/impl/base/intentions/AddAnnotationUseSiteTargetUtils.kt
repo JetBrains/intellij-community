@@ -45,7 +45,6 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 object AddAnnotationUseSiteTargetUtils {
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun KtAnnotationEntry.getApplicableUseSiteTargets(): List<AnnotationUseSiteTarget> {
         val symbol = typeReference?.type?.expandedSymbol
@@ -53,7 +52,6 @@ object AddAnnotationUseSiteTargetUtils {
         return applicableUseSiteTargets(applicableTargets)
     }
 
-    @OptIn(KaExperimentalApi::class)
     fun KtAnnotationEntry.applicableUseSiteTargets(applicableTargets: Set<KaAnnotationTarget>): List<AnnotationUseSiteTarget> {
         if (useSiteTarget != null) return emptyList()
         val annotationShortName = this.shortName ?: return emptyList()

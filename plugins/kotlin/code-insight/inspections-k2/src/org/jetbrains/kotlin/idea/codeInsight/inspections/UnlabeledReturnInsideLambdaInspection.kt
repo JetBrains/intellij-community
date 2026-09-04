@@ -5,7 +5,6 @@ import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.psi.returnExpressionVisitor
 
 internal class UnlabeledReturnInsideLambdaInspection : AbstractKotlinInspection() {
 
-    @OptIn(KaExperimentalApi::class)
     private fun hasDiagnosticError(returnExpression: KtReturnExpression): Boolean {
         return analyze(returnExpression) {
             returnExpression.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).any {

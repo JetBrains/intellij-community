@@ -6,12 +6,9 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.components.isClassType
@@ -93,7 +90,6 @@ internal class UnnecessaryOptInAnnotationInspection :
 
     override fun getApplicableRanges(element: KtAnnotationEntry): List<TextRange> = ApplicabilityRange.self(element)
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtAnnotationEntry): Context? {
         val annotationType = element.typeReference?.type ?: return null
@@ -194,7 +190,6 @@ private class MarkerCollector(private val moduleApiVersion: ApiVersion) {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun collectMarkers(declaration: KtDeclaration) {
         if (declaration !is KtFunction && declaration !is KtProperty && declaration !is KtParameter) return
@@ -219,7 +214,6 @@ private class MarkerCollector(private val moduleApiVersion: ApiVersion) {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun collectMarkers(expression: KtReferenceExpression) {
         val symbols = expression.resolveSuccessfulSymbols()
@@ -269,7 +263,6 @@ private class MarkerCollector(private val moduleApiVersion: ApiVersion) {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun collectMarkers(delegate: KtPropertyDelegate) {
         delegate.resolveSuccessfulSymbols().forEach { (it as? KaAnnotatedSymbol)?.collectMarkers() }

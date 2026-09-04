@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.goto
 import com.intellij.navigation.GotoRelatedItem
 import com.intellij.navigation.GotoRelatedProvider
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.getExpectsForActual
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -23,7 +22,6 @@ class KotlinExpectOrActualGotoRelatedProvider : GotoRelatedProvider() {
             element?.module?.let { KotlinBundle.message("goto.related.provider.in.module.0", it.name) }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun getItems(psiElement: PsiElement): List<GotoRelatedItem> {
         val declaration = psiElement.getParentOfTypeAndBranch<KtNamedDeclaration> { nameIdentifier } ?: return emptyList()
         val targets = when {

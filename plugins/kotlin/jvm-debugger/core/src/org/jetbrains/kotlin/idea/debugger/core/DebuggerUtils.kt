@@ -24,7 +24,6 @@ import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -274,7 +273,6 @@ object DebuggerUtils {
         return false
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun isCrossInlineArgument(argumentExpression: KtExpression): Boolean {
         val callExpression = KtPsiUtil.getParentCallIfPresent(argumentExpression) ?: return false
 

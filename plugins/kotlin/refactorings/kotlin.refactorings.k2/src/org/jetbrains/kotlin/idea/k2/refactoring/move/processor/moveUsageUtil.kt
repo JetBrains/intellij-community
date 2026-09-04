@@ -12,7 +12,6 @@ import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.javaGetterName
 import org.jetbrains.kotlin.analysis.api.components.javaSetterName
@@ -166,7 +165,6 @@ private fun K2MoveTargetDescriptor.File.getJavaFileFacadeFqName(): FqName {
  * @return non-code usages like occurrences in documentation, kdoc references (references in square brackets) are considered
  * code usages and won't be found when calling this method.
  */
-@OptIn(KaExperimentalApi::class)
 private fun KtNamedDeclaration.findNonCodeUsages(
     searchInCommentsAndStrings: Boolean,
     searchForText: Boolean,
@@ -270,7 +268,6 @@ private fun KaSymbol.isStrictAncestorOf(other: KaSymbol): Boolean {
     return false
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun traverseOuterInstanceReferences(
     member: KtNamedDeclaration,
     body: (OuterInstanceReferenceUsageInfo) -> Unit
@@ -282,7 +279,6 @@ private fun traverseOuterInstanceReferences(
         val outerClassPsi = outerClassSymbol.psi
         var found = false
         member.accept(object : PsiRecursiveElementWalkingVisitor() {
-            @OptIn(KaExperimentalApi::class)
             private fun getOuterInstanceReference(element: PsiElement): OuterInstanceReferenceUsageInfo? {
                 return when (element) {
                     is KtThisExpression -> {

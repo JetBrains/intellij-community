@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -97,7 +96,6 @@ internal class RemoveRedundantSpreadOperatorInspection : KotlinApplicableInspect
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun resolveCallToPsiElement(call: KtExpression): PsiElement? = analyze(call) {
     call.resolveSuccessfulExpressionSymbol()?.psi
 }

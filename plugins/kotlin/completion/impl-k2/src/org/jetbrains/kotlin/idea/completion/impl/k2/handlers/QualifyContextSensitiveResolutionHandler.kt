@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.startOffset
 import kotlinx.serialization.Serializable
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.contextSensitiveResolutionStatus
@@ -102,7 +101,6 @@ private var UserDataHolder.contextSensitiveResolutionFqn: FqNameWithOffset?
 
 private data class FqNameWithOffset(val fqName: FqName, val offset: Int)
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun addQualifierIfNeeded(position: PsiElement): PsiElement? {
     val fileCopy = position.copyContainingFile() ?: return null

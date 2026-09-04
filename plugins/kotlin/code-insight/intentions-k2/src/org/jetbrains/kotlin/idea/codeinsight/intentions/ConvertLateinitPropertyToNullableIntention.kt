@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -34,7 +33,6 @@ internal class ConvertLateinitPropertyToNullableIntention :
                 && element.typeReference?.typeElement !is KtNullableType
                 && element.initializer == null
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtProperty): Context {
         val nullableType = element.returnType.withNullability(isMarkedNullable = true)

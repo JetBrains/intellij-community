@@ -6,7 +6,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
@@ -45,7 +44,6 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
         InjectorUtils.getActiveInjectionSupports().filterIsInstance<K2KotlinLanguageInjectionSupport>().firstOrNull()
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun KtCallExpression.hasCallableId(packageName: FqName, callableName: Name): Boolean = analyze(this) {
         val symbol = tryResolveCall()?.single?.function?.symbol
         symbol?.callableId == CallableId(packageName, callableName)
@@ -53,7 +51,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
 
     override fun resolveReference(reference: PsiReference): PsiElement? = reference.resolve()
 
-    @OptIn(KaExperimentalApi::class, KaPlatformInterface::class)
+    @OptIn(KaPlatformInterface::class)
     override fun getTargetProperty(ktProperty: KtProperty, containingFile: PsiFile): KtProperty {
         val copyOrigin = containingFile.copyOrigin as? KtFile
             ?: return super.getTargetProperty(ktProperty, containingFile)

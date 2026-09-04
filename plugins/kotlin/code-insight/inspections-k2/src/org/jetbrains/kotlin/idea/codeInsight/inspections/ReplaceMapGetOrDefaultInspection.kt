@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -65,7 +64,6 @@ internal class ReplaceMapGetOrDefaultInspection :
         return callExpression.arguments() != null
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isApplicableByAnalyze(callExpression: KtCallExpression, receiverExpression: KtExpression): Boolean {
         if (callExpression.resolveSuccessfulSymbol()?.getFqNameIfPackageOrNonLocal() != getOrDefaultFqName) return false

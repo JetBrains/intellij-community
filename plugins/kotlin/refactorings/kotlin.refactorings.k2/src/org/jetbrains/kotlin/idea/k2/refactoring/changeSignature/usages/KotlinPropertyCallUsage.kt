@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.variable
@@ -71,7 +70,6 @@ internal class KotlinPropertyCallUsage(
         return (wrappedElement ?: newElement) as? KtExpression
     }
 
-    @OptIn(KaExperimentalApi::class)
     private val explicitReceiver: SmartPsiElementPointer<KtExpression>? =
         allowAnalysisFromWriteActionInEdt(element) {
             val variableAccessCall = element.tryResolveExpressionCall()?.single?.variable

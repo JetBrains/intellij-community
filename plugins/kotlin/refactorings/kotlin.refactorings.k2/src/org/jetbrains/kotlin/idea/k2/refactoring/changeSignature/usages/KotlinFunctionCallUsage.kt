@@ -14,7 +14,6 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -101,7 +100,7 @@ internal class KotlinFunctionCallUsage(
     private val callee: PsiElement
 ) : UsageInfo(element), KotlinBaseChangeSignatureUsage, WithContextParameters {
 
-    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private val indexToExpMap: Map<Int, SmartPsiElementPointer<KtExpression>>? = allowAnalysisFromWriteAction {
         allowAnalysisOnEdt {
             analyze(element) {
@@ -161,7 +160,7 @@ internal class KotlinFunctionCallUsage(
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private val explicitToImplicitExtensionReceiver: Pair<String?, String?> =
         allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
@@ -187,7 +186,6 @@ internal class KotlinFunctionCallUsage(
     @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private val onReceiver  = allowAnalysisFromWriteAction { allowAnalysisOnEdt { analyze(element) { onReceiver(element) } } }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun onReceiver(element: KtResolvableCall): Boolean {
         val call = element.resolveSuccessfulCall()?.simple ?: return false

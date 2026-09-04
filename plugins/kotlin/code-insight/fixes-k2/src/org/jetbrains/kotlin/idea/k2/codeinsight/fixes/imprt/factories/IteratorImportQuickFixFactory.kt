@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -59,7 +58,6 @@ internal object IteratorImportQuickFixFactory : AbstractImportQuickFixFactory() 
     /**
      * Resolves the type of the iterator returned by calling `iterator()` on the given [iteratedExpression].
      */
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun resolveIteratorType(iteratedExpression: KtExpression): KaType? {
         val psiFactory = KtPsiFactory.contextual(iteratedExpression)

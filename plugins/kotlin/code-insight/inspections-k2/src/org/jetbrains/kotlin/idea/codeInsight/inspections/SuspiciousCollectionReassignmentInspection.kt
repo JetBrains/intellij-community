@@ -9,7 +9,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
@@ -53,7 +52,6 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.types.Variance
 
 class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
-    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         binaryExpressionVisitor(fun(binaryExpression) {
             analyze(binaryExpression) {
@@ -157,7 +155,6 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val emptyCollectionFactoryMethods =
                 listOf("emptyList", "emptySet", "emptyMap", "listOf", "setOf", "mapOf").map { "kotlin.collections.$it" }
 
-            @OptIn(KaExperimentalApi::class)
             context(session: KaSession)
             fun isApplicable(binaryExpression: KtBinaryExpression, property: KtProperty): Boolean {
                 if (binaryExpression.operationToken != KtTokens.PLUSEQ) return false

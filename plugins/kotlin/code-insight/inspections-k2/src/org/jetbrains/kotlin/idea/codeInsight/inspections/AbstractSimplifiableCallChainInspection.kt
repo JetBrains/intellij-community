@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -96,7 +95,6 @@ internal abstract class AbstractSimplifiableCallChainInspection :
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtQualifiedExpression): CallChainConversion? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
@@ -170,7 +168,6 @@ internal abstract class AbstractSimplifiableCallChainInspection :
         return extensionReceiverType.isArrayOrPrimitiveArray && extensionReceiverType.symbol?.typeParameters.orEmpty().isEmpty()
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun isAppliedOnMapReceiver(functionCall: KaFunctionCall<*>): Boolean {
         return functionCall.isCalledOnMapExtensionReceiver
@@ -239,7 +236,6 @@ internal abstract class AbstractSimplifiableCallChainInspection :
     private fun KaFunctionCall<*>.isCalling(fqName: FqName): Boolean =
         symbol.getFqNameIfPackageOrNonLocal() == fqName
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KaCallableSignature<*>.isFunctionalTypeOfAnyKind(): Boolean =
         returnType.functionTypeFamily != null
@@ -278,7 +274,6 @@ internal abstract class AbstractSimplifiableCallChainInspection :
                 classId == StandardClassIds.ULong ||
                 classId == KaStandardTypeClassIds.DOUBLE
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtCallExpression.isSuspendCall(): Boolean {
         val symbol = this.resolveSuccessfulCall()?.symbol ?: return false
@@ -287,7 +282,6 @@ internal abstract class AbstractSimplifiableCallChainInspection :
     // endregion
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal val KaSimpleCall<*, *>.isCalledOnMapExtensionReceiver: Boolean
     get() {
@@ -296,7 +290,6 @@ internal val KaSimpleCall<*, *>.isCalledOnMapExtensionReceiver: Boolean
         return extensionReceiver.type.isSubtypeOf(StandardClassIds.Map)
     }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal val KaSimpleCall<*, *>.isCalledOnMapDispatchReceiver: Boolean
     get() {

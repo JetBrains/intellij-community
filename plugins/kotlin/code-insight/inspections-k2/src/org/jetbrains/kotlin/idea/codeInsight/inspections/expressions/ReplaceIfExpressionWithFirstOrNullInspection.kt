@@ -7,7 +7,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -142,7 +141,6 @@ private fun FirstElementRead.isResolvable(): Boolean = when (this) {
     is FirstElementRead.FirstCall -> expression.callExpression?.calleeCallableId() in FIRST_CALLABLE_IDS
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtCallExpression.calleeCallableId(): CallableId? =
     this.resolveSuccessfulSymbol()?.callableId

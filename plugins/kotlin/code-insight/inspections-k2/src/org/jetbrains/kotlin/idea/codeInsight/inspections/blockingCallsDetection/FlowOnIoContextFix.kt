@@ -6,7 +6,6 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -24,7 +23,6 @@ internal class FlowOnIoContextFix : PsiUpdateModCommandQuickFix() {
         return KotlinBundle.message("intention.flow.on.dispatchers.io")
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val callExpression = element.parentOfType<KtCallExpression>() ?: return
         analyze(callExpression) {

@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
@@ -204,7 +203,6 @@ internal object WrapWithSafeLetCallFixFactories {
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isCallingFunctionalTypeVariableInLocalScope(callExpression: KtCallExpression): Boolean? {
         val calleeExpression = callExpression.calleeExpression
@@ -281,7 +279,6 @@ internal object WrapWithSafeLetCallFixFactories {
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getDeclaredParameterNameForArgument(argumentExpression: KtExpression): String? {
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return null
@@ -301,7 +298,6 @@ internal object WrapWithSafeLetCallFixFactories {
         return current
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isExpressionAtNullablePosition(expression: KtExpression): Boolean {
         val parent = expression.parent

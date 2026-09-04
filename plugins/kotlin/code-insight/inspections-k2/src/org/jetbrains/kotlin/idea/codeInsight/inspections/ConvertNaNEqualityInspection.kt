@@ -7,7 +7,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -93,7 +92,6 @@ internal class ConvertNaNEqualityInspection :
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun isNaNExpression(expression: KtExpression): Boolean {
     if (expression.text?.endsWith(NAN_NAME) != true) return false

@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.constructor
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -98,7 +97,6 @@ internal class AddExplicitTargetToParameterAnnotationInspection :
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isInAllowlist(element: KtAnnotationEntry): Boolean {
         val annotationClassId = element.tryResolveCall()?.single?.constructor?.symbol?.containingClassId

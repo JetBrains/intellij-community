@@ -10,7 +10,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -51,7 +50,6 @@ class MapGetWithNotNullAssertionOperatorInspection : KotlinApplicableInspectionB
     override fun isApplicableByPsi(element: KtPostfixExpression): Boolean =
         element.operationToken == KtTokens.EXCLEXCL && element.getReplacementData() != null
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtPostfixExpression): Unit? =
         (element.baseExpression?.resolveSuccessfulExpressionCall()?.function?.symbol

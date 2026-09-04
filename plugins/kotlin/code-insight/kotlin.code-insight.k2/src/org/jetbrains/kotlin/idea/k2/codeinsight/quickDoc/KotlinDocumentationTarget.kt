@@ -19,7 +19,6 @@ import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -264,7 +263,6 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
     return HtmlChunk.fragment(fqNameSection, fileNameSection)
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
     originalElement: PsiElement?,
     element: KtClass,
@@ -408,7 +406,6 @@ private fun renderKDoc(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun findKDoc(symbol: KaSymbol): KDocContent? {
     val ktElement = symbol.psi?.navigationElement as? KtElement
@@ -437,7 +434,6 @@ private fun findKDoc(symbol: KaSymbol): KDocContent? {
     return (symbol as? KaDeclarationSymbol)?.getExpectsForActual()?.mapNotNull { declarationSymbol -> findKDoc(declarationSymbol) }?.firstOrNull()
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun @receiver:Nls StringBuilder.renderKotlinSymbol(symbol: KaDeclarationSymbol,
                                                            declaration: KtDeclaration,

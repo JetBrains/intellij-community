@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.highlighting.analyzers
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -47,7 +46,6 @@ internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHold
         highlightSimpleNameExpression(expression)
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression) {
         context(session) {
             if (expression.isAssignmentReference()) return
@@ -117,7 +115,6 @@ internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHold
         getDefaultHighlightingInfoForPropertyCall(symbol, expression)
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun getHighlightingInfoTypeForPropertyCallFromExtension(expression: KtSimpleNameExpression): Boolean {
         val highlightInfoType: HighlightInfoType = context(session) {
             val call = expression.tryResolveExpressionCall()?.single ?: return false

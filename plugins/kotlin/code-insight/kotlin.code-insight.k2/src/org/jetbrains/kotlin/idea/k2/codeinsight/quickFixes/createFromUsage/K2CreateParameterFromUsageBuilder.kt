@@ -12,7 +12,6 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
@@ -102,7 +101,6 @@ object K2CreateParameterFromUsageBuilder {
         return listOf(CreateParameterFromUsageAction(qualifiedElement, refExpr.getReferencedName(), valVar, container))
     }
 
-    @OptIn(KaExperimentalApi::class)
     fun generateCreateParameterActionForNamedParameterNotFound(arg: KtValueArgument): IntentionAction? {
         val name = arg.getArgumentName()?.text?: return null
         val expression = arg.getArgumentExpression()?: return null
@@ -150,7 +148,6 @@ object K2CreateParameterFromUsageBuilder {
         override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = originalExprPointer.element != null
         override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
 
-        @OptIn(KaExperimentalApi::class)
         override fun generatePreview(
             project: Project,
             editor: Editor,
@@ -168,7 +165,6 @@ object K2CreateParameterFromUsageBuilder {
             return IntentionPreviewInfo.CustomDiff(KotlinFileType.INSTANCE, container.name, "", "$valVar${propertyName.quoteIfNeeded()}: $typeText")
         }
 
-        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         private fun getExpectedType(expression: KtExpression): KaType {
             if (expression is KtDestructuringDeclarationEntry) {

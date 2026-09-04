@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -54,7 +53,6 @@ class ReplaceWithIgnoreCaseEqualsInspection : KotlinApplicableInspectionBase.Sim
     return caseConversionFunctionFqNames[leftCalleeText] != null
   }
 
-  @OptIn(KaExperimentalApi::class)
   context(session: KaSession)
   override fun prepareContext(element: KtBinaryExpression): Unit? {
     val leftCall = element.left?.getCallExpressionIfCaseConversion() ?: return null

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.refactoring.util
 
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.types.Variance
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 fun getExplicitLambdaSignature(element: KtLambdaExpression): String? {
     val lambdaSymbol = element.functionLiteral.symbol as KaFunctionSymbol

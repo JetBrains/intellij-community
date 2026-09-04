@@ -5,7 +5,6 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -63,7 +62,6 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
     protected interface QualifiedFunctionCallConversion : Conversion<KtQualifiedExpression> {
         val targetCallableId: CallableId
 
-        @OptIn(KaExperimentalApi::class)
         @ApiStatus.NonExtendable
         override fun createProblemDescriptor(
             manager: InspectionManager,

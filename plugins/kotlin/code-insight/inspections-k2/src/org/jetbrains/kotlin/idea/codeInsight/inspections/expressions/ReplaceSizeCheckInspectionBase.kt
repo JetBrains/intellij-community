@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
@@ -59,7 +58,6 @@ internal sealed class ReplaceSizeCheckInspectionBase :
             ?.name != methodToReplaceWith.methodName
                 && extractTargetExpressionFromPsi(element) != null
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     final override fun prepareContext(element: KtBinaryExpression): ReplacementInfo? {
         val replaceableCall = extractTargetExpressionFromPsi(element)
@@ -118,7 +116,6 @@ internal sealed class ReplaceSizeCheckInspectionBase :
         append("()")
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KaSimpleCall<*, *>.findReplaceableOverride(): ReplaceableCall? {
         val receiverType = (extensionReceiver ?: dispatchReceiver)

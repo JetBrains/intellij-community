@@ -10,7 +10,6 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidate
@@ -214,7 +213,6 @@ object SpecifyRemainingArgumentsByNameUtil {
      * See [RemainingArgumentsData] for details.
      */
     @ApiStatus.Internal
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     fun KaFunctionCall<*>.getRemainingArgumentsData(existingArgumentsCount: Int): RemainingArgumentsData? {
         if (!symbol.hasStableParameterNames) return null
@@ -280,7 +278,6 @@ object SpecifyRemainingArgumentsByNameUtil {
      * Given the list of [allCalls] that are possible, this function returns the [RemainingArgumentsData] from the
      * overload with the fewest required (not default) value parameters.
      */
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getRemainingArgumentsData(allCalls: List<KaCallCandidate>, existingArgumentsCount: Int): RemainingArgumentsData? {
         val allFunctionCalls = allCalls.map { info ->
@@ -298,7 +295,6 @@ object SpecifyRemainingArgumentsByNameUtil {
     /**
      * Calculates the [RemainingArgumentsData] for the [element].
      */
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     fun findRemainingNamedArguments(element: KtValueArgumentList): RemainingArgumentsData? {
         val functionCall = element.parent as? KtCallExpression ?: return null

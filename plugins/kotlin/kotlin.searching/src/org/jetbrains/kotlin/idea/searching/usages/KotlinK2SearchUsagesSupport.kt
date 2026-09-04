@@ -16,7 +16,6 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.imports.getDefaultImports
@@ -95,7 +94,6 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.match
 
 internal class KotlinK2SearchUsagesSupport(private val project: Project) : KotlinSearchUsagesSupport {
-    @OptIn(KaExperimentalApi::class)
     override fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean {
         if (searchTarget is KtObjectDeclaration && searchTarget.isCompanion() && psiReference is KtReference) {
             val element = psiReference.element
@@ -419,7 +417,6 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
         return element.originalElement.containingFile != null
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun createConstructorHandle(ktDeclaration: KtDeclaration): KotlinSearchUsagesSupport.ConstructorCallHandle {
         return object : KotlinSearchUsagesSupport.ConstructorCallHandle {
             override fun referencedTo(element: KtElement): Boolean {
@@ -438,7 +435,6 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun createConstructorHandle(psiMethod: PsiMethod): KotlinSearchUsagesSupport.ConstructorCallHandle {
         return object : KotlinSearchUsagesSupport.ConstructorCallHandle {
             override fun referencedTo(element: KtElement): Boolean {

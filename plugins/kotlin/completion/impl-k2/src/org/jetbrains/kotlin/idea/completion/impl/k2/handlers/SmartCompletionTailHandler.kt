@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.handlers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -142,7 +141,6 @@ private fun ValueParameter?.isLastParameter(parameters: List<ValueParameter>): B
 /**
  * Calculates all tails based on all possible call candidates at the position.
  */
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession, _: K2CompletionSectionContext<*>)
 private fun calculateTailForCalls(
     expression: KtExpression,

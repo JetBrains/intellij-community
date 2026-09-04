@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -40,7 +39,6 @@ import org.jetbrains.kotlin.types.Variance
 
 object ConvertReferenceToLambdaUtil {
 
-    @OptIn(KaExperimentalApi::class)
     context(s: KaSession)
     fun prepareLambdaExpressionText(
         element: KtCallableReferenceExpression,

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.psi.PsiErrorElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
@@ -133,7 +132,7 @@ internal fun KotlinUnknownPositionContext.isAfterRangeToken(): Boolean {
  * @return `true` if the context is after a double dot (`..`) not associated with a `rangeTo` operation,
  *         otherwise `false`.
  */
-@OptIn(KaUnstableDiagnosticApi::class, KaExperimentalApi::class)
+@OptIn(KaUnstableDiagnosticApi::class)
 context(_: KaSession)
 internal fun KotlinRawPositionContext.isAfterRangeOperator(): Boolean {
     if (this !is KotlinExpressionNameReferencePositionContext) return false
@@ -152,7 +151,6 @@ internal fun KotlinRawPositionContext.isAfterRangeOperator(): Boolean {
         }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun KotlinRawPositionContext.allowsOnlyNamedArguments(): Boolean {
     if (this !is KotlinExpressionNameReferencePositionContext) return false

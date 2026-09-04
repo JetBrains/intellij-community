@@ -8,9 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
@@ -175,7 +173,6 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         abstract fun registerModifiedVar(e: KtProperty)
     }
 
-    @OptIn(KaNonPublicApi::class)
     override fun createOutputDescriptor(): OutputDescriptor<KaType> = analyze(extractionData.commonParent) {
         // FIXME: KTIJ-34278
         @OptIn(KaImplementationDetail::class)
@@ -221,7 +218,6 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun createDescriptor(
         suggestedFunctionNames: List<String>,
         defaultVisibility: KtModifierKeywordToken?,
@@ -273,7 +269,6 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         return descriptor
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun getRenderedAnnotations(annotationClassIds: Set<ClassId>): List<String> {
         if (annotationClassIds.isEmpty()) return emptyList()
         val container = extractionData.commonParent.getStrictParentOfType<KtNamedFunction>() ?: return emptyList()
@@ -346,7 +341,6 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
     if (propagatingMarkerDescriptors.isNotEmpty() || optInMarkerNames.isNotEmpty()) {
         originalElements.forEach { element ->
             element.accept(object : KtTreeVisitorVoid() {
-                @OptIn(KaExperimentalApi::class)
                 override fun visitReferenceExpression(expression: KtReferenceExpression) {
                     super.visitReferenceExpression(expression)
 
@@ -395,7 +389,6 @@ fun ExtractableCodeDescriptor.validate(target: ExtractionTarget = ExtractionTarg
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun ExtractableCodeDescriptor.validateTempResult(
     result: ExtractionResult,

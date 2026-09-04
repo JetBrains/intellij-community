@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.highlighting.analyzers
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
@@ -44,7 +43,6 @@ internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: 
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): Unit = context(session) {
         if (expression.isCalleeExpression()) return
         val parent = expression.parent

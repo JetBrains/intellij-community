@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.types.Variance
 object UnfoldPropertyUtils {
     class Context(val propertyExplicitType: String?)
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     internal fun prepareUnfoldPropertyContext(element: KtProperty): Context? {
         val initializer = element.initializer ?: return null

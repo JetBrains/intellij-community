@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.refactoring.intentions
 
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -179,7 +178,7 @@ object OperatorToFunctionConverter {
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     private fun getCalledFunctionName(element: KtBinaryExpression): Name? = allowAnalysisOnEdt {
         @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
@@ -219,7 +218,7 @@ object OperatorToFunctionConverter {
         return expressionToReplace.replace(transformed) as KtExpression
     }
 
-    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     private fun appendIfVarargType(element: KtArrayAccessExpression, pattern: BuilderByPattern<KtExpression>) {
         allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
@@ -350,7 +349,7 @@ object OperatorToFunctionConverter {
                 !isLambdaWithReceiver
     }
 
-    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private fun resolveImplicitReceiverText(element: KtCallExpression): String? {
         val callee = element.calleeExpression!!
         val owner = allowAnalysisOnEdt {

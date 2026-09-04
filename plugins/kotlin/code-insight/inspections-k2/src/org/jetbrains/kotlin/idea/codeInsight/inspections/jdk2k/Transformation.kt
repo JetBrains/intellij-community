@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.jdk2k
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -51,7 +50,6 @@ object ToKotlinPrint : Transformation {
         WithoutAdditionalTransformation.invoke(callExpression, replacement)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession) override fun isApplicableByAnalyze(callExpression: KtCallExpression): Boolean =
         (callExpression.calleeExpression as? KtSimpleNameExpression)?.getReceiverExpression()
             ?.tryResolveExpressionCall()?.single?.variable

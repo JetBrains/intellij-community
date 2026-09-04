@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.returnType
@@ -127,7 +126,6 @@ internal class ConvertLambdaToReferenceIntention :
         context: ActionContext,
     ): Boolean = element is KtLambdaArgument
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtLambdaExpression): Context? {
         val singleStatement = element.singleStatementOrNull() ?: return null
@@ -258,7 +256,6 @@ internal class ConvertLambdaToReferenceIntention :
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
     val lambdaParameterType = lambdaExpression.lambdaParameterType()
@@ -318,7 +315,6 @@ private fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun buildReferenceText(receiver: String, selector: String, call: KaSimpleCall<*, *>?): String {
     val invokeReference = if (call?.symbol?.isInvokeOperator == true) "::invoke" else ""
     return if (receiver.isEmpty()) {
@@ -339,7 +335,6 @@ private fun getCalleeReferenceExpression(callableExpression: KtExpression): KtNa
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtLambdaExpression.lambdaParameterType(): KaType? {
     val argument = parentValueArgument() ?: return null
@@ -355,7 +350,6 @@ private fun KtLambdaExpression.parentValueArgument(): KtValueArgument? {
     } as? KtValueArgument
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtNameReferenceExpression.renderTargetReceiverType(): String {
     val singleCall = this.resolveSuccessfulCall()
@@ -363,7 +357,6 @@ private fun KtNameReferenceExpression.renderTargetReceiverType(): String {
     return receiverType.render(position = Variance.IN_VARIANCE)
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtExpression.isReferenceToPackage(): Boolean {
     val selectorOrThis = (this as? KtQualifiedExpression)?.selectorExpression ?: this
@@ -371,7 +364,6 @@ private fun KtExpression.isReferenceToPackage(): Boolean {
     return symbols.any { it is KaPackageSymbol }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun isConvertibleCallInLambdaByAnalyze(
     callableExpression: KtExpression,
@@ -492,7 +484,6 @@ private fun KaNamedFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaEx
     return symbols
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtCallExpression.addTypeArgumentsIfNeeded(lambda: KtLambdaExpression): String? {
     val calledFunctionInLambda =

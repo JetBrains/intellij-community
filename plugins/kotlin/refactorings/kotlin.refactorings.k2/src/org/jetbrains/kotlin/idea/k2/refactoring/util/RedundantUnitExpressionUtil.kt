@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.computeMissingCases
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -83,14 +82,12 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
 
 private fun isDynamicCall(parent: KtBlockExpression): Boolean = parent.getStrictParentOfType<KtFunctionLiteral>()?.findLambdaReturnType() is KaDynamicType
 
-@OptIn(KaExperimentalApi::class)
 private fun KtReturnExpression.expectedReturnType(): KaType? = analyze(this) {
     this.resolveSuccessfulSymbol()?.let {
         (it.psi as? KtFunctionLiteral)?.findLambdaReturnType() ?: it.returnType
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun KtFunctionLiteral.findLambdaReturnType(): KaType? {
     val callExpression = getStrictParentOfType<KtCallExpression>() ?: return null
     val valueArgument = getStrictParentOfType<KtValueArgument>() ?: return null

@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.siyeh.ig.psiutils.TestUtils
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsResultOfLambda
@@ -32,7 +31,6 @@ private const val NAME_HINT_EXCEPTION: String = "Exception"
 private const val NAME_HINT_ERROR: String = "Error"
 
 internal class KotlinThrowableNotThrownInspection : AbstractKotlinInspection() {
-    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> = callExpressionVisitor { callExpression ->
         val calleeExpression = callExpression.calleeExpression ?: return@callExpressionVisitor
         if (!calleeExpression.text.let { it.contains(NAME_HINT_EXCEPTION) || it.contains(NAME_HINT_ERROR) })
@@ -56,7 +54,6 @@ internal class KotlinThrowableNotThrownInspection : AbstractKotlinInspection() {
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtExpression.isUsed(): Boolean {
     if (!isUsedAsExpression) return false

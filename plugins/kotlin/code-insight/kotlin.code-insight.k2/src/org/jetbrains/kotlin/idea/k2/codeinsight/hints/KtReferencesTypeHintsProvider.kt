@@ -7,7 +7,6 @@ import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
@@ -298,7 +297,6 @@ private fun isMultilineLocalProperty(element: PsiElement): Boolean {
     return false
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalProperty: Boolean): KaType? =
     calculateAllTypes(element) { declarationType, allTypes, _ ->
@@ -364,7 +362,6 @@ private fun isUnclearType(type: KaType, element: KtCallableDeclaration): Boolean
     return type.classId != KaStandardTypeClassIds.ANY
 }
 
-@OptIn(KaExperimentalApi::class)
 internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTreeSink) {
     val functionLiteral = lambdaExpression.getStrictParentOfType<KtFunctionLiteral>() ?: return
 
@@ -378,7 +375,6 @@ internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTr
 
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun isConstructorCall(initializer: KtExpression?): Boolean {
     val callExpression = initializer as? KtCallExpression ?: return false
@@ -392,7 +388,6 @@ private fun isConstructorCall(initializer: KtExpression?): Boolean {
     return constructorCall != null && (constructorCall.symbol.typeParameters.isEmpty() || callExpression.typeArgumentList != null)
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun isConstructorLikeCall(type: KaType, initializer: KtExpression?): Boolean {
     val callExpression = initializer as? KtCallExpression ?: return false

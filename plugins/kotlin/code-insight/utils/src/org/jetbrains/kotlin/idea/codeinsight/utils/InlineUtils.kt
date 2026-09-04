@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
@@ -94,7 +93,6 @@ fun getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionSymbol, KaVa
     return symbol to argumentSymbol
 }
 
-@OptIn(KaExperimentalApi::class)
 @ApiStatus.Internal
 context(session: KaSession)
 fun resolveFunctionCall(expression: KtExpression): KaFunctionCall<*>? {

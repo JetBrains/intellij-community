@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -103,7 +102,6 @@ internal class ConvertForEachToForLoopIntention
         return Context(returnsToReplace, implicitReceiverInfo)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtCallExpression.isForEachByAnalyze(): Boolean {
         val symbol = this.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol ?: return false

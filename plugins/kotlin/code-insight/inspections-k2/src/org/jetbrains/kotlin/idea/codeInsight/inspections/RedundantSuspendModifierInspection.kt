@@ -9,7 +9,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.descendants
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionAttempt
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -81,7 +80,6 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
     private fun KaCallableSymbol.isTodoSymbol(): Boolean =
         this is KaNamedFunctionSymbol && callableId?.asSingleFqName() == todoFqName
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtNamedFunction.isSuspendModifierRedundant(): Boolean {
         var isSuspendModifierRedundant = true

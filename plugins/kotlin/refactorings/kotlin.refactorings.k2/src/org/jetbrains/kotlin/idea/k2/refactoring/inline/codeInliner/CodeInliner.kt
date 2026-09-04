@@ -5,7 +5,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -133,13 +132,11 @@ class CodeInliner(
     private val inlineSetter: Boolean,
     private val replacement: CodeToInline
 ) : AbstractCodeInliner<KtElement, KtParameter, KaType, KtDeclaration>(call, replacement) {
-    @OptIn(KaExperimentalApi::class)
     private val mapping: Map<KtExpression, Name>? = analyze(call) {
         val treeUpToCall = treeUpToCall() as? KtResolvableCall ?: return@analyze null
         treeUpToCall.tryResolveCall()?.single?.function?.valueArgumentMapping?.mapValues { e -> e.value.name }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private val contextArguments: List<String?>? = analyze(call) {
         val treeUpToCall = treeUpToCall() as? KtResolvableCall ?: return@analyze null
         treeUpToCall.tryResolveCall()?.single?.simple?.contextArguments?.map {
@@ -147,7 +144,6 @@ class CodeInliner(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private val explicitContextArguments: Map<Name, String>? = analyze(call) {
         val treeUpToCall = treeUpToCall() as? KtResolvableCall ?: return@analyze null
         val singleCall = treeUpToCall.tryResolveCall()?.single?.simple ?: return@analyze null
@@ -166,7 +162,6 @@ class CodeInliner(
         return gParent as? KtSuperTypeCallEntry ?: gParent as? KtAnnotationEntry ?: call
     }
 
-    @OptIn(KaExperimentalApi::class)
     fun doInline(): KtElement? {
         val qualifiedElement = if (call is KtExpression) {
             call.getQualifiedExpressionForSelector()
@@ -558,7 +553,6 @@ class CodeInliner(
         return defaultValueFromExpect ?: parameter.defaultValue
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun createTypeDescription(type: KaType?): TypeDescription? {
         if (type == null) return null

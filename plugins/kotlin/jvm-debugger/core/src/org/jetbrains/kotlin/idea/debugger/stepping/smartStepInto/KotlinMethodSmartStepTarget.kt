@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.psi.KtDeclaration
 import javax.swing.Icon
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 fun calcLabel(symbol: KaDeclarationSymbol): String {
     return symbol.render(RENDERER)

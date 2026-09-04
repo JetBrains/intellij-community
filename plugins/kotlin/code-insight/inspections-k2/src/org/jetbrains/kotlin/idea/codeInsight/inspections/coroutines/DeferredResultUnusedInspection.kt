@@ -7,7 +7,6 @@ import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -49,7 +48,6 @@ internal class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolea
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun check(expression: KtExpression): Boolean {
         // Check whatever possible by PSI
         if (!isExpressionApplicable(expression)) return false

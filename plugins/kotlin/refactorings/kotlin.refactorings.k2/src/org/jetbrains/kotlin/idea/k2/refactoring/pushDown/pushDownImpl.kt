@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.pushDown
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.substitute
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -35,7 +34,6 @@ internal data class MemberContext(
     val doesNotOverride: Boolean,
 )
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun createPushDownAction(
     sourceClass: KtClass,
@@ -71,7 +69,6 @@ internal fun getSuperTypeEntryBySymbol(
     referencedType?.expandedSymbol == symbol
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun createPushDownActionForCallableMember(
     memberInfo: KotlinMemberInfo,
@@ -148,7 +145,6 @@ private fun addCallableMember(
     }
 } as KtCallableDeclaration
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun createPushDownActionForClassLikeMember(
     memberInfo: KotlinMemberInfo,

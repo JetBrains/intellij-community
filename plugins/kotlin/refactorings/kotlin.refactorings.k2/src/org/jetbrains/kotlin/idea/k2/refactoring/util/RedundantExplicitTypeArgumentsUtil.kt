@@ -5,7 +5,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
@@ -43,7 +42,6 @@ import org.jetbrains.kotlin.psi.KtTypeProjection
 
 private val INLINE_REIFIED_FUNCTIONS_WITH_INSIGNIFICANT_TYPE_ARGUMENTS: Set<String> = setOf("kotlin.arrayOf")
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 fun areTypeArgumentsRedundant(
     typeArgumentList: KtTypeArgumentList,
@@ -119,7 +117,6 @@ private fun isInlineReifiedFunction(symbol: KaFunctionSymbol): Boolean =
             symbol.isInline &&
             symbol.typeParameters.any { it.isReified }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun areTypeArgumentsEqual(
     originalCallExpression: KtCallExpression,
@@ -138,7 +135,6 @@ private fun areTypeArgumentsEqual(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun collectCallExpressionInfo(callExpression: KtCallExpression): List<KaTypePointer<KaType>>? {
     return callExpression
@@ -173,7 +169,7 @@ private fun hasNewDiagnostics(originalCallExpression: KtCallExpression, newCallE
     return newDiagnostics.size != oldDiagnostics.size
 }
 
-@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+@OptIn(KaImplementationDetail::class)
 context(session: KaSession)
 private fun restoreTypes(typePointers: List<KaTypePointer<KaType>>): List<KaType>? =
     typePointers.map { it.restore(session) ?: return null }
@@ -221,7 +217,6 @@ fun KtTypeProjection.canBeReplacedWithUnderscore(callExpression: KtCallExpressio
     return areTypeArgumentsEqual(callExpression, newCallExpression, false)
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun buildCallExpressionWithUnderscores(element: KtCallExpression, typeProjectionToReplace: KtTypeProjection): KtCallExpression? {
     val copyOrigin = element.containingKtFile.copyOrigin
     val fileCopy = if (copyOrigin != null) {

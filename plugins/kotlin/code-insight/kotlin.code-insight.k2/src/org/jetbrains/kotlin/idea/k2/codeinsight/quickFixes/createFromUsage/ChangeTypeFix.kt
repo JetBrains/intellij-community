@@ -8,7 +8,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.psi.PsiTypes
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -67,7 +66,6 @@ private fun doChangeType(
     shortenReferences(target)
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun typeName(declaration: KtCallableDeclaration): String? {
     val typeReference = declaration.typeReference
     if (typeReference != null) return typeReference.typeElement?.text

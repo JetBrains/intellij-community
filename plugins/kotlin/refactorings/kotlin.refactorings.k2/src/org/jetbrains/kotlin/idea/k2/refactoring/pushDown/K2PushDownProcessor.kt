@@ -5,10 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
@@ -91,7 +89,6 @@ internal class K2PushDownProcessor(
         processTargetClasses(targetClasses, actionsContext)
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun processTargetClasses(
         targetClasses: List<KtClassOrObject>,
         actionsContext: PushDownActionsContext,
@@ -118,7 +115,6 @@ internal class K2PushDownProcessor(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun processTargetClass(
         targetClass: KtClassOrObject,
@@ -134,7 +130,6 @@ internal class K2PushDownProcessor(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun registerPushDownAction(
         targetClass: KtClassOrObject,
@@ -153,7 +148,6 @@ internal class K2PushDownProcessor(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun registerRemovalAction(
         memberInfo: KotlinMemberInfo,
@@ -169,7 +163,6 @@ internal class K2PushDownProcessor(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun markElementsForRefactoring(
         memberInfo: KotlinMemberInfo,

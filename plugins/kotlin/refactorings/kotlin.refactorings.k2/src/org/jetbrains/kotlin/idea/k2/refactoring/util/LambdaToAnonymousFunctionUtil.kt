@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -43,7 +42,6 @@ object LambdaToAnonymousFunctionUtil {
      * NB: to perform required calculations, the whole file with the lambda expression is copied!
      * So it should not be used during highlighting or other non-explicitly started activities
      */
-    @OptIn(KaExperimentalApi::class)
     fun prepareFunctionText(
         lambda: KtLambdaExpression,
         functionName: String = "",

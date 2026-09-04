@@ -174,7 +174,6 @@ object K2CreateFunctionFromUsageUtil {
                     val symbol = variable.symbol as? KaCallableSymbol
                     val parameterType = symbol?.receiverType ?: (variable.symbol
                         .containingDeclaration as? KaNamedClassSymbol)?.defaultType ?: builtinTypes.nullableAny
-                    @OptIn(KaExperimentalApi::class)
                     typeCreator.classType(ClassId.fromString("kotlin/properties/$delegateClassName")) {
                         invariantTypeArgument(parameterType)
                         invariantTypeArgument(ktType)
@@ -247,7 +246,6 @@ object K2CreateFunctionFromUsageUtil {
         return null
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun KaType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
 
@@ -309,7 +307,6 @@ object K2CreateFunctionFromUsageUtil {
         return expectedParameter(expectedType, *nameArray)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun guessAccessibleTypeByArguments(
         receiverType: KaClassType, expectedArgumentType: KaType
@@ -334,7 +331,6 @@ object K2CreateFunctionFromUsageUtil {
         }?.let { if (type.isMarkedNullable) it.withNullability(true) else it } ?: type
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun guessUnsubstitutedType(type: KaClassType, substitutions: List<Pair<KaType, KaTypeParameterType>>): KaType {
         return typeCreator.classType(type.symbol) {
@@ -350,7 +346,6 @@ object K2CreateFunctionFromUsageUtil {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun guessUnsubstitutedType(type: KaFunctionType, substitutions: List<Pair<KaType, KaTypeParameterType>>): KaType {
         val substitutedReceiverType = type.receiverType?.let { originalReceiverType ->
@@ -458,7 +453,6 @@ object K2CreateFunctionFromUsageUtil {
 
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun JvmType.toKtType(useSitePosition: PsiElement): KaType? = when (this) {
         is PsiType -> if (isValid) {
@@ -577,7 +571,6 @@ object K2CreateFunctionFromUsageUtil {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun computeCallTypeParameterInfo(
         call: KtCallElement,

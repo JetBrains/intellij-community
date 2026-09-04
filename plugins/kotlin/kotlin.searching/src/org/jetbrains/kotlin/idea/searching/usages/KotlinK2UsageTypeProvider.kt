@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.psi.PsiPackage
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -50,7 +49,6 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
 
-    @OptIn(KaExperimentalApi::class)
     override fun getUsageTypeEnumByReference(refExpr: KtReferenceExpression): UsageTypeEnum? {
         val reference = refExpr.mainReference
         check(reference is KtSimpleReference<*>) { "Reference should be KtSimpleReference but not ${reference::class}" }

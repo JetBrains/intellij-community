@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -43,7 +42,6 @@ class ConvertUnsafeCastCallToUnsafeCastIntention : KotlinApplicableModCommandAct
     return callExpression.calleeExpression?.text == "unsafeCast"
   }
 
-  @OptIn(KaExperimentalApi::class)
   context(session: KaSession)
   override fun prepareContext(element: KtDotQualifiedExpression): Context? {
     val callExpression = element.selectorExpression as? KtCallExpression ?: return null

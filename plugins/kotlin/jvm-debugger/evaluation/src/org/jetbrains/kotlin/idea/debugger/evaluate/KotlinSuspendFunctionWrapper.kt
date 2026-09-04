@@ -9,7 +9,6 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionAttempt
@@ -98,7 +97,6 @@ internal class KotlinSuspendFunctionWrapper(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun isSuspendCall(element: PsiElement): Boolean {
         var result = false
         KotlinCallProcessor.process(element, object : KotlinCallTargetProcessor {

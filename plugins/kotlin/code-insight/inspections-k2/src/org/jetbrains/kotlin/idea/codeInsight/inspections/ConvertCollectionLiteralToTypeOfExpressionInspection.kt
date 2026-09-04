@@ -7,7 +7,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
@@ -65,7 +64,6 @@ internal class ConvertCollectionLiteralToTypeOfExpressionInspection :
 
     override fun getApplicableRanges(element: KtCollectionLiteralExpression) = ApplicabilityRange.self(element)
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCollectionLiteralExpression): Context? {
         if (element.directDiagnostics(filter = KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).isNotEmpty()) return null
@@ -105,7 +103,6 @@ internal class ConvertCollectionLiteralToTypeOfExpressionInspection :
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun findClassSymbolForLiteral(element: KtCollectionLiteralExpression): KaNamedClassSymbol? {
         val resolvedSymbol = element.resolveSuccessfulSymbol()

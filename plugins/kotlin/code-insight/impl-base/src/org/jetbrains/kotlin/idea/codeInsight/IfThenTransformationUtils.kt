@@ -13,7 +13,6 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
@@ -183,7 +182,7 @@ object IfThenTransformationUtils {
     }
 
 
-    @OptIn(KaExperimentalApi::class, KaUnstableDiagnosticApi::class)
+    @OptIn(KaUnstableDiagnosticApi::class)
     context(_: KaSession)
     private fun conditionIsSenseless(data: IfThenTransformationData): Boolean =
         data.condition
@@ -296,7 +295,6 @@ object IfThenTransformationUtils {
         "java.lang.NullPointerException"
     )
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun throwsNullPointerExceptionWithNoArguments(throwExpression: KtThrowExpression): Boolean {
         val thrownExpression = throwExpression.thrownExpression as? KtCallExpression ?: return false
@@ -335,7 +333,6 @@ object IfThenTransformationUtils {
     private fun hasImplicitReceiverReplaceableBySafeCall(data: IfThenTransformationData): Boolean =
         data.checkedExpression is KtThisExpression && getImplicitReceiverValue(data) != null
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getImplicitReceiverValue(data: IfThenTransformationData): KaReceiverValue? {
         val resolvedCall = data.baseClause.resolveSuccessfulExpressionCall()?.simple ?: return null
@@ -397,7 +394,6 @@ sealed class IfThenTransformationStrategy {
             }
         }
 
-        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         private fun KtExpression.hasImplicitReceiverMatchingThisExpression(thisExpression: KtThisExpression): Boolean {
             val thisExpressionSymbol = thisExpression.instanceReference.mainReference.resolveToSymbol() ?: return false

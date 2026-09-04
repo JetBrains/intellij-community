@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.utils
 
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -90,7 +89,6 @@ internal fun createFragmentToWithFunction(
  * @param name The name of the counterpart function
  * @return True if the counterpart name resolves to a standard library function
  */
-@OptIn(KaExperimentalApi::class)
 internal fun nameResolvesToStdlib(expression: KtCallExpression, calleeName: String, name: String): Boolean {
     val factory = KtPsiFactory(expression.project)
 
@@ -153,7 +151,6 @@ internal fun buildCodeFragmentWithCollectionLiteral(
     return codeFragment.findElementAt(startIndex)?.parentOfType()
 }
 
-@OptIn(KaExperimentalApi::class)
 internal fun isCollectionLiteralSafeAsArgument(
     element: KtExpression,
     expressionType: KaType,

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
@@ -54,7 +53,6 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
      *
      * To avoid that, we sacrifice some possible performance, but make sure that the [analyze] call is properly finished instead.
      */
-    @OptIn(KaExperimentalApi::class)
     override fun createImportFixesForExpression(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> {
         val file = expression.containingKtFile
 

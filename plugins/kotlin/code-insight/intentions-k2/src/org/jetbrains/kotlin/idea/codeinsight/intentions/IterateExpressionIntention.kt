@@ -9,7 +9,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
@@ -100,7 +99,6 @@ internal class IterateExpressionIntention : KotlinApplicableModCommandAction<KtE
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("iterate.over.collection")
 
-    @OptIn(KaExperimentalApi::class)
     override fun getActionPresentation(
         context: ActionContext,
         element: KtExpression,

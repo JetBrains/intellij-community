@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
@@ -94,7 +93,6 @@ internal object FunctionLookupElementFactory {
         return createLookupElement(signature, lookupObject, useFqNameInTailText = aliasName != null)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun getTrailingFunctionSignature(
         signature: KaFunctionSignature<*>,
@@ -132,7 +130,7 @@ internal object FunctionLookupElementFactory {
                     .zip(type.typeArguments.mapNotNull { it.type })
                     .toMap()
 
-                val functionType = (@OptIn(KaExperimentalApi::class) createSubstitutor(mappings)
+                val functionType = (createSubstitutor(mappings)
                     .substitute(samConstructorType)) as? KaFunctionType
                     ?: return null
 
@@ -146,7 +144,6 @@ internal object FunctionLookupElementFactory {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     @ApiStatus.Experimental
     context(_: KaSession)
     fun createLookupWithTrailingLambda(

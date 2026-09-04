@@ -21,7 +21,6 @@ import com.intellij.refactoring.memberPullUp.PullUpData
 import com.intellij.refactoring.memberPullUp.PullUpHelper
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.util.containers.reverse
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
@@ -81,9 +80,9 @@ import org.jetbrains.kotlin.idea.refactoring.removeOverrideModifier
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport
 import org.jetbrains.kotlin.idea.refactoring.rename.dropDefaultValue
 import org.jetbrains.kotlin.idea.util.isBackingFieldRequired
-import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name.identifier
@@ -153,7 +152,6 @@ internal class K2PullUpHelper(
 
             override fun visitKtFile(file: KtFile, data: Nothing?): Boolean = false
 
-            @OptIn(KaExperimentalApi::class)
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression, arg: Nothing?): Boolean = analyze(expression) {
                 val resolvedCall = expression.resolveSuccessfulExpressionCall()?.simple ?: return true
                 val receiverValue = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
@@ -179,7 +177,6 @@ internal class K2PullUpHelper(
         }, null
     )
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getCommonInitializer(
         currentInitializer: KtExpression?,
@@ -225,7 +222,6 @@ internal class K2PullUpHelper(
         val elementsToRemove: Set<KtElement>,
     )
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getInitializerInfo(
         property: KtProperty,
@@ -413,7 +409,6 @@ internal class K2PullUpHelper(
         return clashingSuperSymbol.psi as? KtCallableDeclaration
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun moveSuperInterface(member: KtNamedDeclaration, substitutor: PsiSubstitutor) {
         val realMemberPsi = (member as? KtPsiClassWrapper)?.psiClass ?: member
 
@@ -541,7 +536,6 @@ internal class K2PullUpHelper(
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(movedMember)
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun move(info: MemberInfoBase<PsiMember>, substitutor: PsiSubstitutor) {
         val member = info.member.toKtDeclarationWrapperAware() ?: return
 
@@ -576,7 +570,6 @@ internal class K2PullUpHelper(
             return movedMember
         }
 
-        @OptIn(KaExperimentalApi::class)
         fun moveCallableMember(member: KtCallableDeclaration, memberCopy: KtCallableDeclaration): KtCallableDeclaration {
             val movedMember: KtCallableDeclaration
             val clashingSuper = allowAnalysisFromWriteActionInEdt(member) {
@@ -688,7 +681,6 @@ internal class K2PullUpHelper(
         KotlinRenameRefactoringSupport.getInstance().dropOverrideKeywordIfNecessary(declaration)
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun moveFieldInitializations(movedFields: LinkedHashSet<PsiField>) {
         val psiFactory = KtPsiFactory(data.sourceClass.project)
 
@@ -799,7 +791,6 @@ private fun isSubClassOf(
     superClass: KaDeclarationSymbol?,
 ): Boolean = subClass is KaClassSymbol && superClass is KaClassSymbol && subClass.isSubClassOf(superClass)
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun addSuperTypeEntry(
     delegator: KtSuperTypeListEntry,

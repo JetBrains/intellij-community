@@ -11,7 +11,6 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
@@ -119,7 +118,6 @@ fun checkClassLikeNameShadowing(declaration: KtNamedDeclaration, newName: String
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 fun checkCallableShadowing(
     declaration: KtNamedDeclaration,
     newName: String,
@@ -298,7 +296,6 @@ private fun KtPsiFactory.createCodeFragmentWithNewName(
 
 private data class QualifiedState(val expression: KtExpression?, val explicitlyQualified: Boolean)
 
-@OptIn(KaExperimentalApi::class)
 private fun createQualifiedExpression(callExpression: KtExpression, newName: String): QualifiedState? {
     val callableReferenceExpression = callExpression.takeIf { it is KtNameReferenceExpression }?.parent as? KtCallableReferenceExpression
     if (callableReferenceExpression?.callableReference == callExpression) {

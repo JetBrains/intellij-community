@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -143,7 +142,6 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
         return factory.createExpression("!" + element.text)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun resolveToMappedCallableId(callExpression: KtCallExpression): CallableId? {
         val call = callExpression.tryResolveCall()?.single?.function ?: return null

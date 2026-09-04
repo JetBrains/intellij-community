@@ -30,7 +30,6 @@ import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.util.application
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
@@ -200,7 +199,6 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
          * val v : List<List<Int>> = mutableListOf(elements))
          * ```
          */
-        @OptIn(KaExperimentalApi::class)
         private fun analyzeIfExplicitTypeOrArgumentsAreNeeded(property: KtProperty) {
             val initializer = property.initializer ?: return
 
@@ -422,7 +420,6 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun doRefactoringWithSelectedTargetContainer(
         project: Project,
         editor: Editor?,
@@ -671,7 +668,6 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 }
         }.ifEmpty { listOf(this) }
 
-    @OptIn(KaExperimentalApi::class)
     private fun areTypeArgumentsNeededForCorrectTypeInference(expression: KtExpression): Boolean {
         val call = expression.getPossiblyQualifiedCallExpression() ?: return false
         if (call.typeArgumentList != null) return false
@@ -682,7 +678,6 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         return (diagnostics.any { diagnostic -> diagnostic is KaFirDiagnostic.CannotInferParameterType })
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun filterContainersWithContainedLambdasByAnalyze(
         containersWithContainedLambdas: Sequence<ContainerWithContained>,
         physicalExpression: KtExpression,

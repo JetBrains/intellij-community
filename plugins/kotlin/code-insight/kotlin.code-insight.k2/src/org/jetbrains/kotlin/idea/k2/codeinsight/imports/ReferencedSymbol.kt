@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.expressions.contextSensitiveResolutionStatus
@@ -105,7 +104,6 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private val KtReference.resolvableWithContextSensitiveResolve: Boolean
     get() {
@@ -156,7 +154,6 @@ private fun isAccessibleAsMemberCallable(
     if (element is KDocName) {
         val ownerClassSymbol = element.ownerClassSymbol()
 
-        @OptIn(KaExperimentalApi::class)
         return ownerClassSymbol != null && symbol.isVisibleInClass(ownerClassSymbol)
     }
 
@@ -188,7 +185,6 @@ private fun isStaticallyImportedReceiver(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun resolveDispatchReceiver(element: KtElement, targetSymbol: KaCallableSymbol): KaReceiverValue? {
     val adjustedElement = element.callableReferenceExpressionForCallableReference()
@@ -259,7 +255,6 @@ private fun isTypeAliasedInnerClassConstructorCall(target: KaSymbol, reference: 
             reference.resolveToSymbols().any { it is KaConstructorSymbol && it.containingDeclaration == target }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun resolveExtensionReceiverForFunctionalTypeVariable(
     referenceExpression: KtNameReferenceExpression?,

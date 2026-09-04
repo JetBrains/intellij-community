@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -24,7 +23,6 @@ import org.jetbrains.kotlin.types.Variance
 
 internal object CreateContextParameterFromNamedArgumentFixFactory {
 
-    @OptIn(KaExperimentalApi::class)
     val namedParameterNotFound = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NamedParameterNotFound ->
         val argument = diagnostic.psi
         val parameterName = Name.identifierIfValid(diagnostic.name)

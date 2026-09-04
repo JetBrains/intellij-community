@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -61,7 +60,6 @@ internal class RedundantRunCatchingInspection : KotlinApplicableInspectionBase.S
         return lambdaArgument?.anyDescendantOfType<KtReturnExpression>() != true
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtQualifiedExpression): CallChainExpressions? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null

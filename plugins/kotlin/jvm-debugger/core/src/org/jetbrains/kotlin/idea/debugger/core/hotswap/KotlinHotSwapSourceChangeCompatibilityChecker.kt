@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.xdebugger.impl.hotswap.SourceFileChangeCompatibilityChecker
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
@@ -383,7 +382,6 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
         typeReference?.type?.renderTypeSignature(typeDescription)
     } ?: unknownClassShapes("Cannot resolve $typeDescription")
 
-    @OptIn(KaExperimentalApi::class)
     private inline fun <R> KtElement.analyzeInContext(crossinline action: context(KaSession) () -> R): R {
         return if (containingKtFile.copyOrigin == null) {
             analyze(this, action)
@@ -392,7 +390,7 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KaNonPublicApi::class)
+    @OptIn(KaNonPublicApi::class)
     context(session: KaSession)
     private fun KaType.renderTypeSignature(typeDescription: String): String {
         val errorType = findErrorType()
@@ -425,7 +423,6 @@ class KotlinHotSwapSourceChangeCompatibilityChecker(project: Project) :
 
 private data class SourceInnerClass(val classOrObject: KtClassOrObject, val name: String, val isAnonymous: Boolean)
 
-@OptIn(KaExperimentalApi::class)
 private val TYPE_RENDERER = KaTypeRendererForSource.WITH_QUALIFIED_NAMES_WITHOUT_PARAMETER_NAMES
 
 private val CLASS_MODIFIERS = arrayOf(

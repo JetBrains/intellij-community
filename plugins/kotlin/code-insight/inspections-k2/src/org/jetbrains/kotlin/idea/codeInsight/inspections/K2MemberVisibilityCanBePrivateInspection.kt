@@ -12,7 +12,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -83,7 +82,6 @@ class K2MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun canBePrivate(declaration: KtNamedDeclaration): Boolean {
         analyze(declaration) {
             if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) || declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false

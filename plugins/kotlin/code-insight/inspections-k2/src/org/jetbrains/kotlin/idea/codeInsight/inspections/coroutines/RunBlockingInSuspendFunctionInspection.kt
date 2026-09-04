@@ -12,7 +12,6 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -198,7 +197,6 @@ private fun isRunBlocking(function: KaNamedFunctionSymbol): Boolean {
 }
 
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun KtCallExpression.resolveToFunctionSymbol(): KaNamedFunctionSymbol? =
     this.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol
@@ -242,7 +240,6 @@ private fun isInSuspendContext(element: KtExpression): Boolean {
  * runBlocking { delay(1000) }         // false — delay is a top-level function, receiver unused
  * ```
  */
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtFunctionLiteral.usesCoroutineScopeReceiver(): Boolean {
     val lambdaReceiverParameter = symbol.receiverParameter ?: return false

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -41,7 +40,6 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
         val invokeCall = invokeCallReceiver.getCallExpressionForCallee() ?: return null
         val qualifiedInvokeCall = invokeCall.getQualifiedExpressionForSelectorOrThis()
 
-        @OptIn(KaExperimentalApi::class)
         val invokeReceiverType = when (diagnostic) {
             is KaFirDiagnostic.FunctionExpected -> {
                 diagnostic.type

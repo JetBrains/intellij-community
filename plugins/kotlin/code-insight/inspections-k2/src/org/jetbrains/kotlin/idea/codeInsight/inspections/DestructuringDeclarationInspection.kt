@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -411,7 +410,6 @@ private fun PsiElement.hasBadRefences(
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun removeEntriesEntrySetInLoopRange(
     declaration: KtDeclaration
 ): Boolean {

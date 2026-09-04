@@ -29,7 +29,6 @@ import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.JBEmptyBorder
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -111,7 +110,6 @@ class KotlinNoActualForExpectInspection : AbstractKotlinInspection() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(
         holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession
     ): PsiElementVisitor {

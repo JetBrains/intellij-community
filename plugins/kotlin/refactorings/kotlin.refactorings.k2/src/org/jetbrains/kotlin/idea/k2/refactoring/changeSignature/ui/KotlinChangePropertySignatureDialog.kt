@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiCodeFragment
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -42,7 +41,6 @@ class KotlinChangePropertySignatureDialog(project: Project,
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun createReturnTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
         val returnPresentableText =
             analyzeInModalWindow(m.method, KotlinBundle.message("fix.change.signature.prepare")) {
@@ -51,7 +49,6 @@ class KotlinChangePropertySignatureDialog(project: Project,
         return kotlinPsiFactory.createTypeCodeFragment(returnPresentableText ?: "", m.method)
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun createReceiverTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
         val receiverPresentableType =
             analyzeInModalWindow(m.method, KotlinBundle.message("fix.change.signature.prepare")) {

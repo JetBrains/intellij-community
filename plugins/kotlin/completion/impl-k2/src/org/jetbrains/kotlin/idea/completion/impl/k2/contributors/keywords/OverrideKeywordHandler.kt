@@ -135,7 +135,6 @@ internal class OverrideKeywordHandler(
         else -> false
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createLookupElementToGenerateSingleOverrideMember(
         member: KtClassMember,
@@ -184,7 +183,6 @@ internal class OverrideKeywordHandler(
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun generateMemberInNewAnalysisSession(
         classOrObject: KtClassOrObject,
         member: KtClassMember,

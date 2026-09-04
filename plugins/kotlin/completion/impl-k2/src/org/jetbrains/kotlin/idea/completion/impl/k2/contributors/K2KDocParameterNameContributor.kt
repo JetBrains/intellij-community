@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.lookup.LookupElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.signatures.asSignature
@@ -57,7 +56,7 @@ internal class K2KDocParameterNameContributor : K2SimpleCompletionContributor<KD
             ).let { sequenceOf(it) }
 
         is KaValueParameterSymbol -> createCallableLookupElements(
-            signature = @OptIn(KaExperimentalApi::class) (declarationSymbol.asSignature()),
+            signature = (declarationSymbol.asSignature()),
             options = CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
             scopeKind = KtOutsideTowerScopeKinds.LocalScope,
         )

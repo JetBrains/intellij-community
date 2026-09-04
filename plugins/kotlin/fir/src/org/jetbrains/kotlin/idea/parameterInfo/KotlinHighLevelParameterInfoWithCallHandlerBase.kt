@@ -9,7 +9,6 @@ import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -80,7 +79,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
         private const val SINGLE_LINE_PARAMETERS_COUNT = 3
 
-        @OptIn(KaExperimentalApi::class)
         private val typeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES
     }
 
@@ -148,7 +146,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     fun createCallInfos(argumentList: TArgumentList, currentArgumentIndex: Int): List<CallInfo> {
         val callElement = argumentList.parent as? KtElement ?: return emptyList()
         return analyze(callElement) {
@@ -181,7 +178,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             .count { it.node.elementType == KtTokens.COMMA }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createCallInfo(
         callCandidateInfo: KaCallCandidate,
@@ -290,7 +286,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun renderParameter(
         parameter: KaVariableSignature<KaValueParameterSymbol>,
@@ -329,7 +324,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun renderContextParameter(parameter: KaVariableSignature<KaParameterSymbol>): String {
         val returnType = parameter.returnType.takeUnless { it is KaErrorType } ?: parameter.symbol.returnType
@@ -741,7 +735,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val afterParameters: String,
     ) {
         companion object {
-            @OptIn(KaExperimentalApi::class)
             context(_: KaSession)
             fun createCallStringRepresentation(candidateSignature: KaFunctionSignature<KaFunctionSymbol>): CallStringRepresentation {
                 val beforeParameters = buildString {

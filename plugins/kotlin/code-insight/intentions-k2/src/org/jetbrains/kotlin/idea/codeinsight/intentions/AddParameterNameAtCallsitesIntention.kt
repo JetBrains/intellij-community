@@ -8,7 +8,6 @@ import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.findParentOfType
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
@@ -33,7 +32,6 @@ internal class AddParameterNameAtCallsitesIntention : PsiBasedModCommandAction<K
         return element.parent.parent is KtNamed && !element.isVarArg && element.nameAsName != null
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun perform(context: ActionContext, element: KtParameter): ModCommand {
         val parameterName = element.nameAsName ?: return ModCommand.nop()
         val function = element.findParentOfType<KtFunction>() ?: return ModCommand.nop()

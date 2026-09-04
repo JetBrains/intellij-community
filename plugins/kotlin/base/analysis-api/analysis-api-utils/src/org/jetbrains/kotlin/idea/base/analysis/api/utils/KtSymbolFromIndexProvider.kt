@@ -13,7 +13,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
@@ -107,7 +106,6 @@ class KtSymbolFromIndexProvider(
         return true
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun getKotlinClassesByName(
         name: Name,
@@ -127,7 +125,6 @@ class KtSymbolFromIndexProvider(
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun getKotlinClassesByNameFilter(
         nameFilter: (Name) -> Boolean,
@@ -233,7 +230,6 @@ class KtSymbolFromIndexProvider(
         }.mapNotNull { it.namedClassSymbol }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun getKotlinCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
@@ -255,7 +251,6 @@ class KtSymbolFromIndexProvider(
         .filterIsInstance<KaCallableSymbol>() +
             resolveExtensionScopeWithTopLevelDeclarations.callables(nameFilter)
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun getKotlinCallableSymbolsByName(
         name: Name,
@@ -368,7 +363,6 @@ class KtSymbolFromIndexProvider(
     /**
      *  Returns top-level callables, excluding extensions. To obtain extensions use [getExtensionCallableSymbolsByNameFilter].
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun getTopLevelCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
@@ -400,7 +394,6 @@ class KtSymbolFromIndexProvider(
     /**
      * Returns top-level callables, including extensions.
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun getTopLevelCallableSymbolsByNameFilterIncludingExtensions(
         nameFilter: (Name) -> Boolean,
@@ -427,7 +420,6 @@ class KtSymbolFromIndexProvider(
         .filterIsInstance<KaCallableSymbol>() +
             resolveExtensionScopeWithTopLevelDeclarations.callables(nameFilter)
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun getExtensionCallableSymbolsByName(
         name: Name,
@@ -464,7 +456,6 @@ class KtSymbolFromIndexProvider(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun getExtensionCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,

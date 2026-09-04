@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -86,7 +85,6 @@ private fun dataClassParameterName(declarationEntry: KtDestructuringDeclarationE
     return listOf("key", "value").getOrNull(entryIndex)
 }
 
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun lambdaParameterName(parameter: KtParameter): String? {
     val functionLiteral = parameter.ownerFunction as? KtFunctionLiteral ?: return null

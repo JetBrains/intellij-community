@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -95,7 +94,6 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
         return super.visitUnaryExpression(expression, data)
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun <T : KtElement> processElement(element: T) {
         if (hasLocalClasses) {
             return
@@ -111,7 +109,6 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun processCall(resolutionAttempt: KaCallResolutionAttempt?) {
         val call = resolutionAttempt?.successful ?: return
 

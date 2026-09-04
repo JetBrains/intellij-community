@@ -16,7 +16,6 @@ import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.components.returnType
@@ -219,7 +218,6 @@ object ChangeSignatureFixFactory {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun prepareChangeInfo(psi: PsiElement, input: FixInput): ChangeInfo? {
         if (input.type == ChangeType.CHANGE_FUNCTIONAL) {
@@ -415,7 +413,6 @@ object ChangeSignatureFixFactory {
     }
 
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun KaType.toFunctionType(): KaType? {
         val typeFamily = functionTypeFamily
@@ -492,7 +489,6 @@ object ChangeSignatureFixFactory {
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun createRemoveParameterFix(
         element: KtElement,
@@ -528,7 +524,6 @@ object ChangeSignatureFixFactory {
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun createMismatchParameterTypeFix(
         element: PsiElement,

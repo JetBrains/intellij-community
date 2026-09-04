@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.impl.compiled.ClsParameterImpl
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterStubImpl
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaDeclarationNameRenderer
@@ -90,7 +89,6 @@ val KaValueParameterSymbol.realName: Name?
  * @see KaVariableSignature.realName
  * @see KaValueParameterSymbol.hasSynthesizedName
  */
-@OptIn(KaExperimentalApi::class)
 fun createRealNameRenderer(renderer: KaDeclarationNameRenderer): KaDeclarationNameRenderer = object : KaDeclarationNameRenderer {
     override fun renderName(
         analysisSession: KaSession,

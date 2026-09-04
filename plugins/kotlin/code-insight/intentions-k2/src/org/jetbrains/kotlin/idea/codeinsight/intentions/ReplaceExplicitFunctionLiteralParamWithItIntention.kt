@@ -7,7 +7,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.application
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -41,7 +40,6 @@ internal class ReplaceExplicitFunctionLiteralParamWithItIntention : SelfTargetin
 
     override fun startInWriteAction(): Boolean = false
 
-    @OptIn(KaExperimentalApi::class)
     override fun isApplicableTo(element: KtElement, caretOffset: Int): Boolean {
         val functionLiteral = targetFunctionLiteral(element, caretOffset) ?: return false
         val explicitParameterName = functionLiteral.valueParameters.singleOrNull()?.name ?: return false
@@ -77,7 +75,6 @@ internal class ReplaceExplicitFunctionLiteralParamWithItIntention : SelfTargetin
 
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun targetFunctionLiteral(element: KtElement, caretOffset: Int, editor: Editor? = null): KtFunctionLiteral? {
     val expression = element.getParentOfType<KtNameReferenceExpression>(false)
     if (expression != null) {

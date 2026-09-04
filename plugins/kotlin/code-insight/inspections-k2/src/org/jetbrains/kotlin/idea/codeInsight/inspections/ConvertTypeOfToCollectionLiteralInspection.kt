@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -73,7 +72,6 @@ internal class ConvertTypeOfToCollectionLiteralInspection :
 
     override fun getApplicableRanges(element: KtDotQualifiedExpression) = ApplicabilityRange.self(element)
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         val callExpr = element.selectorExpression as? KtCallExpression ?: return null

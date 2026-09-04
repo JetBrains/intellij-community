@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -64,7 +63,6 @@ internal class UnusedEqualsInspection : AbstractKotlinInspection() {
             }
         }
 
-        @OptIn(KaExperimentalApi::class)
         context(session: KaSession)
         private fun isAnyEquals(expression: KtCallExpression): Boolean {
             val symbol = expression.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol ?: return false

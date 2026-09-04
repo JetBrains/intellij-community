@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.java.generate.template.TemplateResource
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -56,7 +55,6 @@ internal object AbstractSuperCallFixFactories {
         listOfNotNull(createQuickFix(diagnostic.psi))
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createQuickFix(element: PsiElement): ModCommandAction? {
         val expression = element as? KtNameReferenceExpression ?: return null
@@ -186,7 +184,6 @@ private class SpecifySuperTypeExplicitlyFix(
 
 context(session: KaSession)
 private fun getSuperClassFqNameToReferTo(expression: KtNameReferenceExpression): FqName? {
-    @OptIn(KaExperimentalApi::class)
     fun tryViaCalledFunction(): KaCallableSymbol? = expression.resolveSuccessfulCall()?.symbol
         ?.allOverriddenSymbols?.find { (it as? KaFunctionSymbol)?.modality != KaSymbolModality.ABSTRACT }
 

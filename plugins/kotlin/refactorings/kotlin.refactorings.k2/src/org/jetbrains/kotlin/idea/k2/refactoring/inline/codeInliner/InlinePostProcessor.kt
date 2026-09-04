@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -138,7 +137,6 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun dropArgumentsForDefaultValues(pointer: SmartPsiElementPointer<KtElement>) {
         val result = pointer.element ?: return
 
@@ -226,7 +224,6 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun introduceNamedArguments(pointer: SmartPsiElementPointer<KtElement>) {
         val element = pointer.element ?: return
         val psiFactory = KtPsiFactory.contextual(element)

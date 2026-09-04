@@ -13,7 +13,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parents
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -185,7 +184,6 @@ class CollectionConcatenationToBuildCollectionInspection :
         return toOperationForPlus(isIterableOrSequence(type))
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.isBuildCollectionCall(collectionType: Context.CollectionType): Boolean {
         val callExpression = transformingCallExpression() ?: return false
@@ -236,7 +234,6 @@ class CollectionConcatenationToBuildCollectionInspection :
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.toTransformingOperation(): Context.Operation.TransformingOperation? {
         if (this !is KtQualifiedExpression) return null
@@ -251,7 +248,6 @@ class CollectionConcatenationToBuildCollectionInspection :
     /**
      * The `+`/`-` operators may be overridden by the user, so we ensure that these operations are from the standard library.
      */
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtOperationReferenceExpression.isDefaultStdlibCollectionOperation(): Boolean {
         val resolvedTo = resolveSuccessfulSymbol() as? KaCallableSymbol ?: return false

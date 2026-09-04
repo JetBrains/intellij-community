@@ -14,7 +14,6 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -263,7 +262,6 @@ internal class UseWithIndexInspection : KotlinApplicableInspectionBase.Simple<Kt
         return VariableInitializationInfo(variable, statement, initializer)
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun resolveToVariable(callExpression: KtExpression): KaVariableSymbol? =
         callExpression.resolveSuccessfulExpressionSymbol() as? KaVariableSymbol

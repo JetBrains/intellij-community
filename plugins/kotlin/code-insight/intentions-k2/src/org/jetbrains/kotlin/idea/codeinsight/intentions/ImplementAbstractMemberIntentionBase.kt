@@ -23,7 +23,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.list.buildTargetPopupWithMultiSelect
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.application
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
@@ -232,7 +231,6 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                     )
                 }
 
-                @OptIn(KaExperimentalApi::class)
                 context(session: KaSession)
                 private fun findExistingImplementation(
                     targetClass: KaClassSymbol,
@@ -251,7 +249,6 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                     }
                 }
 
-                @OptIn(KaExperimentalApi::class)
                 fun from(
                     targetClass: KtEnumEntry,
                     abstractMember: KtNamedDeclaration,
@@ -272,7 +269,6 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                     )
                 }
 
-                @OptIn(KaExperimentalApi::class)
                 context(session: KaSession)
                 private fun getCallableMemberToImplement(
                     abstractMember: KtNamedDeclaration,
@@ -285,7 +281,6 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                     return subClass.memberScope.findCallableMemberBySignature(signatureToImplement)
                 }
 
-                @OptIn(KaExperimentalApi::class)
                 context(session: KaSession)
                 private fun createKtClassMember(
                     symbolToImplement: KaCallableSymbol,

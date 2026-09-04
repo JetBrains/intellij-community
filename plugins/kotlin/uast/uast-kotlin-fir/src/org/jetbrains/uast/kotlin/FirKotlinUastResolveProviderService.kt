@@ -12,7 +12,6 @@ import com.intellij.psi.impl.compiled.ClsMemberImpl
 import com.intellij.psi.impl.file.PsiPackageImpl
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
@@ -201,7 +200,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         } else null
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
         analyzeForUast(ktCallElement) {
             val argumentMapping = ktCallElement.tryResolveCall()?.single?.function?.valueArgumentMapping ?: return null
@@ -230,7 +228,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun findAttributeValueExpression(uAnnotation: KotlinUAnnotation, arg: ValueArgument): UExpression? {
         val annotationEntry = uAnnotation.sourcePsi
         analyzeForUast(annotationEntry) {
@@ -241,7 +238,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): UExpression? {
         analyzeForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
@@ -256,7 +252,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression? {
         analyzeForUast(ktCallElement) {
             val resolvedFunctionCall = ktCallElement.tryResolveCall()?.single?.function
@@ -282,7 +277,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun getImplicitParameters(
         ktLambdaExpression: KtLambdaExpression,
         parent: UElement,
@@ -347,7 +341,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         return psiElement.annotations
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
         val candidates = analyzeForUast(ktExpression) {
             val resolvableCall = ktExpression as? KtResolvableCall ?: return@analyzeForUast emptyList()
@@ -400,7 +393,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator {
         val other = UastBinaryOperator.OTHER
         analyzeForUast(ktBinaryExpression) {
@@ -410,7 +402,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
         analyzeForUast(ktElement) {
             val resolutionAttempt = (ktElement as? KtResolvableCall)?.tryResolveCall() ?: return null
@@ -455,7 +446,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun resolveSyntheticJavaPropertyAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
         return analyzeForUast(ktSimpleNameExpression) {
             val variableAccessCall =
@@ -472,7 +462,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean {
         when (ktCallElement) {
             is KtSuperTypeCallEntry, is KtAnnotationEntry, is KtConstructorDelegationCall -> return false
@@ -488,7 +477,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun resolvedFunctionName(ktCallElement: KtCallElement): String? {
         analyzeForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol = ktCallElement.tryResolveCall()?.single?.function?.symbol ?: return null
@@ -497,7 +485,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun qualifiedAnnotationName(ktCallElement: KtCallElement): String? {
         analyzeForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
@@ -509,7 +496,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun callKind(ktCallElement: KtCallElement): UastCallKind {
         when (ktCallElement) {
             is KtSuperTypeCallEntry, is KtAnnotationEntry, is KtConstructorDelegationCall -> return UastCallKind.CONSTRUCTOR_CALL
@@ -533,7 +519,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun isAnnotationConstructorCall(ktCallElement: KtCallElement): Boolean {
         when (ktCallElement) {
             is KtAnnotationEntry -> return true
@@ -552,7 +537,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiClass? {
         analyzeForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol = ktCallElement.tryResolveCall()?.single?.function?.symbol ?: return null
@@ -571,7 +555,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry, source: UElement): PsiClass? {
         analyzeForUast(ktAnnotationEntry) {
             val resolvedAnnotationCall = ktAnnotationEntry.tryResolveCall()?.single as? KaAnnotationCall ?: return null
@@ -582,7 +565,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun resolveToDeclaration(ktExpression: KtExpression): PsiElement? {
         if (ktExpression !is KtExpressionWithLabel && ktExpression !is KtCallExpression && ktExpression !is KtReferenceExpression) {
             return null
@@ -665,7 +647,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 }
             }
 
-            @OptIn(KaExperimentalApi::class)
             fun resolveToPsiClassOrEnumEntry(classOrObject: KtClassOrObject): PsiElement? {
                 val ktType = when (classOrObject) {
                     is KtEnumEntry -> {
@@ -800,7 +781,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
         analyzeForUast(ktCallElement) {
             val ktCall = ktCallElement.tryResolveCall()?.single?.function ?: return null
@@ -808,7 +788,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun getAccessorReceiverType(ktSimpleNameExpression: KtSimpleNameExpression, source: UElement): PsiType? {
         analyzeForUast(ktSimpleNameExpression) {
             val ktCall = (ktSimpleNameExpression as? KtResolvableCall)?.tryResolveCall()?.single?.variable ?: return null
@@ -934,7 +913,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun getSuspendContinuationType(
         suspendFunction: KtFunction,
         containingLightDeclaration: PsiModifierListOwner?,

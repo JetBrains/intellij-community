@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.slicer
 import com.intellij.psi.PsiCall
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -19,7 +18,6 @@ import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtTypeReference
 
 object ReceiverSliceProducer : SliceProducer {
-    @OptIn(KaExperimentalApi::class)
     override fun produce(usage: UsageInfo, mode: KotlinSliceAnalysisMode, parent: SliceUsage): Collection<SliceUsage> {
         val refElement = usage.element ?: return emptyList()
         when (refElement) {

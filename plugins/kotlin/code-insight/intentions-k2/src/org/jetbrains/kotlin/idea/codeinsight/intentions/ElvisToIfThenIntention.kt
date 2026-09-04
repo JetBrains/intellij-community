@@ -7,7 +7,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -52,7 +51,6 @@ class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.elvis.expression.with.if.expression")
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.findSafeCastReceiver(): KtBinaryExpressionWithTypeRHS? {
         var current = this

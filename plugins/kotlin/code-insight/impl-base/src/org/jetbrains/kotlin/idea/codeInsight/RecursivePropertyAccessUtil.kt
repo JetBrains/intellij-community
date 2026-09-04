@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
@@ -100,7 +99,6 @@ object RecursivePropertyAccessUtil {
         return false
     }
 
-    @OptIn(KaExperimentalApi::class)
     fun KtSimpleNameExpression.isRecursivePropertyAccess(anyRecursionTypes: Boolean): Boolean {
         val propertyAccessor = getContainingPropertyAccessor() ?: return false
         analyze(this) {

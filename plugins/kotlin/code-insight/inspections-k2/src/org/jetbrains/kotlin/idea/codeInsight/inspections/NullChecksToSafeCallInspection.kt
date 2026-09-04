@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.isStableForSmartCasting
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -75,7 +74,6 @@ private fun replaceNullChecksWithSafeCall(element: KtBinaryExpression, project: 
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun isNullChecksToSafeCallFixAvailable(expression: KtBinaryExpression): Boolean {
     fun String.afterIgnoreCalls() = replace("?.", ".")
@@ -114,7 +112,6 @@ private fun KtBinaryExpression.getNullTestableExpression(expectedOperation: KtTo
     return null
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun hasStableSmartCast(expression: KtExpression): Boolean {
     val expressionToCheck = when (expression) {

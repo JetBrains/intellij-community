@@ -112,7 +112,6 @@ abstract class KtGenerateMembersHandler(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createMemberEntries(
         editor: Editor,

@@ -15,7 +15,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jdom.Element
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.constructor
@@ -129,7 +128,6 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtElement): Context? {
         val typeArguments = element.getTypeArguments() ?: return null
@@ -307,7 +305,6 @@ private fun KtTypeProjection.isExplicitlyNullable(): Boolean {
  * This behavior of constructor type arguments being flexible is going to be changed in Kotlin 2.3 (KT-71718),
  * but we can't fix it here because we don't want different code for different language versions.
  */
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtTypeProjection.isImplicitlyNullable(): Boolean {
     val userType = typeReference?.typeElement as? KtUserType ?: return false

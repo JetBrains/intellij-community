@@ -23,7 +23,6 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.components.returnType
@@ -150,7 +149,6 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                     }
                 }
 
-                @OptIn(KaExperimentalApi::class)
                 override fun visitKtElement(element: KtElement) {
                     super.visitKtElement(element)
 
@@ -232,7 +230,6 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
      * run change signature refactoring, just like [invoke], but with configurable expression type, and name
      * (to be reused in "create parameter from usage" where both type and name are fixed, and computed a bit differently from the regular "introduce parameter")
      */
-    @OptIn(KaExperimentalApi::class)
     fun addParameter(
         project: Project,
         editor: Editor,
@@ -366,7 +363,6 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
         )
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun showDialog(
         project: Project,
         editor: Editor,
@@ -393,7 +389,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
         ).show()
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class, KaAllowAnalysisFromWriteAction::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     private fun introduceParameterDescriptor(
         originalExpression: KtExpression,
         targetParent: KtNamedDeclaration,
@@ -487,7 +483,6 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(editor: Editor) {
     val superMethods = checkSuperMethods(callable, emptyList(), RefactoringBundle.message("to.refactor"))
     val targetCallable = superMethods.firstOrNull() ?: return
@@ -592,7 +587,6 @@ fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(editor: 
 open class KotlinFirIntroduceLambdaParameterHandler(
     private val helper: KotlinIntroduceParameterHelper<KtNamedDeclaration> = KotlinIntroduceParameterHelper.Default()
 ) : KotlinFirIntroduceParameterHandler(helper) {
-    @OptIn(KaExperimentalApi::class)
     private val extractLambdaHelper = object : ExtractionEngineHelper(INTRODUCE_LAMBDA_PARAMETER) {
         private fun createDialog(
             project: Project,

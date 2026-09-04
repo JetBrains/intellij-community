@@ -12,7 +12,6 @@ import com.intellij.slicer.JavaSliceUsage
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -234,7 +233,6 @@ abstract class Slicer(
     }
 
     // ignore parameter usages in function contract
-    @OptIn(KaExperimentalApi::class)
     private fun shouldIgnoreVariableUsage(usage: UsageInfo): Boolean {
         val element = usage.element ?: return true
         return element.parents.any { el ->
@@ -246,7 +244,6 @@ abstract class Slicer(
 
     protected fun canProcessParameter(parameter: KtParameter): Boolean = !parameter.isVarArg
 
-    @OptIn(KaExperimentalApi::class)
     protected fun processExtensionReceiverUsages(
         declaration: KtCallableDeclaration,
         body: KtExpression?,

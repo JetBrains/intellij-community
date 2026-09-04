@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.expressions.isImplicitReferenceToCompanion
@@ -36,7 +35,6 @@ internal class UsedReference private constructor(val reference: KtReference) {
         return reference.resolvesByNames
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun isResolved(): Boolean {
         if (isEmptyInvokeReference(reference)) {
@@ -90,7 +88,6 @@ private fun isDefaultJavaAnnotationArgumentReference(reference: KtReference): Bo
  * In the cases when `foo()` call is not actually an `invoke` call, we do not want to process such references,
  * since they are not supposed to resolve anywhere.
  */
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun isEmptyInvokeReference(reference: KtReference): Boolean {
     if (reference !is KtInvokeFunctionReference) return false
