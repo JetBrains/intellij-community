@@ -7,7 +7,9 @@ import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
+import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
+import git4idea.GitStandardLocalBranch
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.repo.GitRepoInfo
@@ -89,9 +91,18 @@ fun GitRepositoryManager.collectRemotes(): Set<GitRemoteUrlCoordinates> {
   }.toSet()
 }
 
-fun GitRepoInfo.findFirstRemoteBranchTrackedByCurrent(): GitRemoteBranch? {
-  val currentBranch = currentBranch ?: return null
-  return branchTrackInfos.find { it.localBranch == currentBranch }?.remoteBranch
+fun GitRepoInfo.findFirstRemoteBranchTrackedByCurrent(): GitRemoteBranch? =
+  currentBranch?.let { findFirstRemoteBranchTrackedBy(it) }
+
+/**
+ * Finds the remote branch tracked by [branch], an arbitrary local branch, not necessarily the current one.
+ * [GitBranchTrackInfo.localBranch] is a [GitLocalBranch], while a branch checked out in a linked worktree is only
+ * known as a [GitStandardLocalBranch]. [GitReference.equals] compares `javaClass` strictly, so the two never
+ * compare equal directly - [branch] is wrapped as a [GitLocalBranch] first.
+ */
+fun GitRepoInfo.findFirstRemoteBranchTrackedBy(branch: GitStandardLocalBranch): GitRemoteBranch? {
+  val localBranch = branch as? GitLocalBranch ?: GitLocalBranch(branch.name)
+  return branchTrackInfos.find { it.localBranch == localBranch }?.remoteBranch
 }
 
 private typealias GitRemotesFlow = Flow<Collection<GitRemoteUrlCoordinates>>

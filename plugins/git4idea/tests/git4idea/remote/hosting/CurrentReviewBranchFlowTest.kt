@@ -4,6 +4,7 @@ package git4idea.remote.hosting
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitRemoteBranch
+import git4idea.GitStandardLocalBranch
 import git4idea.push.GitPushSingleRepoContext
 import git4idea.push.gitPushSingleRepoFixture
 import git4idea.push.updateRepositories
@@ -61,6 +62,42 @@ internal class CurrentReviewBranchFlowTest {
 
         // The moved tip must produce a fresh emission (this is what the fix restores).
         waitUntil("review branch re-emitted after push", timeout = 10.seconds) { emissions.size > countBeforePush }
+        assertThat(emissions.last()?.second?.nameForRemoteOperations).isEqualTo("master")
+      }
+      finally {
+        job.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test findFirstRemoteBranchTrackedBy matches a GitStandardLocalBranch against a GitLocalBranch's track info`(): Unit = with(context) {
+    // "feature" is created but never checked out, so it stays a GitLocalBranch only in branchTrackInfos.
+    repository.git("branch --track feature origin/master")
+    updateRepositories()
+
+    // A worktree row only ever knows its branch as a GitStandardLocalBranch, not the more specific GitLocalBranch.
+    val branch = GitStandardLocalBranch("feature")
+
+    assertThat(repository.info.findFirstRemoteBranchTrackedBy(branch)?.nameForRemoteOperations).isEqualTo("master")
+  }
+
+  @Test
+  fun `test resolves the review branch for an arbitrary non-current local branch`(): Unit = with(context) {
+    val manager = hostedRepositoriesManager()
+
+    repository.git("branch --track feature origin/master")
+    updateRepositories()
+
+    val branch = GitStandardLocalBranch("feature")
+
+    runBlocking {
+      val emissions = CopyOnWriteArrayList<Pair<HostedGitRepositoryMapping, GitRemoteBranch>?>()
+      val job = launch(Dispatchers.Default) {
+        manager.findHostedRemoteBranchTrackedBy(repository, branch).collect { emissions.add(it) }
+      }
+      try {
+        waitUntil("review branch is resolved for the non-current branch", timeout = 10.seconds) { emissions.isNotEmpty() }
         assertThat(emissions.last()?.second?.nameForRemoteOperations).isEqualTo("master")
       }
       finally {

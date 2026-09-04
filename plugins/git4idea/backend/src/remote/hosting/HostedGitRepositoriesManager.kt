@@ -2,6 +2,8 @@
 package git4idea.remote.hosting
 
 import git4idea.GitRemoteBranch
+import git4idea.GitStandardLocalBranch
+import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,10 +33,27 @@ fun <M : HostedGitRepositoryMapping> HostedGitRepositoriesManager<M>.findKnownRe
  */
 fun <M : HostedGitRepositoryMapping> HostedGitRepositoriesManager<M>.findHostedRemoteBranchTrackedByCurrent(repository: GitRepository)
   : Flow<Pair<M, GitRemoteBranch>?> =
+  findHostedRemoteBranchTrackedBy(repository) { it.findFirstRemoteBranchTrackedByCurrent() }
+
+/**
+ * Same as [findHostedRemoteBranchTrackedByCurrent], but for an arbitrary local [branch], not the current branch of
+ * [repository]. Used for a branch checked out in a linked worktree, since that branch is usually not the
+ * repository's current branch.
+ */
+fun <M : HostedGitRepositoryMapping> HostedGitRepositoriesManager<M>.findHostedRemoteBranchTrackedBy(
+  repository: GitRepository,
+  branch: GitStandardLocalBranch,
+): Flow<Pair<M, GitRemoteBranch>?> =
+  findHostedRemoteBranchTrackedBy(repository) { it.findFirstRemoteBranchTrackedBy(branch) }
+
+private fun <M : HostedGitRepositoryMapping> HostedGitRepositoriesManager<M>.findHostedRemoteBranchTrackedBy(
+  repository: GitRepository,
+  findRemoteBranch: (GitRepoInfo) -> GitRemoteBranch?,
+): Flow<Pair<M, GitRemoteBranch>?> =
   knownRepositoriesState.combine(
     repository.infoFlow()
       .map { info ->
-        val branch = info.findFirstRemoteBranchTrackedByCurrent()
+        val branch = findRemoteBranch(info)
         branch to branch?.let { info.remoteBranchesWithHashes[it] }
       }
       .distinctUntilChanged()

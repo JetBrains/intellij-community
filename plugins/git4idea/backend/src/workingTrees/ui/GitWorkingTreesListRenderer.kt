@@ -6,13 +6,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorStripe
 import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorStripeSegment
 import com.intellij.ui.hover.ListHoverListener
+import git4idea.ui.branch.GitBranchReviewPresenter
 import java.awt.Color
 import java.awt.Component
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
 
-internal class GitWorkingTreesListRenderer(private val project: Project) : ListCellRenderer<GitWorkingTreesListEntry> {
+internal class GitWorkingTreesListRenderer(
+  private val project: Project,
+  private val reviews: () -> Map<GitWorktreeBranchKey, GitBranchReviewPresenter.Review?>,
+) : ListCellRenderer<GitWorkingTreesListEntry> {
   private val rowComponent = GitWorkingTreeRowComponent()
 
   override fun getListCellRendererComponent(
@@ -25,7 +29,13 @@ internal class GitWorkingTreesListRenderer(private val project: Project) : ListC
     val color = colorFor(value)
     val part = stripePart(list, index, color)
     val hovered = !isSelected && ListHoverListener.getHoveredIndex(list) == index
-    return rowComponent.apply { configure(value, isSelected, hovered, cellHasFocus, list.font, color, part) }.component
+    val review = reviewFor(value)
+    return rowComponent.apply { configure(value, isSelected, hovered, cellHasFocus, list.font, color, part, review) }.component
+  }
+
+  private fun reviewFor(entry: GitWorkingTreesListEntry): GitBranchReviewPresenter.Review? {
+    val key = (entry as? GitWorktreeRow)?.resolveReviewBranchKey() ?: return null
+    return reviews()[key]
   }
 
   private fun colorFor(entry: GitWorkingTreesListEntry): Color? {

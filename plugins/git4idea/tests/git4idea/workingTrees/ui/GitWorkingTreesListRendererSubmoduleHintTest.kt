@@ -33,7 +33,7 @@ internal class GitWorkingTreesListRendererSubmoduleHintTest {
       .single { it.gitWorkingTree.isMain && it.repository.root.path == sub.root.path }
     assertThat(row.repositoryKind).isEqualTo(GitRepositoryKind.SUBMODULE)
 
-    val renderer = GitWorkingTreesListRenderer(project)
+    val renderer = GitWorkingTreesListRenderer(project) { emptyMap() }
     val list = JBList<GitWorkingTreesListEntry>()
     val rendered = renderer.getListCellRendererComponent(list, row, 0, false, false) as Container
     rendered.size = rendered.preferredSize

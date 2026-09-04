@@ -10,14 +10,18 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import git4idea.i18n.GitBundle
+import git4idea.ui.branch.GitBranchReviewPresenter
+import icons.CollaborationToolsIcons
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -39,7 +43,9 @@ internal class GitWorkingTreeRowComponent {
   private val statusIconLabel = JBLabel()
   private val submoduleHintLabel = JBLabel(GitBundle.message("toolwindow.working.trees.worktree.kind.submodule.hint"))
   private val branchIconLabel = JBLabel(AllIcons.Vcs.Branch)
-  private val branchLabel = JBLabel()
+  private val branchLabel = JBLabel().apply { minimumSize = Dimension(0, minimumSize.height) }
+  private val prIconLabel = JBLabel()
+  private val prTitleLabel = JBLabel().apply { minimumSize = Dimension(0, minimumSize.height) }
 
   init {
     component.isOpaque = true
@@ -55,6 +61,8 @@ internal class GitWorkingTreeRowComponent {
       isOpaque = false
       add(branchIconLabel)
       add(branchLabel)
+      add(prIconLabel)
+      add(prTitleLabel)
     }
     val textLines = JPanel(VerticalLayout(JBUI.scale(2))).apply {
       isOpaque = false
@@ -73,6 +81,7 @@ internal class GitWorkingTreeRowComponent {
     font: Font,
     color: Color?,
     part: RepositoryColorStripeSegment,
+    review: GitBranchReviewPresenter.Review?,
   ) {
     val worktree = (row as? GitWorktreeRow)?.gitWorkingTree
     applySelectionColors(selected, hovered, focused, font, dimmed = row is GitWorktreeCreatingRow || worktree?.isPrunable == true)
@@ -89,9 +98,13 @@ internal class GitWorkingTreeRowComponent {
     statusIconLabel.icon = worktree?.let { statusIcon(it.isLocked) }
     submoduleHintLabel.isVisible = row is GitWorktreeRow && row.repositoryKind == GitRepositoryKind.SUBMODULE
     branchLabel.text = row.presentableBranchName
+    prIconLabel.icon = if (review != null) IconUtil.colorize(CollaborationToolsIcons.PullRequestOpen, prTitleLabel.foreground) else null
+    prIconLabel.isVisible = review != null
+    prTitleLabel.text = review?.title
+    prTitleLabel.isVisible = review != null
     setStripe(color, part)
     component.setToolTipText(row.tooltipText())
-    component.accessibleContext.accessibleName = AccessibleContextUtil.getCombinedName(", ", nameLabel, branchLabel)
+    component.accessibleContext.accessibleName = AccessibleContextUtil.getCombinedName(", ", nameLabel, branchLabel, prTitleLabel)
   }
 
   private fun setStripe(color: Color?, part: RepositoryColorStripeSegment) {
@@ -146,10 +159,12 @@ internal class GitWorkingTreeRowComponent {
       val disabledForeground = JBUI.CurrentTheme.Label.disabledForeground(selected)
       nameLabel.foreground = disabledForeground
       branchLabel.foreground = disabledForeground
+      prTitleLabel.foreground = disabledForeground
     }
     else {
       nameLabel.foreground = primaryForeground
       branchLabel.foreground = if (selected) primaryForeground else NamedColorUtil.getInactiveTextColor()
+      prTitleLabel.foreground = if (selected) primaryForeground else NamedColorUtil.getInactiveTextColor()
     }
     statusIconLabel.foreground = primaryForeground
     submoduleHintLabel.foreground = if (selected) primaryForeground else NamedColorUtil.getInactiveTextColor()
@@ -157,6 +172,7 @@ internal class GitWorkingTreeRowComponent {
     component.font = font
     submoduleHintLabel.font = font
     branchLabel.font = font
+    prTitleLabel.font = font
   }
 
   private fun statusIcon(locked: Boolean): Icon? = if (locked) LOCKED_ICON else null

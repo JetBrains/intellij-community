@@ -24,6 +24,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.launchOnShow
 import git4idea.i18n.GitBundle
+import git4idea.ui.branch.GitBranchReviewPresenter
 import git4idea.workingTrees.GitCreateWorkingTreeService
 import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider.Companion.GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST
@@ -46,7 +47,7 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
   private val listModel = CollectionListModel<GitWorkingTreesListEntry>()
   private val list = JBList(listModel).apply {
     selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
-    cellRenderer = GitWorkingTreesListRenderer(project)
+    cellRenderer = GitWorkingTreesListRenderer(project) { viewModel.reviews.value }
     accessibleContext.accessibleName = GitBundle.message("toolwindow.working.trees.tab.name")
     putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
     addMouseListener(createPopupHandler())
@@ -79,11 +80,20 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
       }
     }
 
+    list.launchOnShow("worktree list reviews") {
+      viewModel.reviews.collect {
+        withContext(Dispatchers.UI) {
+          list.repaint()
+        }
+      }
+    }
+
     val wrappedComponent = UiDataProvider.wrapComponent(scrollPane) { sink ->
       val selected = list.selectedValuesList
       sink[GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES] =
         selected.filterIsInstance<GitWorktreeRow>().map { it.gitWorkingTree }
       sink[GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY] = GitWorktreesUiUtil.resolveSelectedBackendRepository(project, selected)
+      sink[GitWorkingTreeTabActionsDataKeys.SELECTED_REVIEW] = resolveSelectedReview(selected)
       sink[PlatformCoreDataKeys.HELP_ID] = TOOLWINDOW_CONTENT_HELP_ID
     }
 
@@ -111,6 +121,11 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
       popupMenu.setTargetComponent(list)
       popupMenu.component.show(comp, x, y)
     }
+  }
+
+  private fun resolveSelectedReview(selected: List<GitWorkingTreesListEntry>): GitBranchReviewPresenter.Review? {
+    val key = (selected.singleOrNull() as? GitWorktreeRow)?.resolveReviewBranchKey() ?: return null
+    return viewModel.reviews.value[key]
   }
 
   private fun applyEntries(entries: List<GitWorkingTreesListEntry>) {
