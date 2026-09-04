@@ -312,6 +312,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolvePropertiesInCompanionObjectFromBinaryDependency(myFixture)
     }
 
+    fun testResolvePropertiesInInnerClass() {
+        checkResolvePropertiesInInnerClass(myFixture)
+    }
+
     fun testResolvePropertiesInInnerClassFromBinaryDependency() {
         checkResolvePropertiesInInnerClassFromBinaryDependency(myFixture)
     }
@@ -362,5 +366,25 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveProtoDSL() {
         checkResolveProtoDSL(myFixture, isK2 = true)
+    }
+
+    fun testResolveCompiledKotlinProperty_pairFirst() {
+        checkResolveCompiledKotlinProperty_pairFirst(myFixture)
+    }
+
+    fun testResolveCompiledKotlinProperty_customLibrary() {
+        checkResolveCompiledKotlinProperty_customLibrary(myFixture)
+    }
+
+    fun testResolveCompiledKotlinProperty_var() {
+        checkResolveCompiledKotlinProperty_var(myFixture)
+    }
+
+    fun testResolveSourceKotlinProperty() {
+        checkResolveSourceKotlinProperty(myFixture)
+    }
+
+    fun testResolveSourceKotlinProperty_var() {
+        checkResolveSourceKotlinProperty_var(myFixture)
     }
 }

@@ -160,27 +160,29 @@ internal fun KtClassOrObject.toPsiType(): PsiType {
 }
 
 @ApiStatus.Internal
+fun KtProperty.toAccessorLightElement(sourcePsi: KtExpression? = null): PsiElement? {
+    val readWriteAccess = sourcePsi?.readWriteAccess() ?: return null
+    val accessorMethods = getAccessorLightMethods()
+    if (sourcePsi is KtBackingField ||
+        (sourcePsi as? KtNameReferenceExpression)?.getReferencedName() == "field"
+    ) {
+        accessorMethods.backingField?.let { return it }
+    }
+    return when {
+        readWriteAccess.isWrite -> {
+            accessorMethods.setter ?: accessorMethods.backingField // backingField is for val property assignments in init blocks
+        }
+        readWriteAccess.isRead -> {
+            accessorMethods.getter
+        }
+        else -> null
+    }
+}
+
+@ApiStatus.Internal
 fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement? {
     if (this is KtProperty) {
-        val readWriteAccess = sourcePsi?.readWriteAccess()
-        if (readWriteAccess != null) {
-            with(getAccessorLightMethods()) {
-                if (sourcePsi is KtBackingField ||
-                    (sourcePsi as? KtNameReferenceExpression)?.getReferencedName() == "field"
-                ) {
-                    backingField?.let { return it }
-                }
-                when {
-                    readWriteAccess.isWrite -> {
-                        (setter ?: backingField)?.let { return it } // backingField is for val property assignments in init blocks
-                    }
-                    readWriteAccess.isRead -> {
-                        getter?.let { return it }
-                    }
-                    else -> {}
-                }
-            }
-        }
+        toAccessorLightElement(sourcePsi)?.let { return it }
     }
     return when (this) {
         is KtDeclaration -> {
