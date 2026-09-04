@@ -578,7 +578,7 @@ class ChangeListManagerImpl(
           val changeProvider = vcs.getChangeProvider()
           if (changeProvider != null) {
             val activity = VcsStatisticsCollector.logClmRefresh(project, vcs, scope.wasEveryThingDirty())
-            changeProvider.getChanges(scope, builder, indicator, updater)
+            changeProvider.getChanges(scope, builder, indicator, updater.gate)
             activity.finished()
           }
         }

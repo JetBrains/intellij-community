@@ -965,7 +965,7 @@ public final class ChangeListWorker {
     return String.format("ChangeListWorker{ default = %s, lists = {\n%s }\ntrackers = %s\n}", myDefault.id, lists, trackers);
   }
 
-  public static final class ChangeListUpdater implements ChangeListManagerGate {
+  public static final class ChangeListUpdater {
     private final ChangeListWorker myWorker;
     private final ProjectLevelVcsManager myVcsManager;
 
@@ -977,15 +977,21 @@ public final class ChangeListWorker {
 
     private final Set<String> myListsToDisappear = new HashSet<>();
 
+    private final @NotNull ChangeListManagerGateImpl myGate;
+
     public ChangeListUpdater(@NotNull ChangeListWorker worker) {
       myWorker = worker.copy();
       myVcsManager = ProjectLevelVcsManager.getInstance(worker.getProject());
+      myGate = new ChangeListManagerGateImpl();
     }
 
     public @NotNull Project getProject() {
       return myWorker.getProject();
     }
 
+    public @NotNull ChangeListManagerGate getGate() {
+      return myGate;
+    }
 
     public void notifyStartProcessingChanges(@Nullable VcsModifiableDirtyScope scope) {
       myWorker.myChangeMappings.forEach((change, list) -> {
@@ -1253,7 +1259,7 @@ public final class ChangeListWorker {
       }
 
       String assignedChangeListId = ChangeListChangeAssigner.EP_NAME.computeSafeIfAny(myWorker.myProject, assigner -> {
-        return assigner.getChangeListIdFor(change, this);
+        return assigner.getChangeListIdFor(change, this.getGate());
       });
       if (assignedChangeListId != null) {
         ListData list = myWorker.getDataById(assignedChangeListId);
@@ -1297,14 +1303,7 @@ public final class ChangeListWorker {
       myWorker.removeChangeMapping(change);
     }
 
-
-    @Override
-    public @NotNull List<LocalChangeList> getListsCopy() {
-      return myWorker.getChangeLists();
-    }
-
-    @Override
-    public @Nullable LocalChangeList findChangeList(@Nullable String name) {
+    private @Nullable LocalChangeList findChangeList(@Nullable String name) {
       if (name == null) return null;
       ListData data = myWorker.getDataByName(name);
       if (data == null) return null;
@@ -1315,47 +1314,67 @@ public final class ChangeListWorker {
       return myWorker.toLightChangeList(data);
     }
 
-    @Override
-    public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
+    private @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
       ListData data = myWorker.addChangeListEntry(name, comment, null, null);
       return myWorker.toLightChangeList(data);
     }
 
-    @Override
     public @NotNull LocalChangeList findOrCreateList(@NotNull String name, @Nullable String comment) {
       LocalChangeList list = findChangeList(name);
       if (list != null) return list;
       return addChangeList(name, comment);
     }
 
-    @Override
-    public void editComment(@NotNull String name, @Nullable String comment) {
-      myWorker.editComment(name, StringUtil.notNullize(comment));
-    }
+    private class ChangeListManagerGateImpl implements ChangeListManagerGate {
+      @Override
+      public @NotNull List<LocalChangeList> getListsCopy() {
+        return myWorker.getChangeLists();
+      }
 
-    @Override
-    public void editName(@NotNull String oldName, @NotNull String newName) {
-      myWorker.editName(oldName, newName);
-    }
+      @Override
+      public @Nullable LocalChangeList findChangeList(@Nullable String name) {
+        return ChangeListUpdater.this.findChangeList(name);
+      }
 
-    @Override
-    public void setListsToDisappear(@NotNull Collection<String> names) {
-      myListsToDisappear.addAll(names);
-    }
+      @Override
+      public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
+        return ChangeListUpdater.this.addChangeList(name, comment);
+      }
 
-    @Override
-    public FileStatus getStatus(@NotNull VirtualFile file) {
-      return myWorker.getStatus(file);
-    }
+      @Override
+      public @NotNull LocalChangeList findOrCreateList(@NotNull String name, @Nullable String comment) {
+        return ChangeListUpdater.this.findOrCreateList(name, comment);
+      }
 
-    @Override
-    public FileStatus getStatus(@NotNull FilePath filePath) {
-      return myWorker.getStatus(filePath);
-    }
+      @Override
+      public void editComment(@NotNull String name, @Nullable String comment) {
+        myWorker.editComment(name, StringUtil.notNullize(comment));
+      }
 
-    @Override
-    public void setDefaultChangeList(@NotNull String list) {
-      myWorker.setDefaultList(list);
+      @Override
+      public void editName(@NotNull String oldName, @NotNull String newName) {
+        myWorker.editName(oldName, newName);
+      }
+
+      @Override
+      public void setListsToDisappear(@NotNull Collection<String> names) {
+        myListsToDisappear.addAll(names);
+      }
+
+      @Override
+      public FileStatus getStatus(@NotNull VirtualFile file) {
+        return myWorker.getStatus(file);
+      }
+
+      @Override
+      public FileStatus getStatus(@NotNull FilePath filePath) {
+        return myWorker.getStatus(filePath);
+      }
+
+      @Override
+      public void setDefaultChangeList(@NotNull String list) {
+        myWorker.setDefaultList(list);
+      }
     }
   }
 
