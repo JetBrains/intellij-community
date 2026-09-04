@@ -3,6 +3,7 @@ query($projectId: ID!, $sourceBranches: [String!], $targetBranches: [String!], $
     mergeRequests(sourceBranches: $sourceBranches, targetBranches: $targetBranches, state: $state, after: $cursor, first: $pageSize) {
       nodes {
         iid
+        title
         targetBranch
         sourceBranch
         targetProject {

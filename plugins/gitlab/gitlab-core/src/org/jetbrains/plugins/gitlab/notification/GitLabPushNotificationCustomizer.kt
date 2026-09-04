@@ -152,7 +152,7 @@ internal class GitLabPushNotificationCustomizer(private val project: Project) : 
 
     return withContext(Dispatchers.IO) {
       try {
-        val mrs = api.graphQL.findMergeRequestsByBranch(targetProjectPath, GitLabMergeRequestState.OPENED, remoteBranchName)!!.nodes
+        val mrs = api.graphQL.findMergeRequestsByBranch(targetProjectPath, GitLabMergeRequestState.OPENED, listOf(remoteBranchName))!!.nodes
         mrs.filter { it.targetProject.fullPath == targetProjectPath.fullPath() && it.sourceProject?.fullPath == targetProjectPath.fullPath() }
       }
       catch (ce: CancellationException) {

@@ -5,6 +5,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 
 data class GitLabMergeRequestByBranchDTO(
   val iid: String,
+  val title: String,
   val targetBranch: String,
   val sourceBranch: String,
   val targetProject: GitLabProjectDTO,

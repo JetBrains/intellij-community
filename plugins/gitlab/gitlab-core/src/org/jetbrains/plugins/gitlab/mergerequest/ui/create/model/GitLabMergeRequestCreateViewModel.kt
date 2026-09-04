@@ -168,7 +168,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     val targetBranch = state.baseBranch.nameForRemoteOperations
 
     runCatching {
-      projectData.mergeRequests.findByBranches(GitLabMergeRequestState.OPENED, sourceBranch, targetBranch).find {
+      projectData.mergeRequests.findByBranches(GitLabMergeRequestState.OPENED, listOf(sourceBranch), targetBranch).find {
         it.targetProject.fullPath == targetProject.repository.projectPath.fullPath() &&
         it.sourceProject?.fullPath == sourceProject.repository.projectPath.fullPath()
       }?.iid

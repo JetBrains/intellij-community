@@ -151,7 +151,7 @@ abstract class GitLabConnectedProjectViewModelBase(
     currentRemoteBranch: String,
     targetProjectPath: String,
   ): String? {
-    return connection.projectData.mergeRequests.findByBranches(GitLabMergeRequestState.OPENED, currentRemoteBranch).find {
+    return connection.projectData.mergeRequests.findByBranches(GitLabMergeRequestState.OPENED, listOf(currentRemoteBranch)).find {
       it.targetProject.fullPath == targetProjectPath && it.sourceProject?.fullPath == targetProjectPath
     }?.iid
   }

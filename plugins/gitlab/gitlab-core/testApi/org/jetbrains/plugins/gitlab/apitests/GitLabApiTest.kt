@@ -370,7 +370,7 @@ class GitLabApiTest : GitLabApiTestCase() {
 
     requiresAuthentication { api ->
       val testProject1 = glTest1Coordinates
-      val mrs = api.graphQL.findMergeRequestsByBranch(testProject1.projectPath, GitLabMergeRequestState.ALL, "changes-on-b")
+      val mrs = api.graphQL.findMergeRequestsByBranch(testProject1.projectPath, GitLabMergeRequestState.ALL, listOf("changes-on-b"))
 
       assertNotNull(mrs)
       assertEquals(listOf("3"), mrs.nodes.map { it.iid })

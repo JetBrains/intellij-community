@@ -125,13 +125,13 @@ suspend fun GitLabApi.GraphQL.getMergeRequestMetrics(
 suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(
   projectPath: GitLabProjectPath,
   state: GitLabMergeRequestState,
-  sourceBranch: String,
+  sourceBranches: Collection<String>,
   targetBranch: String? = null,
 ): GraphQLConnectionDTO<GitLabMergeRequestByBranchDTO>? {
   val parameters = mutableMapOf(
     "projectId" to projectPath.fullPath(),
     "state" to state.asApiParameter(),
-    "sourceBranches" to listOf(sourceBranch),
+    "sourceBranches" to sourceBranches.toList(),
     "targetBranches" to targetBranch?.let { listOf(it) }
   )
   return runQuery<MergeRequestsByBranchConnection>(GitLabGQLQuery.FIND_MERGE_REQUESTS, parameters, "project", "mergeRequests")

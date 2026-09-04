@@ -154,6 +154,8 @@
                              implementation="org.jetbrains.plugins.gitlab.git.http.GitLabHttpAuthDataProvider"/>
     <gitCurrentBranchPresenter
       implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$BranchPresenter"/>
+    <gitBranchReviewPresenter
+      implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabBranchReviewPresenter"/>
     <gitPushNotificationCustomizer implementation="org.jetbrains.plugins.gitlab.notification.GitLabPushNotificationCustomizer"/>
   </extensions>
 
