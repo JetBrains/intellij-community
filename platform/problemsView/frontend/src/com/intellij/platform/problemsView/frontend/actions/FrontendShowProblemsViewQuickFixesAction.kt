@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.problemsView.frontend.FrontendHighlightingPanel
@@ -108,6 +109,9 @@ internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemo
   }
 
   private fun HighlightingProblem.hasQuickFixes(): Boolean {
+    val useHasQuickFixes = RegistryManager.getInstance().get(USE_HAS_QUICK_FIXES_REGISTRY_KEY).asBoolean()
+    if (!useHasQuickFixes) return true
+
     return HighlightInfo.fromRangeHighlighter(highlighter)?.hasQuickFixes() == true
   }
 
@@ -167,3 +171,5 @@ internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemo
     }
   }
 }
+
+private const val USE_HAS_QUICK_FIXES_REGISTRY_KEY = "problems.view.frontend.quick.fixes.use.hasQuickFixes"

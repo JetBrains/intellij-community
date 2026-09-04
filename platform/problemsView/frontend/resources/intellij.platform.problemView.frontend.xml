@@ -34,6 +34,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="problems.view.frontend.quick.fixes.use.hasQuickFixes"
+                 defaultValue="true"
+                 description="Use the quick-fix availability flag for the Problems tool window action"
+                 restartRequired="false"/>
     <projectService serviceInterface="com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemsCollectorProvider"
                     serviceImplementation="com.intellij.platform.problemsView.frontend.FrontendProjectErrorsRootProvider"/>
     <ui.content.impl.toolWindowContentPostprocessor implementation="com.intellij.platform.problemsView.frontend.ProblemsViewToolWindowContentReplacer"/>
