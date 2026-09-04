@@ -17,7 +17,6 @@ import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
@@ -270,12 +269,6 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
     }
   }
 
-  @Disabled(
-    "KNOWN GAP: the projector reports the alternate screen at a positive logical line, because " +
-    "its history mark still points into the primary screen. The alternate model pads that gap with empty " +
-    "lines, so a full-screen program draws below the top of its own buffer. " +
-    "TerminalEmulatorOutputProjectorTest pins the misplaced anchor itself."
-  )
   @Test
   fun `entering the alternate screen shows the program at the top of the alternate model`() = doTest { fixture ->
     assumeGhostty()
@@ -288,12 +281,42 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
 
     fixture.connector.feed("${ESC}[?1049h")
     fixture.view.sessionModel.terminalState.first { it.isAlternateScreenBuffer }
-    fixture.connector.feed("~ VIM ~")
+
+    // The switch alone keeps the cursor at its primary-screen row and column, so a real full-screen
+    // program always positions it before its first draw - this does the same.
+    fixture.connector.feed("${ESC}[H" + "~ VIM ~")
     fixture.assertOutputModelState(alternate) { it.text.contains("~ VIM ~") }
 
     // The alternate screen starts empty and holds no scrollback, so its model must hold the editor's
     // screen alone, with the program's first row on the first line.
     assertThat(alternate.text.split("\n").first()).describedAs("the first alternate line").isEqualTo("~ VIM ~")
+  }
+
+  @Test
+  fun `a switch combined with its first draw in one chunk resolves correctly on both models`() = doTest { fixture ->
+    assumeGhostty()
+    val regular = fixture.view.outputModels.regular
+    val alternate = fixture.view.outputModels.alternative
+
+    // 60 lines leave real pre-switch content in the primary scrollback to recover once reactivated.
+    val primaryLines = (0 until 60).map { "P%02d".format(it) }
+    // The trailing primary content, the switch, and the program's first alternate-screen draw all
+    // arrive in one chunk — the "switch buried mid-stream" case a byte-stream sniffer could not
+    // reliably catch.
+    fixture.connector.feed(primaryLines.joinToString("\r\n") + "${ESC}[?1049h" + "ALT1")
+    fixture.assertOutputModelState(alternate) { it.text.contains("ALT1") }
+    assertThat(regular.text).describedAs("the primary model must not show alternate-screen content").doesNotContain("ALT1")
+
+    fixture.connector.feed("\r\nALT2")
+    fixture.assertOutputModelState(alternate) { it.text.contains("ALT2") }
+    assertThat(alternate.text).describedAs("the alternate model must not show primary content").doesNotContain("P59")
+
+    fixture.connector.feed("${ESC}[?1049l")
+
+    // The primary screen was frozen the whole time it was inactive, so one catch-up read on return
+    // must recover it fully and correctly, with nothing lost from before the switch.
+    fixture.assertOutputModelState(regular) { it.text.contains("P59") }
+    assertThat(regular.text.split("\n")).isEqualTo(primaryLines)
   }
 
   // ---------------------------------------------------------------------------

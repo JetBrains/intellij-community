@@ -307,13 +307,6 @@ internal class TerminalBlocksEndToEndTest(emulatorType: TerminalEmulatorType) : 
     fixture.resizeAndAwait(columns = 80, rows = 24)
   }
 
-  @Disabled(
-    "KNOWN GAP: the projector emits a negative startLineLogicalIndex here, and " +
-    "MutableTerminalOutputModelImpl.updateContent throws IndexOutOfBoundsException on it. That error " +
-    "stops the frontend output-flow collection, so this case cannot assert a model state. " +
-    "TerminalEmulatorOutputProjectorTest pins the negative index itself. Enable this once the projector " +
-    "keeps the alternate screen's anchor at 0."
-  )
   @Test
   fun `a resize on the alternate screen keeps the block boundaries`() {
     assumeGhostty()

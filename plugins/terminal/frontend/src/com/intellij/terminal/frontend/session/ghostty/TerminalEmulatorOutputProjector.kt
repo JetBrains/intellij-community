@@ -32,6 +32,11 @@ import org.jetbrains.plugins.terminal.session.impl.dto.TextStyleOptionDto
  * see [buildContentUpdate]) by each call — together with the [HistoryMark] used to measure how much history was
  * finalized since the last call; [close] releases the mark.
  *
+ * On the alternate screen, [buildContentUpdate] and [computeCursor] report the active screen alone, at logical
+ * index 0 — it has no scrollback of its own — and leave [historyMark] and the screen-top anchor untouched. Both
+ * track the primary screen only, which receives no writes while the alternate screen is active, so they resume
+ * exactly where they left off the instant it deactivates.
+ *
  * Not thread-safe: it reads the emulator, so every call must be serialized with all other emulator access —
  * in practice, every call is made under [GhosttyTerminalSession]'s lock.
  */
@@ -50,6 +55,8 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
   /**
    * True, while the history is replaced by the active screen alone: exact tracking was lost, and reading the
    * retained scrollback is deferred until the output stops. See buildContentUpdate.
+   *
+   * Only meaningful when the primary screen is active.
    */
   var isHistoryReplaced: Boolean = false
     private set
@@ -77,51 +84,63 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
    * The trade-off: as long as anything keeps scrolling (output arrives faster than [OUTPUT_POLL_INTERVAL]),
    * the model holds only the visible screen, so steady output that never pauses keeps its scrollback hidden until it does.
    * But it should be an exceptional case when - even if it adds one line every 20ms, it is still 50 new lines a second.
+   *
+   * On the alternate screen things are much simpler: content is reported from index 0, and none of the
+   * [HistoryMark]/[isHistoryReplaced] bookkeeping below is read or written.
    */
   fun buildContentUpdate(): TerminalContentUpdatedEvent {
     val screenRows = emulator.size.rows
     val curScrollbackRows = emulator.scrollbackRows
-    // finalizedLineCount() also picks up rows a resize (reflow) finalized, or un-finalized, without a write;
-    // null means the marked boundary was evicted.
-    val finalizedSinceLastEmit = historyMark.finalizedLineCount()
-    historyMark.reset()
+    val onAlternateScreen = emulator.usingAlternateScreen
 
-    // Nothing at all scrolled since the last update.
-    val outputStopped = finalizedSinceLastEmit == 0
-
-    // This update's window: where it starts in scrollback, and the absolute index that start maps to.
+    // This update's window: where it starts in scrollback, and the absolute logical line index that start maps to.
     var fromH: Int
     val startLogical: Long
-    when {
-      // The history is already replaced, and the output has not stopped: keep reporting the screen alone.
-      isHistoryReplaced && !outputStopped -> {
-        fromH = curScrollbackRows
-        startLogical = 0L
-      }
-      // The output stopped: read the retained scrollback once and resume exact tracking.
-      isHistoryReplaced -> {
-        isHistoryReplaced = false
-        fromH = 0
-        startLogical = 0L
-      }
-      // The boundary was evicted, or this window is simply too big to be worth reading.
-      finalizedSinceLastEmit == null || finalizedSinceLastEmit > HISTORY_REPLACE_LINES -> {
-        isHistoryReplaced = true
-        fromH = curScrollbackRows
-        startLogical = 0L
-      }
-      // A resize recovered rows from scrollback onto the screen instead of finalizing new ones: nothing new
-      // to read from scrollback, but the anchor has to move back by however many logical lines that was.
-      finalizedSinceLastEmit < 0 -> {
-        fromH = curScrollbackRows
-        val recoveredCount = (-finalizedSinceLastEmit).coerceAtMost(screenRows)
-        val recoveredRows = (0 until recoveredCount).map { emulator.screenLine(it) }
-        startLogical = screenTopLogical - completedLogicalLines(recoveredRows, recoveredCount)
-      }
-      // Normal scenario: report the changed tail
-      else -> {
-        fromH = curScrollbackRows - finalizedSinceLastEmit
-        startLogical = screenTopLogical
+    if (onAlternateScreen) {
+      // The alternate screen has no scrollback of its own: report it fully, from index 0.
+      fromH = curScrollbackRows
+      startLogical = 0L
+    }
+    else {
+      // finalizedLineCount() also picks up rows a resize (reflow) finalized, or un-finalized, without a write;
+      // null means the marked boundary was evicted.
+      val finalizedSinceLastEmit = historyMark.finalizedLineCount()
+      historyMark.reset()
+
+      // Nothing at all scrolled since the last update.
+      val outputStopped = finalizedSinceLastEmit == 0
+
+      when {
+        // The history is already replaced, and the output has not stopped: keep reporting the screen alone.
+        isHistoryReplaced && !outputStopped -> {
+          fromH = curScrollbackRows
+          startLogical = 0L
+        }
+        // The output stopped: read the retained scrollback once and resume exact tracking.
+        isHistoryReplaced -> {
+          isHistoryReplaced = false
+          fromH = 0
+          startLogical = 0L
+        }
+        // The boundary was evicted, or this window is simply too big to be worth reading.
+        finalizedSinceLastEmit == null || finalizedSinceLastEmit > HISTORY_REPLACE_LINES -> {
+          isHistoryReplaced = true
+          fromH = curScrollbackRows
+          startLogical = 0L
+        }
+        // A resize recovered rows from scrollback onto the screen instead of finalizing new ones: nothing new
+        // to read from scrollback, but the anchor has to move back by however many logical lines that was.
+        finalizedSinceLastEmit < 0 -> {
+          fromH = curScrollbackRows
+          val recoveredCount = (-finalizedSinceLastEmit).coerceAtMost(screenRows)
+          val recoveredRows = (0 until recoveredCount).map { emulator.screenLine(it) }
+          startLogical = screenTopLogical - completedLogicalLines(recoveredRows, recoveredCount)
+        }
+        // Normal scenario: report the changed tail
+        else -> {
+          fromH = curScrollbackRows - finalizedSinceLastEmit
+          startLogical = screenTopLogical
+        }
       }
     }
     // A soft-wrapped logical line can straddle that boundary: its first rows were finalized by an earlier emit and
@@ -186,8 +205,10 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
     val cursorLine = startLogical + completedLogicalLines(rows, line)
 
     // The finalized history rows move the screen top forward by their logical-line count. The mark is
-    // already re-anchored above; this starts the next emit's window here.
-    screenTopLogical = startLogical + completedLogicalLines(rows, newHistoryRows)
+    // already re-anchored above; this starts the next emit's window here. Primary screen only.
+    if (!onAlternateScreen) {
+      screenTopLogical = startLogical + completedLogicalLines(rows, newHistoryRows)
+    }
 
     return TerminalContentUpdatedEvent(
       text = text.toString(),
@@ -200,8 +221,9 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
   }
 
   /**
-   * The active-screen cursor as an absolute logical (line, column), consistent with [screenTopLogical]. Used for
-   * cursor-only updates (no content change).
+   * The active-screen cursor as an absolute logical (line, column), consistent with [screenTopLogical] — or with
+   * `0` on the alternate screen, which has no scrollback of its own. Used for cursor-only updates (no content
+   * change).
    *
    * Reads only the rows *above* the cursor: their wrap flags determine the logical-line index, and the text
    * lengths of the soft-wrapped run immediately above the cursor extend its logical column. Rows below the
@@ -218,7 +240,9 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
       line--
       column += rowsAbove[line].toStyledText().text.length
     }
-    return screenTopLogical + completedLogicalLines(rowsAbove, line) to column
+    // The alternate screen has no scrollback, so its logical lines start at 0
+    val anchor = if (emulator.usingAlternateScreen) 0L else screenTopLogical
+    return anchor + completedLogicalLines(rowsAbove, line) to column
   }
 
   /** Logical lines completed by rows `[0, untilRow)`: each row that does not soft-wrap ends one. */

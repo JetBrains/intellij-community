@@ -713,12 +713,6 @@ internal class TerminalEmulatorOutputProjectorTest {
 
   // --- the alternate screen --------------------------------------------------
 
-  @Ignore(
-    "KNOWN GAP: the history mark still points into the primary screen while scrollbackRows " +
-    "already reads the alternate one, so finalizedLineCount reports a recovery of 15 rows that no resize " +
-    "caused. The anchor lands on line 10, and the alternate model then pads ten empty lines above the " +
-    "content. No resize is needed. A filled primary scrollback is enough."
-  )
   @Test
   fun `entering the alternate screen over a filled scrollback keeps the anchor at 0`() =
     withProjector(columns = 80, rows = 5) {
@@ -737,10 +731,6 @@ internal class TerminalEmulatorOutputProjectorTest {
       assertThat(event.text.split('\n')).isEqualTo(listOf("", "", "", "", "   ALT"))
     }
 
-  @Ignore(
-    "KNOWN GAP: the anchor holds the value the buffer switch already put there, which is 10. " +
-    "The resize itself adds no error. See the case above."
-  )
   @Test
   fun `a resize on the alternate screen keeps the anchor at 0`() = withProjector(columns = 80, rows = 5) {
     write((0 until 20).joinToString("\r\n") { "R%02d".format(it) })
@@ -757,10 +747,6 @@ internal class TerminalEmulatorOutputProjectorTest {
     assertThat(event.text.split('\n')).isEqualTo(listOf("", "", "", "", "   ALT"))
   }
 
-  @Ignore(
-    "KNOWN GAP, the severe half: the projector reports the anchor 10 with the text of all 20 " +
-    "lines. The model then writes \"R00\" at logical line 10, which duplicates the whole history."
-  )
   @Test
   fun `leaving the alternate screen after a resize restores the primary anchor`() =
     withProjector(columns = 80, rows = 5) {
@@ -781,11 +767,6 @@ internal class TerminalEmulatorOutputProjectorTest {
       assertThat(event.text.split('\n')).isEqualTo((10 until 20).map { "R%02d".format(it) })
     }
 
-  @Ignore(
-    "KNOWN GAP: the buffer holds 20 lines, numbered 0 to 19, so no anchor above 10 is " +
-    "reachable. The projector reports 20, which is past the end of its own content. The drift stays for " +
-    "the rest of the session, because nothing re-anchors screenTopLogical."
-  )
   @Test
   fun `the anchor stays inside the buffer after the alternate screen is left`() =
     withProjector(columns = 80, rows = 5) {
@@ -806,15 +787,6 @@ internal class TerminalEmulatorOutputProjectorTest {
       assertThat(event.text.split('\n')).isEqualTo((10 until 20).map { "R%02d".format(it) })
     }
 
-  @Ignore(
-    "KNOWN GAP, the root cause: finalizedLineCount reports a recovery of 36 rows, because it " +
-    "reads the alternate screen's empty scrollback against a mark still pinned in the primary screen. " +
-    "The projector clamps that to the 24 screen rows, counts each empty alternate row as one logical " +
-    "line, and subtracts 24 from a screen top of 12. The anchor becomes -12. " +
-    "MutableTerminalOutputModelImpl.updateContent passes it to getStartOfLine, which throws " +
-    "IndexOutOfBoundsException. That error stops the frontend output-flow collection, so the terminal " +
-    "stops updating."
-  )
   @Test
   fun `the anchor never goes negative on the alternate screen`() = withProjector(columns = 80, rows = 24) {
     // 20 lines of 200 characters take three rows each at 80 columns, so 60 rows exist. The 24-row screen
@@ -829,6 +801,87 @@ internal class TerminalEmulatorOutputProjectorTest {
     // screen starts empty, so this one must be 0.
     assertThat(event.startLineLogicalIndex).isEqualTo(0L)
   }
+
+  @Test
+  fun `several resizes on the alternate screen between two updates keep the anchor at 0`() =
+    withProjector(columns = 80, rows = 5) {
+      write((0 until 20).joinToString("\r\n") { "R%02d".format(it) })
+      collectUpdate()
+      write("$ESC[?1049h" + "ALT")
+      collectUpdate()
+
+      // The alternate screen has to survive more than one reflow while it is active, the same as the
+      // primary screen does in "several resizes between two updates report the final geometry".
+      emulator.resize(TerminalSize(40, 10))
+      emulator.resize(TerminalSize(100, 30))
+      emulator.resize(TerminalSize(60, 12))
+      val event = collectUpdate()
+
+      // The anchor must still be 0: it never depends on the primary screenTopLogical, which these
+      // resizes never touch either, since it tracks the primary screen alone.
+      assertThat(projector.isHistoryReplaced).isFalse()
+      assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(event.text).contains("ALT")
+    }
+
+  @Test
+  fun `a large primary burst discovered only after returning from the alternate screen replaces the history`() =
+    withProjector(columns = 80, rows = 5, maxScrollbackBytes = 1) {
+      // maxScrollbackBytes is floored to two pages, so this burst finalizes far more than is retained -
+      // but nothing reads it before the switch below, so historyMark stays unaware of any of it.
+      write((0 until 5_000).joinToString("\r\n") { "R%04d".format(it) })
+
+      write("$ESC[?1049h" + "ALT")
+      val altEvent = collectUpdate()
+
+      // The alternate screen never touches historyMark or isHistoryReplaced, so it reports its own
+      // content alone, with no sign of the huge burst still pending underneath on the primary screen.
+      assertThat(projector.isHistoryReplaced).isFalse()
+      assertThat(altEvent.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(altEvent.text).contains("ALT")
+
+      write("$ESC[?1049l")
+      val backEvent = collectUpdate()
+
+      // Only now does the primary screen get its first read since the burst: historyMark reports far
+      // more than HISTORY_REPLACE_LINES finalized, so the projector replaces the history exactly as it
+      // would with no alternate-screen excursion in between - no exception, no corruption.
+      assertThat(projector.isHistoryReplaced).isTrue()
+      assertThat(backEvent.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(backEvent.text).contains("R4999")
+    }
+
+  // --- computeCursor() and the alternate screen ------------------------------
+
+  @Test
+  fun `computeCursor agrees with the update while the alternate screen is active`() =
+    withProjector(columns = 80, rows = 5) {
+      // 20 lines put 15 into the scrollback, so screenTopLogical sits at 15 - large enough that reusing
+      // it by mistake on the alternate screen would be obvious.
+      write((0 until 20).joinToString("\r\n") { "R%02d".format(it) })
+      collectUpdate()
+
+      write("$ESC[?1049h" + "ALT")
+      val event = collectUpdate()
+
+      // The update's own cursor field is computed inline, not through computeCursor() - so this pins the
+      // two in agreement, catching computeCursor() falling back to the frozen primary screenTopLogical.
+      assertThat(projector.computeCursor()).isEqualTo(event.cursorLogicalLineIndex to event.cursorColumnIndex)
+    }
+
+  @Test
+  fun `computeCursor agrees with the update after the alternate screen is left`() =
+    withProjector(columns = 80, rows = 5) {
+      write((0 until 20).joinToString("\r\n") { "R%02d".format(it) })
+      collectUpdate()
+      write("$ESC[?1049h" + "ALT")
+      collectUpdate()
+
+      write("$ESC[?1049l")
+      val event = collectUpdate()
+
+      assertThat(projector.computeCursor()).isEqualTo(event.cursorLogicalLineIndex to event.cursorColumnIndex)
+    }
 
   // --- a resize beside the other projector states ----------------------------
 

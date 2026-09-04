@@ -40,4 +40,18 @@ class ChangeTrackingTest {
     session.write("!")
     assertThat(session.takeChanges()).isEqualTo(ScreenChange.Rows(intArrayOf(1)))
   }
+
+  @Test
+  fun reportsChangeOnBareAlternateScreenRoundTrip() = session(20, 5) { session ->
+    fun changed(): Boolean = session.takeChanges() != ScreenChange.None
+
+    session.write("hello")
+    changed() // consume the initial paint
+
+    session.useAlternateBuffer(true)
+    assertThat(changed()).describedAs("switching to the alternate screen must report a change, even with nothing drawn on it").isTrue()
+
+    session.useAlternateBuffer(false)
+    assertThat(changed()).describedAs("switching back to the primary screen must also report a change, even with nothing drawn").isTrue()
+  }
 }

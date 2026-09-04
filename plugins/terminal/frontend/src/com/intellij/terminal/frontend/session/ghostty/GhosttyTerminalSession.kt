@@ -98,10 +98,10 @@ import kotlin.time.Duration.Companion.milliseconds
  *   only the currently visible tail instead (see
  *   [TerminalEmulatorOutputProjector.buildContentUpdate]) — already-shown history can be
  *   dropped in that case.
- * - **Buffer switch mid-frame**: when one projection window contains both an
- *   alternate-screen switch and drawing, only the newly active buffer's frame is
- *   emitted — the old buffer's last pre-switch changes are not (the JediTerm pipeline
- *   flushes before switching; the emulator has no such hook).
+ * - **Buffer switch same-tick coalescing**: a switch that flips and flips back (or vice
+ *   versa) between projection ticks — or inside one still-open synchronized-output
+ *   block — is invisible, and whatever was drawn to the other buffer during that round
+ *   trip is not reported until the corresponding buffer is enabled again.
  */
 @ApiStatus.Internal
 @VisibleForTesting
@@ -346,7 +346,9 @@ class GhosttyTerminalSession internal constructor(
           // An idle tick (nothing changed, no force paint pending) costs one lock
           // acquisition and nothing else — no FFI reads.
           val forcePaint = consumeSyncOutputForcePaintLocked()
-          if (changedSinceLastProjection || forcePaint || projector.isHistoryReplaced) {
+          // isHistoryReplaced is scoped only to the primary screen buffer.
+          if (changedSinceLastProjection || forcePaint ||
+              (projector.isHistoryReplaced && !emulator.usingAlternateScreen)) {
             flushPendingEventsLocked(bypassSyncOutputDeferral = forcePaint)
           }
           responses = takeResponsesLocked()
@@ -495,12 +497,11 @@ class GhosttyTerminalSession internal constructor(
     val stateEvent = if (state != previousState) TerminalStateChangedEvent(state) else null
     lastState = state
     // The consumer routes content and cursor updates to the primary or alternate
-    // buffer model by the last state it applied, and this frame is already read from
-    // the newly active buffer — so when the frame switches buffers, the state change
-    // must come first. In every other case the state event stays after the content it
-    // accompanies.
-    val stateFirst = state.isAlternateScreenBuffer != previousState?.isAlternateScreenBuffer
-    if (stateEvent != null && stateFirst) {
+    // buffer model depending on what buffer is active now.
+    // So, when it changes, we need to emit the state event first, and only then new content updates.
+    // In every other case the state event stays after the content it accompanies.
+    val bufferSwitched = state.isAlternateScreenBuffer != previousState?.isAlternateScreenBuffer
+    if (stateEvent != null && bufferSwitched) {
       events.add(stateEvent)
     }
 
@@ -508,9 +509,12 @@ class GhosttyTerminalSession internal constructor(
     val scrollbackRows = emulator.scrollbackRows
     // isHistoryReplaced: the projector replaced the history with the screen alone and restores it on the
     // first projection that finalizes nothing, so it has to run even when nothing changed.
+    // Actual only for the primary buffer.
+    // bufferSwitched: ensure that a newly activated buffer reports its pending changes.
     val contentChanged = change != ScreenChange.None ||
                          scrollbackRows != lastScrollbackRows ||
-                         projector.isHistoryReplaced
+                         bufferSwitched ||
+                         (projector.isHistoryReplaced && !emulator.usingAlternateScreen)
     lastScrollbackRows = scrollbackRows
 
     if (contentChanged) {
@@ -528,7 +532,7 @@ class GhosttyTerminalSession internal constructor(
       }
     }
 
-    if (stateEvent != null && !stateFirst) {
+    if (stateEvent != null && !bufferSwitched) {
       events.add(stateEvent)
     }
 
