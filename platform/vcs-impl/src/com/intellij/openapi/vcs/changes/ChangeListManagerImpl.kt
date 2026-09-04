@@ -42,7 +42,6 @@ import com.intellij.openapi.vcs.VcsConnectionProblem
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
-import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater
 import com.intellij.openapi.vcs.changes.ChangeListWorker.PartialChangeTracker
 import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder.VcsManagedFilesHolderListener
 import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation
@@ -110,7 +109,7 @@ class ChangeListManagerImpl(
    */
   private val delayedNotificator = DelayedNotificator(project, this, scheduler)
 
-  private val worker = ChangeListWorker(project, delayedNotificator)
+  private val worker = ChangeListWorker.Main(project, delayedNotificator)
 
   private val updateRequestsQueue = UpdateRequestsQueue(project, scheduler, ::updateImmediately, ::hasNothingToUpdate)
   private val modifier = ChangeListsModifier(worker, delayedNotificator)
@@ -382,12 +381,12 @@ class ChangeListManagerImpl(
   private fun resetChangedFiles() {
     try {
       synchronized(dataLock) {
-        val dataHolder = DataHolder(filesHolder.copy(), ChangeListUpdater(worker), true).apply {
+        val dataHolder = DataHolder(filesHolder.copy(), worker.copyForUpdate(), true).apply {
           notifyStart()
           notifyEnd()
           finish()
         }
-        worker.applyChangesFromUpdate(dataHolder.updatedWorker, ChangesDeltaForwarder(project, scheduler))
+        worker.applyChangesFromUpdate(dataHolder.worker, ChangesDeltaForwarder(project, scheduler))
         filesHolder = dataHolder.composite
         _updateException = null
       }
@@ -445,7 +444,7 @@ class ChangeListManagerImpl(
       val newDataHolder: DataHolder
       val isInitialUpdate: Boolean
       synchronized(dataLock) {
-        newDataHolder = DataHolder(filesHolder.copy(), ChangeListUpdater(worker), wasEverythingDirty)
+        newDataHolder = DataHolder(filesHolder.copy(), worker.copyForUpdate(), wasEverythingDirty)
         modifier.enterUpdate()
         stateProvider.setInUpdateMode(true)
         if (wasEverythingDirty) {
@@ -490,7 +489,7 @@ class ChangeListManagerImpl(
         if (project.isDisposed()) return@runReadActionBlocking
 
         synchronized(dataLock) {
-          val updatedWorker = newDataHolder.updatedWorker
+          val updatedWorker = newDataHolder.worker
           val takeChanges =
             _updateException == null
             && !wasCancelled
@@ -559,7 +558,7 @@ class ChangeListManagerImpl(
   }
 
   private fun iterateScopes(dataHolder: DataHolder, scopes: List<VcsModifiableDirtyScope>, indicator: ProgressIndicator) {
-    val updater = dataHolder.changeListUpdater
+    val updateWorker = dataHolder.worker
     val composite = dataHolder.composite
 
     dataHolder.notifyStart()
@@ -568,7 +567,7 @@ class ChangeListManagerImpl(
         indicator.checkCanceled()
 
         // do actual requests about file statuses
-        val builder = UpdatingChangeListBuilder(project, scope, updater, composite) {
+        val builder = UpdatingChangeListBuilder(project, scope, updateWorker, composite) {
           project.isDisposed() || updateRequestsQueue.isStopped
         }
         dataHolder.notifyStartProcessingChanges(scope)
@@ -578,7 +577,7 @@ class ChangeListManagerImpl(
           val changeProvider = vcs.getChangeProvider()
           if (changeProvider != null) {
             val activity = VcsStatisticsCollector.logClmRefresh(project, vcs, scope.wasEveryThingDirty())
-            changeProvider.getChanges(scope, builder, indicator, updater.gate)
+            changeProvider.getChanges(scope, builder, indicator, updateWorker.gate)
             activity.finished()
           }
         }
@@ -1144,23 +1143,20 @@ class ChangeListManagerImpl(
 
   private inner class DataHolder(
     val composite: FileHolderComposite,
-    val changeListUpdater: ChangeListUpdater,
+    val worker: ChangeListWorker.ForUpdate,
     private val wasEverythingDirty: Boolean,
   ) {
-    val updatedWorker: ChangeListWorker
-      get() = changeListUpdater.getUpdatedWorker()
-
     fun notifyStart() {
       if (wasEverythingDirty) {
         composite.cleanAll()
-        changeListUpdater.notifyStartProcessingChanges(null)
+        worker.notifyStartProcessingChanges(null)
       }
     }
 
     fun notifyStartProcessingChanges(scope: VcsModifiableDirtyScope) {
       if (!wasEverythingDirty) {
         composite.cleanUnderScope(scope)
-        changeListUpdater.notifyStartProcessingChanges(scope)
+        worker.notifyStartProcessingChanges(scope)
       }
 
       composite.notifyVcsStarted(scope.getVcs())
@@ -1168,18 +1164,18 @@ class ChangeListManagerImpl(
 
     fun notifyDoneProcessingChanges(scope: VcsDirtyScope) {
       if (!wasEverythingDirty) {
-        changeListUpdater.notifyDoneProcessingChanges(delayedNotificator, scope)
+        worker.notifyDoneProcessingChanges(delayedNotificator, scope)
       }
     }
 
     fun notifyEnd() {
       if (wasEverythingDirty) {
-        changeListUpdater.notifyDoneProcessingChanges(delayedNotificator, null)
+        worker.notifyDoneProcessingChanges(delayedNotificator, null)
       }
     }
 
     fun finish() {
-      changeListUpdater.finish()
+      worker.finish()
     }
   }
 

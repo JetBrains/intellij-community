@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Either applies change lists modification directly to the passed {@code worker}
+ * Either applies change lists modification directly to the passed {@code mainWorker}
  * or queues the modifications if update is in progress {@code isInsideUpdate} and applies them to the updated worker {@code finishUpdate}
  *
  * NB: synchronization aspect is external for this class; only logic here
@@ -28,13 +28,13 @@ import java.util.List;
 public class ChangeListsModifier {
   private static final Logger LOG = Logger.getInstance(ChangeListsModifier.class);
 
-  private final ChangeListWorker myWorker;
+  private final ChangeListWorker.Main myWorker;
   private volatile boolean myInsideUpdate;
   private final List<ChangeListCommand> myCommandQueue;
   private final DelayedNotificator myNotificator;
 
-  public ChangeListsModifier(@NotNull ChangeListWorker worker, @NotNull DelayedNotificator notificator) {
-    myWorker = worker;
+  public ChangeListsModifier(@NotNull ChangeListWorker.Main mainWorker, @NotNull DelayedNotificator notificator) {
+    myWorker = mainWorker;
     myNotificator = notificator;
     myCommandQueue = new ArrayList<>();
   }
@@ -113,7 +113,7 @@ public class ChangeListsModifier {
     myInsideUpdate = true;
   }
 
-  public void finishUpdate(@Nullable ChangeListWorker updatedWorker) {
+  public void finishUpdate(@Nullable ChangeListWorker.ForUpdate updateWorker) {
     myInsideUpdate = false;
 
     if (!myWorker.areChangeListsEnabled()) {
@@ -122,9 +122,9 @@ public class ChangeListsModifier {
       return;
     }
 
-    if (updatedWorker != null) {
+    if (updateWorker != null) {
       for (ChangeListCommand command : myCommandQueue) {
-        command.apply(updatedWorker);
+        command.apply(updateWorker);
       }
     }
 

@@ -8,78 +8,22 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.util.BeforeAfter
+import com.intellij.util.ThreeState
+import java.util.Collections
 
 private val LOG = logger<ChangeListsIndexes>()
 
-internal class ChangeListsIndexes {
-  private var dataMap: MutableMap<FilePath, Data> = HashMap()
-  private var changes: MutableSet<Change> = HashSet()
-
+internal abstract class ChangeListsIndexes protected constructor(
+  private val dataMap: Map<FilePath, Data>,
+  private val changes: Set<Change>,
+) {
   fun getChanges(): Set<Change> = changes
 
   fun getAffectedPaths(): Set<FilePath> = dataMap.keys
 
-  fun copyFrom(idx: ChangeListsIndexes) {
-    dataMap = HashMap(idx.dataMap)
-    changes = HashSet(idx.changes)
-  }
-
-  fun clear() {
-    dataMap = HashMap()
-    changes = HashSet()
-  }
-
-  private fun add(file: FilePath, change: Change, status: FileStatus, key: AbstractVcs?, number: VcsRevisionNumber) {
-    dataMap[file] = Data(status, change, key, number)
-    LOG.debug { "Set status $status for $file" }
-  }
-
-  private fun remove(file: FilePath) {
-    dataMap.remove(file)
-    LOG.debug { "Clear status for $file" }
-  }
-
   fun getChange(file: FilePath): Change? = dataMap[file]?.change
 
   fun getStatus(file: FilePath): FileStatus? = dataMap[file]?.status
-
-  fun changeAdded(change: Change, key: AbstractVcs?) {
-    changes.add(change)
-
-    val afterRevision = change.afterRevision
-    val beforeRevision = change.beforeRevision
-
-    if (beforeRevision != null && afterRevision != null) {
-      add(afterRevision.file, change, change.fileStatus, key, beforeRevision.revisionNumber)
-
-      if (beforeRevision.file != afterRevision.file) {
-        add(beforeRevision.file, change, FileStatus.DELETED, key, beforeRevision.revisionNumber)
-      }
-    }
-    else if (afterRevision != null) {
-      add(afterRevision.file, change, change.fileStatus, key, VcsRevisionNumber.NULL)
-    }
-    else if (beforeRevision != null) {
-      add(beforeRevision.file, change, change.fileStatus, key, beforeRevision.revisionNumber)
-    }
-  }
-
-  fun changeRemoved(change: Change) {
-    val wasRemoved = changes.remove(change)
-    if (LOG.isDebugEnabled && !wasRemoved) {
-      LOG.debug("Change wasn't removed: $change")
-    }
-
-    val afterRevision = change.afterRevision
-    val beforeRevision = change.beforeRevision
-
-    if (afterRevision != null) {
-      remove(afterRevision.file)
-    }
-    if (beforeRevision != null) {
-      remove(beforeRevision.file)
-    }
-  }
 
   fun getVcsFor(change: Change): AbstractVcs? {
     return getVcsForRevision(change.afterRevision) ?: getVcsForRevision(change.beforeRevision)
@@ -131,12 +75,103 @@ internal class ChangeListsIndexes {
 
   private fun createBaseRevision(path: FilePath, data: Data): BaseRevision = BaseRevision(data.vcs, data.revision, path)
 
-  private class Data(
+  fun toMutable(): Mutable = Mutable(this)
+
+  fun toIndexed(): Indexed = Indexed(this)
+
+  /**
+   * Immutable thread-safe index where changes are indexed with [affectedPathSet] to allow optimized [haveChangesUnder] queries
+   */
+  class Indexed private constructor(
+    dataMap: Map<FilePath, Data>,
+    changes: Set<Change>,
+  ) : ChangeListsIndexes(dataMap, changes) {
+    constructor() : this(mapOf(), setOf())
+
+    constructor(other: ChangeListsIndexes) : this(
+      Collections.unmodifiableMap(HashMap(other.dataMap)),
+      Collections.unmodifiableSet(HashSet(other.changes)),
+    )
+
+    private val affectedPathSet = AffectedPathSet(dataMap.keys)
+
+    /**
+     * Reports whether a changed file exists under [path].
+     *
+     * See [ChangeListWorker.Main.haveChangesUnder] for the meaning of each [ThreeState] value.
+     */
+    fun haveChangesUnder(path: FilePath): ThreeState = affectedPathSet.haveChangesUnder(path)
+  }
+
+  class Mutable private constructor(
+    private val dataMap: MutableMap<FilePath, Data>,
+    private val changes: MutableSet<Change>,
+  ) : ChangeListsIndexes(dataMap, changes) {
+    constructor() : this(HashMap(), HashSet())
+
+    constructor(other: ChangeListsIndexes) : this(HashMap(other.dataMap), HashSet(other.changes))
+
+    fun changeAdded(change: Change, key: AbstractVcs?) {
+      changes.add(change)
+
+      val afterRevision = change.afterRevision
+      val beforeRevision = change.beforeRevision
+
+      if (beforeRevision != null && afterRevision != null) {
+        add(afterRevision.file, change, change.fileStatus, key, beforeRevision.revisionNumber)
+
+        if (beforeRevision.file != afterRevision.file) {
+          add(beforeRevision.file, change, FileStatus.DELETED, key, beforeRevision.revisionNumber)
+        }
+      }
+      else if (afterRevision != null) {
+        add(afterRevision.file, change, change.fileStatus, key, VcsRevisionNumber.NULL)
+      }
+      else if (beforeRevision != null) {
+        add(beforeRevision.file, change, change.fileStatus, key, beforeRevision.revisionNumber)
+      }
+    }
+
+    fun changeRemoved(change: Change) {
+      val wasRemoved = changes.remove(change)
+      if (LOG.isDebugEnabled && !wasRemoved) {
+        LOG.debug("Change wasn't removed: $change")
+      }
+
+      val afterRevision = change.afterRevision
+      val beforeRevision = change.beforeRevision
+
+      if (afterRevision != null) {
+        remove(afterRevision.file)
+      }
+      if (beforeRevision != null) {
+        remove(beforeRevision.file)
+      }
+    }
+
+    private fun add(file: FilePath, change: Change, status: FileStatus, key: AbstractVcs?, number: VcsRevisionNumber) {
+      dataMap[file] = Data(status, change, key, number)
+      LOG.debug { "Set status $status for $file" }
+    }
+
+    private fun remove(file: FilePath) {
+      dataMap.remove(file)
+      LOG.debug { "Clear status for $file" }
+    }
+  }
+
+  protected class Data(
     val status: FileStatus,
     val change: Change,
     val vcs: AbstractVcs?,
     val revision: VcsRevisionNumber,
   ) {
     fun sameRevisions(data: Data): Boolean = vcs == data.vcs && revision == data.revision
+  }
+
+  companion object {
+    /** An index with no changed path. [ChangeListWorker.Main] starts from it. */
+    @JvmField
+    val EMPTY: Indexed = Indexed()
   }
 }

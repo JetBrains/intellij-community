@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,7 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
   private static final Logger LOG = Logger.getInstance(UpdatingChangeListBuilder.class);
 
   private final @NotNull VcsDirtyScope myScope;
-  private final @NotNull ChangeListUpdater myChangeListUpdater;
+  private final @NotNull ChangeListWorker.ForUpdate myChangeListUpdater;
   private final @NotNull FileHolderComposite myComposite;
   private final @NotNull Supplier<Boolean> myDisposedGetter;
 
@@ -30,7 +29,7 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   UpdatingChangeListBuilder(@NotNull Project project,
                             @NotNull VcsDirtyScope scope,
-                            @NotNull ChangeListUpdater changeListUpdater,
+                            @NotNull ChangeListWorker.ForUpdate changeListUpdater,
                             @NotNull FileHolderComposite composite,
                             @NotNull Supplier<Boolean> disposedGetter) {
     myScope = scope;
