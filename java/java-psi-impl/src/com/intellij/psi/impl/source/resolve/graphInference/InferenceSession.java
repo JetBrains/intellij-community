@@ -1706,7 +1706,7 @@ public class InferenceSession {
       if (PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor)) {
         PsiClassType subclassType = StrictSubtypingConstraint.getSubclassType(containingClass, pType, true);
         final PsiSubstitutor receiverSubstitutor = subclassType != null
-                                                   ? TypeConversionUtil.getSuperClassSubstitutor(containingClass, (PsiClassType)PsiUtil.captureToplevelWildcards(subclassType, myContext))
+                                                   ? TypeConversionUtil.getSuperClassSubstitutor(containingClass, (PsiClassType)PsiUtil.captureToplevelWildcards(subclassType, reference))
                                                    : null;
         if (receiverSubstitutor != null) {
           if (!method.hasTypeParameters()) {
