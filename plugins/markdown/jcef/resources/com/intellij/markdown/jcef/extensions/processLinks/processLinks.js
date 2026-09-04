@@ -27,7 +27,7 @@ if (window.__IntelliJTools === undefined) {
       }
     }
     else {
-      const needsConfirmation = event === undefined || !guard.isGenuineClickInside(event, link);
+      const needsConfirmation = event === undefined || !guard.isGenuineTarget(event, link);
       openInExternalBrowser(guard.confirmationFlag(needsConfirmation) + ":" + href);
     }
     return false;

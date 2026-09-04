@@ -18,7 +18,7 @@ if (window.__IntelliJTools === undefined) {
     finally {}
   };
 
-  // The costliest thing a hijacked click reaches, so use the strictest check.
+  // The costliest thing a hijacked click reaches, so the control must still look like its icon.
   const guard = window.__IntelliJTools.clickGuard;
 
   const runIconAnchorBeneath = (x, y) => {
@@ -37,7 +37,7 @@ if (window.__IntelliJTools === undefined) {
     }
     const icon = target.querySelector('img');
     if (icon !== null) {
-      return { anchor: target, needsConfirmation: !guard.isGenuineClickOn(e, icon) };
+      return { anchor: target, needsConfirmation: !guard.isGenuineControl(e, target, icon) };
     }
     // No run icon on the clicked anchor (an author overlay such as #jump): run the real icon beneath the
     // cursor, always confirming because something is layered on top.
