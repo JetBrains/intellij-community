@@ -19,20 +19,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * synchronization aspect is external for this class; only logic here
- * have internal command queue; applies commands to another copy of change lists (ChangeListWorker) and sends notifications
- * (after update is done)
+ * Either applies change lists modification directly to the passed {@code worker}
+ * or queues the modifications if update is in progress {@code isInsideUpdate} and applies them to the updated worker {@code finishUpdate}
+ *
+ * NB: synchronization aspect is external for this class; only logic here
  */
 @ApiStatus.Internal
-public class Modifier {
-  private static final Logger LOG = Logger.getInstance(Modifier.class);
+public class ChangeListsModifier {
+  private static final Logger LOG = Logger.getInstance(ChangeListsModifier.class);
 
   private final ChangeListWorker myWorker;
   private volatile boolean myInsideUpdate;
   private final List<ChangeListCommand> myCommandQueue;
   private final DelayedNotificator myNotificator;
 
-  public Modifier(@NotNull ChangeListWorker worker, @NotNull DelayedNotificator notificator) {
+  public ChangeListsModifier(@NotNull ChangeListWorker worker, @NotNull DelayedNotificator notificator) {
     myWorker = worker;
     myNotificator = notificator;
     myCommandQueue = new ArrayList<>();

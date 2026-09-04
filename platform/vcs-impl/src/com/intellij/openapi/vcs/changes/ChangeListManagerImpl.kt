@@ -113,7 +113,7 @@ class ChangeListManagerImpl(
   private val worker = ChangeListWorker(project, delayedNotificator)
 
   private val updateRequestsQueue = UpdateRequestsQueue(project, scheduler, ::updateImmediately, ::hasNothingToUpdate)
-  private val modifier = Modifier(worker, delayedNotificator)
+  private val modifier = ChangeListsModifier(worker, delayedNotificator)
 
   private val dataLock = Any()
 
