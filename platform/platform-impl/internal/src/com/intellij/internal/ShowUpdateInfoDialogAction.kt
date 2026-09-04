@@ -270,7 +270,6 @@ private class QuickMock {
     }.resizableRow()
     row {
       chWriteProtected = checkBox("Write protected")
-        .selected(true)
         .component
     }
     row {
@@ -286,7 +285,7 @@ private class QuickMock {
 
       tfIncompatiblePlugins = textField()
         .align(AlignX.FILL)
-        .text("Classic UI, A very incompatible plugin")
+        .text("Gradle, Maven, HTML Tools")
         .comment("Not shown when write protected")
         .enabledIf(checkBox.selected)
         .component

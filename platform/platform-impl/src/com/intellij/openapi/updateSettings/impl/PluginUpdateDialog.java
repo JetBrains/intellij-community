@@ -52,7 +52,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -79,8 +78,8 @@ import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public class PluginUpdateDialog extends DialogWrapper {
-  private final MyPluginModel myPluginModel;
-  private final PluginsGroupComponent myPluginsPanel;
+  private final @NotNull MyPluginModel myPluginModel;
+  protected final PluginsGroupComponent myPluginsPanel;
   private final PluginsGroup myGroup = new PluginsGroup("", PluginsGroupType.UPDATE);
   private final PluginDetailsPageComponent myDetailsPage;
   private final JLabel myTotalLabel = new JLabel();
@@ -143,13 +142,7 @@ public class PluginUpdateDialog extends DialogWrapper {
           node.setDependencies(dependencies);
           model = new PluginUiModelAdapter(node);
         }
-        CoroutineScope scope = ApplicationManager.getApplication().getService(CoreUiCoroutineScopeHolder.class).coroutineScope;
-        @SuppressWarnings("unchecked") ListPluginComponent component =
-          new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, listPluginModel, LinkListener.NULL, scope, true);
-        PluginUiModel plugin = installedPlugins.get(model.getPluginId());
-        component.setOnlyUpdateMode(plugin);
-        component.getChooseUpdateButton().addActionListener(e -> updateButtons());
-        return component;
+        return createListPluginComponent(model, group, listPluginModel, installedPlugins.get(model.getPluginId()));
       }
     };
     PluginManagerConfigurablePanel.registerCopyProvider(myPluginsPanel);
@@ -170,6 +163,18 @@ public class PluginUpdateDialog extends DialogWrapper {
       rootPane.setPreferredSize(new JBDimension(800, 600));
     }
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
+  }
+
+  protected @NotNull ListPluginComponent createListPluginComponent(
+    @NotNull PluginUiModel model, @NotNull PluginsGroup group,
+    @NotNull ListPluginModel listPluginModel, @Nullable PluginUiModel installedPlugin) {
+    var scope = ApplicationManager.getApplication().getService(CoreUiCoroutineScopeHolder.class).coroutineScope;
+    @SuppressWarnings("unchecked")
+    ListPluginComponent component =
+      new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, listPluginModel, LinkListener.NULL, scope, true);
+    component.setOnlyUpdateMode(installedPlugin);
+    component.getChooseUpdateButton().addActionListener(e -> updateButtons());
+    return component;
   }
 
   public static boolean showDialogAndUpdateDownloaders(@NotNull Collection<PluginDownloader> downloaders, @NotNull PluginUpdateDialog dialog) {
@@ -415,6 +420,13 @@ public class PluginUpdateDialog extends DialogWrapper {
     myGroup.ui.panel.getParent().remove(myGroup.ui.panel);
     myGroup.ui.panel.setPreferredSize(new Dimension());
 
+    splitter.setFirstComponent(createLeftPanel());
+    splitter.setSecondComponent(myDetailsPage);
+
+    return splitter;
+  }
+
+  protected @NotNull JComponent createLeftPanel() {
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.add(PluginManagerConfigurablePanel.createScrollPane(myPluginsPanel, true));
 
@@ -425,9 +437,6 @@ public class PluginUpdateDialog extends DialogWrapper {
     myTotalLabel.setForeground(PluginsGroupComponent.SECTION_HEADER_FOREGROUND);
     titlePanel.add(myTotalLabel);
 
-    splitter.setFirstComponent(leftPanel);
-    splitter.setSecondComponent(myDetailsPage);
-
-    return splitter;
+    return leftPanel;
   }
 }

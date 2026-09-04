@@ -176,15 +176,14 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
   @Override
   protected @NotNull JComponent createCenterPanel() {
     return UpdateInfoPanelKt.createUpdateInfoPanel(
-      myPlatformUpdate.getNewBuild(),
-      myPlatformUpdate.getPatches(),
+      myProject,
+      myPlatformUpdate,
       myTestPatch,
       myWriteProtected,
       myLicenseInfo != null ? myLicenseInfo.licenseNote : null,
       myLicenseInfo != null && myLicenseInfo.warning,
       myIncompatiblePluginNames,
-      myAddConfigureUpdatesLink,
-      myPlatformUpdate.getUpdatedChannel());
+      myAddConfigureUpdatesLink);
   }
 
   @Override
@@ -342,6 +341,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
           }
         }
         else {
+          // IDE cannot be restarted
           showPatchInstructions(command);
         }
       }

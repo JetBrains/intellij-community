@@ -1,12 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.ListPluginModel
+import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.PluginManagerConfigurablePanel.Companion.createScrollPane
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.newui.ListPluginComponent
+import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.ide.plugins.newui.PluginUiModelAdapter
+import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -16,6 +26,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.InlineBanner
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.components.panels.OpaquePanel
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
@@ -33,10 +44,14 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.swing.Action
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JEditorPane
+import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 import kotlin.math.max
 
@@ -60,16 +75,18 @@ fun downloadUrl(newBuild: BuildInfo, updatedChannel: UpdateChannel): String =
 
 @ApiStatus.Internal
 fun createUpdateInfoPanel(
-  newBuild: BuildInfo,
-  patches: UpdateChain?,
+  project: Project?,
+  platformUpdate: PlatformUpdates.Loaded,
   testPatch: Path?,
   writeProtected: Boolean,
   licenseInfo: @NlsContexts.Label String?,
   licenseWarn: Boolean,
   incompatiblePluginNames: List<String>?,
   enableLink: Boolean,
-  updatedChannel: UpdateChannel,
 ): DialogPanel {
+  val newBuild = platformUpdate.newBuild
+  val patches = platformUpdate.patches
+  val updatedChannel = platformUpdate.updatedChannel
   val appInfo = ApplicationInfo.getInstance()
   val appNames = ApplicationNamesInfo.getInstance()
 
@@ -106,7 +123,14 @@ fun createUpdateInfoPanel(
                EditorNotificationPanel.Status.Error)
       !incompatiblePluginNames.isNullOrEmpty() ->
         banner(getPluginsList(incompatiblePluginNames, newBuild.displayVersion()),
-               EditorNotificationPanel.Status.Warning)
+               EditorNotificationPanel.Status.Warning).applyToComponent {
+          val incompatiblePlugins = findIncompatiblePlugins(incompatiblePluginNames)
+          if (incompatiblePlugins.isNotEmpty()) {
+            addAction(IdeBundle.message("updates.incompatible.plugins.show.plugins")) {
+              IncompatiblePluginsDialog(project, incompatiblePlugins, newBuild.displayVersion()).show()
+            }
+          }
+        }
     }
 
     if (licenseInfo != null) {
@@ -155,6 +179,74 @@ fun createUpdateInfoPanel(
   }
 
   return result
+}
+
+private fun findIncompatiblePlugins(incompatiblePluginNames: List<String>): List<PluginUiModel> {
+  val names = incompatiblePluginNames.toSet()
+  return PluginManagerCore.getPluginSet().allPlugins
+    .filter { it.name in names }
+    .map { PluginUiModelAdapter(it) }
+}
+
+private class IncompatiblePluginsDialog(
+  project: Project?,
+  incompatiblePlugins: List<PluginUiModel>,
+  newVersion: String,
+) : PluginUpdateDialog(project, incompatiblePlugins, null, emptyMap()) {
+  /**
+   * [createLeftPanel] runs from the base constructor, before this class sets a field
+   */
+  private lateinit var banner: InlineBanner
+
+  init {
+    title = IdeBundle.message("updates.incompatible.plugins.dialog.title")
+    banner.setMessage(IdeBundle.message("updates.incompatible.plugins.dialog.banner",
+                                        incompatiblePlugins.size, newVersion))
+  }
+
+  override fun createActions(): Array<Action> {
+    setCancelButtonText(CommonBundle.getCloseButtonText())
+    return arrayOf(cancelAction, helpAction)
+  }
+
+  override fun createButtonsPanel(buttons: List<JButton>): JPanel {
+    return layoutButtonsPanel(buttons)
+  }
+
+  override fun createSouthAdditionalPanel(): JPanel? {
+    return null
+  }
+
+  override fun doOKAction() {
+    // Deny base logic
+  }
+
+  override fun createListPluginComponent(
+    model: PluginUiModel,
+    group: PluginsGroup,
+    listPluginModel: ListPluginModel,
+    installedPlugin: PluginUiModel?,
+  ): ListPluginComponent {
+    val component = super.createListPluginComponent(model, group, listPluginModel, installedPlugin)
+    component.getChooseUpdateButton()?.isVisible = false
+    return component
+  }
+
+  override fun createLeftPanel(): JComponent {
+    val result = JPanel(BorderLayout())
+    result.add(createScrollPane(myPluginsPanel, true))
+
+    banner = InlineBanner(EditorNotificationPanel.Status.Warning)
+    banner.showCloseButton(false)
+
+    // InlineBanner uses its own border
+    val bannerPanel = OpaquePanel(BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR)
+    bannerPanel.border = JBUI.Borders.empty(8, 12)
+    bannerPanel.add(banner)
+    result.add(bannerPanel, BorderLayout.NORTH)
+
+    return result
+  }
 }
 
 private fun Panel.banner(messageText: @Nls String, status: EditorNotificationPanel.Status): Cell<InlineBanner> {

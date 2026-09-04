@@ -1134,7 +1134,10 @@ class ListPluginComponent(
     if (myOnlyUpdateMode) {
       if (event.keyCode == KeyEvent.VK_SPACE) {
         for (component in selection) {
-          component.myChooseUpdateButton!!.doClick()
+          val checkBox = component.myChooseUpdateButton!!
+          if (checkBox.isVisible) {
+            checkBox.doClick()
+          }
         }
       }
       return
@@ -1401,7 +1404,7 @@ class ListPluginComponent(
       val result = Dimension(myNameComponent!!.preferredSize)
 
       if (myProgressComponent == null) {
-        if (myCheckBoxComponent != null) {
+        if (myCheckBoxComponent != null && myCheckBoxComponent!!.isVisible) {
           val size = myCheckBoxComponent!!.preferredSize
           result.width += size.width + myHOffset.get()
           result.height = Math.max(result.height, size.height)
@@ -1459,7 +1462,7 @@ class ListPluginComponent(
       var x = insets.left
       var y = insets.top
 
-      if (myProgressComponent == null && myCheckBoxComponent != null) {
+      if (myProgressComponent == null && myCheckBoxComponent != null && myCheckBoxComponent!!.isVisible) {
         val size = myCheckBoxComponent!!.preferredSize
         myCheckBoxComponent!!.setBounds(x, (parent.height - size.height) / 2, size.width, size.height)
         x += size.width + myHGap.get()
@@ -1538,7 +1541,7 @@ class ListPluginComponent(
         return width - myProgressComponent!!.preferredSize.width - myHOffset.get()
       }
 
-      if (myCheckBoxComponent != null) {
+      if (myCheckBoxComponent != null && myCheckBoxComponent!!.isVisible) {
         width -= myCheckBoxComponent!!.preferredSize.width + myHOffset.get()
       }
 
