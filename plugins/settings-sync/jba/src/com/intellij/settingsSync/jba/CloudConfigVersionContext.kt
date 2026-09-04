@@ -1,8 +1,8 @@
 package com.intellij.settingsSync.jba
 
+import com.intellij.util.progress.withLockCancellable
 import com.jetbrains.cloudconfig.HeaderStorage
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 internal class CloudConfigVersionContext : HeaderStorage {
   private val contextVersionMap = mutableMapOf<String, String>()
@@ -21,7 +21,8 @@ internal class CloudConfigVersionContext : HeaderStorage {
   }
 
   fun <T> doWithVersion(filePath: String, version: String?, function: (String) -> T): T {
-    return lock.withLock {
+    // a plain lock() parks forever behind a stuck request and makes the caller uncancellable
+    return lock.withLockCancellable {
       try {
         if (version != null) {
           contextVersionMap[filePath] = version

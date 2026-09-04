@@ -3,6 +3,7 @@ package com.intellij.settingsSync.core
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.delete
 import org.jetbrains.annotations.VisibleForTesting
@@ -200,6 +201,7 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
       }
     }
     catch (e: Throwable) {
+      rethrowControlFlowException(e)
       val message = handleRemoteError(e)
       return UpdateResult.Error(message)
     }
@@ -221,6 +223,7 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
       return pushResult
     }
     catch (e: Throwable) {
+      rethrowControlFlowException(e)
       val message = handleRemoteError(e)
       return SettingsSyncPushResult.Error(message)
     }
