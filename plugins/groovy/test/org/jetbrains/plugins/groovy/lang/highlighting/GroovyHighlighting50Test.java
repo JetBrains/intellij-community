@@ -196,4 +196,37 @@ public class GroovyHighlighting50Test extends LightGroovyTestCase implements Hig
                          }
                          """);
   }
+
+  public void testCallingStaticMethodOnInterface() {
+    myFixture.addFileToProject("com/acme/Foo.groovy", """
+      package com.acme;
+      
+      interface Foo {
+          static String fooMessage() {
+              return "foo";
+          }
+      }""");
+    myFixture.configureByText("a.groovy", """
+      import static com.acme.Foo.fooMessage;
+      
+      class Capibara {
+          static void main(String... args) {
+              System.out.println(fooMessage())      // There should not be an error here
+          }
+      }
+      interface Cromulent {
+          static void x() {
+              y()
+          }
+      
+          static void y() {}
+      }
+      class Spurious implements Cromulent {
+        void z() {
+          <error descr="Calls to 'static' methods of super interfaces should be qualified">y</error>()
+        }
+      }
+      """);
+    myFixture.testHighlighting(false, false, false);
+  }
 }

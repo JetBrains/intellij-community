@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.codeInspection.InspectionManager
@@ -8,6 +8,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -17,6 +18,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.GrReplaceReturnWithYiel
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
@@ -303,16 +305,20 @@ class GroovyAnnotator40(private val holder: AnnotationHolder) : GroovyElementVis
     super.visitMethodCall(call)
     if (call.invokedExpression.asSafely<GrReferenceExpression>()?.isQualified == false) {
       val resolved = call.resolveMethod()?.takeIf { it.hasModifierProperty(PsiModifier.STATIC) } ?: return
-      if (resolved.containingClass?.isInterface == true) {
-        val fix = GroovyQuickFixFactory.getInstance().createQualifyExpressionFix()
-        val problemDescriptor =
-          InspectionManager.getInstance(call.project)
-            .createProblemDescriptor(call, GroovyBundle.message("intention.name.replace.with.qualified.expression"), fix, ProblemHighlightType.ERROR, true)
-        holder
-          .newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("inspection.message.static.interface.methods.must.be.qualified.in.groovy.4"))
-          .range(call.invokedExpression)
-          .newLocalQuickFix(fix, problemDescriptor).registerFix()
-          .create()
+      val containingClass = resolved.containingClass
+      if (containingClass != null && containingClass.isInterface) {
+        val owner = PsiTreeUtil.getParentOfType<GrTypeDefinition?>(call, GrTypeDefinition::class.java, true, GroovyFile::class.java)
+        if (owner != null && owner.isInheritor(containingClass, true)) {
+          val fix = GroovyQuickFixFactory.getInstance().createQualifyExpressionFix()
+          val problemDescriptor = InspectionManager.getInstance(call.project)
+              .createProblemDescriptor(call, GroovyBundle.message("intention.name.replace.with.qualified.expression"),
+                                       fix, ProblemHighlightType.ERROR, true)
+          holder.newAnnotation(HighlightSeverity.ERROR,
+                               GroovyBundle.message("inspection.message.static.interface.methods.must.be.qualified.in.groovy.4"))
+            .range(call.invokedExpression)
+            .newLocalQuickFix(fix, problemDescriptor).registerFix()
+            .create()
+        }
       }
     }
   }
