@@ -10,8 +10,12 @@ import com.intellij.ide.RecentProject
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -26,6 +30,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
+import com.intellij.openapi.wm.impl.welcomeScreen.statistics.RecentProjectsFusEventFields
 import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -102,6 +107,15 @@ internal data class RecentProjectItem(
   }
 
   fun openProject(event: AnActionEvent) {
+    ActionsCollectorImpl.record(ActionsEventLogGroup.ACTION_FINISHED, event.project) {
+      add(ActionsEventLogGroup.ACTION_ID.with(ReopenProjectAction::class.java.name))
+      add(ActionsEventLogGroup.ACTION_CLASS.with(ReopenProjectAction::class.java))
+      addAll(ActionsCollectorImpl.actionEventData(event))
+      event.getData(RecentProjectsFusEventFields.ROW_KEY)?.let {
+        add(ActionsEventLogGroup.ADDITIONAL.with(ObjectEventData(RecentProjectsFusEventFields.INDEX.with(it))))
+      }
+    }
+
     // Force move focus to IdeFrame
     IdeEventQueue.getInstance().popupManager.closeAllPopups()
 
