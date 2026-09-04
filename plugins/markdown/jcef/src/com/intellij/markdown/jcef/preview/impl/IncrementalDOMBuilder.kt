@@ -4,7 +4,7 @@ package com.intellij.markdown.jcef.preview.impl
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
-import org.intellij.plugins.markdown.ui.preview.MarkdownImagePathResolver
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver
 import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
@@ -118,7 +118,7 @@ class IncrementalDOMBuilder(
       return node
     }
     val source = node.attr("src")
-    if (source.isEmpty() || MarkdownImagePathResolver.isBrowserOwned(source)) {
+    if (source.isEmpty() || MarkdownPreviewPathResolver.isBrowserOwned(source)) {
       return node
     }
     if (previewResourceProvider?.canProvide(source) == true) {

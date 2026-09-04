@@ -8,11 +8,11 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import kotlinx.coroutines.runBlocking
-import org.intellij.plugins.markdown.ui.preview.MarkdownImagePathResolver
-import org.intellij.plugins.markdown.ui.preview.MarkdownImagePathResolver.Resolution
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver.Resolution
 import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
 
-class MarkdownImagePathResolverTest : BasePlatformTestCase() {
+class MarkdownPreviewPathResolverTest : BasePlatformTestCase() {
   override fun createTempDirTestFixture(): TempDirTestFixture =
     IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
 
@@ -62,6 +62,15 @@ class MarkdownImagePathResolverTest : BasePlatformTestCase() {
     assertFound(nearImage, nearImage.toNioPath().toUri().toString())
   }
 
+  /** A link can arrive without one: the preview knows no containing file for it. */
+  fun `test a file URL resolves without a document`() {
+    val resolution = runBlocking {
+      MarkdownPreviewPathResolver.resolve(null, projectRoot(), nearImage.url, allowOutsideProjectRoot = true)
+    }
+    assertInstanceOf(resolution, Resolution.Found::class.java)
+    assertEquals(nearImage, (resolution as Resolution.Found).file)
+  }
+
   fun `test a query string is ignored`() {
     assertFound(nearImage, "img/near.png?v=1")
   }
@@ -87,25 +96,25 @@ class MarkdownImagePathResolverTest : BasePlatformTestCase() {
 
   fun `test a data URI belongs to the browser`() {
     val source = "data:image/png;base64,iVBORw0KGgo="
-    assertTrue(MarkdownImagePathResolver.isBrowserOwned(source))
+    assertTrue(MarkdownPreviewPathResolver.isBrowserOwned(source))
     assertEquals(Resolution.NotFound, resolve(source))
   }
 
   fun `test an http URL belongs to the browser`() {
-    assertTrue(MarkdownImagePathResolver.isBrowserOwned("http://example.com/a.png"))
-    assertTrue(MarkdownImagePathResolver.isBrowserOwned("https://example.com/a.png"))
-    assertTrue(MarkdownImagePathResolver.isBrowserOwned("//example.com/a.png"))
+    assertTrue(MarkdownPreviewPathResolver.isBrowserOwned("http://example.com/a.png"))
+    assertTrue(MarkdownPreviewPathResolver.isBrowserOwned("https://example.com/a.png"))
+    assertTrue(MarkdownPreviewPathResolver.isBrowserOwned("//example.com/a.png"))
   }
 
   fun `test a file URL does not belong to the browser`() {
-    assertFalse(MarkdownImagePathResolver.isBrowserOwned("file:///a.png"))
+    assertFalse(MarkdownPreviewPathResolver.isBrowserOwned("file:///a.png"))
   }
 
   fun `test a Windows drive letter is not a URL scheme`() {
     // `C:` has the shape of a scheme, so the image stayed broken on Windows.
-    assertFalse(MarkdownImagePathResolver.isBrowserOwned("C:/img/a.png"))
-    assertFalse(MarkdownImagePathResolver.isBrowserOwned("c:\\img\\a.png"))
-    assertTrue(MarkdownImagePathResolver.isBrowserOwned("ws://example.com/a.png"))
+    assertFalse(MarkdownPreviewPathResolver.isBrowserOwned("C:/img/a.png"))
+    assertFalse(MarkdownPreviewPathResolver.isBrowserOwned("c:\\img\\a.png"))
+    assertTrue(MarkdownPreviewPathResolver.isBrowserOwned("ws://example.com/a.png"))
   }
 
   fun `test a file outside the project root is forbidden`() {
@@ -117,6 +126,12 @@ class MarkdownImagePathResolverTest : BasePlatformTestCase() {
     val outside = createFileOutsideProject()
     val resolution = resolve(outside.path, allowOutsideProjectRoot = true)
     assertEquals(outside, (resolution as Resolution.Found).file)
+  }
+
+  fun `test a percent sign without an escape stays literal`() {
+    val file = createFile("subdir/with%space.md")
+    assertFound(file, "with%space.md")
+    assertFound(file, "with%25space.md")
   }
 
   fun `test a malformed path does not throw`() {
@@ -161,7 +176,7 @@ class MarkdownImagePathResolverTest : BasePlatformTestCase() {
   }
 
   private fun resolve(source: String, allowOutsideProjectRoot: Boolean = false): Resolution = runBlocking {
-    MarkdownImagePathResolver.resolve(document, projectRoot(), source, allowOutsideProjectRoot)
+    MarkdownPreviewPathResolver.resolve(document, projectRoot(), source, allowOutsideProjectRoot)
   }
 
   private fun assertFound(expected: VirtualFile, source: String) {

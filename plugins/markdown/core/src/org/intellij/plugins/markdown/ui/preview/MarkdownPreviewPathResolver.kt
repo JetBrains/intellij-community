@@ -5,22 +5,22 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.io.URLUtil
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import org.intellij.plugins.markdown.service.VirtualFileAccessor
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 /**
- * Resolves the `src` of a Markdown preview image to a file.
+ * Resolves a path written in a Markdown document to a file: the `src` of an image, or the destination
+ * of a link.
  *
  * The resolver uses the VFS only, so it also runs on a Remote Development backend. Run it where
  * the files are. A Remote Development frontend has no directory tree. See IJPL-254292.
  */
 @ApiStatus.Internal
-object MarkdownImagePathResolver {
+object MarkdownPreviewPathResolver {
   // A scheme needs two or more characters. One character before a colon is a Windows drive letter.
   private val SCHEME = Regex("^[a-zA-Z][a-zA-Z0-9+.\\-]+:")
 
@@ -56,7 +56,7 @@ object MarkdownImagePathResolver {
    * @param allowOutsideProjectRoot pass the trust state of the project
    */
   suspend fun resolve(
-    document: VirtualFile,
+    document: VirtualFile?,
     projectRoot: VirtualFile?,
     rawSource: String,
     allowOutsideProjectRoot: Boolean = false,
@@ -74,14 +74,14 @@ object MarkdownImagePathResolver {
     return Resolution.Found(file)
   }
 
-  private suspend fun find(document: VirtualFile, projectRoot: VirtualFile?, rawSource: String): VirtualFile? {
+  private suspend fun find(document: VirtualFile?, projectRoot: VirtualFile?, rawSource: String): VirtualFile? {
     if (rawSource.isEmpty() || isBrowserOwned(rawSource)) {
       return null
     }
     if (rawSource.startsWith("file:", ignoreCase = true)) {
       return findByFileUrl(trimQueryAndFragment(rawSource))
     }
-    val path = decode(trimQueryAndFragment(rawSource)) ?: return null
+    val path = decode(trimQueryAndFragment(rawSource))
     if (path.isEmpty()) {
       return null
     }
@@ -92,7 +92,7 @@ object MarkdownImagePathResolver {
       return projectRoot?.findFileByRelativePath(path) ?: findByAbsolutePath(path)
     }
     // The project root is a fallback for a path that names the project, not the document.
-    return document.parent?.findFileByRelativePath(path)
+    return document?.parent?.findFileByRelativePath(path)
            ?: projectRoot?.findFileByRelativePath(path)
   }
 
@@ -131,10 +131,9 @@ object MarkdownImagePathResolver {
     return if (end < 0) rawSource else rawSource.substring(0, end)
   }
 
-  private fun decode(rawPath: String): String? {
-    // A plus sign is literal in a path. URLDecoder reads it as a space, so hide it first.
-    val hidden = rawPath.replace("+", "%2B")
-    val decoded = runCatching { URLDecoder.decode(hidden, StandardCharsets.UTF_8) }.getOrNull() ?: return null
+  private fun decode(rawPath: String): String {
+    // Unlike URLDecoder, this keeps a plus sign and a percent sign without two hex digits literal, as a browser does.
+    val decoded = URLUtil.unescapePercentSequences(rawPath)
     return if (isWindows) decoded.replace('\\', '/') else decoded
   }
 }

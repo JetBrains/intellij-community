@@ -38,18 +38,18 @@ class MarkdownImageResourceProvider(
     }
     val projectRoot = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(document)
     val resolution = awaitWithTimeout(source) {
-      MarkdownImagePathResolver.resolve(
+      MarkdownPreviewPathResolver.resolve(
         document = document,
         projectRoot = projectRoot,
         rawSource = source,
         allowOutsideProjectRoot = TrustedProjects.isProjectTrusted(project),
       )
     } ?: return null
-    if (resolution is MarkdownImagePathResolver.Resolution.Forbidden) {
+    if (resolution is MarkdownPreviewPathResolver.Resolution.Forbidden) {
       thisLogger().warn("The Markdown preview refused $source outside the root of an untrusted project.")
       return null
     }
-    val file = (resolution as? MarkdownImagePathResolver.Resolution.Found)?.file ?: return null
+    val file = (resolution as? MarkdownPreviewPathResolver.Resolution.Found)?.file ?: return null
     return runCatching { file.inputStream.use { it.readBytes() } }.getOrNull()
   }
 

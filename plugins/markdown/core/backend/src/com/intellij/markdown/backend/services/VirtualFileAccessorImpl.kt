@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import org.intellij.plugins.markdown.service.VirtualFileAccessor
-import org.intellij.plugins.markdown.ui.preview.MarkdownImagePathResolver
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver
 
 /**
  * Reads a Markdown preview resource for a Remote Development frontend.
@@ -23,17 +23,17 @@ class VirtualFileAccessorImpl : VirtualFileAccessor {
     val project = projectId.findProjectOrNull() ?: return null
     val document = virtualFileId.virtualFile() ?: return null
     val projectRoot = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(document)
-    val resolution = MarkdownImagePathResolver.resolve(
+    val resolution = MarkdownPreviewPathResolver.resolve(
       document = document,
       projectRoot = projectRoot,
       rawSource = resourceName,
       allowOutsideProjectRoot = TrustedProjects.isProjectTrusted(project),
     )
-    if (resolution is MarkdownImagePathResolver.Resolution.Forbidden) {
+    if (resolution is MarkdownPreviewPathResolver.Resolution.Forbidden) {
       logger.warn("The Markdown preview refused $resourceName outside the root of an untrusted project.")
       return null
     }
-    val file = (resolution as? MarkdownImagePathResolver.Resolution.Found)?.file ?: return null
+    val file = (resolution as? MarkdownPreviewPathResolver.Resolution.Found)?.file ?: return null
     return runCatching { file.inputStream.use { it.readBytes() } }.getOrNull()
   }
 

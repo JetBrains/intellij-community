@@ -11,8 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.svg.getSvgDocumentSize
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import org.intellij.plugins.markdown.ui.preview.MarkdownImagePathResolver.Resolution
-import org.intellij.plugins.markdown.ui.preview.MarkdownImagePathResolver.resolve
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver.Resolution
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver.resolve
 import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
