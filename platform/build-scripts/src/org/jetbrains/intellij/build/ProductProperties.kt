@@ -318,7 +318,7 @@ abstract class ProductProperties {
   /**
    * Custom frontend module filter
    */
-  var frontendModuleFilter: (suspend (BuildContext) -> FrontendModuleFilter)? = null
+  var frontendModuleFilter: ((BuildContext) -> FrontendModuleFilter)? = null
 
   /**
    * Maps each native library name (as extracted by `getLibNameBySourceFile`) to its output folder name under `lib/`.

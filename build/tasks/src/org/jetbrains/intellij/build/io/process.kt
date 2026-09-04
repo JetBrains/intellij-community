@@ -119,7 +119,7 @@ suspend fun runJava(
         }
         catch (e: TimeoutCancellationException) {
           try {
-            dumpThreads(process.pid())
+            dumpThreads(pid = process.pid(), javaExe = javaExe)
           }
           catch (e: Exception) {
             span.addEvent("cannot dump threads: ${e.message}")
@@ -329,12 +329,23 @@ private fun appendArg(value: String, builder: StringBuilder) {
   }
 }
 
-internal suspend fun dumpThreads(pid: Long) {
-  val jstack = System.getenv("JAVA_HOME")
+/**
+ * Dumps the threads of the process [pid].
+ *
+ * Uses the `jstack` next to [javaExe], the JDK that runs the process, and falls back to `JAVA_HOME` and then to `PATH`.
+ *
+ * Use `jstack`, and not the Attach API. The IDE adds the coroutine dump, the progress indicator state, and the lock
+ * state to the `jstack` output through the JBR hook. See `ApplicationLoader.enableJstack`. The Attach API gives the
+ * same dump, but it needs `--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED`, which the build JVM does not have.
+ */
+internal suspend fun dumpThreads(pid: Long, javaExe: Path) {
+  val jstackName = if (javaExe.fileName.toString().endsWith(".exe")) "jstack.exe" else "jstack"
+  val jstack = javaExe.resolveSibling(jstackName).takeIf { Files.isRegularFile(it) }?.toString()
+               ?: System.getenv("JAVA_HOME")
                  ?.removeSuffix("/")
                  ?.removeSuffix("\\")
-                 ?.let { "$it/bin/jstack" }
-               ?: "jstack"
+                 ?.let { "$it/bin/$jstackName" }
+               ?: jstackName
   runProcess(args = listOf(jstack, pid.toString()), inheritOut = true)
 }
 

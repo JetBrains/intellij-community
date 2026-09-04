@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -67,7 +68,13 @@ class ProcessTest {
   @Test
   fun threadDump() {
     runBlocking {
-      dumpThreads(pid = ProcessHandle.current().pid())
+      dumpThreads(pid = ProcessHandle.current().pid(), javaExe = currentJavaExe())
     }
+  }
+
+  /** The `java` of the JVM that runs the test. Its sibling `jstack` is the first candidate of [dumpThreads]. */
+  private fun currentJavaExe(): Path {
+    val name = if (SystemInfoRt.isWindows) "java.exe" else "java"
+    return Path.of(System.getProperty("java.home"), "bin", name)
   }
 }

@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
@@ -213,8 +214,10 @@ class TaskScope internal constructor(
   private val forks = CopyOnWriteArrayList<Deferred<*>>()
 
   /**
-   * The failures of the forks in the order they ended. A [CancellationException] counts only when the group did not
-   * request it, because a fork that throws one itself is a failure of the fork.
+   * The failures the completion handlers saw, in the order the forks ended. A [CancellationException] counts only
+   * when the group did not request it, because a fork that throws one itself is a failure of the fork.
+   *
+   * The list alone is not the answer that [joinAll] reports. See [collectFailures].
    */
   private val failures = CopyOnWriteArrayList<Throwable>()
 
@@ -280,6 +283,7 @@ class TaskScope internal constructor(
       closed = true
     }
 
+    val failures = collectFailures()
     val first = failures.firstOrNull() ?: return
     for (e in failures) {
       if (e !== first && e !is CancellationException) {
@@ -287,6 +291,29 @@ class TaskScope internal constructor(
       }
     }
     throw first
+  }
+
+  /**
+   * The failures of the forks, in the order the forks ended.
+   *
+   * [failures] gives that order, but it is not complete on its own. kotlinx puts a job into its final state before
+   * it runs the completion handlers, so [joinPending] can see a fork as complete while the handler of that fork is
+   * still pending. This reads the result of every fork as well, and appends a failure that no handler recorded yet.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun collectFailures(): List<Throwable> {
+    val result = ArrayList<Throwable>(failures)
+    for (fork in forks) {
+      if (!fork.isCompleted) {
+        continue
+      }
+      // the stored exception, and not `await`, because stack-trace recovery hands out a copy that no identity check finds
+      val e = fork.getCompletionExceptionOrNull() ?: continue
+      if (!isRequestedCancellation(e) && result.none { it === e }) {
+        result.add(e)
+      }
+    }
+    return result
   }
 
   /** `join` of a deferred returns when its body has ended, and throws only when the caller is cancelled. */

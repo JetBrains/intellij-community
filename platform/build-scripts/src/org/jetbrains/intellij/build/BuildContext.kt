@@ -107,8 +107,9 @@ interface BuildContext : CompilationContext {
    *
    * The first caller pays the start of the headless IDE, because the start needs a packed development distribution.
    * The build of the distributions asks for the list early, so the start runs beside the packaging.
+   * The start runs on a virtual thread of its own, and every caller blocks its own virtual thread until the list is ready.
    */
-  suspend fun builtinModules(): BuiltinModulesFileData?
+  fun builtinModules(): BuiltinModulesFileData?
 
   val appInfoXml: String
 
@@ -154,7 +155,7 @@ interface BuildContext : CompilationContext {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
-  suspend fun getFrontendModuleFilter(): FrontendModuleFilter
+  fun getFrontendModuleFilter(): FrontendModuleFilter
 
   /**
    * Creates a copy of this context with [org.jetbrains.intellij.build.ProductProperties] changed to a frontend variant (JetBrains Client) properties.

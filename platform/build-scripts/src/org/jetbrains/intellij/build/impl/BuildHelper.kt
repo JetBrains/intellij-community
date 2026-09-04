@@ -71,34 +71,79 @@ interface SuspendingLazy<T> {
 }
 
 /**
- * Computes a value on the first `await()` and shares the result with all concurrent awaiters.
+ * Computes a value on the first [SuspendingLazy.await] and shares the result with all concurrent awaiters.
  *
  * The computation runs on a virtual thread of its own, under the telemetry context of the caller that started it.
  * A caller that stops waiting changes nothing for the other callers. Successful values and ordinary failures are
- * reused.
+ * reused. [name] names the computation.
  */
-fun <T> suspendingLazy(coroutineName: String, initializer: suspend () -> T): SuspendingLazy<T> {
-  return AsyncCacheBackedSuspendingLazy(coroutineName = coroutineName, initializer = initializer)
+fun <T> suspendingLazy(name: String, initializer: suspend () -> T): SuspendingLazy<T> {
+  return AsyncCacheBackedSuspendingLazy(name = name, initializer = initializer)
+}
+
+/**
+ * The blocking twin of [SuspendingLazy], for an initializer that does not suspend.
+ */
+interface BlockingLazy<T> {
+  /** Returns the value, and blocks the calling virtual thread while the first caller computes it. */
+  fun get(): T
+}
+
+/**
+ * Computes a value on the first [BlockingLazy.get] and shares the result with all concurrent callers.
+ *
+ * The initializer runs on a virtual thread of its own, under the telemetry context of the caller that started it.
+ * A caller blocks only its own virtual thread. A recursive `get` from inside the initializer fails fast. Successful
+ * values and ordinary failures are reused. [name] names the computation.
+ */
+fun <T> blockingLazy(name: String, initializer: () -> T): BlockingLazy<T> {
+  return AsyncCacheBackedBlockingLazy(name = name, initializer = initializer)
 }
 
 private class AsyncCacheBackedSuspendingLazy<T>(
-  coroutineName: String,
+  name: String,
   private val initializer: suspend () -> T,
 ) : SuspendingLazy<T> {
-  private val key = NamedSuspendingLazyKey(coroutineName)
-  private val cache = AsyncCache<NamedSuspendingLazyKey, T>()
+  private val shared = AsyncCacheBackedLazy<T>(name)
 
-  /** The computation of the cache carries the name of the lazy as its thread name. */
   override suspend fun await(): T {
     // the computation runs on a thread of its own, so a span of the initializer gets its parent from here
     val telemetryContext = Context.current().asContextElement()
     // the initializer still suspends, so it needs an entry of its own back into coroutines
-    val load = { runBlockingOnVirtualThreads(telemetryContext) { initializer() } }
-    // `awaitShared` and not `getOrPut`, so an awaiter stays cancellable and does not block its thread
-    return cache.sharedFuture(key, load).awaitShared()
+    return shared.await { runBlockingOnVirtualThreads(telemetryContext) { initializer() } }
   }
 }
 
-private class NamedSuspendingLazyKey(private val name: String) {
+private class AsyncCacheBackedBlockingLazy<T>(
+  name: String,
+  private val initializer: () -> T,
+) : BlockingLazy<T> {
+  private val shared = AsyncCacheBackedLazy<T>(name)
+
+  override fun get(): T {
+    // the computation runs on a thread of its own, so a span of the initializer gets its parent from here
+    val telemetryContext = Context.current()
+    return shared.get { telemetryContext.makeCurrent().use { initializer() } }
+  }
+}
+
+/**
+ * The one entry of an [AsyncCache] that both lazies use.
+ *
+ * The cache gives the single flight, the reuse of a failure, and the fail-fast on a recursive call. The key carries
+ * the name of the lazy, so the computation also names its thread. The loader comes per call, because each lazy hands
+ * the telemetry context of its own caller to the initializer.
+ */
+private class AsyncCacheBackedLazy<T>(name: String) {
+  private val key = NamedLazyKey(name)
+  private val cache = AsyncCache<NamedLazyKey, T>()
+
+  fun get(load: () -> T): T = cache.getOrPut(key, loader = load)
+
+  /** `sharedFuture` and not [get], so an awaiter stays cancellable and does not block its thread. */
+  suspend fun await(load: () -> T): T = cache.sharedFuture(key, load).awaitShared()
+}
+
+private class NamedLazyKey(private val name: String) {
   override fun toString(): String = name
 }

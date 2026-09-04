@@ -269,7 +269,7 @@ class BuildContextImpl internal constructor(
     }
   }
 
-  private val builtinModules = suspendingLazy("provided module list") {
+  private val builtinModules = blockingLazy("provided module list") {
     if (isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP) || !shouldBuildDistributions()) {
       null
     }
@@ -278,7 +278,7 @@ class BuildContextImpl internal constructor(
     }
   }
 
-  override suspend fun builtinModules(): BuiltinModulesFileData? = builtinModules.await()
+  override fun builtinModules(): BuiltinModulesFileData? = builtinModules.get()
 
   override fun addDistFile(file: DistFile) {
     Span.current().addEvent("add app resource", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
@@ -319,7 +319,7 @@ class BuildContextImpl internal constructor(
     compilationContext.notifyArtifactBuilt(artifactPath)
   }
 
-  private val _frontendModuleFilter = suspendingLazy("frontend module filter") {
+  private val _frontendModuleFilter = blockingLazy("frontend module filter") {
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
       FrontendModuleFilterImpl.createFrontendModuleFilter(project = project)
@@ -329,7 +329,7 @@ class BuildContextImpl internal constructor(
     }
   }
 
-  override suspend fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter.await()
+  override fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter.get()
 
   private val embeddedFrontendProductContext = suspendingLazy("embedded frontend product context") {
     if (options.enableEmbeddedFrontend) {

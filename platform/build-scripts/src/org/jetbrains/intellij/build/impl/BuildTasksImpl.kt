@@ -12,6 +12,8 @@ import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.context.Context
+import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.collections.immutable.persistentListOf
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
@@ -63,6 +65,7 @@ import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.isLanguageServer
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.blockingUse
@@ -400,19 +403,23 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
 /**
  * Starts the product in headless mode and reads the list of the built-in modules that it reports.
  *
- * The run needs a packed development distribution, so the call is expensive.
- * See [BuildOptions.PROVIDED_MODULES_LIST_STEP].
+ * The run needs a packed development distribution, so the call is expensive. The function blocks the calling
+ * virtual thread until the IDE has exited. See [BuildOptions.PROVIDED_MODULES_LIST_STEP].
  */
-internal suspend fun buildProvidedModuleList(context: BuildContext): BuiltinModulesFileData {
-  return spanBuilder("build provided module list").use {
+internal fun buildProvidedModuleList(context: BuildContext): BuiltinModulesFileData {
+  return spanBuilder("build provided module list").blockingUse {
     val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
     Files.deleteIfExists(providedModuleFile)
     // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-    spanBuilder("run BundledPluginsLister").use {
-      context.createProductRunner().runProduct(
-        args = listOf("listBundledPlugins", providedModuleFile.toString()),
-        additionalVmProperties = additionalProperties(),
-      )
+    spanBuilder("run BundledPluginsLister").blockingUse {
+      // the product runner and the IDE start still suspend, so this is their entry back into coroutines
+      runBlockingOnVirtualThreads(Context.current().asContextElement()) {
+        context.createProductRunner().runProduct(
+          args = listOf("listBundledPlugins", providedModuleFile.toString()),
+          additionalVmProperties = additionalProperties(),
+          timeout = DEFAULT_TIMEOUT,
+        )
+      }
     }
 
     context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
