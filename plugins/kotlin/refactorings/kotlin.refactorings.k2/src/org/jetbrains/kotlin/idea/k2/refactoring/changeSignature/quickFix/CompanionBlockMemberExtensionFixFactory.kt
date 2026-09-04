@@ -45,19 +45,6 @@ object CompanionBlockMemberExtensionFixFactory {
             }
         }
 
-    private class RemoveReceiverParameterFix(
-        function: KtNamedFunction,
-    ) : KotlinQuickFixAction<KtNamedFunction>(function) {
-        override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-            val function = element ?: return
-            ReceiverParameterChangeSignatureUtils.removeReceiverParameter(project, function)
-        }
-
-        override fun startInWriteAction(): Boolean = false
-        override fun getText(): String = familyName
-        override fun getFamilyName(): String = KotlinBundle.message("fix.unused.receiver.parameter.remove")
-    }
-
     private class ConvertReceiverToParameterFix(
         function: KtNamedFunction,
     ) : KotlinQuickFixAction<KtNamedFunction>(function) {

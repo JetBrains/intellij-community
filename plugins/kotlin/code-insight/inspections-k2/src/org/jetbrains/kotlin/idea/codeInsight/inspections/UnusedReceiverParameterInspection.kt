@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
-import com.intellij.codeInsight.FileModificationService
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -19,7 +20,7 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.getThisWithLabel
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.typeIfSafeToResolve
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ReceiverParameterChangeSignatureUtils
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.RemoveReceiverParameterFix
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ReceiverParameterChangeSignatureUtils.collectUsedTypeParameters
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ReceiverParameterChangeSignatureUtils.isReceiverUsedInside
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
@@ -50,16 +51,18 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
 
     private fun registerProblem(
         holder: ProblemsHolder,
+        callableDeclaration: KtCallableDeclaration,
         receiverTypeReference: KtTypeReference,
         textForReceiver: String?
     ) {
         holder.registerProblem(
             receiverTypeReference,
             KotlinBundle.message("inspection.unused.receiver.parameter"),
-            RemoveReceiverFix(textForReceiver)
+            IntentionWrapper.wrapToQuickFix(RemoveReceiverParameterFix(callableDeclaration, textForReceiver), holder.file)
         )
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun checkElement(callableDeclaration: KtCallableDeclaration, holder: ProblemsHolder) {
         val receiverTypeReference = callableDeclaration.receiverTypeReference
         if (receiverTypeReference == null || receiverTypeReference.textRange.isEmpty) return
@@ -90,6 +93,13 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                 .orEmpty()
             if (usedTypeParametersInReceiver.any { it in usedInReturnType }) return
 
+            if (callableDeclaration
+                .diagnostics()
+                .directOnly(true)
+                .withCheckers(KaDiagnosticCheckerKind.COMMON)
+                .any { it is KaFirDiagnostic.CompanionBlockMemberExtension }
+            ) return
+
             val receiverType = receiverTypeReference.typeIfSafeToResolve
             val receiverTypeSymbol = receiverType?.symbol
             if (receiverTypeSymbol is KaClassSymbol && receiverTypeSymbol.classKind == KaClassKind.COMPANION_OBJECT) return
@@ -103,7 +113,7 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                     callableDeclaration.collectDescendantsOfType<KtThisExpression>().mapNotNull { it.getLabelName() }
                 if (thisLabelNamesInCallable.isNotEmpty()) {
                     if (thisLabelNamesInCallable.none { it == thisLabelName }) {
-                        registerProblem(holder, receiverTypeReference, callableSymbol.getThisWithLabel())
+                        registerProblem(holder, callableDeclaration, receiverTypeReference, callableSymbol.getThisWithLabel())
                     }
                     return
                 }
@@ -112,24 +122,8 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
             val usedReifiedTypeParametersInReceiver = usedTypeParametersInReceiver.filterTo(mutableSetOf()) { it.isReified }
             val receiverUsedInside = isReceiverUsedInside(callableDeclaration, usedReifiedTypeParametersInReceiver)
             if (!receiverUsedInside) {
-                registerProblem(holder, receiverTypeReference, textForReceiver = null)
+                registerProblem(holder, callableDeclaration, receiverTypeReference, textForReceiver = null)
             }
-        }
-    }
-
-    private class RemoveReceiverFix(private val textForReceiver: String?) : LocalQuickFix {
-        override fun getFamilyName(): String =
-            KotlinBundle.message("fix.unused.receiver.parameter.remove")
-
-        override fun startInWriteAction(): Boolean = false
-
-
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val element = descriptor.psiElement as? KtTypeReference ?: return
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
-            val function = element.parent as? KtCallableDeclaration ?: return
-
-            ReceiverParameterChangeSignatureUtils.removeReceiverParameter(project, function, textForReceiver)
         }
     }
 }
