@@ -137,8 +137,6 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
       longRunningAndroidThreads = null
     }
 
-    private const val COMPOSE_RESOURCES_PROJECT_NAME = "ComposeResources"
-
     private val COMPOSE_RESOURCES_PROJECT = GradleTestFixtureBuilder.create(COMPOSE_RESOURCES_PROJECT_NAME) {
       excludeFilePatterns(
         "glob:**/composeApp/src/commonMain/root.png",
@@ -161,9 +159,6 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
         AndroidStudioTestUtils.specifyAndroidSdk(projectRoot.toNioPath())
       }
     }
-
-    private fun composeResourcesProjectRoot(): Path =
-      composeResourcesTestDataRoot().resolve(COMPOSE_RESOURCES_PROJECT_NAME)
 
     private fun composeResourcesTestDataFingerprint(): String {
       val root = composeResourcesProjectRoot()

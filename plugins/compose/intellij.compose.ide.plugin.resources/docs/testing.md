@@ -75,8 +75,15 @@ the files that `withFile` declares, and it ignores a `withFiles` builder. The ba
 SHA-256 fingerprint of the test data to `.gradle/testDataFingerprint`. When you change the test data, the
 fingerprint changes, and the fixture rebuilds the project. You need no manual cache reset.
 
-Use `COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH` or `composeResourcesTestDataRoot()` from
-`ComposeResourcesTestUtils.kt` to reach the test data. Do not repeat the path literal.
+Use `COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH`, `composeResourcesTestDataRoot()`, or
+`composeResourcesProjectRoot()` from `ComposeResourcesTestUtils.kt` to reach the test data. Do not repeat the
+path literal.
+
+The test project keeps a Gradle wrapper, and `testData/ComposeResources/gradle/wrapper/gradle-wrapper.properties`
+must declare `TARGET_GRADLE_VERSION`. `ComposeResourcesTestCase` runs with `DistributionType.DEFAULT_WRAPPED`,
+and `KotlinGradleImportingTestCase.configureByFiles` writes this file over the wrapper that the test framework
+generates. A stale version here makes the test download another Gradle distribution.
+`ComposeResourcesTestDataWrapperTest` guards the two values. Update both when you change the Gradle version.
 
 ## The leak trackers
 
