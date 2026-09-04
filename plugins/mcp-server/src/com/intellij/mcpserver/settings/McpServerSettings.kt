@@ -8,12 +8,14 @@ import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.util.PlatformUtils
 
 interface McpServerSettings {
   companion object {
     @JvmStatic
     fun getInstance(): McpServerSettings = service<McpServerSettingsImpl>()
+    suspend fun getInstanceAsync(): McpServerSettings = serviceAsync<McpServerSettingsImpl>()
 
     @JvmStatic
     val DEFAULT_MCP_PORT: Int = BASE_MCP_PORT + getPortOffset()

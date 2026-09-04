@@ -362,14 +362,15 @@ private fun showMcpServerTerminalPromotionBanner(
       return
     }
 
-    if (!McpServerService.getInstance().isRunning) {
-      if (!getConsentDialog(project)) {
-        return
-      }
-      McpServerService.getInstance().start()
-    }
-
     view.coroutineScope.launch(Dispatchers.Default + CoroutineName("MCP server terminal promotion setup")) {
+      val service = McpServerService.getInstanceAsync()
+      if (!service.isRunning) {
+        val agree = withContext(Dispatchers.EDT) { getConsentDialog(project) }
+        if (!agree) return@launch
+
+        service.start()
+      }
+
       val configuredClients = ArrayList<McpClient>(clientsToConfigure.size)
 
       for (targetClient in clientsToConfigure.distinct()) {

@@ -9,6 +9,8 @@ import com.intellij.ide.setToolTipText
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -22,6 +24,14 @@ import com.intellij.ui.BadgeIconSupplier
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.IconLabelButton
 import com.intellij.ui.popup.PopupState
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.component.resizeHostOnContentSizeChange
@@ -42,6 +52,8 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
   }
 
   private val widgetComponent by lazy { createComponent() }
+  @Suppress("RAW_SCOPE_CREATION")
+  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
   private fun createComponent(): IconLabelButton {
     return IconLabelButton(getCurrentIcon()) {
@@ -53,19 +65,39 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
     }
   }
 
+  @RequiresEdt
   fun updatePresentation() {
+    ThreadingAssertions.softAssertAwtOperationsThread()
+
     widgetComponent.icon = getCurrentIcon()
     widgetComponent.setToolTipText(HtmlChunk.text(getCurrentTooltip()))
   }
 
-  private fun getCurrentIcon(): Icon =
-    if (McpServerService.getInstance().isRunning) BADGE_ICON_SUPPLIER.successIcon
+  private fun getCurrentIcon(): Icon {
+    val service = McpServerService.getInstanceIfCreated() // do not init McpServerService on EDT
+    if (service == null) {
+      coroutineScope.launch { // update icon once available, if not yet
+        serviceAsync<McpServerService>()
+        withContext(Dispatchers.EDT) {
+          updatePresentation()
+        }
+      }
+
+      return BADGE_ICON_SUPPLIER.originalIcon
+    }
+
+    return if (service.isRunning) BADGE_ICON_SUPPLIER.successIcon
     else BADGE_ICON_SUPPLIER.errorIcon
+  }
 
   @Nls
-  private fun getCurrentTooltip(): String =
-    if (McpServerService.getInstance().isRunning) McpServerBundle.message("mcp.server.status.bar.widget.tooltip.enabled")
+  private fun getCurrentTooltip(): String {
+    val service = McpServerService.getInstanceIfCreated() // do not init McpServerService on EDT
+    if (service == null) return McpServerBundle.message("mcp.server.status.bar.widget.tooltip.starting")
+
+    return if (service.isRunning) McpServerBundle.message("mcp.server.status.bar.widget.tooltip.enabled")
     else McpServerBundle.message("mcp.server.status.bar.widget.tooltip.disabled")
+  }
 
   @OptIn(ExperimentalJewelApi::class)
   private fun createAndShowPopup(component: JComponent) {
@@ -77,6 +109,7 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
       val model = remember {
         McpServerPopupModelImpl(
           project = project,
+          coroutineScope = coroutineScope,
           onSettingsClickAction = {
             popupState.popup?.cancel()
             ShowSettingsUtil.getInstance().showSettingsDialog(project, McpServerSettingsConfigurable::class.java)
@@ -115,7 +148,9 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
 
   override fun install(statusBar: StatusBar) {}
 
-  override fun dispose() {}
+  override fun dispose() {
+    coroutineScope.cancel()
+  }
 }
 
 private fun adjustPopupLocation(popup: JBPopup, component: JComponent) {

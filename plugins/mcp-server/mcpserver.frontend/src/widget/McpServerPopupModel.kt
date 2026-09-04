@@ -17,13 +17,17 @@ import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.toolwindow.McpDiagnosticService
 import com.intellij.mcpserver.util.getHelpLink
 import com.intellij.mcpserver.util.getPathForMcp
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ui.TextTransferable
-
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Stable
 internal interface McpServerPopupModel {
@@ -47,17 +51,14 @@ internal interface McpServerPopupModel {
   fun showInServiceView()
 }
 
+private val LOG = logger<McpServerPopupModelImpl>()
+
 internal class McpServerPopupModelImpl(
   private val project: Project,
+  private val coroutineScope: CoroutineScope,
   private val onSettingsClickAction: () -> Unit,
   private val onStateChangedAction: () -> Unit,
 ) : McpServerPopupModel {
-  companion object {
-    private val LOG = logger<McpServerPopupModelImpl>()
-  }
-
-  private val settings = McpServerSettings.getInstance()
-  private val service = McpServerService.getInstance()
   private val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull()
 
   private fun copyToClipboard(text: String): Boolean = try {
@@ -69,10 +70,10 @@ internal class McpServerPopupModelImpl(
     false
   }
 
-  override val initialEnabled: Boolean get() = settings.enableMcpServer
-  override val braveMode: Boolean get() = settings.enableBraveMode
-  override val sseUrl: String? get() = if (service.isRunning) addressProvider?.serverSseUrl else null
-  override val streamUrl: String? get() = if (service.isRunning) addressProvider?.serverStreamUrl else null
+  override val initialEnabled: Boolean get() = McpServerSettings.getInstance().enableMcpServer
+  override val braveMode: Boolean get() = McpServerSettings.getInstance().enableBraveMode
+  override val sseUrl: String? get() = if (McpServerService.getInstance().isRunning) addressProvider?.serverSseUrl else null
+  override val streamUrl: String? get() = if (McpServerService.getInstance().isRunning) addressProvider?.serverStreamUrl else null
 
   override val activeConnectionCount: Int get() = service<McpDiagnosticService>().activeSessionCount
 
@@ -95,30 +96,39 @@ internal class McpServerPopupModelImpl(
   override fun tryEnable(): Boolean {
     val consented = getConsentDialog(project)
     if (!consented) return false
-    settings.enableMcpServer = true
-    service.settingsChanged(true)
-    onStateChangedAction()
+
+    coroutineScope.launch {
+      McpServerSettings.getInstance().enableMcpServer = true
+      McpServerService.getInstance().settingsChanged(true)
+      withContext(Dispatchers.EDT) {
+        onStateChangedAction()
+      }
+    }
     return true
   }
 
   override fun disable() {
-    settings.enableMcpServer = false
-    service.settingsChanged(false)
-    onStateChangedAction()
+    coroutineScope.launch {
+      McpServerSettings.getInstance().enableMcpServer = false
+      McpServerService.getInstance().settingsChanged(false)
+      withContext(Dispatchers.EDT) {
+        onStateChangedAction()
+      }
+    }
   }
 
   override fun setBraveMode(value: Boolean) {
-    settings.enableBraveMode = value
+    McpServerSettings.getInstance().enableBraveMode = value
   }
 
   override fun copySseConfig(): Boolean =
-    copyToClipboard(McpClient.json.encodeToString(createSseServerJsonEntry(service.port, project.getPathForMcp())))
+    copyToClipboard(McpClient.json.encodeToString(createSseServerJsonEntry(McpServerService.getInstance().port, project.getPathForMcp())))
 
   override fun copyStdioConfig(): Boolean =
-    copyToClipboard(McpClient.json.encodeToString(createStdioMcpServerJsonConfiguration(service.port, project.getPathForMcp())))
+    copyToClipboard(McpClient.json.encodeToString(createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, project.getPathForMcp())))
 
   override fun copyStreamConfig(): Boolean =
-    copyToClipboard(McpClient.json.encodeToString(createStreamableServerJsonEntry(service.port, project.getPathForMcp())))
+    copyToClipboard(McpClient.json.encodeToString(createStreamableServerJsonEntry(McpServerService.getInstance().port, project.getPathForMcp())))
 
   override fun browseUrl(url: String) {
     BrowserUtil.browse(url)
