@@ -100,7 +100,11 @@ object InternalPsiVersioning {
       return action()
     }
     val registry = PsiVersionRegistry.instance
-    val latestVersion = registry.latestPublishedVersion
+    val latestVersion = if (isInsideVersioningButNotLocks()) {
+      getCurrentPsiVersion()
+    } else {
+      registry.latestPublishedVersion
+    }
     // todo: the process of entering into versioned environment should run a double-checked-locking loop where we would be able to avoid concurrent garbage collection of the frozen version.
     return ApplicationManagerEx.getApplicationEx().withLocksProhibited(LOCK_PROHIBITION_FREEZE_PSI_VERSION_ADVICE) {
       registry.rememberFrozenVersion(latestVersion) {
