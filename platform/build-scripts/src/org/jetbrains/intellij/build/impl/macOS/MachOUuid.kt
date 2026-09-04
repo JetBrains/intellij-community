@@ -93,6 +93,14 @@ class MachOUuid(private val executable: Path, private val customizer: MacDistrib
   }
 
   suspend fun patch() {
+    patchFile()
+    if (canBeSignedLocally) {
+      runProcess(listOf("codesign", "--sign", "-", "--force", executable.toString()), inheritOut = true)
+    }
+  }
+
+  /** Finds the `LC_UUID` load command of [executable] and rewrites it when the build signs the file. It does not sign the file. */
+  private fun patchFile() {
     Files.newByteChannel(executable, StandardOpenOption.READ, StandardOpenOption.WRITE).use { channel ->
       var buffer = ByteBuffer.allocate(MACH_HEADER_64_MAGIC_SIZE_IN_BYTES).order(ByteOrder.LITTLE_ENDIAN)
       checkMagic(channel, buffer)
@@ -115,10 +123,6 @@ class MachOUuid(private val executable: Path, private val customizer: MacDistrib
         }
       }
       context.messages.logErrorAndThrow("LC_UUID not found in $executable")
-    }
-
-    if (canBeSignedLocally) {
-      runProcess(listOf("codesign", "--sign", "-", "--force", executable.toString()), inheritOut = true)
     }
   }
 

@@ -22,7 +22,7 @@ import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.ResolvedDownload
 import org.jetbrains.intellij.build.resolveFileForReading
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -176,12 +176,12 @@ class BundledRuntimeImpl(
     JvmArchitecture.aarch64 -> "aarch64"
   }
 
-  private suspend fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
+  private fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
     spanBuilder("extract JBR")
       .setAttribute("archive", archive.toString())
       .setAttribute("os", os.osName)
       .setAttribute("destination", destinationDir.toString())
-      .use {
+      .blockingUse {
         NioFiles.deleteRecursively(destinationDir)
         unTar(archive, destinationDir)
         fixPermissions(destinationDir, os == OsFamily.WINDOWS)
