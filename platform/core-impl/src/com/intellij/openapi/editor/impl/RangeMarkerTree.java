@@ -95,12 +95,6 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return null;
   }
 
-  @TestOnly
-  @ApiStatus.Internal
-  public void addIntervalTestAccessor(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
-    addInterval(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
-  }
-
   @Override
   protected @NotNull RMNode<T> createNewNode(@NotNull T key, int start, int end,
                                              boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {

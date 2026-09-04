@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,13 +34,30 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
   private long mySeed;
 
   private DocumentEx myDocument;
-  private MarkerTreeWithPartialSums<MyRange> myTree;
+  private TestMarkerTreeWithPartialSums myTree;
 
+  private static class TestMarkerTreeWithPartialSums extends MarkerTreeWithPartialSums<MyRange> {
+    TestMarkerTreeWithPartialSums(@NotNull Document document) {
+      super(document);
+    }
+
+    // make this method accessible to the test, even when the test is loaded with different classloader
+    @Override
+    public @NotNull RMNode<MyRange> addInterval(@NotNull MarkerTreeWithPartialSumsTest.MyRange interval,
+                                                   int start,
+                                                   int end,
+                                                   boolean greedyToLeft,
+                                                   boolean greedyToRight,
+                                                   boolean stickingToRight,
+                                                   int layer) {
+      return super.addInterval(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
+    }
+  }
   @Override
   public void setUp() throws Exception {
     super.setUp();
     myDocument = new DocumentImpl("abcdefghij");
-    myTree = new MarkerTreeWithPartialSums<>(myDocument);
+    myTree = new TestMarkerTreeWithPartialSums(myDocument);
   }
 
   @Override
@@ -204,7 +223,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
     MyRange(int offset, int value, boolean stickToRight) {
       super(myDocument, offset, offset, false, true);
       myValue = value;
-      myTree.addIntervalTestAccessor(this, offset, offset, false, false, stickToRight, 0);
+      myTree.addInterval(this, offset, offset, false, false, stickToRight, 0);
     }
 
     @Override
