@@ -45,7 +45,7 @@ class SeAllTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
 
   override val id: String get() = ID
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
-    SeAllFilterEditor(delegate.getProvidersIdToName())
+    SeAllFilterEditor(delegate.getProvidersIdToName(), delegate.shouldHaveScopesFilter())
   }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> {
@@ -90,10 +90,10 @@ class SeAllTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   }
 }
 
-private class SeAllFilterEditor(providersIdToName: Map<SeProviderId, @Nls String>) :
+private class SeAllFilterEditor(providersIdToName: Map<SeProviderId, @Nls String>, withScopeFilter: Boolean) :
   SeFilterEditorBase<SeEverywhereFilter>(SeEverywhereFilterImpl(true, false, disabledProviders))
 {
-  private val actions = listOfNotNull(getEverywhereToggleAction(),
+  private val actions = listOfNotNull(if (withScopeFilter) getEverywhereToggleAction() else null,
                                       PreviewAction(),
                                       if (isTypeFilterEnabled) getFilterTypesAction(providersIdToName) else null)
   override fun getHeaderActions(): List<AnAction> = actions

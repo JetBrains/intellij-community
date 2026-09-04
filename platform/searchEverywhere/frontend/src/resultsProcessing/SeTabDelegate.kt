@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.project.projectId
 import com.intellij.platform.scopes.SearchScopesInfo
@@ -137,7 +138,14 @@ class SeTabDelegate(
     }
   }
 
+  @ApiStatus.Internal
+  fun shouldHaveScopesFilter(): Boolean =
+    // The welcome-screen project has no source, so a scope filter has no meaning.
+    // An empty list makes every tab drop its scope filter action.
+    project != null && !WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
+
   suspend fun getSearchScopesInfos(): List<SearchScopesInfo> {
+    if (!shouldHaveScopesFilter()) return emptyList()
     return providers.getValue().getSearchScopesInfos()
   }
 
