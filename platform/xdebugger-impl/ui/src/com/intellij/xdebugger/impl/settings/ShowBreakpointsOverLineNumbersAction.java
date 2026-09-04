@@ -25,6 +25,7 @@ public class ShowBreakpointsOverLineNumbersAction extends ToggleAction implement
 
   public static boolean isSelected() {
     return UISettings.getInstance().getShowBreakpointsOverLineNumbers()
+           && ExperimentalUI.isNewUI()
            && EditorSettingsExternalizable.getInstance().isLineNumbersShown();
   }
 

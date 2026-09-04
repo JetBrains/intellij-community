@@ -82,6 +82,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.CoroutineScopeKt;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -1423,6 +1424,7 @@ public final class EditorUtil {
 
   public static boolean isBreakPointsOnLineNumbers() {
     return UISettings.getInstance().getShowBreakpointsOverLineNumbers()
+           && ExperimentalUI.isNewUI()
            && !UISettings.getInstance().getPresentationMode()
            && !DistractionFreeModeController.isDistractionFreeModeEnabled();
   }
