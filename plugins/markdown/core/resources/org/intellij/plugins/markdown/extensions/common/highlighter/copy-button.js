@@ -8,7 +8,7 @@
     if (target != null) {
       const encodedContent = target.getAttribute("data-fence-content");
       if (encodedContent != null) {
-        const needsConfirmation = !guard.isGenuineClickInside(event, target);
+        const needsConfirmation = !guard.isGenuineTarget(event, target);
         window.__IntelliJTools.messagePipe.post(
           "copy-button/copy",
           guard.confirmationFlag(needsConfirmation) + ":" + encodedContent
