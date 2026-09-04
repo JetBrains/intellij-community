@@ -1380,10 +1380,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       progress = createUpdateProgress(fileEditor);
       // pre-create HighlightingSession in EDT to make visible range available in a background thread
       session = HighlightingSessionImpl.createHighlightingSession(psiFileToSubmit, editor, scheme, progress, daemonCancelEventCount);
-      JobLauncher.getInstance().submitToJobThread(ThreadContext.captureThreadContext(Context.current().wrap(() ->
-            submitInBackground(fileEditor, document, virtualFile, psiFileToSubmit, backgroundHighlighter, passesToIgnore, progress, session, mainDocumentPasses))),
-            // manifest exceptions in EDT to avoid storing them in the Future and abandoning
-            task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
+      Runnable runnable = ThreadContext.captureThreadContext(Context.current().wrap(() ->
+        submitInBackground(fileEditor, document, virtualFile, psiFileToSubmit, backgroundHighlighter, passesToIgnore, progress, session, mainDocumentPasses)));
+      JobLauncher.getInstance().submitToJobThread(runnable,
+         // manifest exceptions in EDT to avoid storing them in the Future and abandoning
+        task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
     }
     if (PassExecutorService.LOG.isDebugEnabled()) {
       PassExecutorService.log(progress, null, "queuePassesCreation completed. session=", session, "; fileStatusMap:",  (editor == null ? null : myFileStatusMap.toString(editor.getDocument())));

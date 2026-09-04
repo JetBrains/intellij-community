@@ -62,7 +62,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   private final int myDaemonInitialCancelEventCount;
   private volatile boolean myIsEssentialHighlightingOnly;
   private volatile boolean myInContent;
-  private volatile ThreeState extensionsAllowToChangeFileSilently;
+  private volatile @NotNull ThreeState extensionsAllowToChangeFileSilently = ThreeState.UNSURE;
   private final List<RunnableFuture<?>> pendingFileLevelHighlightRequests = ContainerUtil.createLockFreeCopyOnWriteList();
   private volatile HighlightSeverity myMinimumSeverity;
 
