@@ -88,7 +88,7 @@ open class SnapshotRangeMarkerImpl internal constructor(
     updateSpec { it.copy(isStickingToRight = value) }
   }
 
-  protected fun isStickingToRight(): Boolean = spec.isStickingToRight
+  fun isStickingToRight(): Boolean = spec.isStickingToRight
 
   @Synchronized
   override fun dispose() {

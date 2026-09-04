@@ -45,7 +45,7 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
   }
 
   @Override
-  void doUpdate() {
+  public void doUpdate() {
     myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels < 0) {
       throw PluginException.createByClass("Non-negative width should be defined for a block element by " + myRenderer, null,
@@ -62,7 +62,7 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
   }
 
   @Override
-  Point getPosition() {
+  public @NotNull Point getPosition() {
     int visualLine = myEditor.offsetToVisualLine(getOffset());
     int[] yRange = myEditor.visualLineToYRange(visualLine);
     List<Inlay<?>> allInlays = myEditor.getInlayModel().getBlockElementsForVisualLine(visualLine, myShowAbove);

@@ -1,27 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
-import com.intellij.openapi.editor.EditorThreading;
-import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
-import com.intellij.openapi.editor.InlayProperties;
-import com.intellij.openapi.editor.VisualPosition;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.awt.Point;
-import java.util.List;
 
 /**
  * @see InlayModel#addAfterLineEndElement
  */
-final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, AfterLineEndInlayImpl<?>> {
-  private static int ourGlobalCounter = 0;
-  final boolean mySoftWrappable;
-  final int myPriority;
-  final int myOrder;
+final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer>
+  extends InlayImpl<R, AfterLineEndInlayImpl<?>> implements AfterLineEndInlay<R> {
+  private static int ourGlobalCounter;
+  private final boolean mySoftWrappable;
+  private final int myPriority;
+  private final int myOrder;
 
   AfterLineEndInlayImpl(@NotNull EditorImpl editor,
                         int offset,
@@ -39,52 +32,22 @@ final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends
   @Override
   @ApiStatus.Internal
   public RangeMarkerTree<AfterLineEndInlayImpl<?>> getTree() {
-    return myEditor.getInlayModel().myAfterLineEndElementsTree;
+    return myEditor.getInlayModel().getAfterLineEndElementsTree();
   }
 
   @Override
-  void doUpdate() {
-    myWidthInPixels = myRenderer.calcWidthInPixels(this);
-    if (myWidthInPixels <= 0) {
-      throw PluginException.createByClass("Positive width should be defined for an after-line-end element by " + myRenderer, null,
-                                          myRenderer.getClass());
-    }
+  public boolean isSoftWrappable() {
+    return mySoftWrappable;
   }
 
   @Override
-  Point getPosition() {
-    VisualPosition pos = EditorThreading.compute(() -> getVisualPosition());
-    return myEditor.visualPositionToXY(pos);
+  public int getPriority() {
+    return myPriority;
   }
 
   @Override
-  public @NotNull Placement getPlacement() {
-    return Placement.AFTER_LINE_END;
-  }
-
-  @Override
-  public @NotNull VisualPosition getVisualPosition() {
-    int offset = getOffset();
-    int logicalLine = myEditor.getDocument().getLineNumber(offset);
-    int lineEndOffset = myEditor.getDocument().getLineEndOffset(logicalLine);
-    VisualPosition position = myEditor.offsetToVisualPosition(lineEndOffset, true, true);
-    if (myEditor.getFoldingModel().isOffsetCollapsed(lineEndOffset)) return position;
-    List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
-    int order = inlays.indexOf(this);
-    return new VisualPosition(position.line, position.column + 1 + order);
-  }
-
-  @Override
-  public int getHeightInPixels() {
-    return myEditor.getLineHeight();
-  }
-
-  @Override
-  public @NotNull InlayProperties getProperties() {
-    return new InlayProperties()
-      .relatesToPrecedingText(isRelatedToPrecedingText())
-      .disableSoftWrapping(!mySoftWrappable)
-      .priority(myPriority);
+  public int getOrder() {
+    return myOrder;
   }
 
   @Override

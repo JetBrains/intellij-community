@@ -452,7 +452,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     if (placement == Inlay.Placement.INLINE) {
       doWithCaretMerging(() -> {
         for (CaretImpl caret : allCarets) {
-          caret.onInlayRemoved(inlay.getOffset(), ((InlineInlayImpl<?>)inlay).getOrder());
+          caret.onInlayRemoved(inlay.getOffset(), ((InlineInlay<?>)inlay).getOrder());
         }
       });
     } else if (placement != Inlay.Placement.AFTER_LINE_END || hasCaretInVirtualSpace()) {
