@@ -8,7 +8,9 @@ import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import com.intellij.openapi.editor.impl.StripedIDGenerator
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ReferenceQueueable
@@ -61,11 +63,11 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
    */
   private class QueuedMarkerReference(
     marker: SnapshotRangeMarkerImpl,
-    document: DocumentImpl,
+    document: DocumentImpl?,
     queue: ReferenceQueue<SnapshotRangeMarkerImpl>,
   ) : WeakSnapshotMarkerReference(marker, queue) {
     val markerId: Long = marker.markerId
-    val documentReference: WeakReference<DocumentImpl> = WeakReference(document)
+    val documentReference: WeakReference<DocumentImpl>? = document?.let(::WeakReference)
     val fileRootReference: WeakReference<FileMarkerRoot>? = marker.fileRoot?.let(::WeakReference)
   }
 
@@ -200,12 +202,50 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
     }
   }
 
+  @ApiStatus.Internal
+  fun createRangeMarkerForVirtualFile(
+    file: VirtualFile,
+    startOffset: Int,
+    startLine: Int,
+    startColumn: Int,
+    endLine: Int,
+    endColumn: Int,
+    persistent: Boolean,
+  ): RangeMarkerEx {
+    processQueue()
+    require(startOffset >= 0) { "startOffset must be non-negative" }
+
+    val cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file) as? DocumentImpl
+    val fileRoot = FileMarkerRoot.getOrCreate(file)
+    val markerId = nextMarkerId()
+    val spec = MarkerSpec(
+      isGreedyToLeft = false,
+      isGreedyToRight = false,
+      policy = if (persistent) PersistentMarkerPolicy else DefaultMarkerPolicy,
+    )
+    val initialLineColumns = if (persistent && cachedDocument == null &&
+                                 startLine >= 0 && startColumn >= 0 && endLine >= 0 && endColumn >= 0) {
+      SnapshotLazyRangeMarker.LineColumns(startLine, startColumn, endLine, endColumn)
+    }
+    else {
+      null
+    }
+    val marker = SnapshotLazyRangeMarker(fileRoot, markerId, spec, TextRange(startOffset, startOffset), initialLineColumns)
+    val markerReference = QueuedMarkerReference(marker, cachedDocument, markerQueue)
+    val rootReference = fileRoot.rootReference()
+    while (true) {
+      val oldRoot = rootReference.get()
+      val newRoot = oldRoot.insert(markerId, startOffset, startOffset, spec, marker.flavorFlags, markerReference)
+      if (rootReference.compareAndSet(oldRoot, newRoot)) return marker
+    }
+  }
+
   override fun processQueue(): Boolean {
     var ret = false
     while (true) {
       val reference = markerQueue.poll() as QueuedMarkerReference? ?: break
       val fileRoot = reference.fileRootReference?.get()
-      val document = reference.documentReference.get()
+      val document = reference.documentReference?.get()
       if (document != null) {
         ret = purgeRangeMarker(markerRoot(document.core.snapshot()), reference.markerId)
       }

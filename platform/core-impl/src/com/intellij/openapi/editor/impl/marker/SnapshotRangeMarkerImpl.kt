@@ -17,21 +17,34 @@ import java.util.concurrent.atomic.AtomicReference
  * Ordinary range marker whose offsets are stored in the snapshot marker engine.
  */
 @ApiStatus.Internal
-open class SnapshotRangeMarkerImpl internal constructor(
-  document: Document,
+open class SnapshotRangeMarkerImpl private constructor(
+  private val documentOrFile: Any,
   internal val fileRoot: FileMarkerRoot?,
   internal val markerId: Long,
   initialSpec: MarkerSpec,
   internal val initialRange: TextRange,
 ) : UserDataHolderBase(), PMarker, RangeMarkerEx {
+  internal constructor(
+    document: Document,
+    fileRoot: FileMarkerRoot?,
+    markerId: Long,
+    initialSpec: MarkerSpec,
+    initialRange: TextRange,
+  ) : this(fileRoot?.file ?: document, fileRoot, markerId, initialSpec, initialRange)
+
+  internal constructor(
+    fileRoot: FileMarkerRoot,
+    markerId: Long,
+    initialSpec: MarkerSpec,
+    initialRange: TextRange,
+  ) : this(fileRoot.file, fileRoot, markerId, initialSpec, initialRange)
+
   protected constructor(
     document: Document,
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,
   ) : this(document, null, markerId, initialSpec, initialRange)
-
-  private val documentOrFile: Any = fileRoot?.file ?: document
 
   @Volatile
   internal var disposed: Boolean = false

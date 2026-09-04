@@ -1405,6 +1405,26 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     marker.dispose();
   }
 
+  public void testLazyFileRangeMarkerDoesNotLoadDocument() {
+    VirtualFile file = VfsTestUtil.createFile(getSourceRoot(), "lazy.txt", "0123456789");
+
+    RangeMarker marker = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(file, 4);
+
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
+    marker.dispose();
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
+  }
+
+  public void testLazyPersistentFileRangeMarkerRestoresLineColumn() {
+    VirtualFile file = VfsTestUtil.createFile(getSourceRoot(), "lazy.txt", "zero\none-two\nthree");
+
+    RangeMarker marker = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(file, 1, 3, true);
+
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
+    assertEquals(8, marker.getStartOffset());
+    assertEquals(8, marker.getEndOffset());
+  }
+
   public void testLazyRangeMarkersWithInvalidOffsetWhenNoDocumentCreatedMustInvalidateThemSelvesOnFirstOpportunity() {
     psiFile = createFile("x.txt", "");
 

@@ -388,7 +388,7 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
 
   @ApiStatus.Internal
   public void documentCreatedFrom(@NotNull VirtualFile f, int tabSize) {
-    FileMarkerRoot.restoreRangeMarkersFromFile(this, f);
+    FileMarkerRoot.restoreRangeMarkersFromFile(this, f, tabSize);
     rangeMarkers.restoreRangeMarkersFromFile(f, hostDocument(), tabSize);
   }
 
