@@ -1,7 +1,8 @@
-# Modules whose tests run only under Bazel. The community JPS aggregator skips them.
+# Modules whose tests run only under Bazel. tests.cmd refuses them, and the community JPS aggregator skips them.
 # One pattern per line: a module name, or a prefix with one trailing '*'. Only letters, digits, '.', '-' and '_'.
 # A line that starts with '#' is a comment. No whitespace around a pattern. BazelMigratedTestModulesTest checks the file.
 
+language-server.*
 intellij.air.frontend.session.view.tests
 intellij.ant.tests
 intellij.commander.tests

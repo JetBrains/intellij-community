@@ -46,7 +46,7 @@ For a community-only module in a standalone community checkout, run the same pac
 ```
 
 - Preserve required test attributes such as `tags`, `timeout`, `env`, `jvm_flags`, and `data`.
-- Add a module to `COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES` only after the target is fully migrated and verified.
+- Add a module to `community/build/bazel-migrated-test-modules.txt` only after the target is fully migrated and verified. The community JPS aggregator then skips the module, and `tests.cmd` refuses it. The file documents its format.
 - Do not use `copy_file` to patch missing jars or descriptors into runfiles. Prefer normal `.iml` dependencies, target runtime/data dependencies, or the existing shared mechanism for that class of test.
 
 ## Dependency Decisions

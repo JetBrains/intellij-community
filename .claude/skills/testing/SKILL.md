@@ -97,7 +97,7 @@ Without `--%`, PowerShell can alter `-D...` arguments before they reach `tests.c
 
 ## Separate Bazel Modules
 
-Some parts of the repository are standalone Bazel modules and must not use `tests.cmd` or `community/tests.cmd`.
+Some parts of the repository are standalone Bazel modules and must not use `tests.cmd` or `community/tests.cmd`. The tests of a module that matches a pattern in `community/build/bazel-migrated-test-modules.txt` (`build/bazel-migrated-test-modules.txt` in a community checkout) run only under Bazel. `tests.cmd` refuses such a module with an error that names the pattern and the Bazel command. Follow that message.
 
 ### `community/platform/build-scripts/bazel`
 
@@ -175,6 +175,7 @@ Extra `-D...` arguments are passed through as JVM flags to `org.jetbrains.intell
 - Check that `--module` is the module that actually contains the test class (look at the .iml file location)
 - Check that class name ends with `Test` (or use `-Dpass.idea.include.unconventionally.named.tests=true`)
 - Before troubleshooting further, check whether the test lives in a separate Bazel module such as `community/platform/build-scripts/bazel`; those tests must be run with module-local `../../../../bazel.cmd test`, not `tests.cmd`
+- If `tests.cmd` refuses the module and names a pattern from `bazel-migrated-test-modules.txt`, the tests are Bazel-only. Run them with `./bazel.cmd test` as the message says
 
 **Tests pass locally but fail in CI:**
 - Check test isolation - tests may depend on execution order
