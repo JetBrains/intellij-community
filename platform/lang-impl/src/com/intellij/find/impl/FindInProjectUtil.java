@@ -108,7 +108,7 @@ public final class FindInProjectUtil {
   private FindInProjectUtil() {}
 
   public static void setScope(@NotNull Project project, @NotNull FindModel model, @NotNull DataContext dataContext) {
-    if (AdvancedSettings.getBoolean("ide.remember.last.search.scope")) {
+    if (AdvancedSettings.getBoolean("ide.remember.last.search.scope") && !WelcomeScreenFindScope.isApplicable(project)) {
       FindInProjectScopeService.getInstance(project).load(model);
     }
     else {

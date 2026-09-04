@@ -566,7 +566,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     DimensionService.getInstance().setSize(SERVICE_KEY, myDialog.getSize(), myHelper.getProject() );
     DimensionService.getInstance().setLocation(SERVICE_KEY, window.getLocationOnScreen(), myHelper.getProject() );
     FindSettings findSettings = FindSettings.getInstance();
-    myScopeUI.applyTo(findSettings, mySelectedScope);
+    if (!WelcomeScreenFindScope.isApplicable(myProject)) {
+      myScopeUI.applyTo(findSettings, mySelectedScope);
+    }
     myHelper.updateFindSettings();
     FindModel model = FindManager.getInstance(myProject).getFindInProjectModel();
     applyTo(model);
@@ -1003,6 +1005,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     add(wrapTextAreaComponent(mySearchTextArea), "pushx, growx, wrap");
     add(wrapTextAreaComponent(myReplaceTextArea), "pushx, growx, wrap");
+    // The welcome screen has one fixed scope, so the row has nothing to offer. See WelcomeScreenFindScope.
+    scopesPanel.setVisible(!WelcomeScreenFindScope.isApplicable(myProject));
     add(scopesPanel, "pushx, growx, ax left, wrap");
     add(myPreviewSplitter, "pushx, growx, growy, pushy, wrap");
     add(bottomPanel, "pushx, growx, dock south");
@@ -1603,7 +1607,13 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     model.setCustomScope(null);
     model.setCustomScopeId(null);
     model.setCustomScope(false);
-    myScopeUI.applyTo(model, mySelectedScope);
+    if (WelcomeScreenFindScope.isApplicable(myProject)) {
+      // The scope row is hidden there, so it cannot say what the scope is.
+      WelcomeScreenFindScope.applyTo(myProject, model);
+    }
+    else {
+      myScopeUI.applyTo(model, mySelectedScope);
+    }
 
     model.setFindAll(false);
 
