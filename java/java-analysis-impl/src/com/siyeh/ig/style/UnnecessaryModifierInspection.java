@@ -176,7 +176,7 @@ public final class UnnecessaryModifierInspection extends BaseInspection implemen
         for (PsiKeyword modifier : modifiers) {
           if (modifier.getTokenType() == JavaTokenType.STATIC_KEYWORD && isImplicitClass) {
             //static for implicit class
-            registerError(modifier, InspectionGadgetsBundle.message("unnecessary.main.modifier.problem.descriptor", level.getShortText()),
+            registerError(modifier, InspectionGadgetsBundle.message("unnecessary.main.modifier.problem.descriptor"),
                           modifier.getText());
             continue;
           }
@@ -184,7 +184,7 @@ public final class UnnecessaryModifierInspection extends BaseInspection implemen
               modifier.getTokenType() == JavaTokenType.PROTECTED_KEYWORD) {
             if (isImplicitClass) {
               //public and protected for implicit class
-              registerError(modifier, InspectionGadgetsBundle.message("unnecessary.main.modifier.problem.descriptor", level.getShortText()),
+              registerError(modifier, InspectionGadgetsBundle.message("unnecessary.main.modifier.problem.descriptor"),
                             modifier.getText());
               continue;
             }
@@ -207,7 +207,7 @@ public final class UnnecessaryModifierInspection extends BaseInspection implemen
               continue;
             }
             //public and protected for normal class
-            registerError(modifier, InspectionGadgetsBundle.message("unnecessary.main.modifier.problem.descriptor", level.getShortText()),
+            registerError(modifier, InspectionGadgetsBundle.message("unnecessary.main.modifier.problem.descriptor"),
                           modifier.getText());
           }
         }
