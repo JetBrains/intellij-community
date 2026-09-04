@@ -6,10 +6,8 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Couple;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Field;
 import com.sun.jdi.Method;
@@ -21,9 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -35,21 +31,9 @@ public class UnBoxingEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance(UnBoxingEvaluator.class);
 
   private final Evaluator myOperand;
-  private static final Map<String, Couple<String>> TYPES_TO_CONVERSION_METHOD_MAP = new HashMap<>();
-
-  static {
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_BOOLEAN, Couple.of("booleanValue", "()Z"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_BYTE, Couple.of("byteValue", "()B"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_CHARACTER, Couple.of("charValue", "()C"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_SHORT, Couple.of("shortValue", "()S"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_INTEGER, Couple.of("intValue", "()I"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_LONG, Couple.of("longValue", "()J"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_FLOAT, Couple.of("floatValue", "()F"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_DOUBLE, Couple.of("doubleValue", "()D"));
-  }
 
   public static boolean isTypeUnboxable(String typeName) {
-    return TYPES_TO_CONVERSION_METHOD_MAP.containsKey(typeName);
+    return getUnboxableType(typeName) != null;
   }
 
   public UnBoxingEvaluator(@NotNull Evaluator operand) {
@@ -67,12 +51,20 @@ public class UnBoxingEvaluator implements Evaluator {
     }
     if (value instanceof ObjectReference) {
       final String valueTypeName = ((ObjectReference)value).type().name();
-      final Couple<String> pair = TYPES_TO_CONVERSION_METHOD_MAP.get(valueTypeName);
-      if (pair != null) {
-        return convertToPrimitive(context, (ObjectReference)value, pair.getFirst(), pair.getSecond());
+      JvmPrimitiveTypeKind primitiveType = getUnboxableType(valueTypeName);
+      if (primitiveType != null) {
+        return convertToPrimitive(context,
+                                  (ObjectReference)value,
+                                  primitiveType.getName() + "Value",
+                                  "()" + primitiveType.getBinaryName());
       }
     }
     return value;
+  }
+
+  private static @Nullable JvmPrimitiveTypeKind getUnboxableType(String typeName) {
+    JvmPrimitiveTypeKind primitiveType = JvmPrimitiveTypeKind.getKindByFqn(typeName);
+    return primitiveType != JvmPrimitiveTypeKind.VOID ? primitiveType : null;
   }
 
   private static Value convertToPrimitive(EvaluationContext context, ObjectReference value, final String conversionMethodName,
@@ -102,7 +94,8 @@ public class UnBoxingEvaluator implements Evaluator {
             return getValue(value, valueField, now)
               .thenApply(primitiveValue -> {
                 if (primitiveValue instanceof PrimitiveValue) {
-                  String expected = PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName();
+                  JvmPrimitiveTypeKind primitiveType = JvmPrimitiveTypeKind.getKindByName(primitiveValue.type().name());
+                  String expected = primitiveType != null ? primitiveType.getBoxedFqn() : null;
                   String actual = type.name();
                   LOG.assertTrue(actual.equals(expected),
                                  "Unexpected unboxable value type" +

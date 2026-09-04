@@ -3,7 +3,7 @@ package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.openapi.util.Ref;
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableConsumer;
@@ -233,42 +233,81 @@ public final class MethodBytecodeUtil {
     if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
       List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
       if (applicableMethods.size() == 1) {
-        return getFirstCalledMethod(applicableMethods.get(0), classesByName);
+        return getTargetMethod(applicableMethods.get(0), classesByName);
       }
     }
     return null;
   }
 
   public static @Nullable Method getBridgeTargetMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
-    return method.isBridge() ? getFirstCalledMethod(method, classesByName) : null;
+    return method.isBridge() ? getTargetMethod(method, classesByName) : null;
   }
 
-  private static Method getFirstCalledMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
-    Ref<Method> methodInSameClass = Ref.create();
-    Ref<Method> methodRef = Ref.create();
+  private static Method getTargetMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
+    List<MethodCall> calls = getMethodCalls(method);
+    if (calls.isEmpty()) {
+      return null;
+    }
+
+    List<MethodCall> targetCalls = ContainerUtil.filter(calls, call -> !isBoxingOrUnboxingMethod(call));
+    if (targetCalls.isEmpty()) {
+      targetCalls = calls;
+    }
+
+    MethodCall targetCall = targetCalls.getFirst();
+    if (targetCalls.size() > 1) {
+      String lambdaBaseClassName = DebuggerUtilsEx.getLambdaBaseClassName(method.declaringType().name());
+      for (MethodCall call : targetCalls) {
+        if (call.owner().equals(lambdaBaseClassName)) {
+          targetCall = call;
+          break;
+        }
+      }
+    }
+    return resolveMethod(method, targetCall, classesByName);
+  }
+
+  private static @Nullable Method resolveMethod(Method caller,
+                                                MethodCall call,
+                                                @NotNull ClassesByNameProvider classesByName) {
+    ReferenceType declaringType = caller.declaringType();
+    ReferenceType targetType = declaringType.name().equals(call.owner())
+                               ? declaringType
+                               : ContainerUtil.getFirstItem(classesByName.get(call.owner()));
+    if (targetType == null) {
+      return null;
+    }
+    return DebuggerUtils.findMethod(targetType, call.name(), call.descriptor());
+  }
+
+  private static @NotNull List<MethodCall> getMethodCalls(Method method) {
+    List<MethodCall> result = new ArrayList<>();
     visit(method, new MethodVisitor(Opcodes.API_VERSION) {
       @Override
-      public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-        if ("java/lang/AbstractMethodError".equals(owner)) {
-          return;
-        }
-        ReferenceType declaringType = method.declaringType();
-        owner = Type.getObjectType(owner).getClassName();
-        String declaringTypeName = declaringType.name();
-        ReferenceType cls = declaringTypeName.equals(owner) ?
-                            declaringType :
-                            ContainerUtil.getFirstItem(classesByName.get(owner));
-        if (cls == null) return;
-        Method targetMethod = DebuggerUtils.findMethod(cls, name, desc);
-        methodRef.setIfNull(targetMethod);
-        if (owner.equals(DebuggerUtilsEx.getLambdaBaseClassName(declaringTypeName))) {
-          methodInSameClass.setIfNull(targetMethod);
+      public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
+        if (!"java/lang/AbstractMethodError".equals(owner)) {
+          result.add(new MethodCall(Type.getObjectType(owner).getClassName(), name, descriptor));
         }
       }
     }, false);
-    if (methodInSameClass.get() != null) return methodInSameClass.get();
-    return methodRef.get();
+    return result;
   }
+
+  private static boolean isBoxingOrUnboxingMethod(MethodCall call) {
+    JvmPrimitiveTypeKind primitiveType = JvmPrimitiveTypeKind.getKindByFqn(call.owner());
+    if (primitiveType == null || primitiveType == JvmPrimitiveTypeKind.VOID) {
+      return false;
+    }
+
+    String primitiveDescriptor = primitiveType.getBinaryName();
+    if (call.name().equals(primitiveType.getName() + "Value")) {
+      return call.descriptor().equals("()" + primitiveDescriptor);
+    }
+    return call.name().equals("valueOf") &&
+           call.descriptor().equals("(" + primitiveDescriptor + ")" + Type.getObjectType(call.owner().replace('.', '/')).getDescriptor());
+  }
+
+  private record MethodCall(@NotNull String owner, @NotNull String name, @NotNull String descriptor) { }
 
   public static List<Location> removeSameLineLocations(@NotNull List<Location> locations) {
     if (locations.size() < 2) {

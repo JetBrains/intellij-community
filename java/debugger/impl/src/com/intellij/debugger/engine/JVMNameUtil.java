@@ -6,6 +6,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -27,7 +28,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypes;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -48,34 +48,8 @@ public final class JVMNameUtil {
   public static final String CONSTRUCTOR_NAME = "<init>";
 
   public static @Nullable String getPrimitiveSignature(String typeName) {
-    if (PsiTypes.booleanType().getCanonicalText().equals(typeName)) {
-      return "Z";
-    }
-    else if (PsiTypes.byteType().getCanonicalText().equals(typeName)) {
-      return "B";
-    }
-    else if (PsiTypes.charType().getCanonicalText().equals(typeName)) {
-      return "C";
-    }
-    else if (PsiTypes.shortType().getCanonicalText().equals(typeName)) {
-      return "S";
-    }
-    else if (PsiTypes.intType().getCanonicalText().equals(typeName)) {
-      return "I";
-    }
-    else if (PsiTypes.longType().getCanonicalText().equals(typeName)) {
-      return "J";
-    }
-    else if (PsiTypes.floatType().getCanonicalText().equals(typeName)) {
-      return "F";
-    }
-    else if (PsiTypes.doubleType().getCanonicalText().equals(typeName)) {
-      return "D";
-    }
-    else if (PsiTypes.voidType().getCanonicalText().equals(typeName)) {
-      return "V";
-    }
-    return null;
+    JvmPrimitiveTypeKind kind = JvmPrimitiveTypeKind.getKindByName(typeName);
+    return kind != null ? kind.getBinaryName() : null;
   }
 
   private static void appendJVMSignature(JVMNameBuffer buffer, PsiType type) {
