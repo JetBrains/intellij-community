@@ -15,7 +15,6 @@ import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.model.error.ErrorCategory
 import org.jetbrains.intellij.build.productLayout.model.error.UnsuppressedPipelineError
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
-import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.productLayout.util.resolveXIncludeBytes
 import java.nio.file.Files
 import java.nio.file.Path
@@ -29,9 +28,7 @@ import java.nio.file.Path
  * For test plugin content modules, descriptors may be in test resources and need test dependencies.
  * See [docs/test-plugins.md](../../docs/test-plugins.md) for details.
  * 
- * Uses a coroutine-friendly Deferred-based cache pattern:
- * - First caller for a module creates a Deferred via async
- * - Subsequent callers await the same Deferred without blocking
+ * The cache analyzes each module once. A second caller for the same module waits for the first result.
  */
 internal class ModuleDescriptorCache(
   private val outputProvider: ModuleOutputProvider,
@@ -71,14 +68,11 @@ internal class ModuleDescriptorCache(
    *
    * @param moduleName The module name to analyze
    */
-  suspend fun getOrAnalyze(moduleName: String): DescriptorInfo? {
-    // the loader still suspends, so it needs an entry of its own back into coroutines
-    return cache.getOrPut(moduleName) {
-      runBlockingOnVirtualThreads { analyzeModule(moduleName) }
-    }
+  fun getOrAnalyze(moduleName: String): DescriptorInfo? {
+    return cache.getOrPut(moduleName) { analyzeModule(moduleName) }
   }
 
-  private suspend fun analyzeModule(moduleName: String): DescriptorInfo? {
+  private fun analyzeModule(moduleName: String): DescriptorInfo? {
     // Handle slash-notation modules (e.g., "intellij.restClient/intelliLang")
     // These are virtual content modules without separate JPS modules.
     // Their descriptor is in the parent plugin's resource root with name like "intellij.restClient.intelliLang.xml"
@@ -104,7 +98,6 @@ internal class ModuleDescriptorCache(
       return null
     }
 
-    @Suppress("BlockingMethodInNonBlockingContext") // the build runs on virtual threads
     val content = Files.readString(descriptorPath)
 
     if (content.contains("<!-- todo: register this as a content module (IJPL-210868)")) {

@@ -12,13 +12,10 @@ import com.intellij.platform.pluginGraph.contentName
 import com.intellij.platform.pluginGraph.isSlashNotation
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.config.ValidationException
@@ -306,22 +303,19 @@ private suspend fun generatePluginDependency(
 
     // Use production function for content module dependency generation
     // Tests pass through their SuppressionConfig (same as production)
-    // the loader still suspends, so it needs an entry of its own back into coroutines
     val planned = contentModuleCache.getOrPut(contentModuleName) {
-      runBlockingOnVirtualThreads {
-        val generation = planContentModuleDependenciesWithBothSets(
-          contentModuleName = contentModule,
-          descriptorCache = descriptorCache,
-          outputProvider = outputProvider,
-          projectLibraryToModuleMap = outputProvider.getProjectLibraryToModuleMap(),
-          pluginGraph = graph,
-          isTestDescriptor = isTestModule,
-          suppressionConfig = effectiveConfig,
-          updateSuppressions = updateSuppressions,
-        )
-        val plan = generation.plan ?: return@runBlockingOnVirtualThreads null
-        PlannedContentModuleResult(plan = plan, result = writeContentModulePlan(plan, effectiveStrategy))
-      }
+      val generation = planContentModuleDependenciesWithBothSets(
+        contentModuleName = contentModule,
+        descriptorCache = descriptorCache,
+        outputProvider = outputProvider,
+        projectLibraryToModuleMap = outputProvider.getProjectLibraryToModuleMap(),
+        pluginGraph = graph,
+        isTestDescriptor = isTestModule,
+        suppressionConfig = effectiveConfig,
+        updateSuppressions = updateSuppressions,
+      )
+      val plan = generation.plan ?: return@getOrPut null
+      PlannedContentModuleResult(plan = plan, result = writeContentModulePlan(plan, effectiveStrategy))
     }
     if (planned != null) {
       contentModuleResults.add(planned.result)
@@ -329,9 +323,7 @@ private suspend fun generatePluginDependency(
     }
 
     if (!isTestModule) {
-      // the loader still suspends, so it needs an entry of its own back into coroutines
       val testResult = testContentModuleCache.getOrPut(contentModuleName) {
-        runBlockingOnVirtualThreads {
         // Compute deps using graph
         val graphModuleDeps = HashSet<ContentModuleName>()
         graph.query {
@@ -354,7 +346,6 @@ private suspend fun generatePluginDependency(
           dependencyFilter = { depName -> !testSuppressedModules.contains(ContentModuleName(depName)) },
           strategy = effectiveStrategy,
         )
-        }
       }
       if (testResult != null) {
         contentModuleResults.add(testResult)
@@ -428,7 +419,7 @@ private fun writeContentModulePlan(plan: ContentModuleDependencyPlan, strategy: 
  * @param strategy File update strategy (write vs diff)
  * @return Result with written dependencies or null if no test descriptor exists
  */
-private suspend fun generateTestDescriptorDependencies(
+private fun generateTestDescriptorDependencies(
   contentModuleName: ContentModuleName,
   outputProvider: ModuleOutputProvider,
   graphModuleDeps: Set<ContentModuleName>,
@@ -448,7 +439,7 @@ private suspend fun generateTestDescriptorDependencies(
     onlyProductionSources = false,
   ) ?: return null
 
-  val content = withContext(Dispatchers.IO) { Files.readString(descriptorPath) }
+  val content = Files.readString(descriptorPath)
   if (content.contains("@skip-dependency-generation")) {
     return null
   }
@@ -486,7 +477,7 @@ private suspend fun generateTestDescriptorDependencies(
 }
 
 @Suppress("UNUSED_PARAMETER")
-private suspend fun buildValidationCache(
+private fun buildValidationCache(
   outputProvider: ModuleOutputProvider,
   pluginContentInfos: Map<String, PluginContentInfo>,
   scope: CoroutineScope,

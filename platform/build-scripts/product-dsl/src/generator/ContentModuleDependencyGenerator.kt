@@ -185,7 +185,7 @@ internal data class ContentModuleGenerationOutput(
  * @see EDGE_CONTENT_MODULE_DEPENDS_ON
  * @see EDGE_CONTENT_MODULE_DEPENDS_ON_TEST
  */
-internal suspend fun planContentModuleDependenciesWithBothSets(
+internal fun planContentModuleDependenciesWithBothSets(
   contentModuleName: ContentModuleName,
   descriptorCache: ModuleDescriptorCache,
   outputProvider: ModuleOutputProvider? = null,

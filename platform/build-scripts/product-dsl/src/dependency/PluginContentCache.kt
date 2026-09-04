@@ -36,7 +36,7 @@ internal interface PluginContentProvider {
  * Plugin origin is tracked via [PluginSource] in [PluginContentInfo].
  *
  * **Key features:**
- * - Deferred-based: first caller for a module creates async job, later callers await same result
+ * - Single-flight: the first caller for a module runs the extraction, and later callers wait for the same result
  * - Source tracking: each plugin knows its origin (BUNDLED, TEST, DSL_TEST, DISCOVERED)
  * - Handles DSL-defined test plugins (content computed from spec, not read from disk)
  *
@@ -80,7 +80,7 @@ internal class PluginContentCache(
    * @param isTest Whether this is a test plugin (determines source and production-only flag)
    * @return PluginContentInfo if module has META-INF/plugin.xml, null otherwise
    */
-  suspend fun extract(
+  fun extract(
     plugin: TargetName,
     isTest: Boolean,
     pluginXmlOverride: PluginXmlOverride? = null,
@@ -107,7 +107,7 @@ internal class PluginContentCache(
    * Adds a single pre-computed DSL test plugin content to the cache.
    * Called for each DSL test plugin during graph building.
    */
-  suspend fun addDslTestPlugin(pluginModule: TargetName, content: PluginContentInfo) {
+  fun addDslTestPlugin(pluginModule: TargetName, content: PluginContentInfo) {
     addPrecomputedPlugin(pluginModule, content)
   }
 
@@ -115,7 +115,7 @@ internal class PluginContentCache(
    * Adds pre-computed plugin content to the cache.
    * Used for descriptors produced in memory, such as DSL test plugins.
    */
-  suspend fun addPrecomputedPlugin(pluginModule: TargetName, content: PluginContentInfo) {
+  fun addPrecomputedPlugin(pluginModule: TargetName, content: PluginContentInfo) {
     cache.getOrPut(pluginModule) { content }
   }
 

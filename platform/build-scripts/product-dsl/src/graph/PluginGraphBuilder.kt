@@ -716,7 +716,7 @@ internal class PluginGraphBuilder(
    * This ensures classifyTarget can treat descriptor-backed targets as ModuleDep
    * even when they are not yet declared as content sources.
    */
-  suspend fun markDescriptorModules(descriptorCache: ModuleDescriptorCache) {
+  fun markDescriptorModules(descriptorCache: ModuleDescriptorCache) {
     store.descriptorFlagsComplete = false
     val targetNames = ArrayList<String>()
     store.nameIndex[NODE_TARGET].forEachKey { targetNames.add(it) }

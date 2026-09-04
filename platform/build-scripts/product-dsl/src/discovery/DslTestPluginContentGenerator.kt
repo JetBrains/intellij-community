@@ -50,7 +50,7 @@ import java.nio.file.Path
  *
  * See [docs/test-plugins.md](../../docs/test-plugins.md) for details on auto-add behavior.
  */
-internal suspend fun computePluginContentFromDslSpec(
+internal fun computePluginContentFromDslSpec(
   testPluginSpec: TestPluginSpec,
   projectRoot: Path,
   resolvableModules: Set<ContentModuleName>,
@@ -168,7 +168,7 @@ internal suspend fun computePluginContentFromDslSpec(
     }
   }
 
-  suspend fun collectDescriptorModuleDeps(moduleName: ContentModuleName): List<ContentModuleName> {
+  fun collectDescriptorModuleDeps(moduleName: ContentModuleName): List<ContentModuleName> {
     val descriptor = descriptorCache?.getOrAnalyze(moduleName.value) ?: return emptyList()
     return descriptor.existingModuleDependencies.map(::ContentModuleName)
   }

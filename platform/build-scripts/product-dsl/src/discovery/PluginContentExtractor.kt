@@ -19,7 +19,6 @@ import org.jetbrains.intellij.build.productLayout.contentName
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.model.error.XIncludeResolutionError
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
-import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.resolveDescriptor
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
@@ -201,24 +200,21 @@ internal suspend fun extractPluginContent(
 
   val prefix = prefixFilter(pluginName)
 
-  val xIncludeResolver: suspend (String) -> ByteArray? = resolver@{ path ->
+  val xIncludeResolver: (String) -> ByteArray? = resolver@{ path ->
     // Use cache which handles deduplication. The loader returns null on failure,
     // which we then convert to an error. Failures are cached as null to avoid retrying.
-    // the loader still suspends, so it needs an entry of its own back into coroutines
     val data = xIncludeCache.getOrPut(path) {
-      runBlockingOnVirtualThreads {
-        when (val result = resolveXInclude(path = path, jpsModule = jpsModule, outputProvider = outputProvider, prefix = prefix)) {
-          is XIncludeResult.Success -> result.data
-          is XIncludeResult.Failure -> {
-            // Emit error immediately to errorSink
-            errorSink.emit(XIncludeResolutionError(
-              context = "Plugin content extraction",
-              pluginName = pluginName,
-              xIncludePath = result.path,
-              debugInfo = result.debugInfo,
-            ))
-            null
-          }
+      when (val result = resolveXInclude(path = path, jpsModule = jpsModule, outputProvider = outputProvider, prefix = prefix)) {
+        is XIncludeResult.Success -> result.data
+        is XIncludeResult.Failure -> {
+          // Emit error immediately to errorSink
+          errorSink.emit(XIncludeResolutionError(
+            context = "Plugin content extraction",
+            pluginName = pluginName,
+            xIncludePath = result.path,
+            debugInfo = result.debugInfo,
+          ))
+          null
         }
       }
     }
@@ -265,7 +261,7 @@ private class ExtractedContent(
 )
 
 /**
- * Extracts content modules and module dependencies from XML using BFS traversal with suspend xi:include resolution.
+ * Extracts content modules and module dependencies from XML using BFS traversal with concurrent xi:include resolution.
  * Resolves all `xi:includes` at each level concurrently for optimal I/O performance.
  *
  * Tracks deps per-file (main file + xi:includes) via [FileDepInfo] to support proper detection
@@ -274,7 +270,7 @@ private class ExtractedContent(
 private suspend fun extractContentModules(
   input: ByteArray,
   skipXIncludePaths: Set<String>,
-  xIncludeResolver: suspend (path: String) -> ByteArray?,
+  xIncludeResolver: (path: String) -> ByteArray?,
 ): ExtractedContent {
   val allContent = ArrayList<ContentModuleElement>()
   val allModuleDependencies = LinkedHashSet<ContentModuleName>()
@@ -343,7 +339,7 @@ private suspend fun extractContentModules(
   )
 }
 
-private suspend fun resolveXInclude(
+private fun resolveXInclude(
   path: String,
   jpsModule: JpsModule,
   outputProvider: ModuleOutputProvider,

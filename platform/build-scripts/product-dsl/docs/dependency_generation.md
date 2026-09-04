@@ -205,10 +205,10 @@ Generates dependencies for **plugin.xml** of plugin main modules.
 **Files updated:** `plugin.xml`
 
 ### ModuleDescriptorCache.kt
-Async-safe caching layer for module descriptor information.
+Thread-safe caching layer for module descriptor information.
 
 **Features:**
-- Deferred-based pattern: first caller creates async job, subsequent callers await same result
+- Single-flight pattern: the first caller analyzes the module, and a second caller waits for the same result
 - Caches: descriptor path, dependencies list, XML content
 - Filters dependencies to include only those that have descriptors
 

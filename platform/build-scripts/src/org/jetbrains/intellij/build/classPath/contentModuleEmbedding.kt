@@ -194,7 +194,7 @@ fun deprecatedResolveDescriptorForEmbeddedProduct(
   }
 }
 
-private suspend fun loadXmlFromEmbeddedProductSpec(
+private fun loadXmlFromEmbeddedProductSpec(
   embeddedProductSpec: ProductModulesContentSpec,
   context: BuildContext,
 ): Element {

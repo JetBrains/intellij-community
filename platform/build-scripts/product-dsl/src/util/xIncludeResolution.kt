@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.module.JpsModule
  *
  * [prefix] keeps the dependency walk inside one product, so a walk of a shared module does not answer from another one.
  */
-internal suspend fun resolveXIncludeBytes(
+internal fun resolveXIncludeBytes(
   path: String,
   module: JpsModule,
   outputProvider: ModuleOutputProvider,

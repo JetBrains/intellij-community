@@ -93,7 +93,7 @@ class ModuleStructureValidator(
     }
   }
 
-  suspend fun validate(): List<AssertionError> {
+  fun validate(): List<AssertionError> {
     errors.clear()
 
     val messages = context.messages
@@ -200,7 +200,7 @@ class ModuleStructureValidator(
     return result
   }
 
-  private suspend fun validateXmlDescriptors() {
+  private fun validateXmlDescriptors() {
     val roots = ArrayList<Path>()
     val libraries = HashSet<JpsLibrary>()
     for (moduleName in allProductModules.map { it.moduleName }.distinct()) {

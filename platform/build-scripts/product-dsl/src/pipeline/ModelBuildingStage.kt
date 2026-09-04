@@ -52,7 +52,6 @@ import org.jetbrains.intellij.build.productLayout.stats.recordGenerationTiming
 import org.jetbrains.intellij.build.productLayout.traversal.collectPluginContentModules
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleNames
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
-import org.jetbrains.intellij.build.runBlockingOnVirtualThreads
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePolicy
 import org.jetbrains.intellij.build.productLayout.util.resolveXIncludeBytes
@@ -81,9 +80,9 @@ private val OS_MODULE_ALIASES = listOf(
  * Stage 2: Model Building
  *
  * Creates all caches and computes shared values needed by generators:
- * - Descriptor cache for async module descriptor analysis
+ * - Descriptor cache for module descriptor analysis
  * - Plugin content cache (pre-warmed with bundled plugins)
- * - Shared Deferred values for parallel access
+ * - Shared values that the generators read
  *
  * **Input:** [DiscoveryResult] + [ModuleSetGenerationConfig]
  * **Output:** [GenerationModel]
@@ -385,7 +384,7 @@ internal object ModelBuildingStage {
    * This allows extraction/validation to use canonical generated descriptors for discovered
    * product plugins even when on-disk product plugin.xml files are stale.
    */
-  internal suspend fun buildProductPluginXmlOverrides(
+  internal fun buildProductPluginXmlOverrides(
     products: List<DiscoveredProduct>,
     moduleSetsByLabel: Map<String, List<ModuleSet>> = emptyMap(),
     moduleSetSources: Map<String, Pair<Any, Path>> = emptyMap(),
@@ -495,7 +494,6 @@ internal object ModelBuildingStage {
       checkedProductCount++
       val xIncludePrefix = xIncludePrefixFilter(pluginModule.value)
       val descriptorCheckStartNano = System.nanoTime()
-      @Suppress("BlockingMethodInNonBlockingContext") // the build runs on virtual threads
       val pluginXmlData = Files.readAllBytes(pluginXmlPath)
       val problems = findDescriptorProblems(
         pluginXmlData = pluginXmlData,
@@ -632,7 +630,7 @@ internal object ModelBuildingStage {
    * An unresolved include wins over a missing content module. A file that does not resolve hides what it declares,
    * so the include is the fault to report and the walk stops there.
    */
-  private suspend fun findDescriptorProblems(
+  private fun findDescriptorProblems(
     pluginXmlData: ByteArray,
     module: JpsModule,
     outputProvider: ModuleOutputProvider,
@@ -876,7 +874,7 @@ internal object ModelBuildingStage {
     }
   }
 
-  private suspend fun expandDslTestPlugins(
+  private fun expandDslTestPlugins(
     discovery: DiscoveryResult,
     config: ModuleSetGenerationConfig,
     builder: PluginGraphBuilder,
@@ -1282,16 +1280,13 @@ internal object ModelBuildingStage {
     for (include in spec.deprecatedXmlIncludes) {
       val moduleName = include.contentModuleName.value
       val cacheKey = "$moduleName:${include.resourcePath}"
-      // the loader still suspends, so it needs an entry of its own back into coroutines
       val aliases = includeAliasCache.getOrPut(cacheKey) {
-        runBlockingOnVirtualThreads {
-          collectAliasesFromDeprecatedInclude(
-            include = include,
-            outputProvider = outputProvider,
-            prefix = prefixFilter(moduleName),
-            skipXIncludePaths = skipXIncludePaths,
-          )
-        }
+        collectAliasesFromDeprecatedInclude(
+          include = include,
+          outputProvider = outputProvider,
+          prefix = prefixFilter(moduleName),
+          skipXIncludePaths = skipXIncludePaths,
+        )
       }
       result.addAll(aliases)
     }
@@ -1310,13 +1305,10 @@ internal object ModelBuildingStage {
 
     val aliases = LinkedHashSet<PluginId>()
     for (moduleName in moduleNames) {
-      // the loader still suspends, so it needs an entry of its own back into coroutines
       val aliasSet = aliasCache.getOrPut(moduleName) {
-        runBlockingOnVirtualThreads {
-          val descriptor = descriptorCache.getOrAnalyze(moduleName.value)
-          val pluginAliases = descriptor?.pluginAliases ?: emptyList()
-          pluginAliases.mapTo(LinkedHashSet()) { PluginId(it) }
-        }
+        val descriptor = descriptorCache.getOrAnalyze(moduleName.value)
+        val pluginAliases = descriptor?.pluginAliases ?: emptyList()
+        pluginAliases.mapTo(LinkedHashSet()) { PluginId(it) }
       }
       aliases.addAll(aliasSet)
     }
@@ -1324,7 +1316,7 @@ internal object ModelBuildingStage {
     return aliases
   }
 
-  private suspend fun collectAliasesFromDeprecatedInclude(
+  private fun collectAliasesFromDeprecatedInclude(
     include: DeprecatedXmlInclude,
     outputProvider: ModuleOutputProvider,
     prefix: String?,
@@ -1361,7 +1353,7 @@ internal object ModelBuildingStage {
     )
   }
 
-  private suspend fun collectPluginAliasesFromXml(
+  private fun collectPluginAliasesFromXml(
     initialPath: String,
     initialData: ByteArray,
     outputProvider: ModuleOutputProvider,

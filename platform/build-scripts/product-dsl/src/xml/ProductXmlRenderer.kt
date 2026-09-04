@@ -47,7 +47,7 @@ internal fun StringBuilder.appendOpeningTag(
 /**
  * Generates xi:include directives or inline content for deprecated XML includes.
  */
-internal suspend fun generateXIncludes(
+internal fun generateXIncludes(
   spec: ProductModulesContentSpec,
   outputProvider: ModuleOutputProvider,
   inlineXmlIncludes: Boolean,
@@ -127,7 +127,7 @@ private class ModuleScopedXIncludeResolver(
   private val module: JpsModule,
   private val outputProvider: ModuleOutputProvider,
 ) : XIncludeElementResolver {
-  override suspend fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element? {
+  override fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element? {
     if (isOptional || isDynamic) return null
     val loadPath = hrefToLoadPath(relativePath)
     return resolveDescriptor(

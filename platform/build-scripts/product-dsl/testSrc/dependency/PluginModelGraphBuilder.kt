@@ -122,7 +122,7 @@ internal class TestPluginGraphBuilder {
     delegate.addPluginDependencyEdgeForTest(sourcePluginId, depId, isOptional, formatMask, hasConfigFile)
   }
 
-  internal suspend fun markDescriptorModules(descriptorCache: ModuleDescriptorCache) {
+  internal fun markDescriptorModules(descriptorCache: ModuleDescriptorCache) {
     delegate.markDescriptorModules(descriptorCache)
   }
 
@@ -495,7 +495,7 @@ internal class GraphTargetBuilder(
  */
 internal inline fun pluginGraph(block: TestPluginGraphBuilder.() -> Unit): PluginGraph = TestPluginGraphBuilder().apply(block).build()
 
-internal suspend fun pluginGraphWithDescriptors(
+internal fun pluginGraphWithDescriptors(
   descriptorCache: ModuleDescriptorCache,
   block: TestPluginGraphBuilder.() -> Unit,
 ): PluginGraph {

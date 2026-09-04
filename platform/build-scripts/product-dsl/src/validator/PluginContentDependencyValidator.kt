@@ -119,7 +119,7 @@ internal object PluginContentDependencyValidator : PipelineNode {
  * @param suppressionConfig Suppression config for checking suppressed module deps
  * @return List of validation errors
  */
-internal suspend fun validatePluginDependencies(
+internal fun validatePluginDependencies(
   pluginGraph: PluginGraph,
   contentModuleResults: List<DependencyFileResult>,
   descriptorCache: ModuleDescriptorCache,
@@ -149,7 +149,6 @@ internal suspend fun validatePluginDependencies(
       modulesWithDescriptors.add(moduleName)
     }
   }
-  // Resolved eagerly: the graph query below is not a coroutine body, and `getOrAnalyze` suspends.
   val visibilityByModule = HashMap<ContentModuleName, ModuleVisibilityValue>(allContentModules.size)
   val declaredDepsByModule = HashMap<ContentModuleName, Set<ContentModuleName>>()
   for (moduleName in allContentModules) {

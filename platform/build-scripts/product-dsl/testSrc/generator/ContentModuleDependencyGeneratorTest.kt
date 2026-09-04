@@ -564,7 +564,7 @@ class ContentModuleDependencyGeneratorTest {
      * Plans deps for a descriptor located in a test resource root (so test scope is included) that has a JPS dependency
      * on the main module of another plugin (`dep.plugin`) with [jpsScope] / [graphScope].
      */
-    private suspend fun planTestsDescriptorWithPluginDep(
+    private fun planTestsDescriptorWithPluginDep(
       tempDir: Path,
       jpsScope: JpsJavaDependencyScope,
       graphScope: String,
