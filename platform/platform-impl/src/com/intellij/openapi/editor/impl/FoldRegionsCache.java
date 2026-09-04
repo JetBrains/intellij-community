@@ -21,20 +21,20 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-abstract class FoldRegionsTree {
-  private final @NotNull RangeMarkerTree<? extends FoldRegionImpl> myMarkerTree;
+abstract class FoldRegionsCache {
+  private final @NotNull FoldingRegionStorage myRegionStorage;
   private volatile CachedData myCachedData;
 
   private static final Comparator<? super FoldRegion> BY_END_OFFSET = Comparator.comparingInt(region -> region.getEndOffset());
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
-  FoldRegionsTree(@NotNull RangeMarkerTree<? extends FoldRegionImpl> markerTree) {
-    myMarkerTree = markerTree;
+  FoldRegionsCache(@NotNull FoldingRegionStorage regionStorage) {
+    myRegionStorage = regionStorage;
   }
 
   void clear() {
     clearCachedValues();
-    myMarkerTree.clear();
+    myRegionStorage.clearRegions();
   }
 
   void clearCachedValues() {
@@ -57,17 +57,18 @@ abstract class FoldRegionsTree {
   protected abstract int getLineHeight();
 
   @NotNull CachedData rebuild() {
-    List<FoldRegion> visible = new ArrayList<>(myMarkerTree.size());
+    List<FoldRegion> visible = new ArrayList<>(myRegionStorage.size());
 
-    SweepProcessor.Generator<FoldRegionImpl> generator = processor -> myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, processor);
+    SweepProcessor.Generator<FoldRegionMarker> generator = processor ->
+      myRegionStorage.processRegionsOverlappingWith(0, Integer.MAX_VALUE, processor);
     SweepProcessor.sweep(generator, new SweepProcessor<>() {
-      FoldRegionImpl lastCollapsedRegion;
+      FoldRegionMarker lastCollapsedRegion;
 
       @Override
       public boolean process(int offset,
-                             @NotNull FoldRegionImpl region,
+                             @NotNull FoldRegionMarker region,
                              boolean atStart,
-                             @NotNull Collection<? extends FoldRegionImpl> overlapping) {
+                             @NotNull Collection<? extends FoldRegionMarker> overlapping) {
         if (atStart) {
           if (lastCollapsedRegion == null || region.getEndOffset() > lastCollapsedRegion.getEndOffset() ||
               region instanceof CustomFoldRegion &&
@@ -175,7 +176,7 @@ abstract class FoldRegionsTree {
     //   the 'normal' one - otherwise, fold region marker would need to be displayed in 'custom' region's area of the gutter, and that's not
     //   currently supported
     int length = end - start;
-    return myMarkerTree.processOverlappingWith(start, end, region -> {
+    return myRegionStorage.processRegionsOverlappingWith(start, end, region -> {
       if (region == toIgnore || !region.isValid()) {
         return true;
       }
@@ -255,7 +256,7 @@ abstract class FoldRegionsTree {
       return FoldRegion.EMPTY_ARRAY;
     }
     List<FoldRegion> allCollapsed = new ArrayList<>();
-    myMarkerTree.processContaining(offset, region->{
+    myRegionStorage.processRegionsContaining(offset, region->{
       if (!region.isExpanded() && containsStrict(region, offset)) {
         allCollapsed.add(region);
       }
@@ -268,7 +269,7 @@ abstract class FoldRegionsTree {
     if (!isFoldingEnabled()) {
       return true;
     }
-    return !myMarkerTree.processAll(region -> {
+    return !myRegionStorage.processAllRegions(region -> {
       boolean contains1 = containsStrict(region, startOffset);
       boolean contains2 = containsStrict(region, endOffset);
       return contains1 == contains2;
@@ -280,7 +281,7 @@ abstract class FoldRegionsTree {
       return FoldRegion.EMPTY_ARRAY;
     }
     List<FoldRegion> regions = new ArrayList<>();
-    myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, new CommonProcessors.CollectProcessor<>(regions));
+    myRegionStorage.processRegionsOverlappingWith(0, Integer.MAX_VALUE, new CommonProcessors.CollectProcessor<>(regions));
     return toFoldArray(regions);
   }
 
@@ -290,7 +291,7 @@ abstract class FoldRegionsTree {
       return Collections.emptyList();
     }
     List<FoldRegion> regions = new ArrayList<>();
-    myMarkerTree.processOverlappingWith(startOffset, endOffset, new CommonProcessors.CollectProcessor<>(regions));
+    myRegionStorage.processRegionsOverlappingWith(startOffset, endOffset, new CommonProcessors.CollectProcessor<>(regions));
     return regions;
   }
 
@@ -417,8 +418,8 @@ abstract class FoldRegionsTree {
 
   @Nullable
   FoldRegion getRegionAt(int startOffset, int endOffset) {
-    FoldRegionImpl[] found = {null};
-    myMarkerTree.processOverlappingWith(startOffset, endOffset, region -> {
+    FoldRegionMarker[] found = {null};
+    myRegionStorage.processRegionsOverlappingWith(startOffset, endOffset, region -> {
       if (region.getStartOffset() == startOffset && region.getEndOffset() == endOffset) {
         found[0] = region;
         return false;
@@ -429,7 +430,7 @@ abstract class FoldRegionsTree {
   }
 
   void clearDocumentRangesModificationStatus() {
-    myMarkerTree.processAll(region -> { region.resetDocumentRegionChanged(); return true; });
+    myRegionStorage.processAllRegions(region -> { region.resetDocumentRegionChanged(); return true; });
   }
 
   /**

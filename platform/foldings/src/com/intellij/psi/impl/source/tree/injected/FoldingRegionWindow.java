@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.impl.FoldRegionImpl;
+import com.intellij.openapi.editor.impl.FoldRegionMarker;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +57,8 @@ public abstract class FoldingRegionWindow extends RangeMarkerWindow implements F
   }
 
   @Override
-  public @NotNull FoldRegionImpl getDelegate() {
-    return (FoldRegionImpl)super.getDelegate();
+  public @NotNull FoldRegionMarker getDelegate() {
+    return (FoldRegionMarker)super.getDelegate();
   }
 
   @Override

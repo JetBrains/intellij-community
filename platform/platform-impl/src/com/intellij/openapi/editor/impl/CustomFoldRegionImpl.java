@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.CustomFoldRegionRendererEx;
-import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.CustomFoldRegionRenderer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
@@ -19,7 +18,7 @@ import java.awt.Point;
 import java.util.Objects;
 
 @ApiStatus.Internal
-public final class CustomFoldRegionImpl extends FoldRegionImpl implements CustomFoldRegion {
+public final class CustomFoldRegionImpl extends FoldRegionImpl implements CustomFoldRegionMarker {
   private final CustomFoldRegionRenderer myRenderer;
 
   private int myWidthInPixels;

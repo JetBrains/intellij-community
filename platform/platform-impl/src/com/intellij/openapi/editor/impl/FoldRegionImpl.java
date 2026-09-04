@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
+public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegionMarker {
   private static final Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
   private static final Key<Boolean> SHOW_GUTTER_MARK_FOR_SINGLE_LINE = Key.create("show.gutter.mark.for.single.line");
 
@@ -54,7 +54,8 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   }
 
   @RequiresEdt
-  void setExpanded(boolean expanded, boolean notify) {
+  @Override
+  public void setExpanded(boolean expanded, boolean notify) {
     FoldingModelImpl foldingModel = myEditor.getFoldingModel();
     if (myGroup == null) {
       doSetExpanded(expanded, foldingModel, this, notify);
@@ -92,7 +93,8 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     return super.isValid() && intervalStart() < intervalEnd();
   }
 
-  void setExpandedInternal(boolean toExpand) {
+  @Override
+  public void setExpandedInternal(boolean toExpand) {
     myIsExpanded = toExpand;
   }
 
@@ -116,11 +118,18 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     return myShouldNeverExpand;
   }
   
-  boolean hasDocumentRegionChanged() {
+  @Override
+  public boolean hasDocumentRegionChanged() {
     return myDocumentRegionWasChanged;
   }
+
+  @Override
+  public void markDocumentRegionChanged() {
+    myDocumentRegionWasChanged = true;
+  }
   
-  void resetDocumentRegionChanged() {
+  @Override
+  public void resetDocumentRegionChanged() {
     myDocumentRegionWasChanged = false;
   }
 
