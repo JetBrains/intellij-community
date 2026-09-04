@@ -66,7 +66,6 @@ internal class LspDocumentHighlightsTest {
   inner class BasicHighlighting {
     @Test
     fun `given caret on symbol when highlight usages triggered then all occurrences are highlighted`() = timeoutRunBlocking {
-      // given
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar foo baz foo").virtualFile
       val serverSession = configureServerSession(project, virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
@@ -79,10 +78,8 @@ internal class LspDocumentHighlightsTest {
         )
       }
 
-      // when
       val result = triggerHighlightUsages()
 
-      // then
       serverSession.awaitExpected()
       val ranges = result.toHighlightedRanges()
       assertEquals(3, ranges.size, "Expected 3 highlighted ranges")
@@ -93,7 +90,6 @@ internal class LspDocumentHighlightsTest {
 
     @Test
     fun `given caret on symbol with no usages when highlight usages triggered then no highlights are added`() = timeoutRunBlocking {
-      // given
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
       val serverSession = configureServerSession(project, virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
@@ -102,10 +98,8 @@ internal class LspDocumentHighlightsTest {
         emptyList()
       }
 
-      // when
       val result = triggerHighlightUsages()
 
-      // then
       serverSession.awaitExpected()
       val ranges = result.toHighlightedRanges()
       assertTrue(ranges.isEmpty(), "Expected no highlighted ranges")
@@ -117,7 +111,6 @@ internal class LspDocumentHighlightsTest {
     @Test
     fun `given caret on symbol with read and write usages when highlight usages triggered then usages are distinguished by kind`() =
       timeoutRunBlocking {
-        // given
         val text = """
         val <caret>x = 1
         print(x)
@@ -135,10 +128,8 @@ internal class LspDocumentHighlightsTest {
           )
         }
 
-        // when
         val result = triggerHighlightUsages()
 
-        // then
         serverSession.awaitExpected()
         val ranges = result.toHighlightedRanges()
         assertEquals(3, ranges.size, "Expected 3 highlighted ranges")
@@ -155,7 +146,6 @@ internal class LspDocumentHighlightsTest {
 
     @Test
     fun `given caret on symbol with text kind when highlight usages triggered then treated as read`() = timeoutRunBlocking {
-      // given
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar foo").virtualFile
       val serverSession = configureServerSession(project, virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
@@ -167,10 +157,8 @@ internal class LspDocumentHighlightsTest {
         )
       }
 
-      // when
       val result = triggerHighlightUsages()
 
-      // then
       serverSession.awaitExpected()
       val ranges = result.toHighlightedRanges()
       assertEquals(2, ranges.size, "Expected 2 highlighted ranges")
@@ -184,7 +172,6 @@ internal class LspDocumentHighlightsTest {
 
     @Test
     fun `given caret on symbol with no kind specified when highlight usages triggered then treated as read`() = timeoutRunBlocking {
-      // given
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar foo").virtualFile
       val serverSession = configureServerSession(project, virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
@@ -196,10 +183,8 @@ internal class LspDocumentHighlightsTest {
         )
       }
 
-      // when
       val result = triggerHighlightUsages()
 
-      // then
       serverSession.awaitExpected()
       val ranges = result.toHighlightedRanges()
       assertEquals(2, ranges.size, "Expected 2 highlighted ranges")
@@ -217,7 +202,6 @@ internal class LspDocumentHighlightsTest {
     @Test
     fun `given caret on symbol in multiline document when highlight usages triggered then correct ranges are highlighted`() =
       timeoutRunBlocking {
-        // given
         val text = """
         function <caret>foo() {
           foo()
@@ -236,10 +220,8 @@ internal class LspDocumentHighlightsTest {
           )
         }
 
-        // when
         val result = triggerHighlightUsages()
 
-        // then
         serverSession.awaitExpected()
         val ranges = result.toHighlightedRanges()
         assertEquals(3, ranges.size, "Expected 3 highlighted ranges")

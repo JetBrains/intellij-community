@@ -53,7 +53,6 @@ internal class LspWorkspaceSymbolTest {
   inner class GotoSymbol {
     @Test
     fun `LSP server returns SymbolInformation`() = timeoutRunBlocking {
-      // given
       val virtualFile = codeInsightFixture.configureByText("test.txt", "").virtualFile
       val serverSession = configureServerSession(project, virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
@@ -68,7 +67,6 @@ internal class LspWorkspaceSymbolTest {
         ))
       }
 
-      // when
       val model = GotoSymbolModel2(project, codeInsightFixture.testRootDisposable)
       val popup = withContext(Dispatchers.EDT) {
         ChooseByNamePopup.createPopup(project, model, null as PsiElement?, "")
@@ -79,7 +77,6 @@ internal class LspWorkspaceSymbolTest {
           popup.calcPopupElements("MyClass", false)
         }
 
-        // then
         serverSession.awaitExpected()
         assertEquals(1, results.size)
 
@@ -100,7 +97,6 @@ internal class LspWorkspaceSymbolTest {
 
     @Test
     fun `LSP server returns WorkspaceSymbol`() = timeoutRunBlocking {
-      // given
       val virtualFile = codeInsightFixture.configureByText("workspace_symbol.txt", "").virtualFile
       val serverSession = configureServerSession(project, virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
@@ -115,7 +111,6 @@ internal class LspWorkspaceSymbolTest {
         ))
       }
 
-      // when
       val model = GotoSymbolModel2(project, codeInsightFixture.testRootDisposable)
       val popup = withContext(Dispatchers.EDT) {
         ChooseByNamePopup.createPopup(project, model, null as PsiElement?, "")
@@ -126,7 +121,6 @@ internal class LspWorkspaceSymbolTest {
           popup.calcPopupElements("MyFunction", false)
         }
 
-        // then
         serverSession.awaitExpected()
         assertEquals(1, results.size)
 
@@ -147,7 +141,6 @@ internal class LspWorkspaceSymbolTest {
 
     @Test
     fun `LSP server returns multiple WorkspaceSymbol results`() = timeoutRunBlocking {
-      // given
       val virtualFile = codeInsightFixture.configureByText("trigger.txt", "").virtualFile
       val file1 = codeInsightFixture.addFileToProject("request.txt", "").virtualFile
       val file2 = codeInsightFixture.addFileToProject("response.txt", "").virtualFile
@@ -189,7 +182,6 @@ internal class LspWorkspaceSymbolTest {
         ))
       }
 
-      // when
       val model = GotoSymbolModel2(project, codeInsightFixture.testRootDisposable)
       val popup = withContext(Dispatchers.EDT) {
         ChooseByNamePopup.createPopup(project, model, null as PsiElement?, "")
@@ -200,7 +192,6 @@ internal class LspWorkspaceSymbolTest {
           popup.calcPopupElements("Handler", false)
         }
 
-        // then
         serverSession.awaitExpected()
         assertEquals(3, results.size)
 
@@ -230,7 +221,6 @@ internal class LspWorkspaceSymbolTest {
 
     @Test
     fun `LSP server returns nothing`() = timeoutRunBlocking {
-      // given
       val virtualFile = codeInsightFixture.configureByText("empty_result.txt", "").virtualFile
       val serverSession = configureServerSession(project, virtualFile)
 
@@ -238,7 +228,6 @@ internal class LspWorkspaceSymbolTest {
         Either.forLeft(emptyList())
       }
 
-      // when
       val model = GotoSymbolModel2(project, codeInsightFixture.testRootDisposable)
       val popup = withContext(Dispatchers.EDT) {
         ChooseByNamePopup.createPopup(project, model, null as PsiElement?, "")
@@ -249,7 +238,6 @@ internal class LspWorkspaceSymbolTest {
           popup.calcPopupElements("NonExistent", false)
         }
 
-        // then
         serverSession.awaitExpected()
         assertEquals(0, results.size)
       }
@@ -265,7 +253,6 @@ internal class LspWorkspaceSymbolTest {
   inner class GotoClass {
     @Test
     fun `LSP server returns multiple class symbols from different files`() = timeoutRunBlocking {
-      // given
       val virtualFile = codeInsightFixture.configureByText("trigger.txt", "").virtualFile
       val file1 = codeInsightFixture.addFileToProject("model.txt", "").virtualFile
       val file2 = codeInsightFixture.addFileToProject("controller.txt", "").virtualFile
@@ -317,7 +304,6 @@ internal class LspWorkspaceSymbolTest {
         ))
       }
 
-      // when
       val model = GotoClassModel2(project)
       val popup = withContext(Dispatchers.EDT) {
         ChooseByNamePopup.createPopup(project, model, null as PsiElement?, "")
@@ -328,7 +314,6 @@ internal class LspWorkspaceSymbolTest {
           popup.calcPopupElements("User", false)
         }
 
-        // then
         serverSession.awaitExpected()
         assertEquals(3, results.size)
 
