@@ -411,7 +411,7 @@ public final class ChangeListWorker {
     fireDefaultListChanged(oldDefault.id, newDefault.id);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format("[setDefaultList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, newDefault.id));
+      LOG.debug(String.format("[setDefaultList %s] name: %s id: %s", logSuffix(), name, newDefault.id));
     }
 
     return oldDefault.name;
@@ -491,7 +491,7 @@ public final class ChangeListWorker {
     list = putNewListData(list);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format("[addChangeList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, list.id));
+      LOG.debug(String.format("[addChangeList %s] name: %s id: %s", logSuffix(), name, list.id));
     }
 
     return list;
@@ -523,7 +523,7 @@ public final class ChangeListWorker {
     myLists.remove(removedList);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format("[removeChangeList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, removedList.id));
+      LOG.debug(String.format("[removeChangeList %s] name: %s id: %s", logSuffix(), name, removedList.id));
     }
 
     return movedChanges;
@@ -584,7 +584,7 @@ public final class ChangeListWorker {
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("[moveChangesTo %s] name: %s id: %s, changes: %s",
-                              myMainWorker ? "" : "- updater", targetList.name, targetList.id, changes));
+                              logSuffix(), targetList.name, targetList.id, changes));
     }
 
     return notifications;
@@ -950,6 +950,10 @@ public final class ChangeListWorker {
       this.isDefault = list.isDefault;
       this.isReadOnly = list.isReadOnly;
     }
+  }
+
+  private @NonNls @NotNull String logSuffix() {
+    return myMainWorker ? "" : "- updater";
   }
 
   @Override
