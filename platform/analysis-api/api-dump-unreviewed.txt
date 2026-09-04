@@ -1243,7 +1243,6 @@ f:com.intellij.modcommand.ActionContext
 - findLeafOnTheLeft():com.intellij.psi.PsiElement
 - s:from(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.modcommand.ActionContext
 - f:hashCode():I
-- mapToHost():com.intellij.modcommand.ActionContext
 - mapToInjected():com.intellij.modcommand.ActionContext
 - mapToInjected(com.intellij.psi.PsiFile):com.intellij.modcommand.ActionContext
 - withFile(com.intellij.psi.PsiFile):com.intellij.modcommand.ActionContext

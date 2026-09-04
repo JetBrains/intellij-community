@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,6 +106,7 @@ public record ActionContext(
    * Returns {@code this} if {@link #file()} is not an injected fragment.
    * @see #mapToInjected()
    */
+  @ApiStatus.Internal
   public @NotNull ActionContext mapToHost() {
     if (!(file.getFileDocument() instanceof DocumentWindow documentWindow)) return this;
     PsiFile hostFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
