@@ -25,6 +25,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.IntSupplier;
 
 import static com.intellij.openapi.editor.impl.InlayKeys.ID_BEFORE_DISPOSAL;
 import static com.intellij.openapi.editor.impl.InlayKeys.OFFSET_BEFORE_DISPOSAL;
@@ -161,7 +162,7 @@ interface EditorInlay<R extends EditorCustomElementRenderer> extends Inlay<R>, R
       if (contentComponent.isShowing()) {
         Rectangle bounds = getBounds();
         if (bounds != null) {
-          if (this instanceof BlockInlayImpl) {
+          if (this instanceof BlockInlay<?>) {
             bounds.width = contentComponent.getWidth();
           }
           contentComponent.repaint(bounds);
@@ -286,6 +287,85 @@ interface AfterLineEndInlay<R extends EditorCustomElementRenderer> extends Edito
     return new InlayProperties()
       .relatesToPrecedingText(isRelatedToPrecedingText())
       .disableSoftWrapping(!isSoftWrappable())
+      .priority(getPriority());
+  }
+}
+
+interface BlockInlay<R extends EditorCustomElementRenderer> extends EditorInlay<R>, IntSupplier {
+  int getPriority();
+
+  boolean isShownAbove();
+
+  boolean isShownWhenFolded();
+
+  void setHeightInPixels(int heightInPixels);
+
+  void setGutterIconRenderer(@Nullable GutterIconRenderer gutterIconRenderer);
+
+  @Override
+  default void doUpdate() {
+    R renderer = getRenderer();
+    int width = renderer.calcWidthInPixels(this);
+    setWidthInPixels(width);
+    if (width < 0) {
+      throw PluginException.createByClass("Non-negative width should be defined for a block element by " + renderer, null,
+                                          renderer.getClass());
+    }
+    int height = renderer.calcHeightInPixels(this);
+    setHeightInPixels(height);
+    if (height < 0) {
+      throw PluginException.createByClass("Non-negative height should be defined for a block element by " + renderer, null,
+                                          renderer.getClass());
+    }
+    setGutterIconRenderer(renderer.calcGutterIconRenderer(this));
+  }
+
+  @Override
+  default @NotNull Point getPosition() {
+    EditorImpl editor = getEditorImpl();
+    int visualLine = editor.offsetToVisualLine(getOffset());
+    int[] yRange = editor.visualLineToYRange(visualLine);
+    List<Inlay<?>> allInlays = editor.getInlayModel().getBlockElementsForVisualLine(visualLine, isShownAbove());
+    int y;
+    if (isShownAbove()) {
+      y = yRange[0];
+      boolean found = false;
+      for (Inlay<?> inlay : allInlays) {
+        if (inlay == this) found = true;
+        if (found) y -= inlay.getHeightInPixels();
+      }
+    }
+    else {
+      y = yRange[1];
+      for (Inlay<?> inlay : allInlays) {
+        if (inlay == this) break;
+        y += inlay.getHeightInPixels();
+      }
+    }
+    return new Point(editor.getContentComponent().getInsets().left, y);
+  }
+
+  @Override
+  default @NotNull Placement getPlacement() {
+    return isShownAbove() ? Placement.ABOVE_LINE : Placement.BELOW_LINE;
+  }
+
+  @Override
+  default @NotNull VisualPosition getVisualPosition() {
+    return getEditorImpl().offsetToVisualPosition(getOffset());
+  }
+
+  @Override
+  default int getAsInt() {
+    return getHeightInPixels();
+  }
+
+  @Override
+  default @NotNull InlayProperties getProperties() {
+    return new InlayProperties()
+      .relatesToPrecedingText(isRelatedToPrecedingText())
+      .showAbove(isShownAbove())
+      .showWhenFolded(isShownWhenFolded())
       .priority(getPriority());
   }
 }

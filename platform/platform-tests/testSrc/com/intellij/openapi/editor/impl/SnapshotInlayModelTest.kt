@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
+import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.marker.PMarker
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
@@ -141,6 +142,109 @@ class SnapshotInlayModelTest {
   }
 
   @Test
+  fun `block inlay follows document edits and preserves properties`(): Unit = timeoutRunBlocking {
+    val state = withEditor("a\nb") { editor ->
+      val properties = InlayProperties()
+        .showAbove(true)
+        .showWhenFolded(true)
+        .priority(7)
+      val inlay = editor.inlayModel.addBlockElement(2, properties, renderer)!!
+
+      editor.document.insertString(0, "x")
+
+      BlockState(
+        usesSnapshotMarker = inlay is PMarker,
+        offset = inlay.offset,
+        isOnlyRangeResult = editor.inlayModel.getBlockElementsInRange(3, 3) == listOf(inlay),
+        isOnlyVisualLineResult = editor.inlayModel.getBlockElementsForVisualLine(1, true) == listOf(inlay),
+        isShownWhenFolded = InlayModelImpl.showWhenFolded(inlay),
+        priority = inlay.properties.priority,
+      )
+    }
+
+    assertThat(state.usesSnapshotMarker).isTrue()
+    assertThat(state.offset).isEqualTo(3)
+    assertThat(state.isOnlyRangeResult).isTrue()
+    assertThat(state.isOnlyVisualLineResult).isTrue()
+    assertThat(state.isShownWhenFolded).isTrue()
+    assertThat(state.priority).isEqualTo(7)
+  }
+
+  @Test
+  fun `block inlay height measure changes on update`(): Unit = timeoutRunBlocking {
+    val state = withEditor("a\nb") { editor ->
+      var height = 3
+      val blockRenderer = object : EditorCustomElementRenderer {
+        override fun calcWidthInPixels(inlay: Inlay<*>): Int = 11
+
+        override fun calcHeightInPixels(inlay: Inlay<*>): Int = height
+      }
+      val inlay = editor.inlayModel.addBlockElement(0, false, false, 0, blockRenderer)
+      val heightBefore = editor.inlayModel.getHeightOfBlockElementsBeforeVisualLine(1, 2, -1)
+      val isWidest = editor.inlayModel.widestVisibleBlockInlay === inlay
+
+      height = 7
+      inlay.update()
+
+      BlockHeightState(
+        heightBefore = heightBefore,
+        heightAfter = editor.inlayModel.getHeightOfBlockElementsBeforeVisualLine(1, 2, -1),
+        isWidest = isWidest,
+      )
+    }
+
+    assertThat(state.heightBefore).isEqualTo(3)
+    assertThat(state.heightAfter).isEqualTo(7)
+    assertThat(state.isWidest).isTrue()
+  }
+
+  @Test
+  fun `block inlays keep legacy order`(): Unit = timeoutRunBlocking {
+    val state = withEditor("text") { editor ->
+      val firstAbove = editor.inlayModel.addBlockElement(0, false, true, 0, renderer)
+      val secondAbove = editor.inlayModel.addBlockElement(0, false, true, 0, renderer)
+      val firstBelow = editor.inlayModel.addBlockElement(0, false, false, 0, renderer)
+      val secondBelow = editor.inlayModel.addBlockElement(0, false, false, 0, renderer)
+
+      Triple(
+        editor.inlayModel.getBlockElementsInRange(0, 0) == listOf(firstAbove, secondAbove, firstBelow, secondBelow),
+        editor.inlayModel.getBlockElementsForVisualLine(0, true) == listOf(secondAbove, firstAbove),
+        editor.inlayModel.getBlockElementsForVisualLine(0, false) == listOf(firstBelow, secondBelow),
+      )
+    }
+
+    assertThat(state.first).isTrue()
+    assertThat(state.second).isTrue()
+    assertThat(state.third).isTrue()
+  }
+
+  @Test
+  fun `explicit disposal removes a block inlay`(): Unit = timeoutRunBlocking {
+    val state = withEditor("abc") { editor ->
+      val inlay = editor.inlayModel.addBlockElement(1, false, false, 0, renderer)
+      val child = Disposer.newCheckedDisposable()
+      try {
+        Disposer.register(inlay, child)
+
+        inlay.dispose()
+
+        BlockDisposalState(
+          inlayIsValid = inlay.isValid,
+          childIsDisposed = child.isDisposed,
+          hasBlockElements = editor.inlayModel.hasBlockElements(),
+        )
+      }
+      finally {
+        Disposer.dispose(child)
+      }
+    }
+
+    assertThat(state.inlayIsValid).isFalse()
+    assertThat(state.childIsDisposed).isTrue()
+    assertThat(state.hasBlockElements).isFalse()
+  }
+
+  @Test
   @UsePMarkerImplementation(false)
   fun `disabled snapshot marker implementation uses inlay trees`(): Unit = timeoutRunBlocking {
     val usesSnapshotStorage = withEditor("abc") { editor ->
@@ -190,6 +294,27 @@ class SnapshotInlayModelTest {
     val inlayIsValid: Boolean,
     val childIsDisposed: Boolean,
     val removalCount: Int,
+  )
+
+  private data class BlockState(
+    val usesSnapshotMarker: Boolean,
+    val offset: Int,
+    val isOnlyRangeResult: Boolean,
+    val isOnlyVisualLineResult: Boolean,
+    val isShownWhenFolded: Boolean,
+    val priority: Int,
+  )
+
+  private data class BlockHeightState(
+    val heightBefore: Int,
+    val heightAfter: Int,
+    val isWidest: Boolean,
+  )
+
+  private data class BlockDisposalState(
+    val inlayIsValid: Boolean,
+    val childIsDisposed: Boolean,
+    val hasBlockElements: Boolean,
   )
 
   private val renderer = EditorCustomElementRenderer { 1 }

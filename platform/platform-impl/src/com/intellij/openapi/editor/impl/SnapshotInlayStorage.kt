@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.impl.InlayKeys.ID_BEFORE_DISPOSAL
 import com.intellij.openapi.editor.impl.InlayKeys.OFFSET_BEFORE_DISPOSAL
 import com.intellij.openapi.editor.impl.InlayKeys.ORDER_BEFORE_DISPOSAL
@@ -20,6 +21,7 @@ import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.DocumentEventUtil
+import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
@@ -28,8 +30,9 @@ import java.util.concurrent.atomic.AtomicReference
 
 private const val INLINE_FLAVOR: Int = 1
 private const val AFTER_LINE_END_FLAVOR: Int = 2
+private const val BLOCK_FLAVOR: Int = 4
 
-/** Stores inline and after-line-end inlays for one editor. */
+/** Stores inline, after-line-end, and block inlays for one editor. */
 internal class SnapshotInlayStorage(
   private val model: InlayModelImpl,
   private val editor: EditorImpl,
@@ -97,6 +100,35 @@ internal class SnapshotInlayStorage(
     return register(marker, offset, spec)
   }
 
+  fun <R : EditorCustomElementRenderer> createBlock(
+    offset: Int,
+    relatesToPrecedingText: Boolean,
+    showAbove: Boolean,
+    showWhenFolded: Boolean,
+    priority: Int,
+    renderer: R,
+  ): SnapshotBlockInlayMarker<R> {
+    val markerId = SnapshotMarkerEngineImpl.nextMarkerId()
+    val spec = MarkerSpec(
+      isGreedyToLeft = false,
+      isGreedyToRight = false,
+      isStickingToRight = relatesToPrecedingText,
+    )
+    val marker = SnapshotBlockInlayMarker(
+      storage = this,
+      editor = editor,
+      markerId = markerId,
+      spec = spec,
+      initialRange = TextRange(offset, offset),
+      relatesToPrecedingText = relatesToPrecedingText,
+      showAbove = showAbove,
+      showWhenFolded = showWhenFolded,
+      priority = priority,
+      renderer = renderer,
+    )
+    return register(marker, offset, spec, marker.heightInPixels)
+  }
+
   fun beforeDocumentChange(event: DocumentEvent) {
     querySnapshot = currentSnapshot()
     if (event.oldLength == 0 || event.newLength != 0) return
@@ -117,9 +149,27 @@ internal class SnapshotInlayStorage(
     return collect(startOffset, endOffset, AFTER_LINE_END_FLAVOR) { it as? SnapshotAfterLineEndInlayMarker<*> }
   }
 
+  fun collectBlock(startOffset: Int, endOffset: Int): List<BlockInlay<*>> {
+    return collect(startOffset, endOffset, BLOCK_FLAVOR) { it as? BlockInlay<*> }
+  }
+
   fun hasInline(startOffset: Int, endOffset: Int): Boolean = has(startOffset, endOffset, INLINE_FLAVOR)
 
   fun hasAfterLineEnd(): Boolean = has(0, document.textLength, AFTER_LINE_END_FLAVOR)
+
+  fun hasBlock(): Boolean = has(0, document.textLength, BLOCK_FLAVOR)
+
+  fun processBlock(startOffset: Int, endOffset: Int, processor: Processor<in BlockInlay<*>>): Boolean {
+    val root = rootStore.root(snapshotForQueries()) ?: return true
+    return root.processRangeMarkersOverlappingWith(startOffset, endOffset, BLOCK_FLAVOR) { entry ->
+      val marker = entry.markerReference?.get() as? BlockInlay<*> ?: return@processRangeMarkersOverlappingWith true
+      processor.process(marker)
+    }
+  }
+
+  fun getBlockHeightUpToOffset(offset: Int): Int {
+    return rootStore.root(snapshotForQueries())?.getPrefixAggregate(offset) ?: 0
+  }
 
   fun allInlays(): List<EditorInlay<*>> {
     return collect(0, document.textLength, 0) { it }
@@ -139,11 +189,15 @@ internal class SnapshotInlayStorage(
     markersById.remove(marker.id, marker)
   }
 
-  private fun <T : SnapshotInlayMarker<*>> register(marker: T, offset: Int, spec: MarkerSpec): T {
+  fun updateBlockHeight(marker: SnapshotBlockInlayMarker<*>, heightInPixels: Int) {
+    rootStore.updateRoot(currentSnapshot()) { it.updateMeasure(marker.id, heightInPixels) }
+  }
+
+  private fun <T : SnapshotInlayMarker<*>> register(marker: T, offset: Int, spec: MarkerSpec, measure: Int = 0): T {
     check(markersById.putIfAbsent(marker.id, marker) == null) { "Inlay marker ${marker.id} is already registered" }
     val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(marker, retainStrong = true)
     rootStore.updateRoot(currentSnapshot()) {
-      it.insert(marker.id, offset, offset, spec, marker.flavorFlags, markerReference)
+      it.insert(marker.id, offset, offset, spec, marker.flavorFlags, markerReference, measure)
     }
     return marker
   }
@@ -315,6 +369,53 @@ internal class SnapshotAfterLineEndInlayMarker<R : EditorCustomElementRenderer>(
     private var globalCounter: Int = 0
 
     private fun nextOrder(): Int = globalCounter++
+  }
+}
+
+internal class SnapshotBlockInlayMarker<R : EditorCustomElementRenderer>(
+  private val storage: SnapshotInlayStorage,
+  editor: EditorImpl,
+  markerId: Long,
+  spec: MarkerSpec,
+  initialRange: TextRange,
+  relatesToPrecedingText: Boolean,
+  private val showAbove: Boolean,
+  private val showWhenFolded: Boolean,
+  private val priority: Int,
+  renderer: R,
+) : SnapshotInlayMarker<R>(storage, editor, markerId, spec, initialRange, relatesToPrecedingText, renderer), BlockInlay<R> {
+  private var height: Int = 0
+  private var gutterIconRenderer: GutterIconRenderer? = null
+
+  init {
+    doUpdate()
+  }
+
+  override fun getFlavorFlags(): Byte = BLOCK_FLAVOR.toByte()
+
+  override fun getPriority(): Int = priority
+
+  override fun isShownAbove(): Boolean = showAbove
+
+  override fun isShownWhenFolded(): Boolean = showWhenFolded
+
+  override fun getHeightInPixels(): Int = height
+
+  override fun setHeightInPixels(heightInPixels: Int) {
+    if (height == heightInPixels) return
+    height = heightInPixels
+    storage.updateBlockHeight(this, heightInPixels)
+  }
+
+  override fun getGutterIconRenderer(): GutterIconRenderer? = gutterIconRenderer
+
+  override fun setGutterIconRenderer(gutterIconRenderer: GutterIconRenderer?) {
+    this.gutterIconRenderer = gutterIconRenderer
+  }
+
+  override fun toString(): String {
+    return "[Block inlay, offset=${getOffset()}, width=${getWidthInPixels()}, height=$height, renderer=${getRenderer()}]" +
+           if (isValid()) "" else "(invalid)"
   }
 }
 

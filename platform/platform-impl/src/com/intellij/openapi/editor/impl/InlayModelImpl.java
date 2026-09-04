@@ -59,11 +59,11 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     .comparingInt((InlineInlay<?> i) -> i.getOffset())
     .thenComparing(i -> i.isRelatedToPrecedingText())
     .thenComparing(i -> -i.getPriority());
-  private static final Comparator<BlockInlayImpl<?>> BLOCK_ELEMENTS_PRIORITY_COMPARATOR = Comparator
-    .comparingInt(i -> -i.myPriority);
-  private static final Comparator<BlockInlayImpl<?>> BLOCK_ELEMENTS_COMPARATOR = Comparator
-    .comparing((BlockInlayImpl<?> i) -> i.getPlacement())
-    .thenComparing(i -> i.getPlacement() == Inlay.Placement.ABOVE_LINE ? i.myPriority : -i.myPriority);
+  private static final Comparator<BlockInlay<?>> BLOCK_ELEMENTS_PRIORITY_COMPARATOR = Comparator
+    .comparingInt(i -> -i.getPriority());
+  private static final Comparator<BlockInlay<?>> BLOCK_ELEMENTS_COMPARATOR = Comparator
+    .comparing((BlockInlay<?> i) -> i.getPlacement())
+    .thenComparing(i -> i.getPlacement() == Inlay.Placement.ABOVE_LINE ? i.getPriority() : -i.getPriority());
   private static final Comparator<AfterLineEndInlay<?>> AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR = Comparator
     .comparingInt((AfterLineEndInlay<?> i) -> i.getOffset())
     .thenComparing(i -> !i.isSoftWrappable())
@@ -91,7 +91,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   private final List<EditorInlay<?>> myInlaysInvalidatedOnMove = new ArrayList<>();
   private final @Nullable SnapshotInlayStorage mySnapshotMarkerStorage;
   private final @Nullable RangeMarkerTree<InlineInlayImpl<?>> myInlineElementsTree;
-  final MarkerTreeWithPartialSums<BlockInlayImpl<?>> myBlockElementsTree;
+  private final @Nullable MarkerTreeWithPartialSums<BlockInlayImpl<?>> myBlockElementsTree;
   private final @Nullable RangeMarkerTree<AfterLineEndInlayImpl<?>> myAfterLineEndElementsTree;
 
   boolean myMoveInProgress;
@@ -107,7 +107,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
                               ? new SnapshotInlayStorage(this, editor, document)
                               : null;
     myInlineElementsTree = mySnapshotMarkerStorage == null ? new InlineElementsTree(myDocument) : null;
-    myBlockElementsTree = new BlockElementsTree(myDocument);
+    myBlockElementsTree = mySnapshotMarkerStorage == null ? new BlockElementsTree(myDocument) : null;
     myAfterLineEndElementsTree = mySnapshotMarkerStorage == null ? new AfterLineEndElementTree(myDocument) : null;
     myDocument.addDocumentListener(this, this);
   }
@@ -194,6 +194,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   void reinitSettings() {
     if (mySnapshotMarkerStorage == null) {
       getInlineElementsTree().processAll(UPDATE_PROCESSOR);
+      getBlockElementsTree().processAll(UPDATE_PROCESSOR);
       getAfterLineEndElementsTree().processAll(UPDATE_PROCESSOR);
     }
     else {
@@ -201,7 +202,6 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
         inlay.update();
       }
     }
-    myBlockElementsTree.processAll(UPDATE_PROCESSOR);
   }
 
   @Override
@@ -209,16 +209,15 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     // the tree will not remove nodes on disposal, we have to dispose remaining inlays manually
     if (mySnapshotMarkerStorage == null) {
       getInlineElementsTree().processAll(DISPOSE_PROCESSOR);
+      getBlockElementsTree().processAll(DISPOSE_PROCESSOR);
       getAfterLineEndElementsTree().processAll(DISPOSE_PROCESSOR);
       getInlineElementsTree().dispose(myDocument);
+      getBlockElementsTree().dispose(myDocument);
       getAfterLineEndElementsTree().dispose(myDocument);
     }
     else {
       mySnapshotMarkerStorage.dispose();
     }
-    myBlockElementsTree.processAll(DISPOSE_PROCESSOR);
-
-    myBlockElementsTree.dispose(myDocument);
   }
 
   @Override
@@ -283,7 +282,11 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
                                                                            @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
     offset = Math.clamp(offset, 0, myDocument.getTextLength());
-    BlockInlayImpl<T> inlay = new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, showWhenFolded, priority, renderer);
+    BlockInlay<T> inlay = mySnapshotMarkerStorage == null
+                          ? new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, showWhenFolded, priority,
+                                                 renderer)
+                          : mySnapshotMarkerStorage.createBlock(offset, relatesToPrecedingText, showAbove, showWhenFolded, priority,
+                                                                renderer);
     notifyAdded(inlay);
     if (myEditor.isDisposed()) {
       Disposer.dispose(inlay);
@@ -353,18 +356,25 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
 
   @Override
   public @NotNull List<Inlay<?>> getBlockElementsInRange(int startOffset, int endOffset) {
-    List<BlockInlayImpl<?>> range =
-      getElementsInRange(myBlockElementsTree, startOffset, endOffset, Predicates.alwaysTrue(), BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
+    List<BlockInlay<?>> range = getBlockElementsInRange(startOffset, endOffset, Predicates.alwaysTrue());
     //noinspection unchecked,rawtypes
     return (List)range;
   }
 
   @Override
   public @NotNull <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
-    List<BlockInlayImpl<?>> range = getElementsInRange(myBlockElementsTree, startOffset, endOffset,
-                                                       inlay -> type.isInstance(inlay.myRenderer), BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
+    List<BlockInlay<?>> range = getBlockElementsInRange(startOffset, endOffset, inlay -> type.isInstance(inlay.getRenderer()));
     //noinspection unchecked,rawtypes
     return (List)range;
+  }
+
+  private @NotNull List<BlockInlay<?>> getBlockElementsInRange(int startOffset,
+                                                                int endOffset,
+                                                                @NotNull Predicate<? super BlockInlay<?>> predicate) {
+    List<BlockInlay<?>> result = collectBlockElements(startOffset, endOffset);
+    result.removeIf(predicate.negate());
+    result.sort(BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
+    return result;
   }
 
   private static <T extends Inlay<?>> List<T> getElementsInRange(@NotNull IntervalTree<? extends T> tree,
@@ -381,20 +391,47 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     return result;
   }
 
+  private @NotNull List<BlockInlay<?>> collectBlockElements(int startOffset, int endOffset) {
+    if (mySnapshotMarkerStorage != null) {
+      return new ArrayList<>(mySnapshotMarkerStorage.collectBlock(startOffset, endOffset));
+    }
+    List<BlockInlay<?>> result = new ArrayList<>();
+    getBlockElementsTree().processOverlappingWith(startOffset, endOffset, inlay -> {
+      result.add(inlay);
+      return true;
+    });
+    return result;
+  }
+
+  private boolean processBlockElements(int startOffset,
+                                       int endOffset,
+                                       @NotNull Processor<? super BlockInlay<?>> processor) {
+    return mySnapshotMarkerStorage == null
+           ? getBlockElementsTree().processOverlappingWith(startOffset, endOffset, processor)
+           : mySnapshotMarkerStorage.processBlock(startOffset, endOffset, processor);
+  }
+
+  private boolean processAllBlockElements(@NotNull Processor<? super BlockInlay<?>> processor) {
+    return mySnapshotMarkerStorage == null
+           ? getBlockElementsTree().processAll(processor)
+           : mySnapshotMarkerStorage.processBlock(0, myDocument.getTextLength(), processor);
+  }
+
+  private int getBlockHeightUpToOffset(int offset) {
+    return mySnapshotMarkerStorage == null
+           ? getBlockElementsTree().getSumOfValuesUpToOffset(offset)
+           : mySnapshotMarkerStorage.getBlockHeightUpToOffset(offset);
+  }
+
   @Override
   public @NotNull List<Inlay<?>> getBlockElementsForVisualLine(int visualLine, boolean above) {
     int visibleLineCount = myEditor.getVisibleLineCount();
-    if (visualLine < 0 || visualLine >= visibleLineCount || myBlockElementsTree.size() == 0) return Collections.emptyList();
-    List<BlockInlayImpl<?>> result = new ArrayList<>();
+    if (visualLine < 0 || visualLine >= visibleLineCount || !hasBlockElements()) return Collections.emptyList();
     int startOffset = myEditor.visualLineStartOffset(visualLine);
     int endOffset = visualLine == visibleLineCount - 1 ? myDocument.getTextLength()
                                                        : myEditor.visualLineStartOffset(visualLine + 1) - 1;
-    myBlockElementsTree.processOverlappingWith(startOffset, endOffset, inlay -> {
-      if (inlay.myShowAbove == above && !EditorUtil.isInlayFolded(inlay)) {
-        result.add(inlay);
-      }
-      return true;
-    });
+    List<BlockInlay<?>> result = collectBlockElements(startOffset, endOffset);
+    result.removeIf(inlay -> inlay.isShownAbove() != above || EditorUtil.isInlayFolded(inlay));
     if (above) {
       // matters for inlays with equal priority
       Collections.reverse(result);
@@ -410,18 +447,18 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     if (visualLine < 0 || !hasBlockElements()) return 0;
     int visibleLineCount = myEditor.getVisibleLineCount();
     if (visualLine >= visibleLineCount) {
-      return myBlockElementsTree.getSumOfValuesUpToOffset(Integer.MAX_VALUE) -
+      return getBlockHeightUpToOffset(Integer.MAX_VALUE) -
              myEditor.getFoldingModel().getTotalHeightOfFoldedBlockInlays();
     }
     int[] result = {0};
     int endOffset = visualLine >= visibleLineCount - 1 ? myDocument.getTextLength()
                                                        : myEditor.visualLineStartOffset(visualLine + 1) - 1;
     if (visualLine > 0) {
-      result[0] += myBlockElementsTree.getSumOfValuesUpToOffset(startOffset - 1) -
+      result[0] += getBlockHeightUpToOffset(startOffset - 1) -
                    myEditor.getFoldingModel().getHeightOfFoldedBlockInlaysBefore(prevFoldRegionIndex);
     }
-    myBlockElementsTree.processOverlappingWith(startOffset, endOffset, inlay -> {
-      if (inlay.myShowAbove && !EditorUtil.isInlayFolded(inlay)) {
+    processBlockElements(startOffset, endOffset, inlay -> {
+      if (inlay.isShownAbove() && !EditorUtil.isInlayFolded(inlay)) {
         result[0] += inlay.getHeightInPixels();
       }
       return true;
@@ -438,7 +475,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   public @Nullable Inlay<?> getWidestVisibleBlockInlay() {
     AtomicInteger maxWidth = new AtomicInteger(-1);
     Ref<Inlay<?>> inlayRef = new Ref<>(null);
-    myBlockElementsTree.processAll(inlay -> {
+    processAllBlockElements(inlay -> {
       int width = inlay.getWidthInPixels();
       if (width > maxWidth.get() && !EditorUtil.isInlayFolded(inlay)) {
         maxWidth.set(width);
@@ -451,7 +488,9 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
 
   @Override
   public boolean hasBlockElements() {
-    return myBlockElementsTree.size() > 0;
+    return mySnapshotMarkerStorage == null
+           ? getBlockElementsTree().size() > 0
+           : mySnapshotMarkerStorage.hasBlock();
   }
 
   @Override
@@ -765,6 +804,10 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     return Objects.requireNonNull(myAfterLineEndElementsTree);
   }
 
+  @NotNull MarkerTreeWithPartialSums<BlockInlayImpl<?>> getBlockElementsTree() {
+    return Objects.requireNonNull(myBlockElementsTree);
+  }
+
   @TestOnly
   boolean isUsingSnapshotInlayStorage() {
     return mySnapshotMarkerStorage != null;
@@ -796,9 +839,12 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     String afterLineEndInlays = mySnapshotMarkerStorage == null
                                 ? dumpInlays(getAfterLineEndElementsTree())
                                 : dumpInlays(mySnapshotMarkerStorage.collectAfterLineEnd(0, myDocument.getTextLength()));
+    String blockInlays = mySnapshotMarkerStorage == null
+                         ? dumpInlays(getBlockElementsTree())
+                         : dumpInlays(mySnapshotMarkerStorage.collectBlock(0, myDocument.getTextLength()));
     return "Inline elements: " + inlineInlays
            + ", after-line-end elements: " + afterLineEndInlays
-           + ", block elements: " + dumpInlays(myBlockElementsTree);
+           + ", block elements: " + blockInlays;
   }
 
 
@@ -820,7 +866,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   }
 
   public static boolean showWhenFolded(@NotNull Inlay<?> inlay) {
-    return inlay instanceof BlockInlayImpl && ((BlockInlayImpl<?>)inlay).myShowWhenFolded;
+    return inlay instanceof BlockInlay<?> blockInlay && blockInlay.isShownWhenFolded();
   }
 
   private final class InlineElementsTree extends HardReferencingRangeMarkerTree<InlineInlayImpl<?>> {
