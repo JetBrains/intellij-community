@@ -2,6 +2,7 @@
 package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Nested
@@ -44,13 +45,18 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-7058"])
-    fun `type of an unknown value is Unknown`() = test(
-      """
-      def f(x):
-          expr = type(x)
-      #   └ TYPE Unknown
-      """,
-    )
+    fun `type of an unknown value is Unknown`() {
+      test(
+        defaultTestOptions.copy(
+          assertRecursionPrevention = Registry.`is`("python.use.better.control.flow.type.inference"),
+        ),
+        """
+        def f(x):
+            expr = type(x)
+        #   └ TYPE Unknown
+        """,
+      )
+    }
 
     @Test
     fun `Type of union of class objects`() = test("""

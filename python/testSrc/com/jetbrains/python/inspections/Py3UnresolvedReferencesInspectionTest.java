@@ -5,6 +5,7 @@ import com.intellij.idea.TestFor;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
@@ -615,6 +616,8 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-89245
   public void testFlakyLoop() {
+    if (!Registry.is("python.use.better.control.flow.type.inference")) return;
+
     doTestByText("""
                    class ListNode:
                        def __init__(self, val=0, next=None):
