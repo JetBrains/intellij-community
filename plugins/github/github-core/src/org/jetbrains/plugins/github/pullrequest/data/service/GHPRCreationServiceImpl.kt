@@ -22,6 +22,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubIssueState
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRestIdOnly
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.toPRIdentifier
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
@@ -55,6 +56,11 @@ internal class GHPRCreationServiceImpl(private val requestExecutor: GithubApiReq
   override suspend fun findOpenPullRequest(baseBranch: GitRemoteBranch?,
                                            headRepo: GHRepositoryPath,
                                            headBranch: GitRemoteBranch): GHPRIdentifier? =
+    findOpenPullRequestDetails(baseBranch, headRepo, headBranch)?.toPRIdentifier()
+
+  override suspend fun findOpenPullRequestDetails(baseBranch: GitRemoteBranch?,
+                                                  headRepo: GHRepositoryPath,
+                                                  headBranch: GitRemoteBranch): GHPullRequestRestIdOnly? =
     requestExecutor.execute(
       GithubApiRequests.Repos.PullRequests.find(baseRepo.repository,
                                                 GithubIssueState.open,
@@ -62,7 +68,7 @@ internal class GHPRCreationServiceImpl(private val requestExecutor: GithubApiReq
                                                 headRepo.owner + ":" + headBranch.nameForRemoteOperations,
         // only the first match is used, so fetch a single result
                                                 GithubRequestPagination(pageSize = 1)
-      )).items.firstOrNull()?.toPRIdentifier()
+      )).items.firstOrNull()
 
   private fun getHeadRepoPrefix(headRepo: GHGitRepositoryMapping) =
     if (baseRepo.repository == headRepo.repository) "" else headRepo.repository.repositoryPath.owner + ":"

@@ -181,6 +181,8 @@
     <gitFetchHandler implementation="org.jetbrains.plugins.github.extensions.GHProtectedBranchRulesLoader"/>
     <gitCurrentBranchPresenter
       implementation="org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchService$BranchPresenter"/>
+    <gitBranchReviewPresenter
+      implementation="org.jetbrains.plugins.github.pullrequest.ui.review.GHBranchReviewPresenter"/>
     <gitPushNotificationCustomizer implementation="org.jetbrains.plugins.github.notification.GHPushNotificationCustomizer"/>
   </extensions>
 

@@ -5,6 +5,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 data class GHPullRequestRestIdOnly(val id: String,
                                    val nodeId: String,
-                                   val number: Long)
+                                   val number: Long,
+                                   val title: String? = null)
 
 fun GHPullRequestRestIdOnly.toPRIdentifier(): GHPRIdentifier = GHPRIdentifier(nodeId, number)

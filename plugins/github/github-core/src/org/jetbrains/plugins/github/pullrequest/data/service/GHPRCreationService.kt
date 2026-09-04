@@ -6,6 +6,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitBranch
 import git4idea.GitRemoteBranch
 import org.jetbrains.plugins.github.api.GHRepositoryPath
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRestIdOnly
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -21,6 +22,10 @@ internal interface GHPRCreationService {
   suspend fun findOpenPullRequest(baseBranch: GitRemoteBranch?,
                                   headRepo: GHRepositoryPath,
                                   headBranch: GitRemoteBranch): GHPRIdentifier?
+
+  suspend fun findOpenPullRequestDetails(baseBranch: GitRemoteBranch?,
+                                         headRepo: GHRepositoryPath,
+                                         headBranch: GitRemoteBranch): GHPullRequestRestIdOnly?
 
   suspend fun getDiff(commit: VcsCommitMetadata): Collection<RefComparisonChange>
 
