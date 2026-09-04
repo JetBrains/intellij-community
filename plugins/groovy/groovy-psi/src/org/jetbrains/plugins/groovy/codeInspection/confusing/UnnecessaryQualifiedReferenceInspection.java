@@ -107,8 +107,8 @@ public final class UnnecessaryQualifiedReferenceInspection extends BaseInspectio
     if (element instanceof GrCodeReferenceElement) {
       if (PsiTreeUtil.getParentOfType(element, GrImportStatement.class, GrPackageDefinition.class) != null) return false;
     }
-    else if (element instanceof GrReferenceExpression) {
-      if (!PsiImplUtil.seemsToBeQualifiedClassName((GrReferenceExpression)element)) return false;
+    else if (element instanceof GrReferenceExpression ref) {
+      if (!PsiImplUtil.seemsToBeQualifiedClassName(ref)) return false;
     }
     else {
       return false;
@@ -119,9 +119,9 @@ public final class UnnecessaryQualifiedReferenceInspection extends BaseInspectio
     if (!(ref.getContainingFile() instanceof GroovyFileBase)) return false;
 
     final PsiElement resolved = ref.resolve();
-    if (!(resolved instanceof PsiClass)) return false;
+    if (!(resolved instanceof PsiClass aClass)) return false;
 
-    final String name = ((PsiClass)resolved).getName();
+    final String name = aClass.getName();
     if (name == null) return false;
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
@@ -132,9 +132,8 @@ public final class UnnecessaryQualifiedReferenceInspection extends BaseInspectio
       return true;
     }
 
-    final PsiClass containingClass = ((PsiClass)resolved).getContainingClass();
-    if (containingClass != null &&
-        !GroovyCodeStyleSettingsFacade.getInstance(containingClass.getProject()).insertInnerClassImports()) {
+    final PsiClass containingClass = aClass.getContainingClass();
+    if (containingClass != null && !GroovyCodeStyleSettingsFacade.getInstance(containingClass.getProject()).insertInnerClassImports()) {
       return false;
     }
 
