@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.python
 
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -31,7 +32,10 @@ private const val PYREFLY_DIR_NAME: String = "pyrefly"
 private const val PYREFLY_BINARY_NAME: String = "pyrefly"
 
 internal fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
-  if (!isPyreflyBundlingEnabled()) return
+  if (!isPyreflyBundlingEnabled()) {
+    Span.current().addEvent("skip the Pyrefly bundling, because '$PYREFLY_BUNDLE_ENABLED_PROPERTY' is false")
+    return
+  }
 
   withGeneratedResources { targetDir, context -> copyPyreflyLicenseReport(targetDir, context) }
 
