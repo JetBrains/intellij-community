@@ -1,22 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.toolWindow
+package com.intellij.toolWindow.innerDrag
 
 import com.intellij.ide.DataManager
 import com.intellij.idea.AppMode
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionInvoked
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ActionUiKind
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupCornerType
 import com.intellij.openapi.util.registry.Registry
@@ -25,9 +17,8 @@ import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.openapi.wm.impl.content.ContentTabLabel
 import com.intellij.openapi.wm.impl.content.SingleContentLayout
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.openapi.wm.impl.content.ToolWindowInEditorSupport
-import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabTransferController
-import com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupportUtil
+import com.intellij.toolWindow.InternalDecoratorImpl
+import com.intellij.toolWindow.ToolWindowDragHelper
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDropTargetHighlightComponent
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
 import com.intellij.ui.ComponentUtil
@@ -280,38 +271,8 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
    */
   private fun dropIntoEditor(content: Content, sourceDecorator: InternalDecoratorImpl, target: EditorDropTarget): Boolean {
     val editorWindow = target.resolveWindow() ?: return false
-    if (ToolWindowEditorTabSupportUtil.isEnabled()) {
-      val toolWindow = sourceDecorator.toolWindow
-      recordMoveToEditorByDrag(sourceDecorator)
-      ToolWindowEditorTabTransferController.getInstance(toolWindow.project)
-        .moveContentToEditor(toolWindow, content, editorWindow, sourceDecorator)
-      // Return false because moveContentToEditor handles unsplitting
-      return false
-    }
-
-    val support = getEditorSupport(sourceDecorator) ?: return false
-    // The support should extract the toolWindow-specific component from the content object and open it in the editor.
-    // The lifecycle of the passed content is also under the control of the support after this call.
-    support.openInEditor(content, editorWindow)
-    return true
-  }
-
-  private fun recordMoveToEditorByDrag(sourceDecorator: InternalDecoratorImpl) {
-    val action = ActionManager.getInstance().getAction("MoveToolWindowTabToEditorAction") ?: return
-    val toolWindow = sourceDecorator.toolWindow
-    val dataContext = SimpleDataContext.builder()
-      .setParent(DataContext.EMPTY_CONTEXT)
-      .add(PlatformDataKeys.TOOL_WINDOW, toolWindow)
-      .build()
-    val event = AnActionEvent.createEvent(
-      action,
-      dataContext,
-      null,
-      ActionPlaces.TOOLWINDOW_CONTENT,
-      ActionUiKind.NONE,
-      MouseEvent(sourceDecorator, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false, MouseEvent.BUTTON1),
-    )
-    recordActionInvoked(toolWindow.project, action, event) { }
+    val transfer = ToolWindowToEditorTransfer.findApplicableTransfer(content, sourceDecorator, target.project) ?: return false
+    return transfer.move(editorWindow)
   }
 
   private fun unsplitSourceIfEmpty(sourceDecorator: InternalDecoratorImpl, content: Content) {
@@ -531,15 +492,6 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     return contentManager.contents.singleOrNull().let { it != null && it !is SingleContentLayout.SubContent }
   }
 
-  private fun getEditorSupport(sourceDecorator: InternalDecoratorImpl?): ToolWindowInEditorSupport? {
-    if (ToolWindowEditorTabSupportUtil.isEnabled()) return null
-
-    return if (sourceDecorator != null) {
-      ToolWindowContentUi.getToolWindowInEditorSupport(sourceDecorator.toolWindow)
-    }
-    else null
-  }
-
   private fun canReorderTabs(decorator: InternalDecoratorImpl): Boolean {
     return AppMode.isMonolith()
            && Registry.`is`("ide.allow.tool.window.tabs.reorder", false)
@@ -548,14 +500,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   }
 
   private fun canDropIntoEditor(decorator: InternalDecoratorImpl?, content: Content, project: Project): Boolean {
-    return getEditorSupport(decorator)?.canOpenInEditor(project, content) == true
-           || (decorator != null && canMoveTabToEditor(decorator, content))
-  }
-
-  private fun canMoveTabToEditor(decorator: InternalDecoratorImpl, content: Content?): Boolean {
-    return content != null &&
-           ToolWindowEditorTabSupportUtil.isEnabled() &&
-           ToolWindowEditorTabTransferController.getInstance(decorator.toolWindow.project).canMoveContentToEditor(decorator.toolWindow, content)
+    return ToolWindowToEditorTransfer.findApplicableTransfer(content, decorator, project) != null
   }
 
   private sealed interface EditorDropTarget {
