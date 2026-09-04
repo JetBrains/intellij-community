@@ -2,6 +2,7 @@
 package com.intellij.gradle.java.performance
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -9,24 +10,23 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.ui.playback.commands.AbstractCommand
-import com.intellij.openapi.util.ActionCallback
-import com.intellij.util.DisposeAwareRunnable
 import com.intellij.util.messages.SimpleMessageBusConnection
-import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
+import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.rejectedPromise
-import org.jetbrains.concurrency.resolvedPromise
-import org.jetbrains.concurrency.toPromise
 import org.jetbrains.plugins.gradle.service.project.open.setupGradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -37,168 +37,158 @@ import org.jetbrains.plugins.gradle.util.suggestGradleVersion
 import org.jetbrains.plugins.gradle.util.validateJavaHome
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.milliseconds
 
-class ImportGradleProjectCommand(text: String, line: Int) : AbstractCommand(text, line) {
-  override fun _execute(context: PlaybackContext): Promise<Any?> {
-    val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
-    runWhenGradleImportAndIndexingFinished(context, actionCallback)
-    return actionCallback.toPromise()
-  }
+/**
+ * The command imports each linked Gradle project and waits for the indexing.
+ * The command links the project first if the project has no linked Gradle project.
+ * Syntax: %importGradleProject
+ */
+class ImportGradleProjectCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
-  private fun runWhenGradleImportAndIndexingFinished(context: PlaybackContext, callback: ActionCallback) {
+  override fun getName(): String = NAME
+
+  override suspend fun doExecute(context: PlaybackContext) {
     val project = context.project
     val projectTrackerSettings = ExternalSystemProjectTrackerSettings.getInstance(project)
     val currentAutoReloadType = projectTrackerSettings.autoReloadType
     projectTrackerSettings.autoReloadType = ExternalSystemProjectTrackerSettings.AutoReloadType.NONE
-    context.message("Waiting for open and initialized Gradle project", line)
-    ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
-      DumbService.getInstance(project).runWhenSmart {
-        ApplicationManager.getApplication().executeOnPooledThread {
-          waitForCurrentResolveTasks(context, project)
-            .thenAsync {
-              context.message("Import of the project has been started", line)
-              val promise = AsyncPromise<Void?>()
-              val gradleSettings = GradleSettings.getInstance(project)
-              linkGradleProjectIfNeeded(project, context, gradleSettings)
-                .onError { callback.reject("Link of a gradle project failed. Not a gradle project") }
-                .onSuccess { doGradleSync(project, context, promise, gradleSettings, callback) }
-              promise
-            }
-            .onProcessed {
-              context.message("Import has been finished", line)
-              projectTrackerSettings.autoReloadType = currentAutoReloadType
-              DumbService.getInstance(project).runWhenSmart(
-                DisposeAwareRunnable.create({ callback.setDone() }, project)
-              )
-            }
-        }
+    try {
+      context.message("Waiting for open and initialized Gradle project", line)
+      awaitExternalProjectsManagerInitialization(project)
+      project.waitForSmartMode()
+      waitForCurrentResolveTasks(context, project)
+
+      context.message("Import of the project has been started", line)
+      val gradleSettings = GradleSettings.getInstance(project)
+      try {
+        linkGradleProjectIfNeeded(project, context, gradleSettings)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Exception) {
+        throw IllegalStateException("Link of a gradle project failed. Not a gradle project. ${e.message}", e)
+      }
+      doGradleSync(project, context, gradleSettings)
+    }
+    finally {
+      context.message("Import has been finished", line)
+      projectTrackerSettings.autoReloadType = currentAutoReloadType
+    }
+    project.waitForSmartMode()
+  }
+
+  private suspend fun awaitExternalProjectsManagerInitialization(project: Project) {
+    suspendCancellableCoroutine { continuation ->
+      ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
+        continuation.resume(Unit)
       }
     }
   }
 
-  private fun waitForCurrentResolveTasks(context: PlaybackContext, project: Project): Promise<*> {
-    val promise = AsyncPromise<Any?>()
+  private suspend fun waitForCurrentResolveTasks(context: PlaybackContext, project: Project) {
     context.message("Waiting for current import resolve tasks", line)
-    ApplicationManager.getApplication().executeOnPooledThread {
-      val processingManager = ExternalSystemProcessingManager.getInstance()
-      while (processingManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT, project)) {
-        try {
-          Thread.sleep(100)
-        }
-        catch (_: InterruptedException) {
-        }
-      }
-      promise.setResult(null)
+    val processingManager = ExternalSystemProcessingManager.getInstance()
+    while (processingManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT, project)) {
+      delay(100.milliseconds)
     }
-    return promise.onProcessed {
-      context.message("Import resolve tasks has been completed", line)
-    }
+    context.message("Import resolve tasks has been completed", line)
   }
 
-  @Suppress("DEPRECATION")
-  private fun doGradleSync(
-    project: Project,
-    context: PlaybackContext,
-    promise: AsyncPromise<Void?>,
-    gradleSettings: GradleSettings,
-    callback: ActionCallback,
-  ) {
+  private suspend fun doGradleSync(project: Project, context: PlaybackContext, gradleSettings: GradleSettings) {
     val projectsSettings = gradleSettings.linkedProjectsSettings
     val projectsPaths: List<String?> = projectsSettings.map { it.externalProjectPath }
     val gradleProjectsToRefreshCount = AtomicInteger(projectsSettings.size)
     val projectsWithResolveErrors = StringBuilder()
+    val importDeferred = CompletableDeferred<Unit>()
     for (settings in projectsSettings) {
       val importSpecBuilder = ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
-      importSpecBuilder.callback(object : ExternalProjectRefreshCallback {
-        private val defaultCallback = ImportSpecBuilder.DefaultProjectRefreshCallback(importSpecBuilder.build())
+      importSpecBuilder
+          .withImportProjectData(false)
+          .withCallback(object : ExternalProjectRefreshCallback {
 
-        override fun onSuccess(externalProject: DataNode<ProjectData>?) {
-          context.message("Gradle resolve finished for: ${externalProject!!.data.linkedExternalProjectPath}", line)
-          val connection: SimpleMessageBusConnection = project.messageBus.simpleConnect()
-          connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
-            override fun onFinalTasksFinished(projectPath: String?) {
-              handleImportFinished(projectPath)
+            override fun onSuccess(externalProject: DataNode<ProjectData>?) {
+              context.message("Gradle resolve finished for: ${externalProject!!.data.linkedExternalProjectPath}", line)
+              val connection: SimpleMessageBusConnection = project.messageBus.simpleConnect()
+              connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
+                override fun onFinalTasksFinished(projectPath: String?) {
+                  handleImportFinished(projectPath)
+                }
+
+                override fun onImportFailed(projectPath: String?, failure: Throwable) {
+                  handleImportFinished(projectPath)
+                }
+
+                private fun handleImportFinished(projectPath: String?) {
+                  if (projectPath !in projectsPaths) return
+                  connection.disconnect()
+                  if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
+                    ApplicationManager.getApplication().invokeLater {
+                      importDeferred.complete(Unit)
+                    }
+                  }
+                }
+              })
+
+              ProjectDataManager.getInstance().importData(externalProject, project)
             }
 
-            override fun onImportFailed(projectPath: String?, failure: Throwable) {
-              handleImportFinished(projectPath)
-            }
-
-            private fun handleImportFinished(projectPath: String?) {
-              if (projectPath !in projectsPaths) return
-              connection.disconnect()
+            override fun onFailure(errorMessage: String, errorDetails: String?) {
+              context.error("Gradle resolve failed for: ${settings.externalProjectPath}:$errorMessage:$errorDetails", line)
+              synchronized(projectsWithResolveErrors) {
+                if (projectsWithResolveErrors.isNotEmpty()) {
+                  projectsWithResolveErrors.append(", ")
+                }
+                projectsWithResolveErrors.append("'${Paths.get(settings.externalProjectPath!!).fileName?.toString() ?: ""}'")
+              }
               if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
                 ApplicationManager.getApplication().invokeLater {
-                  promise.setResult(null)
+                  importDeferred.completeExceptionally(IllegalStateException(projectsWithResolveErrors.toString()))
                 }
               }
             }
           })
-
-          defaultCallback.onSuccess(externalProject)
-          callback.setDone()
-        }
-
-        override fun onFailure(errorMessage: String, errorDetails: String?) {
-          context.error("Gradle resolve failed for: ${settings.externalProjectPath}:$errorMessage:$errorDetails", line)
-          synchronized(projectsWithResolveErrors) {
-            if (projectsWithResolveErrors.isNotEmpty()) {
-              projectsWithResolveErrors.append(", ")
-            }
-            projectsWithResolveErrors.append("'${Paths.get(settings.externalProjectPath!!).fileName?.toString() ?: ""}'")
-          }
-          defaultCallback.onFailure(errorMessage, errorDetails)
-          if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
-            ApplicationManager.getApplication().invokeLater {
-              promise.setError(projectsWithResolveErrors.toString())
-            }
-            callback.reject("Gradle sync failed")
-          }
-        }
-      })
-      ExternalSystemUtil.refreshProject(settings.externalProjectPath, importSpecBuilder)
-    }
+        ExternalSystemUtil.refreshProject(settings.externalProjectPath, importSpecBuilder)
+      }
+      importDeferred.await()
   }
 
   companion object {
-    const val PREFIX: String = "%importGradleProject"
+    const val NAME: String = "importGradleProject"
+    const val PREFIX: String = "$CMD_PREFIX$NAME"
 
-    @JvmStatic
-    fun linkGradleProjectIfNeeded(
+    suspend fun linkGradleProjectIfNeeded(
       project: Project,
       context: PlaybackContext,
       gradleSettings: GradleSettings,
-    ): Promise<Void?> {
-      if (gradleSettings.linkedProjectsSettings.isEmpty()) {
-        val projectDir = project.guessProjectDir()!!
-        val children = projectDir.children
-        val isGradleProject = children.any { GradleConstants.KNOWN_GRADLE_FILES.contains(it.name) }
-        if (!isGradleProject) {
-          context.error("Unable to find Gradle project at ${projectDir.path}", 0)
-          context.message("Files found at the path: ${children.joinToString(prefix = "[", postfix = "]") { it.name }}", 0)
-          return rejectedPromise()
-        }
-
-        val projectSettings = GradleDefaultProjectSettings.createProjectSettings(projectDir.path)
-        gradleSettings.setupGradleSettings()
-        val gradleVersion: GradleVersion? = suggestGradleVersion(
-          SuggestGradleVersionOptions()
-            .withProject(project)
-            .withProjectJdkVersionFilter(project)
-        )
-        if (gradleVersion != null) {
-          setupGradleJvm(project, projectSettings, gradleVersion)
-          validateJavaHome(project, projectDir.toNioPath(), gradleVersion)
-        }
-
-        val promise = AsyncPromise<Void?>()
-        ApplicationManager.getApplication().invokeLater {
-          gradleSettings.linkProject(projectSettings)
-          promise.setResult(null)
-        }
-        return promise
+    ) {
+      if (gradleSettings.linkedProjectsSettings.isNotEmpty()) return
+      val projectDir = project.guessProjectDir()!!
+      val children = projectDir.children
+      val isGradleProject = children.any { GradleConstants.KNOWN_GRADLE_FILES.contains(it.name) }
+      if (!isGradleProject) {
+        context.error("Unable to find Gradle project at ${projectDir.path}", 0)
+        context.message("Files found at the path: ${children.joinToString(prefix = "[", postfix = "]") { it.name }}", 0)
+        throw IllegalStateException("Unable to find Gradle project at ${projectDir.path}")
       }
-      return resolvedPromise()
+
+      val projectSettings = GradleDefaultProjectSettings.createProjectSettings(projectDir.path)
+      gradleSettings.setupGradleSettings()
+      val gradleVersion: GradleVersion? = suggestGradleVersion(
+        SuggestGradleVersionOptions()
+          .withProject(project)
+          .withProjectJdkVersionFilter(project)
+      )
+      if (gradleVersion != null) {
+        setupGradleJvm(project, projectSettings, gradleVersion)
+        validateJavaHome(project, projectDir.toNioPath(), gradleVersion)
+      }
+
+      withContext(Dispatchers.EDT) {
+        gradleSettings.linkProject(projectSettings)
+      }
     }
   }
 }
