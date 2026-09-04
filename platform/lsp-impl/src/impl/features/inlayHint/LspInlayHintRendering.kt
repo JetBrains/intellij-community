@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -128,13 +129,16 @@ private fun buildInlayPresentation(
 private fun navigateTo(descriptor: LspClientDescriptor, project: Project, targetUri: String, targetRange: Range?) {
   val targetFile = descriptor.findFileByUri(targetUri) ?: return
 
-  val editor = FileEditorManager.getInstance(project).openTextEditor(
-    OpenFileDescriptor(project, targetFile), true
-  ) ?: return
-
-  if (targetRange != null) {
-    val document = editor.document
-    val offset = getOffsetInDocument(document, targetRange.start) ?: return
-    editor.caretModel.moveToOffset(offset)
+  val fileEditorManager = FileEditorManager.getInstance(project)
+  val openDescriptor = OpenFileDescriptor(project, targetFile)
+  fileEditorManager.requestOpenTextEditor(openDescriptor, FileEditorOpenRequest.fromDescriptor(openDescriptor)
+    .withRequestFocus(true)).thenAccept { editor ->
+    // the callback runs on the EDT, so it may touch the editor directly
+    if (editor != null && targetRange != null) {
+      val offset = getOffsetInDocument(editor.document, targetRange.start)
+      if (offset != null) {
+        editor.caretModel.moveToOffset(offset)
+      }
+    }
   }
 }

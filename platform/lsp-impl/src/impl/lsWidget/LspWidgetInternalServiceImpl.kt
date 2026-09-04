@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.DumbAware
@@ -63,6 +64,9 @@ private class OpenLspErrorOutputAction(
   override fun actionPerformed(e: AnActionEvent) {
     val fileName = LspBundle.message("server.error.output.editor.tab.name", lspClient.descriptor.presentableName)
     val file = LightVirtualFile(fileName, PlainTextFileType.INSTANCE, lspClient.errorOutput ?: "")
-    FileEditorManager.getInstance(lspClient.project).openTextEditor(OpenFileDescriptor(lspClient.project, file), true)
+    val fileEditorManager = FileEditorManager.getInstance(lspClient.project)
+    val openDescriptor = OpenFileDescriptor(lspClient.project, file)
+    fileEditorManager.requestOpenTextEditor(openDescriptor, FileEditorOpenRequest.fromDescriptor(openDescriptor)
+      .withRequestFocus(true))
   }
 }

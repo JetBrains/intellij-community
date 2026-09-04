@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware
 import com.intellij.openapi.externalSystem.model.project.ExternalEntityData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,7 +55,9 @@ public class OpenExternalConfigAction extends ExternalSystemNodeAction<ExternalC
     VirtualFile configFile = getExternalConfig(configPathAware, systemId);
     if (configFile != null) {
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, configFile);
-      FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      var fileEditorManager = FileEditorManager.getInstance(project);
+      fileEditorManager.requestOpenTextEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor)
+        .withRequestFocus(true));
     }
   }
 }

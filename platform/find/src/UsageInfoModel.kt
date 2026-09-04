@@ -13,12 +13,12 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorLocation
@@ -259,16 +259,18 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   override fun canNavigateToSource(): Boolean = canNavigate()
 
   override fun navigate(requestFocus: Boolean) {
-    if (canNavigate()) {
-      openTextEditor(requestFocus)
-    }
+    if (!canNavigate()) return
+    val descriptor = createDescriptor() ?: return
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    fileEditorManager.requestOpenTextEditor(descriptor, FileEditorOpenRequest
+      .fromDescriptor(descriptor)
+      .withRequestFocus(requestFocus)
+    )
   }
 
-  private fun openTextEditor(requestFocus: Boolean): Editor? {
+  private fun createDescriptor(): OpenFileDescriptor? {
     val virtualFile = virtualFile ?: return null
-    val range = calculateRange()
-    val descriptor = OpenFileDescriptor(project, virtualFile, range.startOffset)
-    return FileEditorManager.getInstance(project).openTextEditor(descriptor, requestFocus)
+    return OpenFileDescriptor(project, virtualFile, calculateRange().startOffset)
   }
 
   override fun getPath(): String = model.presentablePath
@@ -296,13 +298,23 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
 
   override fun selectInEditor() {
     if (!isValid()) return
-    val editor: Editor? = openTextEditor(true)
-    if (editor == null) {
-      LOG.error("Cannot open editor for $path")
-      return
+    val descriptor = createDescriptor() ?: return
+    // the callback runs on the EDT, so it may touch the editor directly
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    fileEditorManager.requestOpenTextEditor(descriptor, FileEditorOpenRequest
+      .fromDescriptor(descriptor).withRequestFocus(true)
+    ).thenAccept { editor ->
+      if (editor == null) {
+        LOG.error("Cannot open editor for $path")
+      }
+      else {
+        runReadActionBlocking {
+          if (project.isDisposed || editor.isDisposed || !isValid()) return@runReadActionBlocking
+          val marker = calculateRange()
+          editor.selectionModel.setSelection(marker.startOffset, marker.endOffset)
+        }
+      }
     }
-    val marker = calculateRange()
-    editor.getSelectionModel().setSelection(marker.getStartOffset(), marker.getEndOffset())
   }
 
   override fun merge(mergeableUsage: MergeableUsage): Boolean {

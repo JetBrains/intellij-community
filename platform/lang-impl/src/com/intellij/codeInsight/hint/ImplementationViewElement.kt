@@ -2,8 +2,9 @@
 package com.intellij.codeInsight.hint
 
 import com.intellij.navigation.NavigationItem
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
@@ -96,9 +97,10 @@ class PsiImplementationViewElement(psiElement: PsiElement) : ImplementationViewE
     val file = navigationElement.containingFile?.originalFile ?: return
     val virtualFile = file.virtualFile ?: return
     val project = psiElement.project
-    val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+    val fileEditorManager = FileEditorManager.getInstance(project)
     val descriptor = OpenFileDescriptor(project, virtualFile, navigationElement.textOffset)
-    fileEditorManager.openTextEditor(descriptor, focusEditor)
+    fileEditorManager.requestOpenTextEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor)
+      .withRequestFocus(focusEditor))
   }
 
   override val elementForShowUsages: PsiElement?

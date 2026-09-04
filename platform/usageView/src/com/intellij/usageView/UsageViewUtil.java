@@ -6,6 +6,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
@@ -147,7 +148,10 @@ public final class UsageViewUtil {
     Project project = info.getProject();
     if (file != null) {
       UsageViewStatisticsCollector.logUsageNavigate(project, info);
-      FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), requestFocus);
+      var fileEditorManager = FileEditorManager.getInstance(project);
+      var openDescriptor = new OpenFileDescriptor(project, file, offset);
+      fileEditorManager.requestOpenTextEditor(openDescriptor, FileEditorOpenRequest.fromDescriptor(openDescriptor)
+        .withRequestFocus(requestFocus));
     }
   }
 
