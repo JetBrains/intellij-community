@@ -68,6 +68,18 @@
         <bundleName>messages.MarkdownBundle</bundleName>
         <categoryKey>markdown.intention.category</categoryKey>
       </intentionAction>
+      <intentionAction>
+        <language>Markdown</language>
+        <className>com.intellij.markdown.backend.intentions.ConvertToReferenceLinkIntention</className>
+        <bundleName>messages.MarkdownBundle</bundleName>
+        <categoryKey>markdown.intention.category</categoryKey>
+      </intentionAction>
+      <intentionAction>
+        <language>Markdown</language>
+        <className>com.intellij.markdown.backend.intentions.ConvertToInlineLinkIntention</className>
+        <bundleName>messages.MarkdownBundle</bundleName>
+        <categoryKey>markdown.intention.category</categoryKey>
+      </intentionAction>
 
       <localInspection language="Markdown"
                        shortName="MarkdownIncorrectTableFormatting"
