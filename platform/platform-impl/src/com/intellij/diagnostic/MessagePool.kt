@@ -7,7 +7,6 @@ import com.intellij.diagnostic.MessagePoolAdvisor.EntryReadEvent
 import com.intellij.diagnostic.MessagePoolAdvisor.PoolClearedEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.util.SlowOperations
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineName
@@ -39,15 +38,6 @@ object MessagePool {
   private val myAdvisors: MutableList<MessagePoolAdvisor> = ContainerUtil.createLockFreeCopyOnWriteList()
   @Suppress("RAW_SCOPE_CREATION") // MessagePool is a process-wide singleton.
   private val coroutineScope = CoroutineScope(SupervisorJob() + CoroutineName("MessagePool"))
-
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("use 'addErrorMessage' instead", level = DeprecationLevel.ERROR)
-  fun addIdeFatalMessage(event: IdeaLoggingEvent) {
-    addErrorMessage(
-      if (event.data is AbstractMessage) event.data as AbstractMessage
-      else LogMessage(event.throwable, event.message, mutableListOf<Attachment>())
-    )
-  }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("use 'addErrorMessage' instead", level = DeprecationLevel.ERROR)
