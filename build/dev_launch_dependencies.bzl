@@ -182,7 +182,7 @@ dev_launch_extracted_repo = repository_rule(
     [dev_launch_deps_repo] takes the network out of an assembly: the archive arrives as a declared input and the
     downloader reads it from there. Extraction stayed behind, in `<communityRoot>/build/download` - a cache in the
     checkout, which a build reading a shared read-only project tree cannot write, and which no action declares. So an
-    archive whose *contents* the assembly reads is extracted here, the same way `bun` is (see community/MODULE.bazel),
+    archive whose *contents* the assembly reads is extracted here, the same way `bun` is (see the ultimate MODULE.bazel),
     and the consumer is handed files rather than a directory it has to populate.
     """,
     implementation = _extracted_repo_impl,

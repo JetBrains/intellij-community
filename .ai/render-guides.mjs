@@ -1165,7 +1165,7 @@ async function renderGuideOutputsWithContext({basePartials, defaultEdition}) {
 }
 
 /**
- * Renders every output into the checkout. Exported for `@community//.ai:render-guides`, which imports
+ * Renders every output into the checkout. Exported for `//.ai:render-guides`, which imports
  * this module rather than executing it, so the entry guard at the bottom does not fire.
  */
 export async function main() {

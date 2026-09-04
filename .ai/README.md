@@ -3,7 +3,7 @@
 This directory (`community/.ai`) contains the templates and documentation source used by:
 
 ```bash
-bazel run @community//.ai:render-guides
+bazel run //.ai:render-guides
 ```
 
 The renderer produces guide files (`AGENTS.md`, `CLAUDE.md`, `.junie/AGENTS.md`), skill stubs, OpenCode config/skills, and the harness tool-permission rules.
@@ -11,16 +11,18 @@ The renderer produces guide files (`AGENTS.md`, `CLAUDE.md`, `.junie/AGENTS.md`)
 ## Quick run
 
 ```bash
-bazel run @community//.ai:render-guides
+bazel run //.ai:render-guides
 ```
 
-The target runs `render-guides.mjs` on the bun Bazel pins (`@community//build:bun`) rather than on a machine-provided `node`; `community/.ai/BUILD.bazel` documents how. It renders into the workspace `bazel run` was invoked from, which must be the monorepo root — the renderer's repo root is the parent of `community/`.
+The target runs `render-guides.mjs` on the bun Bazel pins (`//build:bun`) rather than on a machine-provided `node`; `.ai/BUILD.bazel` documents how. It renders into the workspace `bazel run` was invoked from, which must be the monorepo root — the renderer's repo root is the parent of `community/`.
+
+The target lives in the ultimate `.ai/` package, not beside these sources: a community sync analyzes `//...`, so a community target would download bun for every sync. The renderer renders the monorepo and refuses to run from a community checkout, so it loses nothing.
 
 Force edition when needed:
 
 ```bash
-AI_GUIDE_EDITION=COMMUNITY bazel run @community//.ai:render-guides
-AI_GUIDE_EDITION=ULTIMATE  bazel run @community//.ai:render-guides
+AI_GUIDE_EDITION=COMMUNITY bazel run //.ai:render-guides
+AI_GUIDE_EDITION=ULTIMATE  bazel run //.ai:render-guides
 ```
 
 ## What is generated

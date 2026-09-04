@@ -2,7 +2,7 @@
   "$comment": [
     "The repository's tool-permission list, rendered by community/.ai/render-guides.mjs into",
     ".claude/settings.json (permissions.allow / permissions.deny) and .codex/rules/default.rules.",
-    "Edit this file and rerun `bazel run @community//.ai:render-guides`; never edit the generated",
+    "Edit this file and rerun `bazel run //.ai:render-guides`; never edit the generated",
     "rules by hand.",
     "",
     "Entries are argv prefixes, not command strings: [\"./bazel.cmd\", \"build\"] matches",

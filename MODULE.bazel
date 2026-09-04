@@ -168,45 +168,6 @@ override_repo(
     remote_java_tools_windows = "remote_java_tools_windows_with_vc_redist",
 )
 
-# bun as a declared Bazel input, so a test that needs the JS runtime does not depend on
-# `tools/bun.cmd` having populated its per-user cache — the wrapper downloads on demand, which a
-# sandboxed test cannot do (`sandbox = True` implies `block-network`). See //build:bun for the
-# host-selected alias, and plugins/air/docs/decisions/0016-bazel-provided-bun.md for why the AIR
-# architecture gate needs it.
-#
-# The version and checksums must stay in sync with `tools/bun.cmd`; `BunToolConsistencyTest` enforces
-# that. The checksums are the upstream release archives', which is what `sha256` here wants too.
-BUN_VERSION = "1.4.0"
-
-# A mirror of the GitHub release, byte-identical: `bazel_downloader.cfg` routes github.com through
-# cache-redirector.jetbrains.com, and the redirector does not serve the `oven-sh/bun` repo.
-BUN_BASE_URL = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/bun"
-
-BUN_PLATFORMS = {
-    "linux_x64": "2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452",
-    "linux_aarch64": "4b1a332ee861983eb93bcfe6f770fff94e3e31b2c388bdaea3c8ed35e58eed0e",
-    "windows_x64": "e6f093d39da486b20262ca8cdd5ed6a9e8bc9c2f275b78e6d3a0c5b28cc95901",
-    "windows_aarch64": "f473bfe2df73ee770548c93dd5d380aea7120c218ec2aa1afdd0bbba7bf18c47",
-    "darwin_x64": "1d0211b8f1dc991182344687ad15e72ee86f154845a5f7fa477994cd341dd9b0",
-    "darwin_aarch64": "c669e97f6164e1c96e0701748db98dfa77492908cbd8394c7557134a735de381",
-}
-
-[
-    http_archive(
-        name = "bun_%s" % platform,
-        build_file = "//build:BUILD.bun.bazel",
-        sha256 = sha256,
-        # the release zip nests everything under a directory named after the archive
-        strip_prefix = "bun-%s" % platform.replace("_", "-"),
-        url = "{base}/{version}/bun-{platform}.zip".format(
-            base = BUN_BASE_URL,
-            platform = platform.replace("_", "-"),
-            version = BUN_VERSION,
-        ),
-    )
-    for platform, sha256 in BUN_PLATFORMS.items()
-]
-
 # Register the extension that runs jps-to-bazel converter and provides target lists for dev-build.
 # This creates the @jps_dynamic_deps_community repository.
 use_repo(

@@ -24,7 +24,7 @@ The search wrappers are `./community/tools/fd.cmd` and `./community/tools/rg.cmd
 
 Prefer a documented wrapper command over a hand-rolled equivalent. A spelling the allowlist knows runs
 without a prompt. A novel one does not. Add a new entry to `community/.ai/tool-permissions.json` and rerun
-`bazel run @community//.ai:render-guides`. Never edit a harness allowlist by hand.
+`bazel run //.ai:render-guides`. Never edit a harness allowlist by hand.
 
 ## Shell outside the working copy
 

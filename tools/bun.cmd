@@ -27,7 +27,7 @@ export TOOL_CHECKSUM_MACOS_X64="1d0211b8f1dc991182344687ad15e72ee86f154845a5f7fa
 export TOOL_CHECKSUM_MACOS_ARM64="c669e97f6164e1c96e0701748db98dfa77492908cbd8394c7557134a735de381"
 
 # Download URLs: the JetBrains mirror of the GitHub release archives, byte-identical. The same
-# mirror serves the bun_* http_archives in community/MODULE.bazel, so both pins share one source.
+# mirror serves the bun_* http_archives in the ultimate MODULE.bazel, so both pins share one source.
 TOOL_MIRROR="https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/bun/${TOOL_VERSION}"
 export TOOL_URL_LINUX_X64="${TOOL_MIRROR}/bun-linux-x64.zip"
 export TOOL_URL_LINUX_ARM64="${TOOL_MIRROR}/bun-linux-aarch64.zip"
@@ -68,7 +68,7 @@ set "TOOL_CHECKSUM_MACOS_X64=1d0211b8f1dc991182344687ad15e72ee86f154845a5f7fa477
 set "TOOL_CHECKSUM_MACOS_ARM64=c669e97f6164e1c96e0701748db98dfa77492908cbd8394c7557134a735de381"
 
 REM Download URLs: the JetBrains mirror of the GitHub release archives, byte-identical. The same
-REM mirror serves the bun_* http_archives in community/MODULE.bazel, so both pins share one source.
+REM mirror serves the bun_* http_archives in the ultimate MODULE.bazel, so both pins share one source.
 set "TOOL_MIRROR=https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/bun/%TOOL_VERSION%"
 set "TOOL_URL_LINUX_X64=%TOOL_MIRROR%/bun-linux-x64.zip"
 set "TOOL_URL_LINUX_ARM64=%TOOL_MIRROR%/bun-linux-aarch64.zip"

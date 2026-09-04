@@ -1,7 +1,7 @@
 {{PARTIAL:frontmatter}}
 
 <!-- TEMPLATE:COMMENT -->
-To regenerate, run `bazel run @community//.ai:render-guides`.
+To regenerate, run `bazel run //.ai:render-guides`.
 <!-- /TEMPLATE:COMMENT -->
 
 **Critical:** These guidelines MUST be followed at all times.

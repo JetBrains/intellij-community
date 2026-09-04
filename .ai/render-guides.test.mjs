@@ -198,7 +198,7 @@ describe('render-guides skills', () => {
 
     for (const [output, expectedContent] of renderedOutputs) {
       const actualContent = readFileSync(join(repoRoot, output), 'utf8')
-      equal(actualContent, expectedContent, `${output} is stale; run bazel run @community//.ai:render-guides`)
+      equal(actualContent, expectedContent, `${output} is stale; run bazel run //.ai:render-guides`)
     }
   })
 
@@ -219,7 +219,7 @@ describe('render-guides skills', () => {
 
     for (const [output, expectedContent] of renderedOutputs) {
       const actualContent = readFileSync(join(repoRoot, output), 'utf8')
-      equal(actualContent, expectedContent, `${output} is stale; run bazel run @community//.ai:render-guides`)
+      equal(actualContent, expectedContent, `${output} is stale; run bazel run //.ai:render-guides`)
     }
     if (existsSync(join(repoRoot, '.ultimate.root.marker'))) {
       equal([...renderedOutputs.keys()].join(' '), '.claude/settings.json .codex/rules/default.rules')
