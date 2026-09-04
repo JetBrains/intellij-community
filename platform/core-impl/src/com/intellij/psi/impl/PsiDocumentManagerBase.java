@@ -606,7 +606,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
           }
         }
         finally {
-          LOG.error("Exception while committing " + viewProviders + ", eventSystemEnabled=" + isEventSystemEnabled(document), e);
+          LOG.error("Exception while committing " + viewProviders + (InternalPsiVersioning.isInForkedTimeline() ? "" : ", eventSystemEnabled=" + isEventSystemEnabled(document)), e);
         }
       }
       finally {
