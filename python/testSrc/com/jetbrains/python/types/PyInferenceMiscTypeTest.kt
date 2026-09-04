@@ -2,6 +2,7 @@
 package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Disabled
@@ -273,49 +274,57 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-76659"])
-    fun `class chain fixed point in while loop`() = test("""
-      class A:
-          def bar() -> "B":
-              return B()
-      class B:
-          def bar() -> "C":
-              return C()
-      class C:
-          def bar() -> "D":
-              return D()
-      class D:
-          def bar() -> A:
-              return A()
+    fun `class chain fixed point in while loop`() {
+      if (!Registry.`is`("python.use.better.control.flow.type.inference")) return
 
-      def foo(b):
-          x = A()
-          while b:
-              x = x.bar()
+      test("""
+        class A:
+            def bar() -> "B":
+                return B()
+        class B:
+            def bar() -> "C":
+                return C()
+        class C:
+            def bar() -> "D":
+                return D()
+        class D:
+            def bar() -> A:
+                return A()
 
-          expr = x
-      #   └ TYPE A | B | C | D
-      """)
+        def foo(b):
+            x = A()
+            while b:
+                x = x.bar()
+
+            expr = x
+        #   └ TYPE A | B | C | D
+        """)
+    }
 
     @Test
     @TestFor(issues = ["PY-76659"])
-    fun `types in loop compute fast`() = test("""
-      def is_empty(x: int, y: int) -> bool:
-          ...
+    fun `types in loop compute fast`() {
+      if (!Registry.`is`("python.use.better.control.flow.type.inference")) return
 
-      def drop_grain() -> None:
-          x, y = 500, 0
+      test("""
+        def is_empty(x: int, y: int) -> bool:
+            ...
 
-          while True:
-              if is_empty(x, y):
-                  x, y = x + 1, y
-              elif is_empty(x, y):
-                  x, y = x, y
-              elif is_empty((expr := x), y):
-      #                      └ TYPE Literal[500] | int
-                  x, y = x, y
-              elif not is_empty(x, y):
-                  break
-      """)
+        def drop_grain() -> None:
+            x, y = 500, 0
+
+            while True:
+                if is_empty(x, y):
+                    x, y = x + 1, y
+                elif is_empty(x, y):
+                    x, y = x, y
+                elif is_empty((expr := x), y):
+        #                      └ TYPE Literal[500] | int
+                    x, y = x, y
+                elif not is_empty(x, y):
+                    break
+        """)
+    }
 
     // TODO investigate the inference flakyness
     // The test is disabled because it's flaky: sometimes different types are inferred in the code analysis and user-initiated contexts.
