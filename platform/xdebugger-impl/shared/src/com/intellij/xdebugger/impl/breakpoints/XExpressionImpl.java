@@ -73,6 +73,10 @@ public class XExpressionImpl implements XExpression {
     return new XExpressionImpl(expression.getExpression(), language, expression.getCustomInfo(), expression.getMode());
   }
 
+  public static XExpressionImpl changeText(@NotNull XExpression expression, @NotNull String newExpression) {
+    return new XExpressionImpl(newExpression, expression.getLanguage(), expression.getCustomInfo(), expression.getMode());
+  }
+
   @Override
   public String toString() {
     return myExpression;

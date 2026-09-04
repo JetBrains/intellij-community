@@ -63,6 +63,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProviderBase;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,6 +95,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public abstract class XDebuggerEditorBase implements Expandable {
   public static final Key<Boolean> XDEBUGGER_EDITOR_KEY = Key.create("is.xdebugger.editor");
@@ -112,6 +114,16 @@ public abstract class XDebuggerEditorBase implements Expandable {
   private JBPopup myExpandedPopup;
 
   private Runnable myExpandHandler;
+
+  /**
+   * A proper document for an initial expression can take long to form.
+   * To avoid the UI lag, user interacts with this raw document
+   * until the relevant {@link XDebuggerEditorsProvider} computes the real one.
+   *
+   * @see #createDocumentAsync(XExpression, Consumer)
+   */
+  @ApiStatus.Experimental
+  protected static final Key<Boolean> DUMMY_DOCUMENT = Key.create("DummyDocument");
 
   protected XDebuggerEditorBase(final Project project,
                                 @NotNull XDebuggerEditorsProvider debuggerEditorsProvider,
@@ -684,5 +696,49 @@ public abstract class XDebuggerEditorBase implements Expandable {
     if (editor != null) {
       AbstractToggleUseSoftWrapsAction.toggleSoftWraps(editor, null, use);
     }
+  }
+
+  /**
+   * Creates the document for the given initialExpression in two steps:
+   * 1. Set a dummy document with the given text immediately;
+   * 2. Schedule the real document creation on a background thread.
+   *
+   * @param initialExpression the expression to create the document for
+   * @param documentConsumer the consumer to accept both the dummy and the real document
+   */
+  @ApiStatus.Experimental
+  protected void createDocumentAsync(@NotNull XExpression initialExpression,
+                                     @NotNull Consumer<@NotNull Document> documentConsumer) {
+    // set a dummy document immediately
+    DocumentImpl dummyDocument = new DocumentImpl(initialExpression.getExpression());
+    dummyDocument.putUserData(DUMMY_DOCUMENT, true);
+    documentConsumer.accept(dummyDocument);
+
+    // schedule the real document creation
+    ReadAction.nonBlocking(() -> {
+        // if a user typed something while createDocument, this read action will be canceled
+        // and re-run. We must make sure that the next attempt picks up the expression with the user changes
+        String text = dummyDocument.getText();
+        XExpression expression = text.equals(initialExpression.getExpression())
+                                 ? initialExpression
+                                 // we expect that only text can change between (re)scheduled runs:
+                                 // pseudo-imports cannot be added to dummyDocument as there's no PSI yet,
+                                 // and new imports in the relevant real file will be accounted in myContext
+                                 : XExpressionImpl.changeText(initialExpression, text);
+        return createDocument(expression);
+      })
+      .inSmartMode(getProject())
+      .finishOnUiThread(ModalityState.any(), document -> {
+        // TODO current callers pass EditorTextField.setDocument to the lambda,
+        //      which recreates the editor and thus, for example, invalidates
+        //      the current caret position, which might break the user's typing flow.
+        //      If there's a problem that the typing breaks after creating a debugger editor
+        //      with a pre-selected text, or switching an expression from history,
+        //      this place is the likely culprit.
+        documentConsumer.accept(document);
+        getEditorsProvider().afterEditorCreated(getEditor());
+      })
+      .coalesceBy(this)
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 }

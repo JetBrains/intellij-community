@@ -59,6 +59,10 @@ f:com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 - *s:createFormattedTextEditor(java.lang.String,com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,Z):com.intellij.openapi.editor.Editor
 - *s:createFormattedTextViewer(java.lang.String,com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):com.intellij.openapi.editor.Editor
 - *s:createTextViewer(java.lang.String,com.intellij.openapi.project.Project):com.intellij.xdebugger.impl.ui.TextViewer
+a:com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
+- com.intellij.ui.Expandable
+- *psf:DUMMY_DOCUMENT:com.intellij.openapi.util.Key
+- *p:createDocumentAsync(com.intellij.xdebugger.XExpression,java.util.function.Consumer):V
 *:com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction$ReferrersTreeCustomizer
 - a:getDialog(com.intellij.xdebugger.XDebugSession,java.lang.String,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.frame.XValueMarkers):com.intellij.openapi.ui.DialogWrapper
 *a:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase

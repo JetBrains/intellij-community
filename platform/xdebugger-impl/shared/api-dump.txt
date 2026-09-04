@@ -50,6 +50,7 @@ c:com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 - <init>(java.lang.String,com.intellij.lang.Language,java.lang.String,com.intellij.xdebugger.evaluation.EvaluationMode):V
 - s:changeLanguage(com.intellij.xdebugger.XExpression,com.intellij.lang.Language):com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 - s:changeMode(com.intellij.xdebugger.XExpression,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
+- s:changeText(com.intellij.xdebugger.XExpression,java.lang.String):com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 - equals(java.lang.Object):Z
 - s:fromText(java.lang.String):com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 - s:fromText(java.lang.String,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
