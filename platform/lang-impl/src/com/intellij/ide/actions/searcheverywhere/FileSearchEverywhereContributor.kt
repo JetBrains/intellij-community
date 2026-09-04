@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationRequests
 import com.intellij.pom.Navigatable
@@ -193,6 +194,8 @@ class FileSearchEverywhereContributorFactory : SearchEverywhereContributorFactor
   override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<Any?> {
     return PSIPresentationBgRendererWrapper.wrapIfNecessary(FileSearchEverywhereContributor(initEvent))
   }
+
+  override fun isAvailable(project: Project): Boolean = !WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
 }
 
 @Internal

@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend.tabs.files
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSession
@@ -25,9 +26,14 @@ class SeFilesTabFactory : SeEssentialTabFactory {
     val delegate = SeTabDelegate.create(project,
                                         session,
                                         "Files",
-                                        listOf(SeProviderId(SeProviderIdUtils.FILES_ID),
-                                               SeProviderId(SeProviderIdUtils.NON_INDEXABLE_FILES_ID),
-                                               SeProviderId(SeProviderIdUtils.FUZZY_FILES_ID)),
+                                        if (WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
+                                          listOf(SeProviderId(SeProviderIdUtils.RECENT_FILES_ID))
+                                        }
+                                        else {
+                                          listOf(SeProviderId(SeProviderIdUtils.FILES_ID),
+                                                 SeProviderId(SeProviderIdUtils.NON_INDEXABLE_FILES_ID),
+                                                 SeProviderId(SeProviderIdUtils.FUZZY_FILES_ID))
+                                        },
                                         initEvent,
                                         scope)
 

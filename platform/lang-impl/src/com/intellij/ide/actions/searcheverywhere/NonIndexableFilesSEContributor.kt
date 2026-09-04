@@ -9,7 +9,6 @@ import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -21,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SmartPointerManager
@@ -365,6 +365,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
 
     override fun isAvailable(project: Project?): Boolean {
       return project != null && Registry.`is`("se.enable.non.indexable.files.contributor")
+             && !WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
     }
   }
 }
