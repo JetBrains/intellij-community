@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution
 
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -231,13 +232,14 @@ class SurefireReportParserTest {
 
   @Test
   fun `square brackets are escaped`() {
+    // Parameterized invocation: display name = "suite.param.[0]" → escaped = "suite.param.|[0|]"
     writeReport("TEST-Esc3.xml", """
       <testsuite name="suite">
         <testcase name="param[0]" classname="suite"/>
       </testsuite>
     """)
 
-    assertTrue(messages().any { "param|[0|]" in it })
+    assertTrue(messages().any { "param.|[0|]" in it })
   }
 
   @Test
@@ -266,6 +268,68 @@ line2</failure>
     """)
 
     assertTrue(messages().any { "testStarted" in it && "com.example.FallbackTest.noClass" in it })
+  }
+
+  // ── parameterized test grouping ───────────────────────────────────────────
+
+  @Test
+  fun `parameterized invocations are grouped under a method suite`() {
+    writeReport("TEST-com.example.DiscountTest.xml", """
+      <testsuite name="com.example.DiscountTest">
+        <testcase name="calculateDiscount(int, int, int)[1] 100, 10, 90" classname="com.example.DiscountTest"/>
+        <testcase name="calculateDiscount(int, int, int)[2] 200, 20, 160" classname="com.example.DiscountTest"/>
+        <testcase name="calculateDiscount(int, int, int)[3] 50, 100, 0" classname="com.example.DiscountTest"/>
+      </testsuite>
+    """)
+
+    val msgs = messages()
+
+    // Method-level suite wraps the invocations.
+    val methodSuiteStart = msgs.indexOfFirst { "testSuiteStarted" in it && "calculateDiscount(int, int, int)" in it }
+    val methodSuiteEnd = msgs.indexOfFirst { "testSuiteFinished" in it && "calculateDiscount(int, int, int)" in it }
+    assertTrue(methodSuiteStart >= 0, "method suite start missing")
+    assertTrue(methodSuiteEnd >= 0, "method suite end missing")
+    assertTrue(methodSuiteStart < methodSuiteEnd)
+
+    // Each invocation is a test node with the invocation suffix after a dot.
+    assertTrue(msgs.any { "testStarted" in it && "calculateDiscount(int, int, int).|[1|]" in it })
+    assertTrue(msgs.any { "testStarted" in it && "calculateDiscount(int, int, int).|[2|]" in it })
+    assertTrue(msgs.any { "testStarted" in it && "calculateDiscount(int, int, int).|[3|]" in it })
+
+    // The method suite is nested inside the class suite.
+    val classSuiteStart = msgs.indexOfFirst { "testSuiteStarted" in it && "com.example.DiscountTest'" in it }
+    assertTrue(classSuiteStart < methodSuiteStart, "class suite must open before method suite")
+  }
+
+  @Test
+  fun `non-parameterized tests are not wrapped in a method suite`() {
+    writeReport("TEST-com.example.PlainTest.xml", """
+      <testsuite name="com.example.PlainTest">
+        <testcase name="myTest" classname="com.example.PlainTest"/>
+      </testsuite>
+    """)
+
+    val msgs = messages()
+    // Exactly one suite: the class suite; no extra method-level suite.
+    assertEquals(1, msgs.count { "testSuiteStarted" in it })
+    assertTrue(msgs.any { "testStarted" in it && "com.example.PlainTest.myTest" in it })
+  }
+
+  @Test
+  fun `mixed parameterized and plain tests in same suite`() {
+    writeReport("TEST-com.example.MixTest.xml", """
+      <testsuite name="com.example.MixTest">
+        <testcase name="plain" classname="com.example.MixTest"/>
+        <testcase name="param[1] a" classname="com.example.MixTest"/>
+        <testcase name="param[2] b" classname="com.example.MixTest"/>
+      </testsuite>
+    """)
+
+    val msgs = messages()
+    assertTrue(msgs.any { "testStarted" in it && "com.example.MixTest.plain" in it })
+    assertTrue(msgs.any { "testSuiteStarted" in it && "com.example.MixTest.param" in it })
+    assertTrue(msgs.any { "testStarted" in it && "param.|[1|]" in it })
+    assertTrue(msgs.any { "testStarted" in it && "param.|[2|]" in it })
   }
 
   // ── multiple suites ───────────────────────────────────────────────────────

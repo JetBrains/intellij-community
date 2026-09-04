@@ -73,10 +73,20 @@ internal class SurefireRerunFailedTestsAction(
 fun surefireTestSpec(displayName: String): String? {
   val dot = displayName.lastIndexOf('.')
   if (dot < 0) return null
-  val className = displayName.substring(0, dot)
+  val classPart = displayName.substring(0, dot)
   val rawMethod = displayName.substring(dot + 1)
   // Strip the parameterized suffix: "(Type)[index] value" or "[index] value".
   val methodName = rawMethod.substringBefore('(').substringBefore('[').trimEnd()
-  if (methodName.isEmpty()) return null
-  return "$className#$methodName"
+  if (methodName.isNotEmpty()) return "$classPart#$methodName"
+
+  // Grouped invocation format: displayName = "ClassName.methodName(Types).[index] value"
+  // The part after the last dot is "[index] value" (empty after stripping brackets).
+  // classPart = "ClassName.methodName(Types)" — extract class and bare method from it.
+  val innerDot = classPart.lastIndexOf('.')
+  if (innerDot < 0) return null
+  val trueClass = classPart.substring(0, innerDot)
+  val methodWithTypes = classPart.substring(innerDot + 1)
+  val trueMethod = methodWithTypes.substringBefore('(').trimEnd()
+  if (trueMethod.isEmpty()) return null
+  return "$trueClass#$trueMethod"
 }

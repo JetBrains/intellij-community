@@ -67,13 +67,53 @@ object SurefireReportParser {
     root.getChild("system-out")?.textTrim?.takeIf { it.isNotEmpty() }?.let { messages += it }
     root.getChild("system-err")?.textTrim?.takeIf { it.isNotEmpty() }?.let { messages += it }
 
+    // Track the currently open method-level suite for parameterized test grouping.
+    var openMethodSuite: String? = null
+
     for (testcase in root.getChildren("testcase")) {
       val name = testcase.getAttributeValue("name") ?: continue
       val classname = stripSuffix(testcase.getAttributeValue("classname") ?: suiteName)
       val durationMs = testcase.getAttributeValue("time")?.toDoubleOrNull()?.let { (it * 1000).toLong() }
-      val displayName = "$classname.$name"
 
-      messages += "##teamcity[testStarted name='${escape(displayName)}' locationHint='java:test://${escape(classname)}/${escape(name)}']"
+      // Detect parameterized invocations by the "[" marker Surefire uses for indices.
+      val bracketIdx = name.indexOf('[')
+      val methodSuite: String?
+      val displayName: String
+      val locationHint: String
+
+      if (bracketIdx >= 0) {
+        // Parameterized invocation: group under a method-level suite.
+        // baseMethod may include parameter types, e.g. "calculateDiscount(int, int, int)".
+        val baseMethod = name.substring(0, bracketIdx).trimEnd()
+        val invocationSuffix = name.substring(bracketIdx)
+        methodSuite = "$classname.$baseMethod"
+        // Add a dot before the invocation suffix so the SM runner strips the method suite
+        // prefix when forming the display label, e.g. "[1] 100, 10, 90".
+        displayName = "$methodSuite.$invocationSuffix"
+        // Use the bare method name (no param types) for navigation.
+        val bareMethod = baseMethod.substringBefore('(').trimEnd()
+        locationHint = "java:test://${escape(classname)}/${escape(bareMethod)}"
+      }
+      else {
+        // Non-parameterized test: emit directly under the class suite.
+        methodSuite = null
+        displayName = "$classname.$name"
+        locationHint = "java:test://${escape(classname)}/${escape(name)}"
+      }
+
+      // Close the previous method suite when the current test belongs to a different group.
+      if (openMethodSuite != null && openMethodSuite != methodSuite) {
+        messages += "##teamcity[testSuiteFinished name='${escape(openMethodSuite)}']"
+        openMethodSuite = null
+      }
+      // Open a new method suite for the first invocation of a parameterized method.
+      if (methodSuite != null && openMethodSuite == null) {
+        val bareMethod = name.substring(0, bracketIdx).trimEnd().substringBefore('(').trimEnd()
+        messages += "##teamcity[testSuiteStarted name='${escape(methodSuite)}' locationHint='java:test://${escape(classname)}/${escape(bareMethod)}']"
+        openMethodSuite = methodSuite
+      }
+
+      messages += "##teamcity[testStarted name='${escape(displayName)}' locationHint='$locationHint']"
 
       testcase.getChild("system-out")?.textTrim?.takeIf { it.isNotEmpty() }?.let {
         messages += "##teamcity[testStdOut name='${escape(displayName)}' out='${escape(it)}']"
@@ -105,6 +145,11 @@ object SurefireReportParser {
 
       val durationAttr = if (durationMs != null) " duration='$durationMs'" else ""
       messages += "##teamcity[testFinished name='${escape(displayName)}'$durationAttr]"
+    }
+
+    // Close any method suite still open after the last testcase.
+    if (openMethodSuite != null) {
+      messages += "##teamcity[testSuiteFinished name='${escape(openMethodSuite)}']"
     }
 
     messages += "##teamcity[testSuiteFinished name='${escape(suiteName)}']"

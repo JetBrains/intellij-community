@@ -62,9 +62,22 @@ class SurefireRerunFailedTestsActionTest {
     assertEquals("com.example.MyTest#testFoo", surefireTestSpec("com.example.MyTest.testFoo [1]"))
   }
 
+  // ── grouped invocation names (parameterized grouping) ─────────────────────
+
   @Test
-  fun `method part that is entirely a bracket expression returns null`() {
-    // Display name "com.example.MyTest.[1]": method resolves to "" after stripping.
-    assertNull(surefireTestSpec("com.example.MyTest.[1]"))
+  fun `grouped invocation with typed method falls back to class and bare method`() {
+    // Grouped format: "ClassName.methodName(Types).[index] value"
+    assertEquals(
+      "com.example.DiscountTest#calculateDiscount",
+      surefireTestSpec("com.example.DiscountTest.calculateDiscount(int, int, int).[1] 100, 10, 90"),
+    )
+  }
+
+  @Test
+  fun `grouped invocation without param types falls back to class and method`() {
+    assertEquals(
+      "com.example.DiscountTest#calculateDiscount",
+      surefireTestSpec("com.example.DiscountTest.calculateDiscount.[1]"),
+    )
   }
 }
