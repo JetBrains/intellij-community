@@ -64,7 +64,7 @@ private suspend fun copyPyreflyBinary(targetDir: Path, context: BuildContext, os
   val platformDir = downloadPyrefly(context, pyreflyArtifactId(platformDirName)).resolve(platformDirName)
   val binary = platformDir.resolve(os.binaryName(PYREFLY_BINARY_NAME))
   check(Files.isRegularFile(binary)) {
-    "Pyrefly binary is missing from the archive: $binary"
+    "Pyrefly binary for ${os.osName} ${arch.archName} is missing from the archive: $binary"
   }
   context.messages.info("Bundling pyrefly binary at $binary into ${os.osName} ${arch.archName}")
   copyFileToDir(binary, targetDir.resolve(PYREFLY_DIR_NAME))
