@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
-import com.intellij.dvcs.branch.DvcsBranchInfo;
 import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
@@ -13,8 +12,6 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.messages.Topic;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Tag;
 import git4idea.fetch.GitFetchTagsMode;
 import git4idea.push.GitPushTagMode;
 import git4idea.reset.GitResetMode;
@@ -22,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,6 +43,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   public static final String SETTINGS_KEY = "Git.Settings";
 
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
+  private static final int RECENT_PUSH_TARGETS_LIMIT = 10; // Limit for recent push targets, in total
 
   private final Project project;
 
@@ -164,6 +163,48 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   public void setShowRecentBranches(boolean value) {
     getState().setShowRecentBranches(value);
+  }
+
+  /**
+   * Get the remembered push targets for the repository and the source branch. The most recent entry is first.
+   */
+  @ApiStatus.Internal
+  public @NotNull List<GitPushTargetHistoryEntry> getRecentPushTargets(@NotNull String repositoryRootPath, @NotNull String sourceBranch) {
+    List<GitPushTargetHistoryEntry> result = new ArrayList<>();
+    for (GitPushTargetHistoryEntry entry : getState().getRecentPushTargets()) {
+      if (matchesPushTargetKey(entry, repositoryRootPath, sourceBranch)) {
+        result.add(entry);
+      }
+    }
+    return result;
+  }
+
+  @ApiStatus.Internal
+  public void addRecentPushTarget(@NotNull String repositoryRootPath, @NotNull String sourceBranch,
+                                  @NotNull String targetRemote, @NotNull String targetBranch) {
+    GitPushTargetHistoryEntry entry = createPushTargetEntry(repositoryRootPath, sourceBranch, targetRemote, targetBranch);
+    List<GitPushTargetHistoryEntry> entries = getState().getRecentPushTargets();
+    entries.remove(entry);
+    while (entries.size() >= RECENT_PUSH_TARGETS_LIMIT) {
+      entries.removeLast();
+    }
+    entries.addFirst(entry);
+  }
+
+  private static @NotNull GitPushTargetHistoryEntry createPushTargetEntry(@NotNull String repositoryRootPath, @NotNull String sourceBranch,
+                                                                          @NotNull String targetRemote, @NotNull String targetBranch) {
+    GitPushTargetHistoryEntry entry = new GitPushTargetHistoryEntry();
+    entry.setRepositoryRootPath(repositoryRootPath);
+    entry.setSourceBranch(sourceBranch);
+    entry.setTargetRemote(targetRemote);
+    entry.setTargetBranch(targetBranch);
+    return entry;
+  }
+
+  private static boolean matchesPushTargetKey(@NotNull GitPushTargetHistoryEntry entry,
+                                              @NotNull String repositoryRootPath, @NotNull String sourceBranch) {
+    return Objects.equals(entry.getRepositoryRootPath(), repositoryRootPath) &&
+           Objects.equals(entry.getSourceBranch(), sourceBranch);
   }
 
   public boolean showTags() {
@@ -352,42 +393,6 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   @Override
   public void noStateLoaded() {
     loadState(new GitVcsOptions());
-  }
-
-  @Tag("push-target-info")
-  private static class PushTargetInfo extends DvcsBranchInfo {
-    @Attribute(value = "target-remote") public String targetRemoteName;
-    @Attribute(value = "target-branch") public String targetBranchName;
-
-    @SuppressWarnings("unused")
-    PushTargetInfo() {
-      this("", "", "", "");
-    }
-
-    PushTargetInfo(@NotNull String repositoryPath, @NotNull String source, @NotNull String targetRemote, @NotNull String targetBranch) {
-      super(repositoryPath, source);
-      targetRemoteName = targetRemote;
-      targetBranchName = targetBranch;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-
-      PushTargetInfo info = (PushTargetInfo)o;
-
-      if (targetRemoteName != null ? !targetRemoteName.equals(info.targetRemoteName) : info.targetRemoteName != null) return false;
-      if (targetBranchName != null ? !targetBranchName.equals(info.targetBranchName) : info.targetBranchName != null) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(super.hashCode(), targetRemoteName, targetBranchName);
-    }
   }
 
   @ApiStatus.Internal

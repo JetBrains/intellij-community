@@ -271,6 +271,8 @@
 
     <action id="Git.FindMergedLocalBranches" class="git4idea.branch.FindMergedLocalBranchesAction" internal="true"/>
 
+    <action id="Git.PrefillRecentPushTargets" class="git4idea.push.GitPrefillRecentPushTargetsAction" internal="true"/>
+
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
       <reference ref="Git.Rebase.Abort"/>
       <reference ref="Git.Merge.Abort"/>
