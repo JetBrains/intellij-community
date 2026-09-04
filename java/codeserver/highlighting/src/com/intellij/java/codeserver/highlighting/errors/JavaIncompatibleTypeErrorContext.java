@@ -133,7 +133,8 @@ public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable
       boolean matches = lSubstitutedType == rSubstitutedType ||
                         lSubstitutedType != null &&
                         rSubstitutedType != null &&
-                        TypeConversionUtil.typesAgree(lSubstitutedType, rSubstitutedType, true);
+                        TypeConversionUtil.typesAgree(lSubstitutedType, rSubstitutedType, true,
+                                                      rTypeParameter, rTypeData.substitutor);
       String openBrace = i == 0 ? "&lt;" : "";
       boolean showShortType = showShortType(lSubstitutedType, rSubstitutedType);
 

@@ -1293,11 +1293,10 @@ public final class TypeConversionUtil {
    * A declared bound can be another type parameter of the same declaration, as {@code S} is in
    * {@code <R extends CharSequence, S extends R>}. The type argument for that other parameter is then a wildcard
    * without an upper bound of its own, so the walk continues over the declared bounds of that parameter. It ends at
-   * {@code CharSequence}, which makes {@code StrangeDouble<?,?>} a subtype of
-   * {@code StrangeDouble<?,? extends CharSequence>}, as it is for javac.
+   * {@code CharSequence}, which makes {@code <?,?>} a subtype of {@code <?,? extends CharSequence>}, as it is for javac.
    *
    * @param visited the parameters the walk already passed, to stop it on a cyclic bound
-   * @return true if every type argument for {@code rightParameter} is assignable to {@code leftBound}
+   * @return true if the type argument for {@code rightParameter} is assignable to {@code leftBound}
    */
   private static boolean agreeByTypeParameterBound(@NotNull PsiType leftBound,
                                                    @NotNull PsiTypeParameter rightParameter,
