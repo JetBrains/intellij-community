@@ -1498,7 +1498,7 @@ private val COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST = setOf(
 
 private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.maven.server.eventListener.tests",
-  "intellij.agent.workbench.chat.tests",
+  "intellij.air.frontend.session.view.tests",
   "intellij.ant.tests",
   "intellij.commander.tests",
   "intellij.completionMlRanking.tests",
@@ -1566,7 +1566,6 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.performanceTesting.ui.tests",
   "intellij.platform.debugger.impl.frontend.tests",
   "intellij.platform.debugger.impl.ui.tests",
-  "intellij.platform.diagnostic.freezeAnalyzer.tests",
   "intellij.platform.diagnostic.telemetry.agent.extension.tests",
   "intellij.platform.diagnostic.telemetry.rt.tests",
   "intellij.platform.diff.tests",
