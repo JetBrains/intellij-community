@@ -57,19 +57,20 @@ class CompoundPMarkerRoot private constructor(
     spec: MarkerSpec,
     flavorFlags: Byte,
     markerReference: SnapshotMarkerReference?,
+    measure: Int,
   ): PMarkerRoot {
     val highlighter = markerReference?.get() as? SnapshotRangeHighlighterImpl
     require(highlighter != null) { "A compound marker root requires a snapshot highlighter" }
     return if (highlighter.targetAreaForStorage() == HighlighterTargetArea.EXACT_RANGE) {
       withRoots(
-        exactRangeRoot.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference),
+        exactRangeRoot.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure),
         linesInRangeRoot,
       )
     }
     else {
       withRoots(
         exactRangeRoot,
-        linesInRangeRoot.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference),
+        linesInRangeRoot.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure),
       )
     }
   }
@@ -80,6 +81,10 @@ class CompoundPMarkerRoot private constructor(
 
   override fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot {
     return updateMarker { it.updateSpec(markerId, spec) }
+  }
+
+  override fun updateMeasure(markerId: Long, measure: Int): PMarkerRoot {
+    return updateMarker { it.updateMeasure(markerId, measure) }
   }
 
   override fun remove(markerId: Long): PMarkerRoot {
@@ -106,6 +111,10 @@ class CompoundPMarkerRoot private constructor(
   ): Boolean {
     if (!exactRangeRoot.processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference, processor)) return false
     return linesInRangeRoot.processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference, processor)
+  }
+
+  override fun getPrefixAggregate(offset: Int): Int {
+    return exactRangeRoot.getPrefixAggregate(offset) + linesInRangeRoot.getPrefixAggregate(offset)
   }
 
   override fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry> {

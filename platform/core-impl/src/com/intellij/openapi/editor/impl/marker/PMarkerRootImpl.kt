@@ -54,6 +54,7 @@ open class PMarkerRootImpl private constructor(
     spec: MarkerSpec,
     flavorFlags: Byte,
     markerReference: SnapshotMarkerReference?,
+    measure: Int,
   ): PMarkerRoot {
     require(startOffset >= 0) { "startOffset must be non-negative" }
     require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
@@ -64,7 +65,7 @@ open class PMarkerRootImpl private constructor(
     editor.putValid(
       markerId,
       ValidNode(
-        MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags, markerReference),
+        MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure),
         parentId = NULL_NODE,
         leftId = NULL_NODE,
         rightId = NULL_NODE,
@@ -72,6 +73,7 @@ open class PMarkerRootImpl private constructor(
         maximumEndOffset = endOffset,
         lazyOffsetDelta = 0,
         subtreeFlavorFlags = flavorFlags,
+        subtreeAggregate = measure,
       )
     )
 
@@ -108,6 +110,24 @@ open class PMarkerRootImpl private constructor(
         spec.policy,
       ),
     )
+  }
+
+  override fun updateMeasure(markerId: Long, measure: Int): PMarkerRoot {
+    val state = states.getUnchecked(markerId) as? ValidNode ?: return this
+    if (state.entry.measure == measure) return this
+
+    val editor = MapBatchEditor(states, persistentMarkerCount)
+    editor.putValid(markerId, state.copy(entry = state.entry.copy(measure = measure)))
+    var currentId = markerId
+    while (currentId != NULL_NODE) {
+      val node = editor.valid(currentId)
+      val updatedAggregate = subtreeAggregate(editor, node.entry, node.leftId, node.rightId)
+      if (updatedAggregate != node.subtreeAggregate) {
+        editor.putValid(currentId, node.copy(subtreeAggregate = updatedAggregate))
+      }
+      currentId = node.parentId
+    }
+    return PMarkerRootImpl(rootId, editor.build(), persistentMarkerCount)
   }
 
   override fun remove(markerId: Long): PMarkerRoot {
@@ -274,6 +294,7 @@ open class PMarkerRootImpl private constructor(
           maximumEndOffset = entry.endOffset,
           lazyOffsetDelta = 0,
           subtreeFlavorFlags = entry.flavorFlags,
+          subtreeAggregate = entry.measure,
         )
       )
       editor.addPolicy(entry.spec.policy)
@@ -305,6 +326,30 @@ open class PMarkerRootImpl private constructor(
       requiredFlavorFlags = tastePreference and ALL_FLAVOR_FLAGS,
       processor = processor,
     )
+  }
+
+  override fun getPrefixAggregate(offset: Int): Int {
+    if (rootId == NULL_NODE) return 0
+    val root = states.getUnchecked(rootId) as ValidNode
+    if (offset >= root.maximumEndOffset) return root.subtreeAggregate
+
+    var prefixAggregate = 0
+    var nodeId = rootId
+    var ancestorDelta = 0
+    while (nodeId != NULL_NODE) {
+      val node = states.getUnchecked(nodeId) as ValidNode
+      val startOffset = node.entry.startOffset + ancestorDelta
+      val childDelta = ancestorDelta + node.lazyOffsetDelta
+      if (startOffset <= offset) {
+        prefixAggregate += subtreeAggregate(node.leftId) + node.entry.measure
+        nodeId = node.rightId
+      }
+      else {
+        nodeId = node.leftId
+      }
+      ancestorDelta = childDelta
+    }
+    return prefixAggregate
   }
 
   override fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry> {
@@ -383,6 +428,9 @@ open class PMarkerRootImpl private constructor(
     }
   }
 
+  private fun subtreeAggregate(markerId: Long): Int =
+    if (markerId == NULL_NODE) 0 else (states.getUnchecked(markerId) as ValidNode).subtreeAggregate
+
   private fun processRangeMarkersOverlappingWith(
     nodeId: Long,
     ancestorDelta: Int,
@@ -440,15 +488,41 @@ open class PMarkerRootImpl private constructor(
 
   private data class TraversalFrame(val node: ValidNode, val ancestorDelta: Int)
 
+  /**
+   * Stores one valid [entry] and the AVL links [parentId], [leftId], and [rightId].
+   *
+   * It caches [height], [maximumEndOffset], [subtreeFlavorFlags], and [subtreeAggregate].
+   * The offsets in [entry] and [maximumEndOffset] do not include pending shifts from ancestors.
+   * Readers add those shifts during traversal.
+   * [lazyOffsetDelta] is already included in both values and applies to the child subtrees.
+   */
   private data class ValidNode(
+    /** Stores the marker state at this node. */
     val entry: MarkerEntry,
+
+    /** Identifies the parent node, or [NULL_NODE] for the tree root. */
     val parentId: Long,
+
+    /** Identifies the left child, or [NULL_NODE] when no left child exists. */
     val leftId: Long,
+
+    /** Identifies the right child, or [NULL_NODE] when no right child exists. */
     val rightId: Long,
+
+    /** Stores the AVL subtree height, including this node. */
     val height: Int,
+
+    /** Stores the maximum end offset in this subtree, excluding deltas from ancestors. */
     val maximumEndOffset: Int,
+
+    /** Stores the offset delta that readers must add to both child subtrees. */
     val lazyOffsetDelta: Int,
+
+    /** Stores the bitwise OR of all flavor flags in this subtree. */
     val subtreeFlavorFlags: Byte,
+
+    /** Stores the sum of all [MarkerEntry.measure]s in this subtree. */
+    val subtreeAggregate: Int,
   ) : StoredNode
 
   private data class InvalidNode(
@@ -587,6 +661,12 @@ open class PMarkerRootImpl private constructor(
     private fun subtreeFlavorFlags(editor: MapBatchEditor, entry: MarkerEntry, leftId: Long, rightId: Long): Byte =
       (entry.flavorFlags.toInt() or subtreeFlavorFlags(editor, leftId) or subtreeFlavorFlags(editor, rightId)).toByte()
 
+    private fun subtreeAggregate(editor: MapBatchEditor, markerId: Long): Int =
+      if (markerId == NULL_NODE) 0 else editor.valid(markerId).subtreeAggregate
+
+    private fun subtreeAggregate(editor: MapBatchEditor, entry: MarkerEntry, leftId: Long, rightId: Long): Int =
+      entry.measure + subtreeAggregate(editor, leftId) + subtreeAggregate(editor, rightId)
+
     private fun balanceFactor(editor: MapBatchEditor, node: ValidNode): Int {
       return height(editor, node.leftId) - height(editor, node.rightId)
     }
@@ -643,6 +723,7 @@ open class PMarkerRootImpl private constructor(
         ),
         lazyOffsetDelta = 0,
         subtreeFlavorFlags = subtreeFlavorFlags(editor, entry, leftId, rightId),
+        subtreeAggregate = subtreeAggregate(editor, entry, leftId, rightId),
       )
       if (updated != node) editor.putValid(markerId, updated)
       editor.setParent(leftId, markerId)
@@ -951,6 +1032,7 @@ open class PMarkerRootImpl private constructor(
                 maximumEndOffset = updatedEntry.endOffset,
                 lazyOffsetDelta = 0,
                 subtreeFlavorFlags = updatedEntry.flavorFlags,
+                subtreeAggregate = updatedEntry.measure,
               )
             )
             result = insertAvl(editor, result, entry.markerId)
@@ -1065,6 +1147,7 @@ open class PMarkerRootImpl private constructor(
           maximumEndOffset = maximumEndOffset,
           lazyOffsetDelta = 0,
           subtreeFlavorFlags = subtreeFlavorFlags(editor, entry, leftId, rightId),
+          subtreeAggregate = subtreeAggregate(editor, entry, leftId, rightId),
         )
       )
       return entry.markerId

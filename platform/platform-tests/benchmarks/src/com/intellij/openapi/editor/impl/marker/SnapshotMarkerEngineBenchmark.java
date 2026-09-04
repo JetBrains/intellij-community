@@ -216,7 +216,7 @@ public class SnapshotMarkerEngineBenchmark {
           (long)index + 1L,
           startOffset,
           startOffset + MARKER_LENGTH,
-          NON_GREEDY_SPEC, (byte)0, null
+          NON_GREEDY_SPEC, (byte)0, null, 0
         );
       }
       root = currentRoot;

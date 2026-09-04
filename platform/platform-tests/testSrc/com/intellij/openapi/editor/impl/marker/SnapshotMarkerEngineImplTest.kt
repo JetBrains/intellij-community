@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.lang.ref.WeakReference
@@ -489,8 +490,6 @@ class SnapshotMarkerEngineImplTest {
       endOffset = 4,
       spec = nonGreedySpec()
     )
-    val markerId = marker.id
-
     assertTrue(fixture.document.removeRangeMarker(marker))
 
     val resolution = marker.resolve(fixture.initialSnapshot) as PMarkerResolution.Invalid
@@ -685,6 +684,79 @@ class SnapshotMarkerEngineImplTest {
 
     assertTrue(removed.containsMarkerId(1))
     assertFalse(purged.containsMarkerId(1))
+  }
+
+  @Test
+  fun `root aggregates marker measures by start offset`() {
+    val root = PMarkerRootImpl.empty()
+      .insert(1, 0, 0, nonGreedySpec(), flavorFlags = 0, measure = 2)
+      .insert(2, 2, 2, nonGreedySpec(), flavorFlags = 0, measure = 3)
+      .insert(3, 2, 2, nonGreedySpec(), flavorFlags = 0, measure = 5)
+      .insert(4, 5, 5, nonGreedySpec(), flavorFlags = 0, measure = 7)
+      .insert(5, 1, 1, nonGreedySpec(), flavorFlags = 0)
+
+    assertEquals(0, root.getPrefixAggregate(-1))
+    assertEquals(2, root.getPrefixAggregate(0))
+    assertEquals(2, root.getPrefixAggregate(1))
+    assertEquals(10, root.getPrefixAggregate(2))
+    assertEquals(17, root.getPrefixAggregate(Int.MAX_VALUE))
+  }
+
+  @Test
+  fun `non-empty markers reject non-zero measures`() {
+    val root = PMarkerRootImpl.empty().insert(1, 1, 2, nonGreedySpec(), flavorFlags = 0)
+
+    assertThrows(IllegalArgumentException::class.java) {
+      root.insert(2, 2, 3, nonGreedySpec(), flavorFlags = 0, measure = 1)
+    }
+    assertThrows(IllegalArgumentException::class.java) {
+      root.updateMeasure(1, 1)
+    }
+  }
+
+  @Test
+  fun `root marker measures survive persistent mutations`() {
+    val root = PMarkerRootImpl.empty()
+      .insert(1, 1, 1, nonGreedySpec(), flavorFlags = 0, measure = 2)
+      .insert(2, 3, 3, nonGreedySpec(), flavorFlags = 0, measure = 4)
+      .insert(3, 5, 5, nonGreedySpec(), flavorFlags = 0, measure = 8)
+    val updated = root.updateMeasure(2, 10)
+
+    assertEquals(14, root.getPrefixAggregate(Int.MAX_VALUE))
+    assertEquals(20, updated.getPrefixAggregate(Int.MAX_VALUE))
+    assertSame(updated, updated.updateMeasure(2, 10))
+    assertSame(updated, updated.updateMeasure(99, 10))
+
+    val shifted = applyPatch(updated, "abcdef", textPatch(startOffset = 0, endOffset = 0, newFragment = "xx"))
+    assertEquals(0, shifted.getPrefixAggregate(2))
+    assertEquals(2, shifted.getPrefixAggregate(3))
+
+    val invalidated = applyPatch(shifted, "xxabcdef", textPatch(startOffset = 4, endOffset = 6, newFragment = ""))
+    assertEquals(10, invalidated.getPrefixAggregate(Int.MAX_VALUE))
+
+    val removed = invalidated.remove(1)
+    assertEquals(8, removed.getPrefixAggregate(Int.MAX_VALUE))
+
+    val other = PMarkerRootImpl.empty().insert(4, 0, 0, nonGreedySpec(), flavorFlags = 0, measure = 16)
+    val merged = removed.mergeValidMarkersFrom(other)
+    assertEquals(24, merged.getPrefixAggregate(Int.MAX_VALUE))
+  }
+
+  @Test
+  fun `root marker measures survive a full rebuild`() {
+    val oldText = "alpha\ntarget\nomega"
+    val newText = "prefix\nalpha\ntarget\nomega\nsuffix"
+    val markerStart = oldText.indexOf("target") + 1
+    val root = PMarkerRootImpl.empty()
+      .insert(1, markerStart, markerStart, persistentSpec(), flavorFlags = 0, measure = 3)
+      .insert(2, markerStart, markerStart, nonGreedySpec(), flavorFlags = 0, measure = 5)
+
+    val rebuilt = applyPatch(root, oldText, textPatch(startOffset = 0, endOffset = oldText.length, newFragment = newText))
+    val expectedStart = newText.indexOf("target") + 1
+
+    assertEquals(0, rebuilt.getPrefixAggregate(expectedStart - 1))
+    assertEquals(3, rebuilt.getPrefixAggregate(expectedStart))
+    assertEquals(3, rebuilt.getPrefixAggregate(Int.MAX_VALUE))
   }
 
   @Test

@@ -62,6 +62,7 @@ interface PMarkerRoot {
    *
    * [flavorFlags] is the value obtained from the marker's `RangeMarkerEx.getFlavorFlags()` method at insertion time.
    * [markerReference] provides the marker handle with either weak or strong ownership. Standalone roots may omit it.
+   * [measure] contributes to prefix aggregate queries.
    */
   fun insert(
     markerId: Long,
@@ -70,6 +71,7 @@ interface PMarkerRoot {
     spec: MarkerSpec,
     flavorFlags: Byte,
     markerReference: SnapshotMarkerReference? = null,
+    measure: Int = 0,
   ): PMarkerRoot
 
   /**
@@ -85,6 +87,13 @@ interface PMarkerRoot {
    * If [markerId] is absent or invalid, this method returns the receiver unchanged.
    */
   fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot
+
+  /**
+   * Replaces the measure of a valid marker, preserving its range and other properties.
+   *
+   * If [markerId] is absent or invalid, this method returns the receiver unchanged.
+   */
+  fun updateMeasure(markerId: Long, measure: Int): PMarkerRoot
 
   /**
    * Removes the marker's endpoint anchors and secondary-index entries, retaining an absent tombstone with its last
@@ -110,14 +119,42 @@ interface PMarkerRoot {
    */
   fun mergeValidMarkersFrom(other: PMarkerRoot): PMarkerRoot
 
+  /**
+   * Contains the immutable state of one valid marker.
+   *
+   * Root operations expose the offsets in the coordinate space of the root's document snapshot.
+   */
   data class MarkerEntry(
+    /** Identifies the marker across roots and snapshots. */
     val markerId: Long,
+
+    /** Gives the inclusive start offset. */
     val startOffset: Int,
+
+    /** Gives the exclusive end offset. */
     val endOffset: Int,
+
+    /** Defines how document edits transform the marker. */
     val spec: MarkerSpec,
+
+    /** Selects query categories that the root uses for subtree pruning. */
     val flavorFlags: Byte,
+
+    /** Holds the optional marker handle and its ownership mode. */
     val markerReference: SnapshotMarkerReference? = null,
-  )
+
+    /** Contributes this integer to prefix aggregates. Non-empty markers must use the identity measure, zero. */
+    val measure: Int = 0,
+  ) {
+    init {
+      require(measure == 0 || startOffset == endOffset) {
+        "Only zero-length markers can have a non-zero measure"
+      }
+    }
+  }
+
+  /** Returns the prefix aggregate for valid markers whose start offset is not greater than [offset]. */
+  fun getPrefixAggregate(offset: Int): Int
 
   /**
    * Processes valid markers that non-strictly intersect the requested range and contain every bit in [tastePreference].
