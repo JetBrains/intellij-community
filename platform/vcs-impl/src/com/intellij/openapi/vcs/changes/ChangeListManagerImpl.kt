@@ -568,7 +568,7 @@ class ChangeListManagerImpl(
         indicator.checkCanceled()
 
         // do actual requests about file statuses
-        val builder = UpdatingChangeListBuilder(scope, updater, composite) {
+        val builder = UpdatingChangeListBuilder(project, scope, updater, composite) {
           project.isDisposed() || updateRequestsQueue.isStopped
         }
         dataHolder.notifyStartProcessingChanges(scope)

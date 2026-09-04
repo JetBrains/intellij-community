@@ -4,8 +4,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -16,9 +15,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Supplier;
 
 final class UpdatingChangeListBuilder implements ChangelistBuilder {
@@ -32,7 +28,8 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
   private final @NotNull ProjectLevelVcsManager myVcsManager;
   private final @NotNull FoldersCutDownWorker myFoldersCutDownWorker;
 
-  UpdatingChangeListBuilder(@NotNull VcsDirtyScope scope,
+  UpdatingChangeListBuilder(@NotNull Project project,
+                            @NotNull VcsDirtyScope scope,
                             @NotNull ChangeListUpdater changeListUpdater,
                             @NotNull FileHolderComposite composite,
                             @NotNull Supplier<Boolean> disposedGetter) {
@@ -40,7 +37,7 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
     myChangeListUpdater = changeListUpdater;
     myComposite = composite;
     myDisposedGetter = disposedGetter;
-    myVcsManager = ProjectLevelVcsManager.getInstance(changeListUpdater.getProject());
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myFoldersCutDownWorker = new FoldersCutDownWorker();
   }
 

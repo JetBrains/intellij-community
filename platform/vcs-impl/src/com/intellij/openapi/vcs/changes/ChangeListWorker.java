@@ -154,7 +154,6 @@ public final class ChangeListWorker {
     return new ChangeListWorker(this);
   }
 
-
   public void registerChangeTracker(@NotNull FilePath filePath, @NotNull PartialChangeTracker tracker) {
     if (myPartialChangeTrackers.containsKey(filePath)) {
       LOG.error(String.format("Attempt to register duplicate trackers: %s; old: %s; new: %s",
@@ -981,12 +980,8 @@ public final class ChangeListWorker {
 
     public ChangeListUpdater(@NotNull ChangeListWorker worker) {
       myWorker = worker.copy();
-      myVcsManager = ProjectLevelVcsManager.getInstance(worker.getProject());
+      myVcsManager = ProjectLevelVcsManager.getInstance(worker.myProject);
       myGate = new ChangeListManagerGateImpl();
-    }
-
-    public @NotNull Project getProject() {
-      return myWorker.getProject();
     }
 
     public @NotNull ChangeListManagerGate getGate() {
