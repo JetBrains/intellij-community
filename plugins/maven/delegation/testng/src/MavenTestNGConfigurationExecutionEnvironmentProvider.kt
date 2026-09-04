@@ -44,6 +44,8 @@ class MavenTestNGConfigurationExecutionEnvironmentProvider : MavenExecutionEnvir
     mavenRunConfiguration.beforeRunTasks = emptyList<BeforeRunTask<*>>()
     mavenRunConfiguration.testModuleDirectory = leafProject.directory
     mavenRunConfiguration.runnerSettings = MavenRunner.getInstance(project).state.clone().apply { isSkipTests = false }
+    val reportSuffix = System.currentTimeMillis().toString()
+    mavenRunConfiguration.reportSuffix = reportSuffix
 
     val runnerParameters = mavenRunConfiguration.runnerParameters
     // Run from root reactor so upstream modules are built fresh.
@@ -59,6 +61,7 @@ class MavenTestNGConfigurationExecutionEnvironmentProvider : MavenExecutionEnvir
       add("-Dtest=$testParam")
       add("-DfailIfNoTests=false")
       add("-Dsurefire.failIfNoSpecifiedTests=false")
+      add("-Dsurefire.reportNameSuffix=$reportSuffix")
       add("test")
     })
 

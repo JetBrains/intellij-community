@@ -24,12 +24,13 @@ object SurefireReportParser {
 
   const val SUREFIRE_REPORTS_PATH = "target/surefire-reports"
 
-  fun collectMessages(testModuleDirectory: Path): List<String> {
+  fun collectMessages(testModuleDirectory: Path, reportSuffix: String? = null): List<String> {
     val reportsDir = testModuleDirectory.resolve(SUREFIRE_REPORTS_PATH)
     if (!reportsDir.exists() || !reportsDir.isDirectory()) return emptyList()
 
+    val glob = if (reportSuffix != null) "*-$reportSuffix.xml" else "*.xml"
     val xmlFiles = try {
-      reportsDir.listDirectoryEntries("*.xml")
+      reportsDir.listDirectoryEntries(glob)
     }
     catch (e: Exception) {
       LOG.warn("Cannot list surefire reports in $reportsDir", e)

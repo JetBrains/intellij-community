@@ -29,7 +29,9 @@ import com.intellij.openapi.util.registry.Registry
 import java.io.OutputStream
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.deleteRecursively
+import kotlin.io.path.listDirectoryEntries
 
 class MavenSurefireConfigurationFactory(
   private val configurationName: String,
@@ -54,6 +56,9 @@ class MavenSurefireRunConfiguration(
 
   /** Directory of the Maven module whose Surefire test results to display after the build. */
   var testModuleDirectory: String? = null
+
+  /** Suffix appended to Surefire report filenames via `-Dsurefire.reportNameSuffix`. Isolates parallel runs. */
+  var reportSuffix: String? = null
 
   override fun getState(executor: Executor, env: ExecutionEnvironment): RunProfileState? {
     val delegate = super.getState(executor, env) ?: return null
@@ -112,7 +117,7 @@ private class SurefireTestRunProfileState(
     val mavenResult = delegate.execute(executor, runner) ?: return null
     val mavenHandler = (mavenResult as? DefaultExecutionResult)?.processHandler ?: return mavenResult
 
-    val proxy = SurefireProcessProxy(mavenHandler, testModuleDirectory)
+    val proxy = SurefireProcessProxy(mavenHandler, testModuleDirectory, configuration.reportSuffix)
     val properties = SurefireTestConsoleProperties(configuration, this.executor)
     val console = SMTestRunnerConnectionUtil.createConsole(properties)
     console.attachToProcess(proxy)
@@ -139,6 +144,7 @@ private val LOG = logger<SurefireProcessProxy>()
 private class SurefireProcessProxy(
   private val mavenHandler: ProcessHandler,
   private val testModuleDirectory: String,
+  private val reportSuffix: String?,
 ) : ProcessHandler() {
 
   // Filters out [IJ]-... Maven spy protocol messages (normally consumed by MavenHandlerFilterSpyWrapper).
@@ -156,7 +162,7 @@ private class SurefireProcessProxy(
       }
 
       override fun processTerminated(event: ProcessEvent) {
-        val messages = SurefireReportParser.collectMessages(Path.of(testModuleDirectory))
+        val messages = SurefireReportParser.collectMessages(Path.of(testModuleDirectory), reportSuffix)
         for (message in messages) {
           notifyTextAvailable("$message\n", ProcessOutputTypes.STDOUT)
         }
@@ -167,13 +173,25 @@ private class SurefireProcessProxy(
 
   override fun startNotify() {
     // Clear stale Surefire XML reports before Maven runs so the SM console never shows results from a previous run.
+    // When a suffix is set, delete only files with that suffix to avoid wiping a parallel run's reports.
     // Ignore errors (e.g. locked files on Windows) — stale reports are a minor nuisance, but aborting the run is worse.
-    @OptIn(ExperimentalPathApi::class)
-    try {
-      Path.of(testModuleDirectory).resolve(SurefireReportParser.SUREFIRE_REPORTS_PATH).deleteRecursively()
+    val reportsDir = Path.of(testModuleDirectory).resolve(SurefireReportParser.SUREFIRE_REPORTS_PATH)
+    if (reportSuffix != null) {
+      try {
+        reportsDir.listDirectoryEntries("*-$reportSuffix.xml").forEach { it.deleteIfExists() }
+      }
+      catch (e: Exception) {
+        LOG.warn("Could not clear stale surefire reports in $reportsDir", e)
+      }
     }
-    catch (e: Exception) {
-      LOG.warn("Could not clear stale surefire-reports in $testModuleDirectory", e)
+    else {
+      @OptIn(ExperimentalPathApi::class)
+      try {
+        reportsDir.deleteRecursively()
+      }
+      catch (e: Exception) {
+        LOG.warn("Could not clear stale surefire-reports in $testModuleDirectory", e)
+      }
     }
     super.startNotify()           // fires startNotified on proxy listeners (SM console)
     mavenHandler.startNotify()    // starts event dispatching on the Maven process
