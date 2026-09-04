@@ -29,6 +29,7 @@ import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.relativeTo
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
@@ -173,7 +174,7 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
           .filter { path -> isStableTestDataPath(relativeNames(root, path)) }
           .sorted()
           .forEach { path ->
-            digest.update(root.relativize(path).invariantSeparatorsPathString.toByteArray())
+            digest.update(root.relativeTo(path).invariantSeparatorsPathString.toByteArray())
             digest.update(0)
             DigestUtil.updateContentHash(digest, path)
           }
@@ -182,7 +183,7 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
     }
 
     private fun relativeNames(root: Path, path: Path): List<String> =
-      root.relativize(path).map { it.toString() }
+      root.relativeTo(path).map { it.toString() }
 
     private fun isStableTestDataPath(relativeNames: List<String>): Boolean =
       relativeNames.lastOrNull() != "local.properties" &&
