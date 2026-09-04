@@ -21,11 +21,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface ProjectViewRpc : RemoteApi<Unit> {
-  suspend fun getPaneRequestChannel(projectId: ProjectId, paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest>
-  
+  suspend fun getPaneRequestChannel(projectId: ProjectId, paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest>?
+
   suspend fun getPaneDescriptorsFlow(projectId: ProjectId): Flow<List<ProjectViewPaneDescriptorDTO>>
 
-  suspend fun getPaneStateFlow(projectId: ProjectId, paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEventDTO>
+  suspend fun getPaneStateFlow(projectId: ProjectId, paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEventDTO>?
 
   suspend fun findNodeForOpenedFile(projectId: ProjectId, paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePathImpl?
 

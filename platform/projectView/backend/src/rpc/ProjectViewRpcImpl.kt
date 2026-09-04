@@ -32,7 +32,7 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
   override suspend fun getPaneRequestChannel(
     projectId: ProjectId,
     paneId: ProjectViewPaneId,
-  ): SendChannel<ProjectViewPaneRequest> {
+  ): SendChannel<ProjectViewPaneRequest>? {
     return BackendProjectViewPaneService.getInstance(projectId.findProject()).getPaneRequestChannel(paneId)
   }
 
@@ -47,8 +47,8 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
   override suspend fun getPaneStateFlow(
     projectId: ProjectId,
     paneId: ProjectViewPaneId,
-  ): Flow<ProjectViewPaneStateEventDTO> {
-    return BackendProjectViewPaneService.getInstance(projectId.findProject()).getPaneStateFlow(paneId).map {
+  ): Flow<ProjectViewPaneStateEventDTO>? {
+    return BackendProjectViewPaneService.getInstance(projectId.findProject()).getPaneStateFlow(paneId)?.map {
       it.toDTO()
     }
   }

@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -157,8 +156,8 @@ abstract class ProjectViewPaneServiceBase(
     return managers.value?.get(paneId)
   }
 
-  override suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest> {
-    return awaitManager(paneId)?.getRequestChannel() ?: Channel<ProjectViewPaneRequest>(capacity = 0).also { it.close() }
+  override suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest>? {
+    return awaitManager(paneId)?.getRequestChannel()
   }
 
   override suspend fun getPaneDescriptorsFlow(): Flow<Collection<ProjectViewPaneDescriptorImpl>> {
@@ -168,8 +167,8 @@ abstract class ProjectViewPaneServiceBase(
       .distinctUntilChanged()
   }
 
-  override suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {
-    return awaitManager(paneId)?.getPaneStateFlow() ?: emptyFlow()
+  override suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent>? {
+    return awaitManager(paneId)?.getPaneStateFlow()
   }
 
   fun getPane(paneId: ProjectViewPaneId): ProjectViewPaneModel? {

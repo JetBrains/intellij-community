@@ -164,11 +164,11 @@ private class BackendDelegatingProjectViewPaneService(
     }
   }
 
-  override suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {
-    return rpc.getPaneStateFlow(project.projectId(), paneId).map { it.toEvent() }
+  override suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent>? {
+    return rpc.getPaneStateFlow(project.projectId(), paneId)?.map { it.toEvent() }
   }
 
-  override suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest> {
+  override suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest>? {
     return rpc.getPaneRequestChannel(project.projectId(), paneId)
   }
 
