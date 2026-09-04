@@ -6,7 +6,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
@@ -30,14 +29,9 @@ class MarkdownParserManager: Disposable {
     if (info != null && info.bufferHash == buffer.hashCode() && info.buffer == buffer) {
       return info.tree
     }
-    val stringBuffer = buffer as? String ?: buffer.toString()
     val parseResult = createMarkdownParser(flavour).parse(
       MarkdownElementTypes.MARKDOWN_FILE,
-      object : BombedCharSequence(stringBuffer) {
-        override fun checkCanceled() {
-          ProgressManager.checkCanceled()
-        }
-      },
+      CancellableText.of(buffer),
       parseInlines = false
     )
     lastParsingResult.set(SoftReference(ParsingResult(buffer, parseResult)))

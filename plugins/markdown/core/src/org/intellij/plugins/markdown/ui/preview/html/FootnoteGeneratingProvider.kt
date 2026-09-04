@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.ui.preview.html
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
@@ -14,6 +13,7 @@ import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
+import org.intellij.plugins.markdown.lang.parser.CancellableText
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager
 import org.intellij.plugins.markdown.util.isFootnoteLabelText
 import java.net.URI
@@ -65,11 +65,7 @@ internal class FootnoteMap private constructor(
     private fun renderBodyMarkdown(body: String, baseUri: URI?, fullMap: FootnoteMap? = null): String {
       val content = if (body.endsWith('\n')) body else "$body\n"
       val parsedTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR)
-        .buildMarkdownTreeFromString(object : BombedCharSequence(content) {
-          override fun checkCanceled() {
-            ProgressManager.checkCanceled()
-          }
-        })
+        .buildMarkdownTreeFromString(CancellableText.of(content))
       val linkMap = LinkMap.buildLinkMap(parsedTree, content)
       val providers = MarkdownParserManager.FLAVOUR.createHtmlGeneratingProviders(linkMap, baseUri).toMutableMap()
       if (fullMap != null) {
@@ -303,11 +299,7 @@ internal class FootnoteMap private constructor(
           val body = definitions[label]!!
           val content = if (body.endsWith('\n')) body else "$body\n"
           val bodyTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR)
-            .buildMarkdownTreeFromString(object : BombedCharSequence(content) {
-              override fun checkCanceled() {
-                ProgressManager.checkCanceled()
-              }
-            })
+            .buildMarkdownTreeFromString(CancellableText.of(content))
           val nestedDefs = mutableMapOf<String, String>()
           val nestedRefs = mutableListOf<String>()
           collectFromAst(bodyTree, content, nestedDefs, mutableSetOf(), nestedRefs)
