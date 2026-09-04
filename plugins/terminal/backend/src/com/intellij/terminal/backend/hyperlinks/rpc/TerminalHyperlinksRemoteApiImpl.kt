@@ -3,6 +3,7 @@ package com.intellij.terminal.backend.hyperlinks.rpc
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinksSessionsManager
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalCreateHyperlinksSessionRequest
 import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksRemoteApi
@@ -19,7 +20,7 @@ internal class TerminalHyperlinksRemoteApiImpl : TerminalHyperlinksRemoteApi {
   }
 
   override suspend fun closeSession(projectId: ProjectId, sessionId: TerminalHyperlinksSessionId) {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return
     return BackendTerminalHyperlinksSessionsManager.getInstance(project).closeSession(sessionId)
   }
 }
