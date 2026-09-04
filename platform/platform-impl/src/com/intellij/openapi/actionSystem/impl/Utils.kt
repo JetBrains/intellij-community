@@ -87,7 +87,7 @@ import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.mac.MacMenuSettings
 import com.intellij.ui.mac.foundation.NSDefaults
-import com.intellij.ui.mac.screenmenu.Menu
+import com.intellij.ui.mac.screenmenu.MenuItem
 import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
@@ -589,7 +589,7 @@ object Utils {
                         presentationFactory, asyncDataContext, place, uiKind)
         }
         else {
-          fillMenuInnerMacNative(uiKind.peer, uiKind.frame, list, checked, enableMnemonics,
+          fillMenuInnerMacNative(uiKind.items, uiKind.frame, list, checked, enableMnemonics,
                                  presentationFactory, asyncDataContext, place)
         }
       }
@@ -711,7 +711,7 @@ object Utils {
   }
 
   private fun fillMenuInnerMacNative(
-    nativePeer: Menu,
+    items: MutableList<MenuItem?>,
     frame: JFrame,
     list: List<AnAction>,
     checked: Boolean,
@@ -733,8 +733,14 @@ object Utils {
           updateFromPresentation(presentation)
         }.menuItemPeer
       }
-      // null peer means `null`
-      nativePeer.add(peer)
+      items.add(peer) // null peer means a separator
+    }
+    if (filtered.isEmpty()) {
+      val presentation = presentationFactory.getPresentation(EMPTY_MENU_FILLER)
+      items.add(MacNativeActionMenuItem(
+        EMPTY_MENU_FILLER, place, context, enableMnemonics, checked, useDarkIcons).apply {
+        updateFromPresentation(presentation)
+      }.menuItemPeer)
     }
   }
 
