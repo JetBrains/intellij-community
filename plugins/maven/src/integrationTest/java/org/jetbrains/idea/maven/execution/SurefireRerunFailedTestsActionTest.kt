@@ -39,8 +39,32 @@ class SurefireRerunFailedTestsActionTest {
   }
 
   @Test
-  fun `name that is just a dot returns empty class and empty method`() {
-    // Edge case: "." → class="" method="" → "#"
-    assertEquals("#", surefireTestSpec("."))
+  fun `name that is just a dot returns null because method is empty`() {
+    // "." → class="" method="" → stripped method is empty → null (not a valid spec)
+    assertNull(surefireTestSpec("."))
+  }
+
+  // ── parameterized test names ───────────────────────────────────────────────
+
+  @Test
+  fun `JUnit 5 name with type and index suffix strips to base method`() {
+    // Surefire XML: name="testFoo(String)[1] hello"
+    assertEquals("com.example.MyTest#testFoo", surefireTestSpec("com.example.MyTest.testFoo(String)[1] hello"))
+  }
+
+  @Test
+  fun `name with bracket index only strips to base method`() {
+    assertEquals("com.example.MyTest#testFoo", surefireTestSpec("com.example.MyTest.testFoo[0]"))
+  }
+
+  @Test
+  fun `name with space before bracket strips trailing space`() {
+    assertEquals("com.example.MyTest#testFoo", surefireTestSpec("com.example.MyTest.testFoo [1]"))
+  }
+
+  @Test
+  fun `method part that is entirely a bracket expression returns null`() {
+    // Display name "com.example.MyTest.[1]": method resolves to "" after stripping.
+    assertNull(surefireTestSpec("com.example.MyTest.[1]"))
   }
 }

@@ -53,7 +53,9 @@ internal class SurefireRerunFailedTestsAction(
   }
 
   private fun buildFailedTestParam(allTests: List<AbstractTestProxy>): String? {
-    val specs = allTests.filter { it.isLeaf && it.isDefect }.mapNotNull { surefireTestSpec(it.name) }
+    val specs = allTests.filter { it.isLeaf && it.isDefect }
+      .mapNotNull { surefireTestSpec(it.name) }
+      .distinct()
     return specs.ifEmpty { null }?.joinToString("+")
   }
 }
@@ -62,9 +64,19 @@ internal class SurefireRerunFailedTestsAction(
  * Converts a SM runner display name (`ClassName.methodName` as written by [SurefireReportParser])
  * to a Surefire test spec (`ClassName#methodName`). Returns null when the name contains no dot
  * (e.g. a suite node rather than a leaf test).
+ *
+ * Parameterized tests carry the full invocation display name after the method name
+ * (e.g. `testFoo(String)[1] hello`). Surefire accepts only the base method name in its
+ * `-Dtest=` filter, so the suffix is stripped before building the spec.
  */
 @ApiStatus.Internal
 fun surefireTestSpec(displayName: String): String? {
   val dot = displayName.lastIndexOf('.')
-  return if (dot < 0) null else "${displayName.substring(0, dot)}#${displayName.substring(dot + 1)}"
+  if (dot < 0) return null
+  val className = displayName.substring(0, dot)
+  val rawMethod = displayName.substring(dot + 1)
+  // Strip the parameterized suffix: "(Type)[index] value" or "[index] value".
+  val methodName = rawMethod.substringBefore('(').substringBefore('[').trimEnd()
+  if (methodName.isEmpty()) return null
+  return "$className#$methodName"
 }

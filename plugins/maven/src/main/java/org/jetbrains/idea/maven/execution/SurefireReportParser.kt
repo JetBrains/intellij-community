@@ -41,7 +41,7 @@ object SurefireReportParser {
     val messages = mutableListOf<String>()
     for (xmlFile in xmlFiles.sortedBy { it.fileName.toString() }) {
       try {
-        parseReport(xmlFile, messages)
+        parseReport(xmlFile, messages, reportSuffix)
       }
       catch (e: Exception) {
         LOG.warn("Failed to parse surefire report $xmlFile", e)
@@ -50,11 +50,16 @@ object SurefireReportParser {
     return messages
   }
 
-  private fun parseReport(xmlFile: Path, messages: MutableList<String>) {
+  private fun parseReport(xmlFile: Path, messages: MutableList<String>, reportSuffix: String?) {
     val root = xmlFile.inputStream().use { JDOMUtil.load(it) } ?: return
     if (root.name != "testsuite") return
 
-    val suiteName = root.getAttributeValue("name") ?: return
+    // Surefire appends "(<reportNameSuffix>)" to the suite name and classname attributes when
+    // reportNameSuffix is set.  Strip it so the SM runner shows the real class name.
+    val suffixTag = if (reportSuffix != null) "($reportSuffix)" else null
+    fun stripSuffix(s: String) = if (suffixTag != null) s.removeSuffix(suffixTag) else s
+
+    val suiteName = stripSuffix(root.getAttributeValue("name") ?: return)
 
     messages += "##teamcity[testSuiteStarted name='${escape(suiteName)}' locationHint='java:suite://${escape(suiteName)}']"
 
@@ -64,7 +69,7 @@ object SurefireReportParser {
 
     for (testcase in root.getChildren("testcase")) {
       val name = testcase.getAttributeValue("name") ?: continue
-      val classname = testcase.getAttributeValue("classname") ?: suiteName
+      val classname = stripSuffix(testcase.getAttributeValue("classname") ?: suiteName)
       val durationMs = testcase.getAttributeValue("time")?.toDoubleOrNull()?.let { (it * 1000).toLong() }
       val displayName = "$classname.$name"
 

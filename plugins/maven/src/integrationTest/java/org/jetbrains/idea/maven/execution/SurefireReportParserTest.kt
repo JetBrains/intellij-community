@@ -307,6 +307,25 @@ line2</failure>
     assertTrue(idxA < idxZ, "A should come before Z")
   }
 
+  // ── reportNameSuffix stripping ────────────────────────────────────────────
+
+  @Test
+  fun `reportSuffix is stripped from suite name and classname`() {
+    // Surefire appends "(suffix)" to classnames when reportNameSuffix is set.
+    writeReport("TEST-com.example.SfxTest-abc.xml", """
+      <testsuite name="com.example.SfxTest(abc)">
+        <testcase name="myTest" classname="com.example.SfxTest(abc)"/>
+      </testsuite>
+    """)
+
+    val msgs = SurefireReportParser.collectMessages(root, "abc")
+    assertTrue(msgs.any { "testSuiteStarted" in it && "com.example.SfxTest'" in it },
+               "suite name must not contain the suffix tag")
+    assertTrue(msgs.any { "testStarted" in it && "com.example.SfxTest.myTest" in it },
+               "test display name must not contain the suffix tag")
+    assertFalse(msgs.any { "(abc)" in it }, "suffix tag must not appear in any message")
+  }
+
   // ── malformed XML resilience ──────────────────────────────────────────────
 
   @Test
