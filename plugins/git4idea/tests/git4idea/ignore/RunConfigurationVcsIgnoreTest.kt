@@ -2,99 +2,102 @@
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveSettings
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.gitSingleRepoContextFixture
+import git4idea.test.prepareUnversionedFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class RunConfigurationVcsIgnoreTest : GitSingleRepoTest() {
+@TestApplication
+internal class RunConfigurationVcsIgnoreTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
+
   private val configurationName = "Unnamed"
 
-  override fun isCreateDirectoryBasedProject() = true
-
-  override fun setUpProject() {
-    super.setUpProject()
-    // will create .idea directory
-    runBlockingMaybeCancellable {
+  @BeforeEach
+  fun setUp(): Unit = timeoutRunBlocking {
+    with(context) {
+      // will create .idea directory
       saveSettings(project)
+      edtWriteAction {
+        ModuleManager.getInstance(project).newModule("$projectPath/main.iml", "EMPTY_MODULE")
+      }
     }
   }
 
-  override fun setUpModule() {
-    myModule = createMainModule()
-  }
+  @Test
+  fun `test run configuration not ignored`(): Unit = timeoutRunBlocking {
+    with(context) {
+      val gitIgnore = prepareUnversionedFile(GITIGNORE, "!$configurationName")
+      val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
-  fun `test run configuration not ignored`() {
-    val gitIgnore = prepareUnversionedFile( GITIGNORE, "!$configurationName")
+      withContext(Dispatchers.EDT) {
+        assertThat(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName)).isFalse()
+        assertThat(vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations")).isFalse()
+      }
 
-    val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
-    ApplicationManager.getApplication().invokeAndWait {
-      assertFalse(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
-      assertFalse(vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations"))
-    }
+      gitIgnore.write("!$configurationName*")
 
-    gitIgnore.write("!$configurationName*")
-
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
-  }
-
-  fun `test run configuration ignored`() {
-    prepareUnversionedFile(GITIGNORE, "$configurationName*")
-    ApplicationManager.getApplication().invokeAndWait {
-      assertThat(VcsIgnoreManager.getInstance(project).isRunConfigurationVcsIgnored(configurationName)).isTrue()
+      withContext(Dispatchers.EDT) {
+        assertThat(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName)).isFalse()
+      }
     }
   }
 
-  fun `test remove run configuration from ignore`() {
-    val gitIgnore = prepareUnversionedFile(GITIGNORE, ".idea")
-    val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
-    ApplicationManager.getApplication().invokeAndWait {
-      assertThat(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName)).isTrue()
-      assertThat(vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations")).isTrue()
+  @Test
+  fun `test run configuration ignored`(): Unit = timeoutRunBlocking {
+    with(context) {
+      prepareUnversionedFile(GITIGNORE, "$configurationName*")
 
-      vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName)
-      assertThat(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName)).isFalse()
+      withContext(Dispatchers.EDT) {
+        assertThat(VcsIgnoreManager.getInstance(project).isRunConfigurationVcsIgnored(configurationName)).isTrue()
+      }
     }
+  }
 
-    gitIgnore.write(".idea/")
+  @Test
+  fun `test remove run configuration from ignore`(): Unit = timeoutRunBlocking {
+    with(context) {
+      val gitIgnore = prepareUnversionedFile(GITIGNORE, ".idea")
+      val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
-    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
+      withContext(Dispatchers.EDT) {
+        assertThat(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName)).isTrue()
+        assertThat(vcsIgnoreManager.isDirectoryVcsIgnored("$projectPath/.idea/runConfigurations")).isTrue()
 
-    gitIgnore.write(".id*")
+        vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName)
+        assertThat(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName)).isFalse()
+      }
 
-    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
+      val patterns = listOf(".idea/", ".id*", ".id*/", "*.xml", ".idea/*.xml", "$configurationName.xml")
+      for (pattern in patterns) {
+        gitIgnore.write(pattern)
 
-    gitIgnore.write(".id*/")
-
-    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
-
-    gitIgnore.write("*.xml")
-
-    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
-
-    gitIgnore.write(".idea/*.xml")
-
-    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
-
-    gitIgnore.write("$configurationName.xml")
-
-    invokeAndWaitIfNeeded { vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName) }
-    assertFalse(invokeAndWaitIfNeeded { vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName) })
+        withContext(Dispatchers.EDT) {
+          vcsIgnoreManager.removeRunConfigurationFromVcsIgnore(configurationName)
+          assertThat(vcsIgnoreManager.isRunConfigurationVcsIgnored(configurationName))
+            .describedAs("The run configuration must not be ignored by the pattern '%s'", pattern)
+            .isFalse()
+        }
+      }
+    }
   }
 }
 
-private fun VirtualFile.write(data: String) {
-  runWriteActionAndWait {
+private suspend fun VirtualFile.write(data: String) {
+  edtWriteAction {
     setBinaryContent(data.toByteArray())
   }
 }
