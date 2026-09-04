@@ -59,6 +59,11 @@ public class SharedK2CoroutineNonBlockingContextDetectionTestGenerated extends A
         runTest("testData/inspections/blockingCallsDetection/InsideCoroutine_unknownAsBlocking.kt");
     }
 
+    @TestMetadata("InsideLambdaInCoroutine.kt")
+    public void testInsideLambdaInCoroutine() throws Exception {
+        runTest("testData/inspections/blockingCallsDetection/InsideLambdaInCoroutine.kt");
+    }
+
     @TestMetadata("LambdaAssignmentCheck.kt")
     public void testLambdaAssignmentCheck() throws Exception {
         runTest("testData/inspections/blockingCallsDetection/LambdaAssignmentCheck.kt");

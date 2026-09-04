@@ -94,6 +94,8 @@ internal class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
                 if (type is KaFunctionType) {
                     val hasRestrictSuspensionAnnotation = type.receiverType?.isRestrictsSuspensionReceiver() == true
                     return if (!hasRestrictSuspensionAnnotation && type.isSuspend) Unsure else Blocking
+                } else if (type.isFunctionalInterface) {
+                    return Blocking
                 }
             }
         }
