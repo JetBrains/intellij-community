@@ -2726,10 +2726,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   @Override
   public @Nullable Point getCenterPoint(@NotNull GutterIconRenderer renderer) {
+    // The x is computed in the painting (logical) space. A mirrored gutter flips that axis, so
+    // convert it to a physical component x. Callers use this point as a component coordinate.
+    // convertX is the identity for a normal gutter.
     if (!areIconsShown()) {
       for (Int2ObjectMap.Entry<List<GutterMark>> entry : processGutterRenderers()) {
         if (ContainerUtil.find(entry.getValue(), renderer) != null) {
-          return new Point(getIconAreaOffset(), getLineCenterY(entry.getIntKey()));
+          return new Point(convertX(getIconAreaOffset()), getLineCenterY(entry.getIntKey()));
         }
       }
     }
@@ -2739,7 +2742,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         processIconsRow(entry.getIntKey(), entry.getValue(), (x, y, r) -> {
           if (result.isNull() && r.equals(renderer)) {
             Icon icon = scaleIcon(r.getIcon());
-            result.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
+            result.set(new Point(convertX(x + icon.getIconWidth() / 2), y + icon.getIconHeight() / 2));
           }
         });
         if (!result.isNull()) {
