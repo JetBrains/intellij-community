@@ -23,3 +23,5 @@
 - a:performRename():V
 *:com.intellij.refactoring.rename.RenamerFactory
 - a:createRenamers(com.intellij.openapi.actionSystem.DataContext):java.util.Collection
+*:com.intellij.refactoring.rename.TextOccurrenceReference
+- com.intellij.psi.PsiReference

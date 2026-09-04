@@ -127,8 +127,16 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   fun `test renaming original element updates markdown reference`() {
     val javaClass = createJavaClass()
     myFixture.configureByText("some.md", "There is an `JavaClass` backtick")
-    myFixture.renameElement(javaClass, "NewJavaClass")
+    renameWithTextOccurrences(javaClass, "NewJavaClass")
     myFixture.checkResult("There is an `NewJavaClass` backtick")
+  }
+
+  @Test
+  fun `test renaming original element keeps markdown reference without text occurrences`() {
+    val javaClass = createJavaClass()
+    myFixture.configureByText("some.md", "There is an `JavaClass` backtick")
+    myFixture.renameElement(javaClass, "NewJavaClass", false, false)
+    myFixture.checkResult("There is an `JavaClass` backtick")
   }
 
   @Test
@@ -143,7 +151,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   fun `test renaming class without member separator preserves code span markers`() {
     val javaClass = createJavaClass()
     myFixture.configureByText("some.md", "Call ``JavaClass``")
-    myFixture.renameElement(javaClass, "RenamedJavaClass")
+    renameWithTextOccurrences(javaClass, "RenamedJavaClass")
     myFixture.checkResult("Call ``RenamedJavaClass``")
   }
 
@@ -152,7 +160,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val document = createFile("document.md", "See `file.md`")
     val target = createFile("file.md")
     myFixture.configureFromExistingVirtualFile(document.virtualFile)
-    myFixture.renameElement(target, "renamed.md")
+    renameWithTextOccurrences(target, "renamed.md")
     myFixture.checkResult("See `renamed.md`")
     assertCodeSpanContentAndFileReference(target, "renamed.md", markerLength = 1)
   }
@@ -162,7 +170,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val document = createFile("document.md", "See `file.md`")
     val target = myFixture.addFileToProject("file.md", "")
     myFixture.configureFromExistingVirtualFile(document.virtualFile)
-    myFixture.renameElement(target, "fi`le.md")
+    renameWithTextOccurrences(target, "fi`le.md")
     myFixture.checkResult("See ``fi`le.md``")
     assertCodeSpanContentAndFileReference(target, "fi`le.md", markerLength = 2)
   }
@@ -172,7 +180,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val document = createFile("document.md", "See `file.md`")
     val target = createFile("file.md")
     myFixture.configureFromExistingVirtualFile(document.virtualFile)
-    myFixture.renameElement(target, "fi``le.md")
+    renameWithTextOccurrences(target, "fi``le.md")
     myFixture.checkResult("See ```fi``le.md```")
     assertCodeSpanContentAndFileReference(target, "fi``le.md", markerLength = 3)
   }
@@ -182,7 +190,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val document = createFile("document.md", "See `file.md`")
     val target = createFile("file.md")
     myFixture.configureFromExistingVirtualFile(document.virtualFile)
-    myFixture.renameElement(target, "fi`le`name.md")
+    renameWithTextOccurrences(target, "fi`le`name.md")
     myFixture.checkResult("See ``fi`le`name.md``")
     assertCodeSpanContentAndFileReference(target, "fi`le`name.md", markerLength = 2)
   }
@@ -354,7 +362,7 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     ).children.single { it is PsiClass } as PsiClass
     myFixture.configureByText("some.md", "Call `JavaClass.methodName`")
 
-    myFixture.renameElement(javaClass, "RenamedJavaClass")
+    renameWithTextOccurrences(javaClass, "RenamedJavaClass")
     myFixture.checkResult("Call `RenamedJavaClass.methodName`")
   }
 
@@ -568,6 +576,10 @@ class BacktickReferenceTest : BasePlatformTestCase() {
 
     assertFalse(reference is FileReference)
     assertNull(reference?.resolve())
+  }
+
+  private fun renameWithTextOccurrences(element: PsiElement, newName: String) {
+    myFixture.renameElement(element, newName, false, true)
   }
 
   private fun createJavaClass(name: String = "JavaClass"): PsiClass {

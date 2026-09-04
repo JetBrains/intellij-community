@@ -20,11 +20,12 @@ import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.impl.source.resolve.ResolveCache
+import com.intellij.refactoring.rename.TextOccurrenceReference
 import com.intellij.util.indexing.FindSymbolParameters
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
 
 class BacktickReference(element: MarkdownCodeSpan, range: TextRange) :
-  PsiPolyVariantReferenceBase<MarkdownCodeSpan>(element, range, true) {
+  PsiPolyVariantReferenceBase<MarkdownCodeSpan>(element, range, true), TextOccurrenceReference {
 
   private object Resolver : ResolveCache.PolyVariantResolver<BacktickReference> {
     override fun resolve(ref: BacktickReference, incompleteCode: Boolean): Array<ResolveResult> {

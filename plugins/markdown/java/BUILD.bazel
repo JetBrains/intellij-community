@@ -32,6 +32,7 @@ jvm_library(
         "//java/java-psi-impl:psi-impl",
         "//platform/core-impl",
         "//platform/lang-api:lang",
+        "//platform/refactoring",
     ],
 )
 
@@ -60,6 +61,7 @@ jvm_library(
         "//java/java-psi-impl:psi-impl_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//platform/refactoring:refactoring_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown.java` end

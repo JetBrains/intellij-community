@@ -246,6 +246,8 @@ jvm_library(
         "//platform/pluginSystem/testFramework",
         "//platform/pluginSystem/testFramework:testFramework_test_lib",
         "//platform/platform-impl/rpc",
+        "//platform/refactoring",
+        "//platform/refactoring:refactoring_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown.tests` end

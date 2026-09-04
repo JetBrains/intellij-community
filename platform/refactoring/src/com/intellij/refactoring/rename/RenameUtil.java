@@ -140,6 +140,7 @@ public final class RenameUtil {
           LOG.error("null reference from processor " + elementProcessor);
           continue;
         }
+        if (!searchForTextOccurrences && ref instanceof TextOccurrenceReference) continue;
         PsiElement referenceElement = ref.getElement();
         if (!processor.process(elementProcessor.createUsageInfo(element, ref, referenceElement))) return false;
       }
