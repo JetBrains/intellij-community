@@ -195,7 +195,7 @@ internal class FrontendWelcomeScreenLeftPanel(
 
   override fun saveStateTo(element: Element) { }
 
-  override fun restoreStateFrom(element: Element) { }
+  override fun restoreStateFrom(element: Element?) { }
 
   private class MyMainPanel : JBPanel<JBPanel<*>>(BorderLayout()), UiDataProvider {
     init {

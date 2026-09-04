@@ -23,7 +23,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
+import com.intellij.platform.projectView.frontend.pane.id
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
+import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -41,6 +43,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.asDisposable
+import com.intellij.util.ui.initOnShow
 import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineName
@@ -51,9 +54,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -87,6 +94,12 @@ internal class TreeBasedFrontendProjectViewPane(
   private val treeExpander = ProjectViewTreeExpander(tree, expandRequests)
   private val autoscrollToSourceHandler = MyAutoscrollToSourceHandler(project)
   private val cutCopyPasteDeleteProvider = FrontendProjectViewCutCopyPasteDeleteProvider(paneTreeModel)
+  private val singleRootExpandRequest = MutableStateFlow(SingleRootExpand.MAYBE_NEEDED)
+  private enum class SingleRootExpand {
+    MAYBE_NEEDED,
+    DEFINITELY_NEEDED,
+    NOT_NEEDED,
+  }
 
   private inner class ContentPanel(content: JComponent) : SimpleToolWindowPanel(true), UiDataProvider {
     init {
@@ -127,6 +140,8 @@ internal class TreeBasedFrontendProjectViewPane(
   init {
     tree.addTreeExpansionListener(object : TreeExpansionListener {
       override fun treeExpanded(event: TreeExpansionEvent) {
+        // Something was expanded, no matter what and why, the "first" expand no longer needed.
+        singleRootExpandRequest.value = SingleRootExpand.NOT_NEEDED
         val expandedNodeId = (event.path.lastPathComponent as? Node)?.projectViewNode?.id ?: return
         paneTreeModel.requestLoadChildren(expandedNodeId)
       }
@@ -139,6 +154,45 @@ internal class TreeBasedFrontendProjectViewPane(
     tree.launchOnShow("expand requests") {
       expandRequests.consumeAsFlow().collectLatest { expandRequest ->
         expand(expandRequest)
+      }
+    }
+    tree.initOnShow("first expand and selection") {
+      val firstTopNodes = combine(paneTreeModel.rootChildren, singleRootExpandRequest) { children, expand ->
+        if (children.isEmpty()) {
+          LOG.debug { "Pane $id got empty top children, waiting for more..." }
+          null // not ready yet
+        }
+        else when (expand) {
+          SingleRootExpand.MAYBE_NEEDED -> {
+            // Continue waiting until either:
+            // - an empty state is restored (=> expand needed) or
+            // - something is expanded (=> expand no longer needed).
+            LOG.debug { "Pane $id got non-empty top children, but it's not clear yet whether we need to expand the first node" }
+            null
+          }
+          SingleRootExpand.DEFINITELY_NEEDED, SingleRootExpand.NOT_NEEDED -> {
+            // In both cases we need to stop.
+            LOG.debug { "Pane $id got non-empty top children, stopping to figure out whether we need to expand the first node" }
+            children
+          }
+        }
+      }.filterNotNull().first()
+      LOG.debug { "The first top nodes of the pane $id are: $firstTopNodes" }
+      if (singleRootExpandRequest.value == SingleRootExpand.DEFINITELY_NEEDED) {
+        val singleExpandableNode = firstTopNodes.singleOrNull { nodePath ->
+          (TreeUtil.getLastUserObject(nodePath) as? ProjectViewNodeModelImpl<*>)?.shouldBeInitiallyExpanded() == true
+        }
+        if (singleExpandableNode != null) {
+          LOG.debug { "The pane $id has a single top expandable node, expanding and selecting" }
+          tree.selectionPath = singleExpandableNode
+          tree.expandPath(singleExpandableNode)
+        }
+        else {
+          LOG.debug { "The pane $id doesn't have a single top expandable node, not expanding" }
+        }
+      }
+      else {
+        LOG.debug { "The pane $id doesn't need to expand the first top node (already expanded something)" }
       }
     }
     enableDnD(tree, paneTreeModel)
@@ -345,8 +399,15 @@ internal class TreeBasedFrontendProjectViewPane(
     TreeState.createOn(tree, true, false, true).writeExternal(element)
   }
 
-  override fun restoreStateFrom(element: Element) {
-    TreeState.createFrom(element).applyTo(tree)
+  override fun restoreStateFrom(element: Element?) {
+    val treeState = TreeState.createFrom(element)
+    if (!treeState.isEmpty) {
+      singleRootExpandRequest.value = SingleRootExpand.NOT_NEEDED
+      treeState.applyTo(tree)
+    }
+    else {
+      singleRootExpandRequest.value = SingleRootExpand.DEFINITELY_NEEDED
+    }
   }
 }
 

@@ -137,6 +137,7 @@
 - a:getId():J
 - a:isDirectory():Z
 - a:isIncludedInExpandAll():Z
+- a:shouldBeInitiallyExpanded():Z
 *:com.intellij.platform.projectView.pane.ProjectViewNodeModelBuilder
 - a:buildPresentation(kotlin.jvm.functions.Function1):V
 - a:setCanNavigate(Z):V
@@ -147,6 +148,7 @@
 - a:setModel(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):V
 - a:setPathElementId(java.lang.String):V
 - a:setPathElementType(java.lang.String):V
+- a:setShouldBeInitiallyExpanded(Z):V
 *f:com.intellij.platform.projectView.pane.ProjectViewNodeModelKt
 - *sf:buildProjectViewNodeModel(J,java.lang.Object,kotlin.jvm.functions.Function1):com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 *:com.intellij.platform.projectView.pane.ProjectViewNodePath

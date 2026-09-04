@@ -52,6 +52,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
@@ -72,6 +73,8 @@ internal class FrontendProjectViewPaneTreeModel(
   internal val descriptor: ProjectViewPaneDescriptorImpl,
 ) {
   internal val treeModel = DefaultTreeModelWithCachedPresentation()
+  internal val rootChildren: StateFlow<List<TreePath>>
+    field = MutableStateFlow(emptyList())
 
   private val optionSupport = ActionSupport()
 
@@ -155,6 +158,9 @@ internal class FrontendProjectViewPaneTreeModel(
         }
         else {
           updateChildren(parent, event.children)
+          if (parent.parent == null) {
+            rootChildren.value = parent.children().toList().mapNotNull { (it as? Node)?.treePath }
+          }
         }
         parent.isChildrenLoaded = true
       }
@@ -406,5 +412,8 @@ internal class Node(
 
   override fun toString(): String = "{${if (isLeaf) "-" else "+"}[${projectViewNode.id}] ${projectViewNode.presentation.mainText}}"
 }
+
+private val Node.treePath: TreePath
+  get() = CachingTreePath(path)
 
 private val LOG = logger<FrontendProjectViewPaneTreeModel>()

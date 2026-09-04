@@ -21,6 +21,7 @@ internal class ProjectViewNodeModelBuilderImpl<T : Any>(private val id: Long, pr
   private var includedInExpandAll = false
   private var isDirectory = false
   private var isExpandOnDoubleClick = true
+  private var shouldBeInitiallyExpanded: Boolean? = null
 
   override fun setModel(model: BackendProjectViewNodeModel<*>) {
     model as ProjectViewNodeModelImpl<*>
@@ -66,6 +67,10 @@ internal class ProjectViewNodeModelBuilderImpl<T : Any>(private val id: Long, pr
     this.isExpandOnDoubleClick = isExpandOnDoubleClick
   }
 
+  override fun setShouldBeInitiallyExpanded(shouldBeInitiallyExpanded: Boolean) {
+    this.shouldBeInitiallyExpanded = shouldBeInitiallyExpanded
+  }
+
   fun build(): ProjectViewNodeModelImpl<T> {
     val pathElementType = this.pathElementType
                           ?: (userObject as? PathElementIdProvider)?.pathElementType
@@ -84,6 +89,7 @@ internal class ProjectViewNodeModelBuilderImpl<T : Any>(private val id: Long, pr
       isIncludedInExpandAll = includedInExpandAll,
       isDirectory = isDirectory,
       isExpandOnDoubleClick = isExpandOnDoubleClick,
+      shouldBeInitiallyExpanded = shouldBeInitiallyExpanded ?: isDirectory,
     )
   }
 }
@@ -108,13 +114,21 @@ data class ProjectViewNodeModelImpl<T : Any>(
     isIncludedInExpandAll: Boolean,
     isDirectory: Boolean,
     isExpandOnDoubleClick: Boolean,
+    shouldBeInitiallyExpanded: Boolean,
   ) : this(
     maybeUserObject,
     id,
     presentation,
     pathElementType,
     pathElementId,
-    flags(canNavigate, canNavigateToSource, isIncludedInExpandAll, isDirectory, isExpandOnDoubleClick),
+    flags(
+      canNavigate,
+      canNavigateToSource,
+      isIncludedInExpandAll,
+      isDirectory,
+      isExpandOnDoubleClick,
+      shouldBeInitiallyExpanded, 
+    ),
   )
 
   override fun getElementBackground(row: Int): Color? = presentation.background
@@ -138,6 +152,8 @@ data class ProjectViewNodeModelImpl<T : Any>(
 
   override fun isDirectory(): Boolean = (flags and FLAG_IS_DIRECTORY) != 0
 
+  override fun shouldBeInitiallyExpanded(): Boolean = (flags and FLAG_SHOULD_BE_INITIALLY_EXPANDED) != 0
+
   override fun expandOnDoubleClick(): Boolean = (flags and FLAG_EXPAND_ON_DOUBLE_CLICK) != 0
 }
 
@@ -146,6 +162,7 @@ private const val FLAG_CAN_NAVIGATE_TO_SOURCE = (1 shl 1)
 private const val FLAG_INCLUDED_IN_EXPAND_ALL = (1 shl 2)
 private const val FLAG_IS_DIRECTORY = (1 shl 3)
 private const val FLAG_EXPAND_ON_DOUBLE_CLICK = (1 shl 4)
+private const val FLAG_SHOULD_BE_INITIALLY_EXPANDED = (1 shl 5)
 
 private fun flags(
   canNavigate: Boolean,
@@ -153,12 +170,14 @@ private fun flags(
   isIncludedInExpandAll: Boolean,
   isDirectory: Boolean,
   isExpandOnDoubleClick: Boolean,
+  shouldBeInitiallyExpanded: Boolean,
 ): Int =
   (if (canNavigate) FLAG_CAN_NAVIGATE else 0) or
   (if (canNavigateToSource) FLAG_CAN_NAVIGATE_TO_SOURCE else 0) or 
   (if (isIncludedInExpandAll) FLAG_INCLUDED_IN_EXPAND_ALL else 0) or
   (if (isDirectory) FLAG_IS_DIRECTORY else 0) or
-  (if (isExpandOnDoubleClick) FLAG_EXPAND_ON_DOUBLE_CLICK else 0)
+  (if (isExpandOnDoubleClick) FLAG_EXPAND_ON_DOUBLE_CLICK else 0) or
+  (if (shouldBeInitiallyExpanded) FLAG_SHOULD_BE_INITIALLY_EXPANDED else 0)
 
 @ApiStatus.Experimental
 const val SUPER_ROOT_ID: Long = 0L

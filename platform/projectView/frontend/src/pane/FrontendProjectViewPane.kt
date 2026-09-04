@@ -35,7 +35,7 @@ interface FrontendProjectViewPane {
   fun saveStateTo(element: Element)
 
   @RequiresEdt
-  fun restoreStateFrom(element: Element)
+  fun restoreStateFrom(element: Element?)
 
   suspend fun manage()
 }

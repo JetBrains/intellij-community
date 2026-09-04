@@ -351,9 +351,7 @@ internal class ProjectViewToolWindowServiceImpl(
           pane.component.launchOnShow("Pane ${pane.id} service state saving/restoring") {
             try {
               val paneState = persistentState.getPaneState(pane.id)
-              if (paneState != null) {
-                pane.restoreStateFrom(paneState)
-              }
+              pane.restoreStateFrom(paneState)
               LOG.debug { "Applied the loaded state for ${pane.id}" }
               awaitCancellation()
             }

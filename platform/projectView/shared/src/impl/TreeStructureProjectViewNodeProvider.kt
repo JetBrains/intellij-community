@@ -6,6 +6,7 @@ package com.intellij.platform.projectView.impl
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 import com.intellij.ide.projectView.impl.GroupByTypeComparator
+import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
@@ -56,7 +57,7 @@ private data class TreeStructureProjectViewNodeImpl(
   }
   
   fun isDirectory(): Boolean {
-    return elementDescriptor is PsiDirectoryNode
+    return elementDescriptor is PsiDirectoryNode || elementDescriptor is AbstractModuleNode
   }
 
   fun isExpandOnDoubleClick(): Boolean {
