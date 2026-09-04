@@ -18,6 +18,7 @@ import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGenerati
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.math.BigInteger
+import java.net.URI
 
 object MarkdownUtil {
   @ApiStatus.Internal
@@ -30,8 +31,12 @@ object MarkdownUtil {
   }
 
   fun generateMarkdownHtml(file: VirtualFile, text: String, project: Project?): String {
+    // The base has to end with a slash. Resolving a relative link against a base without one replaces
+    // its last segment instead of descending into the directory, so a link next to the document would
+    // resolve into the parent directory (RFC 3986).
     val baseUri = file.parent?.let {
-      Urls.toUriWithoutParameters(Urls.newFromVirtualFile(it))
+      val directory = Urls.toUriWithoutParameters(Urls.newFromVirtualFile(it))
+      if (directory.path.endsWith("/")) directory else URI("${directory}/")
     }
 
     val parsedTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR)
