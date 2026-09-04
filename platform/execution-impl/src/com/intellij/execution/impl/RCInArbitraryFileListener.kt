@@ -17,6 +17,9 @@ private fun isFileWithRunConfigs(path: String) = !path.contains("/.idea/") && Pa
 
 internal class RCInArbitraryFileListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): @org.jetbrains.annotations.Nullable AsyncFileListener.ChangeApplier? {
+    if (!isRunConfigsFromArbitraryFilesEnabled()) {
+      return null
+    }
     val deletedRCFilePaths = mutableSetOf<String>()
     val updatedRCFilePaths = mutableSetOf<String>()
 

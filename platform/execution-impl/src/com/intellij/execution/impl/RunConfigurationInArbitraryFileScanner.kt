@@ -5,6 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
@@ -21,6 +22,9 @@ import kotlinx.coroutines.launch
  */
 internal class RunConfigurationInArbitraryFileScanner : IndexableFileScanner {
   override fun startSession(project: Project): IndexableFileScanner.ScanSession {
+    if (!isRunConfigsFromArbitraryFilesEnabled()) {
+      return IndexableFileScanner.ScanSession { null }
+    }
     val runManager by lazy(LazyThreadSafetyMode.NONE) { RunManagerImpl.getInstanceImpl(project) }
     return IndexableFileScanner.ScanSession {
       if (it is ContentOrigin || it is ProjectFileOrDirOrigin) {
@@ -44,8 +48,11 @@ internal class RunConfigurationInArbitraryFileScanner : IndexableFileScanner {
 @Service(Service.Level.PROJECT)
 private class ScopeService(val scope: CoroutineScope)
 
-internal fun loadFileWithRunConfigs(project: Project): List<String> = if (project.isDefault) listOf() else 
+internal fun loadFileWithRunConfigs(project: Project): List<String> = if (project.isDefault || !isRunConfigsFromArbitraryFilesEnabled()) listOf() else
   FilenameIndex.getAllFilesByExt(project, "run.xml", ProjectScope.getContentScope(project)).filter { isFileWithRunConfigs(it) }.map { it.path }
+
+internal fun isRunConfigsFromArbitraryFilesEnabled(): Boolean =
+  RegistryManager.getInstance().`is`("run.configurations.from.arbitrary.files")
 
 private fun isFileWithRunConfigs(file: VirtualFile): Boolean {
   if (!file.isInLocalFileSystem || !file.nameSequence.endsWith(".run.xml")) return false
