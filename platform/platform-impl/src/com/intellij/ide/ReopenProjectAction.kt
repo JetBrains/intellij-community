@@ -124,16 +124,15 @@ open class ReopenProjectAction @JvmOverloads constructor(
       forceOpenInNewFrame = BitUtil.isSet(modifiers, ActionEvent.CTRL_MASK) ||
                             BitUtil.isSet(modifiers, ActionEvent.SHIFT_MASK) ||
                             ActionPlaces.WELCOME_SCREEN == e.place ||
-                            LightEdit.owns(project)
+                            LightEdit.owns(project) ||
+                            forceOpenInNewFrame()
       runConfigurators = true
     }
-    openProject(file, options)
+    openProjectAndLogRecent(file = file, options = options, projectGroup = projectGroup)
   }
 
   @ApiStatus.Internal
-  protected open fun openProject(file: Path, options: OpenProjectTask) {
-    openProjectAndLogRecent(file = file, options = options, projectGroup = projectGroup)
-  }
+  protected open fun forceOpenInNewFrame(): Boolean = false
 
   val projectName: @NlsSafe String?
     get() {
