@@ -11,11 +11,8 @@ import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.community.execService.python.HelperName
 import com.intellij.python.community.execService.python.advancedApi.executeHelperAdvanced
 import com.intellij.python.community.execService.python.advancedApi.executePythonAdvanced
-import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetInfo
 import com.intellij.python.community.interpreters.ValidInterpreter
-import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
-import org.jetbrains.annotations.ApiStatus
 
 // This in advanced API, most probably you need "api.kt"
 
@@ -42,16 +39,6 @@ suspend fun <T> ExecService.executeHelperAdvanced(
   procListener: PyProcessListener? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
 ): PyResult<T> = executeHelperAdvanced(python.asExecutablePython, helper, args, options, procListener, processOutputTransformer)
-
-/**
- * Ensures that this python is executable and returns its info. Error if python is broken.
- *
- * Some pythons might be broken: they may be executable, even return a version, but still fail to execute it.
- * As we need workable pythons, we validate it by executing
- */
-@ApiStatus.Internal
-suspend fun ValidInterpreter.validatePythonAndGetInfo(): PyResult<PythonInfo> =
-  ExecService().validatePythonAndGetInfo(asExecutablePython)
 
 /**
  * Execute [helper] on [python]. For remote eels, [helper] is copied (but only one file!).

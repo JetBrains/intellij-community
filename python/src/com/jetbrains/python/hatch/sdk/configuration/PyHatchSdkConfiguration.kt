@@ -3,10 +3,9 @@ package com.jetbrains.python.hatch.sdk.configuration
 
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
-import com.intellij.python.community.execService.python.validatePythonAndGetInfo
+import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.resolvePythonBinary
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.PythonInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -137,8 +136,6 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
  */
 private suspend fun java.nio.file.Path.pythonInfoOrNull(): PythonInfo? {
   val binary = resolvePythonBinary() ?: return null
-  val recorded = withContext(Dispatchers.IO) { binary.detectPythonEnvironment().successOrNull?.version }
-  val level = recorded?.let { LanguageLevel.fromPythonVersionSafe(it) }
-  if (level != null) return PythonInfo(languageLevel = level, version = recorded)
-  return binary.validatePythonAndGetInfo().successOrNull
+  val environment = withContext(Dispatchers.IO) { binary.detectPythonEnvironment().successOrNull } ?: return null
+  return environment.getPythonInfo().successOrNull
 }

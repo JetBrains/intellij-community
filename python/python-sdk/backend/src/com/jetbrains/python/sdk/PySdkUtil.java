@@ -195,7 +195,6 @@ public final class PySdkUtil {
   /**
    * @deprecated use {@link PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
-   * or {@link SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
   @Deprecated(forRemoval = true)
   public static @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {

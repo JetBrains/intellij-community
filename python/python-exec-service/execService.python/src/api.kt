@@ -8,14 +8,12 @@ import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.PyProcessListener
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.python.community.execService.asBinToExec
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executeHelperAdvanced
-import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetInfo
 import com.intellij.python.community.execService.python.impl.execGetStdoutBoolImpl
 import com.intellij.python.community.execService.python.impl.execGetStdoutImpl
+import com.intellij.python.community.execService.python.impl.validatePythonAndGetInfoImpl
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
-import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
 
@@ -40,16 +38,13 @@ suspend fun ExecService.executeHelper(
 
 /**
  * Ensures that this python is executable and returns its info. Error if python is broken.
- *
- * Some pythons might be broken: they may be executable, even return a version, but still fail to execute it.
- * As we need workable pythons, we validate it by executing
  */
-suspend fun ExecService.validatePythonAndGetInfo(python: PythonBinaryOnEelOrTarget): PyResult<PythonInfo> =
-  validatePythonAndGetInfo(ExecutablePython.vanillaExecutablePython(python))
-
-suspend fun PythonBinaryOnEelOrTarget.validatePythonAndGetInfo(): PyResult<PythonInfo> = ExecService().validatePythonAndGetInfo(this)
-suspend fun ExecService.validatePythonAndGetInfo(python: PythonBinary): PyResult<PythonInfo> = validatePythonAndGetInfo(python.asBinToExec())
-suspend fun PythonBinary.validatePythonAndGetInfo(): PyResult<PythonInfo> = asBinToExec().validatePythonAndGetInfo()
+@Deprecated("Currently used only for targets, for eel paths use PythonBinary.detectPythonEnvironment()", ReplaceWith(
+    "PythonBinary.detectPythonEnvironment().mapResult { it.getPythonInfo() }"
+))
+suspend fun PythonBinaryOnEelOrTarget.validatePythonAndGetInfo(): PyResult<PythonInfo> {
+  return ExecService().validatePythonAndGetInfoImpl(ExecutablePython.vanillaExecutablePython(this))
+}
 
 /**
  * Execute [pythonCode] on [ExecutablePython] and (if exitcode is 0) return stdout

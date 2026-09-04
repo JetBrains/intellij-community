@@ -14,7 +14,8 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.withProgressText
-import com.intellij.python.community.execService.python.validatePythonAndGetInfo
+import com.intellij.python.sdk.backend.detectPythonEnvironment
+import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
@@ -25,6 +26,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.Result
+import com.jetbrains.python.mapResult
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
@@ -133,10 +135,10 @@ private suspend fun findExistingVenv(
     logger.warn("No flavor found for $pythonPath")
     return@withContext null
   }
-  return@withContext when (val p = pythonPath.validatePythonAndGetInfo()) {
+  return@withContext when (val p = pythonPath.detectPythonEnvironment().mapResult { it.getPythonInfo() }) {
     is Result.Success -> pythonPath
     is Result.Failure -> {
-      logger.warn("No version string. python seems to be broken: $pythonPath. ${p.error}")
+      logger.warn("Python seems to be broken: $pythonPath. ${p.error}")
       null
     }
   }

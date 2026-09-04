@@ -104,7 +104,9 @@ internal class PyCondaEnvProvider(
 
   private fun constructCondaEnv(envName: String?, envPath: String, base: Boolean, condaPath: FullPathOnTarget): PyCondaEnv {
     val identity = if (envName != null && !base) {
-      PyCondaEnvIdentity.NamedEnv(envName)
+      // The path travels with the name, so a caller can read the environment off the file system instead of asking
+      // conda to run something in it.
+      PyCondaEnvIdentity.NamedEnv(envName, envPath)
     }
     else {
       PyCondaEnvIdentity.UnnamedEnv(envPath, base)

@@ -13,6 +13,7 @@ import com.intellij.python.pytools.PyTool
 import com.intellij.python.sdk.backend.impl.VERSION_NUMBER_RE
 import com.intellij.python.sdk.backend.impl.associationProblem
 import com.intellij.python.sdk.backend.impl.buildItem
+import com.intellij.python.sdk.backend.impl.recordedPythonInfo
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -22,7 +23,6 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
@@ -80,12 +80,9 @@ fun PythonInterpreter.getPythonInfo(): PyResult<PythonInfo> {
   if (detection is Result.Failure) return detection
   associationProblem()?.let { return it }
 
-  // The environment's own version first, since it is exact; then the SDK's, which carries a `Python ` prefix. A
-  // recorded version says nothing about free threading, so that stays at its default.
+  // The environment's own version first, since it is exact; then the SDK's, which carries a `Python ` prefix.
   val recorded = pythonEnvironment?.version ?: sdk.versionString?.let { VERSION_NUMBER_RE.find(it)?.value }
-  return recorded
-           ?.let { LanguageLevel.fromPythonVersionSafe(it) }
-           ?.let { PyResult.success(PythonInfo(languageLevel = it, version = recorded)) }
+  return recordedPythonInfo(recorded)?.let { PyResult.success(it) }
          ?: PyResult.localizedError(PySdkBundle.message("python.sdk.version.not.recorded", sdk.name))
 }
 

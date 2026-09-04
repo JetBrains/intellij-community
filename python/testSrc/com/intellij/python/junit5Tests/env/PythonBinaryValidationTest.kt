@@ -3,13 +3,15 @@ package com.intellij.python.junit5Tests.env
 
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.python.execGetBoolFromStdout
-import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.junit5Tests.randomBinary
+import com.intellij.python.sdk.backend.detectPythonEnvironment
+import com.intellij.python.sdk.backend.getPythonInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.mapResult
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -18,13 +20,13 @@ import org.junit.jupiter.api.Test
 class PythonBinaryValidationTest {
   @Test
   fun sunnyDayTest(@PythonBinaryPath python: PythonBinary): Unit = runBlocking {
-    val info = python.validatePythonAndGetInfo().orThrow()
+    val info = python.detectPythonEnvironment().mapResult { it.getPythonInfo() }.orThrow()
     Assertions.assertNotNull(info, "Failed to get python info")
   }
 
   @Test
   fun rainyDayTest(): Unit = runBlocking {
-    when (val r = randomBinary.validatePythonAndGetInfo()) {
+    when (val r = randomBinary.detectPythonEnvironment().mapResult { it.getPythonInfo() }) {
       is Result.Success -> {
         Assertions.fail("${randomBinary} isn't a python, should fail, but got ${r.result}")
       }

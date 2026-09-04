@@ -11,8 +11,10 @@ import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.Path
-import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.util.EnvironmentUtil
+import com.intellij.python.sdk.backend.detectPythonEnvironment
+import com.intellij.python.sdk.backend.getPythonInfo
+import com.jetbrains.python.mapResult
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
@@ -102,7 +104,8 @@ class PySdkFromEnvironmentVariable private constructor(
    */
   @CheckReturnValue
   suspend fun configureSdkForModules(modules: Array<Module> = project.modules): PyResult<Unit> {
-    python.validatePythonAndGetInfo()
+    python.detectPythonEnvironment()
+      .mapResult { it.getPythonInfo() }
       .getOr(PyBundle.message("sdk.configuration.path.python.invalid", python)) { return it }
 
     // Skip modules with same SDK

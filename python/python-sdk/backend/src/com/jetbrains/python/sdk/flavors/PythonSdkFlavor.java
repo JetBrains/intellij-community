@@ -331,7 +331,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * @deprecated use {@link com.intellij.python.sdk.backend.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
-   * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
   @Deprecated(forRemoval = true)
   //because of process output
@@ -348,7 +347,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * @deprecated use {@link com.intellij.python.sdk.backend.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
-   * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.Internal
@@ -371,7 +369,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * @deprecated use {@link com.intellij.python.sdk.backend.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
-   * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.Internal
@@ -402,7 +399,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * @deprecated use {@link com.intellij.python.sdk.backend.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
-   * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
   @Deprecated(forRemoval = true)
   public @NotNull LanguageLevel getLanguageLevel(@NotNull Sdk sdk) {
@@ -413,7 +409,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * @deprecated use {@link com.intellij.python.sdk.backend.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
-   * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.Internal

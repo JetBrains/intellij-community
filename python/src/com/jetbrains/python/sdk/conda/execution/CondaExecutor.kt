@@ -12,9 +12,6 @@ import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.ZeroCodeJsonParserTransformer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
-import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetInfo
-import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -122,11 +119,6 @@ internal object CondaExecutor {
       binaryToExec, listOf("update", "--dry-run", "--all", "--json"), envIdentity,
       transformer = ZeroCodeJsonParserTransformer { CondaExecutionParser.parseOutdatedOutputs(it) }
     )
-  }
-
-  suspend fun getPythonInfo(binaryToExec: BinaryToExec, envIdentity: PyCondaEnvIdentity): PyResult<PythonInfo> {
-    val runArgs = prepareCondaRunArgs(listOf("run"), listOf("python"), envIdentity)
-    return ExecService().validatePythonAndGetInfo(ExecutablePython(binaryToExec, runArgs, emptyMap()))
   }
 
   private fun prepareCondaRunArgs(

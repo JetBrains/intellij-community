@@ -37,6 +37,8 @@ import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.execService.python.getLanguageLevelFromVersionStringSafe
 import com.intellij.python.community.execService.python.getVersionFromVersionStringSafe
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
+import com.intellij.python.sdk.backend.detectPythonEnvironment
+import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
 import com.intellij.python.community.services.systemPython.SysPythonRegisterError
@@ -309,7 +311,8 @@ data class EelFileSystem(
     return withContext(Dispatchers.IO) {
       workingDir.listDirectoryEntries().filter { it.isDirectory() }.mapNotNull { possibleVenvHome ->
         val pythonBinary = resolvePythonBinary(PathHolder.Eel(possibleVenvHome)) ?: return@mapNotNull null
-        val pythonInfo = pythonBinary.path.validatePythonAndGetInfo().successOrNull ?: return@mapNotNull null
+        val pythonInfo = pythonBinary.path.detectPythonEnvironment().successOrNull?.getPythonInfo()?.successOrNull
+                         ?: return@mapNotNull null
         val ui = uiInfoGetter(pythonBinary)
         DetectedSelectableInterpreter(pythonBinary, pythonInfo, false, ui)
       }
@@ -812,7 +815,7 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
       } ?: run {
         val binToExecute = sdk.asBinToExecute().orLogException(LOG)
         val pythonInfo = binToExecute?.let {
-          ExecService().validatePythonAndGetInfo(binToExecute).orLogException(LOG)
+          binToExecute.validatePythonAndGetInfo().orLogException(LOG)
         }
         pythonInfo?.languageLevel
       }

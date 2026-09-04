@@ -28,7 +28,6 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.python.community.services.systemPython.SystemPython
@@ -67,6 +66,7 @@ import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.evoRefKind
 import com.intellij.python.sdk.common.evolution.evoReusesExistingEnv
 import com.intellij.python.sdk.backend.detectPythonEnvironment
+import com.intellij.python.sdk.backend.getPythonInfo
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.TraceContext
@@ -1020,12 +1020,14 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val binary = homePath.toNioPathOrNull() ?: return null
     // An environment that already wrote its version down is read, not run — see [PythonEnvironment.version]. That is
     // most rows of most nodes, and every one of them used to cost a `python --version` of its own.
-    withContext(Dispatchers.IO) { binary.detectPythonEnvironment().successOrNull?.version }?.let { return it }
+    val environment = withContext(Dispatchers.IO) { binary.detectPythonEnvironment().successOrNull } ?: return null
+    environment.version?.let { return it }
     // Detect the version in the tool's own coroutine (the same one that listed its envs), so it appears under that tool.
     return toolScope(project, traceId, nodeId, providerLabel(nodeId)).async {
-      // Validating runs the interpreter rather than only asking it for a version. A python that answers `--version` and
-      // then fails to run is reported as broken here, instead of showing a version for something unusable.
-      val info = binary.validatePythonAndGetInfo().getOrNull() ?: return@async null
+      // Nothing was written down, so this runs the interpreter rather than only asking it for a version. A python that
+      // answers `--version` and then fails to run is reported as broken here, instead of showing a version for
+      // something unusable.
+      val info = environment.getPythonInfo().getOrNull() ?: return@async null
       // The reported patch version when the probe captured one; otherwise the level it parsed, never a second probe.
       info.version ?: info.languageLevel.toPythonVersion()
     }.await()

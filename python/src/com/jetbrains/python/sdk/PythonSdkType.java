@@ -466,7 +466,6 @@ public final class PythonSdkType extends SdkType {
   /**
    * @deprecated use {@link PythonInterpreterExtKt#getPythonInfo(PythonInterpreter)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
-   * or {@link SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
   @Deprecated(forRemoval = true)
   @Override
@@ -501,7 +500,6 @@ public final class PythonSdkType extends SdkType {
   /**
    * @deprecated use {@link PythonInterpreterExtKt#getPythonInfo(PythonInterpreter)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
-   * or {@link SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
   @Deprecated(forRemoval = true)
   @Override
@@ -561,7 +559,6 @@ public final class PythonSdkType extends SdkType {
   /**
    * @deprecated use {@link PythonInterpreterExtKt#getPythonInfo(PythonInterpreter)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
-   * or {@link SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
   @Deprecated(forRemoval = true)
   public static @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {

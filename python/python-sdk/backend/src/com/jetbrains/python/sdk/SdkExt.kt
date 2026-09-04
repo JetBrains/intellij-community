@@ -14,15 +14,12 @@ import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem
-import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.mapResult
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
@@ -173,13 +170,6 @@ val Sdk.skeletonsPath: Path?
 fun Sdk.createSkeletonsRootDirectory(): Path? {
   return skeletonsPath?.let { Files.createDirectories(it) }
 }
-
-/**
- * Returns SDK validation info, but it is not cached, so you should use
- * [com.intellij.python.sdk.backend.getPythonInfo] instead.
- */
-@Internal
-suspend fun Sdk.validatePythonAndGetInfo(): PyResult<PythonInfo> = asBinToExecute().mapResult { it.validatePythonAndGetInfo() }
 
 /** The activation environment for [this] SDK's interpreter; a failure if the SDK has no valid home path. */
 @Internal

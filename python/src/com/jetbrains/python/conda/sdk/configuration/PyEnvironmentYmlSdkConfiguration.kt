@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.conda.sdk.configuration
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -12,6 +14,10 @@ import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
+import com.intellij.python.sdk.backend.PythonEnvironment
+import com.intellij.python.sdk.backend.detectPythonEnvironment
+import com.intellij.python.sdk.backend.getPythonInfo
+import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -30,7 +36,6 @@ import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
-import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.community.impl.conda.CondaPyTool
@@ -49,6 +54,8 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemDependent
 import java.nio.file.Path
@@ -78,19 +85,47 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
   private suspend fun checkManageableEnv(module: PyProject): EnvCheckerResult =
     withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
       val condaPath = CondaPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))
-      val canManage = condaPath != null
+                      ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
       val intentionName = PyBundle.message("sdk.create.condaenv.suggestion")
-      val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
-      if (canManage) {
-        val envExistenceResult = getCondaEnvIdentity(module, condaPath)?.let { env ->
-          val binaryToExec = BinOnEel(condaPath.path)
-          CondaExecutor.getPythonInfo(binaryToExec, env).findEnvOrNull(intentionName)
-        }
-
-        envExistenceResult ?: if (getEnvironmentYml(module) != null) envNotFound else EnvCheckerResult.CannotConfigure
-      }
+      findExistingEnv(module, condaPath, intentionName)
+      ?: if (getEnvironmentYml(module) != null) EnvCheckerResult.EnvNotFound(intentionName)
       else EnvCheckerResult.CannotConfigure
+    }
+
+  /**
+   * The environment `environment.yml` names, when it already stands on disk, or `null` when it does not.
+   *
+   * Read from the file system layout, the way the interpreter widget reads a conda environment. The identity says where
+   * the environment lives, the interpreter is found in that directory, and [PythonEnvironment.getPythonInfo] answers
+   * from the environment's own `conda-meta` entry. Nothing runs conda. This replaced a `conda run ... python` probe
+   * that started conda twice on every project open.
+   *
+   * `null` covers every "not here" case, and the caller turns it into the offer to create the environment: no identity
+   * matched, the identity carries no directory, the directory holds no interpreter, or the interpreter is broken.
+   */
+  private suspend fun findExistingEnv(
+    pyProject: PyProject,
+    condaExecutable: PathHolder.Eel,
+    @IntentionName intentionName: String,
+  ): EnvCheckerResult.EnvFound? {
+    val envDir = getCondaEnvIdentity(pyProject, condaExecutable)?.envDir ?: return null
+    val environment = withContext(Dispatchers.IO) {
+      envDir.resolvePythonBinary()?.detectPythonEnvironment()?.getOrNull()
+    } ?: return null
+    return environment.getPythonInfo().findEnvOrNull(intentionName)
+  }
+
+  /**
+   * The directory the environment stands in, or `null` when the identity does not carry one.
+   *
+   * A [PyCondaEnvIdentity.NamedEnv] built from a conda listing carries its path. One restored from a saved SDK does
+   * not, and neither does one built from a create request. See [PyCondaEnvIdentity.NamedEnv].
+   */
+  private val PyCondaEnvIdentity.envDir: Path?
+    get() = when (this) {
+      is PyCondaEnvIdentity.NamedEnv -> envPath?.toNioPathOrNull()
+      is PyCondaEnvIdentity.UnnamedEnv -> envPath.toNioPathOrNull()
     }
 
   private suspend fun getEnvironmentYml(pyProject: PyProject) = CondaEnvironmentYmlSdkUtils.envFileNames.firstNotNullOfOrNull {
