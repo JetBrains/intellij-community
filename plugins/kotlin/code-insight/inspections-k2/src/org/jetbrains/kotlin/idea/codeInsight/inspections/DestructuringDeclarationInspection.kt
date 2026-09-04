@@ -98,12 +98,16 @@ internal class DestructuringDeclarationInspection(
     override fun isApplicableByPsi(element: KtDeclaration): Boolean =
         element.getUsageScopeElement() != null
 
-    override fun getProblemHighlightType(element: KtDeclaration, context: UsagesToRemove): ProblemHighlightType =
-        if (reportNonParameterCases || element.parent is KtForExpression || context.useFullFormNameBasedDestructuring) {
+    override fun getProblemHighlightType(element: KtDeclaration, context: UsagesToRemove): ProblemHighlightType {
+        val atMostOneUsedComponent = context.introducedEntries().count { !it.isUnusedComponent() } <= 1
+        val reportAsWarning = reportNonParameterCases || element.parent is KtForExpression || context.useFullFormNameBasedDestructuring
+
+        return if (reportAsWarning && !atMostOneUsedComponent) {
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING
         } else {
             ProblemHighlightType.INFORMATION
         }
+    }
 
     override fun getApplicableRanges(element: KtDeclaration): List<TextRange> {
         val textRange = when (element) {
@@ -155,7 +159,7 @@ internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val contex
         val psiFactory = KtPsiFactory(element.project)
         val parent = element.parent
         val (container, anchor) = if (parent is KtParameterList) parent.parent to null else parent to element
-        val modifiableUsagesToRemove = context.data.map { usageData ->
+        val modifiableEntries = context.introducedEntries().map { usageData ->
             usageData.copy(
                 usagesToReplace = usageData.usagesToReplace.map { updater.getWritable(it) }.toMutableList(),
                 declarationToDrop = updater.getWritable(usageData.declarationToDrop)
@@ -165,17 +169,15 @@ internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val contex
             visibleDeclarationsContext = anchor ?: container as KtElement,
             checkVisibleDeclarationsContext = true,
             target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-            excludedDeclarations = modifiableUsagesToRemove.flatMap {
+            excludedDeclarations = modifiableEntries.flatMap {
                 (it.declarationToDrop as? KtDestructuringDeclaration)?.entries ?: listOfNotNull(it.declarationToDrop)
             }
         )
         val underscoreSupported =
             element.languageVersionSettings.supportsFeature(LanguageFeature.SingleUnderscoreForParameterName)
-        val allUnused = modifiableUsagesToRemove.all { (_, usagesToReplace, variableToDrop) ->
-            usagesToReplace.isEmpty() && variableToDrop == null
-        }
+        val allUnused = modifiableEntries.all { it.isUnusedComponent() }
         val entries = ArrayList<String>()
-        modifiableUsagesToRemove.forEach { usageData ->
+        modifiableEntries.forEach { usageData ->
             val (descriptor, usagesToReplace, variableToDrop, name) = usageData
             val isUnusedComponent = usageData.isUnusedComponent()
             val suggestedName = if (isUnusedComponent && underscoreSupported && !allUnused && !context.useFullFormNameBasedDestructuring) {
@@ -192,15 +194,14 @@ internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val contex
                 }
             }
 
-            if (!context.useFullFormNameBasedDestructuring || !isUnusedComponent || allUnused) {
-                val entry = if (context.useFullFormNameBasedDestructuring) {
-                    buildFullNameBasedDestructuringEntry(suggestedName, descriptor)
-                } else {
-                    suggestedName
-                }
-                entries.add(entry)
+            val entry = if (context.useFullFormNameBasedDestructuring) {
+                buildFullNameBasedDestructuringEntry(suggestedName, descriptor)
+            } else {
+                suggestedName
             }
+            entries.add(entry)
         }
+
         val joinedNames = entries.joinToString()
         when (element) {
             is KtParameter -> {
@@ -217,7 +218,7 @@ internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val contex
             is KtFunctionLiteral -> {
                 val lambda = element.parent as KtLambdaExpression
                 specifyExplicitLambdaSignature(
-                    lambda, modifiableUsagesToRemove.joinToString(prefix = "(", postfix = ")") { it.componentName })
+                    lambda, modifiableEntries.joinToString(prefix = "(", postfix = ")") { it.componentName })
                 runWriteActionIfPhysical(element) {
                     lambda.functionLiteral.valueParameters.singleOrNull()?.replace(
                         psiFactory.createDestructuringParameter("($joinedNames)")
@@ -256,7 +257,17 @@ internal data class UsagesToRemove(
     val data: List<UsageData>,
     val removeSelectorInLoopRange: Boolean,
     val useFullFormNameBasedDestructuring: Boolean,
-)
+) {
+    /**
+     * Returns the destructuring entries introduced by the fix.
+     * Full-form name-based destructuring excludes unused entries.
+     * The fix keeps all entries if none are used because an empty destructuring declaration is invalid.
+     */
+    fun introducedEntries(): List<UsageData> {
+        if (!useFullFormNameBasedDestructuring) return data
+        return data.filterNot(UsageData::isUnusedComponent).ifEmpty { data }
+    }
+}
 
 internal data class SingleUsageData(val callableName: String?, val usageToReplace: KtExpression?, val declarationToDrop: KtDeclaration?)
 

@@ -1287,6 +1287,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/intentions/destructuringInLambda/mapIndexedLastWithLanguageSettings.kt");
         }
 
+        @TestMetadata("mapIndexedTwoOfFourWithLanguageSettings.kt")
+        public void testMapIndexedTwoOfFourWithLanguageSettings() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/mapIndexedTwoOfFourWithLanguageSettings.kt");
+        }
+
         @TestMetadata("noIt.kt")
         public void testNoIt() throws Exception {
             runTest("../../../idea/tests/testData/intentions/destructuringInLambda/noIt.kt");
@@ -1506,6 +1511,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("DataClassSecondVariable.kt")
         public void testDataClassSecondVariable() throws Exception {
             runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassSecondVariable.kt");
+        }
+
+        @TestMetadata("DataClassSingleComponent.kt")
+        public void testDataClassSingleComponent() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassSingleComponent.kt");
         }
 
         @TestMetadata("DataClassTwoDifferentLocals.kt")

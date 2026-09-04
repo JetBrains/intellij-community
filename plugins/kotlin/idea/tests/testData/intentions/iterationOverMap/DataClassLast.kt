@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// HIGHLIGHT: INFORMATION
 
 data class My(val first: String, val second: Int)
 

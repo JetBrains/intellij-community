@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// HIGHLIGHT: INFORMATION
 // AFTER-WARNING: Parameter 'args' is never used
 // AFTER-WARNING: Variable 'key2' is never used
 
