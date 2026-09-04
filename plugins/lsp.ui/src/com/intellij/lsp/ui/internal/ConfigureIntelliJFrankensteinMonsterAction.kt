@@ -47,7 +47,7 @@ internal class ConfigureIntelliJFrankensteinMonsterAction : DumbAwareAction() {
 
     val configuration = LspServerConfiguration(
       name = SERVER_NAME,
-      executablePath = executable.url,
+      executablePath = executable.path,
       arguments = STDIO_ARGUMENT,
       filePatterns = FILE_PATTERNS,
       initializationOptions = createInitializationOptions(projectPath),
