@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.resolve
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPolyVariantReference
@@ -104,7 +103,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
             assertTrue(psiReference is PsiPolyVariantReference)
             psiReference as PsiPolyVariantReference
 
-            val results = executeOnPooledThreadInReadAction {
+            val results = runReadAction {
                 wrapReference(psiReference).multiResolve(true).map { result ->
                     result.element
                         ?: UsefulTestCase.fail("Reference ${psiReference} was resolved to ${result} without psi element") as Nothing
@@ -186,7 +185,7 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         ) {
             val expectedString = expectedResolveData.referenceString
             if (psiReference != null) {
-                val resolvedTo = executeOnPooledThreadInReadAction { psiReference.resolve() }
+                val resolvedTo = runReadAction { psiReference.resolve() }
                 if (resolvedTo != null) {
                     checkResolvedTo(psiReference, resolvedTo)
                     val renderedResolvedTo = render(resolvedTo)
@@ -222,6 +221,3 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         }
     }
 }
-
-private fun <R> executeOnPooledThreadInReadAction(action: () -> R): R =
-    ApplicationManager.getApplication().executeOnPooledThread<R> { runReadAction(action) }.get()
