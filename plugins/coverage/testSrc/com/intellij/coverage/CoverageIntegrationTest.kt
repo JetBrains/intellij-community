@@ -181,7 +181,13 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   fun `test ij coverage reads classes from jar output roots`() = assertHitsWithJarOutputRoots { loadIJSuite() }
 
   @Test
+  fun `test ij coverage reads classes from jar filesystem roots`() = assertHitsWithJarFileSystemRoots { loadIJSuite() }
+
+  @Test
   fun `test jacoco reads classes from jar output roots`() = assertHitsWithJarOutputRoots { loadJaCoCoSuite() }
+
+  @Test
+  fun `test jacoco reads classes from jar filesystem roots`() = assertHitsWithJarFileSystemRoots { loadJaCoCoSuite() }
 
   @Test
   fun testJaCoCoWithoutUnloaded() = runBlocking {
@@ -436,6 +442,24 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
       Files.deleteIfExists(jarOutput)
     }
   }
+
+  private fun assertHitsWithJarFileSystemRoots(loadSuite: () -> CoverageSuitesBundle) {
+    val module = ModuleManager.getInstance(myProject).findModuleByName("simple") ?: error("Module 'simple' is not found")
+    val originalOutputUrl = CompilerModuleExtension.getInstance(module)?.compilerOutputUrl ?: error("Module output URL is not configured")
+    val originalOutputPath = Path.of(VfsUtilCore.urlToPath(originalOutputUrl))
+    val jarOutput = Files.createTempFile("coverage-output", ".jar")
+    try {
+      createJarFromDirectory(originalOutputPath, jarOutput)
+      val jarRootUrl = "jar://" + jarOutput.toString().replace('\\', '/') + "!/"
+      PsiTestUtil.setCompilerOutputPath(module, jarRootUrl, false)
+      assertHits(loadSuite())
+    }
+    finally {
+      PsiTestUtil.setCompilerOutputPath(module, originalOutputUrl, false)
+      Files.deleteIfExists(jarOutput)
+    }
+  }
+
 
   private fun createJarFromDirectory(sourceDir: Path, targetJar: Path) {
     JarOutputStream(Files.newOutputStream(targetJar)).use { output ->

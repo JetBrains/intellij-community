@@ -9,7 +9,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
@@ -48,7 +50,7 @@ internal fun collectOutputRoots(
   return modules.flatMap { module ->
     CoverageOutputRoots.getRoots(coverageDataManager, module, includeTests)
       .asSequence()
-      .map(VirtualFile::toNioPath)
+      .mapNotNull(::toLocalPathOrNull)
       .filter(::isValidOutputRoot)
       .distinct()
       .map { root -> ModuleRequest(module, root, packageEntries) }
@@ -90,3 +92,14 @@ private fun String.isInPackage(packageName: String): Boolean {
 private fun isValidOutputRoot(root: Path): Boolean {
   return Files.isDirectory(root) || Files.isRegularFile(root) && root.fileName.toString().endsWith(".jar", ignoreCase = true)
 }
+
+private fun toLocalPathOrNull(root: VirtualFile): Path? {
+  val localRoot = if (root.fileSystem is JarFileSystem) {
+    JarFileSystem.getInstance().getVirtualFileForJar(root)
+  }
+  else {
+    root
+  }
+  return localRoot?.toNioPathOrNull()
+}
+
