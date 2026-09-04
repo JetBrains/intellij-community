@@ -35,7 +35,7 @@ public class PyTypeTest extends PyTestCase {
 
   public void testParameterFromUsages() {
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
-    Registry.get("python.use.better.control.flow.type.inference").setValue(true);
+    Registry.get("python.use.better.control.flow.type.inference").setValue(true, myFixture.getTestRootDisposable());
     final String text = """
       def foo(bar):
           expr = bar

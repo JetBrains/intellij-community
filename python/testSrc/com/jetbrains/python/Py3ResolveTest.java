@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.StackOverflowPreventedException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -1163,6 +1164,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
   // PY-83803
   public void testNonIdempotentComputation2() {
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    Registry.get("python.use.better.control.flow.type.inference").setValue(true, myFixture.getTestRootDisposable());
 
     myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
     PsiElement result1 = findReferenceByMarker(myFixture.getFile(), "<ref1>").resolve();
