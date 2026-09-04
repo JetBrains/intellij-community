@@ -166,6 +166,20 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         }
       }
     }
+
+    /**
+     * Create a component to show the rectangle of the tool window possible drop target
+     */
+    internal fun createDropHintHighlightComponent(): NonOpaquePanel {
+      return object : NonOpaquePanel() {
+        override fun paint(g: Graphics) {
+          if (ExperimentalUI.isNewUI()) {
+            g.color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.HINT_BACKGROUND
+            g.fillRect(0, 0, width, height)
+          }
+        }
+      }
+    }
   }
 
   override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {

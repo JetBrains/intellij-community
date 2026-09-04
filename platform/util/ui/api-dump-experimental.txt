@@ -5,6 +5,8 @@ f:com.intellij.ui.ComponentUtil
 *:com.intellij.ui.icons.IconWithShape
 - javax.swing.Icon
 - a:getShape():java.awt.Shape
+com.intellij.util.ui.JBUI$CurrentTheme$ToolWindow$DragAndDrop
+- *sf:HINT_BACKGROUND:java.awt.Color
 *f:com.intellij.util.ui.JLabelUtil
 - sf:INSTANCE:com.intellij.util.ui.JLabelUtil
 - sf:setTrimOverflow(javax.swing.JLabel,Z):V

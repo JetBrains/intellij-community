@@ -1143,6 +1143,9 @@ public final class JBUI {
                                                       new JBColor(0x407BF2, 0x548AF7));
         Color AREA_BACKGROUND = JBColor.namedColor("ToolWindow.DragAndDrop.areaBackground",
                                                    new JBColor(0xA0BDF8, 0x366ACF));
+        @Experimental
+        Color HINT_BACKGROUND = JBColor.namedColor("ToolWindow.DragAndDrop.hintBackground",
+                                                   new JBColor(0xD0DDFC, 0x7095DE));
       }
 
       public static @NotNull Color stripeSeparatorColor(boolean dnd) {

@@ -2763,6 +2763,10 @@
       "description": "Background of the drop target area in a tool window"
     },
     {
+      "key": "ToolWindow.DragAndDrop.hintBackground",
+      "description": "Background of the drop hint area in a tool window"
+    },
+    {
       "key": "ToolWindow.Header.background",
       "description": "Active tool window header"
     },
