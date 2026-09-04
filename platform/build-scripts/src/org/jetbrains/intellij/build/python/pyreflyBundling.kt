@@ -16,7 +16,7 @@ import org.jetbrains.intellij.build.resolveFileForReading
 import java.nio.file.Files
 import java.nio.file.Path
 
-private const val PYREFLY_BUNDLE_ENABLED_PROPERTY: String = "system.pyrefly.bundle"
+private const val PYREFLY_BUNDLE_ENABLED_PROPERTY: String = "pyrefly.bundle"
 
 private const val PYREFLY_VERSION_PROPERTY: String = "pyreflyBuild"
 
