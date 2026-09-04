@@ -113,6 +113,10 @@ object ReceiverParameterChangeSignatureUtils {
         return used
     }
 
+    /**
+     * Returns all type parameters that are being referenced by the [typeReference].
+     * If the [typeReference] is removed, then we also want to remove any type parameters that potentially became unused.
+     */
     private fun typeParameters(typeReference: KtTypeReference): List<KtTypeParameter> {
         val parameterParent = typeReference.getParentOfTypesAndPredicate(
             true,
@@ -130,6 +134,9 @@ object ReceiverParameterChangeSignatureUtils {
             } ?: emptyList()
     }
 
+    /**
+     * Removes any of the [typeParameters] if they are no longer being referenced.
+     */
     private fun removeUnusedTypeParameters(typeParameters: List<KtTypeParameter>) {
         val unusedTypeParams = typeParameters.filter { typeParameter ->
             !ReferencesSearch.search(typeParameter).anyMatch { (it as? KtSimpleNameReference)?.expression?.parent !is KtTypeConstraint }
@@ -155,6 +162,10 @@ object ReceiverParameterChangeSignatureUtils {
         }
     }
 
+    /**
+     * We use this function to check if the callable symbol has a receiver that might potentially be used as a context receiver of this symbol.
+     * This is needed because the analysis API does not expose passed context receivers yet: KT-73709
+     */
     context(_: KaSession)
     private fun KaSimpleCall<*, *>.hasContextReceiverOfType(type: KaType): Boolean {
         val substitutor = buildSubstitutor {
@@ -163,6 +174,10 @@ object ReceiverParameterChangeSignatureUtils {
         return symbol.contextReceivers.any { type.isSubtypeOf(substitutor.substitute(it.type)) }
     }
 
+    /**
+     * Returns whether the [element] makes use of one of the [reifiedTypes].
+     * This will only return true if the [element] is inside a function body or function expression.
+     */
     context(_: KaSession)
     private fun isUsageOfReifiedType(reifiedTypes: Set<KaTypeParameterSymbol>, element: KtElement): Boolean {
         val parentFunction = element.parentOfType<KtFunction>() ?: return false
@@ -171,6 +186,9 @@ object ReceiverParameterChangeSignatureUtils {
         return reifiedTypes.contains(element.resolveExpression())
     }
 
+    /**
+     * Returns whether the [symbol] is being used by the [element] by referencing it.
+     */
     context(_: KaSession)
     private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Boolean {
         if (element !is KtExpression) return false

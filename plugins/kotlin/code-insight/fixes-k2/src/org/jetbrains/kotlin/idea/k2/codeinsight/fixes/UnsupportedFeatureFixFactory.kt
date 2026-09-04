@@ -43,7 +43,7 @@ object UnsupportedFeatureFixFactory {
             put(LanguageFeature.AnnotationAllUseSiteTarget, LanguageVersion.KOTLIN_2_2)
             // 2.3
             put(LanguageFeature.ExplicitBackingFields, LanguageVersion.KOTLIN_2_3)
-            // 2.5
+            // 2.4
             put(LanguageFeature.CompanionBlocks, LanguageVersion.KOTLIN_2_4)
             put(LanguageFeature.CompanionExtensions, LanguageVersion.KOTLIN_2_4)
             put(LanguageFeature.NameBasedDestructuring, LanguageVersion.KOTLIN_2_4)

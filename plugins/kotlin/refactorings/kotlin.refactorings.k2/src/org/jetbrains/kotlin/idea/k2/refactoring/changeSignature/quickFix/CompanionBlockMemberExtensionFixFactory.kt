@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSign
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ReceiverParameterChangeSignatureUtils.collectUsedTypeParameters
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ReceiverParameterChangeSignatureUtils.isReceiverUsedInside
-import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -65,7 +63,7 @@ object CompanionBlockMemberExtensionFixFactory {
     ) : KotlinQuickFixAction<KtNamedFunction>(function) {
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
             val function = element ?: return
-            val changeInfo = createChangeInfo(function) ?: return
+            val changeInfo = function.toCreateChangeInfo()
             changeInfo.receiverParameterInfo = null
             KotlinChangeSignatureProcessor(project, changeInfo).run()
         }
@@ -80,7 +78,7 @@ object CompanionBlockMemberExtensionFixFactory {
     ) : KotlinQuickFixAction<KtNamedFunction>(function) {
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
             val function = element ?: return
-            val changeInfo = createChangeInfo(function) ?: return
+            val changeInfo = function.toCreateChangeInfo()
             val oldReceiverInfo = changeInfo.oldReceiverInfo ?: return
             oldReceiverInfo.isContextParameter = true
             changeInfo.receiverParameterInfo = null
@@ -94,9 +92,6 @@ object CompanionBlockMemberExtensionFixFactory {
         override fun getFamilyName(): String = KotlinBundle.message("convert.receiver.parameter.to.context.parameter")
     }
 
-    private fun createChangeInfo(function: KtNamedFunction): KotlinChangeInfo? {
-        val callableWithOverridden = checkSuperMethods(function, emptyList(), RefactoringBundle.message("to.refactor"))
-        val rootOverriddenOrSelf = callableWithOverridden.filterIsInstance<KtNamedFunction>().lastOrNull() ?: return null
-        return KotlinChangeInfo(KotlinMethodDescriptor(rootOverriddenOrSelf))
-    }
+    private fun KtNamedFunction.toCreateChangeInfo(): KotlinChangeInfo =
+        KotlinChangeInfo(KotlinMethodDescriptor(this))
 }
