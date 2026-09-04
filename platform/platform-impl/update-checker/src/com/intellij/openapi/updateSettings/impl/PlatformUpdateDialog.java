@@ -55,6 +55,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerService.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
+import static com.intellij.openapi.updateSettings.impl.UpdateModeKt.actionText;
+import static com.intellij.openapi.updateSettings.impl.UpdateModeKt.getUpdateMode;
 import static java.util.Objects.requireNonNull;
 
 @ApiStatus.Internal
@@ -68,7 +70,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
   private static final int V_COMPONENT_GAP = 3;
 
   private final @Nullable Project myProject;
-  private final PlatformUpdates.Loaded myPlatformUpdate;
+  private final @NotNull PlatformUpdates.Loaded myPlatformUpdate;
   private final @Nullable Collection<PluginDownloader> myUpdatesForPlugins;
   private final boolean myWriteProtected;
   private final @Nullable LicenseInfo myLicenseInfo;
@@ -212,33 +214,39 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     );
     actions.add(getCancelAction());
 
-    var updateButton = (AbstractAction)null;
-    if (myPlatformUpdate.getPatches() != null || myTestPatch != null) {
-      var canRestart = ApplicationManager.getApplication().isRestartCapable();
-      var name = IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.apply.manually.button");
-      updateButton = new AbstractAction(name) {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          close(OK_EXIT_CODE);
-          var pluginIdsToUpdate = ContainerUtil.map2Set((myUpdatesForPlugins != null ? myUpdatesForPlugins : List.of()), PluginDownloader::getId);
-          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(pluginIdsToUpdate, plugins -> {
-            downloadPatchAndRestart(plugins);
-            return Unit.INSTANCE;
-          });
-        }
-      };
-      updateButton.setEnabled(!myWriteProtected);
-    }
-    else {
-      var downloadUrl = myPlatformUpdate.getNewBuild().getDownloadUrl();
-      if (downloadUrl != null) {
-        updateButton = new AbstractAction(IdeBundle.message("updates.download.button")) {
+    AbstractAction updateButton;
+    var mode = getUpdateMode(myPlatformUpdate, myTestPatch);
+
+    switch (mode) {
+      case PATCH, PATCH_MANUAL -> {
+        updateButton = new AbstractAction(actionText(mode)) {
           @Override
           public void actionPerformed(ActionEvent e) {
             close(OK_EXIT_CODE);
-            BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(downloadUrl));
+            var pluginIdsToUpdate = ContainerUtil.map2Set((myUpdatesForPlugins != null ? myUpdatesForPlugins : List.of()), PluginDownloader::getId);
+            PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(pluginIdsToUpdate, plugins -> {
+              downloadPatchAndRestart(plugins);
+              return Unit.INSTANCE;
+            });
           }
         };
+        updateButton.setEnabled(!myWriteProtected);
+      }
+
+      case MANUAL_DOWNLOAD -> {
+        updateButton = new AbstractAction(actionText(mode)) {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            close(OK_EXIT_CODE);
+            var downloadUrl = myPlatformUpdate.getNewBuild().getDownloadUrl();
+            if (downloadUrl != null) {
+              BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(downloadUrl));
+            }
+          }
+        };
+      }
+      case null -> {
+        updateButton = null;
       }
     }
 

@@ -137,8 +137,7 @@ private class DownloadUpdateRenderer(
       return base.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     }
 
-    @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-    val title = action.templatePresentation.text.orEmpty()
+    val title = step.getTextFor(value)
     val enabledItem = step.isSelectable(value)
     lateinit var titleLabel: JLabel
     lateinit var versionsLabel: JLabel
@@ -205,13 +204,20 @@ internal abstract class UpdatePopupAction : DumbAwareAction() {
 
 internal class DownloadUpdateAction : UpdatePopupAction() {
 
+  override fun createTemplatePresentation(): Presentation {
+    return super.createTemplatePresentation().apply {
+      text = UpdateMode.PATCH.actionText()
+    }
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
 
     val update = e.update ?: return
+    val updateMode = getUpdateMode(update, null)
 
-    e.presentation.isVisible = update.patches != null || update.newBuild.downloadUrl != null
-    e.presentation.isEnabled = !PlatformUpdateDialog.isPatchWriteProtected(update)
+    e.presentation.text = (updateMode ?: UpdateMode.PATCH).actionText()
+    e.presentation.isEnabled = updateMode != null && !PlatformUpdateDialog.isPatchWriteProtected(update)
   }
 
   override fun actionPerformed(e: AnActionEvent, update: PlatformUpdates.Loaded) {
