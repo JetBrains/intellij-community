@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.util.UUID
 
 @ApiStatus.Internal
@@ -85,6 +86,11 @@ class ScopeChooserActionProviderDelegate private constructor(private val contrib
   suspend fun applyScope(isEverywhere: Boolean, isAutoTogglePossible: Boolean) {
     val scope = scopeById.getValue()[isEverywhere] ?: return
     applyScope(scope, isAutoTogglePossible)
+  }
+
+  suspend fun applyScopeByName(scopeName: @Nls String, isAutoTogglePossible: Boolean) {
+    val scopeId = searchScopesInfo.getValue()?.scopes?.firstOrNull { it.name == scopeName }?.scopeId ?: return
+    applyScope(scopeId, isAutoTogglePossible)
   }
 
   suspend fun applyScope(scopeId: String?, isAutoTogglePossible: Boolean) {

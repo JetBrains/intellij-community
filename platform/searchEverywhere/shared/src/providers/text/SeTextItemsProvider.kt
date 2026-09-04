@@ -12,6 +12,7 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
@@ -33,6 +34,7 @@ import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import com.intellij.platform.searchEverywhere.providers.SeTextFilter
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
+import com.intellij.psi.search.PredefinedSearchScopeProviderImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -62,7 +64,7 @@ class SeTextSearchItem(
 }
 
 @ApiStatus.Internal
-class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(),
+class SeTextItemsProvider(private val project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(),
                                                                                                               SeSearchScopesProvider,
                                                                                                               SeItemsPreviewProvider,
                                                                                                               SeExtendedInfoProvider {
@@ -79,15 +81,22 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     val textFilter = SeTextFilter.from(params.filter)
 
     scopeProviderDelegate?.let { scopeProviderDelegate ->
-      val scopeToApply: String? = SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
-        scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
-          if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
-        }
-      } ?: run {
-        textFilter?.selectedScopeId
+      if (WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
+        // The welcome-screen project has no source. A project-wide text search finds nothing and costs a full scan.
+        // The recent-files scope holds the editor history plus the open files, which is the only useful set there.
+        scopeProviderDelegate.applyScopeByName(PredefinedSearchScopeProviderImpl.getRecentlyViewedFilesScopeName(), false)
       }
+      else {
+        val scopeToApply: String? = SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
+          scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
+            if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+          }
+        } ?: run {
+          textFilter?.selectedScopeId
+        }
 
-      scopeProviderDelegate.applyScope(scopeToApply, false)
+        scopeProviderDelegate.applyScope(scopeToApply, false)
+      }
     }
 
     var originalModel: FindModel? = null
