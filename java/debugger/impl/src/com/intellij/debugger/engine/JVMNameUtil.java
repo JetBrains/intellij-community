@@ -52,6 +52,20 @@ public final class JVMNameUtil {
     return kind != null ? kind.getBinaryName() : null;
   }
 
+  public static boolean isBoxingOrUnboxingMethod(@NotNull String owner, @NotNull String name, @NotNull String signature) {
+    JvmPrimitiveTypeKind kind = JvmPrimitiveTypeKind.getKindByFqn(owner);
+    if (kind == null || kind == JvmPrimitiveTypeKind.VOID) {
+      return false;
+    }
+
+    String primitiveDescriptor = kind.getBinaryName();
+    if (name.equals(kind.getName() + "Value")) {
+      return signature.equals("()" + primitiveDescriptor);
+    }
+    String wrapperDescriptor = "L" + owner.replace('.', '/') + ";";
+    return name.equals("valueOf") && signature.equals("(" + primitiveDescriptor + ")" + wrapperDescriptor);
+  }
+
   private static void appendJVMSignature(JVMNameBuffer buffer, PsiType type) {
     if (type == null) {
       return;

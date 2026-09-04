@@ -169,7 +169,9 @@ public class RequestHint {
   }
 
   static boolean isProxyMethod(Method method) {
-    return method.isBridge() || DebuggerUtilsEx.isProxyClass(method.declaringType());
+    return method.isBridge() ||
+           DebuggerUtilsEx.isProxyClass(method.declaringType()) ||
+           DebuggerUtilsEx.isLambdaClassName(method.declaringType().name());
   }
 
   protected final @Nullable Integer processSteppingFilters(@NotNull SuspendContextImpl context, @Nullable Location location) {

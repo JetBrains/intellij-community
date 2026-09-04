@@ -2,8 +2,8 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableConsumer;
@@ -249,7 +249,8 @@ public final class MethodBytecodeUtil {
       return null;
     }
 
-    List<MethodCall> targetCalls = ContainerUtil.filter(calls, call -> !isBoxingOrUnboxingMethod(call));
+    List<MethodCall> targetCalls = ContainerUtil.filter(
+      calls, call -> !JVMNameUtil.isBoxingOrUnboxingMethod(call.owner(), call.name(), call.descriptor()));
     if (targetCalls.isEmpty()) {
       targetCalls = calls;
     }
@@ -291,20 +292,6 @@ public final class MethodBytecodeUtil {
       }
     }, false);
     return result;
-  }
-
-  private static boolean isBoxingOrUnboxingMethod(MethodCall call) {
-    JvmPrimitiveTypeKind primitiveType = JvmPrimitiveTypeKind.getKindByFqn(call.owner());
-    if (primitiveType == null || primitiveType == JvmPrimitiveTypeKind.VOID) {
-      return false;
-    }
-
-    String primitiveDescriptor = primitiveType.getBinaryName();
-    if (call.name().equals(primitiveType.getName() + "Value")) {
-      return call.descriptor().equals("()" + primitiveDescriptor);
-    }
-    return call.name().equals("valueOf") &&
-           call.descriptor().equals("(" + primitiveDescriptor + ")" + Type.getObjectType(call.owner().replace('.', '/')).getDescriptor());
   }
 
   private record MethodCall(@NotNull String owner, @NotNull String name, @NotNull String descriptor) { }

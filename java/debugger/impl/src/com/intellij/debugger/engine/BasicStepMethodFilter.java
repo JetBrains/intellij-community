@@ -99,7 +99,8 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
       if (isLambdaCall(process, name, location)) {
         return true;
       }
-      if (!caller && myCheckCaller) {
+      if (!caller && myCheckCaller &&
+          !JVMNameUtil.isBoxingOrUnboxingMethod(method.declaringType().name(), name, method.signature())) {
         int index = stackFrame.getFrameIndex();
         StackFrameProxyImpl callerFrame = stackFrame.threadProxy().frame(index + 1);
         if (callerFrame != null) {
