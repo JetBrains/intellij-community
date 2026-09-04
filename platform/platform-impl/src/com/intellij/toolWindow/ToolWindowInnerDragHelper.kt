@@ -79,15 +79,13 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     with(point.getPoint(pane)) {
       val child = SwingUtilities.getDeepestComponentAt(pane, x, y)
       val decorator = InternalDecoratorImpl.findTopLevelDecorator(child)
-      val editorSupport = getEditorSupport(decorator)
       if (decorator != null &&
           (canReorderTabs(decorator) || decorator.toolWindow.canSplitTabs()) &&
           child is ContentTabLabel &&
           (child.parent is ToolWindowContentUi.TabPanel ||
            Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter) &&
-          (((decorator.toolWindow.contentManager as ContentManagerImpl).getRecursiveContentCount() > 1 ||
-            canMoveTabToEditor(decorator, child.content) ||
-            editorSupport?.canOpenInEditor(decorator.toolWindow.project, child.content) == true))
+          ((decorator.toolWindow.contentManager as ContentManagerImpl).getRecursiveContentCount() > 1 ||
+           canDropIntoEditor(decorator, child.content, decorator.toolWindow.project))
       ) {
         return child
       }
@@ -466,8 +464,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
         DropLocation.ToolWindow(decorator)
       }
       editorTarget != null && content != null &&
-      (getEditorSupport(sourceDecorator)?.canOpenInEditor(editorTarget.project, content) == true ||
-      sourceDecorator != null && canMoveTabToEditor(sourceDecorator!!, content)) -> {
+      canDropIntoEditor(sourceDecorator, content, editorTarget.project) -> {
         // Drop into the editor - allowed only if the tool window provides necessary support.
         DropLocation.Editor(editorTarget)
       }
@@ -548,6 +545,11 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
            && Registry.`is`("ide.allow.tool.window.tabs.reorder", false)
            && (Registry.`is`("ide.allow.tool.window.tabs.reorder.vcs", true)
                || decorator.toolWindow.id !in VCS_TOOLWINDOW_IDS)
+  }
+
+  private fun canDropIntoEditor(decorator: InternalDecoratorImpl?, content: Content, project: Project): Boolean {
+    return getEditorSupport(decorator)?.canOpenInEditor(project, content) == true
+           || (decorator != null && canMoveTabToEditor(decorator, content))
   }
 
   private fun canMoveTabToEditor(decorator: InternalDecoratorImpl, content: Content?): Boolean {
