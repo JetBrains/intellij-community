@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RecentProjectsWelcomeScreenActionBase
+import com.intellij.openapi.wm.impl.welcomeScreen.statistics.RecentProjectsFusEventFields
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
@@ -343,7 +344,7 @@ class RecentProjectFilteringTree(
           }
         }
         else {
-          activateItem(tree, item, mouseEvent)
+          activateItem(tree, item, mouseEvent, tree.getRowForPath(treePath))
         }
       }
 
@@ -366,6 +367,7 @@ class RecentProjectFilteringTree(
           .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEMS_KEY, selectedItems)
           .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY, sourceItem)
           .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_TREE_KEY, tree)
+          .add(RecentProjectsFusEventFields.ROW_KEY, TreeUtil.getRowForLocation(tree, x, y).takeIf { it >= 0 })
           .build()
       }
       popupMenu.component.show(component, x, y)
@@ -882,8 +884,10 @@ class RecentProjectFilteringTree(
 
     private const val RENDERER_BORDER_SIZE = 4
 
-    private fun createActionEvent(tree: Tree, inputEvent: InputEvent?): AnActionEvent {
-      val dataContext = DataManager.getInstance().getDataContext(tree)
+    private fun createActionEvent(tree: Tree, inputEvent: InputEvent?, row: Int): AnActionEvent {
+      val treeContext = DataManager.getInstance().getDataContext(tree)
+      val dataContext = if (row < 0) treeContext
+      else SimpleDataContext.getSimpleContext(RecentProjectsFusEventFields.ROW_KEY, row, treeContext)
       val actionPlace = UIUtil.uiParents(tree, true).let { parents ->
         for (parent in parents) {
           if (parent is FlatWelcomeFrame) return@let ActionPlaces.WELCOME_SCREEN
@@ -896,22 +900,22 @@ class RecentProjectFilteringTree(
     }
 
     private fun activateItems(tree: Tree) {
-      tree.selectionModel.selectionPaths.mapNotNull {
-        it.lastPathComponent.asSafely<DefaultMutableTreeNode>()
-      }.forEach { node ->
+      tree.selectionModel.selectionPaths.mapNotNull { path ->
+        path.lastPathComponent.asSafely<DefaultMutableTreeNode>()?.let { path to it }
+      }.forEach { (path, node) ->
         val item = node.userObject.asSafely<RecentProjectTreeItem>() ?: return
-        activateItem(tree, item)
+        activateItem(tree, item, row = tree.getRowForPath(path))
       }
     }
 
-    private fun activateItem(tree: Tree, item: RecentProjectTreeItem, inputEvent: InputEvent? = null) {
+    private fun activateItem(tree: Tree, item: RecentProjectTreeItem, inputEvent: InputEvent? = null, row: Int = -1) {
       when (item) {
         is RecentProjectItem -> {
-          val actionEvent = createActionEvent(tree, inputEvent)
+          val actionEvent = createActionEvent(tree, inputEvent, row)
           item.openProject(actionEvent)
         }
         is ProviderRecentProjectItem -> {
-          val actionEvent = createActionEvent(tree, inputEvent)
+          val actionEvent = createActionEvent(tree, inputEvent, row)
           item.openProject(actionEvent)
         }
         is ProjectsGroupItem -> {
