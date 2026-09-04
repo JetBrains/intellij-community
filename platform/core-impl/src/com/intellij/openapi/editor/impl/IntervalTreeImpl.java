@@ -212,7 +212,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
       }
     }
 
-    protected void addIntervalsFrom(@NotNull IntervalNode<E> otherNode) {
+    protected void addIntervalsFrom(@NotNull IntervalNode<? extends E> otherNode) {
       for (Supplier<? extends E> key : otherNode.intervals) {
         E interval = key.get();
         if (interval != null) {
@@ -288,14 +288,14 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
 
     void changeDelta(int change) {
       if (change != 0) {
-        setCachedValues(0, false, 0); // deltaUpToRoot is not valid anymore
+        setCachedValues(false, 0); // deltaUpToRoot is not valid anymore
         delta += change;
       }
     }
 
     void clearDelta() {
       if (delta != 0) {
-        setCachedValues(0, false, 0); // deltaUpToRoot is not valid anymore
+        setCachedValues(false, 0); // deltaUpToRoot is not valid anymore
         delta = 0;
       }
     }
@@ -346,8 +346,8 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     private static final VarHandleWrapper
       cachedDeltaHandler = VarHandleWrapper.getFactory().create(IntervalNode.class, "cachedDeltaUpToRoot", long.class);
 
-    private void setCachedValues(int deltaUpToRoot, boolean allDeltaUpToRootAreNull, int modCount) {
-      cachedDeltaUpToRoot = packValues(deltaUpToRoot, allDeltaUpToRootAreNull, modCount);
+    private void setCachedValues(boolean allDeltaUpToRootAreNull, int modCount) {
+      cachedDeltaUpToRoot = packValues(0, allDeltaUpToRootAreNull, modCount);
     }
 
     // attributes could change the flavor
@@ -378,44 +378,6 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     }
     private static int deltaUpToRoot(long packedOffsets) {
       return (int)(packedOffsets >> 33);
-    }
-
-    // finds previous in the in-order traversal
-    IntervalNode<E> previous() {
-      IntervalNode<E> left = getLeft();
-      if (left != null) {
-        while (left.getRight() != null) {
-          left = left.getRight();
-        }
-        return left;
-      }
-      IntervalNode<E> parent = getParent();
-      IntervalNode<E> prev = this;
-      while (parent != null) {
-        if (parent.getRight() == prev) break;
-        prev = parent;
-        parent = parent.getParent();
-      }
-      return parent;
-    }
-
-    // finds next node in the in-order traversal
-    IntervalNode<E> next() {
-      IntervalNode<E> right = getRight();
-      if (right != null) {
-        while (right.getLeft() != null) {
-          right = right.getLeft();
-        }
-        return right;
-      }
-      IntervalNode<E> parent = getParent();
-      IntervalNode<E> prev = this;
-      while (parent != null) {
-        if (parent.getLeft() == prev) break;
-        prev = parent;
-        parent = parent.getParent();
-      }
-      return parent;
     }
 
     @Override
@@ -871,7 +833,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
       }
       node.setParent(current);
     }
-    node.setCachedValues(0, true, getModCount());
+    node.setCachedValues(true, getModCount());
     correctMaxUp(node);
     onInsertNode();
     keySize += node.intervals.size();
@@ -1074,9 +1036,8 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
       }
       return false;
     }
-    boolean r = false;
     try {
-      r = runUnderWriteLock(() -> {
+      return runUnderWriteLock(() -> {
         try {
           incModCount();
           boolean ret = false;
@@ -1103,7 +1064,6 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
           setNode(interval, null);
         }
       });
-      return r;
     }
     finally {
       fireAfterRemoved(interval);
@@ -1141,9 +1101,9 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     IntervalNode<T> parent = root.getParent();
     assertAllDeltasAreNull(parent);
     int delta = root.delta;
-    root.setCachedValues(0, true, 0);
+    root.setCachedValues(true, 0);
     if (delta == 0) {
-      root.setCachedValues(0, true, getModCount());
+      root.setCachedValues(true, getModCount());
     }
     else {
       root.setRange(TextRangeScalarUtil.shift(root.toScalarRange(), delta, delta));

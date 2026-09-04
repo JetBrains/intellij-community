@@ -979,7 +979,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       }
 
       @Override
-      protected void addIntervalsFrom(@NotNull IntervalNode<FoldRegionImpl> otherNode) {
+      protected void addIntervalsFrom(@NotNull IntervalNode<? extends FoldRegionImpl> otherNode) {
         FoldRegionImpl region = getRegion(this);
         FoldRegionImpl otherRegion = getRegion(otherNode);
         if (otherRegion.mySizeBeforeUpdate > region.mySizeBeforeUpdate) {
@@ -990,7 +990,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         }
         else {
           otherNode.setValid(false);
-          ((RMNode<FoldRegionImpl>)otherNode).onRemoved();
+          ((RMNode<? extends FoldRegionImpl>)otherNode).onRemoved();
         }
       }
     }

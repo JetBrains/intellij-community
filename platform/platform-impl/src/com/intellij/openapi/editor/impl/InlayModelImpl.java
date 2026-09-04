@@ -879,7 +879,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
                                                                 boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
       return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
         @Override
-        protected void addIntervalsFrom(@NotNull IntervalNode<InlineInlayImpl<?>> otherNode) {
+        protected void addIntervalsFrom(@NotNull IntervalNode<? extends InlineInlayImpl<?>> otherNode) {
           super.addIntervalsFrom(otherNode);
           if (myPutMergedIntervalsAtBeginning) {
             List<Supplier<? extends InlineInlayImpl<?>>> added =
