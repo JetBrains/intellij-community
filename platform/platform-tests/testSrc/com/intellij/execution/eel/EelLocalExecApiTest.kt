@@ -13,6 +13,7 @@ import com.intellij.execution.process.UnixSignal
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelExecApi.Pty
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixProcess
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelWindowsProcess
@@ -252,14 +253,16 @@ class EelLocalExecApiTest {
         assertNotEquals(0, exitCode) //Brutal kill is never 0
       }
       ExitType.TERMINATE -> {
-        if (SystemInfoRt.isWindows) { // We provide 0 as `ExitProcess` on Windows
-          assertEquals(0, exitCode)
-        }
-        else {
-          val sigCode = UnixSignal.SIGTERM.getSignalNumber(SystemInfoRt.isMac)
-          assertThat("Exit code must be signal code or +128 (if run using shell)",
-                     exitCode,
-                     anyOf(`is`(sigCode), `is`(sigCode + UnixSignal.EXIT_CODE_OFFSET)))
+        when (val platform = localEel.platform) {
+          is EelPlatform.Posix -> {
+            val sigCode = UnixSignal.SIGTERM.getSignalNumber(UnixSignal.PlatformHint.FromEelPlatform(platform))
+            assertThat("Exit code must be signal code or +128 (if run using shell)",
+                       exitCode,
+                       anyOf(`is`(sigCode), `is`(sigCode + UnixSignal.EXIT_CODE_OFFSET)))
+          }
+          is EelPlatform.Windows -> {
+            assertEquals(0, exitCode) // We provide 0 as `ExitProcess` on Windows
+          }
         }
       }
       ExitType.INTERRUPT -> {

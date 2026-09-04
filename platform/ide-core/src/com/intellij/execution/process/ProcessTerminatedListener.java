@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.Platform;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.platform.eel.UnixSignal;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,10 +80,10 @@ public final class ProcessTerminatedListener extends ProcessAdapter {
       result.append(')');
     }
     else if (os.getPlatform() == Platform.UNIX) {
-      boolean isDarwin = os == OS.macOS;
-      var signal = UnixSignal.fromExitCode(isDarwin, exitCode);
+      var platformHint = new UnixSignal.PlatformHint.Explicitly(os == OS.macOS);
+      var signal = UnixSignal.fromExitCode(platformHint, exitCode);
       if (signal != null) {
-        result.append(" (interrupted by signal ").append(signal.getSignalNumber(isDarwin)).append(":").append(signal.name()).append(')');
+        result.append(" (interrupted by signal ").append(signal.getSignalNumber(platformHint)).append(":").append(signal.name()).append(')');
       }
     }
 

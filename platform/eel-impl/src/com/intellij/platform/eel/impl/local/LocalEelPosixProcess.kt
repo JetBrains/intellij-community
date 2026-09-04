@@ -2,7 +2,6 @@
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.execution.process.UnixProcessManager
-import com.intellij.execution.process.UnixSignal
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.fileLogger
@@ -11,6 +10,7 @@ import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixProcess
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.SafeDeferred
+import com.intellij.platform.eel.UnixSignal
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.impl.ToJvmConvertableProcess
@@ -33,11 +33,7 @@ internal class LocalEelPosixProcess private constructor(
      * @return false if failed to send signal
      */
     private fun sendSignalToProcessGroup(process: Process, signal: UnixSignal, platform: EelPlatform.Posix): Boolean {
-      val code = when (platform) {
-        is EelPlatform.Darwin, is EelPlatform.FreeBSD -> signal.darwinCode
-        is EelPlatform.Linux -> signal.linuxCode
-        is EelPlatform.HarmonyOS -> signal.linuxCode //todo[kb] double-check HOS
-      }
+      val code = signal.getSignalNumber(UnixSignal.PlatformHint.FromEelPlatform(platform))
       val pid = process.pid().toInt()
       var result = UnixProcessManager.sendSignalToGroup(pid, code)
       if (result != 0) {
