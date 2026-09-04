@@ -176,8 +176,8 @@ public class ExternalJavaConfigurationService(public val project: Project, inter
 
   private fun <T : JdkReleaseData> proceedWithMatch(candidate: JdkCandidate<T>, match: ReleaseDataMatching, configFile: Path): JdkCandidate<T> {
     when (match) {
-      ReleaseDataMatching.EXACT_MATCH -> LOG.info("[$configFile.fileName] $candidate - Exact match found")
-      ReleaseDataMatching.FEATURE_MATCH -> LOG.info("[$configFile.fileName] $candidate - Match found for the feature version")
+      ReleaseDataMatching.EXACT_MATCH -> LOG.info("[${configFile.fileName}] $candidate - Exact match found")
+      ReleaseDataMatching.FEATURE_MATCH -> LOG.info("[${configFile.fileName}] $candidate - Match found for the feature version")
       ReleaseDataMatching.NO_MATCH -> Unit
     }
     return candidate
