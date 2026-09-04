@@ -533,6 +533,17 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   }
 
   public void saveProperties() {
+    // Custom panels publish breakpoint changes synchronously.
+    // Run them before other setters submit asynchronous proxy changes.
+    // Having this first decreases the chance of a race condition but doesn't guarantee it:
+    // com.intellij.xdebugger.impl.XDebugSessionImpl.MyBreakpointListener.breakpointChanged
+    XBreakpoint<?> monolithBreakpoint = XDebuggerEntityConverter.getBreakpoint(myBreakpoint.getId());
+    if (monolithBreakpoint != null) {
+      for (XBreakpointCustomPropertiesPanel customPanel : myCustomPanels) {
+        customPanel.saveTo(monolithBreakpoint);
+      }
+    }
+
     mySubPanels.forEach(XBreakpointPropertiesSubPanel::saveProperties);
 
     if (myConditionComboBox != null) {
@@ -543,12 +554,6 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       myConditionComboBox.saveTextInHistory();
     }
 
-    XBreakpoint<?> monolithBreakpoint = XDebuggerEntityConverter.getBreakpoint(myBreakpoint.getId());
-    if (monolithBreakpoint != null) {
-      for (XBreakpointCustomPropertiesPanel customPanel : myCustomPanels) {
-        customPanel.saveTo(monolithBreakpoint);
-      }
-    }
     myBreakpoint.setEnabled(myEnabledCheckbox.isSelected());
   }
 
