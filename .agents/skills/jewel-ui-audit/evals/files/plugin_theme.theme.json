@@ -1,0 +1,25 @@
+{
+  "name": "My Plugin Theme",
+  "dark": false,
+  "author": "Example",
+  "colors": {
+    "brandAccent": "#3574F0",
+    "Panel.background": "#EEEEEE"
+  },
+  "ui": {
+    "*": {
+      "borderColor": "#AA1234"
+    },
+    "Button": {
+      "borderColor": "#FF0000"
+    },
+    "Menu": {
+      "borderColor": {
+        "os.windows": "#CCCCCC"
+      }
+    },
+    "SearchField": {
+      "background": "brandAccent"
+    }
+  }
+}

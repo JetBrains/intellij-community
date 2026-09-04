@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "skill": "jewel-ui",
+  "attribution": "Authored for the JetBrains intellij-community Jewel environment and informed by JetBrains Jewel sources, with guidance for keeping IntelliJ Platform APIs out of composition.",
+  "sources": [
+    {
+      "fetchedAt": "2026-06-11",
+      "label": "JetBrains Jewel sources and samples",
+      "role": "upstream-source",
+      "type": "upstream-reference",
+      "url": "https://github.com/JetBrains/intellij-community/tree/master/platform/jewel",
+      "version": "master",
+      "versionSource": "fetchDate",
+      "license": "Apache-2.0",
+      "check": {
+        "type": "github",
+        "repository": "JetBrains/intellij-community",
+        "path": "platform/jewel",
+        "trackingRef": "master",
+        "localCheckoutHint": "~/src/intellij-community/platform/jewel"
+      }
+    },
+    {
+      "fetchedAt": "2026-06-11",
+      "label": "Author-maintained Jewel UI guidance and IJPL composition boundary guidance",
+      "role": "original-content",
+      "type": "local-original-content",
+      "version": "2026-06-11",
+      "versionSource": "fetchDate",
+      "license": "project"
+    }
+  ]
+}
