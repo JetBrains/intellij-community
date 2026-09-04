@@ -57,7 +57,7 @@ interface PsiVersioningService {
     /**
      * Executes [action] with allowing access to PSI Syntax Tree (the [ASTNode] hierarchy).
      * It is possible to work with PSI elements (the [PsiElement] hierarchy),
-     * as long as the use-cases concern only the syntax, and not semantics (i.e., references and resolve).
+     * as long as the use-cases concern only the syntax, and not semantics (i.e., references and indexes).
      *
      * If this function is invoked with [read access allowed][com.intellij.openapi.application.Application.isReadAccessAllowed],
      * then [action] runs directly with a read action.
@@ -65,6 +65,9 @@ interface PsiVersioningService {
      * The PSI tree inside [action] will be _consistent_, but not up to date.
      * In other words, parallel write actions can modify the PSI structure, but these modifications will not be visible to [action].
      * Notably, there might be no read access inside [action], so access to resolve and workspace model may fail.
+     *
+     * Resolve scopes inside `freezePsiVersion` is confined to a file. I.e., every attempt to resolve will work only inside one file,
+     * and the results will not be cached.
      */
     @JvmStatic
     fun <T> freezePsiVersion(action: () -> T): T = getInstance().runAndFreezePsiVersion(action)
