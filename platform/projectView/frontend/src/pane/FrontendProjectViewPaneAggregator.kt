@@ -101,9 +101,7 @@ internal class FrontendProjectViewPaneAggregator(
         else -> emptyList()
       }
       val result = mutableListOf<ProjectViewPaneDescriptorImpl>()
-      for (pureUiDescriptor in pureUiPaneDescriptors.values) {
-        result += pureUiDescriptor
-      }
+      result += pureUiPaneDescriptors.values
       // The choice between a pure UI pane and a full pane is arbitrary, it's an error either way.
       // If we end up in this situation, it's most likely the legacy pane compatibility layer picked something.
       // So our best guess is to pick the pure UI one instead.
