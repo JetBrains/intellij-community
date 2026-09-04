@@ -876,6 +876,10 @@
     <scratch.rootType implementation="com.intellij.ide.scratch.ScratchRootType"/>
     <scratch.rootType implementation="com.intellij.execution.console.HistoryRootType"/>
     <scratch.rootType implementation="com.intellij.ide.script.IdeConsoleRootType"/>
+    <scratch.rootType implementation="com.intellij.ide.actions.WelcomeFilesRootType"/>
+    <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.WelcomeNonProjectFileWritingAccessExtension"/>
+    <virtualFilePreCloseCheck implementation="com.intellij.ide.actions.WelcomeFilePreCloseCheck"/>
+    <projectCloseHandler implementation="com.intellij.ide.actions.WelcomeProjectCloseHandler" order="last"/>
     <!--  Inlay hints  -->
     <editorFactoryMouseListener implementation="com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayEditorMouseListener"/>
     <editorFactoryMouseListener implementation="com.intellij.codeInsight.hints.presentation.listeners.InlayEditorMouseListener"/>

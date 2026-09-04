@@ -1,7 +1,5 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -17,7 +15,6 @@ import com.intellij.platform.project.projectId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.jewel.foundation.theme.JewelTheme
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -112,11 +109,5 @@ abstract class WelcomeScreenRightTab(
     internal var isRightTabEnabled: Boolean
       get() = AdvancedSettings.getBoolean(NON_MODAL_WELCOME_SCREEN_SETTING_ID)
       set(value) = AdvancedSettings.setBoolean(NON_MODAL_WELCOME_SCREEN_SETTING_ID, value)
-
-    @Composable
-    fun color(dark: Color?, light: Color?, fallback: Color): Color {
-      val themeColor = if (JewelTheme.isDark) dark else light
-      return themeColor ?: fallback
-    }
   }
 }

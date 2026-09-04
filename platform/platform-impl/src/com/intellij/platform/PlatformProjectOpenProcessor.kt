@@ -27,7 +27,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.checkTrustedState
@@ -47,7 +46,6 @@ import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
@@ -66,6 +64,9 @@ val PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES: Key<Boolean> = Key.create("PRO
 
 internal val PROJECT_NEWLY_OPENED: Key<Boolean> = Key.create("PROJECT_NEWLY_OPENED")
 internal val PROJECT_NEWLY_CREATED: Key<Boolean> = Key.create("PROJECT_NEWLY_CREATED")
+
+@Internal
+val PROJECT_CLOSE_WITH_CONFIRMATION: Key<Boolean> = Key.create("PROJECT_CLOSE_WITH_CONFIRMATION")
 
 @Internal
 fun isConfiguredByPlatformProcessor(project: Project): Boolean = project.getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true

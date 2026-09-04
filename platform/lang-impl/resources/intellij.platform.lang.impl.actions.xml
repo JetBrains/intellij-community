@@ -618,5 +618,9 @@
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
     </group>
+    <action id="WelcomeNewEmptyFile" class="com.intellij.ide.actions.WelcomeNewEmptyFileAction" icon="AllIcons.FileTypes.Text" use-shortcut-of="NewScratchFile"/>
+    <action id="WelcomeFileChangeLanguage" class="com.intellij.ide.actions.WelcomeChangeLanguageAction" use-shortcut-of="Scratch.ChangeLanguage">
+      <add-to-group group-id="EditorPopupMenu2" anchor="after" relative-to-action="Scratch.ChangeLanguage"/>
+    </action>
   </actions>
 </idea-plugin>

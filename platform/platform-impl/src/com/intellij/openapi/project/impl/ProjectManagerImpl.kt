@@ -99,6 +99,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.ex.isBackgroundActivitiesSuppressed
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.PROJECT_CLOSE_WITH_CONFIRMATION
 import com.intellij.platform.PROJECT_NEWLY_CREATED
 import com.intellij.platform.PROJECT_NEWLY_OPENED
 import com.intellij.platform.PlatformProjectOpenProcessor
@@ -386,6 +387,17 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
     return true
+  }
+
+  private fun closeProjectWithConfirmation(project: Project): Boolean {
+    try {
+      project.putUserData(PROJECT_CLOSE_WITH_CONFIRMATION, true)
+
+      return closeProject(project, checkCanClose = true)
+    }
+    finally {
+      project.putUserData(PROJECT_CLOSE_WITH_CONFIRMATION, null)
+    }
   }
 
   protected open fun closeProject(project: Project, saveProject: Boolean = true, dispose: Boolean = true, checkCanClose: Boolean): Boolean {
@@ -1190,7 +1202,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         val windowManager = serviceAsync<WindowManager>() as WindowManagerEx
         writeIntentReadAction {
           windowManager.withFrameReuseEnabled().use {
-            closeProject(project, checkCanClose = true)
+            closeProjectWithConfirmation(project)
           }
         }
       }
