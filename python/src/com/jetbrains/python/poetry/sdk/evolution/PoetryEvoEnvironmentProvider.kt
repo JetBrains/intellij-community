@@ -1,12 +1,13 @@
 package com.jetbrains.python.poetry.sdk.evolution
 
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.pytools.PyTool
+import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
@@ -14,35 +15,34 @@ import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.PyToolEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.defaultVenvDir
 import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
+import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoInstallPythonLeaf
 import com.intellij.python.sdk.backend.evolution.ownedEnvBinaryIn
-import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.toLeaf
 import com.intellij.python.sdk.backend.evolution.toolMissing
-import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
+import com.intellij.python.sdk.backend.resolvePythonBinary
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
+import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoRecreateDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
-import com.intellij.python.sdk.common.PyInterpreterRef
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.evolution.deleteEnvDir
 import com.jetbrains.python.sdk.evolution.systemPythonOptions
-import com.intellij.python.sdk.backend.PySdkBundle
-import com.intellij.python.sdk.backend.resolvePythonBinary
-import com.intellij.python.sdk.backend.resolvePythonHome
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavor
 import com.jetbrains.python.sdk.poetry.createNewPoetrySdk
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.poetry.runPoetry
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.io.path.pathString
-import com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavor
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 
 private const val VERSIONS_KEY: String = "poetry.systemPythons"
 
@@ -188,7 +188,7 @@ internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<Sdk> {
     val poetryExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
     val projectDir = context.pyProject.baseDir
-    val envHome = homePath.resolvePythonHome()
+    val envHome = VirtualEnvReader().resolvePythonHomeFromPythonBinary(homePath)
     val inProject = envHome.normalize().startsWith(projectDir.normalize())
     if (inProject) {
       deleteEnvDir(envHome).getOr { return it }

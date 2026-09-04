@@ -1,11 +1,11 @@
 package com.jetbrains.python.venv.sdk.evolution
 
-import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.python.venv.createVenv
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.intellij.python.pytools.PyTool
+import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
@@ -17,14 +17,16 @@ import com.intellij.python.sdk.backend.evolution.listEntryNames
 import com.intellij.python.sdk.backend.evolution.ownedEnvBinaryIn
 import com.intellij.python.sdk.backend.evolution.resolveNewVenvDir
 import com.intellij.python.sdk.backend.evolution.toInProjectAndOtherSections
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
-import com.intellij.python.sdk.common.evolution.EvoRecreateDto
 import com.intellij.python.sdk.common.evolution.EvoNodeKind
+import com.intellij.python.sdk.common.evolution.EvoRecreateDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
-import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.venv.PipPyTool
+import com.intellij.python.venv.createVenv
+import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.FileSystem
@@ -32,14 +34,12 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.createSdkGuessingTypeByPath
 import com.jetbrains.python.sdk.evolution.deleteEnvDir
-import com.intellij.python.sdk.backend.PySdkBundle
-import com.intellij.python.sdk.backend.resolvePythonHome
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
-import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 
 /**
  * Contributes the generic "pip" (virtualenv) node — every virtualenv the discovery found. Always available, since a
@@ -143,7 +143,7 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
    * environments mixed together in one folder.
    */
   override suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<Sdk> {
-    val venvDir = homePath.resolvePythonHome()
+    val venvDir = VirtualEnvReader().resolvePythonHomeFromPythonBinary(homePath)
     deleteEnvDir(venvDir).getOr { return it }
     return createVenvIn(context, venvDir, spec.baseToken)
   }

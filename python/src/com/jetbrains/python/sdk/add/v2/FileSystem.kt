@@ -47,6 +47,8 @@ import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.pytools.ToolCommandSpec
 import com.intellij.python.pytools.ToolSearchPath
 import com.intellij.python.pytools.impl.detectExecutableOnEel
+import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -76,14 +78,17 @@ import com.jetbrains.python.sdk.asBinToExecute
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getSdksToInstall
-import com.intellij.python.sdk.backend.PySdkBundle
-import com.intellij.python.sdk.backend.resolvePythonBinary
-import com.intellij.python.sdk.backend.resolvePythonHome
 import com.jetbrains.python.sdk.isSystemWide
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.venvReader.VirtualEnvReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import javax.swing.JComponent
@@ -92,12 +97,6 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable
 import kotlin.io.path.listDirectoryEntries
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 
 
 private val LOG: Logger = fileLogger()
@@ -285,14 +284,8 @@ data class EelFileSystem(
     return pythonHome.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
   }
 
-  override fun resolvePythonHome(pythonHomeOrBinary: PathHolder.Eel): PathHolder.Eel {
-    val path = pythonHomeOrBinary.path
-    val fileName = path.fileName?.toString()
-    val parentName = path.parent?.fileName?.toString()
-    val isPythonBinary = fileName?.startsWith("python", ignoreCase = true) == true &&
-                         (parentName == "bin" || parentName.equals("scripts", ignoreCase = true))
-    return if (isPythonBinary) PathHolder.Eel(path.resolvePythonHome()) else pythonHomeOrBinary
-  }
+  override fun resolvePythonHome(pythonHomeOrBinary: PathHolder.Eel): PathHolder.Eel =
+    PathHolder.Eel(VirtualEnvReader().resolvePythonHomeFromBinaryOrDir(pythonHomeOrBinary.path))
 
   override fun getVenvName(pythonHome: PathHolder.Eel): String? {
     return resolvePythonBinary(pythonHome)?.let { VirtualEnvReader().getVenvName(it.path) }
@@ -558,16 +551,8 @@ data class TargetFileSystem(
   }
 
   override fun resolvePythonHome(pythonHomeOrBinary: PathHolder.Target): PathHolder.Target {
-    val separator = targetEnvironmentConfiguration.getPlatformAndRoot().platform.fileSeparator
-    val path = pythonHomeOrBinary.pathString.removeSuffix(separator.toString())
-    val fileName = path.substringAfterLast(separator).lowercase()
-    val binaryDirectory = path.substringBeforeLast(separator)
-    val binaryDirectoryName = binaryDirectory.substringAfterLast(separator)
-    if (!fileName.startsWith("python") ||
-        !(binaryDirectoryName.equals("bin", ignoreCase = true) || binaryDirectoryName.equals("scripts", ignoreCase = true))) {
-      return pythonHomeOrBinary
-    }
-    return PathHolder.Target(binaryDirectory.substringBeforeLast(separator))
+    val platform = targetEnvironmentConfiguration.getPlatformAndRoot().platform
+    return PathHolder.Target(VirtualEnvReader().resolvePythonHomeFromBinaryOrDir(pythonHomeOrBinary.pathString, platform))
   }
 
   override fun getVenvName(pythonHome: PathHolder.Target): String? {

@@ -25,9 +25,9 @@ import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
 import com.jetbrains.python.sdk.configuration.prepareSdkCreator
 import com.jetbrains.python.sdk.createSdk
-import com.intellij.python.sdk.backend.resolvePythonHome
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.uv.sdk.configuration.isUvEnv
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.io.path.name
@@ -49,7 +49,7 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   ): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
     withContext(Dispatchers.IO) {
       getVirtualEnv(venvsInModule)?.let {
-        it.findEnvOrNull(PyBundle.message("sdk.use.existing.venv", it.resolvePythonHome().name))
+        it.findEnvOrNull(PyBundle.message("sdk.use.existing.venv", VirtualEnvReader().resolvePythonHomeFromPythonBinary(it).name))
       } ?: EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.create.venv.suggestion.no.arg"))
     }
   }

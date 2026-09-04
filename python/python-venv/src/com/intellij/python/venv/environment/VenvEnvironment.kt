@@ -5,15 +5,15 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.sdk.backend.ActivationScript
+import com.intellij.python.sdk.backend.PythonEnvironment
+import com.intellij.python.sdk.backend.PythonEnvironmentProvider
 import com.intellij.python.venv.PyVenvBundle.message
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
-import com.intellij.python.sdk.backend.ActivationScript
-import com.intellij.python.sdk.backend.PythonEnvironment
-import com.intellij.python.sdk.backend.PythonEnvironmentProvider
-import com.intellij.python.sdk.backend.resolvePythonHome
 import com.jetbrains.python.sdk.terminal.Shell
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
@@ -71,7 +71,7 @@ internal class VenvEnvironmentProvider : PythonEnvironmentProvider {
   override val environmentClass: Class<out PythonEnvironment> = VenvEnvironment::class.java
 
   override fun detect(pythonBinary: PythonBinary): PyResult<PythonEnvironment>? {
-    val pythonHome = pythonBinary.resolvePythonHome()
+    val pythonHome = VirtualEnvReader().resolvePythonHomeFromPythonBinary(pythonBinary)
     val pyvenvCfg = pythonHome.resolve("pyvenv.cfg")
     val hasPyvenvCfg = pyvenvCfg.exists()
     if (!hasPyvenvCfg &&

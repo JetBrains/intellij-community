@@ -8,17 +8,17 @@ import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.impl.conda.PyCondaBundle.message
+import com.intellij.python.sdk.backend.ActivationScript
+import com.intellij.python.sdk.backend.PythonEnvironment
+import com.intellij.python.sdk.backend.PythonEnvironmentProvider
+import com.intellij.python.sdk.backend.ShellActivation
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
-import com.intellij.python.sdk.backend.ActivationScript
-import com.intellij.python.sdk.backend.PythonEnvironment
-import com.intellij.python.sdk.backend.PythonEnvironmentProvider
-import com.intellij.python.sdk.backend.ShellActivation
-import com.intellij.python.sdk.backend.resolvePythonHome
 import com.jetbrains.python.sdk.terminal.Shell
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
@@ -127,7 +127,7 @@ internal class CondaEnvironmentProvider : PythonEnvironmentProvider {
   override val environmentClass: Class<out PythonEnvironment> = CondaEnvironment::class.java
 
   override fun detect(pythonBinary: PythonBinary): PyResult<PythonEnvironment>? {
-    val pythonHome = pythonBinary.resolvePythonHome()
+    val pythonHome = VirtualEnvReader().resolvePythonHomeFromPythonBinary(pythonBinary)
     val condaMeta = pythonHome.resolve("conda-meta")
     if (!condaMeta.isDirectory()) return null
 

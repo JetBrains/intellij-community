@@ -9,7 +9,7 @@ import com.intellij.python.pytools.setCustomExecutablePath
 import com.intellij.python.test.env.core.LATEST_PYTHON_VERSION
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.plain.pythonEnvironment
-import com.intellij.python.sdk.backend.resolvePythonHome
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.junit.jupiter.api.extension.BeforeAllCallback
@@ -47,7 +47,7 @@ class RequiresPoetryExtension : BeforeAllCallback, BeforeEachCallback {
     }, PyEnvironment::class.java)
     
     val pythonBinary = poetryEnv.pythonPath
-    val poetryPath = pythonBinary.resolvePythonHome().resolvePythonTool("poetry")
+    val poetryPath = VirtualEnvReader().resolvePythonHomeFromPythonBinary(pythonBinary).resolvePythonTool("poetry")
     
     PoetryPyTool.getInstance().setCustomExecutablePath(localEel.descriptor, poetryPath)
     LOG.info("Poetry configured at: $poetryPath")

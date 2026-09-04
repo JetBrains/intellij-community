@@ -1,24 +1,15 @@
 package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.components.service
-import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.provider.osFamily
+import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
-import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlin.io.path.isExecutable
-import kotlin.io.path.name
 
-
-@RequiresBackgroundThread
-fun PythonBinary.resolvePythonHome(): PythonHomePath = when (osFamily) {
-  EelOsFamily.Windows -> parent.takeIf { it.name.lowercase() != "scripts" } ?: parent.parent
-  EelOsFamily.Posix -> parent.takeIf { it.name != "bin" } ?: parent.parent
-}
 
 @RequiresBackgroundThread
 fun PythonHomePath.resolvePythonBinary(): PythonBinary? {

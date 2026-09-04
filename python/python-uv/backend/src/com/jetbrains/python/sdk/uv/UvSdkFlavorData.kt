@@ -8,6 +8,7 @@ import com.intellij.remote.RemoteSdkPropertiesPaths
 import com.jetbrains.python.sdk.activationEnvironment
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -32,12 +33,10 @@ data class UvSdkFlavorData(
       throw IllegalArgumentException("Sdk ${sdk} doesn't have interpreter path set")
     }
     targetCommandLineBuilder.setExePath(interpreterPath)
-    val separator = targetCommandLineBuilder.request.targetPlatform.platform.fileSeparator
-    targetCommandLineBuilder.addEnvironmentVariable("UV_PROJECT_ENVIRONMENT", interpreterPath.parentPath(separator).parentPath(separator))
+    val envPath = VirtualEnvReader().resolvePythonHomeFromBinaryOrDir(interpreterPath, targetCommandLineBuilder.request.targetPlatform.platform)
+    targetCommandLineBuilder.addEnvironmentVariable("UV_PROJECT_ENVIRONMENT", envPath)
     if (!PythonSdkUtil.isRemote(sdk)) {
       runBlockingMaybeCancellable { sdk.activationEnvironment() }
     }
   }
-
-  private fun String.parentPath(separator: Char): String = removeSuffix(separator.toString()).substringBeforeLast(separator)
 }

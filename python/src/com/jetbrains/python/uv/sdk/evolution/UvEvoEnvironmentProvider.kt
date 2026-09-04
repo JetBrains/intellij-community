@@ -1,11 +1,10 @@
 package com.jetbrains.python.uv.sdk.evolution
 
-import com.jetbrains.python.packaging.PyVersionSpecifiers
-import com.intellij.python.uv.backend.UvSystemPythonService
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.pytools.PyTool
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pytools.PyTool
+import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
@@ -17,32 +16,33 @@ import com.intellij.python.sdk.backend.evolution.listEntryNames
 import com.intellij.python.sdk.backend.evolution.resolveNewVenvDir
 import com.intellij.python.sdk.backend.evolution.toInProjectAndOtherSections
 import com.intellij.python.sdk.backend.evolution.toolMissing
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoRecreateDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
-import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.uv.backend.PyUvBundle
 import com.intellij.python.uv.backend.UvPyTool
+import com.intellij.python.uv.backend.UvSystemPythonService
 import com.intellij.python.uv.backend.cli.uv.UvPythonEntry
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.evolution.requiresPython
-import com.intellij.python.sdk.backend.PySdkBundle
-import com.intellij.python.sdk.backend.resolvePythonHome
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.uv.UvSdkFlavor
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.VersionFormatException
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
-import com.jetbrains.python.sdk.uv.UvSdkFlavor
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 
 private const val VERSIONS_KEY: String = "uv.supportedPythonVersions"
 
@@ -153,7 +153,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     return setupNewUvSdkAndEnv(
       uvExecutable = uvExecutable,
       workingDir = context.pyProject.baseDir,
-      venvPath = PathHolder.Eel(homePath.resolvePythonHome()),
+      venvPath = PathHolder.Eel(VirtualEnvReader().resolvePythonHomeFromPythonBinary(homePath)),
       fileSystem = context.fileSystem,
       version = version,
       errorSink = context.errorSink,
