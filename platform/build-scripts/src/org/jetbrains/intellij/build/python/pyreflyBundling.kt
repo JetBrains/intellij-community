@@ -51,7 +51,7 @@ private suspend fun copyPyreflyLicenseReport(targetDir: Path, context: BuildCont
   check(Files.isDirectory(licenseDir)) {
     "Pyrefly license report is missing from the archive: $licenseDir"
   }
-  context.messages.warning("Bundling pyrefly license report in $licenseDir")
+  context.messages.info("Bundling pyrefly license report in $licenseDir")
   copyDir(sourceDir = licenseDir, targetDir = targetDir.resolve(PYREFLY_DIR_NAME).resolve("license"))
 }
 
