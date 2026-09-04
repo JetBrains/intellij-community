@@ -15,7 +15,7 @@ import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.PyEnvironmentSpec
 import com.intellij.util.containers.orNull
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.sdk.impl.resolvePythonHome
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.junit.jupiter.api.extension.ClassTemplateInvocationContext
@@ -87,14 +87,14 @@ class RunOnEnvironmentsExtension : TestTemplateInvocationContextProvider, ClassT
       checkAndGetToolPath(pythonBinary, "poetry", false)?.let { PropertiesComponent.getInstance().poetryPath = it }
       checkAndGetToolPath(pythonBinary, "pipenv", false)?.let { PropertiesComponent.getInstance().pipenvPath = it }
 
-      val uv = pythonBinary.resolvePythonHome().resolvePythonTool("uv")
+      val uv = VirtualEnvReader().resolvePythonHomeFromPythonBinary(pythonBinary).resolvePythonTool("uv")
       PropertiesComponent.getInstance().setValue("PyCharm.Uv.Path", uv.toString())
 
       return env
     }
 
     private fun checkAndGetToolPath(env: PythonBinary, toolName: String, toThrow: Boolean): String? {
-      val tool = env.resolvePythonHome().resolvePythonTool(toolName)
+      val tool = VirtualEnvReader().resolvePythonHomeFromPythonBinary(env).resolvePythonTool(toolName)
       if (checkedTools[toolName]?.contains(tool) != true) {
         val output = try {
           CapturingProcessHandler(GeneralCommandLine(tool.toString(), "--version")).runProcess(60_000, true)

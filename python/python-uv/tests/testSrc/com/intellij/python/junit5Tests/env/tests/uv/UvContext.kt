@@ -9,7 +9,7 @@ import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.runtime.UvConstants
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.sdk.impl.resolvePythonHome
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.TestInfo
 import java.nio.file.Path
@@ -43,7 +43,7 @@ internal data class UvContext(
         }
       }
 
-      val uvExecutablePath = pythonPath.resolvePythonHome().resolvePythonTool("uv")
+      val uvExecutablePath = VirtualEnvReader().resolvePythonHomeFromPythonBinary(pythonPath).resolvePythonTool("uv")
 
       val envVars = mapOf(
         UvConstants.ConfigEnvVars.CACHE_DIR to uvCacheDirPath.toString(),

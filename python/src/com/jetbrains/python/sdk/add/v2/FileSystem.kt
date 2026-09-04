@@ -75,7 +75,6 @@ import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
-import com.jetbrains.python.sdk.impl.resolvePythonHome
 import com.jetbrains.python.sdk.isSystemWide
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
@@ -281,14 +280,8 @@ data class EelFileSystem(
     return pythonHome.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
   }
 
-  override fun resolvePythonHome(pythonHomeOrBinary: PathHolder.Eel): PathHolder.Eel {
-    val path = pythonHomeOrBinary.path
-    val fileName = path.fileName?.toString()
-    val parentName = path.parent?.fileName?.toString()
-    val isPythonBinary = fileName?.startsWith("python", ignoreCase = true) == true &&
-                         (parentName == "bin" || parentName.equals("scripts", ignoreCase = true))
-    return if (isPythonBinary) PathHolder.Eel(path.resolvePythonHome()) else pythonHomeOrBinary
-  }
+  override fun resolvePythonHome(pythonHomeOrBinary: PathHolder.Eel): PathHolder.Eel =
+    PathHolder.Eel(VirtualEnvReader().resolvePythonHomeFromBinaryOrDir(pythonHomeOrBinary.path))
 
   override fun getVenvName(pythonHome: PathHolder.Eel): String? {
     return resolvePythonBinary(pythonHome)?.let { VirtualEnvReader().getVenvName(it.path) }
@@ -577,16 +570,8 @@ data class TargetFileSystem(
   }
 
   override fun resolvePythonHome(pythonHomeOrBinary: PathHolder.Target): PathHolder.Target {
-    val separator = targetEnvironmentConfiguration.getPlatformAndRoot().platform.fileSeparator
-    val path = pythonHomeOrBinary.pathString.removeSuffix(separator.toString())
-    val fileName = path.substringAfterLast(separator).lowercase()
-    val binaryDirectory = path.substringBeforeLast(separator)
-    val binaryDirectoryName = binaryDirectory.substringAfterLast(separator)
-    if (!fileName.startsWith("python") ||
-        !(binaryDirectoryName.equals("bin", ignoreCase = true) || binaryDirectoryName.equals("scripts", ignoreCase = true))) {
-      return pythonHomeOrBinary
-    }
-    return PathHolder.Target(binaryDirectory.substringBeforeLast(separator))
+    val platform = targetEnvironmentConfiguration.getPlatformAndRoot().platform
+    return PathHolder.Target(VirtualEnvReader().resolvePythonHomeFromBinaryOrDir(pythonHomeOrBinary.pathString, platform))
   }
 
   override fun getVenvName(pythonHome: PathHolder.Target): String? {

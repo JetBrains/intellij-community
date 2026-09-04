@@ -8,7 +8,7 @@ import com.intellij.python.junit5Tests.framework.resolvePythonTool
 import com.intellij.python.test.env.core.LATEST_PYTHON_VERSION
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.plain.pythonEnvironment
-import com.jetbrains.python.sdk.impl.resolvePythonHome
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.junit.jupiter.api.extension.BeforeAllCallback
@@ -46,7 +46,7 @@ class RequiresPoetryExtension : BeforeAllCallback, BeforeEachCallback {
     }, PyEnvironment::class.java)
     
     val pythonBinary = poetryEnv.pythonPath
-    val poetryPath = pythonBinary.resolvePythonHome().resolvePythonTool("poetry")
+    val poetryPath = VirtualEnvReader().resolvePythonHomeFromPythonBinary(pythonBinary).resolvePythonTool("poetry")
     
     PropertiesComponent.getInstance().poetryPath = poetryPath.toString()
     LOG.info("Poetry configured at: $poetryPath")

@@ -11,6 +11,7 @@ import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.impl.PySdkBundle.message
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -33,7 +34,7 @@ import kotlin.io.path.listDirectoryEntries
 @RequiresBackgroundThread
 internal fun PythonBinary.detectPythonEnvironmentImpl(): PyResult<PythonEnvironment> {
   if (!isExecutable()) return PyResult.localizedError(message("python.sdk.detect.binary.not.executable", this))
-  val home = resolvePythonHome()
+  val home = VirtualEnvReader().resolvePythonHomeFromPythonBinary(this)
   val pyvenvCfg = home.resolve("pyvenv.cfg")
   if (pyvenvCfg.exists()) {
     val venvLibRoot = resolveVenvLibRoot(home)

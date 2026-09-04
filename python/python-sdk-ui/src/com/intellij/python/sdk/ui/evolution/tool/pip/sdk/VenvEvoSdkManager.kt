@@ -17,7 +17,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.sdk.impl.resolvePythonHome
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.FileVisitOption
@@ -60,7 +60,7 @@ object VenvEvoSdkManager {
   }
 
   fun buildEvoSdk(pythonBinaryPath: Path): EvoSdk {
-    val sdkHome = pythonBinaryPath.resolvePythonHome()
+    val sdkHome = VirtualEnvReader().resolvePythonHomeFromPythonBinary(pythonBinaryPath)
     val name = sdkHome.name
 
     return EvoSdk(

@@ -6,13 +6,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
 import com.intellij.python.sdk.ui.evolution.sdk.EvoSdk
 import com.intellij.python.sdk.ui.evolution.sdk.EvoSdkProvider
-import com.jetbrains.python.sdk.impl.resolvePythonHome
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.nio.file.Path
 import kotlin.io.path.name
 
 internal object PoetryEvoSdkManager {
   fun buildEvoSdk(module: Module, pythonBinaryPath: Path): EvoSdk {
-    val sdkHome = pythonBinaryPath.resolvePythonHome()
+    val sdkHome = VirtualEnvReader().resolvePythonHomeFromPythonBinary(pythonBinaryPath)
     val venvName = sdkHome.name
     val name = venvName.takeIf { !it.startsWith(module.name.lowercase()) }
 
