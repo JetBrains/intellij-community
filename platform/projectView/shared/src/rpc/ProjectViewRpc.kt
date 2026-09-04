@@ -34,6 +34,6 @@ interface ProjectViewRpc : RemoteApi<Unit> {
   suspend fun getFileUpdateRequestChannel(projectId: ProjectId): SendChannel<FileUpdateDTO>
 
   companion object {
-    suspend fun getInstance(): ProjectViewRpc = LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<ProjectViewRpc>())
+    suspend fun awaitConnectionAndGetInstance(): ProjectViewRpc = LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<ProjectViewRpc>())
   }
 }

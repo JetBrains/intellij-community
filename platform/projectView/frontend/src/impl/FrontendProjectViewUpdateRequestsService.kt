@@ -46,7 +46,7 @@ internal class FrontendProjectViewUpdateRequestsService(
         CoroutineName("Frontend PV updates: sending to the backend"),
         // no need for UNDISPATCHED here, this thing won't start instantly anyway
       ) {
-        val rpcChannel = ProjectViewRpc.getInstance().getFileUpdateRequestChannel(project.projectId())
+        val rpcChannel = ProjectViewRpc.awaitConnectionAndGetInstance().getFileUpdateRequestChannel(project.projectId())
         updates.collect { update ->
           rpcChannel.send(update.toDTO())
         }
