@@ -12,6 +12,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileTextField
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -19,6 +20,8 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.updateSettings.impl.PlatformUpdateDialog
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.UpdateMode
+import com.intellij.openapi.updateSettings.impl.debugUpdateMode
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.IdeFocusManager
@@ -34,6 +37,7 @@ import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.builder.text
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.nullize
@@ -254,6 +258,7 @@ private class QuickMock {
   private lateinit var tfIncompatiblePlugins: JBTextField
   private lateinit var chLicenseNoteWarning: JBCheckBox
   private lateinit var tfLicenseNote: JBTextField
+  private lateinit var cbUpdateMode: ComboBox<UpdateMode?>
 
   val panel = panel {
     row {
@@ -262,7 +267,7 @@ private class QuickMock {
         .applyToComponent {
           text = QUICK_MODE_XML
         }.component
-    }
+    }.resizableRow()
     row {
       chWriteProtected = checkBox("Write protected")
         .selected(true)
@@ -296,9 +301,18 @@ private class QuickMock {
         .selected(true)
         .component
     }
+    row("Update mode:") {
+      cbUpdateMode = comboBox(listOf<UpdateMode?>(null) + UpdateMode.entries, textListCellRenderer("< none >") {
+        it.name
+      }).applyToComponent { selectedItem = debugUpdateMode }
+        .comment("Kept after this dialog closes, reset after a restart. Affects the update dialog and the IDE update toolbar widget")
+        .component
+    }
   }
 
   fun execute(project: Project) {
+    debugUpdateMode = cbUpdateMode.selectedItem as? UpdateMode
+
     val loaded = UpdateChecker.testLoadFromXml(textArea.text)
     val incompatiblePluginsText = (if (tfIncompatiblePlugins.isEnabled) tfIncompatiblePlugins.text else null) ?: ""
     val incompatiblePlugins = incompatiblePluginsText
