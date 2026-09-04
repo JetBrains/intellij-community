@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
@@ -436,6 +437,7 @@ public class Py3TypeTest extends PyTestCase {
 
   @TestFor(issues = "PY-89956")
   public void testLongDefUseChainStackOverflow() {
+    Registry.get("python.use.better.control.flow.type.inference").setValue(true, myFixture.getTestRootDisposable());
     String code = """
                   x = 0
                   """ + "x = x\n".repeat(3000) + """
