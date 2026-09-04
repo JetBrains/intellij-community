@@ -1,38 +1,50 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands
 
-import git4idea.test.GitSingleRepoTest
+import com.intellij.testFramework.junit5.TestApplication
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.checkoutNew
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
+import git4idea.test.prepareRemoteRepo
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class GitUnsetUpstreamTest : GitSingleRepoTest() {
-  fun `test unsetUpstream removes upstream branch reference`() {
+@TestApplication
+class GitUnsetUpstreamTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
+
+  @Test
+  fun `test unsetUpstream removes upstream branch reference`(): Unit = with(context) {
     prepareRemoteRepo(repo)
 
     repo.checkoutNew("feature")
     git("push -u origin feature")
 
     repo.update()
-    assertEquals("origin/feature", getUpstream("feature"))
+    assertThat(getUpstream()).isEqualTo("origin/feature")
 
     val result = GitImpl().unsetUpstream(repo, "feature")
-    assertTrue(result.success())
+    assertThat(result.success()).isTrue()
 
     repo.update()
-    assertNull(getUpstream("feature"))
+    assertThat(getUpstream()).isNull()
   }
 
-  fun `test unsetUpstream fail when branch is not tracking`() {
+  @Test
+  fun `test unsetUpstream fail when branch is not tracking`(): Unit = with(context) {
     git("checkout -b feature")
     val result = GitImpl().unsetUpstream(repo, "feature")
-    assertFalse(result.success())
+    assertThat(result.success()).isFalse()
   }
 
-  fun `test unsetUpstream fail with non-existent branch`() {
-    val result = GitImpl().unsetUpstream(repo, "feature")
-    assertFalse(result.success())
+  @Test
+  fun `test unsetUpstream fail with non-existent branch`(): Unit = with(context) {
+    assertThat(GitImpl().unsetUpstream(repo, "feature").success()).isFalse()
   }
 
-  private fun getUpstream(branch: String): String? {
-    return repo.getBranchTrackInfo(branch)?.remoteBranch?.nameForLocalOperations
+  private fun getUpstream(): String? {
+    return context.repo.getBranchTrackInfo("feature")?.remoteBranch?.nameForLocalOperations
   }
 }

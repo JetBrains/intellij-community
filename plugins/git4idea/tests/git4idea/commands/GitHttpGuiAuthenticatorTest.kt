@@ -7,107 +7,119 @@ import com.intellij.externalProcessAuthHelper.AuthenticationMode
 import com.intellij.externalProcessAuthHelper.PassthroughAuthenticationGate
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.ui.laf.setEarlyUiLaF
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import git4idea.commands.GitHttpGuiAuthenticator.PasswordSafeProvider.credentialAttributes
 import git4idea.commands.GitHttpGuiAuthenticator.PasswordSafeProvider.makeKey
 import git4idea.remote.GitRememberedInputs
-import git4idea.test.GitPlatformTest
+import git4idea.test.GitPlatformTestContext
 import git4idea.test.TestDialogHandler
+import git4idea.test.gitPlatformContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
-class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
+@TestApplication
+class GitHttpGuiAuthenticatorTest {
+  private val fixture = gitPlatformContextFixture()
+  private val context: GitPlatformTestContext get() = fixture.get()
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
   private lateinit var rememberedInputs: DvcsRememberedInputs
   private lateinit var passwordSafe: PasswordSafe
 
   private var dialogShown = false
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     // otherwise login dialog doesn't work (missing LaF for JBOptionButton)
     setEarlyUiLaF()
 
     rememberedInputs = service<GitRememberedInputs>()
     passwordSafe = service()
-  }
-
-  override fun tearDown() {
-    try {
+    Disposer.register(disposable) {
       dialogShown = false
       rememberedInputs.clear()
-      passwordSafe.set(CREDENTIAL_ATTRIBUTES, null)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
+      passwordSafe[CREDENTIAL_ATTRIBUTES] = null
     }
   }
 
+  @Test
   fun `test data saved when correct`() {
     registerDialogHandler(true)
 
     runAuthenticator(true)
 
-    assertTrue(dialogShown)
+    assertThat(dialogShown).isTrue()
     assertSavedPasswordEquals(TEST_PASSWORD)
-    assertEquals(TEST_LOGIN, rememberedInputs.getUserNameForUrl(TEST_URL))
+    assertThat(rememberedInputs.getUserNameForUrl(TEST_URL)).isEqualTo(TEST_LOGIN)
   }
 
+  @Test
   fun `test password not saved when incorrect`() {
     registerDialogHandler(true)
     runAuthenticator(false)
 
-    assertTrue(dialogShown)
+    assertThat(dialogShown).isTrue()
     assertSavedPasswordEquals(null)
   }
 
+  @Test
   fun `test incorrect saved password forgotten`() {
     registerDialogHandler(true)
 
     rememberedInputs.addUrl(TEST_URL, TEST_LOGIN)
-    passwordSafe.set(CREDENTIAL_ATTRIBUTES, Credentials(TEST_PSAFE_KEY, TEST_PASSWORD))
+    passwordSafe[CREDENTIAL_ATTRIBUTES] = Credentials(TEST_PSAFE_KEY, TEST_PASSWORD)
 
     runAuthenticator(false)
-    assertFalse(dialogShown)
+    assertThat(dialogShown).isFalse()
 
     assertSavedPasswordEquals(null)
   }
 
+  @Test
   fun `test password not remembered`() {
     registerDialogHandler(true, false)
     runAuthenticator(true)
 
-    assertTrue(dialogShown)
+    assertThat(dialogShown).isTrue()
     assertSavedPasswordEquals(null)
   }
 
+  @Test
   fun `test dialog cancellation propagated`() {
     registerDialogHandler(false)
     val authenticator = runAuthenticator(false)
 
-    assertTrue(dialogShown)
-    assertTrue(authenticator.wasCancelled())
+    assertThat(dialogShown).isTrue()
+    assertThat(authenticator.wasCancelled()).isTrue()
     assertSavedPasswordEquals(null)
   }
 
+  @Test
   fun `test single dialog shown`() {
     registerDialogHandler(true)
 
-    val authenticator = GitHttpGuiAuthenticator(project, listOf(TEST_URL), Path.of(""),
+    val authenticator = GitHttpGuiAuthenticator(context.project, listOf(TEST_URL), Path.of(""),
                                                 PassthroughAuthenticationGate.instance,
                                                 AuthenticationMode.FULL)
     authenticator.askUsername(TEST_URL)
-    assertTrue(dialogShown)
+    assertThat(dialogShown).isTrue()
 
     dialogShown = false
     authenticator.askPassword(TEST_URL)
-    assertFalse(dialogShown)
+    assertThat(dialogShown).isFalse()
   }
 
   private fun registerDialogHandler(exitOk: Boolean, rememberPassword: Boolean = true) {
-    dialogManager.registerDialogHandler(GitHttpLoginDialog::class.java, TestDialogHandler {
+    context.dialogManager.registerDialogHandler(GitHttpLoginDialog::class.java, TestDialogHandler {
       dialogShown = true
 
       it.username = TEST_LOGIN
@@ -118,14 +130,14 @@ class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
   }
 
   private fun runAuthenticator(assumeCorrect: Boolean): GitHttpGuiAuthenticator {
-    val authenticator = GitHttpGuiAuthenticator(project, listOf(TEST_URL), Path.of(""),
+    val authenticator = GitHttpGuiAuthenticator(context.project, listOf(TEST_URL), Path.of(""),
                                                 PassthroughAuthenticationGate.instance,
                                                 AuthenticationMode.FULL)
     val username = authenticator.askUsername(TEST_URL)
     val password = authenticator.askPassword(TEST_URL)
     if (assumeCorrect) {
-      assertEquals(TEST_LOGIN, username)
-      assertEquals(TEST_PASSWORD, password)
+      assertThat(username).isEqualTo(TEST_LOGIN)
+      assertThat(password).isEqualTo(TEST_PASSWORD)
       authenticator.saveAuthData()
     }
     else {
@@ -135,7 +147,7 @@ class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
   }
 
   private fun assertSavedPasswordEquals(match: String?) {
-    assertEquals(match, passwordSafe.getPassword(CREDENTIAL_ATTRIBUTES))
+    assertThat(passwordSafe.getPassword(CREDENTIAL_ATTRIBUTES)).isEqualTo(match)
   }
 
   companion object {

@@ -1,33 +1,45 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands
 
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.cherrypick.GitLocalChangesConflictDetector
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.file
+import git4idea.test.gitSingleRepoContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class GitSimpleEventDetectorTest: GitSingleRepoTest() {
-  val eventDetector = GitLocalChangesConflictDetector()
+@TestApplication
+class GitSimpleEventDetectorTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
 
-  fun `test local changes would be overwritten by cherry-pick`() {
+  private val eventDetector = GitLocalChangesConflictDetector()
+
+  @Test
+  fun `test local changes would be overwritten by cherry-pick`(): Unit = with(context) {
     val file = file("test")
     val commit = file.create("initial\n").addCommit("initial").hash()
     file("new").append("new-2\n").add()
 
-    val result = Git.getInstance().cherryPick(repo, commit, true, false, eventDetector)
+    val result = Git.getInstance().cherryPick(repo, listOf(commit), true, false, eventDetector)
     assertResult(result, eventDetector)
   }
 
-  fun `test local changes would be overwritten by merge`() {
+  @Test
+  fun `test local changes would be overwritten by merge`(): Unit = with(context) {
     val file = file("test")
     val commit = file.create("initial\n").addCommit("initial").hash()
     file.write("new").addCommit("new")
     file.append("more changes")
 
-    val result = Git.getInstance().cherryPick(repo, commit, true, false, eventDetector)
+    val result = Git.getInstance().cherryPick(repo, listOf(commit), true, false, eventDetector)
     assertResult(result, eventDetector)
-    assertTrue(eventDetector.byMerge)
+    assertThat(eventDetector.byMerge).isTrue()
   }
 
-  fun `test local changes would be overwritten by revert`() {
+  @Test
+  fun `test local changes would be overwritten by revert`(): Unit = with(context) {
     val file = file("test")
     val commit = file.create("initial\n").addCommit("initial").hash()
     file("new").append("new-2\n").add()
@@ -37,7 +49,7 @@ class GitSimpleEventDetectorTest: GitSingleRepoTest() {
   }
 
   private fun assertResult(result: GitCommandResult, eventDetector: GitLocalChangesConflictDetector) {
-    assertFalse("Output - ${result.errorOutputAsJoinedString}", result.success())
-    assertTrue("Event wasn't detected - ${result.errorOutputAsJoinedString}", eventDetector.isDetected)
+    assertThat(result.success()).describedAs("Output: ${result.errorOutputAsJoinedString}").isFalse()
+    assertThat(eventDetector.isDetected).describedAs("Event was not detected: ${result.errorOutputAsJoinedString}").isTrue()
   }
 }
