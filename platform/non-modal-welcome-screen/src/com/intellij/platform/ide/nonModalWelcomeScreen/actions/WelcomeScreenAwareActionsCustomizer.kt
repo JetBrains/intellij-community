@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WELCOME_SCREEN_IS_SHOWN
@@ -25,8 +26,10 @@ internal class WelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomiz
       replaceExistingAction("RenameProject") { hideActionOnWelcomeScreen(it) }
       replaceExistingAction("NewDir") { hideActionOnWelcomeScreen(it) }
       replaceExistingAction("NewFile") { WelcomeScreenProxyAction(it, CreateEmptyFileAction()) }
-      replaceExistingAction("SaveAll") { WelcomeFileProxyAction(it, WelcomeSaveFileAction()) }
-      replaceExistingAction("SaveDocument") { WelcomeFileProxyAction(it, WelcomeSaveFileAction()) }
+      if (!ApplicationManager.getApplication().isUnitTestMode) {
+        replaceExistingAction("SaveAll") { WelcomeFileProxyAction(it, WelcomeSaveFileAction()) }
+        replaceExistingAction("SaveDocument") { WelcomeFileProxyAction(it, WelcomeSaveFileAction()) }
+      }
       if (!PlatformUtils.isPyCharm() && !PlatformUtils.isDataGrip()) {
         replaceExistingAction("NewElement") { WelcomeScreenProxyAction(it, WelcomeScreenLeftTabActionNew(), false) }
       }

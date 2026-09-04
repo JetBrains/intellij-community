@@ -1309,6 +1309,9 @@
         CloseAllToTheLeft
         CloseAllToTheRight
         CloseAllReadonly
+        <separator>
+        SaveEditorsGroup
+          WelcomeSaveFileAction
       <separator>
       ReopenClosedTab
       SplitVertically
@@ -1547,6 +1550,8 @@
   CloseAllToTheLeft
   CloseAllToTheRight
   CloseAllReadonly
+  <separator>
+  SaveEditorsGroup
 [group CodeCompletionGroup]
   CodeCompletion
   SmartTypeCompletion
@@ -1928,6 +1933,7 @@
   FoldingGroup
 [group EditorPopupMenu2]
   Scratch.ChangeLanguage
+  WelcomeFileChangeLanguage
 [group EditorPopupMenu3]
   Images.SetBackgroundImage
 [group EditorPopupMenuDebug]

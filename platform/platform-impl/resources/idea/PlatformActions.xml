@@ -701,6 +701,8 @@
             <reference ref="CloseAllToTheLeft"/>
             <reference ref="CloseAllToTheRight"/>
             <reference ref="CloseAllReadonly"/>
+            <separator/>
+            <group id="SaveEditorsGroup"/>
           </group>
           <separator/>
           <reference ref="ReopenClosedTab"/>

@@ -622,5 +622,8 @@
     <action id="WelcomeFileChangeLanguage" class="com.intellij.ide.actions.WelcomeChangeLanguageAction" use-shortcut-of="Scratch.ChangeLanguage">
       <add-to-group group-id="EditorPopupMenu2" anchor="after" relative-to-action="Scratch.ChangeLanguage"/>
     </action>
+    <action id="WelcomeSaveFileAction" class="com.intellij.ide.actions.WelcomeSaveFileAction">
+      <add-to-group group-id="SaveEditorsGroup" anchor="last"/>
+    </action>
   </actions>
 </idea-plugin>

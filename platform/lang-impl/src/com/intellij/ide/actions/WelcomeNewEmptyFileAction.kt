@@ -12,7 +12,6 @@ import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -25,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
 import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.project.DumbAwareAction
@@ -134,13 +134,13 @@ internal class WelcomeFilePreCloseCheck : VirtualFilePreCloseCheck {
 }
 
 @ApiStatus.Internal
-class WelcomeSaveFileAction : AnAction() {
+class WelcomeSaveFileAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
     val project = event.project
     event.presentation.isEnabledAndVisible = project != null && getFile(project, event) != null
-    event.presentation.text = ActionsBundle.message("action.SaveDocument.text")
+    event.presentation.text = ActionsBundle.message("action.WelcomeSaveFileAction.text")
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -153,7 +153,13 @@ class WelcomeSaveFileAction : AnAction() {
     if (!WelcomeUtils.isWelcomeProject(project)) {
       return null
     }
-    val file = FileDocumentManager.getInstance().getFile(event.getData(CommonDataKeys.EDITOR)?.document ?: return null) ?: return null
+    val document = event.getData(CommonDataKeys.EDITOR)?.document
+    val file = if (document == null) {
+      event.getData(EditorWindow.DATA_KEY)?.getContextFile() ?: return null
+    }
+    else {
+      FileDocumentManager.getInstance().getFile(document) ?: return null
+    }
     if (!WelcomeFilesRootType.Util.instance.containsFile(file)) {
       return null
     }
