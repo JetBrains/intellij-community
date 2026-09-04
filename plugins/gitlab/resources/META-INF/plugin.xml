@@ -44,7 +44,10 @@
 
     <module name="intellij.vcs.gitlab.git"/>
     <module name="intellij.vcs.gitlab.yaml"/>
+    <module name="intellij.vcs.gitlab.ultimate.features.shared"/>
     <module name="intellij.vcs.gitlab.ultimate.features"/>
+    <module name="intellij.vcs.gitlab.ultimate.features.frontend"
+            required-if-available="intellij.platform.frontend"/>
     <module name="intellij.vcs.gitlab.ultimate.ci.sh"/>
   </content>
 </idea-plugin>
