@@ -36,7 +36,9 @@
 *:com.intellij.ide.lightEdit.LightEditCompatible
 com.intellij.ide.plugins.DynamicPluginListener
 - *:beforePluginsLoaded():V
+- *:beforePluginsUnloaded():V
 - *:pluginsLoaded():V
+- *:pluginsUnloaded():V
 *e:com.intellij.ide.plugins.IdeaPluginOsRequirement
 - java.lang.Enum
 - *sf:Companion:com.intellij.ide.plugins.IdeaPluginOsRequirement$Companion

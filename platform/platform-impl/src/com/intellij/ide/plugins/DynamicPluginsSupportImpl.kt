@@ -66,7 +66,7 @@ import java.util.function.Predicate
 import kotlin.time.Duration.Companion.seconds
 
 private val LOG = Logger.getInstance(DynamicPluginsSupportImpl::class.java)
-private val REPORT_ISSUES_COUNT_PROPERTY = "dynamic.plugins.report.issues.count"
+private const val REPORT_ISSUES_COUNT_PROPERTY = "dynamic.plugins.report.issues.count"
 
 internal class DynamicPluginsSupportImpl(
   val classloaderUnloadAwaitStrategy: AwaitClassloaderUnloadStrategy
@@ -237,6 +237,7 @@ internal class DynamicPluginsSupportImpl(
       val affectedPlugins = groupsToUnload.asSequence().flatMap { it.sortedDescriptors.asReversed() }.filterIsInstance<PluginMainDescriptor>()
       try {
         withContext(Dispatchers.EDT) {
+          runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginsUnloaded() }
           for (plugin in affectedPlugins) {
             val isUpdate = plugin.pluginId in pluginsToBeLoadedLater
             runSafe {
@@ -275,6 +276,7 @@ internal class DynamicPluginsSupportImpl(
               application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginUnloaded(plugin, isUpdate)
             }
           }
+          runSafe { application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginsUnloaded() }
         }
       }
 

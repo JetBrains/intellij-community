@@ -16,13 +16,9 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
     mySwitcher = new FileBasedIndexTumbler("Plugin loaded/unloaded");
   }
 
-  @Override
-  public void beforePluginsLoaded() {
-    beforePluginSetChanged();
-  }
 
   @Override
-  public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+  public void beforePluginsLoaded() {
     beforePluginSetChanged();
   }
 
@@ -31,10 +27,17 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
     afterPluginSetChanged();
   }
 
+
   @Override
-  public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+  public void beforePluginsUnloaded() {
+    beforePluginSetChanged();
+  }
+
+  @Override
+  public void pluginsUnloaded() {
     afterPluginSetChanged();
   }
+
 
   private void beforePluginSetChanged() {
     if (!isIndexReloadSkippedInTests()) {
@@ -47,7 +50,7 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
     // we don't use dedicated listener for IndexingDependenciesFingerprint, because order is important: first invalidate, then scan.
     ApplicationManager.getApplication().getService(IndexingDependenciesFingerprint.class).resetCache();
     if (!isIndexReloadSkippedInTests()) {
-      mySwitcher.turnOn(null);
+      mySwitcher.turnOn();
     }
   }
 
