@@ -1189,8 +1189,9 @@
                      key="inspection.display.name.reassigned.in.closure.local.var"
                      groupKey="inspection.confusing"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrReassignedInClosureLocalVarInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy"
-                     key="inspection.display.name.unnecessary.qualified.reference" groupKey="inspection.confusing" enabledByDefault="true"
+    <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.confusing"
+                     key="inspection.display.name.unnecessary.qualified.reference" enabledByDefault="true"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.UnnecessaryQualifiedReferenceInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.empty.statement.body"
                      groupKey="inspection.confusing" enabledByDefault="true"
