@@ -48,8 +48,8 @@ private fun isPyreflyBundlingEnabled(): Boolean = System.getProperty(PYREFLY_BUN
 
 private suspend fun copyPyreflyLicenseReport(targetDir: Path, context: BuildContext) {
   val licenseDir = downloadPyrefly(context, PYREFLY_LICENSE_ARTIFACT_ID).resolve("license")
-  if (!Files.isDirectory(licenseDir)) {
-    return
+  check(Files.isDirectory(licenseDir)) {
+    "Pyrefly license report is missing from the archive: $licenseDir"
   }
   context.messages.warning("Bundling pyrefly license report in $licenseDir")
   copyDir(sourceDir = licenseDir, targetDir = targetDir.resolve(PYREFLY_DIR_NAME).resolve("license"))
@@ -59,8 +59,8 @@ private suspend fun copyPyreflyBinary(targetDir: Path, context: BuildContext, os
   val platformDirName = pyreflyPlatformDirName(os, arch)
   val platformDir = downloadPyrefly(context, pyreflyArtifactId(platformDirName)).resolve(platformDirName)
   val binary = platformDir.resolve(os.binaryName(PYREFLY_BINARY_NAME))
-  if (!Files.exists(binary)) {
-    return
+  check(Files.isRegularFile(binary)) {
+    "Pyrefly binary is missing from the archive: $binary"
   }
   context.messages.info("Bundling pyrefly binary at $binary into ${os.osName} ${arch.archName}")
   copyFileToDir(binary, targetDir.resolve(PYREFLY_DIR_NAME))
