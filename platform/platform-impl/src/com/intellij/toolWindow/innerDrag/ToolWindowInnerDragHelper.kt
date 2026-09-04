@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.project.Project
@@ -19,6 +20,7 @@ import com.intellij.openapi.wm.impl.content.SingleContentLayout
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowDragHelper
+import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDropHintHighlightComponent
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDropTargetHighlightComponent
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
 import com.intellij.ui.ComponentUtil
@@ -59,7 +61,9 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   private var dragImageView: DragImageView? = null
   private var currentDropSide = -1
   private var currentDropIndex = -1
-  private val highlighter = createDropTargetHighlightComponent()
+  private var currentEditorDropArea: EditorsSplitters? = null
+  private val dropTargetHighlightComponent = createDropTargetHighlightComponent()
+  private val dropHintHighlightComponent = createDropHintHighlightComponent()
   private val myInitialOffset = Point()
 
   override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
@@ -323,12 +327,10 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       curLocation.decorator.setDropInfoIndex(-1, 0)
     }
     curDropLocation = null
-    val parent = highlighter.parent
-    if (parent is JComponent) {
-      parent.remove(highlighter)
-      parent.revalidate()
-      parent.repaint()
-    }
+
+    removeAllHighlighting()
+    currentEditorDropArea = null
+
     @Suppress("SSBasedInspection")
     dragImageView?.hide()
     dragImageView = null
@@ -377,8 +379,11 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       }
     }
 
+    currentEditorDropArea = findEditorDropArea(content)
+
     with(IdeGlassPaneUtil.find(pane) as JComponent) {
-      add(highlighter)
+      add(dropTargetHighlightComponent)
+      add(dropHintHighlightComponent)
       revalidate()
       repaint()
     }
@@ -399,9 +404,11 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       is DropLocation.Editor -> highlightEditorDropArea(dropLocation.target)
       else -> {
         currentDropIndex = -1
-        highlighter.bounds = Rectangle()
+        dropTargetHighlightComponent.bounds = Rectangle()
       }
     }
+
+    highlightHintDropArea(dropLocation)
   }
 
   private fun updateCurDropLocation(point: RelativePoint) {
@@ -453,12 +460,34 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     return if (splitters.isEmptyVisible) EditorDropTarget.EmptyArea(splitters) else null
   }
 
+  private fun findEditorDropArea(content: Content): EditorsSplitters? {
+    val sourceDecorator = sourceDecorator ?: return null
+    val project = sourceDecorator.toolWindow.project
+    if (!canDropIntoEditor(sourceDecorator, content, project)) return null
+
+    val splitters = FileEditorManagerEx.getInstanceEx(project).getSplittersFor(pane) ?: return null
+    return splitters.takeIf { UIUtil.getRootPane(it) === pane.rootPane }
+  }
+
+  private fun highlightHintDropArea(dropLocation: DropLocation?) {
+    val editorHintDropArea = currentEditorDropArea
+    val content = myDraggingTab?.content
+    val canMoveContentToEditor = editorHintDropArea != null && content != null
+
+    dropHintHighlightComponent.bounds = if (canMoveContentToEditor && dropLocation !is DropLocation.Editor) {
+      getGlassPaneBounds(editorHintDropArea)
+    }
+    else {
+      Rectangle()
+    }
+  }
+
   private fun highlightToolWindowDropArea(decorator: InternalDecoratorImpl, point: RelativePoint) {
     currentDropIndex = getTabIndex(point)
     if (currentDropIndex != -1 && (canReorderTabs(decorator) || decorator.toolWindow.canSplitTabs())) {
       decorator.setDropInfoIndex(currentDropIndex, dragImageView!!.size.width)
       currentDropSide = -1
-      highlighter.bounds = Rectangle()
+      dropTargetHighlightComponent.bounds = Rectangle()
     }
     else if (decorator.toolWindow.canSplitTabs()) {
       currentDropSide = TabsUtil.getDropSideFor(point.getPoint(decorator), decorator)
@@ -467,21 +496,35 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       dropArea.bounds = SwingUtilities.convertRectangle(decorator, dropArea, pane.rootPane.glassPane)
 
       decorator.setDropInfoIndex(-1, 0)
-      highlighter.bounds = dropArea
+      dropTargetHighlightComponent.bounds = dropArea
     }
     else {
       decorator.setDropInfoIndex(-1, 0)
       currentDropIndex = -1
       currentDropSide = -1
-      highlighter.bounds = Rectangle()
+      dropTargetHighlightComponent.bounds = Rectangle()
     }
   }
 
   private fun highlightEditorDropArea(target: EditorDropTarget) {
-    val component = target.component
-    val dropArea = Rectangle(component.size)
-    dropArea.bounds = SwingUtilities.convertRectangle(component, dropArea, pane.rootPane.glassPane)
-    highlighter.bounds = dropArea
+    dropTargetHighlightComponent.bounds = getGlassPaneBounds(target.component)
+  }
+
+  private fun getGlassPaneBounds(component: JComponent): Rectangle {
+    return SwingUtilities.convertRectangle(component, Rectangle(component.size), pane.rootPane.glassPane)
+  }
+
+  private fun removeAllHighlighting() {
+    removeHighlighting(dropTargetHighlightComponent)
+    removeHighlighting(dropHintHighlightComponent)
+  }
+
+  private fun removeHighlighting(component: JComponent) {
+    val parent = component.parent as? JComponent ?: return
+    parent.remove(component)
+    parent.revalidate()
+    parent.repaint()
+    component.bounds = Rectangle()
   }
 
   private fun findTopDecorator(component: Component): InternalDecoratorImpl? {
