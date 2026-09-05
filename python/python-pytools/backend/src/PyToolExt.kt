@@ -1,13 +1,19 @@
 package com.intellij.python.pytools.backend
 
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.python.pytools.backend.PyToolsBundle.message
 import com.intellij.python.pytools.backend.impl.detectExecutableOnEel
 import com.intellij.python.pytools.backend.services.PyCustomExecutablePaths
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * The user-chosen custom executable path for this executable on [eelDescriptor]'s machine, or `null`
@@ -19,6 +25,36 @@ fun PyExecutable.getCustomExecutablePath(eelDescriptor: EelDescriptor): Path? =
 /** Persist (or clear, when `null`) the custom executable path for this executable on [eelDescriptor]'s machine. */
 fun PyExecutable.setCustomExecutablePath(eelDescriptor: EelDescriptor, path: Path?): Unit =
   PyCustomExecutablePaths.getInstance().set(eelDescriptor, this, path)
+
+/**
+ * Tell every open project that resolves this tool on [eelDescriptor]'s machine that its executable
+ * changed. See [PyTool.onExecutableChanged].
+ *
+ * Both the custom path store and the detection cache are application-level and keyed by machine. So
+ * a change there reaches every project that resolves the tool on that machine. It must not disturb a
+ * project that resolves the tool on another machine, because its servers and caches are still correct.
+ */
+@ApiStatus.Internal
+fun PyTool<*>.notifyExecutableChanged(eelDescriptor: EelDescriptor) {
+  val machine = eelDescriptor.getResolvedEelMachine() ?: return
+  for (project in ProjectManager.getInstance().openProjects) {
+    // openProjects can hand back one that is already closing.
+    if (project.isDisposed) continue
+    if (project.getEelDescriptor().getResolvedEelMachine() != machine) continue
+    // A failure in one project must not keep the projects after it on the old binary.
+    try {
+      onExecutableChanged(project)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: RuntimeException) {
+      LOG.error("Cannot tell $project that ${packageName.name} changed", e)
+    }
+  }
+}
+
+private val LOG = fileLogger()
 
 /**
  * Resolve [executableName] in the environment [eelApi] describes: on `PATH` and in the well-known per-user

@@ -143,6 +143,7 @@ private object PyToolApiImpl : PyToolApi {
     val descriptor = project.getEelDescriptor()
     val path = request.path?.let { EelPath.parse(it, descriptor).asNioPath() }
     tool.setCustomExecutablePath(descriptor, path)
+    tool.notifyExecutableChanged(descriptor)
     return state(project, tool)
   }
 
@@ -162,10 +163,21 @@ private object PyToolApiImpl : PyToolApi {
   }
 
   override suspend fun install(request: PyToolRequest): PyToolOperationResultDto =
-    operate(request) { project, tool -> tool.performToolInstallation(project.getEelDescriptor().toEelApi()) }
+    operate(request) { project, tool ->
+      // `uv tool install` is not a PythonPackageManager operation, so nothing else tells the tool
+      // that its binary just appeared. A server that it runs, and anything that it caches from the
+      // binary, stay out of date until it is told. It installs machine-wide, so every project here
+      // is affected.
+      tool.performToolInstallation(project.getEelDescriptor().toEelApi())
+        .also { if (it is Result.Success) tool.notifyExecutableChanged(project.getEelDescriptor()) }
+    }
 
   override suspend fun upgrade(request: PyToolRequest): PyToolOperationResultDto =
-    operate(request) { project, tool -> tool.performToolUpgrade(project.getEelDescriptor().toEelApi()) }
+    operate(request) { project, tool ->
+      // As for an install: an upgrade in place leaves a running server on the old binary.
+      tool.performToolUpgrade(project.getEelDescriptor().toEelApi())
+        .also { if (it is Result.Success) tool.notifyExecutableChanged(project.getEelDescriptor()) }
+    }
 
   override suspend fun getSdkStates(request: PyToolRequest): List<PyToolSdkStateDto> {
     val project = request.projectId.findProject()

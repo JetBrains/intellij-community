@@ -83,6 +83,7 @@ import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.types.PyTypeEngineSettingsModificationTracker
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.PySdkListener
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -200,9 +201,16 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
                                                                ?: lspClient.descriptor.presentableName
 
   protected open fun subscribeOnChanges(pyTool: PyTool<*>, project: Project, parentDisposable: Disposable) {
+    val executableChanged = PyToolChangeDebouncer(project.service<PyLspService>().cs) { pyTool.onExecutableChanged(project) }
     val connection = project.messageBus.connect(parentDisposable)
-    connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, LspPackageListener(pyTool, project))
+    connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, LspPackageListener(pyTool, project, executableChanged))
     connection.subscribe(ModuleRootListener.TOPIC, LspFolderSetListener(project))
+    // A new module SDK can resolve another binary of the tool, and a running server keeps the old one.
+    connection.subscribe(PySdkListener.TOPIC, object : PySdkListener {
+      override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
+        if (module.project == project && prevSdk != newSdk) executableChanged.schedule()
+      }
+    })
     // A refresh of the serve keys lands without a project event, so it triggers the checks itself. A
     // server that started before the refresh can hold the wrong group, and a module that just got the
     // tool can need a server that nothing started.
@@ -302,7 +310,11 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
    * Starts the server when [pyTool] becomes a package of an interpreter of [project]. Stops the
    * server when the tool leaves every interpreter that a server can run against.
    */
-  inner class LspPackageListener(val pyTool: PyTool<*>, val project: Project) : PythonPackageManagementListener {
+  inner class LspPackageListener(
+    val pyTool: PyTool<*>,
+    val project: Project,
+    private val executableChanged: PyToolChangeDebouncer,
+  ) : PythonPackageManagementListener {
     /**
      * The tool version last seen in each interpreter, so a package event that changes nothing for
      * the tool does not restart a server. [NO_VERSION] stands for an interpreter without the tool.
@@ -340,6 +352,10 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
       val seenBefore = previous != null
       val action = lspPackageVersionAction(seenBefore, previous?.takeUnless { it == NO_VERSION }, version)
       if (action == LspPackageAction.NONE) return
+
+      // An upgrade in place leaves every server on the binary it started with, and the shared
+      // answers of the tool describe that old binary. The debouncer merges a burst into one call.
+      if (action == LspPackageAction.UPGRADE) executableChanged.schedule()
 
       // A version change re-groups the modules, so a running server can hold the wrong folder set.
       PyLspToolVersionTracker.getInstance(project).bump(pyTool.packageName.name)

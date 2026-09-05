@@ -6,19 +6,25 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.Args
+import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.executeOn
-import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.ModuleOrProject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Information about a Ruff configuration option.
@@ -74,69 +80,228 @@ data class RuffRuleInfo(
 /**
  * Service for fetching and storing Ruff configuration options and rule information.
  */
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class RuffService(val project: Project, val cs: CoroutineScope) {
-  private var _configOptions: Map<String, RuffConfigOptionInfo>? = null
+  /**
+   * Guards the check of [generation] against the publication it decides, which are two steps.
+   * The answers themselves need no lock to read: each is one object behind one `@Volatile`.
+   *
+   * Both queries use it as their lock too. So one [invalidate] retires the answer and both queries in
+   * one step, and a read cannot start a query between those steps that the retirement then cancels.
+   */
+  private val cacheLock = Any()
+  private val configOptionQuery = RuffSharedQuery(cs, gate = cacheLock) { queryConfigOptionInformation() }
+  private val ruleQuery = RuffSharedQuery(cs, gate = cacheLock) { queryRuleInformation() }
+  private val generation = AtomicInteger()
 
-  var configOptions: Map<String, RuffConfigOptionInfo>
-    get() {
-      _configOptions?.let { return it }
-      cs.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) { gatherConfigOptionInformation() }
-      return _configOptions ?: emptyMap()
-    }
-    private set(value) {
-      _configOptions = value
-    }
+  /**
+   * The Ruff the cached answer describes: the version a server reported, and the module whose server
+   * reported it. One reference, because a version paired with another module's answer is exactly the
+   * staleness this key exists to catch. The module is held by name, because a project service
+   * outlives a module and must not keep it. The module is also where a query runs, so the answer
+   * comes from the binary that the server of the module runs.
+   *
+   * `null` until a server reports. An answer published while it is `null` came from project scope,
+   * which is a guess, so the first server to report replaces it.
+   */
+  private class AnswerSource(val version: String, val moduleName: String)
 
-  private var _configOptionGroups: Set<String>? = null
-  var configOptionGroups: Set<String>
-    get() {
-      _configOptionGroups?.let { return it }
-      cs.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) { gatherConfigOptionInformation() }
-      return _configOptionGroups ?: emptySet()
-    }
-    private set(value) {
-      _configOptionGroups = value
-    }
+  private val answerSource = AtomicReference<AnswerSource?>(null)
 
-  private var _ruleInformation: Map<String, RuffRuleInfo>? = null
-  var ruleInformation: Map<String, RuffRuleInfo>
-    get() {
-      _ruleInformation?.let { return it }
-      cs.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) { gatherRuleInformation() }
-      return _ruleInformation ?: emptyMap()
-    }
-    private set(value) {
-      _ruleInformation = value
-    }
+  /**
+   * One answer of `ruff config`. Both halves are derived from one output and are published as one,
+   * so a reader can never see half an update. [generation] is the one it was published for: a reader
+   * that finds an older one knows the answer was retired and starts the query that replaces it.
+   */
+  private class ConfigAnswer(val options: Map<String, RuffConfigOptionInfo>, val groups: Set<String>, val generation: Int)
 
-  private var _linterInformation: Map<String, String>? = null
-  var linterInformation: Map<String, String>
-    get() {
-      _linterInformation?.let { return it }
-      cs.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) { gatherRuleInformation() }
-      return _linterInformation ?: emptyMap()
-    }
-    private set(value) {
-      _linterInformation = value
-    }
+  /** One answer of `ruff rule --all`. */
+  private class RuleAnswer(val rules: Map<String, RuffRuleInfo>, val linters: Map<String, String>, val generation: Int)
 
-  companion object {
-    private val LOG = logger<RuffService>()
+  @Volatile
+  private var configAnswer: ConfigAnswer? = null
+
+  @Volatile
+  private var ruleAnswer: RuleAnswer? = null
+
+  val configOptions: Map<String, RuffConfigOptionInfo>
+    get() = readConfigAnswer()?.options ?: emptyMap()
+
+  val configOptionGroups: Set<String>
+    get() = readConfigAnswer()?.groups ?: emptySet()
+
+  val ruleInformation: Map<String, RuffRuleInfo>
+    get() = readRuleAnswer()?.rules ?: emptyMap()
+
+  val linterInformation: Map<String, String>
+    get() = readRuleAnswer()?.linters ?: emptyMap()
+
+  /**
+   * The config answer to read, starting [query] when there is none or the one there was retired.
+   *
+   * A retired answer is still returned. It describes the Ruff of a moment ago, and rule names one
+   * version old are better than none while the replacement runs. But the read must ask for that
+   * replacement, because no other code fetches it, and the answer would outlive its Ruff. Only
+   * some readers of this cache have an LSP server behind them: a `pyproject.toml` completion has
+   * none, and would otherwise never see a newer Ruff.
+   */
+  private fun readConfigAnswer(): ConfigAnswer? {
+    val answer = configAnswer
+    if (answer == null || answer.generation != generation.get()) configOptionQuery.start()
+    return answer
+  }
+
+  private fun readRuleAnswer(): RuleAnswer? {
+    val answer = ruleAnswer
+    if (answer == null || answer.generation != generation.get()) ruleQuery.start()
+    return answer
   }
 
   /**
-   * Fetches all Ruff configuration options from the Ruff executable.
+   * Whether the rule answer on hand was published for the current generation.
    *
-   * @return A map of option paths to their information, or an empty map if fetching fails.
+   * This is the distinction a read acts on: a retired answer is still returned, and returning it is
+   * what starts the query that replaces it.
    */
-  suspend fun gatherConfigOptionInformation() {
-    val output = RuffPyTool.getInstance().executeOn(
-      ModuleOrProject.ProjectOnly(project),
-      Args("config", "--output-format=json")
-    ).orLogException(LOG)
+  @VisibleForTesting
+  fun ruleAnswerIsCurrent(): Boolean = ruleAnswer?.generation == generation.get()
 
-    output?.let { loadConfigOptionInformation(output) }
+  /** The rule answer on hand, current or retired, without asking for a replacement. */
+  @VisibleForTesting
+  fun peekRuleInformation(): Map<String, RuffRuleInfo>? = ruleAnswer?.rules
+
+  /**
+   * Retires the cached answer, so the next [gatherInformation] replaces it.
+   *
+   * The answer stays readable, and the next read of it starts the query that replaces it. Keeping it
+   * is deliberate: it describes a Ruff that is gone, but rule names one version old beat no rule
+   * names at all, and a refresh that fails must not leave the reader with nothing. Bumping
+   * [generation] is what retires it: a query still in flight ran against the Ruff being replaced, so
+   * its answer is discarded rather than published over the new one.
+   */
+  fun invalidate() {
+    val displaced = synchronized(cacheLock) {
+      generation.incrementAndGet()
+      listOfNotNull(configOptionQuery.retire(), ruleQuery.retire())
+    }
+    displaced.forEach { it.cancel() }
+  }
+
+  /**
+   * Gathers the information of the Ruff that the LSP server of [module] runs. That server reports
+   * [version].
+   *
+   * Every started LSP server calls this. A project has one server per module, and the servers start
+   * as the files open. A refresh for each server would spend a Ruff process per module, which is the
+   * bug that this cache prevents. [version] tells those servers apart from a different Ruff. The rule
+   * catalogue and the config schema belong to the binary, so servers with one version share one
+   * answer.
+   *
+   * [module] keeps the version correct. The query runs Ruff in that module, which is the scope where
+   * the server resolved its own binary. So the answer and its version key come from one binary. A
+   * query in project scope resolves the custom path, then `PATH`, then `uvx`, and never an
+   * interpreter. So it can answer from a Ruff that no server runs. See [queryScope].
+   *
+   * A server that reports no version counts as one unknown Ruff, so the query runs one time, as
+   * before.
+   *
+   * [PyTool.onExecutableChanged] restarts the servers when the Ruff of a module can have changed, so
+   * that they initialize and report again. These changes call it: a new custom path, an install or an
+   * upgrade through [PyTool.manager], a new module SDK, and a new Ruff version in an SDK. The IDE sees
+   * a Ruff that changes outside the IDE only when it reloads the package list of that SDK.
+   *
+   * A report that is not news retires nothing. It still renews the retry budget of a query that has
+   * no answer, because a restarted server is a new chance for that query. A sibling module on another
+   * Ruff also renews the budget. [RuffSharedQuery] still waits its retry delay between two attempts.
+   */
+  suspend fun gatherInformation(module: Module, version: String?) {
+    if (!adoptSource(module.name, version)) {
+      configOptionQuery.renewAttempts()
+      ruleQuery.renewAttempts()
+    }
+    configOptionQuery.start().join()
+    ruleQuery.start().join()
+  }
+
+  /**
+   * Takes what [moduleName]'s server reports as the Ruff the cache describes, when it has something
+   * to say that the cache does not already know, and retires the answer when it does.
+   *
+   * Only three things are news. Nothing has claimed the cache yet, so whatever answer it holds came
+   * from project scope and is a guess. Or the module the answer came from now reports a different
+   * version, which is its Ruff replaced under it. Or that module is gone, and someone has to take
+   * over the scope a query runs in.
+   *
+   * Every other report comes from one of N servers that agree, or from a sibling module on its own
+   * Ruff. Neither is a change. To retire for those costs a query per server start and gives nothing,
+   * because the cache holds one answer however many versions the project runs.
+   *
+   * @return `true` when the cached answer was retired.
+   */
+  @VisibleForTesting
+  suspend fun adoptSource(moduleName: String, version: String?): Boolean {
+    val reported = version ?: UNKNOWN_VERSION
+    while (true) {
+      val current = answerSource.get()
+      val news = when {
+        current == null -> true
+        current.moduleName == moduleName -> current.version != reported
+        else -> !moduleExists(current.moduleName)
+      }
+      if (!news) return false
+      if (answerSource.compareAndSet(current, AnswerSource(reported, moduleName))) {
+        invalidate()
+        return true
+      }
+    }
+  }
+
+  private suspend fun moduleExists(name: String): Boolean =
+    readAction { ModuleManager.getInstance(project).findModuleByName(name) } != null
+
+  /**
+   * Where to run Ruff.
+   *
+   * [ModuleOrProject.ProjectOnly] looks like "this project's Ruff" and is not: `moduleIfExists` is
+   * `null` for it, so `toolExecutableWithBaseArgs` skips the interpreter and resolves the custom
+   * path, then `PATH`, then `uvx`. Every LSP server resolves its binary in module scope instead, so
+   * once one has reported in, its module is the scope whose answer matches what the user sees.
+   * Before that, and for a module that has since gone, project scope is all there is.
+   */
+  private suspend fun queryScope(): ModuleOrProject {
+    val name = answerSource.get()?.moduleName ?: return ModuleOrProject.ProjectOnly(project)
+    val module = readAction { ModuleManager.getInstance(project).findModuleByName(name) }
+    if (module == null) {
+      // The module went away. Project scope answers from whatever Ruff it can find, which is not
+      // necessarily one any server runs, so say so rather than let a mismatch look deliberate.
+      LOG.debug("Module $name is gone; querying Ruff in project scope")
+      return ModuleOrProject.ProjectOnly(project)
+    }
+    return ModuleOrProject.ModuleAndProject(module)
+  }
+
+  companion object {
+    private val LOG = logger<RuffService>()
+
+    /** Stands in for the version of a server that reports none, so one such Ruff is one key. */
+    private const val UNKNOWN_VERSION = "<unknown>"
+  }
+
+  private suspend fun queryConfigOptionInformation(): Boolean {
+    val started = generation.get()
+    val output = RuffPyTool.getInstance().executeOn(
+      queryScope(),
+      Args("config", "--output-format=json")
+    ).orLogException(LOG) ?: return false
+
+    val parsed = parseConfigOptionInformation(output, started) ?: return false
+    return synchronized(cacheLock) {
+      // An invalidation overtook this query, so the output describes the Ruff it discarded.
+      if (generation.get() != started) return@synchronized false
+      configAnswer = parsed
+      true
+    }
   }
 
   /**
@@ -146,22 +311,29 @@ class RuffService(val project: Project, val cs: CoroutineScope) {
    * @return A map of option paths to their information, or an empty map if parsing fails.
    */
   fun loadConfigOptionInformation(@Language("JSON") jsonString: String) {
+    synchronized(cacheLock) { configAnswer = parseConfigOptionInformation(jsonString, generation.get()) ?: return }
+  }
+
+  /** Parses [jsonString] without touching the cache, so a caller can publish it under [cacheLock]. */
+  private fun parseConfigOptionInformation(@Language("JSON") jsonString: String, generation: Int): ConfigAnswer? {
     try {
       val jsonElement = JsonParser.parseString(jsonString)
-      val jsonObject = jsonElement as? JsonObject ?: return
+      val jsonObject = jsonElement as? JsonObject ?: return null
 
-      configOptions = buildMap {
+      val options = buildMap {
         jsonObject.entrySet().forEach { (key, value) ->
           processConfigOption(key, value, this)
         }
       }
-      configOptionGroups = configOptions.keys.asSequence()
+      val groups = options.keys.asSequence()
         .filter { "." in it }
         .map { option -> option.dropLastWhile { it != '.' }.dropLast(1) }
         .toSet()
+      return ConfigAnswer(options, groups, generation)
     }
     catch (e: Exception) {
       LOG.warn("Error parsing Ruff config options JSON", e)
+      return null
     }
   }
 
@@ -204,16 +376,20 @@ class RuffService(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  /**
-   * Gathers rule information from the Ruff executable.
-   */
-  suspend fun gatherRuleInformation() {
+  private suspend fun queryRuleInformation(): Boolean {
+    val started = generation.get()
     val output = RuffPyTool.getInstance().executeOn(
-      ModuleOrProject.ProjectOnly(project),
+      queryScope(),
       Args("rule", "--output-format", "json", "--all")
-    ).orLogException(LOG)
+    ).orLogException(LOG) ?: return false
 
-    output?.let { loadRuleInformation(it) }
+    val parsed = parseRuleInformation(output, started) ?: return false
+    return synchronized(cacheLock) {
+      // An invalidation overtook this query, so the output describes the Ruff it discarded.
+      if (generation.get() != started) return@synchronized false
+      ruleAnswer = parsed
+      true
+    }
   }
 
   /**
@@ -223,15 +399,20 @@ class RuffService(val project: Project, val cs: CoroutineScope) {
    * @param jsonString The JSON string containing rule information.
    */
   fun loadRuleInformation(@Language("JSON") jsonString: String) {
+    synchronized(cacheLock) { ruleAnswer = parseRuleInformation(jsonString, generation.get()) ?: return }
+  }
+
+  /** Parses [jsonString] without touching the cache, so a caller can publish it under [cacheLock]. */
+  private fun parseRuleInformation(@Language("JSON") jsonString: String, generation: Int): RuleAnswer? {
     val jsonArray = try {
-      JsonParser.parseString(jsonString) as? JsonArray ?: return
+      JsonParser.parseString(jsonString) as? JsonArray ?: return null
     }
     catch (e: JsonParseException) {
       LOG.warn("Error parsing Ruff rules JSON", e)
-      return
+      return null
     }
 
-    ruleInformation = jsonArray.mapNotNull { item ->
+    val rules = jsonArray.mapNotNull { item ->
       val rule = item as? JsonObject ?: return@mapNotNull null
       // Ruff omits an optional field, or reports it as null. A rule without a code is not addressable.
       val code = rule.stringOrNull("code") ?: return@mapNotNull null
@@ -247,9 +428,10 @@ class RuffService(val project: Project, val cs: CoroutineScope) {
       )
     }.toMap()
 
-    linterInformation = ruleInformation.entries.associate { (key, value) ->
+    val linters = rules.entries.associate { (key, value) ->
       key.takeWhile { it.isLetter() } to value.linter
     }
+    return RuleAnswer(rules, linters, generation)
   }
 
   private fun JsonObject.stringOrNull(key: String): @NlsSafe String? =

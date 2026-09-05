@@ -111,9 +111,12 @@ class RuffLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, Ruff
     override fun serverInitialized(params: InitializeResult) {
       super.serverInitialized(params)
       val service = project.service<RuffService>()
+      // The server reports which Ruff it is, so the cache can tell a sibling module's server apart
+      // from a Ruff that was replaced, without spending a process to find out.
+      val version = params.serverInfo?.version
+      val module = this@RuffLspClientDescriptor.module
       project.service<PyLspService>().cs.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-        service.gatherRuleInformation()
-        service.gatherConfigOptionInformation()
+        service.gatherInformation(module, version)
       }
     }
   }

@@ -264,32 +264,13 @@ internal class PyExternalToolsList(
       val current = snapshotOf(row)
       val detailModified = row.detail?.isModified() == true
       val rowChanged = row.staged != current || detailModified
-      if (row.staged.enabled != current.enabled) {
-        val backendState = runWithModalProgressBlocking(
-          project,
-          PyToolsUiBundle.message("settings.external.tools.apply.progress"),
-        ) {
-          PyToolApi.getInstance().setEnabled(
-            PyToolSetEnabledRequest(PyToolRequest(project.projectId(), row.tool.toolId), row.staged.enabled),
-          )
-        }
-        row.applyBackendState(backendState)
-        PyToolsFrontendState.getInstance(project).apply(
-          PyToolEnabledStateDto(backendState.toolId, backendState.enabled),
-        )
-      }
-      if (row.staged.customPath != current.customPath) {
-        val backendState = runWithModalProgressBlocking(
-          project,
-          PyToolsUiBundle.message("settings.external.tools.apply.progress"),
-        ) {
-          PyToolApi.getInstance().setPath(
-            PyToolSetPathRequest(PyToolRequest(project.projectId(), row.tool.toolId), row.staged.customPath),
-          )
-        }
-        row.applyBackendState(backendState)
-        persistedPaths[row.tool.toolId] = row.persistedCustomPath
-      }
+      val pathChanged = row.staged.customPath != current.customPath
+      val enabledChanged = row.staged.enabled != current.enabled
+      // The path goes before an enable, so the server that the enable starts resolves the binary the
+      // user chose. It goes after a disable, so a tool the user turns off does not restart for the path.
+      if (enabledChanged && !row.staged.enabled) applyEnabled(row)
+      if (pathChanged) applyPath(row)
+      if (enabledChanged && row.staged.enabled) applyEnabled(row)
       if (detailModified) {
         try {
           row.detail?.apply()
@@ -313,6 +294,34 @@ internal class PyExternalToolsList(
       }
     }
     rows.forEach { refreshRow(it) }
+  }
+
+  private fun applyPath(row: ToolRow) {
+    val backendState = runWithModalProgressBlocking(
+      project,
+      PyToolsUiBundle.message("settings.external.tools.apply.progress"),
+    ) {
+      PyToolApi.getInstance().setPath(
+        PyToolSetPathRequest(PyToolRequest(project.projectId(), row.tool.toolId), row.staged.customPath),
+      )
+    }
+    row.applyBackendState(backendState)
+    persistedPaths[row.tool.toolId] = row.persistedCustomPath
+  }
+
+  private fun applyEnabled(row: ToolRow) {
+    val backendState = runWithModalProgressBlocking(
+      project,
+      PyToolsUiBundle.message("settings.external.tools.apply.progress"),
+    ) {
+      PyToolApi.getInstance().setEnabled(
+        PyToolSetEnabledRequest(PyToolRequest(project.projectId(), row.tool.toolId), row.staged.enabled),
+      )
+    }
+    row.applyBackendState(backendState)
+    PyToolsFrontendState.getInstance(project).apply(
+      PyToolEnabledStateDto(backendState.toolId, backendState.enabled),
+    )
   }
 
   /** Revert all rows' staged state to the persisted snapshot and reset any open detail configurables. */

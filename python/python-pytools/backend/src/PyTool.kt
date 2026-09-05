@@ -49,6 +49,26 @@ interface PyTool<C : PyToolConfigurationDto> : PyExecutable {
   fun onEnabledChanged(project: Project, enabled: Boolean) {}
 
   /**
+   * Invoked when the executable this tool would run may have changed. Any persisting is already done
+   * and the detection cache already dropped, so an implementation resolving the tool here sees the
+   * new binary.
+   *
+   * These changes invoke it:
+   * - An edit of the custom path, and an install or an upgrade through [manager]. The path store, the
+   *   detection cache and such an install are application-level and keyed by Eel machine. So each of
+   *   these changes reaches every open [project] that resolves this tool on that machine. See
+   *   [notifyExecutableChanged].
+   * - For an LSP tool, a new SDK of a module, and a new installed version of the tool in an SDK. The
+   *   Python LSP integration sends these, and each reaches only the [project] it belongs to. It
+   *   merges a burst of these changes into one call.
+   *
+   * A tool that runs a server implements this, because the server it started is still the old binary
+   * and nothing else restarts it. So does a tool that caches anything derived from its binary, because
+   * the new binary can answer differently.
+   */
+  fun onExecutableChanged(project: Project) {}
+
+  /**
    * Returns true when the project uses this tool as its type engine.
    *
    * An active type engine remains active when its separate enabled state is false.
