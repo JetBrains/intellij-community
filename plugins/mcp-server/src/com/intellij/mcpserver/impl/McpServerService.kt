@@ -37,6 +37,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.asDisposable
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
@@ -325,7 +326,10 @@ open class McpServerService(val cs: CoroutineScope) {
   }
 
   //todo: I think that should be a subscription to McpServerSettings
+  @RequiresBackgroundThread(generateAssertion = false)
   fun settingsChanged(enabled: Boolean) {
+    ThreadingAssertions.softAssertBackgroundThread()
+
     server.update { currentServer ->
       val effectivelyEnabled = enabled || isMcpServerForceEnabled()
       if (!effectivelyEnabled) {
@@ -643,5 +647,11 @@ open class McpServerService(val cs: CoroutineScope) {
     }.filter { filterAdjusted.shouldInclude(it) }
     allTools.firstOrNull { it.descriptor.name == routerToolName }?.let { filteredTools += it }
     return filteredTools.toList()
+  }
+
+  fun scheduleResetToSettings() {
+    cs.launch {
+      settingsChanged(McpServerSettings.getInstance().enableMcpServer)
+    }
   }
 }

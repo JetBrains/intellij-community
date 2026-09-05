@@ -123,6 +123,11 @@ public abstract class ComposeSwingSearchableConfigurable : SearchableConfigurabl
   override fun reset() {
     bindings.forEach { it.reset() }
   }
+
+  /**
+   * @return constructed content, available only when already shown, throws otherwise
+   */
+  protected fun getContent(): JComponent = page!!
 }
 
 /**

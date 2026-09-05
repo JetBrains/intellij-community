@@ -11,6 +11,7 @@ f:com.intellij.platform.compose.swing.ComposeSwingPanelKt
 - pf:bind(kotlin.reflect.KMutableProperty0):com.intellij.platform.compose.swing.SettingState
 - f:createComponent():javax.swing.JComponent
 - disposeUIResources():V
+- pf:getContent():javax.swing.JComponent
 - getPreferredFocusedComponent():javax.swing.JComponent
 - isModified():Z
 - pf:requestModifiedCheck():V

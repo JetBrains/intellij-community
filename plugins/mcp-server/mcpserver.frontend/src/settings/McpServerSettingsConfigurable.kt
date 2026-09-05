@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("FunctionName")
+
 package com.intellij.mcpserver.frontend.settings
 
 import androidx.compose.runtime.Composable
@@ -26,6 +28,9 @@ import com.intellij.mcpserver.util.getHelpLink
 import com.intellij.mcpserver.util.getPathForMcp
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
@@ -48,7 +53,10 @@ import com.intellij.ui.JBColor
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.ui.ColorizeProxyIcon
 import com.intellij.util.ui.TextTransferable
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
@@ -67,7 +75,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.SwingUtilities
 import kotlin.io.path.createFile
 
 /**
@@ -77,6 +84,7 @@ import kotlin.io.path.createFile
  * `isModified`/`apply`/`reset`). The remaining display state — server status, detected clients — is
  * plain Compose state driven by the plugin services.
  */
+@ApiStatus.Internal
 class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
   private val settings get() = McpServerSettings.getInstance()
 
@@ -95,6 +103,9 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
   private val globalClientControllers = McpClientDetector.detectGlobalMcpClients()?.map { ClientController(it, project = null) } ?: emptyList()
   private var projectClientControllers = emptyList<ClientController>()
   private val disabledExplanationHtml: @NlsContexts.DetailedDescription String = buildDisabledExplanation()
+
+  @Suppress("RAW_SCOPE_CREATION")
+  private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
   init {
     refreshServerStatus()
@@ -136,14 +147,17 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
   override fun reset() {
     super.reset()
     // Revert the live server state to the persisted value (the enable toggle starts/stops it eagerly).
-    McpServerService.getInstance().settingsChanged(settings.enableMcpServer)
-    refreshServerStatus()
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), McpServerBundle.message("apply.mcp.server.state.progress.text")) {
+      McpServerService.getInstance().settingsChanged(settings.enableMcpServer)
+      refreshServerStatus()
+    }
   }
 
   override fun disposeUIResources() {
+    coroutineScope.cancel()
     // If the enable toggle was flipped for preview but never applied, revert the live server state.
     if (enabled != settings.enableMcpServer) {
-      McpServerService.getInstance().settingsChanged(settings.enableMcpServer)
+      McpServerService.getInstance().scheduleResetToSettings()
     }
     super.disposeUIResources()
   }
@@ -279,11 +293,16 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
     projectClients = ProjectClientsState(project.name, projectClientControllers.map { it.toRowState() })
   }
 
-  private fun requestEnabledChange(requested: Boolean) = SwingUtilities.invokeLater {
-    if (!ConsentValidator.isValidNewValue(requested, activeProject)) return@invokeLater
-    enabled = requested
-    McpServerService.getInstance().settingsChanged(requested)
-    refreshServerStatus()
+  private fun requestEnabledChange(requested: Boolean) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(getContent()).asContextElement()) {
+      if (!ConsentValidator.isValidNewValue(requested, activeProject)) return@launch
+      enabled = requested
+
+      withContext(Dispatchers.Main) {
+        McpServerService.getInstance().settingsChanged(requested)
+        refreshServerStatus()
+      }
+    }
   }
 
   private fun refreshServerStatus() {
