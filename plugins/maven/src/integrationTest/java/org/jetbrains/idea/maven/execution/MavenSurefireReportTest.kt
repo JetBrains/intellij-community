@@ -98,16 +98,16 @@ class MavenSurefireReportTest {
     assertTrue(msgs.any { "locationHint='java:test://probe.MixedTest/fails'" in it })
 
     // Passing test
-    assertTrue(msgs.any { "testStarted"  in it && "probe.MixedTest.passes" in it })
-    assertTrue(msgs.any { "testFinished" in it && "probe.MixedTest.passes" in it })
-    assertFalse(msgs.any { "testFailed"  in it && "probe.MixedTest.passes" in it })
+    assertTrue(msgs.any { "testStarted"  in it && "name='passes'" in it })
+    assertTrue(msgs.any { "testFinished" in it && "name='passes'" in it })
+    assertFalse(msgs.any { "testFailed"  in it && "name='passes'" in it })
 
     // Failing test: testFailed with message, not an error
-    assertTrue(msgs.any { "testStarted" in it && "probe.MixedTest.fails" in it })
-    val failed = msgs.first { "testFailed" in it && "probe.MixedTest.fails" in it }
+    assertTrue(msgs.any { "testStarted" in it && "name='fails'" in it })
+    val failed = msgs.first { "testFailed" in it && "name='fails'" in it }
     assertTrue("expected 1 but was 2" in failed || "AssertionError" in failed,
                "failure message missing in: $failed")
     assertFalse("error='true'" in failed, "assertion failure must not have error='true'")
-    assertTrue(msgs.any { "testFinished" in it && "probe.MixedTest.fails" in it })
+    assertTrue(msgs.any { "testFinished" in it && "name='fails'" in it })
   }
 }

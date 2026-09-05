@@ -85,19 +85,20 @@ object SurefireReportParser {
         // Parameterized invocation: group under a method-level suite.
         // baseMethod may include parameter types, e.g. "calculateDiscount(int, int, int)".
         val baseMethod = name.substring(0, bracketIdx).trimEnd()
+        // Use the invocation suffix directly as the node name, e.g. "[1]".
         val invocationSuffix = name.substring(bracketIdx)
-        methodSuite = "$classname.$baseMethod"
-        // Add a dot before the invocation suffix so the SM runner strips the method suite
-        // prefix when forming the display label, e.g. "[1] 100, 10, 90".
-        displayName = "$methodSuite.$invocationSuffix"
+        // Method suite name omits the classname prefix, matching the JPS runner style.
+        methodSuite = baseMethod
+        displayName = invocationSuffix
         // Use the bare method name (no param types) for navigation.
         val bareMethod = baseMethod.substringBefore('(').trimEnd()
         locationHint = "java:test://${escape(classname)}/${escape(bareMethod)}"
       }
       else {
         // Non-parameterized test: emit directly under the class suite.
+        // Omit the classname prefix from the display name, matching the JPS runner style.
         methodSuite = null
-        displayName = "$classname.$name"
+        displayName = name
         locationHint = "java:test://${escape(classname)}/${escape(name)}"
       }
 

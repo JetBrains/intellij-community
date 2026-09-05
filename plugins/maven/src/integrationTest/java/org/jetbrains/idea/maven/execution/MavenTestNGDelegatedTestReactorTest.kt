@@ -69,6 +69,8 @@ class MavenTestNGDelegatedTestReactorTest {
       persistantData.MAIN_CLASS_NAME = "probe.MyTest"
     }
 
+    // Filter out the dynamic -Dsurefire.reportNameSuffix=<timestamp> entry before comparing.
+    val staticGoals = goals.filter { !it.startsWith("-Dsurefire.reportNameSuffix=") }
     assertEquals(
       listOf(
         "--projects=probe:probe",
@@ -78,8 +80,9 @@ class MavenTestNGDelegatedTestReactorTest {
         "-Dsurefire.failIfNoSpecifiedTests=false",
         "test",
       ),
-      goals,
+      staticGoals,
     )
+    assertTrue(goals.any { it.startsWith("-Dsurefire.reportNameSuffix=") })
   }
 
   // ── METHOD ────────────────────────────────────────────────────────────────

@@ -62,22 +62,33 @@ class SurefireRerunFailedTestsActionTest {
     assertEquals("com.example.MyTest#testFoo", surefireTestSpec("com.example.MyTest.testFoo [1]"))
   }
 
-  // ── grouped invocation names (parameterized grouping) ─────────────────────
+  @Test
+  fun `short invocation leaf name with no dot returns null`() {
+    assertNull(surefireTestSpec("[1]"))
+  }
+
+  // ── surefireSpecFromLocation ──────────────────────────────────────────────
 
   @Test
-  fun `grouped invocation with typed method falls back to class and bare method`() {
-    // Grouped format: "ClassName.methodName(Types).[index] value"
+  fun `java test location URL produces class-hash-method spec`() {
     assertEquals(
-      "com.example.DiscountTest#calculateDiscount",
-      surefireTestSpec("com.example.DiscountTest.calculateDiscount(int, int, int).[1] 100, 10, 90"),
+      "com.example.MyTest#myMethod",
+      surefireSpecFromLocation("java:test://com.example.MyTest/myMethod"),
     )
   }
 
   @Test
-  fun `grouped invocation without param types falls back to class and method`() {
-    assertEquals(
-      "com.example.DiscountTest#calculateDiscount",
-      surefireTestSpec("com.example.DiscountTest.calculateDiscount.[1]"),
-    )
+  fun `java suite location URL returns null`() {
+    assertNull(surefireSpecFromLocation("java:suite://com.example.MyTest"))
+  }
+
+  @Test
+  fun `null location URL returns null`() {
+    assertNull(surefireSpecFromLocation(null))
+  }
+
+  @Test
+  fun `location URL without slash returns null`() {
+    assertNull(surefireSpecFromLocation("java:test://com.example.MyTest"))
   }
 }

@@ -67,10 +67,13 @@ internal class ExecRemoteConnectionCreator : MavenRemoteConnectionCreator() {
       }
       val execArgs = ParametersList()
       execArgs.addAll(jdwpArgs)
-      // Strip any stale JDWP args left by a previous debug run so they don't accumulate on rerun.
+      // Strip stale debug args from a previous debug run so they don't accumulate on rerun.
+      // Match on the type prefix (everything up to and including the first "=") of each new debug
+      // arg, so agents, D-flags, and module flags are all deduplicated without hardcoding names.
+      val debugArgPrefixes = jdwpArgs.map { it.substringBefore('=') + "=" }.toSet()
       val previousExecArgs = ParametersList()
       previousExecArgs.addParametersString(execArgsStr)
-      previousExecArgs.list.filter { !it.startsWith("-agentlib:jdwp=") }.forEach { execArgs.add(it) }
+      previousExecArgs.list.filter { staleArg -> debugArgPrefixes.none { staleArg.startsWith(it) } }.forEach { execArgs.add(it) }
       val classPath = FileUtil.toSystemDependentName(parameters.classPath.pathsString)
       if (classPath.isNotEmpty()) {
         appendToClassPath(execArgs, classPath)
@@ -115,10 +118,16 @@ internal class ExecRemoteConnectionCreator : MavenRemoteConnectionCreator() {
         getExecArgsFromPomXml(project, runnerParameters)
       }
 
+    val newDebugArgs = MavenExecutionEnvironmentProviderUtil.patchVmParameters(parameters.vmParametersList)
     val execArgs = ParametersList()
-    execArgs.addAll(MavenExecutionEnvironmentProviderUtil.patchVmParameters(parameters.vmParametersList))
-
-    execArgs.addParametersString(execArgsStr)
+    execArgs.addAll(newDebugArgs)
+    // Strip stale debug args from a previous debug run so they don't accumulate on rerun.
+    // Match on the type prefix (everything up to and including the first "=") of each new debug
+    // arg, so agents, D-flags, and module flags are all deduplicated without hardcoding names.
+    val debugArgPrefixes = newDebugArgs.map { it.substringBefore('=') + "=" }.toSet()
+    val previousExecArgs = ParametersList()
+    previousExecArgs.addParametersString(execArgsStr)
+    previousExecArgs.list.filter { staleArg -> debugArgPrefixes.none { staleArg.startsWith(it) } }.forEach { execArgs.add(it) }
 
     val classPath = FileUtil.toSystemDependentName(parameters.classPath.pathsString)
     if (classPath.isNotEmpty()) {

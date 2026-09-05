@@ -54,20 +54,48 @@ internal class SurefireRerunFailedTestsAction(
 
   private fun buildFailedTestParam(allTests: List<AbstractTestProxy>): String? {
     val specs = allTests.filter { it.isLeaf && it.isDefect }
-      .mapNotNull { surefireTestSpec(it.name) }
+      .mapNotNull { proxy ->
+        // Use the locationHint from the proxy (or its parent) to build the Surefire spec.
+        // The hint format is "java:test://ClassName/methodName", which always carries the
+        // full class and bare method regardless of what the display name looks like.
+        surefireSpecFromLocation(proxy.locationUrl)
+          ?: surefireSpecFromLocation(proxy.parent?.locationUrl)
+      }
       .distinct()
     return specs.ifEmpty { null }?.joinToString("+")
   }
 }
 
 /**
- * Converts a SM runner display name (`ClassName.methodName` as written by [SurefireReportParser])
- * to a Surefire test spec (`ClassName#methodName`). Returns null when the name contains no dot
- * (e.g. a suite node rather than a leaf test).
+ * Converts a `java:test://ClassName/methodName` location URL to a Surefire test spec
+ * (`ClassName#methodName`). Returns null for any other URL scheme or malformed input.
  *
- * Parameterized tests carry the full invocation display name after the method name
- * (e.g. `testFoo(String)[1] hello`). Surefire accepts only the base method name in its
- * `-Dtest=` filter, so the suffix is stripped before building the spec.
+ * This is the primary way [SurefireRerunFailedTestsAction] builds the `-Dtest=` filter,
+ * because the location URL is independent of the display name format.
+ */
+@ApiStatus.Internal
+fun surefireSpecFromLocation(locationUrl: String?): String? {
+  if (locationUrl == null || !locationUrl.startsWith("java:test://")) return null
+  val path = locationUrl.removePrefix("java:test://")
+  val slash = path.indexOf('/')
+  if (slash < 0) return null
+  val className = path.substring(0, slash)
+  val methodName = path.substring(slash + 1)
+  if (className.isEmpty() || methodName.isEmpty()) return null
+  return "$className#$methodName"
+}
+
+/**
+ * Converts a SM runner display name to a Surefire test spec (`ClassName#methodName`).
+ * Returns null when the name contains no dot (e.g. a short method name or a
+ * parameterized-leaf name like `[1]`).
+ *
+ * The method part may carry a parameterized suffix such as `(String)[1] hello`.
+ * Surefire accepts only the base method name in its `-Dtest=` filter, so the suffix
+ * is stripped before building the spec.
+ *
+ * Note: [SurefireRerunFailedTestsAction] uses [surefireSpecFromLocation] instead, which
+ * is more reliable. This function is kept for callers that only have a display name.
  */
 @ApiStatus.Internal
 fun surefireTestSpec(displayName: String): String? {
@@ -77,16 +105,6 @@ fun surefireTestSpec(displayName: String): String? {
   val rawMethod = displayName.substring(dot + 1)
   // Strip the parameterized suffix: "(Type)[index] value" or "[index] value".
   val methodName = rawMethod.substringBefore('(').substringBefore('[').trimEnd()
-  if (methodName.isNotEmpty()) return "$classPart#$methodName"
-
-  // Grouped invocation format: displayName = "ClassName.methodName(Types).[index] value"
-  // The part after the last dot is "[index] value" (empty after stripping brackets).
-  // classPart = "ClassName.methodName(Types)" — extract class and bare method from it.
-  val innerDot = classPart.lastIndexOf('.')
-  if (innerDot < 0) return null
-  val trueClass = classPart.substring(0, innerDot)
-  val methodWithTypes = classPart.substring(innerDot + 1)
-  val trueMethod = methodWithTypes.substringBefore('(').trimEnd()
-  if (trueMethod.isEmpty()) return null
-  return "$trueClass#$trueMethod"
+  if (methodName.isEmpty()) return null
+  return "$classPart#$methodName"
 }

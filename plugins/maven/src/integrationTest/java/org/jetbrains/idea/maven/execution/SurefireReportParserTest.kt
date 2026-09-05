@@ -55,8 +55,8 @@ class SurefireReportParserTest {
 
     val msgs = messages()
     val suiteStart = msgs.indexOfFirst { "testSuiteStarted" in it && "com.example.PassTest" in it }
-    val testStart  = msgs.indexOfFirst { "testStarted"      in it && "com.example.PassTest.myTest" in it }
-    val testEnd    = msgs.indexOfFirst { "testFinished"     in it && "com.example.PassTest.myTest" in it }
+    val testStart  = msgs.indexOfFirst { "testStarted"      in it && "name='myTest'" in it }
+    val testEnd    = msgs.indexOfFirst { "testFinished"     in it && "name='myTest'" in it }
     val suiteEnd   = msgs.indexOfFirst { "testSuiteFinished" in it && "com.example.PassTest" in it }
 
     assertTrue(suiteStart >= 0, "testSuiteStarted missing")
@@ -232,14 +232,14 @@ class SurefireReportParserTest {
 
   @Test
   fun `square brackets are escaped`() {
-    // Parameterized invocation: display name = "suite.param.[0]" → escaped = "suite.param.|[0|]"
+    // Parameterized invocation: display name = "[0]" → escaped = "|[0|]"
     writeReport("TEST-Esc3.xml", """
       <testsuite name="suite">
         <testcase name="param[0]" classname="suite"/>
       </testsuite>
     """)
 
-    assertTrue(messages().any { "param.|[0|]" in it })
+    assertTrue(messages().any { "|[0|]" in it })
   }
 
   @Test
@@ -267,7 +267,7 @@ line2</failure>
       </testsuite>
     """)
 
-    assertTrue(messages().any { "testStarted" in it && "com.example.FallbackTest.noClass" in it })
+    assertTrue(messages().any { "testStarted" in it && "name='noClass'" in it })
   }
 
   // ── parameterized test grouping ───────────────────────────────────────────
@@ -291,10 +291,10 @@ line2</failure>
     assertTrue(methodSuiteEnd >= 0, "method suite end missing")
     assertTrue(methodSuiteStart < methodSuiteEnd)
 
-    // Each invocation is a test node with the invocation suffix after a dot.
-    assertTrue(msgs.any { "testStarted" in it && "calculateDiscount(int, int, int).|[1|]" in it })
-    assertTrue(msgs.any { "testStarted" in it && "calculateDiscount(int, int, int).|[2|]" in it })
-    assertTrue(msgs.any { "testStarted" in it && "calculateDiscount(int, int, int).|[3|]" in it })
+    // Each invocation is a leaf node named by the invocation suffix (values visible directly).
+    assertTrue(msgs.any { "testStarted" in it && "|[1|] 100, 10, 90" in it })
+    assertTrue(msgs.any { "testStarted" in it && "|[2|] 200, 20, 160" in it })
+    assertTrue(msgs.any { "testStarted" in it && "|[3|] 50, 100, 0" in it })
 
     // The method suite is nested inside the class suite.
     val classSuiteStart = msgs.indexOfFirst { "testSuiteStarted" in it && "com.example.DiscountTest'" in it }
@@ -312,7 +312,7 @@ line2</failure>
     val msgs = messages()
     // Exactly one suite: the class suite; no extra method-level suite.
     assertEquals(1, msgs.count { "testSuiteStarted" in it })
-    assertTrue(msgs.any { "testStarted" in it && "com.example.PlainTest.myTest" in it })
+    assertTrue(msgs.any { "testStarted" in it && "name='myTest'" in it })
   }
 
   @Test
@@ -326,10 +326,10 @@ line2</failure>
     """)
 
     val msgs = messages()
-    assertTrue(msgs.any { "testStarted" in it && "com.example.MixTest.plain" in it })
-    assertTrue(msgs.any { "testSuiteStarted" in it && "com.example.MixTest.param" in it })
-    assertTrue(msgs.any { "testStarted" in it && "param.|[1|]" in it })
-    assertTrue(msgs.any { "testStarted" in it && "param.|[2|]" in it })
+    assertTrue(msgs.any { "testStarted" in it && "name='plain'" in it })
+    assertTrue(msgs.any { "testSuiteStarted" in it && "name='param'" in it })
+    assertTrue(msgs.any { "testStarted" in it && "|[1|] a" in it })
+    assertTrue(msgs.any { "testStarted" in it && "|[2|] b" in it })
   }
 
   // ── multiple suites ───────────────────────────────────────────────────────
@@ -385,7 +385,7 @@ line2</failure>
     val msgs = SurefireReportParser.collectMessages(root, "abc")
     assertTrue(msgs.any { "testSuiteStarted" in it && "com.example.SfxTest'" in it },
                "suite name must not contain the suffix tag")
-    assertTrue(msgs.any { "testStarted" in it && "com.example.SfxTest.myTest" in it },
+    assertTrue(msgs.any { "testStarted" in it && "name='myTest'" in it },
                "test display name must not contain the suffix tag")
     assertFalse(msgs.any { "(abc)" in it }, "suffix tag must not appear in any message")
   }

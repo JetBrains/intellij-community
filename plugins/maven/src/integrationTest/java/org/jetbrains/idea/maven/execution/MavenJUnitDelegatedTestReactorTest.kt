@@ -103,6 +103,8 @@ class MavenJUnitDelegatedTestReactorTest {
     val delegatedParameters = (executionEnvironment!!.runProfile as MavenSurefireRunConfiguration).runnerParameters
     assertEquals(maven.projectPath.toCanonicalPath(), delegatedParameters.workingDirPath)
     assertEquals("pom.xml", delegatedParameters.pomFileName)
+    // Filter out the dynamic -Dsurefire.reportNameSuffix=<timestamp> entry before comparing.
+    val staticGoals = delegatedParameters.goals.filter { !it.startsWith("-Dsurefire.reportNameSuffix=") }
     assertEquals(
       listOf(
         "--projects=probe:leaf",
@@ -112,8 +114,9 @@ class MavenJUnitDelegatedTestReactorTest {
         "-Dsurefire.failIfNoSpecifiedTests=false",
         "test",
       ),
-      delegatedParameters.goals,
+      staticGoals,
     )
+    assertTrue(delegatedParameters.goals.any { it.startsWith("-Dsurefire.reportNameSuffix=") })
 
     // Mirrors the historical JUnit provider: run the leaf POM without workspace resolution or a reactor.
     val legacyLeafParameters = MavenRunnerParameters(
