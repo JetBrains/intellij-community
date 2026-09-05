@@ -137,7 +137,10 @@ public final class PackageDirectoryCacheImpl implements PackageDirectoryCache {
         MultiMap<String, VirtualFile> result = MultiMap.createLinked();
         for (VirtualFile directory : myPackageDirectories) {
           ProgressManager.checkCanceled();
-          for (VirtualFile child : directory.getChildren()) {
+          // a cached directory can become stale and stop being a directory; getChildren() is null then
+          VirtualFile[] children = directory.isValid() ? directory.getChildren() : null;
+          if (children == null) continue;
+          for (VirtualFile child : children) {
             String childName = child.getName();
             String packageName = myQname.isEmpty() ? childName : myQname + "." + childName;
             if (child.isDirectory() && myPackageDirectoryFilter.test(child, packageName)) {
