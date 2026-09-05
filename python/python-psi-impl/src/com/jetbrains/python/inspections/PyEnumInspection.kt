@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.util.containers.isEmpty
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.EnumAttributeKind
@@ -33,12 +32,10 @@ class PyEnumInspection : PyInspection() {
           val superClassType = myTypeEvalContext.getType(superClassExpression)
           if (superClassType is PyClassType) {
             val superClass = superClassType.pyClass
-            if (PyStdlibTypeProvider.isCustomEnum(superClass, myTypeEvalContext)) {
-              if (!PyStdlibTypeProvider.getEnumMembers(superClass, myTypeEvalContext).isEmpty()) {
-                registerProblem(superClassExpression,
-                                PyPsiBundle.problemMessage("INSP.enum.enum.class.is.final.and.cannot.be.subclassed", CodifiedParam.ofReference(superClass)),
-                                ProblemHighlightType.GENERIC_ERROR)
-              }
+            if (PyStdlibTypeProvider.isFinalEnum(superClass, myTypeEvalContext)) {
+              registerProblem(superClassExpression,
+                              PyPsiBundle.problemMessage("INSP.enum.enum.class.is.final.and.cannot.be.subclassed", CodifiedParam.ofReference(superClass)),
+                              ProblemHighlightType.GENERIC_ERROR)
             }
           }
         }

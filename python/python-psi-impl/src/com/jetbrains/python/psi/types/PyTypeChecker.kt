@@ -636,9 +636,23 @@ object PyTypeChecker {
       val substitution = if (expected.isDefinition) selfType.toClass() else selfType.toInstance()
       return match(substitution, actual, context).orElse(false)!!
     }
-    if (actual !is PySelfType) return false
+    if (actual !is PySelfType) {
+      // A final class has no subclass, so `Self` in it denotes the class itself. A class with own type parameters
+      // is excluded: `Self` then denotes the class with those parameters, which the bare scope type cannot express.
+      return PyTypingTypeProvider.isFinalClass(expected.pyClass, context.context) &&
+             !hasOwnTypeParameters(expected.pyClass, context.context) &&
+             match(expected.scopeClassType, actual, context).orElse(false)!!
+    }
     return expected.isDefinition == actual.isDefinition &&
            match(expected.scopeClassType, actual.scopeClassType, context).orElse(false)!!
+  }
+
+  /**
+   * Returns true if and only if [cls] declares its own type parameters. A class that only specializes
+   * a generic ancestor, for example `class C(list[int])`, declares none.
+   */
+  private fun hasOwnTypeParameters(cls: PyClass, context: TypeEvalContext): Boolean {
+    return PyTypeProvider.EP_NAME.extensionList.any { it.getGenericType(cls, context) != null }
   }
 
   private fun convertToClass(type: PyType?): PyType? {
@@ -1156,6 +1170,8 @@ object PyTypeChecker {
     val parameters = elementType.getParameters(context)
     if (parameters.isNullOrEmpty() || !parameters.first().isSelf) return elementType
     val selfParamType = parameters.first().getType(context) ?: return elementType
+    // An unannotated `self` has the `Self` type, which binds no type variable
+    if (selfParamType is PySelfType) return elementType
     val selfSubstitutions = GenericSubstitutions()
 
     /**

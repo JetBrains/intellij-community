@@ -1824,6 +1824,101 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       c: Node
       c.next = Node()
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88916"])
+    fun `Self in final class is the class itself`() = test("""
+      from typing import Self, final
+
+      @final
+      class A:
+          def f(self) -> Self:
+              return A() # OK
+
+          def g(self) -> list[Self]:
+              return [A()] # OK
+
+          @classmethod
+          def h(cls) -> type[Self]:
+              return A # OK
+
+          @classmethod
+          def i(cls) -> Self:
+              return A # E
+      #              └ WARNING Expected type 'Self@A', got 'type[A]' instead
+
+
+      class B:
+          def f(self) -> Self:
+              return B() # E
+      #              ^^^ WARNING Expected type 'Self@B', got 'B' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88916"])
+    fun `Self in final class accepts the class as a parameter`() = test("""
+      from typing import Self, final
+
+      @final
+      class A:
+          def eq(self, other: Self) -> bool: ...
+
+          def use(self):
+              self.eq(A()) # OK
+              self.eq(self) # OK
+              self.eq(1) # E
+      #               └ WARNING Expected type 'Self@A', got 'Literal[1]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88916"])
+    fun `Self in final class with own type parameters keeps the parameters`() = test("""
+      from typing import Self, final
+
+      @final
+      class G[T]:
+          def f(self, other: "G[int]") -> Self:
+              return other # E
+      #              ^^^^^ WARNING Expected type 'Self@G', got 'G[int]' instead
+
+          def g(self) -> Self:
+              return G[int]() # E
+      #              ^^^^^^^^ WARNING Expected type 'Self@G', got 'G[int]' instead
+
+
+      @final
+      class Specialized(list[int]):
+          def f(self, other: "Specialized") -> Self:
+              return other # OK
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88916"])
+    fun `Self in enum class with members is the class itself`() = test("""
+      from enum import Enum
+      from typing import Self
+
+      class Colour(Enum):
+          RED = 1
+          GREEN = 2
+
+          @classmethod
+          def odd(cls) -> list[Self]:
+              return [cls.RED] # OK
+
+          @classmethod
+          def first(cls) -> Self:
+              return Colour.RED # OK
+
+          def other(self, other: "Colour") -> Self:
+              return other # OK
+
+
+      class Empty(Enum):
+          def other(self, other: "Empty") -> Self:
+              return other # E
+      #              ^^^^^ WARNING Expected type 'Self@Empty', got 'Empty' instead
+      """.trimIndent())
   }
 
   @Nested

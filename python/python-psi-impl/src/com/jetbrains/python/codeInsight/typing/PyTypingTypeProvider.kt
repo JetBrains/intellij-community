@@ -33,6 +33,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.getNamedTupleTypeForClass
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typeRepresentation.PyModuleTypeName
@@ -1919,6 +1920,17 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return PyKnownDecoratorUtil
         .getKnownDecorators(decoratable, context)
         .any { it === PyKnownDecorator.TYPING_FINAL || it === PyKnownDecorator.TYPING_FINAL_EXT }
+    }
+
+    /**
+     * Returns true if and only if [cls] accepts no subclass. A class with the `@final` decorator
+     * accepts none. An enum class with one member or more also accepts none.
+     */
+    @JvmStatic
+    fun isFinalClass(cls: PyClass, context: TypeEvalContext): Boolean {
+      return PyUtil.getParameterizedCachedValue(cls, context) {
+        isFinal(cls, context) || PyStdlibTypeProvider.isFinalEnum(cls, context)
+      }
     }
 
     @JvmStatic

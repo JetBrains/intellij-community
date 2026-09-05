@@ -241,6 +241,16 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
            metaClassType.getPyClass().isSubclass(PyNames.TYPE_ENUM_META, context);
   }
 
+  /**
+   * Returns true if and only if {@code cls} is an enum class with one member or more.
+   * Such a class accepts no subclass.
+   */
+  @ApiStatus.Internal
+  public static boolean isFinalEnum(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    // The stream can hold a null for a member without a name, so do not use findAny()
+    return isCustomEnum(cls, context) && getEnumMembers(cls, context).iterator().hasNext();
+  }
+
   @ApiStatus.Internal
   public static Stream<PyLiteralType> getEnumMembers(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
     assert isCustomEnum(enumClass, context);
