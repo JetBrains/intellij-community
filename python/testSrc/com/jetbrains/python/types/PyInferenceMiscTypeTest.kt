@@ -249,13 +249,17 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
   inner class RecursionAndFixedPointLoops {
     @Test
     @TestFor(issues = ["PY-76659"])
-    fun `recursive resolve in while loop`() = test("""
-      x = 42
-      while x:
-          x = x + 1
-      expr = x
-      #└ TYPE Literal[42] | int
-      """)
+    fun `recursive resolve in while loop`() {
+      if (!Registry.`is`("python.use.better.control.flow.type.inference")) return
+
+      test("""
+        x = 42
+        while x:
+            x = x + 1
+        expr = x
+        #└ TYPE Literal[42] | int
+        """)
+    }
 
     @Test
     @TestFor(issues = ["PY-76659"])
