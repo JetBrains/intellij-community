@@ -1,16 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("EditorCaretAdapter")
-
-package com.intellij.openapi.editor.impl
+package com.intellij.openapi.editor.impl.caret
 
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.caret.model.CARET_CACHE_RECTANGLE_MARGIN
 import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings
 import com.intellij.openapi.editor.impl.caret.model.CaretEasing
 import com.intellij.openapi.editor.impl.caret.model.CaretPlacement
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
+import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheKey
 import com.intellij.openapi.editor.impl.view.animation.coerceAtLeastEmpty
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -23,42 +23,51 @@ import kotlin.time.Duration.Companion.milliseconds
 private val MIN_BLINK_PERIOD = 10.milliseconds
 
 @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-internal fun caretPlacements(editor: EditorImpl): List<CaretPlacement> = editor.caretModel.allCarets.map { caret ->
+internal fun EditorImpl.caretPlacements(): List<CaretPlacement> = caretModel.allCarets.map { caret ->
   val isRtl = caret.isAtRtlLocation
   val visualPosition = caret.visualPosition
 
-  val origin = editor.visualPositionToPoint2D(visualPosition.leanRight(!isRtl))
-  val neighbour = editor.visualPositionToPoint2D(
+  val origin = visualPositionToPoint2D(visualPosition.leanRight(!isRtl))
+  val neighbour = visualPositionToPoint2D(
     VisualPosition(visualPosition.line, max(0, visualPosition.column + (if (isRtl) -1 else 1)), isRtl)
   )
 
-  val isAtBoundary = !isRtl && editor.inlayModel.hasInlineElementAt(visualPosition)
+  val isAtBoundary = !isRtl && inlayModel.hasInlineElementAt(visualPosition)
   val spanWidth = abs(neighbour.x - origin.x).toFloat()
   val width = when {
-    isAtBoundary -> min(spanWidth, ceil(editor.view.plainSpaceWidth.toDouble()).toFloat())
+    isAtBoundary -> min(spanWidth, ceil(view.plainSpaceWidth.toDouble()).toFloat())
     else -> spanWidth
   }
 
-  val visualColumnAdjustment = caret.visualColumnAdjustment
-  CaretPlacement(caret, origin.x, origin.y, caret.logicalPosition, visualColumnAdjustment, isAtBoundary, width, isRtl)
+  CaretPlacement(caret, origin.x, origin.y, caret.logicalPosition, caret.visualColumnAdjustment, isAtBoundary, width, isRtl)
 }
 
-internal fun caretAnimationSettings(settings: EditorSettings, animationsDisabled: Boolean): CaretAnimationSettings = CaretAnimationSettings(
+internal fun EditorImpl.caretAnimationSettings(): CaretAnimationSettings = CaretAnimationSettings(
   blinkPeriod = settings.caretBlinkPeriod.milliseconds.coerceAtLeast(MIN_BLINK_PERIOD),
   isBlinking = settings.isBlinkCaret,
-  blinksSmoothly = !animationsDisabled && settings.isSmoothCaretBlinking,
+  blinksSmoothly = !shouldDisableAnimations() && settings.isSmoothCaretBlinking,
   easing = when (settings.caretEasing) {
-    EditorSettings.CaretEasing.SNAPPY -> CaretEasing.SNAPPY
+    EditorSettings.CaretEasing.SNAPPY, null -> CaretEasing.SNAPPY
     EditorSettings.CaretEasing.GLIDING -> CaretEasing.GLIDING
   },
   moveDuration = Registry.intValue("editor.smooth.caret.duration").coerceAtLeast(1).milliseconds,
 )
-@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-internal fun prefetchCaretFrames(editor: EditorImpl, key: Any, locations: List<CaretRectangle>) {
-  editor.view.cacheAreasForRepaint(key) {
-    editor.view.caretRectanglesForLocations(locations.toTypedArray(), CARET_CACHE_RECTANGLE_MARGIN)
-      .map { it.coerceAtLeastEmpty() }
+
+internal fun EditorImpl.prefetchCaretFrames(locations: List<CaretRectangle>) {
+  view.cacheAreasForRepaint(caretCacheKeyOf(locations)) {
+    view.caretRectanglesForLocations(locations.toTypedArray(), CARET_CACHE_RECTANGLE_MARGIN).map { it.coerceAtLeastEmpty() }
   }
+}
+
+private fun caretCacheKeyOf(locations: List<CaretRectangle>): EditorAnimationCacheKey {
+  var hash = locations.size
+  for (location in locations) {
+    hash = hash * 31 + location.x.hashCode()
+    hash = hash * 31 + location.y.hashCode()
+    hash = hash * 31 + location.width.hashCode()
+  }
+
+  return EditorAnimationCacheKey(hash)
 }
 
 private val Caret.visualColumnAdjustment: Int get() {

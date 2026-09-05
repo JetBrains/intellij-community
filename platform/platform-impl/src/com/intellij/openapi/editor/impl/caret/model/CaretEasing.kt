@@ -26,12 +26,12 @@ internal enum class CaretEasing {
   abstract fun apply(t: Double): Double
 
   internal fun timeConstant(duration: Duration): Duration {
-    val steps = max(8, (duration / CaretClock.TICK).toInt())
+    val steps = max(8, (duration / CaretClock.MOVEMENT_FRAME).toInt())
     val matchedAt = (1..steps)
       .map { it.toDouble() / steps }
       .firstOrNull { apply(it) >= MATCHED_PROGRESS }
       ?: 1.0
 
-    return ((duration * matchedAt) / -ln(1.0 - MATCHED_PROGRESS)).coerceAtLeast(CaretClock.TICK)
+    return ((duration * matchedAt) / -ln(1.0 - MATCHED_PROGRESS)).coerceAtLeast(CaretClock.MOVEMENT_FRAME)
   }
 }

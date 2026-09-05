@@ -2,6 +2,11 @@
 package com.intellij.openapi.editor.impl.view.animation
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImageUtil.createEditorImage
@@ -10,17 +15,29 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordHit
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordMiss
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.paint.use
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.AlphaComposite
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 private const val CACHE_ENABLED_REGISTRY_KEY = "editor.animation.cache.enabled"
 
@@ -33,15 +50,43 @@ private const val CACHE_ENABLED_REGISTRY_KEY = "editor.animation.cache.enabled"
  */
 private const val MAX_CACHED_VISIBLE_AREAS = 2
 
-internal class EditorAnimationCache private constructor(private val editor: EditorImpl) : Disposable {
+private val THRASH_WINDOW_MS = 100.milliseconds
+private val THRASH_COOLDOWN_MS = 250.milliseconds
+
+@Service(Service.Level.APP)
+internal class EditorAnimationCacheService(private val scope: CoroutineScope) {
+  private val dispatcher = Dispatchers.Default.limitedParallelism(1, "EditorAnimationCache")
+
+  fun createCache(editor: EditorImpl): EditorAnimationCache =
+    EditorAnimationCache(editor, scope.childScope("Editor animation cache", dispatcher))
+}
+
+internal class EditorAnimationCache(
+  private val editor: EditorImpl,
+  private val coroutineScope: CoroutineScope,
+) : Disposable {
   private var isDisposed = false
-  private var lastCacheKey: Any? = null
-  private var pixelGrid: PixelGrid? = null
+  private val lastCacheKey = AtomicReference<EditorAnimationCacheKey?>(null)
+  private val requests = MutableStateFlow<CacheRequest?>(null)
+  private var pixelGrid: EditorPixelGrid? = null
   private val entries = CacheEntryList()
+  private var lastBuildAt: AnimationTimeMark? = null
+  private var cooldownUntil: AnimationTimeMark? = null
+
+  fun start() = coroutineScope.launch {
+    requests.filterNotNull().collect { request ->
+      requests.compareAndSet(request, null)
+      if (request.isDuplicate(lastCacheKey.get())) return@collect
+
+      withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+        cacheMissingAreas(request)
+      }
+    }
+  }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun clear() {
-    lastCacheKey = null
+    lastCacheKey.set(null)
     pixelGrid = null
     entries.clear()
   }
@@ -49,6 +94,8 @@ internal class EditorAnimationCache private constructor(private val editor: Edit
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun dispose() {
     isDisposed = true
+    coroutineScope.cancel()
+    requests.value = null
     clear()
   }
 
@@ -58,8 +105,13 @@ internal class EditorAnimationCache private constructor(private val editor: Edit
       clear()
       return
     }
-    lastCacheKey = null
-    entries.removeIntersecting(clip)
+    lastCacheKey.set(null)
+
+    val lastBuildAt = lastBuildAt ?: return
+    val now = AnimationClock.markAnimationNow()
+    if (entries.removeIntersecting(clip) && (now - lastBuildAt) < THRASH_WINDOW_MS) {
+      cooldownUntil = now + THRASH_COOLDOWN_MS
+    }
   }
 
   /**
@@ -71,27 +123,36 @@ internal class EditorAnimationCache private constructor(private val editor: Edit
    * [paintFromCache] can ever be asked for. Caching the rectangles individually would leave the gaps between them
    * uncached, and no single zone would contain the clip, so every multi-caret repaint would miss.
    */
+  fun cacheAreasForRepaint(requestKey: EditorAnimationCacheKey, rectangles: Supplier<List<Rectangle2D>>) = requests.update { pending ->
+    when (pending?.isDuplicate(requestKey)) {
+      true -> pending
+      else -> CacheRequest(requestKey, rectangles)
+    }
+  }
+
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun cacheAreasForRepaint(key: Any, rectangles: Supplier<List<Rectangle2D>>) {
-    if (isDisposed || editor.isDumb || lastCacheKey == key) return
+  private fun cacheMissingAreas(request: CacheRequest) {
+    if (isDisposed || editor.isDumb) return
+
+    val shouldSkipRequest = when (val cooldownUntil = cooldownUntil) {
+      null -> false
+      else -> AnimationClock.markAnimationNow() < cooldownUntil
+    }
+    if (shouldSkipRequest) return
     if (!ensureOpaqueContent()) return
 
     runCatching {
       val visibleArea = editor.scrollingModel.visibleArea
       if (visibleArea.isEmpty) return
 
-      val currentPixelGrid = PixelGrid.forComponent(editor)
+      val currentPixelGrid = EditorPixelGrid.forComponent(editor)
       if (pixelGrid != currentPixelGrid) {
         clear()
       }
 
       // The union is taken before clipping to the visible area, because that's the order Swing paints in:
       // it coalesces the repaint requests into their bounding box first, and only the resulting clip is visible-bound.
-      val repaintedArea = rectangles.get()
-        .reduceOrNull { union, rectangle -> union.createUnion(rectangle) }
-        ?.intersectWithVisibleArea(visibleArea)
-        ?.growToPixelGrid(currentPixelGrid)
-        ?: return
+      val repaintedArea = request.repaintedArea(visibleArea, currentPixelGrid) ?: return
 
       if (entries.findContaining(repaintedArea) == null) {
         if (entries.totalArea + repaintedArea.area > visibleArea.area * MAX_CACHED_VISIBLE_AREAS) {
@@ -102,10 +163,11 @@ internal class EditorAnimationCache private constructor(private val editor: Edit
         if (isDisposed) return
         entries.add(CacheEntry(repaintedArea, image))
         pixelGrid = currentPixelGrid
+        lastBuildAt = AnimationClock.markAnimationNow()
       }
       // Only remember the key once the zone is actually cached, so a transient failure doesn't skip every later
       // attempt: the caret key stays the same for a whole move, and giving up on it would leave the move uncached.
-      lastCacheKey = key
+      request.pushKey(lastCacheKey)
     }.getOrHandleException { e ->
       LOG.error("An exception occurred while building editor animation cache", e)
     }
@@ -114,7 +176,7 @@ internal class EditorAnimationCache private constructor(private val editor: Edit
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun paintFromCache(graphics: Graphics2D, rect: Rectangle2D): Boolean {
     if (isDisposed || !ensureOpaqueContent()) return false
-    val currentPixelGrid = PixelGrid.forGraphics(graphics)
+    val currentPixelGrid = EditorPixelGrid.forGraphics(graphics)
     if (pixelGrid != currentPixelGrid) {
       clear()
       return false
@@ -159,50 +221,14 @@ internal class EditorAnimationCache private constructor(private val editor: Edit
     return intersectWithVisibleArea(visibleArea)?.coerceAtLeastEmpty()?.takeUnless { it.isEmpty }
   }
 
-  private fun Rectangle2D.intersectWithVisibleArea(visibleArea: Rectangle): Rectangle2D? {
-    if (!intersects(visibleArea)) return null
-    return createIntersection(visibleArea)
-  }
-
-  private fun Rectangle2D.growToPixelGrid(pixelGrid: PixelGrid): Rectangle2D {
-    val scaleContext = pixelGrid.scaleContext
-    val alignment = pixelGrid.alignment
-    val dx = alignment.x
-    val dy = alignment.y
-    val x0 = PaintUtil.alignToInt(dx + x, scaleContext, PaintUtil.RoundingMode.FLOOR, null)
-    val y0 = PaintUtil.alignToInt(dy + y, scaleContext, PaintUtil.RoundingMode.FLOOR, null)
-    val x1 = PaintUtil.alignToInt(dx + x + width, scaleContext, PaintUtil.RoundingMode.CEIL, null)
-    val y1 = PaintUtil.alignToInt(dy + y + height, scaleContext, PaintUtil.RoundingMode.CEIL, null)
-    // Now that we have everything aligned, shift back to the original misaligned space,
-    // because that's the space that will be actually used for painting.
-    return Rectangle2D.Double(x0 - dx, y0 - dy, x1 - x0, y1 - y0)
-  }
-
   companion object {
     @JvmStatic
-    fun createAnimationCache(editor: EditorImpl): EditorAnimationCache? =
-      if (Registry.`is`(CACHE_ENABLED_REGISTRY_KEY)) EditorAnimationCache(editor) else null
-  }
-}
-
-private data class PixelGrid(val scaleContext: ScaleContext, val alignment: Point2D) {
-  companion object {
-    fun forComponent(editor: EditorImpl): PixelGrid {
-      val alignment = editor.contentComponent.currentAlignment
-      return PixelGrid(
-        ScaleContext.create(editor.contentComponent),
-        Point2D.Double(alignment.x, alignment.y),
-      )
-    }
-
-    fun forGraphics(graphics: Graphics2D): PixelGrid {
-      val alignment = PaintUtil.getUserSpacePixelOffset(graphics) ?: Point2D.Double()
-      return PixelGrid(
-        ScaleContext.create(graphics),
-        Point2D.Double(alignment.x, alignment.y),
-      )
+    fun createAnimationCache(editor: EditorImpl): EditorAnimationCache? {
+      if (!Registry.`is`(CACHE_ENABLED_REGISTRY_KEY)) return null
+      return service<EditorAnimationCacheService>().createCache(editor)
     }
   }
 }
+
 
 private val LOG = logger<EditorAnimationCache>()

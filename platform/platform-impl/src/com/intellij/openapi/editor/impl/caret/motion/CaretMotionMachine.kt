@@ -13,66 +13,67 @@ import kotlin.time.Duration
 private const val MIN_URGENCY = 0.2
 private const val URGENCY_DECAY = 0.8
 
-internal class CaretMotionMachine {
-  private var phase: CaretMotionPhase = CaretMotionPhase.DORMANT
-  private var stale: List<CaretRectangle> = emptyList()
-  private var urgency = 1.0
-  private var dirty = false
-  private var currentEasingFrames: List<CaretRectangle>? = null
-
+internal class CaretMotionMachine private constructor(
+  private val phase: CaretMotionPhase,
+  private val urgency: Double,
+  private val dirty: Boolean,
+  private val currentEasingFrames: List<CaretRectangle>?,
+) {
   val isSettled: Boolean get() = phase.settling.isComplete
 
-  fun retarget(placements: List<CaretPlacement>, tick: CaretTick) {
-    val snapping = phase.settling.isComplete && (holdsSamePlaces(placements) || !tick.isCaretShown)
+  val locations: List<CaretRectangle> get() = phase.trajectories.values.map { it.rectangle() }
 
-    urgency = when {
+  /// MARK: motion transitions
+
+  fun retarget(placements: List<CaretPlacement>, tick: CaretTick, isCaretShown: Boolean): CaretMotionMachine {
+    val snapping = phase.settling.isComplete && (holdsSamePlaces(placements) || !isCaretShown)
+    val nextUrgency = when {
       snapping || holdsSameTargets(placements) -> urgency
       else -> max(MIN_URGENCY, urgency * URGENCY_DECAY)
     }
-    aimAt(placements, tick, snapping)
+    return withUrgency(nextUrgency).aimAt(placements, tick, snapping)
   }
 
-  fun snapTo(placements: List<CaretPlacement>, tick: CaretTick) {
-    urgency = 1.0
-    aimAt(placements, tick, snapping = true)
-  }
+  fun snapTo(placements: List<CaretPlacement>, tick: CaretTick): CaretMotionMachine =
+    withUrgency(1.0).aimAt(placements, tick, snapping = true)
 
-  fun settle(tick: CaretTick) {
-    urgency = 1.0
-    phase = restingPhase(phase.trajectories.values.map { it.target }, tick)
-    currentEasingFrames = null
-    dirty = true
-  }
+  fun settle(tick: CaretTick): CaretMotionMachine = CaretMotionMachine(
+    phase = restingPhase(phase.trajectories.values.map { it.target }, tick),
+    urgency = 1.0,
+    dirty = true,
+    currentEasingFrames = null,
+  )
 
-  fun advance(tick: CaretTick, prefetching: Boolean): CaretMotionFrame {
-    val timeConstant = (tick.settings.moveTimeConstant * urgency).coerceAtLeast(CaretClock.TICK)
+  /// MARK: frame updates
+
+  fun advance(tick: CaretTick, prefetching: Boolean): Pair<CaretMotionMachine, CaretMotionStep> {
+    val timeConstant = (tick.settings.moveTimeConstant * urgency).coerceAtLeast(CaretClock.MOVEMENT_FRAME)
     val wasMoving = !phase.settling.isComplete
     val advancedPhase = if (wasMoving) phase.advance(tick, timeConstant) else phase
-    val drained = stale
     val moving = !advancedPhase.settling.isComplete
 
-    val frame = CaretMotionFrame(
-      locations = if (dirty || wasMoving) advancedPhase.trajectories.values.map { it.rectangle() } else null,
-      stale = drained,
+    val step = CaretMotionStep(
+      moved = dirty || wasMoving,
       prefetch = currentEasingFrames.takeIf { prefetching },
-      nextDelay = if (moving) CaretClock.TICK else Duration.INFINITE,
+      nextDelay = if (moving) CaretClock.MOVEMENT_FRAME else Duration.INFINITE,
     )
-
-    phase = advancedPhase
-    stale = emptyList()
-    dirty = false
-    urgency = if (moving) urgency else 1.0
-    currentEasingFrames = currentEasingFrames.takeIf { moving }
-
-    return frame
+    val next = CaretMotionMachine(
+      phase = advancedPhase,
+      urgency = if (moving) urgency else 1.0,
+      dirty = false,
+      currentEasingFrames = currentEasingFrames.takeIf { moving },
+    )
+    return next to step
   }
 
-  private fun aimAt(placements: List<CaretPlacement>, tick: CaretTick, snapping: Boolean) {
-    val previous = phase.trajectories
-    val live = placements.mapTo(HashSet()) { it.caret }
+  /// MARK: trajectory updates
 
-    stale = stale + previous.filterKeys { it !in live }.values.map { it.rectangle() }
-    phase = when {
+  private fun withUrgency(urgency: Double): CaretMotionMachine =
+    CaretMotionMachine(phase, urgency, dirty, currentEasingFrames)
+
+  private fun aimAt(placements: List<CaretPlacement>, tick: CaretTick, snapping: Boolean): CaretMotionMachine {
+    val previous = phase.trajectories
+    val nextPhase = when {
       holdsSameSpots(placements) -> phase.withTrajectories(trajectoriesFrom(previous, placements, CaretTrajectory::aimedAt))
       snapping || holdsSamePlaces(placements) -> restingPhase(placements, tick)
       phase.settling.isComplete -> CaretMotionPhase.Easing(
@@ -84,8 +85,7 @@ internal class CaretMotionMachine {
         settling = phase.settling,
       )
     }
-    currentEasingFrames = phase.easingFrames(tick.settings)
-    dirty = true
+    return CaretMotionMachine(nextPhase, urgency, true, nextPhase.easingFrames(tick.settings))
   }
 
   private fun trajectoriesFrom(
@@ -107,14 +107,34 @@ internal class CaretMotionMachine {
       settling = Settling.COMPLETE,
     )
 
-  private fun holdsSameSpots(placements: List<CaretPlacement>): Boolean =
-    placements.isNotEmpty() && placements.all { phase.trajectories[it.caret]?.target?.isVisuallyAt(it) == true }
+  /// MARK: target comparisons
 
-  private fun holdsSamePlaces(placements: List<CaretPlacement>): Boolean =
-    phase.trajectories.isNotEmpty() && placements.all { phase.trajectories[it.caret]?.target?.isSamePlace(it) == true }
+  private fun targetFor(placement: CaretPlacement) = phase.trajectories[placement.caret]?.target
 
-  private fun holdsSameTargets(placements: List<CaretPlacement>): Boolean =
-    phase.trajectories.size == placements.size && placements.all { phase.trajectories[it.caret]?.target?.matches(it) == true }
+  private fun holdsSameSpots(placements: List<CaretPlacement>): Boolean {
+    val hasPlacements = placements.isNotEmpty()
+    val allSameSpots by lazy { placements.all { targetFor(it)?.isVisuallyAt(it) == true } }
+
+    return hasPlacements && allSameSpots
+  }
+
+  private fun holdsSamePlaces(placements: List<CaretPlacement>): Boolean {
+    val hasTrajectories = phase.trajectories.isNotEmpty()
+    val allSamePlaces by lazy { placements.all { targetFor(it)?.isSamePlace(it) == true } }
+
+    return hasTrajectories && allSamePlaces
+  }
+
+  private fun holdsSameTargets(placements: List<CaretPlacement>): Boolean {
+    val noNewCarets = phase.trajectories.size == placements.size
+    val allSameTargets by lazy { placements.all { targetFor(it)?.matches(it) == true } }
+
+    return noNewCarets && allSameTargets
+  }
+
+  companion object {
+    val DORMANT: CaretMotionMachine = CaretMotionMachine(CaretMotionPhase.DORMANT, 1.0, false, null)
+  }
 }
 
 private fun CaretMotionPhase.easingFrames(settings: CaretAnimationSettings): List<CaretRectangle>? = when {

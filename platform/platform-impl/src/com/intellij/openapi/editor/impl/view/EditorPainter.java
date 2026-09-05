@@ -36,7 +36,9 @@ import com.intellij.openapi.editor.impl.FocusModeModel;
 import com.intellij.openapi.editor.impl.FoldingKeys;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.impl.caret.model.CaretCursorSnapshot;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
+import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
 import com.intellij.openapi.editor.impl.TabCharacterPaintMode;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
@@ -153,8 +155,8 @@ public final class EditorPainter implements TextDrawingCallback {
     new Session(myView, g).paint();
   }
 
-  void paintCaret(Graphics2D g, CaretRectangle[] locations, int yShift) {
-    new Session(myView, g).paintCaret(locations, yShift);
+  void paintCaret(Graphics2D g, CaretCursorSnapshot snapshot, int yShift) {
+    new Session(myView, g).paintCaret(snapshot, yShift);
   }
 
   /**
@@ -203,11 +205,15 @@ public final class EditorPainter implements TextDrawingCallback {
   }
 
   Rectangle [] caretRectanglesForLocations(CaretRectangle @NotNull [] locations, int grow) {
-    var editor = myView.getEditor();
-    int caretHeight = myView.getCaretHeight();
-    int topOverhang = editor.getSettings().isFullLineHeightCursor() ? 0 : myView.getTopOverhang();
+    return caretRectanglesForLocations(locations, grow, myView.getCaretRepaintMetrics());
+  }
 
-    return ContainerUtil.map(locations, location -> caretRectangleForLocationAndGrow(location, topOverhang, caretHeight, grow))
+  private static Rectangle[] caretRectanglesForLocations(
+    CaretRectangle @NotNull [] locations,
+    int grow,
+    @NotNull CaretRepaintMetrics metrics
+  ) {
+    return ContainerUtil.map(locations, location -> caretRectangleForLocationAndGrow(location, metrics.topOverhang, metrics.caretHeight, grow))
       .toArray(Rectangle[]::new);
   }
 
@@ -242,13 +248,9 @@ public final class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  void repaintCarets() {
-    repaintCarets(myView.getEditor().getCaretLocations(false));
-  }
-
-  void repaintCarets(CaretRectangle @NotNull [] locations) {
+  void repaintCarets(CaretRectangle @NotNull [] locations, @NotNull CaretRepaintMetrics metrics) {
     var editor = myView.getEditor();
-    for (var rectangle : caretRectanglesForLocations(locations, CARET_REPAINT_RECTANGLE_MARGIN)) {
+    for (var rectangle : caretRectanglesForLocations(locations, CARET_REPAINT_RECTANGLE_MARGIN, metrics)) {
       editor.getContentComponent().repaintCaret(
         rectangle.x, rectangle.y, rectangle.width, rectangle.height
       );
@@ -1569,13 +1571,13 @@ public final class EditorPainter implements TextDrawingCallback {
       if (myIsBuildingCache) return;
       if (myEditor.isPurePaintingMode()) return;
       if (myEditor.isStickyLinePainting()) return; // suppress caret painting on sticky lines panel
-      CaretRectangle[] locations = myEditor.getCaretLocations(true);
-      if (locations == null) return;
+      CaretCursorSnapshot snapshot = myEditor.getCaretCursorSnapshot(true);
+      if (snapshot == null) return;
 
-      paintCaret(locations, 0);
+      paintCaret(snapshot, 0);
     }
 
-    private void paintCaret(CaretRectangle[] locations, int yShift) {
+    private void paintCaret(CaretCursorSnapshot snapshot, int yShift) {
       Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(myGraphics);
       int caretHeight = myView.getCaretHeight();
       EditorSettings settings = myEditor.getSettings();
@@ -1583,13 +1585,13 @@ public final class EditorPainter implements TextDrawingCallback {
       Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
       if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
       int minX = myInsets.left;
-      for (CaretRectangle location : locations) {
+      float opacity = snapshot.blinkOpacity;
+      for (CaretRectangle location : snapshot.locations) {
         float x = (float)location.getX();
         int y = (int)location.getY() - topOverhang + myYShift + yShift;
         Caret caret = location.getCaret();
         CaretVisualAttributes attr = caret == null ? CaretVisualAttributes.getDefault() : caret.getVisualAttributes();
 
-        var opacity = myEditor.getCaretBlinkOpacity();
         g.setColor(withOpacity(attr.getColor() != null ? attr.getColor() : caretColor, opacity));
         boolean isRtl = location.isRtl();
         float width = location.getWidth();

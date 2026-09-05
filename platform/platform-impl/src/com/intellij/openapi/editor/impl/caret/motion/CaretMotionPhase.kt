@@ -5,13 +5,16 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
-import com.intellij.openapi.editor.impl.caret.model.CaretTimeMark
+import com.intellij.openapi.editor.impl.view.animation.AnimationClock
+import com.intellij.openapi.editor.impl.view.animation.AnimationTimeMark
 import java.awt.geom.Point2D
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 
 private const val SETTLE_TICKS = 3
 private const val SETTLE_EPSILON = 0.25
+
+/// MARK: velocity and settling
 
 internal class Velocity private constructor(val dx: Double, val dy: Double) {
   fun damped(factor: Double): Velocity = Velocity(dx * factor, dy * factor)
@@ -40,6 +43,8 @@ internal value class Settling private constructor(private val ticks: Int) {
   }
 }
 
+/// MARK: motion phases
+
 internal sealed interface CaretMotionPhase {
   val trajectories: Map<Caret, CaretTrajectory>
   val settling: Settling
@@ -53,13 +58,15 @@ internal sealed interface CaretMotionPhase {
 
   override fun toString(): String
 
+  /// MARK: easing
+
   /**
    * Interpolates every caret from its own fixed start towards its own target along one shared easing curve, and
    * finishes deterministically for all of them after the configured duration. Entered whenever a move starts from rest.
    */
   data class Easing(
     override val trajectories: Map<Caret, CaretTrajectory>,
-    private val startTime: CaretTimeMark,
+    private val startTime: AnimationTimeMark,
     override val settling: Settling = Settling.RESTLESS,
   ) : CaretMotionPhase {
     override val isEasing: Boolean get() = true
@@ -87,6 +94,8 @@ internal sealed interface CaretMotionPhase {
       }
     }
   }
+
+  /// MARK: pursuit
 
   /**
    * Closes a constant fraction of the *remaining* distance of every caret each tick, plus the velocity each of them
@@ -116,9 +125,11 @@ internal sealed interface CaretMotionPhase {
   }
 
   companion object {
-    val DORMANT: CaretMotionPhase = Easing(emptyMap(), startTime = TimeSource.Monotonic.markNow(), settling = Settling.COMPLETE)
+    val DORMANT: CaretMotionPhase = Easing(emptyMap(), startTime = AnimationClock.markAnimationNow(), settling = Settling.COMPLETE)
   }
 }
+
+/// MARK: interpolation and settling helpers
 
 private fun snappedEasingTime(elapsed: Duration, settings: CaretAnimationSettings): Double {
   val frameCount = settings.easingFrameCount

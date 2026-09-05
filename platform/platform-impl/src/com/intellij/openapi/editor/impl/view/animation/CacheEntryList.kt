@@ -21,10 +21,11 @@ internal class CacheEntryList {
     totalArea += entry.area
   }
 
-  fun removeIntersecting(rectangle: Rectangle2D) {
-    if (entries.removeAll { it.intersects(rectangle) }) {
-      totalArea = entries.sumOf { it.area }
-    }
+  fun removeIntersecting(rectangle: Rectangle2D): Boolean {
+    val removed = entries.removeAll { it.intersects(rectangle) }
+    if (removed) totalArea = entries.sumOf { it.area }
+
+    return removed
   }
 
   override fun toString(): String = "CacheEntryList(entries=$entries)"

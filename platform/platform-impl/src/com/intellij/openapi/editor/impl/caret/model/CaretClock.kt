@@ -5,8 +5,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
 
-internal typealias CaretTimeMark = TimeSource.Monotonic.ValueTimeMark
-
 internal object CaretClock {
-  val TICK: Duration = 4.milliseconds
+  val MOVEMENT_FRAME: Duration = 4.milliseconds
+
+  val BLINK_FRAME: Duration = 16.milliseconds
 }

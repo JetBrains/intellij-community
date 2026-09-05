@@ -21,5 +21,5 @@ internal data class CaretAnimationSettings(
 
   val moveTimeConstant: Duration = easing.timeConstant(moveDuration)
 
-  val easingFrameCount: Int = ceil(moveDuration / CaretClock.TICK).toInt().coerceAtLeast(1)
+  val easingFrameCount: Int = ceil(moveDuration / CaretClock.MOVEMENT_FRAME).toInt().coerceAtLeast(1)
 }

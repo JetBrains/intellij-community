@@ -3,12 +3,12 @@ package com.intellij.openapi.editor.impl.caret.blink
 
 import kotlin.time.Duration
 
-internal data class CaretBlinkFrame(
+internal data class CaretBlinkStep(
   val opacity: Float?,
   val wantsPrefetch: Boolean,
   val nextDelay: Duration,
 ) {
   companion object {
-    val DORMANT: CaretBlinkFrame = CaretBlinkFrame(null, false, Duration.INFINITE)
+    val DORMANT: CaretBlinkStep = CaretBlinkStep(null, false, Duration.INFINITE)
   }
 }

@@ -14,7 +14,7 @@ internal data class CacheHitRate(val hits: Int, val misses: Int) {
 }
 
 internal object EditorAnimationCacheStatistics {
-  private val startedAt = TimeSource.Monotonic.markNow()
+  private val startedAt = AnimationClock.markAnimationNow()
   private val hits = IntArray(STATISTICS_BUCKET_COUNT)
   private val misses = IntArray(STATISTICS_BUCKET_COUNT)
   private val stamps = arrayOfNulls<TimeSource.Monotonic.ValueTimeMark>(STATISTICS_BUCKET_COUNT)

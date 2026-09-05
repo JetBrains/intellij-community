@@ -29,9 +29,12 @@ import com.intellij.openapi.editor.impl.FocusModeModel;
 import com.intellij.openapi.editor.impl.FoldingModelInternal;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.impl.caret.model.CaretCursorSnapshot;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
+import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCache;
+import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -133,6 +136,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
     if (myContentAnimationCache != null) {
       Disposer.register(this, myContentAnimationCache);
+      myContentAnimationCache.start();
     }
     Disposer.register(this, myLogicalPositionCache);
     Disposer.register(this, myTextLayoutCache);
@@ -281,13 +285,13 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   @ApiStatus.Internal
   public void paintCaretFrame(Graphics2D graphics) {
-    CaretRectangle[] locations = myEditor.getCaretLocations(true);
-    if (locations == null) return;
+    CaretCursorSnapshot snapshot = myEditor.getCaretCursorSnapshot(true);
+    if (snapshot == null) return;
 
     Rectangle clip = graphics.getClipBounds();
     if (clip == null) return;
 
-    myPainter.paintCaret(graphics, locations, clip.y);
+    myPainter.paintCaret(graphics, snapshot, clip.y);
   }
 
   private void runPaintCallback() {
@@ -297,11 +301,18 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   @ApiStatus.Internal
-  @RequiresEdt
-  public void cacheAreasForRepaint(@NotNull Object key, @NotNull Supplier<List<Rectangle2D>> rectangles) {
+  public void cacheAreasForRepaint(@NotNull EditorAnimationCacheKey key, @NotNull Supplier<List<Rectangle2D>> rectangles) {
     if (myContentAnimationCache != null) {
       myContentAnimationCache.cacheAreasForRepaint(key, rectangles);
     }
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  public @NotNull CaretRepaintMetrics getCaretRepaintMetrics() {
+    int caretHeight = getCaretHeight();
+    int topOverhang = myEditor.getSettings().isFullLineHeightCursor() ? 0 : getTopOverhang();
+    return new CaretRepaintMetrics(caretHeight, topOverhang);
   }
 
   @ApiStatus.Internal
@@ -323,15 +334,15 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     }
   }
 
-  @RequiresEdt
-  public void repaintCarets() {
-    myPainter.repaintCarets();
-  }
-
   @ApiStatus.Internal
   @RequiresEdt
   public void repaintCarets(CaretRectangle @NotNull [] locations) {
-    myPainter.repaintCarets(locations);
+    repaintCarets(locations, getCaretRepaintMetrics());
+  }
+
+  @ApiStatus.Internal
+  public void repaintCarets(CaretRectangle @NotNull [] locations, @NotNull CaretRepaintMetrics metrics) {
+    myPainter.repaintCarets(locations, metrics);
   }
 
   @RequiresEdt

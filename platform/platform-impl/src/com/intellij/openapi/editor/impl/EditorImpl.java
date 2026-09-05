@@ -122,14 +122,9 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
-import com.intellij.openapi.editor.impl.caret.CaretAnimationConditions;
-import com.intellij.openapi.editor.impl.caret.CaretAnimationHost;
-import com.intellij.openapi.editor.impl.caret.CaretGeometry;
-import com.intellij.openapi.editor.impl.caret.CaretPresentation;
 import com.intellij.openapi.editor.impl.caret.EditorCaretMutator;
 import com.intellij.openapi.editor.impl.caret.EditorCaretMutatorFactory;
-import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings;
-import com.intellij.openapi.editor.impl.caret.model.CaretPlacement;
+import com.intellij.openapi.editor.impl.caret.model.CaretCursorSnapshot;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
@@ -393,7 +388,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final List<EditorMouseListener> myMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final @NotNull List<EditorMouseMotionListener> myMouseMotionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  final @NotNull CaretCursor myCaretCursor;
   private final ScrollingTimer myScrollingTimer = new ScrollingTimer();
 
   private final @NotNull SettingsImpl mySettings;
@@ -654,15 +648,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     };
 
     myIndentsModel = new IndentsModelImpl(this);
-    myCaretCursor = new CaretCursor();
-    caretMutator = EditorCaretMutatorFactory.createMutator(createCaretAnimationHost(), toString());
+    caretMutator = EditorCaretMutatorFactory.createMutator(this);
     Disposer.register(myDisposable, caretMutator);
-    myDocument.addDocumentListener(new DocumentListener() {
-      @Override
-      public void bulkUpdateStarting(@NotNull Document document) {
-        caretMutator.bulkUpdateStarting();
-      }
-    }, myDisposable);
 
     myState.setVerticalScrollBarOrientation(VERTICAL_SCROLLBAR_RIGHT);
 
@@ -891,7 +878,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                             " virtualSpace=" + EditorCoreUtil.inVirtualSpace(this, myLastMousePressedLocation) +
                             " opposite=" + (e.getOppositeComponent() == null ? "null" : e.getOppositeComponent().getClass().getSimpleName()));
     }
-    myCaretCursor.setVisible(true);
+    caretMutator.setVisible(true);
     gainedFocus.set(true);
 
     for (Caret caret : myCaretModel.getAllCarets()) {
@@ -1546,6 +1533,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myTraceableDisposable.kill(null);
 
       isReleased = true;
+      // Stop background frames before the editor models they read are disposed.
+      Disposer.dispose(caretMutator);
       myDisposalTimestampNanos = System.nanoTime();
       mySizeAdjustmentStrategy.cancelAllRequests();
       cancelAutoResetForMouseSelectionState();
@@ -1693,7 +1682,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myMarkupModel.repaint();
         if (!isRightAligned()) return;
         updateCaretCursor();
-        myCaretCursor.repaint();
+        repaintCaretCursorSnapshot();
       }
     });
   }
@@ -1962,7 +1951,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Object oldValue = extractOldValueOrLog(event, false);
     myPropertyChangeSupport.firePropertyChange(PROP_INSERT_MODE, oldValue, event.getNewValue());
 
-    myCaretCursor.repaint();
+    repaintCaretCursorSnapshot();
   }
 
   @Override
@@ -2837,7 +2826,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @ApiStatus.Internal
   public CaretRectangle @Nullable [] getCaretLocations(boolean onlyIfShown) {
-    return myCaretCursor.getCaretLocations(onlyIfShown);
+    CaretCursorSnapshot snapshot = getCaretCursorSnapshot(onlyIfShown);
+    return snapshot == null ? null : snapshot.locations;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable CaretCursorSnapshot getCaretCursorSnapshot(boolean onlyIfShown) {
+    CaretCursorSnapshot snapshot = caretMutator.snapshot();
+    return onlyIfShown && !isCaretShown(snapshot) ? null : snapshot;
   }
 
   @Override
@@ -3566,87 +3562,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   void updateCaretCursor() {
     myUpdateCursor = true;
-    if (myCaretCursor.isActive()) {
-      myCaretCursor.setStartTime(System.currentTimeMillis());
+    if (caretMutator.snapshot().isShown) {
+      caretMutator.setStartTime();
     }
     else {
-      myCaretCursor.setFullOpacity();
-      myCaretCursor.repaint();
+      caretMutator.setFullOpacity();
+      repaintCaretCursorSnapshot();
     }
   }
 
-  private @NotNull CaretAnimationHost createCaretAnimationHost() {
-    return new CaretAnimationHost(
-      createCaretGeometry(),
-      createCaretPresentation(),
-      createCaretAnimationConditions(),
-      (key, locations) -> EditorCaretAdapter.prefetchCaretFrames(this, key, locations)
-    );
+  private void repaintCaretCursorSnapshot() {
+    myView.repaintCarets(caretMutator.snapshot().locations);
   }
 
-  private @NotNull CaretGeometry createCaretGeometry() {
-    return new CaretGeometry() {
-      @Override
-      public @NotNull List<CaretPlacement> placements() {
-        return EditorCaretAdapter.caretPlacements(EditorImpl.this);
-      }
-
-      @Override
-      public CaretRectangle @NotNull [] currentLocations() {
-        return myCaretCursor.locations();
-      }
-    };
-  }
-
-  private @NotNull CaretPresentation createCaretPresentation() {
-    return new CaretPresentation() {
-      @Override
-      public void showAt(CaretRectangle @NotNull [] locations) {
-        myCaretCursor.setPositions(locations);
-      }
-
-      @Override
-      public void fadeTo(float opacity) {
-        myCaretCursor.setBlinkOpacity(opacity);
-      }
-
-      @Override
-      public void repaint(CaretRectangle @NotNull [] locations) {
-        myCaretCursor.repaint(locations);
-      }
-
-      @Override
-      public void repaintCurrent() {
-        myCaretCursor.repaint();
-      }
-    };
-  }
-
-  private @NotNull CaretAnimationConditions createCaretAnimationConditions() {
-    return new CaretAnimationConditions() {
-      @Override
-      public boolean isCaretShown() {
-        return myCaretCursor.isCaretShown();
-      }
-
-      @Override
-      public boolean isFrozen() {
-        return isDisposed() || myDocument.isInBulkUpdate();
-      }
-
-      @Override
-      public long millisSinceActivity() {
-        return System.currentTimeMillis() - myCaretCursor.getStartTime();
-      }
-
-      @Override
-      public @NotNull CaretAnimationSettings settings() {
-        return EditorCaretAdapter.caretAnimationSettings(mySettings, shouldDisableAnimations());
-      }
-    };
-  }
-
-  boolean shouldDisableAnimations() {
+  @ApiStatus.Internal
+  public boolean shouldDisableAnimations() {
     return Registry.is("ui.simplified", false) ||
            PowerSaveMode.isEnabled() ||
            RemoteDesktopService.isRemoteSession();
@@ -3669,12 +3599,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean setCaretVisible(boolean b) {
-    return EditorThreading.compute(() -> myCaretCursor.setVisible(b));
+    return EditorThreading.compute(() -> caretMutator.setVisible(b));
   }
 
   @Override
   public boolean setCaretEnabled(boolean enabled) {
-    return EditorThreading.compute(() -> myCaretCursor.setEnabled(enabled));
+    return EditorThreading.compute(() -> caretMutator.setEnabled(enabled));
   }
 
   @Override
@@ -3746,133 +3676,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPropertyChangeSupport.firePropertyChange(PROP_ONE_LINE_MODE, oldValue, event.getNewValue());
   }
 
-  final class CaretCursor {
-    private final Object myLock = new Object();
-
-    private CaretRectangle @NotNull [] myLocations = {CaretRectangle.PLACEHOLDER};
-    private boolean myEnabled = true;
-
-    private boolean myIsShown;
-    private float myBlinkOpacity = 1.0f;
-    private long myStartTime;
-
-    public boolean isEnabled() {
-      synchronized (myLock) {
-        return myEnabled;
+  private boolean isEditorInputFocusOwner() {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    Component content = getContentComponent();
+    for (Component temp = focusOwner; temp != null; temp = temp instanceof Window ? null : temp.getParent()) {
+      if (temp == content) {
+        return true;
+      }
+      // check if hosted component is an input focus owner, in that case input focus belongs to hosted component instead of the editor
+      else if (temp instanceof EditorHostedComponent hostedComponent && hostedComponent.isInputFocusOwner()) {
+        return false;
       }
     }
-
-    public boolean setEnabled(boolean enabled) {
-      synchronized (myLock) {
-        boolean old = myEnabled;
-        myEnabled = enabled;
-        return old;
-      }
-    }
-
-    private boolean setVisible(boolean visible) {
-      synchronized (myLock) {
-        boolean old = myIsShown;
-        myIsShown = visible;
-
-        if (visible) {
-          myBlinkOpacity = 1.0f;
-          myStartTime = System.currentTimeMillis();
-        }
-
-        caretMutator.setBlinking(visible);
-        return old;
-      }
-    }
-
-    public boolean isActive() {
-      synchronized (myLock) {
-        return myIsShown;
-      }
-    }
-
-    void setFullOpacity() {
-      synchronized (myLock) {
-        myIsShown = true;
-        myBlinkOpacity = 1.0f;
-      }
-    }
-
-    float getBlinkOpacity() {
-      synchronized (myLock) {
-        return myBlinkOpacity;
-      }
-    }
-
-    void setBlinkOpacity(float opacity) {
-      synchronized (myLock) {
-        myBlinkOpacity = opacity;
-      }
-    }
-
-    long getStartTime() {
-      synchronized (myLock) {
-        return myStartTime;
-      }
-    }
-
-    void setStartTime(long startTime) {
-      synchronized (myLock) {
-        myStartTime = startTime;
-      }
-    }
-
-    void setPositions(CaretRectangle @NotNull [] locations) {
-      synchronized (myLock) {
-        myStartTime = System.currentTimeMillis();
-        myLocations = locations;
-      }
-    }
-
-    void repaint() {
-      myView.repaintCarets();
-    }
-
-    void repaint(CaretRectangle @NotNull [] locations) {
-      myView.repaintCarets(locations);
-    }
-
-    private boolean isEditorInputFocusOwner() {
-      Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      Component content = getContentComponent();
-      for (Component temp = focusOwner; temp != null; temp = (temp instanceof Window) ? null : temp.getParent()) {
-        if (temp == content) {
-          return true;
-        }
-        // check if hosted component is an input focus owner, in that case input focus belongs to hosted component instead of the editor
-        else if (temp instanceof EditorHostedComponent hostedComponent && hostedComponent.isInputFocusOwner()) {
-          return false;
-        }
-      }
-      return false;
-    }
-
-    boolean isCaretShown() {
-      return isEnabled() && isActive() && !isRendererMode() && isEditorInputFocusOwner();
-    }
-
-    CaretRectangle @Nullable [] getCaretLocations(boolean onlyIfShown) {
-      if (onlyIfShown && !isCaretShown()) {
-        return null;
-      }
-      return locations();
-    }
-
-    CaretRectangle @NotNull [] locations() {
-      synchronized (myLock) {
-        return myLocations;
-      }
-    }
+    return false;
   }
 
   @ApiStatus.Internal
-  public float getCaretBlinkOpacity() {
-    return myCaretCursor.getBlinkOpacity();
+  public boolean isCaretShown(@NotNull CaretCursorSnapshot snapshot) {
+    return snapshot.isEnabled && snapshot.isShown && !isRendererMode() && isEditorInputFocusOwner();
   }
 
   private final class ScrollingTimer {

@@ -4,13 +4,12 @@ package com.intellij.openapi.editor.impl.caret.motion
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import kotlin.time.Duration
 
-internal data class CaretMotionFrame(
-  val locations: List<CaretRectangle>?,
-  val stale: List<CaretRectangle>,
+internal data class CaretMotionStep(
+  val moved: Boolean,
   val prefetch: List<CaretRectangle>?,
   val nextDelay: Duration,
 ) {
   companion object {
-    val IDLE: CaretMotionFrame = CaretMotionFrame(null, emptyList(), null, Duration.INFINITE)
+    val IDLE: CaretMotionStep = CaretMotionStep(moved = false, prefetch = null, nextDelay = Duration.INFINITE)
   }
 }
