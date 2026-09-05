@@ -197,16 +197,40 @@ abstract class LspClientDescriptor protected constructor(
    * The default implementation simply calls [getFilePath] and converts it to `file://...` URI.
    * For a dynamic file, an in-memory file the [LspClient] created from a `workspace/textDocumentContent` result,
    * it returns the URI the content was requested with.
+   * For a UNC path, it produces a `file://host/share/path` URI, which keeps the host in the authority.
    */
   open fun getFileUri(file: VirtualFile): String =
     file.getUserData(DYNAMIC_FILE_URI) ?: localFileUri(getFilePath(file))
 
   private fun localFileUri(path: String): String {
+    uncFileUri(path)?.let { return it }
     val escapedPath = URLUtil.encodePath(path)
     val url = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, escapedPath)
     val uri = VfsUtil.toUri(url)?.toString() ?: url
     return lowercaseWindowsDriveAndEscapeColon(uri)
   }
+
+  /**
+   * Puts the host of a UNC path in the authority of the URI, as [RFC 8089](https://datatracker.ietf.org/doc/html/rfc8089#section-2)
+   * and VS Code do: the `//wsl.localhost/Ubuntu/project` path becomes `file://wsl.localhost/Ubuntu/project`.
+   *
+   * @return the URI of a UNC [path], or `null` when [path] is not a UNC path or its host cannot be an authority
+   */
+  private fun uncFileUri(path: String): String? {
+    if (!path.startsWith("//")) return null
+    val host = path.substring(2, path.indexOf('/', 2).takeIf { it >= 0 } ?: path.length)
+    if (!isUriHost(host)) return null
+    // The encoded path still starts with `//`, so it becomes the authority and the path of the URI
+    return URLUtil.FILE_PROTOCOL + ":" + URLUtil.encodePath(path)
+  }
+
+  /**
+   * A device path such as `//./pipe/x` or `//?/C:/dir` has no host.
+   * A WebDAV host such as `host@SSL@443`, a port, an IPv6 literal or a backslash separator changes its meaning in an authority.
+   * Such a path keeps the plain `file:////host/share` conversion, which RFC 8089 also allows.
+   */
+  private fun isUriHost(host: String): Boolean =
+    host.isNotEmpty() && !host.startsWith('.') && host.none { it in "\\?#@:[]%<>^|" || it.isWhitespace() || it.isISOControl() }
 
   /**
    * The LSP spec [requires](https://microsoft.github.io/language-server-protocol/specification/#uri)
@@ -245,6 +269,7 @@ abstract class LspClientDescriptor protected constructor(
   /**
    * Extracts a file path from [fileUri] and calls [findLocalFileByPath].
    * Respects only `file://...` URIs.
+   * A host in the authority gives a UNC path, symmetric to [getFileUri].
    * @param fileUri a [DocumentUri](https://microsoft.github.io/language-server-protocol/specification/#documentUri) received from the LSP
    *                server within some response or notification
    */
@@ -255,12 +280,22 @@ abstract class LspClientDescriptor protected constructor(
         LOG.warn("Unexpected URI scheme: $fileUri")
         return null
       }
-      val path = uri.path
-      if (path == null) {
+      val uriPath = uri.path
+      if (uriPath == null) {
         LOG.warn("Unexpected URI (no path): $fileUri")
         return null
       }
-      findLocalFileByPath(path)
+      val authority = uri.authority
+      if (authority.isNullOrEmpty()) {
+        return findLocalFileByPath(uriPath)
+      }
+      // RFC 8089 reads the `localhost` host as the local machine, so `file://localhost/dir` names the local `/dir`
+      if (authority.equals("localhost", ignoreCase = true)) {
+        findLocalFileByPath(uriPath)?.let { return it }
+      }
+      // Any other host names a UNC path: `file://wsl.localhost/Ubuntu/project` is `//wsl.localhost/Ubuntu/project`.
+      // Do not drop the host, because the local path without it is a file that the server did not name.
+      findLocalFileByPath("//$authority$uriPath")
     }
     catch (e: URISyntaxException) {
       LOG.warn("Malformed URI: " + fileUri + "; " + e.message)
