@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2BundledCompilerPlugin
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.AbstractScriptWithBundledCompilerPluginHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2ComposeCompilerPluginCheckerTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightExitPointsTest
+import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightOverridingMembersTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightUsagesTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightingMetaInfoWithExtensionTest
@@ -50,6 +51,10 @@ internal fun MutableTWorkspace.generateK2HighlighterTests() {
 
         testClass<AbstractK2HighlightExitPointsTest> {
             model("exitPoints")
+        }
+
+        testClass<AbstractK2HighlightOverridingMembersTest> {
+            model("highlightOverridingMembers")
         }
 
         testClass<AbstractK2HighlightUsagesTest> {
