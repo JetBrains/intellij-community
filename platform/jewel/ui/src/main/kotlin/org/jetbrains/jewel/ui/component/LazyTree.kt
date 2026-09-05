@@ -34,49 +34,6 @@ import org.jetbrains.jewel.ui.theme.treeStyle
  * @param onSelectionChange Called when the set of selected elements changes.
  * @param keyActions The [KeyActions] handling keyboard navigation.
  * @param style The [LazyTreeStyle] controlling the visual appearance.
- * @param nodeContent The composable content rendered for each tree element.
- */
-@ApiStatus.Experimental
-@ExperimentalJewelApi
-@Composable
-@Deprecated("Use LazyTree with 'interactionSource' parameter instead", level = DeprecationLevel.HIDDEN)
-public fun <T> LazyTree(
-    tree: Tree<T>,
-    modifier: Modifier = Modifier,
-    onElementClick: (Tree.Element<T>) -> Unit = {},
-    treeState: TreeState = rememberTreeState(),
-    onElementDoubleClick: (Tree.Element<T>) -> Unit = {},
-    onSelectionChange: (List<Tree.Element<T>>) -> Unit = {},
-    keyActions: KeyActions = DefaultTreeViewKeyActions(treeState),
-    style: LazyTreeStyle = JewelTheme.treeStyle,
-    nodeContent: @Composable (SelectableLazyItemScope.(Tree.Element<T>) -> Unit),
-) {
-    LazyTree(
-        tree = tree,
-        modifier = modifier,
-        onElementClick = onElementClick,
-        treeState = treeState,
-        onElementDoubleClick = onElementDoubleClick,
-        onSelectionChange = onSelectionChange,
-        keyActions = keyActions,
-        style = style,
-        nodeContent = nodeContent,
-        interactionSource = remember { MutableInteractionSource() },
-    )
-}
-
-/**
- * Renders a lazily-loaded, selectable tree of [Tree.Element] nodes.
- *
- * @param T The type of data held by each tree element.
- * @param tree The [Tree] data structure to display.
- * @param modifier Modifier to apply to the tree layout.
- * @param onElementClick Called when a tree element is clicked.
- * @param treeState The [TreeState] controlling expansion and selection.
- * @param onElementDoubleClick Called when a tree element is double-clicked.
- * @param onSelectionChange Called when the set of selected elements changes.
- * @param keyActions The [KeyActions] handling keyboard navigation.
- * @param style The [LazyTreeStyle] controlling the visual appearance.
  * @param interactionSource The [MutableInteractionSource] tracking user interactions with the tree.
  * @param nodeContent The composable content rendered for each tree element.
  */
