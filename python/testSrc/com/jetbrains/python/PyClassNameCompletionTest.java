@@ -7,6 +7,7 @@ import com.jetbrains.python.allure.Subsystems;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.idea.TestFor;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -181,6 +182,11 @@ public class PyClassNameCompletionTest extends PyTestCase {
     assertNotNull(notExportedVar);
     TestLookupElementPresentation varPresentation = TestLookupElementPresentation.renderReal(notExportedVar);
     assertEquals("pkg.mod", varPresentation.getTypeText());
+  }
+
+  @TestFor(issues = "PY-91528")
+  public void testPublicSiblingReexportOfPrivateModule() {
+    doTest();
   }
 
   // PY-46381

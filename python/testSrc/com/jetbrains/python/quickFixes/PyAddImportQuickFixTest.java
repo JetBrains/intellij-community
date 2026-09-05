@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.quickFixes;
 
+import com.intellij.idea.TestFor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -451,6 +452,51 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   // PY-88009
   public void testQualifyNestedClassWithRegularImport() {
     doMultiFileAutoImportTest("Import 'pkg.src.Outer.Inner'");
+  }
+
+  @TestFor(issues = "PY-91528")
+  public void testPublicSiblingModuleReexportsPrivateModuleName() {
+    doMultiFileAutoImportTest("Import 'mod.Something'");
+  }
+
+  @TestFor(issues = "PY-91528")
+  public void testPublicSiblingPackageReexportsPrivatePackageName() {
+    doMultiFileAutoImportTest("Import 'impl.Something'");
+  }
+
+  @TestFor(issues = "PY-91528")
+  public void testPublicSiblingModuleWithDunderAllReexportsPrivateModuleName() {
+    doMultiFileAutoImportTest("Import 'mod.Something'");
+  }
+
+  @TestFor(issues = "PY-91528")
+  public void testPlainImportInPublicSiblingModuleIsNotReexport() {
+    doMultiFileAutoImportTest("Import '_mod.Something'");
+  }
+
+  @TestFor(issues = "PY-91528")
+  public void testStarImportInPublicSiblingModuleIsNotReexport() {
+    doMultiFileAutoImportTest("Import '_mod.Something'");
+  }
+
+  @TestFor(issues = "PY-91528")
+  public void testStarImportInPublicSiblingStubIsReexport() {
+    doMultiFileAutoImportTest("Import 'sock.Sock'");
+  }
+
+  @TestFor(issues = "PY-91528")
+  public void testPublicSiblingStubReexportsPrivateStubName() {
+    doMultiFileAutoImportTest("Import 'sock.Sock'");
+  }
+
+  @TestFor(issues = "PY-91528")
+  public void testNonNamesakeSiblingIsNotConsidered() {
+    doMultiFileAutoImportTest("Import '_mod.Something'");
+  }
+
+  @TestFor(issues = "PY-91528")
+  public void testParentPackageReexportPreferredOverSibling() {
+    doMultiFileAutoImportTest("Import 'pkg.Something'");
   }
 
   private void doTestProposedImportsOrdering(String @NotNull ... expected) {

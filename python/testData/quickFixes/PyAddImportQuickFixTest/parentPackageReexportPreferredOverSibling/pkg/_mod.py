@@ -1,0 +1,2 @@
+class Something:
+    pass

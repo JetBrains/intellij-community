@@ -29,10 +29,14 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyStarImportElement;
 import com.jetbrains.python.psi.PyTypeAliasStatement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -138,30 +142,35 @@ public final class QualifiedNameFinder {
     if (virtualFile == null) {
       return null;
     }
-    if (srcfile instanceof PsiFile && symbol instanceof PsiNamedElement && !(symbol instanceof PsiFileSystemItem)) {
-      PsiElement toplevel = symbol;
+    if (srcfile instanceof PsiFile && symbol instanceof PsiNamedElement namedSymbol && !(symbol instanceof PsiFileSystemItem)) {
+      PsiNamedElement toplevel = namedSymbol;
       if (symbol instanceof PyFunction) {
         final PyClass containingClass = ((PyFunction)symbol).getContainingClass();
         if (containingClass != null) {
           toplevel = containingClass;
         }
       }
+      PsiFileSystemItem item = srcfile;
       PsiDirectory dir = ((PsiFile)srcfile).getContainingDirectory();
       while (dir != null) {
         PyFile initPy = as(PyUtil.turnDirIntoInit(dir), PyFile.class);
-        if (initPy == null) {
-          break;
-        }
-        if (initPy.getImportTargets().isEmpty() && initPy.getFromImports().isEmpty()) {
+        if (initPy != null && initPy.getImportTargets().isEmpty() && initPy.getFromImports().isEmpty()) {
           initPy = jumpFromBinarySkeletonsToRealInitPy(initPy);
         }
 
-        //noinspection ConstantConditions
-        final List<RatedResolveResult> resolved = initPy.multiResolveName(((PsiNamedElement)toplevel).getName());
-        final PsiElement finalTopLevel = toplevel;
-        if (resolved.stream().anyMatch(r -> r.getElement() == finalTopLevel)) {
+        if (initPy != null && reexports(initPy, toplevel)) {
           virtualFile = dir.getVirtualFile();
         }
+        else {
+          var namesake = findReexportingPublicNamesake(item, dir, toplevel);
+          if (namesake != null) {
+            virtualFile = namesake;
+          }
+        }
+        if (initPy == null) {
+          break;
+        }
+        item = dir;
         dir = dir.getParentDirectory();
       }
     }
@@ -171,6 +180,53 @@ public final class QualifiedNameFinder {
       if (restored != null) return restored;
     }
     return qname;
+  }
+
+  /**
+   * Returns the public namesake of {@code item} if {@code item} is private and the namesake re-exports {@code toplevel}.
+   * <p>
+   * The namesake is the module, stub, or package in {@code directory} with the name of {@code item} without the leading underscores,
+   * for example {@code mod} for {@code _mod}.
+   */
+  private static @Nullable VirtualFile findReexportingPublicNamesake(@NotNull PsiFileSystemItem item,
+                                                                    @NotNull PsiDirectory directory,
+                                                                    @NotNull PsiNamedElement toplevel) {
+    var name = item instanceof PsiDirectory ? item.getName() : FileUtilRt.getNameWithoutExtension(item.getName());
+    if (PyUtil.getInitialUnderscores(name) == 0 || PyNames.INIT.equals(name)) return null;
+    var namesake = StringUtil.trimLeading(name, '_');
+    if (!PyNames.isIdentifier(namesake)) return null;
+
+    var psiManager = directory.getManager();
+    for (String childName : List.of(namesake, namesake + PyNames.DOT_PYI, namesake + PyNames.DOT_PY)) {
+      var child = directory.getVirtualFile().findChild(childName);
+      if (child == null) continue;
+      PsiFileSystemItem childItem = child.isDirectory() ? psiManager.findDirectory(child) : psiManager.findFile(child);
+      var module = as(PyUtil.turnDirIntoInit(childItem), PyFile.class);
+      if (module != null && reexports(module, toplevel)) return child;
+    }
+    return null;
+  }
+
+  /**
+   * Checks that {@code module} makes {@code toplevel} available under its own name.
+   * <p>
+   * A plain import counts only in a package {@code __init__} file. A module must alias the name
+   * ({@code from m import X as X}) or list it in {@code __all__}. A star import counts in a stub file only.
+   */
+  private static boolean reexports(@NotNull PyFile module, @NotNull PsiNamedElement toplevel) {
+    final String name = toplevel.getName();
+    if (name == null) return false;
+    final boolean plainImportCounts = PyNames.INIT.equals(FileUtilRt.getNameWithoutExtension(module.getName()));
+    for (RatedResolveResult result : module.multiResolveName(name)) {
+      if (result.getElement() != toplevel) continue;
+      if (plainImportCounts) return true;
+      final PyImportedNameDefiner definer = result instanceof ImportedResolveResult imported ? imported.getDefiner() : null;
+      if (definer instanceof PyStarImportElement && module instanceof PyiFile) return true;
+      if (definer instanceof PyImportElement importElement && importElement.getAsName() != null) return true;
+      final List<String> dunderAll = module.getDunderAll();
+      if (dunderAll != null && dunderAll.contains(name)) return true;
+    }
+    return false;
   }
 
   private static @NotNull PyFile jumpFromBinarySkeletonsToRealInitPy(@NotNull PyFile initPy) {
