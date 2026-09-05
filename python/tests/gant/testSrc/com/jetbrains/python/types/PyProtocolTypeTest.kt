@@ -2681,11 +2681,10 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
-  inner class RecursiveProtocolMatchingKnownStackOverflowLimitation {
+  inner class RecursiveProtocolMatching {
 
     @Test
-    @TestFor(issues = ["PY-85997"])
-    @TestCaseOptions(assertRecursionPrevention = false)
+    @TestFor(issues = ["PY-85997", "PY-87896"])
     fun `recursive protocol and implementation using Self`() = test("""
       from typing import Self, Protocol
 
@@ -2702,8 +2701,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestFor(issues = ["PY-85997"])
-    @TestCaseOptions(assertRecursionPrevention = false)
+    @TestFor(issues = ["PY-85997", "PY-87896"])
     fun `recursive protocol and implementation referring to itself`() = test("""
       from typing import Self, Protocol
 
@@ -2717,6 +2715,21 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
       ys: MyIterable[str] = MyIterable[str]()
       xs: MyProtocol[str] = ys
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87896"])
+    fun `recursive protocol behind a generic wrapper`() = test("""
+      from collections.abc import Sequence
+      from typing import Protocol
+
+      class MyProtocol[T](Protocol):
+          def foo(self) -> Sequence[MyProtocol[T]]: ...
+
+      class MyIterable[T]:
+          def foo(self) -> Sequence[MyIterable[T]]: ...
+
+      xs: Sequence[MyProtocol[str]] = [MyIterable[str]()]
       """.trimIndent())
   }
 

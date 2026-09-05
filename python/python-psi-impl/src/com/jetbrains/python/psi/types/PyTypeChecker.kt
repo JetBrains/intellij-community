@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.types
 
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.RecursionGuard
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.component1
@@ -77,6 +78,29 @@ import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrElse
 
 object PyTypeChecker {
+  /**
+   * The guard that holds a frame per [match] on the current stack.
+   *
+   * [matchesInProgress] detects a cycle, so the guard never prevents recursion here. The frames stay
+   * because [RecursionGuard.prohibitResultCaching] needs them.
+   */
+  private val matchGuard: RecursionGuard<Pair<PyType?, PyType?>> = RecursionManager.createGuard("PyTypeChecker.match")
+
+  /**
+   * The (expected, actual) pair of every [match] on the current stack, mapped to the instance that
+   * [matchGuard] holds a frame for.
+   *
+   * A recursive type or a self-referential protocol repeats a pair. The match is coinductive. The cycle
+   * holds if nothing along it contradicts it, so a repeat answers `true`. [RecursionManager] answered the
+   * same, but it also throws in a test that asserts on recursion prevention. That assertion cancels the
+   * daemon and fails the highlighting test. See PY-87896.
+   *
+   * The map keeps the instance instead of only the pair, because [RecursionGuard.prohibitResultCaching]
+   * finds the frame of a computation by identity.
+   */
+  private val matchesInProgress: ThreadLocal<MutableMap<Pair<PyType?, PyType?>, Pair<PyType?, PyType?>>> =
+    ThreadLocal.withInitial { HashMap() }
+
   /**
    * The largest number of parameter combinations that [matchSingleCallableAgainstOverloads] checks.
    * Above it, the check is [matchAnyMember] only.
@@ -389,11 +413,25 @@ object PyTypeChecker {
     PyCodeInsightCounters.inc(Counter.MATCH_STEPS)
     PyAnyType.validate(expected)
     PyAnyType.validate(actual)
-    val result = RecursionManager.doPreventingRecursion(expected to actual, false) {
-      matchImpl(expected, actual, context)
+    val key = expected to actual
+    val inProgress = matchesInProgress.get()
+    val enclosing = inProgress.putIfAbsent(key, key)
+    if (enclosing != null) {
+      // Answer the cycle, and keep the caching contract of the guard. An enclosing CachedValue must not
+      // store a result that depends on the assumption.
+      matchGuard.prohibitResultCaching(enclosing)
+      return Optional.of(true)
     }
+    try {
+      val result = matchGuard.doPreventingRecursion(key, false) {
+        matchImpl(expected, actual, context)
+      }
 
-    return result ?: Optional.of(true)
+      return result ?: Optional.of(true)
+    }
+    finally {
+      inProgress.remove(key)
+    }
   }
 
   /**
