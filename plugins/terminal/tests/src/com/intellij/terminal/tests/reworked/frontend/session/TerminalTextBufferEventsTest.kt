@@ -3,11 +3,14 @@ package com.intellij.terminal.tests.reworked.frontend.session
 
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.frontend.view.activeOutputModel
 import com.intellij.terminal.tests.reworked.util.ESC
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.text
 import com.intellij.terminal.tests.reworked.util.TerminalViewTestCase
 import com.intellij.terminal.tests.reworked.util.assertOutputModelState
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
@@ -17,6 +20,7 @@ import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
@@ -127,6 +131,26 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
 
     fixture.assertOutputModelState(model) { it.text.isBlank() }
     assertThat(model.text).describedAs("no line from before clear may survive").doesNotContain("L")
+  }
+
+  @Test
+  fun `Terminal ClearBuffer removes the visible screen and the whole scrollback`() = doTest { fixture ->
+    // Ghostty-only: JediTerm's own handling of this action preserves the cursor's current line
+    // (see TerminalSessionInput), a different, pre-existing contract this test does not touch.
+    assumeGhostty()
+    @OptIn(LowLevelLocalMachineAccess::class)
+    Assumptions.assumeTrue(OS.CURRENT != OS.Windows, "Terminal.ClearBuffer action is disabled on Windows")
+
+    val model = fixture.view.activeOutputModel()
+
+    // 40 lines on a 24-row screen leave 16 in scrollback.
+    fixture.connector.feed((0 until 40).joinToString("\r\n") { "L%02d".format(it) })
+    fixture.assertOutputModelState(model) { it.text.contains("L39") }
+
+    fixture.invokeAction("Terminal.ClearBuffer")
+
+    fixture.assertOutputModelState(model) { it.text.isBlank() }
+    assertThat(model.text).describedAs("no line from before Terminal.ClearBuffer may survive").doesNotContain("L")
   }
 
   @Test

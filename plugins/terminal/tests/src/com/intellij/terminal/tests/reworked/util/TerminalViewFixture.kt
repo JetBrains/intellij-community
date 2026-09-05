@@ -1,10 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.util
 
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.actions.TerminalActionUtil
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.activeOutputModel
+import com.intellij.terminal.frontend.view.impl.TerminalInput
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.text
 import com.intellij.terminal.tests.reworked.util.TerminalViewFixture.Companion.BLOCKS_MODEL_POLL_INTERVAL
@@ -42,7 +51,7 @@ import kotlin.time.Duration.Companion.seconds
  * [emulatorType] selects the VT emulator ([TerminalEmulatorType.JediTerm] or [TerminalEmulatorType.Ghostty])
  * driving the session.
  */
-internal class TerminalViewFixture(project: Project, emulatorType: TerminalEmulatorType) : AutoCloseable {
+internal class TerminalViewFixture(private val project: Project, emulatorType: TerminalEmulatorType) : AutoCloseable {
   private val scope = terminalProjectScope(project).childScope("TerminalViewFixture")
 
   val connector: LoopbackTtyConnector
@@ -78,6 +87,25 @@ internal class TerminalViewFixture(project: Project, emulatorType: TerminalEmula
     val panel = view.component
     panel.setSize(panel.width + 1, panel.height + 1)
     dispatchAllEventsInIdeEventQueue()
+  }
+
+  @RequiresEdt
+  fun invokeAction(actionId: String) {
+    val action = ActionManager.getInstance().getAction(actionId) ?: error("Unknown action: $actionId")
+    val editor = if (view.isAlternateScreenBuffer) view.alternateBufferEditor else view.outputEditor
+    val context = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(TerminalActionUtil.EDITOR_KEY, editor)
+      .add(TerminalOutputModel.DATA_KEY, view.activeOutputModel())
+      .add(TerminalView.DATA_KEY, view)
+      .add(TerminalInput.DATA_KEY, editor.getUserData(TerminalInput.KEY))
+      .build()
+    val event = AnActionEvent.createEvent(action, context, null, "", ActionUiKind.NONE, null)
+    ActionUtil.updateAction(action, event)
+    assertThat(event.presentation.isEnabledAndVisible)
+      .describedAs("$actionId was not enabled and visible when invoked")
+      .isTrue()
+    ActionUtil.performAction(action, event)
   }
 
   /**

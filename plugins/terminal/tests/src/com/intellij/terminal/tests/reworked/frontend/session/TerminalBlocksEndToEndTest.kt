@@ -2,6 +2,7 @@
 package com.intellij.terminal.tests.reworked.frontend.session
 
 import com.intellij.terminal.tests.reworked.frontend.session.TerminalBlocksEndToEndTest.Companion.REPRO_ITERATION_TEXT
+import com.intellij.terminal.tests.reworked.frontend.session.TerminalBlocksEndToEndTest.Companion.RESIZE_ITERATIONS
 import com.intellij.terminal.tests.reworked.frontend.session.TerminalBlocksEndToEndTest.Companion.SETTLE_DELAY
 import com.intellij.terminal.tests.reworked.frontend.session.TerminalBlocksEndToEndTest.Companion.printedText
 import com.intellij.terminal.tests.reworked.util.ESC
@@ -15,6 +16,8 @@ import com.intellij.terminal.tests.reworked.util.commandStartedOsc
 import com.intellij.terminal.tests.reworked.util.promptFinishedOsc
 import com.intellij.terminal.tests.reworked.util.promptStartedOsc
 import com.intellij.terminal.tests.reworked.util.shellIntegrationInitializedOsc
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
@@ -26,6 +29,7 @@ import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.getOutputText
 import org.jetbrains.plugins.terminal.view.shellIntegration.getTypedCommandText
 import org.jetbrains.plugins.terminal.view.shellIntegration.wasExecuted
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration
@@ -447,6 +451,30 @@ internal class TerminalBlocksEndToEndTest(emulatorType: TerminalEmulatorType) : 
       fixture.assertBlocksModelState(integration.blocks) { it.blocks.size == 1 }
       assertThat(integration.model.text)
         .describedAs("no stale command or output may survive clear")
+        .doesNotContain("echo hi", "out")
+    }
+  }
+
+  @Test
+  fun `Terminal ClearBuffer after several commands collapses the finished blocks`() {
+    assumeGhostty()
+    @OptIn(LowLevelLocalMachineAccess::class)
+    Assumptions.assumeTrue(OS.CURRENT != OS.Windows, "Terminal.ClearBuffer is disabled on Windows")
+
+    doTest { fixture ->
+      val integration = fixture.initShellIntegration()
+      fixture.connector.feed(
+        (List(3) { commandSegments("echo hi", listOf("out")) }.flatten() + listOf(promptStartedOsc(), PROMPT))
+          .joinToString("")
+      )
+      fixture.assertBlocksModelState(integration.blocks) { it.blocks.size == 4 }
+
+      fixture.invokeAction("Terminal.ClearBuffer")
+      fixture.assertOutputModelState(integration.model) { it.text.isBlank() }
+
+      fixture.assertBlocksModelState(integration.blocks) { it.blocks.size == 1 }
+      assertThat(integration.model.text)
+        .describedAs("no stale command or output may survive Terminal.ClearBuffer")
         .doesNotContain("echo hi", "out")
     }
   }

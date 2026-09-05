@@ -413,8 +413,30 @@ class GhosttyTerminalSession internal constructor(
         flushResponses(responses)
         // The reflowed frame is picked up by the next projection tick.
       }
+      is TerminalClearBufferEvent -> handleClearBuffer()
       is TerminalCloseEvent -> runCatching { ttyConnector.close() }
-      is TerminalClearBufferEvent -> Unit // no dedicated emulator API in this spike
+    }
+  }
+
+  private fun handleClearBuffer() {
+    var responses: List<ByteArray> = emptyList()
+    var wipedPrimaryScreen = false
+    lock.withLock {
+      if (disposed) return
+      // Emit VT sequence to clear both the screen and scrollback.
+      // But skip the alternate buffer case: neither JediTerm's nor real Ghostty's own Cmd+K touches it.
+      if (!emulator.usingAlternateScreen) {
+        emulator.write(CLEAR_BUFFER_SEQUENCE)
+        changedSinceLastProjection = true
+        wipedPrimaryScreen = true
+      }
+      responses = takeResponsesLocked()
+    }
+    flushResponses(responses)
+    if (wipedPrimaryScreen) {
+      // Send Ctrl+L to the shell, so it redraws the prompt
+      runCatching { ttyConnector.write(CTRL_L_BYTE) }
+        .onFailure { if (!disposed) LOG.warn("Failed to write Ctrl-L to the pty after Terminal.ClearBuffer", it) }
     }
   }
 
@@ -643,6 +665,11 @@ private val SYNC_OUTPUT_TIMEOUT: Duration = 1000.milliseconds
  * as the JediTerm pipeline's output polling (see `createTerminalOutputFlow`).
  */
 private val OUTPUT_POLL_INTERVAL: Duration = 20.milliseconds
+
+/** The VT sequence `clear` sends (ED2 + the E3 extension) but without the cursor-home. */
+private val CLEAR_BUFFER_SEQUENCE: ByteArray = "\u001B[2J\u001B[3J".encodeToByteArray()
+
+private val CTRL_L_BYTE: ByteArray = byteArrayOf(0x0C)
 
 internal fun createGhosttyTerminalSession(
   project: Project?,
