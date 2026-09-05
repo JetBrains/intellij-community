@@ -41,7 +41,7 @@ class WelcomeScreenLeftPanelActions(val project: Project) {
       if (actions == null) {
         actionManager.getAction("WelcomeScreen.OpenDirectoryProject")?.let { group.add(it) }
         actionManager.getAction("NonModalWelcomeScreen.LeftTabActions.New.Action")?.let { group.add(it) }
-        actionManager.getAction("ProjectFromVersionControl")?.let { group.add(it) }
+        actionManager.getAction("Vcs.VcsClone")?.let { group.add(it) }
         actionManager.getAction("NonModalWelcomeScreen.RemoteDevelopmentActions")?.let { group.add(it) }
       }
       else {

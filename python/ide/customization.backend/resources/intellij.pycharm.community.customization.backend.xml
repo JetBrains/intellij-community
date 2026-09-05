@@ -1,20 +1,19 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.platform.backend"/>
-    <!-- ProjectFromVersionControl uses GetFromVersionControlAction from the VCS implementation module.
-         Keep this dependency in the backend customization content module: the shared customization plugin
-         is also included in JetBrains Client layouts where backend-only VCS modules are unavailable. -->
+    <!-- The reference to Vcs.VcsClone resolves only where the platform VCS module registers the
+         action. Keep this dependency in the backend customization content module: the shared
+         customization plugin is also included in JetBrains Client layouts where backend-only VCS
+         modules are unavailable. -->
     <module name="intellij.platform.vcs.impl"/>
   </dependencies>
 
-  <actions resource-bundle="messages.ActionsBundle">
-    <!-- The product customization owns the action id and the placement. The Project-widget popup
-         text comes from GetFromVersionControlAction.update(). The action implementation belongs to
-         VCS, so it must be registered only from a descriptor whose classloader can see
-         intellij.platform.vcs.impl. -->
-    <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction">
+  <actions>
+    <!-- The product places the platform Vcs.VcsClone action (see VcsActions.xml).
+         Only the placement is product-specific. -->
+    <reference ref="Vcs.VcsClone">
       <add-to-group group-id="PlatformOpenProjectGroup" relative-to-action="NewProjectOrModuleGroup" anchor="after"/>
       <add-to-group group-id="ProjectWidget.Actions" anchor="after" relative-to-action="OpenFile"/>
-    </action>
+    </reference>
   </actions>
 </idea-plugin>

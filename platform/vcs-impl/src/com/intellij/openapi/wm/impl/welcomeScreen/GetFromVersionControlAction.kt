@@ -42,14 +42,8 @@ internal open class GetFromVersionControlAction : DumbAwareAction() {
         presentation.text = ActionsBundle.message("Vcs.VcsClone.Welcome.text")
       }
     }
-    else if (e.place == ActionPlaces.PROJECT_WIDGET_POPUP) {
-      presentation.icon = if (ExperimentalUI.isNewUI()) PlatformVcsImplIcons.Vcs else null
-      // Each product registers this class under its own action id. The text is set here,
-      // so each registration shows the same popup entry.
-      presentation.text = ActionsBundle.message("action.ProjectFromVersionControl.ProjectWidgetPopup.text")
-    }
     else {
-      presentation.icon = null
+      presentation.icon = if (ExperimentalUI.isNewUI() && (ActionPlaces.PROJECT_WIDGET_POPUP == e.place)) PlatformVcsImplIcons.Vcs else null
     }
   }
 

@@ -68,13 +68,13 @@
   </extensions>
   <actions>
     <!--
-      The Java product owns the Project widget placement for Get from Version Control. The action class
-      itself lives in intellij.platform.vcs.impl, so the definition must be loaded only with Java VCS.
+      The Java product places the platform Vcs.VcsClone action (see VcsActions.xml). The reference
+      resolves only where intellij.platform.vcs.impl is loaded, so it stays in the Java VCS module.
     -->
-    <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction">
+    <reference ref="Vcs.VcsClone">
       <add-to-group group-id="JavaNewProjectGroup" anchor="after" relative-to-action="ImportProject"/>
       <add-to-group group-id="ProjectWidget.Actions"/>
-    </action>
+    </reference>
 
     <!-- Module grouping is a Java-specific Changes view customization backed by VCS implementation code. -->
     <action id="ChangesView.GroupBy.Module" class="com.intellij.openapi.vcs.changes.actions.SetModuleChangesGroupingAction">

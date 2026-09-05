@@ -43,6 +43,7 @@
     <action id="Vcs.VcsClone" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction">
       <synonym key="action.Vcs.VcsClone.text.synonym1"/>
       <synonym key="action.Vcs.VcsClone.text.synonym2"/>
+      <override-text place="ProjectWidgetPopup"/>
     </action>
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup" searchable="false"/>
     <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="AllIcons.Actions.CheckOut">
