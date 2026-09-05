@@ -375,7 +375,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <a href="/bar\/)">
          */
-        parsed.assertEquals(htmlBlock("<a href=\"/bar\\/)\">"))
+        parsed.assertEquals()
     }
 
     @Test
@@ -537,7 +537,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <a href="&ouml;&ouml;.html">
          */
-        parsed.assertEquals(htmlBlock("<a href=\"&ouml;&ouml;.html\">"))
+        parsed.assertEquals()
     }
 
     @Test
@@ -2854,11 +2854,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </pre></p>
          * </td></tr></table>
          */
-        parsed.assertEquals(
-            htmlBlock("<table><tr><td>\n<pre>\n**Hello**,"),
-            Paragraph(Emphasis("_", Text("world")), Text("."), SoftLineBreak, HtmlInline("</pre>")),
-            htmlBlock("</td></tr></table>"),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", Text("world")), Text("."), SoftLineBreak, HtmlInline("</pre>")))
     }
 
     @Test
@@ -2890,21 +2886,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </table>
          * <p>okay.</p>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<table>
-                |  <tr>
-                |    <td>
-                |           hi
-                |    </td>
-                |  </tr>
-                |</table>
-                """
-                    .trimMargin()
-            ),
-            paragraph("okay."),
-        )
+        parsed.assertEquals(paragraph("okay."))
     }
 
     @Test
@@ -2925,7 +2907,7 @@ public class MarkdownProcessorDocumentParsingTest {
          *   *hello*
          *          <foo><a>
          */
-        parsed.assertEquals(htmlBlock(" <div>\n  *hello*\n         <foo><a>"))
+        parsed.assertEquals()
     }
 
     @Test
@@ -2944,7 +2926,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </div>
          * *foo*
          */
-        parsed.assertEquals(htmlBlock("</div>\n*foo*"))
+        parsed.assertEquals()
     }
 
     @Test
@@ -2967,11 +2949,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <p><em>Markdown</em></p>
          * </DIV>
          */
-        parsed.assertEquals(
-            htmlBlock("<DIV CLASS=\"foo\">"),
-            Paragraph(Emphasis("*", Text("Markdown"))),
-            htmlBlock("</DIV>"),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("Markdown"))))
     }
 
     @Test
@@ -2992,16 +2970,7 @@ public class MarkdownProcessorDocumentParsingTest {
          *   class="bar">
          * </div>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<div id="foo"
-                |  class="bar">
-                |</div>
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3022,16 +2991,7 @@ public class MarkdownProcessorDocumentParsingTest {
          *   baz">
          * </div>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<div id="foo" class="bar
-                |  baz">
-                |</div>
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3053,7 +3013,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * *foo*
          * <p><em>bar</em></p>
          */
-        parsed.assertEquals(htmlBlock("<div>\n*foo*"), Paragraph(Emphasis("*", Text("bar"))))
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("bar"))))
     }
 
     @Test
@@ -3072,7 +3032,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <div id="foo"
          * *hi*
          */
-        parsed.assertEquals(htmlBlock("<div id=\"foo\"\n*hi*"))
+        parsed.assertEquals()
     }
 
     @Test
@@ -3091,7 +3051,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <div class
          * foo
          */
-        parsed.assertEquals(htmlBlock("<div class\nfoo"))
+        parsed.assertEquals()
     }
 
     @Test
@@ -3110,7 +3070,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <div *???-&&&-<---
          * *foo*
          */
-        parsed.assertEquals(htmlBlock("<div *???-&&&-<---\n*foo*"))
+        parsed.assertEquals()
     }
 
     @Test
@@ -3121,7 +3081,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <div><a href="bar">*foo*</a></div>
          */
-        parsed.assertEquals(htmlBlock("<div><a href=\"bar\">*foo*</a></div>"))
+        parsed.assertEquals()
     }
 
     @Test
@@ -3142,16 +3102,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * foo
          * </td></tr></table>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<table><tr><td>
-                |foo
-                |</td></tr></table>
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3174,17 +3125,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * int x = 33;
          * ```
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<div></div>
-                |``` c
-                |int x = 33;
-                |```
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3205,16 +3146,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * *bar*
          * </a>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<a href="foo">
-                |*bar*
-                |</a>
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3235,16 +3167,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * *bar*
          * </Warning>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<Warning>
-                |*bar*
-                |</Warning>
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3265,16 +3188,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * *bar*
          * </i>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<i class="foo">
-                |*bar*
-                |</i>
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3293,15 +3207,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ins>
          * *bar*
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |</ins>
-                |*bar*
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3322,16 +3228,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * *foo*
          * </del>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<del>
-                |*foo*
-                |</del>
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3354,7 +3251,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <p><em>foo</em></p>
          * </del>
          */
-        parsed.assertEquals(htmlBlock("<del>"), Paragraph(Emphasis("*", Text("foo"))), htmlBlock("</del>"))
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo"))))
     }
 
     @Test
@@ -3394,20 +3291,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          * <p>okay</p>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<pre language="haskell"><code>
-                |import Text.HTML.TagSoup
-                |
-                |main :: IO ()
-                |main = print $ parseTags tags
-                |</code></pre>
-                """
-                    .trimMargin()
-            ),
-            paragraph("okay"),
-        )
+        parsed.assertEquals(paragraph("okay"))
     }
 
     @Test
@@ -3434,19 +3318,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </script>
          * <p>okay</p>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<script type="text/javascript">
-                |// JavaScript example
-                |
-                |document.getElementById("demo").innerHTML = "Hello JavaScript!";
-                |</script>
-                """
-                    .trimMargin()
-            ),
-            paragraph("okay"),
-        )
+        parsed.assertEquals(paragraph("okay"))
     }
 
     @Test
@@ -3475,20 +3347,7 @@ public class MarkdownProcessorDocumentParsingTest {
          *
          * </textarea>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<textarea>
-                |
-                |*foo*
-                |
-                |_bar_
-                |
-                |</textarea>
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3517,20 +3376,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </style>
          * <p>okay</p>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<style
-                |  type="text/css">
-                |h1 {color:red;}
-                |
-                |p {color:blue;}
-                |</style>
-                """
-                    .trimMargin()
-            ),
-            paragraph("okay"),
-        )
+        parsed.assertEquals(paragraph("okay"))
     }
 
     @Test
@@ -3553,17 +3399,7 @@ public class MarkdownProcessorDocumentParsingTest {
          *
          * foo
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<style
-                |  type="text/css">
-                |
-                |foo
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3587,7 +3423,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          * <p>bar</p>
          */
-        parsed.assertEquals(blockQuote(htmlBlock("<div>\nfoo")), paragraph("bar"))
+        parsed.assertEquals(blockQuote(), paragraph("bar"))
     }
 
     @Test
@@ -3610,9 +3446,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>foo</li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(listItem(htmlBlock("<div>"), level = 0), listItem(paragraph("foo"), level = 0))
-        )
+        parsed.assertEquals(unorderedList(listItem(level = 0), listItem(paragraph("foo"), level = 0)))
     }
 
     @Test
@@ -3631,7 +3465,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <style>p{color:red;}</style>
          * <p><em>foo</em></p>
          */
-        parsed.assertEquals(htmlBlock("<style>p{color:red;}</style>"), Paragraph(Emphasis("*", Text("foo"))))
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo"))))
     }
 
     @Test
@@ -3650,7 +3484,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <!-- foo -->*bar*
          * <p><em>baz</em></p>
          */
-        parsed.assertEquals(htmlBlock("<!-- foo -->*bar*"), Paragraph(Emphasis("*", Text("baz"))))
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("baz"))))
     }
 
     @Test
@@ -3671,16 +3505,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * foo
          * </script>1. *bar*
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<script>
-                |foo
-                |</script>1. *bar*
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3705,18 +3530,7 @@ public class MarkdownProcessorDocumentParsingTest {
          *    baz -->
          * <p>okay</p>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<!-- Foo
-                |
-                |bar
-                |   baz -->
-                """
-                    .trimMargin()
-            ),
-            paragraph("okay"),
-        )
+        parsed.assertEquals(paragraph("okay"))
     }
 
     @Test
@@ -3743,19 +3557,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * ?>
          * <p>okay</p>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<?php
-                |
-                |  echo '>';
-                |
-                |?>
-                """
-                    .trimMargin()
-            ),
-            paragraph("okay"),
-        )
+        parsed.assertEquals(paragraph("okay"))
     }
 
     @Test
@@ -3766,7 +3568,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <!DOCTYPE html>
          */
-        parsed.assertEquals(htmlBlock("<!DOCTYPE html>"))
+        parsed.assertEquals()
     }
 
     @Test
@@ -3807,26 +3609,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * ]]>
          * <p>okay</p>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<![CDATA[
-                |function matchwo(a,b)
-                |{
-                |  if (a < b && a < 0) then {
-                |    return 1;
-                |
-                |  } else {
-                |
-                |    return 0;
-                |  }
-                |}
-                |]]>
-                """
-                    .trimMargin()
-            ),
-            paragraph("okay"),
-        )
+        parsed.assertEquals(paragraph("okay"))
     }
 
     @Test
@@ -3847,7 +3630,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <pre><code>&lt;!-- foo --&gt;
          * </code></pre>
          */
-        parsed.assertEquals(htmlBlock("  <!-- foo -->"), indentedCodeBlock("<!-- foo -->"))
+        parsed.assertEquals(indentedCodeBlock("<!-- foo -->"))
     }
 
     @Test
@@ -3868,7 +3651,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <pre><code>&lt;div&gt;
          * </code></pre>
          */
-        parsed.assertEquals(htmlBlock("  <div>"), indentedCodeBlock("<div>"))
+        parsed.assertEquals(indentedCodeBlock("<div>"))
     }
 
     @Test
@@ -3891,17 +3674,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * bar
          * </div>
          */
-        parsed.assertEquals(
-            paragraph("Foo"),
-            htmlBlock(
-                """
-                |<div>
-                |bar
-                |</div>
-                """
-                    .trimMargin()
-            ),
-        )
+        parsed.assertEquals(paragraph("Foo"))
     }
 
     @Test
@@ -3924,17 +3697,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </div>
          * *foo*
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<div>
-                |bar
-                |</div>
-                |*foo*
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -3980,11 +3743,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <p><em>Emphasized</em> text.</p>
          * </div>
          */
-        parsed.assertEquals(
-            htmlBlock("<div>"),
-            Paragraph(Emphasis("*", Text("Emphasized")), Text(" text.")),
-            htmlBlock("</div>"),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("Emphasized")), Text(" text.")))
     }
 
     @Test
@@ -4005,16 +3764,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * *Emphasized* text.
          * </div>
          */
-        parsed.assertEquals(
-            htmlBlock(
-                """
-                |<div>
-                |*Emphasized* text.
-                |</div>
-                """
-                    .trimMargin()
-            )
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -4047,13 +3797,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </tr>
          * </table>
          */
-        parsed.assertEquals(
-            htmlBlock("<table>"),
-            htmlBlock("<tr>"),
-            htmlBlock("<td>\nHi\n</td>"),
-            htmlBlock("</tr>"),
-            htmlBlock("</table>"),
-        )
+        parsed.assertEquals()
     }
 
     @Test
@@ -4087,13 +3831,7 @@ public class MarkdownProcessorDocumentParsingTest {
          *   </tr>
          * </table>
          */
-        parsed.assertEquals(
-            htmlBlock("<table>"),
-            htmlBlock("  <tr>"),
-            indentedCodeBlock("<td>\n  Hi\n</td>"),
-            htmlBlock("  </tr>"),
-            htmlBlock("</table>"),
-        )
+        parsed.assertEquals(indentedCodeBlock("<td>\n  Hi\n</td>"))
     }
 
     @Test
@@ -7031,7 +6769,6 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(listItem(paragraph("foo"), level = 0), listItem(paragraph("bar"), level = 0)),
-            htmlBlock("<!-- -->"),
             unorderedList(listItem(paragraph("baz"), level = 0), listItem(paragraph("bim"), level = 0)),
         )
     }
@@ -7075,7 +6812,6 @@ public class MarkdownProcessorDocumentParsingTest {
                 listItem(paragraph("foo"), level = 0),
                 isTight = false,
             ),
-            htmlBlock("<!-- -->"),
             indentedCodeBlock("code"),
         )
     }

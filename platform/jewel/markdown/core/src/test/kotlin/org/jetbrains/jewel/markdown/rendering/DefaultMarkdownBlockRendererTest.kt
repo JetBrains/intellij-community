@@ -132,14 +132,13 @@ public class DefaultMarkdownBlockRendererTest {
     @Test
     public fun `raw HTML blocks are not rendered by default`() {
         runComposeUiTest {
-            // parseEmbeddedHtml defaults to false: keep producing HtmlBlock (renderer no-op),
-            // not HtmlBlockWithAttributes wrapping a Paragraph that could leak raw HTML text.
+            // parseEmbeddedHtml defaults to false: raw HTML blocks are dropped from the model entirely,
+            // so they can't leak into the rendered output as raw text.
             val processor = MarkdownProcessor(parseEmbeddedHtml = false)
             val blocks = processor.processMarkdownDocument("<div>Raw HTML</div>\n\nVisible paragraph")
 
-            assertEquals(2, blocks.size)
-            assertTrue(blocks[0] is MarkdownBlock.HtmlBlock)
-            assertEquals("<div>Raw HTML</div>", (blocks[0] as MarkdownBlock.HtmlBlock).content)
+            assertEquals(1, blocks.size)
+            assertTrue(blocks[0] is MarkdownBlock.Paragraph)
 
             setContent {
                 MarkdownTestTheme {

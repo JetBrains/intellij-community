@@ -68,13 +68,14 @@ public sealed interface MarkdownBlock {
             public val language: String?,
             @Suppress("UNUSED_PARAMETER", "ConstructorParameterNaming") _dummy: Boolean = false,
         ) : CodeBlock {
-            @Suppress("UnusedPrivateProperty")
+            @Suppress("UnusedPrivateProperty", "DEPRECATION")
             @Deprecated("Kept strictly for binary compatibility.", level = DeprecationLevel.HIDDEN)
             public constructor(
                 content: String,
                 mimeType: MimeType?,
             ) : this(content = content, language = null, _dummy = false)
 
+            @Suppress("DEPRECATION")
             @Deprecated("mimeType has been discontinued in favor of `language`.")
             public val mimeType: MimeType? = MimeType.Known.fromMarkdownLanguageName(language.orEmpty())
 
@@ -133,25 +134,6 @@ public sealed interface MarkdownBlock {
     }
 
     /** A raw HTML block, with [content] holding the literal HTML source as written in the Markdown. */
-    @ApiStatus.Experimental
-    @ExperimentalJewelApi
-    @GenerateDataFunctions
-    public class HtmlBlock(public val content: String) : MarkdownBlock {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as HtmlBlock
-
-            return content == other.content
-        }
-
-        override fun hashCode(): Int = content.hashCode()
-
-        override fun toString(): String = "HtmlBlock(content='$content')"
-    }
-
-    /** A list block containing [ListItem] children, either ordered or unordered. */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     public sealed interface ListBlock : MarkdownBlock, WithChildBlocks {

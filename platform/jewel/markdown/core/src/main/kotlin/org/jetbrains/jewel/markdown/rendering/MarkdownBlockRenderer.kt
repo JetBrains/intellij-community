@@ -12,7 +12,6 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock
-import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList
@@ -87,14 +86,14 @@ public interface MarkdownBlockRenderer {
      * @param enabled True if the block should be enabled, false otherwise.
      * @param onUrlClick The callback invoked when the user clicks on a URL.
      * @param onTextLayout Callback that is executed when a new text layout is calculated. A [TextLayoutResult] object
-     *   that callback provides contains paragraph information, size of the text, baselines and other details. The
+     *   that callback provides contains paragraph information, size of the text, baselines, and other details. The
      *   callback can be used to add additional decoration or functionality to the text. For example, to draw selection
      *   around the text.
      * @param modifier The modifier to be applied to the composable.
      * @param overflow How visual overflow should be handled.
      * @param softWrap Whether the text should break at soft line breaks. If false, the glyphs in the text will be
-     *   positioned as if there was unlimited horizontal space. If [softWrap] is false, [overflow] and [textAlign] may
-     *   have unexpected effects.
+     *   positioned as if there was unlimited horizontal space. If [softWrap] is false, [overflow] may have unexpected
+     *   effects.
      * @param maxLines The maximum number of lines to display.
      */
     @Composable
@@ -283,23 +282,6 @@ public interface MarkdownBlockRenderer {
      */
     @Composable
     public fun RenderThematicBreak(styling: MarkdownStyling.ThematicBreak, enabled: Boolean, modifier: Modifier)
-
-    /**
-     * Renders a [HtmlBlock] into a Compose UI. Since Compose can't render HTML out of the box, this might result in a
-     * no-op (e.g., in [DefaultMarkdownBlockRenderer.RenderBlocks]).
-     *
-     * @param block The HTML block to render.
-     * @param styling The [`HtmlBlock`][MarkdownStyling.HtmlBlock] styling to use to render.
-     * @param enabled True if the block should be enabled, false otherwise.
-     * @param modifier The modifier to be applied to the composable.
-     */
-    @Composable
-    public fun RenderHtmlBlock(
-        block: HtmlBlock,
-        styling: MarkdownStyling.HtmlBlock,
-        enabled: Boolean,
-        modifier: Modifier,
-    )
 
     /**
      * Renders a [MarkdownBlock.HtmlBlockWithAttributes] into a Compose UI. Raw HTML blocks may be exposed as

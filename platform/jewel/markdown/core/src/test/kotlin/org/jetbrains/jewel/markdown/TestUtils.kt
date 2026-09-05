@@ -7,7 +7,6 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.Heading
-import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlockWithAttributes
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList
@@ -73,7 +72,6 @@ private fun MarkdownBlock.findDifferenceWith(expected: MarkdownBlock, indentSize
         is ListBlock -> diffList(this, expected, indentSize, indent)
         is ListItem -> children.findDifferences((expected as ListItem).children, indentSize)
         is ThematicBreak -> emptyList() // They can only differ in their node
-        is HtmlBlock -> diffHtmlBlock(this, expected, indent)
         is HtmlBlockWithAttributes -> diffHtmlBlockWithAttributes(this, expected, indent)
         else -> error("Unsupported MarkdownBlock: ${this.javaClass.name}")
     }
@@ -85,16 +83,6 @@ private fun diffParagraph(actual: Paragraph, expected: MarkdownBlock, indent: St
             "$indent * Paragraph raw content mismatch.\n\n" +
                 "$indent     Actual:   $actual\n" +
                 "$indent     Expected: $expected\n"
-        )
-    }
-}
-
-private fun diffHtmlBlock(actual: HtmlBlock, expected: MarkdownBlock, indent: String) = buildList {
-    if (actual.content != (expected as HtmlBlock).content) {
-        add(
-            "$indent * HTML block content mismatch.\n\n" +
-                "$indent     Actual:   ${actual.content}\n" +
-                "$indent     Expected: ${expected.content}\n"
         )
     }
 }
@@ -213,7 +201,5 @@ public fun orderedList(
 ): OrderedList = OrderedList(items.toList(), isTight, startFrom, delimiter)
 
 public fun listItem(vararg items: MarkdownBlock, level: Int = 0): ListItem = ListItem(children = items, level)
-
-public fun htmlBlock(content: String): HtmlBlock = HtmlBlock(content)
 
 public fun thematicBreak(): ThematicBreak = ThematicBreak

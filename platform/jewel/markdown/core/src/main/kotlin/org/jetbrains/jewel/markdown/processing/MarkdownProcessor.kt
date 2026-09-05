@@ -307,30 +307,39 @@ public class MarkdownProcessor(
         }
     }
 
-    private fun Node.tryProcessMarkdownBlock(): List<MarkdownBlock> =
-        // Non-Block children are ignored
-        when (this) {
-            is Paragraph -> toMarkdownParagraph()
-            is Heading -> toMarkdownHeadingOrNull()
-            is BulletList -> toMarkdownListOrNull()
-            is OrderedList -> toMarkdownListOrNull()
-            is BlockQuote -> toMarkdownBlockQuote()
-            is FencedCodeBlock -> toMarkdownCodeBlockOrNull()
-            is IndentedCodeBlock -> toMarkdownCodeBlockOrNull()
-            is ThematicBreak -> MarkdownBlock.ThematicBreak
-            is HtmlBlock -> toMarkdownHtmlBlockOrNull()
-            is CustomBlock -> {
-                blockExtensions.find { it.canProcess(this) }?.processMarkdownBlock(this, this@MarkdownProcessor)
-            }
-
-            else -> null
-        }.let { block ->
-            if (this is Block && block != null) {
-                postProcess(this, block)
-            } else {
-                emptyList()
-            }
+    private fun Node.tryProcessMarkdownBlock(): List<MarkdownBlock> {
+        if (this is HtmlBlock) {
+            // Raw HTML blocks are only converted when embedded HTML parsing is enabled (parseEmbeddedHtml = true).
+            // Otherwise they are dropped, matching the previous no-op rendering behavior for raw HTML.
+            if (literal.isBlank()) return emptyList()
+            val converter = htmlConverter ?: return emptyList()
+            return convertHtmlBlock(this, converter)
         }
+        return (
+            // Non-Block children are ignored
+            when (this) {
+                is Paragraph -> toMarkdownParagraph()
+                is Heading -> toMarkdownHeadingOrNull()
+                is BulletList -> toMarkdownListOrNull()
+                is OrderedList -> toMarkdownListOrNull()
+                is BlockQuote -> toMarkdownBlockQuote()
+                is FencedCodeBlock -> toMarkdownCodeBlockOrNull()
+                is IndentedCodeBlock -> toMarkdownCodeBlockOrNull()
+                is ThematicBreak -> MarkdownBlock.ThematicBreak
+                is CustomBlock -> {
+                    blockExtensions.find { it.canProcess(this) }?.processMarkdownBlock(this, this@MarkdownProcessor)
+                }
+
+                else -> null
+            })
+            .let { block ->
+                if (this is Block && block != null) {
+                    postProcess(this, block)
+                } else {
+                    emptyList()
+                }
+            }
+    }
 
     internal fun convertHtmlInlines(inlines: List<InlineMarkdown>): List<InlineMarkdown> =
         htmlConverter?.convert(this, inlines) ?: inlines
@@ -339,9 +348,6 @@ public class MarkdownProcessor(
         htmlConverterExtensions.firstOrNull { tagName in it.supportedTags }?.provideConverter(tagName)
 
     private fun postProcess(block: Block, mdBlock: MarkdownBlock): List<MarkdownBlock> {
-        if (block is HtmlBlock && htmlConverter != null) {
-            return convertHtmlBlock(block, htmlConverter)
-        }
         val spans = block.sourceSpans.takeIf { it.isNotEmpty() } ?: return listOf(mdBlock)
         val newMdBlock =
             scrollingSynchronizer?.acceptBlockSpans(mdBlock, spans.first().lineIndex..spans.last().lineIndex) ?: mdBlock
@@ -382,11 +388,6 @@ public class MarkdownProcessor(
 
     private fun IndentedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.IndentedCodeBlock =
         CodeBlock.IndentedCodeBlock(literal.trimEnd('\n'))
-
-    private fun HtmlBlock.toMarkdownHtmlBlockOrNull(): MarkdownBlock.HtmlBlock? {
-        if (literal.isBlank()) return null
-        return MarkdownBlock.HtmlBlock(literal.trimEnd('\n'))
-    }
 
     private fun BulletList.toMarkdownListOrNull(): ListBlock.UnorderedList? {
         val children = processListItems()
