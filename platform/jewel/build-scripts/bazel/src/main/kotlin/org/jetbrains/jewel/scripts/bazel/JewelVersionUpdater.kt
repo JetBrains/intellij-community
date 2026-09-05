@@ -1,3 +1,5 @@
+@file:Suppress("IO_FILE_USAGE")
+
 package org.jetbrains.jewel.scripts.bazel
 
 import java.io.File

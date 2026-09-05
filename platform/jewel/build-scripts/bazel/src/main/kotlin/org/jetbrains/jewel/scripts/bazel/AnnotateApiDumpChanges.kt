@@ -13,8 +13,9 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 
-private val chunkHeaderRegex = "^@@ \\-([0-9]+)(?:,[0-9]+)? \\+([0-9]+)".toRegex()
+private val chunkHeaderRegex = "^@@ -([0-9]+)(?:,[0-9]+)? \\+([0-9]+)".toRegex()
 
+// Run it like: bazel run //platform/jewel/build-scripts/bazel:annotateApiDumpChanges
 fun main(args: Array<String>) {
     runBlocking { AnnotateApiDumpChangesCommand().main(args) }
 }
@@ -63,7 +64,7 @@ internal class AnnotateApiDumpChangesCommand(private val commandRunner: CommandR
 
     private suspend fun determineBaseCommit(jewelRoot: File) =
         if (checkPrNumber()) {
-            requireGhTool()
+            requireGhTool(commandRunner)
             commandRunner("gh pr view ${getPrNumber()} --json baseRefOid -q .baseRefOid", jewelRoot).getOrThrow()
         } else {
             printlnWarn("GitHub PR number not found, falling back to checking against HEAD~1 instead")
@@ -95,23 +96,6 @@ internal class AnnotateApiDumpChangesCommand(private val commandRunner: CommandR
             printlnWarn("GITHUB_STEP_SUMMARY environment variable not set")
         }
     }
-
-    /**
-     * Requires the GitHub CLI tool (`gh`) to be present on the system's PATH. Exits the process with an error code if
-     * the tool is not found.
-     */
-    private suspend fun requireGhTool() {
-        if (checkGhTool()) return
-
-        exitWithError("ERROR: the GitHub CLI tool must be present on the PATH.")
-    }
-
-    /**
-     * Checks if the GitHub CLI tool (`gh`) is present on the system's PATH.
-     *
-     * @return `true` if the `gh` tool is found, `false` otherwise.
-     */
-    private suspend fun checkGhTool() = commandRunner("which gh", null, exitOnError = false).isSuccess
 }
 
 /**

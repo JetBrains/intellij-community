@@ -1,3 +1,5 @@
+@file:Suppress("IO_FILE_USAGE", "RAW_RUN_BLOCKING", "CompletableFuture.defaultExecutor")
+
 package org.jetbrains.jewel.scripts.bazel
 
 import java.io.File
@@ -23,7 +25,8 @@ private const val CODE_CLEAR = "$CONTROL_CODE[0m"
  * @param index The index of the argument to retrieve.
  * @return The argument at [index].
  */
-fun Array<String>.getOrThrow(index: Int) = this.getOrNull(index) ?: error("Index $index does not have any arguments")
+fun Array<String>.getOrThrow(index: Int): String =
+    this.getOrNull(index) ?: error("Index $index does not have any arguments")
 
 /**
  * Gets the Bazel workspace root directory.
@@ -43,17 +46,27 @@ fun getBuildWorkspaceDirectory(): File =
 fun getJewelRoot(): File? = File(getBuildWorkspaceDirectory(), "platform/jewel").takeIf { it.isDirectory }
 
 /**
+ * Resolves [path] against the Bazel workspace root if it's relative. `bazel run` doesn't guarantee the launched
+ * process's working directory matches the directory the user invoked it from, so a bare `File(path)` can silently
+ * fail to find a path that's valid from the shell.
+ */
+fun resolvePath(path: String): File {
+    val file = File(path)
+    return if (file.isAbsolute) file else File(getBuildWorkspaceDirectory(), path)
+}
+
+/**
  * Gets the runfiles directory for the current `bazel run` invocation.
  *
  * @return The runfiles directory path, read from the `RUNFILES_DIR` or `JAVA_RUNFILES` environment variable. Throws if
  *   neither is set — this only works when run via `bazel run`.
  */
-fun getRunfilesDir() =
+fun getRunfilesDir(): String =
     System.getenv("RUNFILES_DIR")
         ?: System.getenv("JAVA_RUNFILES")
         ?: error("RUNFILES_DIR is not set. Run via `bazel run`.")
 
-val isWindows = "windows" in System.getProperty("os.name").lowercase()
+val isWindows: Boolean = "windows" in System.getProperty("os.name").lowercase()
 
 private val stylingSupported = doesTerminalSupportStyling()
 
@@ -65,7 +78,7 @@ private val stylingSupported = doesTerminalSupportStyling()
 private fun doesTerminalSupportStyling(): Boolean =
     System.getenv("TERM")?.contains("color") == true || System.getenv("COLORTERM") == "truecolor"
 
-fun red(text: String) = "\u001B[31m$text\u001B[0m"
+fun red(text: String): String = "\u001B[31m$text\u001B[0m"
 
 /**
  * Formats a string as a success (green) text with ANSI escape codes if the terminal supports it.
@@ -79,14 +92,14 @@ fun String.asSuccess(): String = if (stylingSupported) "$CODE_SUCCESS$this$CODE_
  *
  * @return The formatted text, or the text itself if the terminal does not support styling.
  */
-fun String.asWarning() = if (stylingSupported) "$CODE_WARN$this$CODE_CLEAR" else this
+fun String.asWarning(): String = if (stylingSupported) "$CODE_WARN$this$CODE_CLEAR" else this
 
 /**
  * Formats a string as an error message with ANSI escape codes if the terminal supports it.
  *
  * @return The formatted text, or the text itself if the terminal does not support styling.
  */
-fun String.asError() = if (stylingSupported) "$CODE_ERR$this$CODE_CLEAR" else this
+fun String.asError(): String = if (stylingSupported) "$CODE_ERR$this$CODE_CLEAR" else this
 
 /**
  * Formats a string as a bold text with ANSI escape codes if the terminal supports it.
@@ -187,6 +200,74 @@ object DefaultCommandRunner : CommandRunner {
 }
 
 /**
+ * Splits a command string into argv tokens the way a POSIX shell would for word-splitting and quote removal — no
+ * variable expansion, globbing, or command substitution (Kotlin string templates already handled any interpolation
+ * before this runs). Supports single quotes (`'...'`, no escapes) and double quotes (`"..."`, with backslash escaping
+ * of `\`, `"`, `$`, and `` ` ``), including quoted sections in the middle of a word (e.g. `--flag='some value'` is one
+ * token, `--flag=some value`).
+ */
+internal fun tokenizeCommand(command: String): List<String> {
+    val tokens = mutableListOf<String>()
+    val current = StringBuilder()
+    var hasToken = false
+    var i = 0
+
+    fun endToken() {
+        if (hasToken) {
+            tokens.add(current.toString())
+            current.clear()
+            hasToken = false
+        }
+    }
+
+    while (i < command.length) {
+        when (val c = command[i]) {
+            ' ',
+            '\t' -> {
+                endToken()
+                i++
+            }
+
+            '\'' -> {
+                hasToken = true
+                i++
+                while (i < command.length && command[i] != '\'') {
+                    current.append(command[i])
+                    i++
+                }
+                check(i < command.length) { "Unterminated single quote in command: $command" }
+                i++
+            }
+
+            '"' -> {
+                hasToken = true
+                i++
+                while (i < command.length && command[i] != '"') {
+                    if (command[i] == '\\' && i + 1 < command.length && command[i + 1] in "\\\"$`") {
+                        current.append(command[i + 1])
+                        i += 2
+                    } else {
+                        current.append(command[i])
+                        i++
+                    }
+                }
+                check(i < command.length) { "Unterminated double quote in command: $command" }
+                i++
+            }
+
+            else -> {
+                hasToken = true
+                current.append(c)
+                i++
+            }
+        }
+    }
+    endToken()
+
+    return tokens
+}
+
+/**
  * Runs a shell command and captures its output and exit code.
  *
  * @param command The command to run.
@@ -204,7 +285,7 @@ private suspend fun runCommand(
 ): CmdResult =
     withContext(Dispatchers.IO) {
         val process =
-            ProcessBuilder(command.split(" "))
+            ProcessBuilder(tokenizeCommand(command))
                 .directory(workingDir)
                 .redirectErrorStream(true)
                 .redirectOutput(if (streamOutput) ProcessBuilder.Redirect.INHERIT else ProcessBuilder.Redirect.PIPE)
