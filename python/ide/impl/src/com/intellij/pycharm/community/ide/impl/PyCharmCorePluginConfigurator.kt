@@ -107,9 +107,7 @@ internal class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
           ep.groupWeight = 70
         }
         "PyPlotsConfigurable" -> {
-          ep.groupId = PythonMainConfigurable.ID
-          ep.key = "configurable.plots.pycharm.display.name"
-          ep.bundle = "messages.PyBundle"
+          // groupId already points at the Python group, see intellij.python.scientific.xml
           ep.groupWeight = 60
         }
         "debugger.dataViews.python.type.renderers" -> {
@@ -119,9 +117,7 @@ internal class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
           ep.groupWeight = 30
         }
         "com.jetbrains.python.documentation.PythonDocumentationConfigurable" -> {
-          ep.groupId = PythonMainConfigurable.ID
-          ep.key = "external.documentation.pycharm"
-          ep.bundle="messages.PyBundle"
+          // groupId already points at the Python group, see intellij.python.community.impl.xml
           ep.groupWeight = 10
         }
       }

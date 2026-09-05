@@ -12,7 +12,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.jetbrains.python.PyBundle;
@@ -39,8 +38,7 @@ public final class PythonDocumentationConfigurable implements SearchableConfigur
 
   @Override
   public @Nls String getDisplayName() {
-    return PlatformUtils.isPyCharm() ? PyBundle.message("external.documentation.pycharm")
-                                     : PyBundle.message("external.documentation.python.plugin");
+    return PyBundle.message("external.documentation.configurable.name");
   }
 
   @Override

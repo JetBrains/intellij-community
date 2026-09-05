@@ -45,7 +45,7 @@ class PyTypeEngineConfigurable(
     selectedTypeEngine.set(initialOption)
   }
 
-  override fun getId(): String = "pycharm.type.engine"
+  override fun getId(): String = ID
   override fun getDisplayName(): String = TypeEngineFrontendBundle.message("display.name")
   override fun getDisplayNameFast(): String = TypeEngineFrontendBundle.message("display.name")
   override fun getHelpTopic(): String = "reference.settings.python.type.engine"
@@ -155,5 +155,10 @@ class PyTypeEngineConfigurable(
       previousTypeEngine = state.selected
       preview.pendingDisable.set(emptySet())
     }
+  }
+
+  companion object {
+    /** Keep in sync with the `projectConfigurable` id in `intellij.python.typeEngine.xml`. */
+    const val ID: String = "com.intellij.python.lsp.core.PyTypeEngineConfigurable"
   }
 }

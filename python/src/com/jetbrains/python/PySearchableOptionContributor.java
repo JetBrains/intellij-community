@@ -35,7 +35,7 @@ final class PySearchableOptionContributor extends SearchableOptionContributor {
 
   private static void processIntegratedTools(SearchableOptionProcessor processor) {
     final String configurableId = "com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable";
-    final String displayName = "Python Integrated Tools";
+    final String displayName = PyBundle.message("configurable.PyIntegratedToolsModulesConfigurable.display.name");
     processor.addOptions("Package requirements file", displayName, "Package requirements file",
                          configurableId, displayName, true);
     processor.addOptions("Default test runner", displayName, "Default test runner",

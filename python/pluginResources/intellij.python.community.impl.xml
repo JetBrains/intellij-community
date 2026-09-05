@@ -646,21 +646,22 @@
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyMonkeypatch.PyMonkeypatchReferenceContributor"
                               language="Python"/>
 
-    <applicationConfigurable groupId="tools"
+    <applicationConfigurable groupId="python.group.settings"
                              instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
                              id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
-                             key="external.documentation.python.plugin"/> <!--id is used in PyCharmCorePluginConfigurator-->
+                             key="external.documentation.configurable.name"/> <!--id is used in PyCharmCorePluginConfigurator-->
 
     <applicationConfigurable groupId="reference.idesettings.debugger.python"
                              id="debugger.dataViews.python.type.renderers"
                              instance="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersConfigurable"
                              key="configurable.PyUserTypeRenderersConfigurable.display.name"/> <!--id is used in PyCharmCorePluginConfigurator-->
 
-    <projectConfigurable groupId="tools"
+    <projectConfigurable groupId="python.tools.group.settings"
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          bundle="messages.PyBundle"
-                         key="configurable.PyIntegratedToolsModulesConfigurable.display.name"/> <!--id is used in PyCharmProjectConfigurableStartupActivity-->
+                         key="configurable.PyIntegratedToolsModulesConfigurable.display.name"
+                         groupWeight="20"/>
 
     <search.optionContributor implementation="com.jetbrains.python.PySearchableOptionContributor"/>
 
