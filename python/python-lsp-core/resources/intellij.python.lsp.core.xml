@@ -51,6 +51,9 @@
                  restartRequired="true"
                  description="Offer the external type engine to a project with more than one module"/>
 
+    <search.optionContributor
+        implementation="com.intellij.python.lsp.core.typeEngine.PyTypeEngineSearchableOptionContributor"/>
+
     <statistics.counterUsagesCollector implementationClass="com.intellij.python.lsp.core.typeEngine.PyTypeEngineUsageCollector"/>
     <projectSettings service="com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings"/>
     <notificationGroup id="Python LSP Tools" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
