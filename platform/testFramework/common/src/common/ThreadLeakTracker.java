@@ -6,13 +6,19 @@ import com.intellij.diagnostic.JVMResponsivenessMonitor;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.diagnostic.AsyncLogKt;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.stubs.StubIndexImpl;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -175,6 +181,7 @@ public final class ThreadLeakTracker {
   }
 
   public static void checkLeak(@NotNull Map<String, Thread> threadsBefore) throws AssertionError {
+    waitForIndexInitialization();
     // compare threads by name because BoundedTaskExecutor reuses application thread pool for different bounded pools,
     // leaks of which we want to find
     Map<String, Thread> all = getThreads();
@@ -247,6 +254,22 @@ public final class ThreadLeakTracker {
       "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces) +
       coroutineSection
     );
+  }
+
+  // index initialization belongs to the shared application, not to the finished test; let it settle before the thread comparison
+  private static void waitForIndexInitialization() {
+    Application app = ApplicationManager.getApplication();
+    if (app == null || app.isDisposed()) {
+      return;
+    }
+    FileBasedIndex fileBasedIndex = app.getServiceIfCreated(FileBasedIndex.class);
+    if (fileBasedIndex instanceof FileBasedIndexEx) {
+      ((FileBasedIndexEx)fileBasedIndex).waitUntilIndicesAreInitialized();
+    }
+    StubIndex stubIndex = app.getServiceIfCreated(StubIndex.class);
+    if (stubIndex instanceof StubIndexImpl) {
+      ((StubIndexImpl)stubIndex).waitUntilStubIndexedInitialized();
+    }
   }
 
   private static boolean shouldWaitForThread(Thread thread) {

@@ -86,7 +86,10 @@ abstract class ActionGroupStructureTestCase {
     }
     val expected = goldenFile.readText()
     if (expected != actual) {
-      throw FileComparisonFailedError("Action-group id sequences diverged", expected, actual, goldenFile.absolutePathString())
+      throw FileComparisonFailedError(
+        "Action-group id sequences diverged. A change in a shared actions XML affects the sibling product goldens too: " +
+        "regenerate the golden of every ActionGroupStructureTestCase subclass. This product: $regenerateCommand",
+        expected, actual, goldenFile.absolutePathString())
     }
   }
 
