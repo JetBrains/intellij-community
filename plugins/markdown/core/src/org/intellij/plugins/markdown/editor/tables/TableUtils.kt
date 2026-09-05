@@ -176,7 +176,8 @@ object TableUtils {
     return false
   }
 
-  internal fun isFormattingOnTypeEnabledForTables(file: PsiFile): Boolean {
+  @ApiStatus.Internal
+  fun isFormattingOnTypeEnabledForTables(file: PsiFile): Boolean {
     if (!file.fileType.isMarkdownType()) {
       return false
     }

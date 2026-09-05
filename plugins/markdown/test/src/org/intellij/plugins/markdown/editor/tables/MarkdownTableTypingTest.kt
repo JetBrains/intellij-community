@@ -3,6 +3,8 @@ package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
@@ -11,6 +13,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.awt.datatransfer.StringSelection
 
 @RunWith(JUnit4::class)
 @Suppress("MarkdownIncorrectTableFormatting")
@@ -478,6 +481,113 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
       type("some")
       checkResultByText(expected)
     }
+  }
+
+  @Test
+  fun `test pasting reformats the table`() {
+    // language=Markdown
+    val before = """
+    | a | b |
+    |---|---|
+    | one<caret> | 2 |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    | a      | b |
+    |--------|---|
+    | onexyz | 2 |
+    """.trimIndent()
+    configureFromFileText("some.md", before)
+    CopyPasteManager.getInstance().setContents(StringSelection("xyz"))
+    executeAction(IdeActions.ACTION_EDITOR_PASTE)
+    checkResultByText(after)
+  }
+
+  @Test
+  fun `test cutting reformats the table`() {
+    // language=Markdown
+    val before = """
+    | a           | b |
+    |-------------|---|
+    | <selection>removed</selection>kept | 2 |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    | a           | b |
+    |-------------|---|
+    | kept        | 2 |
+    """.trimIndent()
+    configureFromFileText("some.md", before)
+    executeAction(IdeActions.ACTION_EDITOR_CUT)
+    checkResultByText(after)
+  }
+
+  @Test
+  fun `test duplicating reformats the table`() {
+    // language=Markdown
+    val before = """
+    | a | b |
+    |---|---|
+    | <selection>one</selection> | 2 |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    | a      | b |
+    |--------|---|
+    | oneone | 2 |
+    """.trimIndent()
+    configureFromFileText("some.md", before)
+    executeAction(IdeActions.ACTION_EDITOR_DUPLICATE)
+    checkResultByText(after)
+  }
+
+  @Test
+  fun `test deleting to word start reformats the table`() {
+    // language=Markdown
+    val before = """
+    | a            | b |
+    |--------------|---|
+    | kept removed<caret> | 2 |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    | a            | b |
+    |--------------|---|
+    | kept         | 2 |
+    """.trimIndent()
+    configureFromFileText("some.md", before)
+    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START)
+    checkResultByText(after)
+  }
+
+  @Test
+  fun `test no reformat on pasting when reformat on type is disabled`() {
+    // language=Markdown
+    val content = """
+    | a | b |
+    |---|---|
+    | one<caret> | 2 |
+    """.trimIndent()
+    // language=Markdown
+    val expected = """
+    | a | b |
+    |---|---|
+    | onexyz | 2 |
+    """.trimIndent()
+    configureFromFileText("some.md", content)
+    CopyPasteManager.getInstance().setContents(StringSelection("xyz"))
+    runWithReformatOnTypeDisabled {
+      executeAction(IdeActions.ACTION_EDITOR_PASTE)
+      checkResultByText(expected)
+    }
+  }
+
+  @Test
+  fun `test pasting outside of a table keeps the text`() {
+    configureFromFileText("some.md", "Some text<caret>")
+    CopyPasteManager.getInstance().setContents(StringSelection("xyz"))
+    executeAction(IdeActions.ACTION_EDITOR_PASTE)
+    checkResultByText("Some textxyz")
   }
 
   private fun runWithReformatOnTypeDisabled(block: () -> Unit) {

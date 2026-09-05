@@ -38,6 +38,18 @@
     <editorActionHandler action="EditorBackSpace"
                          implementationClass="com.intellij.markdown.frontend.editor.livepreview.MarkdownBackspaceHandler"
                          order="first" id="markdown.live.preview.backspace"/>
+    <editorActionHandler action="EditorDeleteToWordStart"
+                         implementationClass="com.intellij.markdown.frontend.editor.tables.handlers.MarkdownTableReformatAfterActionHook"
+                         order="first" id="markdown.table.reformat.delete.to.word.start"/>
+    <editorActionHandler action="EditorPaste"
+                         implementationClass="com.intellij.markdown.frontend.editor.tables.handlers.MarkdownTableReformatAfterActionHook"
+                         order="first" id="markdown.table.reformat.paste"/>
+    <editorActionHandler action="EditorCut"
+                         implementationClass="com.intellij.markdown.frontend.editor.tables.handlers.MarkdownTableReformatAfterActionHook"
+                         order="first" id="markdown.table.reformat.cut"/>
+    <editorActionHandler action="EditorDuplicate"
+                         implementationClass="com.intellij.markdown.frontend.editor.tables.handlers.MarkdownTableReformatAfterActionHook"
+                         order="first" id="markdown.table.reformat.duplicate"/>
   </extensions>
 
   <actions resource-bundle="messages.MarkdownBundle">
