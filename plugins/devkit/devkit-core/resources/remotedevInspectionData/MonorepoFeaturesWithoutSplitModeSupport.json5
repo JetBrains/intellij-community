@@ -191,5 +191,6 @@
     "intellij.grid.plugin",
     "intellij.grid.scripting.impl",
     "intellij.grid.scripting.rt",
+    "intellij.execution.multilaunch.core"
   ],
 }

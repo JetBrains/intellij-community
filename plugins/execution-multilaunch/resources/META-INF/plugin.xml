@@ -1,0 +1,17 @@
+<idea-plugin allow-bundled-update="true">
+  <id>intellij.execution.multilaunch</id>
+  <name>Multi-Launch Configuration</name>
+  <vendor>JetBrains</vendor>
+  <category>IDE Settings</category>
+  <content namespace="jetbrains">
+    <module name="intellij.execution.multilaunch.core" loading="required"/>
+  </content>
+
+  <description><![CDATA[
+    <p>Adds the Multi-Launch run configuration.</p>
+    <p>A Multi-Launch run configuration starts several run configurations and tasks together. You set the start
+    order and a start condition for each item. The configuration can start the items one after another, or at the
+    same time. Use it to start a full application stack, such as a backend, a frontend, and a database, with one
+    action.</p>
+  ]]></description>
+</idea-plugin>

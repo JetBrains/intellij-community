@@ -1,17 +1,5 @@
 f:com.intellij.execution.TerminateRemoteProcessDialog
 - *s:show(com.intellij.openapi.project.Project,java.util.List,java.util.List):com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
-*:com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate
-- *sf:Companion:com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate$Companion
-- a:createCondition():com.intellij.execution.multilaunch.execution.conditions.Condition
-- a:getType():java.lang.String
-*f:com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-*a:com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate
-- com.intellij.execution.multilaunch.execution.executables.ExecutableTemplate
-- *sf:Companion:com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate$Companion
-- <init>():V
-*f:com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 *:com.intellij.execution.portsWatcher.ListeningPort
 - a:getPid():java.lang.Long
 - a:getPort():I

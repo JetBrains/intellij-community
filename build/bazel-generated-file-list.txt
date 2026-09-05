@@ -1221,6 +1221,8 @@ plugins/env-files-support
 plugins/env-files-support/java
 plugins/env-files-support/kotlin
 plugins/env-files-support/python
+plugins/execution-multilaunch
+plugins/execution-multilaunch/core
 plugins/extended-toolwindows-ui
 plugins/extended-toolwindows-ui/frontend
 plugins/filePrediction

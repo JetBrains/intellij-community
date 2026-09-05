@@ -163,7 +163,10 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
 
     internal val TERMINATING_FOR_RERUN = Key.create<Boolean>("TERMINATING_FOR_RERUN")
     internal val REPORT_NEXT_START_AS_RERUN = Key.create<Boolean>("REPORT_NEXT_START_AS_RERUN")
-    internal val PARENT_PROFILE_IDE_ACTIVITY = Key.create<StructuredIdeActivity>("PARENT_PROFILE_IDE_ACTIVITY")
+
+    @ApiStatus.Internal
+    @JvmField
+    val PARENT_PROFILE_IDE_ACTIVITY: Key<StructuredIdeActivity> = Key.create("PARENT_PROFILE_IDE_ACTIVITY")
 
     @JvmStatic
     fun getInstance(project: Project): ExecutionManagerImpl {

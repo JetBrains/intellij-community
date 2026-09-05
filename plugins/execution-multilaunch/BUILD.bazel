@@ -1,0 +1,49 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.execution.multilaunch.plugin` start
+dev_dist_plugin(
+    main_module = "intellij.execution.multilaunch.plugin",
+    module_targets = MODULE_TARGETS,
+    prepacked_content_modules = ["intellij.execution.multilaunch.core"],
+)
+### auto-generated section `dev intellij.execution.multilaunch.plugin` end
+
+### auto-generated section `build intellij.execution.multilaunch.plugin` start
+jvm_library(
+    name = "execution-multilaunch-plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.execution.multilaunch.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "execution-multilaunch-plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.execution.multilaunch.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":execution-multilaunch-plugin"],
+)
+### auto-generated section `build intellij.execution.multilaunch.plugin` end
+
+### auto-generated section `iml intellij.execution.multilaunch.plugin` start
+exports_files(
+    [
+        "intellij.execution.multilaunch.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.execution.multilaunch.plugin` end
