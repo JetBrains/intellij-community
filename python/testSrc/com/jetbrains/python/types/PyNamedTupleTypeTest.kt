@@ -363,6 +363,88 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
+  inner class GenericNamedTuple {
+
+    @Test
+    @TestFor(issues = ["PY-90675"])
+    fun `parameterized generic named tuple field`() = test("""
+      from typing import Generic, NamedTuple, TypeVar
+      T = TypeVar("T")
+      class Base(NamedTuple, Generic[T]):
+          path: T
+      def f(b: Base[str]):
+          expr = b.path
+      #   └ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90675"])
+    fun `inheritor of a parameterized generic named tuple field`() = test("""
+      from typing import Generic, NamedTuple, TypeVar
+      T = TypeVar("T")
+      class Base(NamedTuple, Generic[T]):
+          path: T
+      class Sub(Base[str]): ...
+      def f(s: Sub):
+          expr = s.path
+      #   └ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90675"])
+    fun `inheritor keeps the order of the type parameters`() = test("""
+      from typing import Generic, NamedTuple, TypeVar
+      K = TypeVar("K")
+      V = TypeVar("V")
+      class Base(NamedTuple, Generic[K, V]):
+          value: V
+          key: K
+      class Sub(Base[str, int]): ...
+      def f(s: Sub):
+          expr = s.key
+      #   └ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90675"])
+    fun `method of a generic named tuple ancestor`() = test("""
+      from urllib.parse import urlparse
+      expr = urlparse("https://foo.com/bar").geturl()
+      #└ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90675"])
+    fun `parameterization keeps a field without a type parameter`() = test("""
+      from typing import Generic, Literal, NamedTuple, TypeVar
+      T = TypeVar("T")
+      class Base(NamedTuple, Generic[T]):
+          t: list[tuple[Literal[1], Literal[2]]]
+          x: T
+      def f(b: Base[str]):
+          expr = b.t
+      #   └ TYPE list[tuple[Literal[1], Literal[2]]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90675"])
+    fun `urlparse path is str`() = test("""
+      from urllib.parse import urlparse
+      expr = urlparse("https://foo.com/bar").path
+      #└ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90675"])
+    fun `urlparse path split takes a string separator`() = test("""
+      from urllib.parse import urlparse
+      url = urlparse("https://foo.com/bar")
+      expr = url.path.split("/")
+      #└ TYPE list[str]
+      """.trimIndent())
+  }
+
+  @Nested
   inner class TypingNamedTupleInspections {
 
     @Test

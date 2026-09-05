@@ -35,6 +35,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeA
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.getNamedTupleTypeForClass
+import com.jetbrains.python.codeInsight.stdlib.parameterizeNamedTupleType
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typeRepresentation.PyModuleTypeName
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyFunctionTypeRepresentation
@@ -1114,7 +1115,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val results: MutableList<PyClassType> = ArrayList()
       for (superClassExpression in getSuperClassExpressions(pyClass)) {
         val type = getType(superClassExpression, context).derefOrUnknown()
-        if (type is PyClassType) {
+        if (type is PyNamedTupleType && superClassExpression is PySubscriptionExpression) {
+          // A named tuple type reports its field types as its type arguments.
+          // The type arguments of the class must come from the superclass expression, as in `class Sub(Base[str])`.
+          val typeArguments = staticWithCustomContext(context) { getIndexTypes(superClassExpression, it) }
+          results.add(PyCollectionTypeImpl(type.pyClass, false, typeArguments))
+        }
+        else if (type is PyClassType) {
           results.add(type)
         }
       }
@@ -1589,7 +1596,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val isTypeIs = TYPE_IS in names || TYPE_IS_EXT in names
         val isTypeGuard = TYPE_GUARD in names || TYPE_GUARD_EXT in names
         if (isTypeIs || isTypeGuard) {
-          val indexTypes: MutableList<PyType?> = getIndexTypes(resolved, context)
+          val indexTypes = getIndexTypes(resolved, context)
           if (indexTypes.size == 1) {
             val narrowedType = create(resolved, isTypeIs, indexTypes[0])
             if (narrowedType != null) {
@@ -2579,18 +2586,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return Ref(getType(starredExpression, context).derefOrUnknown())
     }
 
-    private fun getIndexTypes(expression: PySubscriptionExpression, context: Context): MutableList<PyType?> {
-      val types: MutableList<PyType?> = ArrayList()
+    private fun getIndexTypes(expression: PySubscriptionExpression, context: Context): List<PyType?> {
       val indexExpr = PyPsiUtils.flattenParens(expression.indexExpression)
-      if (indexExpr is PyTupleExpression) {
-        for (expr in indexExpr.elements) {
-          types.add(getType(expr, context).derefOrUnknown())
-        }
-      }
-      else if (indexExpr != null) {
-        types.add(getType(indexExpr, context).derefOrUnknown())
-      }
-      return types
+      val elements = if (indexExpr is PyTupleExpression) indexExpr.elements.asList() else listOfNotNull(indexExpr)
+      return elements.map { getType(it, context).derefOrUnknown() }
     }
 
     private fun parameterizeClassDefaultAware(
@@ -2652,7 +2651,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
             return assignedTypeRef
           }
           if (typeHint is PySubscriptionExpression) {
-            val indexTypes: MutableList<PyType?> = getIndexTypes(typeHint, context)
+            val indexTypes = getIndexTypes(typeHint, context)
             return Ref(PyTypeChecker.parameterizeType(assignedType, indexTypes, context.typeContext))
           }
           if (typeHint is PyReferenceExpression) {
@@ -2717,8 +2716,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val indexExpr = element.indexExpression
         if (indexExpr != null) {
           val operandType = Ref.deref<PyType?>(getType(operand, context))
-          val indexTypes: MutableList<PyType?> = getIndexTypes(element, context)
+          val indexTypes = getIndexTypes(element, context)
           if (operandType != null) {
+            if (operandType is PyNamedTupleType) {
+              parameterizeNamedTupleType(operandType, indexTypes, context.typeContext)?.let {
+                return it
+              }
+            }
             if (operandType is PyClassType) {
               if (operandType !is PyTupleType && PyNames.FQN.TUPLE == operandType.pyClass.qualifiedName) {
                 if (indexExpr is PyTupleExpression) {
