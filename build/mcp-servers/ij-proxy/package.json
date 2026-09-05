@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "engines": {
+    "bun": ">=1.4.0",
     "node": ">=18"
   },
   "scripts": {
@@ -12,12 +13,13 @@
     "test:jb-mcp": "JETBRAINS_MCP_STREAM_URL=http://127.0.0.1:64344/stream bun test ./integration-tests/jb-mcp-*.test.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "is-port-reachable": "^4.0.0",
     "p-retry": "^7.1.1",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@types/node": "^25.9.1"
+    "@types/bun": "^1.4.1",
+    "@types/node": "^25.9.5"
   }
 }

@@ -27,7 +27,7 @@ Install dependencies (once, from this directory):
 bun install
 ```
 
-Build the dist bundle (requires bun; run from this directory):
+Build the dist bundle with Bun 1.4 or newer. Run this command from this directory:
 
 ```bash
 bun run build
