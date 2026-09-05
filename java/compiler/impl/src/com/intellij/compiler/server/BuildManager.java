@@ -89,13 +89,16 @@ import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryManagerKt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
 import com.intellij.platform.backend.workspace.WorkspaceModelCache;
 import com.intellij.platform.eel.path.EelPath;
@@ -138,6 +141,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.jetbrains.io.ChannelRegistrar;
@@ -383,7 +387,7 @@ public final class BuildManager implements Disposable {
                   snapshot = new ArrayList<>(myUnprocessedEvents);
                   myUnprocessedEvents.clear();
                 }
-                if (shouldTriggerMake(snapshot)) {
+                if (shouldTriggerAutoMake(snapshot)) {
                   scheduleAutoMake();
                 }
               });
@@ -397,42 +401,12 @@ public final class BuildManager implements Disposable {
         }
       }
 
-      private static boolean shouldTriggerMake(List<? extends VFileEvent> events) {
+      private static boolean shouldTriggerAutoMake(List<? extends VFileEvent> events) {
         if (PowerSaveMode.isEnabled()) {
           return false;
         }
-
-        Project project = null;
-        ProjectFileIndex fileIndex = null;
-
-        for (var event : events) {
-          var eventFile = event.getFile();
-          if (eventFile == null) {
-            continue;
-          }
-          if (!eventFile.isValid()) {
-            return true; // should be deleted
-          }
-
-          if (project == null) {
-            // lazy init
-            project = getCurrentContextProject();
-            if (project == null) {
-              return false;
-            }
-            fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-          }
-
-          if (fileIndex.isInContent(eventFile)) {
-            if (ProjectUtil.isProjectOrWorkspaceFile(eventFile) ||
-                GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(eventFile, project)) {
-              // changes in project files or generated stuff should not trigger auto-make
-              continue;
-            }
-            return true;
-          }
-        }
-        return false;
+        Project project = getCurrentContextProject();
+        return project != null && BuildManager.shouldTriggerAutoMake(project, events);
       }
     });
 
@@ -750,6 +724,69 @@ public final class BuildManager implements Disposable {
 
   private static int getAutomakeWhileIdleTimeout(@NotNull RegistryManager registryManager) {
     return registryManager.intValue("compiler.automake.build.while.idle.timeout", 60000);
+  }
+
+  /**
+   * Schedules auto-make after a file is removed from project content.
+   * The listener classifies removals before the VFS change, while the old location is still available.
+   */
+  static final class RemovedContentListener implements AsyncFileListener {
+    @Override
+    public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      if (ApplicationManager.getApplication().isUnitTestMode() || PowerSaveMode.isEnabled()) {
+        return null;
+      }
+      Project project = getCurrentContextProject();
+      if (project == null || !shouldTriggerAutoMakeOnRemoval(project, events)) {
+        return null;
+      }
+      return new ChangeApplier() {
+        @Override
+        public void afterVfsChange() {
+          getInstance().scheduleAutoMake();
+        }
+      };
+    }
+  }
+
+  /**
+   * Returns whether a delete or move event must trigger auto-make for its old location.
+   * The events must come from {@link AsyncFileListener#prepareChange}.
+   */
+  @VisibleForTesting
+  static boolean shouldTriggerAutoMakeOnRemoval(@NotNull Project project, @NotNull List<? extends VFileEvent> events) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    for (VFileEvent event : events) {
+      ProgressManager.checkCanceled();
+      if ((event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) &&
+          isRelevantChange(project, fileIndex, event.getFile())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns whether a post-VFS event must trigger auto-make.
+   * Invalid files are handled by {@link #shouldTriggerAutoMakeOnRemoval} before the VFS change.
+   */
+  @VisibleForTesting
+  static boolean shouldTriggerAutoMake(@NotNull Project project, @NotNull List<? extends VFileEvent> events) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    for (VFileEvent event : events) {
+      if (isRelevantChange(project, fileIndex, event.getFile())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isRelevantChange(@NotNull Project project, @NotNull ProjectFileIndex fileIndex, @Nullable VirtualFile file) {
+    if (file == null || !file.isValid() || !fileIndex.isInContent(file)) {
+      return false;
+    }
+    // changes in project files or generated stuff should not trigger auto-make
+    return !ProjectUtil.isProjectOrWorkspaceFile(file) && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project);
   }
 
   private static boolean canStartAutoMake(@NotNull Project project) {
