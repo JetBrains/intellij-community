@@ -22,6 +22,7 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.asNio
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -36,6 +37,8 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModu
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
+import org.jetbrains.kotlin.idea.core.script.k2.dependencies.ScriptArtifactResolutionService
+import org.jetbrains.kotlin.idea.core.script.k2.dependencies.toRequest
 import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationId
 import org.jetbrains.kotlin.idea.core.script.k2.getVirtualFile
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
@@ -63,6 +66,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.notExists
 import kotlin.io.path.pathString
+import kotlin.script.experimental.api.DependencyCoordinates
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptCollectedData
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
@@ -70,12 +74,14 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.dependenciesSources
+import kotlin.script.experimental.api.dependencyRepositories
 import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.api.valueOrNull
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
+import kotlin.script.experimental.jvm.updateClasspath
 
 /**
  * Project-level service responsible for managing the full lifecycle of Kotlin script configurations.
@@ -178,7 +184,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
             return
         }
 
-        val configuration = when (rootConfiguration) {
+        val refinedConfiguration = when (rootConfiguration) {
             is ResultWithDiagnostics.Success<ScriptCompilationConfigurationWrapper> -> rootConfiguration.value.configuration
             is ResultWithDiagnostics.Failure -> {
                 rootConfiguration.reports.forEach {
@@ -196,6 +202,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
             }
         } ?: return
 
+        val configuration = refinedConfiguration.resolveDependencies(project, virtualFile)
         configuration.refreshVfsDependencies()
 
         project.workspaceModel.update("updating kotlin script entities [$KotlinScriptEntitySource]") { storage ->
@@ -373,6 +380,53 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
                     .filter { it.name.endsWith(KotlinFileType.DOT_SCRIPT_EXTENSION) }
             }
         }
+    }
+}
+
+// Mirrors MainKtsDependencyResolver from the compiler side: the configuration leaves the coordinates unresolved
+// (ScriptingHostConfiguration.resolveDependencies is off in the IDE) and we fetch them here, off the EDT and
+// under a cancellable progress, before the configuration reaches the workspace model.
+private suspend fun ScriptCompilationConfiguration.resolveDependencies(
+    project: Project,
+    virtualFile: VirtualFile,
+): ScriptCompilationConfiguration {
+    val allDependencies = get(ScriptCompilationConfiguration.dependencies).orEmpty()
+    val coordinates = allDependencies.filterIsInstance<DependencyCoordinates>()
+    if (coordinates.isEmpty()) return this
+
+    val repositories = get(ScriptCompilationConfiguration.dependencyRepositories).orEmpty()
+    val requests = coordinates.map { it.toRequest(repositories) }
+    val service = project.service<ScriptArtifactResolutionService>()
+
+    if (requests.any { service.resolvedOrNull(it) == null }) {
+        withBackgroundProgress(
+            project,
+            KotlinBaseScriptingBundle.message("progress.title.resolving.script.artifacts", virtualFile.name),
+        ) {
+            service.resolve(requests)
+        }
+    }
+
+    val resolutions = requests.mapNotNull { service.resolvedOrNull(it) }
+    val classpath = resolutions.flatMap { it.classpath }.distinct()
+    val messages = resolutions.flatMap { it.messages }
+    scriptingDebugLog(virtualFile) {
+        "resolved ${coordinates.flatMap { it.artifacts }} to ${classpath.size} files" + messages.joinToString("") { "; $it" }
+    }
+
+    if (messages.isNotEmpty()) {
+        NotificationGroupManager.getInstance()
+            .getNotificationGroup("KotlinScriptNotificationGroup")
+            .createNotification(
+                KotlinBaseScriptingBundle.message("script.configuration.failed", virtualFile.name),
+                messages.joinToString("\n"),
+                NotificationType.WARNING,
+            ).notify(project)
+    }
+
+    return ScriptCompilationConfiguration(this) {
+        dependencies.put(allDependencies.filterNot { it is DependencyCoordinates })
+        updateClasspath(classpath)
     }
 }
 
