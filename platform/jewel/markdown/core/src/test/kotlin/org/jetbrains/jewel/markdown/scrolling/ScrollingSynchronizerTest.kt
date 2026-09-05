@@ -5,6 +5,7 @@ package org.jetbrains.jewel.markdown.scrolling
 import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -12,7 +13,9 @@ import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.sp
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
@@ -739,7 +742,113 @@ public class ScrollingSynchronizerTest {
         }
     }
 
-    @OptIn(ExperimentalTestApi::class)
+    @Test
+    public fun `continuous offsets pass through block tops and interpolate between them`() {
+        @Language("Markdown")
+        val markdown =
+            """
+            |p1
+            |
+            |p2
+            |
+            |p3
+            """
+                .trimMargin()
+        doTest(markdown) { scrollState, synchronizer ->
+            synchronizer.scrollToLine(2)
+            val p2Top = scrollState.value
+            synchronizer.scrollToLine(4)
+            val p3Top = scrollState.value
+            assertTrue(p3Top > p2Top)
+
+            // Every source line is 10px tall in the editor, so p2 starts at 20 and p3 at 40
+            val editorOffsetOfLine = { line: Int -> line * 10 }
+            val editorMaxOffset = 1000
+
+            assertEquals(0, synchronizer.previewOffsetAt(0, editorMaxOffset, editorOffsetOfLine))
+            assertEquals(p2Top, synchronizer.previewOffsetAt(20, editorMaxOffset, editorOffsetOfLine))
+            assertEquals(p3Top, synchronizer.previewOffsetAt(40, editorMaxOffset, editorOffsetOfLine))
+            val halfway = synchronizer.previewOffsetAt(30, editorMaxOffset, editorOffsetOfLine)
+            assertTrue(abs(halfway - (p2Top + p3Top) / 2) <= 1)
+
+            assertEquals(20, synchronizer.editorOffsetAt(p2Top, editorMaxOffset, editorOffsetOfLine))
+            assertEquals(40, synchronizer.editorOffsetAt(p3Top, editorMaxOffset, editorOffsetOfLine))
+            assertTrue(abs(synchronizer.editorOffsetAt(halfway, editorMaxOffset, editorOffsetOfLine) - 30) <= 1)
+        }
+    }
+
+    @Test
+    public fun `continuous offsets ignore lines the editor does not know`() {
+        @Language("Markdown")
+        val markdown =
+            """
+            |p1
+            |
+            |p2
+            """
+                .trimMargin()
+        doTest(markdown) { scrollState, synchronizer ->
+            synchronizer.scrollToLine(2)
+            val p2Top = scrollState.value
+            val editorMaxOffset = 100
+            // No anchors at all: offsets map proportionally between the two panes' ends
+            val unknownLines = { _: Int -> null }
+            assertEquals(0, synchronizer.previewOffsetAt(0, editorMaxOffset, unknownLines))
+            assertEquals(
+                scrollState.maxValue,
+                synchronizer.previewOffsetAt(editorMaxOffset, editorMaxOffset, unknownLines),
+            )
+            // With p2 known, its top is reached exactly at its editor offset
+            assertEquals(p2Top, synchronizer.previewOffsetAt(50, editorMaxOffset) { line -> 50.takeIf { line == 2 } })
+        }
+    }
+
+    @Test
+    public fun `sync scrolling follows a pane back to the top after the other pane drove it there`() {
+        @Language("Markdown")
+        val markdown =
+            """
+            |p1
+            |
+            |p2
+            |
+            |p3
+            """
+                .trimMargin()
+        doTest(markdown) { previewScrollState, synchronizer ->
+            val editorScrollState = ScrollState(0)
+            val editorOffsetOfLine = { line: Int -> line * 10 }
+            coroutineScope {
+                val sync = launch {
+                    synchronizer.syncScrolling(editorScrollState, previewScrollState) { editorOffsetOfLine }
+                }
+
+                suspend fun settle() = repeat(5) { withFrameNanos {} }
+                settle()
+
+                // The editor drives the preview down to p3 and back to the top...
+                editorScrollState.scrollTo(40)
+                settle()
+                val p3Top = previewScrollState.value
+                assertTrue(p3Top > 0)
+                editorScrollState.scrollTo(0)
+                settle()
+                assertEquals(0, previewScrollState.value)
+
+                // ...then the preview drives the editor down and back to the top. The preview's last report of 0
+                // must not be mistaken for an echo of the editor's earlier request.
+                previewScrollState.scrollTo(p3Top)
+                settle()
+                assertEquals(40, editorScrollState.value)
+                previewScrollState.scrollTo(0)
+                settle()
+                assertEquals(0, editorScrollState.value)
+
+                sync.cancel()
+            }
+        }
+    }
+
     private fun doTest(
         firstRun: String,
         secondRun: String,
