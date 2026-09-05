@@ -24,7 +24,9 @@ class PooledCoroutineContextTest : LightPlatformTestCase() {
   @Test
   fun `log error`() {
     val exception = RuntimeException()
-    assertThat("Unhandled exception has wrong type", loggedErrorsAfterThrowingFromGlobalScope(exception), IsInstanceOf(UnhandledException::class.java))
+    assertThat("Unhandled exception has wrong type",
+               loggedErrorsAfterThrowingFromGlobalScope(exception),
+               IsInstanceOf(UnhandledException::class.java))
   }
 
   @Test

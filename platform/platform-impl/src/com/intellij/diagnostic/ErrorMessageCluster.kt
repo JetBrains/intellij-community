@@ -12,7 +12,7 @@ internal class ErrorMessageCluster(
   val messages: List<AbstractMessage>,
   val pluginId: PluginId?,
   val pluginInfo: ProblematicPluginInfo?,
-  val submitter: ErrorReportSubmitter?
+  val submitter: ErrorReportSubmitter?,
 ) {
   val first = messages.first()
 

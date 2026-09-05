@@ -130,13 +130,13 @@ object ITNProxy {
   private fun appendEarlyAppData(builder: Appendable) {
     @Suppress("TestOnlyProblems")
     val homeDir = System.getProperty("idea.home.path")?.let { Path(it) }
-      ?: PathManager.getHomeDirFor(ITNProxy::class.java)
-      ?: throw RuntimeException("Cannot detect the IDE home directory")
+                  ?: PathManager.getHomeDirFor(ITNProxy::class.java)
+                  ?: throw RuntimeException("Cannot detect the IDE home directory")
     val appDataFile = homeDir.resolve(when {
-      AppMode.isRunningFromDevBuild() -> "bin/product-info.json"
-      OS.CURRENT == OS.macOS -> "Resources/product-info.json"
-      else -> "product-info.json"
-    })
+                                        AppMode.isRunningFromDevBuild() -> "bin/product-info.json"
+                                        OS.CURRENT == OS.macOS -> "Resources/product-info.json"
+                                        else -> "product-info.json"
+                                      })
 
     try {
       var appName = null as String?
@@ -203,7 +203,7 @@ object ITNProxy {
     val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
     trustManagerFactory.init(null as KeyStore?)
     trustManagerFactory.trustManagers.filterIsInstance<X509TrustManager>().firstOrNull()
-      ?: error("No X509TrustManager available")
+    ?: error("No X509TrustManager available")
   }
 
   @Throws(Exception::class)
@@ -448,7 +448,8 @@ object ITNProxy {
   }
 
   private class TrackingStreamWriter(out: Writer) : FilterWriter(out) {
-    @JvmField var isEmpty = true
+    @JvmField
+    var isEmpty = true
 
     override fun write(c: Int) {
       super.write(c)

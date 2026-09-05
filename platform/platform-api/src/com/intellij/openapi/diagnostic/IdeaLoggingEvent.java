@@ -44,7 +44,9 @@ public class IdeaLoggingEvent {
     myAttachments = attachments;
     myData = data;
     myProblematicPluginInfo = problematicPluginInfo;
-    myPlugin = problematicPluginInfo instanceof ProblematicPluginInfoWithDescriptor ? ((ProblematicPluginInfoWithDescriptor)problematicPluginInfo).getPluginDescriptor() : null;
+    myPlugin = problematicPluginInfo instanceof ProblematicPluginInfoWithDescriptor
+               ? ((ProblematicPluginInfoWithDescriptor)problematicPluginInfo).getPluginDescriptor()
+               : null;
   }
 
   /** Returns a message passed to {@link Logger#error Logger.error(String, [...])} methods. */

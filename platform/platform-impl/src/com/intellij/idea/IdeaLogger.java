@@ -47,7 +47,8 @@ public final class IdeaLogger extends JulLogger {
   /// `-Didea.logger.exception.expiration.minutes=5` means to forget about this particular exception if it didn't occur for five minutes.
   ///
   /// To disable the "mute frequent exceptions" feature completely, specify `-Didea.logger.exception.expiration.minutes=0`
-  private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES = Integer.getInteger("idea.logger.exception.expiration.minutes", 8*60);
+  private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES =
+    Integer.getInteger("idea.logger.exception.expiration.minutes", 8 * 60);
 
   // must be as a separate class to avoid initialization as part of start-up (file logger configuration)
   private static final class MyCache {
@@ -69,7 +70,11 @@ public final class IdeaLogger extends JulLogger {
   }
 
   private boolean isTooFrequentException(@Nullable Throwable t) {
-    if (t == null || !isMutingFrequentExceptionsEnabled() || !LoadingState.COMPONENTS_LOADED.isOccurred() || isDebugEnabled() || isTraceEnabled()) {
+    if (t == null ||
+        !isMutingFrequentExceptionsEnabled() ||
+        !LoadingState.COMPONENTS_LOADED.isOccurred() ||
+        isDebugEnabled() ||
+        isTraceEnabled()) {
       return false;
     }
 
@@ -126,7 +131,8 @@ public final class IdeaLogger extends JulLogger {
         }
       }
     }
-    catch (Exception _) { }
+    catch (Exception _) {
+    }
     finally {
       FUS_RECURSION_GUARD.remove();
     }

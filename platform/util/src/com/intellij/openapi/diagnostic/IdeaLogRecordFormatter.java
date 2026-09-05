@@ -94,7 +94,9 @@ public class IdeaLogRecordFormatter extends Formatter {
       result.append('#');
       pos++;
     }
-    if (!(category.startsWith("com.intellij", pos) || category.startsWith("com.jetbrains", pos) || category.startsWith("org.jetbrains", pos))) {
+    if (!(category.startsWith("com.intellij", pos) ||
+          category.startsWith("com.jetbrains", pos) ||
+          category.startsWith("org.jetbrains", pos))) {
       return category;
     }
     while ((nextDot = category.indexOf('.', pos)) >= 0) {

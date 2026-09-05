@@ -66,7 +66,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   private static final EventId1<Integer> PROJECT_MAX_SIMULTANEOUS =
     LIFECYCLE.registerEvent("project.max.simultaneous",
-                           EventFields.BoundedInt("count", new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}));
+                            EventFields.BoundedInt("count", new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}));
 
   private static final EventId PROJECT_CLOSED = LIFECYCLE.registerEvent("project.closed"); // actually called before closed and disposed
 
@@ -91,7 +91,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventId FREEZE_POPUP_SHOWN = LIFECYCLE.registerEvent("freeze.popup.shown");
 
   private static final EventId3<PluginInfo, Long, Boolean> IDE_FREEZE_DETECTED_PLUGIN =
-    LIFECYCLE.registerEvent("ide.freeze.detected.plugin", EventFields.PluginInfo, EventFields.DurationMs, EventFields.Boolean("reported_to_user"));
+    LIFECYCLE.registerEvent("ide.freeze.detected.plugin", EventFields.PluginInfo, EventFields.DurationMs,
+                            EventFields.Boolean("reported_to_user"));
   private static final EventId1<PluginInfo> IDE_FREEZE_PLUGIN_ISSUE_REPORTED =
     LIFECYCLE.registerEvent("ide.freeze.reported.plugin", EventFields.PluginInfo);
   private static final EventId1<PluginInfo> IDE_FREEZE_PLUGIN_IGNORED =
@@ -111,7 +112,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventField<Integer> errorSizeField = EventFields.Int("error_size");
   private static final EventField<Boolean> tooManyErrorsField = EventFields.Boolean("too_many_errors");
   private static final VarargEventId IDE_ERROR = LIFECYCLE.registerVarargEvent(
-    "ide.error", EventFields.PluginInfo, errorField, memoryErrorKindField, errorHashField, errorFramesField, errorSizeField, tooManyErrorsField, unhandledExceptionInteractiveField);
+    "ide.error", EventFields.PluginInfo, errorField, memoryErrorKindField, errorHashField, errorFramesField, errorSizeField,
+    tooManyErrorsField, unhandledExceptionInteractiveField);
 
   private static final EventId IDE_CRASH_DETECTED = LIFECYCLE.registerEvent("ide.crash.detected");
 
@@ -124,14 +126,18 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     LIFECYCLE.registerEvent("ide.hundred.exceptions.happened.in.plugin", numberOfExceptionsField, EventFields.PluginInfo);
 
   private enum ProjectOpenMode {New, Same, Attach}
-  private static final EventField<ProjectOpenMode> projectOpenModeField = EventFields.Enum("mode", ProjectOpenMode.class, mode -> Strings.toLowerCase(mode.name()));
-  private static final EventId1<ProjectOpenMode> PROJECT_FRAME_SELECTED = LIFECYCLE.registerEvent("project.frame.selected", projectOpenModeField);
+
+  private static final EventField<ProjectOpenMode> projectOpenModeField =
+    EventFields.Enum("mode", ProjectOpenMode.class, mode -> Strings.toLowerCase(mode.name()));
+  private static final EventId1<ProjectOpenMode> PROJECT_FRAME_SELECTED =
+    LIFECYCLE.registerEvent("project.frame.selected", projectOpenModeField);
 
   private static final EventId1<Integer> EARLY_ERRORS =
     LIFECYCLE.registerEvent("early.errors", EventFields.Int("errors_ignored"));
 
   private static final EventsRateThrottle ourErrorRateThrottle = new EventsRateThrottle(100, 5L * 60 * 1000); // 100 errors per 5 minutes
-  private static final EventsIdentityThrottle ourErrorIdentityThrottle = new EventsIdentityThrottle(50, 60L * 60 * 1000); // 1 unique error per 1 hour
+  private static final EventsIdentityThrottle ourErrorIdentityThrottle = new EventsIdentityThrottle(50, 60L * 60 * 1000);
+    // 1 unique error per 1 hour
 
   private static final EventId1<Boolean> IDE_MEMORY_REPORT_SENT =
     LIFECYCLE.registerEvent("ide.memory.report.send", EventFields.Boolean("automatic"));

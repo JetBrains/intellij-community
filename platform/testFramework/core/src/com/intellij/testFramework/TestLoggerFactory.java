@@ -233,12 +233,12 @@ public final class TestLoggerFactory implements Logger.Factory {
     public @NotNull String toString() {
       var source = category().substring(Math.max(category().length() - 30, 0));
       String prefix;
-      if(LOG_THREAD_NAME) {
+      if (LOG_THREAD_NAME) {
         var threadNameTruncated = threadName.substring(Math.max(threadName.length() - 20, 0));
         prefix = String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-6s %3$30s [%4$20s] - ",
                                timeStamp, level.getLevelName(), source, threadNameTruncated);
       }
-      else{
+      else {
         prefix = String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-6s %3$30s - ",
                                timeStamp, level.getLevelName(), source);
       }
@@ -247,6 +247,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       return prefix + message + throwable;
     }
   }
+
   private void buffer(@NotNull LogLevel level, @NotNull String category, @Nullable String message, @Nullable Throwable t) {
     synchronized (myBuffer) {
       Record logRecord = new Record(System.currentTimeMillis(), level, category, message, t, Thread.currentThread().getName());
@@ -265,11 +266,12 @@ public final class TestLoggerFactory implements Logger.Factory {
 
     var sb = new StringBuilder();
     ExceptionUtil.causeAndSuppressed(t, ComparisonFailure.class).forEach(e ->
-      logComparisonFailure(sb, e.getExpected(), e.getActual())
+                                                                           logComparisonFailure(sb, e.getExpected(), e.getActual())
     );
 
     ExceptionUtil.causeAndSuppressed(t, junit.framework.ComparisonFailure.class).forEach(e ->
-      logComparisonFailure(sb, e.getExpected(), e.getActual())
+                                                                                           logComparisonFailure(sb, e.getExpected(),
+                                                                                                                e.getActual())
     );
 
     return sb.isEmpty() ? null : sb.toString();
@@ -353,7 +355,10 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   private @NotNull CharSequence myBufferStaticFixtureInit = ""; // guarded by myBuffer
   private @NotNull CharSequence myBufferFixtureInit = ""; // guarded by myBuffer
-  public static <T extends Throwable> void fixtureInitialization(boolean isStatic, @NotNull String testName, @NotNull ThrowableRunnable<T> runnable) throws T {
+
+  public static <T extends Throwable> void fixtureInitialization(boolean isStatic,
+                                                                 @NotNull String testName,
+                                                                 @NotNull ThrowableRunnable<T> runnable) throws T {
     try {
       runnable.run();
     }
@@ -379,11 +384,11 @@ public final class TestLoggerFactory implements Logger.Factory {
   private void saveFixtureLogs(boolean isStatic) {
     synchronized (myBuffer) {
       if (isStatic) {
-        buffer(LogLevel.TRACE, "","---Static Fixtures Initialization End---", null);
+        buffer(LogLevel.TRACE, "", "---Static Fixtures Initialization End---", null);
         myBufferStaticFixtureInit = toBuffer();
       }
       else {
-        buffer(LogLevel.TRACE, "","---Instance Fixtures Initialization End---", null);
+        buffer(LogLevel.TRACE, "", "---Instance Fixtures Initialization End---", null);
         myBufferFixtureInit = toBuffer();
       }
       clear();
@@ -431,6 +436,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   /// Publishes `artifactPath` as a build artifact if the current test fails on TeamCity under the 'debug-artifacts' directory.
+  ///
   /// @param artifactPath path to a file or directory to be published
   /// @param artifactName meaningful name under which the artifact will be published; the name of the current test will be added as a prefix
   ///                     automatically; and if multiple artifacts with the same `artifactName` are added during execution of the test,
@@ -499,7 +505,8 @@ public final class TestLoggerFactory implements Logger.Factory {
       try {
         return Files.createFile(logDir.resolve(testName + i + ".log"));
       }
-      catch (FileAlreadyExistsException ignored) { }
+      catch (FileAlreadyExistsException ignored) {
+      }
     }
   }
 

@@ -199,7 +199,7 @@ internal class ReporterIdForEAAutoReporters : AboutPopupDescriptionProvider {
 
 internal class ReporterIdLoggerActivity : ProjectActivity {
   init {
-      if (application.isHeadlessEnvironment) throw ExtensionNotApplicableException.create()
+    if (application.isHeadlessEnvironment) throw ExtensionNotApplicableException.create()
   }
 
   override suspend fun execute(project: Project) {

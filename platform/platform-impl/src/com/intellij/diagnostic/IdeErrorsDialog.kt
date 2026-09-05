@@ -531,7 +531,9 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
         }
       }
       else if (message.submissionInfo.url != null && message.submissionInfo.linkText != null) {
-        info.append(DiagnosticBundle.message("error.list.message.submitted.as.link", message.submissionInfo.url, message.submissionInfo.linkText))
+        info.append(DiagnosticBundle.message("error.list.message.submitted.as.link",
+                                             message.submissionInfo.url,
+                                             message.submissionInfo.linkText))
       }
       else {
         info.append(DiagnosticBundle.message("error.list.message.submitted"))
@@ -544,7 +546,9 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     val date = DateFormatUtil.formatPrettyDateTime(cluster.messages[count - 1].date)
     myDetailsLabel.text = DiagnosticBundle.message("error.list.message.info", date, count)
     val submitter = cluster.submitter
-    if (submitter == null && pluginInfo != null && !PluginManagerCore.isDevelopedByJetBrains(pluginInfo.pluginId, pluginInfo.vendor, pluginInfo.organization)) {
+    if (submitter == null && pluginInfo != null && !PluginManagerCore.isDevelopedByJetBrains(pluginInfo.pluginId,
+                                                                                             pluginInfo.vendor,
+                                                                                             pluginInfo.organization)) {
       myForeignPluginWarningLabel.isVisible = true
       val vendor = pluginInfo.vendor
       val vendorUrl =
@@ -652,7 +656,8 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   }
 
   /* UI components */
-  private inner class BackAction : AnAction(IdeBundle.message("button.previous"), null, AllIcons.Actions.Back), DumbAware, LightEditCompatible {
+  private inner class BackAction : AnAction(IdeBundle.message("button.previous"), null, AllIcons.Actions.Back), DumbAware,
+                                   LightEditCompatible {
     init {
       val action = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB)
       if (action != null) {
@@ -674,7 +679,8 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
   }
 
-  private inner class ForwardAction : AnAction(IdeBundle.message("button.next"), null, AllIcons.Actions.Forward), DumbAware, LightEditCompatible {
+  private inner class ForwardAction : AnAction(IdeBundle.message("button.next"), null, AllIcons.Actions.Forward), DumbAware,
+                                      LightEditCompatible {
     init {
       val action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB)
       if (action != null) {
@@ -696,7 +702,8 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
   }
 
-  private inner class GoToLastAction : AnAction(IdeBundle.message("button.last"), null, AllIcons.Actions.Play_last), DumbAware, LightEditCompatible {
+  private inner class GoToLastAction : AnAction(IdeBundle.message("button.last"), null, AllIcons.Actions.Play_last), DumbAware,
+                                       LightEditCompatible {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun update(e: AnActionEvent) {
@@ -720,7 +727,8 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
   }
 
-  private inner class AnalyzeAction(analyze: AnAction) : AbstractAction(ActionsBundle.actionText(ActionManager.getInstance().getId(analyze))) {
+  private inner class AnalyzeAction(analyze: AnAction) :
+    AbstractAction(ActionsBundle.actionText(ActionManager.getInstance().getId(analyze))) {
     private val myAnalyze: AnAction
 
     init {
@@ -1034,7 +1042,9 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
     @JvmStatic
     @ApiStatus.ScheduledForRemoval
-    @Deprecated("use {@link PluginUtil#findPluginId} ", ReplaceWith("PluginUtil.getInstance().findPluginId(t)"), level = DeprecationLevel.HIDDEN)
+    @Deprecated("use {@link PluginUtil#findPluginId} ",
+                ReplaceWith("PluginUtil.getInstance().findPluginId(t)"),
+                level = DeprecationLevel.HIDDEN)
     fun findPluginId(t: Throwable): PluginId? = PluginUtil.getInstance().findPluginId(t)
 
     fun hashMessage(message: AbstractMessage): Long {
