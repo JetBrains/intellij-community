@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
@@ -61,7 +60,7 @@ public abstract sealed class ChangeListWorker {
   protected final Map<Change, ListData> myChangeMappings = new HashMap<>();
   protected final Map<FilePath, PartialChangeTracker> myPartialChangeTrackers = new HashMap<>();
 
-  protected abstract @NotNull ChangeListsIndexes getIdx();
+  public abstract @NotNull ChangeListsIndexes getIdx();
 
   protected @Nullable Map<ListData, Set<Change>> myReadOnlyChangesCache = null;
   protected final AtomicBoolean myReadOnlyChangesCacheInvalidated = new AtomicBoolean(false);
@@ -132,16 +131,6 @@ public abstract sealed class ChangeListWorker {
 
   public int getChangeListsNumber() {
     return myLists.size();
-  }
-
-
-  public @Nullable Change getChangeForPath(@Nullable FilePath filePath) {
-    if (filePath == null) return null;
-    return getIdx().getChange(filePath);
-  }
-
-  public @NotNull Collection<Change> getAllChanges() {
-    return new ArrayList<>(getIdx().getChanges());
   }
 
   public @NotNull @Unmodifiable List<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
@@ -228,24 +217,6 @@ public abstract sealed class ChangeListWorker {
 
     return map;
   }
-
-
-  public @NotNull List<FilePath> getAffectedPaths() {
-    return new ArrayList<>(getIdx().getAffectedPaths());
-  }
-
-  public @Nullable AbstractVcs getVcsFor(@NotNull Change change) {
-    return getIdx().getVcsFor(change);
-  }
-
-  public @Nullable FileStatus getStatus(@NotNull VirtualFile file) {
-    return getIdx().getStatus(VcsUtil.getFilePath(file));
-  }
-
-  public @Nullable FileStatus getStatus(@NotNull FilePath file) {
-    return getIdx().getStatus(file);
-  }
-
 
   public @Nullable String setDefaultList(@NotNull String name) {
     if (!assertChangeListsEnabled()) return null;
@@ -640,7 +611,7 @@ public abstract sealed class ChangeListWorker {
     }
 
     @Override
-    protected @NotNull ChangeListsIndexes.Indexed getIdx() {
+    public @NotNull ChangeListsIndexes.Indexed getIdx() {
       return myIdx;
     }
 
@@ -680,8 +651,8 @@ public abstract sealed class ChangeListWorker {
       }
     }
 
-    private @Nullable Change getChangeForAfterPath(@Nullable FilePath filePath) {
-      Change change = getChangeForPath(filePath);
+    private @Nullable Change getChangeForAfterPath(@NotNull FilePath filePath) {
+      Change change = getIdx().getChange(filePath);
       if (change == null) return null;
 
       ContentRevision after = change.getAfterRevision();
@@ -822,16 +793,6 @@ public abstract sealed class ChangeListWorker {
 
       LocalChangeListImpl newList = toChangeList(myDefault);
       if (readOnlyChanged) myDelayedNotificator.changeListChanged(newList);
-    }
-
-    /**
-     * {@link ThreeState#NO} - there are no changed files under this directory
-     * {@link ThreeState#YES} - there are modified direct children of this directory
-     * {@link ThreeState#UNSURE} - there are modified non-direct children of this directory
-     */
-    public @NotNull ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
-      FilePath filePath = VcsUtil.getFilePath(virtualFile);
-      return myIdx.haveChangesUnder(filePath);
     }
 
     private @NotNull Map<ListData, ListData> doSetChangeLists(@NotNull Collection<ListData> lists) {
@@ -1002,7 +963,7 @@ public abstract sealed class ChangeListWorker {
     }
 
     @Override
-    protected @NotNull ChangeListsIndexes.Mutable getIdx() {
+    public @NotNull ChangeListsIndexes.Mutable getIdx() {
       return myIdx;
     }
 
@@ -1308,8 +1269,8 @@ public abstract sealed class ChangeListWorker {
       myReadOnlyChangesCache = null;
     }
 
-    public void removeRegisteredChangeFor(@Nullable FilePath filePath) {
-      Change change = getChangeForPath(filePath);
+    public void removeRegisteredChangeFor(@NotNull FilePath filePath) {
+      Change change = getIdx().getChange(filePath);
       if (change == null) return;
 
       getIdx().changeRemoved(change);
@@ -1381,12 +1342,12 @@ public abstract sealed class ChangeListWorker {
 
       @Override
       public FileStatus getStatus(@NotNull VirtualFile file) {
-        return ForUpdate.this.getStatus(file);
+        return getIdx().getStatus(VcsUtil.getFilePath(file));
       }
 
       @Override
       public FileStatus getStatus(@NotNull FilePath filePath) {
-        return ForUpdate.this.getStatus(filePath);
+        return getIdx().getStatus(filePath);
       }
 
       @Override

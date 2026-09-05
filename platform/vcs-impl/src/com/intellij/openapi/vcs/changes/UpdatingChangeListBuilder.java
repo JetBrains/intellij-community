@@ -90,7 +90,7 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void removeRegisteredChangeFor(FilePath path) {
+  public void removeRegisteredChangeFor(@NotNull FilePath path) {
     myChangeListUpdater.removeRegisteredChangeFor(path);
   }
 

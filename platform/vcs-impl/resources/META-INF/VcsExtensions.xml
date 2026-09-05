@@ -42,6 +42,8 @@
                  description="Add VCS repository roots as recursive VFS watch roots"/>
     <registryKey key="vcs.changelist.move.changes.on.create" defaultValue="false" restartRequired="false"
                  description="Move the currently selected changes into a changelist right after it is created"/>
+    <registryKey key="vcs.changelist.manager.lock.free.queries" defaultValue="true" restartRequired="false"
+                 description="Read the change lists and the file holders without a read action. Turn it off if a query deadlocks, or if it fails because it takes a read action under the data lock"/>
     <dependencyCollector kind="vcs" implementation="com.intellij.openapi.vcs.impl.MissingVcsPluginAdvertiser"/>
     <!--suppress LightServiceMigrationXML - see DefaultProjectStoreTest (IDE needs to know correct Storage without service being loaded) -->
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.OptionsAndConfirmationsHolder"/>

@@ -98,7 +98,9 @@ internal abstract class ChangeListsIndexes protected constructor(
     /**
      * Reports whether a changed file exists under [path].
      *
-     * See [ChangeListWorker.Main.haveChangesUnder] for the meaning of each [ThreeState] value.
+     * [ThreeState.NO] - there are no changed files under this directory
+     * [ThreeState.YES] - there are modified direct children of this directory
+     * [ThreeState.UNSURE] - there are modified non-direct children of this directory
      */
     fun haveChangesUnder(path: FilePath): ThreeState = affectedPathSet.haveChangesUnder(path)
   }

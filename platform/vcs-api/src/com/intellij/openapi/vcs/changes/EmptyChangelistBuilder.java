@@ -26,7 +26,7 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void removeRegisteredChangeFor(FilePath path) {
+  public void removeRegisteredChangeFor(@NotNull FilePath path) {
   }
 
   @Override

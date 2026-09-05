@@ -44,7 +44,7 @@ public class MockChangelistBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void removeRegisteredChangeFor(FilePath path) {
+  public void removeRegisteredChangeFor(@NotNull FilePath path) {
     for (Iterator<Change> iterator = myChanges.iterator(); iterator.hasNext(); ) {
       final Change change = iterator.next();
       if (path.equals(ChangesUtil.getFilePath(change))) {

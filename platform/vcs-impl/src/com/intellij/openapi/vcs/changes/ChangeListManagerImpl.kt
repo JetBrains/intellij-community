@@ -116,7 +116,35 @@ class ChangeListManagerImpl(
 
   private val dataLock = Any()
 
-  private var filesHolder = FileHolderComposite.create(project)
+  /**
+   * Written under [dataLock] by [publishSnapshot], and read through [queryFileHolders], [queryWorkerIndex] or [queryFileHoldersAndWorkerIndex] without a lock.
+   * Files and changes are published here together to ensure consistency within [queryFileHoldersAndWorkerIndex].
+   *
+   * A [FileHolderComposite] is never mutated once published.
+   * An update mutates a [FileHolderComposite.copy] and swaps it in, so a reader always sees a complete snapshot.
+   *
+   * A [VcsManagedFilesHolder] entry in the composite is an immutable view over per-repository data.
+   * The snapshot does not freeze what such a view reports.
+   * The repository holder keeps that data behind its own lock, and [dataLock] never covered it.
+   *
+   * [ChangeListsIndexes.Indexed] is immutable by design and is taken from the worker together with the file holder.
+   */
+  @Volatile
+  private var filesAndChanges = FilesAndChanges(
+    FileHolderComposite.create(project),
+    worker.idx
+  )
+
+  private val filesHolder: FileHolderComposite
+    get() = filesAndChanges.files
+
+  /**
+   * Publishes [files] and the current [worker] index as one [filesAndChanges] snapshot.
+   * Call it under [dataLock] after each change to the [worker] index or to the file holders.
+   */
+  private fun publishSnapshot(files: FileHolderComposite = filesHolder) {
+    filesAndChanges = FilesAndChanges(files, worker.idx)
+  }
 
   private var disabledWorkerState: List<LocalChangeListImpl>? = null
 
@@ -401,6 +429,53 @@ class ChangeListManagerImpl(
     }
   }
 
+  /**
+   * Runs [operation] on the current [filesHolder].
+   *
+   * `vcs.changelist.manager.lock.free.queries` registry key controls the locking. The query takes no lock while the key is on.
+   * While the key is off, the query takes a read action and [dataLock].
+   */
+  private fun <T> queryFileHolders(operation: FileHolderComposite.() -> T): T {
+    if (Registry.`is`("vcs.changelist.manager.lock.free.queries")) {
+      return filesHolder.operation()
+    }
+    return executeUnderReadActionDataLock {
+      filesHolder.operation()
+    }
+  }
+
+  /**
+   * Runs [operation], which reads the published changes index of [worker], but NOT THE CHANGELISTS.
+   *
+   * `vcs.changelist.manager.lock.free.queries` registry key controls the locking. The query takes no lock while the key is on.
+   * While the key is off, the query takes [dataLock].
+   */
+  private fun <T> queryWorkerIndex(operation: ChangeListsIndexes.Indexed.() -> T): T {
+    if (Registry.`is`("vcs.changelist.manager.lock.free.queries")) {
+      return filesAndChanges.changesIdx.operation()
+    }
+    return executeUnderDataLock {
+      filesAndChanges.changesIdx.operation()
+    }
+  }
+
+  /**
+   * Runs [operation], which must read both [filesHolder] and the published changes index of [worker].
+   *
+   * `vcs.changelist.manager.lock.free.queries` registry key controls the locking. The query takes no lock while the key is on.
+   * While the key is off, the query takes a read action and [dataLock].
+   */
+  private fun <T> queryFileHoldersAndWorkerIndex(operation: (files: FileHolderComposite, idx: ChangeListsIndexes.Indexed) -> T): T {
+    if (Registry.`is`("vcs.changelist.manager.lock.free.queries")) {
+      val snapshot = filesAndChanges
+      return operation(snapshot.files, snapshot.changesIdx)
+    }
+    return executeUnderReadActionDataLock {
+      val snapshot = filesAndChanges
+      operation(snapshot.files, snapshot.changesIdx)
+    }
+  }
+
   fun scheduleUpdateImpl() {
     updateRequestsQueue.schedule()
   }
@@ -414,7 +489,7 @@ class ChangeListManagerImpl(
           finish()
         }
         worker.applyChangesFromUpdate(dataHolder.worker, ChangesDeltaForwarder(project, scheduler))
-        filesHolder = dataHolder.composite
+        publishSnapshot(dataHolder.composite)
         _updateException = null
       }
 
@@ -535,7 +610,7 @@ class ChangeListManagerImpl(
           }
 
           val statusChanged = filesHolder != newDataHolder.composite
-          filesHolder = newDataHolder.composite
+          publishSnapshot(newDataHolder.composite)
           if (statusChanged) {
             val isUnchangedUpdating = isInUpdate() || isUnversionedInUpdateMode || isIgnoredInUpdateMode
             delayedNotificator.unchangedFileStatusChanged(!isUnchangedUpdating)
@@ -654,102 +729,102 @@ class ChangeListManagerImpl(
 
   @Suppress("IO_FILE_USAGE")
   override fun getAffectedPaths(): List<File> =
-    executeUnderDataLock {
-      worker.getAffectedPaths()
-    }.mapNotNull {
+    queryWorkerIndex {
+      getAffectedPaths()
+    }.map {
       it.ioFile
     }
 
   override fun getAffectedFiles(): List<VirtualFile> =
-    executeUnderDataLock {
-      worker.getAffectedPaths()
+    queryWorkerIndex {
+      getAffectedPaths()
     }.mapNotNull {
       it.virtualFile
     }
 
   override fun getAllChanges(): Collection<Change> =
-    executeUnderDataLock {
-      worker.getAllChanges()
+    queryWorkerIndex {
+      getChanges()
     }
 
   override fun getUnversionedFilesPaths(): List<FilePath> =
-    executeUnderReadActionDataLock {
-      filesHolder.unversionedFileHolder.getFiles().toList()
+    queryFileHolders {
+      unversionedFileHolder.getFiles().toList()
     }
 
   override fun isResolvedConflict(file: FilePath): Boolean {
     val vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file) ?: return false
-    return executeUnderReadActionDataLock {
-      filesHolder.resolvedMergeFilesHolder.containsFile(file, vcsRoot)
+    return queryFileHolders {
+      resolvedMergeFilesHolder.containsFile(file, vcsRoot)
     }
   }
 
   override fun getResolvedConflictPaths(): List<FilePath> =
-    executeUnderReadActionDataLock {
-      filesHolder.resolvedMergeFilesHolder.getFiles().toList()
+    queryFileHolders {
+      resolvedMergeFilesHolder.getFiles().toList()
     }
 
   override fun getModifiedWithoutEditing(): List<VirtualFile> =
-    executeUnderReadActionDataLock {
-      filesHolder.modifiedWithoutEditingFileHolder.files
+    queryFileHolders {
+      modifiedWithoutEditingFileHolder.files
     }
 
   override fun getIgnoredFilePaths(): List<FilePath> =
-    executeUnderReadActionDataLock {
-      filesHolder.ignoredFileHolder.getFiles().toList()
+    queryFileHolders {
+      ignoredFileHolder.getFiles().toList()
     }
 
   val isUnversionedInUpdateMode: Boolean
-    get() = executeUnderReadActionDataLock {
-      filesHolder.unversionedFileHolder.isInUpdatingMode()
+    get() = queryFileHolders {
+      unversionedFileHolder.isInUpdatingMode
     }
 
   val isIgnoredInUpdateMode: Boolean
-    get() = executeUnderReadActionDataLock {
-      filesHolder.ignoredFileHolder.isInUpdatingMode()
+    get() = queryFileHolders {
+      ignoredFileHolder.isInUpdatingMode
     }
 
   val lockedFolders: List<VirtualFile>
-    get() = executeUnderReadActionDataLock {
-      filesHolder.lockedFileHolder.files
+    get() = queryFileHolders {
+      lockedFileHolder.files
     }
 
   val logicallyLockedFolders: Map<VirtualFile, LogicalLock>
-    get() = executeUnderReadActionDataLock {
-      filesHolder.logicallyLockedFileHolder.map.toMap()
-    }
+    get() = queryFileHolders {
+      logicallyLockedFileHolder.map
+    }.toMap()
 
   fun isLogicallyLocked(file: VirtualFile): Boolean =
-    executeUnderReadActionDataLock {
-      filesHolder.logicallyLockedFileHolder.containsKey(file)
+    queryFileHolders {
+      logicallyLockedFileHolder.containsKey(file)
     }
 
   fun isContainedInLocallyDeleted(filePath: FilePath): Boolean =
-    executeUnderReadActionDataLock {
-      filesHolder.deletedFileHolder.isContainedInLocallyDeleted(filePath)
+    queryFileHolders {
+      deletedFileHolder.isContainedInLocallyDeleted(filePath)
     }
 
   val deletedFiles: List<LocallyDeletedChange>
-    get() = executeUnderReadActionDataLock {
-      filesHolder.deletedFileHolder.getFiles()
+    get() = queryFileHolders {
+      deletedFileHolder.files
     }
 
   val switchedFilesMap: MultiMap<String, VirtualFile>
-    get() = executeUnderReadActionDataLock {
-      filesHolder.switchedFileHolder.getBranchToFileMap()
+    get() = queryFileHolders {
+      switchedFileHolder.getBranchToFileMap()
     }
 
   val switchedRoots: MutableMap<VirtualFile, String>
-    get() = executeUnderReadActionDataLock {
-      filesHolder.rootSwitchFileHolder.getFilesMapCopy()
+    get() = queryFileHolders {
+      rootSwitchFileHolder.getFilesMapCopy()
     }
 
   override fun getUpdateException(): VcsException? = _updateException
 
   override fun isFileAffected(file: VirtualFile): Boolean {
     if (!file.isInLocalFileSystem) return false
-    return executeUnderDataLock {
-      worker.getStatus(file) != null
+    return queryWorkerIndex {
+      getStatus(VcsUtil.getFilePath(file)) != null
     }
   }
 
@@ -881,7 +956,8 @@ class ChangeListManagerImpl(
   override fun getChangeLists(file: VirtualFile): List<LocalChangeList> {
     if (!file.isInLocalFileSystem) return listOf()
     return executeUnderDataLock {
-      worker.getChangeForPath(VcsUtil.getFilePath(file))?.let {
+      val filePath = VcsUtil.getFilePath(file)
+      worker.idx.getChange(filePath)?.let {
         getChangeLists(it)
       }.orEmpty()
     }
@@ -891,20 +967,20 @@ class ChangeListManagerImpl(
 
   override fun getChangeList(file: VirtualFile): LocalChangeList? = getChangeLists(file).firstOrNull()
 
-  override fun getChange(file: FilePath?): Change? =
-    executeUnderDataLock {
-      worker.getChangeForPath(file)
+  override fun getChange(file: FilePath?): Change? {
+    if (file == null) return null
+    return queryWorkerIndex {
+      getChange(file)
     }
+  }
 
   override fun isUnversioned(file: VirtualFile): Boolean {
-    if (!file.isInLocalFileSystem()) return false
+    if (!file.isInLocalFileSystem) return false
     val vcsRoot = SlowOperations.knownIssue("IDEA-322445, EA-857508").use {
       ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file)
     } ?: return false
     val filePath = VcsUtil.getFilePath(file)
-    return executeUnderReadActionDataLock {
-      filesHolder.unversionedFileHolder.containsFile(filePath, vcsRoot)
-    }
+    return queryFileHolders { unversionedFileHolder.containsFile(filePath, vcsRoot) }
   }
 
   override fun getStatus(path: FilePath): FileStatus = getStatus(path, path.getVirtualFile())
@@ -919,7 +995,7 @@ class ChangeListManagerImpl(
     val vcsRoot = if (file != null) vcsManager.getVcsRootObjectFor(file) else vcsManager.getVcsRootObjectFor(path)
     if (vcsRoot == null) return FileStatus.NOT_CHANGED
 
-    return executeUnderReadActionDataLock {
+    return queryFileHoldersAndWorkerIndex { filesHolder, index ->
       when {
         filesHolder.unversionedFileHolder.containsFile(path, vcsRoot) -> {
           FileStatus.UNKNOWN
@@ -934,7 +1010,7 @@ class ChangeListManagerImpl(
           FileStatus.IGNORED
         }
         else -> {
-          val status = worker.getStatus(path) ?: FileStatus.NOT_CHANGED
+          val status = index.getStatus(path) ?: FileStatus.NOT_CHANGED
           if (file != null && FileStatus.NOT_CHANGED == status && filesHolder.switchedFileHolder.containsFile(file)) {
             FileStatus.SWITCHED
           }
@@ -953,8 +1029,9 @@ class ChangeListManagerImpl(
 
   override fun haveChangesUnder(vf: VirtualFile): ThreeState {
     if (!vf.isValid() || !vf.isDirectory()) return ThreeState.NO
-    return executeUnderDataLock {
-      worker.haveChangesUnder(vf)
+    return queryWorkerIndex {
+      val filePath = VcsUtil.getFilePath(vf)
+      haveChangesUnder(filePath)
     }
   }
 
@@ -1008,6 +1085,7 @@ class ChangeListManagerImpl(
       worker.setChangeListsEnabled(areChangeListsEnabled)
       if (areChangeListsEnabled) {
         worker.setChangeLists(changeLists)
+        publishSnapshot()
       }
       else {
         disabledWorkerState = changeLists
@@ -1035,15 +1113,15 @@ class ChangeListManagerImpl(
 
   override fun isIgnoredFile(file: FilePath): Boolean {
     val vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file) ?: return false
-    return executeUnderReadActionDataLock {
-      filesHolder.ignoredFileHolder.containsFile(file, vcsRoot)
+    return queryFileHolders {
+      ignoredFileHolder.containsFile(file, vcsRoot)
     }
   }
 
   override fun getSwitchedBranch(file: VirtualFile): String? {
     if (!file.isInLocalFileSystem) return null
-    return executeUnderDataLock {
-      filesHolder.switchedFileHolder.getBranchForFile(file)
+    return queryFileHolders {
+      switchedFileHolder.getBranchForFile(file)
     }
   }
 
@@ -1071,6 +1149,7 @@ class ChangeListManagerImpl(
       if (enabled) {
         disabledWorkerState?.let {
           worker.setChangeLists(it)
+          publishSnapshot()
         }
       }
     }
@@ -1340,6 +1419,11 @@ class ChangeListManagerImpl(
     }
   }
 }
+
+private data class FilesAndChanges(
+  val files: FileHolderComposite,
+  val changesIdx: ChangeListsIndexes.Indexed,
+)
 
 private fun <T, R> MutableCollection<T>.mapNotNullAndClear(mapper: (T) -> R?): List<R> {
   val result = mapNotNull(mapper)
