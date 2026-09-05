@@ -22,10 +22,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
+import com.intellij.platform.icons.AllIconsDescriptors
 import com.intellij.platform.icons.Icon
 import com.intellij.platform.icons.deferredIcon
 import com.intellij.platform.icons.design.IconAlign
 import com.intellij.platform.icons.design.badge
+import com.intellij.platform.icons.design.iconsFrames
 import com.intellij.platform.icons.design.sRGB
 import com.intellij.platform.icons.icon
 import com.intellij.platform.icons.modifiers.IconModifier
@@ -59,15 +61,9 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 internal fun Icons() {
   val icons = mutableListOf<ShowcaseIcon>()
-  val missingIcon = remember {
-    AllIcons.General.Error.toNewIcon()
-  }
-  val warningIcon = remember {
-    AllIcons.General.Warning.toNewIcon()
-  }
-  val settingsIcon = remember {
-    AllIcons.General.Settings.toNewIcon()
-  }
+  val missingIcon = AllIconsDescriptors.General.Error
+  val warningIcon = AllIconsDescriptors.General.Warning
+  val settingsIcon = AllIconsDescriptors.General.Settings
 
   val transition = rememberInfiniteTransition()
   val iconScale by transition.animateFloat(
@@ -77,11 +73,7 @@ internal fun Icons() {
   )
 
   icons.add(ShowcaseIcon(
-    remember {
-      icon {
-        swingIcon(AllIcons.Actions.NewFolder)
-      }
-    },
+    AllIconsDescriptors.Actions.NewFolder,
     null,
     "Animated Scale Icon",
     scale = fitArea(iconScale.dp, iconScale.dp),
@@ -92,30 +84,17 @@ internal fun Icons() {
   val animatedIcon = remember {
     icon {
       animation {
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_1)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_2)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_3)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_4)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_5)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_6)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_7)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_8)
-        }
+        iconsFrames(
+          duration,
+          AllIconsDescriptors.Process.Step_1,
+          AllIconsDescriptors.Process.Step_2,
+          AllIconsDescriptors.Process.Step_3,
+          AllIconsDescriptors.Process.Step_4,
+          AllIconsDescriptors.Process.Step_5,
+          AllIconsDescriptors.Process.Step_6,
+          AllIconsDescriptors.Process.Step_7,
+          AllIconsDescriptors.Process.Step_8
+        )
       }
     }
   }
@@ -123,7 +102,7 @@ internal fun Icons() {
   icons.add(remember {
     ShowcaseIcon(
       icon {
-        icon(AllIcons.General.Web.toNewIcon())
+        icon(AllIconsDescriptors.General.Web)
       },
       RowIcon(IconUtil.scale(AllIcons.General.Web, null, 2f)),
       "Scaled Icon",
