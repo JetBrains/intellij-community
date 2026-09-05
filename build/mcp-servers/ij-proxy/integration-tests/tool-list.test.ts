@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import {ok} from 'node:assert/strict'
+import {ok, strictEqual} from 'node:assert/strict'
 import {describe, it} from 'bun:test'
 import {BLOCKED_TOOL_NAMES, getProxyToolNames, getReplacedToolNames} from '../proxy-tools/registry'
 import {buildUpstreamTool, debug, defaultUpstreamTools, SUITE_TIMEOUT_MS, withProxy} from '../test-utils'
@@ -33,6 +33,14 @@ const FORBIDDEN_FILE_TOOL_CALLS = [
   ['container_read_file', {sessionId: 'test', path: '/workspace/example.txt'}],
   ['container_write_file', {sessionId: 'test', path: '/workspace/example.txt', content: 'hello'}],
   ['container_list_dir', {sessionId: 'test', path: '/workspace'}]
+]
+
+const FORBIDDEN_CHANGELIST_TOOL_NAMES = [
+  'get_changelists',
+  'create_changelist',
+  'delete_changelist',
+  'set_active_changelist',
+  'move_changes_to_changelist'
 ]
 
 describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
@@ -79,6 +87,36 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
         ok(timeoutSchema && typeof timeoutSchema === 'object' && timeoutSchema.type === 'number',
           `Expected timeout to be {type: 'number'} for ${tool.name}, got ${JSON.stringify(timeoutSchema)}`)
       }
+    })
+  })
+
+  it('hides all changelist tools and preserves unrelated upstream tools', async () => {
+    await withProxy({
+      tools: [...FORBIDDEN_CHANGELIST_TOOL_NAMES, 'git_status'].map((name) => buildUpstreamTool(name))
+    }, async ({proxyClient}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const names = listResponse.result.tools.map((tool) => tool.name)
+
+      assertExcludesAll(names, FORBIDDEN_CHANGELIST_TOOL_NAMES)
+      assertContainsAll(names, ['git_status'])
+    })
+  })
+
+  it('rejects direct changelist calls without forwarding them upstream', async () => {
+    let upstreamCallCount = 0
+    await withProxy({
+      tools: FORBIDDEN_CHANGELIST_TOOL_NAMES.map((name) => buildUpstreamTool(name)),
+      onToolCall() {
+        upstreamCallCount++
+      }
+    }, async ({proxyClient}) => {
+      for (const name of FORBIDDEN_CHANGELIST_TOOL_NAMES) {
+        const response = await proxyClient.send('tools/call', {name, arguments: {}})
+        ok(response.result?.isError, `Expected ${name} to be rejected`)
+        strictEqual(response.result?.content?.[0]?.text, `Tool '${name}' is not exposed by ij-proxy.`)
+      }
+
+      strictEqual(upstreamCallCount, 0)
     })
   })
 

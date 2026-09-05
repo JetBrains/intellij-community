@@ -76,6 +76,7 @@ The proxy is not a pure pass-through: it exposes a fixed proxy tool set (unless 
 Notes:
 - File reads, writes, patches, and directory listings use the agent harness's native tools, not MCP.
 - JetBrains MCP file-operation tools, including the container variants, are blocked until they are removed upstream.
+- The proxy hides all five changelist tools, including `get_changelists`, and rejects direct calls to them.
 - `search_*`, `lint_files` and `reformat_file` are upstream tools passed through unchanged; the proxy only normalizes their arguments and, in a dual-IDE setup, splits and merges them across IDEA and Rider.
 - `get_file_problems` is hidden: it is the per-file variant of `lint_files`, and exposing both invites the agent to lint one file at a time.
 - `build_project` is hidden: this repo builds through Bazel wrappers (`bazel build`, `tests.cmd`), and an IDE JPS build duplicates and conflicts with them.

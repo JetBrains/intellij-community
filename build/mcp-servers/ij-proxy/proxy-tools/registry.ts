@@ -57,6 +57,11 @@ export const BLOCKED_TOOL_NAMES = new Set([
   'execute_terminal_command',
   'execute_tool',
   'skill_search',
+  'get_changelists',
+  'create_changelist',
+  'delete_changelist',
+  'set_active_changelist',
+  'move_changes_to_changelist',
   // This repo builds through Bazel wrappers (`bazel build`, `tests.cmd`); an IDE JPS build duplicates and conflicts with them.
   'build_project'
 ])
