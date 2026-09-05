@@ -213,6 +213,24 @@ public sealed interface ScrollbarVisibility {
     /** The duration for the track expansion animation. */
     public val expandAnimationDuration: Duration
 
+    /**
+     * How long to wait before expanding the track once the pointer is over it.
+     *
+     * The Swing scrollbar waits before growing, so that a pointer crossing the track on its way somewhere else does not
+     * make it flicker open. Defaults to 0ms, which expands immediately.
+     */
+    public val expandDelay: Duration
+        get() = 0.milliseconds
+
+    /**
+     * How long to wait before collapsing the track once the pointer leaves it.
+     *
+     * The Swing scrollbar waits longer to collapse than to expand, so that briefly leaving the track and coming back
+     * does not restart the animation. Defaults to 0ms, which collapses immediately.
+     */
+    public val collapseDelay: Duration
+        get() = 0.milliseconds
+
     /** The duration for the thumb color animation. */
     public val thumbColorAnimationDuration: Duration
 
@@ -252,6 +270,8 @@ public sealed interface ScrollbarVisibility {
      * @param trackPaddingExpanded The padding around the track when expanded. Defaults to [trackPadding].
      * @param expandAnimationDuration The duration of the expand animation. Defaults to 0ms (no animation).
      * @param lingerDuration How long the scrollbar lingers after scrolling stops. Defaults to 0ms.
+     * @param expandDelay How long to wait before expanding the track on hover. Defaults to 0ms (immediate).
+     * @param collapseDelay How long to wait before collapsing the track again. Defaults to 0ms (immediate).
      */
     @GenerateDataFunctions
     public class AlwaysVisible(
@@ -266,6 +286,8 @@ public sealed interface ScrollbarVisibility {
         public override val trackPaddingExpanded: PaddingValues = trackPadding,
         public override val expandAnimationDuration: Duration = 0.milliseconds,
         public override val lingerDuration: Duration = 0.milliseconds,
+        public override val expandDelay: Duration = 0.milliseconds,
+        public override val collapseDelay: Duration = 0.milliseconds,
     ) : ScrollbarVisibility {
         @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
         public constructor(
@@ -304,9 +326,11 @@ public sealed interface ScrollbarVisibility {
             if (scrollbarBackgroundColorLight != other.scrollbarBackgroundColorLight) return false
             if (scrollbarBackgroundColorDark != other.scrollbarBackgroundColorDark) return false
             if (trackThicknessExpanded != other.trackThicknessExpanded) return false
+            if (trackPaddingExpanded != other.trackPaddingExpanded) return false
             if (expandAnimationDuration != other.expandAnimationDuration) return false
             if (lingerDuration != other.lingerDuration) return false
-            if (trackPaddingExpanded != other.trackPaddingExpanded) return false
+            if (expandDelay != other.expandDelay) return false
+            if (collapseDelay != other.collapseDelay) return false
 
             return true
         }
@@ -320,9 +344,11 @@ public sealed interface ScrollbarVisibility {
             result = 31 * result + scrollbarBackgroundColorLight.hashCode()
             result = 31 * result + scrollbarBackgroundColorDark.hashCode()
             result = 31 * result + trackThicknessExpanded.hashCode()
+            result = 31 * result + trackPaddingExpanded.hashCode()
             result = 31 * result + expandAnimationDuration.hashCode()
             result = 31 * result + lingerDuration.hashCode()
-            result = 31 * result + trackPaddingExpanded.hashCode()
+            result = 31 * result + expandDelay.hashCode()
+            result = 31 * result + collapseDelay.hashCode()
             return result
         }
 
@@ -336,9 +362,11 @@ public sealed interface ScrollbarVisibility {
                 "scrollbarBackgroundColorLight=$scrollbarBackgroundColorLight, " +
                 "scrollbarBackgroundColorDark=$scrollbarBackgroundColorDark, " +
                 "trackThicknessExpanded=$trackThicknessExpanded, " +
+                "trackPaddingExpanded=$trackPaddingExpanded, " +
                 "expandAnimationDuration=$expandAnimationDuration, " +
                 "lingerDuration=$lingerDuration, " +
-                "trackPaddingExpanded=$trackPaddingExpanded" +
+                "expandDelay=$expandDelay, " +
+                "collapseDelay=$collapseDelay" +
                 ")"
         }
 
@@ -361,6 +389,8 @@ public sealed interface ScrollbarVisibility {
      * @param expandAnimationDuration The duration for the track expansion animation.
      * @param thumbColorAnimationDuration The duration for the thumb color animation.
      * @param lingerDuration The duration to wait before hiding the scrollbar.
+     * @param expandDelay How long to wait before expanding the track on hover. Defaults to 0ms (immediate).
+     * @param collapseDelay How long to wait before collapsing the track again. Defaults to 0ms (immediate).
      */
     @GenerateDataFunctions
     public class WhenScrolling(
@@ -372,6 +402,8 @@ public sealed interface ScrollbarVisibility {
         public override val expandAnimationDuration: Duration,
         public override val thumbColorAnimationDuration: Duration,
         public override val lingerDuration: Duration,
+        public override val expandDelay: Duration = 0.milliseconds,
+        public override val collapseDelay: Duration = 0.milliseconds,
     ) : ScrollbarVisibility {
         public override val trackPaddingExpanded: PaddingValues = trackPadding
 
@@ -389,7 +421,8 @@ public sealed interface ScrollbarVisibility {
             if (expandAnimationDuration != other.expandAnimationDuration) return false
             if (thumbColorAnimationDuration != other.thumbColorAnimationDuration) return false
             if (lingerDuration != other.lingerDuration) return false
-            if (trackPaddingExpanded != other.trackPaddingExpanded) return false
+            if (expandDelay != other.expandDelay) return false
+            if (collapseDelay != other.collapseDelay) return false
 
             return true
         }
@@ -403,7 +436,8 @@ public sealed interface ScrollbarVisibility {
             result = 31 * result + expandAnimationDuration.hashCode()
             result = 31 * result + thumbColorAnimationDuration.hashCode()
             result = 31 * result + lingerDuration.hashCode()
-            result = 31 * result + trackPaddingExpanded.hashCode()
+            result = 31 * result + expandDelay.hashCode()
+            result = 31 * result + collapseDelay.hashCode()
             return result
         }
 
@@ -417,7 +451,8 @@ public sealed interface ScrollbarVisibility {
                 "expandAnimationDuration=$expandAnimationDuration, " +
                 "thumbColorAnimationDuration=$thumbColorAnimationDuration, " +
                 "lingerDuration=$lingerDuration, " +
-                "trackPaddingExpanded=$trackPaddingExpanded" +
+                "expandDelay=$expandDelay, " +
+                "collapseDelay=$collapseDelay" +
                 ")"
         }
 
@@ -434,7 +469,8 @@ public enum class TrackClickBehavior {
      * Equivalent to the _Jump to the next page_ setting in macOS' _System Settings > Appearance > Click in the scroll
      * bar to_ settings.
      *
-     * This is normally not used on Windows and Linux.
+     * This is the default on Windows and Linux. It matches the Swing scrollbar, which reserves a jump for a middle
+     * click.
      */
     NextPage,
 
@@ -444,7 +480,7 @@ public enum class TrackClickBehavior {
      * Equivalent to the _Jump to the spot that's clicked_ setting in macOS' _System Settings > Appearance > Click in
      * the scroll bar to_ settings.
      *
-     * This is the only available behavior on Windows and Linux.
+     * On macOS this follows the system preference. On Windows and Linux the default is [NextPage].
      */
     JumpToSpot,
 }

@@ -101,7 +101,7 @@ public fun ScrollbarStyle.Companion.macOsDark(
 public fun ScrollbarStyle.Companion.windowsAndLinuxLight(
     colors: ScrollbarColors = ScrollbarColors.windowsAndLinuxLight(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.windowsAndLinux(),
-    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.JumpToSpot,
+    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
     scrollbarVisibility: AlwaysVisible = AlwaysVisible.windowsAndLinux(),
 ): ScrollbarStyle =
     ScrollbarStyle(
@@ -123,7 +123,7 @@ public fun ScrollbarStyle.Companion.windowsAndLinuxLight(
 public fun ScrollbarStyle.Companion.windowsAndLinuxDark(
     colors: ScrollbarColors = ScrollbarColors.windowsAndLinuxDark(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.windowsAndLinux(),
-    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.JumpToSpot,
+    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
     scrollbarVisibility: AlwaysVisible = AlwaysVisible.windowsAndLinux(),
 ): ScrollbarStyle =
     ScrollbarStyle(
@@ -435,6 +435,8 @@ public fun WhenScrolling.Companion.default(): WhenScrolling =
  * @param expandAnimationDuration The duration of track expansion animations.
  * @param thumbColorAnimationDuration The duration of thumb color animations.
  * @param lingerDuration The duration the scrollbar remains visible after scrolling stops.
+ * @param expandDelay How long to wait before expanding the track on hover. Defaults to the Swing scrollbar's 150ms.
+ * @param collapseDelay How long to wait before collapsing the track again. Defaults to the Swing scrollbar's 300ms.
  * @return A [WhenScrolling] configuration for macOS.
  */
 public fun WhenScrolling.Companion.macOs(
@@ -446,6 +448,8 @@ public fun WhenScrolling.Companion.macOs(
     expandAnimationDuration: Duration = trackColorAnimationDuration,
     thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
     lingerDuration: Duration = 700.milliseconds,
+    expandDelay: Duration = SWING_EXPAND_DELAY,
+    collapseDelay: Duration = SWING_COLLAPSE_DELAY,
 ): WhenScrolling =
     WhenScrolling(
         trackThickness = trackThickness,
@@ -456,6 +460,8 @@ public fun WhenScrolling.Companion.macOs(
         expandAnimationDuration = expandAnimationDuration,
         thumbColorAnimationDuration = thumbColorAnimationDuration,
         lingerDuration = lingerDuration,
+        expandDelay = expandDelay,
+        collapseDelay = collapseDelay,
     )
 
 /**
@@ -469,6 +475,8 @@ public fun WhenScrolling.Companion.macOs(
  * @param expandAnimationDuration The duration of track expansion animations.
  * @param thumbColorAnimationDuration The duration of thumb color animations.
  * @param lingerDuration The duration the scrollbar remains visible after scrolling stops.
+ * @param expandDelay How long to wait before expanding the track on hover. Defaults to the Swing scrollbar's 150ms.
+ * @param collapseDelay How long to wait before collapsing the track again. Defaults to the Swing scrollbar's 300ms.
  * @return A [WhenScrolling] configuration for Windows and Linux.
  */
 public fun WhenScrolling.Companion.windowsAndLinux(
@@ -480,6 +488,8 @@ public fun WhenScrolling.Companion.windowsAndLinux(
     expandAnimationDuration: Duration = 0.milliseconds,
     thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
     lingerDuration: Duration = 200.milliseconds,
+    expandDelay: Duration = SWING_EXPAND_DELAY,
+    collapseDelay: Duration = SWING_COLLAPSE_DELAY,
 ): WhenScrolling =
     WhenScrolling(
         trackThickness = trackThickness,
@@ -490,6 +500,8 @@ public fun WhenScrolling.Companion.windowsAndLinux(
         expandAnimationDuration = expandAnimationDuration,
         thumbColorAnimationDuration = thumbColorAnimationDuration,
         lingerDuration = lingerDuration,
+        expandDelay = expandDelay,
+        collapseDelay = collapseDelay,
     )
 
 /**
@@ -570,3 +582,13 @@ public fun WhenScrolling.Companion.tabStrip(
         thumbColorAnimationDuration = thumbColorAnimationDuration,
         lingerDuration = lingerDuration,
     )
+
+/** How long the Swing scrollbar waits before expanding its track on hover: `ScrollBarPainter`'s `pauseForward`. */
+private val SWING_EXPAND_DELAY = 150.milliseconds
+
+/**
+ * How long the Swing scrollbar waits before collapsing its track again: `ScrollBarPainter`'s `pauseBackward`.
+ *
+ * Collapsing waits longer than expanding, so leaving the track briefly and coming back does not restart the animation.
+ */
+private val SWING_COLLAPSE_DELAY = 300.milliseconds
