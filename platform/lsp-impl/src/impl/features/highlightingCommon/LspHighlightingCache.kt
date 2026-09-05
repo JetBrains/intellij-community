@@ -327,11 +327,12 @@ internal abstract class LspHighlightingCache<T>(protected val project: Project) 
     private const val STALE_PSI_MOD_COUNT: Long = -1L
 
     /**
-     * Diagnostics are what the user waits for, so keep the debounce short.
-     * The daemon's own auto-reparse delay already spaces the triggers.
-     * These 50 ms only absorb same-burst double triggers.
+     * Diagnostics are what the user waits for, so their debounce is shorter than [LOW_PRIORITY_QUIESCENCE_DELAY].
+     * The delay must still absorb the typing cadence. A fluent typist produces a keystroke every 100-200 ms,
+     * so a shorter delay starts a pull at almost every keystroke and cancels it at the next one.
+     * With 250 ms the pull starts at a natural pause, for example at a word boundary.
      */
-    val DIAGNOSTICS_QUIESCENCE_DELAY: Duration = 50.milliseconds
+    val DIAGNOSTICS_QUIESCENCE_DELAY: Duration = 250.milliseconds
 
     /**
      * Semantic tokens, document links, folding, code lens, inlay hints, and colors are cosmetic while
