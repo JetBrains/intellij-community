@@ -52,6 +52,11 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
   // 0 when buildContentUpdate can no longer track it exactly); the anchor for incremental content updates.
   private var screenTopLogical = 0L
 
+  // scrollbackRows and the emulator size as of the last primary-screen poll to detect scrollback erasing (CSI 3J).
+  // Seeded at construction so the first poll never misfires.
+  private var lastScrollbackRows = emulator.scrollbackRows
+  private var lastEmulatorSize = emulator.size
+
   /**
    * True, while the history is replaced by the active screen alone: exact tracking was lost, and reading the
    * retained scrollback is deferred until the output stops. See buildContentUpdate.
@@ -73,17 +78,22 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
    * resize can instead pull rows back out of scrollback onto the screen, which [historyMark] reports as a
    * *negative* count.
    *
-   * Two things make the count unusable: [historyMark] returning `null` (the marked boundary was itself
-   * evicted, so the old numbering is unrecoverable), or one update finalizing more than [HISTORY_REPLACE_LINES]
-   * rows, where reading them all costs more than the content is worth. Either way this reports the active
-   * screen alone at index `0` and keeps doing that — cheap, bounded by the screen height — until an update
-   * finalizes *nothing*, meaning the output stopped. It then reads the retained scrollback once and resumes
-   * exact tracking. Waiting for a full stop, rather than for the output to merely slow down, keeps the one
-   * expensive read out of the burst.
+   * Two things make [historyMark]'s count unusable, and reset [screenTopLogical] to zero through
+   * [isHistoryReplaced] — deferring the (expensive) scrollback read until the output stops, because what
+   * was lost was the *ability* to read it cheaply, not the content itself:
+   * 1. [historyMark] returning `null` (the marked boundary was itself evicted, so the old numbering is unrecoverable).
+   * 2. One update finalizing more than [HISTORY_REPLACE_LINES] rows, where reading them all costs more than the content is worth.
    *
-   * The trade-off: as long as anything keeps scrolling (output arrives faster than [OUTPUT_POLL_INTERVAL]),
-   * the model holds only the visible screen, so steady output that never pauses keeps its scrollback hidden until it does.
-   * But it should be an exceptional case when - even if it adds one line every 20ms, it is still 50 new lines a second.
+   * **The trade-off**: as long as anything keeps scrolling (output arrives faster than
+   * [OUTPUT_POLL_INTERVAL]), the model holds only the visible screen until the output slows down to not
+   * finalize any rows during a projection window, so steady output that never pauses keeps its scrollback
+   * hidden until it stops. But it should be an exceptional case when - even if it adds one line every 20ms,
+   * it is still 50 new lines a second.
+   *
+   * A third case resets [screenTopLogical] to zero the same way but *without* [isHistoryReplaced]: the
+   * scrollback being erased (`CSI 3 J`, what `clear` sends). [historyMark] cannot report that on its own —
+   * it relocates its pin instead of evicting it, so the count reads as a misleadingly ordinary `0` — so this
+   * instead notices [TerminalEmulator.scrollbackRows] drop to `0` with no resize to explain it.
    *
    * On the alternate screen things are much simpler: content is reported from index 0, and none of the
    * [HistoryMark]/[isHistoryReplaced] bookkeeping below is read or written.
@@ -110,6 +120,12 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
       // Nothing at all scrolled since the last update.
       val outputStopped = finalizedSinceLastEmit == 0
 
+      // CSI 3J (erase saved lines, what `clear` sends alongside CSI 2J) frees the whole scrollback, but the
+      // native pin relocates instead of reporting itself evicted, so finalizedLineCount() reads a
+      // misleadingly ordinary 0 instead of null. Nothing else drops scrollbackRows to 0 without a resize.
+      val resized = emulator.size != lastEmulatorSize
+      val scrollbackErased = !resized && curScrollbackRows == 0 && lastScrollbackRows > 0
+
       when {
         // The history is already replaced, and the output has not stopped: keep reporting the screen alone.
         isHistoryReplaced && !outputStopped -> {
@@ -119,6 +135,11 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
         // The output stopped: read the retained scrollback once and resume exact tracking.
         isHistoryReplaced -> {
           isHistoryReplaced = false
+          fromH = 0
+          startLogical = 0L
+        }
+        // The scrollback is empty
+        scrollbackErased -> {
           fromH = 0
           startLogical = 0L
         }
@@ -208,6 +229,8 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
     // already re-anchored above; this starts the next emit's window here. Primary screen only.
     if (!onAlternateScreen) {
       screenTopLogical = startLogical + completedLogicalLines(rows, newHistoryRows)
+      lastScrollbackRows = curScrollbackRows
+      lastEmulatorSize = emulator.size
     }
 
     return TerminalContentUpdatedEvent(

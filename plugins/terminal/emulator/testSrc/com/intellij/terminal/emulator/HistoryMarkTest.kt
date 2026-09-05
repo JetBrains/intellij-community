@@ -166,6 +166,28 @@ class HistoryMarkTest {
   }
 
   // ---------------------------------------------------------------------------
+  // Erasing the scrollback
+  // ---------------------------------------------------------------------------
+
+  /**
+   * `CSI 3 J` frees every scrollback page, so afterward `scrollbackRows` is `0`. The native library
+   * relocates the mark's pin instead of reporting it evicted, so the count reads as an ordinary,
+   * misleading `0` — indistinguishable from "nothing happened". A consumer must
+   * detect the erasing some other way, e.g. by noticing `scrollbackRows` dropped to `0` on its own.
+   */
+  @Test
+  fun eraseScrollbackReportsAMisleadingZero() = session(20, 4) { session ->
+    val emulator = session.emulator
+    session.writeLinesWithCrlf(listOf("a", "b", "c", "d", "e", "f", "g")) // scrolls a..c into scrollback
+    emulator.markHistoryBoundary().use { mark ->
+      mark.reset()
+      session.eraseScrollback()
+      assertThat(mark.finalizedLineCount()).isZero()
+      assertThat(emulator.scrollbackRows).isZero()
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // The alternate screen
   // ---------------------------------------------------------------------------
 

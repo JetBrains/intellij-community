@@ -427,6 +427,30 @@ internal class TerminalBlocksEndToEndTest(emulatorType: TerminalEmulatorType) : 
     }
   }
 
+  @Test
+  fun `clear after several commands collapses the finished blocks`() {
+    assumeGhostty()
+    doTest { fixture ->
+      val integration = fixture.initShellIntegration()
+      fixture.connector.feed(
+        (List(3) { commandSegments("echo hi", listOf("out")) }.flatten() + listOf(promptStartedOsc(), PROMPT))
+          .joinToString("")
+      )
+      fixture.assertBlocksModelState(integration.blocks) { it.blocks.size == 4 }
+
+      // ED2 plus the E3 extension (erase scrollback), what `clear` sends.
+      fixture.connector.feed("$ESC[2J$ESC[3J$ESC[H")
+      fixture.assertOutputModelState(integration.model) { it.text.isBlank() }
+
+      // The whole history is gone, so this update is anchored at logical index 0 too - the same outcome
+      // as the burst above for the blocks model, though the projector never treats this as a replacement.
+      fixture.assertBlocksModelState(integration.blocks) { it.blocks.size == 1 }
+      assertThat(integration.model.text)
+        .describedAs("no stale command or output may survive clear")
+        .doesNotContain("echo hi", "out")
+    }
+  }
+
   // Trimming is not covered here. It needs the output model to evict while the emulator still holds the
   // text, and GhosttyTerminalSession derives its scrollback cap from the same setting, so the two caps move
   // together. TerminalBlocksModelTest states that contract directly on the models instead.

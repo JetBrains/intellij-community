@@ -115,6 +115,21 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
   }
 
   @Test
+  fun `clear removes the visible screen and the whole scrollback`() = doTest { fixture ->
+    val model = fixture.view.activeOutputModel()
+
+    // 40 lines on a 24-row screen leave 16 in scrollback.
+    fixture.connector.feed((0 until 40).joinToString("\r\n") { "L%02d".format(it) })
+    fixture.assertOutputModelState(model) { it.text.contains("L39") }
+
+    // ED2 (erase the active screen) plus the E3 extension (erase scrollback), which `clear` sends.
+    fixture.connector.feed("${ESC}[2J${ESC}[3J${ESC}[H")
+
+    fixture.assertOutputModelState(model) { it.text.isBlank() }
+    assertThat(model.text).describedAs("no line from before clear may survive").doesNotContain("L")
+  }
+
+  @Test
   fun `a later increment reports only the new tail, not a full resend`() = doTest { fixture ->
     val model = fixture.view.activeOutputModel()
 

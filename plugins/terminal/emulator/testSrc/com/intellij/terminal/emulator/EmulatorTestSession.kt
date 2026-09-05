@@ -100,6 +100,9 @@ internal class EmulatorTestSession(width: Int, height: Int, maxScrollbackBytes: 
   /** Erase entire display (ED 2); does not move the cursor or touch scrollback. */
   fun clearScreen() = emulator.write(csi("2J"))
 
+  /** Erase saved lines (ED 3, the ncurses/xterm `E3` extension `clear` sends alongside ED 2). */
+  fun eraseScrollback() = emulator.write(csi("3J"))
+
   fun useAlternateBuffer(enabled: Boolean) = emulator.write(csi("?1049${if (enabled) "h" else "l"}"))
 
   fun resize(columns: Int, rows: Int) {

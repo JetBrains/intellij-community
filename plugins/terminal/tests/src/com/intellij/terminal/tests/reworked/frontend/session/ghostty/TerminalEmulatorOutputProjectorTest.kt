@@ -1049,6 +1049,45 @@ internal class TerminalEmulatorOutputProjectorTest {
     }
 
   // ---------------------------------------------------------------------------
+  // Erasing the scrollback (CSI 3J)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `an erase of the scrollback resets tracking to index 0 at once`() = withProjector(rows = 4) {
+    // 7 lines on a 4-row screen: three scroll off into scrollback.
+    write((0 until 7).joinToString("\r\n") { "L$it" })
+    collectUpdate()
+
+    write(csi("2J") + csi("3J") + csi("H"))
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+    assertThat(event.text).describedAs("no line from before the erase may survive").doesNotContain("L")
+  }
+
+  @Test
+  fun `exact tracking continues without a pause after an erase`() = withProjector(rows = 4) {
+    write((0 until 7).joinToString("\r\n") { "L$it" })
+    collectUpdate()
+    write(csi("2J") + csi("3J") + csi("H"))
+    collectUpdate()
+    assertThat(projector.isHistoryReplaced).isFalse()
+
+    // No idle poll in between to "settle" first - two immediate writes, incrementally tracked exactly,
+    // with isHistoryReplaced never becoming true.
+    write((0 until 10).joinToString("\r\n") { "after$it" })
+    collectUpdate()
+    write("\r\nmore")
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isGreaterThan(0L)
+    assertThat(event.text).doesNotContain("L")
+    assertThat(event.text).contains("more")
+  }
+
+  // ---------------------------------------------------------------------------
   // Two updates from one write
   // ---------------------------------------------------------------------------
 
