@@ -40,6 +40,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.lsp.integrationProvider implementation="com.intellij.python.ruff.server.RuffLspIntegrationProvider"/>
     <lang.importOptimizer language="Python" implementationClass="com.intellij.python.ruff.RuffImportOptimizer" order="first"/>
+    <formattingService implementation="com.intellij.python.ruff.RuffFormattingService" order="first"/>
     <codeInsight.declarativeInlayProvider group="OTHER_GROUP"
                                           implementationClass="com.intellij.python.ruff.codeinsight.RuffSuppressionInlayHintsProvider"
                                           isEnabledByDefault="true"

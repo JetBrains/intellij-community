@@ -14,4 +14,5 @@ internal class RuffPyToolFrontend : LspPyToolFrontend {
   override val icon: Icon = IconUtil.resizeSquared(PythonRuffCommonIcons.Ruff, 16)
   override val formattingLabel: String get() = RuffFrontendBundle.message("checkbox.formatting")
   override val sortImportsLabel: String get() = RuffFrontendBundle.message("checkbox.import.optimizer")
+  override val formatSortImportsLabel: String get() = RuffFrontendBundle.message("checkbox.format.sort.imports")
 }

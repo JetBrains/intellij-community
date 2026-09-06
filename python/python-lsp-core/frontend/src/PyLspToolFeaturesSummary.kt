@@ -15,6 +15,7 @@ internal fun pyLspToolFeaturesSummary(
 ): @NlsSafe String = buildList {
   if (settings.inspections) add(PyToolsUiBundle.message("checkbox.inspections"))
   if (settings.formatting == true) tool.formattingLabel?.let(::add)
+  if (settings.formatSortImports == true) tool.formatSortImportsLabel?.let(::add)
   if (settings.sortImports == true) tool.sortImportsLabel?.let(::add)
   if (settings.completions == true) add(PyToolsUiBundle.message("checkbox.completions"))
   if (settings.inlayHints == true) add(PyToolsUiBundle.message("checkbox.inlay.hints"))

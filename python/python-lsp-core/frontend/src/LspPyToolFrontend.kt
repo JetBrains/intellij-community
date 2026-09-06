@@ -26,4 +26,7 @@ interface LspPyToolFrontend : ProjectLevelPyToolFrontend<PyLspToolConfigurationD
 
   /** The localized import sorting label, or null when the tool does not support import sorting. */
   val sortImportsLabel: @Nls String? get() = null
+
+  /** The localized label for import sorting during formatting, or null when the tool does not support it. */
+  val formatSortImportsLabel: @Nls String? get() = null
 }

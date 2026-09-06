@@ -1,97 +1,75 @@
 package com.intellij.python.ruff
 
-import com.intellij.lang.ImportOptimizer
+import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.lang.SuspendableImportOptimizer
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.platform.lsp.api.LspClientManager
-import com.intellij.platform.lsp.api.getClients
-import com.intellij.platform.lsp.util.applySimpleTextEdits
-import com.intellij.platform.lsp.util.getLsp4jRange
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiFile
-import com.intellij.python.ruff.server.RuffLspIntegrationProvider
-import org.eclipse.lsp4j.CodeActionContext
-import org.eclipse.lsp4j.CodeActionKind.SourceOrganizeImports
-import org.eclipse.lsp4j.CodeActionParams
-import org.eclipse.lsp4j.CodeActionTriggerKind
+import com.intellij.python.community.execService.Args
+import com.intellij.python.pytools.backend.isEnabledOn
+import com.jetbrains.python.Result
 
 private val LOG = logger<RuffImportOptimizer>()
 
 /**
- * Import optimizer that uses the Ruff LSP server to optimize imports in Python files.
+ * Import optimizer for a Python file, backed by the Ruff executable.
  *
+ * Unlike the LSP `source.organizeImports` code action, which only sorts and regroups imports, this runs
+ * `ruff check --fix-only` with the import-sorting (`I`) and unused-import (`F401`) rules force-selected. So
+ * `Optimize Imports` both sorts imports and removes the unused ones, whatever the project's rule set enables.
+ *
+ * The work happens in [processFileSuspend], never in `processFile`. The platform calls `processFile` under a read
+ * action, and from the Reformat Files dialog it calls it on the EDT. A process spawn there blocks every write action.
  */
-class RuffImportOptimizer : ImportOptimizer {
+class RuffImportOptimizer : SuspendableImportOptimizer {
   override fun supports(psiFile: PsiFile): Boolean {
     val virtualFile = psiFile.virtualFile ?: return false
+    // An injected fragment or a non-local file has no path that Ruff can read its configuration from.
+    if (!virtualFile.isInLocalFileSystem || virtualFile is VirtualFileWindow) return false
+
     val project = psiFile.project
+    if (project.isDefault) return false
+    // The LSP descriptor used to decide this. The fix now runs through the Ruff executable, so the server does not
+    // have to be up, but the file must still belong to the project Ruff is configured for.
+    if (!ProjectFileIndex.getInstance(project).isInContent(virtualFile)) return false
+    if (!RuffPyTool.getInstance().isEnabledOn(project)) return false
 
-    val toolConfig = project.service<RuffConfiguration>()
-    if (!toolConfig.sortImports) return false
-
-    val lspServerManager = LspClientManager.getInstance(project)
-    val servers = lspServerManager.getClients<RuffLspIntegrationProvider>()
-    return servers.any { it.descriptor.isSupportedFile(virtualFile) }
+    return project.service<RuffConfiguration>().sortImports
   }
 
-  override fun processFile(psiFile: PsiFile): Runnable {
+  override suspend fun processFileSuspend(file: PsiFile): Runnable {
     val noResult = Runnable { }
-    val virtualFile = psiFile.virtualFile ?: return noResult
+    val virtualFile = file.virtualFile ?: return noResult
     // Remove this guard after PY-85408.
     if (virtualFile.extension.equals("ipynb", ignoreCase = true)) return noResult
-    val project = psiFile.project
+    val path = virtualFile.ruffPath() ?: return noResult
 
-    val lspServerManager = LspClientManager.getInstance(project)
-    val servers = lspServerManager.getClients<RuffLspIntegrationProvider>()
+    val snapshot = readAction {
+      val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return@readAction null
+      document to document.text
+    } ?: return noResult
+    val (document, originalText) = snapshot
 
-    if (servers.isEmpty()) {
-      LOG.warn("No Ruff LSP server found for file: ${virtualFile.path}")
-      return noResult
-    }
-
-    val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return noResult
-
-    val server = servers.first { it.descriptor.isSupportedFile(virtualFile) }
-
-    val range = getLsp4jRange(document, 0, document.textLength)
-
-    val params = CodeActionParams(
-      server.getDocumentIdentifier(virtualFile),
-      range,
-      CodeActionContext().apply {
-        diagnostics = emptyList()
-        triggerKind = CodeActionTriggerKind.Invoked
-        only = listOf(SourceOrganizeImports)
-      }
-    )
-
-    val tempDocument = DocumentImpl(document.text, false, true)
-
-    val codeActions = server.sendRequestSync { it.textDocumentService.codeAction(params) } ?: return noResult
-
-    var updated = false
-
-    for (either in codeActions) {
-      val codeAction = either.right ?: continue
-      if (codeAction.data == null) continue
-
-      val resolvedAction = server.sendRequestSync { it.textDocumentService.resolveCodeAction(codeAction) } ?: continue
-
-      if (resolvedAction.edit == null) continue
-      val changes = resolvedAction.edit?.documentChanges ?: continue
-      for (change in changes) {
-        if (!change.isLeft) continue
-        val textDocumentEdit = change.left ?: continue
-        val edits = textDocumentEdit.edits
-
-        updated = true
-        applySimpleTextEdits(tempDocument, edits)
+    // `ruff check --fix-only` applies the fixes and writes the resulting source to stdout, exiting 0 even when
+    // unfixable violations remain. `I` sorts imports and `F401` removes the unused ones.
+    val args = Args("check", "--fix-only", "--select", "I,F401", "--stdin-filename", path, "-")
+    val scope = ruffScopeOf(file.project, virtualFile)
+    val optimizedText = when (val result = RuffPyTool.getInstance().runOnStdin(scope, args, originalText)) {
+      is Result.Success -> result.result
+      is Result.Failure -> {
+        LOG.warn("Ruff import optimization failed for $path: ${result.error.message}")
+        return noResult
       }
     }
+    if (optimizedText == originalText) return noResult
+
     return Runnable {
-      if (updated) {
-        document.setText(tempDocument.text)
+      // Skip a document that changed while Ruff was running: the result comes from text that is gone.
+      if (document.text == originalText) {
+        document.setText(optimizedText)
       }
     }
   }

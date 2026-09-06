@@ -69,6 +69,7 @@ jvm_library(
         "//python/python-pytools/backend",
         "//python/python-pytools/common",
         "//python/python-exec-service:community-execService",
+        "//platform/eel",
         "//platform/eel-nioFs",
     ],
 )
@@ -127,6 +128,7 @@ jvm_library(
         "//python/python-pytools/backend:backend_test_lib",
         "//python/python-pytools/common:common_test_lib",
         "//python/python-exec-service:community-execService_test_lib",
+        "//platform/eel:eel_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
     ],
 )

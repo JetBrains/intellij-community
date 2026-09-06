@@ -41,6 +41,11 @@ class RuffLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, Ruff
   }
 
   override val lspCustomization: PyLspToolCustomization = object : PyLspToolCustomization(toolConfig, pyTool, project) {
+    // `Reformat Code` is delegated to the Ruff LSP server (`textDocument/formatting`), which keeps the long-lived
+    // server in charge and avoids a per-format process spawn. The combined "sort imports when formatting" case cannot
+    // be expressed as one LSP format request, because import sorting is a lint fix and not a part of `ruff format`.
+    // RuffFormattingService takes that case with its own two-pass pipeline; see its KDoc. It is registered first and
+    // claims only an explicit whole-file reformat, so a fragment selection still arrives here.
     override val formattingCustomizer = object : LspFormattingSupport() {
       override fun shouldFormatThisFileExclusivelyByServer(
         file: VirtualFile,

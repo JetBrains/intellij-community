@@ -12,6 +12,9 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 interface RuffSettings : PyLspToolSettings {
   var sortImports: Boolean
   var formatting: Boolean
+
+  /** When formatting is enabled, also sort imports (rule `I`) as part of `Reformat Code`, without removing unused ones. */
+  var formatSortImports: Boolean
 }
 
 @Service(Service.Level.PROJECT)
@@ -22,6 +25,7 @@ interface RuffSettings : PyLspToolSettings {
 data class RuffConfiguration(
   override var sortImports: Boolean = true,
   override var formatting: Boolean = true,
+  override var formatSortImports: Boolean = false,
 ) : PyLspToolConfiguration<RuffConfiguration>(), RuffSettings {
   override fun loadState(state: RuffConfiguration) {
     XmlSerializerUtil.copyBean(state, this)
