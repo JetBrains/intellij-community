@@ -4,7 +4,10 @@ package com.jetbrains.python
 import com.intellij.idea.TestFor
 import com.intellij.testFramework.UsefulTestCase.assertContainsElements
 import com.intellij.testFramework.UsefulTestCase.assertDoesntContain
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.runInEdtAndWait
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.codeInsight.completion.PyFStringFormatSpecCompletionContributor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import org.junit.jupiter.api.Test
@@ -15,7 +18,9 @@ import org.junit.jupiter.api.Test
  * The offered options follow the type of the formatted value, both right after the colon and after a
  * partly typed spec.
  */
-@TestFor(classes = [PyFStringFormatSpecCompletionContributor::class], issues = ["PY-88388", "PY-88389"])
+@Layers.Functional
+@Subsystems.CodeCompletion
+@TestFor(classes = [PyFStringFormatSpecCompletionContributor::class], issues = ["PY-88388", "PY-88389", "PY-84261"])
 class PyFStringFormatSpecCompletionTest : PyCodeInsightTestCase() {
 
   @Test
@@ -169,6 +174,56 @@ class PyFStringFormatSpecCompletionTest : PyCodeInsightTestCase() {
       def test(x: float, wd: int):
           f"{x:{wd}.2<caret>}"
     """, "f", "e", "g")
+
+  // PY-84261: a custom __format__ with a string Literal format_spec drives the completions.
+
+  @Test
+  fun `literal format spec completions from custom dunder format`() {
+    // Only the Literal values are offered; the generic specs that don't apply to a custom __format__ are gone.
+    val variants = complete("""
+      from typing import Literal
+      class A:
+          def __format__(self, format_spec: Literal["foo", "bar"], /) -> str: ...
+      f"{A():<caret>}"
+    """)
+    assertSameElements(variants, "foo", "bar")
+  }
+
+  @Test
+  fun `literal format spec filters by typed prefix`() = runInEdtAndWait {
+    // Typing 'f' leaves only 'foo' as a match, so completion inserts it directly.
+    myFixture.configureByText("test.py", """
+      from typing import Literal
+      class A:
+          def __format__(self, format_spec: Literal["foo", "bar"], /) -> str: ...
+      f"{A():f<caret>}"
+    """.trimIndent())
+    myFixture.completeBasic()
+    myFixture.checkResult("""
+      from typing import Literal
+      class A:
+          def __format__(self, format_spec: Literal["foo", "bar"], /) -> str: ...
+      f"{A():foo}"
+    """.trimIndent())
+  }
+
+  @Test
+  fun `custom class without literal format spec falls back to generic`() =
+    // object.__format__ takes a plain str format_spec, so the generic unknown-type specs are offered.
+    doTest("""
+      class A: ...
+      f"{A():<caret>}"
+    """, ".", "d", "f", "s", "<", ">")
+
+  @Test
+  fun `type conversion ignores literal format spec`() =
+    // !s formats the resulting str, so str's specs are offered instead of the Literal values.
+    doTest("""
+      from typing import Literal
+      class A:
+          def __format__(self, format_spec: Literal["foo", "bar"], /) -> str: ...
+      f"{A()!s:<caret>}"
+    """, "s", "<", ">", "^")
 
   private fun doTest(code: String, vararg expected: String) =
     assertContainsElements(complete(code), *expected)

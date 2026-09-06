@@ -16,6 +16,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyElementTypes
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.fstrings.FORMAT_SPEC_OPTION_KEY
 import com.jetbrains.python.codeInsight.fstrings.PyFormatSpec
@@ -26,8 +27,11 @@ import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecOption
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFStringFragment
 import com.jetbrains.python.psi.PyFStringFragmentFormatPart
+import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyStringDunderUtil
 import com.jetbrains.python.psi.PyStringDunderUtil.isAllowedFormatOverride
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -76,6 +80,20 @@ class PyFStringFormatSpecCompletionContributor : CompletionContributor(), DumbAw
 
                // The spec text between the colon and the caret, with a nested replacement field left out.
                val existingText = getTextBeforeCaret(formatPart) ?: ""
+
+               // A type with a custom __format__ whose format_spec is annotated with a string Literal[...]
+               // fully determines the valid specs: offer only those literal values and suppress the generic
+               // specs that don't apply to it (PY-84261). Type conversions (!s/!r/!a) format the resulting
+               // str instead, so they bypass this.
+               if (fragment.typeConversion == null) {
+                 val literalSpecs = getLiteralFormatSpecs(expression)
+                 if (literalSpecs != null) {
+                   // The literal value is matched as a whole, so narrow by what has already been typed.
+                   val literalResult = result.withPrefixMatcher(existingText)
+                   literalSpecs.forEach { literalResult.addElement(createLiteralSpecElement(it)) }
+                   return
+                 }
+               }
 
                addFormatSpecCompletions(result, expression, fragment, existingText)
              }
@@ -176,6 +194,36 @@ class PyFStringFormatSpecCompletionContributor : CompletionContributor(), DumbAw
     return LookupElementBuilder.create(option.spec)
       .withTypeText(option.shortDescription, true)
       .also { it.putUserData(FORMAT_SPEC_OPTION_KEY, option) }
+  }
+
+  private fun createLiteralSpecElement(value: String): LookupElement {
+    return LookupElementBuilder.create(value)
+      .withTypeText(PyPsiBundle.message("fstring.format.spec.completion.literal.type.text"), true)
+  }
+
+  /**
+   * If the value's type defines a custom `__format__` whose `format_spec` parameter is annotated with a string
+   * `Literal[...]` (e.g. `def __format__(self, format_spec: Literal["foo", "bar"], /) -> str`), returns the accepted
+   * literal values. Returns `null` when no such annotation applies (including the builtin `str` `format_spec` of
+   * `object.__format__` and numeric types), so the caller falls back to the generic format specs. PY-84261.
+   *
+   * For a union value type every member must contribute string literal specs, otherwise the generic specs are used.
+   */
+  private fun getLiteralFormatSpecs(expression: PyExpression): List<String>? {
+    val context = TypeEvalContext.codeCompletion(expression.project, expression.containingFile)
+    val type = context.getType(expression) ?: return null
+
+    val values = LinkedHashSet<String>()
+    for (member in type.asUnionSequence()) {
+      val classType = member as? PyClassType ?: return null
+      val formatMethod = classType.pyClass.findMethodByName(PyNames.DUNDER_FORMAT, true, context) ?: return null
+      // Parameters are [self, format_spec]; the positional-only '/' marker is not a PyNamedParameter.
+      val specParam = formatMethod.parameterList.parameters.filterIsInstance<PyNamedParameter>().getOrNull(1) ?: return null
+      val specValues = context.getType(specParam)?.asUnionSequence()?.map { (it as? PyLiteralType)?.stringValue }?.toList()
+      if (specValues.isNullOrEmpty() || specValues.any { it == null }) return null
+      specValues.forEach { values.add(it!!) }
+    }
+    return values.toList().ifEmpty { null }
   }
 
   private enum class ExpressionType {
