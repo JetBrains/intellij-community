@@ -152,6 +152,8 @@
       implementation="com.jetbrains.python.requirements.RequirementsDocumentationProvider"/>
     <platform.backend.documentation.lookupElementTargetProvider
       implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringFormatSpecDocumentationProvider"/>
+    <platform.backend.documentation.targetProvider
+      implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringFormatSpecHoverDocumentationProvider"/>
     <platform.backend.documentation.linkHandler
       implementation="com.jetbrains.python.requirements.RequirementDocumentationLinkHandler"/>
     <psi.referenceContributor language="Requirements"

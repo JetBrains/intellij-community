@@ -12,9 +12,10 @@ import org.junit.jupiter.api.Test
 /**
  * Tests for f-string format specification code completion.
  *
- * The offered options follow the type of the formatted value.
+ * The offered options follow the type of the formatted value, both right after the colon and after a
+ * partly typed spec.
  */
-@TestFor(classes = [PyFStringFormatSpecCompletionContributor::class], issues = ["PY-88388"])
+@TestFor(classes = [PyFStringFormatSpecCompletionContributor::class], issues = ["PY-88388", "PY-88389"])
 class PyFStringFormatSpecCompletionTest : PyCodeInsightTestCase() {
 
   @Test
@@ -66,16 +67,19 @@ class PyFStringFormatSpecCompletionTest : PyCodeInsightTestCase() {
 
   @Test
   fun `completions with type conversion`() =
-    // !s/!r/!a convert the value to a string, so the string and numeric options apply.
+    // !s/!r/!a convert the value to a string, so only string-valid specs are offered (no numeric types).
     doTest("f'{42!s:<caret>}'", "s", "<", ">", "^")
 
   @Test
-  fun `completions for bool follow its numeric base`() =
-    // A bool is an int subclass, so the mini-language applies to it through its ancestors.
-    doTest("""
+  fun `completions for bool follow its numeric base`() {
+    // A bool is an int subclass, so the numeric options apply to it through its ancestors.
+    val variants = complete("""
       def test(flag: bool):
           f"{flag:<caret>}"
-    """, "d", "b", "x", "X", "+")
+    """)
+    assertContainsElements(variants, "d", "b", "x", "X", "+")
+    assertDoesntContain(variants, "s")
+  }
 
   @Test
   fun `dot completion for precision`() =
@@ -94,8 +98,58 @@ class PyFStringFormatSpecCompletionTest : PyCodeInsightTestCase() {
     doTest("f'{42:<caret>}'", "b", "d", "o", "x", "X", "e", "E", "f", "F", "g", "G", "%")
 
   @Test
-  fun `common completions once the spec carries text`() =
-    doTest("f'{3.14:.2<caret>}'", "f", "d")
+  fun `completions after partial format spec`() {
+    // A float is numeric, so the string presentation type is not offered after the precision.
+    val variants = complete("f'{3.14:.2<caret>}'")
+    assertContainsElements(variants, "f", "e", "g", "%")
+    assertDoesntContain(variants, "s")
+  }
+
+  @Test
+  fun `completions after partial format spec with width`() =
+    doTest("f'{3.14:r>3<caret>}'", "f")
+
+  @Test
+  fun `completions after fill char that is a type letter`() =
+    // The 'f' is a fill character (followed by align '>'), not a presentation type, so types are still offered.
+    doTest("f'{42:f>5<caret>}'", "d", "e", "g")
+
+  @Test
+  fun `partial completions for string exclude the numeric types`() {
+    // Only the string presentation type applies after the precision, so completion inserts it directly.
+    runInEdtAndWait {
+      myFixture.configureByText("test.py", """
+        def test(s: str):
+            f"{s:.2<caret>}"
+      """.trimIndent())
+      myFixture.completeBasic()
+      myFixture.checkResult("""
+        def test(s: str):
+            f"{s:.2s}"
+      """.trimIndent())
+    }
+  }
+
+  @Test
+  fun `partial completions offer the percentage type`() =
+    // '%' is a presentation type, so it belongs to the options offered after a precision.
+    doTest("f'{0.25:.2<caret>}'", "%")
+
+  @Test
+  fun `partial completions for datetime offer the directives`() =
+    doTest("""
+      from datetime import datetime
+      def test(dt: datetime):
+          f"{dt:%Y-<caret>}"
+    """, "%m", "%d", "%H")
+
+  @Test
+  fun `partial completions for datetime after a typed percent`() =
+    doTest("""
+      from datetime import datetime
+      def test(dt: datetime):
+          f"{dt:%<caret>}"
+    """, "%Y", "%m")
 
   @Test
   fun `no format specs inside a nested replacement field`() {
@@ -110,11 +164,11 @@ class PyFStringFormatSpecCompletionTest : PyCodeInsightTestCase() {
 
   @Test
   fun `completions after a nested replacement field`() =
-    // The nested field is not spec text, so the 'd' in its name does not stop the completion.
+    // The nested field is not spec text, so the 'd' in its name is not an already-typed type.
     doTest("""
       def test(x: float, wd: int):
           f"{x:{wd}.2<caret>}"
-    """, "f", "d")
+    """, "f", "e", "g")
 
   private fun doTest(code: String, vararg expected: String) =
     assertContainsElements(complete(code), *expected)

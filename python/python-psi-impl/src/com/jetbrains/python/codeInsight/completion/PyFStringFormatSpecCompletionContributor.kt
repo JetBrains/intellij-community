@@ -18,24 +18,32 @@ import com.jetbrains.python.PyElementTypes
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.fstrings.FORMAT_SPEC_OPTION_KEY
+import com.jetbrains.python.codeInsight.fstrings.PyFormatSpec
 import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecCatalog
 import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecCategory
+import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecComponentKind
 import com.jetbrains.python.codeInsight.fstrings.PyFormatSpecOption
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFStringFragment
 import com.jetbrains.python.psi.PyFStringFragmentFormatPart
-import com.jetbrains.python.psi.PyStringDunderUtil.KNOWN_FORMAT_MINI_LANGUAGE_TYPES
+import com.jetbrains.python.psi.PyStringDunderUtil
 import com.jetbrains.python.psi.PyStringDunderUtil.isAllowedFormatOverride
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-// The value types come from the shared catalog, so completion and the annotator agree on what supports
-// the format mini-language.
+// The value types come from the shared catalog, so completion, the annotator and the inspections
+// agree on what supports the format mini-language.
+private val NUMERIC_TYPE_NAMES = PyStringDunderUtil.KNOWN_COMPLEX_TYPES
+
+private val STRING_TYPE_NAMES = setOf(PyNames.FQN.STR)
+
 private val DATETIME_TYPE_NAMES = setOf(PyNames.FQN.DATE, PyNames.FQN.DATETIME, PyNames.FQN.TIME)
 
-// Options offered when the value type is unknown, and once the spec already carries some text:
-// a small, broadly-applicable subset.
-private val COMMON_SPECS = setOf(".", "d", "f", "s", "<", ">")
+// Specs offered when the value type is a plain string: alignment, precision and the string type.
+private val STRING_SPECS = setOf("<", ">", "^", ".", "s")
+
+// Specs offered when the value type is unknown: a small, broadly-applicable subset.
+private val UNKNOWN_SPECS = setOf(".", "d", "f", "s", "<", ">")
 
 /**
  * Provides code completion for f-string format specifications.
@@ -68,18 +76,8 @@ class PyFStringFormatSpecCompletionContributor : CompletionContributor(), DumbAw
 
                // The spec text between the colon and the caret, with a nested replacement field left out.
                val existingText = getTextBeforeCaret(formatPart) ?: ""
-               val applies = appliesTo(expression.getExpressionType(fragment))
 
-               if (existingText.isEmpty()) {
-                 // Immediately after the colon: offer every option that applies to the value type.
-                 addOptions(result, PyFormatSpecCatalog.options.filter(applies))
-               }
-               else {
-                 // The spec already carries text, so offer the common options that also apply. The offered
-                 // options extend that text instead of matching it, so the prefix matcher has to be empty.
-                 addOptions(result.withPrefixMatcher(""),
-                            PyFormatSpecCatalog.options.filter { it.spec in COMMON_SPECS && applies(it) })
-               }
+               addFormatSpecCompletions(result, expression, fragment, existingText)
              }
            })
   }
@@ -117,11 +115,57 @@ class PyFStringFormatSpecCompletionContributor : CompletionContributor(), DumbAw
     return if (afterFormatStart) text.toString() else null
   }
 
+  private fun addFormatSpecCompletions(
+    result: CompletionResultSet,
+    expression: PyExpression,
+    fragment: PyFStringFragment,
+    existingText: String,
+  ) {
+    val expressionType = expression.getExpressionType(fragment)
+    val applies = appliesTo(expressionType)
+
+    if (existingText.isEmpty()) {
+      // Immediately after the colon: offer every option that applies to the value type.
+      addOptions(result, PyFormatSpecCatalog.options.filter(applies))
+      return
+    }
+
+    if (expressionType == ExpressionType.DATETIME) {
+      // A datetime spec is a free-form strftime string, so a directive can follow any text. A trailing
+      // '%' already starts the next directive, so it becomes the prefix and the directive replaces it.
+      val prefix = if (existingText.endsWith("%")) "%" else ""
+      addOptions(result.withPrefixMatcher(prefix), PyFormatSpecCatalog.of(PyFormatSpecCategory.DATETIME))
+      return
+    }
+
+    val typed = PyFormatSpec.parse(existingText, datetime = false)
+
+    // A presentation type ends the spec, so nothing more can follow it.
+    if (typed.hasPresentationType) {
+      return
+    }
+
+    // Use an empty prefix matcher because the offered options extend the typed text instead of matching
+    // it (e.g., after ".2" we want to offer "f").
+    val extending = result.withPrefixMatcher("")
+
+    // After a precision (e.g. .2) or a width (e.g. r>3), only a presentation type can follow.
+    if (typed.has(PyFormatSpecComponentKind.PRECISION_MARK) || typed.has(PyFormatSpecComponentKind.WIDTH)) {
+      addOptions(extending, PyFormatSpecCatalog.of(PyFormatSpecCategory.TYPE).filter(applies))
+      return
+    }
+
+    // General case - offer the common options that apply to the value type.
+    addOptions(extending, PyFormatSpecCatalog.options.filter { it.spec in UNKNOWN_SPECS && applies(it) })
+  }
+
   /** The options that apply to a value of [expressionType]. */
   private fun appliesTo(expressionType: ExpressionType): (PyFormatSpecOption) -> Boolean = when (expressionType) {
-    ExpressionType.STRING_OR_NUMERIC -> { option -> option.category != PyFormatSpecCategory.DATETIME }
+    ExpressionType.STRING -> { option -> option.spec in STRING_SPECS }
+    // A string presentation type ('s') is invalid for numbers, so it is excluded here.
+    ExpressionType.NUMERIC -> { option -> option.category != PyFormatSpecCategory.DATETIME && option.spec != "s" }
     ExpressionType.DATETIME -> { option -> option.category == PyFormatSpecCategory.DATETIME }
-    ExpressionType.UNKNOWN -> { option -> option.spec in COMMON_SPECS }
+    ExpressionType.UNKNOWN -> { option -> option.spec in UNKNOWN_SPECS }
   }
 
   private fun addOptions(result: CompletionResultSet, options: List<PyFormatSpecOption>) {
@@ -135,7 +179,8 @@ class PyFStringFormatSpecCompletionContributor : CompletionContributor(), DumbAw
   }
 
   private enum class ExpressionType {
-    STRING_OR_NUMERIC,
+    STRING,
+    NUMERIC,
     DATETIME,
     UNKNOWN
   }
@@ -143,7 +188,7 @@ class PyFStringFormatSpecCompletionContributor : CompletionContributor(), DumbAw
   private fun PyExpression.getExpressionType(fragment: PyFStringFragment): ExpressionType {
     // Conversion modifiers (!s, !r, !a) always produce a string before formatting.
     if (fragment.typeConversion != null) {
-      return ExpressionType.STRING_OR_NUMERIC
+      return ExpressionType.STRING
     }
 
     val context = TypeEvalContext.codeCompletion(project, containingFile)
@@ -152,7 +197,8 @@ class PyFStringFormatSpecCompletionContributor : CompletionContributor(), DumbAw
     // The match walks the ancestors, so a subclass such as `bool` counts as its numeric base.
     val members = type.asUnionSequence().filterNotNull().toList()
     return when {
-      members.any { it.isAllowedFormatOverride(KNOWN_FORMAT_MINI_LANGUAGE_TYPES, context) } -> ExpressionType.STRING_OR_NUMERIC
+      members.any { it.isAllowedFormatOverride(NUMERIC_TYPE_NAMES, context) } -> ExpressionType.NUMERIC
+      members.any { it.isAllowedFormatOverride(STRING_TYPE_NAMES, context) } -> ExpressionType.STRING
       members.any { it.isAllowedFormatOverride(DATETIME_TYPE_NAMES, context) } -> ExpressionType.DATETIME
       else -> ExpressionType.UNKNOWN
     }
