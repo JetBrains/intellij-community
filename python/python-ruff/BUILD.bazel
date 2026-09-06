@@ -74,6 +74,7 @@ jvm_library(
         "//platform/util/progress",
         "//platform/vcs-api:vcs",
         "//platform/vcs-impl",
+        "//platform/progress/shared:ide-progress",
     ],
 )
 
@@ -136,6 +137,7 @@ jvm_library(
         "//platform/util/progress:progress_test_lib",
         "//platform/vcs-api:vcs_test_lib",
         "//platform/vcs-impl:vcs-impl_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.ruff` end

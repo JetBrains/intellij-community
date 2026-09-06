@@ -17,6 +17,7 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
@@ -39,6 +40,8 @@
     <module name="intellij.xml.parser"/>
   </dependencies>
   <!-- endregion -->
+
+  <resource-bundle>messages.RuffBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
     <platform.lsp.integrationProvider implementation="com.intellij.python.ruff.server.RuffLspIntegrationProvider"/>
@@ -75,4 +78,10 @@
     <actionOnSave id="RuffFixOnSaveAction" implementation="com.intellij.python.ruff.RuffFixOnSaveAction"/>
     <checkinHandlerFactory implementation="com.intellij.python.ruff.RuffFixOnCommitHandlerFactory"/>
   </extensions>
+
+  <actions>
+    <action id="Ruff.FixScope" class="com.intellij.python.ruff.RuffFixScopeAction">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="CodeCleanup"/>
+    </action>
+  </actions>
 </idea-plugin>
