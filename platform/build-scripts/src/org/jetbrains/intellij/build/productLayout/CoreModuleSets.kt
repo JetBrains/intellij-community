@@ -242,9 +242,8 @@ object CoreModuleSets {
   /**
    * Eclipse LSP4J debug (DAP) library wrapper modules.
    *
-   * Separate from `librariesLsp4j()` on purpose: these wrappers back `intellij.platform.dap`, not
-   * `intellij.platform.lsp`, and their consumers (CLion, Rider, PyCharm, R, and the dotnet debugger plugins)
-   * are far wider than the products that include `lsp()`.
+   * `intellij.platform.dap` moved to the JetBrains DAP protocol library and no longer uses these wrappers.
+   * The CIDR DAP client still does, and CLion does not include `lsp()`, so the set stays separate from `librariesLsp4j()`.
    *
    * Not embedded, and nested in `corePlatform()`: available everywhere, outside the core classloader.
    */
