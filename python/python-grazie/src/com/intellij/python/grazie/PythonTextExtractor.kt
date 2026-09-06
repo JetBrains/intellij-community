@@ -15,6 +15,7 @@ import com.jetbrains.python.PyStringFormatParser
 import com.jetbrains.python.PyStringFormatParser.ConstantChunk
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.documentation.docstrings.SphinxDocString
+import com.jetbrains.python.documentation.docstrings.SphinxReferences
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyFormattedStringElement
 import com.jetbrains.python.psi.PyStringLiteralExpression
@@ -52,7 +53,7 @@ internal class PythonTextExtractor : TextExtractor() {
               .removingIndents(" \t")
               .removingLineSuffixes(" \t")
               .build(element, domain, escapeAwareRange)?.let { text ->
-                if (domain == TextDomain.DOCUMENTATION) text.excludeDocstringTags()?.let { texts.add(it) } else texts.add(text)
+                if (domain == TextDomain.DOCUMENTATION) text.excludeDocstringMarkup()?.let { texts.add(it) } else texts.add(text)
               }
           }
         }
@@ -66,7 +67,10 @@ internal class PythonTextExtractor : TextExtractor() {
         '\n',
         siblings.mapNotNull { TextContent.builder().build(it, TextDomain.COMMENTS) }
       ) ?: return emptyList()
-      return listOf(text)
+      // A Sphinx role in a comment is markup, not prose.
+      val ranges = Text.allOccurrences(SphinxReferences.COMMENT_MARKUP_PATTERN, text)
+      val cleaned = text.excludeRanges(merged(ranges).map(TextContent.Exclusion::exclude))
+      return if (cleaned == null) emptyList() else listOf(cleaned)
     }
 
     return emptyList()
@@ -78,6 +82,28 @@ internal class PythonTextExtractor : TextExtractor() {
   }
 }
 
-private fun TextContent.excludeDocstringTags(): TextContent? {
-  return excludeRanges(Text.allOccurrences(DOCSTRING_DIRECTIVE_PATTERN, this).map(TextContent.Exclusion::exclude))
+private fun TextContent.excludeDocstringMarkup(): TextContent? {
+  // Exclude the docstring field tags (:param:, :rtype:, ...) and the Sphinx markup, so the grammar checker does not
+  // read the raw markup as prose.
+  // The two patterns can overlap. The tag `:type` is also the name of a Sphinx role, and the tag pattern runs
+  // forward to the first colon, which can be the colon of a role. `excludeRanges` rejects an overlap, so merge first.
+  val ranges = Text.allOccurrences(DOCSTRING_DIRECTIVE_PATTERN, this) +
+               Text.allOccurrences(SphinxReferences.DOCSTRING_MARKUP_PATTERN, this)
+  return excludeRanges(merged(ranges).map(TextContent.Exclusion::exclude))
+}
+
+/** Sorts the ranges and joins every pair that overlaps or touches, because [TextContent.excludeRanges] rejects both. */
+private fun merged(ranges: List<TextRange>): List<TextRange> {
+  if (ranges.size < 2) return ranges
+  val result = ArrayList<TextRange>(ranges.size)
+  for (range in ranges.sortedBy { it.startOffset }) {
+    val last = result.lastOrNull()
+    if (last != null && range.intersects(last)) {
+      result[result.size - 1] = range.union(last)
+    }
+    else {
+      result.add(range)
+    }
+  }
+  return result
 }

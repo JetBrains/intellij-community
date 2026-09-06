@@ -8,6 +8,7 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.idea.TestFor
 
 @Subsystems.Inspections
 @Components.Grazie
@@ -41,5 +42,16 @@ class PythonGrazieSupportTest : GrazieTestBase() {
   fun `test docstring tags are excluded`() {
     GrazieConfig.update { it.withDomainEnabledRules(TextStyleDomain.CodeDocumentation, enabledRules) }
     runHighlightTestForFile("DocstringTagsAreExcluded.py")
+  }
+
+  @TestFor(issues=["PY-27635"])
+  fun `test sphinx roles are excluded`() {
+    GrazieConfig.update { it.withDomainEnabledRules(TextStyleDomain.CodeDocumentation, enabledRules) }
+    runHighlightTestForFile("SphinxRolesAreExcluded.py")
+  }
+
+  @TestFor(issues=["PY-27635"])
+  fun `test sphinx markup in comments is excluded`() {
+    runHighlightTestForFile("SphinxInCommentsExcluded.py")
   }
 }

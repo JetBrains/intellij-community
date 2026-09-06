@@ -5,6 +5,7 @@ import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -71,6 +72,16 @@ public class PySpellCheckerTest extends PyTestCase {
 
   // PY-7711
   public void testTyposInRegexIgnored() {
+    doTest();
+  }
+
+  @TestFor(issues="PY-27635")
+  public void testSphinxRoleInDocstring() {
+    doTest();
+  }
+
+  @TestFor(issues="PY-27635")
+  public void testSphinxRoleInComment() {
     doTest();
   }
 

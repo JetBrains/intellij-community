@@ -16,6 +16,7 @@
 package com.jetbrains.python.validation
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
@@ -23,6 +24,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringParser
 import com.jetbrains.python.documentation.docstrings.DocStringReferenceProvider
 import com.jetbrains.python.documentation.docstrings.DocStringUtil
 import com.jetbrains.python.documentation.docstrings.SphinxDocString
+import com.jetbrains.python.documentation.docstrings.SphinxReferences
 import com.jetbrains.python.highlighting.PyHighlighter
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyClass
@@ -37,7 +39,16 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
  */
 class PyDocStringHighlightingAnnotator : PyAnnotatorBase() {
   override fun annotate(element: PsiElement, holder: PyAnnotationHolder) {
-    if (holder.isBatchMode()) return
+    if (holder.isBatchMode) return
+    if (element is PsiComment) {
+      // Highlight the Sphinx role markers (e.g. :py:class:`...`) in a line comment like a docstring tag.
+      for (tagRange in SphinxReferences.findTagRanges(element)) {
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+          .range(tagRange.shiftRight(element.getTextRange().startOffset))
+          .textAttributes(PyHighlighter.PY_DOC_COMMENT_TAG).create()
+      }
+      return
+    }
     element.accept(PyDocStringAnnotatorVisitor(holder))
   }
 }
@@ -82,10 +93,16 @@ private class PyDocStringAnnotatorVisitor(private val holder: PyAnnotationHolder
         val textRange = DocStringReferenceProvider.findNextTag(stmt.getText(), pos, tags)
         if (textRange == null) break
         holder.newSilentAnnotation(
-          HighlightSeverity.INFORMATION).range(textRange.shiftRight(stmt.getTextRange().getStartOffset()))
+          HighlightSeverity.INFORMATION).range(textRange.shiftRight(stmt.getTextRange().startOffset))
           .textAttributes(PyHighlighter.PY_DOC_COMMENT_TAG).create()
         pos = textRange.endOffset
       }
+    }
+    // Highlight Sphinx cross-reference role/directive markers (e.g. :py:class:`...`) like other docstring tags.
+    for (tagRange in SphinxReferences.findTagRanges(stmt)) {
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+        .range(tagRange.shiftRight(stmt.getTextRange().startOffset))
+        .textAttributes(PyHighlighter.PY_DOC_COMMENT_TAG).create()
     }
   }
 }

@@ -927,6 +927,59 @@ public class Py2UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                    """);
   }
 
+  @TestFor(issues = "PY-27635")
+  public void testUnresolvedSphinxRoleReference() {
+    doTestByText("""
+                   def foo():
+                       ""\":py:func:`<warning descr="Unresolved reference 'missing_func'">missing_func</warning>`""\"
+                       pass
+                   """);
+  }
+
+  @TestFor(issues = "PY-27635")
+  public void testResolvedSphinxRoleReferenceHasNoWarning() {
+    doTestByText("""
+                   class MyClass:
+                       def my_method(self):
+                           pass
+
+                   def foo():
+                       ""\"See :py:class:`MyClass` and :py:meth:`MyClass.my_method`.""\"
+                       pass
+                   """);
+  }
+
+  // Sphinx resolves a dotted target through its own inventory, which can hold an object this project does not see.
+  @TestFor(issues = "PY-27635")
+  public void testSphinxRoleWithUnresolvedHeadIsNotWarned() {
+    doTestByText("""
+                   def foo():
+                       ""\"See :py:class:`pandas.DataFrame` and :py:func:`numpy.zeros`.""\"
+                       pass
+                   """);
+  }
+
+  @TestFor(issues = "PY-27635")
+  public void testSphinxRoleWithResolvedHeadIsWarned() {
+    doTestByText("""
+                   class MyClass:
+                       pass
+
+                   def foo():
+                       ""\":py:meth:`MyClass.<warning descr="Unresolved reference 'missing'">missing</warning>`""\"
+                       pass
+                   """);
+  }
+
+  @TestFor(issues = "PY-27635")
+  public void testSphinxDirectiveReferenceIsNotWarned() {
+    doTestByText("""
+                   def foo():
+                       ""\".. py:class:: UndocumentedElsewhere""\"
+                       pass
+                   """);
+  }
+
   // PY-37755 PY-2700
   public void testGlobalResolveAttribute() {
     doTest();

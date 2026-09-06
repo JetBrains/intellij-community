@@ -5,6 +5,7 @@ import com.jetbrains.python.allure.Components;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -228,6 +229,11 @@ public class PythonHighlightingTest extends PyTestCase {
     finally {
       documentationSettings.setFormat(DocStringFormat.PLAIN);
     }
+  }
+
+  @TestFor(issues = "PY-27635")
+  public void testSphinxRoleMarkers() {
+    doTest(false, true);
   }
 
   public void testYieldInNestedFunction() {
