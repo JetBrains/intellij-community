@@ -43,6 +43,7 @@ class RuffPyTool : PyLspTool<RuffConfiguration>() {
       formatting = configuration.formatting,
       sortImports = configuration.sortImports,
       formatSortImports = configuration.formatSortImports,
+      fixOnSave = configuration.fixOnSave,
     )
   }
 
@@ -52,6 +53,7 @@ class RuffPyTool : PyLspTool<RuffConfiguration>() {
     state.formatting?.let { configuration.formatting = it }
     state.sortImports?.let { configuration.sortImports = it }
     state.formatSortImports?.let { configuration.formatSortImports = it }
+    state.fixOnSave?.let { configuration.fixOnSave = it }
   }
 
   override fun onExecutableChanged(project: Project) {

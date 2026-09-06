@@ -71,6 +71,9 @@ jvm_library(
         "//python/python-exec-service:community-execService",
         "//platform/eel",
         "//platform/eel-nioFs",
+        "//platform/util/progress",
+        "//platform/vcs-api:vcs",
+        "//platform/vcs-impl",
     ],
 )
 
@@ -130,6 +133,9 @@ jvm_library(
         "//python/python-exec-service:community-execService_test_lib",
         "//platform/eel:eel_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
+        "//platform/util/progress:progress_test_lib",
+        "//platform/vcs-api:vcs_test_lib",
+        "//platform/vcs-impl:vcs-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.ruff` end

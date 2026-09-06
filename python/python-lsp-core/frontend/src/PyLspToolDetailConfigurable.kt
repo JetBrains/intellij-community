@@ -52,6 +52,11 @@ private class PyLspToolDetailConfigurable(
         checkBox(requireNotNull(tool.sortImportsLabel)).bindSelected(settings::sortImports.toSafeProperty())
       }
     }
+    settings.fixOnSave?.let {
+      row("") {
+        checkBox(requireNotNull(tool.fixOnSaveLabel)).bindSelected(settings::fixOnSave.toSafeProperty())
+      }
+    }
   }
 
   override fun apply() {

@@ -29,4 +29,7 @@ interface LspPyToolFrontend : ProjectLevelPyToolFrontend<PyLspToolConfigurationD
 
   /** The localized label for import sorting during formatting, or null when the tool does not support it. */
   val formatSortImportsLabel: @Nls String? get() = null
+
+  /** The localized label for code fixes on save, or null when the tool does not support them. */
+  val fixOnSaveLabel: @Nls String? get() = null
 }

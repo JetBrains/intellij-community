@@ -15,4 +15,5 @@ internal class RuffPyToolFrontend : LspPyToolFrontend {
   override val formattingLabel: String get() = RuffFrontendBundle.message("checkbox.formatting")
   override val sortImportsLabel: String get() = RuffFrontendBundle.message("checkbox.import.optimizer")
   override val formatSortImportsLabel: String get() = RuffFrontendBundle.message("checkbox.format.sort.imports")
+  override val fixOnSaveLabel: String get() = RuffFrontendBundle.message("checkbox.fix.on.save")
 }

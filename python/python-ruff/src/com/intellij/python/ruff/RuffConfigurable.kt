@@ -15,6 +15,15 @@ interface RuffSettings : PyLspToolSettings {
 
   /** When formatting is enabled, also sort imports (rule `I`) as part of `Reformat Code`, without removing unused ones. */
   var formatSortImports: Boolean
+
+  /** Run `ruff check --fix-only` (apply all configured safe lint fixes) whenever a Python file is saved. */
+  var fixOnSave: Boolean
+
+  /**
+   * Run `ruff check --fix-only` over the committed Python files before a commit completes. Toggled from the
+   * "Apply Ruff fixes" checkbox in the commit options, not from the External Tools settings page.
+   */
+  var fixOnCommit: Boolean
 }
 
 @Service(Service.Level.PROJECT)
@@ -26,6 +35,8 @@ data class RuffConfiguration(
   override var sortImports: Boolean = true,
   override var formatting: Boolean = true,
   override var formatSortImports: Boolean = false,
+  override var fixOnSave: Boolean = false,
+  override var fixOnCommit: Boolean = false,
 ) : PyLspToolConfiguration<RuffConfiguration>(), RuffSettings {
   override fun loadState(state: RuffConfiguration) {
     XmlSerializerUtil.copyBean(state, this)

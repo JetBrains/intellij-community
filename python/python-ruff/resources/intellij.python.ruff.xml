@@ -25,7 +25,10 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.lsp.core"/>
     <module name="intellij.python.lsp.core.common"/>
@@ -69,5 +72,7 @@
     <externalAnnotator language="TOML" implementationClass="com.intellij.python.ruff.codeinsight.RuffConfigExternalAnnotator"/>
     <projectSettings service="com.intellij.python.ruff.RuffConfiguration"/>
     <python.pytools.pyTool implementation="com.intellij.python.ruff.RuffPyTool"/>
+    <actionOnSave id="RuffFixOnSaveAction" implementation="com.intellij.python.ruff.RuffFixOnSaveAction"/>
+    <checkinHandlerFactory implementation="com.intellij.python.ruff.RuffFixOnCommitHandlerFactory"/>
   </extensions>
 </idea-plugin>

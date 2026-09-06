@@ -18,6 +18,7 @@ data class PyLspToolConfigurationDto(
   var formatting: Boolean? = null,
   var sortImports: Boolean? = null,
   var formatSortImports: Boolean? = null,
+  var fixOnSave: Boolean? = null,
 ) : PyToolConfigurationDto
 
 class PyLspToolConfigurationSerializerProvider :

@@ -17,6 +17,7 @@ internal fun pyLspToolFeaturesSummary(
   if (settings.formatting == true) tool.formattingLabel?.let(::add)
   if (settings.formatSortImports == true) tool.formatSortImportsLabel?.let(::add)
   if (settings.sortImports == true) tool.sortImportsLabel?.let(::add)
+  if (settings.fixOnSave == true) tool.fixOnSaveLabel?.let(::add)
   if (settings.completions == true) add(PyToolsUiBundle.message("checkbox.completions"))
   if (settings.inlayHints == true) add(PyToolsUiBundle.message("checkbox.inlay.hints"))
   if (settings.documentation == true) add(PyToolsUiBundle.message("checkbox.documentation"))
