@@ -202,6 +202,8 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyFStringLikeCompletionContributor"/>
     <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyFStringFormatSpecCompletionContributor"/>
+    <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyMultipleArgumentsCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyLiteralTypeCompletionContributor"/>
