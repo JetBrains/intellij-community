@@ -162,7 +162,7 @@ testPlugin(
 ```json
 {
   "contentModules": {
-    "intellij.react.ultimate": {
+    "intellij.react.ultimate.backend": {
       "suppressPlugins": ["com.intellij.css"]
     }
   }
