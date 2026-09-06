@@ -197,6 +197,22 @@ class PySphinxReferenceTest : PyTestCase() {
     assertTrue(myFixture.file.text, myFixture.file.text.contains("# see :py:class:`Renamed`"))
   }
 
+  @TestFor(issues = ["PY-62267"])
+  fun testCodeBlockArgumentIsNotAReference() {
+    configure(
+      """
+      def f():
+          $TQ
+          .. code-block:: python
+
+             1 + 1
+          $TQ
+      """
+    )
+    val offset = myFixture.file.text.lastIndexOf("python")
+    assertNull(myFixture.file.findReferenceAt(offset))
+  }
+
   fun testTagRangesCoverMarkersOnly() {
     configure(
       """
@@ -213,6 +229,7 @@ class PySphinxReferenceTest : PyTestCase() {
     assertSameElements(markers, ":py:class:", ":py:meth:", ".. py:function::")
   }
 
+  @TestFor(issues = ["PY-62267"])
   fun testRoleInAnInjectedCodeBlockIsNotAReference() {
     configure(
       """

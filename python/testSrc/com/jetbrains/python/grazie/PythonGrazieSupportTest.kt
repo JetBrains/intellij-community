@@ -44,7 +44,7 @@ class PythonGrazieSupportTest : GrazieTestBase() {
     runHighlightTestForFile("DocstringTagsAreExcluded.py")
   }
 
-  @TestFor(issues=["PY-27635"])
+  @TestFor(issues=["PY-27635", "PY-62267"])
   fun `test sphinx roles are excluded`() {
     GrazieConfig.update { it.withDomainEnabledRules(TextStyleDomain.CodeDocumentation, enabledRules) }
     runHighlightTestForFile("SphinxRolesAreExcluded.py")

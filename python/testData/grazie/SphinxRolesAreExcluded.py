@@ -16,5 +16,11 @@ class Connection:
     .. py:class:: Connection
 
        The directive signature above is excluded too.
+
+    .. code-block:: python
+
+       1 + 1
+
+    .. note:: <GRAMMAR_ERROR descr="UPPERCASE_SENTENCE_START">this</GRAMMAR_ERROR> argument stays prose.
     """
     pass

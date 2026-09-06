@@ -152,6 +152,15 @@ object SphinxReferences {
   private const val DIRECTIVE_NAMES =
     "module|currentmodule|function|decorator|decoratormethod|class|exception|attribute|data|method|staticmethod|classmethod|property|type"
 
+  /**
+   * Directives that carry prose as their argument, such as `.. note:: Close the socket.`. Only their marker is
+   * markup. Every other directive, such as `.. code-block:: python` or `.. image:: logo.png`, carries a code or a
+   * path argument, so the whole line is markup.
+   */
+  private const val PROSE_DIRECTIVE_NAMES =
+    "note|warning|tip|caution|important|attention|hint|danger|error|admonition|seealso|rubric|topic|sidebar|" +
+    "deprecated|versionadded|versionchanged|versionremoved"
+
   private val ROLE_PATTERN = Regex(":(?:py:)?(?:$ROLE_NAMES):`([^`\\n]+)`")
 
   private val DIRECTIVE_PATTERN = Regex("(?m)^[ \\t]*\\.\\.[ \\t]+(?:py:)?(?:$DIRECTIVE_NAMES)::[ \\t]+(\\S+)")
@@ -163,10 +172,14 @@ object SphinxReferences {
    */
   private const val ANY_ROLE = ":[\\w.+-]+(?::[\\w.+-]+)*:`[^`\\n]+`"
 
-  /** A whole Python-domain directive line, marker and signature together. */
-  private const val PY_DIRECTIVE_LINE = "^[ \\t]*\\.\\.[ \\t]+(?:py:)?(?:$DIRECTIVE_NAMES)::[ \\t]+\\S+"
+  /** The marker of a prose-carrying directive. The argument after it stays available to the grammar checker. */
+  private const val PROSE_DIRECTIVE_MARKER = "^[ \\t]*\\.\\.[ \\t]+(?:$PROSE_DIRECTIVE_NAMES)::"
 
-  private const val DOCSTRING_MARKUP = "$ANY_ROLE|$PY_DIRECTIVE_LINE"
+  /** A whole directive line whose argument is code, a path or an option, such as `.. code-block:: python`. */
+  private const val OTHER_DIRECTIVE_LINE =
+    "^[ \\t]*\\.\\.[ \\t]+(?!(?:$PROSE_DIRECTIVE_NAMES)::)[\\w.+-]+(?::[\\w.+-]+)*::.*"
+
+  private const val DOCSTRING_MARKUP = "$ANY_ROLE|$PROSE_DIRECTIVE_MARKER|$OTHER_DIRECTIVE_LINE"
 
   /**
    * Matches the Sphinx markup of a docstring. Used to exclude the markup from natural-language analysis where the
