@@ -6,11 +6,12 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Unmodifiable
-import java.util.WeakHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicBoolean
@@ -27,7 +28,9 @@ abstract class LspTypeEvalContext(val psiFile: PsiFile) {
   private val stringTypeLocks = Striped.lock(64)
   private val requestedTypesCount = AtomicInteger(0)
   private val isFullLoaded: AtomicBoolean = AtomicBoolean(false)
-  private val cacheElementToStringType: WeakHashMap<PyTypedElement, String?> = WeakHashMap()
+
+  /** Every highlighting thread reads and writes this map, so it must be concurrent. */
+  private val cacheElementToStringType: ConcurrentMap<PyTypedElement, String> = ContainerUtil.createConcurrentWeakMap()
   private val cacheStringTypeToType: ConcurrentSkipListMap<String, Ref<PyType?>> = ConcurrentSkipListMap()
   private val unresolvedSet: ConcurrentSkipListSet<String> = ConcurrentSkipListSet()
 
@@ -62,9 +65,7 @@ abstract class LspTypeEvalContext(val psiFile: PsiFile) {
 
   private fun resolveTypeByLsp(element: PyTypedElement, isUserInitiated: Boolean): String? =
     if (!isUserInitiated && requestedTypesCount.incrementAndGet() >= FULL_LOAD_THRESHOLD && !ApplicationManager.getApplication().isDispatchThread) {
-      synchronized(this@LspTypeEvalContext) {
-        loadAllTypes(element)
-      }
+      loadAllTypes(element)
       cacheElementToStringType[element]
     }
     else {
@@ -76,20 +77,35 @@ abstract class LspTypeEvalContext(val psiFile: PsiFile) {
   private fun loadAllTypes(element: PyTypedElement) {
     if (isFullLoaded.get())
       return
-    val requestedTypes = collectElementsForCalculation(element) - cacheElementToStringType.keys
-    if (requestedTypes.isEmpty()) return
+    synchronized(this) {
+      if (isFullLoaded.get())
+        return
+      val requestedTypes = collectElementsForCalculation(element) - cacheElementToStringType.keys
+      if (requestedTypes.isEmpty()) return
 
-    val contents = requestTypes(requestedTypes)
-    if (contents == null) {
-      thisLogger().warn("Failed to load all types for ${psiFile.name} Current stamp ${psiFile.modificationStamp} calculating: ${psiFileTimestamp}")
-      return
+      val contents = requestTypes(requestedTypes)
+      if (contents == null) {
+        thisLogger().warn("Failed to load all types for ${psiFile.name} Current stamp ${psiFile.modificationStamp} calculating: ${psiFileTimestamp}")
+        return
+      }
+
+      if (contents.size != requestedTypes.size) {
+        thisLogger().warn("Requested ${requestedTypes.size} types for ${psiFile.name} but got ${contents.size}")
+        return
+      }
+
+      // The map refuses a null value. An element without a type stays absent, as it was before.
+      for ((requested, content) in requestedTypes.zip(contents)) {
+        if (content != null) {
+          cacheElementToStringType[requested] = content
+        }
+      }
+      isFullLoaded.set(true)
     }
-
-    cacheElementToStringType.putAll(requestedTypes zip contents)
-    isFullLoaded.set(true)
   }
 
   private fun loadSingleType(typedElement: PyTypedElement): String? {
+    cacheElementToStringType[typedElement]?.let { return it }
     val types = requestTypes(listOf(typedElement))
     if (types.isNullOrEmpty()) return null
     val resolvedType = types.single() ?: ""
