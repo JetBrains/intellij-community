@@ -7,6 +7,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 dev_dist_plugin(
     content_modules = [
         # do not sort,
+        "intellij.libraries.kotlin.tooling.core",
         "intellij.libraries.kotlinc.kotlin.compiler.common",
         "intellij.libraries.kotlinc.kotlin.compiler.fe10",
         "intellij.libraries.kotlinc.kotlin.script.runtime",
@@ -14,7 +15,10 @@ dev_dist_plugin(
         "intellij.libraries.kotlinc.kotlin.scripting.jvm",
     ],
     libraries = [
+        "@lib//:kotlinc-kotlin-build-tools-api",
+        "@lib//:kotlinc-kotlin-build-tools-impl",
         "@lib//:kotlinc-kotlin-dist",
+        "@lib//:libraries-kotlin-tooling-core-kotlin-tooling-core",
         "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
         "@lib//:libraries-kotlinc-kotlin-compiler-fe10-kotlinc-kotlin-compiler-fe10",
         "@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime",
@@ -24,6 +28,7 @@ dev_dist_plugin(
     main_module = "intellij.kotlin.jsr223.plugin",
     module_targets = MODULE_TARGETS,
     prepacked_jars = {
+        "intellij.kotlin.buildToolsRuntime": "intellij.kotlin.buildToolsRuntime.jar",
         "intellij.kotlin.jsr223": "intellij.kotlin.jsr223.jar",
     },
 )
@@ -73,6 +78,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/jsr223",
+        "//plugins/kotlin/build-tools-runtime",
         "//platform/util",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
@@ -92,6 +98,7 @@ jvm_library(
         # do not sort,
         ":jsr223-plugin",
         "//plugins/kotlin/jsr223:jsr223_test_lib",
+        "//plugins/kotlin/build-tools-runtime:build-tools-runtime_test_lib",
         "//platform/util:util_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",

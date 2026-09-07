@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.kotlin.jsr223"/>
+    <module name="intellij.libraries.kotlin.tooling.core"/>
     <module name="intellij.platform.core"/>
   </dependencies>
   <!-- endregion -->

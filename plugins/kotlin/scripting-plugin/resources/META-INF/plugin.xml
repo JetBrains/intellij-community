@@ -9,6 +9,10 @@
     use the toolchain to compile Kotlin in the IDE, and does not have to bundle a compiler of its own.
     ]]></description>
 
+  <!-- The Kotlin plugin ships the same jsr223 engine and the same public intellij.kotlin.buildToolsRuntime module.
+       The two plugins must never load together, so this plugin gives way to the Kotlin plugin. -->
+  <incompatible-with>org.jetbrains.kotlin</incompatible-with>
+
   <!-- kotlin.jsr223 is included in kotlin plugin as well. To avoid conflicts, it's private and is not included in the common namespace -->
   <content>
     <module name="intellij.kotlin.jsr223" loading="embedded"/>
@@ -20,5 +24,8 @@
 
   <content namespace="jetbrains">
     <module name="intellij.kotlin.buildToolsRuntime" loading="embedded"/>
+    <!-- intellij.kotlin.buildToolsRuntime needs this wrapper on the BTA toolchain classpath. The Kotlin plugin
+         declares the same public module. Only one of the two plugins can load, so the two copies never collide. -->
+    <module name="intellij.libraries.kotlin.tooling.core" loading="required"/>
   </content>
 </idea-plugin>

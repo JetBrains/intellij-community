@@ -1,12 +1,11 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
-### auto-generated section `build intellij.kotlin.buildToolsRuntime` start
-jvm_provided_library(
-    name = "libraries_kotlin_libraries-kotlin-tooling-core_provided",
-    lib = "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
-)
+### auto-generated section `dev intellij.kotlin.buildToolsRuntime` start
+content_module_jar(module = ":build-tools-runtime")
+### auto-generated section `dev intellij.kotlin.buildToolsRuntime` end
 
+### auto-generated section `build intellij.kotlin.buildToolsRuntime` start
 jvm_provided_library(
     name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
@@ -33,16 +32,14 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinc-kotlin-build-tools-api",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
         "//platform/util-class-loader:util-classLoader",
         "//platform/core-api:core",
         "//platform/util",
         "//plugins/kotlin/jsr223",
-        ":libraries_kotlin_libraries-kotlin-tooling-core_provided",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
-
-content_module_jar(module = ":build-tools-runtime")
 
 jvm_library(
     name = "build-tools-runtime_test_lib",
@@ -56,7 +53,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":build-tools-runtime",
-        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",

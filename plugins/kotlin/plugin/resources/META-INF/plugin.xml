@@ -213,6 +213,9 @@
     <module name="intellij.libraries.kotlinc.kotlin.jps.common" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.fe10" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.ir" loading="embedded"/>
+    <!-- The Kotlin Scripting Support plugin declares the same public module. That plugin is incompatible with this one,
+         so only one of the two copies can load. Any plugin can then depend on this module id, with or without Kotlin. -->
+    <module name="intellij.kotlin.buildToolsRuntime" loading="embedded"/>
 
     <!-- ultimate part -->
     <module name="intellij.kotlin.ultimate.common.native" loading="optional"/>

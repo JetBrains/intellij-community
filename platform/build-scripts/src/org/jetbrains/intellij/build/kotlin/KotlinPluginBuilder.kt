@@ -135,7 +135,6 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
       spec.withModule("intellij.libraries.kotlinc.kotlin.compiler.fe10")
       withKotlincInPluginDirectory(spec = spec)
 
-      spec.withModule(KOTLIN_TOOLING_CORE_MODULE, KOTLIN_TOOLING_CORE_JAR)
       spec.withProjectLibraryUnpackedIntoJar("kotlinc.kotlin-build-tools-api", spec.mainJarName)
       spec.withProjectLibraryUnpackedIntoJar("kotlinc.kotlin-build-tools-impl", spec.mainJarName)
 
@@ -162,9 +161,6 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
 
 private const val KOTLINC_KOTLIN_COMPILER_COMMON_MODULE = "intellij.libraries.kotlinc.kotlin.compiler.common"
 private const val KOTLINC_KOTLIN_COMPILER_COMMON_JAR = "intellij.libraries.kotlinc.kotlin.compiler.common.jar"
-
-private const val KOTLIN_TOOLING_CORE_MODULE = "intellij.libraries.kotlin.tooling.core"
-private const val KOTLIN_TOOLING_CORE_JAR = "intellij.libraries.kotlin.tooling.core.jar"
 
 private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
   val distLibName = "kotlinc.$libName"
