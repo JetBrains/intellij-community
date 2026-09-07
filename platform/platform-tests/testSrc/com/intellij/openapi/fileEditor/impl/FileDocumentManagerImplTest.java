@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -32,6 +33,7 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.common.ThreadUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -352,6 +354,67 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     myDocumentManager.saveAllDocuments();
     assertEquals("xxx test\rtest", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
+  }
+
+  public void testContentChanged_reloadsAfterTheVfsCachedTheOldContent() throws Exception {
+    VirtualFile file = createFile("cached.txt", "old content");
+    assertEquals("old content", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
+
+    Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
+
+    changeOnDisk(file, "the brand new content");
+
+    assertEquals("the brand new content", document.getText());
+    assertEquals(file.getModificationStamp(), document.getModificationStamp());
+  }
+
+  public void testContentChanged_reloadsChangeOfTheSameLength() throws Exception {
+    VirtualFile file = createFile("same-length.txt", "aaaaaaa");
+    assertEquals("aaaaaaa", new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
+
+    Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
+
+    changeOnDisk(file, "bbbbbbb");
+
+    assertEquals("bbbbbbb", document.getText());
+  }
+
+  public void testContentChanged_keepsTheBomOfTheChangedFile() throws Exception {
+    VirtualFile file = createFile("bom.txt", "");
+    writeBytesToDisk(file, bytesWithUtf8Bom("first"));
+    file.refresh(false, false);
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+    Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
+    assertEquals("first", document.getText());
+    Assert.assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
+
+    writeBytesToDisk(file, bytesWithUtf8Bom("second"));
+    file.refresh(false, false);
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+    assertEquals("second", document.getText());
+    Assert.assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
+  }
+
+  private static byte[] bytesWithUtf8Bom(@NotNull String text) {
+    return ArrayUtil.mergeArrays(CharsetToolkit.UTF8_BOM, text.getBytes(StandardCharsets.UTF_8));
+  }
+
+  private static void changeOnDisk(@NotNull VirtualFile file, @NotNull String content) throws IOException {
+    writeBytesToDisk(file, content.getBytes(StandardCharsets.UTF_8));
+    file.refresh(false, false);
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+  }
+
+  private static void writeBytesToDisk(@NotNull VirtualFile file, byte @NotNull [] content) throws IOException {
+    File ioFile = new File(file.getPath());
+    long oldTimestamp = ioFile.lastModified();
+    FileUtil.writeToFile(ioFile, content);
+    assertTrue("cannot move the timestamp of " + ioFile, ioFile.setLastModified(oldTimestamp + 2000));
   }
 
   public void testContentChanged_noDocument() throws Exception {
