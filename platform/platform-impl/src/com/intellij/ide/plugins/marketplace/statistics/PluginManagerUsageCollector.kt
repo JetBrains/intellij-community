@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /*
   Collects plugin manager usage statistics:
-    - Data about search requests on the Marketplace and Installed tabs and search resets actions will be collected
+    - Data about search requests on the Marketplace and Installed tabs and search reset actions will be collected
       by [PluginManagerMPCollector].
     - Data about opening plugin cards, installing/removing plugins and plugin state changes will be collected by
       both [PluginManagerMPCollector] and [PluginManagerFUSCollector] for backward compatibility.
@@ -35,8 +35,10 @@ object PluginManagerUsageCollector {
 
   // Plugin manager UI session identifier which is unique within one IDE session
   private val sessionId = AtomicInteger(-1)
+
   // Plugin manager search session identifier which is unique within one IDE session
   private val searchSessionId = AtomicInteger(-1)
+
   // Search index within one plugin manager search session. The order corresponds to the order of query updates
   private val searchIndex = AtomicInteger(0)
 
@@ -44,10 +46,18 @@ object PluginManagerUsageCollector {
 
   @JvmStatic
   fun logSessionStarted(openSource: PluginManagerOpenSourceEnum = PluginManagerOpenSourceEnum.OTHER): Int {
+    return logSessionStarted(openSource, isUnifiedPage = false)
+  }
+
+  internal fun logUnifiedSessionStarted(openSource: PluginManagerOpenSourceEnum): Int {
+    return logSessionStarted(openSource, isUnifiedPage = true)
+  }
+
+  private fun logSessionStarted(openSource: PluginManagerOpenSourceEnum, isUnifiedPage: Boolean): Int {
     val newSessionId = sessionId.incrementAndGet()
     val newSearchSessionId = startNewSearchSession()
-    fusCollector.sessionStarted(openSource, newSessionId, newSearchSessionId)
-    mpCollector.sessionStarted(openSource, newSessionId, newSearchSessionId)
+    fusCollector.sessionStarted(openSource, newSessionId, newSearchSessionId, isUnifiedPage)
+    mpCollector.sessionStarted(openSource, newSessionId, newSearchSessionId, isUnifiedPage)
     return newSessionId
   }
 
@@ -86,9 +96,14 @@ object PluginManagerUsageCollector {
     query: SearchQueryParser.Marketplace,
     results: List<PluginUiModel>,
     searchIndex: Int,
-    pluginToScore: Map<PluginUiModel, Double>? = null
+    pluginToScore: Map<PluginUiModel, Double>? = null,
   ) {
     mpCollector.performMarketplaceSearch(project, query, results, searchIndex, sessionId.get(), searchSessionId.get(), pluginToScore)
+  }
+
+  internal fun performUnifiedSearch(project: Project?, statistics: UnifiedPluginSearchStatistics, searchIndex: Int) {
+    fusCollector.performUnifiedSearch(project, statistics, searchIndex, sessionId.get(), searchSessionId.get())
+    mpCollector.performUnifiedSearch(project, statistics, searchIndex, sessionId.get(), searchSessionId.get())
   }
 
   @JvmStatic
@@ -97,7 +112,7 @@ object PluginManagerUsageCollector {
     query: SearchQueryParser.Installed,
     results: List<PluginUiModel>,
     searchIndex: Int,
-    pluginToScore: Map<PluginUiModel, Double>? = null
+    pluginToScore: Map<PluginUiModel, Double>? = null,
   ) {
     mpCollector.performInstalledTabSearch(project, query, results, searchIndex, sessionId.get(), searchSessionId.get(), pluginToScore)
   }
@@ -150,7 +165,7 @@ object PluginManagerUsageCollector {
   fun pluginInstallationStarted(
     descriptor: IdeaPluginDescriptor,
     source: InstallationSourceEnum,
-    previousVersion: String? = null
+    previousVersion: String? = null,
   ) {
     fusCollector.pluginInstallationStarted(descriptor, source, sessionId.get(), searchSessionId.get(), previousVersion)
     mpCollector.pluginInstallationStarted(descriptor, source, sessionId.get(), searchSessionId.get(), previousVersion)

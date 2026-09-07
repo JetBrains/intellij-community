@@ -91,6 +91,15 @@ enum class PluginManagerUiMetric(val metricName: String) {
   /** End-to-end latency of an Installed plugins search. */
   SEARCH_INSTALLED_LATENCY("search.installed.latency"),
 
+  /** Time until the unified page first shows settled source data. */
+  UNIFIED_PAGE_READY("unified.page.ready"),
+
+  /** Building and applying one unified page state on the EDT. */
+  UNIFIED_PAGE_RENDER("unified.page.render"),
+
+  /** End-to-end latency of a settled unified page search. */
+  UNIFIED_SEARCH_LATENCY("unified.search.latency"),
+
   /** Downloading a plugin icon from the Marketplace. */
   ICON_LOAD_REMOTE("icon.load.remote"),
 
@@ -135,6 +144,24 @@ enum class PluginManagerUiEvent(val metricName: String) {
 
   /** A Marketplace search succeeded but returned no results. */
   SEARCH_MARKETPLACE_EMPTY("search.marketplace.empty"),
+
+  /** Loading the local source for the unified page failed. */
+  UNIFIED_LOCAL_LOAD_ERROR("unified.local.load.error"),
+
+  /** Loading the Internal source for the unified page failed. */
+  UNIFIED_INTERNAL_LOAD_ERROR("unified.internal.load.error"),
+
+  /** Loading the Marketplace source for the unified page failed. */
+  UNIFIED_MARKETPLACE_LOAD_ERROR("unified.marketplace.load.error"),
+
+  /** Loading a repository source for the unified page failed. */
+  UNIFIED_REPOSITORY_LOAD_ERROR("unified.repository.load.error"),
+
+  /** A settled unified search returned no plugin. */
+  UNIFIED_SEARCH_EMPTY("unified.search.empty"),
+
+  /** A settled unified search has results from only some eligible sources. */
+  UNIFIED_SEARCH_PARTIAL("unified.search.partial"),
 
   /** Loading updates from the local (frontend) host failed. */
   UPDATES_LOCAL_LOAD_ERROR("updates.local.load.error"),

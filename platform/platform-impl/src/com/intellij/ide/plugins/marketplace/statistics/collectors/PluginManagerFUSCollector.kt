@@ -2,8 +2,10 @@
 package com.intellij.ide.plugins.marketplace.statistics.collectors
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.MarketplaceTabSearchSortByOptions
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginsGroupType
+import com.intellij.ide.plugins.marketplace.statistics.UnifiedPluginSearchStatistics
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerButtonType
@@ -12,12 +14,18 @@ import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSo
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerSide
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerTab
 import com.intellij.ide.plugins.marketplace.statistics.enums.SignatureVerificationResult
+import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchFilterKind
+import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchQueryShape
+import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchSection
+import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchSourceKind
 import com.intellij.ide.plugins.marketplace.statistics.fields.PluginVersionEventField
 import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.BaseEventId
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.internal.statistic.utils.getPluginInfoById
@@ -27,7 +35,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 internal const val PM_FUS_GROUP_ID = "plugin.manager"
-internal const val PM_FUS_GROUP_VERSION = 12
+internal const val PM_FUS_GROUP_VERSION = 13
 private val EVENT_GROUP = EventLogGroup(PM_FUS_GROUP_ID, PM_FUS_GROUP_VERSION)
 
 @ApiStatus.Internal
@@ -36,8 +44,10 @@ open class PluginManagerFUSCollector : CounterUsagesCollector() {
 
   @Suppress("PropertyName")
   protected val PLUGIN_MANAGER_SESSION_ID = IntEventField("sessionId")
+
   @Suppress("PropertyName")
   protected val PLUGIN_MANAGER_SEARCH_SESSION_ID: IntEventField = IntEventField("searchSessionId")
+
   @Suppress("PropertyName")
   protected val PLUGIN_MANAGER_SEARCH_INDEX = IntEventField("searchIndex")
 
@@ -53,14 +63,26 @@ open class PluginManagerFUSCollector : CounterUsagesCollector() {
   private val PREVIOUS_VERSION = PluginVersionEventField("previous_version")
   private val SIGNATURE_CHECK_RESULT = EventFields.Enum<SignatureVerificationResult>("signature_check_result")
   private val PLUGIN_LIST_INDEX = EventFields.Int("index")
+  private val IS_UNIFIED_PAGE = EventFields.Boolean("isUnifiedPage")
+  private val UNIFIED_QUERY_SHAPE = EventFields.Enum<UnifiedPluginSearchQueryShape>("query_shape")
+  private val UNIFIED_FILTER_KINDS = EventFields.StringList(
+    "filter_kinds", UnifiedPluginSearchFilterKind.entries.map(Enum<*>::name)
+  )
+  private val UNIFIED_SOURCE_KINDS = EventFields.StringList(
+    "source_kinds", UnifiedPluginSearchSourceKind.entries.map(Enum<*>::name)
+  )
+  private val UNIFIED_SORT = EventFields.Enum<MarketplaceTabSearchSortByOptions>("sort")
+  private val UNIFIED_RESULT_SECTION = EventFields.Enum<UnifiedPluginSearchSection>("section")
+  private val UNIFIED_RESULT_COUNT = EventFields.RoundedInt("result_count")
+  private val UNIFIED_RESULTS = ObjectListEventField("results", UNIFIED_RESULT_SECTION, UNIFIED_RESULT_COUNT)
 
   private val PLUGIN_CARD_OPENED = group.registerVarargEvent(
     "plugin.search.card.opened", EventFields.PluginInfo, PLUGINS_GROUP_TYPE,
     PLUGIN_LIST_INDEX, PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
   )
   private val THIRD_PARTY_ACCEPTANCE_CHECK = group.registerEvent("plugin.install.third.party.check",
-                                                                  ACCEPTANCE_RESULT, PLUGIN_MANAGER_SESSION_ID,
-                                                                  PLUGIN_MANAGER_SEARCH_SESSION_ID)
+                                                                 ACCEPTANCE_RESULT, PLUGIN_MANAGER_SESSION_ID,
+                                                                 PLUGIN_MANAGER_SEARCH_SESSION_ID)
   private val PLUGIN_SIGNATURE_WARNING = group.registerVarargEvent(
     "plugin.signature.warning.shown", EventFields.PluginInfo, ACCEPTANCE_RESULT,
     PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
@@ -91,14 +113,18 @@ open class PluginManagerFUSCollector : CounterUsagesCollector() {
     "plugin.uninstall.button.clicked", EventFields.PluginInfo, PLUGIN_MANAGER_SIDE, PLUGIN_MANAGER_BUTTON_TYPE,
     PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
   )
-  private val SESSION_STARTED = group.registerEvent(
-    "session.started", OPEN_SOURCE, PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  private val SESSION_STARTED = group.registerVarargEvent(
+    "session.started", OPEN_SOURCE, IS_UNIFIED_PAGE, PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
   )
   private val TAB_SELECTED = group.registerEvent(
     "tab.selected", PLUGIN_MANAGER_TAB, PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
   )
   private val MANAGE_ACTION_INVOKED = group.registerEvent(
     "manage.action.invoked", MANAGE_ACTION, PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val UNIFIED_SEARCH_PERFORMED = group.registerVarargEvent(
+    "unified.search", UNIFIED_QUERY_SHAPE, UNIFIED_FILTER_KINDS, UNIFIED_SOURCE_KINDS, UNIFIED_SORT, UNIFIED_RESULTS,
+    PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID, PLUGIN_MANAGER_SEARCH_INDEX,
   )
 
   fun pluginCardOpened(descriptor: IdeaPluginDescriptor, group: PluginsGroup?, sessionId: Int, searchSessionId: Int): Unit? = group?.let {
@@ -171,7 +197,45 @@ open class PluginManagerFUSCollector : CounterUsagesCollector() {
   }
 
   fun sessionStarted(source: PluginManagerOpenSourceEnum, sessionId: Int, searchSessionId: Int) {
-    SESSION_STARTED.getIfInitializedOrNull()?.log(source, sessionId, searchSessionId)
+    sessionStarted(source, sessionId, searchSessionId, isUnifiedPage = false)
+  }
+
+  internal fun sessionStarted(
+    source: PluginManagerOpenSourceEnum,
+    sessionId: Int,
+    searchSessionId: Int,
+    isUnifiedPage: Boolean,
+  ) {
+    SESSION_STARTED.getIfInitializedOrNull()?.log(
+      OPEN_SOURCE.with(source),
+      IS_UNIFIED_PAGE.with(isUnifiedPage),
+      PLUGIN_MANAGER_SESSION_ID.with(sessionId),
+      PLUGIN_MANAGER_SEARCH_SESSION_ID.with(searchSessionId),
+    )
+  }
+
+  internal fun performUnifiedSearch(
+    project: Project?,
+    statistics: UnifiedPluginSearchStatistics,
+    searchIndex: Int,
+    sessionId: Int,
+    searchSessionId: Int,
+  ) {
+    UNIFIED_SEARCH_PERFORMED.getIfInitializedOrNull()?.log(project) {
+      add(UNIFIED_QUERY_SHAPE.with(statistics.queryShape))
+      add(UNIFIED_FILTER_KINDS.with(statistics.filterKinds.map(Enum<*>::name)))
+      add(UNIFIED_SOURCE_KINDS.with(statistics.sourceKinds.map(Enum<*>::name)))
+      add(UNIFIED_SORT.with(statistics.sort))
+      add(UNIFIED_RESULTS.with(UnifiedPluginSearchSection.entries.map { section ->
+        ObjectEventData(
+          UNIFIED_RESULT_SECTION.with(section),
+          UNIFIED_RESULT_COUNT.with(statistics.resultCounts[section] ?: 0),
+        )
+      }))
+      add(PLUGIN_MANAGER_SESSION_ID.with(sessionId))
+      add(PLUGIN_MANAGER_SEARCH_SESSION_ID.with(searchSessionId))
+      add(PLUGIN_MANAGER_SEARCH_INDEX.with(searchIndex))
+    }
   }
 
   fun tabSelected(tab: PluginManagerTab, sessionId: Int, searchSessionId: Int) {
