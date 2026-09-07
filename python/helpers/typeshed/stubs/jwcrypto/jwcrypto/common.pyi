@@ -19,6 +19,9 @@ class InvalidJWAAlgorithm(JWException):
 class InvalidCEKeyLength(JWException):
     def __init__(self, expected: int, obtained: int) -> None: ...
 
+class InvalidJWEData(JWException):
+    def __init__(self, message: str | None = None, exception: BaseException | None = None) -> None: ...
+
 class InvalidJWEOperation(JWException):
     def __init__(self, message: str | None = None, exception: BaseException | None = None) -> None: ...
 

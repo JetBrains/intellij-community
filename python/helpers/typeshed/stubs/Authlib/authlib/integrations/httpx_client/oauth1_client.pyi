@@ -1,21 +1,19 @@
-from _typeshed import Incomplete
 from collections.abc import Generator
-from typing import TypeAlias
 from typing_extensions import Never
 
+import httpx2
 from authlib.oauth1 import ClientAuth
 from authlib.oauth1.client import OAuth1Client as _OAuth1Client
 
-_Response: TypeAlias = Incomplete  # actual type is httpx.Response
-_Request: TypeAlias = Incomplete  # actual type is httpx.Request
+Auth = httpx2.Auth
+Request = httpx2.Request
+Response = httpx2.Response
 
-# Inherits from httpx.Auth
-class OAuth1Auth(ClientAuth):
+class OAuth1Auth(Auth, ClientAuth):
     requires_request_body: bool
-    def auth_flow(self, request: _Request) -> Generator[_Request, _Response]: ...
+    def auth_flow(self, request: Request) -> Generator[Request, Response]: ...
 
-# Inherits from httpx.AsyncClient
-class AsyncOAuth1Client(_OAuth1Client):
+class AsyncOAuth1Client(_OAuth1Client, httpx2.AsyncClient):  # type: ignore[misc]  # incompatible definitions of "auth" in the base classes
     auth_class = OAuth1Auth
     def __init__(
         self,
@@ -35,8 +33,7 @@ class AsyncOAuth1Client(_OAuth1Client):
     @staticmethod
     def handle_error(error_type: str | None, error_description: str | None) -> Never: ...
 
-# Inherits from httpx.Client
-class OAuth1Client(_OAuth1Client):
+class OAuth1Client(_OAuth1Client, httpx2.Client):  # type: ignore[misc]  # incompatible definitions of "auth" in the base classes
     auth_class = OAuth1Auth
     def __init__(
         self,

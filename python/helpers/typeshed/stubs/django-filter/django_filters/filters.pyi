@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from collections.abc import Callable, Iterable
 from typing import Any
 
@@ -303,7 +304,7 @@ class OrderingFilter(BaseCSVFilter, ChoiceFilter):
         field_name: str | None = None,
         lookup_expr: str | None = None,
         *,
-        fields: dict[str, str] | Iterable[str] | Iterable[tuple[str, str]] = ...,
+        fields: dict[str, str] | Iterable[str | tuple[str, str]] = ...,
         field_labels: dict[str, StrOrPromise] = ...,
         # Inherited from ChoiceFilter
         null_value: Any = ...,  # Null value can be any type (None, empty string, etc.)
@@ -317,7 +318,7 @@ class OrderingFilter(BaseCSVFilter, ChoiceFilter):
     def get_ordering_value(self, param: str) -> str: ...
     def filter(self, qs: QuerySet[Any], value: Any) -> QuerySet[Any]: ...
     @classmethod
-    def normalize_fields(cls, fields: Any) -> list[str]: ...
+    def normalize_fields(cls, fields: dict[str, str] | Iterable[str | tuple[str, str]]) -> OrderedDict[str, str]: ...
     def build_choices(self, fields: Any, labels: dict[str, StrOrPromise] | None) -> list[tuple[str, str]]: ...
 
 class FilterMethod:

@@ -19,12 +19,12 @@ HOUR_MINUTE_REGEX: Final[re.Pattern[str]]
 def no_space_parser_eligibile(datestring: str) -> bool: ...
 def get_unresolved_attrs(parser_object: object) -> tuple[list[_Component], list[_Component]]: ...
 
-date_order_chart: Final[dict[str, str]]
+date_order_chart: Final[dict[Literal["DMY", "DYM", "MDY", "MYD", "YDM", "YMD"], str]]
 
 @overload
-def resolve_date_order(order: str, lst: Literal[True]) -> list[_Component]: ...
+def resolve_date_order(order: Literal["DMY", "DYM", "MDY", "MYD", "YDM", "YMD"], lst: Literal[True]) -> list[_Component]: ...
 @overload
-def resolve_date_order(order: str, lst: Literal[False] | None = None) -> str: ...
+def resolve_date_order(order: Literal["DMY", "DYM", "MDY", "MYD", "YDM", "YMD"], lst: Literal[False] | None = None) -> str: ...
 
 class _time_parser:
     time_directives: list[str]
@@ -37,7 +37,9 @@ class _no_spaces_parser:
     date_formats: dict[str, list[str]]
     def __init__(self, *args, **kwargs) -> None: ...
     @classmethod
-    def parse(cls, datestring: str, settings: Settings) -> tuple[datetime.datetime, str]: ...
+    def parse(
+        cls, datestring: str, settings: Settings, date_order: Literal["DMY", "DYM", "MDY", "MYD", "YDM", "YMD"] | None = None
+    ) -> tuple[datetime.datetime, str]: ...
 
 class _parser:
     alpha_directives: ClassVar[dict[str, list[str]]]
@@ -54,10 +56,19 @@ class _parser:
     auto_order: list[str]
     ordered_num_directives: OrderedDict[str, list[str]]
 
-    def __init__(self, tokens: Iterable[tuple[str, _TokenType]], settings: Settings) -> None: ...
+    def __init__(
+        self,
+        tokens: Iterable[tuple[str, _TokenType]],
+        settings: Settings,
+        date_order: Literal["DMY", "DYM", "MDY", "MYD", "YDM", "YMD"] | None = None,
+    ) -> None: ...
     @classmethod
     def parse(
-        cls, datestring: str, settings: Settings, tz: datetime.tzinfo | None = None
+        cls,
+        datestring: str,
+        settings: Settings,
+        tz: datetime.tzinfo | None = None,
+        date_order: Literal["DMY", "DYM", "MDY", "MYD", "YDM", "YMD"] | None = None,
     ) -> tuple[datetime.datetime, str | None]: ...
 
 class tokenizer:

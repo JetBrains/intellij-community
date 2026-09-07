@@ -1,3 +1,0 @@
-version = "0.4.*"
-upstream-repository = "https://github.com/binaryornot/binaryornot"
-obsolete-since = { version = "0.5.0", date = "2026-03-07" }

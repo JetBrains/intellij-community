@@ -86,19 +86,24 @@ jobs:
         run: |
           PACKAGES=$(python tests/get_stubtest_system_requirements.py)
 
+          # System package names contain no whitespace or glob characters, so word splitting is intentional.
+          # shellcheck disable=SC2086
           if [ "${{ runner.os }}" = "Linux" ]; then
             if [ -n "$PACKAGES" ]; then
-              printf "Installing APT packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+              printf 'Installing APT packages:\n'
+              printf '  %s\n' $PACKAGES
               sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
             fi
           else
             if [ "${{ runner.os }}" = "macOS" ] && [ -n "$PACKAGES" ]; then
-              printf "Installing Homebrew packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+              printf 'Installing Homebrew packages:\n'
+              printf '  %s\n' $PACKAGES
               brew install -q $PACKAGES
             fi
 
             if [ "${{ runner.os }}" = "Windows" ] && [ -n "$PACKAGES" ]; then
-              printf "Installing Chocolatey packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+              printf 'Installing Chocolatey packages:\n'
+              printf '  %s\n' $PACKAGES
               choco install -y $PACKAGES
             fi
           fi

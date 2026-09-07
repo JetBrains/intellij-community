@@ -3,8 +3,6 @@
 # ============================================
 
 _frozen_importlib_external.PathFinder.discover
-_frozen_importlib_external.SourceFileLoader.source_to_code
-_frozen_importlib_external.SourceLoader.source_to_code
 dataclasses.MISSING
 dataclasses._MISSING_TYPE
 dataclasses.field
@@ -105,6 +103,11 @@ types.UnionType.__qualname__
 # Allowlist entries that cannot or should not be fixed; >= 3.13
 # =============================================================
 
+# `cleanup_socket` was added in 3.13 to the concrete `_UnixSelectorEventLoop.create_unix_server`,
+# not to the abstract `AbstractEventLoop.create_unix_server`. The stub adds it on the abstract
+# method so code typing the loop as `AbstractEventLoop` can still pass `cleanup_socket=...`. See #15742.
+asyncio.events.AbstractEventLoop.create_unix_server
+
 _pyrepl\..+  # The internal implementation of the REPL on py313+; not for public consumption
 codecs.backslashreplace_errors  # Runtime incorrectly has `self`
 codecs.ignore_errors  # Runtime incorrectly has `self`
@@ -128,6 +131,8 @@ multiprocessing.managers._BaseDictProxy.values
 types.MappingProxyType.get
 
 typing_extensions.Protocol  # Super-special typing primitive
+
+copy.replace  # Cannot have keyword-only ParamSpec
 
 
 # =============================================================

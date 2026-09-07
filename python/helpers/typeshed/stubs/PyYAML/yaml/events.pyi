@@ -1,60 +1,76 @@
-from _typeshed import Incomplete
+from collections.abc import Mapping
+from typing import TypeAlias
+
+from ._yaml import Mark as _CMark
+from .error import Mark
+
+_Mark: TypeAlias = Mark | _CMark
 
 class Event:
-    start_mark: Incomplete
-    end_mark: Incomplete
-    def __init__(self, start_mark=None, end_mark=None) -> None: ...
+    start_mark: _Mark | None
+    end_mark: _Mark | None
+    def __init__(self, start_mark: _Mark | None = None, end_mark: _Mark | None = None) -> None: ...
 
 class NodeEvent(Event):
-    anchor: Incomplete
-    start_mark: Incomplete
-    end_mark: Incomplete
-    def __init__(self, anchor, start_mark=None, end_mark=None) -> None: ...
+    anchor: str | None
+    def __init__(self, anchor: str | None, start_mark: _Mark | None = None, end_mark: _Mark | None = None) -> None: ...
 
 class CollectionStartEvent(NodeEvent):
-    anchor: Incomplete
-    tag: Incomplete
-    implicit: Incomplete
-    start_mark: Incomplete
-    end_mark: Incomplete
-    flow_style: Incomplete
-    def __init__(self, anchor, tag, implicit, start_mark=None, end_mark=None, flow_style=None) -> None: ...
+    tag: str | None
+    implicit: bool
+    flow_style: bool | None
+    def __init__(
+        self,
+        anchor: str | None,
+        tag: str | None,
+        implicit: bool,
+        start_mark: _Mark | None = None,
+        end_mark: _Mark | None = None,
+        flow_style: bool | None = None,
+    ) -> None: ...
 
 class CollectionEndEvent(Event): ...
 
 class StreamStartEvent(Event):
-    start_mark: Incomplete
-    end_mark: Incomplete
-    encoding: Incomplete
-    def __init__(self, start_mark=None, end_mark=None, encoding=None) -> None: ...
+    encoding: str | None
+    def __init__(self, start_mark: _Mark | None = None, end_mark: _Mark | None = None, encoding: str | None = None) -> None: ...
 
 class StreamEndEvent(Event): ...
 
 class DocumentStartEvent(Event):
-    start_mark: Incomplete
-    end_mark: Incomplete
-    explicit: Incomplete
-    version: Incomplete
-    tags: Incomplete
-    def __init__(self, start_mark=None, end_mark=None, explicit=None, version=None, tags=None) -> None: ...
+    explicit: bool | None
+    version: tuple[int, int] | None
+    tags: Mapping[str, str] | None
+    def __init__(
+        self,
+        start_mark: _Mark | None = None,
+        end_mark: _Mark | None = None,
+        explicit: bool | None = None,
+        version: tuple[int, int] | None = None,
+        tags: Mapping[str, str] | None = None,
+    ) -> None: ...
 
 class DocumentEndEvent(Event):
-    start_mark: Incomplete
-    end_mark: Incomplete
-    explicit: Incomplete
-    def __init__(self, start_mark=None, end_mark=None, explicit=None) -> None: ...
+    explicit: bool | None
+    def __init__(self, start_mark: _Mark | None = None, end_mark: _Mark | None = None, explicit: bool | None = None) -> None: ...
 
 class AliasEvent(NodeEvent): ...
 
 class ScalarEvent(NodeEvent):
-    anchor: Incomplete
-    tag: Incomplete
-    implicit: Incomplete
-    value: Incomplete
-    start_mark: Incomplete
-    end_mark: Incomplete
-    style: Incomplete
-    def __init__(self, anchor, tag, implicit, value, start_mark=None, end_mark=None, style=None) -> None: ...
+    tag: str | None
+    implicit: tuple[bool, bool]
+    value: str
+    style: str | None
+    def __init__(
+        self,
+        anchor: str | None,
+        tag: str | None,
+        implicit: tuple[bool, bool],
+        value: str,
+        start_mark: _Mark | None = None,
+        end_mark: _Mark | None = None,
+        style: str | None = None,
+    ) -> None: ...
 
 class SequenceStartEvent(CollectionStartEvent): ...
 class SequenceEndEvent(CollectionEndEvent): ...

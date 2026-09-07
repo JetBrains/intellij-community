@@ -4,11 +4,11 @@ from typing import Any, TypeAlias
 from google.protobuf.descriptor import Descriptor, FieldDescriptor
 from google.protobuf.message import Message
 
-_Decoder: TypeAlias = Callable[[str, int, int, Message, dict[FieldDescriptor, Any]], int]
-_NewDefault: TypeAlias = Callable[[Message], Message]
+_Decoder: TypeAlias = Callable[[memoryview, int, int, Message, dict[FieldDescriptor, Any]], int]
+_NewDefault: TypeAlias = Callable[[Message], Any]
 
 def IsDefaultScalarValue(value: Any) -> bool: ...
-def ReadTag(buffer: bytes, pos: int) -> tuple[bytes, int]: ...
+def ReadTag(buffer: memoryview, pos: int) -> tuple[bytes, int]: ...
 def DecodeTag(tag_bytes: bytes) -> tuple[int, int]: ...
 def EnumDecoder(
     field_number: int,
@@ -18,21 +18,110 @@ def EnumDecoder(
     new_default: _NewDefault,
     clear_if_default: bool = False,
 ) -> _Decoder: ...
-
-Int32Decoder: _Decoder
-Int64Decoder: _Decoder
-UInt32Decoder: _Decoder
-UInt64Decoder: _Decoder
-SInt32Decoder: _Decoder
-SInt64Decoder: _Decoder
-Fixed32Decoder: _Decoder
-Fixed64Decoder: _Decoder
-SFixed32Decoder: _Decoder
-SFixed64Decoder: _Decoder
-FloatDecoder: _Decoder
-DoubleDecoder: _Decoder
-BoolDecoder: _Decoder
-
+def Int32Decoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
+def Int64Decoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
+def UInt32Decoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
+def UInt64Decoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
+def SInt32Decoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
+def SInt64Decoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
+def Fixed32Decoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
+def Fixed64Decoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
+def SFixed32Decoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
+def SFixed64Decoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
+def FloatDecoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
+def DoubleDecoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
+def BoolDecoder(
+    field_number: int,
+    is_repeated: bool,
+    is_packed: bool,
+    key: FieldDescriptor,
+    new_default: _NewDefault,
+    clear_if_default: bool = False,
+) -> _Decoder: ...
 def StringDecoder(
     field_number: int,
     is_repeated: bool,

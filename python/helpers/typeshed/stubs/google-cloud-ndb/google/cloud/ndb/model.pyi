@@ -305,7 +305,7 @@ class Model(_NotEqualMixin, metaclass=MetaModel):
     ) -> tasklets_module.Future: ...
     @classmethod
     def get_by_id(
-        cls: type[Model],
+        cls,
         id: int | str | None,
         parent: key_module.Key | None = ...,
         namespace: str | None = ...,
@@ -327,7 +327,7 @@ class Model(_NotEqualMixin, metaclass=MetaModel):
         force_writes: bool | None = ...,
         _options=...,
         database: str | None = None,
-    ) -> Model | None: ...
+    ) -> Self | None: ...
     @classmethod
     def get_by_id_async(
         cls: type[Model],
@@ -355,7 +355,7 @@ class Model(_NotEqualMixin, metaclass=MetaModel):
     ) -> tasklets_module.Future: ...
     @classmethod
     def get_or_insert(
-        cls: type[Model],
+        cls,
         _name: str,
         parent: key_module.Key | None = ...,
         namespace: str | None = ...,
@@ -377,7 +377,7 @@ class Model(_NotEqualMixin, metaclass=MetaModel):
         force_writes: bool | None = ...,
         _options=...,
         **kw_model_args,
-    ) -> Model: ...
+    ) -> Self: ...
     @classmethod
     def get_or_insert_async(
         cls: type[Model],

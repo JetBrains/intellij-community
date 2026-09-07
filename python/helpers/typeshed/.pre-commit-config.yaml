@@ -10,6 +10,12 @@ repos:
       - id: mixed-line-ending
         args: [--fix=lf]
       - id: check-case-conflict
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 12e63946db2c5cfcc9030fac21c3883ba88c6ed8 # frozen: 0.38.0
+    hooks:
+      - id: check-github-workflows
+      - id: check-renovate
+        additional_dependencies: ["json5==0.15.0"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # The Ruff version must match requirements-tests.txt.
     rev: c59bba8fb259db0fec2bbb77ad8ba51ea7341b56 # frozen: v0.15.20

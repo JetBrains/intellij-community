@@ -1,7 +1,7 @@
 version = "3.6.1"
 upstream-repository = "https://github.com/networkx/networkx"
-# requires a version of numpy with a `py.typed` file
-dependencies = ["numpy>=1.20"]
+# Requires a version of NumPy with `numpy.typing.NDArray`.
+optional-dependencies = ["numpy>=1.21"]
 
 [tool.stubtest]
 # stub_uploader won't allow pandas-stubs in the requires field https://github.com/typeshed-internal/stub_uploader/issues/90

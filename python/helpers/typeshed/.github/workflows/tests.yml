@@ -63,8 +63,11 @@ jobs:
       - name: Install required APT packages
         run: |
           PACKAGES=$(python tests/get_stubtest_system_requirements.py)
+          # System package names contain no whitespace or glob characters, so word splitting is intentional.
+          # shellcheck disable=SC2086
           if [ -n "$PACKAGES" ]; then
-            printf "Installing APT packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+            printf 'Installing APT packages:\n'
+            printf '  %s\n' $PACKAGES
             sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
           fi
       - name: Run mypy_test.py
@@ -117,7 +120,11 @@ jobs:
         run: |
           PACKAGES=$(python tests/get_external_stub_requirements.py)
           if [ -n "$PACKAGES" ]; then
-            uv pip install --python-version ${{ matrix.python-version }} $PACKAGES
+            PACKAGE_ARGS=()
+            while IFS= read -r package; do
+              PACKAGE_ARGS+=("$package")
+            done <<< "$PACKAGES"
+            uv pip install --python-version ${{ matrix.python-version }} "${PACKAGE_ARGS[@]}"
           fi
           # Published stub packages can shadow the checked-in stubs when ty
           # resolves their relative imports.
@@ -152,7 +159,11 @@ jobs:
         run: |
           PACKAGES=$(python tests/get_external_stub_requirements.py)
           if [ -n "$PACKAGES" ]; then
-            uv pip install --python-version ${{ matrix.python-version }} $PACKAGES
+            PACKAGE_ARGS=()
+            while IFS= read -r package; do
+              PACKAGE_ARGS+=("$package")
+            done <<< "$PACKAGES"
+            uv pip install --python-version ${{ matrix.python-version }} "${PACKAGE_ARGS[@]}"
           fi
           # Published stub packages can shadow the checked-in stubs when pyrefly
           # resolves their relative imports.
@@ -186,8 +197,11 @@ jobs:
       - name: Install required APT packages
         run: |
           PACKAGES=$(python tests/get_stubtest_system_requirements.py)
+          # System package names contain no whitespace or glob characters, so word splitting is intentional.
+          # shellcheck disable=SC2086
           if [ -n "$PACKAGES" ]; then
-            printf "Installing APT packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+            printf 'Installing APT packages:\n'
+            printf '  %s\n' $PACKAGES
             sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
           fi
       - name: Create an isolated venv for testing
@@ -196,11 +210,16 @@ jobs:
         run: |
           PACKAGES=$(python tests/get_external_stub_requirements.py)
           if [ -n "$PACKAGES" ]; then
-              printf "Installing python packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
-              uv pip install --python-version ${{ matrix.python-version }} $PACKAGES
+            PACKAGE_ARGS=()
+            while IFS= read -r package; do
+              PACKAGE_ARGS+=("$package")
+            done <<< "$PACKAGES"
+            printf 'Installing python packages:\n'
+            printf '  %s\n' "${PACKAGE_ARGS[@]}"
+            uv pip install --python-version ${{ matrix.python-version }} "${PACKAGE_ARGS[@]}"
           fi
       - name: Activate the isolated venv for the rest of the job
-        run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
+        run: echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
       - name: List 3rd-party stub dependencies installed
         run: uv pip freeze
       - name: Run pyright with basic settings on all the stubs

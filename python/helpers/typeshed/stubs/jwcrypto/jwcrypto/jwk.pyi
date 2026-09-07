@@ -11,6 +11,14 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey as Ed25519PrivateKey,
     Ed25519PublicKey as Ed25519PublicKey,
 )
+from cryptography.hazmat.primitives.asymmetric.mldsa import (
+    MLDSA44PrivateKey as MLDSA44PrivateKey,
+    MLDSA44PublicKey as MLDSA44PublicKey,
+    MLDSA65PrivateKey as MLDSA65PrivateKey,
+    MLDSA65PublicKey as MLDSA65PublicKey,
+    MLDSA87PrivateKey as MLDSA87PrivateKey,
+    MLDSA87PublicKey as MLDSA87PublicKey,
+)
 from cryptography.hazmat.primitives.asymmetric.x448 import X448PrivateKey as X448PrivateKey, X448PublicKey as X448PublicKey
 from cryptography.hazmat.primitives.asymmetric.x25519 import (
     X25519PrivateKey as X25519PrivateKey,
@@ -22,11 +30,11 @@ _T = TypeVar("_T")
 
 class UnimplementedOKPCurveKey:
     @classmethod
-    def generate(cls) -> None: ...
+    def generate(cls): ...
     @classmethod
-    def from_public_bytes(cls, *args) -> None: ...
+    def from_public_bytes(cls, *args): ...
     @classmethod
-    def from_private_bytes(cls, *args) -> None: ...
+    def from_private_bytes(cls, *args): ...
 
 ImplementedOkpCurves: Sequence[str]
 priv_bytes: Callable[[bytes], X25519PrivateKey] | None
@@ -46,6 +54,20 @@ class _X25519_CURVE(NamedTuple):
 class _X448_CURVE(NamedTuple):
     pubkey: UnimplementedOKPCurveKey
     privkey: UnimplementedOKPCurveKey
+
+class UnimplementedAKPAlgorithm:
+    @classmethod
+    def generate(cls): ...
+    @classmethod
+    def from_public_bytes(cls, *args): ...
+    @classmethod
+    def from_seed_bytes(cls, *args): ...
+
+ImplementedAKPAlgorithms: Sequence[str]
+
+class _AKPAlg(NamedTuple):
+    pubkey: UnimplementedAKPAlgorithm
+    privkey: UnimplementedAKPAlgorithm
 
 _JWKKeyTypeSupported: TypeAlias = Literal["oct", "RSA", "EC", "OKP"]
 JWKTypesRegistry: dict[_JWKKeyTypeSupported, str]

@@ -24,6 +24,7 @@ class AssertionSession(AssertionClient):
         claims=None,
         token_placement="header",
         scope=None,
+        client_id=None,
         default_timeout=None,
         leeway=60,
         **kwargs,

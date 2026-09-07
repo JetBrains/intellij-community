@@ -41,7 +41,7 @@ jobs:
           cd typeshed_to_test
           MYPY_VERSION=$(grep mypy== requirements-tests.txt | cut -d = -f 3)
           echo "new commit"
-          git rev-list --format=%s --max-count=1 $GITHUB_SHA
+          git rev-list --format=%s --max-count=1 "$GITHUB_SHA"
           git checkout -b upstream_main origin/main
           echo "base commit"
           git rev-list --format=%s --max-count=1 upstream_main
@@ -50,9 +50,9 @@ jobs:
           # fail action if exit code isn't zero or one
           (
             mypy_primer \
-            --new v${MYPY_VERSION} --old v${MYPY_VERSION} \
+            --new "v${MYPY_VERSION}" --old "v${MYPY_VERSION}" \
             --custom-typeshed-repo typeshed_to_test \
-            --new-typeshed $GITHUB_SHA --old-typeshed upstream_main \
+            --new-typeshed "$GITHUB_SHA" --old-typeshed upstream_main \
             --num-shards 6 --shard-index ${{ matrix.shard-index }} \
             --debug \
             --output concise \

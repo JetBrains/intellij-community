@@ -1,5 +1,5 @@
 import sys
-from _typeshed import Incomplete, StrOrBytesPath
+from _typeshed import StrOrBytesPath
 from collections.abc import Generator, Iterable, Mapping
 from contextlib import _GeneratorContextManager
 from io import BufferedWriter
@@ -15,7 +15,7 @@ CaseInsensitiveDict = structures.CaseInsensitiveDict
 InvalidURL = exceptions.InvalidURL
 
 NETRC_FILES: tuple[str, str]
-DEFAULT_CA_BUNDLE_PATH: Incomplete
+DEFAULT_CA_BUNDLE_PATH: str
 DEFAULT_PORTS: dict[str, int]
 DEFAULT_ACCEPT_ENCODING: str
 
@@ -48,7 +48,7 @@ def is_ipv4_address(string_ip: str) -> bool: ...
 def is_valid_cidr(string_network: str) -> bool: ...
 def set_environ(env_name: str, value: None) -> _GeneratorContextManager[None]: ...
 def should_bypass_proxies(url: _Uri, no_proxy: str | None) -> bool: ...
-def get_environ_proxies(url: _Uri, no_proxy: Iterable[str] | None = None) -> dict[Incomplete, Incomplete]: ...
+def get_environ_proxies(url: _Uri, no_proxy: Iterable[str] | None = None) -> dict[str, str]: ...
 def select_proxy(url: _Uri, proxies: Mapping[str, str] | None) -> str | None: ...
 def resolve_proxies(
     request: Request | PreparedRequest, proxies: dict[str, str] | None, trust_env: bool = True

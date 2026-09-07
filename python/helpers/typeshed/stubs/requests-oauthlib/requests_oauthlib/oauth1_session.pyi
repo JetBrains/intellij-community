@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
 from logging import Logger
-from typing import TypeAlias, TypedDict, type_check_only
+from typing import Any, TypeAlias, TypedDict, type_check_only
 
 import requests
 from oauthlib.oauth1 import Client
@@ -48,9 +48,12 @@ class OAuth1Session(requests.Session):
         client_class: type[Client] | None = None,
         force_include_body: bool = False,
         *,
+        decoding: str | None = "utf-8",
+        realm=None,
         encoding: str = "utf-8",
         nonce=None,
         timestamp=None,
+        **kwargs: Any,  # passed to client_class's __init__
     ) -> None: ...
 
     @property
