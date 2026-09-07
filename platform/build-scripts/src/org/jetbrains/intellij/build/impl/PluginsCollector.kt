@@ -367,7 +367,7 @@ private fun readPluginDescriptor(
   if (applyPublishFilters && xml.getChildren("content").any { contentElement ->
       contentElement.getChildren("module").any {
         val contentModuleName = it.getAttributeValue("name", "")
-        //intellij.platform.vcs.*.split modules are currently included in the CodeWithMe plugin
+        // intellij.platform.vcs.*.split modules are currently included in the Remote Development plugin.
         contentModuleName.startsWith("intellij.platform.vcs.") && !contentModuleName.endsWith(".split") || contentModuleName == "intellij.ide.startup.importSettings"
       }
     }) {
