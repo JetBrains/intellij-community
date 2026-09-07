@@ -5,17 +5,22 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.internal.platformBridge.loadSubtreesIntoVfs
 import com.intellij.python.pyproject.model.internal.platformBridge.mayContainPython
 import com.intellij.python.pyproject.model.internal.pyProjectToml.findPyProjectTomlFilesInIndex
-import com.jetbrains.python.venvReader.PRUNED_SCAN_DIRS
+import com.intellij.python.pyproject.model.internal.pyProjectToml.isPrunedName
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.isDirectory
 import kotlin.time.Duration.Companion.minutes
 
@@ -35,8 +40,9 @@ import kotlin.time.Duration.Companion.minutes
  * The VFS load runs first, because an IDE has scanned the tree before the search runs. The load dominates the
  * run time of this test, and a real IDE pays it during scanning anyway.
  *
- * The test prints the time of each step, and it asserts that both ways report the same set of files. Read
- * the printed times of the project that you point it at. A time measured on another tree says nothing here.
+ * Each test prints the time of every step, and each one compares the old way with the new one. The search
+ * test requires the same set of files from both, and the load test requires the same set of environments.
+ * Read the printed times of the project that you point it at. A time from another tree says nothing here.
  */
 @TestApplication
 internal class PyProjectTomlDiscoveryBenchmarkTest {
@@ -59,11 +65,48 @@ internal class PyProjectTomlDiscoveryBenchmarkTest {
       measure { indexResult = findPyProjectTomlFilesInIndex(roots, excludedPaths = emptySet()) }
     }
     report("findPyProjectTomlFilesInIndex, ${indexResult.size} files", indexTimes)
-    println("[PY-91841] median search ${indexTimes.median()} ms over ${indexResult.size} files")
+
+    var walkResult: List<Path> = emptyList()
+    val walkMs = measure { walkResult = findPyProjectTomlByFilesystemWalk(root) }
+    report("the filesystem walk that this change replaced, ${walkResult.size} files", listOf(walkMs))
+    println("[PY-91841] search: walk ${walkMs} ms, index ${indexTimes.median()} ms, ${indexResult.size} files")
 
     assertThat(indexResult)
       .describedAs("The search must report a pyproject.toml from a real tree")
       .isNotEmpty()
+    assertThat(indexResult.toSortedSet())
+      .describedAs("the index must report the same files as the filesystem walk")
+      .isEqualTo(walkResult.toSortedSet())
+  }
+
+  /**
+   * The search as it worked before this change: one walk of the filesystem for every directory.
+   *
+   * It stands here only to time the old way and to prove that the new way finds the same files. It mirrors
+   * the rules of `PyProjectTomlPathFilter`, so the two results are comparable. It reads [isPrunedName] of
+   * the production code rather than a copy, because a copy would drift and this test runs by hand only.
+   */
+  private fun findPyProjectTomlByFilesystemWalk(root: Path): List<Path> {
+    val virtualEnvReader = VirtualEnvReader()
+    val hits = ArrayList<Path>()
+    Files.walkFileTree(root, object : SimpleFileVisitor<Path>() {
+      override fun preVisitDirectory(directory: Path, attributes: BasicFileAttributes): FileVisitResult {
+        if (directory == root) return FileVisitResult.CONTINUE
+        val name = directory.fileName?.toString() ?: return FileVisitResult.SKIP_SUBTREE
+        if (name.isPrunedName()) return FileVisitResult.SKIP_SUBTREE
+        if (Files.isSymbolicLink(directory)) return FileVisitResult.SKIP_SUBTREE
+        if (virtualEnvReader.findPythonInPythonRoot(directory) != null) return FileVisitResult.SKIP_SUBTREE
+        return FileVisitResult.CONTINUE
+      }
+
+      override fun visitFile(file: Path, attributes: BasicFileAttributes): FileVisitResult {
+        if (file.fileName?.toString() == PY_PROJECT_TOML) hits.add(file)
+        return FileVisitResult.CONTINUE
+      }
+
+      override fun visitFileFailed(file: Path, e: java.io.IOException): FileVisitResult = FileVisitResult.CONTINUE
+    })
+    return hits
   }
 
   /**
@@ -129,7 +172,7 @@ internal class PyProjectTomlDiscoveryBenchmarkTest {
     VfsUtilCore.visitChildrenRecursively(from, object : VirtualFileVisitor<Unit>(NO_FOLLOW_SYMLINKS) {
       override fun visitFile(file: VirtualFile): Boolean {
         if (!file.isDirectory) return true
-        if (file.name.startsWith(".") || file.name in PRUNED_SCAN_DIRS) return false
+        if (file.name.isPrunedName()) return false
         onDirectory(file)
         return true
       }
