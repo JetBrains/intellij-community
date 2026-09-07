@@ -93,13 +93,13 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
         // Flush .iml files to disk to make changes visible for VCS and to prevent races with VFS.
         val saveStart = System.nanoTime()
         saveSettings(project)
-        logger.info("Saved the project settings in ${millisSince(saveStart)} ms")
+        logger.debug { "Saved the project settings in ${millisSince(saveStart)} ms" }
         return@withLock
       }
       // The last attempt writes the model whatever the module set holds, so it never asks for a repeat.
       // A repeat here would leave the loop with no model, no saved settings and no report of either.
       check(!lastAttempt) { "The last attempt of the model build has to write the model" }
-      logger.info("The module set changed during the build. Attempt $attempt of $MODEL_UPDATE_ATTEMPTS.")
+      logger.debug { "The module set changed during the build. Attempt $attempt of $MODEL_UPDATE_ATTEMPTS." }
     }
   }
 }
@@ -161,9 +161,11 @@ private suspend fun tryRebuildProjectModel(project: Project, files: FSWalkInfoWi
       clashMs = millisSince(clashStart)
     }
   }
-  // The split answers "where does the apply spend its time?" on a monorepo (PY-91841).
-  logger.info("Model apply: ${entries.size} entries in $entriesMs ms, " +
-              "workspace update ${millisSince(updateStart)} ms (entities $applyMs ms, clash check $clashMs ms)")
+  // The split answers "where does the apply spend its time?" (PY-91841).
+  logger.debug {
+    "Model apply: ${entries.size} entries in $entriesMs ms, " +
+    "workspace update ${millisSince(updateStart)} ms (entities $applyMs ms, clash check $clashMs ms)"
+  }
   return applied
 }
 
@@ -480,10 +482,13 @@ private fun logIfNeeded(projectStorage: MutableEntityStorage, title: String) {
 private fun ensureNoSrcIntersectsWithOtherRoots(projectStorage: MutableEntityStorage) {
   val allContentRoots = projectStorage.entities<ModuleEntity>().flatMap { it.contentRoots }.toList()
   // `clashTarget` reads every content root for every source root and for every excluded url. The product of
-  // these three numbers is the cost of this method, so the log must carry all of them (PY-91841).
-  logger.info("Clash check over ${allContentRoots.size} content roots, " +
-              "${allContentRoots.sumOf { it.sourceRoots.size }} source roots, " +
-              "${allContentRoots.sumOf { it.excludedUrls.size }} excluded urls")
+  // these three numbers is the cost of this method, so the log must carry all of them (PY-91841). The two
+  // sums walk every content root, hence the lambda: it keeps that walk out of a run that logs nothing.
+  logger.debug {
+    "Clash check over ${allContentRoots.size} content roots, " +
+    "${allContentRoots.sumOf { it.sourceRoots.size }} source roots, " +
+    "${allContentRoots.sumOf { it.excludedUrls.size }} excluded urls"
+  }
 
   val pathsToRemove = mutableMapOf<ContentRootEntity, MutableSet<Path>>()
   val sourcesToAdd = mutableMapOf<ContentRootEntity, MutableList<SourceRootEntityBuilder>>()

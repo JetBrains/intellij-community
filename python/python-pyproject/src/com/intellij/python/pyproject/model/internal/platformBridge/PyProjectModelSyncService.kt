@@ -160,8 +160,7 @@ internal class PyProjectModelSyncService(private val project: Project, private v
       log.warn("$what did not finish in $AWAIT_TIMEOUT. The pyproject.toml model is built without it.")
     }
     else {
-      // INFO, because this wait is a large part of the time to the first model (PY-91841).
-      log.info("Waited ${millisSince(start)} ms for $what")
+      log.debug { "Waited ${millisSince(start)} ms for $what" }
     }
   }
 
@@ -181,7 +180,7 @@ internal class PyProjectModelSyncService(private val project: Project, private v
       if (directoriesToLoad.isNotEmpty()) {
         val start = System.nanoTime()
         loadSubtreesIntoVfs(directoriesToLoad, collectExcludedPaths(project))
-        log.info("Loaded ${directoriesToLoad.size} new directories into the VFS in ${millisSince(start)} ms")
+        log.debug { "Loaded ${directoriesToLoad.size} new directories into the VFS in ${millisSince(start)} ms" }
       }
       rebuildNow(batch.mapTo(LinkedHashSet()) { it.reason }.joinToString(" and "))
     }
@@ -226,22 +225,24 @@ internal class PyProjectModelSyncService(private val project: Project, private v
   private suspend fun rebuildNow(reason: String) {
     // The counter and the reason answer the question "why did the model build again?" (PY-91841).
     val build = buildCounter.incrementAndGet()
-    log.info("Model build $build starts, because of $reason")
+    log.debug { "Model build $build starts, because of $reason" }
     saveTomlDocuments()
 
     val projectRoots = getRootPaths(project)
     knownRoots = projectRoots
     val excludedPaths = collectExcludedPaths(project)
-    // The two INFO lines below are the measurement of PY-91841. Keep them: the search and the apply have very
-    // different costs, and only a split number tells which one a slow project load comes from.
+    // The two DEBUG lines below are the measurement of PY-91841. Keep them: the search and the apply have
+    // very different costs, and only a split number tells which one a slow project load comes from.
     val searchStart = System.nanoTime()
     val files = findPyProjectTomlWithContent(projectRoots, excludedPaths)
     val applyStart = System.nanoTime()
-    log.info("Build $build found ${files.tomlFiles.size} pyproject.toml files in ${millisSince(searchStart)} ms")
+    log.debug { "Build $build found ${files.tomlFiles.size} pyproject.toml files in ${millisSince(searchStart)} ms" }
     log.debug { "Files found: ${files.tomlFiles.keys.joinToString(", ")}" }
 
     rebuildProjectModel(project, files)
-    log.info("Build $build applied the model of ${files.tomlFiles.size} pyproject.toml files in ${millisSince(applyStart)} ms")
+    log.debug {
+      "Build $build applied the model of ${files.tomlFiles.size} pyproject.toml files in ${millisSince(applyStart)} ms"
+    }
     // Even though we have no entities, we still "rebuilt" the model, time to configure SDK
     notifyModelRebuilt(project)
   }
@@ -265,8 +266,7 @@ internal class PyProjectModelSyncService(private val project: Project, private v
       roots.mapNotNullTo(LinkedHashSet()) { localFileSystem.refreshAndFindFileByNioFile(it) }
     }
     loadSubtreesIntoVfs(rootDirectories, collectExcludedPaths(project))
-    // INFO, because this load is a large part of the time to the first model on a monorepo (PY-91841).
-    log.info("Loaded ${rootDirectories.size} project roots into the VFS in ${millisSince(start)} ms")
+    log.debug { "Loaded ${rootDirectories.size} project roots into the VFS in ${millisSince(start)} ms" }
   }
 
   /**
