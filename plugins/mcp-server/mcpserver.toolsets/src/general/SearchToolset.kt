@@ -376,7 +376,8 @@ suspend fun searchFiles(
           false
         }
 
-        if (usedIndex) return@withBackgroundProgress
+        // An empty index pass is not proof of absence; fall through to content iteration.
+        if (usedIndex && results.isNotEmpty()) return@withBackgroundProgress
       }
 
       val contentIterator = ContentIterator { file ->

@@ -6,15 +6,23 @@ import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.SearchToolset
 import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
 import com.intellij.mcpserver.util.INDEXING_PARTIAL_RESULT_REASON
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.testFramework.DumbModeTestUtils
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
+import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
+import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
@@ -29,6 +37,9 @@ import kotlin.io.path.Path
 
 class SearchToolsetTest : GeneralMcpToolsetTestBase() {
   private val json = Json { ignoreUnknownKeys = true }
+
+  @TestDisposable
+  private lateinit var testDisposable: Disposable
 
   private val searchFile by sourceRootFixture.virtualFileFixture(
     "se_unique_search_file_7c2f.txt",
@@ -109,6 +120,9 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
   private val pathExcludedDirName = "se_paths_excluded_dir_9f3b"
   private val pathExcludedFileName = "se_paths_excluded_file_9f3b.txt"
 
+  private val nonIndexableDirName = "se_non_indexable_dir_6b4f"
+  private val nonIndexableFileName = "se_non_indexable_file_6b4f.txt"
+
   private fun parseResult(text: String?): SearchResult {
     val payload = text ?: error("Tool call result should include text content")
     return json.decodeFromString(SearchResult.serializer(), payload)
@@ -129,6 +143,28 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
       listOf(excludedDir.url)
     )
     excludedFile
+  }
+
+  /**
+   * Creates a file under a content root that is not indexable.
+   * The file is visible to content iteration but absent from [com.intellij.psi.search.FilenameIndex].
+   */
+  private suspend fun createNonIndexableFile(): VirtualFile {
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetTestContributor(), testDisposable)
+    val nonIndexableDir = edtWriteAction {
+      val projectRoot = sourceRootFixture.get().virtualFile.parent
+      projectRoot.findChild(nonIndexableDirName) ?: projectRoot.createChildDirectory(this, nonIndexableDirName)
+    }
+    val workspaceModel = project.workspaceModel
+    val nonIndexableDirUrl = nonIndexableDir.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
+    workspaceModel.update("add non-indexable root") { storage ->
+      storage.addEntity(NonIndexableTestEntity(nonIndexableDirUrl, NonPersistentEntitySource))
+    }
+    return edtWriteAction {
+      nonIndexableDir.findChild(nonIndexableFileName) ?: nonIndexableDir.createChildData(this, nonIndexableFileName).also {
+        it.setBinaryContent("Non-indexable file content".toByteArray())
+      }
+    }
   }
 
   private suspend fun createFileInSubdir1(directoryName: String, fileName: String, content: String): VirtualFile = edtWriteAction {
@@ -302,6 +338,21 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
     ) { actualResult ->
       val filePaths = parseResult(actualResult.textContent.text).filePaths()
       assertThat(filePaths).anyMatch { it.contains(fileName) }
+    }
+  }
+
+  @Test
+  fun search_file_finds_file_under_non_indexable_content_root() = runBlocking(Dispatchers.Default) {
+    val nonIndexableFile = createNonIndexableFile()
+    awaitExternalChangesAndIndexing(project)
+    testMcpTool(
+      SearchToolset::search_file.name,
+      buildJsonObject {
+        put("q", JsonPrimitive(nonIndexableFile.name))
+      }
+    ) { actualResult ->
+      val filePaths = parseResult(actualResult.textContent.text).filePaths()
+      assertThat(filePaths).containsExactly("$nonIndexableDirName/$nonIndexableFileName")
     }
   }
 
