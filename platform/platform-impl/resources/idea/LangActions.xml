@@ -406,6 +406,7 @@
 
     <group id="NewGroup" popup="true" searchable="false">
       <reference ref="NewFile"/>
+      <reference ref="WelcomeNewEmptyFile"/>
       <reference ref="NewScratchFile"/>
       <reference ref="NewDir"/>
       <group id="FileTemplateSeparatorGroup" searchable="false"/> <!-- kept for backward compatibility -->

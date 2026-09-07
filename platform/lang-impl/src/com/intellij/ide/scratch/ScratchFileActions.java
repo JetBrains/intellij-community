@@ -129,12 +129,19 @@ public final class ScratchFileActions {
       String place = e.getPlace();
       Editor editor = e.getData(CommonDataKeys.EDITOR);
 
+      boolean isWelcomeProject = project != null &&
+                                 ProjectFrameCapabilitiesService.Companion.getInstanceSync()
+                                   .has(project, ProjectFrameCapability.WELCOME_EXPERIENCE);
       boolean enabled = project != null && (
         e.isFromActionToolbar() ||
-        ProjectFrameCapabilitiesService.Companion.getInstanceSync().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE) ||
+        isWelcomeProject ||
         ActionPlaces.isMainMenuOrActionSearch(place) ||
         ActionPlaces.EDITOR_POPUP.equals(place) && hasSelection(editor) ||
         e.isFromContextMenu() && e.getData(LangDataKeys.IDE_VIEW) != null);
+
+      if (enabled && isWelcomeProject && ("popup@WeighingNewGroup".equals(place) || ActionPlaces.KEYBOARD_SHORTCUT.equals(place))) {
+        enabled = false;
+      }
 
       e.getPresentation().setEnabledAndVisible(enabled);
       updatePresentationTextAndIcon(e, e.getPresentation());
