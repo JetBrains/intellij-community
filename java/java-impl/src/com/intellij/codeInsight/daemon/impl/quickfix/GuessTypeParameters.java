@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
+import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import static com.intellij.codeInsight.ExpectedTypeInfo.TYPE_OR_SUBTYPE;
 import static com.intellij.codeInsight.ExpectedTypeInfo.TYPE_OR_SUPERTYPE;
@@ -50,17 +52,29 @@ public class GuessTypeParameters {
   private final Project myProject;
   private final PsiManager myManager;
   private final JVMElementFactory myFactory;
-  private final TemplateBuilder myBuilder;
+  private final BiConsumer<PsiElement, Expression> myFieldSink;
   private final PsiSubstitutor mySubstitutor;
 
   public GuessTypeParameters(@NotNull Project project,
                              @NotNull JVMElementFactory factory,
                              @NotNull TemplateBuilder builder,
                              @Nullable PsiSubstitutor substitutor) {
+    this(project, factory, builder::replaceElement, substitutor);
+  }
+
+  /**
+   * @param fieldSink takes each template field. A {@link com.intellij.modcommand.ModCommandAction} collects
+   *                  the fields, and writes them into its {@link com.intellij.modcommand.ModTemplateBuilder}
+   *                  after every PSI change is done.
+   */
+  public GuessTypeParameters(@NotNull Project project,
+                             @NotNull JVMElementFactory factory,
+                             @NotNull BiConsumer<PsiElement, Expression> fieldSink,
+                             @Nullable PsiSubstitutor substitutor) {
     myProject = project;
     myManager = PsiManager.getInstance(project);
     myFactory = factory;
-    myBuilder = builder;
+    myFieldSink = fieldSink;
     mySubstitutor = substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
   }
 
@@ -84,7 +98,7 @@ public class GuessTypeParameters {
       if (!matchedParameters.isEmpty()) {
         final List<PsiType> types = new SmartList<>(map(matchedParameters, it -> myFactory.createType(it)));
         ContainerUtil.addAll(types, ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(myManager, scope), myProject));
-        myBuilder.replaceElement(typeElement, new TypeExpression(myProject, types));
+        myFieldSink.accept(typeElement, new TypeExpression(myProject, types));
         return typeElement;
       }
 
@@ -123,7 +137,7 @@ public class GuessTypeParameters {
         ExpectedTypeInfo info1 = ExpectedTypesProvider.createInfo(rawDefaultType, TYPE_STRICTLY, rawDefaultType, info.getTailType());
         MyTypeVisitor visitor = new MyTypeVisitor(myManager, scope);
         PsiType[] types = ExpectedTypesProvider.processExpectedTypes(new ExpectedTypeInfo[]{info1}, visitor, myProject);
-        myBuilder.replaceElement(referenceNameElement, new TypeExpression(myProject, types));
+        myFieldSink.accept(referenceNameElement, new TypeExpression(myProject, types));
         return typeElement;
       }
       else if (substitionResult != SUBSTITUTED_NONE) {
@@ -134,7 +148,7 @@ public class GuessTypeParameters {
     PsiType[] types = infos.length == 0
                       ? new PsiType[]{typeElement.getType()}
                       : ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(myManager, scope), myProject);
-    myBuilder.replaceElement(typeElement, new TypeExpression(myProject, types));
+    myFieldSink.accept(typeElement, new TypeExpression(myProject, types));
     return typeElement;
   }
 
@@ -184,7 +198,7 @@ public class GuessTypeParameters {
         types.add(substituted);
       }
 
-      myBuilder.replaceElement(typeElement, new TypeExpression(myProject, types));
+      myFieldSink.accept(typeElement, new TypeExpression(myProject, types));
       return toplevel ? SUBSTITUTED_IN_REF : SUBSTITUTED_IN_PARAMETERS;
     }
 

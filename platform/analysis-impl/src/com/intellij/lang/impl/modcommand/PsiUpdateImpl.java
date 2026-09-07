@@ -594,8 +594,7 @@ final class PsiUpdateImpl {
               // just-inserted field, then recalculate type bindings. Otherwise, types end up fully qualified.
               RangeMarker marker = tracker.myDocument.createRangeMarker(start, start + fieldValue.length());
               try {
-                shortenAndRecalc(tracker, recalc, marker);
-                range = mapRange(marker.getTextRange());
+                range = mapRange(shortenAndRecalc(tracker, recalc, marker));
               }
               finally {
                 marker.dispose();
@@ -963,22 +962,40 @@ final class PsiUpdateImpl {
      * inserted template field: runs the ModCommand-aware optional processors (e.g. FQN shortening and import insertion) over
      * the field range, then recalculates type bindings. Without this step results such as {@code PsiTypeResult} keep their
      * fully qualified canonical text in the resulting command (and in the IDEA preview).
+     *
+     * @return the range of the field after the processors ran. A processor can move text into the field from the
+     * left, and the document then keeps that text outside of {@code marker}.
      */
-    private void shortenAndRecalc(@NotNull FileTracker tracker,
-                                  @NotNull RecalculatableResult recalc,
-                                  @NotNull RangeMarker marker) {
+    private @NotNull TextRange shortenAndRecalc(@NotNull FileTracker tracker,
+                                                @NotNull RecalculatableResult recalc,
+                                                @NotNull RangeMarker marker) {
       Document document = tracker.myDocument;
       PsiFile psiFile = tracker.myCopyFile;
       Project project = getProject();
       TemplateImpl stubTemplate = new TemplateImpl("", "", "");
       stubTemplate.setToShortenLongNames(true);
-      for (TemplateOptionalProcessor processor : TemplateOptionalProcessor.EP_NAME.getExtensionList()) {
-        if (processor instanceof ModCommandAwareTemplateOptionalProcessor modProcessor) {
-          modProcessor.processText(stubTemplate, this, marker);
+      RangeMarker fieldMarker = null;
+      try {
+        for (TemplateOptionalProcessor processor : TemplateOptionalProcessor.EP_NAME.getExtensionList()) {
+          if (processor instanceof ModCommandAwareTemplateOptionalProcessor modProcessor) {
+            TextRange processed = modProcessor.processText(stubTemplate, this, marker);
+            if (!processed.equals(marker.getTextRange())) {
+              if (fieldMarker != null) {
+                fieldMarker.dispose();
+              }
+              fieldMarker = document.createRangeMarker(processed);
+            }
+          }
+        }
+        PsiDocumentManager.getInstance(project).commitDocument(document);
+        recalc.handleRecalc(psiFile, document, marker.getStartOffset(), marker.getEndOffset());
+        return fieldMarker != null && fieldMarker.isValid() ? fieldMarker.getTextRange() : marker.getTextRange();
+      }
+      finally {
+        if (fieldMarker != null) {
+          fieldMarker.dispose();
         }
       }
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      recalc.handleRecalc(psiFile, document, marker.getStartOffset(), marker.getEndOffset());
     }
   }
 }

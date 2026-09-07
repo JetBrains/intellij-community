@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.lang.java.actions.CreateMethodAction
 import com.intellij.lang.java.request.generateActions
+import com.intellij.lang.jvm.actions.ChooseTargetClassAction
 import com.intellij.lang.jvm.actions.JvmClassIntentionActionGroup
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
@@ -92,7 +93,10 @@ internal class JavaCreateFromUsagesCompletionCommand(val psiClass: PsiClass) : C
       runWithModalProgressBlocking(psiFile.project, message("scanning.scope.progress.title")) {
         readAction {
           generateActions(expression).firstOrNull {
-            it is CreateMethodAction || it is JvmClassIntentionActionGroup}
+            val modCommandAction = it.asModCommandAction()
+            modCommandAction is CreateMethodAction || modCommandAction is ChooseTargetClassAction ||
+            it is JvmClassIntentionActionGroup
+          }
         }
       }?: return
 

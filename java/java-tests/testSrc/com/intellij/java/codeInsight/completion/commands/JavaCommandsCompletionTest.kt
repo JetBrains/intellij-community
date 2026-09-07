@@ -1110,6 +1110,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           }
       
           private void test() {
+      ${"        "}
           }
       }
     """.trimIndent())

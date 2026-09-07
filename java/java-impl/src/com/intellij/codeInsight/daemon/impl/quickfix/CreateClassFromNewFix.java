@@ -125,6 +125,34 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
   public static @Nullable PsiMethod setupSuperCall(PsiClass targetClass, PsiMethod constructor, TemplateBuilderImpl templateBuilder)
     throws IncorrectOperationException {
+    SuperCall superCall = createSuperCall(targetClass, constructor);
+    templateBuilder.setEndVariableAfter(superCall.endAfter());
+    return superCall.superConstructor();
+  }
+
+  /**
+   * Adds the {@code super()} call which a new constructor needs, and leaves the caret alone. A
+   * {@link com.intellij.modcommand.ModCommandAction} builds the body of the constructor itself, so it
+   * decides the caret position on its own.
+   *
+   * @return the super constructor whose arguments the call needs, or null when the super class has a
+   * default constructor
+   */
+  public static @Nullable PsiMethod setupSuperCall(PsiClass targetClass, PsiMethod constructor)
+    throws IncorrectOperationException {
+    return createSuperCall(targetClass, constructor).superConstructor();
+  }
+
+  /**
+   * @param superConstructor the super constructor whose arguments the new {@code super()} call needs, or null when
+   *                         the super class has a default constructor
+   * @param endAfter         the element after which the template puts the caret
+   */
+  private record SuperCall(@Nullable PsiMethod superConstructor, @NotNull PsiElement endAfter) {
+  }
+
+  private static @NotNull SuperCall createSuperCall(PsiClass targetClass, PsiMethod constructor)
+    throws IncorrectOperationException {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(targetClass.getProject());
     PsiMethod supConstructor = null;
     PsiClass superClass = targetClass.getSuperClass();
@@ -151,13 +179,11 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
         PsiMethodCallExpression call = (PsiMethodCallExpression)statement.getExpression();
         PsiExpressionList argumentList = call.getArgumentList();
-        templateBuilder.setEndVariableAfter(argumentList.getFirstChild());
-        return supConstructor;
+        return new SuperCall(supConstructor, argumentList.getFirstChild());
       }
     }
 
-    templateBuilder.setEndVariableAfter(constructor.getBody().getLBrace());
-    return null;
+    return new SuperCall(null, constructor.getBody().getLBrace());
   }
 
   private static void setupInheritance(PsiNewExpression element, PsiClass targetClass) throws IncorrectOperationException {

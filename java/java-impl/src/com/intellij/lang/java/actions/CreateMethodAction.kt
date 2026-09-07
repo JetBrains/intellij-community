@@ -1,45 +1,34 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
-import com.intellij.codeInsight.CodeInsightUtil.positionCursor
-import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.setupEditor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.setupMethodBody
-import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateBuilder
-import com.intellij.codeInsight.template.TemplateBuilderImpl
-import com.intellij.codeInsight.template.TemplateEditingAdapter
-import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.lang.java.request.CreateMethodFromJavaUsageRequest
+import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateAbstractMethodActionGroup
 import com.intellij.lang.jvm.actions.CreateMethodActionGroup
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.JvmActionGroup
-import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
+import com.intellij.lang.jvm.actions.JvmGroupModCommandAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
-import com.intellij.modcommand.ModCommandExecutor
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.ModTemplateBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFactory
-import com.intellij.psi.PsiEllipsisType
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiNameHelper
-import com.intellij.psi.PsiParameterList
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.JavaElementKind
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil.setModifierProperty
+import com.intellij.psi.util.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -50,60 +39,77 @@ public class CreateMethodAction(
   targetClass: PsiClass,
   override val request: CreateMethodRequest,
   private val abstract: Boolean
-) : CreateMemberAction(targetClass, request), JvmGroupIntentionAction {
+) : CreateMemberModCommandAction(targetClass, request), JvmGroupModCommandAction {
 
   override fun getActionGroup(): JvmActionGroup = if (abstract) CreateAbstractMethodActionGroup else CreateMethodActionGroup
 
-  override fun isAvailable(project: Project, file: PsiFile, target: PsiClass): Boolean {
-    return super.isAvailable(project, file, target) && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
-  }
-
   override fun getRenderData(): JvmActionGroup.RenderData = JvmActionGroup.RenderData { request.methodName }
+
+  override fun getTarget(): JvmClass? = targetClass
+
+  override fun isAvailable(target: PsiClass): Boolean {
+    return PsiNameHelper.getInstance(target.project).isIdentifier(request.methodName)
+  }
 
   override fun getFamilyName(): String = message("create.method.from.usage.family")
 
-  override fun getText(): String {
+  override fun getText(target: PsiClass): String {
     val what = request.methodName
     val where = getNameForClass(target, false)
     val kind = if (abstract) JavaElementKind.ABSTRACT_METHOD else JavaElementKind.METHOD
     return message("create.element.in.class", kind.`object`(), what, where)
   }
 
-  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
-    val copyClass = PsiTreeUtil.findSameElementInCopy(target, psiFile)
-    val previewRequest = if (request is CreateMethodFromJavaUsageRequest && request.call.containingFile == psiFile.originalFile) {
-      val copyCall = PsiTreeUtil.findSameElementInCopy(request.call, psiFile) // copy call when possible to get proper anchor
-      CreateMethodFromJavaUsageRequest(copyCall, request.modifiers)
-    } else request
-    JavaMethodRenderer(project, abstract, copyClass, previewRequest).doMagic()
-    return IntentionPreviewInfo.DIFF
+  override fun invoke(context: ActionContext, element: PsiClass, updater: ModPsiUpdater) {
+    val originalTarget = targetClass ?: return
+    JavaMethodRenderer(context.project, abstract, element, originalTarget, copyRequest(originalTarget, updater), updater).doMagic()
   }
 
-  override fun invoke(project: Project, file: PsiFile, target: PsiClass) {
-    JavaMethodRenderer(project, abstract, target, request).doMagic()
+  /**
+   * Every write goes to a copy of the file. The expected types of the method come from the call, and the
+   * call must be in the same copy to see the new method. So the request needs the copy of the call.
+   *
+   * @return the request against the copy of the call, or the original request when the call is in another
+   * file, which the action does not change
+   */
+  private fun copyRequest(originalTarget: PsiClass, updater: ModPsiUpdater): CreateMethodRequest {
+    val javaRequest = request as? CreateMethodFromJavaUsageRequest ?: return request
+    if (javaRequest.call.containingFile != originalTarget.containingFile) return request
+    return CreateMethodFromJavaUsageRequest(updater.getWritable(javaRequest.call), javaRequest.modifiers)
   }
 }
 
+/**
+ * @param targetClass the writable copy of the target class
+ * @param originalTarget the physical target class, to find the method again after the template ends
+ */
 private class JavaMethodRenderer(
   val project: Project,
   val abstract: Boolean,
   val targetClass: PsiClass,
-  val request: CreateMethodRequest
+  originalTarget: PsiClass,
+  val request: CreateMethodRequest,
+  val updater: ModPsiUpdater,
 ) {
 
   val factory = JavaPsiFacade.getElementFactory(project)!!
   val requestedModifiers = request.modifiers
   val javaUsage = request as? CreateMethodFromJavaUsageRequest
 
+  private val originalTargetPointer = originalTarget.createSmartPointer(project)
+
   fun doMagic() {
+    // The request holds the copy of the call when the call and the target class share a file, so the
+    // anchor and the context are already writable. Otherwise the call is in another file, which gives
+    // no anchor, and the context serves only as a resolve scope.
+    val anchor = javaUsage?.getAnchor(targetClass)
+    val guesserContext = javaUsage?.context
+    // Take every writable copy before the first write, as ModPsiUpdater.getWritable demands.
+    val elementToReplace = updater.getWritable(request.elementToReplace)
+
     var method = renderMethod()
-    method = insertMethod(method)
-    method = forcePsiPostprocessAndRestoreElement(method) ?: return
-    val builder = setupTemplate(method)
-    builder.setScrollToTemplate(request.isStartTemplate)
-    method = forcePsiPostprocessAndRestoreElement(method) ?: return
-    val template = builder.buildInlineTemplate()
-    startTemplate(method, template)
+    method = insertMethod(method, anchor, elementToReplace)
+    setupTemplate(method, guesserContext)
   }
 
   fun renderMethod(): PsiMethod {
@@ -141,14 +147,12 @@ private class JavaMethodRenderer(
     return method
   }
 
-  private fun insertMethod(method: PsiMethod): PsiMethod {
-    val anchor = javaUsage?.getAnchor(targetClass)
-    val elementToReplace = request.elementToReplace
+  private fun insertMethod(method: PsiMethod, anchor: PsiElement?, elementToReplace: PsiElement?): PsiMethod {
     val inserted = if (anchor != null) {
       targetClass.addAfter(method, anchor)
     }
-    else if (elementToReplace != null && request.elementToReplace.isValid) {
-      request.elementToReplace.replace(method) as PsiMethod
+    else if (elementToReplace != null && elementToReplace.isValid) {
+      elementToReplace.replace(method) as PsiMethod
     }
     else {
       targetClass.add(method)
@@ -156,76 +160,79 @@ private class JavaMethodRenderer(
     return inserted as PsiMethod
   }
 
-  private fun setupTemplate(method: PsiMethod): TemplateBuilderImpl {
-    val builder = TemplateBuilderImpl(method)
-    createTemplateContext(builder).run {
-      val returnType = request.returnType
-      method.typeParameters.forEach { typeParameter -> typeParameter.delete() }
-      setupTypeElement(method.returnTypeElement, returnType)
+  /**
+   * Every PSI change happens first, and the template fields go in at the end. A
+   * [ModTemplateBuilder] writes the value of a field into the document at once, which leaves the PSI
+   * behind, so an offset read after that is stale.
+   */
+  private fun setupTemplate(method: PsiMethod, guesserContext: PsiElement?) {
+    method.typeParameters.forEach { typeParameter -> typeParameter.delete() }
+
+    // Record the fields of the return type and of the parameters, and add the dummy parameters.
+    val fields = RecordedTemplateFields(project)
+    val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
+    templateContext(project, factory, targetClass, fields, substitutor, guesserContext).run {
+      setupTypeElement(method.returnTypeElement, request.returnType)
       setupParameters(method, request.expectedParameters)
     }
-    if (method.containingClass?.rBrace == null) {
-      val codeBlock = method.body
+
+    // Write the fields now. The body text depends on the return type, and the method carries a
+    // placeholder return type until the field writes the default value.
+    val methodPointer = method.createSmartPointer(project)
+    val builder = updater.templateBuilder()
+    fields.flushTo(builder)
+    PsiDocumentManager.getInstance(project).commitDocument(updater.document)
+    val liveMethod = methodPointer.element ?: return
+
+    // Build the body now, so a preview and a non-interactive run are already correct.
+    setupBody(liveMethod, updater)
+
+    if (liveMethod.containingClass?.rBrace == null) {
+      val codeBlock = liveMethod.body
       if (codeBlock != null) {
-        builder.setEndVariableBefore(codeBlock.lBrace ?: codeBlock)
+        builder.finishAt((codeBlock.lBrace ?: codeBlock).textRange.startOffset)
       }
     }
     else {
-      builder.setEndVariableAfter(method.body ?: method)
+      builder.finishAt(updater.caretOffset)
     }
-    builder.setScrollToTemplate(request.isStartTemplate)
-    return builder
+
+    builder.onTemplateFinished { _ -> correctMethod() }
   }
 
-  private fun createTemplateContext(builder: TemplateBuilder): TemplateContext {
-    val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
-    val guesser = GuessTypeParameters(project, factory, builder, substitutor)
-    return TemplateContext(project, factory, targetClass, builder, guesser, javaUsage?.context)
+  /**
+   * Renders the body of the method and puts the caret in it. [setupMethodBody] replaces the body, so a
+   * second call gives the same result as the first one.
+   */
+  private fun setupBody(method: PsiMethod, updater: ModPsiUpdater) {
+    if (method.body == null && !method.hasModifierProperty(PsiModifier.DEFAULT)) return
+    setupMethodBody(method, updater)
+    val body = method.body ?: return
+    setupEditor(body, updater)
   }
 
-  private fun startTemplate(method: PsiMethod, template: Template) {
-    val targetFile = targetClass.containingFile
-    val newEditor = positionCursor(project, targetFile, method) ?: return
-    val templateListener = MethodTemplateListener(project, newEditor, targetFile)
-    CreateFromUsageBaseFix.startTemplate(newEditor, template, project, templateListener, null)
+  /**
+   * Corrects what the live template left behind. The user can select a vararg parameter type, and a
+   * return type which needs another return statement. The template also moves the caret to the finish
+   * offset, which drops the selection that [setupBody] made.
+   */
+  private fun correctMethod(): ModCommand {
+    val target = originalTargetPointer.element ?: return ModCommand.nop()
+    val method = target.findMethodsByName(request.methodName, false).singleOrNull() ?: return ModCommand.nop()
+    return ModCommand.psiUpdate(method) { writableMethod, methodUpdater ->
+      deleteParametersAfterVararg(writableMethod)
+      setupBody(writableMethod, methodUpdater)
+    }
   }
-}
 
-private class MethodTemplateListener(val project: Project, val editor: Editor, val file: PsiFile) : TemplateEditingAdapter() {
-
-  override fun currentVariableChanged(templateState: TemplateState, template: Template?, oldIndex: Int, newIndex: Int) {
-    if (oldIndex > 0 && oldIndex and 1 == 0) {
-      val offset = editor.caretModel.offset
-      val parameterList = PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, PsiParameterList::class.java, false)
-      if (parameterList?.getParameter((oldIndex shr 1) - 1)?.type is PsiEllipsisType) {
-        templateState.gotoEnd()
+  private fun deleteParametersAfterVararg(method: PsiMethod) {
+    var vararg = false
+    for (parameter in method.parameterList.parameters) {
+      if (vararg) {
+        parameter.delete()
       }
-    }
-    super.currentVariableChanged(templateState, template, oldIndex, newIndex)
-  }
-
-  override fun templateFinished(template: Template, brokenOff: Boolean) {
-    PsiDocumentManager.getInstance(project).commitDocument(editor.document)
-    val context = ActionContext.from(editor, file)
-    ModCommandExecutor.executeInteractively(context, message("create.method.body"), editor) {
-      val method = PsiTreeUtil.findElementOfClassAtOffset(file, context.offset - 1, PsiMethod::class.java, false) 
-                   ?: return@executeInteractively ModCommand.nop()
-      ModCommand.psiUpdate(method) { method, updater ->
-        var vararg = false;
-        for (parameter in method.parameterList.parameters) {
-          if (vararg) {
-            parameter.delete()
-          }
-          else if (parameter.isVarArgs) {
-            vararg = true
-          }
-        }
-        if (method.body == null && !method.hasModifierProperty(PsiModifier.DEFAULT)) return@psiUpdate
-        setupMethodBody(method, updater)
-        val body = method.getBody()
-        if (body != null) {
-          setupEditor(body, updater)
-        }
+      else if (parameter.isVarArgs) {
+        vararg = true
       }
     }
   }
