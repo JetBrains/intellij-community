@@ -71,11 +71,6 @@ object InternalPsiVersioning {
 
   internal const val FORKED_TIMELINE_DELTA: Long = 1L
 
-  /**
-   * We reserve **one** least significant bit for version manipulations
-   */
-  internal const val FORKED_TIMELINE_MASK = 2L
-
 
   // it is important that this property is final so that JIT is able to optimize away such calls in production
   @TestOnly
@@ -127,7 +122,7 @@ object InternalPsiVersioning {
     if (ApplicationManager.getApplication().isWriteAccessAllowed || ApplicationManager.getApplication().isWriteIntentLockAcquired) {
       return action()
     }
-    require(version % FORKED_TIMELINE_MASK != 0L) {
+    require(version % MAIN_TIMELINE_DELTA != 0L) {
       "Cannot execute exclusive modification scope with version $version. The scope must be forked with `forkTimeline`"
     }
     return ApplicationManagerEx.getApplicationEx().withLocksProhibited(LOCK_PROHIBITION_FORKED_TIMELINE_ADVICE) {
@@ -185,7 +180,7 @@ object InternalPsiVersioning {
    */
   @JvmStatic
   fun isInForkedTimeline(): Boolean {
-    return getCurrentPsiVersion() % FORKED_TIMELINE_MASK != 0L
+    return getCurrentPsiVersion() % MAIN_TIMELINE_DELTA != 0L
   }
 
   @JvmStatic
@@ -373,7 +368,7 @@ object InternalPsiVersioning {
       // we select the lowest even version for cleanup -- we need to retain only this version for guaranteed semantics preservation
       // there is always at least one frozen version, so we never observe an empty collection
       return frozenPsiVersionsRegistry.keys.minOf {
-        it - (it and 1)
+        it - (it % MAIN_TIMELINE_DELTA)
       }
     }
 

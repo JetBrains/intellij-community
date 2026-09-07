@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Debug
  * 0 -> 2, 2 -> 4, 4 -> 6, ...
  * 0 -> 1, 2 -> 3, 4 -> 5, ...
  * ```
- * Note, that we don't have `1 -> 2`: `2` is not reachable from `1`.
+ * Note, that we don't have `1 -> 2`: `2` is not reachable from `1`. In other words, we permit only one fork per each main version at this point.
  *
  * Another way to visualize reachability is by looking at the following picture:
  * ```text
@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Debug
  * The formal definition of reachability is an implementation detail, and it can evolve alongside versioned syntax structure.
  *
  * The implementation of this structure is tightly coupled with
- * [InternalPsiVersioning.MAIN_TIMELINE_DELTA], [InternalPsiVersioning.FORKED_TIMELINE_MASK], [InternalPsiVersioning.FORKED_TIMELINE_DELTA]
+ * [InternalPsiVersioning.MAIN_TIMELINE_DELTA], [InternalPsiVersioning.FORKED_TIMELINE_DELTA]
  *
  * Structural changes in these classes should be reflected in `org.jetbrains.idea.devkit.hprof.PersistentSyntaxTreeHprofProcessor`
  */
@@ -391,7 +391,7 @@ private fun isReachable(earlierVersion: Long, laterVersion: Long): Boolean {
   return laterVersion == earlierVersion || (laterVersion > earlierVersion && !earlierVersion.isForked())
 }
 
-private fun Long.isForked(): Boolean = this % InternalPsiVersioning.FORKED_TIMELINE_MASK == InternalPsiVersioning.FORKED_TIMELINE_DELTA
+private fun Long.isForked(): Boolean = this % InternalPsiVersioning.MAIN_TIMELINE_DELTA == InternalPsiVersioning.FORKED_TIMELINE_DELTA
 
 /**
  * Returns `true` if the payload stored for [version] is invisible to every version that is reachable from [barrier].
