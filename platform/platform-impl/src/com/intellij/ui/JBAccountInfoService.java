@@ -227,7 +227,8 @@ public interface JBAccountInfoService {
   record JbaServiceConfiguration(
     @NotNull String accountUrl,
     @NotNull String signupUrl,
-    @Nullable String paymentMethodsUrl, // TODO nullable during the transition period
+    @NotNull String paymentMethodsUrl,
+    @NotNull String jcpApiBaseUrl, // not actually JBA-related, but for now here as a property in JetBrainsAccount.xml
     @NotNull List<@NotNull JbaOAuthProvider> authProviders
   ) { }
 
