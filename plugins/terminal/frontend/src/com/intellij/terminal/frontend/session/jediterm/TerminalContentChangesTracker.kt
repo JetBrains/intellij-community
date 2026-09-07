@@ -11,6 +11,7 @@ import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.session.collectLines
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
+import org.jetbrains.plugins.terminal.block.ui.getLengthWithoutDwc
 import org.jetbrains.plugins.terminal.fus.BatchLatencyReporter
 import org.jetbrains.plugins.terminal.fus.DurationAndTextLength
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
@@ -125,10 +126,15 @@ class TerminalContentChangesTracker(
     val output: StyledCommandOutput = scrapeOutput(effectiveStartLine, additionalLines)
     // It is the absolut logical line index from the start of the output tracking (including lines already dropped from the history)
     val logicalLineIndex = textBuffer.getLogicalLineIndex(effectiveStartLine) + discardedHistoryTracker.getDiscardedLogicalLinesCount() - additionalLines.size
+    // The screen starts at visual line 0 in the Text Buffer coordinates. A wrapped line can straddle that
+    // boundary, so the screen can start in the middle of a logical line, at a non-zero column.
+    val (screenTopLine, screenTopColumn) = textBuffer.toLogicalLineAndColumn(0, 0)
+    val screenTopAbsoluteLine = screenTopLine + discardedHistoryTracker.getDiscardedLogicalLinesCount()
 
     LOG.debug {
       "Content updated: length = ${output.text.length}, " +
       "from line = $startLine (effective $effectiveStartLine, absolute $logicalLineIndex), " +
+      "screen top = $screenTopAbsoluteLine:$screenTopColumn, " +
       "last changed visual line = $lastChangedVisualLine, " +
       "additional lines = ${additionalLines.size}, " +
       "effective history lines = ${textBuffer.effectiveHistoryLinesCount}, " +
@@ -142,6 +148,8 @@ class TerminalContentChangesTracker(
       text = output.text,
       styles = output.styleRanges.map { it.toDto() },
       startLineLogicalIndex = logicalLineIndex,
+      screenTopLogicalLineIndex = screenTopAbsoluteLine,
+      screenTopColumnIndex = screenTopColumn,
       osc8Hyperlinks = output.osc8Hyperlinks.map { it.toDto() },
     )
   }
@@ -166,6 +174,8 @@ data class TerminalContentUpdate(
   val text: String,
   val styles: List<StyleRangeDto>,
   val startLineLogicalIndex: Long,
+  val screenTopLogicalLineIndex: Long,
+  val screenTopColumnIndex: Int,
   val osc8Hyperlinks: List<Osc8HyperlinkDto>,
 )
 
@@ -182,7 +192,30 @@ internal fun TerminalTextBuffer.getLogicalLineIndex(visualLine: Int): Int {
   return count
 }
 
-private val TerminalTextBuffer.effectiveHistoryLinesCount: Int
+/**
+ * The absolute logical line index and column of the cell at [visualLine] and [column], in the Text Buffer
+ * coordinates: a negative [visualLine] addresses the history, a non-negative one the screen.
+ * A wrapped line continues the logical line above it, so this backs up to the line that starts the run and
+ * extends the column by the length of every line it passes.
+ */
+internal fun TerminalTextBuffer.toLogicalLineAndColumn(
+  visualLine: Int,
+  column: Int,
+): Pair<Int, Int> {
+  var line = visualLine
+  var resolvedColumn = column
+  while (line - 1 >= -effectiveHistoryLinesCount && getLine(line - 1).isWrapped) {
+    line--
+    resolvedColumn += getLine(line).getLengthWithoutDwc()
+  }
+  return getLogicalLineIndex(line) to resolvedColumn
+}
+
+/**
+ * The history lines the active buffer has. The alternate buffer keeps no history of its own, and the
+ * primary lines behind it must not be read as if it did.
+ */
+internal val TerminalTextBuffer.effectiveHistoryLinesCount: Int
   get() = if (isUsingAlternateBuffer) 0 else historyLinesCount
 
 private val LOG = logger<TerminalContentChangesTracker>()
