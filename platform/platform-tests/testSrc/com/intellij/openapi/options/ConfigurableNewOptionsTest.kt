@@ -11,6 +11,7 @@ import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.updateSettings.impl.PluginUpdateHandler
+import com.intellij.openapi.updateSettings.impl.PluginUpdateProgressSink
 import com.intellij.openapi.updateSettings.impl.PluginUpdateHandlerProvider
 import com.intellij.openapi.updateSettings.impl.PluginUpdatesModel
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -175,6 +176,7 @@ private object NoopPluginUpdateHandler : PluginUpdateHandler {
     component: JComponent?,
     finishCallback: Runnable?,
     customRestarter: Consumer<Boolean>?,
+    progressSink: PluginUpdateProgressSink,
   ) {
   }
 

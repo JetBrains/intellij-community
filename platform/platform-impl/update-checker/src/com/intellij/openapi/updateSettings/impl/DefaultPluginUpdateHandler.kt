@@ -38,9 +38,15 @@ class DefaultPluginUpdateHandler : PluginUpdateHandler {
     return updateModel
   }
 
-  override suspend fun installUpdates(updates: Collection<PluginUiModel>, component: JComponent?, finishCallback: Runnable?, customRestarter: Consumer<Boolean>?) {
+  override suspend fun installUpdates(
+    updates: Collection<PluginUiModel>,
+    component: JComponent?,
+    finishCallback: Runnable?,
+    customRestarter: Consumer<Boolean>?,
+    progressSink: PluginUpdateProgressSink,
+  ) {
     val downloaders = updates.mapNotNull { this.myDownloaders[it.pluginId] }
-    PluginUpdateDialog.runUpdateAll(downloaders, component, finishCallback, customRestarter)
+    PluginUpdateDialog.runUpdateAll(downloaders, component, finishCallback, customRestarter, progressSink)
   }
 
   override suspend fun ignorePluginUpdates() {

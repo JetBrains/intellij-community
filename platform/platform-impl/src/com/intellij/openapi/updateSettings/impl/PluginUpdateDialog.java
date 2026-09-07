@@ -257,11 +257,19 @@ public class PluginUpdateDialog extends DialogWrapper {
                                   @Nullable JComponent ownerComponent,
                                   @Nullable Runnable finishCallback,
                                   @Nullable Consumer<Boolean> customRestarter) {
+    runUpdateAll(toDownload, ownerComponent, finishCallback, customRestarter, PluginUpdateProgressSink.NONE);
+  }
+
+  public static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownload,
+                                  @Nullable JComponent ownerComponent,
+                                  @Nullable Runnable finishCallback,
+                                  @Nullable Consumer<Boolean> customRestarter,
+                                  @NotNull PluginUpdateProgressSink progressSink) {
     String message = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     new Task.Backgroundable(null, message, true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        List<PluginDownloader> downloaders = downloadPluginUpdates(toDownload, indicator);
+        List<PluginDownloader> downloaders = downloadPluginUpdates(toDownload, indicator, progressSink);
         if (downloaders.isEmpty()) {
           return;
         }
@@ -352,12 +360,13 @@ public class PluginUpdateDialog extends DialogWrapper {
   }
 
   private static @NotNull List<PluginDownloader> downloadPluginUpdates(@NotNull Collection<PluginDownloader> toDownload,
-                                                                       @NotNull ProgressIndicator indicator) {
+                                                                       @NotNull ProgressIndicator indicator,
+                                                                       @NotNull PluginUpdateProgressSink progressSink) {
     LinkedHashSet<@Nls String> errors = new LinkedHashSet<>();
     try {
       List<PluginDownloader> downloaders = ContainerUtil.map(toDownload,
                                                              downloader -> downloader.withErrorsConsumer(errors::add));
-      return UpdateInstaller.downloadPluginUpdates(downloaders, indicator);
+      return UpdateInstaller.downloadPluginUpdates(downloaders, indicator, progressSink);
     }
     finally {
       if (!errors.isEmpty()) {

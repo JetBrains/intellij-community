@@ -73,6 +73,16 @@ object UpdateInstaller {
   @JvmStatic
   @RequiresBackgroundThread
   fun downloadPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): List<PluginDownloader> {
+    return downloadPluginUpdates(downloaders, indicator, PluginUpdateProgressSink.NONE)
+  }
+
+  @JvmStatic
+  @RequiresBackgroundThread
+  fun downloadPluginUpdates(
+    downloaders: Collection<PluginDownloader>,
+    indicator: ProgressIndicator,
+    progressSink: PluginUpdateProgressSink,
+  ): List<PluginDownloader> {
     indicator.text = IdeBundle.message("update.downloading.plugins.progress")
 
     val updateChecker = UpdateCheckerFacade.getInstance()
@@ -82,8 +92,12 @@ object UpdateInstaller {
     val readyToInstall = mutableListOf<PluginDownloader>()
     for (downloader in downloaders) {
       try {
-        if (downloader.id !in disabledToUpdate && downloader.prepareToInstall(indicator)) {
-          readyToInstall += downloader
+        if (downloader.id !in disabledToUpdate) {
+          progressSink.downloadProgressChanged(downloader.id, null)
+          if (downloader.prepareToInstall(indicator.withPluginUpdateProgress(downloader.id, downloader.pluginName, progressSink))) {
+            progressSink.downloadProgressChanged(downloader.id, 1.0)
+            readyToInstall += downloader
+          }
         }
         indicator.checkCanceled()
       }
