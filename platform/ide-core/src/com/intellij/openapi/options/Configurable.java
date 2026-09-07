@@ -309,6 +309,16 @@ public interface Configurable extends UnnamedConfigurable {
     void showProgress(boolean start);
 
     void showProject(boolean hasProject);
+
+    /** Controls whether Settings reserves and shows the page progress indicator. */
+    default void showProgressIndicator(boolean show) { }
+
+    /** Controls whether Settings shows the page reset action. */
+    default void showResetAction(boolean show) { }
+
+    /** Sets the horizontal gap between the left and center components in the Settings header. */
+    @ApiStatus.Internal
+    default void setCenterComponentGap(int gap) { }
   }
 
   interface TopComponentProvider {

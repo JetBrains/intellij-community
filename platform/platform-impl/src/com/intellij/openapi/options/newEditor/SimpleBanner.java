@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -19,7 +20,11 @@ import java.awt.FlowLayout;
  * @author Alexander Lobas
  */
 class SimpleBanner extends JPanel {
+  static final String CENTERED_HEADER_KEY = "ide.settings.header.centered";
+  static final int DEFAULT_CENTER_COMPONENT_GAP = 10;
+
   private final AnimatedIcon.Default myAnimatedIcon = new AnimatedIcon.Default();
+  private final boolean myUseCenteredLayout = RegistryManager.getInstance().get(CENTERED_HEADER_KEY).asBoolean();
   private boolean myShowProgress;
 
   protected final JPanel myLeftPanel;
@@ -28,7 +33,7 @@ class SimpleBanner extends JPanel {
   protected Component myCenterComponent;
 
   SimpleBanner() {
-    super(new BorderLayout(10, 0));
+    super(new BorderLayout(DEFAULT_CENTER_COMPONENT_GAP, 0));
     myLeftPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.CENTER, 0, 0) {
       @Override
       public Dimension preferredLayoutSize(Container target) {
@@ -38,7 +43,12 @@ class SimpleBanner extends JPanel {
       @Override
       public void layoutContainer(Container target) {
         super.layoutContainer(target);
-        baselineLayout();
+        if (myUseCenteredLayout) {
+          centerComponentsVertically();
+        }
+        else {
+          baselineLayout();
+        }
       }
     });
     myLeftPanel.add(myProgress);
@@ -47,6 +57,19 @@ class SimpleBanner extends JPanel {
 
   Dimension getPreferredLeftPanelSize(Dimension size) {
     return size;
+  }
+
+  private void centerComponentsVertically() {
+    int components = myLeftPanel.getComponentCount();
+    for (int i = 0; i < components; i++) {
+      Component component = myLeftPanel.getComponent(i);
+      if (!component.isVisible()) {
+        continue;
+      }
+
+      int y = (myLeftPanel.getHeight() - component.getHeight()) / 2;
+      component.setLocation(component.getX(), y);
+    }
   }
 
   private void baselineLayout() {
@@ -107,10 +130,22 @@ class SimpleBanner extends JPanel {
     }
   }
 
+  void setCenterComponentGap(int gap) {
+    ((BorderLayout)getLayout()).setHgap(gap);
+    revalidate();
+  }
+
   void showProgress(boolean start) {
     myShowProgress = start;
     myProgress.setIcon(start ? myAnimatedIcon : EmptyIcon.ICON_16);
     updateProgressBorder();
+  }
+
+  void setProgressIndicatorVisible(boolean visible) {
+    if (!visible) {
+      showProgress(false);
+    }
+    myProgress.setVisible(visible);
   }
 
   void updateProgressBorder() {
@@ -119,6 +154,10 @@ class SimpleBanner extends JPanel {
 
   boolean canShow() {
     return myLeftComponent != null || myCenterComponent != null || myShowProgress;
+  }
+
+  boolean usesCenteredLayout() {
+    return myUseCenteredLayout;
   }
 
   Component getBaselineTemplate() {

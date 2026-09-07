@@ -374,7 +374,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     loadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
     myBanner = new ConfigurableEditorBanner(editor.getResetAction(), myBreadcrumbs);
     searchPanel.setBorder(JBUI.Borders.empty(7, 5, 6, 5));
-    myBanner.setBorder(JBUI.Borders.empty(11, 6, 0, 10));
     search.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     searchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     JComponent left = new JPanel(new BorderLayout());
@@ -510,7 +509,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     search.getTextEditor().addFocusListener(spotlightRemover);
   }
 
-  private JComponent withHistoryToolbar(JComponent component) {
+  private JComponent withHistoryToolbar(SimpleBanner component) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionUtil.copyFrom(new BackAction(), "Back"));
     group.add(ActionUtil.copyFrom(new ForwardAction(), "Forward"));
@@ -519,17 +518,23 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     }
     JComponent toolbar = ActionUtil.createToolbarComponent(this, ActionPlaces.SETTINGS_HISTORY, group, true);
     toolbar.setOpaque(false);
+    return createHeaderPanel(component, toolbar);
+  }
+
+  static @NotNull JComponent createHeaderPanel(@NotNull SimpleBanner banner, @NotNull JComponent toolbar) {
+    boolean useCenteredLayout = banner.usesCenteredLayout();
+    banner.setBorder(useCenteredLayout ? JBUI.Borders.empty(5, 6, 6, 10) : JBUI.Borders.empty(11, 6, 0, 10));
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setOpaque(false);
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.fill = GridBagConstraints.HORIZONTAL;
-    gbc.anchor = GridBagConstraints.NORTH;
+    gbc.anchor = useCenteredLayout ? GridBagConstraints.CENTER : GridBagConstraints.NORTH;
     gbc.gridx = 1;
     gbc.weightx = 1;
-    panel.add(component, gbc);
+    panel.add(banner, gbc);
     gbc.gridx = 2;
     gbc.weightx = 0;
-    gbc.insets = JBUI.insets(8, 2, 0, 0);
+    gbc.insets = useCenteredLayout ? JBUI.insetsLeft(2) : JBUI.insets(8, 2, 0, 0);
     panel.add(toolbar, gbc);
     return panel;
   }
@@ -635,7 +640,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       boolean isModified = isModified();
       editor.getApplyAction().setEnabled(isModified);
       myResetAllAction.setEnabled(isModified);
-      editor.getResetAction().setEnabled(filter.context.isModified(configurable) || exception != null);
+      editor.getResetAction().setEnabled(
+        isResetActionEnabled(lastController, filter.context.isModified(configurable), exception != null)
+      );
       editor.setError(exception);
       editor.revalidate();
     }
@@ -654,6 +661,10 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   public @NotNull Set<Configurable> getModifiedConfigurables() {
     return filter.context.getModified();
+  }
+
+  static boolean isResetActionEnabled(@Nullable ConfigurableController controller, boolean modified, boolean hasError) {
+    return (controller == null || controller.isResetActionVisible()) && (modified || hasError);
   }
 
   /**
@@ -807,6 +818,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       lastController = controller;
       controller.setBanner(myBanner);
     }
+    updateStatus(configurable);
   }
 
   void checkModified(Configurable configurable) {

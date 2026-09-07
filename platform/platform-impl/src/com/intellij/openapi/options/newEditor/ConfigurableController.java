@@ -19,19 +19,26 @@ final class ConfigurableController implements Configurable.TopComponentControlle
   private Component myCenterComponent;
   private Component myLeftComponent;
   private boolean myProgress;
+  private boolean myShowProgressIndicator = true;
   private boolean myHasProject;
+  private boolean myShowResetAction = true;
+  private int myCenterComponentGap = SimpleBanner.DEFAULT_CENTER_COMPONENT_GAP;
 
   void setBanner(SimpleBanner banner) {
     if (banner == null) {
       myBanner.setLeftComponent(null);
       myBanner.setCenterComponent(null);
+      myBanner.setCenterComponentGap(SimpleBanner.DEFAULT_CENTER_COMPONENT_GAP);
       myBanner.showProgress(false);
+      myBanner.setProgressIndicatorVisible(true);
       showProject(myBanner, true);
     }
     else {
       banner.setLeftComponent(myLeftComponent);
       banner.setCenterComponent(myCenterComponent);
-      banner.showProgress(myProgress);
+      banner.setCenterComponentGap(myCenterComponentGap);
+      banner.setProgressIndicatorVisible(myShowProgressIndicator);
+      banner.showProgress(myShowProgressIndicator && myProgress);
       showProject(banner, myHasProject);
 
       IJSwingUtilities.updateComponentTreeUI(banner);
@@ -52,7 +59,16 @@ final class ConfigurableController implements Configurable.TopComponentControlle
   public void showProgress(boolean start) {
     myProgress = start;
     if (myBanner != null) {
-      myBanner.showProgress(start);
+      myBanner.showProgress(myShowProgressIndicator && start);
+    }
+  }
+
+  @Override
+  public void showProgressIndicator(boolean show) {
+    myShowProgressIndicator = show;
+    if (myBanner != null) {
+      myBanner.setProgressIndicatorVisible(show);
+      myBanner.showProgress(show && myProgress);
     }
   }
 
@@ -60,6 +76,23 @@ final class ConfigurableController implements Configurable.TopComponentControlle
   public void showProject(boolean hasProject) {
     myHasProject = hasProject;
     showProject(myBanner, hasProject);
+  }
+
+  @Override
+  public void showResetAction(boolean show) {
+    myShowResetAction = show;
+  }
+
+  @Override
+  public void setCenterComponentGap(int gap) {
+    myCenterComponentGap = gap;
+    if (myBanner != null) {
+      myBanner.setCenterComponentGap(gap);
+    }
+  }
+
+  boolean isResetActionVisible() {
+    return myShowResetAction;
   }
 
   static @Nullable ConfigurableController getOrCreate(@Nullable Configurable configurable,

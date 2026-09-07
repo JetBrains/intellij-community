@@ -435,6 +435,11 @@
       description="Show an available IDE update as a main toolbar button instead of an item in the Settings menu"
     />
     <registryKey
+      key="ide.settings.header.centered"
+      defaultValue="true"
+      description="Center the Settings title and header actions vertically"
+    />
+    <registryKey
       key="ide.hide.default.project.directory.for.isolated.workspace"
       defaultValue="true"
       description="Hide the 'Default project directory' setting for projects in an isolated environment (Docker containers/devcontainers, SSH, remote dev)"
