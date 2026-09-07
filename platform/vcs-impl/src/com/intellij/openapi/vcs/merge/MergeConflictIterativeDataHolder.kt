@@ -2,6 +2,8 @@
 package com.intellij.openapi.vcs.merge
 
 import com.intellij.diff.DiffManagerEx
+import com.intellij.diff.InvalidDiffRequestException
+import com.intellij.diff.comparison.DiffTooBigException
 import com.intellij.diff.merge.IterativeResolveSupport
 import com.intellij.diff.merge.LangSpecificMergeConflictResolverWrapper
 import com.intellij.diff.merge.MergeConflictModel
@@ -74,14 +76,32 @@ class MergeConflictIterativeDataHolder(
     removedModels.forEach(Disposer::dispose)
   }
 
+  /**
+   * Prepares the iterative resolution model for the [file] from an already built [request].
+   * Returns `null` when an external tool or a non-text request handles the file.
+   *
+   * @throws DiffTooBigException when the diff is too big to compute. It is a `ProcessCanceledException`, so the
+   *   caller must let it propagate.
+   * @throws InvalidDiffRequestException when the model cannot write the output.
+   */
+  @Throws(DiffTooBigException::class, InvalidDiffRequestException::class)
   suspend fun prepareModelIfSupported(file: VirtualFile, request: MergeRequest): MergeConflictModel? =
     withContext(Dispatchers.EDT) {
       if (request !is TextMergeRequest || !isMergeRequestSupported(request)) return@withContext null
       val model = mergeConflictModels.getOrPut(file) {
         val conflictResolver = LangSpecificMergeConflictResolverWrapper(project, request.contents)
         val settings = service<TextDiffSettingsHolder>().getSettings(DiffPlaces.MERGE)
-        MergeConflictModel(project, request, conflictResolver).apply {
-          rediff(settings.ignorePolicy, settings.isAutoResolveImportConflicts)
+        val created = MergeConflictModel(project, request, conflictResolver)
+        var initialized = false
+        try {
+          created.rediff(settings.ignorePolicy, settings.isAutoResolveImportConflicts)
+          initialized = true
+          created
+        }
+        finally {
+          // The model registers a document listener in its constructor. If rediff fails (for example with
+          // DiffTooBigException), dispose it, or it stays a Disposer root and pins the project.
+          if (!initialized) Disposer.dispose(created)
         }
       }
       IterativeResolveSupport.setData(request, model)
