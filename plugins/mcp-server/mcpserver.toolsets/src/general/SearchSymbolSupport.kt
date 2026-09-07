@@ -14,7 +14,6 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.project
-import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.navigation.NavigationItem
@@ -47,7 +46,6 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Searches for symbols via a customizable symbol search engine and maps them to [SearchItem]s.
@@ -104,7 +102,7 @@ private suspend fun chooseByNameSearchSymbols(
   var providerStoppedEarly = false
   var reachedLimit = false
 
-  val timedOut = withTimeoutOrNull(Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE.milliseconds) {
+  val timedOut = withTimeoutOrNull(searchTimeout(project)) {
     withBackgroundProgress(
       project = project,
       title = McpServerBundle.message("tool.activity.searching.files.for.text", q),
@@ -158,6 +156,7 @@ private suspend fun chooseByNameSearchSymbols(
   return SearchResult(
     items = items.toList(),
     more = timedOut || reachedLimit || providerStoppedEarly,
+    partialResultReason = if (timedOut) SEARCH_TIMEOUT_PARTIAL_RESULT_REASON else null,
   )
 }
 

@@ -5,7 +5,9 @@ package com.intellij.mcpserver.toolsets
 import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.McpNavigationItemLocation
 import com.intellij.mcpserver.toolsets.general.McpNavigationItemMapper
+import com.intellij.mcpserver.toolsets.general.SEARCH_TIMEOUT_PARTIAL_RESULT_REASON
 import com.intellij.mcpserver.toolsets.general.SearchToolset
+import com.intellij.mcpserver.toolsets.general.withSearchTimeoutOverride
 import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
 import com.intellij.mcpserver.util.INDEXING_PARTIAL_RESULT_REASON
 import com.intellij.navigation.ChooseByNameContributor
@@ -40,6 +42,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import kotlin.io.path.Path
+import kotlin.time.Duration
 
 class SearchToolsetTest : GeneralMcpToolsetTestBase() {
   private val json = Json { ignoreUnknownKeys = true }
@@ -540,6 +543,54 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
     }
     finally {
       DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, token)
+    }
+  }
+
+  @Test
+  fun search_text_reports_partial_result_on_timeout() = runBlocking(Dispatchers.Default) {
+    awaitExternalChangesAndIndexing(project)
+    withSearchTimeoutOverride(project, Duration.ZERO) {
+      testMcpTool(
+        SearchToolset::search_text.name,
+        buildJsonObject { put("q", JsonPrimitive("Search Everywhere file content")) }
+      ) { actualResult ->
+        val result = parseResult(actualResult.textContent.text)
+        assertThat(result.items).isEmpty()
+        assertThat(result.more).isTrue()
+        assertThat(result.partialResultReason).isEqualTo(SEARCH_TIMEOUT_PARTIAL_RESULT_REASON)
+      }
+    }
+  }
+
+  @Test
+  fun search_file_reports_partial_result_on_timeout() = runBlocking(Dispatchers.Default) {
+    DumbService.getInstance(project).waitForSmartMode()
+    withSearchTimeoutOverride(project, Duration.ZERO) {
+      testMcpTool(
+        SearchToolset::search_file.name,
+        buildJsonObject { put("q", JsonPrimitive(searchFile.name)) }
+      ) { actualResult ->
+        val result = parseResult(actualResult.textContent.text)
+        assertThat(result.items).isEmpty()
+        assertThat(result.more).isTrue()
+        assertThat(result.partialResultReason).isEqualTo(SEARCH_TIMEOUT_PARTIAL_RESULT_REASON)
+      }
+    }
+  }
+
+  @Test
+  fun search_symbol_reports_partial_result_on_timeout() = runBlocking(Dispatchers.Default) {
+    DumbService.getInstance(project).waitForSmartMode()
+    withSearchTimeoutOverride(project, Duration.ZERO) {
+      testMcpTool(
+        SearchToolset::search_symbol.name,
+        buildJsonObject { put("q", JsonPrimitive("${symbolPrefix}Alpha")) }
+      ) { actualResult ->
+        val result = parseResult(actualResult.textContent.text)
+        assertThat(result.items).isEmpty()
+        assertThat(result.more).isTrue()
+        assertThat(result.partialResultReason).isEqualTo(SEARCH_TIMEOUT_PARTIAL_RESULT_REASON)
+      }
     }
   }
 

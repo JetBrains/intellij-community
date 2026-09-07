@@ -22,6 +22,7 @@ import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -55,6 +56,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.FileSystems
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -62,6 +64,7 @@ import java.nio.file.PathMatcher
 import java.util.regex.PatternSyntaxException
 import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @Internal
@@ -69,6 +72,34 @@ const val MAX_RESULTS_UPPER_BOUND: Int = 5000
 
 @Internal
 const val SEARCH_SCOPE_MULTIPLIER: Int = 5
+
+@Internal
+const val SEARCH_TIMEOUT_PARTIAL_RESULT_REASON: String =
+  "The search timed out after 10 s. Narrow the query or pass paths."
+
+@Service(Service.Level.PROJECT)
+private class SearchTimeoutState {
+  @Volatile
+  var timeoutOverride: Duration? = null
+}
+
+internal suspend fun searchTimeout(project: Project): Duration {
+  return project.serviceAsync<SearchTimeoutState>().timeoutOverride
+         ?: Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE.milliseconds
+}
+
+@TestOnly
+suspend fun <T> withSearchTimeoutOverride(project: Project, timeout: Duration, action: suspend () -> T): T {
+  val state = project.serviceAsync<SearchTimeoutState>()
+  val previous = state.timeoutOverride
+  state.timeoutOverride = timeout
+  try {
+    return action()
+  }
+  finally {
+    state.timeoutOverride = previous
+  }
+}
 private const val PATHS_DESCRIPTION = "Optional list of project-relative glob patterns to filter results. " +
                                       "Supports '!' excludes. Trailing '/' expands to '**'. " +
                                       "Patterns without '/' are treated as '**/pattern'. Empty strings are ignored."
@@ -159,7 +190,7 @@ class SearchToolset : McpToolset {
         mcpFail("search_symbol is not supported by this IDE version")
       }
     }
-    return result.copy(partialResultReason = partialResultReason)
+    return result.copy(partialResultReason = partialResultReason ?: result.partialResultReason)
   }
 
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
@@ -222,7 +253,7 @@ suspend fun searchInFiles(
 
   val usages = ArrayList<UsageInfo>(minOf(effectiveLimit, 256))
   val usageLock = Any()
-  val timedOut = withTimeoutOrNull(Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE.milliseconds) {
+  val timedOut = withTimeoutOrNull(searchTimeout(project)) {
     val processor = Processor<UsageInfo> { usageInfo ->
       val file = usageInfo.virtualFile ?: return@Processor true
       val relativePath = relativizeInProject(projectDirectories, projectDir, file) ?: return@Processor true
@@ -266,7 +297,11 @@ suspend fun searchInFiles(
 
   val items = mapUsagesToItems(usages, projectDir)
   val reachedLimit = usages.size >= effectiveLimit
-  return SearchResult(items = items, more = timedOut || reachedLimit)
+  return SearchResult(
+    items = items,
+    more = timedOut || reachedLimit,
+    partialResultReason = if (timedOut) SEARCH_TIMEOUT_PARTIAL_RESULT_REASON else null,
+  )
 }
 
 /**
@@ -353,7 +388,7 @@ suspend fun searchFiles(
     return true
   }
 
-  val timedOut = withTimeoutOrNull(Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE.milliseconds) {
+  val timedOut = withTimeoutOrNull(searchTimeout(project)) {
     withBackgroundProgress(
       project,
       McpServerBundle.message("progress.title.searching.for.files.by.glob.pattern", q),
@@ -404,7 +439,11 @@ suspend fun searchFiles(
     }
   } == null
 
-  return SearchResult(items = results.toList(), more = timedOut || reachedLimit)
+  return SearchResult(
+    items = results.toList(),
+    more = timedOut || reachedLimit,
+    partialResultReason = if (timedOut) SEARCH_TIMEOUT_PARTIAL_RESULT_REASON else null,
+  )
 }
 
 private fun extractIndexedFileNamePattern(globPattern: String): String? {
