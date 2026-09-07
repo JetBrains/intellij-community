@@ -224,7 +224,7 @@ private fun mapNavigationItem(
                      is PsiElement -> item
                      is PsiElementNavigationItem -> item.targetElement
                      else -> null
-                   } ?: return null
+                   } ?: return mapNonPsiNavigationItem(item, projectDir, pathScope)
 
   val anchor = resolveNavigationAnchor(psiElement) ?: return null
   val filePath = projectDir.relativizeIfPossible(anchor.file)
@@ -238,6 +238,25 @@ private fun mapNavigationItem(
     startColumn = snippet?.startColumn,
     endLine = snippet?.endLine,
     endColumn = snippet?.endColumn,
+  )
+}
+
+private fun mapNonPsiNavigationItem(
+  item: NavigationItem,
+  projectDir: Path,
+  pathScope: PathScope?,
+): SearchItem? {
+  val location = McpNavigationItemMapper.EP_NAME.computeSafeIfAny { it.map(item) } ?: return null
+  val filePath = projectDir.relativizeIfPossible(location.file)
+  if (filePath.isBlank()) return null
+  if (!matchesPathScope(pathScope, projectDir, filePath)) return null
+
+  return SearchItem(
+    filePath = filePath,
+    startLine = location.startLine?.plus(1),
+    startColumn = location.startColumn?.plus(1),
+    endLine = location.endLine?.plus(1),
+    endColumn = location.endColumn?.plus(1),
   )
 }
 

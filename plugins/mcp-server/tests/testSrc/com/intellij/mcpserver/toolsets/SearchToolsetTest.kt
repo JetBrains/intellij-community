@@ -3,12 +3,18 @@
 package com.intellij.mcpserver.toolsets
 
 import com.intellij.mcpserver.GeneralMcpToolsetTestBase
+import com.intellij.mcpserver.toolsets.general.McpNavigationItemLocation
+import com.intellij.mcpserver.toolsets.general.McpNavigationItemMapper
 import com.intellij.mcpserver.toolsets.general.SearchToolset
 import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
 import com.intellij.mcpserver.util.INDEXING_PARTIAL_RESULT_REASON
+import com.intellij.navigation.ChooseByNameContributor
+import com.intellij.navigation.ItemPresentation
+import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -612,6 +618,29 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
   }
 
   @Test
+  fun search_symbol_surfaces_non_psi_items_via_navigation_item_mapper() = runBlocking(Dispatchers.Default) {
+    val symbolName = "SeMappedSymbol2f8d"
+    val mappedItem = FakeNonPsiNavigationItem(symbolName)
+    ChooseByNameContributor.SYMBOL_EP_NAME.point.registerExtension(FakeSymbolContributor(symbolName, mappedItem), testDisposable)
+    McpNavigationItemMapper.EP_NAME.point.registerExtension(FakeNavigationItemMapper(mappedItem, searchFile), testDisposable)
+    DumbService.getInstance(project).waitForSmartMode()
+    testMcpTool(
+      SearchToolset::search_symbol.name,
+      buildJsonObject {
+        put("q", JsonPrimitive(symbolName))
+      }
+    ) { actualResult ->
+      val result = parseResult(actualResult.textContent.text)
+      val item = result.items.firstOrNull { it.filePath.contains(searchFile.name) }
+      assertThat(item).isNotNull
+      assertThat(item?.startLine).isEqualTo(3)
+      assertThat(item?.startColumn).isEqualTo(5)
+      assertThat(item?.endLine).isEqualTo(3)
+      assertThat(item?.endColumn).isEqualTo(15)
+    }
+  }
+
+  @Test
   fun search_symbol_description_suggests_include_external_retry() = runBlocking(Dispatchers.Default) {
     withConnection { client ->
       val tool = client.listTools().tools.first { it.name == SearchToolset::search_symbol.name }
@@ -684,5 +713,40 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
       assertThat(result.more).isTrue()
       assertThat(entryFilePaths).anyMatch { path -> expectedNames.any { path.contains(it) } }
     }
+  }
+}
+
+private class FakeNonPsiNavigationItem(private val itemName: String) : NavigationItem {
+  override fun getName(): String = itemName
+
+  override fun getPresentation(): ItemPresentation = object : ItemPresentation {
+    override fun getPresentableText(): String = itemName
+    override fun getIcon(unused: Boolean): javax.swing.Icon? = null
+  }
+
+  override fun navigate(requestFocus: Boolean) {}
+
+  override fun canNavigate(): Boolean = false
+
+  override fun canNavigateToSource(): Boolean = false
+}
+
+private class FakeSymbolContributor(
+  private val symbolName: String,
+  private val item: NavigationItem,
+) : ChooseByNameContributor {
+  override fun getNames(project: Project?, includeNonProjectItems: Boolean): Array<String> = arrayOf(symbolName)
+
+  override fun getItemsByName(name: String, pattern: String, project: Project?, includeNonProjectItems: Boolean): Array<NavigationItem> =
+    if (name == symbolName) arrayOf(item) else NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY
+}
+
+private class FakeNavigationItemMapper(
+  private val expectedItem: NavigationItem,
+  private val file: VirtualFile,
+) : McpNavigationItemMapper {
+  override fun map(item: NavigationItem): McpNavigationItemLocation? {
+    if (item !== expectedItem) return null
+    return McpNavigationItemLocation(file = file, startLine = 2, startColumn = 4, endLine = 2, endColumn = 14)
   }
 }
