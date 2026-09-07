@@ -31,13 +31,18 @@ import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys
 import git4idea.workingTrees.ui.actions.RemoveWorkingTreeAction
 import kotlinx.coroutines.CancellationException
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Proxy
-import java.util.concurrent.CopyOnWriteArrayList
+import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.doAnswer
+import org.mockito.Mockito.spy
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
 @RegistryKey("git.enable.working.trees.feature", "true")
@@ -160,21 +165,13 @@ internal class RemoveWorkingTreeActionTest {
   @Test
   fun `test cancellation reports worktrees deleted before interruption`(): Unit = with(context) {
     setUpTwoWorktrees()
-    val realGit = Git.getInstance()
-    var deletionAttempt = 0
-    // Delegate all Git operations except the second deletion, which simulates cancellation after one success.
-    val interruptingGit = Proxy.newProxyInstance(Git::class.java.classLoader, arrayOf(Git::class.java)) { _, method, arguments ->
-      if (method.name == "deleteWorkingTree") {
-        deletionAttempt++
-        if (deletionAttempt == 2) throw CancellationException("Test cancellation")
-      }
-      try {
-        method.invoke(realGit, *(arguments ?: emptyArray()))
-      }
-      catch (e: InvocationTargetException) {
-        throw e.targetException
-      }
-    } as Git
+    val interruptingGit = GitSpies.register(spy(Git.getInstance()))
+    val deletionAttempts = AtomicInteger()
+    // Every Git operation is real except the second deletion, which simulates cancellation after one success.
+    doAnswer { invocation ->
+      if (deletionAttempts.incrementAndGet() == 2) throw CancellationException("Test cancellation")
+      invocation.callRealMethod()
+    }.`when`(interruptingGit).deleteWorkingTree(any(), any())
     ApplicationManager.getApplication().replaceService(Git::class.java, interruptingGit, testDisposable)
 
     val oldTestDialog = TestDialogManager.setTestDialog(TestDialog.YES)
@@ -200,7 +197,7 @@ internal class RemoveWorkingTreeActionTest {
       assertThat(vcsNotifier.notifications)
         .describedAs("Cancellation must not suppress the notification for already deleted worktrees")
         .hasSize(1)
-      assertThat(deletionAttempt).describedAs("Deletion must be cancelled on the second worktree").isEqualTo(2)
+      verify(interruptingGit, times(2)).deleteWorkingTree(any(), any())
 
       val service = GitWorkingTreesService.getInstance(project)
       timeoutRunBlocking {
@@ -217,16 +214,17 @@ internal class RemoveWorkingTreeActionTest {
   @Test
   fun `test overlapping delete requests remove the working tree once`(): Unit = with(context) {
     setUpWorktree()
-    val deletionAttempts = CopyOnWriteArrayList<String>()
+    val deletionCount = AtomicInteger()
     val firstAttemptStarted = CountDownLatch(1)
     val releaseFirstAttempt = CountDownLatch(1)
     // Hold the first `git worktree remove` inside the command, so the second request provably overlaps it.
-    recordDeletions(deletionAttempts) {
+    val spiedGit = replaceGitWithSpy(deletionCount) {
       firstAttemptStarted.countDown()
       releaseFirstAttempt.await(1, TimeUnit.MINUTES)
     }
 
     val toDelete = linkedTree()
+    val deleted = ArgumentCaptor.forClass(GitWorkingTree::class.java)
     val service = GitWorkingTreesService.getInstance(project)
     val first = service.deleteWorkingTrees(project, listOf(toDelete), repo)
     try {
@@ -245,18 +243,19 @@ internal class RemoveWorkingTreeActionTest {
       val second = service.deleteWorkingTrees(project, listOf(toDelete), repo)
       timeoutRunBlocking { second.join() }
 
-      assertThat(deletionAttempts)
+      assertThat(deletionCount.get())
         .describedAs("The duplicate request must not run `git worktree remove` a second time")
-        .containsExactly(toDelete.path.path)
+        .isEqualTo(1)
     }
     finally {
       releaseFirstAttempt.countDown()
     }
     timeoutRunBlocking { first.join() }
 
-    assertThat(deletionAttempts)
+    verify(spiedGit, times(1)).deleteWorkingTree(any(), deleted.capture())
+    assertThat(deleted.allValues.map { it.path })
       .describedAs("`git worktree remove` must run exactly once per working tree path")
-      .containsExactly(toDelete.path.path)
+      .containsExactly(toDelete.path)
     timeoutRunBlocking {
       waitUntil("the deletion notification is shown") { vcsNotifier.notifications.isNotEmpty() }
     }
@@ -269,35 +268,29 @@ internal class RemoveWorkingTreeActionTest {
   @Test
   fun `test deleted working tree remains claimed until reload removes it`(): Unit = with(context) {
     setUpWorktree()
-    val realGit = Git.getInstance()
-    val deletionAttempts = CopyOnWriteArrayList<String>()
+    val spiedGit = GitSpies.register(spy(Git.getInstance()))
     val deletionCompleted = AtomicBoolean()
     val reloadStarted = CountDownLatch(1)
     val releaseReload = CountDownLatch(1)
-    val proxiedGit = Proxy.newProxyInstance(Git::class.java.classLoader, arrayOf(Git::class.java)) { _, method, arguments ->
-      if (method.name == "listWorktrees" && deletionCompleted.get()) {
+    // Hold the reload that follows the deletion, so the model keeps the stale row while the assertions run.
+    doAnswer { invocation ->
+      if (deletionCompleted.get()) {
         reloadStarted.countDown()
         releaseReload.await(1, TimeUnit.MINUTES)
       }
-      if (method.name == "deleteWorkingTree") {
-        deletionAttempts.add((arguments!![1] as GitWorkingTree).path.path)
-      }
-      val result = try {
-        method.invoke(realGit, *(arguments ?: emptyArray()))
-      }
-      catch (e: InvocationTargetException) {
-        throw e.targetException
-      }
-      if (method.name == "deleteWorkingTree") {
-        deletionCompleted.set(true)
-      }
+      invocation.callRealMethod()
+    }.`when`(spiedGit).listWorktrees(any())
+    doAnswer { invocation ->
+      val result = invocation.callRealMethod()
+      deletionCompleted.set(true)
       result
-    } as Git
-    ApplicationManager.getApplication().replaceService(Git::class.java, proxiedGit, testDisposable)
+    }.`when`(spiedGit).deleteWorkingTree(any(), any())
+    ApplicationManager.getApplication().replaceService(Git::class.java, spiedGit, testDisposable)
 
     val toDelete = linkedTree()
     val service = GitWorkingTreesService.getInstance(project)
     val deletion = service.deleteWorkingTrees(project, listOf(toDelete), repo)
+    val deleted = ArgumentCaptor.forClass(GitWorkingTree::class.java)
     try {
       assertThat(reloadStarted.await(1, TimeUnit.MINUTES))
         .describedAs("The deletion must start refreshing the worktrees model")
@@ -319,9 +312,10 @@ internal class RemoveWorkingTreeActionTest {
 
       val duplicate = service.deleteWorkingTrees(project, listOf(toDelete), repo)
       timeoutRunBlocking { duplicate.join() }
-      assertThat(deletionAttempts)
+      verify(spiedGit, times(1)).deleteWorkingTree(any(), deleted.capture())
+      assertThat(deleted.allValues.map { it.path })
         .describedAs("The stale row must not issue another `git worktree remove`")
-        .containsExactly(toDelete.path.path)
+        .containsExactly(toDelete.path)
     }
     finally {
       releaseReload.countDown()
@@ -338,18 +332,19 @@ internal class RemoveWorkingTreeActionTest {
   @Test
   fun `test a working tree queued in a running batch cannot be deleted concurrently`(): Unit = with(context) {
     setUpTwoWorktrees()
-    val deletionAttempts = CopyOnWriteArrayList<String>()
+    val deletionCount = AtomicInteger()
     val firstAttemptStarted = CountDownLatch(1)
     val releaseFirstAttempt = CountDownLatch(1)
     // Hold only the batch's first `git worktree remove`, so its second working tree stays queued and unstarted.
-    recordDeletions(deletionAttempts) {
-      if (deletionAttempts.size == 1) {
+    val spiedGit = replaceGitWithSpy(deletionCount) {
+      if (deletionCount.get() == 1) {
         firstAttemptStarted.countDown()
         releaseFirstAttempt.await(1, TimeUnit.MINUTES)
       }
     }
 
     val toDelete = linkedTrees()
+    val deleted = ArgumentCaptor.forClass(GitWorkingTree::class.java)
     assertThat(toDelete).describedAs("Both linked working trees must be set up").hasSize(2)
     val queued = toDelete[1]
     val service = GitWorkingTreesService.getInstance(project)
@@ -371,39 +366,36 @@ internal class RemoveWorkingTreeActionTest {
 
       val concurrent = service.deleteWorkingTrees(project, listOf(queued), repo)
       timeoutRunBlocking { concurrent.join() }
-      assertThat(deletionAttempts)
+      assertThat(deletionCount.get())
         .describedAs("A concurrent request must not delete a working tree the running batch has queued")
-        .containsExactly(toDelete[0].path.path)
+        .isEqualTo(1)
     }
     finally {
       releaseFirstAttempt.countDown()
     }
     timeoutRunBlocking { batch.join() }
 
-    assertThat(deletionAttempts)
+    verify(spiedGit, times(2)).deleteWorkingTree(any(), deleted.capture())
+    assertThat(deleted.allValues.map { it.path })
       .describedAs("Each working tree of the batch must be deleted exactly once")
-      .containsExactly(toDelete[0].path.path, queued.path.path)
+      .containsExactly(toDelete[0].path, queued.path)
   }
 
   /**
-   * Replaces [Git] with a proxy that records the path of every `git worktree remove` and runs [beforeDeletion] before
-   * delegating, so a test can hold one deletion open while it issues a second request.
+   * Replaces [Git] with a spy and returns it. The spy records every call, so a test can report the deletions with
+   * [verify]. [beforeDeletion] runs before each real `git worktree remove`, which lets a test hold one deletion open
+   * while it issues a second request. [deletionCount] counts the started deletions, so [beforeDeletion] can act on
+   * the first one only.
    */
-  private fun recordDeletions(deletionAttempts: MutableList<String>, beforeDeletion: () -> Unit = {}) {
-    val realGit = Git.getInstance()
-    val recordingGit = Proxy.newProxyInstance(Git::class.java.classLoader, arrayOf(Git::class.java)) { _, method, arguments ->
-      if (method.name == "deleteWorkingTree") {
-        deletionAttempts.add((arguments!![1] as GitWorkingTree).path.path)
-        beforeDeletion()
-      }
-      try {
-        method.invoke(realGit, *(arguments ?: emptyArray()))
-      }
-      catch (e: InvocationTargetException) {
-        throw e.targetException
-      }
-    } as Git
-    ApplicationManager.getApplication().replaceService(Git::class.java, recordingGit, testDisposable)
+  private fun replaceGitWithSpy(deletionCount: AtomicInteger, beforeDeletion: () -> Unit = {}): Git {
+    val spiedGit = GitSpies.register(spy(Git.getInstance()))
+    doAnswer { invocation ->
+      deletionCount.incrementAndGet()
+      beforeDeletion()
+      invocation.callRealMethod()
+    }.`when`(spiedGit).deleteWorkingTree(any(), any())
+    ApplicationManager.getApplication().replaceService(Git::class.java, spiedGit, testDisposable)
+    return spiedGit
   }
 
   private fun GitSingleRepoContext.actionEvent(selection: List<GitWorkingTree>): AnActionEvent {
@@ -416,5 +408,14 @@ internal class RemoveWorkingTreeActionTest {
       }
     }
     return AnActionEvent.createEvent(RemoveWorkingTreeAction(), ctx, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
+  }
+
+  companion object {
+    /** A spy records the calls of a whole class, so the recorded calls are cleared once the class ends. */
+    @AfterAll
+    @JvmStatic
+    fun clearRecordedSpyCalls() {
+      GitSpies.clearRecordedCalls()
+    }
   }
 }

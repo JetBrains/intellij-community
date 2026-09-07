@@ -23,9 +23,13 @@ import git4idea.test.gitSingleRepoContextFixture
 import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys
 import git4idea.workingTrees.ui.actions.OpenWorkingTreeAction
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Proxy
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.doAnswer
+import org.mockito.Mockito.spy
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -85,23 +89,16 @@ internal class OpenWorkingTreeActionTest {
   @Test
   fun `test action is disabled while the working tree is being deleted`(): Unit = with(context) {
     setUpWorktree()
-    val realGit = Git.getInstance()
     val deletionStarted = CountDownLatch(1)
     val releaseDeletion = CountDownLatch(1)
+    val spiedGit = GitSpies.register(spy(Git.getInstance()))
     // Hold `git worktree remove` open, so the assertion below runs while the deletion is genuinely in flight.
-    val gatedGit = Proxy.newProxyInstance(Git::class.java.classLoader, arrayOf(Git::class.java)) { _, method, arguments ->
-      if (method.name == "deleteWorkingTree") {
-        deletionStarted.countDown()
-        releaseDeletion.await(1, TimeUnit.MINUTES)
-      }
-      try {
-        method.invoke(realGit, *(arguments ?: emptyArray()))
-      }
-      catch (e: InvocationTargetException) {
-        throw e.targetException
-      }
-    } as Git
-    ApplicationManager.getApplication().replaceService(Git::class.java, gatedGit, testDisposable)
+    doAnswer { invocation ->
+      deletionStarted.countDown()
+      releaseDeletion.await(1, TimeUnit.MINUTES)
+      invocation.callRealMethod()
+    }.`when`(spiedGit).deleteWorkingTree(any(), any())
+    ApplicationManager.getApplication().replaceService(Git::class.java, spiedGit, testDisposable)
 
     val toDelete = linkedTree()
     val deletion = GitWorkingTreesService.getInstance(project).deleteWorkingTrees(project, listOf(toDelete), repo)
@@ -120,6 +117,7 @@ internal class OpenWorkingTreeActionTest {
       releaseDeletion.countDown()
     }
     timeoutRunBlocking { deletion.join() }
+    verify(spiedGit, times(1)).deleteWorkingTree(any(), any())
   }
 
   private fun GitSingleRepoContext.actionEvent(selection: List<GitWorkingTree>): AnActionEvent {
@@ -131,5 +129,14 @@ internal class OpenWorkingTreeActionTest {
       }
     }
     return AnActionEvent.createEvent(OpenWorkingTreeAction(), ctx, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
+  }
+
+  companion object {
+    /** A spy records the calls of a whole class, so the recorded calls are cleared once the class ends. */
+    @AfterAll
+    @JvmStatic
+    fun clearRecordedSpyCalls() {
+      GitSpies.clearRecordedCalls()
+    }
   }
 }
