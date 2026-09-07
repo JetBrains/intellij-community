@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -59,13 +60,18 @@ class OpenFileQuickFix(private val path: Path, private val search: String?) : Bu
 
     @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     private fun doShowFile(project: Project, file: VirtualFile, search: String?) {
-      val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), false)
-      if (search == null || editor == null) return
+      val fileEditorManager = FileEditorManager.getInstance(project)
+      val openDescriptor = OpenFileDescriptor(project, file)
+      fileEditorManager.requestOpenTextEditor(openDescriptor, FileEditorOpenRequest.fromDescriptor(openDescriptor)
+        .withRequestFocus(false))
+        .thenAccept { editor ->
+          if (search == null || editor == null) return@thenAccept
 
-      val findModel = FindModel().apply { FindModel.initStringToFind(this, search) }
-      val findResult = FindManager.getInstance(project).findString(editor.document.charsSequence, 0, findModel, file)
-      val highlightManager = HighlightManager.getInstance(project)
-      HighlightUsagesHandler.highlightRanges(highlightManager, editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, listOf(findResult))
+          val findModel = FindModel().apply { FindModel.initStringToFind(this, search) }
+          val findResult = FindManager.getInstance(project).findString(editor.document.charsSequence, 0, findModel, file)
+          val highlightManager = HighlightManager.getInstance(project)
+          HighlightUsagesHandler.highlightRanges(highlightManager, editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, listOf(findResult))
+        }
     }
   }
 }
