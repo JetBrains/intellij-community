@@ -56,7 +56,7 @@ private val PROCESS_CLEANUP_TIMEOUT: Duration = 3_000.milliseconds
 
 /** See `platform/ijent/docs/internal/shell-deploy-lifetime.md` for the process ownership and the error strategy. */
 abstract class IjentDeployingOverShellProcessStrategy(
-  scope: ParentOfIjentScopes,
+  parentScope: ParentOfIjentScopes,
   currentDispatcher: CoroutineDispatcher,
   private val ijentLabel: String
 ) : IjentControlledEnvironmentDeployingStrategy() {
@@ -164,11 +164,11 @@ abstract class IjentDeployingOverShellProcessStrategy(
   /** Non-null while the deployer owns cleanup; cleared on close or when the session takes ownership. */
   private var createdShellProcess: ShellProcessWrapper? = null
 
-  private val myContext: Deferred<ShellSession> = scope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
-    val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(scope, ijentLabel)
+  private val myContext: Deferred<ShellSession> = parentScope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
+    val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(parentScope, ijentLabel)
     val processFacade = createShellProcessFacade(ijentProcessScope)
     val mediator = IjentSessionProcessMediator.create(
-      parentScope = scope,
+      parentScope = parentScope,
       ijentProcessScope = ijentProcessScope,
       process = processFacade,
       ijentLabel = ijentLabel,
@@ -210,7 +210,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
     }
   }
 
-  private val myDetectedTarget = scope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
+  private val myDetectedTarget = parentScope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
     val session = getMyContext()
     session.execCommand {
       detectTarget()
