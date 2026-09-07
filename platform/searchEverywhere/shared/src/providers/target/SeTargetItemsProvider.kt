@@ -38,7 +38,9 @@ import com.intellij.platform.searchEverywhere.providers.SeScopeById
 import com.intellij.platform.searchEverywhere.providers.SeScopeByIdFiles
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.suspendLazy
+import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FindSymbolParameters
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -73,16 +75,13 @@ class SeTargetPresentableItem(val rawItem: Any,
 }
 
 @ApiStatus.Internal
-class SeTargetItemsProvider(private val project: Project,
-                            dataContext: DataContext,
-                            private val operationDisposable: Disposable?,
-                            private val label: String,
-                            private val gotoModelProvider: (Project, ScopeDescriptor?, Set<FileTypeRef>) -> (FilteringGotoByModel<*>)) {
-
-  private val psiContext = GotoActionBase.getPsiContext(dataContext)?.let { context ->
-    SmartPointerManager.getInstance(project).createSmartPsiElementPointer(context)
-  }
-
+class SeTargetItemsProvider private constructor(
+  private val project: Project,
+  private val psiContext: SmartPsiElementPointer<PsiElement?>?,
+  private val operationDisposable: Disposable?,
+  private val label: String,
+  private val gotoModelProvider: (Project, ScopeDescriptor?, Set<FileTypeRef>) -> (FilteringGotoByModel<*>),
+) {
   private val scopeById: SuspendLazyProperty<SeScopeById> = suspendLazy {
     SeScopeByIdFiles(project, psiContext)
   }
@@ -232,6 +231,23 @@ class SeTargetItemsProvider(private val project: Project,
 
   companion object {
     private val LOG = logger<SeTargetItemsProvider>()
+    const val COROUTINE_BASED_GOTO_KEY = "search.everywhere.coroutine.based.goto"
+
+    suspend fun create(
+      project: Project,
+      dataContext: DataContext,
+      operationDisposable: Disposable?,
+      label: String,
+      gotoModelProvider: (Project, ScopeDescriptor?, Set<FileTypeRef>) -> (FilteringGotoByModel<*>),
+    ): SeTargetItemsProvider {
+      val psiContext = readAction {
+        GotoActionBase.getPsiContext(dataContext)?.let { context ->
+          SmartPointerManager.getInstance(project).createSmartPsiElementPointer(context)
+        }
+      }
+
+      return SeTargetItemsProvider(project, psiContext, operationDisposable, label, gotoModelProvider)
+    }
   }
 }
 

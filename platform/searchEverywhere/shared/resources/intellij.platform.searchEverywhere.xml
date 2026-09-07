@@ -36,9 +36,18 @@
     <extensionPoint name="searchEverywhere.legacyItemPresentationProvider"
                     interface="com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider"
                     dynamic="true"/>
+
+    <extensionPoint name="searchEverywhere.targetPresentationProvider"
+                    interface="com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="search.everywhere.coroutine.based.goto"
+                 defaultValue="false"
+                 restartRequired="false"
+                 description="Use the coroutine based goto providers in Search Everywhere. Such a provider drives the ChooseByName model itself and computes the item presentation on a background thread. When the key is off, Search Everywhere wraps the legacy SearchEverywhereContributor instead."/>
+
     <platform.entityTypes implementation="com.intellij.platform.searchEverywhere.SeEntityTypeProvider"/>
     <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeSelectedItemsDataContextSerializer" />
     <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeSessionDataContextSerializer" />
@@ -62,5 +71,10 @@
       implementation="com.intellij.platform.searchEverywhere.providers.classes.SeClassesProviderFactory"/>
     <searchEverywhere.itemsProviderFactory
       implementation="com.intellij.platform.searchEverywhere.providers.symbols.SeSymbolsProviderFactory"/>
+
+    <!-- The fallback presentation provider. It answers for every item, so it must stay last. -->
+    <searchEverywhere.targetPresentationProvider
+      order="last"
+      implementation="com.intellij.platform.searchEverywhere.providers.target.presentation.SeDefaultTargetPresentationProvider"/>
   </extensions>
 </idea-plugin>

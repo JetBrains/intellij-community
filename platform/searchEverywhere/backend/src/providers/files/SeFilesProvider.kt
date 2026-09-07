@@ -2,18 +2,24 @@
 package com.intellij.platform.searchEverywhere.backend.providers.files
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
+import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel
 import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetPresentableItem
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetRawItem
+import com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.buffer
@@ -21,20 +27,15 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.annotations.Nls
 
-internal class SeFilesProvider(private val project: Project,
-                               dataContext: DataContext) : SeItemsProvider {
+internal class SeFilesProvider private constructor(private val targetProvider: SeTargetItemsProvider) : SeItemsProvider {
   override val id: String get() = SeProviderIdUtils.FILES_ID
   override val displayName: @Nls String get() = IdeBundle.message("search.everywhere.group.name.files")
-
-  private val provider = SeTargetItemsProvider(project, dataContext, null, "SeFiles") { project, _, hiddenTypes ->
-    createModel(project, hiddenTypes)
-  }
 
   override suspend fun collectItems(
     params: SeParams,
     collector: SeItemsProvider.Collector,
   ) = coroutineScope {
-    provider.getItemsFlow(params, presentationProvider = { fetchPresentation(it) })
+    targetProvider.getItemsFlow(params, presentationProvider = { fetchPresentation(it) })
       .buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND)
       .takeWhile {
         collector.put(it)
@@ -43,7 +44,19 @@ internal class SeFilesProvider(private val project: Project,
   }
 
   private suspend fun fetchPresentation(item: SeTargetRawItem): SeTargetPresentableItem {
-    // Fetching mock
+    val weight = item.rawWeight ?: 0
+    val presentation = SeTargetPresentationProvider.computePresentation(item.rawItem)
+                       ?: TargetPresentation.builder("").presentation()
+
+    return SeTargetPresentableItem(
+      rawItem = item.rawItem,
+      matchers = null, // TODO: provide matchers
+      weight = weight,
+      presentation = presentation,
+      extendedInfo = SeExtendedInfoBuilder().build(), // TODO: provide the extended info
+      isMultiSelectionSupported = true, // AbstractGotoSEContributor supports it for every goto model
+      isExactMatch = DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(weight),
+    )
   }
 
   override suspend fun itemSelected(
@@ -51,22 +64,30 @@ internal class SeFilesProvider(private val project: Project,
     modifiers: Int,
     searchText: String,
   ): Boolean {
-    TODO("not implemented")
+    SeLog.log(SeLog.USER_ACTION) { "SeFilesProvider.itemSelected" }
+    return true
   }
 
-  override suspend fun canBeShownInFindResults(): Boolean {
-    TODO("not implemented")
-  }
+  override suspend fun canBeShownInFindResults(): Boolean = true
 
   override fun dispose() {
-    TODO("not implemented")
+
   }
 
   companion object {
     private fun createModel(project: Project, hiddenTypes: Set<FileTypeRef>): FilteringGotoByModel<FileTypeRef> {
       val model = GotoFileModel(project)
-      model.setFilterItems(hiddenTypes)
+      model.setFilterItems(FileSearchEverywhereContributor.getAllFileTypes().filterNot { it in hiddenTypes })
       return model
+    }
+
+    suspend fun create(project: Project,
+                       dataContext: DataContext): SeFilesProvider {
+      val targetProvider = SeTargetItemsProvider.create(project, dataContext, null, "SeFiles") { project, _, hiddenTypes ->
+        createModel(project, hiddenTypes)
+      }
+
+      return SeFilesProvider(targetProvider)
     }
   }
 }

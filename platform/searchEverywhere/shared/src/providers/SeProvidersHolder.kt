@@ -99,10 +99,10 @@ class SeProvidersHolder(
 
         if (providerFactory is SeWrappedLegacyContributorItemsProviderFactory) {
           provider = legacyContributors[providerFactoryId]?.let {
-            providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = true)
+            providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = true, dataContext = dataContext)
           }
           separateTabProvider = separateTabLegacyContributors[providerFactoryId]?.let {
-            providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = false)
+            providerFactory.getItemsProviderCatchingOrNull(project, it, isAllTab = false, dataContext = dataContext)
           }
         }
         else {
@@ -183,8 +183,9 @@ suspend fun SeItemsProviderFactory.getItemsProviderCatchingOrNull(project: Proje
 @ApiStatus.Internal
 suspend fun SeWrappedLegacyContributorItemsProviderFactory.getItemsProviderCatchingOrNull(project: Project?,
                                                                                          legacyContributor: SearchEverywhereContributor<Any>,
-                                                                                         isAllTab: Boolean): SeItemsProvider? =
-  computeCatchingOrNull { getItemsProvider(project, legacyContributor, isAllTab) }
+                                                                                         isAllTab: Boolean,
+                                                                                         dataContext: DataContext): SeItemsProvider? =
+  computeCatchingOrNull { getItemsProvider(project, legacyContributor, isAllTab, dataContext) }
 
 @ApiStatus.Internal
 suspend fun SeItemsProviderFactory.computeCatchingOrNull(block: suspend () -> SeItemsProvider?): SeItemsProvider? =

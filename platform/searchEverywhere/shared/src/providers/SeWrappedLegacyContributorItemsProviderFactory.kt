@@ -17,4 +17,10 @@ interface SeWrappedLegacyContributorItemsProviderFactory: SeItemsProviderFactory
 
   suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>, isAllTab: Boolean): SeItemsProvider? =
     getItemsProvider(project, legacyContributor)
+
+  suspend fun getItemsProvider(project: Project?,
+                               legacyContributor: SearchEverywhereContributor<Any>,
+                               isAllTab: Boolean,
+                               dataContext: DataContext): SeItemsProvider? =
+    getItemsProvider(project, legacyContributor, isAllTab)
 }
