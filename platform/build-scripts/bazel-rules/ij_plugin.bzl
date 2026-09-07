@@ -6,9 +6,33 @@ load(
     _PluginVersionProvider = "PluginVersionProvider",
 )
 load("@rules_java//java/common:java_common.bzl", "java_common")
-load("@rules_jvm//:jvm.bzl", _jvm_platform_transition = "jvm_platform_transition", _scrubbed_host_platform_transition = "scrubbed_host_platform_transition")
+load("@rules_jvm//:jvm.bzl", _jvm_platform_transition = "jvm_platform_transition")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", _PluginModuleInfo = "PluginModuleInfo")
+
+# The packager tool reads no IDE build setting. The rule implementation computes `since-build`, `until-build` and the
+# plugin version itself, and passes them to the tool as action arguments. So the tool must not inherit a plugin's
+# settings. Without the reset below, each distinct set of settings gives the tool its own output path, and Bazel builds
+# the same 27 MB deploy jar once for each set.
+_IDE_BUILD_SETTINGS_DEFAULTS = {
+    "@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ide_build_number": "",
+    "@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ide_stability_level": "snapshot",
+    "@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ij_plugin_force_exact_build_compatibility": False,
+    "@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ij_plugin_version": "",
+}
+
+# The platform half repeats `scrubbed_host_platform_transition` from `@rules_jvm//:jvm.bzl`, because Bazel accepts only
+# one transition for an attribute and cannot compose two. Keep this platform label equal to the one that rule sets.
+def _packager_transition_impl(_settings, _attr):
+    outputs = dict(_IDE_BUILD_SETTINGS_DEFAULTS)
+    outputs["//command_line_option:platforms"] = ["@rules_jvm//rules/impl/platforms:scrubbed_host"]
+    return outputs
+
+_packager_transition = transition(
+    implementation = _packager_transition_impl,
+    inputs = [],
+    outputs = ["//command_line_option:platforms"] + _IDE_BUILD_SETTINGS_DEFAULTS.keys(),
+)
 
 def _ij_plugin_impl(ctx):
     plugin_descriptor_module_info = _plugin_module_info(ctx.attr.descriptor_module)
@@ -169,8 +193,9 @@ This rule is experimental, and its API may change. Do not migrate plugins to it 
             default = Label("//platform/build-scripts/bazel-rules/ij-plugin-packager:ij-plugin-packager_deploy.jar"),
             allow_single_file = True,
             # the deploy jar is platform-independent, so build it under a host-independent output directory to keep the
-            # `IjPluginPackaging` action key (and thus its remote cache entries) the same on Linux/macOS/Windows
-            cfg = _scrubbed_host_platform_transition,
+            # `IjPluginPackaging` action key (and thus its remote cache entries) the same on Linux/macOS/Windows.
+            # The transition also resets the IDE build settings, so one build of the jar serves every plugin.
+            cfg = _packager_transition,
         ),
         "_packager_jvm_flags": attr.label(
             default = Label("//platform/build-scripts/bazel-rules/ij-plugin-packager:ij-plugin-packager-jvm_flags"),
