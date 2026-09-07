@@ -1881,14 +1881,14 @@
   CompareClipboardWithSelection
   Code.Review.Editor.Show.Diff
   Code.Review.Editor.New.Comment
-  Git.Stage.Index.File.Menu
   Gradle.ImportExternalProject
+  JsonPathEvaluateAction
+  XmlGenerateToolsGroup
+  Git.Stage.Index.File.Menu
   GitLab.Create.Snippet
   Github.Create.Gist
   Github.PullRequest.Changed.MarkViewed.Toggle
   Mermaid.ExportDiagram
-  JsonPathEvaluateAction
-  XmlGenerateToolsGroup
   Maven.AddFileAsMavenProject
   Maven.GlobalProjectMenu
   OpenInSceneBuilder
@@ -2737,14 +2737,14 @@
   ExternalToolsGroup
   <separator>
   ProjectViewPopupMenuSettingsGroup
-  GitLab.Create.Snippet
-  Github.Create.Gist
-  Mermaid.ExportDiagram
   UpdateCopyright
   Images.SetBackgroundImage
   DissociateResourceBundleAction
   CombinePropertiesFilesAction
   XmlGenerateToolsGroup
+  GitLab.Create.Snippet
+  Github.Create.Gist
+  Mermaid.ExportDiagram
   ConvertJavaToKotlin
   ConvertJavaToKotlinGroup
   Maven.AddFileAsMavenProject
@@ -2841,10 +2841,10 @@
   OpenInAssociatedApplication
   OpenInBrowserGroup
   ShowFilePath
-  Git.Hosting.Open.In.Browser.Group
   Terminal.OpenInTerminal
   PyOpenInPythonConsole
   Terminal.OpenInReworkedTerminal
+  Git.Hosting.Open.In.Browser.Group
 [group RightToolbarSideGroup]
   CompileDirty
   SettingsEntryPoint
