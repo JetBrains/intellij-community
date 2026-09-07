@@ -1088,7 +1088,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
           old.createDirectories()
           val testProcessName = systemProperties["intellij.build.test.process.name"] ?: error("'intellij.build.test.process.name' is not set")
-          Files.createTempDirectory(old, "junit-$testProcessName-")
+          createIndexedTempDirectory(old, "junit-$testProcessName-")
         }
         val ideaConfigPath = Path.of(systemProperties[PathManager.PROPERTY_CONFIG_PATH] ?: error("'${PathManager.PROPERTY_CONFIG_PATH}' is not set")).resolve(ideaLogPath.fileName)  // reuse the same junit-* name
         ideaConfigPath.deleteRecursively()

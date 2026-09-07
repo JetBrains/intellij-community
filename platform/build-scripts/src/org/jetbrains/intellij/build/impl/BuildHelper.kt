@@ -15,6 +15,9 @@ import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import java.io.IOException
+import java.nio.file.FileAlreadyExistsException
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Predicate
 
@@ -68,6 +71,24 @@ internal fun openedPackagesArguments(file: Path, target: OsFamily?): List<String
     null -> OS.CURRENT
   }
   return JavaModuleOptions.readOptions(file, os)
+}
+
+/**
+ * Creates a new directory under [parent], named [prefix] plus the smallest free index, starting at 0.
+ * [Files.createTempDirectory] appends a random suffix of a long type instead, which brings little value, while
+ * increasing risks of issues with long paths on Windows.
+ * Using the same approach as Guava's `Files.createTempDir()` to limit the number of attempts.
+ */
+internal fun createIndexedTempDirectory(parent: Path, prefix: String): Path {
+  val maxAttempts = 10_000
+  for (index in 0 until maxAttempts) {
+    try {
+      return Files.createDirectory(parent.resolve("$prefix$index"))
+    }
+    catch (_: FileAlreadyExistsException) {
+    }
+  }
+  throw IOException("Failed to create a directory under '$parent' with the prefix '$prefix' in $maxAttempts attempts")
 }
 
 /** Creates a shared value owned by the build lifetime. */
