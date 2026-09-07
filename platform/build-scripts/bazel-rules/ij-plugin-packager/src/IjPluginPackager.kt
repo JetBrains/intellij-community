@@ -169,7 +169,7 @@ object IjPluginPackager {
             if (!isIncludedFromModuleOutput(filePath)) {
               return@addEntriesFromJar null
             }
-            if (!first && containMultipleLibraries && isSkippedWhileMergingLibraries(filePath)) {
+            if (!first && (containMultipleLibraries && isSkippedWhileMergingLibraries(filePath) || isSkippedFromLibraries(filePath))) {
               return@addEntriesFromJar null
             }
             val data = dataFetcher()
@@ -200,6 +200,13 @@ object IjPluginPackager {
     // this function intentionally doesn't include all patterns from librarySourcesFilter.kt because exclusion of files may break library's logic
     return filePath == "META-INF/MANIFEST.MF"
            || filePath == "module-info.class" // IJ platform doesn't use JPMS, so it's ok to skip these entries
+  }
+
+  /**
+   * Returns `true` if files with the given relative path inside JAR coming from a library should be skipped.
+   */
+  private fun isSkippedFromLibraries(filePath: String): Boolean {
+    return filePath == "META-INF/INDEX.LIST" // the included list will become incorrect, and JAR Index isn't supported since JVM 21 (JDK-8302819)
   }
 
   private fun parseModuleArgument(argument: String, baseDir: Path): ModuleArgument {
