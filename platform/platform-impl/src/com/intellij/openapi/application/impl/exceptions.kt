@@ -33,8 +33,10 @@ internal fun processUnhandledException(
   when (val interactiveMode = interactiveMode(coroutineContext)) {
     is Mode.Interactive -> {
       val exception = UnhandledException(cause, isInteractive = true)
+      // Write the log on this thread. A caller can stop the process before the EDT runs the block below,
+      // and then the exception reaches no log. See IJPL-254578.
+      logExceptionSafely(message, exception)
       SwingUtilities.invokeLater {
-        logExceptionSafely(message, exception)
         val defaultMessage = LogMessage(exception, message, emptyList())
         // "clear" button doesn't play well with interactive message. Once cleared, windows becomes empty.
         val application = ApplicationManager.getApplication()
