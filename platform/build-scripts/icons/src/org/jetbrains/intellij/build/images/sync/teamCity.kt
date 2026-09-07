@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
-import okhttp3.Credentials
-import okhttp3.MediaType
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.Request
+import java.net.URI
+import java.net.http.HttpRequest
+import java.util.Base64
+import java.util.concurrent.CancellationException
 
 internal fun isUnderTeamCity(): Boolean = BUILD_SERVER != null
 private val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
@@ -12,22 +12,22 @@ private val BUILD_CONF = System.getProperty("teamcity.buildType.id")
 private val BUILD_ID = System.getProperty("teamcity.build.id")
 
 private fun teamCityGet(path: String): String {
-  val requestBuilder = Request.Builder().url("$BUILD_SERVER/httpAuth/app/rest/$path")
+  val requestBuilder = HttpRequest.newBuilder(URI("$BUILD_SERVER/httpAuth/app/rest/$path"))
   requestBuilder.teamCityAuth()
   return rest(requestBuilder.build())
 }
 
-private val XML: MediaType by lazy { "application/xml".toMediaType() }
-
 private fun teamCityPost(path: String, body: String): String {
-  return post("$BUILD_SERVER/httpAuth/app/rest/$path", body, XML) {
+  return post("$BUILD_SERVER/httpAuth/app/rest/$path", body, "application/xml") {
     teamCityAuth()
-    addHeader("Content-Type", "application/xml")
   }
 }
 
-private fun Request.Builder.teamCityAuth() {
-  header("Authorization", Credentials.basic(System.getProperty("pin.builds.user.name"), System.getProperty("pin.builds.user.password")))
+internal fun HttpRequest.Builder.teamCityAuth() {
+  val userName = requireNotNull(System.getProperty("pin.builds.user.name"))
+  val password = requireNotNull(System.getProperty("pin.builds.user.password"))
+  val credentials = Base64.getEncoder().encodeToString("$userName:$password".toByteArray(Charsets.ISO_8859_1))
+  header("Authorization", "Basic $credentials")
 }
 
 internal val DEFAULT_INVESTIGATOR by lazy {
@@ -89,6 +89,12 @@ private fun assignInvestigation(investigator: Investigator, report: String) {
       </investigation>""".trimIndent())
     investigator.isAssigned = true
     log("Investigation is assigned to ${investigator.email} with message '$text'")
+  }
+  catch (e: InterruptedException) {
+    throw e
+  }
+  catch (e: CancellationException) {
+    throw e
   }
   catch (e: Exception) {
     log("Unable to assign investigation to ${investigator.email}, ${e.message}")

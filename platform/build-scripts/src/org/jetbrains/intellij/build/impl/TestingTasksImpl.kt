@@ -57,6 +57,7 @@ import java.nio.file.AccessDeniedException
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.copyTo
@@ -1468,6 +1469,12 @@ private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
       map["project"] = System.getProperty("intellij.test.discovery.project")?.takeIf(String::isNotEmpty) ?: "intellij"
       map["checkout-root-prefix"] = System.getProperty("intellij.build.test.discovery.checkout.root.prefix") ?: ""
       uploader.upload(path, map)
+    }
+    catch (e: InterruptedException) {
+      throw e
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
       messages.logErrorAndThrow(e.message!!, e)

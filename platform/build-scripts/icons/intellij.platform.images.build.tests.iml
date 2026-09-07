@@ -22,8 +22,9 @@
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry.semconv" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.libraries.okhttp" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.tasks.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />

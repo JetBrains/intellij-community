@@ -3,19 +3,18 @@
 
 package org.jetbrains.intellij.build.impl
 
-import okhttp3.CacheControl
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
-import org.jetbrains.intellij.build.impl.compilation.httpClient
+import org.jetbrains.intellij.build.io.sendHttpRequest
+import org.jetbrains.intellij.build.io.withHttpClient
 import tools.jackson.jr.ob.JSON
 import java.io.IOException
+import java.net.URI
 import java.net.URLEncoder
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.minutes
 
 open class TraceFileUploader(serverUrl: String, token: String?) {
   private val serverUrl = serverUrl.trimEnd('/')
@@ -30,39 +29,40 @@ open class TraceFileUploader(serverUrl: String, token: String?) {
       throw RuntimeException("The file does not exist: $file")
     }
 
-    val id = uploadMetadata(getFullMetadata(file, metadata))
-    log("Performed metadata upload. Import id is: $id")
-    val response = uploadFile(file, id)
-    log("Performed file upload. Server answered: $response")
+    withHttpClient(connectTimeout = 1.minutes) { client ->
+      val id = uploadMetadata(client, getFullMetadata(file, metadata))
+      log("Performed metadata upload. Import id is: $id")
+      val response = uploadFile(client, file, id)
+      log("Performed file upload. Server answered: $response")
+    }
   }
 
-  private fun uploadMetadata(metadata: Map<String, String>): String {
+  private fun uploadMetadata(client: HttpClient, metadata: Map<String, String>): String {
     val url = "$serverUrl/import"
     val content = JSON.std.asString(metadata)
     log("Uploading metadata to '$url': $content")
     val builder = prepareRequestBuilder(url)
-    builder.post(content.toRequestBody("application/json".toMediaType()))
-    httpClient.newCall(builder.build()).execute().use { response ->
-      when (response.code) {
-        200, 201, 202, 204 -> return readPlainMetadata(response)
-        else -> throw readError(response, response.code)
-      }
+    builder.header("Content-Type", "application/json; charset=utf-8")
+    builder.POST(HttpRequest.BodyPublishers.ofString(content))
+    val response = sendHttpRequest(client, builder.build(), timeout = 1.minutes)
+    when (val code = response.statusCode()) {
+      200, 201, 202, 204 -> return readPlainMetadata(response.body())
+      else -> throw IOException("Unexpected code from server: $code body: ${response.body()}")
     }
   }
 
-  private fun uploadFile(file: Path, id: String): String {
+  private fun uploadFile(client: HttpClient, file: Path, id: String): String {
     val url = "$serverUrl/import/${URLEncoder.encode(id, StandardCharsets.UTF_8)}/upload/tr-single"
     log("Uploading '${file.fileName}' to '$url'")
     val builder = prepareRequestBuilder(url)
-    builder.post(file.toFile().asRequestBody("application/octet-stream".toMediaType()))
-    httpClient.newCall(builder.build()).execute().use { response ->
-      return readBody(response)
-    }
+    builder.header("Content-Type", "application/octet-stream")
+    builder.POST(HttpRequest.BodyPublishers.ofFile(file))
+    return sendHttpRequest(client, builder.build(), timeout = 1.minutes).body()
   }
 
-  private fun prepareRequestBuilder(url: String): Request.Builder {
-    val builder = Request.Builder().url(url)
-    builder.cacheControl(CacheControl.FORCE_NETWORK)
+  private fun prepareRequestBuilder(url: String): HttpRequest.Builder {
+    val builder = HttpRequest.newBuilder(URI(url))
+    builder.header("Cache-Control", "no-cache")
     builder.header("User-Agent", "TraceFileUploader")
     if (serverAuthToken != null) {
       builder.header("Authorization", "Bearer $serverAuthToken")
@@ -81,19 +81,8 @@ private fun getFullMetadata(file: Path, metadata: Map<String, String>): Map<Stri
   return map
 }
 
-private fun readBody(connection: Response): String {
-  return connection.body.use { body ->
-    body.string()
-  }
-}
-
-private fun readError(connection: Response, code: Int): Exception {
-  val body = readBody(connection)
-  return IOException("Unexpected code from server: $code body: $body")
-}
-
-private fun readPlainMetadata(connection: Response): String {
-  val body = readBody(connection).trim()
+private fun readPlainMetadata(content: String): String {
+  val body = content.trim()
   if (body.startsWith('{')) {
     val map = JSON.std.mapFrom(body)
     return map.get("id") as String

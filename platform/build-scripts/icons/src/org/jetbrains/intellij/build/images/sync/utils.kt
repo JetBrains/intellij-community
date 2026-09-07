@@ -6,6 +6,7 @@ import java.io.OutputStream
 import java.io.PrintStream
 import java.nio.file.Path
 import java.util.Locale
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 
 internal fun log(msg: String) = println(msg)
@@ -59,6 +60,12 @@ internal fun <T> List<T>.split(eachSize: Int): List<List<T>> {
 
 internal fun <T> callSafely(printStackTrace: Boolean = false, call: () -> T): T? = try {
   call()
+}
+catch (e: InterruptedException) {
+  throw e
+}
+catch (e: CancellationException) {
+  throw e
 }
 catch (e: Exception) {
   if (printStackTrace) e.printStackTrace() else log(e.message ?: e::class.java.simpleName)
