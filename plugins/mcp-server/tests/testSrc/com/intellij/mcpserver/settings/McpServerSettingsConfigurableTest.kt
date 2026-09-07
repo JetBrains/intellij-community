@@ -5,6 +5,7 @@ import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable
 import com.intellij.mcpserver.frontend.settings.TerminalPromotionSetting
 import com.intellij.mcpserver.frontend.settings.openFileInEditor
+import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpServerTerminalPromotionDismissalState
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
@@ -21,6 +22,9 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -160,6 +164,80 @@ class McpServerSettingsConfigurableTest {
       TestDialogManager.setTestDialog(previousDialog)
       configurable.disposeUIResources()
       settings.enableMcpServer = original
+    }
+  }
+
+  /**
+   * The enable toggles queue behind a mutex, so a click can still wait when the user presses Reset.
+   * The reset has to discard the queued toggles: a survivor would re-apply a dropped click and start
+   * the server while the checkbox and the saved setting say it is off.
+   */
+  @Test
+  fun `reset discards the queued enable toggles`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val settings = McpServerSettings.getInstance()
+    val original = settings.enableMcpServer
+    settings.enableMcpServer = false
+    withContext(Dispatchers.Default) { McpServerService.getInstance().settingsChanged(false) }
+    val previousDialog = TestDialogManager.setTestDialog(TestDialog.YES)
+    val configurable = McpServerSettingsConfigurable()
+    try {
+      val component = configurable.createComponent()
+      configurable.reset()
+      val enableCheckBox = UIUtil.findComponentsOfType(component, JCheckBox::class.java)
+        .single { it.text == McpServerBundle.message("enable.mcp.server") }
+
+      // Enable, disable, enable: the later clicks queue behind the first transition.
+      repeat(3) {
+        enableCheckBox.doClick()
+        UIUtil.dispatchAllInvocationEvents()
+      }
+
+      configurable.reset()
+
+      configurable.joinEnableChanges()
+      UIUtil.dispatchAllInvocationEvents()
+      assertThat(McpServerService.getInstance().isRunning).describedAs("the server after the reset").isFalse()
+      assertThat(configurable.isModified()).isFalse()
+      assertThat(settings.enableMcpServer).isFalse()
+    }
+    finally {
+      TestDialogManager.setTestDialog(previousDialog)
+      configurable.disposeUIResources()
+      settings.enableMcpServer = original
+      withContext(Dispatchers.Default) { McpServerService.getInstance().settingsChanged(original) }
+    }
+  }
+
+  /**
+   * The settings page schedules this reset while a cancelled enable toggle can still run its
+   * background block. The reset has to wait for that block, or a late start overrides the
+   * saved state after the page closed.
+   */
+  @Test
+  fun `the scheduled reset applies the saved state after the passed jobs`(): Unit = timeoutRunBlocking {
+    val settings = McpServerSettings.getInstance()
+    val original = settings.enableMcpServer
+    settings.enableMcpServer = false
+    val service = McpServerService(this)
+    try {
+      service.settingsChanged(false)
+
+      // The gate stands for a cancelled toggle whose background block still runs.
+      val lateToggle = Job()
+      val reset = service.scheduleResetToSettings(after = listOf(lateToggle))
+      // Let the reset coroutine run: it has to park on the gate, not on this single-threaded scheduler.
+      yield()
+
+      // The late toggle turns the server on, then finishes; the reset must still win.
+      service.settingsChanged(true)
+      lateToggle.complete()
+      reset.join()
+
+      assertThat(service.isRunning).describedAs("the server after the scheduled reset").isFalse()
+    }
+    finally {
+      settings.enableMcpServer = original
+      service.settingsChanged(false)
     }
   }
 

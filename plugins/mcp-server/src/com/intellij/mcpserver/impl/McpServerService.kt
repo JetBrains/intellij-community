@@ -55,6 +55,7 @@ import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.ServerCapabilities
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,7 +63,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -215,6 +216,13 @@ open class McpServerService(val cs: CoroutineScope) {
 
   private val server = MutableStateFlow(startGlobalServerIfEnabled())
 
+  /**
+   * Guards every start-stop transition of [server]. A `MutableStateFlow.update` CAS loop cannot serialize them.
+   * A CAS retry would run the start and stop side effects again. A stop that overlaps a slow startup
+   * would see no server to stop, and the startup would then publish a running server.
+   */
+  private val serverStateLock = Any()
+
   private class ServerAndCount(var server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>?, var userCount: Int)
 
   private val privateServer: ServerAndCount = ServerAndCount(null, 0)
@@ -362,12 +370,13 @@ open class McpServerService(val cs: CoroutineScope) {
   fun settingsChanged(enabled: Boolean, port: Int? = null) {
     ThreadingAssertions.softAssertBackgroundThread()
 
-    server.update { currentServer ->
+    synchronized(serverStateLock) {
+      val currentServer = server.value
       val effectivelyEnabled = enabled || isMcpServerForceEnabled()
       if (!effectivelyEnabled) {
         // stop old
         currentServer?.stop()
-        return@update null
+        server.value = null
       }
       else {
         // reuse old or start new
@@ -375,14 +384,17 @@ open class McpServerService(val cs: CoroutineScope) {
         if (currentServer != null) {
           if (port == null || currentServer.engineConfig.connectors.firstOrNull()?.port == port) {
             // if there is a running server and the port did not change, reuse it.
-            return@update currentServer
+            server.value = currentServer
           }
           else {
             // port changed, stop old
             currentServer.stop()
+            server.value = startGlobalServer()
           }
         }
-        return@update startGlobalServer()
+        else {
+          server.value = startGlobalServer()
+        }
       }
     }
   }
@@ -712,9 +724,9 @@ open class McpServerService(val cs: CoroutineScope) {
     return filteredTools.toList()
   }
 
-  fun scheduleResetToSettings() {
-    cs.launch {
-      settingsChanged(McpServerSettings.getInstance().enableMcpServer)
-    }
+  /** Applies the persisted enable setting after the [after] jobs complete, so a dying transition cannot override it. */
+  fun scheduleResetToSettings(after: Collection<Job> = emptyList()): Job = cs.launch {
+    after.joinAll()
+    settingsChanged(McpServerSettings.getInstance().enableMcpServer)
   }
 }

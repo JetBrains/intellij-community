@@ -58,13 +58,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.compose.swing.components.Label
 import org.jetbrains.compose.swing.components.button.Button
 import org.jetbrains.compose.swing.components.button.CheckBox
@@ -72,6 +77,7 @@ import org.jetbrains.compose.swing.components.text.TextField
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.appearance.icon
 import org.jetbrains.compose.swing.modifier.appearance.toolTip
+import org.jetbrains.compose.swing.modifier.interaction.enabled
 import org.jetbrains.compose.swing.modifier.layout.visible
 import java.nio.file.Files
 import java.nio.file.Path
@@ -109,8 +115,9 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
   private var projectClientControllers = emptyList<ClientController>()
   private val disabledExplanationHtml: @NlsContexts.DetailedDescription String = buildDisabledExplanation()
 
+  /** Runs only the enable-toggle coroutines, so [reset] can cancel the queued toggles as a unit. */
   @Suppress("RAW_SCOPE_CREATION")
-  private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  private val enableChangeScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
   init {
     refreshServerStatus()
@@ -151,8 +158,19 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
 
   override fun reset() {
     super.reset()
+    // A pending toggle is stale once the checkbox reverts: it would re-apply a discarded click after this reset.
+    val staleToggles = enableChangeScope.coroutineContext.job.children.toList()
+    staleToggles.forEach { it.cancel() }
     // Revert the live server state to the persisted value (the enable toggle starts/stops it eagerly).
-    runWithModalProgressBlocking(ModalTaskOwner.guess(), McpServerBundle.message("apply.mcp.server.state.progress.text")) {
+    // Not cancellable: the checkbox is already reverted, so the restoration has to complete.
+    runWithModalProgressBlocking(
+      ModalTaskOwner.guess(),
+      McpServerBundle.message("apply.mcp.server.state.progress.text"),
+      TaskCancellation.nonCancellable(),
+    ) {
+      // The join cannot hang under this modal dialog: the EDT dispatcher resumes a cancelled coroutine
+      // with ModalityState.any(). After the join no toggle can touch the server, so the persisted value wins.
+      staleToggles.joinAll()
       updateServerSettings(settings.enableMcpServer)
       refreshServerStatus()
     }
@@ -163,13 +181,17 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
     val portChanged = port != settings.mcpServerPort
     super.apply()
     if (portChanged) {
-      coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(getContent()).asContextElement()) {
-        updateServerSettings(settings.enableMcpServer, port)
+      // A toggle that holds the lock refreshes `port` to the running server's port, so read it before queuing.
+      val requestedPort = port
+      // The restart touches the server like a toggle does, so it queues behind the toggles under the same lock.
+      enableChangeScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(getContent()).asContextElement()) {
+        enableChangeMutex.withLock {
+          updateServerSettings(settings.enableMcpServer, requestedPort)
+        }
         refreshServerStatus()
         // Note that we need to reset auto-config for all clients, as the port may have changed.
         refreshClients(resetAutoConfig = true)
       }
-
     }
   }
 
@@ -185,11 +207,11 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
   }
 
   override fun disposeUIResources() {
-    coroutineScope.cancel()
-    // If the enable toggle was flipped for preview but never applied, revert the live server state.
-    if (enabled != settings.enableMcpServer) {
-      McpServerService.getInstance().scheduleResetToSettings()
-    }
+    // A toggle already inside its background block outlives the cancel, so `enabled` cannot prove the
+    // live server state. The scheduled reset joins the toggles, then applies the persisted setting.
+    val staleToggles = enableChangeScope.coroutineContext.job.children.toList()
+    enableChangeScope.cancel()
+    McpServerService.getInstance().scheduleResetToSettings(after = staleToggles)
     super.disposeUIResources()
   }
 
@@ -256,21 +278,25 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
     FormGroup(McpServerBundle.message("mcp.general.client"), indent = false) {
       FormComment(McpServerBundle.message("settings.comment.manual.config"))
       FormIndent {
+        // The copy actions read the server port, so they stay disabled until the server runs.
         FormRow {
           Button(
             McpServerBundle.message("copy.mcp.server.sse.configuration"),
+            modifier = SwingModifier.enabled(serverRunning),
             onClick = {
               copyJsonToClipboard(createSseServerJsonEntry(McpServerService.getInstance().port, mcpPath()))
             },
           )
           Button(
             McpServerBundle.message("copy.mcp.server.stdio.configuration"),
+            modifier = SwingModifier.enabled(serverRunning),
             onClick = {
               copyJsonToClipboard(createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, mcpPath()))
             },
           )
           Button(
             McpServerBundle.message("copy.mcp.server.stream.configuration"),
+            modifier = SwingModifier.enabled(serverRunning),
             onClick = {
               copyJsonToClipboard(createStreamableServerJsonEntry(McpServerService.getInstance().port, mcpPath()))
             },
@@ -321,15 +347,19 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
   @Composable
   private fun FormScope.ClientRows(state: ClientRowState) {
     // Detecting the per-transport options touches client config, so it is loaded off the UI thread when the rows appear.
-    val options by produceState(emptyList()) { value = state.loadOptions() }
+    // The rows appear while the server is still starting, and the URL options need its port.
+    // serverRunning is a key, so the load runs again when the server state flips.
+    val options by produceState(emptyList(), serverRunning) { value = state.loadOptions() }
 
     FormRow(topGap = FormGap.SMALL) { Label(state.displayName) }
     FormRow {
+      // The configure actions need the port, so the button stays disabled until the server runs.
       OptionButton(
         text = McpServerBundle.message("autoconfigure.mcp.server"),
         onClick = state.onAutoConfigure,
         options = options,
         addSeparator = false,
+        modifier = SwingModifier.enabled(serverRunning),
       )
       state.statusIcon?.let {
         Label(text = "", modifier = SwingModifier.cell(smallGapAfter = true).icon(it))
@@ -348,13 +378,26 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
     projectClients = ProjectClientsState(project.name, projectClientControllers.map { it.toRowState() })
   }
 
+  /**
+   * Applies the enable toggles to the server in click order. The lock is fair and is taken on the EDT
+   * before the first suspension, so a later toggle cannot overtake a slow earlier one on [Dispatchers.Default].
+   */
+  private val enableChangeMutex = Mutex()
+
   private fun requestEnabledChange(requested: Boolean) {
-    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(getContent()).asContextElement()) {
+    enableChangeScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(getContent()).asContextElement()) {
       if (!ConsentValidator.isValidNewValue(requested, activeProject)) return@launch
       enabled = requested
-      updateServerSettings(requested)
+      enableChangeMutex.withLock {
+        updateServerSettings(requested)
+      }
       refreshServerStatus()
     }
+  }
+
+  @TestOnly
+  suspend fun joinEnableChanges() {
+    enableChangeScope.coroutineContext.job.children.toList().joinAll()
   }
 
   private fun refreshServerStatus() {
