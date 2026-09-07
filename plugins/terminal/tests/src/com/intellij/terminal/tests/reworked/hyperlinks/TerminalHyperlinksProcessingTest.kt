@@ -712,7 +712,9 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
         styles = emptyList(),
         startLineLogicalIndex = fromLine,
         cursorLogicalLineIndex = fromLine + textWithEol.count { it == '\n' } - 1,
-        cursorColumnIndex = 0
+        cursorColumnIndex = 0,
+        screenTopLogicalLineIndex = fromLine,
+        screenTopColumnIndex = 0,
       )
       outputModel.updateContent(event)
     }

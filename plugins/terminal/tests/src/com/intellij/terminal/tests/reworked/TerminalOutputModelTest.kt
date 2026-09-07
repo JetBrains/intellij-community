@@ -18,6 +18,7 @@ import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.session.impl.StyleRange
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalLineIndex
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -354,6 +355,92 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `screen top starts at the output start`() = runBlocking(Dispatchers.EDT) {
+    val model = TerminalTestUtil.createOutputModel()
+
+    assertEquals(model.startOffset, model.screenTopOffset)
+  }
+
+  @Test
+  fun `screen top resolves a line and a column to an offset`() = runBlocking(Dispatchers.EDT) {
+    val model = TerminalTestUtil.createOutputModel()
+    model.updateContent(0, outputPattern("first\nsecond\nthird"))
+
+    model.updateScreenTopPosition(1, 3)
+
+    // "first\n" is 6 characters, plus 3 into "second".
+    assertEquals(TerminalOffset.of(9), model.screenTopOffset)
+  }
+
+  @Test
+  fun `screen top clamps a column past the line end instead of padding`() = runBlocking(Dispatchers.EDT) {
+    val model = TerminalTestUtil.createOutputModel()
+    model.updateContent(0, outputPattern("first\nsecond"))
+    val lengthBefore = model.textLength
+
+    model.updateScreenTopPosition(1, 100)
+
+    // The cursor would pad the line with spaces to reach the column. The screen top is only an anchor to
+    // read, so it stops at the line end and leaves the text alone.
+    assertEquals(model.endOffset, model.screenTopOffset)
+    assertEquals(lengthBefore, model.textLength)
+  }
+
+  @Test
+  fun `screen top falls back to the output start when its line is already trimmed`() = runBlocking(Dispatchers.EDT) {
+    val model = TerminalTestUtil.createOutputModel(maxLength = 10)
+
+    // Overflows the 10-character cap, so the early lines are trimmed away.
+    model.updateContent(0, outputPattern("aaaa\nbbbb\ncccc\ndddd"))
+    assertThat(model.firstLineIndex.toAbsolute()).isGreaterThan(0L)
+
+    model.updateScreenTopPosition(0, 0)
+
+    assertEquals(model.startOffset, model.screenTopOffset)
+  }
+
+  @Test
+  fun `screen top stays valid when trimming passes it`(): Unit = runBlocking(Dispatchers.EDT) {
+    val model = TerminalTestUtil.createOutputModel(maxLength = 10)
+    model.updateContent(0, outputPattern("aaaa\nbbbb"))
+    model.updateScreenTopPosition(0, 0)
+    assertEquals(model.startOffset, model.screenTopOffset)
+
+    // More output than the cap: the trim removes the text the screen top pointed at.
+    model.updateContent(2, outputPattern("cccc\ndddd\neeee"))
+
+    assertThat(model.screenTopOffset).isGreaterThanOrEqualTo(model.startOffset)
+    assertThat(model.screenTopOffset).isLessThanOrEqualTo(model.endOffset)
+  }
+
+  @Test
+  fun `screen top is already back in range whenever a drastic shrink fires cursorOffsetChanged`(): Unit = runBlocking(Dispatchers.EDT) {
+    val model = TerminalTestUtil.createOutputModel()
+
+    // A long document with the screen top and the cursor both far into it
+    model.updateContent(0, outputPattern("1\n2\n3\n4\n5\n6\n7\n8\n9\n10<cursor>"))
+    model.updateScreenTopPosition(5, 0)
+
+    var sawOutOfRangeScreenTop = false
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
+        // Read screenTopOffset the same way a listener legitimately would:
+        // it must already be a valid offset into the model's *current* content, even mid-update.
+        if (model.screenTopOffset < model.startOffset || model.screenTopOffset > model.endOffset) {
+          sawOutOfRangeScreenTop = true
+        }
+      }
+    })
+
+    // Replace everything with a single short line, drastically shrinking the document.
+    // The resulting cursor clamp (ensureCorrectOffsets) fires cursorOffsetChanged before this update's own
+    // explicit screen-top/cursor calls run, so the screen top must already be back in range by then.
+    model.updateContent(0, outputPattern("x<cursor>"))
+
+    assertThat(sawOutOfRangeScreenTop).isFalse()
+  }
+
+  @Test
   fun `check state is restored correctly`() = runBlocking(Dispatchers.EDT) {
     val model = TerminalTestUtil.createOutputModel(maxLength = 10)
 
@@ -364,6 +451,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       trimmedCharsCount = 90,
       firstLineTrimmedCharsCount = 10,
       cursorOffset = 3,
+      screenTopOffset = 1,
       highlightings = listOf(styleRange(90, 95), styleRange(95, 100)),
       osc8Hyperlinks = emptyList(),
     )
@@ -372,6 +460,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
     assertEquals(line, model.document.text)
     assertEquals(model.startOffset + 3, model.cursorOffset)
+    assertEquals(model.startOffset + 1, model.screenTopOffset)
     assertEquals(9L, model.trimmedLinesCount)
     assertEquals(90L, model.trimmedCharsCount)
     assertEquals(10, model.firstLineTrimmedCharsCount)

@@ -200,12 +200,16 @@ class TerminalTypingTrackerImpl(
     val line = model.getLineByOffset(cursorOffset)
     val lineStart = model.getStartOfLine(line)
     val lineEnd = model.getEndOfLine(line)
+    // The screen is carried over unchanged: this event describes the typed line, and typing never moves the screen.
+    val screenTopLine = model.getLineByOffset(model.screenTopOffset)
     return TerminalContentUpdatedEvent(
       text = model.getText(lineStart, lineEnd).toString(),
       styles = emptyList(),
       startLineLogicalIndex = line.toAbsolute(),
       cursorLogicalLineIndex = line.toAbsolute(),
       cursorColumnIndex = (cursorOffset - lineStart).toInt(),
+      screenTopLogicalLineIndex = screenTopLine.toAbsolute(),
+      screenTopColumnIndex = (model.screenTopOffset - model.getStartOfLine(screenTopLine)).toInt(),
     )
   }
 

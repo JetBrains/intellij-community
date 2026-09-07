@@ -1165,6 +1165,9 @@ internal class TerminalTypeAheadTest : BasePlatformTestCase() {
       startLineLogicalIndex = startLine,
       cursorLogicalLineIndex = startLine + cursorLineOffset,
       cursorColumnIndex = cursorCol,
+      // These cases report the whole buffer, so the screen starts where the update does.
+      screenTopLogicalLineIndex = startLine,
+      screenTopColumnIndex = 0,
     )
   }
 

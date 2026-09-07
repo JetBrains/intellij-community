@@ -53,8 +53,17 @@ sealed interface MutableTerminalOutputModel : TerminalOutputModel {
    * [absoluteLineIndex] is the index of the line from the start of the terminal output.
    */
   fun updateCursorPosition(absoluteLineIndex: Long, columnIndex: Int)
-  
+
   fun updateCursorPosition(offset: TerminalOffset)
+
+  /**
+   * Updates [TerminalOutputModel.screenTopOffset].
+   *
+   * [absoluteLineIndex] is the index of the line from the start of the terminal output.
+   */
+  fun updateScreenTopPosition(absoluteLineIndex: Long, columnIndex: Int)
+
+  fun updateScreenTopPosition(offset: TerminalOffset)
 
   fun dumpState(): TerminalOutputModelState
 
@@ -67,4 +76,7 @@ fun MutableTerminalOutputModel.updateContent(event: TerminalContentUpdatedEvent)
   val osc8Hyperlinks = event.osc8Hyperlinks.map { it.toOsc8Hyperlink() }
   updateContent(event.startLineLogicalIndex, event.text, styles, osc8Hyperlinks)
   updateCursorPosition(event.cursorLogicalLineIndex, event.cursorColumnIndex)
+  // After the cursor: the cursor pads the document up to its own line, and the screen top can sit on a line
+  // the content update itself did not reach.
+  updateScreenTopPosition(event.screenTopLogicalLineIndex, event.screenTopColumnIndex)
 }

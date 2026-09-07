@@ -246,6 +246,8 @@ class TransferableTerminalLifetimeTest {
           startLineLogicalIndex = 0,
           cursorLogicalLineIndex = 0,
           cursorColumnIndex = 0,
+          screenTopLogicalLineIndex = 0,
+          screenTopColumnIndex = 0,
         )
       )
       yield()
@@ -260,6 +262,8 @@ class TransferableTerminalLifetimeTest {
           startLineLogicalIndex = 0,
           cursorLogicalLineIndex = 0,
           cursorColumnIndex = 19,
+          screenTopLogicalLineIndex = 0,
+          screenTopColumnIndex = 0,
         )
       )
       yield()

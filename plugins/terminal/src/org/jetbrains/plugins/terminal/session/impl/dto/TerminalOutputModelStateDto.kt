@@ -13,6 +13,7 @@ data class TerminalOutputModelStateDto(
   val trimmedCharsCount: Long,
   val firstLineTrimmedCharsCount: Int,
   val cursorOffset: Int,
+  val screenTopOffset: Int,
   val highlightings: List<StyleRangeDto>,
   val osc8Hyperlinks: List<Osc8HyperlinkDto>,
 )
@@ -25,6 +26,7 @@ fun TerminalOutputModelState.toDto(): TerminalOutputModelStateDto {
     trimmedCharsCount = trimmedCharsCount,
     firstLineTrimmedCharsCount = firstLineTrimmedCharsCount,
     cursorOffset = cursorOffset,
+    screenTopOffset = screenTopOffset,
     highlightings = highlightings.map { it.toDto() },
     osc8Hyperlinks = osc8Hyperlinks.map { it.toDto() },
   )
@@ -38,6 +40,7 @@ fun TerminalOutputModelStateDto.toState(): TerminalOutputModelState {
     trimmedCharsCount = trimmedCharsCount,
     firstLineTrimmedCharsCount = firstLineTrimmedCharsCount,
     cursorOffset = cursorOffset,
+    screenTopOffset = screenTopOffset,
     highlightings = highlightings.map { it.toStyleRange() },
     osc8Hyperlinks = osc8Hyperlinks.map { it.toOsc8Hyperlink() },
   )
