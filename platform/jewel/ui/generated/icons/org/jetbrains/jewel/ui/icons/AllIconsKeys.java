@@ -1865,6 +1865,9 @@ public final class AllIconsKeys {
     /** 16x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey ShowWarning = new IntelliJIconKey("general/showWarning.svg", "expui/status/warningOutline.svg", AllIconsKeys.class);
+    /** 16x16 */
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey SortBy = new IntelliJIconKey("expui/general/sortBy.svg", "expui/general/sortBy.svg", AllIconsKeys.class);
     /** 32x32 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey SuccessDialog = new IntelliJIconKey("general/successDialog.svg", "expui/general/successDialog.svg", AllIconsKeys.class);

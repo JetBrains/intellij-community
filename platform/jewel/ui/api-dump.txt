@@ -3174,6 +3174,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:ShowInfos:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ShowWarning:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Show_to_implement:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:SortBy:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SuccessDialog:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SuccessLogin:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:TbHidden:org.jetbrains.jewel.ui.icon.IntelliJIconKey

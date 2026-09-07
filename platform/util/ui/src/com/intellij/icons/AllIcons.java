@@ -662,6 +662,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Show_to_implement = load("expui/general/showToImplement.svg", "general/show_to_implement.svg", -590429028, 7);
     /** 16x16 */ public static final @NotNull Icon ShowInfos = load("expui/status/infoOutline.svg", "general/showInfos.svg", 1114268817, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWarning = load("expui/status/warningOutline.svg", "general/showWarning.svg", -496649249, 2);
+    /** 16x16 */ public static final @NotNull Icon SortBy = load("expui/general/sortBy.svg", 354555314, 2);
     /** 32x32 */ public static final @NotNull Icon SuccessDialog = load("expui/general/successDialog.svg", "general/successDialog.svg", -1746944171, 0);
     /** 48x48 */ public static final @NotNull Icon SuccessLogin = load("expui/general/successLogin.svg", "general/successLogin.svg", 1387742290, 0);
     /** 16x16 */ public static final @NotNull Icon TbHidden = load("general/tbHidden.svg", -1372883698, 2);

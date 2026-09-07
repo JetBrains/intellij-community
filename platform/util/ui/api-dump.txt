@@ -628,6 +628,7 @@ f:com.intellij.icons.AllIcons$General
 - sf:ShowInfos:javax.swing.Icon
 - sf:ShowWarning:javax.swing.Icon
 - sf:Show_to_implement:javax.swing.Icon
+- sf:SortBy:javax.swing.Icon
 - sf:SuccessDialog:javax.swing.Icon
 - sf:SuccessLogin:javax.swing.Icon
 - sf:TbHidden:javax.swing.Icon
