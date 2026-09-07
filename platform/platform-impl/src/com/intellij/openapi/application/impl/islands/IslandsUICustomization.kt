@@ -7,6 +7,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -116,9 +117,9 @@ private data class WindowBackgroundComponentData(val origOpaque: Boolean, val or
 private val WINDOW_BACKGROUND_COMPONENT_KEY: Key<WindowBackgroundComponentData> = Key.create("Islands.WINDOW_BACKGROUND_COMPONENT_KEY")
 
 private val DEFAULT_THEME_IDS = setOf(
-  "ExperimentalDark",
-  "ExperimentalLight",
-  "ExperimentalLightWithLightHeader",
+  UITheme.EXPERIMENTAL_DARK_ID,
+  UITheme.EXPERIMENTAL_LIGHT_ID,
+  UITheme.EXPERIMENTAL_LIGHT_WITH_LIGHT_HEADER_ID,
   "JetBrainsHighContrastTheme",
   "Darcula",
 )

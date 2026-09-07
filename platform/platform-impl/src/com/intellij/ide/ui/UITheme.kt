@@ -171,6 +171,15 @@ class UITheme internal constructor(
     const val FILE_EXT_ENDING: String = ".theme.json"
 
     @ApiStatus.Internal
+    const val EXPERIMENTAL_LIGHT_ID: String = "ExperimentalLight"
+    @ApiStatus.Internal
+    const val EXPERIMENTAL_LIGHT_WITH_LIGHT_HEADER_ID: String = "ExperimentalLightWithLightHeader"
+    @ApiStatus.Internal
+    const val EXPERIMENTAL_DARK_ID: String = "ExperimentalDark"
+    @ApiStatus.Internal
+    const val ISLANDS_LIGHT_ID: String = "Islands Light"
+
+    @ApiStatus.Internal
     fun loadTempThemeFromJson(stream: InputStream, themeId: @NonNls String): UITheme {
       val classLoader = UITheme::class.java.classLoader
       val warn = createWarnFunction(classLoader)
@@ -219,18 +228,22 @@ class UITheme internal constructor(
     }
 
     /**
-     * Returns true if [theme] is based on experimental theme Dark or Light
+     * Returns true if [theme] with [themeId] is the theme [baseThemeId], or a descendant of it.
      */
-    internal fun isBasedOnExperimentalTheme(theme: UIThemeBean): Boolean {
-      var current: UIThemeBean? = theme
-      while (current != null) {
-        if (current.name == "Light" || current.name == "Dark") {
-          return true
-        }
-        val parentTheme = current.parentTheme?: return false
-        current = (UiThemeProviderListManager.getInstance().findThemeById(parentTheme) as? UIThemeLookAndFeelInfoImpl)?.theme?.bean
+    internal fun isBasedOnTheme(themeId: @NonNls String, theme: UIThemeBean, baseThemeId: @NonNls String): Boolean {
+      if (themeId == baseThemeId) {
+        return true
       }
-      return false
+
+      val parentTheme = theme.parentTheme ?: return false
+      val parentUiTheme =
+        (UiThemeProviderListManager.getInstance().findThemeById(parentTheme) as? UIThemeLookAndFeelInfoImpl)?.theme ?: return false
+      return isBasedOnTheme(parentUiTheme, baseThemeId)
+    }
+
+    @ApiStatus.Internal
+    fun isBasedOnTheme(theme: UITheme, baseThemeId: @NonNls String): Boolean {
+      return isBasedOnTheme(theme.id, theme.bean, baseThemeId)
     }
 
     private fun resolveParentTheme(theme: UIThemeBean, themeId: @NonNls String): UIThemeBean? {
@@ -293,7 +306,7 @@ private fun createTheme(theme: UIThemeBean,
   }
   initializeNamedColors(theme, warn = warn)
 
-  val paletteScopeManager = UiThemePaletteScopeManager(theme)
+  val paletteScopeManager = UiThemePaletteScopeManager(themeId, theme)
 
   val iconMap = theme.icons
   var colorPatcher: SvgElementColorPatcherProvider? = null

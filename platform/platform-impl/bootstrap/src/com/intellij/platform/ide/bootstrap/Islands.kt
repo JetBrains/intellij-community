@@ -3,6 +3,7 @@ package com.intellij.platform.ide.bootstrap
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
@@ -67,7 +68,9 @@ private suspend fun enableTheme(properties: PropertiesComponent) {
   val lafManager = serviceAsync<LafManager>()
   val currentTheme = lafManager.currentUIThemeLookAndFeel?.id ?: return
 
-  if (currentTheme != "ExperimentalDark" && currentTheme != "ExperimentalLight" && currentTheme != "ExperimentalLightWithLightHeader") {
+  if (currentTheme != UITheme.EXPERIMENTAL_DARK_ID
+      && currentTheme != UITheme.EXPERIMENTAL_LIGHT_ID
+      && currentTheme != UITheme.EXPERIMENTAL_LIGHT_WITH_LIGHT_HEADER_ID) {
     if (currentTheme == "Islands Light" || currentTheme == "Islands Dark") {
       resetLafSettingsToDefault(lafManager, serviceAsync<UiThemeProviderListManager>())
     }

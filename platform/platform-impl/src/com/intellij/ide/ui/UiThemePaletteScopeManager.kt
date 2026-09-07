@@ -9,6 +9,7 @@ import com.intellij.ui.svg.newSvgPatcher
 import com.intellij.util.InsecureHashBuilder
 import com.intellij.util.SVGLoader
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import org.jetbrains.annotations.NonNls
 import java.awt.Color
 import java.util.function.Supplier
 
@@ -43,9 +44,10 @@ private class UiThemePaletteScopeImpl : UiThemePaletteScope {
   }
 }
 
-internal class UiThemePaletteScopeManager(theme: UIThemeBean) {
+internal class UiThemePaletteScopeManager(themeId: @NonNls String, theme: UIThemeBean) {
 
-  private val isBasedOnExperimentalTheme = UITheme.isBasedOnExperimentalTheme(theme)
+  private val isBasedOnExperimentalTheme = UITheme.isBasedOnTheme(themeId, theme, UITheme.EXPERIMENTAL_DARK_ID)
+                                           || UITheme.isBasedOnTheme(themeId, theme, UITheme.EXPERIMENTAL_LIGHT_ID)
 
   private val ui = UiThemePaletteScopeImpl()
   private val checkBoxes = UiThemePaletteScopeImpl()
