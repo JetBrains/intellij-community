@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionException
@@ -26,6 +26,7 @@ import com.intellij.platform.eel.EelPathBoundDescriptor
 import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.EnvironmentVariablesOptionsBuilder
 import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.getAcceptorForRemotePort
@@ -390,7 +391,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     return runBlockingCancellable {
       builder.env(buildEnvs(commandLine.environmentVariables, parentEnvVarsOptions))
       try {
-        builder.eelIt().convertToJavaProcess()
+        builder.eelIt().convertToJVMProcess()
       }
       catch (e: ExecuteProcessException) {
         throw ExecutionException(e)

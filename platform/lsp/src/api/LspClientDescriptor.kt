@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -173,7 +174,7 @@ abstract class LspClientDescriptor protected constructor(
     }
 
     LOG.info("$this: starting LSP server via Eel: ${commandLine.exePath}")
-    return object : OSProcessHandler(eelProcess.convertToJavaProcess(), commandLine.commandLineString, Charsets.UTF_8) {
+    return object : OSProcessHandler(eelProcess.convertToJVMProcess(), commandLine.commandLineString, Charsets.UTF_8) {
       override fun readerOptions(): BaseOutputReader.Options = lspReaderOptions()
     }
   }

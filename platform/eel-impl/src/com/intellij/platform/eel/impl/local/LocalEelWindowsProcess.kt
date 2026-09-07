@@ -10,6 +10,7 @@ import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
+import com.intellij.platform.eel.impl.ToJvmConvertableProcess
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.util.io.awaitExit
@@ -22,7 +23,7 @@ internal class LocalEelWindowsProcess private constructor(
   private val resizeWindow: ((Int, Int) -> Unit)?,
   scope: CoroutineScope,
   commandLineForDebug: String,
-) : EelWindowsProcess {
+) : EelWindowsProcess, ToJvmConvertableProcess {
   companion object {
     @JvmStatic
     suspend fun create(process: Process, resizeWindow: ((Int, Int) -> Unit)?, commandLineForDebug: String): LocalEelWindowsProcess =
@@ -48,7 +49,7 @@ internal class LocalEelWindowsProcess private constructor(
     LocalProcessService.getInstance().sendWinProcessCtrlC(process)
   }
 
-  override fun convertToJavaProcess(): Process = process
+  override fun convertToJVMProcess(): Process = process
 
   override suspend fun resizePty(columns: Int, rows: Int) {
     if (!process.isAlive) {

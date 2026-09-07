@@ -294,7 +294,7 @@ f:com.intellij.platform.eel.EelPlatformKt
 - com.intellij.platform.eel.EelProcess
 - *a:terminate(kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelProcess
-- *a:convertToJavaProcess():java.lang.Process
+- convertToJavaProcess():java.lang.Process
 - *a:getExitCode():com.intellij.platform.eel.SafeDeferred
 - *a:getPid():com.intellij.platform.eel.EelApi$Pid
 - *a:getStderr():com.intellij.platform.eel.channels.EelReceiveChannel
@@ -329,6 +329,8 @@ f:com.intellij.platform.eel.EelPlatformKt
 - a:getPid():com.intellij.platform.eel.EelApi$Pid
 - a:getStartInstant():java.time.Instant
 - a:getUser():java.lang.String
+*f:com.intellij.platform.eel.EelProcessKt
+- *sf:convertToJVMProcess(com.intellij.platform.eel.EelProcess):java.lang.Process
 *:com.intellij.platform.eel.EelProcessManagementApi
 - *a:getDescriptor():com.intellij.platform.eel.EelDescriptor
 - *a:kill(J,kotlin.coroutines.Continuation):java.lang.Object

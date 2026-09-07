@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.maven.execution.run
 
@@ -43,6 +43,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -247,7 +248,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
     try {
       val result = processOptions.eelIt()
-      return KillableColoredProcessHandler.Silent(result.convertToJavaProcess(), commandLineToShowUser, parameters.charset, emptySet())
+      return KillableColoredProcessHandler.Silent(result.convertToJVMProcess(), commandLineToShowUser, parameters.charset, emptySet())
         .also {
           it.addProcessListener(object : ProcessListener {
             override fun processTerminated(event: ProcessEvent) {

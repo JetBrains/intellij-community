@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.eel
 
 import com.intellij.execution.Executor
@@ -19,6 +19,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelTunnelsApi
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.fs.pathSeparator
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
@@ -214,7 +215,7 @@ private class EelMavenCmdState(
       builder.eelIt()
     }
 
-    return object : KillableColoredProcessHandler(eelProcess.convertToJavaProcess(), cmd) {
+    return object : KillableColoredProcessHandler(eelProcess.convertToJVMProcess(), cmd) {
       override fun killProcess() {
         runBlockingMaybeCancellable {
           eelProcess.kill()

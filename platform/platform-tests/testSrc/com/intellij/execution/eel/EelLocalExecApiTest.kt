@@ -18,6 +18,7 @@ import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.ThrowsChecked
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.impl.local.getShellFromPasswdRecords
 import com.intellij.platform.eel.isPosix
@@ -409,7 +410,7 @@ class EelLocalExecApiTest {
   }
 
   private val EelProcess.isWinConPtyProcess: Boolean
-    get() = this is EelWindowsProcess && convertToJavaProcess()::class.java.name == "com.pty4j.windows.conpty.WinConPtyProcess"
+    get() = this is EelWindowsProcess && convertToJVMProcess()::class.java.name == "com.pty4j.windows.conpty.WinConPtyProcess"
 }
 
 private val DROP_HELLO = Regex("^.*$HELLO")

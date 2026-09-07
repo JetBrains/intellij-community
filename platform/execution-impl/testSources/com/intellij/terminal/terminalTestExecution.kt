@@ -11,6 +11,7 @@ import com.intellij.execution.process.SelfKiller
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.util.io.BaseOutputReader
@@ -42,7 +43,7 @@ internal suspend fun createTerminalProcessHandler(
   catch (err: ExecuteProcessException) {
     throw IllegalStateException("Failed to start ${javaCommand.commandLine}", err)
   }
-  val javaProcess = eelProcess.convertToJavaProcess()
+  val javaProcess = eelProcess.convertToJVMProcess()
   assumeTestableProcess(javaProcess)
   return createTerminalProcessHandler(javaProcess, javaCommand.commandLine)
 }

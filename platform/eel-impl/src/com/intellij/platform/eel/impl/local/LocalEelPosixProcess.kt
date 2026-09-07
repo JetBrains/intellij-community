@@ -13,6 +13,7 @@ import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
+import com.intellij.platform.eel.impl.ToJvmConvertableProcess
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.util.io.awaitExit
@@ -25,7 +26,7 @@ internal class LocalEelPosixProcess private constructor(
   private val resizeWindow: ((Int, Int) -> Unit)?,
   scope: CoroutineScope,
   private val platform: EelPlatform.Posix,
-) : EelPosixProcess {
+) : EelPosixProcess, ToJvmConvertableProcess {
   companion object {
     /**
      * Send signal to the process group. If failed, send it to the process itself.
@@ -70,7 +71,7 @@ internal class LocalEelPosixProcess private constructor(
     process.destroyForcibly() // When signal failed, we still need to kill it
   }
 
-  override fun convertToJavaProcess(): Process = process
+  override fun convertToJVMProcess(): Process = process
 
   override suspend fun resizePty(columns: Int, rows: Int) {
     if (!process.isAlive) {

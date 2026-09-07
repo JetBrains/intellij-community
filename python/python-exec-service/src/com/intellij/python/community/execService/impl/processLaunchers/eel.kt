@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.impl.processLaunchers
 
 import com.intellij.ide.trustedProjects.TrustedProjects
@@ -8,6 +8,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.impl.base.ProcessFunctions
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
@@ -99,7 +100,7 @@ private class EelProcessCommands(
         .interactionOptions(if (tty != null) EelExecApi.Pty(tty.cols.toInt(), tty.rows.toInt()) else null)
         .eelIt()
       this.eelProcess = eelProcess
-      return Result.success(eelProcess.convertToJavaProcess())
+      return Result.success(eelProcess.convertToJVMProcess())
     }
     catch (e: ExecuteProcessException) {
       return Result.failure(ExecErrorReason.CantStart(e.errno, e.message))

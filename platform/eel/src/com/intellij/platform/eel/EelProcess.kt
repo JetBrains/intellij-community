@@ -1,8 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Experimental
+
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
+import com.intellij.platform.eel.impl.convertToJavaProcessImpl
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -15,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
  *   is merged into it (so [stderr] stays closed); terminal line discipline and echo apply, input may need escape codes and a `TERM`
  *   variable, and only here does [resizePty] work.
  *
- * [exitCode] completes when the process terminates, and [convertToJavaProcess] adapts the handle to the JVM [Process] API.
+ * [exitCode] completes when the process terminates, and [convertToJVMProcess] adapts the handle to the JVM [Process] API.
  *
  * The interface models both POSIX ([EelPosixProcess]) and Windows ([EelWindowsProcess]) processes. They diverge mainly in process
  * control: the signals sent by [kill] and [interrupt] differ per OS (see each), and graceful shutdown via [EelPosixProcess.terminate]
@@ -67,12 +70,11 @@ sealed interface EelProcess {
   suspend fun interrupt()
 
   /**
-   * Converts to the JVM [Process] which can be used instead of [EelProcess] for compatibility reasons.
-   * Note: After conversion, this [EelProcess] shouldn't be used: Use result [Process] instead
-   * Use `LocalProcessService.getPtyControl` to control a terminal through the returned process.
+   * Use [convertToJVMProcess]
    */
-  @ApiStatus.Experimental
-  fun convertToJavaProcess(): Process
+  @Deprecated("Use extension method convertToJVMProcess", replaceWith = ReplaceWith("convertToJVMProcess"), level = DeprecationLevel.ERROR)
+  fun convertToJavaProcess(): Process = convertToJVMProcess()
+
 
   /**
    * Resizes the pseudo-terminal to [columns] columns by [rows] rows. PTY mode only (see above).
@@ -100,6 +102,7 @@ sealed interface EelProcess {
  * for which Windows has no direct equivalent.
  */
 @ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface EelPosixProcess : EelProcess {
   /**
    * Requests graceful shutdown by sending `SIGTERM`, which the process may handle or ignore. Use [kill] to force termination.
@@ -116,6 +119,17 @@ interface EelPosixProcess : EelProcess {
  * future Windows-specific operations.
  */
 @ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface EelWindowsProcess : EelProcess {
   // Nothing yet.
 }
+
+
+/**
+ * Converts to the JVM [Process] which can be used instead of [EelProcess] for compatibility reasons.
+ * Note: After conversion, this [EelProcess] shouldn't be used: Use result [Process] instead
+ * If the process was launched with PTY, `com.pty4j.PtyProcess` instance is returned.
+ * Use `LocalProcessService.getPtyControl` to control a terminal through the returned process.
+ */
+@ApiStatus.Experimental
+fun EelProcess.convertToJVMProcess(): Process = convertToJavaProcessImpl()

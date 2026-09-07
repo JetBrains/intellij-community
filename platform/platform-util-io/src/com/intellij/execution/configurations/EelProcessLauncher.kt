@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.ThrowsChecked
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.path.EelPath
@@ -111,7 +112,7 @@ internal fun startProcessBlockingUsingEel(
     val exec = descriptor.toEelApi().exec
     val env = (if (isPassParentEnvironment) exec.environmentVariables().eelIt().await() else emptyMap()) + builder.environment()
     exec.spawnProcess(exe).args(rest).workingDirectory(workingDir).env(env)
-      .interactionOptions(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) }).eelIt().convertToJavaProcess()
+      .interactionOptions(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) }).eelIt().convertToJVMProcess()
   }
 }
 

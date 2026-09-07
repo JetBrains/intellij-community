@@ -4,6 +4,7 @@ package com.intellij.platform.ide.impl.wsl
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
@@ -33,7 +34,7 @@ internal suspend fun isMirroredMode(desc: WslEelDescriptor, eelApi: IjentPosixAp
   val result = run {
     val (shell, arg) = eelApi.exec.getShell()
     val result = try {
-      val process = eelApi.exec.spawnProcess(shell, arg, "wslinfo --networking-mode").eelIt().convertToJavaProcess()
+      val process = eelApi.exec.spawnProcess(shell, arg, "wslinfo --networking-mode").eelIt().convertToJVMProcess()
       process.getResultOnSeparatePool()
     }
     catch (e: ExecuteProcessException) {
