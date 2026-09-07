@@ -23,8 +23,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
-@org.jetbrains.annotations.ApiStatus.Internal
+@ApiStatus.Internal
 class MergeConflictIterativeDataHolder(
   private val project: Project?,
   parentDisposable: Disposable,
@@ -123,10 +124,9 @@ class MergeConflictIterativeDataHolder(
       is MergeRequestHandler.UserConfiguredExternalToolHandler, is MergeRequestHandler.ExtensionBasedHandler -> false
     }
   }
-
 }
 
-@org.jetbrains.annotations.ApiStatus.Internal
+@ApiStatus.Internal
 data class MergeConflictAiFileSnapshot(
   @JvmField val totalConflicts: Int,
   @JvmField val resolvedConflicts: Int,
