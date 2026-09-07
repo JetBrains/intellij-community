@@ -290,7 +290,7 @@ open class MultipleFileMergeDialog(
           reportSequentialProgress(files.size) { reporter ->
             for ((index, file) in files.withIndex()) {
               reporter.itemStep(VcsBundle.message("multiple.file.merge.modal.progress.resolving.file", index + 1, files.size)) {
-                val request = mergeRequestBuilder(file).build()
+                val request = mergeRequestBuilder(file).build().getOrNull() ?: return@itemStep
                 val model = iterativeDataHolder.prepareModelIfSupported(file, request) ?: return@itemStep
 
                 edtWriteAction {
@@ -328,9 +328,10 @@ open class MultipleFileMergeDialog(
           val iterativeFilesWithModels = mutableListOf<Pair<VirtualFile, MergeConflictModel>>()
           val nonIterativeFiles = mutableListOf<VirtualFile>()
           for (file in textFiles) {
-            val request = mergeRequestBuilder(file).build()
-            // Need to make sure that the iterative is actually possible for that given request
-            val model = iterativeDataHolder.prepareModelIfSupported(file, request)
+            // A file the iterative resolution cannot take (too big to load or to diff) falls back to the
+            // content resolution, which opens no viewer.
+            val request = mergeRequestBuilder(file).build().getOrNull()
+            val model = request?.let { iterativeDataHolder.prepareModelIfSupported(file, it) }
             if (model != null) {
               iterativeFilesWithModels.add(file to model)
             }
@@ -572,9 +573,9 @@ open class MultipleFileMergeDialog(
             }
           }
         }
-      }.build().also { request ->
-        iterativeDataHolder?.prepareModelIfSupported(file, request)
-      }
+      }.build()
+        .getOrThrow()
+        .also { request -> iterativeDataHolder?.prepareModelIfSupported(file, request) }
     }
 
     val times = fileOpenCounts.getOrDefault(file, 0) + 1
@@ -664,19 +665,26 @@ open class MultipleFileMergeDialog(
 
     fun withCallback(cb: (MergeResult) -> Unit) = apply { callback = cb }
 
-    fun build(requestFactory: DiffRequestFactory = DiffRequestFactory.getInstance()): MergeRequest {
+    fun build(requestFactory: DiffRequestFactory = DiffRequestFactory.getInstance()): Result<MergeRequest> {
       val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
-      return if (mergeProvider.isBinary(file)) {
-        requestFactory.createBinaryMergeRequest(project, file, byteContents, title, contentTitles, callback)
-      }
-      else {
-        requestFactory.createMergeRequest(project, file, byteContents, mergeData.CONFLICT_TYPE, title, contentTitles, callback)
-      }.also {
-        MergeUtils.putRevisionInfos(it, mergeData)
-        titleCustomizers?.run {
-          DiffUtil.addTitleCustomizers(it, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
+      val request = try {
+        if (mergeProvider.isBinary(file)) {
+          requestFactory.createBinaryMergeRequest(project, file, byteContents, title, contentTitles, callback)
+        }
+        else {
+          requestFactory.createMergeRequest(project, file, byteContents, mergeData.CONFLICT_TYPE, title, contentTitles, callback)
         }
       }
+      catch (e: InvalidDiffRequestException) {
+        LOG.warn("Cannot build the merge request for ${file.presentableUrl}. The file cannot load into the merge dialog.", e)
+        return Result.failure(e)
+      }
+
+      MergeUtils.putRevisionInfos(request, mergeData)
+      titleCustomizers?.run {
+        DiffUtil.addTitleCustomizers(request, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
+      }
+      return Result.success(request)
     }
   }
 
