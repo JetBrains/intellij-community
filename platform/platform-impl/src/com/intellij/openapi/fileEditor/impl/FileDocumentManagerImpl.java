@@ -906,8 +906,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         return null;
       }
 
-      boolean[] isReloadable = {isReloadable(file, document, project)};
-      if (isReloadable[0]) {
+      boolean isReloadable = isReloadable(file, document, project);
+      if (isReloadable) {
         // Special handling for files with decompiler - run decompilation in background with progress
         if (isBinaryWithDecompiler(file)) {
           reloadFromDiskWithDecompiler(document, project, file);
@@ -934,7 +934,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
           }
         }
       }
-      if (isReloadable[0]) {
+      if (isReloadable) {
         ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
           .fileContentReloaded(file, document);
       }
