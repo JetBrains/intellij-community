@@ -158,16 +158,28 @@ fun KtClass.getOrCreateCompanionBlock(): KtCompanionBlock {
     return appendElementToClassBody(companionBlock)
 }
 
-inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T {
-    return appendElementToClassBody(declaration)
+inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T, skipWhiteSpaces: Boolean = true): T {
+    return appendElementToClassBody(declaration, skipWhiteSpaces)
 }
 
-inline fun <reified T : PsiElement> KtClassOrObject.appendElementToClassBody(element: T): T {
-    return appendElementToClassBody(getOrCreateClassBody(), element)
+inline fun <reified T : PsiElement> KtClassOrObject.appendElementToClassBody(element: T, skipWhiteSpaces: Boolean = true): T {
+    return appendElementToClassBody(getOrCreateClassBody(), element, skipWhiteSpaces)
 }
 
-inline fun <reified T : PsiElement> appendElementToClassBody(body: KtClassBody, element: T): T {
-    val anchor = PsiTreeUtil.skipSiblingsBackward(body.rBrace ?: body.lastChild!!, PsiWhiteSpace::class.java)
+/**
+ * Adds [element] to the end of the target class [body].
+ *
+ * If [skipWhiteSpaces] is `true`, the selected anchor element is the last non-whitespace element.
+ * If it's `false` the trailing body whitespaces are allowed as the anchor.
+ */
+inline fun <reified T : PsiElement> appendElementToClassBody(body: KtClassBody, element: T, skipWhiteSpaces: Boolean = true): T {
+    val lastBodyElement = body.rBrace ?: body.lastChild!!
+    val anchor = if (skipWhiteSpaces) {
+        PsiTreeUtil.skipSiblingsBackward(lastBodyElement, PsiWhiteSpace::class.java)
+    } else {
+        lastBodyElement.prevSibling
+    }
+
     val newDeclaration =
         if (anchor?.nextSibling is PsiErrorElement)
             body.addBefore(element, anchor)

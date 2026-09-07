@@ -131,7 +131,7 @@ sealed interface K2MoveTargetDescriptor {
         override val pkgName: FqName = targetClass.containingKtFile.packageFqName
 
         override fun addElement(target: T, element: PsiElement): PsiElement {
-            return target.appendElementToClassBody(element)
+            return target.appendElementToClassBody(element, skipWhiteSpaces = false)
         }
     }
 
