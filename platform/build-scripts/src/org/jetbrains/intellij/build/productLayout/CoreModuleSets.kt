@@ -370,6 +370,8 @@ object CoreModuleSets {
 
     embeddedModule("intellij.platform.runtime.product")
 
+    module("intellij.platform.buildScripts.concurrency")
+
     embeddedModule("intellij.platform.util.ex")
     embeddedModule("intellij.platform.util.ui")
     embeddedModule("intellij.platform.util.coroutines")

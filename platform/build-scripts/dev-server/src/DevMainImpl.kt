@@ -81,7 +81,6 @@ private fun buildDevImpl(rawArgs: Array<String>): BuildDevInfo {
       baseIdePlatformPrefixForFrontend = baseIdePlatformPrefixForFrontend,
       additionalModules = getAdditionalPluginMainModules(),
       projectDir = ideaProjectRoot,
-      keepHttpClient = false,
       platformClassPathConsumer = { actualMainClassName, classPath, runDir ->
         platformMainClassName = actualMainClassName
         platformClassPath = classPath

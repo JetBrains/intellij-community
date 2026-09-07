@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.dependencies
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.resolveAndExtractToCacheLocation
 import java.nio.file.Files
 import java.nio.file.Path
@@ -18,13 +19,18 @@ object JdkDownloader {
   }
 
   fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
+    return getJdkHome(communityRoot, jdkBuildNumber, variation, null, infoLog)
+  }
+
+  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, session: BuildHttpSession?, infoLog: (String) -> Unit): Path {
     return getJdkHome(
       communityRoot = communityRoot,
       os = OS.current,
       arch = Arch.current,
       infoLog = infoLog,
       jdkBuildNumber = jdkBuildNumber,
-      variation = variation
+      variation = variation,
+      session = session,
     )
   }
 
@@ -61,9 +67,22 @@ object JdkDownloader {
     variation: String? = null,
     infoLog: (String) -> Unit,
   ): Path {
+    return getJdkHome(communityRoot, os, arch, isMusl, jdkBuildNumber, variation, null, infoLog)
+  }
+
+  fun getJdkHome(
+    communityRoot: BuildDependenciesCommunityRoot,
+    os: OS,
+    arch: Arch,
+    isMusl: Boolean = false,
+    jdkBuildNumber: String? = null,
+    variation: String? = null,
+    session: BuildHttpSession?,
+    infoLog: (String) -> Unit,
+  ): Path {
     val effectiveVariation = if (isMusl) null else variation
     val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, jdkBuildNumber = jdkBuildNumber, variation = effectiveVariation)
-    val jdkExtracted = resolveAndExtractToCacheLocation(jdkUrl, communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
+    val jdkExtracted = resolveAndExtractToCacheLocation(jdkUrl, communityRoot, session, BuildDependenciesExtractOptions.STRIP_ROOT)
     val jdkHome = if (os == OS.MACOSX) jdkExtracted.resolve("Contents").resolve("Home") else jdkExtracted
     infoLog("JPS-bootstrap JDK (jdkHome=$jdkHome, executable=${getJavaExecutable(jdkHome)})")
     return jdkHome

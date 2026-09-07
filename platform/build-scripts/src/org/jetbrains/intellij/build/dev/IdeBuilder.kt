@@ -14,6 +14,7 @@ import io.opentelemetry.api.trace.Tracer
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -132,7 +133,7 @@ data class BuildRequest(
    */
   @JvmField val jarCacheDir: Path? = devRootDir.resolve("jar-cache"),
   @JvmField val classesOutputDirectory: Path? = null,
-  @JvmField val keepHttpClient: Boolean = true,
+  @JvmField val httpSession: BuildHttpSession? = null,
   @JvmField val platformClassPathConsumer: ((mainClass: String, classPath: Set<Path>, runDir: Path) -> Unit)? = null,
   /**
    * If `true`, the dev build will include a [runtime module repository](psi_element://com.intellij.platform.runtime.repository).
@@ -197,7 +198,7 @@ data class BuildRequest(
       if (classesOutputDirectory != null) {
         append("classesOutputDirectory=$classesOutputDirectory, ")
       }
-      append("keepHttpClient=$keepHttpClient, ")
+      append("borrowedHttpSession=${httpSession != null}, ")
       append("generateRuntimeModuleRepository=$generateRuntimeModuleRepository")
     }
   }
@@ -239,7 +240,7 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
   request.scratchDir?.let { prepareScratchDir(it) }
 
   val runDir = buildDir
-  val lifetime = BuildLifetime()
+  val lifetime = BuildLifetime(request.httpSession)
   var contextToClose: BuildContext? = null
   try {
     taskScope {
@@ -775,6 +776,7 @@ private fun createBuildContextFromProject(
       buildOutputRootEvaluator = { _ -> buildDir },
       options = options,
       customBuildPaths = buildPaths,
+      httpSession = lifetime.http,
     ),
     lifetime = lifetime,
     isBazelBacked = isDevBuildBazelBacked(),

@@ -3,17 +3,13 @@ package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.downloadFileToCacheLocation
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFileToCacheLocation
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.getTargetFile
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.getUriForMavenArtifact
-import org.jetbrains.intellij.build.retryWithExponentialBackOff
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import kotlin.io.path.exists
-import kotlin.io.path.name
 import kotlin.io.path.toPath
 
 private const val INTELLIJ_DEPENDENCIES_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/intellij-dependencies"
@@ -41,7 +37,8 @@ object KotlinCompilerDependencyDownloader {
   }
 
 
-  fun downloadAndExtractKotlinCompiler(communityRoot: BuildDependenciesCommunityRoot): Path {
+  @JvmOverloads
+  fun downloadAndExtractKotlinCompiler(communityRoot: BuildDependenciesCommunityRoot, session: BuildHttpSession? = null): Path {
     val kotlinJpsPluginVersion = getKotlinJpsPluginVersion(communityRoot)
     val kotlinDistUrl = getUriForMavenArtifact(getMavenRepositoryUrl(), ARTIFACT_GROUP_ID, "kotlin-dist-for-ide", kotlinJpsPluginVersion, "jar")
     val kotlinDistJar = if (shouldUseMavenLocal()) {
@@ -49,12 +46,13 @@ object KotlinCompilerDependencyDownloader {
       check(path.exists()) { "kotlin-dist-for-ide was not found in the local Maven repository" }
       path
     } else {
-      downloadFileToCacheLocation(communityRoot, kotlinDistUrl)
+      downloadFileToCacheLocation(communityRoot, kotlinDistUrl, session)
     }
     return extractFileToCacheLocation(communityRoot, kotlinDistJar)
   }
 
-  fun downloadKotlinJpsPlugin(communityRoot: BuildDependenciesCommunityRoot): Path {
+  @JvmOverloads
+  fun downloadKotlinJpsPlugin(communityRoot: BuildDependenciesCommunityRoot, session: BuildHttpSession? = null): Path {
     val kotlinJpsPluginVersion = getKotlinJpsPluginVersion(communityRoot)
     val kotlinJpsPluginUrl = getUriForMavenArtifact(getMavenRepositoryUrl(), ARTIFACT_GROUP_ID, "kotlin-jps-plugin-classpath", kotlinJpsPluginVersion, "jar")
 
@@ -64,23 +62,7 @@ object KotlinCompilerDependencyDownloader {
       return kotlinJpsPluginJar
     }
 
-    val cacheLocation = getTargetFile(communityRoot, kotlinJpsPluginUrl.toString())
-    if (cacheLocation.exists()) {
-      return cacheLocation
-    }
-
-    // Download file by hand since calling entire ktor/cio/coroutines stuff *before* loading JPS plugin into classpath
-    // leads to funny kotlin-reflect failures later in Kotlin JPS plugin
-    // Ideal solution would be to move compilation to other process altogether and do not modify current process classpath
-    println(" * Downloading $kotlinJpsPluginUrl")
-    val tmpLocation = Files.createTempFile(cacheLocation.parent, cacheLocation.name, ".tmp")
-    retryWithExponentialBackOff {
-      kotlinJpsPluginUrl.toURL().openStream().use {
-        Files.copy(it, tmpLocation, StandardCopyOption.REPLACE_EXISTING)
-      }
-    }
-    Files.move(tmpLocation, cacheLocation, StandardCopyOption.ATOMIC_MOVE)
-    return cacheLocation
+    return downloadFileToCacheLocation(communityRoot, kotlinJpsPluginUrl, session)
   }
 
   fun getKotlinJpsPluginVersion(communityRoot: BuildDependenciesCommunityRoot): String {

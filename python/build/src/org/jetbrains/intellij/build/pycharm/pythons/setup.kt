@@ -3,9 +3,11 @@ package org.jetbrains.intellij.build.pycharm.pythons
 
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.localEel
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.downloadFileToCacheLocation
+import org.jetbrains.intellij.build.withBuildHttpSession
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.ExperimentalPathApi
@@ -60,17 +62,17 @@ fun runCommand(vararg args: String, env: Map<String, String> = emptyMap()) {
 
 private val isWindows = localEel.platform.osFamily.isWindows
 
-fun setupPyEnv() {
+fun setupPyEnv(session: BuildHttpSession? = null) {
   if (pyEnvHome.exists()) return
   println("*** Setup pyenv ***")
   val pyEnv: Path
   if (isWindows) {
-    val pyEnvPath = downloadFileToCacheLocation(pyEnvWinUrl, buildRoot)
+    val pyEnvPath = downloadFileToCacheLocation(pyEnvWinUrl, buildRoot, session)
     runCommand("powershell", "-ExecutionPolicy", "Bypass", "-File", "$pyEnvPath",
                env = mapOf("USERPROFILE" to pyEnvHome.toString()))
   }
   else {
-    val pyEnvPath = downloadFileToCacheLocation(pyEnvUrl, buildRoot)
+    val pyEnvPath = downloadFileToCacheLocation(pyEnvUrl, buildRoot, session)
     val extracted = BuildDependenciesDownloader.extractFileToCacheLocation(buildRoot, pyEnvPath)
     pyEnv = extracted / "pyenv-master"
     val installSh = pyEnv / "plugins" / "python-build" / "install.sh"
@@ -79,14 +81,18 @@ fun setupPyEnv() {
   }
 }
 
+fun Python.installUsingPyEnv(session: BuildHttpSession? = null): Path {
+  return withBuildHttpSession(session) { client -> installUsingPyEnvWithSession(client) }
+}
+
 @OptIn(ExperimentalPathApi::class)
-fun Python.installUsingPyEnv(): Path {
-  setupPyEnv()
+private fun Python.installUsingPyEnvWithSession(session: BuildHttpSession): Path {
+  setupPyEnv(session)
   val output = pythonsHome / directoryName
   if (output.exists()) return output
   if (isWindows) {
     if (pyenvDefinition.lowercase().contains("miniconda")) {
-      val miniCondaFile = downloadFileToCacheLocation("https://repo.anaconda.com/miniconda/$pyenvDefinition-Windows-x86_64.exe", buildRoot)
+      val miniCondaFile = downloadFileToCacheLocation("https://repo.anaconda.com/miniconda/$pyenvDefinition-Windows-x86_64.exe", buildRoot, session)
       runCommand(miniCondaFile.toString(), "/InstallationType=JustMe", "/AddToPath=0", "/RegisterPython=0", "/S", "/D=$output")
     }
     else {

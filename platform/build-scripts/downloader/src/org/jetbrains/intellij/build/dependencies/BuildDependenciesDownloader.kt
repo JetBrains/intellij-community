@@ -7,6 +7,7 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.IExceptionWithRetryPolicy
 import org.jetbrains.intellij.build.StripedLock
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.cleanUpIfRequired
@@ -109,13 +110,19 @@ object BuildDependenciesDownloader {
   }
 
   @JvmStatic
-  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI): Path {
-    return downloadFileToCacheLocation(uri.toString(), communityRoot)
+  @JvmOverloads
+  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI, session: BuildHttpSession? = null): Path {
+    return downloadFileToCacheLocation(uri.toString(), communityRoot, session)
   }
 
   @JvmStatic
   fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI, credentialsProvider: () -> Credentials): Path {
     return downloadFileToCacheLocation(uri.toString(), communityRoot, credentialsProvider)
+  }
+
+  @JvmStatic
+  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI, session: BuildHttpSession?, credentialsProvider: () -> Credentials): Path {
+    return downloadFileToCacheLocation(uri.toString(), communityRoot, session, credentialsProvider)
   }
 
   fun getTargetFile(communityRoot: BuildDependenciesCommunityRoot, uriString: String): Path {

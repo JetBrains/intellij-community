@@ -706,7 +706,7 @@ private fun TaskScope.createBuildBrokenPluginListJob(context: BuildContext): Sub
     BuildOptions.BROKEN_PLUGINS_LIST_STEP,
     context,
   ) {
-    val data = buildBrokenPlugins(currentBuildString = buildString, isInDevelopmentMode = context.options.isInDevelopmentMode)
+    val data = buildBrokenPlugins(currentBuildString = buildString, isInDevelopmentMode = context.options.isInDevelopmentMode, session = context.httpSession)
     if (data != null) {
       context.addDistFile(DistFile(content = InMemoryDistFileContent(data), relativePath = "bin/brokenPlugins.db"))
     }

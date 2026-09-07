@@ -73,16 +73,16 @@ internal fun buildSearchableOptions(
     // The nested group ends before the product starts.
     taskScope {
       fork("resolve maven4 libs") {
-        BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
+        BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot, context.httpSession)
       }
       fork("resolve maven3 libs") {
-        BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot)
+        BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot, context.httpSession)
       }
       fork("download maven distribution") {
-        BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
+        BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot, context.httpSession)
       }
       fork("resolve maven telemetry dependencies") {
-        BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+        BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot, context.httpSession)
       }
       join()
     }

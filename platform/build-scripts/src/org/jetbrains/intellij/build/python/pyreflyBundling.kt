@@ -74,7 +74,7 @@ private fun downloadPyrefly(context: BuildContext, artifactId: String): Path {
   val communityRoot = context.paths.communityHomeDirRoot
   val version = context.dependenciesProperties.property(PYREFLY_VERSION_PROPERTY)
   val uri = BuildDependenciesDownloader.getUriForMavenArtifact(INTELLIJ_DEPENDENCIES_URL, PYREFLY_GROUP_ID, artifactId, version, PYREFLY_PACKAGING)
-  val resolved = resolveFileForReading(uri.toString(), communityRoot)
+  val resolved = resolveFileForReading(uri.toString(), communityRoot, context.httpSession)
   return extractToCacheLocation(
     archiveFile = resolved.file,
     communityRoot = communityRoot,

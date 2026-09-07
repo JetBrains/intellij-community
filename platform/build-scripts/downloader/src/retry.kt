@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
 import kotlin.random.Random
@@ -28,13 +29,19 @@ fun <T> retryWithExponentialBackOff(
   var effectiveDelay = initialDelayMs
   val exceptions = mutableListOf<Exception>()
   for (attempt in 1..attempts) try {
+    if (Thread.currentThread().isInterrupted) throw InterruptedException("The retry was interrupted")
     return action(attempt)
   }
   catch (e: InterruptedException) {
     // an interrupt is a cancel of the caller, not a failure of the attempt
     throw e
   }
+  catch (e: CancellationException) {
+    throw e
+  }
   catch (e: Exception) {
+    if (Thread.currentThread().isInterrupted) throw InterruptedException("The retry was interrupted").apply { initCause(e) }
+    if (generateSequence<Throwable>(e) { it.cause }.any { it is InterruptedException || it is CancellationException }) throw e
     onException(attempt, e)
     if ((e is IExceptionWithRetryPolicy && e.isRetryAllowed.not()) || isRetryAllowed(e).not()) {
       throw Exception("Attempt $attempt failed, stopping retries", e).apply {

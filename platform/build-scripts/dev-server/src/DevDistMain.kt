@@ -179,7 +179,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
       platformPrefix = platformPrefix,
       additionalModules = additionalModules,
       projectDir = projectDir,
-      keepHttpClient = false,
       platformClassPathConsumer = { actualMainClassName, _, _ ->
         mainClassName = actualMainClassName
       },

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.dependencies
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.resolveAndExtractToCacheLocation
 import java.nio.file.Path
 
@@ -18,9 +19,10 @@ object TerminalLibGhosttyVtDownloader {
    *
    * See `community/plugins/terminal/emulator/README.md` for the update procedure.
    */
-  fun getOrDownloadLibRoot(communityRoot: BuildDependenciesCommunityRoot): Path {
+  @JvmOverloads
+  fun getOrDownloadLibRoot(communityRoot: BuildDependenciesCommunityRoot, session: BuildHttpSession? = null): Path {
     val version = BuildDependenciesDownloader.getDependencyProperties(communityRoot).property("libGhosttyVtVersion")
-    return resolveAndExtractToCacheLocation(downloadUrl(version), communityRoot)
+    return resolveAndExtractToCacheLocation(downloadUrl(version), communityRoot, session)
   }
 
   /** Public so tests that pre-provision the build-dependencies download cache can pin the same URL. */

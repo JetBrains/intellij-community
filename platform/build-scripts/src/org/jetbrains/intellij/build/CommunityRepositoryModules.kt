@@ -109,7 +109,7 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withGeneratedResources { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
 
-        val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
+        val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot, context.httpSession)
         copyDir(sourceDir = mavenDist, targetDir = targetLib.resolve("maven3"), overwrite = true)
       }
 
@@ -121,9 +121,9 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
 
         spec.withGeneratedResources { targetDir, context ->
           val targetLib = targetDir.resolve("lib")
-          val maven3Libs = BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot)
+          val maven3Libs = BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot, context.httpSession)
           copyMavenLibraries(maven3Libs, targetLib.resolve(this))
-          val mavenTelemetryDependencies = BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+          val mavenTelemetryDependencies = BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot, context.httpSession)
           copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this))
         }
       }
@@ -139,9 +139,9 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
 
         spec.withGeneratedResources { targetDir, context ->
           val targetLib = targetDir.resolve("lib")
-          val maven4Libs = BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
+          val maven4Libs = BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot, context.httpSession)
           copyMavenLibraries(maven4Libs, targetLib.resolve(this))
-          val mavenTelemetryDependencies = BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+          val mavenTelemetryDependencies = BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot, context.httpSession)
           copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this))
         }
       }
@@ -171,7 +171,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       }
 
       spec.withModule("intellij.idea.community.build.dependencies")
-      spec.withModule("intellij.platform.buildScripts.concurrency")
       spec.withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
       spec.withModule("intellij.maven.server", relativeJarPath = "maven-server.jar")
@@ -309,7 +308,7 @@ fun getContribRepositoryPlugins(): List<PluginLayout> = java.util.List.of(
     // jSerialComm native library
     spec.withGeneratedResources { targetDir, context ->
       val uri = URI.create("https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jSerialComm/9a7813435b79aa2e23c7f2a78f1b66b48c0504c4/jSerialComm.zip")
-      val downloaded = BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDirRoot, uri)
+      val downloaded = BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDirRoot, uri, context.httpSession)
       BuildDependenciesDownloader.extractFile(downloaded, targetDir.resolve("bin"), context.paths.communityHomeDirRoot)
     }
   },
@@ -365,6 +364,7 @@ private fun jcefPlugin(os: OsFamily, arch: JvmArchitecture): PluginLayout {
       val extracted = resolveAndExtractToCacheLocation(
         url = jcefDownloadUrl(os, arch, jcefBuildNumber),
         communityRoot = communityRoot,
+        session = context.httpSession,
         BuildDependenciesExtractOptions.STRIP_ROOT,
       )
 

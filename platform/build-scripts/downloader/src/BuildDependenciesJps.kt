@@ -44,63 +44,66 @@ object BuildDependenciesJps {
     library: Element,
     mavenRepositoryUrl: String,
     communityRoot: BuildDependenciesCommunityRoot,
-    credentialsProvider: (() -> Credentials)?
+    credentialsProvider: (() -> Credentials)?,
+    session: BuildHttpSession? = null,
   ): List<Path> {
-    val properties = library.getSingleChildElement("properties")
-    val mavenId = properties.getAttribute("maven-id")
+    return withBuildHttpSession(session) { client ->
+      val properties = library.getSingleChildElement("properties")
+      val mavenId = properties.getAttribute("maven-id")
 
-    // every library in Ultimate project must have a sha256 checksum, so all of this data must be present
-    // in case of referencing '-SNAPSHOT' versions locally, checksums may be missing
-    val verification = properties.tryGetSingleChildElement("verification")
-    val artifacts = verification?.getChildElements("artifact")
-    val sha256sumMap = artifacts?.associate {
-      it.getAttribute("url") to it.getSingleChildElement("sha256sum").textContent.trim()
-    } ?: emptyMap()
+      // every library in Ultimate project must have a sha256 checksum, so all of this data must be present
+      // in case of referencing '-SNAPSHOT' versions locally, checksums may be missing
+      val verification = properties.tryGetSingleChildElement("verification")
+      val artifacts = verification?.getChildElements("artifact")
+      val sha256sumMap = artifacts?.associate {
+        it.getAttribute("url") to it.getSingleChildElement("sha256sum").textContent.trim()
+      } ?: emptyMap()
 
-    val classes = library.getSingleChildElement("CLASSES")
-    return classes.getChildElements("root")
-      .mapNotNull { it.getAttribute("url") }
-      .map {
-        it
-          .removePrefix("jar:/")
-          .replace($$"$MAVEN_REPOSITORY$", "")
-          .trim('!', '/')
-      }
-      .map { relativePath ->
-        val fileUrl = $$"file://$MAVEN_REPOSITORY$/$${relativePath}"
-        val remoteUrl = mavenRepositoryUrl.trimEnd('/') + "/${relativePath}"
-
-        val localMavenFile = Path.of(getMavenRepositoryPath()).resolve(relativePath)
-
-        val file = when {
-          Files.isRegularFile(localMavenFile) && Files.size(localMavenFile) > 0 -> localMavenFile
-          credentialsProvider != null -> downloadFileToCacheLocation(remoteUrl, communityRoot, credentialsProvider)
-          else -> downloadFileToCacheLocation(remoteUrl, communityRoot)
+      val classes = library.getSingleChildElement("CLASSES")
+      return@withBuildHttpSession classes.getChildElements("root")
+        .mapNotNull { it.getAttribute("url") }
+        .map {
+          it
+            .removePrefix("jar:/")
+            .replace($$"$MAVEN_REPOSITORY$", "")
+            .trim('!', '/')
         }
+        .map { relativePath ->
+          val fileUrl = $$"file://$MAVEN_REPOSITORY$/$${relativePath}"
+          val remoteUrl = mavenRepositoryUrl.trimEnd('/') + "/${relativePath}"
 
-        // '-SNAPSHOT' versions could be used only locally to test new locally built dependencies
-        if (!mavenId.endsWith("-SNAPSHOT")) {
-          val digest = cloneDigest(sha2_256)
-          val buffer = ByteArray(512 * 1024)
-          Files.newInputStream(file).use {
-            while (true) {
-              val size = it.read(buffer)
-              if (size <= 0) {
-                break
+          val localMavenFile = Path.of(getMavenRepositoryPath()).resolve(relativePath)
+
+          val file = when {
+            Files.isRegularFile(localMavenFile) && Files.size(localMavenFile) > 0 -> localMavenFile
+            credentialsProvider != null -> downloadFileToCacheLocation(remoteUrl, communityRoot, client, credentialsProvider)
+            else -> downloadFileToCacheLocation(remoteUrl, communityRoot, client)
+          }
+
+          // '-SNAPSHOT' versions could be used only locally to test new locally built dependencies
+          if (!mavenId.endsWith("-SNAPSHOT")) {
+            val digest = cloneDigest(sha2_256)
+            val buffer = ByteArray(512 * 1024)
+            Files.newInputStream(file).use {
+              while (true) {
+                val size = it.read(buffer)
+                if (size <= 0) {
+                  break
+                }
+                digest.update(buffer, 0, size)
               }
-              digest.update(buffer, 0, size)
+            }
+
+            val actualSha256checksum = digest.digest().toHexString()
+            val expectedSha256Checksum = sha256sumMap[fileUrl] ?: error("SHA256 checksum is missing for $fileUrl:\n${library.asText}")
+            if (expectedSha256Checksum != actualSha256checksum) {
+              Files.delete(file)
+              error("File $file has wrong checksum. On disk: $actualSha256checksum. Expected: $expectedSha256Checksum. Library:\n${library.asText}")
             }
           }
-
-          val actualSha256checksum = digest.digest().toHexString()
-          val expectedSha256Checksum = sha256sumMap[fileUrl] ?: error("SHA256 checksum is missing for $fileUrl:\n${library.asText}")
-          if (expectedSha256Checksum != actualSha256checksum) {
-            Files.delete(file)
-            error("File $file has wrong checksum. On disk: $actualSha256checksum. Expected: $expectedSha256Checksum. Library:\n${library.asText}")
-          }
+          file
         }
-        file
-      }
+    }
   }
 
   fun getModuleLibraryRoots(
@@ -108,13 +111,14 @@ object BuildDependenciesJps {
     libraryName: String,
     mavenRepositoryUrl: String,
     communityRoot: BuildDependenciesCommunityRoot,
-    credentialsProvider: (() -> Credentials)?
+    credentialsProvider: (() -> Credentials)?,
+    session: BuildHttpSession? = null,
   ): List<Path> {
     return try {
       val root = BuildDependenciesUtil.createDocumentBuilder().parse(iml.toFile()).documentElement
 
       val library = root.getLibraryElement(libraryName, iml)
-      val roots = getLibraryRoots(library, mavenRepositoryUrl, communityRoot, credentialsProvider)
+      val roots = getLibraryRoots(library, mavenRepositoryUrl, communityRoot, credentialsProvider, session)
 
       if (roots.isEmpty()) {
         error("No library roots for library '$libraryName' in the following iml file at '$iml':\n${Files.readString(iml)}")
@@ -151,9 +155,10 @@ object BuildDependenciesJps {
     libraryName: String,
     mavenRepositoryUrl: String,
     communityRoot: BuildDependenciesCommunityRoot,
-    credentialsProvider: (() -> Credentials)?
+    credentialsProvider: (() -> Credentials)?,
+    session: BuildHttpSession? = null,
   ): Path {
-    val roots = getModuleLibraryRoots(iml, libraryName, mavenRepositoryUrl, communityRoot, credentialsProvider)
+    val roots = getModuleLibraryRoots(iml, libraryName, mavenRepositoryUrl, communityRoot, credentialsProvider, session)
     if (roots.size != 1) {
       error("Expected one and only one library '$libraryName' root in '$iml', but got ${roots.size}: ${roots.joinToString()}")
     }
@@ -166,12 +171,13 @@ object BuildDependenciesJps {
     libraryName: String,
     mavenRepositoryUrl: String,
     communityRoot: BuildDependenciesCommunityRoot,
-    credentialsProvider: (() -> Credentials)?
+    credentialsProvider: (() -> Credentials)?,
+    session: BuildHttpSession? = null,
   ): List<Path> = try {
     val document = BuildDependenciesUtil.createDocumentBuilder().parse(libraryXml.toFile())
 
     val library = document.documentElement.getSingleChildElement("library")
-    val roots = getLibraryRoots(library, mavenRepositoryUrl, communityRoot, credentialsProvider)
+    val roots = getLibraryRoots(library, mavenRepositoryUrl, communityRoot, credentialsProvider, session)
 
     if (roots.isEmpty()) {
       error("No library roots for library '$libraryName' in the following iml file at '$libraryXml':\n${Files.readString(libraryXml)}")

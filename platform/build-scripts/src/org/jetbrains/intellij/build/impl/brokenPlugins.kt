@@ -5,6 +5,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.downloadAsText
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
@@ -16,11 +17,11 @@ private const val MARKETPLACE_BROKEN_PLUGINS_URL = "https://plugins.jetbrains.co
 /**
  * Generate the 'brokenPlugins.txt' file using JetBrains Marketplace.
  */
-fun buildBrokenPlugins(currentBuildString: String, isInDevelopmentMode: Boolean): ByteArray? {
+fun buildBrokenPlugins(currentBuildString: String, isInDevelopmentMode: Boolean, session: BuildHttpSession? = null): ByteArray? {
   val span = Span.current()
 
   val allBrokenPlugins = try {
-    val content = downloadAsText(MARKETPLACE_BROKEN_PLUGINS_URL)
+    val content = downloadAsText(MARKETPLACE_BROKEN_PLUGINS_URL, session)
     @Suppress("JSON_FORMAT_REDUNDANT")
     Json { ignoreUnknownKeys = true }.decodeFromString(ListSerializer(MarketplaceBrokenPlugin.serializer()), content)
   }

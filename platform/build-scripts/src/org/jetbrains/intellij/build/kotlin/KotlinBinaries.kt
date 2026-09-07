@@ -5,6 +5,7 @@ import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.addToClasspathAgent.AddToClasspathUtil
 import java.nio.file.Files
@@ -14,7 +15,7 @@ import java.nio.file.Path
  * Sets up Kotlin compiler (downloaded from Marketplace) which is required for JPS to compile the repository
  */
 @ApiStatus.Internal
-class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot) {
+class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot, private val httpSession: BuildHttpSession? = null) {
   companion object {
     val kotlinCompilerExecutables: List<String>
       get() {
@@ -28,7 +29,7 @@ class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot) 
   }
 
   val kotlinCompilerHome: Path by lazy {
-    val compilerHome = KotlinCompilerDependencyDownloader.downloadAndExtractKotlinCompiler(communityHome)
+    val compilerHome = KotlinCompilerDependencyDownloader.downloadAndExtractKotlinCompiler(communityHome, httpSession)
     val kotlinc = compilerHome.resolve("bin/kotlinc")
     check(Files.exists(kotlinc)) { "Kotlin compiler home is missing under the path: $compilerHome" }
     compilerHome
@@ -52,7 +53,7 @@ class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot) 
       return
     }
 
-    val jpsPlugin = KotlinCompilerDependencyDownloader.downloadKotlinJpsPlugin(communityHome)
+    val jpsPlugin = KotlinCompilerDependencyDownloader.downloadKotlinJpsPlugin(communityHome, httpSession)
     Span.current().addEvent("load Kotlin JPS plugin from $jpsPlugin")
     AddToClasspathUtil.addToClassPathViaAgent(listOf(jpsPlugin))
 

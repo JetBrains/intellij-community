@@ -19,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuiltinModulesFileData
@@ -82,6 +83,7 @@ fun createBuildContext(
       buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
       options = options,
       setupTracer = setupTracer,
+      httpSession = lifetime.http,
     ),
     projectHome = projectHome,
     productProperties = productProperties,
@@ -107,6 +109,7 @@ fun createCompilationContext(
       buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome = projectHome, productProperties = productProperties, buildOptions = options),
       options = options,
       setupTracer = setupTracer,
+      httpSession = lifetime.http,
     ),
     lifetime = lifetime,
   )
@@ -177,6 +180,9 @@ class BuildContextImpl internal constructor(
   ),
   @JvmField internal val jarCacheManager: JarCacheManager,
 ) : BuildContext, CompilationContext by compilationContext {
+  override val httpSession: BuildHttpSession
+    get() = lifetime.http
+
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
 
   private val extraExecutablePatterns = AtomicReference<Map<OsFamily, PersistentList<String>>>(java.util.Map.of())

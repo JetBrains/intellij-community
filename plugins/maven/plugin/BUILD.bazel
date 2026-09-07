@@ -7,7 +7,6 @@ dev_dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.idea.community.build.dependencies",
-        "intellij.platform.buildScripts.concurrency",
         "intellij.maven",
         "intellij.maven.artifactResolver.m31",
         "intellij.maven.artifactResolver.common",

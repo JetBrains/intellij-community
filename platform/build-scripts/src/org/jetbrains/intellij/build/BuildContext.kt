@@ -25,6 +25,9 @@ import kotlin.time.Duration
 interface BuildContext : CompilationContext {
   val lifetime: BuildLifetime
 
+  override val httpSession: BuildHttpSession
+    get() = lifetime.http
+
   val productProperties: ProductProperties
   val windowsDistributionCustomizer: WindowsDistributionCustomizer?
   val macDistributionCustomizer: MacDistributionCustomizer?

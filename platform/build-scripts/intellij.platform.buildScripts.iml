@@ -422,7 +422,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl" />
     <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" scope="RUNTIME" />

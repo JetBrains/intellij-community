@@ -11,6 +11,9 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
 interface CompilationContext {
+  val httpSession: BuildHttpSession?
+    get() = null
+
   val options: BuildOptions
   val messages: BuildMessages
   val paths: BuildPaths

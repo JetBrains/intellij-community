@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.VmProperties
-import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.productLayout.discovery.PRODUCT_REGISTRY_PATH
 import org.jetbrains.intellij.build.productLayout.discovery.ProductConfiguration
@@ -157,18 +156,10 @@ fun buildProductInProcess(request: BuildRequest): Path {
     TraceManager.setTracer(it)
   }
   return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).use {
-    try {
-      val buildOptionsTemplate = BuildOptions()
-      val configuration = createConfiguration(homePath = request.projectDir)
-      val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
-      buildProductFromProject(request = request, productConfiguration = productConfiguration, buildOptionsTemplate = buildOptionsTemplate)
-    }
-    finally {
-      // otherwise, a thread leak in tests
-      if (!request.keepHttpClient) {
-        closeKtorClient()
-      }
-    }
+    val buildOptionsTemplate = BuildOptions()
+    val configuration = createConfiguration(homePath = request.projectDir)
+    val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
+    buildProductFromProject(request = request, productConfiguration = productConfiguration, buildOptionsTemplate = buildOptionsTemplate)
   }
 }
 

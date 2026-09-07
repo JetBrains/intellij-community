@@ -23,7 +23,6 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
-import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
 import org.jetbrains.intellij.build.impl.buildNonBundledPlugins
@@ -379,8 +378,6 @@ internal fun <T> doRunTestBuild(
     if (closeLifetime) clean { context.lifetime.close() }
     // close debug logging to prevent locking of the output directory on Windows
     clean { context.messages.close() }
-
-    clean { closeKtorClient() }
 
     if (traceFile != null) {
       // the span processor is shared by every test of the JVM, so only the file of this test closes

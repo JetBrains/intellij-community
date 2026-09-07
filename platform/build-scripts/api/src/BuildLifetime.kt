@@ -12,12 +12,23 @@ import org.jetbrains.intellij.build.telemetry.TraceManager
  * The constructor also installs the build-failure reporter on the current thread.
  */
 @ApiStatus.Internal
-class BuildLifetime : AutoCloseable {
+class BuildLifetime(borrowedHttpSession: BuildHttpSession? = null) : AutoCloseable {
   val sharedTasks: SharedTaskOwner = SharedTaskOwner("build")
 
   init {
     installBuildFailureReporter()
   }
+
+  private val httpSession: BuildHttpSession by lazy {
+    borrowedHttpSession ?: BuildHttpSession().also { sharedTasks.onClose(it) }
+  }
+
+  /** Shares the build's connection pool without transferring its ownership to a caller. */
+  val http: BuildHttpSession
+    get() {
+      sharedTasks.checkOpen()
+      return httpSession
+    }
 
   /** Closes every registered resource, the last one first. The first failure is thrown with the others suppressed. */
   override fun close() {

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildScripts.concurrency.withLockInterruptibly
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
@@ -46,9 +47,10 @@ class BundledRuntimeImpl(
   private val dependenciesProperties: DependenciesProperties,
   private val productProperties: ProductProperties?,
   private val info: (String) -> Unit,
+  private val httpSession: BuildHttpSession? = null,
 ) : BundledRuntime {
   constructor(context: CompilationContext) : this(
-    context.options, context.paths, context.dependenciesProperties, (context as? BuildContext)?.productProperties, context.messages::info
+    context.options, context.paths, context.dependenciesProperties, (context as? BuildContext)?.productProperties, context.messages::info, context.httpSession
   )
 
   override val prefix: String
@@ -123,7 +125,7 @@ class BundledRuntimeImpl(
     "https://cache-redirector.jetbrains.com/intellij-jbr/${archiveName(os, arch, libc, prefix)}"
 
   override fun resolveArchive(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, prefix: String): ResolvedDownload =
-    resolveFileForReading(downloadUrlFor(os, arch, libc, prefix), paths.communityHomeDirRoot)
+    resolveFileForReading(downloadUrlFor(os, arch, libc, prefix), paths.communityHomeDirRoot, httpSession)
 
   /**
    * Update this method together with:

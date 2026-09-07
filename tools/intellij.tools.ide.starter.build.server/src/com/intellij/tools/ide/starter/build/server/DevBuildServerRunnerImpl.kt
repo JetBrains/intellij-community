@@ -83,7 +83,6 @@ object DevBuildServerRunnerImpl : DevBuildServerRunner {
               baseIdePlatformPrefixForFrontend = ideInfo.baseIdePlatformPrefixForFrontend,
               additionalModules = ideInfo.additionalModules,
               scrambleTool = di.direct.instance<ScrambleToolProvider>().get() as ScrambleTool?,
-              keepHttpClient = false,
               generateRuntimeModuleRepository = ConfigurationStorage.includeRuntimeModuleRepositoryInIde(),
               tracer = TestTelemetryService.instance.getTracer(),
               isBootClassPathCorrect = true,

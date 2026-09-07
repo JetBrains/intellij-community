@@ -173,6 +173,7 @@
 
     <!-- region direct modules -->
     <module name="intellij.platform.runtime.product" loading="embedded"/>
+    <module name="intellij.platform.buildScripts.concurrency"/>
     <module name="intellij.platform.util.ex" loading="embedded"/>
     <module name="intellij.platform.util.ui" loading="embedded"/>
     <module name="intellij.platform.util.coroutines" loading="embedded"/>

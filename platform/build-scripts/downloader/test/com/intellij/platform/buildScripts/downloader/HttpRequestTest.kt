@@ -1,4 +1,7 @@
-package org.jetbrains.intellij.build.io
+package com.intellij.platform.buildScripts.downloader
+
+import org.jetbrains.intellij.build.io.sendHttpRequest
+import org.jetbrains.intellij.build.io.withHttpClient
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -31,7 +34,7 @@ class HttpRequestTest {
   fun `the client uses virtual workers and closes its resources`() {
     lateinit var client: HttpClient
     lateinit var executor: ExecutorService
-    HttpTestServer { exchange ->
+    DownloadHttpServer { exchange ->
       assertThat(exchange.requestHeaders.getFirst("Accept-Encoding")).isEqualTo("identity")
       exchange.respond("response")
     }.use { server ->
@@ -69,7 +72,7 @@ class HttpRequestTest {
   fun `a deadline includes the response body`() {
     val bodyStarted = CountDownLatch(1)
     lateinit var client: HttpClient
-    HttpTestServer { exchange ->
+    DownloadHttpServer { exchange ->
       exchange.sendResponseHeaders(200, 100)
       exchange.responseBody.write(0)
       exchange.responseBody.flush()
@@ -97,7 +100,7 @@ class HttpRequestTest {
     }
     val requestStarted = CountDownLatch(1)
     lateinit var client: HttpClient
-    HttpTestServer {
+    DownloadHttpServer {
       requestStarted.countDown()
       CountDownLatch(1).await()
     }.use { server ->
@@ -121,7 +124,7 @@ class HttpRequestTest {
     val outcome = CompletableFuture<Throwable>()
     val interrupted = AtomicBoolean()
     lateinit var client: HttpClient
-    HttpTestServer {
+    DownloadHttpServer {
       requestStarted.countDown()
       CountDownLatch(1).await()
     }.use { server ->
@@ -158,7 +161,7 @@ class HttpRequestTest {
   @Test
   fun `an interrupted caller does not start a request`() {
     val requests = AtomicInteger()
-    HttpTestServer { exchange ->
+    DownloadHttpServer { exchange ->
       requests.incrementAndGet()
       exchange.respond("unexpected")
     }.use { server ->
@@ -181,7 +184,7 @@ class HttpRequestTest {
   @Test
   fun `a server error does not retry a POST`() {
     val requests = AtomicInteger()
-    HttpTestServer { exchange ->
+    DownloadHttpServer { exchange ->
       requests.incrementAndGet()
       exchange.requestBody.readAllBytes()
       exchange.responseHeaders.set("Retry-After", "0")
@@ -200,7 +203,7 @@ class HttpRequestTest {
   @Test
   fun `a disconnect does not retry a POST`() {
     val requests = AtomicInteger()
-    HttpTestServer { exchange ->
+    DownloadHttpServer { exchange ->
       requests.incrementAndGet()
       exchange.requestBody.readAllBytes()
     }.use { server ->
@@ -219,7 +222,7 @@ class HttpRequestTest {
     val contents = "file contents".toByteArray()
     val file = Files.write(tempDir.resolve("redirect.bin"), contents)
     val requests = AtomicInteger()
-    HttpTestServer { exchange ->
+    DownloadHttpServer { exchange ->
       requests.incrementAndGet()
       assertThat(exchange.requestMethod).isEqualTo("POST")
       assertThat(exchange.requestBody.readAllBytes()).isEqualTo(contents)
@@ -243,7 +246,7 @@ class HttpRequestTest {
   @Test
   fun `a redirect preserves credentials within the same origin`() {
     val requests = AtomicInteger()
-    HttpTestServer { exchange ->
+    DownloadHttpServer { exchange ->
       requests.incrementAndGet()
       assertThat(exchange.requestHeaders.getFirst("Authorization")).isEqualTo("Bearer secret")
       if (exchange.requestURI.path == "/target") {
@@ -265,11 +268,11 @@ class HttpRequestTest {
   @Test
   fun `a redirect does not forward credentials to another origin`() {
     val authorization = CompletableFuture<String>()
-    HttpTestServer { exchange ->
+    DownloadHttpServer { exchange ->
       authorization.complete(exchange.requestHeaders.getFirst("Authorization") ?: "absent")
       exchange.respond("redirected")
     }.use { target ->
-      HttpTestServer { exchange ->
+      DownloadHttpServer { exchange ->
         exchange.responseHeaders.set("Location", target.uri.toString())
         exchange.respond("", 302)
       }.use { source ->

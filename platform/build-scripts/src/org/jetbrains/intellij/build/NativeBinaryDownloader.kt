@@ -88,7 +88,7 @@ object NativeBinaryDownloader {
    * Downloads and unpacks the libghostty-vt archive and returns a path to a library for the given platform.
    */
   fun getLibGhosttyVt(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path {
-    val unpackedDir = TerminalLibGhosttyVtDownloader.getOrDownloadLibRoot(context.paths.communityHomeDirRoot)
+    val unpackedDir = TerminalLibGhosttyVtDownloader.getOrDownloadLibRoot(context.paths.communityHomeDirRoot, context.httpSession)
     // match `LibGhosttyVtLocator.libraryPath` with lowercase directory names
     val relativePath = "${os.osName.lowercase()}-${arch.archName.lowercase()}/${os.libraryName("ghostty-vt")}"
     val file = unpackedDir.resolve(relativePath)
@@ -102,7 +102,7 @@ object NativeBinaryDownloader {
     val communityRoot = context.paths.communityHomeDirRoot
     val version = context.dependenciesProperties.property(propertyName)
     val uri = BuildDependenciesDownloader.getUriForMavenArtifact(INTELLIJ_DEPENDENCIES_URL, GROUP_ID, artifactId, version, PACKAGING)
-    val resolved = resolveFileForReading(uri.toString(), communityRoot)
+    val resolved = resolveFileForReading(uri.toString(), communityRoot, context.httpSession)
     val unpackedDir = extractToCacheLocation(
       archiveFile = resolved.file,
       communityRoot = communityRoot,

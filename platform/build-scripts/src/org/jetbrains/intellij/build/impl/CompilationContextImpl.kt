@@ -18,6 +18,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BUILD_CONCURRENCY
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
@@ -102,6 +103,7 @@ fun createCompilationContext(
   setupTracer: Boolean,
   enableCoroutinesDump: Boolean = true,
   customBuildPaths: BuildPaths? = null,
+  httpSession: BuildHttpSession? = null,
 ): CompilationContextImpl {
   return doCreateCompilationContext(
     projectHome = projectHome,
@@ -112,6 +114,7 @@ fun createCompilationContext(
     customBuildPaths = customBuildPaths,
     isCompilationRequired = isCompilationRequired(options),
     isBazelBacked = isRunningFromBazelOut(),
+    httpSession = httpSession,
   )
 }
 
@@ -128,6 +131,7 @@ fun createDevBuildCompilationContext(
   buildOutputRootEvaluator: (JpsProject) -> Path,
   options: BuildOptions,
   customBuildPaths: BuildPaths,
+  httpSession: BuildHttpSession? = null,
 ): CompilationContextImpl {
   return doCreateCompilationContext(
     projectHome = projectHome,
@@ -139,6 +143,7 @@ fun createDevBuildCompilationContext(
     customBuildPaths = customBuildPaths,
     isCompilationRequired = false,
     isBazelBacked = isDevBuildBazelBacked(),
+    httpSession = httpSession,
   )
 }
 
@@ -151,6 +156,7 @@ private fun doCreateCompilationContext(
   customBuildPaths: BuildPaths?,
   isCompilationRequired: Boolean,
   isBazelBacked: Boolean,
+  httpSession: BuildHttpSession?,
 ): CompilationContextImpl {
   if (isCompilationRequired) {
     // disable compression - otherwise, our zstd/zip cannot compress efficiently
@@ -192,7 +198,7 @@ private fun doCreateCompilationContext(
   }
   val model = loadProject(
     projectHome = projectHome,
-    kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT),
+    kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT, httpSession),
     isCompilationRequired = isCompilationRequired,
     mavenRepositoryPath = mavenRepositoryPath
   )
@@ -211,7 +217,7 @@ private fun doCreateCompilationContext(
   }
 
   val messages = BuildMessagesImpl.create()
-  val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options)
+  val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options, httpSession = httpSession)
   if (isCompilationRequired) {
     spanBuilder("define JDK").use {
       defineJavaSdk(context)
@@ -235,6 +241,7 @@ class CompilationContextImpl internal constructor(
   override val paths: BuildPaths,
   override val options: BuildOptions,
   @JvmField val outputProviderState: JpsModuleOutputProviderState = JpsModuleOutputProviderState(model.project),
+  override val httpSession: BuildHttpSession? = null,
 ) : CompilationContext {
   val global: JpsGlobal
     get() = model.global
@@ -267,8 +274,7 @@ class CompilationContextImpl internal constructor(
     var jdkHome = cachedJdkHome
     if (jdkHome == null) {
       // blocking doesn't matter, getStableJdkHome is mostly always called before
-      @Suppress("DEPRECATION")
-      jdkHome = JdkDownloader.blockingGetJdkHome(COMMUNITY_ROOT, infoLog = Span.current()::addEvent)
+      jdkHome = JdkDownloader.getJdkHome(COMMUNITY_ROOT, session = httpSession, infoLog = Span.current()::addEvent)
       cachedJdkHome = jdkHome
     }
     JdkDownloader.getJavaExecutable(jdkHome)
@@ -286,14 +292,14 @@ class CompilationContextImpl internal constructor(
   override fun getStableJdkHome(): Path {
     var jdkHome = cachedJdkHome
     if (jdkHome == null) {
-      jdkHome = JdkDownloader.getJdkHome(COMMUNITY_ROOT, infoLog = Span.current()::addEvent)
+      jdkHome = JdkDownloader.getJdkHome(COMMUNITY_ROOT, session = httpSession, infoLog = Span.current()::addEvent)
       cachedJdkHome = jdkHome
     }
     return jdkHome
   }
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, lifetime: BuildLifetime?): CompilationContext {
-    val copy = CompilationContextImpl(model = projectModel, messages = messages, paths = paths, options = options, outputProviderState = outputProviderState)
+    val copy = CompilationContextImpl(model = projectModel, messages = messages, paths = paths, options = options, outputProviderState = outputProviderState, httpSession = lifetime?.http ?: httpSession)
     copy.compilationData = compilationData
     return copy
   }

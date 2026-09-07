@@ -13,7 +13,6 @@ import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials.Compa
 import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials.Options
 import com.intellij.util.io.DigestUtil.sha1Hex
 import com.intellij.util.io.sha256Hex
-import io.ktor.client.plugins.ClientRequestException
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -22,9 +21,11 @@ import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.HttpStatusException
 import org.jetbrains.intellij.build.downloadAsText
 import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.impl.BundledRuntime
@@ -706,7 +707,7 @@ class SoftwareBillOfMaterialsImpl(
       }
     }
 
-    fun checkCopyrightText() {
+    fun checkCopyrightText(session: BuildHttpSession) {
       if (copyrightText != null) return
       var licenseUrl = library.licenseUrl ?: return
       if (licenseUrl.startsWith("https://github.com/") && !licenseUrl.contains("/raw/")) {
@@ -716,9 +717,10 @@ class SoftwareBillOfMaterialsImpl(
       }
       @Suppress("HardCodedStringLiteral")
       val licenseHtml = try {
-        downloadAsText(licenseUrl)
+        downloadAsText(licenseUrl, session)
       }
-      catch (e: ClientRequestException) {
+      catch (e: HttpStatusException) {
+        if (e.statusCode !in 400..499) throw e
         error(
           "'copyrightText' for '$library' library is missing, please specify it. " +
           "Unable to suggest anything due to '${e.message}'"
@@ -1033,7 +1035,7 @@ class SoftwareBillOfMaterialsImpl(
     }
     val errors = sortedLibraries.slice(50..100).mapConcurrent {
       try {
-        it.checkCopyrightText()
+        it.checkCopyrightText(context.httpSession)
         null
       }
       catch (e: IllegalStateException) {

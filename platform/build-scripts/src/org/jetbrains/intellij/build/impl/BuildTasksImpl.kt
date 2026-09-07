@@ -137,10 +137,10 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       SoftwareBillOfMaterials.STEP_ID,
     )
     context.reportDistributionBuildNumber()
-    BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
-    BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot)
-    BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
-    BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+    BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot, context.httpSession)
+    BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot, context.httpSession)
+    BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot, context.httpSession)
+    BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot, context.httpSession)
     val arch = if (SystemInfoRt.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
       JvmArchitecture.aarch64
     }
