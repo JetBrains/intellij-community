@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.ProblematicPluginInfo
+import com.intellij.openapi.diagnostic.UnhandledExceptionKind
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -59,7 +60,7 @@ internal class HeapDumpAnalysisSupport {
     val messageText = if (automaticReport) "Heap analysis results (auto)" else "Heap analysis results"
     val text = getHeapDumpReportText(reportText, heapReportProperties)
     val attachment = Attachment("report.txt", text).apply { isIncluded = true }
-    val event = IdeaLoggingEvent(messageText, OutOfMemoryError(), listOf(attachment), null as ProblematicPluginInfo?, null)
+    val event = IdeaLoggingEvent(messageText, OutOfMemoryError(), listOf(attachment), null as ProblematicPluginInfo?, null, UnhandledExceptionKind.HANDLED)
     ErrorReportSubmitter.EP_NAME.findExtension(ITNReporter::class.java)?.submit(arrayOf(event), null, parentComponent) { }
 
     LifecycleUsageTriggerCollector.onMemoryReportSubmitted(automaticReport)

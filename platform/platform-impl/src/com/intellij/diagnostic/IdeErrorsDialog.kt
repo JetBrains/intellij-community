@@ -32,7 +32,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -626,13 +625,13 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       }
     }
 
-    val pair = cluster.decouple()
-    if (pair == null) {
+    val event = cluster.toUserLoggingEvent()
+    if (event == null) {
       message.setSubmitted(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       return false
     }
 
-    val events = arrayOf(IdeaLoggingEvent(pair.first, pair.second, message.includedAttachments, cluster.pluginInfo, message))
+    val events = arrayOf(event)
     val accepted = submitter.submit(events, message.additionalInfo, parentComponent) { reportInfo ->
       message.setSubmitted(reportInfo)
       UIUtil.invokeLaterIfNeeded { updateOnSubmit() }
