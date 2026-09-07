@@ -17,6 +17,6 @@ class SeFilesProviderFactory : SeWrappedLegacyContributorItemsProviderFactory {
 
   override suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? {
     if (project == null || legacyContributor !is WeightedSearchEverywhereContributor<Any>) return null
-    return SeFilesProvider(SeAsyncContributorWrapper(legacyContributor))
+    return SeFilesLegacyBasedProvider(SeAsyncContributorWrapper(legacyContributor))
   }
 }

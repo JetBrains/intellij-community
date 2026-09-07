@@ -21,7 +21,7 @@ import com.intellij.platform.searchEverywhere.providers.target.SeTargetsProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import org.jetbrains.annotations.Nls
 
-internal class SeFilesProvider(
+internal class SeFilesLegacyBasedProvider(
   private val contributorWrapper: SeAsyncContributorWrapper<Any>,
 ) : SeWrappedLegacyContributorItemsProvider(),
     SeSearchScopesProvider,
