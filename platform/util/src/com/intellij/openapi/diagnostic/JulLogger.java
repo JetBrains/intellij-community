@@ -51,13 +51,43 @@ public class JulLogger extends Logger {
   }
 
   protected final void logSevere(@NotNull String msg) {
-    logSevere(msg, null);
+    logSevere(msg, null, UnhandledExceptionKind.HANDLED);
   }
 
-  protected final void logSevere(@NotNull String msg, @Nullable Throwable t) {
+  /**
+   * Writes {@code t} as the real cause, and carries {@code unhandledExceptionKind} beside it.
+   * A caller that already split an {@link UnhandledException} passes both parts here.
+   * See {@link IdeaLogRecord} and IJPL-254578.
+   */
+  protected final void logSevere(@NotNull String msg, @Nullable Throwable t, @NotNull UnhandledExceptionKind unhandledExceptionKind) {
     if (myLogger.isLoggable(LogLevel.ERROR.getLevel())) {
-      log(new LogEvent(myLogger, LogLevel.ERROR, msg, t));
+      log(event(LogLevel.ERROR, msg, t, unhandledExceptionKind));
     }
+  }
+
+  private @NotNull LogEvent event(@NotNull LogLevel level, @Nullable String message, @Nullable Throwable t) {
+    return event(level, message, t, UnhandledExceptionKind.HANDLED);
+  }
+
+  /**
+   * The one place where a throwable enters a {@link LogRecord}.
+   * It drops an {@link UnhandledException} wrapper, so {@code LogRecord.getThrown()} always holds the real cause.
+   * The kind travels apart, in an {@link IdeaLogRecord}. A log handler needs no knowledge of the wrapper.
+   * See IJPL-254578.
+   */
+  private @NotNull LogEvent event(@NotNull LogLevel level,
+                                  @Nullable String message,
+                                  @Nullable Throwable t,
+                                  @NotNull UnhandledExceptionKind unhandledExceptionKind) {
+    if (!(t instanceof UnhandledException)) {
+      return new LogEvent(myLogger, level, message, t, unhandledExceptionKind);
+    }
+    UnhandledException.ExceptionAndWrapper unwrapped = UnhandledException.unwrapIfUnhandled(t);
+    // A caller that split the wrapper knows the kind. A caller that gave the wrapper does not, so read it here.
+    UnhandledExceptionKind kind = unhandledExceptionKind == UnhandledExceptionKind.HANDLED
+                                  ? unwrapped.getUnhandledExceptionKind()
+                                  : unhandledExceptionKind;
+    return new LogEvent(myLogger, level, message, unwrapped.getRealCause(), kind);
   }
 
   @Override
@@ -68,14 +98,14 @@ public class JulLogger extends Logger {
   @Override
   public void trace(String message) {
     if (myLogger.isLoggable(LogLevel.TRACE.getLevel())) {
-      log(new LogEvent(myLogger, LogLevel.TRACE, message, null));
+      log(event(LogLevel.TRACE, message, null));
     }
   }
 
   @Override
   public void trace(@Nullable Throwable t) {
     if (myLogger.isLoggable(LogLevel.TRACE.getLevel())) {
-      log(new LogEvent(myLogger, LogLevel.TRACE, "", t));
+      log(event(LogLevel.TRACE, "", t));
     }
   }
 
@@ -87,21 +117,21 @@ public class JulLogger extends Logger {
   @Override
   public void debug(String message, @Nullable Throwable t) {
     if (myLogger.isLoggable(LogLevel.DEBUG.getLevel())) {
-      log(new LogEvent(myLogger, LogLevel.DEBUG, message, t));
+      log(event(LogLevel.DEBUG, message, t));
     }
   }
 
   @Override
   public void info(String message, @Nullable Throwable t) {
     if (myLogger.isLoggable(LogLevel.INFO.getLevel())) {
-      log(new LogEvent(myLogger, LogLevel.INFO, message, t));
+      log(event(LogLevel.INFO, message, t));
     }
   }
 
   @Override
   public void warn(String message, @Nullable Throwable t) {
     if (myLogger.isLoggable(LogLevel.WARNING.getLevel())) {
-      log(new LogEvent(myLogger, LogLevel.WARNING, message, t));
+      log(event(LogLevel.WARNING, message, t));
     }
   }
 
@@ -109,7 +139,7 @@ public class JulLogger extends Logger {
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (myLogger.isLoggable(LogLevel.ERROR.getLevel())) {
       String fullMessage = details.length > 0 ? message + "\nDetails: " + String.join("\n", details) : message;
-      log(new LogEvent(myLogger, LogLevel.ERROR, fullMessage, t));
+      log(event(LogLevel.ERROR, fullMessage, t));
     }
   }
 

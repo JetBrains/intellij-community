@@ -23,6 +23,7 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.UnhandledException;
+import com.intellij.openapi.diagnostic.UnhandledExceptionKind;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -227,19 +228,24 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     FREEZE_POPUP_SHOWN.log(null);
   }
 
+  /**
+   * @param realCause              the cause without an {@link UnhandledException} wrapper
+   * @param unhandledExceptionKind how the exception reached the collector. See IJPL-100 and IJPL-254578.
+   */
   public static void onError(
     @Nullable PluginId pluginId,
-    @NotNull Throwable throwable,
+    @NotNull Throwable realCause,
+    @NotNull UnhandledExceptionKind unhandledExceptionKind,
     @Nullable VMOptions.MemoryKind memoryErrorKind
   ) {
     try {
-      var description = new ThrowableDescription(throwable);
+      var description = new ThrowableDescription(realCause);
       var data = new ArrayList<EventPair<?>>();
       data.add(EventFields.PluginInfo.with(pluginId == null ? getPlatformPlugin() : getPluginInfoById(pluginId)));
       data.add(errorField.with(description.getThrowableClass()));
 
-      if (throwable instanceof UnhandledException uh) { // See IJPL-100
-        data.add(unhandledExceptionInteractiveField.with(uh.isInteractive()));
+      if (unhandledExceptionKind != UnhandledExceptionKind.HANDLED) {
+        data.add(unhandledExceptionInteractiveField.with(unhandledExceptionKind == UnhandledExceptionKind.INTERACTIVE));
       }
       if (memoryErrorKind != null) {
         data.add(memoryErrorKindField.with(memoryErrorKind));
