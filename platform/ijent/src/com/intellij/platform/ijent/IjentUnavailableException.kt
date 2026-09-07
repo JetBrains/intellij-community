@@ -4,6 +4,7 @@ package com.intellij.platform.ijent
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.ijent.IjentUnavailableException.Companion.resolveDeadSessionReason
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
@@ -67,7 +68,7 @@ sealed class IjentUnavailableException : EelUnavailableException, ExceptionWithA
      * Aligned with the exit-code consumer await in `GrpcIjentChildProcess`.
      */
     @Internal
-    val DEAD_SESSION_RESOLVE_TIMEOUT: Duration = 3.seconds
+    val DEAD_SESSION_RESOLVE_TIMEOUT: Duration = 3.seconds  // 3 seconds are taken at random, feel free to experiment with the value.
 
     /**
      * Resolves the canonical dead-session [IjentUnavailableException] for [initialError].

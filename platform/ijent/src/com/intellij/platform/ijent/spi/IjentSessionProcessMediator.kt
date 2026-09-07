@@ -27,7 +27,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -258,7 +257,7 @@ class IjentSessionProcessMediator private constructor(
           ?.takeIf { it.isCompleted }
           ?.getCompleted()
         if (exitReason is IjentUnavailableException.ClosedByApplication) {
-          ijentProcessScope.s.cancel(CancellationException(exitReason.message))
+          ijentProcessScope.destroy(exitReason, isRootCause = true)
         }
         finalizerScope.cancel(if (err != null) CancellationException(err.message, err) else null)
       }

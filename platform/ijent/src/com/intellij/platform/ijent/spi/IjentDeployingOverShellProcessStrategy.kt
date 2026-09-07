@@ -28,11 +28,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
@@ -362,18 +360,17 @@ private class ShellProcessWrapper(
   }
 
   private fun terminateProcessScope(error: IjentUnavailableException) {
-    mediator.ijentProcessScope.s.launch(start = CoroutineStart.UNDISPATCHED) {
-      currentCoroutineContext()[IjentScope.IjentContext.Key]!!
-        .completeExitReason(error)
-      throw error
-    }
+    mediator.ijentProcessScope.destroy(error, isRootCause = true)
   }
 
   fun processForConnection(): IjentSessionProcessMediator = mediator
 
   fun close() {
     if (cleanupStarted.compareAndSet(false, true)) {
-      mediator.ijentProcessScope.s.cancel(CancellationException("Deployment closed before process handoff"))
+      mediator.ijentProcessScope.destroy(
+        IjentUnavailableException.ClosedByApplication("Deployment closed before process handoff", null),
+        isRootCause = true,
+      )
     }
   }
 }
