@@ -9,6 +9,7 @@ import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.computeCatchingOrNull
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetItem
+import com.intellij.platform.searchEverywhere.providers.target.SeTargetPresentableItem
 import com.jetbrains.rhizomedb.DbContext
 import fleet.kernel.DurableRef
 import kotlinx.serialization.Serializable
@@ -67,7 +68,7 @@ class SeItemDataFactory {
         additionalInfo[SeItemDataKeys.IS_SEMANTIC] = isSemanticElement.toString()
       }
 
-      if (item is SeTargetItem && item.isExactMatch) {
+      if (item is SeTargetItem && item.isExactMatch || item is SeTargetPresentableItem && item.isExactMatch) {
         additionalInfo[SeItemDataKeys.IS_EXACT_MATCH] = true.toString()
       }
     }
