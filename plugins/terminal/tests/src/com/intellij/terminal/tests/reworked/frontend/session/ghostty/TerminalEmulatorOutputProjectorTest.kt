@@ -1049,6 +1049,87 @@ internal class TerminalEmulatorOutputProjectorTest {
     }
 
   // ---------------------------------------------------------------------------
+  // The screen top
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `a screen that never scrolled starts at logical line 0`() = withProjector {
+    write("hello")
+
+    val event = collectUpdate()
+    assertThat(event.screenTopLogicalLineIndex).isEqualTo(0L)
+    assertThat(event.screenTopColumnIndex).isEqualTo(0)
+  }
+
+  @Test
+  fun `the screen top advances by the logical lines finalized into history`() = withProjector(rows = 3) {
+    // A 3-row screen: every further line finalizes exactly one logical line. Unlike startLineLogicalIndex,
+    // which lags one update behind, the screen top counts every row already finalized.
+    write("a\r\nb\r\nc")
+    assertThat(collectUpdate().screenTopLogicalLineIndex).isEqualTo(0L)
+
+    write("\r\nd") // finalizes "a"
+    assertThat(collectUpdate().screenTopLogicalLineIndex).isEqualTo(1L)
+
+    write("\r\ne")
+    assertThat(collectUpdate().screenTopLogicalLineIndex).isEqualTo(2L)
+
+    write("\r\nf")
+    assertThat(collectUpdate().screenTopLogicalLineIndex).isEqualTo(3L)
+  }
+
+  @Test
+  fun `Ctrl+L reports the redrawn prompt as the screen top`() = withProjector(rows = 3) {
+    // Fill the screen so lines scroll into history, then erase the screen alone
+    // (CSI 2J, what a shell sends for Ctrl+L) and redraw the prompt at the home position. The scrollback
+    // survives, so the screen top is well past 0, and it is the prompt's own line: that is what lets the view
+    // put the prompt at the top of the viewport.
+    write("a\r\nb\r\nc\r\nd\r\ne")
+    collectUpdate()
+
+    write(csi("H") + csi("2J") + "prompt> ")
+    val event = collectUpdate()
+
+    assertThat(event.text).isEqualTo("prompt> ")
+    // "a" and "b" were finalized before the erase, so the surviving screen begins at logical line 2, and the
+    // prompt is that very line. The scrollback is untouched, so nothing here is 0.
+    assertThat(event.startLineLogicalIndex).isEqualTo(2L)
+    assertThat(event.screenTopLogicalLineIndex).isEqualTo(2L)
+    assertThat(event.screenTopColumnIndex).isEqualTo(0)
+    assertThat(event.cursorLogicalLineIndex).isEqualTo(2L)
+    assertThat(event.cursorColumnIndex).isEqualTo(8)
+  }
+
+  @Test
+  fun `a wrapped line straddling the screen top reports a column`() = withProjector(columns = 80, rows = 3) {
+    // One unbroken line long enough that its own rows scroll off. The screen then begins in the middle of
+    // that single logical line, so the screen top keeps line 0 and carries the width of the row above it.
+    write("A".repeat(240)) // exactly fills the 3-row screen
+    collectUpdate()
+    write("A".repeat(80)) // pushes the line's first row into history
+
+    val event = collectUpdate()
+    assertThat(event.screenTopLogicalLineIndex).isEqualTo(0L)
+    assertThat(event.screenTopColumnIndex).isEqualTo(80)
+  }
+
+  @Test
+  fun `the alternate screen reports its screen top at 0`() = withProjector(rows = 3) {
+    write("a\r\nb\r\nc\r\nd\r\ne")
+    val primary = collectUpdate()
+    assertThat(primary.screenTopLogicalLineIndex).isGreaterThan(0L)
+
+    write(csi("?1049h") + "full screen")
+    val alternate = collectUpdate()
+    assertThat(alternate.screenTopLogicalLineIndex).isEqualTo(0L)
+    assertThat(alternate.screenTopColumnIndex).isEqualTo(0)
+
+    // Leaving it restores the primary anchor, so the screen top comes back where it was.
+    write(csi("?1049l"))
+    assertThat(collectUpdate().screenTopLogicalLineIndex).isEqualTo(primary.screenTopLogicalLineIndex)
+  }
+
+  // ---------------------------------------------------------------------------
   // Erasing the scrollback (CSI 3J)
   // ---------------------------------------------------------------------------
 
@@ -1064,6 +1145,8 @@ internal class TerminalEmulatorOutputProjectorTest {
     assertThat(projector.isHistoryReplaced).isFalse()
     assertThat(event.startLineLogicalIndex).isEqualTo(0L)
     assertThat(event.text).describedAs("no line from before the erase may survive").doesNotContain("L")
+    assertThat(event.screenTopLogicalLineIndex).isEqualTo(0L)
+    assertThat(event.screenTopColumnIndex).isEqualTo(0)
   }
 
   @Test
@@ -1123,6 +1206,15 @@ internal class TerminalEmulatorOutputProjectorTest {
         assertThat(it.cursorLogicalLineIndex)
           .describedAs("cursorLogicalLineIndex of $it")
           .isGreaterThanOrEqualTo(it.startLineLogicalIndex)
+        // The emitted window starts at or above the screen top: the rows before it are finalized history.
+        assertThat(it.screenTopLogicalLineIndex)
+          .describedAs("screenTopLogicalLineIndex of $it")
+          .isGreaterThanOrEqualTo(it.startLineLogicalIndex)
+        // The cursor lives on the screen, so it never precedes the screen top.
+        assertThat(it.cursorLogicalLineIndex)
+          .describedAs("cursorLogicalLineIndex vs screenTopLogicalLineIndex of $it")
+          .isGreaterThanOrEqualTo(it.screenTopLogicalLineIndex)
+        assertThat(it.screenTopColumnIndex).describedAs("screenTopColumnIndex of $it").isNotNegative()
       }
     }
 

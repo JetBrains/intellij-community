@@ -134,6 +134,28 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
   }
 
   @Test
+  fun `Ctrl+L leaves the redrawn prompt as the screen top`() = doTest { fixture ->
+    val model = fixture.view.activeOutputModel()
+
+    // 40 lines on a 24-row screen leave 16 in scrollback.
+    fixture.connector.feed((0 until 40).joinToString("\r\n") { "L%02d".format(it) })
+    fixture.assertOutputModelState(model) { it.text.contains("L39") }
+
+    // Home plus ED2, which is what a shell sends for Ctrl+L, then the redrawn prompt. Unlike `clear`, this
+    // erases the screen alone and keeps the whole scrollback.
+    fixture.connector.feed("${ESC}[H${ESC}[2J" + "prompt> ")
+    fixture.assertOutputModelState(model) { it.text.contains("prompt>") }
+
+    // The prompt occupies the screen's first row, so the screen starts on the prompt's own line.
+    assertThat(model.getLineByOffset(model.screenTopOffset))
+      .describedAs("the screen top must be the prompt's line, not the start of the output")
+      .isEqualTo(model.getLineByOffset(model.cursorOffset))
+    // And it is well past the start of the output, because the scrollback survived.
+    assertThat(model.screenTopOffset).isGreaterThan(model.startOffset)
+    assertThat(model.text).describedAs("the scrollback must survive Ctrl+L").contains("L00")
+  }
+
+  @Test
   fun `Terminal ClearBuffer removes the visible screen and the whole scrollback`() = doTest { fixture ->
     // Ghostty-only: JediTerm's own handling of this action preserves the cursor's current line
     // (see TerminalSessionInput), a different, pre-existing contract this test does not touch.
