@@ -52,6 +52,8 @@
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.android.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.compose.compiler.plugin" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.compose.ide.plugin.shared" />
 </module>

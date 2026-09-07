@@ -17,8 +17,10 @@
  */
 package com.intellij.compose.ide.plugin.shared.util
 
+import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.compose.ide.plugin.shared.isComposeEnabledInModule
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.EditorTestUtil
@@ -134,9 +136,10 @@ fun CodeInsightTestFixture.moveCaret(window: String): PsiElement {
  * Sets up the Compose compiler plugin for tests that need compiler diagnostics.
  */
 fun setUpCompilerArgumentsForComposeCompilerPlugin(project: Project) {
-  val pluginPath = File(PlatformTestUtil.getCommunityPath(), "android/compose-ide-plugin/lib/compiler-hosted-1.5.8.jar")
+  val pluginPath = PathManager.getJarForClass(ComposePluginRegistrar::class.java)
+                   ?: error("Cannot find the Compose compiler plugin jar on the test classpath")
   KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
-    this.pluginClasspaths = arrayOf(pluginPath.absolutePath)
+    this.pluginClasspaths = arrayOf(pluginPath.toString())
   }
 }
 

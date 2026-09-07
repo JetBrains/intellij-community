@@ -205,6 +205,10 @@ jvm_library(
         "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//android/android-plugin:plugin",
+        "//android/android-plugin:plugin_test_lib",
+        "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin",
+        "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` end
