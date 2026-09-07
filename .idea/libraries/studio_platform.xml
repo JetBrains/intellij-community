@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="studio-platform" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:studio-platform:2025.3.3-433">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:studio-platform:2025.3.4-437">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2025.3.3-433/studio-platform-2025.3.3-433.jar">
-          <sha256sum>c585ab31189f62542c0da132cc7acedde50f00e3a31420e8d93080e248360093</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2025.3.4-437/studio-platform-2025.3.4-437.jar">
+          <sha256sum>bbbb840af90528074dc43a7f6837cd730043bb527639f7ce50e9b97204f6b7a7</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2025.3.3-433/studio-platform-2025.3.3-433.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2025.3.4-437/studio-platform-2025.3.4-437.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2025.3.3-433/studio-platform-2025.3.3-433-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2025.3.4-437/studio-platform-2025.3.4-437-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
