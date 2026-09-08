@@ -4,9 +4,8 @@
   <category>IDE Settings</category>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
-    Provides UI for managing LSP (Language Server Protocol) servers via configuration settings.
-    <br><br>
-    Open <b>Settings | Languages & Frameworks | LSP Servers</b> to configure servers and file mappings.
+    <p>Provides UI for managing LSP (Language Server Protocol) servers via configuration settings.</p>
+    <p>Open <b>Settings | Languages & Frameworks | Language Servers</b> to configure servers and file mappings.</p>
   ]]></description>
 
   <dependencies>

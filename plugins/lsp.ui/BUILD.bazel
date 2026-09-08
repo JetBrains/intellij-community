@@ -1,4 +1,14 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "MODULE_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.lsp.ui` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    main_module = "intellij.lsp.ui",
+    module_targets = MODULE_TARGETS,
+)
+### auto-generated section `dev intellij.lsp.ui` end
 
 ### auto-generated section `build intellij.lsp.ui` start
 jvm_library(
