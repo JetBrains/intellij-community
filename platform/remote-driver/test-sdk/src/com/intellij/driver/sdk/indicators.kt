@@ -83,7 +83,7 @@ internal fun Driver.waitForIndicators(projectGet: () -> Project?, timeout: Durat
       return@waitFor false
     }
 
-    if (waitSmartLongEnough && !lightSession) {
+    if (waitSmartLongEnough) {
       val start = smartLongEnoughStart
       if (start == null) {
         smartLongEnoughStart = Instant.now()
