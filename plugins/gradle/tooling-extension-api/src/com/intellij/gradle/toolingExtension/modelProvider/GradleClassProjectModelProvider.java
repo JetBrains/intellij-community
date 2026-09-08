@@ -52,6 +52,7 @@ public class GradleClassProjectModelProvider<T> implements ProjectImportModelPro
   ) {
     modelController.fetchRequest(buildModels, modelClass)
       .executionMode(GradleExecutionMode.SEQUENTIAL)
+      .optionalModel(true)
       .execute(modelConsumer);
   }
 

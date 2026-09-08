@@ -14,6 +14,7 @@ import com.intellij.testFramework.common.mock.notImplemented
 import com.intellij.testFramework.junit5.TestDisposable
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.api.Action
+import org.gradle.tooling.UnknownModelException
 import org.gradle.tooling.model.BuildIdentifier
 import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.tooling.model.gradle.GradleBuild
@@ -300,6 +301,62 @@ class GradleModelControllerTest(val isResilientSyncEnabled: Boolean) {
     modelConsumer.assertNoProjectModels()
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun `resilient model fetch api handles optional models`(optionalModel: Boolean) {
+    val rootProject = MockGradleProject("root")
+    val subProject = MockGradleProject("sub-project", rootProject)
+    val projectModels = listOf(rootProject, subProject)
+    val buildModel = MockGradleBuild(rootProject, projectModels)
+
+    val buildController = TestBuildController()
+    val modelConsumer = TestModelConsumer()
+
+    val modelRequest = GradleModelControllerImpl(buildController)
+      .fetchRequest(listOf(buildModel), UnknownModel::class.java)
+      .optionalModel(optionalModel)
+
+    when (optionalModel) {
+      true -> modelRequest.execute(modelConsumer)
+      else -> when (isResilientSyncEnabled) {
+        true -> modelRequest.execute(modelConsumer)
+        else -> assertThrows<UnknownModelException> {
+          modelRequest.execute(modelConsumer)
+        }
+      }
+    }
+
+    when (optionalModel) {
+      true -> buildController.assertModelRequests(
+        TestModelRequest(rootProject, UnknownModel::class.java),
+        TestModelRequest(subProject, UnknownModel::class.java)
+      )
+      else -> when (isResilientSyncEnabled) {
+        true -> buildController.assertModelRequests(
+          TestModelRequest(rootProject, UnknownModel::class.java),
+          TestModelRequest(subProject, UnknownModel::class.java)
+        )
+        else -> buildController.assertModelRequests(
+          TestModelRequest(rootProject, UnknownModel::class.java)
+        )
+      }
+    }
+
+    when (optionalModel) {
+      true -> buildController.assertNoSentFailures()
+      else -> when (isResilientSyncEnabled) {
+        true -> buildController.assertSentFailureExceptions {
+          modelFetchFailure(UnknownModelException::class.java)
+          modelFetchFailure(UnknownModelException::class.java)
+        }
+        else -> buildController.assertNoSentFailures()
+      }
+    }
+
+    modelConsumer.assertNoBuildModels()
+    modelConsumer.assertNoProjectModels()
+  }
+
   @Test
   fun `resilient model fetch api propagates project directory as target path in failure result`() {
     val rootProjectDir = File("root-dir")
@@ -416,6 +473,8 @@ class GradleModelControllerTest(val isResilientSyncEnabled: Boolean) {
       parent?.children?.add(this)
     }
   }
+
+  private interface UnknownModel
 
   private interface TestModel {
     val value: Any
