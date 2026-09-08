@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightUsagesTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightingMetaInfoWithExtensionTest
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.AbstractScriptHighlightingMetaInfoTest
+import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightImplicitItHandlerTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractOutsiderHighlightingTest
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.HIGHLIGHTING
@@ -76,6 +77,12 @@ internal fun MutableTWorkspace.generateK2HighlighterTests() {
     testGroup("highlighting/highlighting-k2", category = HIGHLIGHTING, testDataPath = "testData") {
         testClass<AbstractOutsiderHighlightingTest> {
             model("outsider", pattern = Patterns.DIRECTORY, isRecursive = false, passTestDataPath = false)
+        }
+    }
+
+    testGroup("highlighting/highlighting-k2", category = HIGHLIGHTING, testDataPath = "../../idea/tests/testData") {
+        testClass<AbstractHighlightImplicitItHandlerTest>("org.jetbrains.kotlin.idea.k2.highlighting.HighlightImplicitItHandlerTestGenerated") {
+            model("implicitIt")
         }
     }
 }
