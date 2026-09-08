@@ -28,7 +28,7 @@ import org.jetbrains.annotations.ApiStatus
 class FigmaLinkDocumentListener : DocumentListener {
 
   override fun documentChanged(event: DocumentEvent) {
-    if (!FigmaAdvertiserRegistry.isAdvertiserEnabled) return
+    if (!FigmaAdvertiserRegistry.isSuggestionAllowed) return
     val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
     if (!isMarkdownSuggestionFile(file.path)) return
 

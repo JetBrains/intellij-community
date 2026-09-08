@@ -179,6 +179,31 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
   }
 
   /**
+   * `ide.show.plugin.suggestions.on.open` is the only switch a user has that means "stop offering me
+   * plugins". The platform reads it before the project-open balloon and not before an editor banner,
+   * so this banner reads it itself, and the same file earns the banner in the cases above.
+   */
+  fun `test no banner is offered while the platform plugin suggestions are switched off`() {
+    val note = designNote()
+    suggestionOver(note).shouldNotBeNull()
+
+    Registry.get(FigmaAdvertiserRegistry.KEY_PLATFORM_PLUGIN_SUGGESTIONS).setValue(false, testRootDisposable)
+
+    suggestionOver(note).shouldBeNull()
+  }
+
+  /** The switch the banner answers is the switch the edit that would raise it answers. */
+  fun `test no recompute is asked for while the platform plugin suggestions are switched off`() {
+    myFixture.configureByText("notes.md", "# Checkout\n")
+    val notifications = recordNotifications()
+    Registry.get(FigmaAdvertiserRegistry.KEY_PLATFORM_PLUGIN_SUGGESTIONS).setValue(false, testRootDisposable)
+
+    myFixture.type("See https://www.figma.com/design/AbC123/Checkout")
+
+    notifications.updated.shouldBeEmpty()
+  }
+
+  /**
    * The answer is recorded on the project that was asked. A second project keeps the offer, which is
    * the accepted cost of not silencing the suggestion for someone who met it in the wrong project.
    */

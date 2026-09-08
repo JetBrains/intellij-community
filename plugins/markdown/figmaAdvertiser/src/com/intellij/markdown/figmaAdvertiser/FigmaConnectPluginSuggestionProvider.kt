@@ -25,9 +25,9 @@ import org.jetbrains.annotations.ApiStatus
 class FigmaConnectPluginSuggestionProvider : PluginSuggestionProvider {
 
   override fun getSuggestion(project: Project, file: VirtualFile): PluginSuggestion? {
-    // The switch first: this is asked about every file that is opened, and a registry read is
+    // The switches first: this is asked about every file that is opened, and a registry read is
     // cheaper than the path match below, which is string work.
-    if (!FigmaAdvertiserRegistry.isAdvertiserEnabled) return null
+    if (!FigmaAdvertiserRegistry.isSuggestionAllowed) return null
     if (!isMarkdownSuggestionFile(file.path)) return null
     if (isFigmaSuggestionDismissed(project)) return null
 
