@@ -4,16 +4,11 @@ package com.intellij.platform.searchEverywhere.providers.target
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewFetcher
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.ide.util.gotoByName.ChooseByNameMatcherFactory
-import com.intellij.ide.vfs.rpcId
-import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
@@ -22,7 +17,6 @@ import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeLegacyItem
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SePreviewInfo
-import com.intellij.platform.searchEverywhere.SePreviewInfoFactory
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
@@ -124,27 +118,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
 
   suspend fun getPreviewInfo(item: SeItem, project: Project): SePreviewInfo? {
     val legacyItem = (item as? SeTargetItem)?.legacyItem ?: return null
-
-    val usageInfo = readAction {
-      SearchEverywherePreviewFetcher.findFirstChild(legacyItem, project) {
-        usagePreviewDisposableList.add(it)
-      }
-    }
-    if (usageInfo?.virtualFile == null) return null
-
-    val fileIndex = ProjectFileIndex.getInstance(project)
-    // PsiElement is null for non-decompiled class files, so hide all library files
-    if (AppMode.isRemoteDevHost() && readAction {
-        fileIndex.isInLibraryClasses(usageInfo.virtualFile!!) ||
-         fileIndex.isInLibrarySource(usageInfo.virtualFile!!)
-      }) return null
-
-    val rangeResult = readAction {
-      SearchEverywherePreviewFetcher.readRangeFromUsageInfo(usageInfo)
-    }
-    val (startOffset, endOffset) = rangeResult ?: return null
-
-    return SePreviewInfoFactory.create(usageInfo.virtualFile!!.rpcId(), listOf(startOffset to endOffset))
+    return SeTargetItemsProvider.fetchPreviewInfo(legacyItem, project) { usagePreviewDisposableList.add(it) }
   }
 
   /**

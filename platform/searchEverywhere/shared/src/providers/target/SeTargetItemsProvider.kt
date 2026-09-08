@@ -6,6 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
+import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewFetcher
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.ide.util.gotoByName.ChooseByNameInScopeItemProvider
@@ -20,6 +21,8 @@ import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeIdMapper
 import com.intellij.ide.util.scopeChooser.ScopeSeparator
+import com.intellij.ide.vfs.rpcId
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.readAction
@@ -32,6 +35,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.scopes.SearchScopeData
@@ -39,6 +43,8 @@ import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
+import com.intellij.platform.searchEverywhere.SePreviewInfoFactory
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
@@ -63,6 +69,7 @@ import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.UUID
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -110,8 +117,30 @@ class SeTargetItemsProvider private constructor(
   private val label: String,
   private val gotoModelProvider: (Project, ScopeDescriptor?, Set<FileTypeRef>) -> (FilteringGotoByModel<*>),
   private val typeFilterProvider: (Project) -> List<PersistentSearchEverywhereContributorFilter<*>>,
-) {
+) : Disposable {
   private val scopes: SuspendLazyProperty<SeTargetScopes> = suspendLazy { createScopes() }
+
+  /**
+   * The disposables that a preview fetch opens, released in [dispose].
+   *
+   * `SearchEverywherePreviewFetcher.findFirstChild` can open a file to build the usage. It hands the
+   * disposable back through the handler, and the file must stay open until this provider goes away.
+   */
+  private val previewDisposables = ConcurrentLinkedQueue<Disposable>()
+
+  /**
+   * Builds the preview of [rawItem], or returns null when the item shows none.
+   *
+   * `SearchEverywherePreviewFetcher.findFirstChild` starts with
+   * `PSIPresentationBgRendererWrapper.toPsi`, so a raw item goes in with no wrapper around it.
+   */
+  suspend fun getPreviewInfo(rawItem: Any): SePreviewInfo? =
+    fetchPreviewInfo(rawItem, project) { previewDisposables.add(it) }
+
+  override fun dispose() {
+    previewDisposables.forEach { Disposer.dispose(it) }
+    previewDisposables.clear()
+  }
 
   /**
    * The persistent type filters of the model, in the order that the filter actions appear.
@@ -403,6 +432,31 @@ class SeTargetItemsProvider private constructor(
   companion object {
     private val LOG = logger<SeTargetItemsProvider>()
     const val COROUTINE_BASED_GOTO_KEY = "search.everywhere.coroutine.based.goto"
+
+    /**
+     * Builds the preview of [rawItem], or returns null when the item shows none.
+     */
+    suspend fun fetchPreviewInfo(rawItem: Any, project: Project, disposableHandler: (Disposable) -> Unit): SePreviewInfo? {
+      val usageInfo = readAction {
+        SearchEverywherePreviewFetcher.findFirstChild(rawItem, project, disposableHandler)
+      }
+      val virtualFile = usageInfo?.virtualFile ?: return null
+
+      // The PSI element is null for a class file that is not decompiled, so hide every library file.
+      if (AppMode.isRemoteDevHost() &&
+          readAction {
+            val fileIndex = ProjectFileIndex.getInstance(project)
+            fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile)
+          }) {
+        return null
+      }
+
+      val (startOffset, endOffset) = readAction {
+        SearchEverywherePreviewFetcher.readRangeFromUsageInfo(usageInfo)
+      } ?: return null
+
+      return SePreviewInfoFactory.create(virtualFile.rpcId(), listOf(startOffset to endOffset))
+    }
 
     /**
      * Removes the trailing space from the query. A trailing space is not part of a name.

@@ -10,12 +10,15 @@ import com.intellij.ide.util.gotoByName.FilteringGotoByModel
 import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
 import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsPreviewProvider
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
 import com.intellij.platform.searchEverywhere.SeTypeVisibilityStateProvider
@@ -35,7 +38,8 @@ import org.jetbrains.annotations.Nls
 
 internal class SeFilesProvider private constructor(private val targetProvider: SeTargetItemsProvider) : SeItemsProvider,
                                                                                                         SeSearchScopesProvider,
-                                                                                                        SeTypeVisibilityStateProvider {
+                                                                                                        SeTypeVisibilityStateProvider,
+                                                                                                        SeItemsPreviewProvider {
   override val id: String get() = SeProviderIdUtils.FILES_ID
   override val displayName: @Nls String get() = IdeBundle.message("search.everywhere.group.name.files")
 
@@ -96,10 +100,16 @@ internal class SeFilesProvider private constructor(private val targetProvider: S
   override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
     targetProvider.getTypeVisibilityStates(index)
 
+  override suspend fun getPreviewInfo(item: SeItem, project: Project): SePreviewInfo? {
+    val rawItem = (item as? SeTargetPresentableItem)?.rawItem ?: return null
+    return targetProvider.getPreviewInfo(rawItem)
+  }
+
   override suspend fun canBeShownInFindResults(): Boolean = true
 
   override fun dispose() {
-
+    // The target provider holds the disposables that a preview fetch opened.
+    Disposer.dispose(targetProvider)
   }
 
   companion object {
