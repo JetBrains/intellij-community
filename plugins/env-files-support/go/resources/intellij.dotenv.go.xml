@@ -1,15 +1,16 @@
 <idea-plugin package="ru.adelf.idea.dotenv.go">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="org.jetbrains.plugins.go"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.go.impl"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.projectModel"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="go" implementationClass="ru.adelf.idea.dotenv.go.GoEnvCompletionProvider"/>
     <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.go.GoEnvCompletionProvider"/>
