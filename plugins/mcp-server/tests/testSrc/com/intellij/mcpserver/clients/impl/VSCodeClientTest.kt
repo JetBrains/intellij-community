@@ -12,7 +12,7 @@ import java.nio.file.Path
 
 @TestApplication
 class VSCodeClientTest : VscodeForkMcpClientTest() {
-  override fun createClient(scope: McpClientInfo.Scope, configPath: Path): McpClient =
+  override fun createClient(scope: McpClientInfo.McpClientScope, configPath: Path): McpClient =
     VSCodeClient(scope, configPath)
 
   override fun getTestOverrideKey(): String = "vscodetest"
@@ -43,7 +43,7 @@ class VSCodeClientTest : VscodeForkMcpClientTest() {
   @Test
   fun `mcpServersKey returns servers for VSCode`() {
     val configPath = tempDir.resolve("config.json")
-    val client = VSCodeClient(McpClientInfo.Scope.Global, configPath)
+    val client = VSCodeClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     assertThat(client.mcpServersKey()).isEqualTo("servers")
   }
 }

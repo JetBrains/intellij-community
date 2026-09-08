@@ -17,9 +17,9 @@ internal fun shouldSkipPromotionDueToProjectIjProxy(project: Project): Boolean {
 
 @VisibleForTesting
 internal fun projectBaseDirHasIjProxyMcpServer(projectBaseDir: Path): Boolean {
-  val claudeClient = ClaudeCodeClient(McpClientInfo.Scope.Global, projectBaseDir.resolve(".mcp.json"))
+  val claudeClient = ClaudeCodeClient(McpClientInfo.McpClientScope.McpClientGlobalScope, projectBaseDir.resolve(".mcp.json"))
   if (claudeClient.hasAnyMcpServerNamed(IJ_PROXY_SERVER_NAMES)) return true
 
-  val codexClient = CodexClient(McpClientInfo.Scope.Global, projectBaseDir.resolve(".codex").resolve("config.toml"))
+  val codexClient = CodexClient(McpClientInfo.McpClientScope.McpClientGlobalScope, projectBaseDir.resolve(".codex").resolve("config.toml"))
   return codexClient.hasAnyMcpServerNamed(IJ_PROXY_SERVER_NAMES)
 }

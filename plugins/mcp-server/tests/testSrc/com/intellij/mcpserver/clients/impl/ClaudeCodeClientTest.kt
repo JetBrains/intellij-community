@@ -12,7 +12,7 @@ import kotlin.io.path.writeText
 
 @TestApplication
 class ClaudeCodeClientTest : VscodeForkMcpClientTest() {
-  override fun createClient(scope: McpClientInfo.Scope, configPath: Path): McpClient =
+  override fun createClient(scope: McpClientInfo.McpClientScope, configPath: Path): McpClient =
     ClaudeCodeClient(scope, configPath)
 
   override fun getTestOverrideKey(): String = "claudecodetest"
@@ -26,7 +26,7 @@ class ClaudeCodeClientTest : VscodeForkMcpClientTest() {
 
     McpClient.overrideProductSpecificServerKeyForTests(getTestOverrideKey())
 
-    val client = createClient(McpClientInfo.Scope.Project(tempDir.toString()), configPath)
+    val client = createClient(McpClientInfo.McpClientScope.McpClientProjectScope(tempDir.toString()), configPath)
     runBlocking(Dispatchers.Default) {
       client.configure(getStreamableHttpConfigOrThrow(client))
     }

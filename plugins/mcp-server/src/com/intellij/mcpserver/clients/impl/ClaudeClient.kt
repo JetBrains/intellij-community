@@ -5,7 +5,7 @@ import com.intellij.mcpserver.clients.McpClientInfo
 import java.nio.file.Path
 
 
-class ClaudeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient(
+class ClaudeClient(scope: McpClientInfo.McpClientScope, configPath: Path) : McpClient(
   mcpClientInfo = McpClientInfo(McpClientInfo.Name.CLAUDE_APP, scope),
   configPath = configPath
 ) {

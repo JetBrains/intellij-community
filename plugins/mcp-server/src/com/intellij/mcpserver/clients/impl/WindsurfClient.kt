@@ -7,7 +7,7 @@ import com.intellij.mcpserver.clients.configs.WindsurfNetworkConfig
 import java.nio.file.Path
 
 
-class WindsurfClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient(
+class WindsurfClient(scope: McpClientInfo.McpClientScope, configPath: Path) : McpClient(
   mcpClientInfo = McpClientInfo(McpClientInfo.Name.WINDSURF, scope),
   configPath = configPath
 ) {

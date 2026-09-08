@@ -7,7 +7,7 @@ import java.nio.file.Path
 
 @TestApplication
 class CursorClientTest : VscodeForkMcpClientTest() {
-  override fun createClient(scope: McpClientInfo.Scope, configPath: Path): McpClient =
+  override fun createClient(scope: McpClientInfo.McpClientScope, configPath: Path): McpClient =
     CursorClient(scope, configPath)
 
   override fun getTestOverrideKey(): String = "cursortest"

@@ -6,7 +6,7 @@ import com.intellij.mcpserver.clients.configs.AirNetworkConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import java.nio.file.Path
 
-class AirClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient(
+class AirClient(scope: McpClientInfo.McpClientScope, configPath: Path) : McpClient(
   mcpClientInfo = McpClientInfo(McpClientInfo.Name.AIR, scope),
   configPath = configPath
 ) {

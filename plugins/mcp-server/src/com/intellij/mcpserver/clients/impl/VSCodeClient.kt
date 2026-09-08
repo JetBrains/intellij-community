@@ -17,7 +17,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 
 
-open class VSCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient(
+open class VSCodeClient(scope: McpClientInfo.McpClientScope, configPath: Path) : McpClient(
   mcpClientInfo = McpClientInfo(McpClientInfo.Name.VS_CODE, scope),
   configPath = configPath
 ) {

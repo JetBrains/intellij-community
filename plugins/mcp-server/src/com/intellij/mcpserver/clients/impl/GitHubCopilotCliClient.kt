@@ -20,7 +20,7 @@ import java.nio.file.Path
  * "mcpServers")` accepts either key, so we only choose the *write* key here.
  */
 class GitHubCopilotCliClient(
-  scope: McpClientInfo.Scope,
+  scope: McpClientInfo.McpClientScope,
   configPath: Path,
 ) : McpClient(
   mcpClientInfo = McpClientInfo(

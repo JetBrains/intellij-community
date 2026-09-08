@@ -12,7 +12,7 @@ import java.nio.file.Path
 
 @TestApplication
 class GitHubCopilotIdePluginClientTest : VscodeForkMcpClientTest() {
-  override fun createClient(scope: McpClientInfo.Scope, configPath: Path): McpClient =
+  override fun createClient(scope: McpClientInfo.McpClientScope, configPath: Path): McpClient =
     GitHubCopilotIdePluginClient(scope, configPath)
 
   override fun getTestOverrideKey(): String = "githubcopilotidetest"
@@ -43,7 +43,7 @@ class GitHubCopilotIdePluginClientTest : VscodeForkMcpClientTest() {
   @Test
   fun `mcpServersKey returns servers for IDE plugin variant`() {
     val configPath = tempDir.resolve("config.json")
-    val client = GitHubCopilotIdePluginClient(McpClientInfo.Scope.Global, configPath)
+    val client = GitHubCopilotIdePluginClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath)
     assertThat(client.mcpServersKey()).isEqualTo("servers")
   }
 }

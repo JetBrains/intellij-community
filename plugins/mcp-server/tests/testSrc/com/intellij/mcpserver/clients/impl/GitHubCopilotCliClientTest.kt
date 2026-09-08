@@ -7,7 +7,7 @@ import java.nio.file.Path
 
 @TestApplication
 class GitHubCopilotCliClientTest : VscodeForkMcpClientTest() {
-  override fun createClient(scope: McpClientInfo.Scope, configPath: Path): McpClient =
+  override fun createClient(scope: McpClientInfo.McpClientScope, configPath: Path): McpClient =
     GitHubCopilotCliClient(scope, configPath)
 
   override fun getTestOverrideKey(): String = "githubcopilotclitest"
