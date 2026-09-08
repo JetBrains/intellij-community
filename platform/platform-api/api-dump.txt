@@ -532,17 +532,18 @@ com.intellij.ide.FrameStateListener
 - onFrameDeactivated():V
 - onFrameDeactivated(com.intellij.openapi.wm.IdeFrame):V
 c:com.intellij.ide.HelpTooltip
+- sf:Companion:com.intellij.ide.HelpTooltip$Companion
 - p:myMouseListener:java.awt.event.MouseAdapter
 - <init>():V
 - p:createIsOverTipMouseListener():java.awt.event.MouseListener
 - pf:createMouseListeners():V
-- s:disableTooltip(java.awt.Component):V
-- s:dispose(java.awt.Component):V
-- s:enableTooltip(java.awt.Component):V
+- sf:disableTooltip(java.awt.Component):V
+- sf:dispose(java.awt.Component):V
+- sf:enableTooltip(java.awt.Component):V
 - equals(java.lang.Object):Z
-- s:getShortcutAsHtml(java.lang.String):java.lang.String
-- s:getTooltipFor(javax.swing.JComponent):com.intellij.ide.HelpTooltip
-- s:hide(java.awt.Component):V
+- sf:getShortcutAsHtml(java.lang.String):java.lang.String
+- sf:getTooltipFor(javax.swing.JComponent):com.intellij.ide.HelpTooltip
+- sf:hide(java.awt.Component):V
 - p:hidePopup(Z):V
 - installOn(javax.swing.JComponent):V
 - setBrowserLink(java.lang.String,java.net.URL):com.intellij.ide.HelpTooltip
@@ -553,8 +554,8 @@ c:com.intellij.ide.HelpTooltip
 - setLink(java.lang.String,java.lang.Runnable):com.intellij.ide.HelpTooltip
 - setLink(java.lang.String,java.lang.Runnable,Z):com.intellij.ide.HelpTooltip
 - setLocation(com.intellij.ide.HelpTooltip$Alignment):com.intellij.ide.HelpTooltip
-- s:setMasterPopup(java.awt.Component,com.intellij.openapi.ui.popup.JBPopup):V
-- s:setMasterPopupOpenCondition(java.awt.Component,java.util.function.BooleanSupplier):V
+- sf:setMasterPopup(java.awt.Component,com.intellij.openapi.ui.popup.JBPopup):V
+- sf:setMasterPopupOpenCondition(java.awt.Component,java.util.function.BooleanSupplier):V
 - setNeverHideOnTimeout(Z):com.intellij.ide.HelpTooltip
 - setPlainTextTitle(java.lang.String):com.intellij.ide.HelpTooltip
 - setPlainTextTitle(java.util.function.Supplier):com.intellij.ide.HelpTooltip
@@ -573,9 +574,20 @@ e:com.intellij.ide.HelpTooltip$Alignment
 - sf:LEFT:com.intellij.ide.HelpTooltip$Alignment
 - sf:RIGHT:com.intellij.ide.HelpTooltip$Alignment
 - sf:TOP:com.intellij.ide.HelpTooltip$Alignment
+- b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- s:getEntries():kotlin.enums.EnumEntries
 - a:getPointFor(java.awt.Component,java.awt.Dimension,java.awt.Point):java.awt.Point
 - s:valueOf(java.lang.String):com.intellij.ide.HelpTooltip$Alignment
 - s:values():com.intellij.ide.HelpTooltip$Alignment[]
+f:com.intellij.ide.HelpTooltip$Companion
+- f:disableTooltip(java.awt.Component):V
+- f:dispose(java.awt.Component):V
+- f:enableTooltip(java.awt.Component):V
+- f:getShortcutAsHtml(java.lang.String):java.lang.String
+- f:getTooltipFor(javax.swing.JComponent):com.intellij.ide.HelpTooltip
+- f:hide(java.awt.Component):V
+- f:setMasterPopup(java.awt.Component,com.intellij.openapi.ui.popup.JBPopup):V
+- f:setMasterPopupOpenCondition(java.awt.Component,java.util.function.BooleanSupplier):V
 pc:com.intellij.ide.HelpTooltip$OverTipMouseListener
 - java.awt.event.MouseAdapter
 - p:<init>(com.intellij.ide.HelpTooltip):V
