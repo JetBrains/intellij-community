@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.run
 
@@ -10,6 +10,11 @@ import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
 import org.jetbrains.kotlin.idea.gradleJava.extensions.KotlinMultiplatformCommonProducersProvider
+
+private const val ANDROID_TEST_RUN_CONFIGURATION_TYPE = "AndroidTestRunConfigurationType"
+
+internal fun ConfigurationFromContext.isAndroidTestConfiguration(): Boolean =
+    configuration.type.id == ANDROID_TEST_RUN_CONFIGURATION_TYPE
 
 internal fun ConfigurationFromContext.isJpsJunitConfiguration(): Boolean {
     for (extension in KotlinTestFrameworkProvider.EP_NAME.extensionList) {
