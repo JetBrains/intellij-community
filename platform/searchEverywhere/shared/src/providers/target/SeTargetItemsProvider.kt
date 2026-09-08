@@ -117,7 +117,9 @@ class SeTargetItemsProvider private constructor(
   private val label: String,
   private val gotoModelProvider: (Project, ScopeDescriptor?, Set<FileTypeRef>) -> (FilteringGotoByModel<*>),
   private val typeFilterProvider: (Project) -> List<PersistentSearchEverywhereContributorFilter<*>>,
+  private val extendedInfoCalculator: SeExtendedInfoCalculator,
 ) : Disposable {
+  suspend fun getExtendedInfo(item: SeTargetRawItem): SeExtendedInfo = extendedInfoCalculator.infoFor(item)
   private val scopes: SuspendLazyProperty<SeTargetScopes> = suspendLazy { createScopes() }
 
   /**
@@ -489,6 +491,7 @@ class SeTargetItemsProvider private constructor(
       label: String,
       gotoModelProvider: (Project, ScopeDescriptor?, Set<FileTypeRef>) -> (FilteringGotoByModel<*>),
       typeFilterProvider: (Project) -> List<PersistentSearchEverywhereContributorFilter<*>> = { emptyList() },
+      extendedInfoCalculator: SeExtendedInfoCalculator = SePsiExtendedInfoCalculator(),
     ): SeTargetItemsProvider {
       val psiContext = readAction {
         GotoActionBase.getPsiContext(dataContext)?.let { context ->
@@ -496,7 +499,8 @@ class SeTargetItemsProvider private constructor(
         }
       }
 
-      return SeTargetItemsProvider(project, psiContext, operationDisposable, label, gotoModelProvider, typeFilterProvider)
+      return SeTargetItemsProvider(project, psiContext, operationDisposable, label, gotoModelProvider, typeFilterProvider,
+                                   extendedInfoCalculator)
     }
   }
 }

@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.scopes.SearchScopesInfo
-import com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsPreviewProvider
 import com.intellij.platform.searchEverywhere.SeItemsProvider
@@ -39,7 +39,8 @@ import org.jetbrains.annotations.Nls
 internal class SeFilesProvider private constructor(private val targetProvider: SeTargetItemsProvider) : SeItemsProvider,
                                                                                                         SeSearchScopesProvider,
                                                                                                         SeTypeVisibilityStateProvider,
-                                                                                                        SeItemsPreviewProvider {
+                                                                                                        SeItemsPreviewProvider,
+                                                                                                        SeExtendedInfoProvider {
   override val id: String get() = SeProviderIdUtils.FILES_ID
   override val displayName: @Nls String get() = IdeBundle.message("search.everywhere.group.name.files")
 
@@ -72,7 +73,7 @@ internal class SeFilesProvider private constructor(private val targetProvider: S
       matchers = item.matchers,
       weight = weight,
       presentation = presentation,
-      extendedInfo = SeExtendedInfoBuilder().build(), // TODO: provide the extended info
+      extendedInfo = targetProvider.getExtendedInfo(item),
       isMultiSelectionSupported = true, // AbstractGotoSEContributor supports it for every goto model
       isExactMatch = SeTargetItemsProvider.isExactMatch(
         // The legacy verdict of the item. SeAsyncContributorWrapper derives it the same way.
