@@ -400,6 +400,13 @@ public final class TableResultView extends JBTableWithResizableCells
     return myIsFrozenStrip || myFrozenColumnsController == null ? null : myFrozenColumnsController.getFrozenView();
   }
 
+  /** The table that owns the active cell editor: a pinned cell edits in the frozen strip rather than in this table. */
+  public @Nullable TableResultView getEditingView() {
+    if (isEditing()) return this;
+    TableResultView frozenView = getPairedFrozenView();
+    return frozenView != null && frozenView.isEditing() ? frozenView : null;
+  }
+
   private @Nullable TableResultView getPrimaryView() {
     return myIsFrozenStrip && myFrozenColumnsController != null ? myFrozenColumnsController.getPrimaryView() : null;
   }
@@ -521,6 +528,7 @@ public final class TableResultView extends JBTableWithResizableCells
    * selection to the clicked pinned column; Ctrl/Shift gestures stay additive. */
   @Override
   public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+    if (!myFrozenColumnsController.stopEditingBeforeSelectionChange(this, rowIndex, columnIndex)) return;
     if (extend && myFrozenColumnsController.handleCellRangeSelection(this, rowIndex, columnIndex, toggle)) return;
     super.changeSelection(rowIndex, columnIndex, toggle, extend);
     myFrozenColumnsController.afterChangeSelection(this, columnIndex, toggle, extend);
@@ -1860,6 +1868,9 @@ public final class TableResultView extends JBTableWithResizableCells
 
   @Override
   public boolean editCellAt(int row, int column, EventObject e) {
+    // The pair edits as one table: JTable finishes only its own editor before it starts another, so the editor the
+    // other table may hold is finished here instead of being left open next to this one.
+    if (!stopPairedViewEditing()) return false;
     ClientProperty.put(this, GridTableCellEditor.EDITING_STARTER_CLIENT_PROPERTY_KEY, e);
     if (shouldDisplayValueEditor(row, column)) {
       showValueEditor(e);
@@ -1871,6 +1882,13 @@ public final class TableResultView extends JBTableWithResizableCells
     finally {
       ClientProperty.put(this, GridTableCellEditor.EDITING_STARTER_CLIENT_PROPERTY_KEY, null);
     }
+  }
+
+  /** @return false when the other table keeps its editor, which leaves this cell out of edit mode as well. */
+  private boolean stopPairedViewEditing() {
+    TableResultView paired = myIsFrozenStrip ? getPrimaryView() : getPairedFrozenView();
+    TableCellEditor editor = paired == null ? null : paired.getCellEditor();
+    return editor == null || editor.stopCellEditing();
   }
 
   private boolean shouldDisplayValueEditor(int row, int column) {
@@ -2501,11 +2519,9 @@ public final class TableResultView extends JBTableWithResizableCells
 
   @Override
   public boolean stopEditing() {
-    // A pinned cell edits in the frozen view, but stopEditing() routes here; commit through the view holding the editor.
+    // A pinned cell edits in the frozen view while stopEditing() routes here, so that editor is committed as well.
     TableResultView frozenView = getPairedFrozenView();
-    if (getCellEditor() == null && frozenView != null && frozenView.isEditing()) {
-      return frozenView.stopEditing();
-    }
+    if (frozenView != null && frozenView.isEditing() && !frozenView.stopEditing()) return false;
     TableCellEditor editor = getCellEditor();
     if (editor == null) return true;
 
@@ -2533,10 +2549,8 @@ public final class TableResultView extends JBTableWithResizableCells
     if (editor != null) {
       editor.cancelCellEditing();
     }
-    else {
-      TableResultView frozenView = getPairedFrozenView();
-      if (frozenView != null && frozenView.isEditing()) frozenView.cancelEditing();
-    }
+    TableResultView frozenView = getPairedFrozenView();
+    if (frozenView != null && frozenView.isEditing()) frozenView.cancelEditing();
   }
 
   @Override

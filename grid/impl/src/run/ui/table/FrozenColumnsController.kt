@@ -982,6 +982,7 @@ internal class FrozenColumnsController(
   }
 
   fun processMouseEvent(view: TableResultView, event: MouseEvent, defaultProcessor: Runnable) {
+    if (!stopEditingBeforeNonLeftPress(view, event)) return
     // Selection in the fixed strip must not scroll the main viewport. Keep the lock for the full mouse gesture.
     if (view !== primaryView) {
       runWithAutoscrollLocked {
@@ -995,6 +996,16 @@ internal class FrozenColumnsController(
       dragAnchorColumn = unifiedMainColumn(view, event)
     }
   }
+
+  /**
+   * Swing finishes an edit before a left press reaches any listener, but it ignores the other buttons, and a right
+   * press still selects the cell under it from a JBTable listener. The edit is finished before that listener runs.
+   *
+   * @return false when the press has to be dropped, because an editor refused to commit.
+   */
+  private fun stopEditingBeforeNonLeftPress(view: TableResultView, event: MouseEvent): Boolean =
+    event.id != MouseEvent.MOUSE_PRESSED || SwingUtilities.isLeftMouseButton(event) ||
+    stopEditingBeforeSelectionChange(view, view.rowAtPoint(event.point), view.columnAtPoint(event.point))
 
   fun processMouseMotionEvent(view: TableResultView, event: MouseEvent) {
     if (event.id == MouseEvent.MOUSE_DRAGGED && !event.isConsumed && SwingUtilities.isLeftMouseButton(event)) {
@@ -1128,6 +1139,8 @@ internal class FrozenColumnsController(
                                     target: Int,
                                     extend: Boolean,
                                     focusTarget: TableResultView): Boolean {
+    // A rejected edit must prevent scrolling and focus transfer as well as the selection change.
+    if (!stopEditingBeforeSelectionChange(primaryView, row, target)) return true
     if (extend) {
       if (!selectDisplayedColumnRange(order, target, false)) return false
       if (focusTarget === primaryView) primaryView.scrollRectToVisible(primaryView.getCellRect(row, target, true))
@@ -1141,6 +1154,37 @@ internal class FrozenColumnsController(
     focusTarget.requestFocusInWindow()
     return true
   }
+
+  /**
+   * Finishes an edit that the selection would otherwise leave behind: a pending value is written through the selection
+   * the grid has when the editor commits, so moving the selection first sends it to the wrong cells. The cell holding
+   * the editor is exempt, because Swing starts an editor before it selects the cell that was clicked.
+   *
+   * @return false when an editor refused to commit, in which case the selection has to stay where it is.
+   */
+  fun stopEditingBeforeSelectionChange(view: TableResultView, row: Int, column: Int): Boolean {
+    val frozen = frozenView ?: return true
+    if (view !== primaryView && view !== frozen) return true
+    val target = modelCell(view, row, column)
+    // Either table can hold an editor, so both are asked rather than only the one that is expected to have it.
+    return stopEditingUnlessAt(primaryView, target) && stopEditingUnlessAt(frozen, target)
+  }
+
+  private fun stopEditingUnlessAt(view: TableResultView, target: ModelCell?): Boolean {
+    val editor = view.cellEditor ?: return true
+    val editing = modelCell(view, view.editingRow, view.editingColumn)
+    // The editor commits the way Swing commits an unpinned one when the selection leaves it, without the prompt
+    // TableResultView.stopEditing() adds for an explicit commit.
+    return (editing != null && editing == target) || editor.stopCellEditing()
+  }
+
+  /** The two tables index rows and columns on their own, so only model indices identify a cell in both. */
+  private fun modelCell(view: TableResultView, row: Int, column: Int): ModelCell? =
+    if (row in 0 until view.rowCount && column in 0 until view.columnCount)
+      ModelCell(view.convertRowIndexToModel(row), view.convertColumnIndexToModel(column))
+    else null
+
+  private data class ModelCell(val row: Int, val column: Int)
 
   /** An overflowing strip scrolls on its own, so a pinned column the keyboard moves to has to be brought into it. */
   private fun scrollFrozenColumnToVisible(primaryColumn: Int) {
