@@ -28,6 +28,7 @@ import com.intellij.platform.searchEverywhere.providers.target.SeTargetPresentab
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetRawItem
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider
+import com.intellij.platform.searchEverywhere.providers.target.selection.SeTargetItemSelectionProcessor
 import com.intellij.psi.PsiDirectory
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.annotations.Nls
+import java.awt.event.InputEvent
 
 internal class SeFilesProvider private constructor(private val targetProvider: SeTargetItemsProvider) : SeItemsProvider,
                                                                                                         SeSearchScopesProvider,
@@ -93,7 +95,13 @@ internal class SeFilesProvider private constructor(private val targetProvider: S
     searchText: String,
   ): Boolean {
     SeLog.log(SeLog.USER_ACTION) { "SeFilesProvider.itemSelected" }
-    return true
+    // A null answer means that no extension handled the item, so the popup stays open.
+    return SeTargetItemSelectionProcessor.process(item, this, modifiers, searchText) ?: false
+  }
+
+  override suspend fun performExtendedAction(item: SeItem): Boolean {
+    SeLog.log(SeLog.USER_ACTION) { "SeFilesProvider.performExtendedAction" }
+    return SeTargetItemSelectionProcessor.process(item, this, InputEvent.SHIFT_DOWN_MASK, "") ?: false
   }
 
   override suspend fun getSearchScopesInfo(): SearchScopesInfo? = targetProvider.getSearchScopesInfo()

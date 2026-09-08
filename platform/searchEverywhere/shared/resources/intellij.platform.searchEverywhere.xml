@@ -40,6 +40,11 @@
     <extensionPoint name="searchEverywhere.targetPresentationProvider"
                     interface="com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider"
                     dynamic="true"/>
+
+    <!-- Ordered. Each extension takes the part of the selection it handles and passes the rest on. -->
+    <extensionPoint name="searchEverywhere.targetItemSelectionProcessor"
+                    interface="com.intellij.platform.searchEverywhere.providers.target.selection.SeTargetItemSelectionProcessor"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -76,5 +81,10 @@
     <searchEverywhere.targetPresentationProvider
       order="last"
       implementation="com.intellij.platform.searchEverywhere.providers.target.presentation.SeDefaultTargetPresentationProvider"/>
+
+    <!-- The fallback selection processor. It navigates to whatever is left, so it must stay last. -->
+    <searchEverywhere.targetItemSelectionProcessor
+      order="last"
+      implementation="com.intellij.platform.searchEverywhere.providers.target.selection.SeDefaultTargetItemSelectionProcessor"/>
   </extensions>
 </idea-plugin>
