@@ -9,21 +9,21 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jetbrains.mlapi.core" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:mlapi-core:0.2.3">
+        <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:mlapi-core:0.2.4">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0.2.3/mlapi-core-0.2.3.jar">
-              <sha256sum>13f52c729e4ba3c536880c9177d272ec1e134d07172cd923720c03e0deefc9fa</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0.2.4/mlapi-core-0.2.4.jar">
+              <sha256sum>33a8dbb5a86476e3208142c0b0795e01f70f5b43c7f7e27e947e81909181bf6f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0.2.3/mlapi-core-0.2.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0.2.4/mlapi-core-0.2.4.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0.2.3/mlapi-core-0.2.3-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0.2.4/mlapi-core-0.2.4-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0.2.3/mlapi-core-0.2.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0.2.4/mlapi-core-0.2.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
