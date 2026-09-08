@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.backend.providers.files
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel
@@ -24,6 +25,7 @@ import com.intellij.platform.searchEverywhere.providers.target.SeTargetPresentab
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetRawItem
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider
+import com.intellij.psi.PsiDirectory
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.buffer
@@ -41,7 +43,10 @@ internal class SeFilesProvider private constructor(private val targetProvider: S
     params: SeParams,
     collector: SeItemsProvider.Collector,
   ) = coroutineScope {
-    targetProvider.getItemsFlow(params, presentationProvider = { fetchPresentation(it) })
+    val inputQuery = SeTargetItemsProvider.normalizeQuery(params.inputQuery)
+    val inputQueryHasNoExtension = !inputQuery.contains('.')
+
+    targetProvider.getItemsFlow(params, presentationProvider = { fetchPresentation(it, inputQuery, inputQueryHasNoExtension) })
       .buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND)
       .takeWhile {
         collector.put(it)
@@ -49,7 +54,11 @@ internal class SeFilesProvider private constructor(private val targetProvider: S
       .collect()
   }
 
-  private suspend fun fetchPresentation(item: SeTargetRawItem): SeTargetPresentableItem {
+  private suspend fun fetchPresentation(
+    item: SeTargetRawItem,
+    inputQuery: String,
+    inputQueryHasNoExtension: Boolean,
+  ): SeTargetPresentableItem {
     val weight = item.rawWeight ?: 0
     val presentation = SeTargetPresentationProvider.computePresentation(item.rawItem)
                        ?: TargetPresentation.builder("").presentation()
@@ -61,7 +70,15 @@ internal class SeFilesProvider private constructor(private val targetProvider: S
       presentation = presentation,
       extendedInfo = SeExtendedInfoBuilder().build(), // TODO: provide the extended info
       isMultiSelectionSupported = true, // AbstractGotoSEContributor supports it for every goto model
-      isExactMatch = DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(weight),
+      isExactMatch = SeTargetItemsProvider.isExactMatch(
+        // The legacy verdict of the item. SeAsyncContributorWrapper derives it the same way.
+        isExactMatchFromItem = DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(weight),
+        presentableText = presentation.presentableText,
+        inputQuery = inputQuery,
+        isFile = id == SeProviderIdUtils.FILES_ID,
+        inputQueryHasNoExtension = inputQueryHasNoExtension,
+        isDirectory = PSIPresentationBgRendererWrapper.toPsi(item.rawItem) is PsiDirectory,
+      ),
     )
   }
 

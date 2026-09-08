@@ -241,7 +241,7 @@ class SeTargetItemsProvider private constructor(
     val attemptCount = AtomicInteger(0)
     val sentCount = AtomicInteger(0)
     val startedAtNano = System.nanoTime()
-    val pattern = params.inputQuery.trim()
+    val pattern = normalizeQuery(params.inputQuery)
     if (pattern.isBlank()) return@channelFlow
 
     val (scopeDescriptor, hiddenTypes) = SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
@@ -374,6 +374,30 @@ class SeTargetItemsProvider private constructor(
   companion object {
     private val LOG = logger<SeTargetItemsProvider>()
     const val COROUTINE_BASED_GOTO_KEY = "search.everywhere.coroutine.based.goto"
+
+    /**
+     * Removes the trailing space from the query. A trailing space is not part of a name.
+     *
+     * Only the trailing space goes. A leading space and an internal space stay, because a Goto matcher
+     * and a command with an argument both use them.
+     */
+    fun normalizeQuery(rawQuery: String): String = rawQuery.trimEnd()
+
+    /**
+     * Tells whether a target matches exactly what the user typed, so that the result list can keep it
+     * above a partial sibling. See IJPL-248758.
+     */
+    fun isExactMatch(
+      isExactMatchFromItem: Boolean,
+      presentableText: String,
+      inputQuery: String,
+      isFile: Boolean,
+      inputQueryHasNoExtension: Boolean,
+      isDirectory: Boolean,
+    ): Boolean =
+      isExactMatchFromItem || // IJPL-133399, IJPL-251596
+      !isDirectory && ((presentableText == inputQuery) || // IJPL-55665
+                       (isFile && inputQueryHasNoExtension && presentableText.startsWith("$inputQuery."))) // IJPL-55732, IJPL-156298
 
     suspend fun create(
       project: Project,

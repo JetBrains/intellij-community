@@ -7,10 +7,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * Unit tests for [SeTargetsProviderDelegate.isExactMatch] — the rule that marks a target as an exact match of what the
+ * Unit tests for [SeTargetItemsProvider.isExactMatch] — the rule that marks a target as an exact match of what the
  * user typed, so that the result list can keep it above partial/fuzzy siblings (IJPL-248758).
  */
-class SeTargetsProviderDelegateExactMatchTest {
+class SeTargetItemsProviderExactMatchTest {
 
   @Test
   fun contributorVerdictIsAlwaysHonored() {
@@ -94,7 +94,7 @@ class SeTargetsProviderDelegateExactMatchTest {
     assertEquals("  Foo", normalizeQuery("  Foo"))
   }
 
-  private fun normalizeQuery(rawQuery: String): String = SeTargetsProviderDelegate.normalizeQuery(rawQuery)
+  private fun normalizeQuery(rawQuery: String): String = SeTargetItemsProvider.normalizeQuery(rawQuery)
 
   /**
    * [queryHasNoExtension] defaults to the same expression the production caller uses, so that the cases above exercise
@@ -107,7 +107,7 @@ class SeTargetsProviderDelegateExactMatchTest {
     isFile: Boolean = false,
     queryHasNoExtension: Boolean = !query.contains('.'),
     isDirectory: Boolean = false,
-  ): Boolean = SeTargetsProviderDelegate.isExactMatch(
+  ): Boolean = SeTargetItemsProvider.isExactMatch(
     isExactMatchFromItem = fromItem,
     presentableText = presentableText,
     inputQuery = query,

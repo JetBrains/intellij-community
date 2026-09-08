@@ -70,7 +70,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
   }
 
   suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector, operationDisposable: Disposable? = null) {
-    val inputQuery = normalizeQuery(params.inputQuery)
+    val inputQuery = SeTargetItemsProvider.normalizeQuery(params.inputQuery)
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
     scopeProviderDelegate?.let { scopeProviderDelegate ->
@@ -96,12 +96,12 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
         val isDirectory = PSIPresentationBgRendererWrapper.toPsi(legacyItem.item) is PsiDirectory
 
         // If the item main presentation text equals the query, we make it exact match as well
-        val isExactMatch = isExactMatch(isExactMatch,
-                                        presentableText = presentableText,
-                                        inputQuery = inputQuery,
-                                        isFile = isFile,
-                                        inputQueryHasNoExtension = hasNoExtension,
-                                        isDirectory = isDirectory)
+        val isExactMatch = SeTargetItemsProvider.isExactMatch(isExactMatch,
+                                                              presentableText = presentableText,
+                                                              inputQuery = inputQuery,
+                                                              isFile = isFile,
+                                                              inputQueryHasNoExtension = hasNoExtension,
+                                                              isDirectory = isDirectory)
 
         return collector.put(SeTargetItem(legacyItem,
                                           matchers,
@@ -188,24 +188,5 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
 
   override fun dispose() {
     usagePreviewDisposableList.forEach { Disposer.dispose(it) }
-  }
-
-  companion object {
-    /**
-     * Removes the trailing space from the query. A trailing space is not part of a name.
-     */
-    fun normalizeQuery(rawQuery: String): String = rawQuery.trimEnd()
-
-    fun isExactMatch(
-      isExactMatchFromItem: Boolean,
-      presentableText: String,
-      inputQuery: String,
-      isFile: Boolean,
-      inputQueryHasNoExtension: Boolean,
-      isDirectory: Boolean,
-    ): Boolean =
-      isExactMatchFromItem || // IJPL-133399, IJPL-251596
-      !isDirectory && ((presentableText == inputQuery) || // IJPL-55665
-                       (isFile && inputQueryHasNoExtension && presentableText.startsWith("$inputQuery."))) // IJPL-55732, IJPL-156298
   }
 }
