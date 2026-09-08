@@ -336,6 +336,11 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     return command.equals(currentCommand);
   }
 
+  @ApiStatus.Internal
+  protected final @Nullable CommandToken getCurrentCommandToken() {
+    return currentCommand;
+  }
+
   private void startUndoTransparentAction() {
     if (LOG.isDebugEnabled()) {
       LOG.debug("runUndoTransparentAction in command = " + (currentCommand != null) +

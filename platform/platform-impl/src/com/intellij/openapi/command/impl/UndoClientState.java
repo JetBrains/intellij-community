@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
 final class UndoClientState {
@@ -163,6 +164,10 @@ final class UndoClientState {
 
   boolean isInsideCommand() {
     return commandBuilder.isInsideCommand();
+  }
+
+  @NotNull BooleanSupplier captureHasCurrentActions() {
+    return isInsideCommand() ? commandBuilder.captureHasActions() : () -> false;
   }
 
   void markCurrentCommandAsGlobal() {

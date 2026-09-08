@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.BooleanSupplier;
 
 public class UndoManagerImpl extends UndoManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(UndoManagerImpl.class);
@@ -163,6 +164,10 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
   public boolean isActive() {
     return state.isActiveForCurrentProject();
+  }
+
+  @NotNull BooleanSupplier captureHasActions() {
+    return state.captureHasCurrentActions();
   }
 
   public void addDocumentAsAffected(@NotNull Document document) {

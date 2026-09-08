@@ -17,9 +17,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 @ApiStatus.Internal
 public final class CommandProcessorImpl extends CoreCommandProcessor implements Disposable {
+  private final Map<CommandToken, BooleanSupplier> commandActionsAcrossModals = new HashMap<>();
 
   @Override
   public void finishCommand(@NotNull CommandToken command, @Nullable Throwable throwable) {
@@ -27,10 +31,16 @@ public final class CommandProcessorImpl extends CoreCommandProcessor implements 
       return;
     }
     boolean isPCE = throwable instanceof ProcessCanceledException;
+    boolean shouldCheckActions = throwable != null && command.getProject() != null && !isUndoTransparentActionInProgress();
+    BooleanSupplier hasActionsSupplier = () -> false;
+    BooleanSupplier modalActions;
     try {
       if (throwable != null && !isPCE) {
         ExceptionUtil.rethrowUnchecked(throwable);
         LOG.error(throwable);
+      }
+      if (shouldCheckActions) {
+        hasActionsSupplier = captureHasActions(command);
       }
     }
     finally {
@@ -43,10 +53,49 @@ public final class CommandProcessorImpl extends CoreCommandProcessor implements 
         }
         throw e;
       }
+      finally {
+        modalActions = commandActionsAcrossModals.remove(command);
+      }
     }
     if (throwable != null) {
+      boolean hasActions = shouldCheckActions &&
+                           (hasActionsSupplier.getAsBoolean() || modalActions != null && modalActions.getAsBoolean());
       boolean showTooComplexDialog = !isPCE; // IJPL-1116 Cancellation causes "Too complex" message
-      undoLastOperation(command, showTooComplexDialog);
+      undoLastOperation(command, hasActions, showTooComplexDialog);
+    }
+  }
+
+  /**
+   * Modal windows reset an action collection.
+   * Starting counter-part during which the previous buffer is flushed
+   */
+  @Override
+  public void enterModal() {
+    CommandToken command = getCurrentCommandToken();
+    if (command == null || command.getProject() == null) {
+      super.enterModal();
+      return;
+    }
+    BooleanSupplier actions = captureHasActions(command);
+    try {
+      super.enterModal();
+      boolean hasActions = actions.getAsBoolean();
+      actions = () -> hasActions;
+    }
+    finally {
+      rememberCommandActions(command, actions);
+    }
+  }
+
+  /**
+   * Closing counter-part, see {@link #enterModal}.
+   */
+  @Override
+  public void leaveModal() {
+    super.leaveModal();
+    CommandToken command = getCurrentCommandToken();
+    if (command != null && command.getProject() != null) {
+      rememberCommandActions(command, captureHasActions(command));
     }
   }
 
@@ -60,6 +109,7 @@ public final class CommandProcessorImpl extends CoreCommandProcessor implements 
 
   @Override
   public void dispose() {
+    commandActionsAcrossModals.clear();
     // [analyzer] IJPL-199712: Dispose command processor between executions
   }
 
@@ -79,9 +129,20 @@ public final class CommandProcessorImpl extends CoreCommandProcessor implements 
     }
   }
 
-  private static void undoLastOperation(@NonNull CommandToken command, boolean showTooComplexDialog) {
+  private void rememberCommandActions(@NotNull CommandToken command, @NotNull BooleanSupplier actions) {
+    BooleanSupplier previous = commandActionsAcrossModals.get(command);
+    BooleanSupplier merged = previous != null && previous.getAsBoolean() ? () -> true : actions;
+    commandActionsAcrossModals.put(command, merged);
+  }
+
+  private static @NotNull BooleanSupplier captureHasActions(@NotNull CommandToken command) {
+    UndoManagerImpl undoManager = getUndoManagerImpl(command.getProject());
+    return undoManager == null ? () -> false : undoManager.captureHasActions();
+  }
+
+  private static void undoLastOperation(@NonNull CommandToken command, boolean hasActions, boolean showTooComplexDialog) {
     Project project = command.getProject();
-    if (project != null) {
+    if (project != null && hasActions) {
       var undoManagerImpl = getUndoManagerImpl(project);
       if (undoManagerImpl != null) {
         FileEditor editor = undoManagerImpl.getEditorProvider().getCurrentEditor(project);
