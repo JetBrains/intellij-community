@@ -20,6 +20,26 @@ object FigmaAdvertiserRegistry {
 
   const val ENABLED_BY_DEFAULT: Boolean = true
 
+  /**
+   * The platform's own "stop offering me plugins" switch, read at
+   * `PluginsAdvertiserStartupActivity.kt:50`.
+   */
+  const val KEY_PLATFORM_PLUGIN_SUGGESTIONS: String = "ide.show.plugin.suggestions.on.open"
+
   val isAdvertiserEnabled: Boolean
     get() = Registry.`is`(KEY_ADVERTISER_ENABLED, ENABLED_BY_DEFAULT)
+
+  /**
+   * Whether the advertisement may offer anything, before any file's path or text is looked at.
+   *
+   * The platform reads [KEY_PLATFORM_PLUGIN_SUGGESTIONS] before the project-open balloon and not
+   * before an editor banner, so the platform's own banners ignore it. This advertisement answers it,
+   * because the two mistakes cost different amounts. Honouring the switch too widely costs a user one
+   * suggestion they might have wanted. Ignoring it shows a plugin offer to a user who asked to be
+   * shown none, which is the worse of the two, so the doubt is spent on the side of their answer.
+   *
+   * Both questions are registry reads, which is why every caller asks this one first.
+   */
+  val isSuggestionAllowed: Boolean
+    get() = isAdvertiserEnabled && Registry.`is`(KEY_PLATFORM_PLUGIN_SUGGESTIONS)
 }
