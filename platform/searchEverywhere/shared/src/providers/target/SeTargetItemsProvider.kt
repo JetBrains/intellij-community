@@ -16,6 +16,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
 import com.intellij.ide.util.gotoByName.ChooseByNameWeightedItemProvider
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel
+import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeIdMapper
 import com.intellij.ide.util.scopeChooser.ScopeSeparator
@@ -45,10 +46,13 @@ import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FindSymbolParameters
+import com.intellij.util.text.matching.MatchingMode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
@@ -80,7 +84,10 @@ import kotlin.coroutines.cancellation.CancellationException
 @ApiStatus.Internal
 class SeTargetScopes(val info: SearchScopesInfo?, val byId: SeScopeById)
 
-class SeTargetRawItem(val rawItem: Any, val rawWeight: Int?)
+/**
+ * A raw search result, with the matchers that decide which parts of its presentation the UI highlights.
+ */
+class SeTargetRawItem(val rawItem: Any, val rawWeight: Int?, val matchers: ItemMatchers?)
 
 class SeTargetPresentableItem(val rawItem: Any,
                               private val matchers: ItemMatchers?,
@@ -287,6 +294,7 @@ class SeTargetItemsProvider private constructor(
         val provider = ChooseByNameModelEx.getItemProvider(model, context)
         val isEverywhere = scope.isSearchInLibraries
         val viewModel = MyViewModel(project, model)
+        val defaultMatchers = createDefaultMatchers(pattern, model)
 
         LOG.debug {
           "$label: search start, attempt=$attempt, pattern='$pattern', " +
@@ -304,20 +312,20 @@ class SeTargetItemsProvider private constructor(
               provider.filterElementsWithWeights(viewModel, parameters, progressIndicator
               ) { item: FoundItemDescriptor<*> ->
                 fromModelCount.incrementAndGet()
-                processElement(progressIndicator, model, item.item, item.weight, sentCount)
+                processElement(progressIndicator, model, item.item, item.weight, defaultMatchers, sentCount)
               }
             }
             is ChooseByNameWeightedItemProvider -> {
               provider.filterElementsWithWeights(viewModel, pattern, isEverywhere, progressIndicator
               ) { item: FoundItemDescriptor<*> ->
                 fromModelCount.incrementAndGet()
-                processElement(progressIndicator, model, item.item, item.weight, sentCount)
+                processElement(progressIndicator, model, item.item, item.weight, defaultMatchers, sentCount)
               }
             }
             else -> {
               provider.filterElements(viewModel, pattern, isEverywhere, progressIndicator) { element: Any ->
                 fromModelCount.incrementAndGet()
-                processElement(progressIndicator, model, element, null, sentCount)
+                processElement(progressIndicator, model, element, null, defaultMatchers, sentCount)
               }
             }
           }
@@ -346,8 +354,29 @@ class SeTargetItemsProvider private constructor(
     }
   }
 
+  /**
+   * The matchers of the whole query, before any item narrows them.
+   */
+  private fun createDefaultMatchers(pattern: String, model: ChooseByNameModel): ItemMatchers {
+    val namePattern = ChooseByNamePopup.getTransformedPattern(pattern, model)
+    return ItemMatchers(NameUtil.buildMatcherWithFallback("*$pattern", "*$namePattern", MatchingMode.IGNORE_CASE), null)
+  }
+
+  private fun itemMatchers(defaultMatchers: ItemMatchers, model: ChooseByNameModel, element: Any): ItemMatchers =
+    if (model is GotoFileModel && element is PsiFileSystemItem) {
+      GotoFileModel.convertToFileItemMatchers(defaultMatchers, element, model)
+    }
+    else {
+      defaultMatchers
+    }
+
   private fun ProducerScope<SeTargetRawItem>.processElement(
-    indicator: ProgressIndicator, model: ChooseByNameModel, element: Any?, weight: Int?, sentCount: AtomicInteger,
+    indicator: ProgressIndicator,
+    model: ChooseByNameModel,
+    element: Any?,
+    weight: Int?,
+    defaultMatchers: ItemMatchers,
+    sentCount: AtomicInteger,
   ): Boolean {
     if (indicator.isCanceled) {
       LOG.debug {
@@ -364,7 +393,7 @@ class SeTargetItemsProvider private constructor(
       LOG.debug {
         "$label: emitting ${element.toString().split('\n').firstOrNull()}, weight=$weight"
       }
-      send(SeTargetRawItem(element, weight))
+      send(SeTargetRawItem(element, weight, itemMatchers(defaultMatchers, model, element)))
     }
     sentCount.incrementAndGet()
 

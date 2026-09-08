@@ -65,7 +65,7 @@ internal class SeFilesProvider private constructor(private val targetProvider: S
 
     return SeTargetPresentableItem(
       rawItem = item.rawItem,
-      matchers = null, // TODO: provide matchers
+      matchers = item.matchers,
       weight = weight,
       presentation = presentation,
       extendedInfo = SeExtendedInfoBuilder().build(), // TODO: provide the extended info
