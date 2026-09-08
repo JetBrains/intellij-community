@@ -273,17 +273,21 @@ internal class PyProjectModelSyncService(private val project: Project, private v
    *
    * Only a `pyproject.toml` is saved. A save of every document would cost an EDT write action for each event
    * batch, and the save of a `pyproject.toml` itself emits a content change event, hence one more rebuild.
+   *
+   * The write action needs the EDT, and a background `writeAction` does not work here. `saveDocument`
+   * publishes `beforeAnyDocumentSaving`, a listener of that topic runs on the EDT, and the message bus then
+   * calls `invokeAndWait`. From a background write action the platform reports that as a deadlock.
+   * `PySaveTomlDocumentTest` covers this path.
    */
   private suspend fun saveTomlDocuments() {
     val fileDocumentManager = FileDocumentManager.getInstance()
     fun Document.isPyProjectToml(): Boolean = fileDocumentManager.getFile(this)?.name == PY_PROJECT_TOML
-    if (fileDocumentManager.unsavedDocuments.none { it.isPyProjectToml() }) return
+    val documents = fileDocumentManager.unsavedDocuments.filter { it.isPyProjectToml() }
+    if (documents.isEmpty()) return
     edtWriteAction {
-      for (document in fileDocumentManager.unsavedDocuments) {
-        if (document.isPyProjectToml()) {
-          fileDocumentManager.saveDocument(document)
-        }
-      }
+      // A document that another writer saved in the meantime is no longer unsaved, and `saveDocument`
+      // returns at once for it.
+      documents.forEach(fileDocumentManager::saveDocument)
     }
   }
 
