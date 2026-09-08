@@ -7,12 +7,14 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.python.ruff.RuffBundle
-import com.jetbrains.python.sdk.getExecutablePath
+import com.intellij.util.system.OS
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import org.toml.lang.psi.TomlFile
 import java.io.BufferedReader
@@ -20,6 +22,7 @@ import java.io.File
 import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
 import kotlin.io.path.writeText
@@ -156,3 +159,15 @@ private val ERROR_PATTERN = Regex(
 
 // Pattern to match the success message from ruff check ? output
 private val SUCCESS_PATTERN = Regex("\\?:1:1: E902 No such file or directory \\(os error 2\\)\\s+Found 1 error\\.")
+
+// TODO: The whole engine should be replaced with eel-based API and PyTool
+private fun Sdk.getExecutablePath(name: String): Path? = homePath?.let {
+  val base = Path(it)
+  val candidates = if (OS.CURRENT == OS.Windows) {
+    listOf("exe", "bat", "cmd", "com").map { ext -> "$name.$ext" }.plusElement(name)
+  }
+  else {
+    listOf(name)
+  }
+  candidates.firstNotNullOfOrNull { candidate -> PythonSdkUtil.getExecutablePath(base, candidate) }
+}

@@ -217,7 +217,14 @@ public final class PythonSdkUtil {
     return (path != null) ? path.toString() : null;
   }
 
+  /**
+   * Use {@link VirtualEnvReaderKt}
+   * @param homeDirectory
+   * @param name
+   * @return
+   */
   @RequiresBackgroundThread(generateAssertion = false)
+  @Deprecated(forRemoval = true)
   public static @Nullable Path getExecutablePath(@NotNull Path homeDirectory, @NotNull String name) {
     Path binDir = homeDirectory.getParent();
     if (binDir == null) return null;
