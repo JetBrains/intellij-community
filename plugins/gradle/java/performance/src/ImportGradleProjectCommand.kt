@@ -1,12 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.java.performance
 
+import com.intellij.gradle.java.performance.ImportGradleProjectCommand.Companion.SYNC_TASK_TIMEOUT
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback
@@ -14,6 +16,8 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.progress.ProgressManagerListener
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.waitForSmartMode
@@ -23,9 +27,11 @@ import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.open.setupGradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
@@ -39,6 +45,7 @@ import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.resume
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * The command imports each linked Gradle project and waits for the indexing.
@@ -103,61 +110,111 @@ class ImportGradleProjectCommand(text: String, line: Int) : PerformanceCommandCo
     val gradleProjectsToRefreshCount = AtomicInteger(projectsSettings.size)
     val projectsWithResolveErrors = StringBuilder()
     val importDeferred = CompletableDeferred<Unit>()
-    for (settings in projectsSettings) {
-      val importSpecBuilder = ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
-      importSpecBuilder
+    val syncTasksFinished = CompletableDeferred<Unit>()
+    subscribeToSyncTasksUnderProgress(project, projectsSettings.size, syncTasksFinished)
+    try {
+      for (settings in projectsSettings) {
+        val importSpecBuilder = ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
+        importSpecBuilder
           .withImportProjectData(false)
           .withCallback(object : ExternalProjectRefreshCallback {
 
-            override fun onSuccess(externalProject: DataNode<ProjectData>?) {
-              context.message("Gradle resolve finished for: ${externalProject!!.data.linkedExternalProjectPath}", line)
-              val connection: SimpleMessageBusConnection = project.messageBus.simpleConnect()
-              connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
-                override fun onFinalTasksFinished(projectPath: String?) {
-                  handleImportFinished(projectPath)
-                }
+          override fun onSuccess(externalProject: DataNode<ProjectData>?) {
+            context.message("Gradle resolve finished for: ${externalProject!!.data.linkedExternalProjectPath}", line)
+            val connection: SimpleMessageBusConnection = project.messageBus.simpleConnect()
+            connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
+              override fun onFinalTasksFinished(projectPath: String?) {
+                handleImportFinished(projectPath)
+              }
 
-                override fun onImportFailed(projectPath: String?, failure: Throwable) {
-                  handleImportFinished(projectPath)
-                }
+              override fun onImportFailed(projectPath: String?, failure: Throwable) {
+                handleImportFinished(projectPath)
+              }
 
-                private fun handleImportFinished(projectPath: String?) {
-                  if (projectPath !in projectsPaths) return
-                  connection.disconnect()
-                  if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
-                    ApplicationManager.getApplication().invokeLater {
-                      importDeferred.complete(Unit)
-                    }
+              private fun handleImportFinished(projectPath: String?) {
+                if (projectPath !in projectsPaths) return
+                connection.disconnect()
+                if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
+                  ApplicationManager.getApplication().invokeLater {
+                    importDeferred.complete(Unit)
                   }
                 }
-              })
-
-              ProjectDataManager.getInstance().importData(externalProject, project)
-            }
-
-            override fun onFailure(errorMessage: String, errorDetails: String?) {
-              context.error("Gradle resolve failed for: ${settings.externalProjectPath}:$errorMessage:$errorDetails", line)
-              synchronized(projectsWithResolveErrors) {
-                if (projectsWithResolveErrors.isNotEmpty()) {
-                  projectsWithResolveErrors.append(", ")
-                }
-                projectsWithResolveErrors.append("'${Paths.get(settings.externalProjectPath!!).fileName?.toString() ?: ""}'")
               }
-              if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
-                ApplicationManager.getApplication().invokeLater {
-                  importDeferred.completeExceptionally(IllegalStateException(projectsWithResolveErrors.toString()))
-                }
+            })
+
+            ProjectDataManager.getInstance().importData(externalProject, project)
+          }
+
+          override fun onFailure(errorMessage: String, errorDetails: String?) {
+            context.error("Gradle resolve failed for: ${settings.externalProjectPath}:$errorMessage:$errorDetails", line)
+            synchronized(projectsWithResolveErrors) {
+              if (projectsWithResolveErrors.isNotEmpty()) {
+                projectsWithResolveErrors.append(", ")
+              }
+              projectsWithResolveErrors.append("'${Paths.get(settings.externalProjectPath!!).fileName?.toString() ?: ""}'")
+            }
+            if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
+              ApplicationManager.getApplication().invokeLater {
+                importDeferred.completeExceptionally(IllegalStateException(projectsWithResolveErrors.toString()))
               }
             }
-          })
+          }
+        })
         ExternalSystemUtil.refreshProject(settings.externalProjectPath, importSpecBuilder)
       }
       importDeferred.await()
+      context.message("Waiting for the end of the sync tasks under progress", line)
+      awaitSyncTasksUnderProgress(syncTasksFinished)
+    }
+    finally {
+      syncTasksFinished.cancel()
+    }
+  }
+
+  /**
+   * Waits until [syncTasksFinished] completes, but not longer than [SYNC_TASK_TIMEOUT].
+   */
+  private suspend fun awaitSyncTasksUnderProgress(syncTasksFinished: CompletableDeferred<Unit>) {
+    try {
+      withTimeout(SYNC_TASK_TIMEOUT) {
+        syncTasksFinished.await()
+      }
+    }
+    catch (e: TimeoutCancellationException) {
+      throw IllegalStateException("The Gradle sync tasks under progress did not end in $SYNC_TASK_TIMEOUT", e)
+    }
+  }
+
+  /**
+   * Completes [syncTasksFinished] when the Gradle sync tasks under progress end.
+   *
+   * The `ExternalSystemSyncProjectTask` telemetry span closes in the task under progress, after the data import.
+   * [ProjectDataImportListener] reports the data import, which is earlier. A command that completes on the earlier
+   * signal lets the `exitApp` command start the IDE shutdown while the span is still open. The shutdown holds the
+   * event dispatch thread, the sync tail waits for a write action, and the span processor stops before the span ends.
+   * The span is then lost, and a telemetry span collector reports no Gradle sync metric.
+   */
+  private fun subscribeToSyncTasksUnderProgress(project: Project, taskCount: Int, syncTasksFinished: CompletableDeferred<Unit>) {
+    val ideProjectId = ExternalSystemTaskId.getProjectId(project)
+    val tasksToFinishCount = AtomicInteger(taskCount)
+    val connection: SimpleMessageBusConnection = ApplicationManager.getApplication().messageBus.simpleConnect()
+    syncTasksFinished.invokeOnCompletion { connection.disconnect() }
+    connection.subscribe(ProgressManagerListener.TOPIC, object : ProgressManagerListener {
+      override fun afterTaskFinished(task: Task) {
+        val taskId = task.id as? ExternalSystemTaskId ?: return
+        if (taskId.type != ExternalSystemTaskType.RESOLVE_PROJECT) return
+        if (ideProjectId != taskId.ideProjectId) return
+        if (tasksToFinishCount.decrementAndGet() > 0) return
+        syncTasksFinished.complete(Unit)
+      }
+    })
   }
 
   companion object {
     const val NAME: String = "importGradleProject"
     const val PREFIX: String = "$CMD_PREFIX$NAME"
+
+    private val SYNC_TASK_TIMEOUT = 2.minutes
 
     suspend fun linkGradleProjectIfNeeded(
       project: Project,
