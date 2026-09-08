@@ -79,30 +79,30 @@ internal class PyProjectModelSyncService(private val project: Project, private v
       log.info("PyProject sync already started")
       return@synchronized
     }
-    val disposable = Disposer.newDisposable("PyProjectModelSyncService")
-    Disposer.register(this, disposable)
+    val vfsListenerDisposable = Disposer.newDisposable("PyProjectModelSyncService")
+    Disposer.register(this, vfsListenerDisposable)
     knownRoots = setOf(project.stateStore.projectBasePath)
     val requests = Channel<RebuildRequest>(Channel.UNLIMITED)
-    // Both trackers subscribe before the job starts, so no change of the wait window is lost.
+    // Both trackers subscribe before the build starts, so no change of the wait window is lost.
     // The channel is unlimited, hence a request that arrives before the first build waits in it.
-    subscribeToPyProjectTomlChanges(disposable, { knownRoots }) { requests.sendOrWarn(it) }
+    subscribeToPyProjectTomlChanges(vfsListenerDisposable, { knownRoots }) { requests.sendOrWarn(it) }
     val wsmTrackerJob = scope.createWsmTracker(project) { unExcluded, reason ->
       requests.sendOrWarn(RebuildRequest(unExcluded, reason))
     }
-    val job = scope.launch {
+    val buildJob = scope.launch {
       awaitVfsAndJpsModel()
       loadProjectRootsIntoVfs()
       rebuildNow("the start of the sync")
       consumeRequests(requests)
     }
-    // A failure of a build ends this job. The two trackers must end with it, because a tracker with no
+    // A failure of a build ends the build job. The two trackers must end with it, because a tracker with no
     // consumer fills the channel and holds a `VirtualFile` of every change. [stop] ends the same two, and
     // both calls are safe.
-    job.invokeOnCompletion {
-      Disposer.dispose(disposable)
+    buildJob.invokeOnCompletion {
+      Disposer.dispose(vfsListenerDisposable)
       wsmTrackerJob.cancel()
     }
-    session = Session(disposable, job, wsmTrackerJob)
+    session = Session(vfsListenerDisposable, buildJob, wsmTrackerJob)
     log.info("PyProject sync started")
   }
 
@@ -110,9 +110,9 @@ internal class PyProjectModelSyncService(private val project: Project, private v
   fun stop(): Unit = synchronized(m) {
     val session = this.session ?: return@synchronized
     log.info("PyProject sync stopped")
-    session.job.cancel()
+    session.buildJob.cancel()
     session.wsmTrackerJob.cancel()
-    Disposer.dispose(session.disposable)
+    Disposer.dispose(session.vfsListenerDisposable)
     this.session = null
   }
 
@@ -220,7 +220,7 @@ internal class PyProjectModelSyncService(private val project: Project, private v
   /**
    * Reads every `pyproject.toml` of the project and applies the result to the workspace model.
    *
-   * The job of [start] builds the first model, and [consumeRequests] builds one model for each batch.
+   * The build job of [start] builds the first model, and [consumeRequests] builds one model for each batch.
    * [rebuildForTest] is the only other way in.
    */
   private suspend fun rebuildNow(reason: String) {
@@ -291,7 +291,17 @@ internal class PyProjectModelSyncService(private val project: Project, private v
     }
   }
 
-  private class Session(val disposable: Disposable, val job: Job, val wsmTrackerJob: Job)
+  /**
+   * What one [start] created, so that [stop] ends exactly that.
+   *
+   * [buildJob] waits for the platform, builds the first model, and then builds one model for each batch of
+   * requests. [wsmTrackerJob] and [vfsListenerDisposable] hold the two sources of a request.
+   */
+  private class Session(
+    val vfsListenerDisposable: Disposable,
+    val buildJob: Job,
+    val wsmTrackerJob: Job,
+  )
 
   private companion object {
     val log = fileLogger()
