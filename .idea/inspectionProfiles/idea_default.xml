@@ -1147,6 +1147,9 @@
     <inspection_tool class="PatternValidation" enabled="true" level="Strong Warning" enabled_by_default="true">
       <option name="CHECK_NON_CONSTANT_VALUES" value="true" />
     </inspection_tool>
+    <inspection_tool class="PatternVariableCanBeUsed" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="reportAlsoCastWithIntroducingNewVariable" value="true" />
+    </inspection_tool>
     <inspection_tool class="PatternVariableHidesField" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="PluginXmlPluginLogo" enabled="true" level="WARNING" enabled_by_default="true" editorAttributes="WARNING_ATTRIBUTES" />
     <inspection_tool class="PluginXmlReferencesModuleReachability" enabled="true" level="ERROR" enabled_by_default="true" />
