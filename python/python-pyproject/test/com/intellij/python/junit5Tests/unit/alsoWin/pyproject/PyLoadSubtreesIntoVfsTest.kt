@@ -44,7 +44,10 @@ internal class PyLoadSubtreesIntoVfsTest {
       root.resolve(name).resolve("nested").createDirectories().resolve(PY_PROJECT_TOML).createFile()
     }
     // An environment with no dot in the name, so only the interpreter inside it can prune the directory.
+    // Both layouts, because `VirtualEnvReader` reads `Scripts/python.exe` on Windows and `bin/python` on
+    // posix. One layout alone makes this an ordinary directory on the other system.
     root.resolve("venv").apply {
+      resolve("Scripts").createDirectories().resolve("python.exe").createFile()
       resolve("bin").createDirectories().resolve("python").createFile()
       resolve("nested").createDirectories().resolve(PY_PROJECT_TOML).createFile()
     }
