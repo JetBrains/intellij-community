@@ -92,7 +92,7 @@ interface GradleModelController {
      * Use this when the model may not be available in all Gradle configurations.
      */
     @Experimental
-    fun suppressFailures(): GradleModelFetchRequest<Model>
+    fun suppressFailures(suppressFailures: Boolean = true): GradleModelFetchRequest<Model>
 
     fun execute(modelConsumer: GradleModelConsumer)
 
