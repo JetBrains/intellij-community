@@ -3,6 +3,11 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -21,7 +26,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -77,8 +84,23 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
     if (!targetClass.isPhysical()) {
       newExpression = PsiTreeUtil.findSameElementInCopy(newExpression, targetClass.getContainingFile());
     }
+    PsiClass created = createInnerClass(targetClass, newExpression);
+    if (created == null) return;
+    setupClassFromNewExpression(created, newExpression);
+  }
+
+  /**
+   * Adds the new class into the target class. It adds the modifiers and the type parameters. It adds no
+   * constructor, and it starts no template, so a {@link com.intellij.modcommand.ModCommandAction} can
+   * call it.
+   *
+   * @param targetClass   the class which gets the new class
+   * @param newExpression the expression which creates an instance of the new class
+   * @return the new class, or null when the new expression has no class reference
+   */
+  protected @Nullable PsiClass createInnerClass(@NotNull PsiClass targetClass, @NotNull PsiNewExpression newExpression) {
     PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
-    assert ref != null;
+    if (ref == null) return null;
     String refName = ref.getReferenceName();
     LOG.assertTrue(refName != null);
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(newExpression.getProject());
@@ -102,7 +124,44 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
     }
 
     setupGenericParameters(created, ref);
-    setupClassFromNewExpression(created, newExpression);
+    return created;
+  }
+
+  @Override
+  public @Nullable ModCommandAction getFallbackModCommandAction() {
+    PsiNewExpression newExpression = getNewExpression();
+    return newExpression == null ? null : new CreateInnerClassFromNewModCommandAction(newExpression);
+  }
+
+  /**
+   * Creates the class in the first target class. The fix which the user starts in the editor asks for the
+   * target class, which a {@link ModCommandAction} cannot do.
+   */
+  private final class CreateInnerClassFromNewModCommandAction extends PsiUpdateModCommandAction<PsiNewExpression> {
+    private CreateInnerClassFromNewModCommandAction(@NotNull PsiNewExpression newExpression) {
+      super(newExpression);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return CreateInnerClassFromNewFix.this.getFamilyName();
+    }
+
+    @Override
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiNewExpression newExpression) {
+      String text = getAvailableText(context.project(), context.offset());
+      return text == null ? null : Presentation.of(text);
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiNewExpression newExpression, @NotNull ModPsiUpdater updater) {
+      List<PsiClass> targetClasses = filterTargetClasses(newExpression, context.project());
+      if (targetClasses.isEmpty()) return;
+      PsiClass created = createInnerClass(updater.getWritable(targetClasses.getFirst()), newExpression);
+      if (created == null) return;
+      setupNewClass(created, newExpression, DummyTemplateBuilder.INSTANCE);
+      updater.moveCaretTo(ObjectUtils.notNull(created.getNameIdentifier(), created));
+    }
   }
 
   private static boolean isInThisOrSuperCall(PsiNewExpression newExpression) {

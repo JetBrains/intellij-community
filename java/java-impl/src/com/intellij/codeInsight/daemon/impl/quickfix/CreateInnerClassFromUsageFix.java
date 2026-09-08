@@ -8,6 +8,11 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -84,8 +89,9 @@ public final class CreateInnerClassFromUsageFix extends CreateClassFromUsageBase
   }
 
   @Override
-  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
-    return super.isAvailable(project, editor, psiFile) && getPossibleTargets(getRefElement()).length > 0;
+  protected @IntentionName @Nullable String getAvailableText(@NotNull PsiJavaCodeReferenceElement element, int offset) {
+    if (getPossibleTargets(element).length == 0) return null;
+    return super.getAvailableText(element, offset);
   }
 
   private static PsiClass @NotNull [] getPossibleTargets(final PsiJavaCodeReferenceElement element) {
@@ -136,27 +142,8 @@ public final class CreateInnerClassFromUsageFix extends CreateClassFromUsageBase
       ref = getRefElement();
     }
     assert ref != null;
-    String refName = ref.getReferenceName();
-    LOG.assertTrue(refName != null);
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
-    PsiClass created = myKind.create(elementFactory, refName);
-    final PsiModifierList modifierList = created.getModifierList();
-    LOG.assertTrue(modifierList != null);
-    if (aClass.isInterface() || PsiUtil.isLocalOrAnonymousClass(aClass)) {
-      modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
-    } else {
-      modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-    }
-    if (CommonJavaRefactoringUtil.isInStaticContext(ref, aClass) && !aClass.isInterface()) {
-      modifierList.setModifierProperty(PsiModifier.STATIC, true);
-    }
-    if (superClassName != null) {
-      CreateFromUsageUtils.setupSuperClassReference(created, superClassName);
-    }
-    CreateFromUsageBaseFix.setupGenericParameters(created, ref);
-
     if (!aClass.isPhysical()) {
-      PsiClass add = (PsiClass)aClass.add(created);
+      PsiClass add = createInnerClass(aClass, ref, superClassName);
       PsiDeconstructionPattern pattern = getDeconstructionPattern(ref);
       if (pattern != null) {
         setupRecordFromDeconstructionPattern(add, pattern, getText());
@@ -166,7 +153,7 @@ public final class CreateInnerClassFromUsageFix extends CreateClassFromUsageBase
       if (!FileModificationService.getInstance().preparePsiElementForWrite(aClass)) return;
       WriteCommandAction.runWriteCommandAction(aClass.getProject(), getText(), null,
                                                () -> {
-                                                 PsiClass add = (PsiClass)aClass.add(created);
+                                                 PsiClass add = createInnerClass(aClass, ref, superClassName);
                                                  ref.bindToElement(add);
                                                  PsiDeconstructionPattern pattern = getDeconstructionPattern(ref);
                                                  if (pattern != null) {
@@ -175,6 +162,40 @@ public final class CreateInnerClassFromUsageFix extends CreateClassFromUsageBase
                                                },
                                                aClass.getContainingFile());
     }
+  }
+
+  /**
+   * Adds the new class into the target class. It adds the modifiers, the super class reference and the
+   * type parameters. It starts no template, so a {@link ModCommandAction} can call it.
+   *
+   * @param aClass         the class which gets the new class
+   * @param ref            the reference which needs the new class
+   * @param superClassName the qualified name of the super class, or null when the class needs none
+   * @return the new class
+   */
+  private @NotNull PsiClass createInnerClass(@NotNull PsiClass aClass,
+                                             @NotNull PsiJavaCodeReferenceElement ref,
+                                             @Nullable String superClassName) {
+    String refName = ref.getReferenceName();
+    LOG.assertTrue(refName != null);
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
+    PsiClass created = myKind.create(elementFactory, refName);
+    final PsiModifierList modifierList = created.getModifierList();
+    LOG.assertTrue(modifierList != null);
+    if (aClass.isInterface() || PsiUtil.isLocalOrAnonymousClass(aClass)) {
+      modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
+    }
+    else {
+      modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+    }
+    if (CommonJavaRefactoringUtil.isInStaticContext(ref, aClass) && !aClass.isInterface()) {
+      modifierList.setModifierProperty(PsiModifier.STATIC, true);
+    }
+    if (superClassName != null) {
+      CreateFromUsageUtils.setupSuperClassReference(created, superClassName);
+    }
+    CreateFromUsageBaseFix.setupGenericParameters(created, ref);
+    return (PsiClass)aClass.add(created);
   }
 
   static void setupRecordFromDeconstructionPattern(@Nullable PsiClass aClass, final @NotNull PsiDeconstructionPattern pattern,
@@ -202,5 +223,48 @@ public final class CreateInnerClassFromUsageFix extends CreateClassFromUsageBase
     PsiRecordHeader header = aClass.getRecordHeader();
     CreateRecordFromNewFix.setupRecordComponentsFromPattern(header, templateBuilder, list);
     return templateBuilder;
+  }
+
+  @Override
+  public @Nullable ModCommandAction getFallbackModCommandAction() {
+    PsiJavaCodeReferenceElement element = getRefElement();
+    return element == null ? null : new CreateInnerClassFromUsageModCommandAction(element);
+  }
+
+  /**
+   * Creates the class in the innermost class around the reference. The fix which the user starts in the
+   * editor asks for the target class, which a {@link ModCommandAction} cannot do.
+   */
+  private final class CreateInnerClassFromUsageModCommandAction extends PsiUpdateModCommandAction<PsiJavaCodeReferenceElement> {
+    private CreateInnerClassFromUsageModCommandAction(@NotNull PsiJavaCodeReferenceElement element) {
+      super(element);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return CreateInnerClassFromUsageFix.this.getFamilyName();
+    }
+
+    @Override
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiJavaCodeReferenceElement element) {
+      if (element.getQualifier() != null) return null;
+      String text = getAvailableText(element, context.offset());
+      return text == null ? null : Presentation.of(text);
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context,
+                          @NotNull PsiJavaCodeReferenceElement element,
+                          @NotNull ModPsiUpdater updater) {
+      PsiClass[] targets = getPossibleTargets(element);
+      if (targets.length == 0) return;
+      PsiClass added = createInnerClass(targets[0], element, getSuperClassName(element));
+      PsiDeconstructionPattern pattern = getDeconstructionPattern(element);
+      if (pattern != null) {
+        CreateRecordFromNewFix.setupRecordComponentsFromPattern(added.getRecordHeader(), DummyTemplateBuilder.INSTANCE,
+                                                                pattern.getDeconstructionList());
+      }
+      updater.moveCaretTo(ObjectUtils.notNull(added.getNameIdentifier(), added));
+    }
   }
 }

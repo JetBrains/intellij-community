@@ -26,6 +26,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.application.ApplicationManager;
@@ -81,6 +82,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
@@ -510,47 +512,86 @@ public final class CreateFromUsageUtils {
                                      @NotNull PsiElement contextElement,
                                      PsiFile sourceFile,
                                      String superClassName) {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    final PsiElementFactory factory = facade.getElementFactory();
-
     return WriteAction.compute(() -> {
-        try {
-          PsiClass targetClass;
-          if (directory != null) {
-            try {
-              targetClass = classKind.createInDirectory(directory, name);
-            }
-            catch (IncorrectOperationException e) {
-              scheduleFileOrPackageCreationFailedMessageBox(e, name, directory, false);
-              return null;
-            }
-            if (!facade.getResolveHelper().isAccessible(targetClass, contextElement, null)) {
-              PsiUtil.setModifierProperty(targetClass, PsiModifier.PUBLIC, true);
-            }
-          }
-          else { //tests
-            PsiClass aClass = classKind.create(factory, name);
-            targetClass = (PsiClass)sourceFile.add(aClass);
-            if (ScratchUtil.isScratch(sourceFile.getVirtualFile())) {
-              PsiUtil.setModifierProperty(targetClass, PsiModifier.PACKAGE_LOCAL, true);
-            }
-          }
-
-          if (StringUtil.isNotEmpty(superClassName)  &&
-              (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM)) &&
-              (classKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
-            setupSuperClassReference(targetClass, superClassName);
-          }
-          if (contextElement instanceof PsiJavaCodeReferenceElement ref) {
-            CreateFromUsageBaseFix.setupGenericParameters(targetClass, ref);
-          }
-          return targetClass;
+      try {
+        return createClassInDirectory(classKind, directory, name, contextElement, sourceFile, superClassName);
+      }
+      catch (IncorrectOperationException e) {
+        if (directory != null) {
+          scheduleFileOrPackageCreationFailedMessageBox(e, name, directory, false);
         }
-        catch (IncorrectOperationException e) {
+        else {
           LOG.error(e);
-          return null;
         }
-      });
+        return null;
+      }
+    });
+  }
+
+  /**
+   * Creates the class, and adds its super class reference and its type parameters. It shows no dialog
+   * and it starts no write action, so a {@link com.intellij.modcommand.ModCommandAction} can call it.
+   *
+   * @param directory     the directory of the new file, or null to add the class into the source file
+   * @param contextElement the element which uses the class
+   * @param sourceFile     the file which uses the class. It is necessary only when the directory is null
+   * @return the new class, or null when the creation fails
+   */
+  public static @Nullable PsiClass createClassInDirectory(@NotNull CreateClassKind classKind,
+                                                          @Nullable PsiDirectory directory,
+                                                          @NotNull String name,
+                                                          @NotNull PsiElement contextElement,
+                                                          @Nullable PsiFile sourceFile,
+                                                          @Nullable String superClassName) {
+    Project project = contextElement.getProject();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    PsiClass targetClass;
+    if (directory != null) {
+      targetClass = classKind.createInDirectory(directory, name);
+      if (!facade.getResolveHelper().isAccessible(targetClass, contextElement, null)) {
+        PsiUtil.setModifierProperty(targetClass, PsiModifier.PUBLIC, true);
+      }
+    }
+    else { //tests
+      Objects.requireNonNull(sourceFile, "The source file is necessary when the directory is null");
+      PsiClass aClass = classKind.create(facade.getElementFactory(), name);
+      targetClass = (PsiClass)sourceFile.add(aClass);
+      if (ScratchUtil.isScratch(sourceFile.getVirtualFile())) {
+        PsiUtil.setModifierProperty(targetClass, PsiModifier.PACKAGE_LOCAL, true);
+      }
+    }
+
+    if (StringUtil.isNotEmpty(superClassName) &&
+        (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM)) &&
+        (classKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
+      setupSuperClassReference(targetClass, superClassName);
+    }
+    if (contextElement instanceof PsiJavaCodeReferenceElement ref) {
+      CreateFromUsageBaseFix.setupGenericParameters(targetClass, ref);
+    }
+    return targetClass;
+  }
+
+  /**
+   * This method makes the same checks as
+   * {@link com.intellij.psi.impl.file.JavaDirectoryServiceImpl#checkCreateClassOrInterface}, but it accepts a
+   * read-only directory. A {@link com.intellij.modcommand.ModCommandAction} writes into a copy of the
+   * directory, and the host of the action decides whether it can apply the result.
+   *
+   * @param className the name of the new class
+   * @return the directory which can hold the new class next to the file, or null when no directory can
+   * hold it
+   */
+  public static @Nullable PsiDirectory findClassDirectory(@NotNull PsiFile file, @NotNull String className) {
+    PsiDirectory directory = file.getContainingDirectory();
+    if (directory == null) return null;
+    PsiNameHelper helper = PsiNameHelper.getInstance(file.getProject());
+    if (!helper.isIdentifier(className)) return null;
+    if (directory.findFile(className + "." + JavaFileType.INSTANCE.getDefaultExtension()) != null) return null;
+    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+    String qualifiedName = aPackage == null ? null : aPackage.getQualifiedName();
+    if (!StringUtil.isEmpty(qualifiedName) && !helper.isQualifiedName(qualifiedName)) return null;
+    return directory;
   }
 
   public static void setupSuperClassReference(PsiClass targetClass, String superClassName) {
@@ -561,6 +602,7 @@ public final class CreateFromUsageUtils {
       factory.createReferenceElementByFQClassName(superClassName, targetClass.getResolveScope());
     final PsiReferenceList list = targetClass.isInterface() || superClass == null || !superClass.isInterface()
                                   ? targetClass.getExtendsList() : targetClass.getImplementsList();
+    assert list != null;
     list.add(superClassReference);
   }
 

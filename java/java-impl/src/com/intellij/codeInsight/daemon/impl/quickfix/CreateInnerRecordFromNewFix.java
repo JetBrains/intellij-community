@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiRecordHeader;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
@@ -25,13 +26,14 @@ public class CreateInnerRecordFromNewFix extends CreateInnerClassFromNewFix {
     return CreateClassKind.RECORD;
   }
 
-  @NotNull
   @Override
-  TemplateBuilderImpl createConstructorTemplate(PsiClass aClass, PsiNewExpression newExpression, PsiExpressionList argList) {
-    TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(aClass);
+  @Nullable PsiElement setupConstructor(@NotNull PsiClass aClass,
+                                        @NotNull PsiNewExpression newExpression,
+                                        @NotNull PsiExpressionList argList,
+                                        @NotNull TemplateBuilder builder) {
     PsiRecordHeader header = aClass.getRecordHeader();
-    CreateRecordFromNewFix.setupRecordComponents(header, templateBuilder, argList, getTargetSubstitutor(newExpression));
-    return templateBuilder;
+    CreateRecordFromNewFix.setupRecordComponents(header, builder, argList, getTargetSubstitutor(newExpression));
+    return null;
   }
 
   @Override
