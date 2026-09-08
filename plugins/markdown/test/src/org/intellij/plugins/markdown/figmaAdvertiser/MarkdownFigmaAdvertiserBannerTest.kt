@@ -17,6 +17,7 @@ import com.intellij.markdown.figmaAdvertiser.FigmaConnectPluginSuggestionProvide
 import com.intellij.markdown.figmaAdvertiser.FigmaSuggestionOffer
 import com.intellij.markdown.figmaAdvertiser.MarkdownFigmaAdvertiserBundle
 import com.intellij.markdown.figmaAdvertiser.ShownSuggestions
+import com.intellij.markdown.figmaAdvertiser.dismissFigmaSuggestion
 import com.intellij.markdown.figmaAdvertiser.isFigmaSuggestionDismissed
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestion
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.loadPluginWithText
 import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang
@@ -38,8 +40,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
+import com.intellij.ui.EditorNotifications
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -286,6 +291,91 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
     enabler.enabled shouldBe listOf(FIGMA_CONNECT_PLUGIN_ID)
   }
 
+  /**
+   * The platform recomputes an editor banner when a file is opened and not while it is edited, so a
+   * link written into a file that is already open was answered only by opening the file again.
+   *
+   * The URL is typed one character at a time, which is what `type` does. So the recompute is asked
+   * for by the keystroke that finishes the link, and a paste large enough to carry the link whole is
+   * not what makes this pass.
+   *
+   * **The list is asserted whole, and its length is the point.** Forty-eight keystrokes ask once,
+   * because a link has to meet the change and not merely lie near it. A `distinct()` here would
+   * read the same for one ask and for sixteen.
+   */
+  fun `test a Figma link typed into an open Markdown file asks for a recompute`() {
+    val note = myFixture.configureByText("notes.md", "# Checkout\n")
+    // Replaced after the file is opened, so what is recorded is what the editing asked for.
+    val notifications = recordNotifications()
+
+    myFixture.type("See https://www.figma.com/design/AbC123/Checkout")
+
+    notifications.updated shouldBe listOf(note.virtualFile)
+  }
+
+  /**
+   * An edit beside a link that was already there writes no link, and the offer over that file was
+   * answered when it was opened. Asking again would charge the platform a recompute per keystroke
+   * for the life of the file.
+   */
+  fun `test typing beside a link that is already there asks for nothing`() {
+    myFixture.configureByText("notes.md", "The spec is at https://www.figma.com/design/AbC123/Checkout\n")
+    val notifications = recordNotifications()
+    myFixture.editor.caretModel.moveToOffset(myFixture.file.textLength)
+
+    myFixture.type("Ask Ada about the header.")
+
+    notifications.updated.shouldBeEmpty()
+  }
+
+  /**
+   * Every document in the IDE reaches the listener, so the text a user types in a Markdown file
+   * costs the platform nothing until it names a design.
+   */
+  fun `test typing text that links to nothing asks for no recompute`() {
+    myFixture.configureByText("notes.md", "# Checkout\n")
+    val notifications = recordNotifications()
+
+    myFixture.type("We talked about the design in the meeting.")
+
+    notifications.updated.shouldBeEmpty()
+  }
+
+  /** The path decides first here as well: a file Markdown does not claim is never scanned. */
+  fun `test a Figma link typed into a file that is not Markdown asks for no recompute`() {
+    myFixture.configureByText("notes.txt", "# Checkout\n")
+    val notifications = recordNotifications()
+
+    myFixture.type("See https://www.figma.com/design/AbC123/Checkout")
+
+    notifications.updated.shouldBeEmpty()
+  }
+
+  /**
+   * Tells a switched-off advertisement from an edit it has nothing to say about. The same typing
+   * asks for a recompute in the case above, so what changed is the key.
+   */
+  fun `test no recompute is asked for while the advertiser is switched off`() {
+    myFixture.configureByText("notes.md", "# Checkout\n")
+    val notifications = recordNotifications()
+    Registry.get(FigmaAdvertiserRegistry.KEY_ADVERTISER_ENABLED).setValue(false, testRootDisposable)
+
+    myFixture.type("See https://www.figma.com/design/AbC123/Checkout")
+
+    notifications.updated.shouldBeEmpty()
+  }
+
+  /** The answer the user already gave is not re-asked by their next keystroke. */
+  fun `test no recompute is asked for on a project the offer is dismissed for`() {
+    myFixture.configureByText("notes.md", "# Checkout\n")
+    val notifications = recordNotifications()
+    dismissFigmaSuggestion(project)
+
+    myFixture.type("See https://www.figma.com/design/AbC123/Checkout")
+
+    notifications.updated.shouldBeEmpty()
+  }
+
   /** The dismissal records what the user answered and nothing else. */
   fun `test the dismissed event names the Markdown trigger`() {
     val panel = bannerOver(designNote())
@@ -321,6 +411,25 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
     finally {
       PluginManagerCore.setPluginSet(originalPluginSet)
     }
+  }
+
+  /** Puts a recording [EditorNotifications] on the project and answers it. */
+  private fun recordNotifications(): RecordingEditorNotifications = RecordingEditorNotifications().also {
+    project.replaceService(EditorNotifications::class.java, it, testRootDisposable)
+  }
+
+  /** Records which files something asked the platform to recompute the notifications for. */
+  private class RecordingEditorNotifications : EditorNotifications() {
+    val updated: MutableList<VirtualFile> = mutableListOf()
+
+    override fun updateNotifications(file: VirtualFile) {
+      updated += file
+    }
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun updateNotifications(provider: EditorNotificationProvider) = Unit
+
+    override fun updateAllNotifications() = Unit
   }
 
   private fun offerForTest(): FigmaSuggestionOffer = FigmaSuggestionOffer(
