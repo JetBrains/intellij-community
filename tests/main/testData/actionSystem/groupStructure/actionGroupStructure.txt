@@ -2602,6 +2602,7 @@
   AddPyProject
   NewPythonFile
   NewFile
+  WelcomeNewEmptyFile
   NewScratchFile
   NewDir
   NewRemoteDevModule
