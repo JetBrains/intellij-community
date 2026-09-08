@@ -197,7 +197,10 @@ public final class ThreadDumpParser {
     return threads;
   }
 
-  private static @Nullable ThreadState findLockOwner(@Nullable List<? extends ThreadState> lockOwners, List<? extends ThreadState> threadStates, String lockId, boolean ignoreWaiting) {
+  private static @Nullable ThreadState findLockOwner(@Nullable List<? extends ThreadState> lockOwners,
+                                                     Map<String, ThreadState> ownableSynchronizerOwners,
+                                                     String lockId,
+                                                     boolean ignoreWaiting) {
     if (lockOwners != null) {
       for(ThreadState lockOwner : lockOwners) {
         String trace = lockOwner.getStackTrace();
@@ -206,12 +209,7 @@ public final class ThreadDumpParser {
         }
       }
     }
-    for(ThreadState lockOwner : threadStates) {
-      if (lockOwner.getOwnableSynchronizers() != null && lockOwner.getOwnableSynchronizers().equals(lockId)) {
-        return lockOwner;
-      }
-    }
-    return null;
+    return ownableSynchronizerOwners.get(lockId);
   }
 
   @Contract(mutates = "param1")
@@ -225,10 +223,15 @@ public final class ThreadDumpParser {
    */
   public static void detectWaitingAndDeadlockedThreads(List<? extends ThreadState> threadStates) {
     Map<String, List<ThreadState>> monitorToOwners = new HashMap<>();
+    Map<String, ThreadState> ownableSynchronizerOwners = new HashMap<>();
 
     for (ThreadState threadState : threadStates) {
       for (String lockId : threadState.getOwnedMonitors()) {
-        monitorToOwners.computeIfAbsent(lockId, k -> new ArrayList<>()).add(threadState);
+        monitorToOwners.computeIfAbsent(lockId, ignored -> new ArrayList<>()).add(threadState);
+      }
+      String ownableSynchronizer = threadState.getOwnableSynchronizers();
+      if (ownableSynchronizer != null) {
+        ownableSynchronizerOwners.putIfAbsent(ownableSynchronizer, threadState);
       }
     }
 
@@ -237,9 +240,9 @@ public final class ThreadDumpParser {
       if (waitedMonitor == null) continue;
       var monitorOwners = monitorToOwners.get(waitedMonitor);
 
-      ThreadState lockOwner = findLockOwner(monitorOwners, threadStates, waitedMonitor, true);
+      ThreadState lockOwner = findLockOwner(monitorOwners, ownableSynchronizerOwners, waitedMonitor, true);
       if (lockOwner == null) {
-        lockOwner = findLockOwner(monitorOwners, threadStates, waitedMonitor, false);
+        lockOwner = findLockOwner(monitorOwners, ownableSynchronizerOwners, waitedMonitor, false);
       }
       if (lockOwner != null) {
         if (threadState.isAwaitedBy(lockOwner)) {
@@ -277,7 +280,7 @@ public final class ThreadDumpParser {
     for (ThreadState threadState : threadStates) {
       String contended = threadState.getContendedMonitor();
       if (contended != null) {
-        monitorToWaitingThreadNames.computeIfAbsent(contended, k -> new ArrayList<>()).add(threadState.getName());
+        monitorToWaitingThreadNames.computeIfAbsent(contended, ignored -> new ArrayList<>()).add(threadState.getName());
       }
       for (String monitor : threadState.getOwnedMonitors()) {
         monitorToOwnerThreadName.putIfAbsent(monitor, threadState.getName());
