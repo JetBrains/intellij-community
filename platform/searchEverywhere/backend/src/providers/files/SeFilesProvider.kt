@@ -17,10 +17,12 @@ import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
+import com.intellij.platform.searchEverywhere.SeTypeVisibilityStateProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetPresentableItem
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetRawItem
+import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
@@ -30,7 +32,8 @@ import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.annotations.Nls
 
 internal class SeFilesProvider private constructor(private val targetProvider: SeTargetItemsProvider) : SeItemsProvider,
-                                                                                                        SeSearchScopesProvider {
+                                                                                                        SeSearchScopesProvider,
+                                                                                                        SeTypeVisibilityStateProvider {
   override val id: String get() = SeProviderIdUtils.FILES_ID
   override val displayName: @Nls String get() = IdeBundle.message("search.everywhere.group.name.files")
 
@@ -73,6 +76,9 @@ internal class SeFilesProvider private constructor(private val targetProvider: S
 
   override suspend fun getSearchScopesInfo(): SearchScopesInfo? = targetProvider.getSearchScopesInfo()
 
+  override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
+    targetProvider.getTypeVisibilityStates(index)
+
   override suspend fun canBeShownInFindResults(): Boolean = true
 
   override fun dispose() {
@@ -88,9 +94,18 @@ internal class SeFilesProvider private constructor(private val targetProvider: S
 
     suspend fun create(project: Project,
                        dataContext: DataContext): SeFilesProvider {
-      val targetProvider = SeTargetItemsProvider.create(project, dataContext, null, "SeFiles") { project, _, hiddenTypes ->
-        createModel(project, hiddenTypes)
-      }
+      val targetProvider = SeTargetItemsProvider.create(
+        project = project,
+        dataContext = dataContext,
+        operationDisposable = null,
+        label = "SeFiles",
+        gotoModelProvider = { project, _, hiddenTypes ->
+          createModel(project, hiddenTypes)
+        },
+        typeFilterProvider = {
+          listOf(FileSearchEverywhereContributor.createFileTypeFilter(it))
+        },
+      )
 
       return SeFilesProvider(targetProvider)
     }

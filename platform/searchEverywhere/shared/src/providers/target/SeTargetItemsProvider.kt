@@ -5,6 +5,8 @@ import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
+import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.ide.util.gotoByName.ChooseByNameInScopeItemProvider
 import com.intellij.ide.util.gotoByName.ChooseByNameModel
@@ -100,8 +102,47 @@ class SeTargetItemsProvider private constructor(
   private val operationDisposable: Disposable?,
   private val label: String,
   private val gotoModelProvider: (Project, ScopeDescriptor?, Set<FileTypeRef>) -> (FilteringGotoByModel<*>),
+  private val typeFilterProvider: (Project) -> List<PersistentSearchEverywhereContributorFilter<*>>,
 ) {
   private val scopes: SuspendLazyProperty<SeTargetScopes> = suspendLazy { createScopes() }
+
+  /**
+   * The persistent type filters of the model, in the order that the filter actions appear.
+   */
+  private val typeFilters: SuspendLazyProperty<List<PersistentSearchEverywhereContributorFilter<*>>> = suspendLazy {
+    typeFilterProvider(project)
+  }
+
+  /**
+   * The type list that the filter action at [index] shows, or an empty list when there is no such filter.
+   */
+  suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
+    typeFilters.getValue().getOrNull(index)?.let {
+      typeVisibilityStates(it)
+    } ?: emptyList()
+
+  private fun <T> typeVisibilityStates(filter: PersistentSearchEverywhereContributorFilter<T>): List<SeTypeVisibilityStatePresentation> =
+    filter.allElements.map { element ->
+      SeTypeVisibilityStatePresentation(filter.getElementText(element), filter.getElementIcon(element)?.rpcId(), filter.isSelected(element))
+    }
+
+  /**
+   * Writes [hiddenTypes] into every persistent type filter.
+   */
+  private suspend fun persistHiddenTypes(hiddenTypes: List<String>?) {
+    val hidden = hiddenTypes?.toSet() ?: return
+    typeFilters.getValue().forEach { filter ->
+      persistHiddenTypes(filter, hidden)
+    }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun persistHiddenTypes(filter: PersistentSearchEverywhereContributorFilter<*>, hiddenTypes: Set<String>) {
+    val typedFilter = filter as PersistentSearchEverywhereContributorFilter<Any?>
+    typedFilter.allElements.forEach { element ->
+      typedFilter.setSelected(element, !hiddenTypes.contains(typedFilter.getElementText(element)))
+    }
+  }
 
   /**
    * The scope list that the scope chooser shows, or null when the model has no scope to offer.
@@ -117,11 +158,8 @@ class SeTargetItemsProvider private constructor(
     }
     if (descriptors.isEmpty()) return SeTargetScopes(null, SeScopeByIdMap(emptyMap(), null, null))
 
-    val scopeIdMapper = ScopeIdMapper.instance
     val descriptorByScopeId = mutableMapOf<String, ScopeDescriptor>()
 
-    // The id keeps the `<uuid>_<serialization id>` shape that ScopeChooserActionProviderDelegate uses.
-    // A reader that strips the uuid still gets the stable serialization id.
     val scopeDataList = descriptors.mapNotNull { descriptor ->
       val name = descriptor.displayName ?: return@mapNotNull null
       val scopeId = SeScopeById.generateScopeId(name)
@@ -217,6 +255,8 @@ class SeTargetItemsProvider private constructor(
     }
 
     val scope = scopeDescriptor?.scope as? GlobalSearchScope ?: GlobalSearchScope.projectScope(project)
+
+    persistHiddenTypes(hiddenTypes)
 
     val hiddenTypeRefs = hiddenTypes?.toSet()?.let { hiddenTypes ->
       FileSearchEverywhereContributor.getAllFileTypes().filter { hiddenTypes.contains(it.displayName) }
@@ -341,6 +381,7 @@ class SeTargetItemsProvider private constructor(
       operationDisposable: Disposable?,
       label: String,
       gotoModelProvider: (Project, ScopeDescriptor?, Set<FileTypeRef>) -> (FilteringGotoByModel<*>),
+      typeFilterProvider: (Project) -> List<PersistentSearchEverywhereContributorFilter<*>> = { emptyList() },
     ): SeTargetItemsProvider {
       val psiContext = readAction {
         GotoActionBase.getPsiContext(dataContext)?.let { context ->
@@ -348,7 +389,7 @@ class SeTargetItemsProvider private constructor(
         }
       }
 
-      return SeTargetItemsProvider(project, psiContext, operationDisposable, label, gotoModelProvider)
+      return SeTargetItemsProvider(project, psiContext, operationDisposable, label, gotoModelProvider, typeFilterProvider)
     }
   }
 }
