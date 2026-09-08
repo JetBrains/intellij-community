@@ -2114,6 +2114,19 @@ public final class TableResultView extends JBTableWithResizableCells
            doGetGridColor(getColorsScheme());
   }
 
+  /**
+   * A pinned column is displayed in the frozen strip and leaves a zero-width placeholder here, so revealing its cell
+   * only drags the unpinned columns back to their first one. Reveal the rows and leave the columns where they are.
+   */
+  @Override
+  public void scrollRectToVisible(@NotNull Rectangle rect) {
+    if (rect.width <= 0 && getPairedFrozenView() != null) {
+      Rectangle visible = getVisibleRect();
+      rect = new Rectangle(visible.x, rect.y, visible.width, rect.height);
+    }
+    super.scrollRectToVisible(rect);
+  }
+
   @Override
   public void tableChanged(TableModelEvent e) {
     if (myResultPanel == null) {
