@@ -9,7 +9,6 @@ import org.gradle.api.Task
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.internal.FactoryNamedDomainObjectContainer
 import org.gradle.api.plugins.JavaPluginExtension
-import org.gradle.api.tasks.SourceSet
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.getSourceSetName
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.KOTLIN_PLUGIN_WRAPPER_CLASS
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.KOTLIN_PROJECT_EXTENSION_CLASS
@@ -60,22 +59,22 @@ private fun Task.getPureKotlinSourceRoots(sourceSet: String, disambiguationClass
         val compilationFullName = compilationFullName(sourceSet, classifier)
         val kotlinSourceSet = (kotlinExtensionClass?.javaClass?.getMethod("getSourceSets")?.invoke(kotlinExtensionClass)
                 as? FactoryNamedDomainObjectContainer<Any>)?.asMap?.get(compilationFullName) ?: return null
-        val pureJava: Set<File>? = getJavaSourceRoot(project, compilationFullName)
+        val javaSourceRoots = getJavaSourceRoots(project)
         return (getKotlinMethod.invoke(kotlinSourceSet) as? SourceDirectorySet)?.srcDirs?.filter {
-            !(pureJava?.contains(it) ?: false)
+            it !in javaSourceRoots
         }?.toList()
     } catch (e: Exception) {
     }
     return null
 }
 
-private fun getJavaSourceRoot(project: Project, sourceSet: String): Set<File>? {
-    val javaSourceSet: SourceSet? = if (GradleVersionUtil.isGradleAtLeast(project.gradle.gradleVersion, "8.2")) {
-        project.extensions.getByType(JavaPluginExtension::class.java).sourceSets.asMap[sourceSet]
+private fun getJavaSourceRoots(project: Project): Set<File> {
+    val javaSourceSets = if (GradleVersionUtil.isGradleAtLeast(project.gradle.gradleVersion, "8.2")) {
+        project.extensions.findByType(JavaPluginExtension::class.java)?.sourceSets
     } else {
-        ConventionJavaPluginAccessor(project).sourceSetContainer?.asMap[sourceSet]
+        ConventionJavaPluginAccessor(project).sourceSetContainer
     }
-    return javaSourceSet?.java?.srcDirs
+    return javaSourceSets?.flatMapTo(HashSet()) { it.java.srcDirs } ?: emptySet()
 }
 
 internal fun Project.getKotlinPluginVersion(): String? {
