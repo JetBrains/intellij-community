@@ -239,7 +239,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
 
   abstract fun getButtonFor(toolWindowId: String): StripeButtonManager?
 
-  fun finishDrop(manager: ToolWindowManagerImpl) {
+  fun finishDrop(manager: ToolWindowManagerImpl, splitModeOverride: Boolean? = null) {
     val lastLayoutData = lastLayoutData ?: return
     if (!isDroppingButton()) {
       return
@@ -251,8 +251,9 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       if (isNewStripes && anchor == ToolWindowAnchor.BOTTOM && !ToolWindowStripeExtension.exists) {
         order++
       }
-      val isSplit = if (useSplitGap) lastLayoutData.dragToSide else lastLayoutData.isSplit
+      val isSplit = splitModeOverride ?: if (useSplitGap) lastLayoutData.dragToSide else lastLayoutData.isSplit
       manager.setSideToolAndAnchor(it.id, paneId, anchor, order, isSplit)
+      manager.showToolWindow(it.id)
     }
     manager.invokeLater { resetDrop() }
   }

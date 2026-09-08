@@ -5,6 +5,7 @@ package com.intellij.toolWindow
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
@@ -211,6 +212,12 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     }
 
     override fun containsPoint(screenPoint: Point): Boolean {
+      if (!isOverToolbar(screenPoint)) {
+        getDropArea()?.let { area ->
+          return area.containsPoint(screenPoint, if (anchor.isHorizontal && !isHorizontal()) split else null)
+        }
+      }
+
       if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
         // With ToolWindowStripeExtension the whole column height is the drop zone
         val halfColumn = !ToolWindowStripeExtension.exists
@@ -254,6 +261,28 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
       return super.containsPoint(screenPoint)
     }
 
+    internal fun getDropArea(): ToolWindowDropArea? {
+      val pane = bottomAnchorDropAreaComponent as? ToolWindowPane ?: return null
+      if (!pane.isShowing) {
+        return null
+      }
+      val component = pane.getComponentAt(anchor)?.takeIf { it.isShowing && it.width > 0 && it.height > 0 }
+      val isVertical = anchor.isSplitVertically
+      val sideWidth = if (isVertical) getFirstVisibleToolWindowSize(true) else JBUI.scale(200) * 2
+      val bounds = getToolWindowDropAreaBounds(
+        anchor = anchor,
+        paneBounds = Rectangle(pane.locationOnScreen, pane.size),
+        documentBounds = pane.getDocumentComponent()?.takeIf { it.isShowing }?.let { Rectangle(it.locationOnScreen, it.size) },
+        componentBounds = component?.let { Rectangle(it.locationOnScreen, it.size) },
+        sideWidth = sideWidth,
+      )
+      return ToolWindowDropArea(bounds, isVertical, component as? Splitter)
+    }
+
+    internal fun isOverToolbar(screenPoint: Point): Boolean {
+      return toolBar.isShowing && Rectangle(toolBar.locationOnScreen, toolBar.size).contains(screenPoint)
+    }
+
     override fun getComponentGraphics(graphics: Graphics?): Graphics {
       return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, graphics as Graphics2D)
     }
@@ -283,6 +312,8 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     }
 
     override fun getToolWindowDropAreaScreenBounds(): Rectangle {
+      getDropArea()?.let { return it.bounds }
+
       val size = toolBar.size
 
       if (anchor == ToolWindowAnchor.LEFT) {

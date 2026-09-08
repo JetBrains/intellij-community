@@ -50,6 +50,7 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
@@ -83,15 +84,45 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   private var lastStripe: AbstractDroppableStripe? = null
   private var lastDropTargetPaneId: String? = null
   private var lastDropTargetPane: ToolWindowPane? = null
+  private var lastSplitModeOverride: Boolean? = null
   private var dragSession: DragSession? = null
   private var dragMoreButton: MoreSquareStripeButton? = null
   private var dragMoreButtonNewSide: ToolWindowAnchor? = null
 
-  private var lastDropTooltipAnchor: ToolWindowMoveAction.Anchor? = null
+  private var lastDropTooltipTitle: @Nls String? = null
   private var dropTooltipPopup: JBPopup? = null
+
+  internal data class SideDropTarget(
+    val bounds: Rectangle,
+    val isVertical: Boolean,
+    val isSplit: Boolean,
+  )
 
   companion object {
     const val THUMB_OPACITY: Float = .85f
+
+    internal fun getSideDropTarget(
+      area: ToolWindowDropArea,
+      anchor: ToolWindowAnchor,
+      screenPoint: Point,
+      toolbarSplit: Boolean?,
+    ): SideDropTarget? {
+      if (toolbarSplit != null && !area.hasBothComponents && (area.isVertical || anchor.isHorizontal)) {
+        return null
+      }
+      val isSplit = toolbarSplit ?: area.isSplit(screenPoint)
+      return SideDropTarget(area.getTargetBounds(isSplit), area.isVertical, isSplit)
+    }
+
+    internal fun getDropTooltipTitle(
+      anchor: ToolWindowAnchor,
+      isSplit: Boolean,
+      isHorizontalSideSplit: Boolean,
+    ): @Nls String {
+      val moveAnchor = ToolWindowMoveAction.Anchor.getAnchor(anchor, isSplit)
+      return UIBundle.message("tool.window.move.to.action.group.name") + " " +
+             ToolWindowMoveAction.getToolWindowMoveActionText(moveAnchor, isHorizontalSideSplit)
+    }
 
     /**
      * Create a potentially scaled image of the component to use as a drag image
@@ -335,6 +366,18 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     val preferredStripe = getSourceStripe(toolWindow.anchor, toolWindow.isSplitMode)
     val targetStripe = getTargetStripeByDropLocation(eventDevicePoint, preferredStripe)
                        ?: if (isPointInVisibleDockedToolWindow(eventDevicePoint)) preferredStripe else null
+    val targetPane = targetStripe?.let { toolWindow.toolWindowManager.getToolWindowPane(it.paneId) }
+    val initialStripeButton = this.initialStripeButton
+    if (targetStripe != null && initialStripeButton != null) {
+      targetStripe.processDropButton(initialStripeButton, view.asDragButton(), eventDevicePoint)
+    }
+    val sideDropTarget = if (targetStripe == null || targetPane == null) {
+      null
+    }
+    else {
+      getSideDropTarget(targetPane, targetStripe, eventDevicePoint)
+    }
+    lastSplitModeOverride = sideDropTarget?.isSplit
     lastStripe?.let {
       if (it != targetStripe) {
         removeDropTargetHighlighter(toolWindow.toolWindowManager.getToolWindowPane(it.paneId))
@@ -343,17 +386,19 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     }
 
     if (isNewUi) {
-      if (lastStripe == null) {
+      if (targetStripe == null) {
         clearDropTooltip()
       }
       else {
-        val anchor = ToolWindowMoveAction.Anchor.getAnchor(lastStripe!!.anchor, lastStripe!!.getDropToSide() == true)
-        if (anchor !== lastDropTooltipAnchor) {
+        val dropToSide = sideDropTarget?.isSplit ?: (targetStripe.getDropToSide() == true)
+        val anchor = ToolWindowMoveAction.Anchor.getAnchor(targetStripe.anchor, dropToSide)
+        val title = getDropTooltipTitle(targetStripe.anchor, dropToSide, sideDropTarget?.isVertical == false)
+        if (title != lastDropTooltipTitle) {
           clearDropTooltip()
-          lastDropTooltipAnchor = anchor
+          lastDropTooltipTitle = title
 
           val tooltip = HelpTooltip()
-          tooltip.setTitle(UIBundle.message("tool.window.move.to.action.group.name") + " " + anchor.toString())
+          tooltip.setTitle(title)
           dropTooltipPopup = HelpTooltip.initPopupBuilder(tooltip.createTipPanel()).createPopup()
         }
 
@@ -381,7 +426,6 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     lastStripe = targetStripe
     setDragOut(isDragOut(eventDevicePoint))
 
-    val initialStripeButton = this.initialStripeButton
     if (targetStripe != null && initialStripeButton != null) {
       addDropTargetHighlighter(toolWindow.toolWindowManager.getToolWindowPane(targetStripe.paneId))
 
@@ -401,11 +445,9 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       //  dialog.updateIcon(image)
       //  stripe.remove(button)
       //}
-      targetStripe.processDropButton(initialStripeButton, view.asDragButton(), eventDevicePoint)
-
       if (lastDropTargetPaneId != targetStripe.paneId) {
         lastDropTargetPaneId = targetStripe.paneId
-        lastDropTargetPane = toolWindow.toolWindowManager.getToolWindowPane(targetStripe.paneId)
+        lastDropTargetPane = targetPane
       }
 
       SwingUtilities.invokeLater(Runnable {
@@ -415,7 +457,10 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         // it's inside the bounds of the tool window (and the tool window is visible), then use the tool window bounds. Note that when
         // docked, the tool window's screen coordinate system will be the same as the mouse event's. But if it's floating, it might be on
         // another screen (although if it's floating, we don't get bounds)
-        val bounds = if (isNewUi) {
+        val bounds = if (sideDropTarget != null) {
+          Rectangle(sideDropTarget.bounds)
+        }
+        else if (isNewUi) {
           targetStripe.getToolWindowDropAreaScreenBounds()
         }
         else {
@@ -426,21 +471,9 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         }
         bounds.location = bounds.location.also { SwingUtilities.convertPointFromScreen(it, lastDropTargetPane!!.rootPane.layeredPane) }
 
-        val dropToSide = targetStripe.getDropToSide()
-        if (dropToSide != null) {
-          val half = if (targetStripe.anchor.isHorizontal) bounds.width / 2 else bounds.height / 2
-          if (!targetStripe.anchor.isHorizontal) {
-            bounds.height -= half
-            if (dropToSide) {
-              bounds.y += half
-            }
-          }
-          else {
-            bounds.width -= half
-            if (dropToSide) {
-              bounds.x += half
-            }
-          }
+        val dropToSide = sideDropTarget?.isSplit ?: targetStripe.getDropToSide()
+        if (sideDropTarget == null && dropToSide != null) {
+          splitDropTargetBounds(bounds, !targetStripe.anchor.isHorizontal, dropToSide)
         }
         dropTargetHighlightComponent.bounds = bounds
       })
@@ -483,7 +516,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
       val stripe = lastStripe
       if (stripe != null) {
-        stripe.finishDrop(toolWindow.toolWindowManager)
+        stripe.finishDrop(toolWindow.toolWindowManager, lastSplitModeOverride)
       }
       else {
         // Set the bounds before we show the window, to avoid a visible jump
@@ -544,6 +577,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     lastStripe = null
     lastDropTargetPaneId = null
     lastDropTargetPane = null
+    lastSplitModeOverride = null
     initialStripeButton = null
     dragMoreButton?.setDragState(false)
     dragMoreButton = null
@@ -554,7 +588,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   private fun clearDropTooltip() {
     val popup = dropTooltipPopup
     dropTooltipPopup = null
-    lastDropTooltipAnchor = null
+    lastDropTooltipTitle = null
 
     if (popup != null && popup.isVisible) {
       popup.cancel()
@@ -637,6 +671,24 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     val width = pane.width - getStripeWidth(pane, LEFT) - getStripeWidth(pane, RIGHT)
     val height = pane.height - getStripeHeight(pane, TOP) - getStripeHeight(pane, BOTTOM)
     return Rectangle(location.x, location.y, width, height)
+  }
+
+  private fun getSideDropTarget(
+    pane: ToolWindowPane,
+    stripe: AbstractDroppableStripe,
+    devicePoint: DevicePoint,
+  ): SideDropTarget? {
+    val point = devicePoint.getLocationOnScreen(pane).location
+    if (stripe !is ToolWindowToolbar.StripeV2) {
+      return null
+    }
+    val area = stripe.getDropArea() ?: return null
+    val toolbarSplit = if (stripe.isOverToolbar(point)) {
+      stripe.doLayout()
+      stripe.getDropToSide()
+    }
+    else null
+    return getSideDropTarget(area, stripe.anchor, point, toolbarSplit)
   }
 
   /**

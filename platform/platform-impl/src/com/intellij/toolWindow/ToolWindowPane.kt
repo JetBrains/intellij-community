@@ -375,7 +375,7 @@ class ToolWindowPane private constructor(
     }
   }
 
-  private fun getComponentAt(anchor: ToolWindowAnchor): JComponent? {
+  internal fun getComponentAt(anchor: ToolWindowAnchor): JComponent? {
     return when (anchor) {
       ToolWindowAnchor.TOP -> verticalSplitter.firstComponent
       ToolWindowAnchor.LEFT -> horizontalSplitter.firstComponent

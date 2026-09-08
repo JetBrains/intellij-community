@@ -151,21 +151,22 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
 
   private final @NotNull Anchor myAnchor;
 
-  private static @Nls String getToolWindowMoveActionText(@NotNull Anchor anchor) {
-    if (anchor == Anchor.LeftTop && UISettings.getInstance().getLeftHorizontalSplit()) {
+  @ApiStatus.Internal
+  public static @NotNull @Nls String getToolWindowMoveActionText(@NotNull Anchor anchor, boolean isHorizontalSplit) {
+    if (anchor == Anchor.LeftTop && isHorizontalSplit) {
       return UIBundle.message("tool.window.move.to.left.action.name");
     }
-    else if (anchor == Anchor.LeftBottom && UISettings.getInstance().getLeftHorizontalSplit()) {
+    else if (anchor == Anchor.LeftBottom && isHorizontalSplit) {
       return UIBundle.message("tool.window.move.to.left.action.name") +
              " " +
              UIBundle.message("tool.window.move.to.side.by.side.action.name");
     }
-    else if (anchor == Anchor.RightTop && UISettings.getInstance().getRightHorizontalSplit()) {
+    else if (anchor == Anchor.RightTop && isHorizontalSplit) {
       return UIBundle.message("tool.window.move.to.right.action.name") +
              " " +
              UIBundle.message("tool.window.move.to.side.by.side.action.name");
     }
-    else if (anchor == Anchor.RightBottom && UISettings.getInstance().getRightHorizontalSplit()) {
+    else if (anchor == Anchor.RightBottom && isHorizontalSplit) {
       return UIBundle.message("tool.window.move.to.right.action.name");
     }
 
@@ -190,7 +191,8 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
 
   @ApiStatus.Internal
   public ToolWindowMoveAction(@NotNull Anchor anchor) {
-    super(() -> getToolWindowMoveActionText(anchor), null, () -> getToolWindowMoveActionIcon(anchor));
+    super(() -> getToolWindowMoveActionText(anchor, !anchor.getAnchor().isSplitVertically()),
+          null, () -> getToolWindowMoveActionIcon(anchor));
 
     myAnchor = anchor;
   }
