@@ -21,19 +21,11 @@ import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.test.env.junit5.LspToolVersions
+import com.intellij.python.test.env.junit5.installToolPackage
 import com.intellij.python.test.env.junit5.pyVenvFixture
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import com.jetbrains.python.isSuccess
-import com.intellij.python.requirements.parser.PyRequirementParser
-import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.repository.PyPiPackageRepository
-import com.jetbrains.python.sdk.pythonSdk
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
@@ -53,36 +45,6 @@ import kotlin.time.Duration.Companion.seconds
  * whole [com.intellij.python.lsp.core.PyLspToolIntegrationProvider] pipeline is exercised: executable
  * discovery, server start-up, formatting / import optimization and `textDocument/publishDiagnostics`.
  */
-
-/**
- * Install [requirement] (a PEP 508 requirement string, e.g. `ruff==0.15.18`) into the module's venv
- * via the real package manager. Retried with a short backoff to tolerate flaky network access on CI.
- */
-internal suspend fun Module.installToolPackage(requirement: String) {
-  val packageManager = PythonPackageManager.forSdk(project, pythonSdk!!)
-  val spec = PythonRepositoryPackageSpecification(PyPiPackageRepository, PyRequirementParser.fromLine(requirement)!!)
-  val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))
-
-  var lastError: Throwable? = null
-  repeat(3) { attempt ->
-    try {
-      val result = packageManager.installPackage(installRequest)
-      assertTrue(result.isSuccess) { "Failed to install '$requirement': ${result.errorOrNull}" }
-      CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
-      return
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      // Either the install reported failure (AssertionError) or the package manager threw (e.g. a
-      // network error); both are worth retrying.
-      lastError = e
-      if (attempt < 2) delay(2.seconds * (attempt + 1))
-    }
-  }
-  throw lastError!!
-}
 
 /**
  * Poll the LSP client of [providerClass] until it has published at least one diagnostic of
