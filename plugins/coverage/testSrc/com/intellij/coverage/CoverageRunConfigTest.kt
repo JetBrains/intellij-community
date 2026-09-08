@@ -16,7 +16,9 @@ import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.util.Disposer
@@ -384,6 +386,31 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
     }
   }
 
+  @Test
+  fun `test another applicable engine replaces the cached configuration`() {
+    val runner = TestCoverageRunner()
+    CoverageRunner.EP_NAME.point.registerExtension(runner, testRootDisposable)
+    val runConfig = ApplicationConfiguration("coverage engine switch", project)
+
+    // JavaCoverageEngine applies to every ApplicationConfiguration, so it wins while the test engine stays off.
+    Assert.assertTrue(CoverageEnabledConfiguration.getOrCreate(runConfig) is JavaCoverageEnabledConfiguration)
+
+    val engine = SwitchableCoverageEngine(runner)
+    CoverageEngine.EP_NAME.point.registerExtension(engine, LoadingOrder.FIRST, testRootDisposable)
+    engine.isApplicable = true
+    val switched = CoverageEnabledConfiguration.getOrCreate(runConfig)
+
+    Assert.assertTrue(switched is SwitchableCoverageEnabledConfiguration)
+    Assert.assertSame(switched, CoverageEnabledConfiguration.getOrNull(runConfig))
+    Assert.assertSame(runConfig, switched.configuration)
+
+    engine.isApplicable = false
+    val switchedBack = CoverageEnabledConfiguration.getOrCreate(runConfig)
+
+    Assert.assertTrue(switchedBack is JavaCoverageEnabledConfiguration)
+    Assert.assertSame(switchedBack, CoverageEnabledConfiguration.getOrNull(runConfig))
+  }
+
   private fun compileFixture(outputDir: Path) {
     val compiler = JavacUtil.getJavac()
     val sourceRoot = getProjectDirOrFile(true).resolve("src")
@@ -406,4 +433,22 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
 
     override fun acceptsCoverageEngine(engine: CoverageEngine) = true
   }
+
+  private class SwitchableCoverageEngine(private val runner: CoverageRunner) : CoverageEngine() {
+    var isApplicable: Boolean = false
+
+    override fun getPresentableText() = "Switchable"
+
+    override fun isApplicableTo(conf: RunConfigurationBase<*>) = isApplicable
+
+    override fun createCoverageEnabledConfiguration(conf: RunConfigurationBase<*>): CoverageEnabledConfiguration =
+      SwitchableCoverageEnabledConfiguration(conf, runner)
+
+    override fun createEmptyCoverageSuite(coverageRunner: CoverageRunner): CoverageSuite? = null
+
+    override fun getCoverageAnnotator(project: Project): CoverageAnnotator = throw UnsupportedOperationException()
+  }
+
+  private class SwitchableCoverageEnabledConfiguration(conf: RunConfigurationBase<*>, runner: CoverageRunner) :
+    CoverageEnabledConfiguration(conf, runner)
 }
