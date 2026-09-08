@@ -166,6 +166,7 @@ private data class PlatformThreadMetadata(
 
 private fun JcmdThread.toThreadState(containerId: Long?): ThreadState {
   val threadState = ThreadState(name, state)
+  threadState.javaThreadState = state
 
   val rawStackTrace = stack
     .filter { it.isNotEmpty() }

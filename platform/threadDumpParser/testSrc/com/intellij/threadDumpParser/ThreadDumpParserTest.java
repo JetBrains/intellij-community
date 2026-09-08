@@ -708,7 +708,7 @@ public class ThreadDumpParserTest {
   }
 
   @Test
-	public void testCarryingVirtualThread() {
+  public void testCarryingVirtualThread() {
     String text = """
       "ForkJoinPool-1-worker-1" #24 [25347] daemon prio=5 os_prio=31 cpu=41.39ms elapsed=6.75s tid=0x000000011f00da00  [0x000000017003d000]
          Carrying virtual thread #21
@@ -739,6 +739,53 @@ public class ThreadDumpParserTest {
 
     assertEquals("ForkJoinPool-1-worker-2", threads.get(1).getName());
     assertEquals("WAITING", threads.get(1).getJavaThreadState());
+  }
+
+  @Test
+  public void testJcmdJsonThreadStateIsPreserved() {
+    String text = """
+      {
+        "threadDump": {
+          "threadContainers": [
+            {
+              "threads": [
+                {
+                  "tid": "1",
+                  "name": "waiting-thread",
+                  "state": "WAITING",
+                  "stack": [
+                    "java.base/jdk.internal.misc.Unsafe.park(Native Method)"
+                  ]
+                },
+                {
+                  "tid": "2",
+                  "name": "running-thread",
+                  "state": "RUNNABLE",
+                  "stack": [
+                    "example.Main.run(Main.java:1)"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+      """;
+
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(2, threads.size());
+
+    ThreadState waitingThread = ContainerUtil.find(threads, thread -> "waiting-thread".equals(thread.getName()));
+    assertNotNull(waitingThread);
+    assertEquals("WAITING", waitingThread.getState());
+    assertEquals("WAITING", waitingThread.getJavaThreadState());
+    assertTrue(waitingThread.isWaiting());
+
+    ThreadState runningThread = ContainerUtil.find(threads, thread -> "running-thread".equals(thread.getName()));
+    assertNotNull(runningThread);
+    assertEquals("RUNNABLE", runningThread.getState());
+    assertEquals("RUNNABLE", runningThread.getJavaThreadState());
+    assertFalse(runningThread.isWaiting());
   }
 
   @Test

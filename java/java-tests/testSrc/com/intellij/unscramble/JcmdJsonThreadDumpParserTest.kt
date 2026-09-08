@@ -351,7 +351,7 @@ internal class JcmdJsonThreadDumpParserTest {
 
   private fun findDumpItem(dumpItems: List<DumpItem>, name: String): DumpItem =
     dumpItems.firstOrNull { it.name == name }
-      ?: error("Dump item not found: $name, available: ${dumpItems.map { it.name }}")
+    ?: error("Dump item not found: $name, available: ${dumpItems.map { it.name }}")
 
   private fun DumpItem.isVirtual() = stackTrace.contains("virtual")
 

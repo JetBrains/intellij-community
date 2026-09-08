@@ -175,7 +175,11 @@ public class ThreadState {
   public boolean isWaiting() {
     return "on object monitor".equals(myThreadStateDetail) ||
            myState.startsWith("waiting") ||
-           ("parking".equals(myThreadStateDetail) && !isSleeping());
+           ("parking".equals(myThreadStateDetail) && !isSleeping()) ||
+           (Thread.State.BLOCKED.name().equals(myJavaThreadState) ||
+            Thread.State.WAITING.name().equals(myJavaThreadState) ||
+            Thread.State.TIMED_WAITING.name().equals(myJavaThreadState)
+           );
   }
 
   public boolean isEDT() {

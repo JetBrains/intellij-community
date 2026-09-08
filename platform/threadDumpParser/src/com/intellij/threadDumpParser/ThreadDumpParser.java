@@ -81,7 +81,12 @@ public final class ThreadDumpParser {
     for (JsonNode container : containers.values()) {
       for (JsonNode thread : container.path("threads").values()) {
         var name = thread.path("name").asString();
-        var threadState = createThreadState(name, "unknown");
+        var javaThreadState = thread.path("state").asString();
+        if (StringUtil.isEmptyOrSpaces(javaThreadState)) {
+          javaThreadState = "unknown";
+        }
+        var threadState = createThreadState(name, javaThreadState);
+        threadState.setJavaThreadState(javaThreadState);
 
         var rawStackTrace = new StringBuilder();
         for (JsonNode ste : thread.path("stack").values()) {
