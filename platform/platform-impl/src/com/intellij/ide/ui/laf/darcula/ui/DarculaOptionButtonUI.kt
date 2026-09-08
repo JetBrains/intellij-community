@@ -10,6 +10,8 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isDefaultButton
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.BasicOptionButtonUI
+import com.intellij.ui.dsl.builder.impl.updateVisualPadding
+import com.intellij.ui.dsl.gridLayout.toUnscaledGaps
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.scale
@@ -32,11 +34,11 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
 
   override fun configureOptionButton(): Unit = super.configureOptionButton().also {
     optionButtonBorder = optionButton.border
-    optionButton.border = if (isSimpleButton) optionButtonBorder else mainButton.border
+    updateBorder()
   }
 
   override fun unconfigureOptionButton(): Unit = super.unconfigureOptionButton().also {
-    optionButton.border = optionButtonBorder
+    setBorder(optionButtonBorder)
     optionButtonBorder = null
   }
 
@@ -113,6 +115,15 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
     g.fill(Rectangle2D.Float(x, yOffset, LW.float, mainButton.height - yOffset * 2))
   }
 
+  private fun updateBorder() {
+    setBorder(if (isSimpleButton) optionButtonBorder else mainButton.border)
+  }
+
+  private fun setBorder(border: Border?) {
+    optionButton.border = border
+    optionButton.updateVisualPadding(border?.getBorderInsets(optionButton)?.toUnscaledGaps())
+  }
+
   private fun separatorColor(c: JComponent) : Paint {
     c as AbstractButton
     val defButton = isDefaultButton(c)
@@ -132,9 +143,7 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
     return resourceName?.let { UIManager.getColor(it) } ?: (mainButton.border as DarculaButtonPainter).getBorderPaint(c)
   }
 
-  override fun updateOptions(): Unit = super.updateOptions().also {
-    optionButton.border = if (isSimpleButton) optionButtonBorder else mainButton.border
-  }
+  override fun updateOptions(): Unit = super.updateOptions().also { updateBorder() }
 
   @ApiStatus.Internal
   companion object {

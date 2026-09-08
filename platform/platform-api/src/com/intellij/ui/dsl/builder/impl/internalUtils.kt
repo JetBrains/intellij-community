@@ -12,6 +12,8 @@ import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.gridLayout.Constraints
+import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.JComponent
@@ -141,6 +143,26 @@ fun errorInInternalOrLogWarn(message: String, stacktrace: Throwable? = null) {
   else {
     LOG.warn(message)
   }
+}
+
+/**
+ * Sets [DslComponentProperty.VISUAL_PADDINGS] and updates the actual insets if the component is already in the hierarchy
+ */
+@ApiStatus.Internal
+fun JComponent.updateVisualPadding(visualPaddings: UnscaledGaps?) {
+  putClientProperty(DslComponentProperty.VISUAL_PADDINGS, visualPaddings)
+
+  // Update padding in the view hierarchy
+  val layout = parent?.layout as? GridLayout ?: return
+  val constraints = layout.getConstraints(this)
+  if (constraints == null) {
+    failInInternalOrLogError("Component is not found in the layout: $this")
+    return
+  }
+
+  constraints.visualPaddings = visualPaddings ?: UnscaledGaps.EMPTY
+  parent.revalidate()
+  parent.repaint()
 }
 
 private val testOrInternalMode: Boolean by lazy {
