@@ -212,6 +212,7 @@ internal object AppIdleMemoryCleanerUsagesCollector : CounterUsagesCollector() {
   ) {
     val xmxMb = ManagementFactory.getMemoryMXBean().heapMemoryUsage.max.toMB()
     val totalCleanedMb = memBeforeCleanupMb - memAfterCleanupMb
+    val totalCleanedPercentMb = if (memBeforeCleanupMb != 0L) totalCleanedMb * 100 / memBeforeCleanupMb else 0
     MEMORY_CLEANUP_PERFORMED.log(
       XMX.with(xmxMb.toInt()),
       DURATION_SINCE_LAST_CLEANUP.with(durationSinceLastCleanupMs),
@@ -219,7 +220,7 @@ internal object AppIdleMemoryCleanerUsagesCollector : CounterUsagesCollector() {
       MEM_BEFORE_CLEANUP_MB.with(memBeforeCleanupMb.toInt()),
       MEM_AFTER_CLEANUP_MB.with(memAfterCleanupMb.toInt()),
       TOTAL_CLEANED_MB.with(totalCleanedMb.toInt()),
-      TOTAL_CLEANED_PERCENT.with((totalCleanedMb * 100 / memBeforeCleanupMb).toInt()),
+      TOTAL_CLEANED_PERCENT.with(totalCleanedPercentMb.toInt()),
       GC_CLEANED_MB.with(gcCleanedMb.toInt()),
       DIRECT_BUFFERS_CLEANED_MB.with(directBuffersCleanedMb.toInt()),
     )
