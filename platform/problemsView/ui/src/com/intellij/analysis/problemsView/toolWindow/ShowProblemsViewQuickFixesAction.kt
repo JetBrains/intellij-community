@@ -27,7 +27,7 @@ import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.awt.RelativePoint
 import java.awt.event.MouseEvent
 
-//deprecated, monolithic implementation
+@Deprecated("legacy, monolithic implementation of problems-view quick-fixes action. see split implementation: `FrontendShowProblemsViewQuickFixesAction`")
 internal class ShowProblemsViewQuickFixesAction : AnAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

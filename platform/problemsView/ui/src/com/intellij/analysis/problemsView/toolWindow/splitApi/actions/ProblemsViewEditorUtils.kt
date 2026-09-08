@@ -2,6 +2,7 @@
 package com.intellij.analysis.problemsView.toolWindow.splitApi.actions
 
 import com.intellij.openapi.editor.ClientEditorManager
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -23,15 +24,25 @@ object ProblemsViewEditorUtils {
     }
   }
 
+
   @RequiresReadLock
+  //for the legacy, monolithic implementation of `ShowProblemsViewQuickFixesAction`
   fun getEditor(psi: PsiFile): Editor? {
-    val document = PsiDocumentManager.getInstance(psi.project).getDocument(psi) ?: return null
-    return ClientEditorManager.getCurrentInstance().editors(document, psi.project).firstOrNull { !it.isViewer }
+    val project = psi.project
+    val document = PsiDocumentManager.getInstance(project).getDocument(psi) ?: return null
+
+    return getEditor(document, project)
   }
 
   @RequiresReadLock
   fun getEditor(file: VirtualFile, project: Project): Editor? {
+    if (!file.isValid) return null
+
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+    return getEditor(document, project)
+  }
+
+  fun getEditor(document: Document, project: Project): Editor? {
     return ClientEditorManager.getCurrentInstance().editors(document, project).firstOrNull { !it.isViewer }
   }
 

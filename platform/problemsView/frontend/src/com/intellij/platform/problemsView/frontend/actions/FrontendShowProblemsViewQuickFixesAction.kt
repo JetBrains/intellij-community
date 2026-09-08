@@ -35,6 +35,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -83,6 +84,7 @@ internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemo
     }
   }
 
+  @RequiresEdt
   private fun showQuickFixes(
     event: AnActionEvent,
     problem: HighlightingProblem,
@@ -91,10 +93,10 @@ internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemo
     val project = event.project ?: return
     val offset = problem.getQuickFixOffset()
     val psiFile = PsiManager.getInstance(project).findFile(problem.file) ?: return
-    val editor = event.getData(ProblemsViewPanel.PREVIEW_DATA_KEY) ?: run {
-      val existingEditor = getEditor(problem.file, project) ?: return
-      openEditorIfNeeded(problem.file, project, existingEditor) ?: return
-    }
+    val editor = event.getData(ProblemsViewPanel.PREVIEW_DATA_KEY) ?:
+      getEditor(problem.file, project)
+        ?.let { editor -> openEditorIfNeeded(problem.file, project, editor) }
+        ?: return
     val cachedIntentions = createCachedIntentions(
       intentions,
       project,

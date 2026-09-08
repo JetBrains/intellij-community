@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.problemsView.backend
 
-import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.ProblemsViewEditorUtils
+import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.ProblemsViewEditorUtils.getEditor
+import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.ProblemsViewEditorUtils.openEditorIfNeeded
 import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.QuickFixModelDto
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.IntentionAction
@@ -14,6 +15,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
@@ -85,8 +87,7 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
     val psiFile = PsiManager.getInstance(project).findFile(file)
     if (psiFile == null) return emptyList()
 
-    val editor = ProblemsViewEditorUtils.getEditor(psiFile)
-    if (editor == null) return emptyList()
+    val editor = getEditor(file, project) ?: return emptyList()
 
     val quickFixes = mutableListOf<IntentionActionWithIds>()
 
@@ -134,29 +135,58 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
   }
 
   private suspend fun executeQuickFix(file: VirtualFile, highlighterId: Long, action: IntentionAction) {
-    val context = readAction {
+    val document = readAction {
       if (!file.isValid) return@readAction null
-      val editor = ProblemsViewEditorUtils.getEditor(file, project) ?: return@readAction null
-      val psiFile = PsiManager.getInstance(project).findFile(file) ?: return@readAction null
-      psiFile to editor
-    } ?: return
-
-    val (psiFile, editor) = context
+      FileDocumentManager.getInstance().getDocument(file)
+    }
+    if (document == null) {
+      LOG.warn("Cannot execute the quick fix because the document is unavailable.")
+      return
+    }
 
     withContext(Dispatchers.EDT) {
-      val targetEditor = ProblemsViewEditorUtils.openEditorIfNeeded(file, project, editor) ?: return@withContext
-      if (!file.isValid || targetEditor.isDisposed) return@withContext
-      val highlighter = findHighlighter(file, highlighterId) ?: return@withContext
-      val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return@withContext
+      if (!file.isValid) {
+        LOG.warn("Cannot execute the quick fix because the file is invalid.")
+        return@withContext
+      }
 
-      ShowIntentionActionsHandler.chooseActionAndInvoke(
+      val editor = getEditor(document, project)
+        ?.let { editor -> openEditorIfNeeded(file, project, editor) }
+      if (editor == null) {
+        LOG.warn("Cannot execute the quick fix because the editor is unavailable.")
+        return@withContext
+      }
+
+      val psiFile = PsiManager.getInstance(project).findFile(file)
+        ?.takeIf { it.isValid }
+      if (psiFile == null) {
+        LOG.warn("Cannot execute the quick fix because the PSI file is unavailable.")
+        return@withContext
+      }
+
+      val highlighter = findHighlighter(file, highlighterId)
+      if (highlighter == null) {
+        LOG.warn("Cannot execute the quick fix because the highlighter is unavailable.")
+        return@withContext
+      }
+
+      val info = HighlightInfo.fromRangeHighlighter(highlighter)
+      if (info == null) {
+        LOG.warn("Cannot execute the quick fix because the highlight information is unavailable.")
+        return@withContext
+      }
+
+      val invoked = ShowIntentionActionsHandler.chooseActionAndInvoke(
         psiFile,
-        targetEditor,
+        editor,
         action,
         action.text,
         info.actualStartOffset,
         IntentionSource.PROBLEMS_VIEW
       )
+      if (!invoked) {
+        LOG.warn("Cannot execute the quick fix because the intention handler rejected the invocation.")
+      }
     }
   }
 
@@ -194,3 +224,5 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
     fun getInstance(project: Project): BackendProblemsViewQuickFixService = project.service()
   }
 }
+
+private val LOG = logger<BackendProblemsViewQuickFixService>()

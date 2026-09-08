@@ -7,10 +7,7 @@ import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
@@ -104,16 +101,15 @@ internal class BackendProblemsViewQuickFixServiceTest {
       service.executeQuickFix(quickFixes.quickFixModelId, "another intention")
       assertTrue(service.hasLoadedQuickFixes())
 
-      val highlighter = findHighlighter(highlighterId)
-      withContext(Dispatchers.EDT) { highlighter.dispose() }
       service.executeQuickFix(quickFixes.quickFixModelId, intentionId)
       assertFalse(service.hasLoadedQuickFixes())
     }
   }
 
   private suspend fun <T> withEditor(action: suspend () -> T): T {
-    val document = readAction { testFile.viewProvider.document }
-    val editor = withContext(Dispatchers.EDT) { EditorFactory.getInstance().createEditor(document, project) }
+    val editor = withContext(Dispatchers.EDT) {
+      EditorFactory.getInstance().createEditor(testFile.viewProvider.document, project)
+    }
     try {
       return action()
     }
@@ -123,23 +119,16 @@ internal class BackendProblemsViewQuickFixServiceTest {
   }
 
   private suspend fun addQuickFix(): Long {
-    val document = readAction { testFile.viewProvider.document }
-    val info = requireNotNull(readAction {
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(0, 0)
-        .registerFix(EmptyIntentionAction("test"), null, null, null, null)
-        .create()
-    })
-    withContext(Dispatchers.EDT) {
-      UpdateHighlightersUtil.setHighlightersToEditor(project, document, 0, 0, listOf(info), null, 1)
-    }
-    return getHighlighterId(requireNotNull(info.highlighter))
-  }
-
-  private suspend fun findHighlighter(highlighterId: Long): RangeHighlighter {
-    return readAction {
+    return withContext(Dispatchers.EDT) {
       val document = testFile.viewProvider.document
-      DocumentMarkupModel.forDocument(document, project, false).allHighlighters.single { getHighlighterId(it) == highlighterId }
+      val info = requireNotNull(
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(0, 0)
+          .registerFix(EmptyIntentionAction("test"), null, null, null, null)
+          .create()
+      )
+      UpdateHighlightersUtil.setHighlightersToEditor(project, document, 0, 0, listOf(info), null, 1)
+      getHighlighterId(requireNotNull(info.highlighter))
     }
   }
 
