@@ -83,13 +83,18 @@ interface GradleModelController {
     ): GradleModelFetchRequest<Model>
 
     /**
+     * Marks the requested model as optional for this model fetch request.
+     *
+     * Unlike [suppressFailures], this method suppresses only the failure that reports a missing model.
+     */
+    fun optionalModel(optionalModel: Boolean = true): GradleModelFetchRequest<Model>
+
+    /**
      * Suppresses failures for this model fetch request.
      *
      * When suppressed:
      * - With the resilient Gradle API: failures returned by [org.gradle.tooling.BuildController.fetch] are not forwarded.
      * - Without the resilient Gradle API: exceptions thrown by [org.gradle.tooling.BuildController.getModel] are caught and discarded.
-     *
-     * Use this when the model may not be available in all Gradle configurations.
      */
     @Experimental
     fun suppressFailures(suppressFailures: Boolean = true): GradleModelFetchRequest<Model>
