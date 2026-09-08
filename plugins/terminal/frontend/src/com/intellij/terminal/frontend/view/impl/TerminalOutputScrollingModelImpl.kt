@@ -2,9 +2,11 @@
 package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.EditorScrollableIncrementProvider
@@ -23,6 +25,7 @@ import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.block.ui.VerticalSpaceInlayRenderer
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.block.ui.doWithoutScrollingAnimation
 import org.jetbrains.plugins.terminal.view.TerminalOffset
@@ -66,6 +69,9 @@ class TerminalOutputScrollingModelImpl(
   private val appliedOutputModelState = MutableStateFlow(getCurrentOutputModelState())
 
   private val lifetimeDisposable = coroutineScope.asDisposable()
+
+  /** Pads the bottom of the document so a screen-top target line is positioned at the top of the viewport */
+  private val scrollPadding = TerminalScrollPaddingController(editor, lifetimeDisposable)
 
   init {
     // Make the platform's wheel/scrollbar scrolling come to rest on a whole grid line (accounting for block insets),
@@ -164,13 +170,12 @@ class TerminalOutputScrollingModelImpl(
    * The cursor is considered only if it is visible.
    */
   private fun updateScrollPosition(cursorOffset: TerminalOffset) {
-    val screenRows = editor.calculateTerminalSize()?.rows ?: run {
+    if (editor.calculateTerminalSize() == null) {
       LOG.trace { "updateScrollPosition: skipped, terminal size is not available yet" }
       return
     }
 
-    val screenBottomVisualLine = editor.offsetToVisualLine(editor.document.textLength, true)
-    val screenTopVisualLine = max(0, screenBottomVisualLine - screenRows + 1)
+    val screenTopVisualLine = editor.offsetToVisualLine(outputModel.screenTopOffset.toRelative(outputModel), false)
 
     val topInset = getTopInset()
     val bottomInset = JBUI.scale(TerminalUi.blockBottomInset)
@@ -208,11 +213,13 @@ class TerminalOutputScrollingModelImpl(
       "updateScrollPosition: currentOffset=$currentOffset -> scrollY=$scrollY " +
       "(${if (scrollY != currentOffset) "scrolling" else "no change"}); " +
       "cursor(visible=$isCursorVisible, line=$cursorVisualLine, atTop=$isCursorAtTop), " +
-      "screen(rows=$screenRows, topLine=$screenTopVisualLine, bottomLine=$screenBottomVisualLine, height=$screenHeight), " +
+      "screen(topLine=$screenTopVisualLine, height=$screenHeight), " +
       "insets(top=$topInset, bottom=$bottomInset), lastNotBlankLine=$lastNotBlankVisualLine, " +
       "y(top=$screenTopY, bottom=$screenBottomY), " +
       "candidates(bottomAligned=${screenBottomY - screenHeight}, topAligned=$screenTopY, current=$currentOffset)"
     }
+
+    scrollPadding.ensureReachable(screenTopY, screenHeight)
 
     if (scrollY != currentOffset) {
       editor.doWithoutScrollingAnimation {
@@ -336,6 +343,38 @@ class TerminalOutputScrollingModelImpl(
         val line = editor.yToVisualLine(targetY)
         val alignedY = editor.visualLineToY(line)
         (visibleRect.y - alignedY).coerceAtLeast(0)
+      }
+    }
+  }
+
+  /**
+   * Owns a block inlay after the end of the document and grows it just enough that the screen-top line passed to
+   * [ensureReachable] is always scrollable to the top of the viewport, even when the real content below it is
+   * shorter than the viewport.
+   */
+  private class TerminalScrollPaddingController(private val editor: EditorImpl, parentDisposable: Disposable) {
+    private var height = 0
+
+    private val inlay: Inlay<*> = editor.inlayModel.addBlockElement(
+      editor.document.textLength,
+      true,
+      false,
+      TerminalUi.terminalScrollPaddingInlayPriority,
+      VerticalSpaceInlayRenderer { height }
+    )
+
+    init {
+      Disposer.register(parentDisposable, inlay)
+    }
+
+    /** Grows or shrinks the padding so that scrolling to [screenTopY] with a [screenHeight]-tall viewport is reachable. */
+    fun ensureReachable(screenTopY: Int, screenHeight: Int) {
+      val realContentBottomVisualLine = editor.offsetToVisualLine(editor.document.textLength, true)
+      val realContentBottomY = editor.visualLineToY(realContentBottomVisualLine) + editor.lineHeight + JBUI.scale(TerminalUi.blockBottomInset)
+      val neededHeight = (screenTopY + screenHeight - realContentBottomY).coerceAtLeast(0)
+      if (neededHeight != height) {
+        height = neededHeight
+        inlay.update()
       }
     }
   }

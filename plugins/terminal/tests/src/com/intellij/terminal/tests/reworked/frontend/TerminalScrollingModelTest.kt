@@ -46,12 +46,12 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
       updateText(0, outputPattern("""
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
       updateText(0, outputPattern("""
         123
         456<cursor>
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
     }
   }
 
@@ -64,17 +64,17 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
       updateText(0, outputPattern("""
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
       updateText(0, outputPattern("""
         1
         2
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
       updateText(2, outputPattern("""
         3
         4
-      """.trimIndent()))
-      updateText(4, outputPattern("5"))
+      """.trimIndent()), screenTopLine = 1)
+      updateText(4, outputPattern("5"), screenTopLine = 2)
     }
   }
 
@@ -89,7 +89,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         2
 
         <cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 1)
     }
   }
 
@@ -103,11 +103,11 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         1
         2
         12345<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
 
       updateText(2, outputPattern("""
         12345678<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
     }
   }
 
@@ -121,12 +121,12 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         1
         2
         3<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
       updateText(3, outputPattern("""
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 1)
     }
   }
 
@@ -140,12 +140,12 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         1
         2
         3<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
       updateText(3, outputPattern("""
 
 
         <cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 1)
     }
   }
 
@@ -162,7 +162,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
 
       // Ctrl+L will first replace the current line and add the new line
       updateText(0, outputPattern("""
@@ -172,7 +172,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 1)
 
       // Then it will print the new prompt on a new line
       updateText(1, outputPattern("""
@@ -181,7 +181,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 1)
 
       // Then it will print the command
       updateText(1, outputPattern("""
@@ -190,7 +190,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 1)
     }
   }
 
@@ -209,7 +209,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         5
         6
         prompt> pwd<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 2)
 
       // Ctrl+L will first replace the current line and add the new lines
       updateText(6, outputPattern("""
@@ -219,7 +219,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 7)
 
       // Then it will print the new prompt on a new line
       updateText(7, outputPattern("""
@@ -228,7 +228,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 7)
 
       // Then it will print the command
       updateText(7, outputPattern("""
@@ -237,7 +237,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 7)
     }
   }
 
@@ -254,7 +254,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         prompt> pwd<cursor>
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
 
       // Ctrl+L will first replace the current line and add the new line
       updateText(2, outputPattern("""
@@ -264,7 +264,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 3)
 
       // Then it will print the new prompt on a new line
       updateText(3, outputPattern("""
@@ -273,7 +273,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 3)
 
       // Then it will print the command
       updateText(3, outputPattern("""
@@ -282,7 +282,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 3)
     }
   }
 
@@ -295,21 +295,21 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         prompt> clear<cursor>
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
 
       // "clear" first replaces all lines with empty
       updateText(0, outputPattern("""
         <cursor>
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
 
       // Then it will print the new prompt on the first line
       updateText(0, outputPattern("""
         prompt> <cursor>
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
     }
   }
 
@@ -326,13 +326,13 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         5
         6
         prompt> clear<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 2)
 
       // "Clear" first adds the new line
       updateText(6, outputPattern("""
         prompt> clear
         <cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 3)
 
       // Then it replaces everything with empty lines
       updateText(0, outputPattern("""
@@ -341,7 +341,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
 
       // Then it will print the new prompt on the first line
       updateText(0, outputPattern("""
@@ -350,7 +350,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
     }
   }
 
@@ -365,7 +365,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         prompt> clear<cursor>
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
 
       // "clear" first replaces all lines with empty
       updateText(0, outputPattern("""
@@ -374,7 +374,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
 
       // Then it will print the new prompt on the first line
       updateText(0, outputPattern("""
@@ -383,7 +383,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
 
 
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 0)
     }
   }
 
@@ -402,16 +402,17 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         5
         6
         prompt> command<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 2)
 
       // Suppose command printed two lines
       updateText(6, outputPattern("""
         prompt> command
         persistentOutput
         tempOutput<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 4)
 
-      // Then it removed the "tempOutput" line.
+      // Then it removed the "tempOutput" line. The screen top ("5", line 4) is unaffected by this edit,
+      // so it is not reported again here - it stays valid, exactly like a real session would leave it.
       updateText(8, outputPattern(""))
       updateCursor(7, 16)
     }
@@ -432,10 +433,11 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         4
         5
         6<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 3)
 
       invokeAction("Terminal.LineUp")
 
+      // Following stopped, so this update never triggers updateScrollPosition - no screenTop needed.
       updateText(6, outputPattern("7<cursor>"))
     }
   }
@@ -453,12 +455,12 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         4
         5
         6<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 3)
 
       invokeAction("Terminal.LineUp")
       invokeAction("Terminal.LineDown")
 
-      updateText(6, outputPattern("7<cursor>"))
+      updateText(6, outputPattern("7<cursor>"), screenTopLine = 4)
     }
   }
 
@@ -474,11 +476,11 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         4
         5
         6<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 3)
 
       scrollWithoutUserAction(TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 2 * editor.lineHeight)
 
-      updateText(6, outputPattern("7<cursor>"))
+      updateText(6, outputPattern("7<cursor>"), screenTopLine = 4)
     }
   }
 
@@ -496,12 +498,12 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         4
         5
         6<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 3)
 
       invokeAction("Terminal.LineUp")
       scrollToCursor(true)
 
-      updateText(6, outputPattern("7<cursor>"))
+      updateText(6, outputPattern("7<cursor>"), screenTopLine = 4)
     }
   }
 
@@ -519,7 +521,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         4
         5
         6<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 3)
 
       invokeAction("Terminal.LineUp")
       scrollToCursor(false)
@@ -544,7 +546,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         6
         7
         8<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 5)
 
       invokeAction("Terminal.LineUp")
       invokeAction("Terminal.LineUp")
@@ -566,7 +568,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         6
         7
         8<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 5)
 
       repeat(10) { invokeAction("Terminal.LineUp") }
 
@@ -592,7 +594,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         4
         5
         6<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 3)
 
         // The platform only keeps the scroll position stable across this trim if the real editor caret sits past the
         // trimmed range (TerminalKeyilEventsHandlerImpl.syncEditorCaretWithModel does this on every keystroke); simulate
@@ -619,14 +621,98 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
         6
         7
         8<cursor>
-      """.trimIndent()))
+      """.trimIndent()), screenTopLine = 5)
 
       invokeAction("Terminal.PageUp")
       invokeAction("Terminal.PageDown")
 
-      updateText(8, outputPattern("9<cursor>"))
+      updateText(8, outputPattern("9<cursor>"), screenTopLine = 6)
     }
   }
+
+  @Test
+  fun `scroll position is on top after Ctrl+L with Ghostty-style trimming in the top of the screen`() =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val editor = createEditor(rows = 5)
+      doTest(editor, expectedScrollOffset = 0) {
+        updateText(0, outputPattern("prompt> pwd<cursor>"), screenTopLine = 0)
+
+        updateText(0, outputPattern("prompt> <cursor>"), screenTopLine = 0)
+      }
+    }
+
+  @Test
+  fun `scroll position is on top after Ctrl+L with Ghostty-style trimming in the middle of the screen`() =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val editor = createEditor(rows = 5)
+      // Only 3 real lines exist below the top of the document, far short of the 5-row viewport: reaching this
+      // scroll position at all requires the dynamic bottom padding, not just the corrected screen-top offset.
+      val expected = 2 * editor.lineHeight
+      doTest(editor, expected) {
+        updateText(0, outputPattern("""
+          1
+          2
+          prompt> pwd<cursor>
+        """.trimIndent()), screenTopLine = 0)
+
+        updateText(2, outputPattern("prompt> <cursor>"), screenTopLine = 2)
+      }
+    }
+
+  @Test
+  fun `scroll position is on top after Ctrl+L with Ghostty-style trimming in the bottom of the screen`() =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val editor = createEditor(rows = 5)
+      // Under the old screenRows-count-back heuristic this reaches into the pre-Ctrl+L scrollback (lines "3".."4")
+      // instead of the real new screen top, and the un-padded content is far shorter than the viewport - this
+      // needs both the screenTopOffset fix and the dynamic bottom padding to land on the redrawn prompt.
+      val expected = 6 * editor.lineHeight
+      doTest(editor, expected) {
+        updateText(0, outputPattern("""
+          1
+          2
+          3
+          4
+          5
+          6
+          prompt> pwd<cursor>
+        """.trimIndent()), screenTopLine = 2)
+
+        updateText(6, outputPattern("prompt> <cursor>"), screenTopLine = 6)
+      }
+    }
+
+  @Test
+  fun `scroll padding shrinks back as real output fills the screen after a Ghostty-style Ctrl+L`() =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val editor = createEditor(rows = 5)
+      // After the Ctrl+L trim below, "a".."d" fill the screen back up to exactly 5 rows (prompt + 4 lines):
+      // the screen is full again, so following the bottom must resume normally with no leftover padding
+      // pinning the scroll position too high.
+      val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 6 * editor.lineHeight
+      doTest(editor, expected) {
+        updateText(0, outputPattern("""
+          1
+          2
+          3
+          4
+          5
+          6
+          prompt> pwd<cursor>
+        """.trimIndent()), screenTopLine = 2)
+
+        updateText(6, outputPattern("prompt> <cursor>"), screenTopLine = 6)
+
+        // Real output now fills the screen back up.
+        updateText(6, outputPattern("""
+          prompt>
+          a
+          b
+          c
+          d<cursor>
+        """.trimIndent()), screenTopLine = 6)
+      }
+    }
 
   private suspend fun CoroutineScope.doTest(
     editor: EditorImpl,
@@ -692,13 +778,29 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     private val outputModel: MutableTerminalOutputModel,
     private val scrollingModel: TerminalOutputScrollingModelImpl,
   ) {
-    suspend fun updateText(absoluteLineIndex: Long, pattern: TerminalOutputPattern) {
+    suspend fun updateText(
+      absoluteLineIndex: Long,
+      pattern: TerminalOutputPattern,
+      screenTopLine: Long? = null,
+      screenTopColumn: Int = 0,
+    ) {
       outputModel.updateContent(absoluteLineIndex, pattern)
+      if (screenTopLine != null) {
+        outputModel.updateScreenTopPosition(screenTopLine, screenTopColumn)
+      }
       scrollingModel.awaitEventProcessing()
     }
 
-    suspend fun updateCursor(absoluteLineIndex: Long, column: Int) {
+    suspend fun updateCursor(
+      absoluteLineIndex: Long,
+      column: Int,
+      screenTopLine: Long? = null,
+      screenTopColumn: Int = 0,
+    ) {
       outputModel.updateCursorPosition(absoluteLineIndex, column)
+      if (screenTopLine != null) {
+        outputModel.updateScreenTopPosition(screenTopLine, screenTopColumn)
+      }
       scrollingModel.awaitEventProcessing()
     }
 
