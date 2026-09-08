@@ -255,16 +255,15 @@ internal class PyProjectModelSyncService(private val project: Project, private v
    * This method therefore runs one time for each session.
    */
   private suspend fun loadProjectRootsIntoVfs() {
-    var loadedRoots = 0
-    val loaded = measureTime {
+    val (loadedRoots, loaded) = measureTimedValue {
       val localFileSystem = LocalFileSystem.getInstance()
       val roots = getRootPaths(project)
       // `refreshAndFindFileByNioFile` reads the filesystem, so this step needs the dispatcher of its own.
       val rootDirectories = withContext(Dispatchers.IO) {
         roots.mapNotNullTo(LinkedHashSet()) { localFileSystem.refreshAndFindFileByNioFile(it) }
       }
-      loadedRoots = rootDirectories.size
       loadSubtreesIntoVfs(rootDirectories, collectExcludedPaths(project))
+      rootDirectories.size
     }
     log.debug { "Loaded $loadedRoots project roots into the VFS in $loaded" }
   }

@@ -22,7 +22,10 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.isDirectory
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.measureTime
 
 /**
  * Times the `pyproject.toml` search of PY-91841 on a real tree.
@@ -57,8 +60,8 @@ internal class PyProjectTomlDiscoveryBenchmarkTest {
     val rootFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(root)
                    ?: error("The VFS cannot find $root")
 
-    val vfsLoadMs = measure { loadSubtreesIntoVfs(setOf(rootFile)) }
-    report("VFS load of the tree", listOf(vfsLoadMs))
+    val vfsLoadTime = measure { loadSubtreesIntoVfs(setOf(rootFile)) }
+    report("VFS load of the tree", listOf(vfsLoadTime))
 
     var indexResult: List<Path> = emptyList()
     val indexTimes = (1..RUNS).map {
@@ -67,9 +70,9 @@ internal class PyProjectTomlDiscoveryBenchmarkTest {
     report("findPyProjectTomlFilesInIndex, ${indexResult.size} files", indexTimes)
 
     var walkResult: List<Path> = emptyList()
-    val walkMs = measure { walkResult = findPyProjectTomlByFilesystemWalk(root) }
-    report("the filesystem walk that this change replaced, ${walkResult.size} files", listOf(walkMs))
-    println("[PY-91841] search: walk ${walkMs} ms, index ${indexTimes.median()} ms, ${indexResult.size} files")
+    val walkTime = measure { walkResult = findPyProjectTomlByFilesystemWalk(root) }
+    report("the filesystem walk that this change replaced, ${walkResult.size} files", listOf(walkTime))
+    println("[PY-91841] search: walk ${walkTime.ms()}, index ${indexTimes.median().ms()}, ${indexResult.size} files")
 
     assertThat(indexResult)
       .describedAs("The search must report a pyproject.toml from a real tree")
@@ -127,16 +130,16 @@ internal class PyProjectTomlDiscoveryBenchmarkTest {
     Assumptions.assumeTrue(root.isDirectory(), "$root is not a directory")
     val rootFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(root) ?: error("The VFS cannot find $root")
 
-    val loadMs = measure { loadSubtreesIntoVfs(setOf(rootFile)) }
+    val loadTime = measure { loadSubtreesIntoVfs(setOf(rootFile)) }
 
     var directories = 0
-    val walkMs = measure { walk(rootFile) { directories++ } }
+    val walkTime = measure { walk(rootFile) { directories++ } }
 
     val virtualEnvReader = VirtualEnvReader()
 
     // The check that the loader used to run: a filesystem read for every directory.
     val byFilesystem = sortedSetOf<String>()
-    val filesystemMs = measure {
+    val filesystemTime = measure {
       walk(rootFile) { file ->
         val path = file.toNioPathOrNull() ?: return@walk
         if (virtualEnvReader.findPythonInPythonRoot(path) != null) byFilesystem.add(path.toString())
@@ -146,7 +149,7 @@ internal class PyProjectTomlDiscoveryBenchmarkTest {
     // The check that the loader runs now: a cheap gate over the loaded names, then the real call.
     val byTwoStage = sortedSetOf<String>()
     var candidates = 0
-    val twoStageMs = measure {
+    val twoStageTime = measure {
       walk(rootFile) { file ->
         val path = file.toNioPathOrNull() ?: return@walk
         if (!mayContainPython(file.children.asSequence().map { it.name })) return@walk
@@ -155,11 +158,11 @@ internal class PyProjectTomlDiscoveryBenchmarkTest {
       }
     }
 
-    println("[PY-91841] loadSubtreesIntoVfs      ${loadMs} ms over $directories directories")
-    println("[PY-91841] walk only                ${walkMs} ms (${perDirectory(walkMs, directories)} us per directory)")
-    println("[PY-91841] walk + filesystem check  ${filesystemMs} ms (${perDirectory(filesystemMs, directories)} us), found ${byFilesystem.size}")
-    println("[PY-91841] walk + two stage check   ${twoStageMs} ms (${perDirectory(twoStageMs, directories)} us), found ${byTwoStage.size}, $candidates candidates")
-    println("[PY-91841] the check cost, before   ${filesystemMs - walkMs} ms, after ${twoStageMs - walkMs} ms")
+    println("[PY-91841] loadSubtreesIntoVfs      ${loadTime.ms()} over $directories directories")
+    println("[PY-91841] walk only                ${walkTime.ms()} (${perDirectory(walkTime, directories)} us per directory)")
+    println("[PY-91841] walk + filesystem check  ${filesystemTime.ms()} (${perDirectory(filesystemTime, directories)} us), found ${byFilesystem.size}")
+    println("[PY-91841] walk + two stage check   ${twoStageTime.ms()} (${perDirectory(twoStageTime, directories)} us), found ${byTwoStage.size}, $candidates candidates")
+    println("[PY-91841] the check cost, before   ${(filesystemTime - walkTime).ms()}, after ${(twoStageTime - walkTime).ms()}")
 
     assertThat(directories).describedAs("the walk must visit the project").isGreaterThan(0)
     assertThat(byTwoStage)
@@ -179,20 +182,20 @@ internal class PyProjectTomlDiscoveryBenchmarkTest {
     })
   }
 
-  private fun perDirectory(millis: Long, directories: Int): Long =
-    if (directories == 0) 0 else millis * 1000 / directories
+  /** Microseconds per directory, which is the unit that makes a per-directory cost readable. */
+  private fun perDirectory(time: Duration, directories: Int): Long =
+    if (directories == 0) 0 else time.inWholeMicroseconds / directories
 
-  private suspend fun measure(block: suspend () -> Unit): Long {
-    val start = System.nanoTime()
-    block()
-    return (System.nanoTime() - start) / 1_000_000
+  private suspend fun measure(block: suspend () -> Unit): Duration = measureTime { block() }
+
+  private fun List<Duration>.median(): Duration = sorted()[size / 2]
+
+  private fun report(name: String, times: List<Duration>) {
+    println("[PY-91841] $name: ${times.joinToString(", ") { it.ms() }}")
   }
 
-  private fun List<Long>.median(): Long = sorted()[size / 2]
-
-  private fun report(name: String, times: List<Long>) {
-    println("[PY-91841] $name: ${times.joinToString(", ") { "$it ms" }}")
-  }
+  /** Whole milliseconds. The default text of a [Duration] carries nanoseconds, which no reader of a run needs. */
+  private fun Duration.ms(): String = toString(DurationUnit.MILLISECONDS)
 
   private companion object {
     const val ROOT_PROPERTY = "py.discovery.bench.root"
