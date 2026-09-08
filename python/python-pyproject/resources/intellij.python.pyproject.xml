@@ -22,9 +22,9 @@
     <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
-    <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.requirements.backend"/>
     <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.python.sdk.common"/>
     <module name="intellij.toml.core"/>
   </dependencies>
   <!-- endregion -->

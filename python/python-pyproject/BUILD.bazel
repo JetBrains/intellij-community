@@ -47,7 +47,6 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//python/openapi:community",
-        "//python/python-psi-impl:psi-impl",
         "//platform/core-api:core",
         "//python/python-sdk/backend",
         "//platform/util",
@@ -75,6 +74,7 @@ jvm_library(
         "//jps/model-api:model",
         "//platform/util:util-ui",
         "//python/python-requirements/backend",
+        "//python/python-sdk/common",
     ],
 )
 
@@ -97,7 +97,6 @@ jvm_library(
         # do not sort,
         ":pyproject",
         "//python/openapi:community_test_lib",
-        "//python/python-psi-impl:psi-impl_test_lib",
         "//platform/core-api:core_test_lib",
         "//python/python-sdk/backend:backend_test_lib",
         "//platform/util:util_test_lib",
@@ -125,6 +124,7 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//platform/util:util-ui_test_lib",
         "//python/python-requirements/backend:backend_test_lib",
+        "//python/python-sdk/common:common_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.pyproject` end

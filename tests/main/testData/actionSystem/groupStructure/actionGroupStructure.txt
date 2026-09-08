@@ -888,8 +888,6 @@
         DumpGroovyControlFlowAction
       DetectProjectLeaks
       TestJbProtocolCommand
-      PythonPsiInternalGroup
-        PyTypeBenchmarkAction
       Vcs.Internal
         Vcs.Log.Internal
           Vcs.Log.InvalidateCaches
@@ -899,6 +897,8 @@
           Git.Log.Internal
             Git.Log.Show.Command
         Git.Cleanup.Branches
+      PythonPsiInternalGroup
+        PyTypeBenchmarkAction
       ReloadProjectAction
       Internal.Ex
         ShowEdtUtilizationChart

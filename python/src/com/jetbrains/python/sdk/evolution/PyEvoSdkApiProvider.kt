@@ -8,6 +8,7 @@ import com.intellij.python.uv.backend.cli.uv.UvPythonEntry
 import com.intellij.python.community.impl.uv.common.UV_UI_INFO
 import com.intellij.python.uv.backend.UvSystemPythonService
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
+import com.intellij.python.sdk.backend.evolution.getModulesCluster
 import com.intellij.python.sdk.common.evolution.EvoCurrentRecreateDto
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -36,6 +37,7 @@ import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.processOutput.common.ProcessOutputTopic
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.performToolInstallation
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
@@ -859,7 +861,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
 
   /**
    * Assigns [sdk] to every module the interpreter belongs to — the whole workspace when the module takes part in one
-   * ([EvoPyProject.sdkModules]), since a uv/poetry workspace has a single shared environment and leaving the siblings
+   * ([getModulesCluster]), since a uv/poetry workspace has a single shared environment and leaving the siblings
    * on their previous interpreter would make the same environment disagree with itself across the project.
    *
    * Uses `configurePythonSdk` (the setter the inspection's fix and the add-interpreter dialog use): it does the EDT
@@ -867,7 +869,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    * Must be called under the SDK-configuration lock.
    */
   private fun EvoPyProject.applySdk(sdk: Sdk) {
-    for (module in sdkModules) configurePythonSdk(module.project, module, sdk)
+    for (module in getModulesCluster()) configurePythonSdk(module.project, module, sdk)
   }
 
   /**
@@ -1071,7 +1073,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       // setPythonSdk → ModuleRootModificationUtil.setModuleSdk does its own EDT write (invokeAndWait); calling it inside
       // a write action deadlocks, so run it plainly on a background coroutine.
       widgetScope.launch {
-        for (target in pyProject.sdkModules) PyModuleService.getInstance(project).setPythonSdk(target, sdk)
+        for (target in pyProject.getModulesCluster()) PyModuleService.getInstance(project).setPythonSdk(target, sdk)
       }
     }
     val action = actions.getOrNull(index)

@@ -13,7 +13,7 @@ import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.getInterpreter
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
-import com.jetbrains.python.sdk.evolution.EvoPyProjectModel
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 
 /**
  * The subproject a Python Console runs for, and its interpreter.

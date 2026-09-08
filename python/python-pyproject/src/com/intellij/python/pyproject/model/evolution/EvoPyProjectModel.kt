@@ -1,8 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.evolution
+package com.intellij.python.pyproject.model.evolution
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -13,6 +14,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.python.sdk.backend.asInterpreterRef
+import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.pythonSdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -42,6 +44,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * The entities [PyProject] is derived from ([com.intellij.python.pyproject.model.internal.pyProject.PyProjectImpl]):
@@ -74,13 +77,14 @@ private fun VersionedStorageChange.affectsPyProjects(): Boolean =
  * `intellij.python.pyproject`), so [dtos] is pushed over RPC and the frontend resolves its target against that.
  */
 @Service(Service.Level.PROJECT)
-internal class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
+@ApiStatus.Internal
+class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
 
   /**
    * One self-consistent view of the project's Python structure. Immutable: a recomputation publishes a new instance
    * rather than mutating this one, so a caller that resolved a target keeps working against the generation it read.
    */
-  internal class Snapshot(
+  class Snapshot(
     private val byKey: Map<String, EvoPyProject>,
     /**
      * The `PyProject` rooted at the project's own base dir, i.e. the one that makes the *project* a Python project —
@@ -110,9 +114,6 @@ internal class EvoPyProjectModel(private val project: Project, scope: CoroutineS
 
     /** Every `PyProject`'s own base dir — a workspace member's own, not its root's. Used to exclude sibling projects from env discovery. */
     val baseDirs: Set<Path> get() = byKey.values.mapTo(mutableSetOf()) { it.moduleBaseDir }
-
-    /** The `PyProject` that resides on [module], or `null` when it is not a Python one. */
-    fun of(module: Module): EvoPyProject? = byKey.values.firstOrNull { it.module == module }
 
   }
 
@@ -149,6 +150,7 @@ internal class EvoPyProjectModel(private val project: Project, scope: CoroutineS
         .conflate()
         .collect { interpreterState.value = interpreterFor(selectedFile()) }
     }
+
   }
 
   /** The current structure, awaiting the first computation when it has not landed yet. */
@@ -169,10 +171,10 @@ internal class EvoPyProjectModel(private val project: Project, scope: CoroutineS
    * The `PyProject` [file] belongs to, or the project's own when it belongs to none — a scratch, a file dragged in
    * from outside, or nothing focused at all. See [EvoPyProjectDto.isMain].
    */
-  suspend fun targetFor(file: VirtualFile?): EvoPyProject? {
+  internal suspend fun targetFor(file: VirtualFile?): EvoPyProject? {
     val snapshot = snapshot()
     val module = file?.let { readAction { ModuleUtilCore.findModuleForFile(it, project) } } ?: return snapshot.main
-    return snapshot.of(module) ?: snapshot.main
+    return snapshot.forModule(module) ?: snapshot.main
   }
 
   /**
@@ -184,7 +186,7 @@ internal class EvoPyProjectModel(private val project: Project, scope: CoroutineS
    */
   suspend fun interpreterFor(file: VirtualFile?): Sdk? {
     val target = targetFor(file) ?: return null
-    return readAction { target.sdkModules.firstNotNullOfOrNull { it.pythonSdk } }
+    return readAction { target.sdk }
   }
 
   /**
@@ -250,3 +252,15 @@ internal class EvoPyProjectModel(private val project: Project, scope: CoroutineS
  * equality on both sides, with no path parsing and no VFS lookup.
  */
 internal fun keyOf(pyProject: PyProject): String = FileUtil.toSystemIndependentName(pyProject.baseDir.toString())
+
+/**
+ * The interpreter of the module at the project root, for a file that belongs to no module, such as a scratch file.
+ *
+ * Replaces `ProjectRootManager.getProjectSdk()`, which reads `project-jdk-name` from `.idea/misc.xml`. That attribute
+ * is missing or stale in the projects PY-89831 reports.
+ *
+ * Waits for the structure and for the project model behind the module's own SDK reference, so it never answers on
+ * incomplete information.
+ */
+@ApiStatus.Internal
+suspend fun Project.findMainPythonSdk(): Sdk? = service<EvoPyProjectModel>().snapshot().main?.module?.findPythonSdk()

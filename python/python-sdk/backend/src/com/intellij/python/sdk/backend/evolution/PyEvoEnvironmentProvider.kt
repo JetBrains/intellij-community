@@ -34,6 +34,7 @@ import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.pySdkAdditionalData
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.intellij.python.sdk.backend.PySdkBundle
@@ -74,8 +75,8 @@ class EvoWorkspace(val root: PyProject, val tool: ToolId, val modules: List<Modu
  * A tool workspace (a uv/poetry workspace) has a single environment, declared at its root: no member owns one, and the
  * tools are always driven from the root. So everything the widget does with a directory (scanning for envs, reading
  * `requires-python`, creating an env, running the tool) uses [baseDir] — the *workspace root's* base dir — and an
- * interpreter picked for any one module is applied to [sdkModules], the whole workspace. Only [module] itself, whose
- * interpreter the status bar reflects, stays the one the user is looking at.
+ * interpreter picked for any one module is applied to [getModulesCluster], the whole workspace. Only [module] itself,
+ * whose interpreter the status bar reflects, stays the one the user is looking at.
  */
 @ApiStatus.Internal
 class EvoPyProject(
@@ -93,9 +94,17 @@ class EvoPyProject(
   /** The module's *own* base dir, whether or not it takes part in a workspace. */
   val moduleBaseDir: Directory get() = self.baseDir
 
-  /** Every module a selected interpreter must be applied to: the whole workspace, or just this module when standalone. */
-  val sdkModules: List<Module> get() = workspace?.let { (it.modules + module).distinct() } ?: listOf(module)
+  /**
+   * The interpreter this project uses.
+   *
+   * Every module of a workspace holds its own reference to the SDK, so [module] alone answers.
+   */
+  val sdk: Sdk? get() = module.pythonSdk
 }
+
+/** Every module a selected interpreter must be written to: the whole workspace, or this module alone when standalone. */
+@ApiStatus.Internal
+fun EvoPyProject.getModulesCluster(): List<Module> = workspace?.modules ?: listOf(module)
 
 /** [EvoToolContext.cached] key under which the core-supplied system-Python list is memoized. */
 private const val SYSTEM_PYTHONS_KEY: String = "core.systemPythons"

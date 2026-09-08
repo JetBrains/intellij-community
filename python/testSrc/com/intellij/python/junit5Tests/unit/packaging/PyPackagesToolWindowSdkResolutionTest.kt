@@ -15,7 +15,7 @@ import com.jetbrains.python.PythonTestUtil
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.jetbrains.python.junit5.framework.pyMockSdkFixture
 import com.intellij.openapi.components.service
-import com.jetbrains.python.sdk.evolution.EvoPyProjectModel
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkType
 import kotlinx.coroutines.Dispatchers
