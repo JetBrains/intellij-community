@@ -4,7 +4,9 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
+import com.intellij.psi.impl.source.tree.mvcc.PsiVersioningGarbageCollector
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.IS_UNDER_TESTING
@@ -13,11 +15,14 @@ import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.PsiVersionin
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiVersioningService
 import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.keyFMap.ArrayBackedFMap
 import com.intellij.util.keyFMap.KeyFMap
+import com.intellij.util.application
 import kotlinx.coroutines.async
+import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
@@ -32,6 +37,107 @@ import kotlin.test.assertTrue
 @TestApplication
 @RegistryKey(key = "psi.enable.persistent.syntax.tree", value = "true")
 internal class VersionedUserDataTest {
+
+  @Test
+  fun `obsolete overwritten user data is cleaned without another holder access`(
+    @TestDisposable disposable: Disposable,
+  ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    installVersioningListeners(disposable)
+    val key = Key.create<UserDataPayload>("automatic overwrite cleanup")
+    val initial = UserDataPayload("initial")
+    val replacement = UserDataPayload("replacement")
+    val leaf = createVersionedLeaf()
+    runVersionedWriteAction { leaf.putUserData(key, initial) }
+
+    retainCurrentPsiVersion {
+      runVersionedWriteAction { leaf.putUserData(key, replacement) }
+      assertReferenced(leaf, initial)
+    }
+
+    application.service<PsiVersioningGarbageCollector>().awaitCleanup()
+    assertNotReferenced(leaf, initial)
+    assertSame(replacement, leaf.getUserData(key))
+  }
+
+  @Test
+  fun `obsolete removed user data is cleaned without another holder access`(
+    @TestDisposable disposable: Disposable,
+  ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    installVersioningListeners(disposable)
+    val key = Key.create<UserDataPayload>("automatic removal cleanup")
+    val payload = UserDataPayload("payload")
+    val leaf = createVersionedLeaf()
+    runVersionedWriteAction { leaf.putUserData(key, payload) }
+
+    retainCurrentPsiVersion {
+      runVersionedWriteAction { leaf.putUserData(key, null) }
+      assertReferenced(leaf, payload)
+    }
+
+    application.service<PsiVersioningGarbageCollector>().awaitCleanup()
+    assertNotReferenced(leaf, payload)
+    assertTrue(leaf.userMap.isEmpty)
+  }
+
+  @Test
+  fun `asynchronous cleanup preserves a retained user data value`(
+    @TestDisposable disposable: Disposable,
+  ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    installVersioningListeners(disposable)
+    val key = Key.create<UserDataPayload>("frozen cleanup safety")
+    val initial = UserDataPayload("initial")
+    val replacement = UserDataPayload("replacement")
+    val leaf = createVersionedLeaf()
+    runVersionedWriteAction { leaf.putUserData(key, initial) }
+
+    retainCurrentPsiVersion {
+      runVersionedWriteAction { leaf.putUserData(key, replacement) }
+      application.service<PsiVersioningGarbageCollector>().cleanupNow()
+      assertReferenced(leaf, initial)
+    }
+
+    application.service<PsiVersioningGarbageCollector>().awaitCleanup()
+    assertNotReferenced(leaf, initial)
+  }
+
+  @Test
+  fun `one write action tracks a user data holder once`(@TestDisposable disposable: Disposable) {
+    installVersioningListeners(disposable)
+    val collector = application.service<PsiVersioningGarbageCollector>()
+    val key = Key.create<UserDataPayload>("write batch identity deduplication")
+    val leaf = createVersionedLeaf()
+    runVersionedWriteAction { leaf.putUserData(key, UserDataPayload("initial")) }
+
+    retainCurrentPsiVersion {
+      val before = collector.pendingVersionCleanableCount()
+      runVersionedWriteAction {
+        repeat(100) { leaf.putUserData(key, UserDataPayload("replacement $it")) }
+      }
+      assertEquals(before + 1, collector.pendingVersionCleanableCount())
+    }
+  }
+
+  @Test
+  fun `modification outside a write batch registers user data cleanup`(
+    @TestDisposable disposable: Disposable,
+  ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    installVersioningListeners(disposable)
+    val key = Key.create<UserDataPayload>("immediate cleanup registration")
+    val initial = UserDataPayload("initial")
+    val leaf = createVersionedLeaf()
+    runVersionedWriteAction { leaf.putUserData(key, initial) }
+
+    retainCurrentPsiVersion {
+      advancePsiVersion()
+      InternalPsiVersioning.runModificationOfVersionedPsi {
+        leaf.putUserData(key, UserDataPayload("replacement"))
+      }
+      assertReferenced(leaf, initial)
+    }
+
+    application.service<PsiVersioningGarbageCollector>().awaitCleanup()
+    assertNotReferenced(leaf, initial)
+  }
 
   @Test
   fun `versioned user data operations use lower bound across psi versions`(@TestDisposable disposable: Disposable) {
