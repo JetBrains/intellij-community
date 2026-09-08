@@ -2,6 +2,7 @@
 package com.jetbrains.python.refactoring
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.openapi.application.WriteAction
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.LanguageLevel
@@ -133,4 +134,28 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testUsedAsReference() = doTestError("The function foo is used as a reference and cannot be inlined. The function definition will not be removed", isReferenceError = true)
   fun testUsesArgumentUnpacking() = doTestError("The function foo uses argument unpacking and cannot be inlined. The function definition will not be removed", isReferenceError = true)
   fun testNestedIfElseIndentation() = doTest()
+
+  // PY-89262
+  fun testReadOnlyLibraryFunction() {
+    val testName = getTestName(true)
+    myFixture.copyDirectoryToProject(testName, "")
+    myFixture.configureByFile("main.py")
+    val libVFile = myFixture.findFileInTempDir("lib.py")
+    assertNotNull(libVFile)
+    WriteAction.runAndWait<RuntimeException> { libVFile!!.isWritable = false }
+    try {
+      var element = TargetElementUtil.findTargetElement(myFixture.editor, TargetElementUtil.getInstance().referenceSearchFlags)
+      if (element!!.containingFile is PyiFile) element = PyiUtil.getOriginalElement(element as PyElement)
+      val reference = TargetElementUtil.findReference(myFixture.editor)
+      assertTrue(element is PyFunction)
+      assertFalse("Precondition: the library file should be non-writable", element!!.containingFile.virtualFile.isWritable)
+      // Must not throw due to a read-only check on the library file, since we don't remove the declaration.
+      PyInlineFunctionProcessor(myFixture.project, myFixture.editor, element as PyFunction, reference,
+                                myInlineThisOnly = false, removeDeclaration = false).run()
+      myFixture.checkResultByFile("$testName/main.after.py")
+    }
+    finally {
+      WriteAction.runAndWait<RuntimeException> { libVFile!!.isWritable = true }
+    }
+  }
 }
