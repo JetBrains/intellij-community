@@ -51,6 +51,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -108,6 +109,8 @@ abstract class EditorBasedStatusBarPopup(
   // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
   @Volatile
   private var editor = WeakReference<Editor?>(null)
+
+  private var currentEditorJob: Job? = null
 
   init {
     scope.launch {
@@ -197,8 +200,30 @@ abstract class EditorBasedStatusBarPopup(
   override fun install(statusBar: StatusBar) {
     super<EditorBasedWidget>.install(statusBar)
 
+    subscribeOnCurrentEditor(statusBar)
+
     setEditor(getEditor())
     update()
+  }
+
+  /**
+   * Reacts to the editor state that [getSelectedFile] reads, and not only to a [FileEditorManagerListener] event.
+   *
+   * A lost event hides the widget until the next selection change. A split-mode restore can lose that event,
+   * so the widget stays hidden for the whole session. See IJPL-233497.
+   */
+  private fun subscribeOnCurrentEditor(statusBar: StatusBar) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
+
+    currentEditorJob?.cancel()
+    currentEditorJob = scope.launch {
+      statusBar.currentEditor.collect { fileEditor ->
+        setEditor((fileEditor as? TextEditor)?.editor)
+        fileChanged(fileEditor?.file)
+      }
+    }.also { it.cancelOnDispose(this) }
   }
 
   protected open fun updateForDocument(document: Document?) {
