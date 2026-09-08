@@ -20,7 +20,7 @@ import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
 @ApiStatus.Internal
 class ModuleToGradleProjectConnector : ProjectDataManager.ProjectDataImportExtension {
 
-  override fun finalizeImportData(projectData: ProjectData?, modelsProvider: IdeModifiableModelsProvider) {
+  override fun prepareImportData(projectData: ProjectData?, modelsProvider: IdeModifiableModelsProvider) {
     val mutableStorage = (modelsProvider as? IdeModifiableModelsProviderImpl)?.actualStorageBuilder ?: return
     if (Registry.`is`("gradle.phased.sync.bridge.disabled")) return
     addGradleModuleEntities(mutableStorage)
