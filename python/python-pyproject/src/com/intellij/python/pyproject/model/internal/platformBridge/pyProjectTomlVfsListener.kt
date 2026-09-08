@@ -209,8 +209,12 @@ private const val PYPY_PREFIX = "pypy"
  * A move carries two parents, and only one of them has to lie under a root. A directory that arrives from
  * outside the project keeps its old parent outside every root, and the model must still see it (PY-91841).
  *
- * The walk up ends at a root. A project may itself live under a dot directory, so the name of a root is never
- * checked. A root reached means "keep the event", and no root reached means "outside the project".
+ * The walk up ends at a root. A root reached means "keep the event", and no root reached means "outside the
+ * project".
+ *
+ * The name rule holds for a root as well, so a project whose own directory carries a dot name gets no model.
+ * `loadSubtreesIntoVfs` prunes such a directory and `PyProjectTomlPathFilter` rejects a file under it, so an
+ * event kept here could never reach a module. The three rules therefore agree.
  */
 private class EventFilter(knownRoots: Set<Path>) {
   /**
@@ -243,8 +247,9 @@ private class EventFilter(knownRoots: Set<Path>) {
     var current: VirtualFile? = parent
     while (current != null) {
       val directory = current
-      if (directory.path in roots) return false
+      // The name comes first, so the rule holds for a root too. See the note on this class.
       if (directory.name.isPrunedName()) return true
+      if (directory.path in roots) return false
       current = directory.parent
     }
     return true

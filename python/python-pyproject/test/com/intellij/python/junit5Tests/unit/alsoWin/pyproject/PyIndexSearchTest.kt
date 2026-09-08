@@ -104,6 +104,25 @@ internal class PyIndexSearchTest {
   }
 
   /**
+   * A root of a dot name gets no model, and the three rules of PY-91841 agree on it. `loadSubtreesIntoVfs`
+   * prunes such a directory, `EventFilter` drops an event under it, and this filter rejects its files.
+   *
+   * The case puts the file in the VFS itself, so the index reports it and only the filter can reject it.
+   */
+  @Test
+  fun testARootOfADotNameReportsNothing(): Unit = timeoutRunBlocking {
+    val dotRoot = root.resolve(".hidden-project")
+    val toml = dotRoot.resolve("member").createDirectories().resolve(PY_PROJECT_TOML).createFile()
+    assertThat(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(toml))
+      .describedAs("the case needs the file in the VFS, or it proves nothing")
+      .isNotNull()
+
+    assertThat(findPyProjectTomlFilesInIndex(setOf(dotRoot), excludedPaths = emptySet()))
+      .describedAs("a root of a dot name reports nothing")
+      .isEmpty()
+  }
+
+  /**
    * A VFS event arrives for the parent directory only, so a new directory has no loaded children.
    * `loadSubtreesIntoVfs` is what makes its `pyproject.toml` visible to the filename index.
    */
