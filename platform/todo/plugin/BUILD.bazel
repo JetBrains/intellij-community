@@ -9,12 +9,14 @@ dev_dist_plugin(
         "intellij.platform.todo",
         "intellij.platform.todo.backend",
         "intellij.platform.vcs.impl.lang.todo",
+        "intellij.platform.vcs.impl.lang.todo.frontend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_modules = [
         "intellij.platform.todo",
         "intellij.platform.todo.backend",
         "intellij.platform.vcs.impl.lang.todo",
+        "intellij.platform.vcs.impl.lang.todo.frontend",
     ],
     jars = {
         "lib/platform-todo-plugin.jar": ["intellij.platform.todo.plugin"],
@@ -64,6 +66,7 @@ ij_plugin(
         "//platform/todo",
         "//platform/todo/backend",
         "//platform/vcs-impl/lang/todo",
+        "//platform/vcs-impl/lang/todo/frontend",
     ],
     visibility = ["//visibility:public"],
 )
