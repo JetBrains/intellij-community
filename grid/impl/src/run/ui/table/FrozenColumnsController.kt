@@ -998,14 +998,15 @@ internal class FrozenColumnsController(
   }
 
   /**
-   * Swing finishes an edit before a left press reaches any listener, but it ignores the other buttons, and a right
-   * press still selects the cell under it from a JBTable listener. The edit is finished before that listener runs.
+   * Swing finishes an edit before a left press reaches any listener, but it ignores the other buttons, while JBTable
+   * still selects the row under a right press from a listener of its own. The edit is finished before that listener
+   * runs, whether a column is pinned or not.
    *
    * @return false when the press has to be dropped, because an editor refused to commit.
    */
   private fun stopEditingBeforeNonLeftPress(view: TableResultView, event: MouseEvent): Boolean =
-    event.id != MouseEvent.MOUSE_PRESSED || SwingUtilities.isLeftMouseButton(event) ||
-    stopEditingBeforeSelectionChange(view, view.rowAtPoint(event.point), view.columnAtPoint(event.point))
+    event.id != MouseEvent.MOUSE_PRESSED || SwingUtilities.isLeftMouseButton(event) || !isPairedView(view) ||
+    stopEditingUnlessAt(modelCell(view, view.rowAtPoint(event.point), view.columnAtPoint(event.point)))
 
   fun processMouseMotionEvent(view: TableResultView, event: MouseEvent) {
     if (event.id == MouseEvent.MOUSE_DRAGGED && !event.isConsumed && SwingUtilities.isLeftMouseButton(event)) {
@@ -1158,23 +1159,27 @@ internal class FrozenColumnsController(
   /**
    * Finishes an edit that the selection would otherwise leave behind: a pending value is written through the selection
    * the grid has when the editor commits, so moving the selection first sends it to the wrong cells. The cell holding
-   * the editor is exempt, because Swing starts an editor before it selects the cell that was clicked.
+   * the editor is exempt, because Swing starts an editor before it selects the cell that was clicked. Without a strip
+   * there is nothing to do: Swing finishes the edit itself before it changes a selection of its own.
    *
    * @return false when an editor refused to commit, in which case the selection has to stay where it is.
    */
-  fun stopEditingBeforeSelectionChange(view: TableResultView, row: Int, column: Int): Boolean {
-    val frozen = frozenView ?: return true
-    if (view !== primaryView && view !== frozen) return true
-    val target = modelCell(view, row, column)
-    // Either table can hold an editor, so both are asked rather than only the one that is expected to have it.
-    return stopEditingUnlessAt(primaryView, target) && stopEditingUnlessAt(frozen, target)
+  fun stopEditingBeforeSelectionChange(view: TableResultView, row: Int, column: Int): Boolean =
+    frozenView == null || !isPairedView(view) || stopEditingUnlessAt(modelCell(view, row, column))
+
+  private fun isPairedView(view: TableResultView): Boolean = view === primaryView || view === frozenView
+
+  /** Either table can hold the editor, so both are asked rather than only the one that is expected to have it. */
+  private fun stopEditingUnlessAt(target: ModelCell?): Boolean {
+    val frozen = frozenView
+    return stopEditingUnlessAt(primaryView, target) && (frozen == null || stopEditingUnlessAt(frozen, target))
   }
 
   private fun stopEditingUnlessAt(view: TableResultView, target: ModelCell?): Boolean {
     val editor = view.cellEditor ?: return true
     val editing = modelCell(view, view.editingRow, view.editingColumn)
-    // The editor commits the way Swing commits an unpinned one when the selection leaves it, without the prompt
-    // TableResultView.stopEditing() adds for an explicit commit.
+    // Committing through the editor is the call Swing itself makes when the selection leaves a cell, and it skips the
+    // prompt TableResultView.stopEditing() adds for an explicit commit.
     return (editing != null && editing == target) || editor.stopCellEditing()
   }
 
