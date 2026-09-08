@@ -68,9 +68,10 @@ class SeItemDataFactory {
         additionalInfo[SeItemDataKeys.IS_SEMANTIC] = isSemanticElement.toString()
       }
 
-      if (item is SeTargetItem && item.isExactMatch || item is SeTargetPresentableItem && item.isExactMatch) {
-        additionalInfo[SeItemDataKeys.IS_EXACT_MATCH] = true.toString()
-      }
+    }
+
+    if ((item as? SeTargetItem)?.isExactMatch == true || (item as? SeTargetPresentableItem)?.isExactMatch == true) {
+      additionalInfo[SeItemDataKeys.IS_EXACT_MATCH] = true.toString()
     }
 
     return SeItemDataImpl(uuid, providerId, item.weight(), item.presentation(), emptyList(), additionalInfo, entityRef)
