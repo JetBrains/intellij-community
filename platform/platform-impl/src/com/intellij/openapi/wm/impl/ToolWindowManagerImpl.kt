@@ -70,7 +70,6 @@ import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.toolWindow.ToolWindowEntry
 import com.intellij.toolWindow.ToolWindowEventSource
-import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.ToolWindowProperty
@@ -78,6 +77,7 @@ import com.intellij.toolWindow.ToolWindowSetInitializer
 import com.intellij.toolWindow.ToolWindowStripeManager
 import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.toolWindow.bringOwnerToFront
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.toolWindow.findIconFromBean
 import com.intellij.toolWindow.getShowingComponentToRequestFocus
 import com.intellij.toolWindow.getStripeTitleSupplier
@@ -603,7 +603,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   ) {
     LOG.debug { "activateToolWindow($entry)" }
 
-    if (isUnifiedToolWindowSizesEnabled()) {
+    if (isUnifiedToolWindowSizesEnabled() && canUseUnifiedWeight(info)) {
       info.weight = layoutState.getUnifiedAnchorWeight(info.anchor)
       LOG.debug { "Activated tool window: ${info.id}, using ${info.anchor} unified weight of ${info.weight}" }
     }
@@ -645,6 +645,20 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   private fun isUnifiedToolWindowSizesEnabled(): Boolean = !isIndependentToolWindowResizeEnabled()
+
+  private fun canUseUnifiedWeight(info: WindowInfoImpl): Boolean {
+    if (!info.isDocked || !info.anchor.isUltrawideLayout()) {
+      return true
+    }
+    return layoutState.getInfos().values.none {
+      it.id != info.id &&
+      it.isVisible &&
+      it.isDocked &&
+      it.safeToolWindowPaneId == info.safeToolWindowPaneId &&
+      it.anchor == info.anchor &&
+      it.isSplit != info.isSplit
+    }
+  }
 
   private fun isIndependentToolWindowResizeEnabled(): Boolean {
     return if (isNewUi) {

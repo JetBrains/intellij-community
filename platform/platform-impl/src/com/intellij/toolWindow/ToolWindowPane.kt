@@ -89,6 +89,16 @@ class ToolWindowPane private constructor(
       return if (weight >= 1) 1 - WindowInfoImpl.DEFAULT_WEIGHT else weight
     }
 
+    private fun getSideBySideSplitProportion(firstWeight: Float, secondWeight: Float): Float {
+      val totalWeight = firstWeight + secondWeight
+      if (totalWeight <= 0) {
+        return WindowInfoImpl.DEFAULT_WEIGHT
+      }
+      return (firstWeight / totalWeight).coerceIn(0f, 1f)
+    }
+
+    private fun getSideBySideSplitWeight(firstWeight: Float, secondWeight: Float): Float = normalizeWeight(firstWeight + secondWeight)
+
     internal fun log() = LOG
 
     internal fun create(frame: JFrame, coroutineScope: CoroutineScope, paneId: String, buttonManager: ToolWindowButtonManager): ToolWindowPane {
@@ -267,8 +277,12 @@ class ToolWindowPane private constructor(
         val c = getComponentAt(anchor)
         if (c is Splitter) {
           val component1 = (if (info.isSplit) c.firstComponent else c.secondComponent) as InternalDecoratorImpl
+          val component1Info = getRegisteredMutableInfoOrLogError(component1)
+          val component1Weight = getComponentWeight(anchor, component1, component1Info.weight)
+          component1Info.weight = component1Weight
           state.addSplitProportion(info, component1, c)
-          setComponent(component1, anchor, getRegisteredMutableInfoOrLogError(component1).weight)
+          setComponent(component1, anchor, component1Weight)
+          manager.layoutState.setUnifiedAnchorWeight(anchor, component1Weight)
           // detach removed component from the splitter
           // makes a difference for rem-dev scenarios, see BackendServerToolWindowManager.ensureShowing
           if (info.isSplit) {
@@ -307,6 +321,16 @@ class ToolWindowPane private constructor(
       else -> LOG.error("unknown anchor: $anchor")
     }
     setWeight(anchor, weight)
+  }
+
+  private fun getComponentWeight(anchor: ToolWindowAnchor, component: Component, defaultValue: Float): Float {
+    val rootSize = rootPane?.size ?: return defaultValue
+    val totalSize = if (anchor.isHorizontal) rootSize.height else rootSize.width
+    val componentSize = if (anchor.isHorizontal) component.height else component.width
+    if (totalSize <= 0 || componentSize <= 0) {
+      return defaultValue
+    }
+    return getAdjustedRatio(partSize = componentSize, totalSize = totalSize, direction = 1)
   }
 
   private val setAnchorWeightFutures = hashMapOf<ToolWindowAnchor, Future<*>>()
@@ -652,6 +676,7 @@ class ToolWindowPane private constructor(
     }
 
     val splitter = MySplitter()
+    splitter.setHonorComponentsMinimumSize(false)
     splitter.orientation = anchor.isSplitVertically
     if (!anchor.isHorizontal) {
       splitter.setAllowSwitchOrientationByMouseClick(true)
@@ -694,6 +719,11 @@ class ToolWindowPane private constructor(
     if (c is InternalDecoratorImpl) {
       val oldComponent = c
       val oldInfo = getRegisteredMutableInfoOrLogError(oldComponent)
+      val isSideBySideSplit = anchor.isUltrawideLayout()
+      val oldWeight = if (isSideBySideSplit) getComponentWeight(anchor, oldComponent, oldInfo.weight) else oldInfo.weight
+      if (isSideBySideSplit) {
+        oldInfo.weight = oldWeight
+      }
       if (isLookAndFeelUpdated) {
         IJSwingUtilities.updateComponentTreeUI(oldComponent)
         IJSwingUtilities.updateComponentTreeUI(newComponent)
@@ -702,26 +732,39 @@ class ToolWindowPane private constructor(
       if (info.isSplit) {
         splitter.firstComponent = oldComponent
         splitter.secondComponent = newComponent
-        LOG.debug { "Determining the split proportion for ${oldInfo.id}+${info.id} " +
-                    "using oldInfo.sideWeight=${oldInfo.sideWeight}" }
-        val proportion = state.getPreferredSplitProportion(
-          id = oldInfo.id!!,
-          defaultValue = normalizeWeight(oldInfo.sideWeight / (oldInfo.sideWeight + info.sideWeight)),
-        )
-        splitter.proportion = proportion
-        newWeight = if (!anchor.isHorizontal && !anchor.isSplitVertically) {
-          normalizeWeight(oldInfo.weight + info.weight)
+        val proportion = if (isSideBySideSplit) {
+          LOG.debug { "Determining the split proportion for ${oldInfo.id}+${info.id} using weights" }
+          getSideBySideSplitProportion(firstWeight = oldWeight, secondWeight = info.weight)
         }
         else {
-          normalizeWeight(oldInfo.weight)
+          LOG.debug {
+            "Determining the split proportion for ${oldInfo.id}+${info.id} " +
+            "using oldInfo.sideWeight=${oldInfo.sideWeight}"
+          }
+          state.getPreferredSplitProportion(
+            id = oldInfo.id!!,
+            defaultValue = normalizeWeight(oldInfo.sideWeight / (oldInfo.sideWeight + info.sideWeight)),
+          )
+        }
+        splitter.proportion = proportion
+        newWeight = if (isSideBySideSplit) {
+          getSideBySideSplitWeight(firstWeight = oldWeight, secondWeight = info.weight)
+        }
+        else {
+          normalizeWeight(oldWeight)
         }
       }
       else {
         splitter.firstComponent = newComponent
         splitter.secondComponent = oldComponent
-        splitter.proportion = normalizeWeight(info.sideWeight)
-        newWeight = if (!anchor.isHorizontal && !anchor.isSplitVertically) {
-          normalizeWeight(oldInfo.weight + info.weight)
+        splitter.proportion = if (isSideBySideSplit) {
+          getSideBySideSplitProportion(firstWeight = info.weight, secondWeight = oldWeight)
+        }
+        else {
+          normalizeWeight(info.sideWeight)
+        }
+        newWeight = if (isSideBySideSplit) {
+          getSideBySideSplitWeight(firstWeight = oldWeight, secondWeight = info.weight)
         }
         else {
           normalizeWeight(info.weight)
@@ -729,12 +772,16 @@ class ToolWindowPane private constructor(
       }
       LOG.debug { "Calculated splitter weight of $newWeight for ${oldInfo.id}+${info.id} " +
                   "using isSplit=${info.isSplit}, isHorizontal=${anchor.isHorizontal}, isSplitVertically=${anchor.isSplitVertically}, " +
-                  "oldInfo.weight=${oldInfo.weight}, newInfo.weight=${info.weight}" }
+                  "oldWeight=$oldWeight, newInfo.weight=${info.weight}"
+      }
     }
     else {
       newWeight = normalizeWeight(info.weight)
     }
     setComponent(component = splitter, anchor = anchor, weight = newWeight)
+    if (anchor.isUltrawideLayout()) {
+      manager.layoutState.setUnifiedAnchorWeight(anchor, newWeight)
+    }
     if (!dirtyMode) {
       layeredPane.validate()
       layeredPane.repaint()
