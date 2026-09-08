@@ -368,6 +368,7 @@ internal class FrozenColumnsController(
     frozen.selectionModel = primaryView.selectionModel
     TableSelectionModel.install(frozen, resultPanel)
     installRightButtonCellSelect(frozen)
+    primaryView.shareFloatingToolbarWith(frozen)
     componentMouseListeners.forEach(frozen::addMouseListener)
 
     val mainColumns = primaryView.columnModel.selectionModel
@@ -411,6 +412,7 @@ internal class FrozenColumnsController(
   private fun disposeFrozenView() {
     val frozen = frozenView ?: return
     uninstallFrozenScrolling()
+    primaryView.stopSharingFloatingToolbarWith(frozen)
     frozenView = null
     frozenModelSync?.let(primaryView.model::removeTableModelListener)
     frozenModelSync = null

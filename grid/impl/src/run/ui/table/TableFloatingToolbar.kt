@@ -32,6 +32,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
@@ -42,6 +43,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.BorderFactory
+import javax.swing.SwingUtilities
 
 class TableFloatingToolbar(private val tableResultView: TableResultView, private val grid: DataGrid, private val cs: CoroutineScope) {
 
@@ -87,6 +89,9 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
     .setBorderColor(getHintBorderColor())
     .setTextFg(JBColor.foreground())
   private var position = ToolbarPosition(Point(0, 0), 0, 0)
+
+  /** The table the hint is shown in and whose coordinates [position] is expressed in. */
+  private var anchorView: TableResultView = tableResultView
   private var showingJob: AtomicReference<Job?> = AtomicReference(null)
 
   private fun hintUpdate() {
@@ -113,18 +118,20 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
     }
 
     override fun mouseClicked(e: MouseEvent) {
-      if (e.button != MouseEvent.BUTTON1 || tableResultView.selectedRowCount != 1) {
+      val view = e.component as? TableResultView ?: return
+      if (e.button != MouseEvent.BUTTON1 || view.selectedRowCount != 1) {
         return
       }
 
-      val columnNum = tableResultView.columnAtPoint(e.point)
-      val rowNum = tableResultView.rowAtPoint(e.point)
-      if (rowNum < 0 || rowNum >= tableResultView.rowCount || columnNum < 0 || columnNum >= tableResultView.columnCount) {
+      val columnNum = view.columnAtPoint(e.point)
+      val rowNum = view.rowAtPoint(e.point)
+      if (rowNum < 0 || rowNum >= view.rowCount || columnNum < 0 || columnNum >= view.columnCount) {
         return
       }
 
-      val cellRect = tableResultView.getCellRect(rowNum, columnNum, true)
+      val cellRect = view.getCellRect(rowNum, columnNum, true)
       val newCornerPosition = cornerPositionForCell(cellRect)
+      anchorView = view
       position = ToolbarPosition(newCornerPosition, rowNum, columnNum)
       show()
     }
@@ -133,13 +140,15 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
       if (!isHintVisible()) {
         return
       }
-      val cellRectArea = tableResultView.getCellRect(position.rowNum, position.columnNum, true)
+      // The pointer may already have crossed into the other table, while the hint stays where it was shown.
+      val point = if (e.component === anchorView) e.point else SwingUtilities.convertPoint(e.component, e.point, anchorView)
+      val cellRectArea = anchorView.getCellRect(position.rowNum, position.columnNum, true)
       cellRectArea.grow(0, cellRectArea.height * 2)
-      if (cellRectArea.contains(e.point)) {
+      if (cellRectArea.contains(point)) {
         return
       }
 
-      val distSq = distanceSq(e.point,
+      val distSq = distanceSq(point,
                               Rectangle(Point(position.rightBottomCorner.x - hint.size.width, position.rightBottomCorner.y - hint.size.height), hint.size))
       if (distSq > hidingDistanceSq) {
         hide()
@@ -148,20 +157,43 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
     }
   }
 
+  private val focusListener: FocusAdapter = object : FocusAdapter() {
+    override fun focusLost(e: FocusEvent?) {
+      hide()
+    }
+  }
+
+  private val componentListener: ComponentAdapter = object : ComponentAdapter() {
+    override fun componentMoved(e: ComponentEvent?) {
+      hide()
+    }
+  }
+
   init {
     tableResultView.whenDisposed { hide() }
-    tableResultView.addMouseListener(mouseListener)
-    tableResultView.addMouseMotionListener(mouseListener)
-    tableResultView.addFocusListener(object : FocusAdapter() {
-      override fun focusLost(e: FocusEvent?) {
-        hide()
-      }
-    })
-    tableResultView.addComponentListener(object : ComponentAdapter() {
-      override fun componentMoved(e: ComponentEvent?) {
-        hide()
-      }
-    })
+    attach(tableResultView)
+  }
+
+  /**
+   * Offers the toolbar in [view] as well. A pinned column is displayed in the frozen strip rather than in the main
+   * table, which owns the only toolbar, so without this the cell actions are unreachable for pinned cells.
+   */
+  fun attach(view: TableResultView) {
+    view.addMouseListener(mouseListener)
+    view.addMouseMotionListener(mouseListener)
+    view.addFocusListener(focusListener)
+    view.addComponentListener(componentListener)
+  }
+
+  /** Stops offering the toolbar in [view], which is about to be discarded, and takes the hint down if it is anchored there. */
+  fun detach(view: TableResultView) {
+    view.removeMouseListener(mouseListener)
+    view.removeMouseMotionListener(mouseListener)
+    view.removeFocusListener(focusListener)
+    view.removeComponentListener(componentListener)
+    if (anchorView !== view) return
+    hide()
+    anchorView = tableResultView
   }
 
   private fun isHintVisible(): Boolean {
@@ -193,10 +225,10 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
       }
 
       checkCanceled()
-      hint.show(tableResultView,
+      hint.show(anchorView,
                 position.rightBottomCorner.x - hint.component.preferredWidth,
                 position.rightBottomCorner.y - hint.component.preferredHeight,
-                tableResultView,
+                anchorView,
                 hintOptions)
     })
   }
@@ -205,6 +237,10 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
     showingJob.get()?.cancel()
     hint.hide()
   }
+
+  /** The table and the cell the toolbar was last offered for. */
+  @TestOnly
+  fun getOfferedCell(): Pair<TableResultView, ToolbarPosition> = anchorView to position
 
   companion object {
     const val ACTION_PLACE = "TableFloatingToolbar"

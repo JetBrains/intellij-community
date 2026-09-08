@@ -257,7 +257,6 @@ public final class TableResultView extends JBTableWithResizableCells
   private boolean myAllowMultilineColumnLabel = false;
   private final AtomicInteger editingBlocked = new AtomicInteger(0); // TODO: currently only locks column reordering
   private HoveredRowBgHighlightMode myHoveredRowMode = HoveredRowBgHighlightMode.AUTO;
-  @SuppressWarnings({"FieldCanBeLocal", "unused"}) // held for its lifetime; it installs the floating toolbar/actions
   private final TableFloatingToolbar myFloatingToolbar;
 
   private StatisticsTableHeader myStatisticsHeader;
@@ -398,6 +397,24 @@ public final class TableResultView extends JBTableWithResizableCells
 
   private @Nullable TableResultView getPairedFrozenView() {
     return myIsFrozenStrip || myFrozenColumnsController == null ? null : myFrozenColumnsController.getFrozenView();
+  }
+
+  /**
+   * Offers the main table's floating toolbar in the frozen strip too. The strip has none of its own, so the cell
+   * actions it holds, "Related Rows" among them, would be out of reach for every pinned column.
+   */
+  void shareFloatingToolbarWith(@NotNull TableResultView frozenStrip) {
+    if (myFloatingToolbar != null) myFloatingToolbar.attach(frozenStrip);
+  }
+
+  /** Stops offering the toolbar in a strip that is being discarded, so a stale one is neither shown nor held on to. */
+  void stopSharingFloatingToolbarWith(@NotNull TableResultView frozenStrip) {
+    if (myFloatingToolbar != null) myFloatingToolbar.detach(frozenStrip);
+  }
+
+  @TestOnly
+  public @Nullable TableFloatingToolbar getFloatingToolbar() {
+    return myFloatingToolbar;
   }
 
   /** The table that owns the active cell editor: a pinned cell edits in the frozen strip rather than in this table. */
