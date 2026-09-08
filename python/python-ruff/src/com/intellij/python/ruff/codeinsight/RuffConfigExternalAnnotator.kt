@@ -6,50 +6,39 @@ import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiFile
 import com.intellij.python.ruff.RuffBundle
-import com.intellij.util.system.OS
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.Result
+import com.jetbrains.python.sdk.ModuleOrProject
 import org.toml.lang.psi.TomlFile
-import java.io.BufferedReader
-import java.io.File
-import java.io.InputStreamReader
-import java.nio.file.Files
-import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.div
-import kotlin.io.path.writeText
 
 /**
  * External annotator for Ruff config files (.ruff.toml, ruff.toml, and pyproject.toml).
  */
-class RuffConfigExternalAnnotator : ExternalAnnotator<RuffConfigExternalAnnotator.State, RuffConfigExternalAnnotator.Result>() {
+internal class RuffConfigExternalAnnotator : ExternalAnnotator<RuffConfigExternalAnnotator.State, RuffConfigError>() {
 
   companion object {
     private val LOG = logger<RuffConfigExternalAnnotator>()
-
   }
 
+  /**
+   * The config file as [collectInformation] read it.
+   *
+   * It holds the text and not the [PsiFile], because [doAnnotate] runs later and outside a read
+   * action.
+   */
   data class State(
     val project: Project,
-    val file: PsiFile,
     val virtualFile: VirtualFile,
-    val tempFile: Path,
+    val fileName: String,
+    val text: String,
   )
-
-  class Result(
-    val errorLine: Int = -1,
-    val errorColumn: Int = -1,
-    val errorWidth: Int = -1,
-    val errorMessage: String = "",
-   )
 
   /**
    * Collects information from the file to be used for annotation.
@@ -62,112 +51,56 @@ class RuffConfigExternalAnnotator : ExternalAnnotator<RuffConfigExternalAnnotato
 
     val virtualFile = file.virtualFile ?: return null
 
-    val tempDir = Files.createTempDirectory(null)
-    val tempFile = tempDir / file.name
-    tempFile.writeText(file.text)
-    return State(file.project, file, virtualFile, tempFile)
+    return State(file.project, virtualFile, file.name, file.text)
   }
 
   /**
    * Executes the external tool and processes its output.
    */
-  override fun doAnnotate(state: State): Result? {
+  override fun doAnnotate(state: State): RuffConfigError? {
+    // A config file can live outside any nio filesystem, for example inside an archive.
+    val workingDir = state.virtualFile.parent?.toNioPathOrNull() ?: return null
     val module = ModuleUtilCore.findModuleForFile(state.virtualFile, state.project)
-    val sdk = module?.pythonSdk ?: state.project.pythonSdk ?: return null
+    val moduleOrProject = module?.let { ModuleOrProject.ModuleAndProject(it) } ?: ModuleOrProject.ProjectOnly(state.project)
 
-    val ruffExecutable = sdk.getExecutablePath("ruff") ?: return null.also {
-      LOG.info("Could not find ruff executable in SDK: ${sdk.name}")
+    val result = runBlockingMaybeCancellable {
+      checkRuffConfig(moduleOrProject, state.fileName, state.text, workingDir)
     }
-
-    val workingDir = state.virtualFile.parent.path
-
-    val processBuilder = ProcessBuilder(ruffExecutable.absolutePathString(), "check", "?", "--config", state.tempFile.absolutePathString())
-      .directory(File(workingDir))
-      .redirectErrorStream(true)
-
-    try {
-      val process = processBuilder.start()
-      val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
-
-      return parseOutput(output)
-    }
-    catch (e: Exception) {
-      LOG.warn("Error executing ruff check ? command", e)
-      return null
+    return when (result) {
+      is Result.Failure -> {
+        // TODO: Come with a solution to report background errors to user
+        LOG.warn("Cannot check the Ruff config: ${result.error.message}")
+        null
+      }
+      is Result.Success -> result.result
     }
   }
 
-  private fun parseOutput(output: String): Result? {
-    if (SUCCESS_PATTERN matches output) {
-      return null
-    }
-
-    val match = ERROR_PATTERN.find(output) ?: return null.also {
-      LOG.info("Could not parse `ruff check ?` output: $output")
-    }
-
-    return Result(
-      errorLine = match.groups[1]!!.value.toInt(),
-      errorColumn = match.groups[2]!!.value.toInt(),
-      errorWidth = match.groups[3]!!.value.length,
-      errorMessage = match.groups[4]!!.value
-    )
-  }
-
-  override fun apply(file: PsiFile, result: Result?, holder: AnnotationHolder) {
+  override fun apply(file: PsiFile, result: RuffConfigError?, holder: AnnotationHolder) {
     if (result == null) return
 
     val document = file.viewProvider.document ?: return
 
-    val lineStartOffset = document.getLineStartOffset(result.errorLine - 1)
+    val lineStartOffset = document.getLineStartOffset(result.line - 1)
 
-    val startOffset = lineStartOffset + result.errorColumn - 1
-    val endOffset = startOffset + result.errorWidth
+    val startOffset = lineStartOffset + result.column - 1
+    val endOffset = startOffset + result.width
 
-    val message = RuffBundle.message("inspection.message.ruff.config.error", result.errorMessage)
+    val message = RuffBundle.message("inspection.message.ruff.config.error", result.message)
     holder.newAnnotation(HighlightSeverity.ERROR, message)
       .range(TextRange(startOffset, endOffset))
       .tooltip(buildTooltip(result))
       .create()
-
   }
 
   @NlsSafe
-  private fun buildTooltip(result: Result): String {
+  private fun buildTooltip(result: RuffConfigError): String {
     return """
             <html>
             <body>
-            <p><b>Ruff config error:</b> ${result.errorMessage}</p>
+            <p><b>Ruff config error:</b> ${result.message}</p>
             </body>
             </html>
         """.trimIndent()
   }
-}
-
-private val ERROR_PATTERN = Regex(
-  """
-  ruff failed
-    (?:Cause: Failed to load configuration `.+`
-    )?Cause: Failed to parse .+
-    Cause: TOML parse error at line (\d+), column (\d+)
-   \s*\|
-  \d+ \| .*
-   \s*\|\s+(\^+)
-  (.+)
-  """.trimIndent()
-)
-
-// Pattern to match the success message from ruff check ? output
-private val SUCCESS_PATTERN = Regex("\\?:1:1: E902 No such file or directory \\(os error 2\\)\\s+Found 1 error\\.")
-
-// TODO: The whole engine should be replaced with eel-based API and PyTool
-private fun Sdk.getExecutablePath(name: String): Path? = homePath?.let {
-  val base = Path(it)
-  val candidates = if (OS.CURRENT == OS.Windows) {
-    listOf("exe", "bat", "cmd", "com").map { ext -> "$name.$ext" }.plusElement(name)
-  }
-  else {
-    listOf(name)
-  }
-  candidates.firstNotNullOfOrNull { candidate -> PythonSdkUtil.getExecutablePath(base, candidate) }
 }
