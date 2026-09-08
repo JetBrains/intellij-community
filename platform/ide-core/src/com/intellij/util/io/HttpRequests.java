@@ -399,9 +399,20 @@ public final class HttpRequests {
 
     @Override
     public @NotNull InputStream getInputStream() throws IOException {
+      return getInputStream(null);
+    }
+
+    private @NotNull InputStream getInputStream(@Nullable ProgressIndicator indicator) throws IOException {
       if (myInputStream == null) {
         var connection = getConnection();
-        myInputStream = unzipStreamIfNeeded(connection, connection.getInputStream());
+        var inputStream = connection.getInputStream();
+        if (indicator != null) {
+          var contentLength = connection.getContentLengthLong();
+          if (contentLength > 0) {
+            inputStream = new ProgressMonitorInputStream(indicator, inputStream, contentLength);
+          }
+        }
+        myInputStream = unzipStreamIfNeeded(connection, inputStream);
       }
       return myInputStream;
     }
@@ -418,13 +429,7 @@ public final class HttpRequests {
     @Override
     public @NotNull BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException {
       if (myReader == null) {
-        var inputStream = getInputStream();
-        if (indicator != null) {
-          var contentLength = getConnection().getContentLengthLong();
-          if (contentLength > 0) {
-            inputStream = new ProgressMonitorInputStream(indicator, inputStream, contentLength);
-          }
-        }
+        var inputStream = getInputStream(indicator);
         myReader = new BufferedReader(new InputStreamReader(inputStream, getCharset()));
       }
       return myReader;
