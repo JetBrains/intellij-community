@@ -95,6 +95,9 @@
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.rdProtocolDetector"
+                    interface="com.intellij.platform.rd.RdProtocolDetector"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.marketplaceCustomization"
                     interface="com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService"
                     dynamic="true"/>

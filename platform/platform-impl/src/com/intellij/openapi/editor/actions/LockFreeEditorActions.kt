@@ -6,7 +6,7 @@ package com.intellij.openapi.editor.actions
 import com.intellij.openapi.editor.actionSystem.LockFreeEditorActionsCore
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.productMode.IdeProductMode
-import com.intellij.util.PlatformUtils
+import com.intellij.platform.rd.RdProtocolDetector
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -25,14 +25,12 @@ object LockFreeEditorActions {
   }
 
   /**
-   * Remote development has a quite sophisticated way of updating actions
-   * Too much of lock-protected entities are accessed during action update,
-   * so for the time being we disable the possibility of lock-free update in remote development.
-   * See IJPL-250526
-   * Also, rider and clion are also opted-out, as they use the same action update algorithm
+   * RD Protocol clients use lock-protected data when they update actions.
+   * Lock-free updates remain disabled for these clients. See IJPL-250526.
+   *
+   * RD Protocol clients can also be loaded dynamically (i.e., C++ Nova plugin in IDEA), so static check for product mode is not enough
    */
   private fun canUseLockFreeActionsInCurrentProductMode(): Boolean {
-    return IdeProductMode.isMonolith && !PlatformUtils.isRider() && !PlatformUtils.isCLion()
+    return IdeProductMode.isMonolith && !RdProtocolDetector.isRdProtocolDetected()
   }
 }
-
