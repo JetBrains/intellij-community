@@ -122,7 +122,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
 
     configureToolbar(project, consoleView, toolbarActions);
 
-    updateThreadsTree();
+    sortAndUpdateThreadDumpItemList();
 
     Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(consoleView.getPreferredFocusableComponent()));
     if (editor != null) {
