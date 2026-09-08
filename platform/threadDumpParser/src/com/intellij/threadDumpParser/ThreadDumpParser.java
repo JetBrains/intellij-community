@@ -32,10 +32,11 @@ import static com.intellij.threadDumpParser.ThreadDumpInlineMetadataKt.stripMeta
 @ApiStatus.Internal
 public final class ThreadDumpParser {
   private static final Pattern ourThreadStartPattern = Pattern.compile("^\"(.+)\".+((?:prio=\\d+ )?(?:os_prio=[^\\s]+ )?.*tid=[^\\s]+(?: nid=[^\\s]+)?|[Ii][Dd]=\\d+) ([^\\[]+)");
+  private static final Pattern ourHotSpotThreadIdPattern = Pattern.compile("^\"[^\"]*\" #(\\d+)\\b");
   private static final Pattern ourForcedThreadStartPattern = Pattern.compile("^Thread (\\d+): \\(state = (.+)\\)");
   private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(.+) \\[([A-Z_, ]*)]");
   private static final Pattern ourYourkitThreadStartPattern2 = Pattern.compile("(.+) (?:State:)? (.+) CPU usage on sample: .+");
-  private static final Pattern ourJcmdThreadStartPattern = Pattern.compile("#\\d+ \"(.*)\"(.*)");
+  private static final Pattern ourJcmdThreadStartPattern = Pattern.compile("#(\\d+) \"(.*)\"(.*)");
   private static final Pattern ourJcmdStackTraceElement = Pattern.compile("\\S+\\(.+\\)");
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
@@ -490,6 +491,12 @@ public final class ThreadDumpParser {
         state.setVirtual(true);
       }
       applyInlineMetadata(line, state);
+      if (state.getUniqueId() == null && !line.contains("[\"")) {
+        Matcher threadId = ourHotSpotThreadIdPattern.matcher(line);
+        if (threadId.find()) {
+          state.setUniqueId(parseLong(threadId.group(1)));
+        }
+      }
       return state;
     }
 
@@ -502,8 +509,9 @@ public final class ThreadDumpParser {
 
     m = ourJcmdThreadStartPattern.matcher(line);
     if (m.matches()) {
-      var state = createThreadState(m.group(1), "unknown");
-      var suffix = m.group(2);
+      var state = createThreadState(m.group(2), "unknown");
+      state.setUniqueId(parseLong(m.group(1)));
+      var suffix = m.group(3);
       state.setVirtual(suffix.contains(" virtual"));
       applyInlineMetadata(line, state);
       return state;

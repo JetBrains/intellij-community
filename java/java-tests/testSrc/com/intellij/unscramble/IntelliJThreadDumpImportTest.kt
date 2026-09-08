@@ -44,8 +44,8 @@ internal class IntelliJThreadDumpImportTest : AbstractThreadDumpImportTest() {
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
 
-    assertDumpItem(parsedThreadDump, "main@101", null, null, false, false)
-    assertDumpItem(parsedThreadDump, "worker-1@201", null, null, false, true)
+    assertDumpItem(parsedThreadDump, "main@101", 1, null, false, false)
+    assertDumpItem(parsedThreadDump, "worker-1@201", 2, null, false, true)
   }
 
   @Test
@@ -123,7 +123,7 @@ internal class IntelliJThreadDumpImportTest : AbstractThreadDumpImportTest() {
     val plainDumpText = loadThreadDump("plainWithoutFooterMarker.txt")
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(plainDumpText))
 
-    assertDumpItem(parsedThreadDump, "main@101", null, null, false, false)
+    assertDumpItem(parsedThreadDump, "main@101", 1, null, false, false)
   }
 
   @Test

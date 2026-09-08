@@ -412,6 +412,7 @@ public class ThreadDumpParserTest {
     assertEquals(3, threads.stream().filter(s -> s.isVirtual()).count());
 
     assertEquals("main", threads.get(0).getName());
+    assertEquals(Long.valueOf(1L), threads.get(0).getUniqueId());
     assertTrue(threads.get(0).getStackTrace().contains("Unsafe.park"));
     assertTrue(threads.get(0).getStackTrace().contains("VTHardWork.main"));
     assertFalse(threads.get(0).isEmptyStackTrace());
@@ -735,9 +736,11 @@ public class ThreadDumpParserTest {
     assertEquals(2, threads.size());
 
     assertEquals("ForkJoinPool-1-worker-1", threads.get(0).getName());
+    assertEquals(Long.valueOf(24L), threads.get(0).getUniqueId());
     assertEquals(ThreadOperation.CARRYING_VTHREAD, threads.get(0).getOperation());
 
     assertEquals("ForkJoinPool-1-worker-2", threads.get(1).getName());
+    assertEquals(Long.valueOf(22L), threads.get(1).getUniqueId());
     assertEquals("WAITING", threads.get(1).getJavaThreadState());
   }
 
