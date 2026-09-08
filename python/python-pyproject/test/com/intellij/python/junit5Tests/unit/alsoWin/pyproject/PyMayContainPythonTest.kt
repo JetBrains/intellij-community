@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 
-import com.intellij.python.pyproject.model.internal.platformBridge.mayContainPython
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -15,7 +15,9 @@ import org.junit.jupiter.api.Test
  */
 internal class PyMayContainPythonTest {
 
-  private fun mayContain(vararg childNames: String): Boolean = mayContainPython(childNames.asSequence())
+  private val reader = VirtualEnvReader()
+
+  private fun mayContain(vararg childNames: String): Boolean = reader.mayContainPython(childNames.asSequence())
 
   @Test
   fun testADirectoryOfInterpretersPasses() {
@@ -29,10 +31,22 @@ internal class PyMayContainPythonTest {
    * `resolve("bin")` there, so the filter must accept it or it stops being a superset.
    */
   @Test
-  fun testTheCaseOfTheNameDoesNotMatter() {
-    for (name in listOf("Bin", "BIN", "scripts", "SCRIPTS", "Python3", "PyPy")) {
+  fun testTheCaseOfTheDirectoryNameDoesNotMatter() {
+    for (name in listOf("Bin", "BIN", "scripts", "SCRIPTS")) {
       assertThat(mayContain(name)).describedAs("a directory that holds '$name'").isTrue()
     }
+  }
+
+  /**
+   * The name of a binary follows the pattern of the layout, and the pattern of posix reads the case. A file
+   * named `Python3` therefore reaches no interpreter through `findInterpreter` either, so the filter may
+   * reject it and stays a superset.
+   */
+  @Test
+  fun testTheCaseOfABinaryNameFollowsTheLayout() {
+    assertThat(mayContain("python3")).describedAs("the name of the posix layout").isTrue()
+    assertThat(mayContain("Python3")).describedAs("the posix pattern reads the case").isFalse()
+    assertThat(mayContain("PYTHON.EXE")).describedAs("the windows pattern ignores the case").isTrue()
   }
 
   /** The second way: the binary lies directly in the directory, as in the root of an installation. */
@@ -51,13 +65,13 @@ internal class PyMayContainPythonTest {
   }
 
   /**
-   * The filter is wider than the patterns of the method, because it tests a prefix. Such a name only costs
-   * one call of the method, which then answers that the directory holds no interpreter.
+   * The filter reads the patterns of the layout, so a name that only starts like a binary does not pass.
+   * `findInterpreter` would reject the same name.
    */
   @Test
-  fun testAWiderNameStillPasses() {
-    assertThat(mayContain("python_helper")).isTrue()
-    assertThat(mayContain("pythonrc")).isTrue()
+  fun testANameThatOnlyStartsLikeABinaryDoesNotPass() {
+    assertThat(mayContain("python_helper")).isFalse()
+    assertThat(mayContain("pythonrc")).isFalse()
     assertThat(mayContain("bins")).describedAs("`bins` is not `bin`").isFalse()
   }
 }

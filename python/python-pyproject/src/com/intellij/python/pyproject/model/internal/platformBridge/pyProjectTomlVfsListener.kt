@@ -123,7 +123,7 @@ internal suspend fun loadSubtreesIntoVfs(directories: Set<VirtualFile>, excluded
           // `findPythonInPythonRoot` opens a directory stream, so a call for each visited directory reads
           // the whole project from the disk. Very few directories hold an interpreter, hence almost every
           // call finds nothing. [mayContainPython] reads the names that the walk loaded anyway (PY-91841).
-          if (!mayContainPython(file.children.asSequence().map { it.name })) return true
+          if (!virtualEnvReader.mayContainPython(file.children.asSequence().map { it.name })) return true
           return virtualEnvReader.findPythonInPythonRoot(path) == null
         }
       })
@@ -163,37 +163,6 @@ private fun VFileEvent.removesDirectory(): Boolean = this is VFileDeleteEvent &&
  */
 private fun VFileEvent.renamesDirectory(): Boolean =
   this is VFilePropertyChangeEvent && propertyName == VirtualFile.PROP_NAME && file.isDirectory
-
-/**
- * True when a name of [childNames] can lead `VirtualEnvReader.findPythonInPythonRoot` to an interpreter.
- *
- * That method reads the filesystem on every call, and it opens a directory stream for each one. The load
- * calls it for every directory of a project, and only a few directories hold an interpreter. This filter
- * reads the names that the walk loaded anyway, so the load reaches the filesystem for a few directories.
- *
- * The answer is a superset, and it covers both layouts of the method at once. The method finds a binary
- * under a directory of interpreters, `bin` or `Scripts`, or directly in the directory. Both of its name
- * patterns start with the alternation of `pypy` and `python`, so a test of the prefix covers every name
- * that they match. A superset only costs one call of the method, and it hides no interpreter.
- *
- * The comparison ignores the case, because the method resolves the nested directory with `Path.resolve`,
- * and the filesystem of macOS and of Windows resolves a name without the case.
- *
- * Read the patterns of `VirtualEnvReader` again if they change. A pattern that matches a name with another
- * prefix needs that prefix here. `PyProjectTomlDiscoveryBenchmarkTest` compares the two on a real tree.
- */
-internal fun mayContainPython(childNames: Sequence<String>): Boolean =
-  childNames.any { name ->
-    name.equals(POSIX_DIR_WITH_PYTHON, ignoreCase = true) ||
-    name.equals(WINDOWS_DIR_WITH_PYTHON, ignoreCase = true) ||
-    name.startsWith(PYTHON_PREFIX, ignoreCase = true) ||
-    name.startsWith(PYPY_PREFIX, ignoreCase = true)
-  }
-
-private const val POSIX_DIR_WITH_PYTHON = "bin"
-private const val WINDOWS_DIR_WITH_PYTHON = "Scripts"
-private const val PYTHON_PREFIX = "python"
-private const val PYPY_PREFIX = "pypy"
 
 /**
  * Rejects a change that the model never reads.

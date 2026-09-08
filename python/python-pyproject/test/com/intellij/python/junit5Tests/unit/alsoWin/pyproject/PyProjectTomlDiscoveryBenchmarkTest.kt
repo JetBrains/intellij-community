@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.internal.platformBridge.loadSubtreesIntoVfs
-import com.intellij.python.pyproject.model.internal.platformBridge.mayContainPython
 import com.intellij.python.pyproject.model.internal.pyProjectToml.findPyProjectTomlFilesInIndex
 import com.intellij.python.pyproject.model.internal.pyProjectToml.isPrunedName
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -152,7 +151,7 @@ internal class PyProjectTomlDiscoveryBenchmarkTest {
     val twoStageTime = measure {
       walk(rootFile) { file ->
         val path = file.toNioPathOrNull() ?: return@walk
-        if (!mayContainPython(file.children.asSequence().map { it.name })) return@walk
+        if (!virtualEnvReader.mayContainPython(file.children.asSequence().map { it.name })) return@walk
         candidates++
         if (virtualEnvReader.findPythonInPythonRoot(path) != null) byTwoStage.add(path.toString())
       }
