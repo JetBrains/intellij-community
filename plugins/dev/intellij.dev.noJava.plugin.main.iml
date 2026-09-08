@@ -7,6 +7,7 @@
     <orderEntry type="module" module-name="intellij.dev" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.dev.codeInsight" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.dev.psiViewer" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.dev.pluginLoading" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.statistics.devkit" scope="RUNTIME" />
   </component>
 </module>

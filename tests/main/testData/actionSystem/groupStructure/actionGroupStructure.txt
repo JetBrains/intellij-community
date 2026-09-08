@@ -1,5 +1,5 @@
 # Golden action-group structure: child id sequences observed via getChildActionsOrStubs.
-# Regenerate: (cd community && ./tests.cmd --module intellij.idea.community.main.tests --test com.intellij.openapi.actionSystem.CommunityActionGroupStructureTest -Dpass.actions.golden.regenerate=true)
+# Regenerate: (cd community && ./bazel.cmd test //:main-tests_test --test_filter=com.intellij.openapi.actionSystem.CommunityActionGroupStructureTest --test_arg=--jvm_flag=-Dactions.golden.regenerate=true --cache_test_results=no)
 # Risky group ids not registered in this run (0 of 319):
 [tree MainMenu]
   FileMenu
@@ -997,6 +997,7 @@
       ConvertSchemaAction
       AddAntBuildFile
     ExternalToolsGroup
+    ShowPluginLoadingState
     com.intellij.mcpserver.actions.ShowMcpToolsAction
     com.jetbrains.python.console.RunPythonOrDebugConsoleAction
     PyPackagingMenu
@@ -3127,6 +3128,7 @@
   Markdown.Tools
   ToolsXmlGroup
   ExternalToolsGroup
+  ShowPluginLoadingState
   com.intellij.mcpserver.actions.ShowMcpToolsAction
   com.jetbrains.python.console.RunPythonOrDebugConsoleAction
   PyPackagingMenu

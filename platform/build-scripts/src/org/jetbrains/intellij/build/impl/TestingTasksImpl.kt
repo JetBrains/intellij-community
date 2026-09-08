@@ -1698,6 +1698,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.jewel.markdown.extensions.frontMatter.tests",
   "intellij.platform.recentFiles.tests",
   "intellij.dev.leakDetection.tests",
+  "intellij.dev.pluginLoading.tests",
   "intellij.python.requirements.tests",
   "intellij.platform.testFramework.junit5.tests",
   "intellij.platform.debugger.impl.tests",

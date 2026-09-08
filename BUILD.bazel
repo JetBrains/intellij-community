@@ -1158,6 +1158,8 @@ jvm_library(
         "//platform/discoverability:discoverability-tests_test_lib",
         "//plugins/dev/intellij.dev.leakDetection:leakDetection-tests",
         "//plugins/dev/intellij.dev.leakDetection:leakDetection-tests_test_lib",
+        "//plugins/dev/intellij.dev.pluginLoading:pluginLoading-tests",
+        "//plugins/dev/intellij.dev.pluginLoading:pluginLoading-tests_test_lib",
         "//plugins/mcp-server/tests",
         "//plugins/mcp-server/tests:tests_test_lib",
         "//plugins/mcp-server/mcpserver.terminal/tests",

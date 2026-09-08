@@ -18,6 +18,7 @@ dev_dist_plugin(
         "intellij.platform.ide.ui.inspector",
         "intellij.platform.statistics.devkit",
         "intellij.dev.leakDetection",
+        "intellij.dev.pluginLoading",
         "intellij.groovy.dev",
     ],
 )
