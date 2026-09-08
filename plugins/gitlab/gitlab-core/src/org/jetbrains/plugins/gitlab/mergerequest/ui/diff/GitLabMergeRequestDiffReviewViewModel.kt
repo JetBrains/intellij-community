@@ -15,6 +15,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
+import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,7 @@ import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
+import org.jetbrains.plugins.gitlab.mergerequest.data.findLatestCommitWithChangesTo
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabPersistentMergeRequestChangesViewedState
@@ -67,6 +69,7 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   private val mergeRequest: GitLabMergeRequest,
   private val diffData: GitTextFilePatchWithHistory,
   private val change: RefComparisonChange,
+  private val parsedChanges: GitBranchComparisonResult,
   private val diffVm: GitLabMergeRequestDiffViewModel,
   private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
@@ -115,7 +118,8 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   }
 
   override fun markViewed() {
-    val sha = mergeRequest.details.value.diffRefs?.headSha ?: return
+    if (!isCumulativeChange) return
+    val sha = parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRemote.repository, change.filePath) ?: return
     persistentChangesViewedState.markViewed(
       mergeRequest.serverPath, mergeRequest.projectId, mergeRequest.iid,
       mergeRequest.gitRemote.repository,
