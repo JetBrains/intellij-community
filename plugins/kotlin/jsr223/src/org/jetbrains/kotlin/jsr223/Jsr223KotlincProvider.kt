@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.jsr223
 
+import com.intellij.idea.AppMode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.util.BazelEnvironmentUtil
 import com.intellij.util.io.Decompressor
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import java.io.IOException
@@ -86,16 +89,38 @@ object Jsr223KotlincProvider {
         val fileName = kotlinDistForIdeJarName()
         val version = KotlinCompilerVersion.VERSION
         val artifactPath = "$KOTLIN_MAVEN_GROUP_PATH/$KOTLIN_DIST_FOR_IDE_ARTIFACT_ID/$version/$fileName"
-
-        return buildList {
-            add("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
-            add("https://cache-redirector.jetbrains.com/intellij-dependencies")
-            add("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
-        }.map { "$it/$artifactPath" }
+        return kotlinArtifactRepositoryCoordinates.map { "$it/$artifactPath" }
     }
 
     private fun kotlinDistForIdeJarName(): String {
         return "$KOTLIN_DIST_FOR_IDE_ARTIFACT_ID-${KotlinCompilerVersion.VERSION}.jar"
+    }
+}
+
+/**
+ * Returns the list of repository URLs to search for Kotlin artifacts.
+ *
+ * Sic!
+ * Copied from `community/plugins/kotlin/base/plugin/src/org/jetbrains/kotlin/idea/compiler/configuration/KotlinArtifactsDownloader.kt`
+ * as the kotlin-scripting plugin (used in Qodana) doesn't depend on the Kotlin plugin.
+ *
+ * When changing, also adjust `KotlinArtifactsDownloader.kt`.
+ */
+private val kotlinArtifactRepositoryCoordinates: List<String> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    buildList {
+        add("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+        add("https://cache-redirector.jetbrains.com/intellij-dependencies")
+        add("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
+
+        // This aims to cover tests when run both from sources and binaries, and the debug IDE in various configurations
+        val isTestLikeRun = ApplicationManager.getApplication().isUnitTestMode
+                || AppMode.isRunningFromDevBuild()
+                || BazelEnvironmentUtil.isBazelTestRun()
+
+        if (isTestLikeRun) {
+            // Do not use the experimental repository in production
+            add("https://packages.jetbrains.team/maven/p/kt/experimental")
+        }
     }
 }
 
