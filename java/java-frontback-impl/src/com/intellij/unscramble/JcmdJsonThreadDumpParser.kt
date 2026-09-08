@@ -3,6 +3,7 @@ package com.intellij.unscramble
 
 import com.intellij.threadDumpParser.ThreadDumpParser
 import com.intellij.threadDumpParser.ThreadState
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
@@ -13,6 +14,7 @@ private val jcmdPlatformThreadIdRegex = Regex("""^(?:"[^"]*"\s+#|#)(\d+)\b""")
 private val jcmdPlatformThreadNativeIdRegex = Regex("""^(?:"[^"]*"\s+#|#)\d+\s+\[(\d+)\](?=\s|$)""")
 private val jcmdPlatformThreadAttributeRegex = Regex("""\b(prio|os_prio|cpu|elapsed|tid|nid)=([^\s]+)""")
 private val jcmdPlatformThreadStackPointerRegex = Regex("""(\[0x[\da-fA-F]+\])\s*$""")
+private const val UNSAFE_PARK_FRAME = "jdk.internal.misc.Unsafe.park("
 
 /**
  * Parses the output of `jcmd <pid> Thread.dump_to_file -format=json` preserving the hierarchy of thread containers.
@@ -206,7 +208,11 @@ private fun JcmdContainer.toJavaThreadContainerDesc(containerNameToId: Map<Strin
 }
 
 private fun ThreadState.extractJcmdJsonLockInfo(thread: JcmdThread) {
-  contendedMonitor = thread.blockedOn ?: thread.waitingOn // todo support parkBlocker (logically equal to blockedOn?)
+  val parkBlocker = thread.parkBlocker?.objectRef?.takeIf { it.isNotEmpty() }
+  contendedMonitor = thread.blockedOn ?: thread.waitingOn ?: parkBlocker
+  if (parkBlocker != null) {
+    addParkingToWaitForAfterUnsafePark(parkBlocker)
+  }
 
   // To be consistent with com.sun.jdi.ThreadReference#ownedMonitors we do not include monitors
   // relinquished through Object.wait() in the list of owned monitors.
@@ -219,6 +225,15 @@ private fun ThreadState.extractJcmdJsonLockInfo(thread: JcmdThread) {
       addOwnedMonitorAtDepth(lock, monitorInfo.depth)
     }
   }
+}
+
+private fun ThreadState.addParkingToWaitForAfterUnsafePark(parkBlocker: String) {
+  val currentStackTrace = stackTrace ?: return
+  val lines = currentStackTrace.lines().toMutableList()
+  val unsafeParkFrameIndex = lines.indexOfFirst { it.contains(UNSAFE_PARK_FRAME) }
+  if (unsafeParkFrameIndex < 0) return
+  lines.add(unsafeParkFrameIndex + 1, "\t- parking to wait for  <$parkBlocker>")
+  setStackTrace(lines.joinToString("\n"), isEmptyStackTrace)
 }
 
 @Serializable
@@ -249,7 +264,13 @@ private data class JcmdThread(
   val state: String = "unknown",
   val blockedOn: String? = null,
   val waitingOn: String? = null,
+  val parkBlocker: JcmdParkBlocker? = null,
   val monitorsOwned: List<JcmdMonitorInfo> = emptyList(),
+)
+
+@Serializable
+private data class JcmdParkBlocker(
+  @SerialName("object") val objectRef: String? = null,
 )
 
 @Serializable

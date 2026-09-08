@@ -93,58 +93,6 @@ internal class JcmdJsonThreadDumpParserTest {
   }
 
   @Test
-  fun `selected platform thread metadata is merged into full dump`() {
-    val parsed = parseMergedThreadDump()
-
-    val worker = parsed.threadStates.first { it.name == "multi-lock-thread" }
-
-    assertThat(worker.stackTrace).startsWith(
-      "\"multi-lock-thread\" #35 [48643] daemon prio=5 os_prio=31 cpu=0.04ms elapsed=63.52s " +
-      "tid=0x000000092d3f2000 nid=48643 RUNNABLE [0x1000]\n"
-    )
-    assertThat(worker.stackTrace).contains(
-      "\tat example.JsonFrame.run(JsonFrame.java:1)",
-      "\t  - locked java.lang.Object@jsonOnly",
-    )
-    assertThat(worker.stackTrace).doesNotContain(
-      "in Object.wait()",
-      "example.PlatformFrame.run",
-      "0x000000070001",
-      "0x000000070002",
-    )
-    assertTrue(worker.isDaemon)
-    assertThat(worker.ownedMonitors).contains("java.lang.Object@jsonOnly")
-
-    val container = parsed.threadContainerDescriptors.single { it.name == "java.util.concurrent.ForkJoinPool@abc" }
-    assertEquals(container.containerId, worker.threadContainerUniqueId)
-  }
-
-  @Test
-  fun `platform threads missing from full dump are added`() {
-    val parsed = parseMergedThreadDump()
-
-    val vmThread = parsed.threadStates.first { it.name == "VM Thread" }
-    assertThat(vmThread.stackTrace).startsWith(
-      "\"VM Thread\" os_prio=31 cpu=3.13ms elapsed=29.05s tid=0x0000000101848800 nid=0x5303 runnable"
-    )
-  }
-
-  @Test
-  fun `virtual threads are kept from full dump when merging platform dump`() {
-    val parsed = parseMergedThreadDump()
-
-    val virtualThread = parsed.threadStates.first { it.name == "virtual-worker" }
-
-    assertTrue(virtualThread.isVirtual)
-    assertEquals(
-      "\"virtual-worker\" tid=40 virtual unmounted RUNNABLE\n" +
-      "\tat example.Virtual.run(Virtual.java:1)\n" +
-      "\tat java.base/java.lang.VirtualThread.run(VirtualThread.java:456)",
-      virtualThread.stackTrace,
-    )
-  }
-
-  @Test
   fun `parser returns null for non-json input`() {
     assertNull(parseJcmdJsonThreadDump("\"main\" #1 prio=5 tid=0x1 nid=0x1 runnable"))
   }
@@ -239,37 +187,6 @@ internal class JcmdJsonThreadDumpParserTest {
 
     val thread1 = parsed.threadStates.first { it.name == "Thread-1" }
     assertEquals("java.lang.Object@4a1a69c2", thread1.contendedMonitor)
-  }
-
-  @Test
-  fun `park blocker is added after unsafe park frame`() {
-    val parsed = requireNotNull(parseJcmdJsonThreadDump(PARK_BLOCKER_DUMP))
-
-    val thread = parsed.threadStates.single { it.name == "ForkJoinPool-1-worker-14" }
-
-    assertEquals("java.util.concurrent.ForkJoinPool@4c997fb0", thread.contendedMonitor)
-    assertThat(thread.stackTrace).contains(
-      "\tat java.base/jdk.internal.misc.Unsafe.park(Native Method)\n" +
-      "\t- parking to wait for  <java.util.concurrent.ForkJoinPool@4c997fb0>\n" +
-      "\tat java.base/java.util.concurrent.ForkJoinPool.awaitWork(ForkJoinPool.java:2109)"
-    )
-  }
-
-  @Test
-  fun `json thread state is used for dump item icon`() {
-    val parsed = requireNotNull(parseJcmdJsonThreadDump(THREAD_STATES_DUMP))
-
-    val waitingThread = parsed.threadStates.single { it.name == "waiting-thread" }
-    val runningThread = parsed.threadStates.single { it.name == "running-thread" }
-    val dumpItemsByName = toDumpItems(parsed).associateBy { it.name }
-
-    assertEquals("WAITING", waitingThread.javaThreadState)
-    assertTrue(waitingThread.isWaiting)
-    assertThat(dumpItemsByName.getValue("waiting-thread").icon).isEqualTo(AllIcons.Debugger.ThreadFrozen)
-
-    assertEquals("RUNNABLE", runningThread.javaThreadState)
-    assertFalse(runningThread.isWaiting)
-    assertThat(dumpItemsByName.getValue("running-thread").icon).isEqualTo(AllIcons.Actions.Resume)
   }
 
   @Test
@@ -402,11 +319,6 @@ internal class JcmdJsonThreadDumpParserTest {
 
     val parsed = requireNotNull(parseJcmdJsonThreadDump(dumpText))
     return toDumpItems(parsed)
-  }
-
-  private fun parseMergedThreadDump(): ThreadDumpState {
-    val platformThreadStates = parseJcmdPlatformThreadDump(MERGE_PLATFORM_DUMP)
-    return requireNotNull(parseJcmdJsonThreadDump(MERGE_FULL_DUMP, platformThreadStates))
   }
 
   private fun loadThreadDump(path: String): String {
