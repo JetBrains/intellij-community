@@ -393,6 +393,29 @@ object Git {
     }
   }
 
+  /**
+   * Points [ref] at [target], which creates [ref] if it does not exist yet.
+   *
+   * Use it for a reference that no plain branch command can write, for example a remote-tracking
+   * reference such as `refs/remotes/origin/feature`.
+   */
+  fun updateRef(repositoryDirectory: Path, ref: String, target: String) {
+    require(ref.isNotEmpty()) { "Reference should not be empty" }
+    require(target.isNotEmpty()) { "Target should not be empty" }
+
+    val cmdName = "git-update-ref"
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = listOf("git", "update-ref", ref, target),
+      stdoutRedirect = stdout,
+      stderrRedirect = stdout,
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
   fun deleteBranch(workDir: Path, targetBranch: String) {
     val stdout = ExecOutputRedirect.ToString()
     ProcessExecutor(
@@ -476,12 +499,14 @@ object Git {
     ).start()
   }
 
-  fun commit(workDir: Path, message: String): String {
+  fun commit(workDir: Path, message: String, author: String? = null): String {
     require(message.isNotEmpty()) { "Message should not be empty" }
+    require(author == null || author.isNotBlank()) { "Author should not be blank" }
 
     val cmdName = "git-commit"
     val stdout = ExecOutputRedirect.ToString()
     val arguments = mutableListOf("git", "commit", "-m", message)
+    if (author != null) arguments.add("--author=$author")
 
     ProcessExecutor(
       presentableName = cmdName,
