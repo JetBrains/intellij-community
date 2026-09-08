@@ -510,7 +510,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun queueTask(task: DumbModeTask) {
     if (isDisposed) {
-      LOG.debug { "DumbServiceImpl is disposed, throwing an AlreadyDisposedException when trying to queue $task" }
+      LOG.warn("DumbServiceImpl for project '${myProject.name}' is disposed. Disposing the rejected task $task instead of queuing it.", Throwable())
       Disposer.dispose(task)
       throw AlreadyDisposedException("Cannot queue task $task after disposal")
     }
