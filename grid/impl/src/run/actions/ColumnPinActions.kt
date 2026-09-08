@@ -118,7 +118,7 @@ class PinColumnsUpToHereAction : ColumnHeaderActionBase() {
       showReason(e, DataGridBundle.message(TRANSPOSED))
       return
     }
-    // Nothing left to pin up to here, or nothing to count it along: either way the action is not offered.
+    // The column is pinned already, or there is no display order to count "up to here" along: either way, not offered.
     if (!panel.isColumnInDisplayOrder(column) || !panel.canPinColumnsUpToHere(column)) {
       e.presentation.isEnabledAndVisible = false
       return

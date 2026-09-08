@@ -43,11 +43,11 @@ class GridColumnPinModel private constructor(private val pinned: Set<Int>) {
     return GridColumnPinModel(pinned + displayOrder.subList(0, target + 1))
   }
 
-  /** True when the prefix up to and including [targetId] has a column that is not pinned yet (so pinning would do something). */
-  fun canPinUpToHere(targetId: Int, displayOrder: List<Int>): Boolean {
-    val target = displayOrder.indexOf(targetId)
-    return target >= 0 && displayOrder.subList(0, target + 1).any { it !in pinned }
-  }
+  /**
+   * True when pinning up to [targetId] is worth offering: the target has to be present and still unpinned. A pinned
+   * target is offered the unpin actions instead, even when columns before it are unpinned.
+   */
+  fun canPinUpToHere(targetId: Int, displayOrder: List<Int>): Boolean = targetId !in pinned && targetId in displayOrder
 
   override fun equals(other: Any?): Boolean = other is GridColumnPinModel && pinned == other.pinned
 
