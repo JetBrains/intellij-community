@@ -1844,6 +1844,7 @@ python/python-requirements/tests
 python/python-restructuredtext
 python/python-ruff
 python/python-ruff/frontend
+python/python-ruff/tests
 python/python-sdk-configurator/backend
 python/python-sdk/backend
 python/python-sdk/common

@@ -2051,6 +2051,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-requirements/tests/intellij.python.requirements.tests.iml" filepath="$PROJECT_DIR$/python/python-requirements/tests/intellij.python.requirements.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-ruff/intellij.python.ruff.iml" filepath="$PROJECT_DIR$/python/python-ruff/intellij.python.ruff.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-ruff/frontend/intellij.python.ruff.frontend.iml" filepath="$PROJECT_DIR$/python/python-ruff/frontend/intellij.python.ruff.frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-ruff/tests/intellij.python.ruff.tests.iml" filepath="$PROJECT_DIR$/python/python-ruff/tests/intellij.python.ruff.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-sdk/backend/intellij.python.sdk.backend.iml" filepath="$PROJECT_DIR$/python/python-sdk/backend/intellij.python.sdk.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-sdk/common/intellij.python.sdk.common.iml" filepath="$PROJECT_DIR$/python/python-sdk/common/intellij.python.sdk.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-sdk/frontend/intellij.python.sdk.frontend.iml" filepath="$PROJECT_DIR$/python/python-sdk/frontend/intellij.python.sdk.frontend.iml" />

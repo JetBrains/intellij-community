@@ -1,0 +1,85 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.python.ruff.tests` start
+jvm_library(
+    name = "tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.ruff.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//python/python-ruff:ruff",
+        "//python/python-ruff:ruff_test_lib",
+    ],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [":tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-jupiter",
+        "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/testFramework/common",
+        "//platform/testFramework/common:common_test_lib",
+        "//python/python-test-env/junit5",
+        "//python/python-test-env/junit5:junit5_test_lib",
+        "//python/junit5Tests-framework:community-junit5Tests-framework",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+        "//python/python-sdk/backend",
+        "//python/python-sdk/backend:backend_test_lib",
+        "//python/openapi:community",
+        "//python/openapi:community_test_lib",
+        "//python/python-pytools/backend",
+        "//python/python-pytools/backend:backend_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//python/python-lsp-core:lsp-core",
+        "//python/python-lsp-core:lsp-core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.ruff.tests` end
+
+### auto-generated section `iml intellij.python.ruff.tests` start
+exports_files(
+    [
+        "intellij.python.ruff.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.ruff.tests` end
+
+### auto-generated section `test intellij.python.ruff.tests` start
+jps_test(
+    name = "tests_test",
+    runtime_deps = [":tests_test_lib"],
+)
+### auto-generated section `test intellij.python.ruff.tests` end
