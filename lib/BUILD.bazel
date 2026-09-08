@@ -8956,9 +8956,9 @@ jvm_import(
 )
 
 copy_file(
-    name = "dev.matkov.compose.swing/swing-ui-0.1.0-alpha04.jar_copy",
-    src = "@dev_matkov_compose_swing-swing-ui-0_1_0-alpha04_http//file",
-    out = "dev.matkov.compose.swing/swing-ui-0.1.0-alpha04.jar",
+    name = "org.jetbrains.compose.swing/swing-ui-0.1.0-alpha05.jar_copy",
+    src = "@org_jetbrains_compose_swing-swing-ui-0_1_0-alpha05_http//file",
+    out = "org.jetbrains.compose.swing/swing-ui-0.1.0-alpha05.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -8971,20 +8971,29 @@ copy_file(
     visibility = ["//visibility:public"],
 )
 
+copy_file(
+    name = "androidx.tracing/tracing-desktop-2.0.0.jar_copy",
+    src = "@androidx_tracing-tracing-desktop-2_0_0_http//file",
+    out = "androidx.tracing/tracing-desktop-2.0.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
 java_library(
-    name = "libraries-compose-swing-dev-matkov-compose-swing-swing-ui",
+    name = "libraries-compose-swing-org-jetbrains-compose-swing-swing-ui",
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":dev_matkov_compose_swing-swing-ui-0_1_0-alpha04_http_import",
+        ":org_jetbrains_compose_swing-swing-ui-0_1_0-alpha05_http_import",
         ":org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_9_0_http_import",
+        ":androidx_tracing-tracing-desktop-2_0_0_http_import",
     ],
 )
 
 jvm_import(
-    name = "dev_matkov_compose_swing-swing-ui-0_1_0-alpha04_http_import",
-    jar = "@dev_matkov_compose_swing-swing-ui-0_1_0-alpha04_http//file",
-    source_jar = "@dev_matkov_compose_swing-swing-ui-0_1_0-alpha04-sources_http//file",
+    name = "org_jetbrains_compose_swing-swing-ui-0_1_0-alpha05_http_import",
+    jar = "@org_jetbrains_compose_swing-swing-ui-0_1_0-alpha05_http//file",
+    source_jar = "@org_jetbrains_compose_swing-swing-ui-0_1_0-alpha05-sources_http//file",
 )
 
 jvm_import(
@@ -8993,10 +9002,16 @@ jvm_import(
     source_jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_9_0-sources_http//file",
 )
 
+jvm_import(
+    name = "androidx_tracing-tracing-desktop-2_0_0_http_import",
+    jar = "@androidx_tracing-tracing-desktop-2_0_0_http//file",
+    source_jar = "@androidx_tracing-tracing-desktop-2_0_0-sources_http//file",
+)
+
 copy_file(
-    name = "dev.matkov.compose.swing/swing-ui-test-0.1.0-alpha04.jar_copy",
-    src = "@dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha04_http//file",
-    out = "dev.matkov.compose.swing/swing-ui-test-0.1.0-alpha04.jar",
+    name = "org.jetbrains.compose.swing/swing-ui-test-0.1.0-alpha05.jar_copy",
+    src = "@org_jetbrains_compose_swing-swing-ui-test-0_1_0-alpha05_http//file",
+    out = "org.jetbrains.compose.swing/swing-ui-test-0.1.0-alpha05.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -9018,11 +9033,11 @@ copy_file(
 )
 
 java_library(
-    name = "libraries-compose-swing-dev-matkov-compose-swing-swing-ui-test",
+    name = "libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-test",
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha04_http_import",
+        ":org_jetbrains_compose_swing-swing-ui-test-0_1_0-alpha05_http_import",
         ":org_jetbrains_kotlin-kotlin-test-2_3_20_http_import",
         ":org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_9_0_http_import",
         ":org_jetbrains_kotlinx-kotlinx-coroutines-swing-1_9_0_http_import",
@@ -9030,9 +9045,9 @@ java_library(
 )
 
 jvm_import(
-    name = "dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha04_http_import",
-    jar = "@dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha04_http//file",
-    source_jar = "@dev_matkov_compose_swing-swing-ui-test-0_1_0-alpha04-sources_http//file",
+    name = "org_jetbrains_compose_swing-swing-ui-test-0_1_0-alpha05_http_import",
+    jar = "@org_jetbrains_compose_swing-swing-ui-test-0_1_0-alpha05_http//file",
+    source_jar = "@org_jetbrains_compose_swing-swing-ui-test-0_1_0-alpha05-sources_http//file",
 )
 
 jvm_import(

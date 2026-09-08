@@ -9,7 +9,6 @@ import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.node.SwingNode
 
 /**
@@ -27,8 +26,8 @@ import org.jetbrains.compose.swing.node.SwingNode
 @ApiStatus.Experimental
 public fun Comment(
   text: @NlsContexts.DetailedDescription String,
-  maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
   modifier: SwingModifier = SwingModifier,
+  maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
 ) {
   SwingNode(
     factory = {
@@ -36,6 +35,7 @@ public fun Comment(
         action = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE
       }
     },
+    modifier = modifier,
     update = {
       // A comment that wraps to the width it is given has no width of its own to ask for, so it is held to
       // the one it gets; the width is set before the text so the text is laid out to it straight away.
@@ -44,7 +44,6 @@ public fun Comment(
         limitPreferredSize = it == MAX_LINE_LENGTH_WORD_WRAP
       }
       set(text) { this.text = it }
-      applyModifier(modifier)
     },
   )
 }

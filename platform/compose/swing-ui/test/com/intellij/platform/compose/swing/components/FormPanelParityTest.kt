@@ -15,7 +15,6 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.appearance.testTag
-import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.node.SwingNode
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.jetbrains.compose.swing.test.screenshot.assertImagesPixelPerfect
@@ -504,23 +503,23 @@ class FormPanelParityTest {
 
   @Composable
   private fun TextFieldControl(modifier: SwingModifier = SwingModifier) =
-    SwingNode(factory = { newTextField() }, update = { applyModifier(modifier) })
+    SwingNode(factory = { newTextField() }, modifier = modifier)
 
   @Composable
   private fun CheckBoxControl(text: String, modifier: SwingModifier = SwingModifier) =
-    SwingNode(factory = { newCheckBox(text) }, update = { applyModifier(modifier) })
+    SwingNode(factory = { newCheckBox(text) }, modifier = modifier)
 
   @Composable
   private fun LabelControl(text: String, modifier: SwingModifier = SwingModifier) =
-    SwingNode(factory = { newLabel(text) }, update = { applyModifier(modifier) })
+    SwingNode(factory = { newLabel(text) }, modifier = modifier)
 
   @Composable
   private fun ScrollPaneControl(modifier: SwingModifier = SwingModifier) =
-    SwingNode(factory = { newScrollPane() }, update = { applyModifier(modifier) })
+    SwingNode(factory = { newScrollPane() }, modifier = modifier)
 
   @Composable
   private fun IconControl(modifier: SwingModifier = SwingModifier) =
-    SwingNode(factory = { newIcon() }, update = { applyModifier(modifier) })
+    SwingNode(factory = { newIcon() }, modifier = modifier)
 }
 
 private const val FORM_TAG = "form-under-test"

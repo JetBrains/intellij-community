@@ -2,17 +2,13 @@
 package com.intellij.platform.compose.swing.components
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.listener.actionListener
 import org.jetbrains.compose.swing.node.SwingNode
 import org.jetbrains.compose.swing.node.declare
-import org.jetbrains.compose.swing.node.rememberAppliedValue
-import java.awt.event.ActionListener
+import org.jetbrains.compose.swing.node.rememberMirrorState
 import com.intellij.util.ui.ThreeStateCheckBox as IdeaThreeStateCheckBox
 
 /** The state of a [ThreeStateCheckBox]. */
@@ -39,33 +35,29 @@ public enum class ThreeStateCheckBoxState {
 public fun ThreeStateCheckBox(
   text: @NlsContexts.Checkbox String,
   state: ThreeStateCheckBoxState,
+  onStateChange: (ThreeStateCheckBoxState) -> Unit,
   modifier: SwingModifier = SwingModifier,
-  onStateChange: (ThreeStateCheckBoxState) -> Unit = {},
 ) {
-  val currentOnStateChange = rememberUpdatedState(onStateChange)
-  val applied = rememberAppliedValue(state)
-  // The box publishes its state for every cycle, the user's click and this wrapper's own write alike. The
-  // binding answers which is which by value: a cycle that lands on the declaration is the declaration
-  // arriving.
-  val listener = remember(applied) {
-    ActionListener { event ->
-      val cycled = (event.source as IdeaThreeStateCheckBox).state.toCheckBoxState()
-      if (applied.observed(cycled)) currentOnStateChange.value(cycled)
-    }
-  }
+  val mirror = rememberMirrorState(state)
   SwingNode(
     factory = { IdeaThreeStateCheckBox() },
+    // The box publishes its state for every cycle, the user's click and this wrapper's own write alike.
+    // report answers which is which by value: a cycle that lands on the declaration is the declaration
+    // arriving, and is not reported.
+    modifier =
+      modifier.actionListener<IdeaThreeStateCheckBox> {
+        mirror.report(this.state.toCheckBoxState(), onStateChange)
+      },
     update = {
       set(text) { this.text = it }
       // Settled against the box rather than applied on change: a click moves the box out from under the
       // declaration, and a declaration equal to the last one still has to stand.
       declare(
         value = state,
-        applied = applied,
+        mirror = mirror,
         read = { this.state.toCheckBoxState() },
         write = { this.state = it.toIdeaState() },
       )
-      applyModifier(modifier.actionListener(listener))
     },
   )
 }

@@ -305,9 +305,9 @@ object CommunityLibraryLicenses {
       .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
       .suppliedByOrganizations(Suppliers.GOOGLE),
 
-    LibraryLicense("Compose Swing UI", libraryName = "dev.matkov.compose.swing.swing-ui", url = "https://github.com/MatkovIvan/compose-swing-ui")
-      .apache("https://github.com/MatkovIvan/compose-swing-ui/blob/master/LICENSE")
-      .suppliedByPersons("Ivan Matkov"),
+    LibraryLicense("Compose Swing UI", libraryName = "org.jetbrains.compose.swing.swing-ui", url = "https://github.com/JetBrains/compose-swing-ui")
+      .apache("https://github.com/JetBrains/compose-swing-ui/blob/master/LICENSE")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
 
     // For ADB wireless QR Code generation
     LibraryLicense("Core barcode encoding/decoding library", url = "https://github.com/zxing/zxing/tree/master/core", libraryName = "zxing-core")

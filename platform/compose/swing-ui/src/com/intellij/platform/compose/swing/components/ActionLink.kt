@@ -2,15 +2,11 @@
 package com.intellij.platform.compose.swing.components
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.listener.actionListener
 import org.jetbrains.compose.swing.node.SwingNode
-import java.awt.event.ActionListener
 import com.intellij.ui.components.ActionLink as IdeaActionLink
 
 /**
@@ -24,13 +20,11 @@ public fun ActionLink(
   onClick: () -> Unit,
   modifier: SwingModifier = SwingModifier,
 ) {
-  val currentOnClick = rememberUpdatedState(onClick)
-  val listener = remember { ActionListener { currentOnClick.value() } }
   SwingNode(
     factory = { IdeaActionLink() },
+    modifier = modifier.actionListener { onClick() },
     update = {
       set(text) { this.text = it }
-      applyModifier(modifier.actionListener(listener))
     },
   )
 }

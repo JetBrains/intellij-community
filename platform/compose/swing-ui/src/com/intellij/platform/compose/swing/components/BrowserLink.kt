@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.node.SwingNode
 import com.intellij.ui.components.BrowserLink as IdeaBrowserLink
 
@@ -22,12 +21,12 @@ public fun BrowserLink(
 ) {
   SwingNode(
     factory = { IdeaBrowserLink(url) },
+    modifier = modifier,
     update = {
       set(url) {
         text = it
         this.url = it
       }
-      applyModifier(modifier)
     },
   )
 }
@@ -45,10 +44,10 @@ public fun BrowserLink(
 ) {
   SwingNode(
     factory = { IdeaBrowserLink(text, url) },
+    modifier = modifier,
     update = {
       set(text) { this.text = it }
       update(url) { this.url = it }
-      applyModifier(modifier)
     },
   )
 }

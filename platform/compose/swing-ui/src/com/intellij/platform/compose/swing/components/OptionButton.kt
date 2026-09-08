@@ -2,8 +2,6 @@
 package com.intellij.platform.compose.swing.components
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBOptionButton
@@ -11,10 +9,8 @@ import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.applyModifier
 import org.jetbrains.compose.swing.modifier.listener.actionListener
 import org.jetbrains.compose.swing.node.SwingNode
-import java.awt.event.ActionListener
 
 /**
  * A button whose primary click runs [onClick] and whose drop-down offers the secondary [options].
@@ -26,13 +22,11 @@ import java.awt.event.ActionListener
 @ApiStatus.Experimental
 public fun OptionButton(
   text: @NlsContexts.Button String,
-  options: List<AnAction> = emptyList(),
+  onClick: () -> Unit,
   modifier: SwingModifier = SwingModifier,
+  options: List<AnAction> = emptyList(),
   addSeparator: Boolean = true,
-  onClick: () -> Unit = {},
 ) {
-  val currentOnClick = rememberUpdatedState(onClick)
-  val listener = remember { ActionListener { currentOnClick.value() } }
   SwingNode(
     factory = {
       JBOptionButton(null, null).apply {
@@ -53,11 +47,11 @@ public fun OptionButton(
         putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
       }
     },
+    modifier = modifier.actionListener { onClick() },
     update = {
       set(text) { this.text = it }
       set(options) { setOptions(it) }
       set(addSeparator) { this.addSeparator = it }
-      applyModifier(modifier.actionListener(listener))
     },
   )
 }

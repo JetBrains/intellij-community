@@ -8,41 +8,49 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="dev.matkov.compose.swing.swing-ui" type="repository">
-        <properties maven-id="dev.matkov.compose.swing:swing-ui:0.1.0-alpha04">
+      <library name="org.jetbrains.compose.swing.swing-ui" type="repository">
+        <properties maven-id="org.jetbrains.compose.swing:swing-ui:0.1.0-alpha05">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/dev/matkov/compose/swing/swing-ui/0.1.0-alpha04/swing-ui-0.1.0-alpha04.jar">
-              <sha256sum>a393d998c6241014250433d4447ac3d7ba7385b1f4980ca21fa9120b419b2b02</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha05/swing-ui-0.1.0-alpha05.jar">
+              <sha256sum>a41dcfbb5de2c971320a5ab58c42424e1190888be1e41f0fe2a77d07fb60f8f0</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0.jar">
               <sha256sum>ce506d82f3642651a39fc706f3d2928d846772a64c92e749f018d7f0f216826f</sha256sum>
             </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/tracing/tracing-desktop/2.0.0/tracing-desktop-2.0.0.jar">
+              <sha256sum>cc3c640b8ee4e3b74d2bc0532e829f546b2fe55c6dd8ee4a8e57583453244d8e</sha256sum>
+            </artifact>
           </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
             <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="androidx.annotation:annotation-jvm" />
+            <dependency maven-id="androidx.collection:collection-jvm" />
             <dependency maven-id="androidx.compose.runtime:runtime-desktop" />
             <dependency maven-id="androidx.lifecycle:lifecycle-runtime-compose-desktop" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/dev/matkov/compose/swing/swing-ui/0.1.0-alpha04/swing-ui-0.1.0-alpha04.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha05/swing-ui-0.1.0-alpha05.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/tracing/tracing-desktop/2.0.0/tracing-desktop-2.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/dev/matkov/compose/swing/swing-ui/0.1.0-alpha04/swing-ui-0.1.0-alpha04-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha05/swing-ui-0.1.0-alpha05-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/tracing/tracing-desktop/2.0.0/tracing-desktop-2.0.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="" scope="TEST">
-      <library name="dev.matkov.compose.swing.swing-ui-test" type="repository">
-        <properties maven-id="dev.matkov.compose.swing:swing-ui-test:0.1.0-alpha04">
+      <library name="org.jetbrains.compose.swing.swing-ui-test" type="repository">
+        <properties maven-id="org.jetbrains.compose.swing:swing-ui-test:0.1.0-alpha05">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/dev/matkov/compose/swing/swing-ui-test/0.1.0-alpha04/swing-ui-test-0.1.0-alpha04.jar">
-              <sha256sum>4a09a907787ceb8d7891062aba9d0b7cc60702e635b996f9bf272266ad7af5d3</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha05/swing-ui-test-0.1.0-alpha05.jar">
+              <sha256sum>fd2162ec8ccc2ca2b0705851ae897c48503c0d84733d9dc2007ac3b5cc70c5a4</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.3.20/kotlin-test-2.3.20.jar">
               <sha256sum>d6c9ccf82f67e6cf7fdaf9e0cea419dac4dfa58620a1653d3dba45f544a289ac</sha256sum>
@@ -58,20 +66,20 @@
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
             <dependency maven-id="org.jetbrains:annotations" />
-            <dependency maven-id="dev.matkov.compose.swing:swing-ui" />
+            <dependency maven-id="org.jetbrains.compose.swing:swing-ui" />
             <dependency maven-id="androidx.compose.runtime:runtime-desktop" />
             <dependency maven-id="androidx.lifecycle:lifecycle-runtime-compose-desktop" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/dev/matkov/compose/swing/swing-ui-test/0.1.0-alpha04/swing-ui-test-0.1.0-alpha04.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha05/swing-ui-test-0.1.0-alpha05.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.3.20/kotlin-test-2.3.20.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.9.0/kotlinx-coroutines-test-jvm-1.9.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/dev/matkov/compose/swing/swing-ui-test/0.1.0-alpha04/swing-ui-test-0.1.0-alpha04-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha05/swing-ui-test-0.1.0-alpha05-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.3.20/kotlin-test-2.3.20-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.9.0/kotlinx-coroutines-test-jvm-1.9.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0-sources.jar!/" />
