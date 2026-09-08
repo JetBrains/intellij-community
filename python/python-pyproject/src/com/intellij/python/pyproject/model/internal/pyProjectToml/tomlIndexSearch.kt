@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -20,7 +19,6 @@ import com.jetbrains.python.venvReader.Directory
 import com.jetbrains.python.venvReader.PRUNED_SCAN_DIRS_NO_DOT
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -39,7 +37,10 @@ import kotlin.io.path.name
  *    `PyProjectModelSyncService` does both.
  * 3. The query needs [ALL_FILES_SCOPE] and [ACCEPT_EVERY_FILE]. See their own comments.
  *
- * Fact 1 can be turned off, and [findPyProjectTomlByVfsWalk] then replaces the query.
+ * Fact 1 can be turned off with the system property `indexing.filename.over.vfs`. `FilenameIndex` is then a
+ * content index, and it holds no file outside a content root. A directory that waits to become a module lies
+ * outside every content root, so the query would report too few files and the model would lose a module.
+ * This method therefore fails instead. No host of this code turns the property off today.
  *
  * A file survives only when every directory between it and its root passes five rules: no dot directory,
  * no name in [PRUNED_SCAN_DIRS_NO_DOT], no directory in [excludedPaths], no symbolic link, and no virtualenv.
@@ -51,9 +52,12 @@ suspend fun findPyProjectTomlFilesInIndex(
 ): List<Path> {
   if (roots.isEmpty()) return emptyList()
 
-  val files =
-    if (FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) queryFilenameIndex()
-    else findPyProjectTomlByVfsWalk(roots, excludedPaths)
+  check(FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
+    "The pyproject.toml model needs the filename index over the VFS. " +
+    "The system property indexing.filename.over.vfs turns it off, and the model would then miss a module."
+  }
+
+  val files = queryFilenameIndex()
   if (files.isEmpty()) return emptyList()
 
   return withContext(Dispatchers.IO) {
@@ -88,41 +92,6 @@ private suspend fun queryFilenameIndex(): List<VirtualFile> = readAction {
   hits
 }
 
-/**
- * Walks the VFS from [roots], for the case that the filename index is not served by the VFS.
- *
- * The system property `indexing.filename.over.vfs` can turn `FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX`
- * off. `FilenameIndex` is then a content index, and it holds no file outside a content root. A directory that
- * waits to become a module lies outside every content root, so the query would report too few files and the
- * model would lose a module with no error. This walk reads the same VFS instead, hence it needs no index.
- *
- * The walk touches no disk. It prunes the same names as [PyProjectTomlPathFilter], which stays the authority.
- */
-private suspend fun findPyProjectTomlByVfsWalk(roots: Set<Directory>, excludedPaths: Set<Path>): List<VirtualFile> =
-  withContext(Dispatchers.IO) {
-    log.warn("The filename index is not served by the VFS. The pyproject.toml search walks the VFS instead.")
-    val localFileSystem = LocalFileSystem.getInstance()
-    val virtualEnvReader = VirtualEnvReader()
-    val hits = ArrayList<VirtualFile>()
-    for (root in roots) {
-      coroutineContext.ensureActive()
-      val rootDirectory = localFileSystem.findFileByNioFile(root) ?: continue
-      VfsUtilCore.visitChildrenRecursively(rootDirectory, object : VirtualFileVisitor<Unit>(NO_FOLLOW_SYMLINKS) {
-        override fun visitFile(file: VirtualFile): Boolean {
-          if (!file.isDirectory) {
-            if (file.name == PY_PROJECT_TOML) hits.add(file)
-            return true
-          }
-          // The name of a root is never checked, because a project may itself live under a dot directory.
-          if (file == rootDirectory) return true
-          if (file.name.isPrunedName()) return false
-          val path = file.toNioPathOrNull() ?: return true
-          return path !in excludedPaths && virtualEnvReader.findPythonInPythonRoot(path) == null
-        }
-      })
-    }
-    hits
-  }
 
 /**
  * The query must reach every name the VFS holds. Two platform filters stand in the way, and both hide a file
