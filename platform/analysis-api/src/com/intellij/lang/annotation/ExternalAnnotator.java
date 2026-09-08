@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInspection.GlobalSimpleInspectionTool;
@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +67,7 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> i
    * @param collectedInfo initial information gathered by {@link ExternalAnnotator#collectInformation}
    * @return annotations to pass to {@link ExternalAnnotator#apply(PsiFile, AnnotationResultType, AnnotationHolder)}
    */
+  @RequiresBackgroundThread
   public @Nullable AnnotationResultType doAnnotate(InitialInfoType collectedInfo) {
     return null;
   }
