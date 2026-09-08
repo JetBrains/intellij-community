@@ -10,11 +10,13 @@ import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetPresentableItem
@@ -27,7 +29,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.annotations.Nls
 
-internal class SeFilesProvider private constructor(private val targetProvider: SeTargetItemsProvider) : SeItemsProvider {
+internal class SeFilesProvider private constructor(private val targetProvider: SeTargetItemsProvider) : SeItemsProvider,
+                                                                                                        SeSearchScopesProvider {
   override val id: String get() = SeProviderIdUtils.FILES_ID
   override val displayName: @Nls String get() = IdeBundle.message("search.everywhere.group.name.files")
 
@@ -67,6 +70,8 @@ internal class SeFilesProvider private constructor(private val targetProvider: S
     SeLog.log(SeLog.USER_ACTION) { "SeFilesProvider.itemSelected" }
     return true
   }
+
+  override suspend fun getSearchScopesInfo(): SearchScopesInfo? = targetProvider.getSearchScopesInfo()
 
   override suspend fun canBeShownInFindResults(): Boolean = true
 

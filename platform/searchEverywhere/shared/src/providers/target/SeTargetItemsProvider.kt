@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.providers.target
 
 import com.intellij.ide.actions.GotoActionBase
+import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
@@ -14,6 +15,8 @@ import com.intellij.ide.util.gotoByName.ChooseByNameWeightedItemProvider
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
+import com.intellij.ide.util.scopeChooser.ScopeIdMapper
+import com.intellij.ide.util.scopeChooser.ScopeSeparator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.readAction
@@ -28,14 +31,15 @@ import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.platform.scopes.SearchScopeData
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
-import com.intellij.platform.searchEverywhere.providers.SeScopeById
-import com.intellij.platform.searchEverywhere.providers.SeScopeByIdFiles
+import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import com.intellij.psi.PsiElement
@@ -51,6 +55,8 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -58,6 +64,19 @@ import kotlin.coroutines.cancellation.CancellationException
 //    - provide matchers
 //    - semantic provider
 //    - Target presentation provider
+
+/**
+ * The scope list of one [SeTargetItemsProvider], with the map that resolves a scope id back.
+ *
+ * Both halves come from one `AbstractGotoSEContributor.createScopes` call, so a scope id that reaches
+ * the UI always resolves in the search path.
+ *
+ * The selected scope is not persisted. `AbstractGotoSEContributor` keeps its own selection per
+ * contributor class in project user data, and that map is file private there. So a new session starts
+ * on the project scope.
+ */
+@ApiStatus.Internal
+class SeTargetScopes(val info: SearchScopesInfo?, val byId: SeScopeById)
 
 class SeTargetRawItem(val rawItem: Any, val rawWeight: Int?)
 
@@ -82,8 +101,60 @@ class SeTargetItemsProvider private constructor(
   private val label: String,
   private val gotoModelProvider: (Project, ScopeDescriptor?, Set<FileTypeRef>) -> (FilteringGotoByModel<*>),
 ) {
-  private val scopeById: SuspendLazyProperty<SeScopeById> = suspendLazy {
-    SeScopeByIdFiles(project, psiContext)
+  private val scopes: SuspendLazyProperty<SeTargetScopes> = suspendLazy { createScopes() }
+
+  /**
+   * The scope list that the scope chooser shows, or null when the model has no scope to offer.
+   *
+   * A provider that exposes this must resolve the same scope ids back in [getItemsFlow]. Both sides
+   * read one [SeTargetScopes], so the ids always agree.
+   */
+  suspend fun getSearchScopesInfo(): SearchScopesInfo? = scopes.getValue().info
+
+  private suspend fun createScopes(): SeTargetScopes {
+    val descriptors = readAction {
+      collectScopesWithSeparators(AbstractGotoSEContributor.createScopes(project, psiContext))
+    }
+    if (descriptors.isEmpty()) return SeTargetScopes(null, SeScopeByIdMap(emptyMap(), null, null))
+
+    val scopeIdMapper = ScopeIdMapper.instance
+    val descriptorByScopeId = mutableMapOf<String, ScopeDescriptor>()
+
+    // The id keeps the `<uuid>_<serialization id>` shape that ScopeChooserActionProviderDelegate uses.
+    // A reader that strips the uuid still gets the stable serialization id.
+    val scopeDataList = descriptors.mapNotNull { descriptor ->
+      val name = descriptor.displayName ?: return@mapNotNull null
+      val scopeId = SeScopeById.generateScopeId(name)
+
+      SearchScopeData.from(descriptor, scopeId)?.also {
+        descriptorByScopeId[scopeId] = descriptor
+      }
+    }
+
+    fun scopeIdOf(name: @Nls String): String? = scopeDataList.firstOrNull { it.name == name }?.scopeId
+
+    val projectScopeName = GlobalSearchScope.projectScope(project).displayName
+    val everywhereScopeName = GlobalSearchScope.everythingScope(project).displayName
+    val projectScopeId = scopeIdOf(projectScopeName)
+    val everywhereScopeId = scopeIdOf(everywhereScopeName)
+
+    // The scope chooser can auto toggle to the everywhere scope only when both ids resolve and differ.
+    // See SeScopeChooserActionProvider.canToggleEverywhere. A null id disables the auto toggle silently.
+    if (projectScopeId == null || everywhereScopeId == null) {
+      SeLog.warn("$label: the auto toggle is off, because a scope id is missing. " +
+                 "project='$projectScopeName' -> $projectScopeId, everywhere='$everywhereScopeName' -> $everywhereScopeId. " +
+                 "Known scopes: ${scopeDataList.joinToString { it.name }}")
+    }
+    else {
+      SeLog.log(SeLog.SCOPE) {
+        "$label: scopes=${scopeDataList.size}, project='$projectScopeName', everywhere='$everywhereScopeName'"
+      }
+    }
+
+    return SeTargetScopes(
+      info = SearchScopesInfo(scopeDataList, projectScopeId, projectScopeId, everywhereScopeId),
+      byId = SeScopeByIdMap(descriptorByScopeId, everywhereScopeId = everywhereScopeId, projectScopeId = projectScopeId),
+    )
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -96,6 +167,37 @@ class SeTargetItemsProvider private constructor(
         }
       }
 
+  /**
+   * Keeps the scopes that the scope chooser can show, in the shape that
+   * `ScopeChooserAction.collectScopesAndSeparators` produces.
+   *
+   * `AbstractGotoSEContributor.createScopes` asks for `ScopeOption.EMPTY_SCOPES`, so the raw list also
+   * holds a descriptor with no scope and a descriptor with a scope that is not a [GlobalSearchScope].
+   * The legacy path drops both. This method must drop them too, or a scope that the search cannot use
+   * reaches the UI, and the lookup by display name can find the wrong entry.
+   *
+   * A separator survives only when a real scope follows it, and never as the first entry.
+   */
+  private fun collectScopesWithSeparators(descriptors: List<ScopeDescriptor>): List<ScopeDescriptor> {
+    val items = mutableListOf<ScopeDescriptor>()
+    var pendingSeparator: ScopeSeparator? = null
+
+    for (descriptor in descriptors) {
+      if (descriptor is ScopeSeparator) {
+        if (items.isNotEmpty()) pendingSeparator = descriptor
+        continue
+      }
+      if (descriptor.scopeEquals(null) || descriptor.scope !is GlobalSearchScope) continue
+
+      pendingSeparator?.let {
+        items.add(it)
+        pendingSeparator = null
+      }
+      items.add(descriptor)
+    }
+    return items
+  }
+
   fun getItemsFlow(params: SeParams): Flow<SeTargetRawItem> = channelFlow {
     // The counters live outside the read action, because `readAction` restarts the block after a write action.
     val attemptCount = AtomicInteger(0)
@@ -105,12 +207,12 @@ class SeTargetItemsProvider private constructor(
     if (pattern.isBlank()) return@channelFlow
 
     val (scopeDescriptor, hiddenTypes) = SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
-      scopeById.getValue()[isEverywhere] to null
+      scopes.getValue().byId[isEverywhere] to null
     } ?: run {
       val targetsFilter = SeTargetsFilter.from(params.filter)
 
       targetsFilter.selectedScopeId?.let {
-        scopeById.getValue()[it]
+        scopes.getValue().byId[it]
       } to targetsFilter.hiddenTypes
     }
 
@@ -263,4 +365,31 @@ private class MyViewModel(private val myProject: Project, private val myModel: C
   override fun canShowListForEmptyPattern(): Boolean = false
 
   override fun getMaximumListSizeLimit(): Int = 0
+}
+
+
+@ApiStatus.Internal
+interface SeScopeById {
+  operator fun get(isEverywhere: Boolean): ScopeDescriptor?
+  operator fun get(scopeId: String): ScopeDescriptor?
+
+  companion object {
+    private const val SCOPE_ID_SEPARATOR: Char = '_'
+
+    fun generateScopeId(displayName: @Nls String): String =
+      "${UUID.randomUUID()}$SCOPE_ID_SEPARATOR${ScopeIdMapper.instance.getScopeSerializationId(displayName)}"
+
+    fun extractSerializationId(scopeId: String): String = scopeId.substringAfter(SCOPE_ID_SEPARATOR)
+  }
+}
+
+internal class SeScopeByIdMap(
+  private val scopeIdToScope: Map<String, ScopeDescriptor>,
+  private val everywhereScopeId: String?,
+  private val projectScopeId: String?,
+) : SeScopeById {
+  override fun get(isEverywhere: Boolean): ScopeDescriptor? =
+    (if (isEverywhere) everywhereScopeId else projectScopeId)?.let { scopeIdToScope[it] }
+
+  override fun get(scopeId: String): ScopeDescriptor? = scopeIdToScope[scopeId]
 }
