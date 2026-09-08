@@ -1012,3 +1012,16 @@ open class HelpTooltip {
     }
   }
 }
+
+/**
+ * Sets tooltip content.
+ * Prefer this method over [JComponent.setToolTipText] to avoid accidental HTML injections.
+ *
+ * Tooltip text is allowed to contain HTML markup. Construct the text using [HtmlChunk].
+ * If your tooltip doesn't suppose to contain HTML markup,
+ * prefer using [HtmlChunk.text] to avoid accidental HTML injections.
+ */
+fun JComponent.setToolTipText(html: HtmlChunk?) {
+  @Suppress("UseHtmlChunkToolTip")
+  this.toolTipText = html?.toString()
+}
