@@ -25,9 +25,8 @@ data class ThreadDumpState(
  * Converts parsed threads and containers into dump items consumed by the thread dump UI.
  */
 @ApiStatus.Internal
-fun ThreadDumpState.dumpItems(): List<DumpItem> {
-  return toDumpItems(threadStates, threadContainerDescriptors)
-}
+fun toDumpItems(threadDumpState: ThreadDumpState): List<DumpItem> =
+  toDumpItems(threadDumpState.threadStates, threadDumpState.threadContainerDescriptors)
 
 /**
  * Parses thread dump text and restores thread/container hierarchy from inline metadata when present.

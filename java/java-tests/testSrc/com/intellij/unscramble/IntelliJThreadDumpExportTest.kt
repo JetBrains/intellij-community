@@ -137,7 +137,7 @@ internal class IntelliJThreadDumpExportTest {
   private fun createDumpItemsForExport(): List<DumpItem> {
     val dumpText = loadThreadDump("commonIntelliJFormat.txt")
     return buildList {
-      addAll(requireNotNull(parseIntelliJThreadDump(dumpText)).dumpItems())
+      addAll(requireNotNull(toDumpItems(parseIntelliJThreadDump(dumpText))))
       add(InfoDumpItem("Thread dump unavailable", "Collection of extended dump was disabled."))
     }
   }

@@ -62,7 +62,7 @@ internal class IntelliJThreadDumpImportTest : AbstractThreadDumpImportTest() {
   fun `new import keeps thread presentation data`() {
     val dumpText = loadThreadDump("commonIntelliJFormat.txt")
 
-    val importedDumpItems = requireNotNull(parseIntelliJThreadDump(dumpText)).dumpItems()
+    val importedDumpItems = toDumpItems(requireNotNull(parseIntelliJThreadDump(dumpText)))
     val mainThread = findDumpItem(importedDumpItems, "main@101")
     val workerThread1 = findDumpItem(importedDumpItems, "worker-1@201")
     val workerThread2 = findDumpItem(importedDumpItems, "worker-2@202")
@@ -89,7 +89,7 @@ internal class IntelliJThreadDumpImportTest : AbstractThreadDumpImportTest() {
 
   @Test
   fun `round trip from intellij style dump preserves hierarchy and keeps ids in dump item names`() {
-    val importedDumpItems = requireNotNull(parseIntelliJThreadDump(loadThreadDump("commonIntelliJFormat.txt"))).dumpItems()
+    val importedDumpItems = toDumpItems(requireNotNull(parseIntelliJThreadDump(loadThreadDump("commonIntelliJFormat.txt"))))
 
     assertThat(importedDumpItems.filter { !it.isContainer }.map { it.name }).containsExactly("main@101", "worker-1@201", "worker-2@202")
 
@@ -107,12 +107,12 @@ internal class IntelliJThreadDumpImportTest : AbstractThreadDumpImportTest() {
   @Test
   fun `import export import does not duplicate serialized thread ids`() {
     val firstImportedDump = requireNotNull(parseIntelliJThreadDump(loadThreadDump("commonIntelliJFormat.txt")))
-    val serializedOnce = serializeIntelliJThreadDump(firstImportedDump.dumpItems(), listOf("Full thread dump"))
+    val serializedOnce = serializeIntelliJThreadDump(toDumpItems(firstImportedDump), listOf("Full thread dump"))
 
     val secondImportedDump = requireNotNull(parseIntelliJThreadDump(serializedOnce))
-    assertThat(secondImportedDump.dumpItems().filter { !it.isContainer }.map { it.name }).containsExactly("main@101", "worker-1@201", "worker-2@202")
+    assertThat(toDumpItems(secondImportedDump).filter { !it.isContainer }.map { it.name }).containsExactly("main@101", "worker-1@201", "worker-2@202")
 
-    val serializedTwice = serializeIntelliJThreadDump(secondImportedDump.dumpItems(), listOf("Full thread dump"))
+    val serializedTwice = serializeIntelliJThreadDump(toDumpItems(secondImportedDump), listOf("Full thread dump"))
     assertThat(serializedTwice).doesNotContain("@101@101")
     assertThat(serializedTwice).doesNotContain("@201@201")
     assertThat(serializedTwice).isEqualTo(serializedOnce)
@@ -131,7 +131,7 @@ internal class IntelliJThreadDumpImportTest : AbstractThreadDumpImportTest() {
     val dumpText = loadThreadDump("invalidMetadata.txt")
 
     val parsedThreadDump = requireNotNull(parseIntelliJThreadDump(dumpText))
-    val dumpItems = parsedThreadDump.dumpItems().filter { !it.isContainer }
+    val dumpItems = toDumpItems(parsedThreadDump).filter { !it.isContainer }
 
     assertThat(dumpItems.map { it.name }).containsExactly("main@101", "worker-1@201")
     assertThat(dumpItems.map { it.treeId }).containsOnlyNulls()
@@ -207,7 +207,7 @@ internal abstract class AbstractThreadDumpImportTest {
     isContainer: Boolean,
     isVirtual: Boolean,
   ) {
-    assertDumpItem(threadDumpState.dumpItems(), name, treeId, parentTreeId, isContainer, isVirtual)
+    assertDumpItem(toDumpItems(threadDumpState), name, treeId, parentTreeId, isContainer, isVirtual)
   }
 
   private fun assertDumpItem(

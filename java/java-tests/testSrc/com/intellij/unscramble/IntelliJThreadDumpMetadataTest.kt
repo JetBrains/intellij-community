@@ -58,7 +58,7 @@ internal class IntelliJThreadDumpMetadataTest {
       )
     )
 
-    val dumpItem = parsedDump.dumpItems().single { !it.isContainer }
+    val dumpItem = toDumpItems(parsedDump).single { !it.isContainer }
     assertThat(dumpItem.name).isEqualTo("worker,1@101")
     assertThat(dumpItem.treeId).isEqualTo(101L)
     assertThat(dumpItem.stackTrace.lineSequence().first()).doesNotContain("[\"id\":101]")

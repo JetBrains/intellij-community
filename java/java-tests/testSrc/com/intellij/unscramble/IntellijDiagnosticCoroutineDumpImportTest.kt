@@ -216,7 +216,7 @@ internal class IntellijDiagnosticCoroutineDumpImportTest : AbstractThreadDumpImp
       "Please report this issue to the developers.",
     ).joinToString("\n")
 
-    val dumpItems = requireNotNull(parseIntelliJThreadDump(dumpText)).dumpItems()
+    val dumpItems = toDumpItems(requireNotNull(parseIntelliJThreadDump(dumpText)))
 
     assertThat(dumpItems.map { it.name }).containsExactly("Coroutine dump")
   }

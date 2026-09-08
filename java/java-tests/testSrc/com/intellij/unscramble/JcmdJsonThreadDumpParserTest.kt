@@ -190,6 +190,37 @@ internal class JcmdJsonThreadDumpParserTest {
   }
 
   @Test
+  fun `park blocker is added after unsafe park frame`() {
+    val parsed = requireNotNull(parseJcmdJsonThreadDump(PARK_BLOCKER_DUMP))
+
+    val thread = parsed.threadStates.single { it.name == "ForkJoinPool-1-worker-14" }
+
+    assertEquals("java.util.concurrent.ForkJoinPool@4c997fb0", thread.contendedMonitor)
+    assertThat(thread.stackTrace).contains(
+      "\tat java.base/jdk.internal.misc.Unsafe.park(Native Method)\n" +
+      "\t- parking to wait for  <java.util.concurrent.ForkJoinPool@4c997fb0>\n" +
+      "\tat java.base/java.util.concurrent.ForkJoinPool.awaitWork(ForkJoinPool.java:2109)"
+    )
+  }
+
+  @Test
+  fun `json thread state is used for dump item icon`() {
+    val parsed = requireNotNull(parseJcmdJsonThreadDump(THREAD_STATES_DUMP))
+
+    val waitingThread = parsed.threadStates.single { it.name == "waiting-thread" }
+    val runningThread = parsed.threadStates.single { it.name == "running-thread" }
+    val dumpItemsByName = toDumpItems(parsed).associateBy { it.name }
+
+    assertEquals("WAITING", waitingThread.javaThreadState)
+    assertTrue(waitingThread.isWaiting)
+    assertThat(dumpItemsByName.getValue("waiting-thread").icon).isEqualTo(AllIcons.Debugger.ThreadFrozen)
+
+    assertEquals("RUNNABLE", runningThread.javaThreadState)
+    assertFalse(runningThread.isWaiting)
+    assertThat(dumpItemsByName.getValue("running-thread").icon).isEqualTo(AllIcons.Actions.Resume)
+  }
+
+  @Test
   fun `stack trace enriched with locked monitors at correct depth`() {
     val dumpText = loadThreadDump("multipleOwnedMonitors.json")
     val parsed = requireNotNull(parseJcmdJsonThreadDump(dumpText))
@@ -291,7 +322,7 @@ internal class JcmdJsonThreadDumpParserTest {
     val jcmdDumpItems = parseThreadDump("jcmdJsonNestedContainers.json")
 
     val serialized = serializeIntelliJThreadDump(jcmdDumpItems)
-    val parsedSerializedDumpItems = requireNotNull(parseIntelliJThreadDump(serialized)).dumpItems()
+    val parsedSerializedDumpItems = toDumpItems(requireNotNull(parseIntelliJThreadDump(serialized)))
 
     assertEquals(dumpItemsTree(jcmdDumpItems), dumpItemsTree(parsedSerializedDumpItems))
   }
@@ -301,7 +332,7 @@ internal class JcmdJsonThreadDumpParserTest {
     val dumpText = loadThreadDump("jcmdJsonDeadlock.json")
     val originalThreadDump = requireNotNull(parseJcmdJsonThreadDump(dumpText))
 
-    val serialized = serializeIntelliJThreadDump(originalThreadDump.dumpItems())
+    val serialized = serializeIntelliJThreadDump(toDumpItems(originalThreadDump))
     val parsedSerializedThreadDump = requireNotNull(parseIntelliJThreadDump(serialized))
 
     for (i in originalThreadDump.threadStates.indices) {
@@ -318,7 +349,7 @@ internal class JcmdJsonThreadDumpParserTest {
     val dumpText = loadThreadDump(dumpFileName)
 
     val parsed = requireNotNull(parseJcmdJsonThreadDump(dumpText))
-    return parsed.dumpItems()
+    return toDumpItems(parsed)
   }
 
   private fun loadThreadDump(path: String): String {
