@@ -42,6 +42,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 /**
  * Builds the `pyproject.toml` project model and keeps it up to date.
@@ -155,12 +157,12 @@ internal class PyProjectModelSyncService(private val project: Project, private v
    * The wait only saves the work of a build that a later build would repeat.
    */
   private suspend fun awaitOrWarn(what: String, wait: suspend () -> Unit) {
-    val start = System.nanoTime()
-    if (withTimeoutOrNull(AWAIT_TIMEOUT) { wait() } == null) {
+    val (finished, waited) = measureTimedValue { withTimeoutOrNull(AWAIT_TIMEOUT) { wait() } }
+    if (finished == null) {
       log.warn("$what did not finish in $AWAIT_TIMEOUT. The pyproject.toml model is built without it.")
     }
     else {
-      log.debug { "Waited ${millisSince(start)} ms for $what" }
+      log.debug { "Waited $waited for $what" }
     }
   }
 
@@ -178,9 +180,8 @@ internal class PyProjectModelSyncService(private val project: Project, private v
     requests.receiveAsFlow().debounceBatch(DEBOUNCE).collect { batch ->
       val directoriesToLoad = batch.flatMapTo(LinkedHashSet()) { it.directoriesToLoad }
       if (directoriesToLoad.isNotEmpty()) {
-        val start = System.nanoTime()
-        loadSubtreesIntoVfs(directoriesToLoad, collectExcludedPaths(project))
-        log.debug { "Loaded ${directoriesToLoad.size} new directories into the VFS in ${millisSince(start)} ms" }
+        val loaded = measureTime { loadSubtreesIntoVfs(directoriesToLoad, collectExcludedPaths(project)) }
+        log.debug { "Loaded ${directoriesToLoad.size} new directories into the VFS in $loaded" }
       }
       rebuildNow(batch.mapTo(LinkedHashSet()) { it.reason }.joinToString(" and "))
     }
@@ -233,16 +234,12 @@ internal class PyProjectModelSyncService(private val project: Project, private v
     val excludedPaths = collectExcludedPaths(project)
     // The two DEBUG lines below are the measurement of PY-91841. Keep them: the search and the apply have
     // very different costs, and only a split number tells which one a slow project load comes from.
-    val searchStart = System.nanoTime()
-    val files = findPyProjectTomlWithContent(projectRoots, excludedPaths)
-    val applyStart = System.nanoTime()
-    log.debug { "Build $build found ${files.tomlFiles.size} pyproject.toml files in ${millisSince(searchStart)} ms" }
+    val (files, searchTime) = measureTimedValue { findPyProjectTomlWithContent(projectRoots, excludedPaths) }
+    log.debug { "Build $build found ${files.tomlFiles.size} pyproject.toml files in $searchTime" }
     log.debug { "Files found: ${files.tomlFiles.keys.joinToString(", ")}" }
 
-    rebuildProjectModel(project, files)
-    log.debug {
-      "Build $build applied the model of ${files.tomlFiles.size} pyproject.toml files in ${millisSince(applyStart)} ms"
-    }
+    val applyTime = measureTime { rebuildProjectModel(project, files) }
+    log.debug { "Build $build applied the model of ${files.tomlFiles.size} pyproject.toml files in $applyTime" }
     // Even though we have no entities, we still "rebuilt" the model, time to configure SDK
     notifyModelRebuilt(project)
   }
@@ -258,15 +255,18 @@ internal class PyProjectModelSyncService(private val project: Project, private v
    * This method therefore runs one time for each session.
    */
   private suspend fun loadProjectRootsIntoVfs() {
-    val start = System.nanoTime()
-    val localFileSystem = LocalFileSystem.getInstance()
-    val roots = getRootPaths(project)
-    // `refreshAndFindFileByNioFile` reads the filesystem, so this step needs the dispatcher of its own.
-    val rootDirectories = withContext(Dispatchers.IO) {
-      roots.mapNotNullTo(LinkedHashSet()) { localFileSystem.refreshAndFindFileByNioFile(it) }
+    var loadedRoots = 0
+    val loaded = measureTime {
+      val localFileSystem = LocalFileSystem.getInstance()
+      val roots = getRootPaths(project)
+      // `refreshAndFindFileByNioFile` reads the filesystem, so this step needs the dispatcher of its own.
+      val rootDirectories = withContext(Dispatchers.IO) {
+        roots.mapNotNullTo(LinkedHashSet()) { localFileSystem.refreshAndFindFileByNioFile(it) }
+      }
+      loadedRoots = rootDirectories.size
+      loadSubtreesIntoVfs(rootDirectories, collectExcludedPaths(project))
     }
-    loadSubtreesIntoVfs(rootDirectories, collectExcludedPaths(project))
-    log.debug { "Loaded ${rootDirectories.size} project roots into the VFS in ${millisSince(start)} ms" }
+    log.debug { "Loaded $loadedRoots project roots into the VFS in $loaded" }
   }
 
   /**
@@ -297,8 +297,6 @@ internal class PyProjectModelSyncService(private val project: Project, private v
   /** Numbers the builds of one session, so the log tells one build from the next. */
   private val buildCounter = AtomicInteger()
 }
-
-private fun millisSince(startNanos: Long): Long = (System.nanoTime() - startNanos) / 1_000_000
 
 /** A wait of this length turns a burst of VFS events into one rebuild. */
 private val DEBOUNCE: Duration = 300.milliseconds

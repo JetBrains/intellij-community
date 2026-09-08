@@ -62,6 +62,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.time.Duration
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 private val logger = fileLogger()
 
@@ -91,9 +94,8 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
       val lastAttempt = attempt == MODEL_UPDATE_ATTEMPTS
       if (tryRebuildProjectModel(project, files, lastAttempt)) {
         // Flush .iml files to disk to make changes visible for VCS and to prevent races with VFS.
-        val saveStart = System.nanoTime()
-        saveSettings(project)
-        logger.debug { "Saved the project settings in ${millisSince(saveStart)} ms" }
+        val saved = measureTime { saveSettings(project) }
+        logger.debug { "Saved the project settings in $saved" }
         return@withLock
       }
       // The last attempt writes the model whatever the module set holds, so it never asks for a repeat.
@@ -138,38 +140,33 @@ private suspend fun tryRebuildProjectModel(project: Project, files: FSWalkInfoWi
       moduleRootPath?.let { it to module.name }
     }.toMap()
 
-  val entriesStart = System.nanoTime()
-  val entries = generatePyProjectTomlEntries(files, existingPythonNames, allModuleNames)
-  val entriesMs = millisSince(entriesStart)
+  val (entries, entriesTime) = measureTimedValue {
+    generatePyProjectTomlEntries(files, existingPythonNames, allModuleNames)
+  }
 
   var applied = true
-  var applyMs = 0L
-  var clashMs = 0L
-  val updateStart = System.nanoTime()
-  project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { projectStorage ->
-    val namesNow = projectStorage.entities<ModuleEntity>().map { it.name }.toSet()
-    if (namesNow != allModuleNames && !lastAttempt) {
-      applied = false
-      return@update
-    }
-    preserveRootModule(project, projectStorage) {
-      val applyStart = System.nanoTime()
-      applyProjectModel(entries, project, projectStorage)
-      applyMs = millisSince(applyStart)
-      val clashStart = System.nanoTime()
-      ensureNoSrcIntersectsWithOtherRoots(projectStorage)
-      clashMs = millisSince(clashStart)
+  var applyTime = Duration.ZERO
+  var clashTime = Duration.ZERO
+  val updateTime = measureTime {
+    project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { projectStorage ->
+      val namesNow = projectStorage.entities<ModuleEntity>().map { it.name }.toSet()
+      if (namesNow != allModuleNames && !lastAttempt) {
+        applied = false
+        return@update
+      }
+      preserveRootModule(project, projectStorage) {
+        applyTime = measureTime { applyProjectModel(entries, project, projectStorage) }
+        clashTime = measureTime { ensureNoSrcIntersectsWithOtherRoots(projectStorage) }
+      }
     }
   }
   // The split answers "where does the apply spend its time?" (PY-91841).
   logger.debug {
-    "Model apply: ${entries.size} entries in $entriesMs ms, " +
-    "workspace update ${millisSince(updateStart)} ms (entities $applyMs ms, clash check $clashMs ms)"
+    "Model apply: ${entries.size} entries in $entriesTime, " +
+    "workspace update $updateTime (entities $applyTime, clash check $clashTime)"
   }
   return applied
 }
-
-private fun millisSince(startNanos: Long): Long = (System.nanoTime() - startNanos) / 1_000_000
 
 /**
  * The value of the deepest key of [byPath] that is [path] itself or an ancestor of [path]. Null if none is.
