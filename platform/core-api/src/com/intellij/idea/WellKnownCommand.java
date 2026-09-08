@@ -93,6 +93,7 @@ public final class WellKnownCommand {
     put("cwmHost", REMOTE_DEV_HOST);
     put("cwmHostNoLobby", REMOTE_DEV_HOST);
     put("remoteDevHost", REMOTE_DEV_HOST);
+    put("ijLightHost", REMOTE_DEV_HOST);
     put("rdserver-headless", HEADLESS);
     put("openUrlOnClient", HEADLESS);
     put("cwmHostStatus", HEADLESS);
