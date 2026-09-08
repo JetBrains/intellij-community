@@ -1,5 +1,6 @@
 package com.intellij.markdown.figmaAdvertiser
 
+import com.intellij.ide.plugins.PluginManager
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -38,6 +39,42 @@ fun isMarkdownSuggestionFile(filePath: String): Boolean {
 fun containsFigmaUrl(text: CharSequence): Boolean = FIGMA_URL_PATTERN.containsMatchIn(text)
 
 /**
+ * Whether a link to a Figma file in [text] meets the change over `[changeStart, changeEnd)`.
+ *
+ * A match that is there after a change and was not there before it holds at least one character the
+ * change wrote, and a match a pure deletion produced spans the position the deletion left behind.
+ * So a link the change created always meets the change, and a link that was already there and was
+ * not touched does not. Answering the wider question — a link anywhere near the change — would say
+ * yes to every keystroke within [FIGMA_URL_MAX_MATCH] characters of a link the author wrote
+ * yesterday.
+ *
+ * [FIGMA_URL_PATTERN] matches at most [FIGMA_URL_MAX_MATCH] characters, so a match that meets the
+ * change lies inside the changed range grown by that many characters at each end. Searching that
+ * window keeps an edit in a long Markdown file as cheap as an edit in a short one.
+ */
+@ApiStatus.Internal
+fun changeTouchesFigmaUrl(text: CharSequence, changeStart: Int, changeEnd: Int): Boolean {
+  val from = (changeStart - FIGMA_URL_MAX_MATCH).coerceIn(0, text.length)
+  val to = (changeEnd + FIGMA_URL_MAX_MATCH).coerceIn(from, text.length)
+  // A deletion writes no character, so it marks the single position it left behind.
+  val touchedEnd = maxOf(changeEnd, changeStart + 1)
+  return FIGMA_URL_PATTERN.findAll(text.subSequence(from, to)).any { match ->
+    from + match.range.first < touchedEnd && changeStart < from + match.range.last + 1
+  }
+}
+
+/**
+ * Whether Figma Connect is loaded.
+ *
+ * [FigmaConnectPluginSuggestionProvider] is given this exclusion by `buildSuggestionIfNeeded`, which
+ * drops every plugin id already in `PluginManager.getLoadedPlugins()`. A caller that does not reach
+ * that call asks here.
+ */
+@ApiStatus.Internal
+fun isFigmaConnectLoaded(): Boolean =
+  PluginManager.getLoadedPlugins().any { it.pluginId.idString == FIGMA_CONNECT_PLUGIN_ID }
+
+/**
  * Lower case. A file system keeps the case a user typed, and `README.MD` names the same extension.
  *
  * Mirrors the `extensions` attribute of the `Markdown` file type
@@ -53,6 +90,13 @@ private val MARKDOWN_EXTENSIONS: Set<String> = setOf("md", "markdown", "mdc")
  */
 private val FIGMA_URL_PATTERN: Regex =
   Regex("""https?://(?:www\.)?figma\.com/(?:file|design|proto)/""", RegexOption.IGNORE_CASE)
+
+/**
+ * A bound on the length of a string [FIGMA_URL_PATTERN] matches. The longest one is
+ * `https://www.figma.com/design/`, at 29 characters; the bound is set well above it so that a URL
+ * shape added to the pattern has room before the bound has to move with it.
+ */
+private const val FIGMA_URL_MAX_MATCH: Int = 64
 
 /** The plugin this module advertises. Owned by `plugins/figma/resources/META-INF/plugin.xml:2`. */
 @ApiStatus.Internal
