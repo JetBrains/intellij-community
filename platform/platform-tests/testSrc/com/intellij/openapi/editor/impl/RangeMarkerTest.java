@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.marker.PMarker;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl;
@@ -2014,7 +2015,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   public void testRangeMarkerImplThrowsWhenSnapshotEngineIsEnabled() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument("");
-    if (RangeMarkersImpl.Holder.USE_PMARKER_IMPLEMENTATION) {
+    if (RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION) {
       assertThrows(AssertionError.class, () -> new RangeMarkerImpl(document, 0, 0, true, false));
     }
     else {

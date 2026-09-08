@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ex.ElfCandidate;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -101,7 +102,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   FoldingModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
     myDocument = editor.getElfDocument();
-    myRegionStorage = myDocument instanceof DocumentImpl document && RangeMarkersImpl.Holder.USE_PMARKER_IMPLEMENTATION
+    myRegionStorage = myDocument instanceof DocumentImpl document && RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION
                       ? new SnapshotFoldingRegionStorage(this, editor, document)
                       : new LegacyFoldingRegionStorage();
     myFoldsCache = new MyFoldRegionsCache(myRegionStorage);

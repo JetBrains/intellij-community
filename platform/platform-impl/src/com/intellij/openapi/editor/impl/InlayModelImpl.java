@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.ElfCandidate;
 import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.util.Disposer;
@@ -103,7 +104,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   InlayModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
     myDocument = editor.getElfDocument();
-    mySnapshotMarkerStorage = myDocument instanceof DocumentImpl document && RangeMarkersImpl.Holder.USE_PMARKER_IMPLEMENTATION
+    mySnapshotMarkerStorage = myDocument instanceof DocumentImpl document && RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION
                               ? new SnapshotInlayStorage(this, editor, document)
                               : null;
     myInlineElementsTree = mySnapshotMarkerStorage == null ? new InlineElementsTree(myDocument) : null;

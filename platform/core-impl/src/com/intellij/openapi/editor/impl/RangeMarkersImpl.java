@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.impl.marker.PersistentMarkerPolicy;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
@@ -33,7 +32,7 @@ public final class RangeMarkersImpl implements RangeMarkers {
   private final @NotNull DocumentImpl myDocument;
 
   RangeMarkersImpl(@NotNull DocumentEventDispatcher dispatcher, @NotNull DocumentImpl document) {
-    if (Holder.USE_PMARKER_IMPLEMENTATION) {
+    if (RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION) {
       myRangeMarkers = null;
       myPersistentRangeMarkers = null;
     }
@@ -42,9 +41,6 @@ public final class RangeMarkersImpl implements RangeMarkers {
       myPersistentRangeMarkers = new PersistentRangeMarkerTree(dispatcher);
     }
     myDocument = document;
-  }
-  static class Holder {
-    static boolean USE_PMARKER_IMPLEMENTATION = Registry.is("editor.range.marker.use.pmarker.internal");
   }
   @Override
   public @NotNull RangeMarkerEx createRangeMarker(@NotNull DocumentEx hostDocument,

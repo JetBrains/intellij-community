@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.ex
 
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
@@ -55,4 +56,9 @@ interface RangeMarkers {
   @Contract(pure = true)
   @TestOnly
   fun getRangeMarkersNodeSize(): Int
+
+  object Holder {
+    @JvmField
+    var USE_PMARKER_IMPLEMENTATION: Boolean = Registry.`is`("editor.range.marker.use.pmarker.internal")
+  }
 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.ElfCandidate
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.ex.RangeMarkerEx
+import com.intellij.openapi.editor.ex.RangeMarkers
 import com.intellij.openapi.editor.impl.customwrap.CustomWrapImpl
 import com.intellij.util.DocumentUtil
 import com.intellij.util.EventDispatcher
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.TestOnly
 internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapModel, CustomWrapModel.Mutator, PrioritizedDocumentListener,
                                                                      Dumpable, Disposable {
   private val document = editor.elfDocument
-  private val tree: CustomWrapTree? = if (RangeMarkersImpl.Holder.USE_PMARKER_IMPLEMENTATION) null else CustomWrapTree(document)
+  private val tree: CustomWrapTree? = if (RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION) null else CustomWrapTree(document)
   @Volatile
   private var snapshotStorage: SnapshotCustomWrapStorage? = null
   private val eventDispatcher = EventDispatcher.create(CustomWrapModel.Listener::class.java)

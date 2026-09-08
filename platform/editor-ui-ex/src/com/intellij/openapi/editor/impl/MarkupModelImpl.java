@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -50,7 +51,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @ApiStatus.Internal
   protected MarkupModelImpl(@NotNull DocumentEx document) {
     myDocument = document;
-    if (document instanceof DocumentImpl documentImpl && RangeMarkersImpl.Holder.USE_PMARKER_IMPLEMENTATION) {
+    if (document instanceof DocumentImpl documentImpl && RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION) {
       myHighlighterTree = null;
       myHighlighterTreeForLines = null;
       mySnapshotHighlighterStorage = new SnapshotHighlighterStorage(this, documentImpl);

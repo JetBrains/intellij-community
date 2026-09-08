@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.ElfCandidate;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -75,7 +76,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     this.document = editor.getElfDocument();
     this.caretListeners = EventDispatcher.create(CaretListener.class);
     this.caretActionListeners = EventDispatcher.create(CaretActionListener.class);
-    this.snapshotMarkerStorage = document instanceof DocumentImpl documentImpl && RangeMarkersImpl.Holder.USE_PMARKER_IMPLEMENTATION
+    this.snapshotMarkerStorage = document instanceof DocumentImpl documentImpl && RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION
                                  ? new SnapshotCaretMarkerStorage(documentImpl, this::snapshotMarkersChanged)
                                  : null;
     this.positionMarkerTree = snapshotMarkerStorage == null ? new RangeMarkerTree<>(document) : null;

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.DocumentEventDispatcher;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,7 @@ final class GuardedBlocksImpl implements GuardedBlocks {
   public @NotNull RangeMarkerEx createGuardedBlock(@NotNull DocumentEx hostDocument, int startOffset, int endOffset) {
     LOG.assertTrue(startOffset <= endOffset, "Should be startOffset <= endOffset");
     RangeMarkerEx block;
-    if (RangeMarkersImpl.Holder.USE_PMARKER_IMPLEMENTATION) {
+    if (RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION) {
       block = SnapshotGuardedBlock.create((DocumentImpl)hostDocument, startOffset, endOffset);
     }
     else {

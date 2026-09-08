@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -56,7 +57,7 @@ public final class FocusModeModel implements Disposable {
   @ApiStatus.Internal
   public FocusModeModel(@NotNull EditorImpl editor) {
     myEditor = editor;
-    myFocusMarkerTree = RangeMarkersImpl.Holder.USE_PMARKER_IMPLEMENTATION ? null : new RangeMarkerTree<>(editor.getElfDocument());
+    myFocusMarkerTree = RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION ? null : new RangeMarkerTree<>(editor.getElfDocument());
 
     myEditor.getScrollingModel().addVisibleAreaListener(_ -> {
       AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
