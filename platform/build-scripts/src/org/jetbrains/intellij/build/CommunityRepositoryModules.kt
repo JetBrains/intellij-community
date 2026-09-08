@@ -249,16 +249,12 @@ object CommunityRepositoryModules {
     pluginAutoWithCustomDirName("intellij.lombok.plugin") { spec ->
       spec.directoryName = "lombok"
     },
-    pluginAuto(listOf("intellij.performanceTesting.ui")),
-    pluginAuto(listOf("intellij.vcs.github")),
-    pluginAuto(listOf("intellij.vcs.gitlab")),
     pluginAuto(listOf("intellij.compilation.charts")) { spec ->
       spec.withModule("intellij.compilation.charts.jps")
     },
     pluginAuto("intellij.java.jshell") { spec ->
       spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
     },
-    pluginAuto(listOf("intellij.tipsOfTheDay.plugin")),
     *allJcefPlugins()
   )
 
