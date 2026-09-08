@@ -4,8 +4,8 @@ package com.intellij.python.pyproject.model.internal.pyProjectToml
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
@@ -23,7 +23,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
 
@@ -63,8 +62,8 @@ suspend fun findPyProjectTomlFilesInIndex(
       // The index holds a directory too, and the name enumerator is application wide.
       // A directory named `pyproject.toml`, or a file of another open project, must not become a module.
       .filter { !it.isDirectory }
-      .mapNotNull { it.toNioPathOrNull() }
       .filter { filter.accepts(it) }
+      .mapNotNull { it.toNioPathOrNull() }
       .toList()
   }
 }
@@ -154,60 +153,62 @@ private val ACCEPT_EVERY_FILE: IdFilter = object : IdFilter() {
  * Applies the directory rules to one file at a time.
  *
  * A flat list of hits shares its directories, so this class caches the answer per directory.
- * Only the last two rules need a syscall.
+ * Only the last rule needs a syscall.
  */
 private class PyProjectTomlPathFilter(
-  private val roots: Set<Directory>,
+  roots: Set<Directory>,
   private val excludedPaths: Set<Path>,
 ) {
   private val virtualEnvReader = VirtualEnvReader()
-  private val cache = HashMap<Path, Boolean>()
+  private val cache = HashMap<VirtualFile, Boolean>()
 
-  fun accepts(tomlFile: Path): Boolean {
-    val root = roots.firstOrNull { isUnder(it, tomlFile) } ?: return false
-    var directory: Path? = tomlFile.parent
+  /**
+   * The roots as the VFS holds them.
+   *
+   * A root that the VFS does not hold is dropped, and it loses no file. The filename index reports what the
+   * VFS knows, so such a root has no hit to accept.
+   */
+  private val rootFiles: List<VirtualFile> =
+    roots.mapNotNull { LocalFileSystem.getInstance().findFileByNioFile(it) }
+
+  /**
+   * The walk compares a [VirtualFile] and never a name.
+   *
+   * The VFS resolves a name as the filesystem of that directory does, and two spellings of one directory
+   * reach the same [VirtualFile]. A comparison of paths would need the case rule of that directory, and
+   * `Path` reads no such rule while `SystemInfoRt.isFileSystemCaseSensitive` is one guess for the whole
+   * system. See [VirtualFile.isCaseSensitive] (PY-91841).
+   */
+  fun accepts(tomlFile: VirtualFile): Boolean {
+    val root = rootFiles.firstOrNull { VfsUtilCore.isAncestor(it, tomlFile, true) } ?: return false
+    var directory: VirtualFile? = tomlFile.parent
     while (directory != null) {
       if (!isVisible(directory)) return false
-      if (FileUtil.pathsEqual(directory.toString(), root.toString())) return true
+      if (directory == root) return true
       directory = directory.parent
     }
-    // The loop leaves the root only when `startsWith` and `parent` disagree, which must not happen.
+    // `isAncestor` found the root, so the walk up from the file reaches it.
     return false
   }
 
   // These rules decide the model. `loadSubtreesIntoVfs` prunes the VFS walk with the same rules, so a rule
   // added here must reach that walk too, or the walk loads a subtree that the model then rejects. The name
   // rule is shared through [isPrunedName]. The excluded path and the interpreter stay in both places.
-  private fun isVisible(directory: Path): Boolean = cache.getOrPut(directory) {
-    val name = directory.name
+  private fun isVisible(directory: VirtualFile): Boolean = cache.getOrPut(directory) {
+    val path = directory.toNioPathOrNull()
     // The order of the checks follows their cost. A check of the name needs no syscall (PY-91826).
     when {
-      name.isPrunedName() || directory in excludedPaths -> false
-      // `Files.walkFileTree` never follows a link, and the VFS always does. A link that points into a build
-      // cache can hold a second copy of the whole project, and every copy would become a module. A build
-      // directory that links to the execroot of the build tool is the common case.
-      Files.isSymbolicLink(directory) -> false
-      else -> virtualEnvReader.findPythonInPythonRoot(directory) == null
+      directory.name.isPrunedName() -> false
+      path == null -> false
+      path in excludedPaths -> false
+      // A link that points into a build cache can hold a second copy of the whole project, and every copy
+      // would become a module. A build directory that links to the execroot of the build tool is the common
+      // case. The VFS records the property when it reads the directory, so this rule needs no syscall.
+      directory.`is`(VFileProperty.SYMLINK) -> false
+      else -> virtualEnvReader.findPythonInPythonRoot(path) == null
     }
   }
 }
-
-/**
- * True when [file] lies under [root].
- *
- * [Path.startsWith] is not enough on a case-insensitive filesystem of macOS or of Linux. `UnixPath` compares
- * the bytes of a name, and it reads no property of the filesystem. A root of another case then rejects every
- * file, and the model loses every module without an error.
- *
- * The default volume of macOS is case-insensitive. `Files.isDirectory` accepts the other case of a name
- * there, and `Path.startsWith` rejects it.
- *
- * [FileUtil.isAncestor] reads `SystemInfoRt.isFileSystemCaseSensitive`, so it follows the filesystem. The
- * two arguments become strings for that reason alone.
- *
- * `WindowsPath` needs none of this. It compares two names without the case already.
- */
-private fun isUnder(root: Path, file: Path): Boolean = FileUtil.isAncestor(root.toString(), file.toString(), true)
 
 /**
  * True when a directory of this name never holds a `pyproject.toml` that becomes a module.

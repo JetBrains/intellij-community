@@ -21,11 +21,12 @@ import kotlin.io.path.name
  * The search must accept a root whose case differs from the case on the disk (PY-91841).
  *
  * `projectBasePath` holds the path that opened the project, and a hit of the index carries the path of the
- * VFS. The two can differ in the case of a name, and a filesystem that ignores the case still resolves
- * both to one directory. `isUnder` therefore reads `SystemInfoRt.isFileSystemCaseSensitive`.
+ * VFS. The two can differ in the case of a name, and a filesystem that ignores the case still resolves both
+ * to one directory. The filter of the search therefore compares a `VirtualFile`, which the VFS resolves as
+ * the filesystem of that directory does.
  *
- * `Path.startsWith` of nio would reject such a root, because `UnixPath` compares the bytes of a name and
- * reads no property of the filesystem. This test fails for that implementation.
+ * A comparison of two `Path` objects fails this test. `UnixPath` compares the bytes of a name and reads no
+ * property of the filesystem.
  *
  * A filesystem that keeps the case makes two such paths two directories, so the case is skipped there.
  */
