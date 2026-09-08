@@ -1,6 +1,4 @@
-// COMPILER_ARGUMENTS: -Xcontext-parameters
-// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
-// K2_ERROR: NO_CONTEXT_ARGUMENT
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
 
 interface Context
 
@@ -8,6 +6,7 @@ context(_<caret>: Context)
 val prop: Int
     get() = 0
 
+context(_: Context)
 fun test() {
-    ::prop
+    print(::prop)
 }

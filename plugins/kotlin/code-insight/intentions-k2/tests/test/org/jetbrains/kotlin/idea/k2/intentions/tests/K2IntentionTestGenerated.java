@@ -15182,6 +15182,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("anonymousContextAtUsageSite.kt")
+            public void testAnonymousContextAtUsageSite() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/anonymousContextAtUsageSite.kt");
+            }
+
+            @TestMetadata("anonymousDeclarationAndUsageInMember.kt")
+            public void testAnonymousDeclarationAndUsageInMember() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/anonymousDeclarationAndUsageInMember.kt");
+            }
+
+            @TestMetadata("boundMemberReferenceOutsideClassConflict.kt")
+            public void testBoundMemberReferenceOutsideClassConflict() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/boundMemberReferenceOutsideClassConflict.kt");
+            }
+
             @TestMetadata("classHierarchy1.kt")
             public void testClassHierarchy1() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/classHierarchy1.kt");
@@ -15212,9 +15227,19 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/classHierarchy6.kt");
             }
 
+            @TestMetadata("contextFromStdlibContextFunction.kt")
+            public void testContextFromStdlibContextFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/contextFromStdlibContextFunction.kt");
+            }
+
             @TestMetadata("contextFunctionCallableReferenceUsage.kt")
             public void testContextFunctionCallableReferenceUsage() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/contextFunctionCallableReferenceUsage.kt");
+            }
+
+            @TestMetadata("contextFunctionCallableReferenceUsageNoFlag.kt")
+            public void testContextFunctionCallableReferenceUsageNoFlag() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/contextFunctionCallableReferenceUsageNoFlag.kt");
             }
 
             @TestMetadata("contextProperty.kt")
@@ -15277,6 +15302,26 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/lambdaContextUsage2.kt");
             }
 
+            @TestMetadata("memberFunctionReference.kt")
+            public void testMemberFunctionReference() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/memberFunctionReference.kt");
+            }
+
+            @TestMetadata("multipleContextParameters.kt")
+            public void testMultipleContextParameters() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/multipleContextParameters.kt");
+            }
+
+            @TestMetadata("propertyReference.kt")
+            public void testPropertyReference() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/propertyReference.kt");
+            }
+
+            @TestMetadata("qualifiedThisReferenceConflict.kt")
+            public void testQualifiedThisReferenceConflict() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/qualifiedThisReferenceConflict.kt");
+            }
+
             @TestMetadata("receiverUsage1.kt")
             public void testReceiverUsage1() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/receiverUsage1.kt");
@@ -15285,6 +15330,31 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("receiverUsage2.kt")
             public void testReceiverUsage2() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/receiverUsage2.kt");
+            }
+
+            @TestMetadata("referenceAsCallArgument.kt")
+            public void testReferenceAsCallArgument() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/referenceAsCallArgument.kt");
+            }
+
+            @TestMetadata("subtypeContextArgument.kt")
+            public void testSubtypeContextArgument() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/subtypeContextArgument.kt");
+            }
+
+            @TestMetadata("unqualifiedReferenceUsesContextArgument.kt")
+            public void testUnqualifiedReferenceUsesContextArgument() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/unqualifiedReferenceUsesContextArgument.kt");
+            }
+
+            @TestMetadata("untypedValInitializer.kt")
+            public void testUntypedValInitializer() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/untypedValInitializer.kt");
+            }
+
+            @TestMetadata("usageSiteContextNotAffected.kt")
+            public void testUsageSiteContextNotAffected() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/usageSiteContextNotAffected.kt");
             }
 
             @TestMetadata("withUsage1.kt")

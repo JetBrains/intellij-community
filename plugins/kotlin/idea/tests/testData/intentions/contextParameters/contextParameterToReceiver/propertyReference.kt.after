@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
+class Ctx
+
+val Ctx.prop: Int
+    get() = 0
+
+context(c: Ctx)
+fun usage() {
+    val ref = c::prop
+}

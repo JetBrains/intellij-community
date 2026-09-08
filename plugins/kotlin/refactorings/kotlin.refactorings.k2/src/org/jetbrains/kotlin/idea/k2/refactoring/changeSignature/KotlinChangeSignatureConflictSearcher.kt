@@ -22,7 +22,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableReferenceFix
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByConventionCallUsage
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinCallableReferenceUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinChangeSignatureConflictingUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFunctionCallUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinOverrideUsageInfo
@@ -157,6 +159,12 @@ class KotlinChangeSignatureConflictSearcher(
                     }
 
                     result.putValue(usageInfo.element, conflictMessage)
+                }
+                is KotlinCallableReferenceUsage -> {
+                    val fix = usageInfo.fix
+                    if (fix is CallableReferenceFix.Conflict) {
+                        usageInfo.element?.let { result.putValue(it, fix.message) }
+                    }
                 }
             }
         }

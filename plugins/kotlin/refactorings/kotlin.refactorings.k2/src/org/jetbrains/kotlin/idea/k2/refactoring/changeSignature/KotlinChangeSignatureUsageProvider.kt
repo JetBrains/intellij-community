@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableReferenceFix
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByConventionCallUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinCallableReferenceUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinCallerCallUsage
@@ -111,8 +112,12 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
                     }
                     parent is KtConstructorDelegationCall ->
                         return KotlinConstructorDelegationCallUsage(parent, method)
-                    parent is KtCallableReferenceExpression ->
-                        return KotlinCallableReferenceUsage(parent)
+                    parent is KtCallableReferenceExpression ->{
+                        val usage = fromJavaChangeInfo(changeInfo, UsageInfo(parent), true)
+                            ?.let { kotlinInfo -> analyze(parent) { KotlinCallableReferenceUsage.create(parent, kotlinInfo) } }
+                            ?: KotlinCallableReferenceUsage(parent, CallableReferenceFix.None)
+                        return usage
+                    }
                     element is KtSimpleNameExpression && (method is KtProperty || method is KtParameter) ->
                         return KotlinPropertyCallUsage(element, changeInfo as KotlinChangeInfoBase)
                     element is KtSuperTypeCallEntry ->

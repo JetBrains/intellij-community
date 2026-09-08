@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
+class Ctx
+
+fun Ctx.fn(x: Int): String = x.toString()
+
+fun accept(f: (Int) -> String) {}
+
+context(c: Ctx)
+fun usage() {
+    accept(c::fn)
+}

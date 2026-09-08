@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
+class CtxA
+class CtxB
+
+context(b: CtxB)
+fun CtxA.fn(x: Int): String = x.toString()
+
+context(a: CtxA, b: CtxB)
+fun usage() {
+    val ref: (Int) -> String = a::fn
+}
