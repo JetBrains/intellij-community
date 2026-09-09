@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.intellij
 
-import com.intellij.platform.icons.imageIcon
+import com.intellij.platform.icons.imageIconDescriptor
 import com.intellij.platform.icons.impl.design.DefaultSRGB
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.patchSvg
 import com.intellij.platform.icons.modifiers.stroke
 import com.intellij.platform.icons.patchers.svgPatcher
-import com.intellij.platform.icons.swing.toSwingIcon
+import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.testFramework.junit5.TestApplication
 import java.awt.image.BufferedImage
 import kotlin.math.roundToInt
@@ -148,7 +148,7 @@ class StrokeRenderTest {
 
   private fun render(path: String, modifier: IconModifier): BufferedImage {
     IntelliJIconManager.activate()
-    val swingIcon = imageIcon(path, StrokeRenderTest::class.java.classLoader, modifier).toSwingIcon()
+    val swingIcon = imageIconDescriptor(path, StrokeRenderTest::class.java.classLoader, modifier).createSwingIcon()
     val image = BufferedImage(swingIcon.iconWidth, swingIcon.iconHeight, BufferedImage.TYPE_INT_ARGB)
     val g = image.createGraphics()
     try {

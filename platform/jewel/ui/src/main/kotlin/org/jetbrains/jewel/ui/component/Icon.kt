@@ -28,9 +28,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.intellij.platform.icons.Icon
+import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.design.IconDesigner
-import com.intellij.platform.icons.icon
+import com.intellij.platform.icons.iconDescriptor
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.rendering.createRenderer
@@ -90,13 +90,13 @@ public fun Icon(
     scale: IconScale? = null,
     iconDesigner: IconDesigner.() -> Unit,
 ) {
-    Icon(icon(iconDesigner), contentDescription, modifier, scale)
+    Icon(iconDescriptor(iconDesigner), contentDescription, modifier, scale)
 }
 
 /**
  * Icon component that draws an icon from an IntelliJ Icon.
  *
- * @param icon The Icon descriptor
+ * @param iconDescriptor The Icon descriptor
  * @param contentDescription text used by accessibility services to describe what this icon represents. This should
  *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
  *   that a user can take.
@@ -104,7 +104,12 @@ public fun Icon(
  * @param scale Scale multiplier for the icon.
  */
 @Composable
-public fun Icon(icon: Icon, contentDescription: String?, modifier: Modifier = Modifier, scale: IconScale? = null) {
+public fun Icon(
+    iconDescriptor: IconDescriptor,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    scale: IconScale? = null,
+) {
     val scope = rememberCoroutineScope()
     val isDark = JewelTheme.isDark
 
@@ -118,7 +123,7 @@ public fun Icon(icon: Icon, contentDescription: String?, modifier: Modifier = Mo
             )
         }
 
-    val renderer = remember(icon, context) { icon.createRenderer(context) }
+    val renderer = remember(iconDescriptor, context) { iconDescriptor.createRenderer(context) }
 
     val semantics =
         if (contentDescription != null) {

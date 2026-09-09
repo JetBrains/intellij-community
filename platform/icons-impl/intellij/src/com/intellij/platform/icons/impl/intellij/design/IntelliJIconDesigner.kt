@@ -5,6 +5,7 @@ import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.impl.design.DefaultIconDesigner
 import com.intellij.platform.icons.impl.intellij.ModuleImageResourceLocation
 import com.intellij.platform.icons.impl.layers.SwingIconLayer
+import javax.swing.Icon
 
 class IntelliJIconDesigner: DefaultIconDesigner() {
   override fun image(path: String, classLoader: ClassLoader?, modifier: IconModifier) {
@@ -12,7 +13,7 @@ class IntelliJIconDesigner: DefaultIconDesigner() {
     image(ModuleImageResourceLocation.fromClassLoader(path, classLoader), modifier)
   }
 
-  fun addSwingLayer(icon: javax.swing.Icon, modifier: IconModifier) {
+  fun addSwingLayer(icon: Icon, modifier: IconModifier) {
     layers.add(SwingIconLayer(icon, modifier))
   }
 

@@ -5,4 +5,4 @@ package com.intellij.platform.icons
  * This is universal Icon interface that can be used across different environments with different graphics api. (or
  * without one)
  */
-interface Icon
+interface IconDescriptor

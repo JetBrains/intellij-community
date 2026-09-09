@@ -415,7 +415,7 @@ f:org.jetbrains.jewel.ui.component.IconButtonState$Companion
 - bs:of-3OtLUoY$default(org.jetbrains.jewel.ui.component.IconButtonState$Companion,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.IconKt
 - sf:Icon(androidx.compose.ui.graphics.painter.Painter,java.lang.String,androidx.compose.ui.graphics.ColorFilter,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
-- sf:Icon(com.intellij.platform.icons.Icon,java.lang.String,androidx.compose.ui.Modifier,com.intellij.platform.icons.scale.IconScale,androidx.compose.runtime.Composer,I,I):V
+- sf:Icon(com.intellij.platform.icons.IconDescriptor,java.lang.String,androidx.compose.ui.Modifier,com.intellij.platform.icons.scale.IconScale,androidx.compose.runtime.Composer,I,I):V
 - sf:Icon(java.lang.String,androidx.compose.ui.Modifier,com.intellij.platform.icons.scale.IconScale,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
 - sf:Icon(org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,androidx.compose.ui.Modifier,java.lang.Class,androidx.compose.ui.graphics.ColorFilter,org.jetbrains.jewel.ui.painter.PainterHint,androidx.compose.runtime.Composer,I,I):V
 - sf:Icon(org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,androidx.compose.ui.Modifier,java.lang.Class,androidx.compose.ui.graphics.ColorFilter,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I):V

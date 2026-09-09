@@ -1,7 +1,10 @@
 load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
 format_multirun(
     name = "format",
@@ -66,6 +69,10 @@ exports_files(
 jps_test(
     name = "main-tests_test",
     timeout = "moderate",
+    data = [BAZEL_TARGETS_JSON],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
     tags = ["community-aggregator"],
     runtime_deps = [":main-tests_test_lib"],
 )

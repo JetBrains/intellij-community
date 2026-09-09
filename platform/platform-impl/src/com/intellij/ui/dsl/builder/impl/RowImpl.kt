@@ -16,11 +16,11 @@ import com.intellij.platform.icons.design.Color
 import com.intellij.platform.icons.design.IconDesigner
 import com.intellij.platform.icons.filters.ColorFilter
 import com.intellij.platform.icons.filters.tint
-import com.intellij.platform.icons.icon
+import com.intellij.platform.icons.iconDescriptor
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.colorFilter
 import com.intellij.platform.icons.scale.IconScale
-import com.intellij.platform.icons.swing.toSwingIcon
+import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.UIBundle
@@ -64,6 +64,7 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -320,16 +321,18 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(label)
   }
 
-  override fun icon(icon: com.intellij.platform.icons.Icon, scale: IconScale): CellImpl<JLabel> {
-    val label = JBLabel(icon, scale)
-    label.disabledIcon = com.intellij.platform.icons.icon {
-      icon(icon, IconModifier.colorFilter(ColorFilter.tint(Color.Black, BlendMode.Saturation)))
-    }.toSwingIcon()
+  @ApiStatus.Internal
+  override fun icon(iconDescriptor: com.intellij.platform.icons.IconDescriptor, scale: IconScale): CellImpl<JLabel> {
+    val label = JBLabel(iconDescriptor, scale)
+    label.disabledIcon = iconDescriptor {
+      icon(iconDescriptor, IconModifier.colorFilter(ColorFilter.tint(Color.Black, BlendMode.Saturation)))
+    }.createSwingIcon()
     return cell(label)
   }
 
+  @ApiStatus.Internal
   override fun icon(scale: IconScale, designer: IconDesigner.() -> Unit): Cell<JLabel> {
-    return icon(icon(designer), scale)
+    return icon(iconDescriptor(designer), scale)
   }
 
   override fun contextHelp(description: String, title: String?): CellImpl<JLabel> {

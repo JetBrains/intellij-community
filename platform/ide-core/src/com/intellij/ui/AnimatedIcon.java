@@ -5,10 +5,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.platform.icons.IconDescriptor;
 import com.intellij.platform.icons.modifiers.IconModifier;
 import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-import static com.intellij.platform.icons.IconManagerKt.icon;
+import static com.intellij.platform.icons.IconManagerKt.iconDescriptor;
 import static com.intellij.platform.icons.swing.SwingIconKt.swingIcon;
 
 public class AnimatedIcon implements Icon {
@@ -226,9 +228,9 @@ public class AnimatedIcon implements Icon {
 
     @ApiStatus.Internal
     @Override
-    public com.intellij.platform.icons.Icon extractAsNewIcon() {
+    public IconDescriptor extractAsNewIcon() {
       final int fadeTime = Math.max(period / 2, 0);
-      return icon((designer) -> {
+      return iconDescriptor((designer) -> {
         designer.animation(IconModifier.Companion, (animation) -> {
           animation.frame(fadeTime, 0, fadeTime, (frameDesigner) -> {
             swingIcon(frameDesigner, icon, IconModifier.Companion);
@@ -335,7 +337,7 @@ public class AnimatedIcon implements Icon {
   @Override
   public final void paintIcon(Component c, Graphics g, int x, int y) {
     Icon icon = getUpdatedIcon();
-    if (EventQueue.isDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       CellRendererPane pane = ComponentUtil.getParentOfType(CellRendererPane.class, c);
       requestRefresh(pane == null ? c : getRendererOwner(pane.getParent()));
     }
@@ -374,8 +376,8 @@ public class AnimatedIcon implements Icon {
   }
 
   @ApiStatus.Internal
-  public com.intellij.platform.icons.Icon extractAsNewIcon() {
-    return icon((designer) -> {
+  public IconDescriptor extractAsNewIcon() {
+    return iconDescriptor((designer) -> {
       designer.animation(IconModifier.Companion, (animation) -> {
         for (Frame frame : frames) {
           animation.frame(frame.getDelay(), (frameDesigner) -> {
