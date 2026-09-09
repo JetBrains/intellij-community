@@ -17,7 +17,6 @@ import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppMode
 import com.intellij.idea.ApplicationStartArguments
 import com.intellij.idea.LoggerFactory
-import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -237,7 +236,7 @@ fun startApplication(
     }
   }
 
-  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(scope, logDeferred, appInfoDeferred, initLafJob, args, mainScope)
+  scheduleSystemLibSetupAndLogInfoAndInitMacApp(scope, logDeferred, appInfoDeferred, initLafJob, args, mainScope)
 
   val euaDocumentDeferred = scope.async { loadEuaDocument(appInfoDeferred) }
 
@@ -397,7 +396,7 @@ fun startApplication(
   }
 }
 
-private fun scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
+private fun scheduleSystemLibSetupAndLogInfoAndInitMacApp(
   scope: CoroutineScope,
   logDeferred: Deferred<Logger>,
   appInfoDeferred: Deferred<ApplicationInfoEx>,
@@ -417,8 +416,13 @@ private fun scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
     // this must happen after locking system dirs
     val log = logDeferred.await()
 
-    span("system libs loading", Dispatchers.IO) {
-      JnaLoader.load()
+    if (OS.CURRENT == OS.Windows && java.lang.Boolean.getBoolean("ide.native.launcher")) {
+      val windowsDirectory = System.getenv("SystemRoot")
+      if (windowsDirectory != null) {
+        val libraryPath = System.getProperty("jna.platform.library.path")
+        val systemDirectory = "$windowsDirectory\\System32"
+        System.setProperty("jna.platform.library.path", if (libraryPath == null) systemDirectory else "$libraryPath;$systemDirectory")
+      }
     }
 
     val appInfo = appInfoDeferred.await()
@@ -427,7 +431,6 @@ private fun scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
     }
 
     if (OS.CURRENT == OS.macOS && !AppMode.isHeadless() && !AppMode.isRemoteDevHost()) {
-      // JNA and Swing are used - invoke only after both are loaded
       initUiDeferred.join()
       launch(CoroutineName("macOS app init")) {
         runCatching {
