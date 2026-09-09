@@ -61,7 +61,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     endOffset: Int,
     spec: MarkerSpec,
     retainStrong: Boolean,
-  ): PMarker {
+  ): SnapshotMarker {
     return createRangeMarker(document, snapshot, startOffset, endOffset, spec, retainStrong) { fileRoot, markerId ->
       SnapshotRangeMarkerImpl(document as DocumentImpl, fileRoot, markerId, spec, TextRange(startOffset, endOffset))
     }
@@ -163,7 +163,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     return if (retainStrong) StrongSnapshotMarkerReference(marker) else WeakSnapshotMarkerReference(marker)
   }
 
-  override fun removeRangeMarker(marker: PMarker): Boolean {
+  override fun removeRangeMarker(marker: SnapshotMarker): Boolean {
     processQueue()
     val storedMarker = marker as SnapshotRangeMarkerImpl
     val markerId = storedMarker.markerId

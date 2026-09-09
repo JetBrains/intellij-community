@@ -48,14 +48,14 @@ interface SnapshotMarkerEngine {
     endOffset: Int,
     spec: MarkerSpec,
     retainStrong: Boolean = false,
-  ): PMarker
+  ): SnapshotMarker
 
   /**
    * Disposes [marker] and removes it from its current root.
    *
    * @return `true` if the marker was present and removed
    */
-  fun removeRangeMarker(marker: PMarker): Boolean
+  fun removeRangeMarker(marker: SnapshotMarker): Boolean
 
   fun processRangeMarkersOverlappingWith(
     rootStore: SnapshotMarkerRootStore,

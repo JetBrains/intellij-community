@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.ex.DocumentTextPatch
-import com.intellij.openapi.editor.impl.marker.PMarker
+import com.intellij.openapi.editor.impl.marker.SnapshotMarker
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
@@ -156,7 +156,7 @@ class SnapshotInlayModelTest {
       editor.document.insertString(0, "x")
 
       BlockState(
-        usesSnapshotMarker = inlay is PMarker,
+        usesSnapshotMarker = inlay is SnapshotMarker,
         offset = inlay.offset,
         isOnlyRangeResult = editor.inlayModel.getBlockElementsInRange(3, 3) == listOf(inlay),
         isOnlyVisualLineResult = editor.inlayModel.getBlockElementsForVisualLine(1, true) == listOf(inlay),

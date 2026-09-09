@@ -22,7 +22,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.editor.impl.marker.PMarker;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarker;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -1121,7 +1121,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testInvalidMarkerIsPurgedAfterGc() {
     Ref<RangeMarkerEx> markerRef = new Ref<>(createMarker("0123456789", 2, 5));
     long markerId = markerRef.get().getId();
-    boolean snapshotMarker = markerRef.get() instanceof PMarker;
+    boolean snapshotMarker = markerRef.get() instanceof SnapshotMarker;
     deleteString(document, 1, 6);
     assertFalse(markerRef.get().isValid());
 

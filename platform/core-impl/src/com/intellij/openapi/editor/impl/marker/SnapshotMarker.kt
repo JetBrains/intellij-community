@@ -4,4 +4,4 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 
 /** Range marker stored in a persistent marker root. */
-interface PMarker : RangeMarkerEx
+interface SnapshotMarker : RangeMarkerEx

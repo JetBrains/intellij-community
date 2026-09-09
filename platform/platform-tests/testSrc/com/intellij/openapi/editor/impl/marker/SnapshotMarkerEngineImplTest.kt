@@ -37,7 +37,7 @@ class SnapshotMarkerEngineImplTest {
 
     val marker = document.createRangeMarker(1, 3, true)
 
-    assertTrue(marker is PMarker)
+    assertTrue(marker is SnapshotMarker)
   }
 
   @Test
@@ -1058,20 +1058,20 @@ class SnapshotMarkerEngineImplTest {
     assertEquals(6, childResolution.endOffset)
   }
 
-  private fun assertRange(marker: PMarker, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
+  private fun assertRange(marker: SnapshotMarker, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
     val storedMarker = marker as SnapshotRangeMarkerImpl
     val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(storedMarker, rootFor(storedMarker, snapshot))
     assertEquals(startOffset, resolution.startOffset)
     assertEquals(endOffset, resolution.endOffset)
   }
 
-  private fun assertAbsent(marker: PMarker, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
+  private fun assertAbsent(marker: SnapshotMarker, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
     val storedMarker = marker as SnapshotRangeMarkerImpl
     val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(storedMarker, rootFor(storedMarker, snapshot)) as PMarkerResolution.Absent
     assertEquals(TextRange(startOffset, endOffset), resolution)
   }
 
-  private fun assertDisposed(marker: PMarker, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
+  private fun assertDisposed(marker: SnapshotMarker, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
     val storedMarker = marker as SnapshotRangeMarkerImpl
     val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(storedMarker, rootFor(storedMarker, snapshot))
     assertEquals("Marker is disposed", (resolution as PMarkerResolution.Invalid).reason)

@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy;
 import com.intellij.openapi.editor.impl.marker.MarkerSpec;
-import com.intellij.openapi.editor.impl.marker.PMarker;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarker;
 import com.intellij.openapi.editor.impl.marker.PersistentMarkerPolicy;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore;
@@ -91,8 +91,8 @@ public final class RangeMarkersImpl implements RangeMarkers {
 
   @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
-    if (rangeMarker instanceof PMarker) {
-      return SnapshotMarkerEngineImpl.INSTANCE.removeRangeMarker((PMarker)rangeMarker);
+    if (rangeMarker instanceof SnapshotMarker) {
+      return SnapshotMarkerEngineImpl.INSTANCE.removeRangeMarker((SnapshotMarker)rangeMarker);
     }
     return treeFor(rangeMarker).removeInterval(rangeMarker);
   }

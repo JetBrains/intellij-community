@@ -22,7 +22,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   internal val markerId: Long,
   initialSpec: MarkerSpec,
   internal val initialRange: TextRange,
-) : UserDataHolderBase(), PMarker, RangeMarkerEx {
+) : UserDataHolderBase(), SnapshotMarker, RangeMarkerEx {
   internal constructor(
     document: DocumentImpl,
     fileRoot: FileMarkerRoot?,
