@@ -400,8 +400,7 @@ public final class TableResultView extends JBTableWithResizableCells
   }
 
   /**
-   * Offers the main table's floating toolbar in the frozen strip too. The strip has none of its own, so the cell
-   * actions it holds, "Related Rows" among them, would be out of reach for every pinned column.
+   * Shares the main table's floating toolbar with the strip so pinned cells offer the same actions.
    */
   void shareFloatingToolbarWith(@NotNull TableResultView frozenStrip) {
     if (myFloatingToolbar != null) myFloatingToolbar.attach(frozenStrip);
@@ -1153,8 +1152,7 @@ public final class TableResultView extends JBTableWithResizableCells
     }
     revalidate();
     repaint();
-    // The strip caches its own cell images and is never told about the update, so a pinned column would keep
-    // the old one.
+    // Rendering changes must invalidate the strip's separate cell-image cache too.
     TableResultView frozenView = getPairedFrozenView();
     if (frozenView != null) {
       frozenView.dropCaches();
@@ -1885,8 +1883,7 @@ public final class TableResultView extends JBTableWithResizableCells
 
   @Override
   public boolean editCellAt(int row, int column, EventObject e) {
-    // The pair edits as one table: JTable finishes only its own editor before it starts another, so the editor the
-    // other table may hold is finished here instead of being left open next to this one.
+    // JTable finishes only its own editor; commit the paired table's editor before opening another.
     if (!stopPairedViewEditing()) return false;
     ClientProperty.put(this, GridTableCellEditor.EDITING_STARTER_CLIENT_PROPERTY_KEY, e);
     if (shouldDisplayValueEditor(row, column)) {
@@ -2115,8 +2112,7 @@ public final class TableResultView extends JBTableWithResizableCells
   }
 
   /**
-   * A pinned column is displayed in the frozen strip and leaves a zero-width placeholder here, so revealing its cell
-   * only drags the unpinned columns back to their first one. Reveal the rows and leave the columns where they are.
+   * Reveals a pinned placeholder's row without scrolling horizontally to the zero-width column.
    */
   @Override
   public void scrollRectToVisible(@NotNull Rectangle rect) {
@@ -2445,7 +2441,7 @@ public final class TableResultView extends JBTableWithResizableCells
       return;
     }
     if (myIsFrozenStrip) {
-      // The frozen view has only a no-op selection model, so whole-column selection goes through the primary view.
+      // Map strip columns to the primary table, which owns the unified column selection.
       if (primaryView == this) return;
       int primaryColumn = toViewColumnIn(viewColumn, primaryView);
       if (primaryColumn >= 0) primaryView.selectViewColumnInterval(primaryColumn, e);

@@ -143,9 +143,8 @@ internal class FrozenColumnsController(
   }
 
   /**
-   * Keeps a dragged column after the pinned ones, which sit here at zero width: dropping in front of them looks like a
-   * drop on the leftmost column but reorders the columns behind the strip. Pinned columns further along are crossed
-   * like any other, and reordering from code is left alone.
+   * Prevents header drags from moving ahead of leading pinned placeholders.
+   * Placeholders elsewhere remain crossable; programmatic moves are unrestricted.
    */
   fun adjustColumnMoveTarget(view: TableResultView, targetIndex: Int): Int {
     if (view !== primaryView || frozenView == null || view.tableHeader.draggedColumn == null) return targetIndex
@@ -208,8 +207,7 @@ internal class FrozenColumnsController(
 
   private fun inFrozenResizeZone(x: Int): Boolean {
     if (frozenView == null || primaryView.isTransposed) return false
-    // While the strip is clipped the divider marks where it is cut off, not the edge of the last pinned column, so
-    // dragging it would resize a column that is not on screen.
+    // A clipped divider is a viewport edge, not a column edge that can be resized.
     if (frozenScrollBar?.isVisible == true) return false
     val resizeArea = JBUI.scale(3)
     return if (primaryView.componentOrientation.isLeftToRight) x in 0..resizeArea
@@ -307,9 +305,8 @@ internal class FrozenColumnsController(
   }
 
   /**
-   * Shows the currently visible [pinnedModelIndices] in the strip, in the order the main table has them. They keep
-   * their place there at width 0, so pinning never reorders anything: the order stays the user's own, and so does the
-   * persisted one. Logical pins that are not present in the main view do not create an empty strip.
+   * Renders visible [pinnedModelIndices] in main-table order, retaining zero-width placeholders there.
+   * Hidden pins remain in the logical state but occupy no space.
    */
   fun setFrozenColumns(pinnedModelIndices: Collection<Int>) {
     val parent = findScrollPane() ?: return
@@ -384,8 +381,7 @@ internal class FrozenColumnsController(
     installFrozenScrolling(parent, frozen)
 
     // The frozen table has its own model instance, so forward granular updates without stacking listeners on rebuild.
-    // The originating place travels along: dropping it makes every listener treat an edit of its own as a foreign
-    // change, and the Record View then rewrites the field being typed in.
+    // Preserve the request place so Record View recognizes its own edits and keeps the caret.
     val modelSync = TableModelListener { event ->
       val currentFrozen = frozenView ?: return@TableModelListener
       val model = currentFrozen.model
@@ -445,7 +441,7 @@ internal class FrozenColumnsController(
       primaryView.tableHeader.removeMouseMotionListener(it)
     }
     frozenColumnResizeHandle = null
-    // Hand the corner slots back rather than leaving components around a disposed frozen view installed.
+    // Restore the original corners when disposing the strip.
     parent?.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, originalCorner)
     parent?.setCorner(ScrollPaneConstants.LOWER_LEADING_CORNER, originalLowerCorner)
     componentMouseListeners.clear()
@@ -457,9 +453,7 @@ internal class FrozenColumnsController(
     val frozenColumns = frozenView?.columnModel ?: return
     for (index in 0 until frozenColumns.columnCount) {
       val frozenColumn = frozenColumns.getColumn(index) as TableResultViewColumn
-      // Go by column, not by its place in the view: a column hidden meanwhile is not shown but still holds its width,
-      // and left at the zero width of the strip it would come back at the minimum one. A column dropped from the data
-      // has nothing left to restore.
+      // Restore cached hidden columns too; removed columns no longer have a width to restore.
       val cache = primaryView.columnCache
       if (!cache.hasCachedColumn(frozenColumn.modelIndex)) continue
       restoreMainColumn(cache.getOrCreateColumn(frozenColumn.modelIndex), frozenColumn)
@@ -534,13 +528,12 @@ internal class FrozenColumnsController(
     viewport.applyComponentOrientation(orientation)
     headerViewport.applyComponentOrientation(orientation)
     frozenScrollBar?.applyComponentOrientation(orientation)
-    // Each swap relayouts the scroll pane, and a rebuild for a second pinned column reuses the same components.
+    // Reuse installed components to avoid relayout and flicker when pinning another column.
     if (parent.rowHeader?.view !== rowHeader) parent.setRowHeaderView(rowHeader)
     if (parent.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER) !== corner) {
       parent.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, corner)
     }
-    // Without a leading lower corner the horizontal scrollbar leaves a band under the strip painted in the scrollbar
-    // background, which reads as extra empty space once a column is widened.
+    // Match the grid background in the corner beside the horizontal scrollbar.
     val lowerCorner = lowerCornerComponent ?: FrozenLowerCorner().also { lowerCornerComponent = it }
     configureLowerCorner(lowerCorner, gutter)
     if (parent.getCorner(ScrollPaneConstants.LOWER_LEADING_CORNER) !== lowerCorner) {
@@ -597,9 +590,7 @@ internal class FrozenColumnsController(
     panel.add(component, BorderLayout.CENTER)
   }
 
-  /**
-   * Fills the band the horizontal scrollbar leaves beside the strip with the grid background.
-   */
+  /** Fills the corner beside the horizontal scrollbar with the grid background. */
   private inner class FrozenLowerCorner : JPanel() {
     init {
       layout = BorderLayout()
@@ -624,11 +615,9 @@ internal class FrozenColumnsController(
   }
 
   /**
-   * Keeps the frozen strip within the width admitted by [PinnedColumnsFit]. The columns retain their full widths in
-   * the nested viewport, so resizing the result does not rewrite user state; an overflowing strip scrolls instead.
+   * Caps the strip's viewport using [PinnedColumnsFit], preserving column widths and scrolling overflow.
    *
-   * The row header reserves the gutter and the strip through its own layout rather than a width written here, so a
-   * gutter that changes width afterwards cannot leave the strip narrower than the space kept for it.
+   * The row header derives its width from the live gutter and strip sizes to avoid gaps after gutter resizing.
    */
   private fun updateFrozenViewport(parent: TableScrollPane, anchorNewOverflowAtTrailingEdge: Boolean = false) {
     if (updatingFrozenViewport || parent !== installedScrollPane) return
@@ -890,8 +879,7 @@ internal class FrozenColumnsController(
   }
 
   /**
-   * A component that has a wheel listener no longer gets AWT's automatic forwarding to its scrollable ancestor, so the
-   * strip has to hand back the wheel events it does not scroll horizontally itself.
+   * Forwards unhandled wheel events because installing a wheel listener disables AWT's ancestor forwarding.
    */
   private fun forwardWheelToScrollPane(event: MouseWheelEvent) {
     if (event.isConsumed) return
@@ -906,8 +894,7 @@ internal class FrozenColumnsController(
 
     init {
       view = component
-      // The strip paints the divider at its visible trailing edge, and a blit scroll copies the painted pixels along,
-      // leaving a stale divider behind every scroll step.
+      // Repaint on scroll so blitting cannot copy the viewport-edge divider into the content.
       scrollMode = SIMPLE_SCROLL_MODE
     }
 
@@ -985,7 +972,7 @@ internal class FrozenColumnsController(
 
   fun processMouseEvent(view: TableResultView, event: MouseEvent, defaultProcessor: Runnable) {
     if (!stopEditingBeforeNonLeftPress(view, event)) return
-    // Selection in the fixed strip must not scroll the main viewport. Keep the lock for the full mouse gesture.
+    // Strip presses and releases must not scroll the main viewport through selection notifications.
     if (view !== primaryView) {
       runWithAutoscrollLocked {
         defaultProcessor.run()
@@ -1000,9 +987,7 @@ internal class FrozenColumnsController(
   }
 
   /**
-   * Swing finishes an edit before a left press reaches any listener, but it ignores the other buttons, while JBTable
-   * still selects the row under a right press from a listener of its own. The edit is finished before that listener
-   * runs, whether a column is pinned or not.
+   * Commits before a non-left press can change the selection. Swing handles left presses itself.
    *
    * @return false when the press has to be dropped, because an editor refused to commit.
    */
@@ -1028,8 +1013,7 @@ internal class FrozenColumnsController(
     val selection = SelectionModelUtil.get<GridRow, GridColumn>(resultPanel, primaryView) as? TableSelectionModel ?: return
     if (view !== primaryView) primaryView.columnModel.selectionModel.valueIsAdjusting = true
     selection.setRowSelectionInterval(dragAnchorRow, targetRow)
-    // A column interval runs in main view order, where a pinned column keeps the index it had before it moved into the
-    // strip, so the columns the drag swept are the ones between the anchor and the target on screen.
+    // Pinned placeholders retain their main-table indices, so select the range in displayed order.
     selectDisplayedColumnRange(displayedColumnOrder(frozen), targetColumn, add = false, anchorOverride = dragAnchorColumn)
   }
 
@@ -1073,13 +1057,11 @@ internal class FrozenColumnsController(
     val current = if (view === primaryView) lead else order.primaryIndexOfFrozen(lead) ?: return false
     val row = leadRow(view)
     if (row < 0) return false
-    // A move that stays in one table is left to Swing, which steps to the next column-model index. That index is the
-    // zero-width placeholder of a pinned column whenever one sits between, or past, the columns displayed here.
+    // Swing steps through column-model indices, including hidden pinned placeholders.
     val swingTarget = lead + if (forward) 1 else -1
     val swingHitsPlaceholder = view === primaryView && isPinnedPlaceholder(primaryView.columnModel, swingTarget)
     val target = order.adjacent(current, forward)
-    // Nothing displayed that way: Tab carries on in the next row, and an arrow is consumed rather than left to Swing,
-    // which would walk onto a placeholder.
+    // At the edge, Tab wraps rows; arrows must not enter a hidden placeholder.
     if (target == null) {
       return wrapsRows && !extend && continueInAdjacentRow(frozen, order, row, forward) || swingHitsPlaceholder
     }
@@ -1089,8 +1071,7 @@ internal class FrozenColumnsController(
   }
 
   /**
-   * Tab and Shift+Tab carry on in the neighbouring row once the columns run out. Each table holds only part of the
-   * displayed order, so Swing would wrap inside whichever one has focus and skip every column of the other.
+   * Wraps Tab/Shift+Tab through both tables instead of wrapping within the focused table alone.
    */
   private fun continueInAdjacentRow(frozen: TableResultView, order: DisplayedColumnOrder, row: Int, forward: Boolean): Boolean {
     val rows = primaryView.rowCount
@@ -1159,10 +1140,8 @@ internal class FrozenColumnsController(
   }
 
   /**
-   * Finishes an edit that the selection would otherwise leave behind: a pending value is written through the selection
-   * the grid has when the editor commits, so moving the selection first sends it to the wrong cells. The cell holding
-   * the editor is exempt, because Swing starts an editor before it selects the cell that was clicked. Without a strip
-   * there is nothing to do: Swing finishes the edit itself before it changes a selection of its own.
+   * Commits before selection moves, since edits are applied to the selection present at commit time.
+   * Exempts the edited cell because Swing opens an editor before selecting it. Without a strip, Swing handles this.
    *
    * @return false when an editor refused to commit, in which case the selection has to stay where it is.
    */
@@ -1171,7 +1150,7 @@ internal class FrozenColumnsController(
 
   private fun isPairedView(view: TableResultView): Boolean = view === primaryView || view === frozenView
 
-  /** Either table can hold the editor, so both are asked rather than only the one that is expected to have it. */
+  /** Commits editors in either table unless they already edit the target cell. */
   private fun stopEditingUnlessAt(target: ModelCell?): Boolean {
     val frozen = frozenView
     return stopEditingUnlessAt(primaryView, target) && (frozen == null || stopEditingUnlessAt(frozen, target))
@@ -1180,8 +1159,7 @@ internal class FrozenColumnsController(
   private fun stopEditingUnlessAt(view: TableResultView, target: ModelCell?): Boolean {
     val editor = view.cellEditor ?: return true
     val editing = modelCell(view, view.editingRow, view.editingColumn)
-    // Committing through the editor is the call Swing itself makes when the selection leaves a cell, and it skips the
-    // prompt TableResultView.stopEditing() adds for an explicit commit.
+    // Match Swing's commit path without the prompt added by TableResultView.stopEditing().
     return (editing != null && editing == target) || editor.stopCellEditing()
   }
 
@@ -1193,7 +1171,7 @@ internal class FrozenColumnsController(
 
   private data class ModelCell(val row: Int, val column: Int)
 
-  /** An overflowing strip scrolls on its own, so a pinned column the keyboard moves to has to be brought into it. */
+  /** Reveals the pinned column reached by keyboard navigation in an overflowing strip. */
   private fun scrollFrozenColumnToVisible(primaryColumn: Int) {
     val frozen = frozenView ?: return
     val scrollBar = frozenScrollBar?.takeIf { it.isVisible } ?: return
@@ -1216,7 +1194,7 @@ internal class FrozenColumnsController(
     return -1
   }
 
-  /** Applies a Shift range in screen order: the frozen strip followed by the visible columns in the main table. */
+  /** Selects a range in displayed order: pinned columns followed by the visible main-table columns. */
   private fun selectDisplayedColumnRange(order: DisplayedColumnOrder,
                                          target: Int,
                                          add: Boolean,
@@ -1228,8 +1206,7 @@ internal class FrozenColumnsController(
 
     mirroringSelection = true
     try {
-      // A drag keeps the selection adjusting until the mouse is released, so restore what the caller had rather than
-      // announcing a settled selection mid-gesture, which scrolls the main view to the column under the pointer.
+      // Preserve drag batching until release to prevent selection-driven viewport jumps.
       val wasAdjusting = selection.valueIsAdjusting
       selection.valueIsAdjusting = true
       try {
@@ -1277,8 +1254,7 @@ internal class FrozenColumnsController(
 
   fun columnMarginChanged(view: TableResultView) {
     if (view !== frozenView && view !== primaryView) return
-    // Widening a pinned column keeps the edge being dragged in sight; resizing a main column only changes how much
-    // room is left for the strip, and the strip keeps the position it already has.
+    // Follow a pinned column's resized edge; preserve the strip's scroll position when main columns resize.
     val anchorAtTrailingEdge = view === frozenView
     findScrollPane()?.let { updateFrozenViewport(it, anchorNewOverflowAtTrailingEdge = anchorAtTrailingEdge) }
   }

@@ -15,11 +15,11 @@ import com.intellij.openapi.util.NlsActions.ActionDescription
 private const val TRANSPOSED = "action.Console.TableResult.PinColumns.transposed.description"
 private const val NO_SPACE = "action.Console.TableResult.PinColumns.insufficient.space.description"
 
-/** Null when the grid has no column pinning at all, which keeps these actions out of the menu. */
+/** Returns the panel when column pinning is enabled. */
 private fun pinPanel(grid: DataGrid): TableResultPanel? =
   (grid as? TableResultPanel)?.takeIf { TableResultPanel.isColumnPinningEnabled() }
 
-/** The panel an invocation may act on: a presentation can go stale, so the conditions are re-read here. */
+/** Rechecks availability at invocation because the presentation may be stale. */
 private fun actablePanel(grid: DataGrid): TableResultPanel? = pinPanel(grid)?.takeIf { !it.resultView.isTransposed }
 
 private fun allPinned(panel: TableResultPanel, columns: ModelIndexSet<GridColumn>, pinned: Boolean): Boolean =
@@ -34,11 +34,9 @@ private fun pinTargetColumns(grid: DataGrid, base: ModelIndexSet<GridColumn>): M
 }
 
 /**
- * Shows the action disabled with [reason] instead of hiding it, and restores its normal description once the reason
- * stops applying. A null reason means the action is available.
+ * Disables the action with [reason], or restores its normal description when available.
  *
- * The reason doubles as the tooltip: a disabled popup item is not selectable, so its description alone never reaches
- * the status bar.
+ * Use a tooltip too: disabled popup items cannot show their description in the status bar.
  */
 private fun AnAction.showReason(e: AnActionEvent, reason: @ActionDescription String?) {
   e.presentation.isVisible = true
@@ -66,7 +64,7 @@ class PinColumnsAction : ColumnHeaderActionBase(true) {
       showReason(e, DataGridBundle.message(TRANSPOSED))
       return
     }
-    // Pinned columns are offered the unpin actions instead, so pinning is hidden rather than explained.
+    // Offer unpin actions for pinned columns.
     if (!allPinned(panel, columnIdxs, false)) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -89,7 +87,7 @@ class UnpinColumnsAction : ColumnHeaderActionBase(true) {
     val one = columnIdxs.size() == 1
     e.presentation.text = DataGridBundle.message(if (one) "action.Console.TableResult.UnpinColumn.text"
                                                  else "action.Console.TableResult.UnpinColumns.text")
-    // Unpinning is noise on columns that are not pinned, so it is hidden rather than explained.
+    // Offer this action only when all target columns are pinned.
     val panel = pinPanel(grid)
     if (panel == null || columnIdxs.size() == 0 || !allPinned(panel, columnIdxs, true)) {
       e.presentation.isEnabledAndVisible = false
@@ -103,7 +101,7 @@ class UnpinColumnsAction : ColumnHeaderActionBase(true) {
   }
 }
 
-/** Pins every column from the first one up to and including the clicked one; not offered once they all are. */
+/** Pins the prefix through the clicked column; offered only on an unpinned target. */
 class PinColumnsUpToHereAction : ColumnHeaderActionBase() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -118,8 +116,7 @@ class PinColumnsUpToHereAction : ColumnHeaderActionBase() {
       showReason(e, DataGridBundle.message(TRANSPOSED))
       return
     }
-    // The column is pinned already, or there is no display order to count "up to here" along: either way, not offered.
-    if (!panel.isColumnInDisplayOrder(column) || !panel.canPinColumnsUpToHere(column)) {
+    if (!panel.canPinColumnsUpToHere(column)) {
       e.presentation.isEnabledAndVisible = false
       return
     }

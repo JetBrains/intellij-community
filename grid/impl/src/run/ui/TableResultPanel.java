@@ -704,11 +704,6 @@ public class TableResultPanel extends UserDataHolderBase
     return isColumnPinningEnabled() && myColumnPinModel.canPinUpToHere(columnIdx.value, visibleColumnsInDisplayOrder());
   }
 
-  /** Whether the column takes part in the displayed order that "up to here" is counted along. */
-  public boolean isColumnInDisplayOrder(@NotNull ModelIndex<GridColumn> columnIdx) {
-    return visibleColumnsInDisplayOrder().contains(columnIdx.value);
-  }
-
   /** Pins {@code columns} unless the result would leave no usable width for the unpinned table. */
   public void pinColumns(@NotNull ModelIndexSet<GridColumn> columns) {
     pinIfItFits(myColumnPinModel.pinAll(columnIds(columns)));
@@ -723,8 +718,7 @@ public class TableResultPanel extends UserDataHolderBase
   }
 
   /**
-   * The width check the pin actions gate on. Restore paths skip it on purpose: a pinned layout that is already too
-   * wide is left alone rather than silently changed (DBE-26267).
+   * Checks width for pin actions. Restore paths preserve existing pins even when the strip needs scrolling.
    */
   private boolean columnsFit(@NotNull GridColumnPinModel pinned) {
     return !(myResultView instanceof TableResultView view) || view.canFitPinnedColumns(pinned.pinnedIds());
@@ -766,8 +760,7 @@ public class TableResultPanel extends UserDataHolderBase
   }
 
   /**
-   * A column that stops being pinned has to be visible again: the scroll position restored around the rebuild
-   * describes the layout without it, so on its own it would leave the column off to the left.
+   * Reveals newly unpinned columns after restoring the scroll position captured while they had zero width.
    */
   private void scrollUnpinnedColumnsIntoView(@NotNull List<Integer> unpinnedIds) {
     if (unpinnedIds.isEmpty() || !(myResultView instanceof TableResultView view)) return;
@@ -835,8 +828,7 @@ public class TableResultPanel extends UserDataHolderBase
   }
 
   /**
-   * Captures the width the view shows now and returns it, so it stays available when the current presentation has no
-   * per-column layout.
+   * Captures the current column width, or returns its saved width when the presentation has no column layout.
    */
   public int captureColumnWidthForPersistence(@NotNull ModelIndex<GridColumn> columnIdx) {
     GridColumn column = getDataModel(DATA_WITH_MUTATIONS).getColumn(columnIdx);

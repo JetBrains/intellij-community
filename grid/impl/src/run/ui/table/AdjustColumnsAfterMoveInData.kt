@@ -16,8 +16,7 @@ class AdjustColumnsAfterMoveInData(
 ) : () -> Unit {
 
   private val originallyVisibleColumns = grid.visibleColumns.asIterable().toSet()
-  // A pinned column is kept at zero width here and carries its real width in the strip, so go through the column
-  // holding it rather than the one laid out in this table.
+  // Read pinned widths from the strip, not their zero-width placeholders.
   private val columnWidths = originallyVisibleColumns
     .mapTo(mutableListOf()) { modelIndex ->
       val width = tableView.getColumnForPersistence(modelIndex)?.columnWidth ?: 0

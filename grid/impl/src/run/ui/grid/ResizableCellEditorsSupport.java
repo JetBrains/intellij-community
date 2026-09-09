@@ -105,7 +105,7 @@ public class ResizableCellEditorsSupport implements PropertyChangeListener, Tabl
   }
 
   private void editingStarted() {
-    // The height belongs to the row this edit starts on, so forget the one an earlier edit saved.
+    // Never reuse a previous edit's height if this cell cannot be resolved.
     myRowHeightBeforeEditing = NO_SAVED_ROW_HEIGHT;
     int editingColumn = myGrid.getEditingColumn();
     int editingRow = myGrid.getEditingRow();
@@ -236,8 +236,7 @@ public class ResizableCellEditorsSupport implements PropertyChangeListener, Tabl
 
   private void setCellSize(int row, int height) {
     hideExpansionHint();
-    // An edit whose cell could not be resolved when it started saved no height, so there is nothing to restore; a row
-    // height below one is rejected by Swing anyway.
+    // Unresolved edits have no saved height; Swing requires positive row heights.
     if (row != -1 && height >= 1) {
       myGrid.setRowHeight(row, height);
     }

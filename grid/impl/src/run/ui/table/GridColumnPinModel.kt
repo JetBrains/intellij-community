@@ -1,8 +1,7 @@
 package com.intellij.database.run.ui.table
 
 /**
- * Immutable pin state for the data grid: which columns are pinned, by model index. Pinning does not reorder anything —
- * the pinned columns are rendered in the frozen strip and keep their place in the column order (DBE-26267).
+ * Immutable set of pinned model columns. Pinning changes where columns are rendered, not their order.
  */
 class GridColumnPinModel private constructor(private val pinned: Set<Int>) {
   constructor() : this(emptySet())
@@ -44,8 +43,7 @@ class GridColumnPinModel private constructor(private val pinned: Set<Int>) {
   }
 
   /**
-   * True when pinning up to [targetId] is worth offering: the target has to be present and still unpinned. A pinned
-   * target is offered the unpin actions instead, even when columns before it are unpinned.
+   * Offers pinning only for a visible, unpinned target, regardless of pins elsewhere in the prefix.
    */
   fun canPinUpToHere(targetId: Int, displayOrder: List<Int>): Boolean = targetId !in pinned && targetId in displayOrder
 

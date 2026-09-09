@@ -175,8 +175,7 @@ class TableFloatingToolbar(private val tableResultView: TableResultView, private
   }
 
   /**
-   * Offers the toolbar in [view] as well. A pinned column is displayed in the frozen strip rather than in the main
-   * table, which owns the only toolbar, so without this the cell actions are unreachable for pinned cells.
+   * Shares the main table's toolbar with [view], including cells rendered in the pinned strip.
    */
   fun attach(view: TableResultView) {
     view.addMouseListener(mouseListener)

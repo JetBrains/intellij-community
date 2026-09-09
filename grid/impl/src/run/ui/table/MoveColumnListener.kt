@@ -76,7 +76,7 @@ class MoveColumnListener(private val grid: DataGrid, private val tableResultView
     return pinned
   }
 
-  /** The column the drag moved, i.e. the only one whose removal makes both orders equal, or null if there is none. */
+  /** Finds a column whose removal makes both orders equal; an adjacent swap may have two candidates. */
   private fun movedColumn(before: List<Int>, after: List<Int>): Int? {
     if (before.size != after.size || before == after) return null
     for (index in before.indices) {
@@ -88,10 +88,8 @@ class MoveColumnListener(private val grid: DataGrid, private val tableResultView
   }
 
   /**
-   * Where [column] has to land in the data so that it keeps the neighbour it was dropped against. The primary view's
-   * column order can differ from the data order, so the target comes from that neighbour rather than from the view
-   * position, which is what a move in the data takes. A drag reorders a column within its own group, so the neighbour
-   * is looked up among the pinned columns for a pinned one and among the rest for the others.
+   * Resolves the data destination from the adjacent column in the same pinned/unpinned group.
+   * View positions cannot be used directly because the view and data orders may differ.
    */
   private fun targetIndexInData(after: List<Int>, column: Int): Int? {
     val pinned = pinnedColumns()
