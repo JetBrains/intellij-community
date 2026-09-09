@@ -105,8 +105,8 @@
 
   <!-- Build contains exe files with proper MPS icons -->
   <target name="extract-win-exe" description="Extract customized Windows executables">
-    <copy file="${target.win.x64}/bin/mps64.exe" tofile="${target.dist}/build/resources/mps-win-64.exe"/>
-    <copy file="${target.win.aarch64}/bin/mps64.exe" tofile="${target.dist}/build/resources/mps-win-aarch64.exe"/>
+    <copy file="${target.win.x64}/bin/mps64.exe" tofile="${target.dist}/build/resources/mps-win-64.exe" overwrite="true"/>
+    <copy file="${target.win.aarch64}/bin/mps64.exe" tofile="${target.dist}/build/resources/mps-win-aarch64.exe" overwrite="true"/>
   </target>
 
   <!-- plugin.xml built by JPS contains all needed embedded module descriptors. Extract them for MPS build to later include them in MPSPlugin.xml -->
