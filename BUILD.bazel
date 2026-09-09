@@ -75,6 +75,7 @@ create_kotlinc_options(
 create_kotlinc_options(
     name = "k25",
     jvm_target = "25",
+    warn = "report",
 )
 
 ## used to determine community root path in the test
