@@ -90,9 +90,6 @@
     <toolWindow.splitContentProvider toolWindowId="terminal"
                                      implementationClass="com.intellij.terminal.frontend.view.impl.TerminalToolWindowSplitContentProvider"/>
 
-    <applicationService
-      serviceInterface="org.jetbrains.plugins.terminal.fus.FrontendLatencyService"
-      serviceImplementation="com.intellij.terminal.frontend.fus.FrontendLatencyServiceImpl"/>
     <inline.completion.editorInsertHandler
       implementation="com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionEditorInsertHandler"
       order="first"/>
