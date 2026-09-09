@@ -120,11 +120,9 @@ internal suspend fun loadSubtreesIntoVfs(directories: Set<VirtualFile>, excluded
           // this check stops an install of thousands of files. The rule is wider than a virtualenv: it also
           // holds for a conda environment and for the root of a python installation.
           //
-          // `findPythonInPythonRoot` opens a directory stream, so a call for each visited directory reads
-          // the whole project from the disk. Very few directories hold an interpreter, hence almost every
-          // call finds nothing. [mayContainPython] reads the names that the walk loaded anyway (PY-91841).
-          if (!virtualEnvReader.mayContainPython(path, file.children.asSequence().map { it.name })) return true
-          return virtualEnvReader.findPythonInPythonRoot(path) == null
+          // The walk loaded the names of the children already, and the overload that takes them reads the
+          // filesystem only for a directory that those names allow (PY-91841).
+          return virtualEnvReader.findPythonInPythonRoot(path, file.children.asSequence().map { it.name }) == null
         }
       })
     }

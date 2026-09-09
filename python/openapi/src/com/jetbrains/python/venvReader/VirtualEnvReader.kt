@@ -20,6 +20,7 @@ import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.venvReader.VirtualEnvReader.Companion.Instance
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Files
@@ -140,9 +141,9 @@ class VirtualEnvReader private constructor(
   /**
    * True when a child of [childNames] can lead [findPythonInPythonRoot] to an interpreter in [pathOrDir].
    *
-   * [findPythonInPythonRoot] reads the filesystem on every call, and [findInterpreter] opens a directory
-   * stream. A caller that walks a tree can ask this first, because it reads only the names that the walk
-   * holds already. The filesystem is then reached for the few directories that pass.
+   * This is the cheap half of `findPythonInPythonRoot(pathOrDir, childNames)`, which is the method a caller
+   * should use. It stays visible for `PyMayContainPythonTest`, which pins the rules one name at a time, and
+   * for the benchmark of PY-91841, which times the two ways of asking.
    *
    * The answer is a superset. A name that passes costs one call of the method, and a name that fails hides
    * no interpreter. The layout comes from [pathOrDir], so it is the layout that the method itself reads.
@@ -157,12 +158,29 @@ class VirtualEnvReader private constructor(
    * case on posix, and [findInterpreter] matches a name the same way.
    */
   @ApiStatus.Internal
+  @VisibleForTesting
   fun mayContainPython(pathOrDir: PythonHomePath, childNames: Sequence<String>): Boolean {
     val layout = getLayout(forcedOs ?: pathOrDir.osFamily)
     return childNames.any { name ->
       name.equals(layout.dirWithPython, ignoreCase = true) || layout.pyBinaryPattern.matches(name)
     }
   }
+
+  /**
+   * As [findPythonInPythonRoot], for a caller that already holds the names of the children of [pathOrDir].
+   *
+   * The single argument form reads the filesystem on every call, and [findInterpreter] opens a directory
+   * stream. Very few directories of a project hold an interpreter, so almost every read finds nothing. The
+   * names answer for those directories with no read at all, and the filesystem is reached only for the few
+   * that may hold one.
+   *
+   * The names must be the children of [pathOrDir]. A caller holds them when it walks a tree, either from
+   * the VFS or from a listing that it made. This class cannot read them itself: it serves a path of a
+   * remote target as well, and the directories that it scans lie outside the content of a project.
+   */
+  @RequiresBackgroundThread
+  fun findPythonInPythonRoot(pathOrDir: PythonHomePath, childNames: Sequence<String>): PythonBinary? =
+    if (mayContainPython(pathOrDir, childNames)) findPythonInPythonRoot(pathOrDir) else null
 
   /**
    * [pathOrDir] is either a direct path to a Python binary or a root directory of python installation or virtualenv
