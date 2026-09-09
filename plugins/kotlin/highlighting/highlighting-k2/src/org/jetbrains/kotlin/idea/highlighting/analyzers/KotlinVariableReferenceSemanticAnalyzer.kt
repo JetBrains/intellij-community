@@ -133,7 +133,7 @@ internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHold
             highlightName(expression, MUTABLE_VARIABLE)
         }
 
-        val hasExplicitGetterOrSetter = symbol.getter?.hasBody == true || symbol.setter?.hasBody == true
+        val hasExplicitGetterOrSetter = symbol.getter?.isNotDefault == true || symbol.setter?.isNotDefault == true
         val color = when {
             symbol.isExtension -> EXTENSION_PROPERTY
             symbol.location == KaSymbolLocation.TOP_LEVEL -> when {
