@@ -297,6 +297,7 @@ java/debugger/debugger-agent
 java/debugger/frontend
 java/debugger/impl
 java/debugger/jb-jdi
+java/debugger/jsp
 java/debugger/memory-agent
 java/debugger/openapi
 java/debugger/shared

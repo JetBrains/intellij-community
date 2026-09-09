@@ -1,0 +1,65 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.java.debugger.jsp` start
+content_module_jar(module = ":jsp")
+### auto-generated section `dev intellij.java.debugger.jsp` end
+
+### auto-generated section `build intellij.java.debugger.jsp` start
+jvm_library(
+    name = "jsp",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.debugger.jsp",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//java/debugger/openapi:java-debugger",
+        "//java/java-psi-api:psi",
+        "//java/jsp-openapi:jsp",
+        "//platform/core-api:core",
+        "//xml/xml-psi-api:psi",
+    ],
+)
+
+jvm_library(
+    name = "jsp_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.debugger.jsp",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":jsp",
+        "//java/debugger/openapi:java-debugger_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//java/jsp-openapi:jsp_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//xml/xml-psi-api:psi_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.debugger.jsp` end
+
+### auto-generated section `iml intellij.java.debugger.jsp` start
+exports_files(
+    [
+        "intellij.java.debugger.jsp.iml",
+        "resources/intellij.java.debugger.jsp.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.debugger.jsp` end

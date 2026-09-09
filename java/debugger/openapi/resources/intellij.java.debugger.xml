@@ -9,7 +9,6 @@
     <module name="intellij.java.execution"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
-    <module name="intellij.jsp"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>

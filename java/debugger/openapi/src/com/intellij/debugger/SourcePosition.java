@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
+import com.intellij.java.debugger.template.JavaTemplateDebuggerSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +15,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiComment;
@@ -320,13 +320,7 @@ public abstract class SourcePosition implements Navigatable {
     PsiElement navigationElement = element.getNavigationElement();
     final SmartPsiElementPointer<PsiElement> pointer =
       SmartPointerManager.getInstance(navigationElement.getProject()).createSmartPsiElementPointer(navigationElement);
-    final PsiFile psiFile;
-    if (JspPsiUtil.isInJspFile(navigationElement)) {
-      psiFile = JspPsiUtil.getJspFile(navigationElement);
-    }
-    else {
-      psiFile = navigationElement.getContainingFile();
-    }
+    var psiFile = JavaTemplateDebuggerSupport.findSourceFile(navigationElement);
     if (psiFile == null) return null;
     return new SourcePositionCache(psiFile) {
       @Override

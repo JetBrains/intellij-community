@@ -6,6 +6,9 @@
 -->
 <idea-plugin>
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.java.templateDebuggerSupport"
+                    interface="com.intellij.java.debugger.template.JavaTemplateDebuggerSupport" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.debugger.codeFragmentFactory"
                     interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory" dynamic="true"/>
 
