@@ -75,6 +75,7 @@ import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.system.OS
 import com.intellij.util.ui.AsyncProcessIcon.BigCentered
 import com.intellij.util.ui.HTMLEditorKitBuilder
@@ -90,6 +91,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -221,9 +223,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private val pluginManagerCustomizer: PluginManagerCustomizer?
   private val notificationsUpdateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
-  private val coroutineScope = pluginModel.getModel().coroutineScope
+  private val coroutineScope = pluginModel.getModel().coroutineScope.childScope("Plugin details")
   private val showPluginSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private var buttonsLoadedDeferred: Deferred<Unit>? = null
+  private var detached = false
 
   private val tracker: PluginManagerUiTracker = PluginManagerUiTracker()
 
@@ -294,6 +297,27 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   val descriptorForActions: PluginUiModel?
     get() = if (!isMarketplace || installedDescriptorForMarketplace == null) plugin else installedDescriptorForMarketplace
+
+  @RequiresEdt
+  fun detach() {
+    if (detached) return
+    detached = true
+
+    pluginModel.getModel().removeDetailPanel(this)
+
+    val currentDescriptor = descriptorForActions
+    val currentIndicator = indicator
+    if (currentDescriptor != null && currentIndicator != null) {
+      PluginModelFacade.removeProgress(currentDescriptor, currentIndicator)
+    }
+    hideProgress()
+
+    showComponent = null
+    plugin = null
+    updateDescriptor = null
+    installedDescriptorForMarketplace = null
+    coroutineScope.cancel()
+  }
 
   fun setPlugin(pluginDescriptor: IdeaPluginDescriptor?) {
     if (pluginDescriptor != null) {

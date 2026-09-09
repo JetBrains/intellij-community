@@ -130,6 +130,7 @@ abstract class PluginsTab @RequiresEdt constructor(
   }
 
   open fun dispose() {
+    detailsPage.detach()
     searchUpdateAlarm.dispose()
     searchTextField.disposeUIResources()
   }

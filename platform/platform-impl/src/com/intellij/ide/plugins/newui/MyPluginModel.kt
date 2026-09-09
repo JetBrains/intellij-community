@@ -643,6 +643,10 @@ open class MyPluginModel @JvmOverloads constructor(
     myDetailPanels.add(detailPanel)
   }
 
+  fun removeDetailPanel(detailPanel: PluginDetailsPageComponent) {
+    myDetailPanels.remove(detailPanel)
+  }
+
   private fun appendOrUpdateDescriptor(descriptor: PluginUiModel) {
     val index = view.indexOf(descriptor)
     if (index < 0) {
