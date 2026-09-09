@@ -14,12 +14,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.NoSuchElementException
 import java.util.function.LongConsumer
 
 /** Combines the exact-range and line-range highlighter roots in one marker root. */
 @ApiStatus.Internal
-class CompoundPMarkerRoot private constructor(
+open class CompoundPMarkerRoot private constructor(
   val exactRangeRoot: PMarkerRoot,
   val linesInRangeRoot: PMarkerRoot,
 ) : PMarkerRoot {
@@ -172,7 +171,9 @@ class CompoundPMarkerRoot private constructor(
   }
 
   companion object {
-    private val EMPTY: CompoundPMarkerRoot = CompoundPMarkerRoot(PMarkerRootImpl.empty(), PMarkerRootImpl.empty())
+    private object EMPTY: CompoundPMarkerRoot(PMarkerRootImpl.empty(), PMarkerRootImpl.empty()) {
+      override fun toString(): String = "EMPTY"
+    }
 
     fun empty(): CompoundPMarkerRoot = EMPTY
 
