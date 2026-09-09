@@ -212,10 +212,10 @@ class KotlinWhitespaceModificationTest : KotlinLightCodeInsightFixtureTestCase()
     private fun assertLiteralWhitespaceDiagnosticsCount(file: KtFile, expectedCount: Int) {
         runReadAction {
             analyze(file) {
-                // We only want to grab "literals must be surrounded by whitespace" diagnostics, which are `Unsupported`.
+                // We only want to grab "At least one leading whitespace is required." and "At least one trailing whitespace is required." diagnostics.
                 val diagnostics = file
                     .collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-                    .filterIsInstance<KaFirDiagnostic.Unsupported>()
+                    .filter { it is KaFirDiagnostic.LeadingWhitespaceRequired || it is KaFirDiagnostic.TrailingWhitespaceRequired }
 
                 assertEquals(expectedCount, diagnostics.size)
             }
