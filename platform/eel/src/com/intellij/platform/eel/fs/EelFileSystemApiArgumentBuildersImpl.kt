@@ -14,12 +14,15 @@ internal data class WriteOptionsImpl2(
   override var append: Boolean = false,
   override var truncateExisting: Boolean = false,
   override var creationMode: FileWriterCreationMode = FileWriterCreationMode.ONLY_OPEN_EXISTING,
+  override var createParents: Boolean = false,
 ) : WriteOptions, WriteOptions.Builder {
   override fun append(v: Boolean): WriteOptions.Builder = apply { append = v }
 
   override fun truncateExisting(v: Boolean): WriteOptions.Builder = apply { truncateExisting = v }
 
   override fun creationMode(v: FileWriterCreationMode): WriteOptions.Builder = apply { creationMode = v }
+
+  override fun createParents(v: Boolean): WriteOptions.Builder = apply { createParents = v }
 
   override fun build(): WriteOptions {
     return copy()

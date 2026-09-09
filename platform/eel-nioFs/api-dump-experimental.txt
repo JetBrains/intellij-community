@@ -10,6 +10,13 @@
 - sf:readString(java.nio.file.Path):java.lang.String
 - sf:readString(java.nio.file.Path,java.nio.charset.Charset):java.lang.String
 - sf:write(java.nio.file.Path,B[],java.nio.file.OpenOption[]):java.nio.file.Path
+*e:com.intellij.platform.eel.fs.EelOpenOption
+- java.lang.Enum
+- java.nio.file.OpenOption
+- sf:CREATE_PARENTS:com.intellij.platform.eel.fs.EelOpenOption
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.eel.fs.EelOpenOption
+- s:values():com.intellij.platform.eel.fs.EelOpenOption[]
 *f:com.intellij.platform.eel.provider.EelNioBridgeServiceKt
 - s:asEelPath(java.nio.file.Path):com.intellij.platform.eel.path.EelPath
 - s:asNioPath(com.intellij.platform.eel.path.EelPath):java.nio.file.Path

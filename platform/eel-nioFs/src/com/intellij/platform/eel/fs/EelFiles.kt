@@ -43,6 +43,7 @@ object EelFiles {
   /**
    * Writes [bytes] to [path] with the same behavior as [java.nio.file.Files.write].
    * For common open options, IJent opens, writes, and closes the file in one RPC.
+   * [EelOpenOption.CREATE_PARENTS] also creates missing parent directories in the same RPC.
    * Other options use the file system provider.
    */
   @JvmStatic

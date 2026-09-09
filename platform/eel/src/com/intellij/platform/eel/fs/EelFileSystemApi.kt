@@ -529,6 +529,9 @@ interface EelFileSystemApi {
     val truncateExisting: Boolean get() = true
     val creationMode: FileWriterCreationMode get() = FileWriterCreationMode.ALLOW_CREATE
 
+    /** Creates missing parent directories before opening the file. */
+    val createParents: Boolean get() = false
+
     interface Builder {
       /**
        * Whether to append new data to the end of file.
@@ -547,6 +550,9 @@ interface EelFileSystemApi {
        * Default: [FileWriterCreationMode.ONLY_OPEN_EXISTING]
        */
       fun creationMode(v: FileWriterCreationMode): Builder
+
+      /** Creates missing parent directories before opening the file. The default is `false`. */
+      fun createParents(v: Boolean): Builder
 
       fun build(): WriteOptions
     }

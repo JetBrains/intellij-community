@@ -1025,12 +1025,21 @@ object EelFileSystemApiHelpers {
   ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<EelOpenedFile.ReaderWriter, EelFileSystemApi.FileWriterError>> {
     private var append: Boolean = false
 
+    private var createParents: Boolean = false
+
     private var creationMode: EelFileSystemApi.FileWriterCreationMode = EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
 
     private var truncateExisting: Boolean = true
 
     fun append(arg: Boolean): OpenForReadingAndWriting = apply {
       this.append = arg
+    }
+
+    /**
+     * Creates missing parent directories before opening the file.
+     */
+    fun createParents(arg: Boolean): OpenForReadingAndWriting = apply {
+      this.createParents = arg
     }
 
     fun creationMode(arg: EelFileSystemApi.FileWriterCreationMode): OpenForReadingAndWriting = apply {
@@ -1063,6 +1072,7 @@ object EelFileSystemApiHelpers {
       owner.openForReadingAndWriting(
         WriteOptionsImpl(
           append = append,
+          createParents = createParents,
           creationMode = creationMode,
           path = path,
           truncateExisting = truncateExisting,
@@ -1083,12 +1093,21 @@ object EelFileSystemApiHelpers {
   ) : com.intellij.platform.eel.EelOwnedBuilder<EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError>> {
     private var append: Boolean = false
 
+    private var createParents: Boolean = false
+
     private var creationMode: EelFileSystemApi.FileWriterCreationMode = EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
 
     private var truncateExisting: Boolean = true
 
     fun append(arg: Boolean): OpenForWriting = apply {
       this.append = arg
+    }
+
+    /**
+     * Creates missing parent directories before opening the file.
+     */
+    fun createParents(arg: Boolean): OpenForWriting = apply {
+      this.createParents = arg
     }
 
     fun creationMode(arg: EelFileSystemApi.FileWriterCreationMode): OpenForWriting = apply {
@@ -1121,6 +1140,7 @@ object EelFileSystemApiHelpers {
       owner.openForWriting(
         WriteOptionsImpl(
           append = append,
+          createParents = createParents,
           creationMode = creationMode,
           path = path,
           truncateExisting = truncateExisting,

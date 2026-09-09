@@ -6,6 +6,7 @@ package com.intellij.platform.eel.nioFs.impl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelSharedSecrets
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode
+import com.intellij.platform.eel.fs.EelOpenOption.CREATE_PARENTS
 import com.intellij.platform.eel.fs.StreamingWriteResult
 import com.intellij.platform.eel.fs.WriteOptionsBuilder
 import com.intellij.platform.eel.fs.readFile
@@ -63,12 +64,14 @@ internal class EelFilesAccessorImpl : EelSharedSecrets.EelFilesAccessor {
 
     return runBlocking {
       val eelPath = path.asEelPath()
+      val useDefaultOptions = options.all { it == CREATE_PARENTS }
       val writeOptions = WriteOptionsBuilder(eelPath)
         .append(APPEND in options)
-        .truncateExisting(options.isEmpty() || TRUNCATE_EXISTING in options)
+        .createParents(CREATE_PARENTS in options)
+        .truncateExisting(useDefaultOptions || TRUNCATE_EXISTING in options)
         .creationMode(when {
           CREATE_NEW in options -> FileWriterCreationMode.ONLY_CREATE
-          options.isEmpty() || CREATE in options -> FileWriterCreationMode.ALLOW_CREATE
+          useDefaultOptions || CREATE in options -> FileWriterCreationMode.ALLOW_CREATE
           else -> FileWriterCreationMode.ONLY_OPEN_EXISTING
         })
         .build()
@@ -81,7 +84,7 @@ internal class EelFilesAccessorImpl : EelSharedSecrets.EelFilesAccessor {
   }
 
   companion object {
-    private val streamingWriteOptions: Set<OpenOption> = setOf(WRITE, APPEND, CREATE, CREATE_NEW, TRUNCATE_EXISTING)
+    private val streamingWriteOptions: Set<OpenOption> = setOf(WRITE, APPEND, CREATE, CREATE_NEW, TRUNCATE_EXISTING, CREATE_PARENTS)
 
     /**
      * Although functions from this class must behave the same as their nio counterparts,
