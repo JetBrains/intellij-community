@@ -76,6 +76,73 @@ internal class PluginModelEventPublisherTest {
   }
 
   @Test
+  fun `logical operation publishes the combined restart result`() {
+    val events = mutableListOf<PluginModelEvent>()
+    val publisher = PluginModelEventPublisher(events::add)
+    val pluginId = PluginId.getId("plugin.id")
+    val context = PluginOperationContext.create(pluginId, PluginSource.BOTH, PluginOperationKind.UPDATE)
+
+    publisher.operationStarted("session", context, plugin(pluginId))
+    publisher.operationTargetFinished(
+      context,
+      PluginSource.LOCAL,
+      PluginOperationTerminalResult.SUCCEEDED,
+      restartRequired = false,
+    )
+    publisher.operationTargetFinished(
+      context,
+      PluginSource.REMOTE,
+      PluginOperationTerminalResult.SUCCEEDED,
+      restartRequired = true,
+    )
+    publisher.operationFinished(context)
+
+    assertThat(events.filterIsInstance<PluginModelEvent.OperationFinished>().single().restartRequired).isTrue()
+  }
+
+  @Test
+  fun `failed operation does not publish a restart result`() {
+    val events = mutableListOf<PluginModelEvent>()
+    val publisher = PluginModelEventPublisher(events::add)
+    val pluginId = PluginId.getId("plugin.id")
+    val context = PluginOperationContext.create(pluginId, PluginSource.BOTH, PluginOperationKind.UPDATE)
+
+    publisher.operationStarted("session", context, plugin(pluginId))
+    publisher.operationTargetFinished(
+      context,
+      PluginSource.LOCAL,
+      PluginOperationTerminalResult.FAILED,
+      restartRequired = true,
+    )
+    publisher.operationFinished(context)
+
+    val completion = events.filterIsInstance<PluginModelEvent.OperationFinished>().single()
+    assertThat(completion.result).isEqualTo(PluginOperationTerminalResult.FAILED)
+    assertThat(completion.restartRequired).isFalse()
+  }
+
+  @Test
+  fun `installed dependencies are retained on the completed operation`() {
+    val events = mutableListOf<PluginModelEvent>()
+    val publisher = PluginModelEventPublisher(events::add)
+    val pluginId = PluginId.getId("plugin.id")
+    val dependency = plugin(PluginId.getId("dependency.id"))
+    val context = PluginOperationContext.create(pluginId, PluginSource.LOCAL, PluginOperationKind.INSTALL)
+
+    publisher.operationStarted("session", context, plugin(pluginId))
+    publisher.operationTargetFinished(
+      context,
+      PluginSource.LOCAL,
+      PluginOperationTerminalResult.SUCCEEDED,
+      listOf(dependency, dependency),
+    )
+    publisher.operationFinished(context)
+
+    assertThat(events.filterIsInstance<PluginModelEvent.OperationFinished>().single().installedPlugins)
+      .containsExactly(dependency)
+  }
+
+  @Test
   fun `missing physical target completes as cancellation`() {
     val events = mutableListOf<PluginModelEvent>()
     val publisher = PluginModelEventPublisher(events::add)

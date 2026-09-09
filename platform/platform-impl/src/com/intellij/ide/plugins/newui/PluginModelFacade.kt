@@ -81,7 +81,13 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
         )
       }
       val result = withContext(NonCancellable) { installTask.await() }
-      pluginModel.operationTargetFinished(context, target, result.toTerminalResult())
+      pluginModel.operationTargetFinished(
+        context,
+        target,
+        result.toTerminalResult(),
+        result?.installedDependencyDescriptors.orEmpty(),
+        result?.restartRequired == true,
+      )
       return result
     }
     catch (e: CancellationException) {

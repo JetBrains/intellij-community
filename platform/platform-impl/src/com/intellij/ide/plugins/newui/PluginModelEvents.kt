@@ -29,6 +29,8 @@ sealed interface PluginModelEvent {
     val target: PluginSource,
     val kind: PluginOperationKind,
     val result: PluginOperationTerminalResult,
+    val installedPlugins: List<PluginUiModel> = emptyList(),
+    val restartRequired: Boolean = false,
   ) : PluginModelEvent
 
   data class OperationDependenciesScheduled(
@@ -136,10 +138,14 @@ internal class PluginModelEventPublisher(private val sink: PluginModelEventSink)
     context: PluginOperationContext,
     target: PluginSource,
     result: PluginOperationTerminalResult,
+    installedPlugins: Collection<PluginUiModel> = emptyList(),
+    restartRequired: Boolean = false,
   ) {
     synchronized(operations) {
       val state = checkNotNull(operations[context.operationId]) { "Plugin operation was not started: ${context.operationId}" }
       state.targetResults[target] = result
+      installedPlugins.forEach { plugin -> state.installedPlugins.putIfAbsent(plugin.pluginId, plugin) }
+      state.restartRequired = state.restartRequired || restartRequired
     }
   }
 
@@ -185,6 +191,8 @@ internal class PluginModelEventPublisher(private val sink: PluginModelEventSink)
           target = context.target,
           kind = context.kind,
           result = result,
+          installedPlugins = state.installedPlugins.values.toList(),
+          restartRequired = result == PluginOperationTerminalResult.SUCCEEDED && state.restartRequired,
         )
       )
     }
@@ -193,6 +201,8 @@ internal class PluginModelEventPublisher(private val sink: PluginModelEventSink)
   private class OperationState(
     val sessionId: String,
     val targetResults: MutableMap<PluginSource, PluginOperationTerminalResult> = mutableMapOf(),
+    val installedPlugins: LinkedHashMap<PluginId, PluginUiModel> = LinkedHashMap(),
     val scheduledDependencies: LinkedHashMap<PluginId, PluginUiModel> = LinkedHashMap(),
+    var restartRequired: Boolean = false,
   )
 }
