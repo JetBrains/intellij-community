@@ -72,7 +72,10 @@ import javax.swing.Icon
 import javax.swing.JComponent
 
 @ApiStatus.Internal
-open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project), PluginEnabler {
+open class MyPluginModel @JvmOverloads constructor(
+  project: Project?,
+  eventSink: PluginModelEventSink = PluginModelEventSink.NONE,
+) : InstalledPluginsTableModel(project), PluginEnabler {
   private var myInstalledPanel: PluginsGroupComponent? = null
   var userInstalled: PluginsGroup? = null
     private set
@@ -96,6 +99,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   private val myRequiredPluginsForProject: MutableMap<PluginId, Boolean> = HashMap()
   private val myUninstalled: MutableSet<PluginId> = HashSet()
   private val myPluginManagerCustomizer: PluginManagerCustomizer?
+  private val myEventPublisher = PluginModelEventPublisher(eventSink)
 
   private var myInstallSource: FUSEventSource? = null
 
@@ -150,6 +154,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     myUninstalled.clear()
     updateButtons(applyResult)
     myPluginManagerCustomizer?.updateAfterModificationAsync {}
+    myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.APPLY)
     return !applyResult.needRestart
   }
 
@@ -158,6 +163,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       applyChangedStates(it.changedEnabledStates)
       updateEnabledStateInUi()
       applyChangedUpdateSourcesToUI(it.updateSourceStatesToRevert)
+      myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.RESET)
     }
   }
 
@@ -165,6 +171,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     UiPluginManager.getInstance().resetSession(mySessionId.toString(), removeSession, parentComponent) {
       applyChangedStates(it.changedEnabledStates)
       applyChangedUpdateSourcesToUI(it.updateSourceStatesToRevert)
+      myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.RESET)
     }
   }
 
@@ -172,6 +179,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     val descriptor = callbackData.pluginDescriptor
     coroutineScope.launch {
       appendOrUpdateDescriptor(PluginUiModelAdapter(descriptor), callbackData.restartNeeded, errors)
+      myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.INSTALL_FROM_DISK, listOf(descriptor.pluginId))
     }
   }
 
@@ -327,6 +335,15 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     else {
       info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result))
     }
+    val affectedPluginIds = buildSet {
+      addAll(result.pluginsToDisable)
+      addAll(result.pluginsToEnable)
+      add(info.descriptor.pluginId)
+      add(descriptor.pluginId)
+      installedDescriptor?.pluginId?.let(::add)
+    }
+    val reason = if (info.install) PluginInventoryChangeReason.INSTALL else PluginInventoryChangeReason.UPDATE
+    myEventPublisher.inventoryInvalidated(reason, affectedPluginIds)
     return result
   }
 
@@ -750,6 +767,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     if (result.pluginNamesToSwitch.isEmpty()) {
       applyChangedStates(result.changedStates)
       updateEnabledStateInUi()
+      invalidateAfterEnableDisable(result.changedStates.keys)
     }
     else {
       askToUpdateDependencies(action, result.pluginNamesToSwitch, result.pluginsIdsToSwitch)
@@ -767,6 +785,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       if (it.pluginNamesToSwitch.isEmpty()) {
         applyChangedStates(it.changedStates)
         updateEnabledStateInUi()
+        invalidateAfterEnableDisable(it.changedStates.keys)
       }
       else {
         askToUpdateDependencies(action, it.pluginNamesToSwitch, it.pluginsIdsToSwitch)
@@ -789,6 +808,13 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     if (result.changedStates.isNotEmpty()) {
       applyChangedStates(result.changedStates)
       updateEnabledStateInUi()
+      invalidateAfterEnableDisable(result.changedStates.keys)
+    }
+  }
+
+  private fun invalidateAfterEnableDisable(pluginIds: Collection<PluginId>) {
+    if (pluginIds.isNotEmpty()) {
+      myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.ENABLE_DISABLE, pluginIds)
     }
   }
 
@@ -845,6 +871,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
                                                                               descriptor.pluginId)
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       setStatesByIds(pluginsToEnable, true)
+      invalidateAfterEnableDisable(pluginsToEnable)
     }
   }
 
@@ -983,12 +1010,14 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
         myPluginManagerCustomizer.updateAfterModificationAsync {
           hideProgresses(descriptor.pluginId)
           updateUiAfterUninstall(descriptor, needRestartForUninstall, errors, completelyUninstalled)
+          myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.UNINSTALL, listOf(descriptor.pluginId))
           callback?.run()
         }
       }
       else {
         hideProgresses(descriptor.pluginId)
         updateUiAfterUninstall(descriptor, needRestartForUninstall, errors, completelyUninstalled)
+        myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.UNINSTALL, listOf(descriptor.pluginId))
         callback?.run()
       }
     }
