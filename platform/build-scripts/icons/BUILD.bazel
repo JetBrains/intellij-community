@@ -1,5 +1,12 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+java_binary(
+    name = "generate_icon_classes",
+    main_class = "org.jetbrains.intellij.build.images.GenerateIconClassesKt",
+    runtime_deps = [":images-build"],
+)
 
 jps_test(
     name = "images-build-tests_test_smoke",

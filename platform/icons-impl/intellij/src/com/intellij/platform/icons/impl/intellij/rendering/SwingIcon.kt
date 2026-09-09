@@ -2,7 +2,7 @@
 package com.intellij.platform.icons.impl.intellij.rendering
 
 import com.intellij.openapi.application.EDT
-import com.intellij.platform.icons.Icon
+import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.impl.rendering.ResolvedScalingContext
 import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.impl.rendering.resolve
@@ -19,12 +19,13 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.util.WeakHashMap
+import javax.swing.Icon
 import kotlin.math.roundToInt
 
 class SwingIcon(
-  val icon: Icon,
+  val iconDescriptor: IconDescriptor,
   val scale: IconScale? = null
-): javax.swing.Icon, ScalableSwingIcon {
+): Icon, ScalableSwingIcon {
   internal val users = WeakHashMap<Component, Boolean>()
 
   private val renderer by lazy {
@@ -36,7 +37,7 @@ class SwingIcon(
       }
     }
     val context = IconRendererManager.createRenderingContext(flow)
-    IconRendererManager.getInstance().createRenderer(icon, context)
+    IconRendererManager.getInstance().createRenderer(iconDescriptor, context)
   }
 
   private val dimensions by lazy {
@@ -59,7 +60,7 @@ class SwingIcon(
     } else {
       scale
     }
-    return SwingIcon(icon, mergedScale)
+    return SwingIcon(iconDescriptor, mergedScale)
   }
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {

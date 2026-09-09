@@ -5,10 +5,10 @@ package com.intellij.platform.icons
  * Deferred Icon takes time to resolve; therefore, it is postponed to be resolved after first render. Placeholder icon
  * can be set to provide a visual representation while the actual icon is being resolved.
  *
- * @see IconManager.deferredIcon
+ * @see IconManager.deferredIconDescriptor
  * @see IconManager.forceEvaluation
  */
-interface DeferredIcon : Icon {
+interface DeferredIconDescriptor : IconDescriptor {
     val id: IconIdentifier
-    val placeholder: Icon?
+    val placeholder: IconDescriptor?
 }

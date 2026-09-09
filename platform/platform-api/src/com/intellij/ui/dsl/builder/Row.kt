@@ -307,7 +307,7 @@ interface Row {
   fun icon(icon: Icon): Cell<JLabel>
 
   @ApiStatus.Internal
-  fun icon(icon: com.intellij.platform.icons.Icon, scale: IconScale = IconScale.Default): Cell<JLabel>
+  fun icon(iconDescriptor: com.intellij.platform.icons.IconDescriptor, scale: IconScale = IconScale.Default): Cell<JLabel>
 
   @ApiStatus.Internal
   fun icon(scale: IconScale = IconScale.Default, designer: IconDesigner.() -> Unit): Cell<JLabel>

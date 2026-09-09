@@ -11,34 +11,35 @@ import com.intellij.platform.icons.patchers.SvgPatcher
 import com.intellij.platform.icons.scale.IconScale
 import com.intellij.platform.icons.scale.factor
 import com.intellij.platform.icons.swing.ScalableSwingIcon
+import kotlinx.coroutines.CoroutineScope
 import java.util.ServiceLoader
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface IconManager {
     /**
-     * Creates new Icon "description", this is a cheap operation, to render the Icon, use Icon.createRenderer()
-     * function. Use convenience top-level method icon {} instead if possible.
+     * Creates new Icon "description", this is a cheap operation, to render the Icon, use IconDescriptor.createRenderer()
+     * function. Use convenience top-level method iconDescriptor {} instead if possible.
      */
-    fun icon(designer: IconDesigner.() -> Unit): Icon
+    fun iconDescriptor(designer: IconDesigner.() -> Unit): IconDescriptor
 
-    /** @see com.intellij.platform.icons.deferredIcon */
-    fun deferredIcon(
-        placeholder: Icon?,
-        evaluator: suspend () -> Icon,
-    ): Icon
+    /** @see com.intellij.platform.icons.deferredIconDescriptor */
+    fun deferredIconDescriptor(
+      placeholder: IconDescriptor?,
+      evaluator: suspend () -> IconDescriptor,
+    ): IconDescriptor
 
-    suspend fun forceEvaluation(icon: DeferredIcon): Icon
+    suspend fun forceEvaluation(icon: DeferredIconDescriptor): IconDescriptor
 
     /**
-     * Converts specific Icon to swing Icon. ! This is an expensive operation and can include image loading, reuse the
-     * instance if possible. !
+     * Converts specific Icon descriptor to swing Icon! This is an expensive operation and can include image loading, reuse the
+     * instance if possible!
      */
-    fun toSwingIcon(icon: Icon, scale: IconScale = factor(1f)): ScalableSwingIcon
+    fun createSwingIcon(iconDescriptor: IconDescriptor, scale: IconScale = factor(1f)): ScalableSwingIcon
 
     fun addSwingLayer(designer: IconDesigner, swingIcon: javax.swing.Icon, modifier: IconModifier)
 
-    fun toNewIcon(swingIcon: javax.swing.Icon): Icon
+    fun toIconDescriptor(swingIcon: javax.swing.Icon): IconDescriptor
 
     fun svgPatcher(designer: SvgPatcherDesigner.() -> Unit): SvgPatcher
 
@@ -47,6 +48,7 @@ interface IconManager {
     @ApiStatus.Internal fun colorFilterFactory(): ColorFilterFactory
 
     @ApiStatus.Internal fun unitsFactory(): UnitsFactory
+    fun setDeferredIconScope(scope: CoroutineScope) {}
 
     companion object {
         @Volatile private var instance: IconManager? = null
@@ -81,19 +83,19 @@ interface IconManager {
  * Check the designer interface for layer options. Also check intellij.platform.icons.api.swing module to find out how
  * to convert swing icons and new icons.
  *
- * @see IconManager.toSwingIcon
+ * @see IconManager.createSwingIcon
  */
-fun icon(designer: IconDesigner.() -> Unit): Icon = IconManager.getInstance().icon(designer)
+fun iconDescriptor(designer: IconDesigner.() -> Unit): IconDescriptor = IconManager.getInstance().iconDescriptor(designer)
 
 /**
  * Deferred icon allows apis to return an Icon that takes some time to compute; optional placeholder can be included to
  * allow rendering it before the actual icon is ready.
  */
-fun deferredIcon(
-    placeholder: Icon?,
-    evaluator: suspend () -> Icon,
-): Icon = IconManager.getInstance().deferredIcon(placeholder, evaluator)
+fun deferredIconDescriptor(
+  placeholder: IconDescriptor?,
+  evaluator: suspend () -> IconDescriptor,
+): IconDescriptor = IconManager.getInstance().deferredIconDescriptor(placeholder, evaluator)
 
-fun imageIcon(path: String, classLoader: ClassLoader? = null, modifier: IconModifier = IconModifier): Icon = icon {
+fun imageIconDescriptor(path: String, classLoader: ClassLoader? = null, modifier: IconModifier = IconModifier): IconDescriptor = iconDescriptor {
     image(path, classLoader, modifier)
 }

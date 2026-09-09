@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.design
 
-import com.intellij.platform.icons.Icon
+import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.ImageResourceLocation
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.align
@@ -13,7 +13,7 @@ interface IconDesigner {
 
     fun image(path: String, classLoader: ClassLoader? = null, modifier: IconModifier = IconModifier)
 
-    fun icon(icon: Icon, modifier: IconModifier = IconModifier)
+    fun icon(iconDescriptor: IconDescriptor, modifier: IconModifier = IconModifier)
 
     fun box(modifier: IconModifier = IconModifier, builder: IconDesigner.() -> Unit)
 
@@ -41,4 +41,16 @@ fun IconDesigner.badge(
 interface IconAnimationDesigner {
     fun frame(duration: Long, builder: IconDesigner.() -> Unit)
     fun frame(fadeIn: Long, stay: Long, fadeOut: Long, builder: IconDesigner.() -> Unit)
+}
+
+fun IconAnimationDesigner.iconFrame(duration: Long, iconDescriptor: IconDescriptor) {
+  frame(duration) { icon(iconDescriptor) }
+}
+
+fun IconAnimationDesigner.iconsFrames(duration: Long, iconDescriptors: List<IconDescriptor>) {
+  iconDescriptors.forEach { iconFrame(duration, it) }
+}
+
+fun IconAnimationDesigner.iconsFrames(duration: Long, vararg iconDescriptors: IconDescriptor) {
+  iconsFrames(duration, iconDescriptors.toList())
 }
