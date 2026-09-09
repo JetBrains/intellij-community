@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.lsp.impl.LspPluginServerConfiguration
 import com.intellij.platform.lsp.impl.LspServerSettingsProvider
+import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
@@ -135,9 +136,7 @@ internal data class LspServerConfiguration(
   }
 
   fun getArgumentsList(): List<String> {
-    return arguments.split(" ")
-      .map { it.trim() }
-      .filter { it.isNotEmpty() }
+    return ParametersListUtil.parse(arguments)
   }
 }
 
