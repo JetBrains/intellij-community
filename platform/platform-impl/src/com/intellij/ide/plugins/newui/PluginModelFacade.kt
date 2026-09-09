@@ -73,7 +73,12 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
       val installTask = service<PluginManagerCoroutineScopeHolder>().coroutineScope.async(
         CoroutineName("Install plugin ${model.pluginId}")
       ) {
-        pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, this, modalityState, controller)
+        pluginModel.installOrUpdatePlugin(
+          component, model, updateDescriptor, this, modalityState, controller,
+          PluginInstallationProgressSink { dependencies ->
+            pluginModel.operationDependenciesScheduled(context, dependencies)
+          },
+        )
       }
       val result = withContext(NonCancellable) { installTask.await() }
       pluginModel.operationTargetFinished(context, target, result.toTerminalResult())

@@ -108,6 +108,26 @@ internal class PluginModelEventPublisherTest {
   }
 
   @Test
+  fun `scheduled dependencies are published before completion and deduplicated`() {
+    val events = mutableListOf<PluginModelEvent>()
+    val publisher = PluginModelEventPublisher(events::add)
+    val pluginId = PluginId.getId("plugin.id")
+    val dependency = plugin(PluginId.getId("dependency.id"))
+    val context = PluginOperationContext.create(pluginId, PluginSource.LOCAL, PluginOperationKind.INSTALL)
+
+    publisher.operationStarted("session", context, plugin(pluginId))
+    publisher.operationDependenciesScheduled(context, listOf(dependency, dependency, plugin(pluginId)))
+    publisher.operationDependenciesScheduled(context, listOf(dependency))
+
+    assertThat(events.filterIsInstance<PluginModelEvent.OperationDependenciesScheduled>()).containsExactly(
+      PluginModelEvent.OperationDependenciesScheduled(
+        "session", context.operationId, pluginId, listOf(dependency), PluginSource.LOCAL, PluginOperationKind.INSTALL
+      )
+    )
+    assertThat(events).noneMatch { it is PluginModelEvent.OperationFinished }
+  }
+
+  @Test
   fun `operation rejects a presentation model with another display id`() {
     val publisher = PluginModelEventPublisher {}
     val context = PluginOperationContext.create(

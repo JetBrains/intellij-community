@@ -30,6 +30,15 @@ sealed interface PluginModelEvent {
     val kind: PluginOperationKind,
     val result: PluginOperationTerminalResult,
   ) : PluginModelEvent
+
+  data class OperationDependenciesScheduled(
+    val sessionId: String,
+    val operationId: UUID,
+    val displayPluginId: PluginId,
+    val dependencies: List<PluginUiModel>,
+    val target: PluginSource,
+    val kind: PluginOperationKind,
+  ) : PluginModelEvent
 }
 
 @ApiStatus.Internal
@@ -134,6 +143,30 @@ internal class PluginModelEventPublisher(private val sink: PluginModelEventSink)
     }
   }
 
+  fun operationDependenciesScheduled(
+    context: PluginOperationContext,
+    dependencies: Collection<PluginUiModel>,
+  ) {
+    synchronized(operations) {
+      val state = checkNotNull(operations[context.operationId]) { "Plugin operation was not started: ${context.operationId}" }
+      val newDependencies = dependencies.filter { dependency ->
+        dependency.pluginId != context.displayPluginId &&
+        state.scheduledDependencies.putIfAbsent(dependency.pluginId, dependency) == null
+      }
+      if (newDependencies.isEmpty()) return
+      sink.onEvent(
+        PluginModelEvent.OperationDependenciesScheduled(
+          sessionId = state.sessionId,
+          operationId = context.operationId,
+          displayPluginId = context.displayPluginId,
+          dependencies = newDependencies,
+          target = context.target,
+          kind = context.kind,
+        )
+      )
+    }
+  }
+
   fun operationFinished(context: PluginOperationContext) {
     synchronized(operations) {
       val state = operations.remove(context.operationId) ?: return
@@ -160,5 +193,6 @@ internal class PluginModelEventPublisher(private val sink: PluginModelEventSink)
   private class OperationState(
     val sessionId: String,
     val targetResults: MutableMap<PluginSource, PluginOperationTerminalResult> = mutableMapOf(),
+    val scheduledDependencies: LinkedHashMap<PluginId, PluginUiModel> = LinkedHashMap(),
   )
 }

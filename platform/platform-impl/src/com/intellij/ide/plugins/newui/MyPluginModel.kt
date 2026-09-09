@@ -130,6 +130,13 @@ open class MyPluginModel @JvmOverloads constructor(
     myEventPublisher.operationTargetFinished(context, target, result)
   }
 
+  internal fun operationDependenciesScheduled(
+    context: PluginOperationContext,
+    dependencies: Collection<PluginUiModel>,
+  ) {
+    myEventPublisher.operationDependenciesScheduled(context, dependencies)
+  }
+
   internal fun operationFinished(context: PluginOperationContext) {
     myEventPublisher.operationFinished(context)
   }
