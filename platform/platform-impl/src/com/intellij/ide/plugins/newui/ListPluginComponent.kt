@@ -115,7 +115,7 @@ internal data class PluginRowRenderKey(
 )
 
 @ApiStatus.Internal
-class ListPluginComponent internal constructor(
+class ListPluginComponent private constructor(
   pluginModelFacade: PluginModelFacade,
   pluginUiModel: PluginUiModel,
   group: PluginsGroup,
@@ -125,12 +125,83 @@ class ListPluginComponent internal constructor(
   private val myOperationLauncher: PluginOperationLauncher,
   operationUiBridge: PluginOperationUiBridge?,
   marketplace: Boolean,
-  private val myUseSecondaryButtons: Boolean = false,
-  private val myUseBadgeTags: Boolean = false,
-  private val myUseIslandSelection: Boolean = false,
-  private val myUseToggleForEnablement: Boolean = false,
-  private val myPluginIconScale: Float = 1.0f,
+  precomputedRenderKey: PluginRowRenderKey?,
+  private val myUseSecondaryButtons: Boolean,
+  private val myUseBadgeTags: Boolean,
+  private val myUseIslandSelection: Boolean,
+  private val myUseToggleForEnablement: Boolean,
+  private val myPluginIconScale: Float,
+  @Suppress("UNUSED_PARAMETER") constructorMarker: Unit,
 ) : SelectablePanel() {
+  internal constructor(
+    pluginModelFacade: PluginModelFacade,
+    pluginUiModel: PluginUiModel,
+    group: PluginsGroup,
+    listModel: ListPluginModel,
+    searchListener: LinkListener<Any>,
+    coroutineScope: CoroutineScope,
+    operationLauncher: PluginOperationLauncher,
+    operationUiBridge: PluginOperationUiBridge?,
+    marketplace: Boolean,
+    secondaryButtons: Boolean = false,
+    badgeTags: Boolean = false,
+    islandSelection: Boolean = false,
+    toggleForEnablement: Boolean = false,
+    pluginIconScale: Float = 1.0f,
+  ) : this(
+    pluginModelFacade,
+    pluginUiModel,
+    group,
+    listModel,
+    searchListener,
+    coroutineScope,
+    operationLauncher,
+    operationUiBridge,
+    marketplace,
+    null,
+    secondaryButtons,
+    badgeTags,
+    islandSelection,
+    toggleForEnablement,
+    pluginIconScale,
+    Unit,
+  )
+
+  internal constructor(
+    pluginModelFacade: PluginModelFacade,
+    pluginUiModel: PluginUiModel,
+    group: PluginsGroup,
+    listModel: ListPluginModel,
+    searchListener: LinkListener<Any>,
+    coroutineScope: CoroutineScope,
+    operationLauncher: PluginOperationLauncher,
+    operationUiBridge: PluginOperationUiBridge?,
+    marketplace: Boolean,
+    renderKey: PluginRowRenderKey,
+    secondaryButtons: Boolean = false,
+    badgeTags: Boolean = false,
+    islandSelection: Boolean = false,
+    toggleForEnablement: Boolean = false,
+    pluginIconScale: Float = 1.0f,
+  ) : this(
+    pluginModelFacade,
+    pluginUiModel,
+    group,
+    listModel,
+    searchListener,
+    coroutineScope,
+    operationLauncher,
+    operationUiBridge,
+    marketplace,
+    renderKey,
+    secondaryButtons,
+    badgeTags,
+    islandSelection,
+    toggleForEnablement,
+    pluginIconScale,
+    Unit,
+  )
+
   constructor(
     pluginModelFacade: PluginModelFacade,
     pluginUiModel: PluginUiModel,
@@ -155,7 +226,7 @@ class ListPluginComponent internal constructor(
   private val mySearchListener: LinkListener<Any> = searchListener
   private val myMarketplace: Boolean = marketplace
   private val myGroup: PluginsGroup = group
-  private val myRenderKey = createRenderKey(pluginModelFacade, pluginUiModel, group, listModel, marketplace)
+  private val myRenderKey = precomputedRenderKey ?: createRenderKey(pluginModelFacade, pluginUiModel, group, listModel, marketplace)
   private val myIsAvailable: Boolean = myRenderKey.available
 
   /** FIXME value logic is duplicated with {@link com.intellij.ide.plugins.newui.PluginDetailsPageComponent} */
@@ -1364,11 +1435,6 @@ class ListPluginComponent internal constructor(
     return myUiCoroutineScope
   }
 
-  @Suppress("unused")
-  internal fun canReuseFor(renderKey: PluginRowRenderKey): Boolean {
-    return myRenderKey == renderKey
-  }
-
   fun getModelFacade(): PluginModelFacade {
     return myModelFacade
   }
@@ -1862,7 +1928,7 @@ class ListPluginComponent internal constructor(
       marketplace: Boolean,
     ): PluginRowRenderKey {
       val installedPlugin = listModel.installedModels[plugin.pluginId]
-      val installationState = checkNotNull(listModel.pluginInstallationStates[plugin.pluginId])
+      val installationState = listModel.getPluginInstallationState(plugin.pluginId)
       val restrictedByProduct = UiPluginManager.getInstance()
         .isPluginRequiresUltimateButItIsDisabled(pluginModelFacade.getModel().sessionId, plugin.pluginId)
       val pluginManagerCustomizerClassName = if (UiPluginManager.isCombinedPluginManagerEnabled()) {

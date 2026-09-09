@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.ide.plugins.ListPluginModel
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.PluginsGroupType
 import com.intellij.openapi.extensions.PluginId
@@ -10,6 +11,21 @@ import org.junit.jupiter.api.Test
 
 @TestApplication
 internal class PluginRowRenderKeyTest {
+  @Test
+  fun `missing installation state follows installed counterpart presence`() {
+    val plugin = pluginModel("Plugin", "1.0")
+    val listModel = ListPluginModel()
+
+    assertThat(listModel.getPluginInstallationState(plugin.pluginId)).isEqualTo(PluginInstallationState(false))
+
+    listModel.setInstalledPlugins(mapOf(plugin.pluginId to plugin))
+    assertThat(listModel.getPluginInstallationState(plugin.pluginId)).isEqualTo(PluginInstallationState(true))
+
+    val explicitState = PluginInstallationState(false, PluginStatus.UNINSTALLED_WITHOUT_RESTART)
+    listModel.setPluginInstallationState(plugin.pluginId, explicitState)
+    assertThat(listModel.getPluginInstallationState(plugin.pluginId)).isEqualTo(explicitState)
+  }
+
   @Test
   fun `installation state changes reuse a compatible row`() {
     val plugin = pluginModel("Plugin", "1.0")
