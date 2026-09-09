@@ -236,7 +236,14 @@ fun startApplication(
     }
   }
 
-  scheduleSystemLibSetupAndLogInfoAndInitMacApp(scope, logDeferred, appInfoDeferred, initLafJob, args, mainScope)
+  scheduleSystemLibSetupAndLogInfoAndInitMacApp(
+    scope = scope,
+    logDeferred = logDeferred,
+    appInfoDeferred = appInfoDeferred,
+    initUiDeferred = initLafJob,
+    args = args,
+    mainScope = mainScope,
+  )
 
   val euaDocumentDeferred = scope.async { loadEuaDocument(appInfoDeferred) }
 

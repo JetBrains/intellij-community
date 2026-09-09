@@ -123,11 +123,11 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jaxen")
     embeddedModule("intellij.libraries.jbr")
     embeddedModule("intellij.libraries.jcip")
-    embeddedModule("intellij.libraries.jna")
+    module("intellij.libraries.jna")
     embeddedModule("intellij.libraries.jsoup")
     module("intellij.libraries.jsonpath")
     embeddedModule("intellij.libraries.jsvg")
-    embeddedModule("intellij.libraries.jvm.native.trusted.roots")
+    module("intellij.libraries.jvm.native.trusted.roots")
     module("intellij.libraries.jzlib")
     embeddedModule("intellij.libraries.kryo5")
     embeddedModule("intellij.libraries.lz4")
@@ -511,7 +511,7 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.refactoring")
     embeddedModule("intellij.platform.ide.impl")
     requiredModule("intellij.platform.ide.util.io.native")
-    embeddedModule("intellij.platform.ide.osCertificates")
+    requiredModule("intellij.platform.ide.osCertificates")
     // keeps marketplace-zip-signer out of the core classloader - loaded only when a plugin signature is verified
     module("intellij.platform.ide.pluginSignatureVerifier")
     // private wrapper used only by intellij.platform.ide.pluginSignatureVerifier, so it is not embedded

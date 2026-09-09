@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" />
     <orderEntry type="module-library" exported="">
       <library name="keychain" type="repository">
         <properties maven-id="com.jetbrains:keychain:4.4.3">
