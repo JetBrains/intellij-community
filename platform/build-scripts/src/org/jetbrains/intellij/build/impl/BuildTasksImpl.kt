@@ -620,7 +620,7 @@ private fun checkProductLayout(context: BuildContext) {
   // todo mainJarName type specified as not-null - does it work?
   val messages = context.messages
 
-  val pluginLayouts = layout.pluginLayouts
+  val pluginLayouts = layout.pluginLayouts.value
   checkPluginDuplicates(pluginLayouts)
   checkPluginModules(context.getBundledPluginModules(), "effective bundled plugin modules", context)
   checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", context)
@@ -845,7 +845,7 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
 
 fun getCrossPlatformOnlyBundledPlugins(context: BuildContext): List<PluginLayout> {
   val bundledPluginModules = context.getBundledPluginModules().toSet()
-  return context.productProperties.productLayout.pluginLayouts
+  return context.productProperties.productLayout.pluginLayouts.value
     .filter {
       it.bundlingRestrictions.includeInDistribution == PluginDistribution.CROSS_PLATFORM_DIST_ONLY &&
       it.mainModule in bundledPluginModules

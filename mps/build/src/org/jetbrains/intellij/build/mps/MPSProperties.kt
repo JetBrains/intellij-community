@@ -100,8 +100,10 @@ class MPSProperties : JetBrainsProductProperties() {
         productLayout.buildAllCompatiblePlugins = false
         productLayout.compatiblePluginsToIgnore = persistentListOf("intellij.java.plugin")
 
-        val pluginLayouts = productLayout.pluginLayouts + JavaPluginLayout.javaPlugin(patchPluginXml())
-        productLayout.pluginLayouts = pluginLayouts.toPersistentList()
+        val previousPluginLayouts = productLayout.pluginLayouts
+        productLayout.pluginLayouts = lazy {
+            (previousPluginLayouts.value + JavaPluginLayout.javaPlugin(patchPluginXml())).toPersistentList()
+        }
 
         productLayout.addPlatformSpec { layout ->
             for (moduleName in listOf("intellij.platform.testFramework", "intellij.platform.testFramework.common", "intellij.java.testFramework", "intellij.platform.testFramework.core", "intellij.platform.testFramework.teamCity")) {

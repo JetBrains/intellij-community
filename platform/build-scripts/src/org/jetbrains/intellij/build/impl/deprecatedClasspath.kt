@@ -23,7 +23,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 @Deprecated("Do not use it")
 fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildContext): Collection<String> {
   val contentReport = generateProjectStructureMapping(platformLayout = platformLayout, context = context)
-  val pluginLayouts = context.productProperties.productLayout.pluginLayouts
+  val pluginLayouts = context.productProperties.productLayout.pluginLayouts.value
   val classPath = LinkedHashSet<Path>()
 
   val libDir = context.paths.distAllDir.resolve("lib")

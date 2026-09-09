@@ -66,7 +66,7 @@ fun createLayoutProviderByDistributionState(
   return DistributionStatePluginLayoutProvider(
     platformLayout = state.platformLayout,
     layoutByMainModule = layoutByMainModule,
-    allPluginLayouts = context.productProperties.productLayout.pluginLayouts,
+    allPluginLayouts = context.productProperties.productLayout.pluginLayouts.value,
     mainModulesOfBundledPlugins = mainModulesOfBundledPlugins,
     mainModuleOfCorePlugin = mainModuleOfCorePlugin,
     corePluginDescriptorPath = corePluginDescriptorPath,

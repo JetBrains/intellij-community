@@ -159,7 +159,7 @@ class PluginPopulationDerivationTest {
 private class PopulationProductProperties : ProductProperties() {
   init {
     productLayout.bundledPluginModules = persistentListOf()
-    productLayout.pluginLayouts = persistentListOf()
+    productLayout.pluginLayouts = lazyOf(persistentListOf())
   }
 
   override val baseFileName: String = "demo"

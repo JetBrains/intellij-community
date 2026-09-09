@@ -178,7 +178,7 @@ fun derivePluginJars(
     if (properties.embeddedFrontendRootModule != null) {
       frontendProduct = true
     }
-    for (layout in properties.productLayout.pluginLayouts) {
+    for (layout in properties.productLayout.pluginLayouts.value) {
       layoutsByMainModule.computeIfAbsent(layout.mainModule) { ArrayList() }.add(layout)
     }
   }

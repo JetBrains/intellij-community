@@ -294,8 +294,8 @@ private fun Map<String, PluginDescriptor>.filterValuesTo(predicate: (PluginDescr
 }
 
 private fun groupPluginLayoutsByMainModule(productLayout: ProductModulesLayout): Map<String, List<PluginLayout>> {
-  val result = HashMap<String, MutableList<PluginLayout>>(productLayout.pluginLayouts.size)
-  for (pluginLayout in productLayout.pluginLayouts) {
+  val result = HashMap<String, MutableList<PluginLayout>>(productLayout.pluginLayouts.value.size)
+  for (pluginLayout in productLayout.pluginLayouts.value) {
     result.getOrPut(pluginLayout.mainModule) { mutableListOf() }.add(pluginLayout)
   }
   return result

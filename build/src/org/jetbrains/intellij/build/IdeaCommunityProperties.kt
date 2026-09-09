@@ -37,7 +37,8 @@ internal fun createCommunityBuildContext(
     projectHome = projectHome,
     productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
     setupTracer = true,
-    options = options, lifetime = lifetime,
+    options = options,
+    lifetime = lifetime,
   )
 }
 
@@ -65,11 +66,12 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
 
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = true
-    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + persistentListOf(
-      JavaPluginLayout.javaPlugin(),
-      CommunityRepositoryModules.groovyPlugin(),
-      *CommunityRepositoryModules.androidPlugin(),
-    )
+    productLayout.pluginLayouts = lazy {
+      getCommunityRepositoryPlugins() + persistentListOf(
+        JavaPluginLayout.javaPlugin(),
+        groovyPlugin()
+      ) + androidPlugin()
+    }
 
     productLayout.skipUnresolvedContentModules = true
 

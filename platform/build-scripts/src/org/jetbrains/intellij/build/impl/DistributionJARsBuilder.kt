@@ -530,7 +530,7 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
     return createPluginLayoutSet(expectedSize = 0)
   }
 
-  val layoutsByMainModule = productLayout.pluginLayouts.groupByTo(HashMap()) { it.mainModule }
+  val layoutsByMainModule = productLayout.pluginLayouts.value.groupByTo(HashMap()) { it.mainModule }
   val result = createPluginLayoutSet(modules.size)
   for (moduleName in modules) {
     val layouts = layoutsByMainModule.get(moduleName) ?: mutableListOf(PluginLayout.pluginAuto(listOf(moduleName)))

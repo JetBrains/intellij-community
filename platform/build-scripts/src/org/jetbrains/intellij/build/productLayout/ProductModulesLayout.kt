@@ -12,8 +12,8 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.CommunityRepositoryModules
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.getCommunityRepositoryPlugins
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
@@ -69,24 +69,27 @@ class ProductModulesLayout {
 
   /**
    * Describes the layout of non-trivial plugins which may be included in the product.
-   * The actual list of the plugins needs to be bundled with the product is specified by [bundledPluginModules],
-   * the actual list of plugins which need to be prepared for publishing is specified by [pluginModulesToPublish].
+   * [bundledPluginModules] specifies the plugins to bundle, and [pluginModulesToPublish] specifies the plugins to publish.
+   * The producer runs on the first read of its [Lazy.value]. Assigned producers check for duplicate layouts before they cache their lists.
    */
-  var pluginLayouts: PersistentList<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
+  var pluginLayouts: Lazy<PersistentList<PluginLayout>> = lazy { getCommunityRepositoryPlugins() }
     set(value) {
-      val nameGuard = createPluginLayoutSet(value.size)
-      for (layout in value) {
-        check(nameGuard.add(layout)) {
-          val bundlingRestrictionsAsString = if (layout.bundlingRestrictions == PluginBundlingRestrictions.NONE) {
-            ""
+      field = lazy {
+        val layouts = value.value
+        val nameGuard = createPluginLayoutSet(layouts.size)
+        for (layout in layouts) {
+          check(nameGuard.add(layout)) {
+            val bundlingRestrictionsAsString = if (layout.bundlingRestrictions == PluginBundlingRestrictions.NONE) {
+              ""
+            }
+            else {
+              ", bundlingRestrictions=${layout.bundlingRestrictions}"
+            }
+            "PluginLayout(mainModule=${layout.mainModule}$bundlingRestrictionsAsString) is duplicated"
           }
-          else {
-            ", bundlingRestrictions=${layout.bundlingRestrictions}"
-          }
-          "PluginLayout(mainModule=${layout.mainModule}$bundlingRestrictionsAsString) is duplicated"
         }
+        layouts
       }
-      field = value
     }
 
   /**

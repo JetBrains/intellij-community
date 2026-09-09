@@ -35,11 +35,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Locale
 
-object CommunityRepositoryModules {
-  /**
-   * Specifies non-trivial layout for all plugins that sources are located in 'community' and 'contrib' repositories
-   */
-  val COMMUNITY_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
+/**
+ * Specifies non-trivial layout for all plugins that sources are located in 'community' and 'contrib' repositories
+ */
+fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
+  return persistentListOf(
     plugin("intellij.ant") { spec ->
       spec.mainJarName = "antIntegration.jar"
       spec.withModule("intellij.ant.jps", "ant-jps.jar")
@@ -94,7 +94,6 @@ object CommunityRepositoryModules {
     // only `BuildOptions.skipCustomResourceGenerators`, used by build tests, suppresses them), which is why the
     // runtime has no dev-build-specific branch. Renaming a path here breaks the IDE, not just the distribution.
     plugin("intellij.maven.plugin") { spec ->
-
       spec.doNotCopyModuleLibrariesAutomatically(
         listOf(
           "intellij.maven.artifactResolver.common",
@@ -219,7 +218,11 @@ object CommunityRepositoryModules {
       spec.mainJarName = "java-decompiler.jar"
       spec.withModule("intellij.java.decompiler.engine", spec.mainJarName)
     },
-    javaFXPlugin("intellij.javaFX.community"),
+    pluginAutoWithCustomDirName("intellij.javaFX.community", "javaFX") { spec ->
+      spec.withModule("intellij.javaFX.jps")
+      spec.withModule("intellij.javaFX.common", "javaFX-common.jar")
+      spec.withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
+    },
     pluginAuto("intellij.terminal") { spec ->
       spec.withModule("intellij.terminal.completion")
       spec.withResource("resources/shell-integrations", "shell-integrations")
@@ -255,533 +258,522 @@ object CommunityRepositoryModules {
     pluginAuto("intellij.java.jshell") { spec ->
       spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
     },
-    *allJcefPlugins()
+  ).addingAll(allJcefPlugins().toList())
+}
+
+private fun androidDesignPlugin(mainModuleName: String = "intellij.android.design-plugin.descriptor"): PluginLayout {
+  return pluginAutoWithCustomDirName(mainModuleName, "design-tools") { spec ->
+    // modules:
+    // design-tools.jar
+    spec.withModule("intellij.android.compose-designer")
+    if (mainModuleName != "intellij.android.design-plugin.descriptor") {
+      spec.withModule("intellij.android.design-plugin.descriptor")
+    }
+    spec.withModule("intellij.android.designer.customview")
+    spec.withModule("intellij.android.designer")
+    spec.withModule("intellij.android.designer.gradle")
+    spec.withModule("intellij.android.glance-designer")
+    spec.withModule("intellij.android.layoutlib")
+    spec.withModule("intellij.android.nav.editor")
+    spec.withModule("intellij.android.nav.editor.gradle")
+    spec.withModule("intellij.android.preview-designer")
+    spec.withModule("intellij.android.wear-designer")
+    spec.withModule("intellij.android.visual-lint")
+
+    // libs:
+    // layoutlib comes from the intellij.libraries.layoutlib content module, declared in this plugin's descriptor
+
+    // :libs
+
+    //"resources": [
+    //  "//prebuilts/studio/layoutlib:layoutlib",
+    //  "//tools/adt/idea/compose-designer:kotlin-compiler-daemon-libs",
+    //],
+  }
+}
+
+fun getContribRepositoryPlugins(): List<PluginLayout> = java.util.List.of(
+  pluginAuto("intellij.errorProne") { spec ->
+    spec.withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
+  },
+  pluginAuto("intellij.cucumber.java") { spec ->
+    spec.withModule("intellij.cucumber.jvmFormatter", "cucumber-jvmFormatter.jar")
+    spec.withModule("intellij.cucumber.jvmFormatter3", "cucumber-jvmFormatter3.jar")
+    spec.withModule("intellij.cucumber.jvmFormatter4", "cucumber-jvmFormatter4.jar")
+    spec.withModule("intellij.cucumber.jvmFormatter5", "cucumber-jvmFormatter5.jar")
+  },
+  pluginAuto("intellij.serial.monitor") { spec ->
+    // jSerialComm java JAR - Remember to update the binary dependency when updating to a new version!
+    spec.withProjectLibrary("jetbrains.intellij.deps.jSerialComm", LibraryPackMode.STANDALONE_SEPARATE)
+
+    // jSerialComm native library
+    spec.withGeneratedResources { targetDir, context ->
+      val uri = URI.create("https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jSerialComm/9a7813435b79aa2e23c7f2a78f1b66b48c0504c4/jSerialComm.zip")
+      val downloaded = BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDirRoot, uri)
+      BuildDependenciesDownloader.extractFile(downloaded, targetDir.resolve("bin"), context.paths.communityHomeDirRoot)
+    }
+  },
+)
+
+private fun allJcefPlugins(): Sequence<PluginLayout> {
+  val supportedOsArch = listOf(
+    SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64, MacLibcImpl.DEFAULT),
+    SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64, MacLibcImpl.DEFAULT),
+    SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64, WindowsLibcImpl.DEFAULT),
+    SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.aarch64, WindowsLibcImpl.DEFAULT),
+    SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64, LinuxLibcImpl.GLIBC),
+    SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.aarch64, LinuxLibcImpl.GLIBC),
   )
+  return supportedOsArch.asSequence().map { (os, arch, _) -> jcefPlugin(os, arch) } +  jcefCrossPlatformEmpty()
+}
 
-  val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(
-    pluginAuto("intellij.errorProne") { spec ->
-      spec.withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
-    },
-    pluginAuto("intellij.cucumber.java") { spec ->
-      spec.withModule("intellij.cucumber.jvmFormatter", "cucumber-jvmFormatter.jar")
-      spec.withModule("intellij.cucumber.jvmFormatter3", "cucumber-jvmFormatter3.jar")
-      spec.withModule("intellij.cucumber.jvmFormatter4", "cucumber-jvmFormatter4.jar")
-      spec.withModule("intellij.cucumber.jvmFormatter5", "cucumber-jvmFormatter5.jar")
-    },
-    pluginAuto("intellij.serial.monitor") { spec ->
-      // jSerialComm java JAR - Remember to update the binary dependency when updating to a new version!
-      spec.withProjectLibrary("jetbrains.intellij.deps.jSerialComm", LibraryPackMode.STANDALONE_SEPARATE)
+private fun jcefCrossPlatformEmpty(): PluginLayout {
+  return plugin("intellij.jcef.plugin") { // cross-platform distribution comes without JCEF binaries
+    it.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
+  }
+}
 
-      // jSerialComm native library
-      spec.withGeneratedResources { targetDir, context ->
-        val uri = URI.create("https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jSerialComm/9a7813435b79aa2e23c7f2a78f1b66b48c0504c4/jSerialComm.zip")
-        val downloaded = BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDirRoot, uri)
-        BuildDependenciesDownloader.extractFile(downloaded, targetDir.resolve("bin"), context.paths.communityHomeDirRoot)
-      }
-    },
-  )
+/**
+ * The JCEF archive the [jcefPlugin] resource generator downloads. Public so tests that
+ * pre-provision the build-dependencies download cache can pin the same URL.
+ */
+private fun jcefDownloadUrl(os: OsFamily, arch: JvmArchitecture, build: String): String {
+  val archSuffix = when (arch) {
+    JvmArchitecture.x64 -> "x64"
+    JvmArchitecture.aarch64 -> "aarch64"
+  }
+  return "https://cache-redirector.jetbrains.com/intellij-jbr/jcef-${os.jbrArchiveSuffix}-${archSuffix}-${build}.tar.gz"
+}
 
-  private fun androidDesignPlugin(mainModuleName: String = "intellij.android.design-plugin.descriptor"): PluginLayout {
-    return pluginAutoWithCustomDirName(mainModuleName, "design-tools") { spec ->
-      // modules:
-      // design-tools.jar
-      spec.withModule("intellij.android.compose-designer")
-      if (mainModuleName != "intellij.android.design-plugin.descriptor") {
-        spec.withModule("intellij.android.design-plugin.descriptor")
-      }
-      spec.withModule("intellij.android.designer.customview")
-      spec.withModule("intellij.android.designer")
-      spec.withModule("intellij.android.designer.gradle")
-      spec.withModule("intellij.android.glance-designer")
-      spec.withModule("intellij.android.layoutlib")
-      spec.withModule("intellij.android.nav.editor")
-      spec.withModule("intellij.android.nav.editor.gradle")
-      spec.withModule("intellij.android.preview-designer")
-      spec.withModule("intellij.android.wear-designer")
-      spec.withModule("intellij.android.visual-lint")
+private fun jcefPlugin(os: OsFamily, arch: JvmArchitecture): PluginLayout {
+  return plugin("intellij.jcef.plugin") { spec ->
+    spec.bundlingRestrictions.supportedOs = persistentListOf(os)
+    spec.bundlingRestrictions.supportedArch = persistentListOf(arch)
 
-      // libs:
-      // layoutlib comes from the intellij.libraries.layoutlib content module, declared in this plugin's descriptor
+    patchOsSpecificPluginXml(spec, os, arch)
 
-      // :libs
+    // be careful, Marketplace expects linux/macos/windows for os and x86_64/x86/arm64/arm32 for arch
+    spec.withCustomVersion(osArchPluginVersion(os = os, arch = arch))
 
-      //"resources": [
-      //  "//prebuilts/studio/layoutlib:layoutlib",
-      //  "//tools/adt/idea/compose-designer:kotlin-compiler-daemon-libs",
-      //],
+    spec.withGeneratedResources { targetDir, context ->
+      val communityRoot = context.paths.communityHomeDirRoot
+      val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
+      val jcefBuildNumber = properties.property("jcefBuild")
+
+      // extracted into the content-keyed cache rather than straight into the layout: a dev run directory is wiped
+      // on every launch (`IdeBuilder`), so an extraction that lands in it is an extraction repeated every launch
+      val extracted = resolveAndExtractToCacheLocation(
+        url = jcefDownloadUrl(os, arch, jcefBuildNumber),
+        communityRoot = communityRoot,
+        BuildDependenciesExtractOptions.STRIP_ROOT,
+      )
+
+      // Unix ZIP does not have root `jcef` directory
+      val jcefOutputDir = extracted.resolve("jcef").takeIf { Files.exists(it) } ?: extracted
+      copyDir(sourceDir = jcefOutputDir, targetDir = targetDir.resolve("jcef"), overwrite = true)
+    }
+
+    spec.enableSymlinksAndExecutableResources()
+  }
+}
+
+fun androidPlugin(
+  additionalModulesToJars: Map<String, String> = emptyMap(),
+  mainModuleName: String = "intellij.android.plugin.descriptor",
+  addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null,
+): List<PluginLayout> {
+  return SUPPORTED_DISTRIBUTIONS.asSequence().map { (os, arch, _) ->
+    createAndroidPluginLayout(mainModuleName, additionalModulesToJars, os, arch, addition)
+  }
+    .plus(createAndroidPluginLayout(mainModuleName, additionalModulesToJars, null, null, addition))
+    .toList()
+}
+
+private val supportedFfmpegPresets: PersistentList<SupportedDistribution> = persistentListOf(
+  SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64, MacLibcImpl.DEFAULT),
+  SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64, MacLibcImpl.DEFAULT),
+  SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64, WindowsLibcImpl.DEFAULT),
+  SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64, LinuxLibcImpl.GLIBC),
+)
+
+/**
+ * Packs the ffmpeg and javacpp libraries of the `intellij.libraries.ffmpeg` wrapper module, keeping only the natives
+ * that match this layout's [os] and [arch]. Pass `null` for both to get every platform, as the cross-platform
+ * distribution does.
+ *
+ * The libraries live in that wrapper module, registered as private plugin content in
+ * `android-plugin/descriptor/resources/META-INF/plugin.xml`. `ModuleLibraryData` and `PluginLayout.excludedModuleLibraries`
+ * are keyed by `(moduleName, libraryName)`, so naming the wrapper here - and keeping every `relativeOutputPath` -
+ * leaves the distribution byte-identical to when the libraries still sat on `intellij.android.streaming`.
+ *
+ * The `relativeOutputPath` arguments are load-bearing: without them the wrapper would merge all ten jars into one
+ * archive, which loses the per-platform filtering below and changes the javacpp native-extraction cache path (it is
+ * keyed on the containing jar's name). One wrapper holds all ten because per-platform content modules are impossible
+ * - content registration is static XML - so the exclusion below is what does the filtering.
+ *
+ * Shared with Rider's Android plugin layout (`createRiderAndroidPluginLayout`): both distributions must agree, and
+ * keeping this in one place is what stops them drifting apart.
+ */
+fun PluginLayout.PluginLayoutSpec.withFfmpegWrapper(os: OsFamily?, arch: JvmArchitecture?) {
+  val ffmpegVersion = "6.0-1.5.9"
+  val javacppVersion = "1.5.9"
+  val wrapperModuleName = "intellij.libraries.ffmpeg"
+
+  withModuleLibrary("ffmpeg", wrapperModuleName, "ffmpeg-$ffmpegVersion.jar")
+  withModuleLibrary("ffmpeg-javacpp", wrapperModuleName, "javacpp-$javacppVersion.jar")
+
+  // include only the platform-dependent binaries matching this layout's (os, arch);
+  // exclude the rest so the wrapper module's other platform libraries don't leak in.
+  for ((supportedOs, supportedArch, _) in supportedFfmpegPresets) {
+    val osName = supportedOs.osName.lowercase(Locale.ROOT)
+    val ffmpegLibraryName = "ffmpeg-$osName-$supportedArch"
+    val javacppLibraryName = "javacpp-$osName-$supportedArch"
+
+    if (supportedOs == os && supportedArch == arch || os == null && arch == null) {
+      withModuleLibrary(ffmpegLibraryName, wrapperModuleName, "${ffmpegLibraryName}-$ffmpegVersion.jar")
+      withModuleLibrary(javacppLibraryName, wrapperModuleName, "${javacppLibraryName}-$javacppVersion.jar")
+    }
+    else {
+      excludeModuleLibrary(ffmpegLibraryName, wrapperModuleName)
+      excludeModuleLibrary(javacppLibraryName, wrapperModuleName)
     }
   }
+}
 
-  fun allJcefPlugins(): Array<PluginLayout> {
-    val supportedOsArch = listOf(
-      SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64, MacLibcImpl.DEFAULT),
-      SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64, MacLibcImpl.DEFAULT),
-      SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64, WindowsLibcImpl.DEFAULT),
-      SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.aarch64, WindowsLibcImpl.DEFAULT),
-      SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64, LinuxLibcImpl.GLIBC),
-      SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.aarch64, LinuxLibcImpl.GLIBC),
-    )
-
-    val allLayouts = ArrayList(supportedOsArch.map { (os, arch, _) -> jcefPlugin(os, arch) })
-    allLayouts += jcefCrossPlatformEmpty()
-    return allLayouts.toTypedArray()
-  }
-
-  private fun jcefCrossPlatformEmpty(): PluginLayout {
-    return plugin("intellij.jcef.plugin") { // cross-platform distribution comes without JCEF binaries
-      it.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
-    }
-  }
-
-  /**
-   * The JCEF archive the [jcefPlugin] resource generator downloads. Public so tests that
-   * pre-provision the build-dependencies download cache can pin the same URL.
-   */
-  fun jcefDownloadUrl(os: OsFamily, arch: JvmArchitecture, build: String): String {
-    val archSuffix = when (arch) {
-      JvmArchitecture.x64 -> "x64"
-      JvmArchitecture.aarch64 -> "aarch64"
-    }
-    return "https://cache-redirector.jetbrains.com/intellij-jbr/jcef-${os.jbrArchiveSuffix}-${archSuffix}-${build}.tar.gz"
-  }
-
-  fun jcefPlugin(os: OsFamily, arch: JvmArchitecture): PluginLayout {
-    return plugin("intellij.jcef.plugin") { spec ->
+private fun createAndroidPluginLayout(
+  mainModuleName: String,
+  additionalModulesToJars: Map<String, String> = emptyMap(),
+  os: OsFamily?,
+  arch: JvmArchitecture?,
+  addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?,
+): PluginLayout {
+  return pluginAutoWithCustomDirName(mainModuleName, "android") { spec ->
+    if (os != null && arch != null) {
       spec.bundlingRestrictions.supportedOs = persistentListOf(os)
       spec.bundlingRestrictions.supportedArch = persistentListOf(arch)
 
       patchOsSpecificPluginXml(spec, os, arch)
 
-      // be careful, Marketplace expects linux/macos/windows for os and x86_64/x86/arm64/arm32 for arch
-      spec.withCustomVersion(osArchPluginVersion(os = os, arch = arch))
-
-      spec.withGeneratedResources { targetDir, context ->
-        val communityRoot = context.paths.communityHomeDirRoot
-        val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
-        val jcefBuildNumber = properties.property("jcefBuild")
-
-        // extracted into the content-keyed cache rather than straight into the layout: a dev run directory is wiped
-        // on every launch (`IdeBuilder`), so an extraction that lands in it is an extraction repeated every launch
-        val extracted = resolveAndExtractToCacheLocation(
-          url = jcefDownloadUrl(os, arch, jcefBuildNumber),
-          communityRoot = communityRoot,
-          BuildDependenciesExtractOptions.STRIP_ROOT,
-        )
-
-        // Unix ZIP does not have root `jcef` directory
-        val jcefOutputDir = extracted.resolve("jcef").takeIf { Files.exists(it) } ?: extracted
-        copyDir(sourceDir = jcefOutputDir, targetDir = targetDir.resolve("jcef"), overwrite = true)
-      }
-
-      spec.enableSymlinksAndExecutableResources()
-    }
-  }
-
-  fun androidPlugin(
-    additionalModulesToJars: Map<String, String> = emptyMap(),
-    mainModuleName: String = "intellij.android.plugin.descriptor",
-    addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null,
-  ): Array<PluginLayout> {
-    return SUPPORTED_DISTRIBUTIONS.asSequence().map { (os, arch, _) ->
-      createAndroidPluginLayout(mainModuleName, additionalModulesToJars, os, arch, addition)
-    }
-      .plus(createAndroidPluginLayout(mainModuleName, additionalModulesToJars, null, null, addition))
-      .toList().toTypedArray()
-  }
-
-  private val supportedFfmpegPresets: PersistentList<SupportedDistribution> = persistentListOf(
-    SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64, MacLibcImpl.DEFAULT),
-    SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64, MacLibcImpl.DEFAULT),
-    SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64, WindowsLibcImpl.DEFAULT),
-    SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64, LinuxLibcImpl.GLIBC),
-  )
-
-  /**
-   * Packs the ffmpeg and javacpp libraries of the `intellij.libraries.ffmpeg` wrapper module, keeping only the natives
-   * that match this layout's [os] and [arch]. Pass `null` for both to get every platform, as the cross-platform
-   * distribution does.
-   *
-   * The libraries live in that wrapper module, registered as private plugin content in
-   * `android-plugin/descriptor/resources/META-INF/plugin.xml`. `ModuleLibraryData` and `PluginLayout.excludedModuleLibraries`
-   * are keyed by `(moduleName, libraryName)`, so naming the wrapper here - and keeping every `relativeOutputPath` -
-   * leaves the distribution byte-identical to when the libraries still sat on `intellij.android.streaming`.
-   *
-   * The `relativeOutputPath` arguments are load-bearing: without them the wrapper would merge all ten jars into one
-   * archive, which loses the per-platform filtering below and changes the javacpp native-extraction cache path (it is
-   * keyed on the containing jar's name). One wrapper holds all ten because per-platform content modules are impossible
-   * - content registration is static XML - so the exclusion below is what does the filtering.
-   *
-   * Shared with Rider's Android plugin layout (`createRiderAndroidPluginLayout`): both distributions must agree, and
-   * keeping this in one place is what stops them drifting apart.
-   */
-  fun PluginLayout.PluginLayoutSpec.withFfmpegWrapper(os: OsFamily?, arch: JvmArchitecture?) {
-    val ffmpegVersion = "6.0-1.5.9"
-    val javacppVersion = "1.5.9"
-    val wrapperModuleName = "intellij.libraries.ffmpeg"
-
-    withModuleLibrary("ffmpeg", wrapperModuleName, "ffmpeg-$ffmpegVersion.jar")
-    withModuleLibrary("ffmpeg-javacpp", wrapperModuleName, "javacpp-$javacppVersion.jar")
-
-    // include only the platform-dependent binaries matching this layout's (os, arch);
-    // exclude the rest so the wrapper module's other platform libraries don't leak in.
-    for ((supportedOs, supportedArch, _) in supportedFfmpegPresets) {
-      val osName = supportedOs.osName.lowercase(Locale.ROOT)
-      val ffmpegLibraryName = "ffmpeg-$osName-$supportedArch"
-      val javacppLibraryName = "javacpp-$osName-$supportedArch"
-
-      if (supportedOs == os && supportedArch == arch || os == null && arch == null) {
-        withModuleLibrary(ffmpegLibraryName, wrapperModuleName, "${ffmpegLibraryName}-$ffmpegVersion.jar")
-        withModuleLibrary(javacppLibraryName, wrapperModuleName, "${javacppLibraryName}-$javacppVersion.jar")
-      }
-      else {
-        excludeModuleLibrary(ffmpegLibraryName, wrapperModuleName)
-        excludeModuleLibrary(javacppLibraryName, wrapperModuleName)
-      }
-    }
-  }
-
-  private fun createAndroidPluginLayout(
-    mainModuleName: String,
-    additionalModulesToJars: Map<String, String> = emptyMap(),
-    os: OsFamily?,
-    arch: JvmArchitecture?,
-    addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?,
-  ): PluginLayout =
-    pluginAutoWithCustomDirName(mainModuleName, "android") { spec ->
-      if (os != null && arch != null) {
-        spec.bundlingRestrictions.supportedOs = persistentListOf(os)
-        spec.bundlingRestrictions.supportedArch = persistentListOf(arch)
-
-        patchOsSpecificPluginXml(spec, os, arch)
-
-        spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
-          // be careful, Marketplace expects linux/macos/windows for os and x86_64/x86/arm64/arm32 for arch
-          val osArchSuffix = "-${os.osId}-${arch.marketplaceName}"
-          val pluginXml = pluginXmlSupplier()
-          if (pluginXml.indexOf("<version>") != -1) {
-            val declaredVersion = pluginXml.substring(pluginXml.indexOf("<version>") + "<version>".length, pluginXml.indexOf("</version>"))
-            PluginVersionEvaluatorResult(pluginVersion = "$declaredVersion.$ideBuildVersion$osArchSuffix")
-          }
-          else {
-            PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion$osArchSuffix")
-          }
+      spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
+        // be careful, Marketplace expects linux/macos/windows for os and x86_64/x86/arm64/arm32 for arch
+        val osArchSuffix = "-${os.osId}-${arch.marketplaceName}"
+        val pluginXml = pluginXmlSupplier()
+        if (pluginXml.indexOf("<version>") != -1) {
+          val declaredVersion = pluginXml.substring(pluginXml.indexOf("<version>") + "<version>".length, pluginXml.indexOf("</version>"))
+          PluginVersionEvaluatorResult(pluginVersion = "$declaredVersion.$ideBuildVersion$osArchSuffix")
+        }
+        else {
+          PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion$osArchSuffix")
         }
       }
-      else {
-        spec.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
-      }
-
-      // modules:
-      // adt-ui.jar
-      spec.withModule("intellij.android.adt.ui.compose", "adt-ui.jar")
-      spec.withModule("intellij.android.adt.ui.model", "adt-ui.jar")
-      spec.withModule("intellij.android.adt.ui", "adt-ui.jar")
-
-      // android-common.jar
-      spec.withModule("intellij.android.common", "android-common.jar")
-      spec.withModule("intellij.android.jps.model", "android-common.jar")
-
-      //android-gradle-tooling.jar
-      spec.withModule("intellij.android.gradle-tooling.api", "android-gradle.jar")
-      spec.withModule("intellij.android.gradle-tooling.impl", "android-gradle.jar")
-      spec.withModule("intellij.android.projectSystem.gradle.sync", "android-gradle.jar")
-
-      // android-kotlin.jar
-      spec.withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
-      spec.withModule("intellij.android.kotlin.idea.common", "android-kotlin.jar")
-      spec.withModule("intellij.android.kotlin.idea.k2", "android-kotlin.jar")
-      spec.withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
-
-      // android-profilers.jar
-      spec.withModule("intellij.android.profilers.atrace", "android-profilers.jar")
-      spec.withModule("intellij.android.profilers.ui", "android-profilers.jar")
-      spec.withModule("intellij.android.profilers", "android-profilers.jar")
-      spec.withModule("intellij.android.transportDatabase", "android-profilers.jar")
-
-      // android-rt.jar
-      //tools/adt/idea/rt:intellij.android.rt <= REMOVED
-
-      // android-project-system-gradle-models.jar
-      spec.withModule("intellij.android.projectSystem.gradle.models", "android-project-system-gradle-models.jar")
-
-      // android.jar
-      spec.withModule("intellij.android.analytics", "android.jar")
-      spec.withModule("intellij.android.assistant", "android.jar")
-      //tools/adt/idea/connection-assistant:connection-assistant <= REMOVED
-      spec.withModule("intellij.android.adb", "android.jar")
-      spec.withModule("intellij.android.adb.ui", "android.jar")
-      spec.withModule("intellij.android.backup", "android.jar")
-      spec.withModule("intellij.android.backup.api", "android.jar")
-      spec.withModule("intellij.android.lint", "android.jar")
-      spec.withModule("intellij.android.templates", "android.jar")
-      spec.withModule("intellij.android.testartifacts", "android.jar")
-      spec.withModule("intellij.android.apkanalyzer", "android.jar")
-      spec.withModule("intellij.android.apkanalyzer.apk", "android.jar")
-      spec.withModule("intellij.android.apkanalyzer.gradle", "android.jar")
-      spec.withModule("intellij.android.app-inspection.api", "android.jar")
-      spec.withModule("intellij.android.app-inspection.ide", "android.jar")
-      spec.withModule("intellij.android.app-inspection.ide.gradle", "android.jar")
-      spec.withModule("intellij.android.app-inspection.inspector.api", "android.jar")
-      spec.withModule("intellij.android.app-inspection.inspector.ide", "android.jar")
-      spec.withModule("intellij.android.app-inspection.inspectors.backgroundtask.ide", "android.jar")
-      spec.withModule("intellij.android.app-inspection.inspectors.backgroundtask.model", "android.jar")
-      spec.withModule("intellij.android.app-inspection.inspectors.backgroundtask.view", "android.jar")
-      // Disabled sync it requires Google's APIs
-      //spec.withModule("intellij.android.app-quality-insights.api", "android.jar")
-      //spec.withModule("intellij.android.app-quality-insights.ide", "android.jar")
-      //spec.withModule("intellij.android.app-quality-insights.ui", "android.jar")
-      //spec.withModule("intellij.android.app-quality-insights.play-vitals.model", "android.jar")
-      //spec.withModule("intellij.android.app-quality-insights.play-vitals.ide", "android.jar")
-      //spec.withModule("intellij.android.app-quality-insights.play-vitals.view", "android.jar")
-      spec.withModule("intellij.android.build-attribution", "android.jar")
-      spec.withModule("intellij.android.compose-common", "android.jar")
-      spec.withModule("intellij.android.device", "android.jar")
-      spec.withModule("intellij.android.core", "android.jar")
-      spec.withModule("intellij.android.core.editing.documentation", "android.jar")
-      spec.withModule("intellij.android.core.editing.metrics", "android.jar")
-      spec.withModule("intellij.android.navigator", "android.jar")
-      spec.withModule("intellij.android.dagger", "android.jar")
-      spec.withModule("intellij.android.databinding", "android.jar")
-      spec.withModule("intellij.android.databinding.gradle", "android.jar")
-      spec.withModule("intellij.android.app-inspection.inspectors.database", "android.jar")
-      spec.withModule("intellij.android.debuggers", "android.jar")
-      spec.withModule("intellij.android.deploy", "android.jar")
-      spec.withModule("intellij.android.device-explorer", "android.jar")
-      spec.withModule("intellij.android.device-explorer-files", "android.jar")
-      spec.withModule("intellij.android.device-explorer-monitor", "android.jar")
-      spec.withModule("intellij.android.device-explorer-common", "android.jar")
-      //spec.withModule("intellij.android.device-manager", "android.jar")
-      spec.withModule("intellij.android.device-manager-v2", "android.jar")
-      spec.withModule("intellij.android.gmaven", "android.jar")
-      spec.withModule("intellij.android.ml-api", "android.jar")
-      // Packaged as a gradle-dsl plugin
-      //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
-      //tools/adt/idea/gradle-dsl-kotlin:intellij.android.gradle.dsl.kotlin <= REMOVED
-      //spec.withModule("intellij.android.gradle.dsl.declarative", "android.jar")
-      //spec.withModule("intellij.android.gradle.dsl.toml", "android.jar")
-      spec.withModule("intellij.android.lang-databinding", "android.jar")
-      spec.withModule("intellij.android.lang", "android.jar")
-      spec.withModule("intellij.android.layout-inspector", "android.jar")
-      spec.withModule("intellij.android.layout-inspector.gradle", "android.jar")
-      spec.withModule("intellij.android.layout-ui", "android.jar")
-      spec.withModule("intellij.android.logcat", "android.jar")
-      spec.withModule("intellij.android.logcat.gradle", "android.jar")
-      spec.withModule("intellij.android.mlkit", "android.jar")
-      spec.withModule("intellij.android.nav.safeargs", "android.jar")
-      spec.withModule("intellij.android.nav.safeargs.common", "android.jar")
-      spec.withModule("intellij.android.nav.safeargs.common.gradle", "android.jar")
-      spec.withModule("intellij.android.nav.safeargs.k2", "android.jar")
-      spec.withModule("intellij.android.android-material", "android.jar")
-      spec.withModule("intellij.android.observable.ui", "android.jar")
-      spec.withModule("intellij.android.observable", "android.jar")
-      if (mainModuleName != "intellij.android.plugin.descriptor") {
-        spec.withModule("intellij.android.plugin.descriptor", "android.jar")
-      }
-      spec.withModule("intellij.android.preview-elements", "android.jar")
-      spec.withModule("intellij.android.profilersAndroid", "android.jar")
-      spec.withModule("intellij.android.profilersAndroid.gradle", "android.jar")
-      spec.withModule("intellij.android.projectSystem.apk", "android.jar")
-      spec.withModule("intellij.android.projectSystem.gradle.psd", "android.jar")
-      spec.withModule("intellij.android.projectSystem.gradle.repositorySearch", "android.jar")
-      spec.withModule("intellij.android.projectSystem.gradle.upgrade", "android.jar")
-      spec.withModule("intellij.android.projectSystem.gradle", "android.jar")
-      spec.withModule("intellij.android.projectSystem", "android.jar")
-      spec.withModule("intellij.android.render-resources", "android.jar")
-      spec.withModule("intellij.android.rendering", "android.jar")
-      spec.withModule("intellij.android.room", "android.jar")
-      //spec.withModule("intellij.android.samples-browser", "android.jar") AS Koala Merge
-      spec.withModule("intellij.android.screenshot-test", "android.jar")
-      spec.withModule("intellij.android.screenshot-test.gradle", "android.jar")
-      spec.withModule("intellij.android.sdkUpdates", "android.jar")
-      spec.withModule("intellij.android.threading-checker", "android.jar")
-      spec.withModule("intellij.android.tracer", "android.jar")
-      spec.withModule("intellij.android.transport", "android.jar")
-      spec.withModule("intellij.android.newProjectWizard", "android.jar")
-      spec.withModule("intellij.android.wear-pairing", "android.jar")
-      spec.withModule("intellij.android.wear-whs", "android.jar")
-      spec.withModule("intellij.android.wear-dwf", "android.jar")
-      spec.withModule("intellij.android.wizard.model", "android.jar")
-      spec.withModule("intellij.android.wizard", "android.jar")
-      spec.withModule("intellij.android.native-symbolizer", "android.jar")
-      spec.withModule("intellij.android.native-symbolizer.gradle", "android.jar")
-      //tools/adt/idea/whats-new-assistant:whats-new-assistant <= REMOVED
-      spec.withModule("intellij.android.app-inspection.inspectors.network.ide", "android.jar")
-      spec.withModule("intellij.android.app-inspection.inspectors.network.model", "android.jar")
-      spec.withModuleLibrary("brotli-dec", "intellij.android.app-inspection.inspectors.network.model", "android.jar")
-      spec.withModule("intellij.android.app-inspection.inspectors.network.view", "android.jar")
-      spec.withModule("intellij.android.server-flags", "android.jar")
-      spec.withModule("intellij.android.codenavigation", "android.jar")
-      spec.withModule("intellij.android.execution.common", "android.jar")
-      spec.withModule("intellij.android.avd", "android.jar")
-
-      spec.withModule("intellij.android.preview-fast-compile", "android.jar")
-      spec.withModule("intellij.android.completion", "android.jar")
-
-      // artwork.jar
-      spec.withModule("intellij.android.artwork", "artwork.jar")
-      spec.withModule("intellij.android.artwork-compose", "artwork.jar")
-      // build-common.jar
-      spec.withModule("intellij.android.buildCommon", "build-common.jar")
-
-      // inspectors-common.jar
-      spec.withModule("intellij.android.inspectors-common.api", "inspectors-common.jar")
-      spec.withModule("intellij.android.inspectors-common.api-ide", "inspectors-common.jar")
-      spec.withModule("intellij.android.inspectors-common.ui", "inspectors-common.jar")
-
-      // layoutlib-api.jar
-
-
-      // layoutlib-loader.jar
-      spec.withModule("intellij.android.layoutlib-loader", "layoutlib-loader.jar")
-
-      // lint-ide.jar
-      spec.withModule("intellij.android.lint.common", "lint-ide.jar")
-
-      // manifest-merger.jar
-
-
-      // memory-usage.jar
-      spec.withModule("intellij.android.memory-usage", "memory-usage.jar")
-
-      // utp.jar
-      spec.withModule("intellij.android.utp", "utp.jar")
-
-      // libs:
-      //spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea.common", "")
-      //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
-
-
-      // We do not bundle Google Login API
-      //spec.withModuleLibrary("javax-servlet", "google-login-as", "")
-      //spec.withModuleLibrary("jsr305-2.0.1", "google-login-as", "")
-      //spec.withModuleLibrary("oauth2", "google-login-as", "")
-
-
-      // Module is disabled intellij.android.adt.ui.compose since no modules use it
-      //spec.withModuleLibrary("compose-desktop-animation", "intellij.android.adt.ui.compose", "")
-      //spec.withModuleLibrary("compose-desktop-foundation", "intellij.android.adt.ui.compose", "")
-      //spec.withModuleLibrary("compose-desktop-material", "intellij.android.adt.ui.compose", "")
-      //spec.withModuleLibrary("compose-desktop-runtime", "intellij.android.adt.ui.compose", "")
-      //spec.withModuleLibrary("compose-desktop-ui", "intellij.android.adt.ui.compose", "")
-      //spec.withModuleLibrary("skiko", "intellij.android.adt.ui.compose", "")
-
-      spec.withFfmpegWrapper(os = os, arch = arch)
-
-      spec.withModule("intellij.android.streaming")
-
-      // Library that aggregates all libraries and modules from `tools/base` directory
-      spec.withProjectLibrary("studio-platform")
-
-      // Used in intellij.android.app-quality-insights.api module which currently isn't bundled in IJ IDEA
-      //spec.withProjectLibrary("gradle-shared-proto")
-      //spec.withModuleLibrary("play_vitals_java_proto", "intellij.android.app-quality-insights.play-vitals.model", "")
-      /**
-       * TODO Check if needed since following modules reference it:
-       * - intellij.android.app-inspection.inspectors.database
-       * - intellij.android.app-inspection.inspectors.database.tests
-       */
-      //spec.withProjectLibrary("sqlite-inspector-proto")
-      // We do not bundle Google API client in IJ
-      //spec.withProjectLibrary("google-api-client")
-      spec.withProjectLibrary("aapt-proto")
-      spec.withProjectLibrary("google-baksmali")
-      spec.withProjectLibrary("google-dexlib2")
-      //spec.withProjectLibrary("gradle-shared-proto")
-      spec.withProjectLibrary("javax-inject")
-      //spec.withProjectLibrary("jetty")
-      spec.withModuleLibrary("kotlinx-coroutines-guava", "intellij.libraries.kotlinx.coroutines.guava", "")
-      //spec.withProjectLibrary("libadb-server-proto")
-      //spec.withProjectLibrary("oauth2")
-      //spec.withModuleLibrary("libandroid-core-proto", "intellij.android.projectSystem.gradle", "")
-      //tools/adt/idea/android/lib:android-sdk-tools-jps <= this is jarutils.jar
-      spec.withModuleLibrary("instantapps-api", "intellij.android.core", "")
-      //spec.withModuleLibrary("play_vitals_java_proto", "intellij.android.app-quality-insights.play-vitals.model", "")
-      //tools/adt/idea/compose-designer:ui-animation-tooling-internal <= not recognized
-      //tools/vendor/google/game-tools/main:game-tools-protos <= not recognized
-      // :libs
-
-
-      //"resources": [
-      // contents of "/plugins/android/lib/layoutlib/" will be downloaded by the AndroidPlugin on demand
-      // Profiler downloader will download all the other profiler libraries: profilers-transform.jar, perfa_okhttp.dex, perfa, perfd, simpleperf
-      // Profiler downloader will also download instant run installers: /resources/installer
-      // Profiler downloader will also download instant run transport: /resources/transport
-
-      //  "//tools/adt/idea/android/lib:sample-data-bundle",
-      spec.withResourceFromModule("intellij.android.core", "lib/sampleData", "resources/sampleData")
-      // "//tools/adt/idea/android/lib:apks-bundle",
-      spec.withResourceFromModule("intellij.android.core", "lib/apks", "resources/apks")
-      //  "//tools/adt/idea/artwork:device-art-resources-bundle",  # duplicated in android.jar
-      spec.withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "resources/device-art-resources")
-      //  "//tools/adt/idea/android/annotations:androidAnnotations",
-      spec.withResourceArchiveFromModule("intellij.android.plugin", "../android/annotations", "resources/androidAnnotations.jar")
-      //  "//tools/adt/idea/emulator/native:native_lib",
-      spec.withResourceFromModule("intellij.android.streaming", "native/linux", "resources/native/linux")
-      spec.withResourceFromModule("intellij.android.streaming", "native/mac", "resources/native/mac")
-      spec.withResourceFromModule("intellij.android.streaming", "native/mac_arm", "resources/native/mac_arm")
-      spec.withResourceFromModule("intellij.android.streaming", "native/win", "resources/native/win")
-      // "//tools/adt/idea/emulator/screen-sharing-agent:bundle", TODO-ank
-
-      //  "//tools/base/app-inspection/inspectors/backgroundtask:bundle",
-      //  "//tools/base/app-inspection/inspectors/network:bundle",
-      //  "//tools/base/dynamic-layout-inspector/agent/appinspection:bundle",
-      //  "tools/base/process-monitor/process-tracker-agent:bundle",
-      //  "//tools/base/profiler/transform:profilers-transform",
-      //  "//tools/base/profiler/app:perfa",
-      //  "//tools/base/profiler/app:perfa_okhttp",
-      //  "//tools/base/tracer:trace_agent.jar",  # TODO(b/149320690): remove in 4.1 final release.
-      //"//tools/base/transport:transport-bundle",
-      //"//prebuilts/tools:simpleperf-bundle",
-      //"//prebuilts/tools/common/perfetto:perfetto-bundle",
-      //"//prebuilts/tools/common/app-inspection/androidx/sqlite:sqlite-inspection-bundle",
-      //"//tools/base/deploy/installer:android-installer-bundle",
-      //"//tools/adt/idea/android:asset-studio-bundle",
-      spec.withResourceFromModule("intellij.android.core", "resources/images/asset_studio", "resources/images/asset_studio")
-      //"//prebuilts/tools/common/trace-processor-daemon:trace-processor-daemon-bundle",
-      //],
-      //
-      // END OF BAZEL FILE
-
-      // here go some differences from original Android Studio layout
-
-      for ((key, value) in additionalModulesToJars) {
-        spec.withModule(key, value)
-      }
-
-      addition?.invoke(spec)
+    }
+    else {
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
     }
 
-  fun javaFXPlugin(mainModuleName: String): PluginLayout {
-    return pluginAutoWithCustomDirName(mainModuleName, "javaFX") { spec ->
-      spec.withModule("intellij.javaFX.jps")
-      spec.withModule("intellij.javaFX.common", "javaFX-common.jar")
-      spec.withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
+    // modules:
+    // adt-ui.jar
+    spec.withModule("intellij.android.adt.ui.compose", "adt-ui.jar")
+    spec.withModule("intellij.android.adt.ui.model", "adt-ui.jar")
+    spec.withModule("intellij.android.adt.ui", "adt-ui.jar")
+
+    // android-common.jar
+    spec.withModule("intellij.android.common", "android-common.jar")
+    spec.withModule("intellij.android.jps.model", "android-common.jar")
+
+    //android-gradle-tooling.jar
+    spec.withModule("intellij.android.gradle-tooling.api", "android-gradle.jar")
+    spec.withModule("intellij.android.gradle-tooling.impl", "android-gradle.jar")
+    spec.withModule("intellij.android.projectSystem.gradle.sync", "android-gradle.jar")
+
+    // android-kotlin.jar
+    spec.withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
+    spec.withModule("intellij.android.kotlin.idea.common", "android-kotlin.jar")
+    spec.withModule("intellij.android.kotlin.idea.k2", "android-kotlin.jar")
+    spec.withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
+
+    // android-profilers.jar
+    spec.withModule("intellij.android.profilers.atrace", "android-profilers.jar")
+    spec.withModule("intellij.android.profilers.ui", "android-profilers.jar")
+    spec.withModule("intellij.android.profilers", "android-profilers.jar")
+    spec.withModule("intellij.android.transportDatabase", "android-profilers.jar")
+
+    // android-rt.jar
+    //tools/adt/idea/rt:intellij.android.rt <= REMOVED
+
+    // android-project-system-gradle-models.jar
+    spec.withModule("intellij.android.projectSystem.gradle.models", "android-project-system-gradle-models.jar")
+
+    // android.jar
+    spec.withModule("intellij.android.analytics", "android.jar")
+    spec.withModule("intellij.android.assistant", "android.jar")
+    //tools/adt/idea/connection-assistant:connection-assistant <= REMOVED
+    spec.withModule("intellij.android.adb", "android.jar")
+    spec.withModule("intellij.android.adb.ui", "android.jar")
+    spec.withModule("intellij.android.backup", "android.jar")
+    spec.withModule("intellij.android.backup.api", "android.jar")
+    spec.withModule("intellij.android.lint", "android.jar")
+    spec.withModule("intellij.android.templates", "android.jar")
+    spec.withModule("intellij.android.testartifacts", "android.jar")
+    spec.withModule("intellij.android.apkanalyzer", "android.jar")
+    spec.withModule("intellij.android.apkanalyzer.apk", "android.jar")
+    spec.withModule("intellij.android.apkanalyzer.gradle", "android.jar")
+    spec.withModule("intellij.android.app-inspection.api", "android.jar")
+    spec.withModule("intellij.android.app-inspection.ide", "android.jar")
+    spec.withModule("intellij.android.app-inspection.ide.gradle", "android.jar")
+    spec.withModule("intellij.android.app-inspection.inspector.api", "android.jar")
+    spec.withModule("intellij.android.app-inspection.inspector.ide", "android.jar")
+    spec.withModule("intellij.android.app-inspection.inspectors.backgroundtask.ide", "android.jar")
+    spec.withModule("intellij.android.app-inspection.inspectors.backgroundtask.model", "android.jar")
+    spec.withModule("intellij.android.app-inspection.inspectors.backgroundtask.view", "android.jar")
+    // Disabled sync it requires Google's APIs
+    //spec.withModule("intellij.android.app-quality-insights.api", "android.jar")
+    //spec.withModule("intellij.android.app-quality-insights.ide", "android.jar")
+    //spec.withModule("intellij.android.app-quality-insights.ui", "android.jar")
+    //spec.withModule("intellij.android.app-quality-insights.play-vitals.model", "android.jar")
+    //spec.withModule("intellij.android.app-quality-insights.play-vitals.ide", "android.jar")
+    //spec.withModule("intellij.android.app-quality-insights.play-vitals.view", "android.jar")
+    spec.withModule("intellij.android.build-attribution", "android.jar")
+    spec.withModule("intellij.android.compose-common", "android.jar")
+    spec.withModule("intellij.android.device", "android.jar")
+    spec.withModule("intellij.android.core", "android.jar")
+    spec.withModule("intellij.android.core.editing.documentation", "android.jar")
+    spec.withModule("intellij.android.core.editing.metrics", "android.jar")
+    spec.withModule("intellij.android.navigator", "android.jar")
+    spec.withModule("intellij.android.dagger", "android.jar")
+    spec.withModule("intellij.android.databinding", "android.jar")
+    spec.withModule("intellij.android.databinding.gradle", "android.jar")
+    spec.withModule("intellij.android.app-inspection.inspectors.database", "android.jar")
+    spec.withModule("intellij.android.debuggers", "android.jar")
+    spec.withModule("intellij.android.deploy", "android.jar")
+    spec.withModule("intellij.android.device-explorer", "android.jar")
+    spec.withModule("intellij.android.device-explorer-files", "android.jar")
+    spec.withModule("intellij.android.device-explorer-monitor", "android.jar")
+    spec.withModule("intellij.android.device-explorer-common", "android.jar")
+    //spec.withModule("intellij.android.device-manager", "android.jar")
+    spec.withModule("intellij.android.device-manager-v2", "android.jar")
+    spec.withModule("intellij.android.gmaven", "android.jar")
+    spec.withModule("intellij.android.ml-api", "android.jar")
+    // Packaged as a gradle-dsl plugin
+    //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
+    //tools/adt/idea/gradle-dsl-kotlin:intellij.android.gradle.dsl.kotlin <= REMOVED
+    //spec.withModule("intellij.android.gradle.dsl.declarative", "android.jar")
+    //spec.withModule("intellij.android.gradle.dsl.toml", "android.jar")
+    spec.withModule("intellij.android.lang-databinding", "android.jar")
+    spec.withModule("intellij.android.lang", "android.jar")
+    spec.withModule("intellij.android.layout-inspector", "android.jar")
+    spec.withModule("intellij.android.layout-inspector.gradle", "android.jar")
+    spec.withModule("intellij.android.layout-ui", "android.jar")
+    spec.withModule("intellij.android.logcat", "android.jar")
+    spec.withModule("intellij.android.logcat.gradle", "android.jar")
+    spec.withModule("intellij.android.mlkit", "android.jar")
+    spec.withModule("intellij.android.nav.safeargs", "android.jar")
+    spec.withModule("intellij.android.nav.safeargs.common", "android.jar")
+    spec.withModule("intellij.android.nav.safeargs.common.gradle", "android.jar")
+    spec.withModule("intellij.android.nav.safeargs.k2", "android.jar")
+    spec.withModule("intellij.android.android-material", "android.jar")
+    spec.withModule("intellij.android.observable.ui", "android.jar")
+    spec.withModule("intellij.android.observable", "android.jar")
+    if (mainModuleName != "intellij.android.plugin.descriptor") {
+      spec.withModule("intellij.android.plugin.descriptor", "android.jar")
     }
+    spec.withModule("intellij.android.preview-elements", "android.jar")
+    spec.withModule("intellij.android.profilersAndroid", "android.jar")
+    spec.withModule("intellij.android.profilersAndroid.gradle", "android.jar")
+    spec.withModule("intellij.android.projectSystem.apk", "android.jar")
+    spec.withModule("intellij.android.projectSystem.gradle.psd", "android.jar")
+    spec.withModule("intellij.android.projectSystem.gradle.repositorySearch", "android.jar")
+    spec.withModule("intellij.android.projectSystem.gradle.upgrade", "android.jar")
+    spec.withModule("intellij.android.projectSystem.gradle", "android.jar")
+    spec.withModule("intellij.android.projectSystem", "android.jar")
+    spec.withModule("intellij.android.render-resources", "android.jar")
+    spec.withModule("intellij.android.rendering", "android.jar")
+    spec.withModule("intellij.android.room", "android.jar")
+    //spec.withModule("intellij.android.samples-browser", "android.jar") AS Koala Merge
+    spec.withModule("intellij.android.screenshot-test", "android.jar")
+    spec.withModule("intellij.android.screenshot-test.gradle", "android.jar")
+    spec.withModule("intellij.android.sdkUpdates", "android.jar")
+    spec.withModule("intellij.android.threading-checker", "android.jar")
+    spec.withModule("intellij.android.tracer", "android.jar")
+    spec.withModule("intellij.android.transport", "android.jar")
+    spec.withModule("intellij.android.newProjectWizard", "android.jar")
+    spec.withModule("intellij.android.wear-pairing", "android.jar")
+    spec.withModule("intellij.android.wear-whs", "android.jar")
+    spec.withModule("intellij.android.wear-dwf", "android.jar")
+    spec.withModule("intellij.android.wizard.model", "android.jar")
+    spec.withModule("intellij.android.wizard", "android.jar")
+    spec.withModule("intellij.android.native-symbolizer", "android.jar")
+    spec.withModule("intellij.android.native-symbolizer.gradle", "android.jar")
+    //tools/adt/idea/whats-new-assistant:whats-new-assistant <= REMOVED
+    spec.withModule("intellij.android.app-inspection.inspectors.network.ide", "android.jar")
+    spec.withModule("intellij.android.app-inspection.inspectors.network.model", "android.jar")
+    spec.withModuleLibrary("brotli-dec", "intellij.android.app-inspection.inspectors.network.model", "android.jar")
+    spec.withModule("intellij.android.app-inspection.inspectors.network.view", "android.jar")
+    spec.withModule("intellij.android.server-flags", "android.jar")
+    spec.withModule("intellij.android.codenavigation", "android.jar")
+    spec.withModule("intellij.android.execution.common", "android.jar")
+    spec.withModule("intellij.android.avd", "android.jar")
+
+    spec.withModule("intellij.android.preview-fast-compile", "android.jar")
+    spec.withModule("intellij.android.completion", "android.jar")
+
+    // artwork.jar
+    spec.withModule("intellij.android.artwork", "artwork.jar")
+    spec.withModule("intellij.android.artwork-compose", "artwork.jar")
+    // build-common.jar
+    spec.withModule("intellij.android.buildCommon", "build-common.jar")
+
+    // inspectors-common.jar
+    spec.withModule("intellij.android.inspectors-common.api", "inspectors-common.jar")
+    spec.withModule("intellij.android.inspectors-common.api-ide", "inspectors-common.jar")
+    spec.withModule("intellij.android.inspectors-common.ui", "inspectors-common.jar")
+
+    // layoutlib-api.jar
+
+
+    // layoutlib-loader.jar
+    spec.withModule("intellij.android.layoutlib-loader", "layoutlib-loader.jar")
+
+    // lint-ide.jar
+    spec.withModule("intellij.android.lint.common", "lint-ide.jar")
+
+    // manifest-merger.jar
+
+
+    // memory-usage.jar
+    spec.withModule("intellij.android.memory-usage", "memory-usage.jar")
+
+    // utp.jar
+    spec.withModule("intellij.android.utp", "utp.jar")
+
+    // libs:
+    //spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea.common", "")
+    //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
+
+
+    // We do not bundle Google Login API
+    //spec.withModuleLibrary("javax-servlet", "google-login-as", "")
+    //spec.withModuleLibrary("jsr305-2.0.1", "google-login-as", "")
+    //spec.withModuleLibrary("oauth2", "google-login-as", "")
+
+
+    // Module is disabled intellij.android.adt.ui.compose since no modules use it
+    //spec.withModuleLibrary("compose-desktop-animation", "intellij.android.adt.ui.compose", "")
+    //spec.withModuleLibrary("compose-desktop-foundation", "intellij.android.adt.ui.compose", "")
+    //spec.withModuleLibrary("compose-desktop-material", "intellij.android.adt.ui.compose", "")
+    //spec.withModuleLibrary("compose-desktop-runtime", "intellij.android.adt.ui.compose", "")
+    //spec.withModuleLibrary("compose-desktop-ui", "intellij.android.adt.ui.compose", "")
+    //spec.withModuleLibrary("skiko", "intellij.android.adt.ui.compose", "")
+
+    spec.withFfmpegWrapper(os = os, arch = arch)
+
+    spec.withModule("intellij.android.streaming")
+
+    // Library that aggregates all libraries and modules from `tools/base` directory
+    spec.withProjectLibrary("studio-platform")
+
+    // Used in intellij.android.app-quality-insights.api module which currently isn't bundled in IJ IDEA
+    //spec.withProjectLibrary("gradle-shared-proto")
+    //spec.withModuleLibrary("play_vitals_java_proto", "intellij.android.app-quality-insights.play-vitals.model", "")
+    /**
+     * TODO Check if needed since following modules reference it:
+     * - intellij.android.app-inspection.inspectors.database
+     * - intellij.android.app-inspection.inspectors.database.tests
+     */
+    //spec.withProjectLibrary("sqlite-inspector-proto")
+    // We do not bundle Google API client in IJ
+    //spec.withProjectLibrary("google-api-client")
+    spec.withProjectLibrary("aapt-proto")
+    spec.withProjectLibrary("google-baksmali")
+    spec.withProjectLibrary("google-dexlib2")
+    //spec.withProjectLibrary("gradle-shared-proto")
+    spec.withProjectLibrary("javax-inject")
+    //spec.withProjectLibrary("jetty")
+    spec.withModuleLibrary("kotlinx-coroutines-guava", "intellij.libraries.kotlinx.coroutines.guava", "")
+    //spec.withProjectLibrary("libadb-server-proto")
+    //spec.withProjectLibrary("oauth2")
+    //spec.withModuleLibrary("libandroid-core-proto", "intellij.android.projectSystem.gradle", "")
+    //tools/adt/idea/android/lib:android-sdk-tools-jps <= this is jarutils.jar
+    spec.withModuleLibrary("instantapps-api", "intellij.android.core", "")
+    //spec.withModuleLibrary("play_vitals_java_proto", "intellij.android.app-quality-insights.play-vitals.model", "")
+    //tools/adt/idea/compose-designer:ui-animation-tooling-internal <= not recognized
+    //tools/vendor/google/game-tools/main:game-tools-protos <= not recognized
+    // :libs
+
+
+    //"resources": [
+    // contents of "/plugins/android/lib/layoutlib/" will be downloaded by the AndroidPlugin on demand
+    // Profiler downloader will download all the other profiler libraries: profilers-transform.jar, perfa_okhttp.dex, perfa, perfd, simpleperf
+    // Profiler downloader will also download instant run installers: /resources/installer
+    // Profiler downloader will also download instant run transport: /resources/transport
+
+    //  "//tools/adt/idea/android/lib:sample-data-bundle",
+    spec.withResourceFromModule("intellij.android.core", "lib/sampleData", "resources/sampleData")
+    // "//tools/adt/idea/android/lib:apks-bundle",
+    spec.withResourceFromModule("intellij.android.core", "lib/apks", "resources/apks")
+    //  "//tools/adt/idea/artwork:device-art-resources-bundle",  # duplicated in android.jar
+    spec.withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "resources/device-art-resources")
+    //  "//tools/adt/idea/android/annotations:androidAnnotations",
+    spec.withResourceArchiveFromModule("intellij.android.plugin", "../android/annotations", "resources/androidAnnotations.jar")
+    //  "//tools/adt/idea/emulator/native:native_lib",
+    spec.withResourceFromModule("intellij.android.streaming", "native/linux", "resources/native/linux")
+    spec.withResourceFromModule("intellij.android.streaming", "native/mac", "resources/native/mac")
+    spec.withResourceFromModule("intellij.android.streaming", "native/mac_arm", "resources/native/mac_arm")
+    spec.withResourceFromModule("intellij.android.streaming", "native/win", "resources/native/win")
+    // "//tools/adt/idea/emulator/screen-sharing-agent:bundle", TODO-ank
+
+    //  "//tools/base/app-inspection/inspectors/backgroundtask:bundle",
+    //  "//tools/base/app-inspection/inspectors/network:bundle",
+    //  "//tools/base/dynamic-layout-inspector/agent/appinspection:bundle",
+    //  "tools/base/process-monitor/process-tracker-agent:bundle",
+    //  "//tools/base/profiler/transform:profilers-transform",
+    //  "//tools/base/profiler/app:perfa",
+    //  "//tools/base/profiler/app:perfa_okhttp",
+    //  "//tools/base/tracer:trace_agent.jar",  # TODO(b/149320690): remove in 4.1 final release.
+    //"//tools/base/transport:transport-bundle",
+    //"//prebuilts/tools:simpleperf-bundle",
+    //"//prebuilts/tools/common/perfetto:perfetto-bundle",
+    //"//prebuilts/tools/common/app-inspection/androidx/sqlite:sqlite-inspection-bundle",
+    //"//tools/base/deploy/installer:android-installer-bundle",
+    //"//tools/adt/idea/android:asset-studio-bundle",
+    spec.withResourceFromModule("intellij.android.core", "resources/images/asset_studio", "resources/images/asset_studio")
+    //"//prebuilts/tools/common/trace-processor-daemon:trace-processor-daemon-bundle",
+    //],
+    //
+    // END OF BAZEL FILE
+
+    // here go some differences from original Android Studio layout
+
+    for ((key, value) in additionalModulesToJars) {
+      spec.withModule(key, value)
+    }
+
+    addition?.invoke(spec)
   }
+}
 
-  fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    return pluginAutoWithCustomDirName("intellij.groovy") { spec ->
-      spec.directoryName = "Groovy"
-      spec.mainJarName = "Groovy.jar"
-      spec.withModules(
-        listOf(
-          "intellij.groovy.psi",
-          "intellij.groovy.structuralSearch",
-        )
+fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
+  return pluginAutoWithCustomDirName("intellij.groovy") { spec ->
+    spec.directoryName = "Groovy"
+    spec.mainJarName = "Groovy.jar"
+    spec.withModules(
+      listOf(
+        "intellij.groovy.psi",
+        "intellij.groovy.structuralSearch",
       )
-      spec.withModule("intellij.groovy.jps", "groovy-jps.jar")
-      spec.withModule("intellij.groovy.rt", "groovy-rt.jar")
-      spec.withModule("intellij.groovy.spock.rt", "groovy-spock-rt.jar")
-      spec.withModule("intellij.groovy.rt.classLoader", "groovy-rt-class-loader.jar")
-      spec.withModule("intellij.groovy.constants.rt", "groovy-constants-rt.jar")
-      spec.withModules(additionalModules)
+    )
+    spec.withModule("intellij.groovy.jps", "groovy-jps.jar")
+    spec.withModule("intellij.groovy.rt", "groovy-rt.jar")
+    spec.withModule("intellij.groovy.spock.rt", "groovy-spock-rt.jar")
+    spec.withModule("intellij.groovy.rt.classLoader", "groovy-rt-class-loader.jar")
+    spec.withModule("intellij.groovy.constants.rt", "groovy-constants-rt.jar")
+    spec.withModules(additionalModules)
 
-      spec.excludeFromModule("intellij.groovy.psi", "standardDsls/**")
-      spec.withResource("groovy-psi/resources/standardDsls", "lib/standardDsls")
-      spec.withResource("hotswap/gragent.jar", "lib/agent")
-      spec.withResource("groovy-psi/resources/conf", "lib")
-      addition?.invoke(spec)
-    }
+    spec.excludeFromModule("intellij.groovy.psi", "standardDsls/**")
+    spec.withResource("groovy-psi/resources/standardDsls", "lib/standardDsls")
+    spec.withResource("hotswap/gragent.jar", "lib/agent")
+    spec.withResource("groovy-psi/resources/conf", "lib")
+    addition?.invoke(spec)
   }
 }
 

@@ -29,7 +29,7 @@ internal fun inferModuleSources(
     directDependencies = helper.getModuleDependencies(layout.mainModule),
     addedModules = addedModules,
     platformLayout = platformLayout,
-    pluginLayouts = context.productProperties.productLayout.pluginLayouts,
+    pluginLayouts = context.productProperties.productLayout.pluginLayouts.value,
   )
   for (name in children) {
     val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = getDefaultJarName(layout, name, frontendModuleFilter), reason = "<- ${layout.mainModule}")

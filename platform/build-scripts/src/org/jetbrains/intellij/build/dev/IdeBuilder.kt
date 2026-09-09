@@ -966,7 +966,9 @@ private fun doCreateProductProperties(
   platformPrefix: String,
 ): ProductProperties {
   val productPropertiesClass = try {
-    classLoader.loadClass(className)
+    // Use false to load the class without running static initializers, as loadClass did.
+    // The constructor invocation below initializes the class.
+    Class.forName(className, false, classLoader)
   }
   catch (e: ClassNotFoundException) {
     val classPathString = classPathFiles.joinToString(separator = "\n") { file ->
