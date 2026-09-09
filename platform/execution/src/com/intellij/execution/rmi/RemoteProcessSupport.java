@@ -59,6 +59,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+
 /**
  * @author Gregory.Shrago
  */
@@ -498,14 +500,14 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
     }
     if (info instanceof PendingInfo pendingInfo) {
-      LOG.warn("Dropping process info for pending process: stder = " + pendingInfo.stderr, error);
-
       if (error != null || !pendingInfo.stderr.isEmpty() || pendingInfo.ref.isNull()) {
         pendingInfo.ref.set(new FailedInfo(error, pendingInfo.stderr.toString()));
       }
       synchronized (pendingInfo.ref) {
         pendingInfo.ref.notifyAll();
       }
+      rethrowControlFlowException(error);
+      LOG.warn("Dropping process info for pending process: stder = " + pendingInfo.stderr, error);
     }
     return info != null;
   }
