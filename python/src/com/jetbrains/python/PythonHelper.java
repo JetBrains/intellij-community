@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -238,7 +238,7 @@ public enum PythonHelper implements HelperPackage {
 
     private HelperDependency(@NotNull String pythonPath) { myPythonPath = pythonPath; }
 
-    public void addToPythonPath(@NotNull Map<String, String> environment) {
+    private void addToPythonPath(@NotNull Map<String, String> environment) {
       PythonEnvUtil.addToPythonPath(environment, myPythonPath);
     }
 

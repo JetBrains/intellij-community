@@ -34,11 +34,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * <strong>DO NOT USE THIS CLASS</strong>. Use {@link com.intellij.python.community.execService.ExecService}
  * A more flexible cousin of SdkVersionUtil.
  * Needs not to be instantiated and only holds static methods.
  *
- * @see PythonSdkUtil for Pyhton SDK utilities with no run-time dependencies
- * @deprecated please use Kotlin coroutines to run processes in background
+ * @deprecated Use {@link com.intellij.python.community.execService.ExecService}
  */
 @Deprecated(forRemoval = true)
 @ApiStatus.Internal
@@ -68,9 +68,7 @@ public final class PySdkUtil {
     return getProcessOutput(homePath, command, null, timeout);
   }
 
-  @ApiStatus.Internal
-
-  public static @NotNull ProcessOutput getProcessOutput(String homePath,
+  private static @NotNull ProcessOutput getProcessOutput(String homePath,
                                                         @NonNls String[] command,
                                                         @Nullable @NonNls Map<String, String> extraEnv,
                                                         final int timeout) {
@@ -79,7 +77,7 @@ public final class PySdkUtil {
 
   @ApiStatus.Internal
 
-  public static @NotNull ProcessOutput getProcessOutput(String homePath,
+  private static @NotNull ProcessOutput getProcessOutput(String homePath,
                                                         @NonNls String[] command,
                                                         @Nullable @NonNls Map<String, String> extraEnv,
                                                         final int timeout,
@@ -176,8 +174,11 @@ public final class PySdkUtil {
       }
     };
   }
-
-  public static @NotNull Map<String, String> mergeEnvVariables(@NotNull Map<String, String> environment,
+  /**
+   * @deprecated it doesn't support eel, do ot use it.
+   */
+  @Deprecated(forRemoval = true)
+  private static @NotNull Map<String, String> mergeEnvVariables(@NotNull Map<String, String> environment,
                                                                @NotNull Map<String, String> extraEnvironment) {
     final Map<String, String> result = new HashMap<>(environment);
     for (Map.Entry<String, String> entry : extraEnvironment.entrySet()) {
