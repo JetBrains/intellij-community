@@ -10,6 +10,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewFetcher
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.ide.util.gotoByName.ChooseByNameInScopeItemProvider
+import com.intellij.ide.util.gotoByName.ChooseByNameMatcherFactory
 import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNameModelEx
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
@@ -55,6 +56,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.codeStyle.MatcherWithFallback
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FindSymbolParameters
@@ -247,13 +249,9 @@ class SeTargetItemsProvider private constructor(
     return true
   }
 
-  /**
-   * The matchers of the whole query, before any item narrows them.
-   */
-  private fun createDefaultMatchers(pattern: String, model: ChooseByNameModel): ItemMatchers {
-    val namePattern = ChooseByNamePopup.getTransformedPattern(pattern, model)
-    return ItemMatchers(NameUtil.buildMatcherWithFallback("*$pattern", "*$namePattern", MatchingMode.IGNORE_CASE), null)
-  }
+  /** Takes the name pattern out of [model], then hands the rest to [createDefaultMatchers]. */
+  private fun createDefaultMatchers(pattern: String, model: ChooseByNameModel): ItemMatchers =
+    createDefaultMatchers(pattern, ChooseByNamePopup.getTransformedPattern(pattern, model))
 
   private fun itemMatchers(defaultMatchers: ItemMatchers, model: ChooseByNameModel, element: Any): ItemMatchers =
     if (model is GotoFileModel && element is PsiFileSystemItem) {
@@ -456,6 +454,26 @@ class SeTargetItemsProvider private constructor(
       } ?: return null
 
       return SePreviewInfoFactory.create(virtualFile.rpcId(), listOf(startOffset to endOffset))
+    }
+
+    /**
+     * Builds the matchers of the whole query, before any item narrows them.
+     */
+    fun createDefaultMatchers(rawPattern: String, namePattern: String): ItemMatchers {
+      val fullRawPattern = "*$rawPattern"
+      val fullNamePattern = "*$namePattern"
+
+      val matcherFactory = ChooseByNameMatcherFactory.tryGetInstance()
+      if (matcherFactory != null) {
+        val rawMatcher = matcherFactory.createMatcher(fullRawPattern, false)
+        val nameMatcher = matcherFactory.createMatcher(fullNamePattern, false)
+        if (rawMatcher != null && nameMatcher != null) {
+          val matcher = if (fullRawPattern == fullNamePattern) rawMatcher else MatcherWithFallback(rawMatcher, nameMatcher)
+          return ItemMatchers(matcher, null)
+        }
+      }
+
+      return ItemMatchers(NameUtil.buildMatcherWithFallback(fullRawPattern, fullNamePattern, MatchingMode.IGNORE_CASE), null)
     }
 
     /**

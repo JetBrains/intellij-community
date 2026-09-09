@@ -5,7 +5,6 @@ import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrappe
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
-import com.intellij.ide.util.gotoByName.ChooseByNameMatcherFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
@@ -27,9 +26,6 @@ import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.codeStyle.MatcherWithFallback
-import com.intellij.psi.codeStyle.NameUtil
-import com.intellij.util.text.matching.MatchingMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -128,22 +124,9 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     return contributor.showInFindResults()
   }
 
-  private fun createDefaultMatchers(rawPattern: String): ItemMatchers {
-    val fullRawPattern = "*$rawPattern"
-    val fullNamePattern = "*${contributor.filterControlSymbols(rawPattern)}"
-
-    val matcherFactory = ChooseByNameMatcherFactory.tryGetInstance()
-    if (matcherFactory != null) {
-      val rawMatcher = matcherFactory.createMatcher(fullRawPattern, false)
-      val nameMatcher = matcherFactory.createMatcher(fullNamePattern, false)
-      if (rawMatcher != null && nameMatcher != null) {
-        val matcher = if (fullRawPattern == fullNamePattern) rawMatcher else MatcherWithFallback(rawMatcher, nameMatcher)
-        return ItemMatchers(matcher, null)
-      }
-    }
-
-    return ItemMatchers(NameUtil.buildMatcherWithFallback(fullRawPattern, fullNamePattern, MatchingMode.IGNORE_CASE), null)
-  }
+  /** Takes the name pattern out of the contributor, then hands the rest to [SeTargetItemsProvider]. */
+  private fun createDefaultMatchers(rawPattern: String): ItemMatchers =
+    SeTargetItemsProvider.createDefaultMatchers(rawPattern, contributor.filterControlSymbols(rawPattern))
 
   suspend fun getSearchScopesInfo(): SearchScopesInfo? {
     return scopeProviderDelegate?.searchScopesInfo?.getValue()
