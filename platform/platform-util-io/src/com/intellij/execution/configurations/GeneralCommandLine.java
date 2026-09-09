@@ -27,6 +27,7 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FastUtilHashingStrategies;
@@ -396,6 +397,9 @@ public class GeneralCommandLine implements UserDataHolder {
 
   @ApiStatus.NonExtendable
   public @NotNull Process createProcess() throws ExecutionException {
+    // creating process on Windows may easily block, it may not be performed from EDT
+    SlowOperations.assertNonCancelableSlowOperationsAreAllowed();
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("Executing [" + getCommandLineString() + "]");
       if (myWorkingDirectory != null) {
