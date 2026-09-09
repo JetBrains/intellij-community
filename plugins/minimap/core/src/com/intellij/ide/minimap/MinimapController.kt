@@ -10,25 +10,27 @@ import com.intellij.ide.minimap.listeners.MinimapUiListeners
 import com.intellij.ide.minimap.interaction.MinimapInteractionPolicy
 import com.intellij.ide.minimap.layout.MinimapLayoutPolicy
 import com.intellij.ide.minimap.model.MinimapModel
+import com.intellij.ide.minimap.model.MinimapStructureMarkerSnapshot
 import com.intellij.ide.minimap.scene.MinimapSceneBuilder
+import com.intellij.ide.minimap.scene.MinimapSnapshot
 import com.intellij.ide.minimap.settings.MinimapSettings
 import com.intellij.ide.minimap.settings.MinimapScaleMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,6 +49,7 @@ class MinimapController(
   private var disposed = false
 
   private val scope = coroutineScope.childScope("MinimapController")
+  private val snapshotUpdates = MutableSharedFlow<SnapshotRequest>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val structureUpdates = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val diagnosticsUpdates = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val settings = MinimapSettings.getInstance()
@@ -89,6 +92,7 @@ class MinimapController(
   fun install() {
     stateListeners.install()
     uiListeners.install()
+    initSnapshotFlow()
     refreshSnapshot()
     initStructureMarkersFlow()
     initDiagnosticsFlow()
@@ -109,35 +113,61 @@ class MinimapController(
   fun scheduleDiagnosticsUpdate(): Boolean = diagnosticsUpdates.tryEmit(Unit)
 
   fun refreshSnapshot() {
-    // The snapshot pass resolves structure markers and reads the editor/document model in
-    // MinimapSceneBuilder, which needs read access. This runs on EDT from many call sites
-    // (resize, scroll, settings, LAF changes, …); wrap once here so every caller is protected.
-    WriteIntentReadAction.run {
-      val state = settings.state
-      val panelHeight = max(if (panel.height > 0) panel.height else container.height, 0)
-      val effectiveScaleMode = MinimapLayoutPolicy.getEffectiveScaleMode(editor, state.scaleMode)
-      val scaleData = MinimapScaleUtil.computeScale(editor, panelHeight, state.width, effectiveScaleMode)
-      if (!updatePanelVisibility(scaleData.width)) {
-        return@run
-      }
-      if (panel.updatePreferredWidth(scaleData.width)) {
-        panel.revalidate()
-      }
+    if (disposed || editor.isDisposed) return
 
-      val panelWidth = max(panel.width, scaleData.width)
-      val areaStartOverride = if (isIndependentScrollEnabled()) independentAreaStart else null
-      val snapshot = sceneBuilder.buildSnapshot(
-        panelWidth,
-        panelHeight,
-        scaleData,
-        effectiveScaleMode,
-        areaStartOverride,
+    val state = settings.state
+    val independentScrollEnabled = isIndependentScrollEnabled()
+    val request = SnapshotRequest(
+      panelWidth = panel.width,
+      panelHeight = max(if (panel.height > 0) panel.height else container.height, 0),
+      editorWidth = container.width,
+      fixedWidth = state.width,
+      scaleMode = state.scaleMode,
+      areaStartOverride = if (independentScrollEnabled) independentAreaStart else null,
+      independentScrollEnabled = independentScrollEnabled,
+    )
+    snapshotUpdates.tryEmit(request)
+  }
+
+  @RequiresEdt
+  private fun buildSnapshotUpdate(request: SnapshotRequest, structureMarkers: List<MinimapStructureMarkerSnapshot>): SnapshotUpdate {
+    val effectiveScaleMode = MinimapLayoutPolicy.getEffectiveScaleMode(editor, request.scaleMode)
+    val scaleData = MinimapScaleUtil.computeScale(editor, request.panelHeight, request.fixedWidth, effectiveScaleMode)
+    val shouldBeVisible = !shouldHideForNarrowEditor(scaleData.width, request.editorWidth)
+    val snapshot = if (shouldBeVisible) {
+      sceneBuilder.buildSnapshot(
+        panelWidth = max(request.panelWidth, scaleData.width),
+        panelHeight = request.panelHeight,
+        scaleData = scaleData,
+        scaleMode = effectiveScaleMode,
+        areaStartOverride = request.areaStartOverride,
+        structureMarkers = structureMarkers,
       )
-      panel.updateSnapshot(snapshot)
-      if (isIndependentScrollEnabled()) {
-        independentAreaStart = snapshot.geometry.areaStart
-      }
     }
+    else {
+      null
+    }
+    return SnapshotUpdate(scaleData.width, shouldBeVisible, request.independentScrollEnabled, snapshot)
+  }
+
+  private fun applySnapshotUpdate(update: SnapshotUpdate) {
+    if (disposed || editor.isDisposed) return
+    val isVisible = updatePanelVisibility(update.minimapWidth)
+    if (isVisible != update.shouldBeVisible) {
+      refreshSnapshot()
+      return
+    }
+    if (!isVisible) return
+
+    if (panel.updatePreferredWidth(update.minimapWidth)) {
+      panel.revalidate()
+    }
+    val snapshot = update.snapshot ?: return
+    panel.updateSnapshot(snapshot)
+    if (update.independentScrollEnabled) {
+      independentAreaStart = snapshot.geometry.areaStart
+    }
+    panel.repaint()
   }
 
   private fun refreshVisibleArea() {
@@ -196,7 +226,7 @@ class MinimapController(
   }
 
   private fun updatePanelVisibility(minimapWidth: Int): Boolean {
-    val hiddenForNarrowEditor = shouldHideForNarrowEditor(minimapWidth)
+    val hiddenForNarrowEditor = shouldHideForNarrowEditor(minimapWidth, container.width)
     val shouldBeVisible = !hiddenForNarrowEditor
     if (panel.isVisible == shouldBeVisible) return shouldBeVisible
     panel.isVisible = shouldBeVisible
@@ -205,26 +235,33 @@ class MinimapController(
     return shouldBeVisible
   }
 
-  private fun shouldHideForNarrowEditor(minimapWidth: Int): Boolean {
+  private fun shouldHideForNarrowEditor(minimapWidth: Int, editorWidth: Int): Boolean {
     if (minimapWidth <= 0) return false
-    val editorWidth = container.width
     if (editorWidth <= 0) return false
     return editorWidth.toLong() <= minimapWidth.toLong() * HIDE_MINIMAP_EDITOR_WIDTH_MULTIPLIER
   }
 
   fun updateStructureMarkersNow() {
-    ReadAction.nonBlocking<Unit> { model.updateStructureMarkers() }
-      .coalesceBy(this)
-      .expireWith(this)
-      .finishOnUiThread(ModalityState.any()) {
+    scope.launch {
+      updateStructureMarkers()
+    }
+  }
+
+  private suspend fun updateStructureMarkers() {
+    readAction {
+      model.updateStructureMarkers()
+    }
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      if (!disposed) {
         refreshSnapshot()
         panel.repaint()
-      }.submit(AppExecutorUtil.getAppExecutorService())
+      }
+    }
   }
 
   private fun initStructureMarkersFlow() = scope.launch {
-    structureUpdates.debounce(STRUCTURE_MARKERS_DEBOUNCE_MS.milliseconds).collect {
-      updateStructureMarkersNow()
+    structureUpdates.debounce(STRUCTURE_MARKERS_DEBOUNCE_MS.milliseconds).collectLatest {
+      updateStructureMarkers()
     }
   }
 
@@ -237,6 +274,35 @@ class MinimapController(
       }
     }
   }
+
+  private fun initSnapshotFlow() = scope.launch {
+    snapshotUpdates.collectLatest { request ->
+      val structureMarkers = readAction {
+        sceneBuilder.captureStructureMarkers()
+      }
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val update = buildSnapshotUpdate(request, structureMarkers)
+        applySnapshotUpdate(update)
+      }
+    }
+  }
+
+  private data class SnapshotRequest(
+    val panelWidth: Int,
+    val panelHeight: Int,
+    val editorWidth: Int,
+    val fixedWidth: Int,
+    val scaleMode: MinimapScaleMode,
+    val areaStartOverride: Int?,
+    val independentScrollEnabled: Boolean,
+  )
+
+  private data class SnapshotUpdate(
+    val minimapWidth: Int,
+    val shouldBeVisible: Boolean,
+    val independentScrollEnabled: Boolean,
+    val snapshot: MinimapSnapshot?,
+  )
 
   companion object {
     private const val STRUCTURE_MARKERS_DEBOUNCE_MS: Long = 125

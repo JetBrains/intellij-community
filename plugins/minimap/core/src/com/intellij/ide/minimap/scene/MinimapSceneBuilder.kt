@@ -9,10 +9,12 @@ import com.intellij.ide.minimap.geometry.MinimapScaleData
 import com.intellij.ide.minimap.layout.MinimapLayoutCalculator
 import com.intellij.ide.minimap.layout.MinimapLayoutModeSelector
 import com.intellij.ide.minimap.model.MinimapStructureMarker
+import com.intellij.ide.minimap.model.MinimapStructureMarkerSnapshot
 import com.intellij.ide.minimap.model.MinimapModel
 import com.intellij.ide.minimap.render.MinimapRenderContext
 import com.intellij.ide.minimap.settings.MinimapScaleMode
 import com.intellij.openapi.editor.Editor
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 class MinimapSceneBuilder(
   private val editor: Editor,
@@ -30,7 +32,8 @@ class MinimapSceneBuilder(
                     panelHeight: Int,
                     scaleData: MinimapScaleData,
                     scaleMode: MinimapScaleMode,
-                    areaStartOverride: Int? = null): MinimapSnapshot {
+                    areaStartOverride: Int? = null,
+                    structureMarkers: List<MinimapStructureMarkerSnapshot> = captureStructureMarkers()): MinimapSnapshot {
     val lineProjection = model.getLineProjection()
     val geometry = geometryCalculator.compute(panelHeight, scaleData, scaleMode, lineProjection.projectedLineCount, areaStartOverride)
     val context = MinimapRenderContext(
@@ -40,14 +43,6 @@ class MinimapSceneBuilder(
       geometry = geometry,
       lineProjection = lineProjection,
     )
-
-    val isCommitted = model.isDocumentCommitted()
-    val structureMarkers = if (isCommitted) {
-      model.getStructureMarkers().also { lastStructureMarkers = it }
-    }
-    else {
-      lastStructureMarkers
-    }
 
     val layoutMode = MinimapLayoutModeSelector.selectMode(context, scaleMode)
     val layout = layoutCalculator.buildLayout(context, structureMarkers, layoutMode)
@@ -66,6 +61,21 @@ class MinimapSceneBuilder(
       layoutMetrics = layout.metrics,
       layoutMode = layoutMode,
     )
+  }
+
+  @RequiresReadLock
+  fun captureStructureMarkers(): List<MinimapStructureMarkerSnapshot> {
+    val structureMarkers = if (model.isDocumentCommitted()) {
+      model.getStructureMarkers().also { lastStructureMarkers = it }
+    }
+    else {
+      lastStructureMarkers
+    }
+    return structureMarkers.mapNotNull { marker ->
+      val rangeMarker = marker.rangeMarker ?: return@mapNotNull null
+      if (!rangeMarker.isValid) return@mapNotNull null
+      MinimapStructureMarkerSnapshot(marker.elementReference, rangeMarker.textRange)
+    }
   }
 
   fun clear() {
