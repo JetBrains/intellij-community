@@ -31,5 +31,5 @@ class SePsiExtendedInfoCalculator : SeExtendedInfoCalculator {
   }
 
   override suspend fun infoFor(item: SeTargetRawItem): SeExtendedInfo =
-    readAction { SeExtendedInfoBuilder().withExtendedInfo(extendedInfo, item.rawObject).build() }
+    readAction { SeExtendedInfoBuilder().withExtendedInfo(extendedInfo, item.rawItem).build() }
 }

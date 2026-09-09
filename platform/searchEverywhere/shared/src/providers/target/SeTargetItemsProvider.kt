@@ -95,16 +95,18 @@ import kotlin.coroutines.cancellation.CancellationException
  * A raw search result, with the matchers that decide which parts of its presentation the UI highlights.
  */
 @ApiStatus.Experimental
-class SeTargetRawItem(val rawObject: Any, val rawWeight: Int?, val matchers: ItemMatchers?)
+class SeTargetRawItem(val rawItem: Any, val rawWeight: Int?, val matchers: ItemMatchers?)
 
 @ApiStatus.Experimental
-class SeTargetPresentableItem(override val rawObject: Any,
+class SeTargetPresentableItem(rawItem: Any,
                               private val matchers: ItemMatchers?,
                               private val weight: Int,
                               private val presentation: TargetPresentation,
                               val extendedInfo: SeExtendedInfo,
                               val isMultiSelectionSupported: Boolean,
                               val isExactMatch: Boolean): SeItem {
+
+  override val rawObject: Any = PSIPresentationBgRendererWrapper.ItemWithPresentation(rawItem, presentation)
   override fun weight(): Int = weight
   override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentationBuilder()
     .withTargetPresentation(presentation, matchers, extendedInfo, isMultiSelectionSupported)
@@ -145,11 +147,11 @@ class SeTargetItemsProvider<T> private constructor(
     inputQueryHasNoExtension: Boolean,
   ): SeTargetPresentableItem {
     val weight = item.rawWeight ?: 0
-    val presentation = SeTargetPresentationProvider.computePresentation(item.rawObject)
+    val presentation = SeTargetPresentationProvider.computePresentation(item.rawItem)
                        ?: TargetPresentation.builder("").presentation()
 
     return SeTargetPresentableItem(
-      rawObject = item.rawObject,
+      rawItem = item.rawItem,
       matchers = item.matchers,
       weight = weight,
       presentation = presentation,
@@ -162,7 +164,7 @@ class SeTargetItemsProvider<T> private constructor(
         inputQuery = inputQuery,
         isFile = isFileProvider,
         inputQueryHasNoExtension = inputQueryHasNoExtension,
-        isDirectory = PSIPresentationBgRendererWrapper.toPsi(item.rawObject) is PsiDirectory,
+        isDirectory = PSIPresentationBgRendererWrapper.toPsi(item.rawItem) is PsiDirectory,
       ),
     )
   }
