@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
+import com.intellij.java.impl.refactorings.template.JavaTemplateRefactoringSupport;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -27,7 +28,6 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -95,7 +95,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       else {
         final Set<PsiClass> classes = MoveInstanceMembersUtil.getThisClassesToMembers(method).keySet();
         for (PsiClass aClass : classes) {
-          if (aClass instanceof JspClass) {
+          if (!JavaTemplateRefactoringSupport.isClassRefactoringAllowed(aClass)) {
             message = JavaRefactoringBundle.message("synthetic.jsp.class.is.referenced.in.the.method");
             Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
             CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MOVE_INSTANCE_METHOD);

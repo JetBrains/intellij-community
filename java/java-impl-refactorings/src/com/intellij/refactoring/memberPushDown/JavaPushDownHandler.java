@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
+import com.intellij.java.impl.refactorings.template.JavaTemplateRefactoringSupport;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -17,7 +18,6 @@ import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
@@ -65,7 +65,7 @@ public class JavaPushDownHandler implements ElementsHandler, ContextAwareActionH
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
       return;
     }
-    if (aClass instanceof JspClass) {
+    if (!JavaTemplateRefactoringSupport.isClassRefactoringAllowed(aClass)) {
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("refactoring.is.not.supported.for.jsp.classes"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
       return;

@@ -679,6 +679,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/java-impl-inspections/intellij.java.impl.inspections.iml" filepath="$PROJECT_DIR$/java/java-impl-inspections/intellij.java.impl.inspections.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-impl-jsp/intellij.java.impl.jsp.iml" filepath="$PROJECT_DIR$/java/java-impl-jsp/intellij.java.impl.jsp.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-impl-refactorings/intellij.java.impl.refactorings.iml" filepath="$PROJECT_DIR$/java/java-impl-refactorings/intellij.java.impl.refactorings.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/java-impl-refactorings-jsp/intellij.java.impl.refactorings.jsp.iml" filepath="$PROJECT_DIR$/java/java-impl-refactorings-jsp/intellij.java.impl.refactorings.jsp.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-indexing-api/intellij.java.indexing.iml" filepath="$PROJECT_DIR$/java/java-indexing-api/intellij.java.indexing.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-indexing-impl/intellij.java.indexing.impl.iml" filepath="$PROJECT_DIR$/java/java-indexing-impl/intellij.java.indexing.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-indexing-serializers/intellij.java.indexing.serializers.iml" filepath="$PROJECT_DIR$/java/java-indexing-serializers/intellij.java.indexing.serializers.iml" />

@@ -325,6 +325,7 @@ java/java-impl
 java/java-impl-inspections
 java/java-impl-jsp
 java/java-impl-refactorings
+java/java-impl-refactorings-jsp
 java/java-indexing-api
 java/java-indexing-impl
 java/java-indexing-serializers

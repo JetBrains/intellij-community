@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInner;
 
+import com.intellij.java.impl.refactorings.template.JavaTemplateRefactoringSupport;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.jvm.JvmLanguage;
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
@@ -45,7 +45,7 @@ public final class MoveInnerToUpperHandler extends MoveHandlerDelegate {
     if (isNonStaticInnerClass(element) && !JavaMoveClassesOrPackagesHandler.isReferenceInAnonymousClass(reference)) {
       PsiClass aClass = (PsiClass) element;
       final PsiClass containingClass = aClass.getContainingClass();
-      if (containingClass instanceof JspClass) {
+      if (!JavaTemplateRefactoringSupport.isClassRefactoringAllowed(containingClass)) {
         CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("move.nonstatic.class.from.jsp.not.supported"),
                                             RefactoringBundle.message("move.title"), null);
         return true;
