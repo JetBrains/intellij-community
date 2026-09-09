@@ -122,7 +122,9 @@ import javax.swing.JTextField
 import javax.swing.ScrollPaneConstants
 import javax.swing.SwingConstants
 import javax.swing.UIManager
+import javax.swing.plaf.InsetsUIResource
 import javax.swing.plaf.TabbedPaneUI
+import javax.swing.plaf.UIResource
 import javax.swing.text.View
 import javax.swing.text.html.ImageView
 import javax.swing.text.html.ParagraphView
@@ -138,6 +140,7 @@ class PluginDetailsPageComponent private constructor(
   operationLauncherOverride: OperationLauncherOverride?,
   internal val useSecondaryButtons: Boolean,
   internal val useBadgeTags: Boolean,
+  internal val layout: PluginDetailsPageLayout,
 ) : MultiPanel() {
   @JvmOverloads
   constructor(
@@ -145,7 +148,7 @@ class PluginDetailsPageComponent private constructor(
     searchListener: LinkListener<Any>,
     isMarketplace: Boolean,
     customizationStrategy: PluginDetailsPageCustomizationStrategy = DefaultPluginDetailsPageCustomizationStrategy,
-  ) : this(pluginModel, searchListener, isMarketplace, customizationStrategy, null, false, false)
+  ) : this(pluginModel, searchListener, isMarketplace, customizationStrategy, null, false, false, PluginDetailsPageLayout.Legacy)
 
   internal constructor(
     pluginModel: PluginModelFacade,
@@ -156,6 +159,7 @@ class PluginDetailsPageComponent private constructor(
     operationUiBridge: PluginOperationUiBridge? = null,
     secondaryButtons: Boolean = false,
     badgeTags: Boolean = false,
+    layout: PluginDetailsPageLayout = PluginDetailsPageLayout.Legacy,
   ) : this(
     pluginModel,
     searchListener,
@@ -164,6 +168,7 @@ class PluginDetailsPageComponent private constructor(
     OperationLauncherOverride(operationLauncher, operationUiBridge),
     secondaryButtons,
     badgeTags,
+    layout,
   )
 
   @Suppress("OPT_IN_USAGE")
@@ -263,7 +268,9 @@ class PluginDetailsPageComponent private constructor(
   private val tracker: PluginManagerUiTracker = PluginManagerUiTracker()
 
   init {
-    nameAndButtons = BaselinePanel(12, false)
+    nameAndButtons = BaselinePanel(12, false).apply {
+      setLeadingVisualInset(this@PluginDetailsPageComponent.layout.actionButtonLeadingVisualInset)
+    }
     customizer = try {
       getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
     }
@@ -418,7 +425,7 @@ class PluginDetailsPageComponent private constructor(
     panel = OpaquePanel(BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR)
 
     val topPanel = OpaquePanel(VerticalLayout(JBUI.scale(8)), PluginManagerConfigurable.MAIN_BG_COLOR)
-    topPanel.border = createMainBorder()
+    topPanel.border = createMainBorder(layout.contentHorizontalInset)
     panel!!.add(topPanel, BorderLayout.NORTH)
 
     topPanel.add(TagPanel(searchListener, useBadgeTags).also { tagPanel = it })
@@ -710,12 +717,33 @@ class PluginDetailsPageComponent private constructor(
         putClientProperty("TabbedPane.hoverColor", ListPluginComponent.HOVER_COLOR)
 
         val contentOpaque = UIManager.getBoolean("TabbedPane.contentOpaque")
+        val defaults = UIManager.getDefaults()
+        val tabAreaInsets = defaults["TabbedPane.tabAreaInsets"]
+        val tabStripLeftInset = this@PluginDetailsPageComponent.layout.tabStripLeftInset
         UIManager.getDefaults()["TabbedPane.contentOpaque"] = false
+        if (tabStripLeftInset > 0) {
+          val insets = tabAreaInsets as? Insets ?: JBUI.emptyInsets()
+          val left = insets.left + JBUI.scale(tabStripLeftInset)
+          defaults["TabbedPane.tabAreaInsets"] = if (insets is UIResource) {
+            InsetsUIResource(insets.top, left, insets.bottom, insets.right)
+          }
+          else {
+            Insets(insets.top, left, insets.bottom, insets.right)
+          }
+        }
         try {
           super.setUI(ui)
         }
         finally {
-          UIManager.getDefaults()["TabbedPane.contentOpaque"] = contentOpaque
+          defaults["TabbedPane.contentOpaque"] = contentOpaque
+          if (tabStripLeftInset > 0) {
+            if (tabAreaInsets == null) {
+              defaults.remove("TabbedPane.tabAreaInsets")
+            }
+            else {
+              defaults["TabbedPane.tabAreaInsets"] = tabAreaInsets
+            }
+          }
         }
         setTabContainerBorder(this)
       }
@@ -743,10 +771,10 @@ class PluginDetailsPageComponent private constructor(
     descriptionComponent = createDescriptionComponent(createHtmlImageViewHandler())
 
     myImagesComponent = PluginImagesComponent()
-    myImagesComponent!!.border = JBUI.Borders.emptyRight(16)
+    myImagesComponent!!.border = JBUI.Borders.emptyRight(layout.overviewImagesRightInset)
 
     val parent: JPanel = OpaquePanel(BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR)
-    parent.border = JBUI.Borders.empty(16, 16, 0, 0)
+    parent.border = JBUI.Borders.empty(16, 16, 0, layout.overviewRightInset)
     parent.add(myImagesComponent, BorderLayout.NORTH)
     parent.add(descriptionComponent)
 
@@ -776,7 +804,8 @@ class PluginDetailsPageComponent private constructor(
     val parent = JBPanelWithEmptyText(BorderLayout())
     parent.isOpaque = true
     parent.background = PluginManagerConfigurable.MAIN_BG_COLOR
-    parent.border = JBUI.Borders.emptyLeft(12)
+    parent.border = layout.tabContentHorizontalInset?.let { JBUI.Borders.empty(0, it, 0, it) }
+                    ?: JBUI.Borders.emptyLeft(12)
     parent.add(changeNotes)
     myChangeNotesEmptyState = parent
     pane.add(IdeBundle.message("plugins.configurable.whats.new.tab.name"), createScrollPane(parent))
@@ -848,7 +877,13 @@ class PluginDetailsPageComponent private constructor(
 
   private fun createAdditionalInfoTab(pane: JBTabbedPane) {
     val infoPanel: JPanel = OpaquePanel(VerticalLayout(JBUI.scale(16)), PluginManagerConfigurable.MAIN_BG_COLOR)
-    infoPanel.border = JBUI.Borders.empty(16, 12, 0, 0)
+    val horizontalInset = layout.tabContentHorizontalInset
+    infoPanel.border = if (horizontalInset == null) {
+      JBUI.Borders.empty(16, 12, 0, 0)
+    }
+    else {
+      JBUI.Borders.empty(16, horizontalInset, 0, horizontalInset)
+    }
 
     documentationUrl = LinkPanel(infoPanel, false)
     bugtrackerUrl = LinkPanel(infoPanel, false)
@@ -1764,7 +1799,7 @@ class PluginDetailsPageComponent private constructor(
 
   private fun createInstallButton(): PluginInstallButton {
     if (requiresInstallOptionButton(useSecondaryButtons, UiPluginManager.isCombinedPluginManagerEnabled())) {
-      val button = InstallOptionButton()
+      val button = InstallOptionButton(useNaturalWidth = layout.useNaturalInstallButtonWidth)
       setDefaultInstallAction(button)
       return button
     }
@@ -2071,9 +2106,40 @@ private fun createBaseNotificationPanel(): BorderLayoutPanel {
   return panel
 }
 
-private fun createMainBorder(): CustomLineBorder {
+internal data class PluginDetailsPageLayout(
+  val contentHorizontalInset: Int,
+  val tabStripLeftInset: Int,
+  val overviewRightInset: Int,
+  val overviewImagesRightInset: Int,
+  val tabContentHorizontalInset: Int?,
+  val actionButtonLeadingVisualInset: Int,
+  val useNaturalInstallButtonWidth: Boolean,
+) {
+  companion object {
+    val Legacy = PluginDetailsPageLayout(
+      contentHorizontalInset = 20,
+      tabStripLeftInset = 0,
+      overviewRightInset = 0,
+      overviewImagesRightInset = 16,
+      tabContentHorizontalInset = null,
+      actionButtonLeadingVisualInset = 0,
+      useNaturalInstallButtonWidth = false,
+    )
+    val Unified = PluginDetailsPageLayout(
+      contentHorizontalInset = 16,
+      tabStripLeftInset = 12,
+      overviewRightInset = 16,
+      overviewImagesRightInset = 0,
+      tabContentHorizontalInset = 16,
+      actionButtonLeadingVisualInset = 3,
+      useNaturalInstallButtonWidth = true,
+    )
+  }
+}
+
+private fun createMainBorder(horizontalInset: Int): CustomLineBorder {
   return object : CustomLineBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, JBUI.insetsTop(1)) {
-    override fun getBorderInsets(c: Component): Insets = JBUI.insets(15, 20, 0, 20)
+    override fun getBorderInsets(c: Component): Insets = JBUI.insets(15, horizontalInset, 0, horizontalInset)
   }
 }
 
