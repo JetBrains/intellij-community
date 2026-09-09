@@ -99,15 +99,30 @@ class IdeUpdateWidgetState {
     PropertiesComponent.getInstance().setValue(REMIND_LATER_TIME, System.currentTimeMillis().toString())
   }
 
+  /**
+   * Returns the button from [Status.DOWNLOADING] when the patch task ends without a patch.
+   *
+   * A prepared patch has already left [Status.DOWNLOADING] for [Status.RESTART], so only a failed download and a cancellation
+   * reach the transition.
+   */
   fun onDownloadFinished() {
     if (isEnabled() && mutableStatus.compareAndSet(Status.DOWNLOADING, Status.AVAILABLE)) {
       updateWidget()
     }
   }
 
-  fun onRestartReady(command: Array<String>) {
+  /**
+   * The [command] is `null` when restart is not available
+   */
+  fun onRestartReady(command: Array<String>?) {
     restartCommand = command
     updateStatus(Status.RESTART)
+  }
+
+  fun isClickable(): Boolean = when (status.value) {
+    Status.DOWNLOADING -> false
+    Status.RESTART -> restartCommand != null
+    else -> true
   }
 
   private fun updateWidget() {
