@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls
  * modes without a restart. Use `com.intellij.platform.ide.productMode.IdeProductMode` to read it
  * from product code.
  *
- * TODO: reuse inside [com.intellij.idea.AppMode]?
+ * TODO: reuse inside `com.intellij.idea.AppMode`?
  */
 @ApiStatus.Experimental
 enum class ProductMode(val id: @NonNls String) {
@@ -74,10 +74,5 @@ enum class ProductMode(val id: @NonNls String) {
   companion object {
     @JvmStatic
     fun findById(id: @NonNls String): ProductMode? = entries.firstOrNull { it.id == id }
-
-    /** Returns the mode with the given [id], and fails when no mode has it. */
-    @JvmStatic
-    fun getById(id: @NonNls String): ProductMode =
-      findById(id) ?: throw IllegalArgumentException("Unknown product mode '$id'")
   }
 }
