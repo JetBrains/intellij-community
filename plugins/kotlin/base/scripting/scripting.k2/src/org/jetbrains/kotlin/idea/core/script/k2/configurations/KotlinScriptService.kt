@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.modifyKotlinScriptLibrar
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.definition.javaHomePath
 import org.jetbrains.kotlin.idea.core.script.shared.definition.jdkSupplier
+import org.jetbrains.kotlin.idea.core.script.shared.definition.moduleSupplier
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.awaitExternalSystemInitialization
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
@@ -197,6 +198,9 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         } ?: return
 
         configuration.refreshVfsDependencies()
+        val relatedModuleIds = readAction {
+            listOfNotNull(definition.compilationConfiguration[ScriptCompilationConfiguration.ide.moduleSupplier]?.invoke(project, virtualFile))
+        }
 
         project.workspaceModel.update("updating kotlin script entities [$KotlinScriptEntitySource]") { storage ->
             if (!storage.containsScriptEntity(scriptUrl)) {
@@ -226,6 +230,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
                 storage addEntity KotlinScriptEntity(scriptUrl, libraryIds, KotlinScriptEntitySource) {
                     this.configurationId = configuration.getOrCreateScriptConfigurationId(storage, KotlinScriptEntitySource)
                     this.sdkId = configuration.sdkId
+                    this.relatedModuleIds = relatedModuleIds.toMutableList()
                 }
             }
         }

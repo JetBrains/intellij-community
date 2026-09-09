@@ -9,14 +9,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.script.v1.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
-import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsAnyScriptsInSourceRoots
-import org.jetbrains.kotlin.idea.core.script.v1.hasNoExceptionsToBeUnderSourceRoot
-import org.jetbrains.kotlin.idea.core.script.v1.isEnabled
+import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsScriptsInSourceRoots
+import org.jetbrains.kotlin.idea.core.script.v1.isSupportedUnderSourceRoot
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
@@ -40,7 +37,7 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         // This is a workaround for completion in REPL to provide module dependencies
         if (scriptDefinition.baseClassType.fromClass == Any::class) return null
 
-        val backwardCompatibilityIsOn = compilerAllowsAnyScriptsInSourceRoots(project)
+        val backwardCompatibilityIsOn = compilerAllowsScriptsInSourceRoots(project)
 
         ktFile.debugLog { "backward-compatibility-flag: ${backwardCompatibilityIsOn}" }
 
@@ -88,15 +85,15 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
     }
 
     private fun KtFile.getScopeForStandaloneScriptUnderSourceRoot(file: VirtualFile, project: Project): KotlinScriptSearchScope? {
-        val hasNoExceptionToBeUnderSourceRoot = file.hasNoExceptionsToBeUnderSourceRoot()
-        debugLog { "exception-to-be-under-source-root: ${!hasNoExceptionToBeUnderSourceRoot}" }
+        val supportedUnderSourceRoot = file.isSupportedUnderSourceRoot()
+        debugLog { "supported-under-source-root: $supportedUnderSourceRoot" }
 
-        return if (hasNoExceptionToBeUnderSourceRoot) {
-            // We show the editor notification panel (file will be ignored at compilation), but allow resolution/highlighting work.
-            calculateScopeForStandaloneScript(file, project)
-        } else {
+        return if (supportedUnderSourceRoot) {
             debugLog { "=> in-module" }
             null // scripts not yet supporting "isStandalone" flag
+        } else {
+            // We show the editor notification panel (file will be ignored at compilation), but allow resolution/highlighting work.
+            calculateScopeForStandaloneScript(file, project)
         }
     }
 

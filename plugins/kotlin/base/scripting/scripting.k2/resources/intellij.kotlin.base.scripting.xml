@@ -170,8 +170,6 @@
     <scriptAfterRunCallbackProvider
             implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsAfterRunCallbackProvider"/>
 
-    <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.ModuleScriptAdditionalIdeaDependenciesProvider"/>
-
     <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesProvider"/>
   </extensions>
 

@@ -28,9 +28,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsAnyScriptsInSourceRoots
-import org.jetbrains.kotlin.idea.core.script.v1.hasNoExceptionsToBeUnderSourceRoot
+import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsScriptsInSourceRoots
 import org.jetbrains.kotlin.idea.core.script.v1.isStandaloneKotlinScript
+import org.jetbrains.kotlin.idea.core.script.v1.isSupportedUnderSourceRoot
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
@@ -42,9 +42,9 @@ class ScriptingSupportChecker : EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
         if (file.isNonScript()) return null
 
-        if (!compilerAllowsAnyScriptsInSourceRoots(project)
+        if (!compilerAllowsScriptsInSourceRoots(project)
             && file.isUnderSourceRoot(project)
-            && (file.isStandaloneKotlinScript(project) && file.hasNoExceptionsToBeUnderSourceRoot())
+            && (file.isStandaloneKotlinScript(project) && !file.isSupportedUnderSourceRoot())
         ) {
             return Function {
                 EditorNotificationPanel(it, EditorNotificationPanel.Status.Warning).apply {

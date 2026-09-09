@@ -49,8 +49,9 @@ private val scriptResidenceExceptionProviders: List<ScriptResidenceExceptionProv
     }
 )
 
-fun VirtualFile.hasNoExceptionsToBeUnderSourceRoot(): Boolean =
-    scriptResidenceExceptionProviders.none { it.isSupportedUnderSourceRoot(this) }
+/** True when a residence exception lets this script live under a source root, for example a `.gradle.kts` or a `.teamcity` script. */
+fun VirtualFile.isSupportedUnderSourceRoot(): Boolean =
+    scriptResidenceExceptionProviders.any { it.isSupportedUnderSourceRoot(this) }
 
 fun LanguageFeature.isEnabled(module: Module?, project: Project): Boolean {
     val settings = module?.languageVersionSettings ?: project.languageVersionSettings
@@ -58,7 +59,7 @@ fun LanguageFeature.isEnabled(module: Module?, project: Project): Boolean {
 }
 
 @ApiStatus.Internal
-fun compilerAllowsAnyScriptsInSourceRoots(project: Project): Boolean {
+fun compilerAllowsScriptsInSourceRoots(project: Project): Boolean {
     val additionalSettings = KotlinCompilerSettings.getInstance(project).settings
     return additionalSettings.additionalArguments.contains("-Xallow-any-scripts-in-source-roots")
 }

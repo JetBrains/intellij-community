@@ -49,49 +49,8 @@ KaScriptModule:
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/javaparser-core-3.17.0.jar)
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar)
     KaLibraryModule(SDK)
-    KaSourceModule(GradleKotlinFixture, production)
-    KaSourceModule(GradleKotlinFixture, test)
-  friendDependencies:
-    KaSourceModule(GradleKotlinFixture, production)
-  dependsOnDependencies:
-    <empty>
-
-KaSourceModule:
-  description: Sources of GradleKotlinFixture
-  targetPlatform: JVM (1.8)
-  name: GradleKotlinFixture
-  sourceModuleKind: PRODUCTION
-  stableModuleName: <GradleKotlinFixture>
-  regularDependencies:
-    KaLibraryModule(SDK)
   friendDependencies:
     <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: SDK
-  targetPlatform: JVM (1.8)
-  libraryName: SDK
-  isSdk: true
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaSourceModule:
-  description: Sources of GradleKotlinFixture
-  targetPlatform: JVM (1.8)
-  name: GradleKotlinFixture
-  sourceModuleKind: TEST
-  stableModuleName: <GradleKotlinFixture>
-  regularDependencies:
-    KaLibraryModule(SDK)
-    KaSourceModule(GradleKotlinFixture, production)
-  friendDependencies:
-    KaSourceModule(GradleKotlinFixture, production)
   dependsOnDependencies:
     <empty>
 
@@ -1107,6 +1066,18 @@ KaLibraryFallbackDependenciesModule:
   dependsOnDependencies:
     <empty>
 
+KaLibraryModule:
+  description: SDK
+  targetPlatform: JVM (1.8)
+  libraryName: SDK
+  isSdk: true
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
 KaScriptModule:
   description: Script settings.gradle.kts
   targetPlatform: JVM (1.8)
@@ -1139,10 +1110,8 @@ KaScriptModule:
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar)
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar)
     KaLibraryModule(SDK)
-    KaSourceModule(GradleKotlinFixture, production)
-    KaSourceModule(GradleKotlinFixture, test)
   friendDependencies:
-    KaSourceModule(GradleKotlinFixture, production)
+    <empty>
   dependsOnDependencies:
     <empty>
 

@@ -406,7 +406,9 @@ PROBLEMS:
 
 ### How buildSrc is supported
 
-`GradleScriptAdditionalIdeaDependenciesProvider`
+The Gradle sync stores the buildSrc and included-build modules in `KotlinScriptEntity.relatedModuleIds` (see `addScripts` in `gradleKotlinScriptEntities.kt`).
+`KotlinScriptService.update` stores the module from `ide.moduleSupplier` (a scratch) or the module that contains the script.
+`KaScriptModuleImpl` maps these ids to friend dependencies (production) and regular dependencies (production, test, and their dependencies).
 
 
 ## IDEA modules relevant for scripting

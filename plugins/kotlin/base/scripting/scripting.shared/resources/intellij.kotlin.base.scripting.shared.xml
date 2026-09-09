@@ -24,6 +24,7 @@
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.workspace.jps"/>
     <module name="kotlin.scripting"/>
   </dependencies>
   <!-- endregion -->
@@ -48,11 +49,6 @@
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptDiagnosticFixProvider"
             interface="org.jetbrains.kotlin.idea.core.script.shared.ScriptDiagnosticFixProvider"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptAdditionalIdeaDependenciesProvider"
-            interface="org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider"
-            area="IDEA_PROJECT"
             dynamic="true"/>
   </extensionPoints>
 

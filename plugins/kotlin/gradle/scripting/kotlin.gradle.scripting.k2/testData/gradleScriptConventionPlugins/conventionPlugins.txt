@@ -30,22 +30,71 @@ KaScriptModule:
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/javaparser-core-3.17.0.jar)
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar)
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar)
+    KaLibraryModule(Gradle: gradle-api-8.11.jar)
+    KaLibraryModule(Gradle: gradle-installation-beacon-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-extensions-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar)
+    KaLibraryModule(Gradle: groovy-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-ant-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-astbuilder-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-console-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-datetime-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-dateutil-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-groovydoc-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-json-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-nio-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-sql-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-templates-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-test-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-xml-3.0.22.jar)
+    KaLibraryModule(Gradle: javaparser-core-3.17.0.jar)
+    KaLibraryModule(Gradle: kotlin-reflect-2.0.20.jar)
+    KaLibraryModule(Gradle: kotlin-stdlib-2.0.20.jar)
+    KaLibraryModule(Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20)
+    KaLibraryModule(Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20)
+    KaLibraryModule(Gradle: org.jetbrains:annotations:13.0)
     KaLibraryModule(SDK)
-    KaSourceModule(GradleKotlinFixture, production)
-    KaSourceModule(GradleKotlinFixture, test)
+    KaSourceModule(not-build-src.main, production)
+    KaSourceModule(not-build-src.main, test)
   friendDependencies:
-    KaSourceModule(GradleKotlinFixture, production)
     KaSourceModule(not-build-src.main, production)
   dependsOnDependencies:
     <empty>
 
 KaSourceModule:
-  description: Sources of GradleKotlinFixture
-  targetPlatform: JVM (1.8)
-  name: GradleKotlinFixture
+  description: Sources of not-build-src.main
+  targetPlatform: JVM (17)
+  name: not-build-src.main
   sourceModuleKind: PRODUCTION
-  stableModuleName: <GradleKotlinFixture>
+  stableModuleName: <not-build-src>
   regularDependencies:
+    KaLibraryModule(Gradle: gradle-api-8.11.jar)
+    KaLibraryModule(Gradle: gradle-installation-beacon-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-extensions-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar)
+    KaLibraryModule(Gradle: groovy-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-ant-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-astbuilder-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-console-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-datetime-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-dateutil-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-groovydoc-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-json-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-nio-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-sql-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-templates-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-test-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-xml-3.0.22.jar)
+    KaLibraryModule(Gradle: javaparser-core-3.17.0.jar)
+    KaLibraryModule(Gradle: kotlin-reflect-2.0.20.jar)
+    KaLibraryModule(Gradle: kotlin-stdlib-2.0.20.jar)
+    KaLibraryModule(Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20)
+    KaLibraryModule(Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20)
+    KaLibraryModule(Gradle: org.jetbrains:annotations:13.0)
     KaLibraryModule(SDK)
   friendDependencies:
     <empty>
@@ -64,17 +113,592 @@ KaLibraryModule:
   dependsOnDependencies:
     <empty>
 
-KaSourceModule:
-  description: Sources of GradleKotlinFixture
+KaLibraryModule:
+  description: Library Gradle: gradle-api-8.11.jar
   targetPlatform: JVM (1.8)
-  name: GradleKotlinFixture
-  sourceModuleKind: TEST
-  stableModuleName: <GradleKotlinFixture>
+  libraryName: Gradle: gradle-api-8.11.jar
+  isSdk: false
   regularDependencies:
-    KaLibraryModule(SDK)
-    KaSourceModule(GradleKotlinFixture, production)
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: gradle-api-8.11.jar)
   friendDependencies:
-    KaSourceModule(GradleKotlinFixture, production)
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: gradle-api-8.11.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-ant-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-ant-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-ant-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-ant-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-astbuilder-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-astbuilder-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-astbuilder-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-astbuilder-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-console-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-console-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-console-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-console-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-datetime-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-datetime-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-datetime-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-datetime-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-dateutil-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-dateutil-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-dateutil-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-dateutil-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-groovydoc-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-groovydoc-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-groovydoc-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-groovydoc-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-json-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-json-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-json-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-json-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-nio-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-nio-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-nio-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-nio-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-sql-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-sql-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-sql-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-sql-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-templates-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-templates-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-templates-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-templates-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-test-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-test-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-test-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-test-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: groovy-xml-3.0.22.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: groovy-xml-3.0.22.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-xml-3.0.22.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: groovy-xml-3.0.22.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: javaparser-core-3.17.0.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: javaparser-core-3.17.0.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: javaparser-core-3.17.0.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: javaparser-core-3.17.0.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: kotlin-stdlib-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: kotlin-stdlib-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: kotlin-stdlib-2.0.20.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: kotlin-stdlib-2.0.20.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: kotlin-reflect-2.0.20.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: kotlin-reflect-2.0.20.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: kotlin-reflect-2.0.20.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: kotlin-reflect-2.0.20.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: gradle-installation-beacon-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: gradle-installation-beacon-8.11.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: gradle-installation-beacon-8.11.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: gradle-installation-beacon-8.11.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: gradle-kotlin-dsl-extensions-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: gradle-kotlin-dsl-extensions-8.11.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: gradle-kotlin-dsl-extensions-8.11.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: gradle-kotlin-dsl-extensions-8.11.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: gradle-kotlin-dsl-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: gradle-kotlin-dsl-8.11.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: gradle-kotlin-dsl-8.11.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: gradle-kotlin-dsl-8.11.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library Gradle: org.jetbrains:annotations:13.0
+  targetPlatform: JVM (1.8)
+  libraryName: Gradle: org.jetbrains:annotations:13.0
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: org.jetbrains:annotations:13.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryFallbackDependenciesModule:
+  description: Fallback dependencies for library module `Library Gradle: org.jetbrains:annotations:13.0`
+  targetPlatform: JVM (1.8)
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of not-build-src.main
+  targetPlatform: JVM (17)
+  name: not-build-src.main
+  sourceModuleKind: TEST
+  stableModuleName: <not-build-src>
+  regularDependencies:
+    KaLibraryModule(Gradle: gradle-api-8.11.jar)
+    KaLibraryModule(Gradle: gradle-installation-beacon-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-extensions-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar)
+    KaLibraryModule(Gradle: groovy-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-ant-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-astbuilder-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-console-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-datetime-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-dateutil-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-groovydoc-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-json-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-nio-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-sql-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-templates-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-test-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-xml-3.0.22.jar)
+    KaLibraryModule(Gradle: javaparser-core-3.17.0.jar)
+    KaLibraryModule(Gradle: kotlin-reflect-2.0.20.jar)
+    KaLibraryModule(Gradle: kotlin-stdlib-2.0.20.jar)
+    KaLibraryModule(Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20)
+    KaLibraryModule(Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20)
+    KaLibraryModule(Gradle: org.jetbrains:annotations:13.0)
+    KaLibraryModule(SDK)
+    KaSourceModule(not-build-src.main, production)
+  friendDependencies:
+    KaSourceModule(not-build-src.main, production)
   dependsOnDependencies:
     <empty>
 
@@ -694,594 +1318,6 @@ KaLibraryFallbackDependenciesModule:
   dependsOnDependencies:
     <empty>
 
-KaSourceModule:
-  description: Sources of not-build-src.main
-  targetPlatform: JVM (17)
-  name: not-build-src.main
-  sourceModuleKind: PRODUCTION
-  stableModuleName: <not-build-src>
-  regularDependencies:
-    KaLibraryModule(Gradle: gradle-api-8.11.jar)
-    KaLibraryModule(Gradle: gradle-installation-beacon-8.11.jar)
-    KaLibraryModule(Gradle: gradle-kotlin-dsl-8.11.jar)
-    KaLibraryModule(Gradle: gradle-kotlin-dsl-extensions-8.11.jar)
-    KaLibraryModule(Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar)
-    KaLibraryModule(Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar)
-    KaLibraryModule(Gradle: groovy-3.0.22.jar)
-    KaLibraryModule(Gradle: groovy-ant-3.0.22.jar)
-    KaLibraryModule(Gradle: groovy-astbuilder-3.0.22.jar)
-    KaLibraryModule(Gradle: groovy-console-3.0.22.jar)
-    KaLibraryModule(Gradle: groovy-datetime-3.0.22.jar)
-    KaLibraryModule(Gradle: groovy-dateutil-3.0.22.jar)
-    KaLibraryModule(Gradle: groovy-groovydoc-3.0.22.jar)
-    KaLibraryModule(Gradle: groovy-json-3.0.22.jar)
-    KaLibraryModule(Gradle: groovy-nio-3.0.22.jar)
-    KaLibraryModule(Gradle: groovy-sql-3.0.22.jar)
-    KaLibraryModule(Gradle: groovy-templates-3.0.22.jar)
-    KaLibraryModule(Gradle: groovy-test-3.0.22.jar)
-    KaLibraryModule(Gradle: groovy-xml-3.0.22.jar)
-    KaLibraryModule(Gradle: javaparser-core-3.17.0.jar)
-    KaLibraryModule(Gradle: kotlin-reflect-2.0.20.jar)
-    KaLibraryModule(Gradle: kotlin-stdlib-2.0.20.jar)
-    KaLibraryModule(Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20)
-    KaLibraryModule(Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20)
-    KaLibraryModule(Gradle: org.jetbrains:annotations:13.0)
-    KaLibraryModule(SDK)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: gradle-api-8.11.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: gradle-api-8.11.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: gradle-api-8.11.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: gradle-api-8.11.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-ant-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-ant-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-ant-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-ant-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-astbuilder-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-astbuilder-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-astbuilder-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-astbuilder-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-console-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-console-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-console-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-console-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-datetime-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-datetime-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-datetime-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-datetime-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-dateutil-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-dateutil-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-dateutil-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-dateutil-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-groovydoc-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-groovydoc-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-groovydoc-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-groovydoc-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-json-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-json-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-json-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-json-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-nio-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-nio-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-nio-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-nio-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-sql-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-sql-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-sql-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-sql-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-templates-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-templates-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-templates-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-templates-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-test-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-test-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-test-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-test-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: groovy-xml-3.0.22.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: groovy-xml-3.0.22.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: groovy-xml-3.0.22.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: groovy-xml-3.0.22.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: javaparser-core-3.17.0.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: javaparser-core-3.17.0.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: javaparser-core-3.17.0.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: javaparser-core-3.17.0.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: kotlin-stdlib-2.0.20.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: kotlin-stdlib-2.0.20.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: kotlin-stdlib-2.0.20.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: kotlin-stdlib-2.0.20.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: kotlin-reflect-2.0.20.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: kotlin-reflect-2.0.20.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: kotlin-reflect-2.0.20.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: kotlin-reflect-2.0.20.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: gradle-installation-beacon-8.11.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: gradle-installation-beacon-8.11.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: gradle-installation-beacon-8.11.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: gradle-installation-beacon-8.11.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: gradle-kotlin-dsl-extensions-8.11.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: gradle-kotlin-dsl-extensions-8.11.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: gradle-kotlin-dsl-extensions-8.11.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: gradle-kotlin-dsl-extensions-8.11.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: gradle-kotlin-dsl-8.11.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: gradle-kotlin-dsl-8.11.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: gradle-kotlin-dsl-8.11.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: gradle-kotlin-dsl-8.11.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library Gradle: org.jetbrains:annotations:13.0
-  targetPlatform: JVM (1.8)
-  libraryName: Gradle: org.jetbrains:annotations:13.0
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of Gradle: org.jetbrains:annotations:13.0)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryFallbackDependenciesModule:
-  description: Fallback dependencies for library module `Library Gradle: org.jetbrains:annotations:13.0`
-  targetPlatform: JVM (1.8)
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
 KaScriptModule:
   description: Script settings.gradle.kts
   targetPlatform: JVM (1.8)
@@ -1313,11 +1349,35 @@ KaScriptModule:
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/javaparser-core-3.17.0.jar)
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar)
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar)
+    KaLibraryModule(Gradle: gradle-api-8.11.jar)
+    KaLibraryModule(Gradle: gradle-installation-beacon-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-extensions-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar)
+    KaLibraryModule(Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar)
+    KaLibraryModule(Gradle: groovy-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-ant-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-astbuilder-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-console-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-datetime-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-dateutil-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-groovydoc-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-json-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-nio-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-sql-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-templates-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-test-3.0.22.jar)
+    KaLibraryModule(Gradle: groovy-xml-3.0.22.jar)
+    KaLibraryModule(Gradle: javaparser-core-3.17.0.jar)
+    KaLibraryModule(Gradle: kotlin-reflect-2.0.20.jar)
+    KaLibraryModule(Gradle: kotlin-stdlib-2.0.20.jar)
+    KaLibraryModule(Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20)
+    KaLibraryModule(Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20)
+    KaLibraryModule(Gradle: org.jetbrains:annotations:13.0)
     KaLibraryModule(SDK)
-    KaSourceModule(GradleKotlinFixture, production)
-    KaSourceModule(GradleKotlinFixture, test)
+    KaSourceModule(not-build-src.main, production)
+    KaSourceModule(not-build-src.main, test)
   friendDependencies:
-    KaSourceModule(GradleKotlinFixture, production)
     KaSourceModule(not-build-src.main, production)
   dependsOnDependencies:
     <empty>
@@ -1395,37 +1455,8 @@ KaScriptModule:
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/javaparser-core-3.17.0.jar)
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar)
     KaLibraryModule(SDK)
-    KaSourceModule(not-build-src, production)
-    KaSourceModule(not-build-src, test)
-  friendDependencies:
-    KaSourceModule(not-build-src, production)
-  dependsOnDependencies:
-    <empty>
-
-KaSourceModule:
-  description: Sources of not-build-src
-  targetPlatform: JVM (1.8)
-  name: not-build-src
-  sourceModuleKind: PRODUCTION
-  stableModuleName: <not-build-src>
-  regularDependencies:
-    KaLibraryModule(SDK)
   friendDependencies:
     <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaSourceModule:
-  description: Sources of not-build-src
-  targetPlatform: JVM (1.8)
-  name: not-build-src
-  sourceModuleKind: TEST
-  stableModuleName: <not-build-src>
-  regularDependencies:
-    KaLibraryModule(SDK)
-    KaSourceModule(not-build-src, production)
-  friendDependencies:
-    KaSourceModule(not-build-src, production)
   dependsOnDependencies:
     <empty>
 
@@ -1923,9 +1954,7 @@ KaScriptModule:
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar)
     KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar)
     KaLibraryModule(SDK)
-    KaSourceModule(not-build-src, production)
-    KaSourceModule(not-build-src, test)
   friendDependencies:
-    KaSourceModule(not-build-src, production)
+    <empty>
   dependsOnDependencies:
     <empty>

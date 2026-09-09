@@ -1,8 +1,5 @@
 graph TD
   KaScriptModule_97{{"KaScriptModule(build.gradle.kts)"}}
-  KaSourceModule_99["KaSourceModule(GradleKotlinFixture)<br />production<br />JVM (1.8)"]
-  KaLibraryModule_96(["KaLibraryModule(SDK)"])
-  KaSourceModule_100["KaSourceModule(GradleKotlinFixture)<br />test<br />JVM (1.8)"]
   KaLibraryModule_65(["KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/7388d355f7cceb002cd387ccb7ab3850e4e0a07f/kotlin-stdlib-2.0.20.jar, GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar)<br />scriptDependency"])
   KaLibraryFallbackDependenciesModule_65[/"KaLibraryFallbackDependenciesModule"/]
   KaLibraryModule_48(["KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/caches/8.11/dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes, GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/ACCESSORS_HASH_1/classes, GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/ACCESSORS_HASH_2/classes)<br />scriptDependency"])
@@ -95,14 +92,12 @@ graph TD
   KaLibraryFallbackDependenciesModule_93[/"KaLibraryFallbackDependenciesModule"/]
   KaLibraryModule_94(["KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar)<br />scriptDependency"])
   KaLibraryFallbackDependenciesModule_94[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_96(["KaLibraryModule(SDK)"])
   KaScriptModule_98{{"KaScriptModule(settings.gradle.kts)"}}
   KaLibraryModule_95(["KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar)<br />scriptDependency"])
   KaLibraryFallbackDependenciesModule_95[/"KaLibraryFallbackDependenciesModule"/]
   KaLibraryModule_50(["KaLibraryModule(Gradle (PROJECT_PLACEHOLDER): GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/ACCESSORS_HASH_3/classes)<br />scriptDependency"])
   KaLibraryFallbackDependenciesModule_50[/"KaLibraryFallbackDependenciesModule"/]
-  style KaSourceModule_99 fill:#608BC1
-  style KaLibraryModule_96 fill:#CC2B52
-  style KaSourceModule_100 fill:#31511E
   style KaLibraryModule_65 fill:#CB6040
   style KaLibraryModule_48 fill:#CB6040
   style KaLibraryModule_61 fill:#CB6040
@@ -149,6 +144,7 @@ graph TD
   style KaLibraryModule_92 fill:#CB6040
   style KaLibraryModule_93 fill:#CB6040
   style KaLibraryModule_94 fill:#CB6040
+  style KaLibraryModule_96 fill:#CC2B52
   style KaLibraryModule_95 fill:#CB6040
   style KaLibraryModule_50 fill:#CB6040
   KaLibraryModule_48 --> KaLibraryFallbackDependenciesModule_48
@@ -246,8 +242,6 @@ graph TD
   KaScriptModule_97 --> KaLibraryModule_93
   KaScriptModule_97 --> KaLibraryModule_94
   KaScriptModule_97 --> KaLibraryModule_96
-  KaScriptModule_97 --> KaSourceModule_100
-  KaScriptModule_97 --> KaSourceModule_99
   KaScriptModule_98 --> KaLibraryModule_49
   KaScriptModule_98 --> KaLibraryModule_50
   KaScriptModule_98 --> KaLibraryModule_71
@@ -276,14 +270,6 @@ graph TD
   KaScriptModule_98 --> KaLibraryModule_94
   KaScriptModule_98 --> KaLibraryModule_95
   KaScriptModule_98 --> KaLibraryModule_96
-  KaScriptModule_98 --> KaSourceModule_100
-  KaScriptModule_98 --> KaSourceModule_99
-  KaSourceModule_100 --> KaLibraryModule_96
-  KaSourceModule_100 --> KaSourceModule_99
-  KaSourceModule_99 --> KaLibraryModule_96
-  KaScriptModule_97 --friend--> KaSourceModule_99
-  KaScriptModule_98 --friend--> KaSourceModule_99
-  KaSourceModule_100 --friend--> KaSourceModule_99
   linkStyle 0 stroke:black
   linkStyle 1 stroke:black
   linkStyle 2 stroke:black
@@ -407,13 +393,3 @@ graph TD
   linkStyle 120 stroke:black
   linkStyle 121 stroke:black
   linkStyle 122 stroke:black
-  linkStyle 123 stroke:black
-  linkStyle 124 stroke:black
-  linkStyle 125 stroke:black
-  linkStyle 126 stroke:black
-  linkStyle 127 stroke:black
-  linkStyle 128 stroke:black
-  linkStyle 129 stroke:black
-  linkStyle 130 stroke:#E6C767
-  linkStyle 131 stroke:#E6C767
-  linkStyle 132 stroke:#E6C767

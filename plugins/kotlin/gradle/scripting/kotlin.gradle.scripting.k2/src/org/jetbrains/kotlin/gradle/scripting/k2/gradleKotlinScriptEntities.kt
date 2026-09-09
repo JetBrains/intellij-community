@@ -10,11 +10,12 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.psi.PsiManager
-import com.intellij.util.containers.prefixTree.map.PrefixTreeMap
+import com.intellij.util.containers.prefixTree.map.MutablePrefixTreeMap
 import com.intellij.workspaceModel.ide.toPath
 import org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleScriptModel
 import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleKotlinScriptEntitySource
@@ -38,9 +39,10 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.adjustByDefinition
 import org.jetbrains.kotlin.scripting.resolve.getScriptCollectedData
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
-import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
+import org.jetbrains.kotlin.utils.addIfNotNull
 import java.io.File
 import java.nio.file.Path
+import java.nio.file.Path.of
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.defaultImports
@@ -88,6 +90,10 @@ internal suspend fun addScripts(
     for (contentRoot in storage.entities(ContentRootEntity::class.java)) {
         contentRootIndex.put(contentRoot.url.toPath(), contentRoot.module.symbolicId)
     }
+    val sourceRootIndex = PathPrefixTree.createMap<ModuleId>()
+    for (sourceRoot in storage.entities(SourceRootEntity::class.java)) {
+        sourceRootIndex.put(sourceRoot.url.toPath(), sourceRoot.contentRoot.module.symbolicId)
+    }
     val attachSources = indexSourceRootsEagerly() || AdvancedSettings.getBoolean("gradle.attach.scripts.dependencies.sources")
     val libraries = ScriptLibraries(storage, entitySource, urlManager, attachSources)
 
@@ -105,7 +111,24 @@ internal suspend fun addScripts(
             this.configurationId = configurationWrapper.configuration?.getOrCreateScriptConfigurationId(storage, entitySource)
             this.reports = result.reports.map(ScriptDiagnostic::map).toMutableList()
             this.sdkId = configurationWrapper.configuration?.sdkId
-            this.relatedModuleIds = model.classpathModel?.let { getRelatedModules(contentRootIndex, it) }.orEmpty().toMutableList()
+            this.relatedModuleIds = getRelatedModules(model, sourceRootIndex, contentRootIndex).toMutableList()
+        }
+    }
+}
+
+private fun getRelatedModules(
+    model: GradleScriptModel,
+    sourceRootIndex: MutablePrefixTreeMap<Path, ModuleId>,
+    contentRootIndex: MutablePrefixTreeMap<Path, ModuleId>
+): Iterable<ModuleId> {
+    return buildSet {
+        addIfNotNull(sourceRootIndex.getAncestorValues(model.virtualFile.toNioPath()).lastOrNull())
+        
+        if (model.classpathModel != null) {
+            addAll(
+                model.classpathModel.classpath.asSequence()
+                    .flatMap { it.sources }
+                    .mapNotNullTo(mutableSetOf()) { contentRootIndex.getAncestorValues(of(it)).lastOrNull() })
         }
     }
 }
@@ -148,11 +171,6 @@ private fun ScriptCompilationConfiguration.Builder.withResolvedJdk(project: Proj
     jvm.jdkHome(File(javaHome))
     scriptingInfoLog("resolved gradle javaHome=$javaHome")
 }
-
-private fun getRelatedModules(contentRootIndex: PrefixTreeMap<Path, ModuleId>, classpathModel: GradleBuildScriptClasspathModel): Set<ModuleId> =
-    classpathModel.classpath.asSequence()
-        .flatMap { it.sources }
-        .mapNotNullTo(mutableSetOf()) { contentRootIndex.getAncestorValues(Path.of(it)).lastOrNull() }
 
 /** Registers the library entities of one script and returns their ids. Equal class roots of one project share one entity. */
 internal class ScriptLibraries(

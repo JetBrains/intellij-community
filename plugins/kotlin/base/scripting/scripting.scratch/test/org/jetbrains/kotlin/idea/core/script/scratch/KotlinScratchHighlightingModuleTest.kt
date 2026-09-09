@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.scratch
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.module.Module
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
@@ -13,6 +14,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
@@ -39,6 +41,8 @@ class KotlinScratchHighlightingModuleTest : KotlinLightCodeInsightFixtureTestCas
 
         scratch.bindTo(module)
 
+        val entity = requireNotNull(KotlinScriptEntityProvider.findKotlinScriptEntity(project, scratch.virtualFile))
+        assertEquals(listOf(ModuleId(module.name)), entity.relatedModuleIds)
         scratch.checkMetaInfoHighlighting("alphaWithModuleSelected.kts.highlighting")
     }
 

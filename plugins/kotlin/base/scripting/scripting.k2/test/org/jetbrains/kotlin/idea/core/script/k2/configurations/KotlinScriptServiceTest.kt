@@ -3,12 +3,15 @@ package org.jetbrains.kotlin.idea.core.script.k2.configurations
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.workspaceModel.update
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
+import org.jetbrains.kotlin.idea.core.script.shared.definition.moduleSupplier
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -66,6 +69,36 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
             .filter { it.virtualFileUrl.url.endsWith("test.kts") }
             .toList()
         assertEquals("Exactly one entity must exist after loading the same file twice", 1, entities.size)
+    }
+
+    fun `test load stores containing module when compiler allows scripts in source roots`() {
+        val settings = KotlinCompilerSettings.getInstance(project)
+        val arguments = settings.settings.additionalArguments
+        settings.update { additionalArguments = "-Xallow-any-scripts-in-source-roots" }
+        try {
+            val file = myFixture.configureByText("test.kts", "val x = 1")
+
+            runBlocking {
+                KotlinScriptService.getInstance(project).load(file.virtualFile)
+            }
+
+            val entity = requireNotNull(KotlinScriptEntityProvider.findKotlinScriptEntity(project, file.virtualFile))
+            assertEquals(listOf(ModuleId(module.name)), entity.relatedModuleIds)
+        } finally {
+            settings.update { additionalArguments = arguments }
+        }
+    }
+
+    fun `test load stores module from definition moduleSupplier`() {
+        registerModuleSupplierScriptDefinition()
+        val file = myFixture.configureByText("test.module.kts", "val x = 1")
+
+        runBlocking {
+            KotlinScriptService.getInstance(project).load(file.virtualFile)
+        }
+
+        val entity = requireNotNull(KotlinScriptEntityProvider.findKotlinScriptEntity(project, file.virtualFile))
+        assertEquals(listOf(ModuleId(module.name)), entity.relatedModuleIds)
     }
 
     fun `test load does not create entities for circular imported scripts`() = runBlocking {
@@ -198,18 +231,36 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     private fun registerCircularImportScriptDefinition() {
-        val definition = createScriptDefinitionFromTemplate(
-            KotlinType(ScriptTemplateWithArgs::class),
-            defaultJvmScriptingHostConfiguration,
-            compilation = {
-                fileExtension("imports.kts")
-                ide { acceptedLocations(ScriptAcceptedLocation.Everywhere) }
-                refineConfiguration {
-                    onAnnotations(CircularImport::class) { context -> resolveImportedScripts(context) }
-                }
-            },
+        registerScriptDefinition(
+            createScriptDefinitionFromTemplate(
+                KotlinType(ScriptTemplateWithArgs::class),
+                defaultJvmScriptingHostConfiguration,
+                compilation = {
+                    fileExtension("imports.kts")
+                    ide { acceptedLocations(ScriptAcceptedLocation.Everywhere) }
+                    refineConfiguration {
+                        onAnnotations(CircularImport::class) { context -> resolveImportedScripts(context) }
+                    }
+                },
+            )
         )
+    }
 
+    private fun registerModuleSupplierScriptDefinition() {
+        registerScriptDefinition(
+            createScriptDefinitionFromTemplate(
+                KotlinType(ScriptTemplateWithArgs::class),
+                defaultJvmScriptingHostConfiguration,
+                compilation = {
+                    fileExtension("module.kts")
+                    ide { acceptedLocations(ScriptAcceptedLocation.Everywhere) }
+                    ide.moduleSupplier { _, _ -> ModuleId(module.name) }
+                },
+            )
+        )
+    }
+
+    private fun registerScriptDefinition(definition: ScriptDefinition) {
         project.registerExtension(
             ScriptDefinitionsProvider.EP_NAME,
             object : ScriptDefinitionsProvider {

@@ -8,6 +8,7 @@ import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.util.PathUtil
 import java.io.File
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptDefinitionsProviderId
 import org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchCompilationConfiguration
 import org.jetbrains.kotlin.idea.core.script.shared.definition.jdkSupplier
+import org.jetbrains.kotlin.idea.core.script.shared.definition.moduleSupplier
 import org.jetbrains.kotlin.idea.core.script.shared.definition.scriptClassPath
 import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptionsByFile
 
@@ -54,6 +56,7 @@ class KotlinScratchDefinitionProvider(val project: Project) : ScriptDefinitionsP
                 ?: defaultScratchJavaHome
             jdkHome?.takeIf { it.isNotBlank() }?.let(::File)
         }
+        ide.moduleSupplier { _, virtualFile -> ScratchFileOptionsByFile[project, virtualFile].selectedModule?.let(::ModuleId) }
     }
 
     private fun scratchPathPattern(): String {
