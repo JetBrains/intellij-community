@@ -4,6 +4,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +29,7 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -226,10 +228,29 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
       return true;
     }
     // check if there are any bridge methods that match
-    //noinspection SSBasedInspection
     for (Method candidate : method.declaringType().methodsByName(method.name())) {
-      if (candidate != method && candidate.isBridge() && expectedSignature.equals(candidate.signature())) {
+      if (candidate != method && candidate.isBridge() && expectedSignature.equals(candidate.signature()) &&
+          isBridgeFor(candidate, method)) {
         return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isBridgeFor(Method bridge, Method method) {
+    var vm = method.virtualMachine();
+    if (!vm.canGetBytecodes() || !vm.canGetConstantPool()) {
+      return true;
+    }
+    var visited = new HashSet<Method>();
+    var target = bridge;
+    while (target != null && target.isBridge() && visited.add(target)) {
+      target = MethodBytecodeUtil.getBridgeTargetMethod(target, vm::classesByName);
+      if (target != null) {
+        target = DebuggerUtils.findMethod(method.declaringType(), target.name(), target.signature());
+        if (method.equals(target)) {
+          return true;
+        }
       }
     }
     return false;

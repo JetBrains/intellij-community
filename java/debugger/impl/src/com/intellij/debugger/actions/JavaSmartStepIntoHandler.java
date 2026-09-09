@@ -35,6 +35,8 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiEnumConstantInitializer;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiField;
@@ -47,6 +49,7 @@ import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -365,15 +368,17 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                                         ? newExpr.getClassOrAnonymousClassReference()
                                         : expression;
           if (psiMethod != null && isSteppableMethod(psiMethod) && (callExpression == null || matchLine(callExpression))) {
+            var needBreakpointRequest = isInsideLambda(expression) ||
+                                        (expression instanceof PsiNewExpression newExpr && newExpr.getAnonymousClass() != null);
+            var targetMethod = needBreakpointRequest ? psiMethod : getInvocationMethod(psiMethod, callExpression);
             MethodSmartStepTarget target = new MethodSmartStepTarget(
-              psiMethod,
+              targetMethod,
               null,
               callExpression,
-              isInsideLambda(expression) ||
-              (expression instanceof PsiNewExpression newExpr && newExpr.getAnonymousClass() != null),
+              needBreakpointRequest,
               null
             );
-            target.setOrdinal(Math.toIntExact(existingMethodCalls(targets, psiMethod).count()));
+            target.setOrdinal(Math.toIntExact(existingMethodCalls(targets, targetMethod).count()));
             if (pos != -1) {
               targets.add(pos, target);
             }
@@ -536,5 +541,18 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   private static StreamEx<MethodSmartStepTarget> existingMethodCalls(List<SmartStepTarget> targets, PsiMethod psiMethod) {
     return immediateMethodCalls(targets)
       .filter(t -> psiMethod.getManager().areElementsEquivalent(psiMethod, t.getMethod()));
+  }
+
+  private static @NotNull PsiMethod getInvocationMethod(@NotNull PsiMethod method, @Nullable PsiElement highlightElement) {
+    if (method.getContainingClass() instanceof PsiEnumConstantInitializer initializer &&
+        highlightElement != null && highlightElement.getParent() instanceof PsiReferenceExpression reference &&
+        reference.getQualifierExpression() instanceof PsiReferenceExpression qualifier &&
+        qualifier.resolve() instanceof PsiEnumConstant) {
+      var superMethods = method.findSuperMethods(initializer.getContainingClass());
+      if (superMethods.length == 1) {
+        return superMethods[0];
+      }
+    }
+    return method;
   }
 }
