@@ -57,6 +57,11 @@ interface RangeMarkers {
   @TestOnly
   fun getRangeMarkersNodeSize(): Int
 
+  fun processDeliciousRangeMarkersOverlappingWith(start:Int,
+                                                  end:Int,
+                                                  tastePreference:Byte,
+                                                  processor:Processor<in RangeMarker>):Boolean
+
   object Holder {
     @JvmField
     var USE_PMARKER_IMPLEMENTATION: Boolean = Registry.`is`("editor.range.marker.use.pmarker.internal")

@@ -88,10 +88,11 @@ public final class RangeMarkersImpl implements RangeMarkers {
     return processDeliciousRangeMarkersOverlappingWith(start, end, (byte)0, processor);
   }
 
-  boolean processDeliciousRangeMarkersOverlappingWith(int start,
-                                                      int end,
-                                                      byte tastePreference,
-                                                      @NotNull Processor<? super RangeMarker> processor) {
+  @Override
+  public boolean processDeliciousRangeMarkersOverlappingWith(int start,
+                                                             int end,
+                                                             byte tastePreference,
+                                                             @NotNull Processor<? super RangeMarker> processor) {
     RangeMarkerTree<RangeMarkerEx> rangeMarkers = myRangeMarkers;
     if (rangeMarkers == null) {
       return SnapshotMarkerEngineImpl.INSTANCE.processRangeMarkersOverlappingWith(

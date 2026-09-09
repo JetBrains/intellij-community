@@ -19,10 +19,10 @@ import java.util.List;
 final class GuardedBlocksImpl implements GuardedBlocks {
   private static final Logger LOG = Logger.getInstance(GuardedBlocksImpl.class);
 
-  @NotNull private final RangeMarkersImpl myRangeMarkers;
+  @NotNull private final RangeMarkers myRangeMarkers;
   private List<RangeMarker> myCachedGuardedBlocks;
 
-  GuardedBlocksImpl(@NotNull RangeMarkersImpl rangeMarkers) {
+  GuardedBlocksImpl(@NotNull RangeMarkers rangeMarkers) {
     myRangeMarkers = rangeMarkers;
   }
 
