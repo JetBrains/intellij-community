@@ -667,6 +667,7 @@ internal class WorkspaceFileIndexDataImpl(
     packageName: String,
     includeLibrarySources: Boolean,
   ): Query<VirtualFile> = WorkspaceFileIndexDataMetrics.getDirectoriesByPackageNameTimeNanosec.addMeasuredTime {
+    ensureIsUpToDate()
     val query = CollectionQuery(packageDirectoryCache.getDirectoriesByPackageName(packageName))
     return@addMeasuredTime if (includeLibrarySources) query
     else query.filtering {
@@ -674,8 +675,10 @@ internal class WorkspaceFileIndexDataImpl(
     }
   }
 
-  override fun getFilesByPackageName(packageName: String): Query<VirtualFile> =
-    CollectionQuery(packageDirectoryCache.getFilesByPackageName(packageName))
+  override fun getFilesByPackageName(packageName: String): Query<VirtualFile> {
+    ensureIsUpToDate()
+    return CollectionQuery(packageDirectoryCache.getFilesByPackageName(packageName))
+  }
 
   override fun onLowMemory() {
     packageDirectoryCache.onLowMemory()
