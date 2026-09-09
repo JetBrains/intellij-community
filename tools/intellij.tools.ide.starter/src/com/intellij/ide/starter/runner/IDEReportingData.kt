@@ -66,6 +66,9 @@ class IDEReportingData internal constructor(
     ?.takeUnless { it.isEmpty() || testMethod?.namesTheLaunch(flattenedLaunchName) == true }
     ?.let(ReportingPathUtils::launchDirNameOf)
 
+  private val theTestIsNamedByTheMethod: Boolean = testMethod?.namesTheTest(flattenedTestName) == true
+  private val theClassIsNamedByTheTest: Boolean = testMethod?.hasItsClassNamedBy(flattenedTestName) == true
+
   /**
    * One directory name per level this launch reports under: `<class>/<index>_<method>/<launch>/frontend`, each level only when it applies.
    * Every one of them is bounded, because the whole path has to stay within [ReportingPathUtils.PATH_LENGTH_LIMIT].
@@ -82,12 +85,10 @@ class IDEReportingData internal constructor(
    * so that one of the two always names the test.
    */
   private val reusedIdeArtifactPath: String = artifactPathOf(buildList {
-    if (testMethod?.namesTheTest(flattenedTestName) != true) {
+    if (!theTestIsNamedByTheMethod) {
       add(ReportingPathUtils.testDirectoryName(testName))
     }
-    addAll(dirSegmentsBelowTest(theClassIsNamedAbove =
-                                  testMethod?.hasItsClassNamedBy(flattenedTestName) == true
-                                  && !testMethod.namesTheTest(flattenedTestName)))
+    addAll(dirSegmentsBelowTest(theClassIsNamedAbove = theClassIsNamedByTheTest && !theTestIsNamedByTheMethod))
   })
 
   /**
@@ -130,7 +131,7 @@ class IDEReportingData internal constructor(
   // region Reporting directories
 
   private val launchReportingDir: Path =
-    dirSegmentsBelowTest(theClassIsNamedAbove = testMethod?.hasItsClassNamedBy(flattenedTestName) == true)
+    dirSegmentsBelowTest(theClassIsNamedAbove = theClassIsNamedByTheTest)
       .fold(reportingRoot) { dir, segment -> dir.resolve(segment) }
 
   val reportsDir: Path = createReportingDirectory("reports")
