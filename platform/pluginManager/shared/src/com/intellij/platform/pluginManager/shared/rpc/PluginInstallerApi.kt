@@ -17,6 +17,7 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @Rpc
@@ -35,8 +36,21 @@ interface PluginInstallerApi : RemoteApi<Unit> {
   suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
   suspend fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult
   suspend fun installPluginFromDisk(projectId: ProjectId?): Flow<PluginInstalledFromDiskResult>
-  suspend fun installOrUpdatePlugin(sessionId: String, descriptor: PluginDto, updateDescriptor: PluginDto?, installSource: FUSEventSource?, customRepoPlugins: List<PluginDto>?): InstallPluginResult
-  suspend fun continueInstallation(sessionId: String, pluginId: PluginId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, customRepoPlugins: List<PluginDto>?): InstallPluginResult
+  suspend fun installOrUpdatePlugin(
+    sessionId: String,
+    descriptor: PluginDto,
+    updateDescriptor: PluginDto?,
+    installSource: FUSEventSource?,
+    customRepoPlugins: List<PluginDto>?,
+  ): Flow<PluginInstallRpcEvent>
+
+  suspend fun continueInstallation(
+    sessionId: String,
+    pluginId: PluginId,
+    enableRequiredPlugins: Boolean,
+    allowInstallWithoutRestart: Boolean,
+    customRepoPlugins: List<PluginDto>?,
+  ): Flow<PluginInstallRpcEvent>
   suspend fun isRestartRequired(sessionId: String): Boolean
 
   companion object {
@@ -44,4 +58,17 @@ interface PluginInstallerApi : RemoteApi<Unit> {
       return RemoteApiProviderService.resolve(remoteApiDescriptor<PluginInstallerApi>())
     }
   }
+}
+
+@Serializable
+@ApiStatus.Internal
+sealed interface PluginInstallRpcEvent {
+  @Serializable
+  data class DependenciesScheduled(val dependencies: List<PluginDto>) : PluginInstallRpcEvent
+
+  @Serializable
+  data class DownloadProgressChanged(val fraction: Double?) : PluginInstallRpcEvent
+
+  @Serializable
+  data class Completed(val result: InstallPluginResult) : PluginInstallRpcEvent
 }

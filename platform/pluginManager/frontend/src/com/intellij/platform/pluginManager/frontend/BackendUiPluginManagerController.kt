@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
+import com.intellij.platform.pluginManager.shared.rpc.PluginInstallRpcEvent
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.project.projectId
 import fleet.rpc.client.RpcClientDisconnectedException
@@ -40,6 +41,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.completeWith
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
@@ -108,7 +110,13 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     customRepoPlugins: List<PluginUiModel>?,
     progressSink: PluginInstallationProgressSink,
   ): InstallPluginResult {
-    return PluginInstallerApi.getInstance().installOrUpdatePlugin(sessionId, PluginDto.fromModel(descriptor), updateDescriptor?.let { PluginDto.fromModel(it) }, installSource, customRepoPlugins?.map { PluginDto.fromModel(it) })
+    return collectInstallResult(
+      PluginInstallerApi.getInstance().installOrUpdatePlugin(
+        sessionId, PluginDto.fromModel(descriptor), updateDescriptor?.let { PluginDto.fromModel(it) }, installSource,
+        customRepoPlugins?.map { PluginDto.fromModel(it) },
+      ),
+      progressSink,
+    )
   }
 
   override suspend fun continueInstallation(
@@ -122,7 +130,31 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     customRepoPlugins: List<PluginUiModel>?,
     progressSink: PluginInstallationProgressSink,
   ): InstallPluginResult {
-    return PluginInstallerApi.getInstance().continueInstallation(sessionId, pluginId, enableRequiredPlugins, allowInstallWithoutRestart, customRepoPlugins?.map { PluginDto.fromModel(it) })
+    return collectInstallResult(
+      PluginInstallerApi.getInstance().continueInstallation(
+        sessionId, pluginId, enableRequiredPlugins, allowInstallWithoutRestart,
+        customRepoPlugins?.map { PluginDto.fromModel(it) },
+      ),
+      progressSink,
+    )
+  }
+
+  private suspend fun collectInstallResult(
+    events: Flow<PluginInstallRpcEvent>,
+    progressSink: PluginInstallationProgressSink,
+  ): InstallPluginResult {
+    var completedResult: InstallPluginResult? = null
+    events.collect { event ->
+      when (event) {
+        is PluginInstallRpcEvent.DependenciesScheduled -> {
+          event.dependencies.forEach { it.source = PluginSource.REMOTE }
+          progressSink.dependenciesScheduled(event.dependencies)
+        }
+        is PluginInstallRpcEvent.DownloadProgressChanged -> progressSink.downloadProgressChanged(event.fraction)
+        is PluginInstallRpcEvent.Completed -> completedResult = event.result
+      }
+    }
+    return checkNotNull(completedResult) { "Plugin installation stream completed without a result" }
   }
 
   override suspend fun getCustomRepoTags(): Set<String> {
