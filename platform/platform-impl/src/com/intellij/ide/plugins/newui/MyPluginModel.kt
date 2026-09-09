@@ -48,6 +48,8 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CancellationException
@@ -543,7 +545,7 @@ open class MyPluginModel @JvmOverloads constructor(
         listComponent.showProgress()
       }
     }
-    for (panel in myDetailPanels) {
+    forEachDetailPanel { panel ->
       if (panel.isShowingPlugin(pluginId)) {
         panel.showInstallProgress(installationScope)
       }
@@ -593,7 +595,7 @@ open class MyPluginModel @JvmOverloads constructor(
         listComponent.updateErrors(errorList)
       }
     }
-    for (panel in myDetailPanels) {
+    forEachDetailPanelSuspending { panel ->
       if (panel.isShowingPlugin(descriptor.pluginId)) {
         panel.setPlugin(installedDescriptor)
         panel.finishInstall(success, restartRequired, descriptor.pluginId, installedDescriptor)
@@ -662,7 +664,7 @@ open class MyPluginModel @JvmOverloads constructor(
           gridComponent.hideProgress()
         }
       }
-      for (panel in myDetailPanels) {
+      forEachDetailPanel { panel ->
         if (panel.isShowingPlugin(id)) {
           panel.hideProgress()
         }
@@ -738,12 +740,32 @@ open class MyPluginModel @JvmOverloads constructor(
     }
   }
 
+  @RequiresEdt
   fun addDetailPanel(detailPanel: PluginDetailsPageComponent) {
+    ThreadingAssertions.assertEventDispatchThread()
     myDetailPanels.add(detailPanel)
   }
 
+  @RequiresEdt
   fun removeDetailPanel(detailPanel: PluginDetailsPageComponent) {
+    ThreadingAssertions.assertEventDispatchThread()
     myDetailPanels.remove(detailPanel)
+  }
+
+  @RequiresEdt
+  private fun forEachDetailPanel(action: (PluginDetailsPageComponent) -> Unit) {
+    ThreadingAssertions.assertEventDispatchThread()
+    for (panel in myDetailPanels.toList()) {
+      if (panel in myDetailPanels) action(panel)
+    }
+  }
+
+  @RequiresEdt
+  private suspend fun forEachDetailPanelSuspending(action: suspend (PluginDetailsPageComponent) -> Unit) {
+    ThreadingAssertions.assertEventDispatchThread()
+    for (panel in myDetailPanels.toList()) {
+      if (panel in myDetailPanels) action(panel)
+    }
   }
 
   private fun appendOrUpdateDescriptor(descriptor: PluginUiModel) {
@@ -1026,7 +1048,7 @@ open class MyPluginModel @JvmOverloads constructor(
           }
         }
       }
-      for (detailPanel in myDetailPanels) {
+      forEachDetailPanelSuspending { detailPanel ->
         detailPanel.updateAll()
       }
     }
@@ -1040,8 +1062,8 @@ open class MyPluginModel @JvmOverloads constructor(
 
   private fun applyChangedUpdateSourcesToUI(updateSourceStates: Map<PluginId, PluginUpdateSourceState>) {
     for ((pluginId, updateSourceState) in updateSourceStates) {
-      for (pageComponent in myDetailPanels) {
-        if (!pageComponent.isShowingPlugin(pluginId)) continue
+      forEachDetailPanel { pageComponent ->
+        if (!pageComponent.isShowingPlugin(pluginId)) return@forEachDetailPanel
 
         pageComponent.updatePluginUpdateSource(updateSourceState.value)
       }
@@ -1112,7 +1134,7 @@ open class MyPluginModel @JvmOverloads constructor(
   ) {
     val scope = coroutineScope.childScope(javaClass.name, Dispatchers.IO, true)
     myTopController!!.showProgress(true)
-    for (panel in myDetailPanels) {
+    forEachDetailPanel { panel ->
       if (panel.descriptorForActions === descriptor) {
         panel.showUninstallProgress(scope)
       }
@@ -1189,7 +1211,7 @@ open class MyPluginModel @JvmOverloads constructor(
       }
     }
 
-    for (panel in myDetailPanels) {
+    forEachDetailPanelSuspending { panel ->
       if (panel.isShowingPlugin(descriptor.pluginId)) {
         panel.updateAfterUninstall(needRestartForUninstall)
       }
