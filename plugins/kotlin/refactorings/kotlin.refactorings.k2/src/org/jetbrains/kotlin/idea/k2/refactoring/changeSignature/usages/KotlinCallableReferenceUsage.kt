@@ -5,14 +5,16 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
+import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
@@ -98,7 +100,7 @@ private fun classify(
     return when {
         // Value param(s) became context param(s): a reference can't pass context arguments.
         anyValueParamBecameContext(changeInfo) ->
-            if (!qualified && !isMember && isOnlyParamKindChange(changeInfo))
+            if (!qualified && !isMember && isOnlyParamKindChange(changeInfo) && isUsedAsFunctionType(expression))
                 buildContextArgsLambda(expression, changeInfo)
             else
                 conflictFix(expression, CONTEXT_PARAMS_CONFLICT)
@@ -106,9 +108,11 @@ private fun classify(
         contextParameterBecameReceiver(changeInfo) -> when {
             qualified ->
                 conflictFix(expression, if (isMember) MEMBER_EXTENSION_CONFLICT else CONTEXT_PARAMS_CONFLICT)
+
             isMember ->
                 buildMemberExtensionLambda(expression, changeInfo)
                     ?: conflictFix(expression, MEMBER_EXTENSION_CONFLICT)
+
             else ->
                 CallableReferenceFix.SetQualifier(
                     boundReceiverText(expression, changeInfo) ?: fullyQualifiedReceiverType(changeInfo)
@@ -128,13 +132,19 @@ private fun classify(
     }
 }
 
+private fun anyValueParamBecameContext(changeInfo: KotlinChangeInfoBase): Boolean =
+    changeInfo.newParameters.any { !it.isNewParameter && !it.wasContextParameter && it.isContextParameter }
+
 /** The change touches nothing but flipping value params to context params. */
 private fun isOnlyParamKindChange(changeInfo: KotlinChangeInfoBase): Boolean =
     changeInfo.receiverParameterInfo == null && changeInfo.oldReceiverInfo == null &&
             changeInfo.newParameters.none { it.isNewParameter || it.wasContextParameter }
 
-private fun anyValueParamBecameContext(changeInfo: KotlinChangeInfoBase): Boolean =
-    changeInfo.newParameters.any { !it.isNewParameter && !it.wasContextParameter && it.isContextParameter }
+context(session: KaSession)
+private fun isUsedAsFunctionType(expression: KtCallableReferenceExpression): Boolean {
+    val expectedType = expression.expectedType as? KaFunctionType ?: return false
+    return !expectedType.isReflectType && expectedType.receiverType == null
+}
 
 private fun contextParameterBecameReceiver(changeInfo: KotlinChangeInfoBase): Boolean =
     changeInfo.oldReceiverInfo == null && changeInfo.receiverParameterInfo?.wasContextParameter == true
@@ -148,9 +158,13 @@ private fun buildContextArgsLambda(
     changeInfo: KotlinChangeInfoBase,
 ): CallableReferenceFix.ConvertToLambda {
     // Lambda parameters = ALL old parameters in old order (the old function type shape).
+    val method = changeInfo.method.unwrapped as? KtCallableDeclaration
+    val varargOldName = method?.valueParameters?.firstOrNull { it.isVarArg }?.name
     val allParams = changeInfo.newParameters.sortedBy { it.oldIndex }
     val contextArgs = allParams.filter { it.isContextParameter }.joinToString(", ") { it.name }
-    val valueArgs = allParams.filter { !it.isContextParameter }.joinToString(", ") { it.name }
+    val valueArgs = allParams.filter { !it.isContextParameter }.joinToString(", ") { param ->
+        if (param.oldName == varargOldName) "*${param.name}" else param.name
+    }
     val call = "${calleeName(expression, changeInfo)}($valueArgs)"
     val body = if (contextArgs.isEmpty()) call else "context($contextArgs) { $call }"
     return CallableReferenceFix.ConvertToLambda(lambdaText(allParams.map { it.name }, body))
