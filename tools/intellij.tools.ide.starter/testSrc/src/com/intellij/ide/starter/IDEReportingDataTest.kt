@@ -164,6 +164,20 @@ class IDEReportingDataTest {
   }
 
   /**
+   * A test name the bound cut short spells only the front of the class. A directory of its own spells the class whole, so it stays.
+   */
+  @Test
+  fun `a class the bound cut short in the test name is still spelled out below it`() {
+    val className = "ReusedModeNonResponsiveRecoveryLongTest"
+    val reportingData = reportingDataOf(
+      testName = "${className.hyphenateTestName()}-with-a-project",
+      testMethod = testMethodIdentity("$className/recoversTheIde", index = 1),
+    )
+
+    reportingData.launchDirSegments() shouldBe listOf("reused-mode-non-responsive-recovery-long-test", "1_recovers-the-ide")
+  }
+
+  /**
    * A hyphenated name keeps the dots it was given, so a `Class.method` test name names its class every bit as much as a `Class/method`
    * one, whose slash becomes a hyphen. Spelling the class again below it would spend a whole bounded directory on what the level above
    * says already.
@@ -172,6 +186,20 @@ class IDEReportingDataTest {
   fun `a class the test name names before a dot is not repeated below it`() {
     val reportingData = reportingDataOf(
       testName = "MavenSmokeTests.addCustomRootsInMavenProject",
+      testMethod = testMethodIdentity("MavenSmokeTests/addCustomRootsInMavenProject", index = 1),
+    )
+
+    reportingData.launchDirSegments() shouldBe listOf("1_add-custom-roots-in-maven-project")
+  }
+
+  /**
+   * A reused-mode test names its run mode before its class, so the class is not at the front of the test name. Spelling the class again
+   * below would cost the path a whole bounded directory over one word above it.
+   */
+  @Test
+  fun `a class the test name names after a run mode is not repeated below it`() {
+    val reportingData = reportingDataOf(
+      testName = "split-maven-smoke-tests",
       testMethod = testMethodIdentity("MavenSmokeTests/addCustomRootsInMavenProject", index = 1),
     )
 

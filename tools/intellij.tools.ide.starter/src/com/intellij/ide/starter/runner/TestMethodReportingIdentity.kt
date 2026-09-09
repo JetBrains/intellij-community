@@ -4,7 +4,7 @@ import com.intellij.ide.starter.utils.ReportingPathUtils
 import com.intellij.ide.starter.utils.ReportingPathUtils.dirName
 import com.intellij.ide.starter.utils.escapeDotSegment
 import com.intellij.ide.starter.utils.flattened
-import com.intellij.ide.starter.utils.startsWithWholeName
+import com.intellij.ide.starter.utils.namesWholeOf
 import org.jetbrains.annotations.ApiStatus
 
 /** The test method an IDE launch belongs to, and which run of that method inside one IDE process it is. */
@@ -47,11 +47,20 @@ data class TestMethodReportingIdentity(
                                                           flattenedTestName == dirMethodName)
 
   /**
-   * Whether [flattenedTestName] begins with the class this method is in, and so names it before any directory below could. The front of it,
-   * because that is the part [ReportingPathUtils.testDirectoryName] keeps when it cuts the test's own directory down to a bounded length.
+   * Whether the directory of [flattenedTestName] names the class this method is in, and so names it before any directory below could.
+   *
+   * The class may sit anywhere in the name, because the test's own directory is free to name a run mode first. Only the part the bound
+   * keeps counts, because a class the bound cut away is named nowhere. That is why the front of the class counts too, but only once it
+   * reaches as far as a directory of the class itself would spell.
    */
-  fun hasItsClassNamedBy(flattenedTestName: String): Boolean =
-    dirClassName != null && flattenedTestName.startsWithWholeName(dirClassName)
+  fun hasItsClassNamedBy(flattenedTestName: String): Boolean {
+    val className = dirClassName ?: return false
+    val unhashedTestName = ReportingPathUtils.unhashedPartOf(flattenedTestName)
+    val namesTheWholeClass = unhashedTestName.namesWholeOf(className)
+    val namesTheFrontOfTheClass = className.startsWith(unhashedTestName)
+    val spellsAsMuchAsAClassDirectoryWould = unhashedTestName.length >= ReportingPathUtils.unhashedPartOf(className).length
+    return namesTheWholeClass || (namesTheFrontOfTheClass && spellsAsMuchAsAClassDirectoryWould)
+  }
 
   /** Whether [flattenedLaunchName] is this method's own name and nothing besides. */
   fun namesTheLaunch(flattenedLaunchName: String?): Boolean = flattenedLaunchName != null && flattenedLaunchName == dirMethodName

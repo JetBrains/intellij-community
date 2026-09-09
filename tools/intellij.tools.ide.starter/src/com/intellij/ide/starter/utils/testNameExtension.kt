@@ -42,8 +42,17 @@ internal fun String.flattened(): String = hyphenateTestName().replace('/', '-')
 internal fun String.escapeDotSegment(): String = if (this == "." || this == "..") replace(".", "%2E") else this
 
 /**
- * Whether this name begins with the whole of [name] rather than merely beginning like it: `maven-smoke-tests`, `maven-smoke-tests-x` and
- * `maven-smoke-tests.x` all begin with the whole of `maven-smoke-tests`, `maven-smoke-testsuite` does not.
+ * Whether this name spells the whole of [name] somewhere in it, at bounds of its own, rather than merely running through it:
+ * `maven-smoke-tests`, `split-maven-smoke-tests`, `maven-smoke-tests-x` and `maven-smoke-tests.x` all spell the whole of
+ * `maven-smoke-tests`, `maven-smoke-testsuite` does not.
  */
-internal fun String.startsWithWholeName(name: String): Boolean =
-  startsWith(name) && getOrNull(name.length)?.isLetterOrDigit() != true
+internal fun String.namesWholeOf(name: String): Boolean {
+  var index = indexOf(name)
+  while (index >= 0) {
+    val isBoundedBefore = getOrNull(index - 1)?.isLetterOrDigit() != true
+    val isBoundedAfter = getOrNull(index + name.length)?.isLetterOrDigit() != true
+    if (isBoundedBefore && isBoundedAfter) return true
+    index = indexOf(name, index + 1)
+  }
+  return false
+}

@@ -202,14 +202,41 @@ object ReportingPathUtils {
       "Maximum length must leave room for the hash suffix"
     }
 
-    if (hashedName == name && name.toByteArray(Charsets.UTF_8).size <= maxLengthInBytes) return name
+    if (hashedName == name && name.fitsIn(maxLengthInBytes)) return name
 
-    // Reporting names are expected to be ASCII; non-ASCII truncation may be imprecise
-    // a cut that lands on a hyphen leaves one, and the artifact path collapses hyphen runs, so keeping it spells the name two ways
-    // a cut that lands on a separator would leave a directory named after nothing but the hash, the name itself having ended above it
-    val prefix = name.take(maxLengthInBytes - NAME_HASH_LENGTH - 1).trimEnd('-', '/')
-    return "$prefix-${nameHash(hashedName)}"
+    return "${prefixWithinBytes(name, maxLengthInBytes - NAME_HASH_LENGTH - 1)}-${nameHash(hashedName)}"
   }
+
+  /**
+   * The part of [name] that a directory name bounded by [maxLengthInBytes] spells with letters rather than with a hash: the whole of it
+   * when it fits, and the front of it when it does not. A directory below can leave out only what this part names already.
+   */
+  fun unhashedPartOf(name: String, maxLengthInBytes: Int = MAX_DIR_NAME_LENGTH_IN_BYTES): String =
+    if (name.fitsIn(maxLengthInBytes)) name
+    else prefixWithinBytes(name, maxLengthInBytes - NAME_HASH_LENGTH - 1)
+
+  /**
+   * The longest prefix of [name] that fits [maxLengthInBytes] and does not end in a separator. The bound counts bytes, and the cut falls
+   * between two code points, so it never splits a character in half.
+   *
+   * [shortenWithHashIfNeeded] joins the hash to this prefix with a hyphen. A prefix ending in a hyphen makes `a-dir--f3a9`, while a
+   * published path collapses a hyphen run and spells the same directory `a-dir-f3a9`. A prefix ending in a `/` makes `completion/-f3a9`,
+   * where the hash alone names the directory below.
+   */
+  private fun prefixWithinBytes(name: String, maxLengthInBytes: Int): String {
+    var end = 0
+    var usedBytes = 0
+    while (end < name.length) {
+      val charCount = Character.charCount(name.codePointAt(end))
+      val charBytes = name.substring(end, end + charCount).toByteArray(Charsets.UTF_8).size
+      if (usedBytes + charBytes > maxLengthInBytes) break
+      usedBytes += charBytes
+      end += charCount
+    }
+    return name.take(end).trimEnd('-', '/')
+  }
+
+  private fun String.fitsIn(maxLengthInBytes: Int): Boolean = toByteArray(Charsets.UTF_8).size <= maxLengthInBytes
 
   /**
    * A short stable hash of [name], for a directory name that keeps only a part of what it is named after: whatever was left out, the hash
