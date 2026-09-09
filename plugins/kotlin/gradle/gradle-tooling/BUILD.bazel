@@ -18,7 +18,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/gradle/tooling-extension-api:toolingExtension"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/gradle/tooling-extension-api:toolingExtension",
+        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea",
+    ],
 )
 
 jvm_library(
@@ -35,6 +39,7 @@ jvm_library(
         # do not sort,
         ":kotlin-gradle-tooling",
         "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
+        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling` end
