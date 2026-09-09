@@ -1,16 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.ServerPageFile;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
@@ -24,7 +23,7 @@ public final class JavaIndexPatternBuilder implements IndexPatternBuilder {
 
   @Override
   public @Nullable Lexer getIndexingLexer(final @NotNull PsiFile file) {
-    if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
+    if (file instanceof PsiJavaFile && JavaTemplateCodeInsightSupport.isIndexingLexerAllowed(file)) {
       return JavaParserDefinition.createLexer(((PsiJavaFile)file).getLanguageLevel());
     }
     return null;
@@ -32,7 +31,7 @@ public final class JavaIndexPatternBuilder implements IndexPatternBuilder {
 
   @Override
   public @Nullable TokenSet getCommentTokenSet(final @NotNull PsiFile file) {
-    if (file instanceof PsiJavaFile && !(file instanceof ServerPageFile)) {
+    if (file instanceof PsiJavaFile && JavaTemplateCodeInsightSupport.isCommentIndexingAllowed(file)) {
       return TokenSet.orSet(StdTokenSets.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
     }
     return null;

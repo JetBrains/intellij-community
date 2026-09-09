@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
@@ -131,7 +132,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.jsp.JspxLanguage;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -1205,10 +1205,7 @@ public final class JavaCompletionUtil {
   }
 
   public static @NotNull String escapeXmlIfNeeded(InsertionContext context, @NotNull String generics) {
-    if (context.getFile().getViewProvider().getBaseLanguage() instanceof JspxLanguage) {
-      return StringUtil.escapeXmlEntities(generics);
-    }
-    return generics;
+    return JavaTemplateCodeInsightSupport.escapeText(context.getFile(), generics);
   }
 
   public static boolean isEffectivelyDeprecated(PsiDocCommentOwner member) {

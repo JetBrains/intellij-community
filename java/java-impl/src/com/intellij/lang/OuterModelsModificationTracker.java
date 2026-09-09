@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
+import com.intellij.java.impl.template.JavaTemplatePresentationSupport;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -40,7 +41,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spi.psi.SPIFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.xml.util.JspFileTypeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,7 +156,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
     private static boolean isIgnoredFileType(@NotNull FileType type) {
       return type.equals(FileTypeManager.getInstance().getFileTypeByExtension("html")) ||
              type instanceof LanguageFileType && "JavaScript".equals(((LanguageFileType)type).getLanguage().getID()) ||
-             JspFileTypeUtil.isJspOrJspX(type);
+             JavaTemplatePresentationSupport.isModificationIgnored(type);
     }
   }
 

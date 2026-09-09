@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
+import com.intellij.java.impl.template.JavaTemplatePresentationSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -17,10 +18,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.ServerPageFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
@@ -52,7 +51,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
 
     PsiFile topLevelFile = InjectedLanguageManager.getInstance(containingFile.getProject()).getTopLevelFile(containingFile);
 
-    if (!(topLevelFile instanceof PsiJavaFile) || topLevelFile instanceof ServerPageFile) {
+    if (!(topLevelFile instanceof PsiJavaFile) || !JavaTemplatePresentationSupport.isJavaSourceAllowed(topLevelFile)) {
       return null;
     }
     PsiElement containingClass = topLevelFile == containingFile ? psiElement : InjectedLanguageManager
@@ -77,8 +76,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       }
     }
     else {
-      // skip JspClass synthetic classes.
-      if (containingClass.getParent() instanceof PsiFile && FileTypeUtils.isInServerPageFile(containingClass)) {
+      if (JavaTemplatePresentationSupport.isClassHidden((PsiClass)containingClass)) {
         containingClass = null;
       }
     }

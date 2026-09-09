@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.impl.template.JavaTemplateImportSupport;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
@@ -23,8 +24,6 @@ import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
-import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
@@ -79,10 +78,7 @@ public final class JavaImportOptimizer implements ImportOptimizer {
           PsiDocumentManager.getInstance(javaFile.getProject()).commitDocument(javaFile.getFileDocument());
           final PsiImportList oldImportList = javaFile.getImportList();
           assert oldImportList != null;
-          if (oldImportList instanceof JspxImportList) {
-            oldImportList.replace(newImportList);
-          }
-          else {
+          if (!JavaTemplateImportSupport.replaceImports(oldImportList, newImportList)) {
             oldImportList.getParent()
               .addRangeAfter(newImportList.getParent().getFirstChild(), newImportList.getParent().getLastChild(), oldImportList);
             oldImportList.delete();
@@ -116,7 +112,8 @@ public final class JavaImportOptimizer implements ImportOptimizer {
 
   @Override
   public boolean supports(@NotNull PsiFile file) {
-    if (file instanceof PsiJavaFile && !(file instanceof JspFile) && !TemplateLanguageUtil.isTemplateDataFile(file)) {
+    if (file instanceof PsiJavaFile && JavaTemplateImportSupport.isImportOptimizerAllowed(file) &&
+        !TemplateLanguageUtil.isTemplateDataFile(file)) {
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
       return virtualFile != null && (ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInSource(virtualFile) ||
                                      virtualFile instanceof LightVirtualFile ||

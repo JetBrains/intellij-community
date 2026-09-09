@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -26,7 +27,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.xml.util.JspFileTypeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class JavaCharFilter extends CharFilter {
@@ -41,8 +41,7 @@ public final class JavaCharFilter extends CharFilter {
     PsiFile file = lookup.getPsiFile();
     if (file == null) return null;
     boolean isJava = file.getLanguage().isKindOf(JavaLanguage.INSTANCE);
-    boolean isJsp = JspFileTypeUtil.isJsp(file);
-    if (!isJava && !isJsp) {
+    if (!isJava && !JavaTemplateCodeInsightSupport.isJavaCompletionSupported(file)) {
       return null;
     }
 

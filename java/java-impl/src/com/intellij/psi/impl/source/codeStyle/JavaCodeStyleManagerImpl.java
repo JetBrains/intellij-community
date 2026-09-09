@@ -6,6 +6,7 @@ import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.java.impl.template.JavaTemplateImportSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -73,10 +74,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.search.MethodDeepestSuperSearcher;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
-import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.statistics.JavaStatisticsManager;
-import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -89,7 +87,6 @@ import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -178,10 +175,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       PsiImportList newList = prepareOptimizeImportsResult(javaFile);
       if (newList != null) {
         final PsiImportList importList = javaFile.getImportList();
-        if (importList instanceof JspxImportList) {
-          importList.replace(newList);
-        }
-        else if (importList != null) {
+        if (importList != null && !JavaTemplateImportSupport.replaceImports(importList, newList)) {
           importList.getParent().addRangeAfter(newList.getParent().getFirstChild(), newList.getParent().getLastChild(), importList);
           importList.delete();
         }
@@ -232,16 +226,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     Set<PsiImportStatementBase> allImports = ContainerUtil.newHashSet(imports);
     final Collection<PsiImportStatementBase> redundant;
-    if (FileTypeUtils.isInServerPageFile(file)) {
-      // remove only duplicate imports
-      redundant = new ReferenceOpenHashSet<>();
-      ContainerUtil.addAll(redundant, imports);
-      redundant.removeAll(allImports);
-      for (PsiImportStatementBase importStatement : imports) {
-        if (importStatement instanceof JspxImportStatement && importStatement.isForeignFileImport()) {
-          redundant.remove(importStatement);
-        }
-      }
+    Collection<PsiImportStatementBase> templateRedundant = JavaTemplateImportSupport.getRedundantImports(file, imports, allImports);
+    if (templateRedundant != null) {
+      redundant = templateRedundant;
     }
     else {
       redundant = allImports;

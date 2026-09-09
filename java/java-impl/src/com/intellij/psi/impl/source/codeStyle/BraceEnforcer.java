@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.java.impl.template.JavaTemplateFormattingSupport;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.PsiBlockStatement;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDoWhileStatement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
@@ -25,12 +26,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.jsp.JavaJspRecursiveElementVisitor;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
+public class BraceEnforcer extends JavaRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance(BraceEnforcer.class);
 
   private final PostFormatProcessorHelper myPostProcessor;
@@ -87,10 +86,9 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
     }
   }
 
-  @Override public void visitJspFile(JspFile file) {
-    final PsiClass javaRoot = file.getJavaClass();
-    if (javaRoot != null) {
-      javaRoot.accept(this);
+  @Override public void visitFile(@NotNull PsiFile file) {
+    if (!JavaTemplateFormattingSupport.visitTemplateFile(file, this)) {
+      super.visitFile(file);
     }
   }
 

@@ -7,7 +7,7 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.hierarchy.ReferenceAwareNodeDescriptor;
-import com.intellij.java.JavaBundle;
+import com.intellij.java.impl.template.JavaTemplatePresentationSupport;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -30,13 +30,11 @@ import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
-import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,7 +107,7 @@ public final class CallHierarchyNodeDescriptor extends JavaHierarchyNodeDescript
       String usagesText = IdeBundle.message("node.call.hierarchy.N.usages", myUsageCount);
       myHighlightedText.getEnding().addText(usagesText, getUsageCountPrefixAttributes());
     }
-    if (!(FileTypeUtils.isInServerPageFile(enclosingElement) && enclosingElement instanceof PsiFile)) {
+    if (JavaTemplatePresentationSupport.isHierarchyLocationShown(enclosingElement)) {
       appendLocationPath(myHighlightedText, enclosingElement);
     }
     myName = myHighlightedText.getText();
@@ -121,24 +119,18 @@ public final class CallHierarchyNodeDescriptor extends JavaHierarchyNodeDescript
   private @NotNull CompositeAppearance getEnclosingElementAppearance(@NotNull PsiMember enclosingElement, boolean withAttributes) {
     CompositeAppearance appearance = new CompositeAppearance();
     TextAttributes mainTextAttributes = withAttributes ? baseColorAttributes() : null;
-    if (enclosingElement instanceof PsiMethod || enclosingElement instanceof PsiField || enclosingElement instanceof PsiRecordComponent) {
-      if (FileTypeUtils.isInServerPageFile(enclosingElement)) {
-        PsiFile file = enclosingElement.getContainingFile();
-        String text = file != null ? file.getName() : JavaBundle.message("node.call.hierarchy.unknown.jsp");
-        appearance.getEnding().addText(text, mainTextAttributes);
-      }
-      else {
-        String name =
-          enclosingElement instanceof PsiMethod method
-          ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                       PsiFormatUtilBase.SHOW_TYPE)
-          : enclosingElement.getName();
-        appearance.getEnding().addText(name, withAttributes ? textAttributesFor(enclosingElement) : null);
-      }
+    String templateName = JavaTemplatePresentationSupport.getHierarchyName(enclosingElement);
+    if (templateName != null) {
+      appearance.getEnding().addText(templateName, mainTextAttributes);
     }
-    else if (FileTypeUtils.isInServerPageFile(enclosingElement) && enclosingElement instanceof PsiFile) {
-      PsiFile file = PsiUtilCore.getTemplateLanguageFile(enclosingElement);
-      appearance.getEnding().addText(file.getName(), mainTextAttributes);
+    else if (enclosingElement instanceof PsiMethod || enclosingElement instanceof PsiField ||
+             enclosingElement instanceof PsiRecordComponent) {
+      String name =
+        enclosingElement instanceof PsiMethod method
+        ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                     PsiFormatUtilBase.SHOW_TYPE)
+        : enclosingElement.getName();
+      appearance.getEnding().addText(name, withAttributes ? textAttributesFor(enclosingElement) : null);
     }
     else {
       String simpleName = ClassPresentationUtil.getSimpleNameForClass((PsiClass)enclosingElement);

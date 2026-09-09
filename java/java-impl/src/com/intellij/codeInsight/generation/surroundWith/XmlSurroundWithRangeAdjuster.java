@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.java.impl.template.JavaTemplateFormattingSupport;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
@@ -9,8 +10,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.jsp.JspLanguage;
-import com.intellij.psi.jsp.JspxLanguage;
 import com.intellij.psi.xml.XmlFile;
 
 
@@ -18,8 +17,7 @@ public final class XmlSurroundWithRangeAdjuster implements SurroundWithRangeAdju
   private static boolean isLanguageWithWSSignificant(Language lang) {
     return lang == HTMLLanguage.INSTANCE ||
            lang == XHTMLLanguage.INSTANCE ||
-           lang instanceof JspLanguage ||
-           lang instanceof JspxLanguage;
+           JavaTemplateFormattingSupport.isWhitespaceSignificant(lang);
   }
 
   private static Language getLanguage(PsiElement element) {

@@ -9,6 +9,7 @@ import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.FileNodeWithNestedFileNodes;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.java.impl.template.JavaTemplatePresentationSupport;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.progress.ProgressManager;
@@ -30,7 +31,6 @@ import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.ServerPageFile;
 import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.ClassUtil;
@@ -61,7 +61,7 @@ public final class ClassesTreeStructureProvider implements SelectableTreeStructu
       ProgressManager.checkCanceled();
 
       Object o = child.getValue();
-      if (o instanceof PsiClassOwner classOwner && !(o instanceof ServerPageFile)) {
+      if (o instanceof PsiClassOwner classOwner && JavaTemplatePresentationSupport.isJavaSourceAllowed(classOwner)) {
         ViewSettings settings1 = ((ProjectViewNode<?>)parent).getSettings();
         VirtualFile file = classOwner.getVirtualFile();
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiClass;
@@ -19,7 +20,6 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.filters.FilterPositionUtil;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -157,9 +157,7 @@ public final class ModifierChooser {
            parent instanceof PsiDeclarationStatement || parent instanceof PsiImportList ||
            parent instanceof PsiDocComment) {
       parent = parent.getParent();
-      if (parent instanceof JspClassLevelDeclarationStatement) {
-        parent = parent.getContext();
-      }
+      parent = JavaTemplateCodeInsightSupport.getDeclarationContext(parent);
     }
 
     if (parent == null) return false;

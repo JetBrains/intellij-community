@@ -1,0 +1,32 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.jsp"/>
+    <module name="intellij.jsp.base"/>
+    <module name="intellij.jsp.spi"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.xml.psi"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <java.templateImportSupport implementation="com.intellij.java.impl.jsp.JspImportSupport"/>
+    <java.templateCodeInsightSupport implementation="com.intellij.java.impl.jsp.JspCodeInsightSupport"/>
+    <java.templateFormattingSupport implementation="com.intellij.java.impl.jsp.JspFormattingSupport"/>
+    <java.templatePresentationSupport implementation="com.intellij.java.impl.jsp.JspPresentationSupport"/>
+    <treeCopyHandler implementation="com.intellij.java.impl.jsp.JspxTreeCopyHandler" order="before java"/>
+  </extensions>
+</idea-plugin>

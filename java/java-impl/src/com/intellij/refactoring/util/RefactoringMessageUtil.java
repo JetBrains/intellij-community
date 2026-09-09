@@ -4,16 +4,13 @@ package com.intellij.refactoring.util;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -70,10 +67,5 @@ public final class RefactoringMessageUtil {
       text = JavaRefactoringBundle.message("setter.method.found.for.the.field.0", newName, action);
     }
     return text;
-  }
-
-  public static void showNotSupportedForJspClassesError(final Project project, Editor editor, final @NlsContexts.DialogTitle String refactoringName, final String helpId) {
-    String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("refactoring.is.not.supported.for.jsp.classes"));
-    CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId);
   }
 }

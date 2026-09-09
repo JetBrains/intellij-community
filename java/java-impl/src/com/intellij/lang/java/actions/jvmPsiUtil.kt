@@ -7,6 +7,7 @@ import com.intellij.codeInsight.ExpectedTypesProvider.createInfo
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.TailTypes
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.request.ExpectedJavaType
 import com.intellij.lang.jvm.JvmClass
@@ -29,7 +30,6 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.TypeAnnotationProvider
 import com.intellij.psi.impl.source.PsiClassImpl
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass
 import com.intellij.psi.util.PsiTypesUtil
 
 @ModifierConstant
@@ -55,14 +55,12 @@ internal fun JvmModifier.toPsiModifier(): String = when (this) {
  * @return Java PsiClass or `null` if the receiver is not a Java PsiClass
  */
 internal fun JvmClass.toJavaClassOrNull(): PsiClass? {
-  if (this is PsiClassImpl || this is JspClass || this is PsiImplicitClass) {
-    // `is JspClass` check should be removed when JSP will define its own action factory,
-    // since Java should know nothing about JSP.
-    if ((this as PsiClass).language == JavaLanguage.INSTANCE) {
+  if (this is PsiClassImpl || this is PsiImplicitClass) {
+    if (language == JavaLanguage.INSTANCE) {
       return this
     }
   }
-  return null
+  return JavaTemplateCodeInsightSupport.getActionClass(this)
 }
 
 internal val visibilityModifiers: Set<JvmModifier> = setOf(

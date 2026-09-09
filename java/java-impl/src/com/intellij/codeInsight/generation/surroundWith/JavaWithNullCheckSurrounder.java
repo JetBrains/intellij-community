@@ -17,6 +17,7 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.TextRange;
@@ -28,12 +29,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionStatement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +47,7 @@ public class JavaWithNullCheckSurrounder extends JavaExpressionModCommandSurroun
     PsiElement parent = PsiTreeUtil.getParentOfType(expr, PsiExpressionStatement.class);
     if (parent == null) return false;
     final PsiElement element = parent.getParent();
-    if (!(element instanceof PsiCodeBlock) && !(FileTypeUtils.isInServerPageFile(element)  && element instanceof PsiFile)) return false;
+    if (!(element instanceof PsiCodeBlock) && !JavaTemplateCodeInsightSupport.isStatementContainerSupported(element)) return false;
     return true;
   }
 

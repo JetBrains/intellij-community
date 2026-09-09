@@ -519,7 +519,7 @@
     <projectTemplateParameterFactory implementation="com.intellij.openapi.module.BasePackageParameterFactory"/>
     <projectTemplateParameterFactory implementation="com.intellij.openapi.module.LanguageLevelParameterFactory"/>
     <java.elementFinder implementation="com.intellij.psi.impl.migration.MigrationElementFinder"/>
-    <treeCopyHandler implementation="com.intellij.psi.impl.source.tree.JavaTreeCopyHandler"/>
+    <treeCopyHandler implementation="com.intellij.psi.impl.source.tree.JavaTreeCopyHandler" id="java"/>
     <lang.treePatcher language="JAVA" implementationClass="com.intellij.psi.templateLanguages.MiddleTreePatcher"/>
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>

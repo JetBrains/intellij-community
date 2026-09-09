@@ -17,6 +17,7 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
@@ -29,14 +30,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionStatement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +51,7 @@ public class JavaWithIfExpressionSurrounder extends JavaExpressionModCommandSurr
     if (!isElseBranch(expr, statementParent) &&
         !(statementParent instanceof PsiCodeBlock) &&
         !(statementParent instanceof PsiCodeFragment) &&
-        !(FileTypeUtils.isInServerPageFile(statementParent) && statementParent instanceof PsiFile)) {
+        !JavaTemplateCodeInsightSupport.isStatementContainerSupported(statementParent)) {
       return false;
     }
     return true;

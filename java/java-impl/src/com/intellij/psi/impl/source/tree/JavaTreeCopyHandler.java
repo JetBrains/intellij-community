@@ -2,18 +2,15 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportHolder;
 import com.intellij.psi.PsiImportStaticStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -26,26 +23,20 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.jsp.JspxLanguage;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.Objects;
 
 public final class JavaTreeCopyHandler implements TreeCopyHandler {
   private static final Logger LOG = Logger.getInstance(JavaTreeCopyHandler.class);
 
-  private static final Key<Boolean> ALREADY_ESCAPED = new Key<>("ALREADY_ESCAPED");
-  private static final Key<Boolean> ESCAPEMENT_ENGAGED = new Key<>("ESCAPEMENT_ENGAGED");
   private static final Key<Boolean> INTERFACE_MODIFIERS_FLAG_KEY = Key.create("INTERFACE_MODIFIERS_FLAG_KEY");
 
   @Override
   public TreeElement decodeInformation(@NotNull TreeElement element, @NotNull Map<Object, Object> decodingState) {
-    boolean shallDecodeEscapedTexts = shallEncodeEscapedTexts(element, decodingState);
     if (element instanceof CompositeElement) {
       IElementType elementType = element.getElementType();
       if (elementType == JavaElementType.JAVA_CODE_REFERENCE ||
@@ -121,34 +112,12 @@ public final class JavaTreeCopyHandler implements TreeCopyHandler {
         }
       }
     }
-    else if (shallDecodeEscapedTexts && element instanceof LeafElement && !(element instanceof OuterLanguageElement)) {
-      if (!isInCData(element)) {
-        String original = element.getText();
-        String escaped = StringUtil.escapeXmlEntities(original);
-        if (!Objects.equals(original, escaped) && element.getCopyableUserData(ALREADY_ESCAPED) == null) {
-          LeafElement copy = ((LeafElement)element).replaceWithText(escaped);
-          copy.putCopyableUserData(ALREADY_ESCAPED, Boolean.TRUE);
-          return copy;
-        }
-      }
-    }
 
     return null;
   }
 
-  private static boolean conversionMayApply(@NotNull ASTNode element) {
-    PsiElement psi = element.getPsi();
-    if (psi == null || !psi.isValid()) return false;
-
-    PsiFile file = psi.getContainingFile();
-    Language baseLanguage = file.getViewProvider().getBaseLanguage();
-    return baseLanguage instanceof JspxLanguage && file.getLanguage() != baseLanguage;
-  }
-
   @Override
   public void encodeInformation(@NotNull TreeElement element, @NotNull ASTNode original, @NotNull Map<Object, Object> encodingState) {
-    boolean shallEncodeEscapedTexts = shallEncodeEscapedTexts(original, encodingState);
-
     if (original instanceof CompositeElement) {
       IElementType originalType = original.getElementType();
       if (originalType == JavaElementType.JAVA_CODE_REFERENCE || originalType == JavaElementType.REFERENCE_EXPRESSION) {
@@ -169,40 +138,6 @@ public final class JavaTreeCopyHandler implements TreeCopyHandler {
         }
       }
     }
-    else if (shallEncodeEscapedTexts &&
-             original instanceof LeafElement &&
-             !(original instanceof OuterLanguageElement) &&
-             !isInCData(original)) {
-      String originalText = element.getText();
-      String unescapedText = StringUtil.unescapeXmlEntities(originalText);
-      if (!Objects.equals(originalText, unescapedText)) {
-        LeafElement replaced = ((LeafElement)element).rawReplaceWithText(unescapedText);
-        element.putCopyableUserData(ALREADY_ESCAPED, null);
-        replaced.putCopyableUserData(ALREADY_ESCAPED, null);
-      }
-    }
-  }
-
-  private static Boolean shallEncodeEscapedTexts(@NotNull ASTNode original, @NotNull Map<Object, Object> encodingState) {
-    Boolean shallEncodeEscapedTexts = (Boolean)encodingState.get(ESCAPEMENT_ENGAGED);
-    if (shallEncodeEscapedTexts == null) {
-      shallEncodeEscapedTexts = conversionMayApply(original);
-      encodingState.put(ESCAPEMENT_ENGAGED, shallEncodeEscapedTexts);
-    }
-    return shallEncodeEscapedTexts;
-  }
-
-  private static boolean isInCData(ASTNode element) {
-    ASTNode leaf = element;
-    while (leaf != null) {
-      if (leaf instanceof OuterLanguageElement) {
-        return leaf.getText().contains("<![CDATA[");
-      }
-
-      leaf = TreeUtil.prevLeaf(leaf);
-    }
-
-    return false;
   }
 
   private static void encodeInformationInRef(@NotNull TreeElement ref, @NotNull ASTNode original) {

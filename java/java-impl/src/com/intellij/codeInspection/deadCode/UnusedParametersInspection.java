@@ -61,7 +61,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                                                            final @NotNull GlobalInspectionContext globalContext,
                                                            final @NotNull ProblemDescriptionsProcessor processor) {
     if (!(refEntity instanceof RefMethod refMethod)) return null;
-    if (refMethod.isSyntheticJSP()) return null;
+    if (refMethod.isSynthetic()) return null;
     if (refMethod.isExternalOverride()) return null;
     if (!(refMethod.isStatic() || refMethod.isConstructor()) && !refMethod.getSuperMethods().isEmpty()) return null;
     RefClass aClass = refMethod.getOwnerClass();

@@ -21,6 +21,7 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.impl.template.JavaTemplatePresentationSupport;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -49,7 +50,6 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.psi.ServerPageFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
@@ -417,7 +417,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
 
     @Override
     public void visitFile(@NotNull PsiFile psiFile) {
-      if (psiFile instanceof PsiJavaFile && !(psiFile instanceof ServerPageFile)) {
+      if (psiFile instanceof PsiJavaFile && JavaTemplatePresentationSupport.isJavaSourceAllowed(psiFile)) {
         VirtualFile vFile = psiFile.getVirtualFile();
         if (vFile != null && vFile.isInLocalFileSystem()) {
           mySourceFiles.add(vFile);

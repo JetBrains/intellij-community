@@ -124,7 +124,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
         appendClassOrInterface(buf, refClass, false);
         buf.append(HTMLComposerImpl.NBSP).append(HTMLComposerImpl.B_OPENING).append(HTMLComposerImpl.CODE_OPENING);
         final String name = refClass.getName();
-        buf.append(refClass.isSyntheticJSP() ? XmlStringUtil.escapeString(name) : name);
+        buf.append(refClass.isSynthetic() ? XmlStringUtil.escapeString(name) : name);
         buf.append(HTMLComposerImpl.CODE_CLOSING).append(HTMLComposerImpl.B_CLOSING);
       }
 
@@ -215,7 +215,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
   @Override
   public @Nullable String getQualifiedName(final RefEntity refEntity) {
-    if (refEntity instanceof RefJavaElement && ((RefJavaElement)refEntity).isSyntheticJSP()) {
+    if (refEntity instanceof RefJavaElement && ((RefJavaElement)refEntity).isSynthetic()) {
       return XmlStringUtil.escapeString(refEntity.getName());
     }
     else if (refEntity instanceof RefMethod refMethod) {
@@ -289,7 +289,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
         refElement instanceof RefFunctionalExpression) {
       buf.append(XmlStringUtil.escapeString(AnalysisBundle.message("inspection.reference.anonymous")));
     }
-    else if (refElement instanceof RefJavaElement && ((RefJavaElement)refElement).isSyntheticJSP()) {
+    else if (refElement instanceof RefJavaElement && ((RefJavaElement)refElement).isSynthetic()) {
       buf.append(XmlStringUtil.escapeString(refElement.getName()));
     }
     else if (refElement instanceof RefMethod refMethod) {

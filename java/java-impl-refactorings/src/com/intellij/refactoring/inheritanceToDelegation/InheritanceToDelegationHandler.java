@@ -3,6 +3,7 @@
 package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.java.impl.template.JavaTemplatePresentationSupport;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -34,7 +35,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
@@ -106,7 +106,8 @@ public class InheritanceToDelegationHandler implements PreviewableRefactoringAct
     }
 
     if (aClass instanceof JspClass) {
-      RefactoringMessageUtil.showNotSupportedForJspClassesError(project, editor, getRefactoringName(), HelpID.INHERITANCE_TO_DELEGATION);
+      JavaTemplatePresentationSupport.showUnsupportedRefactoringError(project, editor, getRefactoringName(),
+                                                                     HelpID.INHERITANCE_TO_DELEGATION);
       return;
     }
 

@@ -20,8 +20,6 @@
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.java.structureView"/>
     <module name="intellij.java.syntax"/>
-    <module name="intellij.jsp"/>
-    <module name="intellij.jsp.spi"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.completion.ranking.java"/>
     <module name="intellij.libraries.fastutil"/>
@@ -97,8 +95,14 @@
   <xi:include href="/META-INF/IntentionPowerPack.xml"/>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.java.javadocPreservedBlockProvider"
-                    interface="com.intellij.psi.impl.source.codeStyle.javadoc.JavaDocMultiLineTodoProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.templateImportSupport"
+                    interface="com.intellij.java.impl.template.JavaTemplateImportSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.templateCodeInsightSupport"
+                    interface="com.intellij.java.impl.template.JavaTemplateCodeInsightSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.templateFormattingSupport"
+                    interface="com.intellij.java.impl.template.JavaTemplateFormattingSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.templatePresentationSupport"
+                    interface="com.intellij.java.impl.template.JavaTemplatePresentationSupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.annotationPackageSupport" interface="com.intellij.codeInsight.annoPackages.AnnotationPackageSupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.annotations.marker.suppressor"
                     interface="com.intellij.codeInsight.NonCodeAnnotationsMarkerSuppressor" dynamic="true"/>

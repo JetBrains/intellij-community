@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiDoWhileStatement;
@@ -32,7 +33,6 @@ import com.intellij.psi.PsiLoopStatement;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.PsiWhileStatement;
-import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -88,7 +88,7 @@ public final class EmptyStatementBodyInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(@NotNull PsiFile file) {
-    return !FileTypeUtils.isInServerPageFile(file);
+    return JavaTemplateCodeInsightSupport.isEmptyStatementInspectionAllowed(file);
   }
 
   @Override

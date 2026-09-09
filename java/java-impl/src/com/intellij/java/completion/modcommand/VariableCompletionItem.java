@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -22,7 +23,6 @@ import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -245,7 +245,7 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
   }
 
   public static void makeFinalIfNeeded(PsiElement place, PsiVariable variable) {
-    if (PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, place) || JspPsiUtil.isInJspFile(place)) {
+    if (PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, place) || !JavaTemplateCodeInsightSupport.isFinalVariableRequired(place)) {
       return;
     }
 

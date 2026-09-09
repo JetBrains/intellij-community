@@ -153,6 +153,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.impl.template.JavaTemplateImportSupport;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
@@ -237,7 +238,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiVariable;
-import com.intellij.psi.ServerPageFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.InheritanceUtil;
@@ -985,8 +985,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     }
 
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject());
-    // don't optimize out imports in JSP since it can be included in other JSP
-    if (!codeAnalyzer.isHighlightingAvailable(file) || !(file instanceof PsiJavaFile) || file instanceof ServerPageFile) return false;
+    if (!codeAnalyzer.isHighlightingAvailable(file) || !(file instanceof PsiJavaFile) ||
+        !JavaTemplateImportSupport.isOnTheFlyOptimizationAllowed(file)) return false;
 
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
     boolean errors = containsErrorsPreventingOptimize(file);

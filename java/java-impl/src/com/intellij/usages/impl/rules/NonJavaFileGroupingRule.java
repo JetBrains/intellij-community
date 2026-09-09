@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
+import com.intellij.java.impl.template.JavaTemplatePresentationSupport;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.ServerPageFile;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
@@ -21,7 +21,7 @@ public class NonJavaFileGroupingRule extends FileGroupingRule {
     final FileUsageGroup usageGroup = (FileUsageGroup)super.getParentGroupFor(usage, targets);
     if (usageGroup != null) {
       final PsiFile psiFile = usageGroup.getPsiFile();
-      if (psiFile instanceof PsiJavaFile && !(psiFile instanceof ServerPageFile)) {
+      if (psiFile instanceof PsiJavaFile && JavaTemplatePresentationSupport.isJavaSourceAllowed(psiFile)) {
         return null;
       }
     }

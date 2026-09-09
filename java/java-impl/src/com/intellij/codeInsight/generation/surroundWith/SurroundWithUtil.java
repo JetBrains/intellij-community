@@ -2,6 +2,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.java.impl.template.JavaTemplateFormattingSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -24,7 +25,6 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -179,7 +179,7 @@ public final class SurroundWithUtil {
     }
 
     ASTNode commentWsText = node.getTreePrev();
-    if (commentWsText == null || !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(commentWsText.getElementType())) {
+    if (commentWsText == null || !JavaTemplateFormattingSupport.isWhitespace(commentWsText.getElementType())) {
       return;
     }
 
@@ -212,7 +212,7 @@ public final class SurroundWithUtil {
         continue;
       }
 
-      if (JavaJspElementType.WHITE_SPACE_BIT_SET.contains(childNode.getElementType())) {
+      if (JavaTemplateFormattingSupport.isWhitespace(childNode.getElementType())) {
         codeBlockWsElement = codeBlockChild;
         codeBlockWsNode = childNode;
         break;

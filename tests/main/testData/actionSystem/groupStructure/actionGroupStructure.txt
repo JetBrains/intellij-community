@@ -57,8 +57,8 @@
       ExportSettings
       <separator>
       RestoreDefaultSettings
-      SettingsSyncOpenSettingsAction
       SaveAsNewFormat
+      SettingsSyncOpenSettingsAction
     FileOtherSettingsGroup
       TemplateProjectProperties
       RunConfigurationTemplatesForNewProjects
@@ -587,10 +587,10 @@
       <separator>
       <separator>
       BuildArtifact
-    UpdateIdeFromSources
     Groovy.CheckResources
       Groovy.CheckResources.Make
       Groovy.CheckResources.Rebuild
+    UpdateIdeFromSources
     PluginDeployActions
       MakeJarAction
       MakeAllJarsAction
@@ -773,10 +773,10 @@
           ShowWslSatisfactionDialog
           OnboardingKotlin
             org.jetbrains.kotlin.onboarding.ShowKotlinOnboardingFeedbackDialogAction
-          MavenBuildProcessSatisfaction
-            org.jetbrains.kotlin.onboarding.maven.ShowMavenBuildProcessSatisfactionDialogAction
           BuildProcessSatisfaction
             org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction
+          MavenBuildProcessSatisfaction
+            org.jetbrains.kotlin.onboarding.maven.ShowMavenBuildProcessSatisfactionDialogAction
         UiInspectorGroup
           UiInspector
           UiThemeColorPickerAction
@@ -1009,8 +1009,8 @@
       ShowKotlinBytecode
       ConfigureKotlinInProject
       DecompileKotlinToJava
-    WorkspaceModelGeneration
     Groovy.Console
+    WorkspaceModelGeneration
   VcsGroups
     Vcs.MainMenu
       Start.Use.Vcs
@@ -1505,8 +1505,8 @@
   ToggleBreakpointEnabled
 [group BuildMenu]
   Java.BuildMenu
-  UpdateIdeFromSources
   Groovy.CheckResources
+  UpdateIdeFromSources
   PluginDeployActions
   AntBuildGroup
   RunTargetAction
@@ -1889,9 +1889,9 @@
   Github.Create.Gist
   Github.PullRequest.Changed.MarkViewed.Toggle
   Mermaid.ExportDiagram
+  OpenInSceneBuilder
   Maven.AddFileAsMavenProject
   Maven.GlobalProjectMenu
-  OpenInSceneBuilder
   ChangeTemplateDataLanguage
   XPathView.EditorPopup
   PackageFile
@@ -1977,10 +1977,10 @@
   ReopenClosedTab
   popup@ExpandableBookmarkContextMenu
   EditorTabPopupMenuEx
-  GitLab.Create.Snippet
-  Github.Create.Gist
   ConvertJavaToKotlin
   ConvertJavaToKotlinGroup
+  GitLab.Create.Snippet
+  Github.Create.Gist
   OpenInSceneBuilder
   ExcludeFromStubGeneration
 [group EditorTabPopupMenuEx]
@@ -2077,8 +2077,8 @@
   ExportSettings
   <separator>
   RestoreDefaultSettings
-  SettingsSyncOpenSettingsAction
   SaveAsNewFormat
+  SettingsSyncOpenSettingsAction
 [group ExternalToolsGroup]
 [group ExtractMethodToolWindow.TreePopup]
   EditSource
@@ -2240,9 +2240,9 @@
   Markdown.InsertGroup
   org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction
   GenerateCopyright
+  JavaGenerateGroup2
   HtmlAddTableColumnBefore
   HtmlAddTableColumnAfter
-  JavaGenerateGroup2
   KotlinMavenGenerate
   GenerateExternalization
   GuiDesigner.GenerateMain
@@ -2579,10 +2579,10 @@
   GoToChangeMarkerGroup
 [group NewFromTemplate]
 [group NewGroup]
+  AddNewPropertyFile
   NewGroup1
   Groovy.NewClass
   Kotlin.NewFile
-  AddNewPropertyFile
   NewPythonFile
   NewFile
   WelcomeNewEmptyFile
@@ -2604,10 +2604,10 @@
   CreateEditorConfigFile
   Markdown.NewFile
   NewXmlDescriptor
-  DevkitObsoleteNewActions
-  DevKit.NewTheme
   Groovy.NewScript
   Gant.NewScript
+  DevkitObsoleteNewActions
+  DevKit.NewTheme
   GuiDesigner.NewActions
 [group NewMicroservices]
 [group NewProjectOrModuleGroup]
@@ -2738,23 +2738,23 @@
   ProjectViewPopupMenuSettingsGroup
   XmlGenerateToolsGroup
   UpdateCopyright
+  ConvertJavaToKotlin
+  ConvertJavaToKotlinGroup
   DissociateResourceBundleAction
   CombinePropertiesFilesAction
   Images.SetBackgroundImage
   GitLab.Create.Snippet
   Github.Create.Gist
   Mermaid.ExportDiagram
-  ConvertJavaToKotlin
-  ConvertJavaToKotlinGroup
+  OpenInSceneBuilder
   Maven.AddFileAsMavenProject
   Maven.GlobalProjectMenu
-  OpenInSceneBuilder
   AddAntBuildFile
   XPathView.XSLT.Associations
   Gradle.ProjectViewDependencyAnalyzer
+  PackageFile
   Images.EditExternally
   Images.ConvertSvgToPng
-  PackageFile
   Maven.ProjectViewDependencyAnalyzer
   PluginDeployActions
 [group ProjectViewPopupMenuModifyGroup]
@@ -3130,8 +3130,8 @@
   PyPackagingMenu
   DevKit.Bootstrap
   KotlinToolsGroup
-  WorkspaceModelGeneration
   Groovy.Console
+  WorkspaceModelGeneration
 [group ToolsMenu.Services]
 [group TopStripeActionGroup]
 [group TouchBar]

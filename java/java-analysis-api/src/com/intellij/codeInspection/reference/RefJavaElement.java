@@ -56,8 +56,15 @@ public interface RefJavaElement extends RefElement {
    * Checks if the element is, or belongs to, a synthetic class or method created for a JSP page.
    *
    * @return true if the element is a synthetic JSP element, false otherwise.
+   * @deprecated Use {@link #isSynthetic()}.
    */
+  @Deprecated
   boolean isSyntheticJSP();
+
+  /** Returns whether the element belongs to a synthetic class or method. */
+  default boolean isSynthetic() {
+    return isSyntheticJSP();
+  }
 
   /**
    * Returns the access modifier for the element, as one of the keywords from the

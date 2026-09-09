@@ -19,6 +19,7 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -57,7 +58,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -346,12 +346,8 @@ public final class TooBroadScopeInspection extends BaseInspection {
           return;
         }
       }
-      if (insertionPoint != null && FileTypeUtils.isInServerPageFile(insertionPoint)) {
-        PsiElement elementBefore = insertionPoint.getPrevSibling();
-        elementBefore = PsiTreeUtil.skipWhitespacesBackward(elementBefore);
-        if (elementBefore instanceof PsiDeclarationStatement && elementBefore.equals(variable.getParent())) {
-          return;
-        }
+      if (insertionPoint != null && !JavaTemplateCodeInsightSupport.isVariableMovementAllowed(insertionPoint, variable)) {
+        return;
       }
       final ProblemHighlightType highlightType = movable && !m_onlyLookAtBlocks
                                                  ? ProblemHighlightType.WARNING

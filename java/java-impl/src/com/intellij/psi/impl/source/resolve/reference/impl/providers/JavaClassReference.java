@@ -11,7 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.reference.PsiMemberReference;
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -38,7 +38,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.ResolveState;
-import com.intellij.psi.ServerPageFile;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -420,10 +419,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     }
     if (resolveResult == null) {
       if (containingFile instanceof PsiJavaFile) {
-        if (containingFile instanceof ServerPageFile) {
-          containingFile = containingFile.getViewProvider().getPsi(JavaLanguage.INSTANCE);
-          if (containingFile == null) return JavaResolveResult.EMPTY;
-        }
+        containingFile = JavaTemplateCodeInsightSupport.getReferenceResolutionFile(containingFile);
+        if (containingFile == null) return JavaResolveResult.EMPTY;
 
         ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), psiElement, containingFile);
         PsiClass contextClass = myJavaClassReferenceSet.getProvider().getContextClass(psiElement);

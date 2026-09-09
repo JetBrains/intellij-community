@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.java.impl.template.JavaTemplatePresentationSupport;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -17,7 +18,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.ElementPresentationUtil;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -159,7 +159,8 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> implements FileNo
       return 0;
     }
     try {
-      int pos = aClass instanceof JspClass ? ElementPresentationUtil.CLASS_KIND_JSP : ElementPresentationUtil.getClassKind(aClass);
+      Integer templateKind = JavaTemplatePresentationSupport.getClassKind(aClass);
+      int pos = templateKind != null ? templateKind : ElementPresentationUtil.getClassKind(aClass);
       //abstract class before concrete
       if (pos == ElementPresentationUtil.CLASS_KIND_CLASS || pos == ElementPresentationUtil.CLASS_KIND_EXCEPTION) {
         boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isInterface();

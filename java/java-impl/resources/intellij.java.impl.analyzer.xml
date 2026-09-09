@@ -19,6 +19,14 @@
     <extensionPoint qualifiedName="com.intellij.jvm.logging" interface="com.intellij.lang.logging.JvmLogger" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.documentationDelegateProvider"
                     interface="com.intellij.codeInsight.javadoc.DocumentationDelegateProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.templateImportSupport"
+                    interface="com.intellij.java.impl.template.JavaTemplateImportSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.templateCodeInsightSupport"
+                    interface="com.intellij.java.impl.template.JavaTemplateCodeInsightSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.templateFormattingSupport"
+                    interface="com.intellij.java.impl.template.JavaTemplateFormattingSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.templatePresentationSupport"
+                    interface="com.intellij.java.impl.template.JavaTemplatePresentationSupport" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <defaultLiveTemplates file="liveTemplates/Java"/>

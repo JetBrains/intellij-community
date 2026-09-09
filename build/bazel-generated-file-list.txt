@@ -323,6 +323,7 @@ java/java-frontback-tests
 java/java-frontend
 java/java-impl
 java/java-impl-inspections
+java/java-impl-jsp
 java/java-impl-refactorings
 java/java-indexing-api
 java/java-indexing-impl
