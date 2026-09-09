@@ -14,11 +14,16 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A classic intention action that has an alternative {@link ModCommand}-based implementation.
- * It's still preferred to use this action in IntelliJ platform IDEs, but it could be useful to
+ * It's still preferred to use this action in IntelliJ Platform-based IDEs, but it could be useful to
  * use ModCommand in other contexts, like headless applications.
  * <p>
  * Before using this interface, please consider rewriting the action to {@link ModCommandAction} 
  * completely. Use this interface only if the action cannot be rewritten for some reason.
+ * <p>
+ * Important: Unless the intention overrides
+ * {@link IntentionAction#generatePreview(Project, Editor, PsiFile)}, this interface
+ * will use a non-null fallback action from {@link #getFallbackModCommandAction()} to generate the preview.
+ * Note that this behavior also affects IntelliJ Platform-based IDEs.
  */
 @ApiStatus.Experimental
 public interface IntentionActionWithModCommandFallback extends IntentionAction {
