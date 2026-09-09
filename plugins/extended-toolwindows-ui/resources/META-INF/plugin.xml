@@ -23,4 +23,10 @@
       <li><b>Tool window names in the sidebars</b> — show names next to the icons, rendered vertically so they cost no extra editor width.</li>
     </ul>
   ]]></description>
+
+  <change-notes><![CDATA[
+    <ul>
+      <li>The first release.</li>
+    </ul>
+  ]]></change-notes>
 </idea-plugin>
