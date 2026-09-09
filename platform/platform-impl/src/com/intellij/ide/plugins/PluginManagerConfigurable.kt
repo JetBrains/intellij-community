@@ -37,7 +37,7 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
-  private var myPanel: PluginManagerConfigurablePanel? = null
+  private var myPanel: PluginsPageSession? = null
   private var openSource: PluginManagerOpenSourceEnum? = null
 
   /**
@@ -82,14 +82,14 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
   }
 
   @RequiresEdt
-  private fun createPanelIfNeeded(): PluginManagerConfigurablePanel {
+  private fun createPanelIfNeeded(): PluginsPageSession {
     return createPanelIfNeeded(null)
   }
 
   @RequiresEdt
-  private fun createPanelIfNeeded(searchQuery: String?): PluginManagerConfigurablePanel {
+  private fun createPanelIfNeeded(searchQuery: String?): PluginsPageSession {
     if (myPanel == null) {
-      myPanel = PluginManagerConfigurablePanel(searchQuery, openSource ?: PluginManagerOpenSourceEnum.OTHER)
+      myPanel = createPluginsPageSession(searchQuery, openSource ?: PluginManagerOpenSourceEnum.OTHER)
     }
     return myPanel!!
   }

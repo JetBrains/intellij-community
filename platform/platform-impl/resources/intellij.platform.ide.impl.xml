@@ -488,6 +488,11 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.menu.MainMenuCollector"/>
     <editorEmptyStateComponentProvider implementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextComponentProvider" order="last"/>
     <editorEmptyTextProvider implementation="com.intellij.openapi.fileEditor.impl.DefaultEditorEmptyTextProvider" order="last"/>
+    <registryKey key="plugin.manager.unified.page" defaultValue="false"
+                 description="Enable the unified Plugins settings page"/>
+    <registryKey key="plugin.manager.unified.page.density.options"
+                 defaultValue="[Baseline*|32 px icons|2 preview rows]"
+                 description="Select a temporary density variant for the unified Plugins settings page"/>
     <pluginUpdatesProvider implementation="com.intellij.ide.plugins.newui.DefaultPluginUpdatesProvider"/>
     <projectSettings service="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
     <projectSettings service="com.intellij.ui.RecentsManager"/>

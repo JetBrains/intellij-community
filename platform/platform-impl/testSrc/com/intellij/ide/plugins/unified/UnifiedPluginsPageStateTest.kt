@@ -59,6 +59,51 @@ internal class UnifiedPluginsPageStateTest {
       .hasMessageContaining("does not match item ID")
   }
 
+  @Test
+  fun `bulk state actions use only installed section models`() {
+    val installed = pluginModel("installed")
+    val bundled = pluginModel("bundled")
+    val sections = listOf(
+      PluginSectionState(
+        PluginSectionId.Installed,
+        items = listOf(PluginItemState(installed.pluginId, installed.name, modelHandle = PluginItemModelHandle(installed))),
+      ),
+      PluginSectionState(
+        PluginSectionId.Bundled,
+        items = listOf(PluginItemState(bundled.pluginId, bundled.name, modelHandle = PluginItemModelHandle(bundled))),
+      ),
+    )
+
+    assertThat(eligibleInstalledPluginModels(sections)).containsExactly(installed)
+  }
+
+  @Test
+  fun `Bundled category action resolves every category model in order`() {
+    val installed = pluginModel("installed")
+    val firstBundled = pluginModel("first.bundled")
+    val secondBundled = pluginModel("second.bundled")
+    val sections = listOf(
+      PluginSectionState(
+        PluginSectionId.Installed,
+        items = listOf(PluginItemState(installed.pluginId, installed.name, modelHandle = PluginItemModelHandle(installed))),
+      ),
+      PluginSectionState(
+        PluginSectionId.Bundled,
+        items = listOf(
+          PluginItemState(firstBundled.pluginId, firstBundled.name, modelHandle = PluginItemModelHandle(firstBundled)),
+          PluginItemState(secondBundled.pluginId, secondBundled.name, modelHandle = PluginItemModelHandle(secondBundled)),
+        ),
+      ),
+    )
+    val category = BundledPluginCategoryGroupState(
+      category = "Tools",
+      pluginIds = listOf(secondBundled.pluginId, firstBundled.pluginId),
+      action = BundledPluginCategoryAction.EnableAll,
+    )
+
+    assertThat(eligibleBundledCategoryPluginModels(sections, category)).containsExactly(secondBundled, firstBundled)
+  }
+
   private fun pluginModel(pluginId: String) = PluginNodeModelBuilderFactory
     .createBuilder(PluginId.getId(pluginId))
     .setName("Plugin")
