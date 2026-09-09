@@ -21,12 +21,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlChunk
@@ -121,6 +119,7 @@ class ListPluginComponent internal constructor(
   searchListener: LinkListener<Any>,
   coroutineScope: CoroutineScope,
   private val myOperationLauncher: PluginOperationLauncher,
+  operationUiBridge: PluginOperationUiBridge?,
   marketplace: Boolean,
 ) : JPanel() {
   constructor(
@@ -139,6 +138,7 @@ class ListPluginComponent internal constructor(
     searchListener,
     coroutineScope,
     PluginOperationLauncher(coroutineScope),
+    null,
     marketplace,
   )
 
@@ -192,6 +192,7 @@ class ListPluginComponent internal constructor(
   private var myEventHandler: EventHandler? = null
   private var myCustomizer: PluginManagerCustomizer? = null
   private val myUiCoroutineScope: CoroutineScope = coroutineScope.childScope("Plugin row ${pluginUiModel.pluginId}")
+  private val myOperationUi = operationUiBridge?.createHandle(this) ?: PluginOperationUiHandle(this)
   private var mySelection: EventHandler.SelectionType = EventHandler.SelectionType.NONE
   private var myClosed = false
 
@@ -343,8 +344,7 @@ class ListPluginComponent internal constructor(
         myLayout.addButtonComponent(myInstallButton!!)
 
         myInstallButton!!.addActionListener {
-          val modalityState = ModalityState.stateForComponent(myInstallButton!!)
-          val operationUi = PluginOperationUiContext(modalityState) { this }
+          val operationUi = myOperationUi.captureContext(myInstallButton!!)
           PluginModelAsyncOperationsExecutor.performAutoInstall(myOperationLauncher,
                                                                 myModelFacade,
                                                                 myPlugin,
@@ -795,8 +795,7 @@ class ListPluginComponent internal constructor(
   }
 
   private fun updatePlugin(descriptorForActions: PluginUiModel, updateDescriptor: PluginUiModel) {
-    val modalityState = ModalityState.stateForComponent(myUpdateButton!!)
-    val operationUi = PluginOperationUiContext(modalityState) { this }
+    val operationUi = myOperationUi.captureContext(myUpdateButton!!)
     PluginModelAsyncOperationsExecutor.updatePlugin(
       myOperationLauncher,
       myModelFacade,
@@ -1059,6 +1058,7 @@ class ListPluginComponent internal constructor(
       myIndicator = null
     }
     myModelFacade.removeComponent(this)
+    myOperationUi.detach()
     myUiCoroutineScope.cancel()
   }
 
@@ -1391,9 +1391,7 @@ class ListPluginComponent internal constructor(
     selection: MutableList<ListPluginComponent>,
     function: Function<ListPluginComponent, PluginUiModel?>,
   ): UninstallAction<ListPluginComponent> {
-    return UninstallAction(myOperationLauncher, myModelFacade, true, this, selection, function) {
-      selection.forEach { PluginUpdateSourceService.getInstance().erasePluginUpdateSourceId(it.myPlugin.pluginId) }
-    }
+    return UninstallAction(myOperationLauncher, myModelFacade, true, myOperationUi, selection, function)
   }
 
   fun getFocusableComponents(): List<JComponent> {

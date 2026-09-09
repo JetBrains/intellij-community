@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.text.StringUtil
@@ -23,10 +22,9 @@ internal class UninstallAction<C : JComponent>(
   private val operationLauncher: PluginOperationLauncher,
   pluginModelFacade: PluginModelFacade,
   showShortcut: Boolean,
-  private val myUiParent: JComponent,
+  private val operationUi: PluginOperationUiHandle,
   selection: MutableList<C>,
   pluginModelGetter: Function<C, PluginUiModel?>,
-  private val myOnFinishAction: Runnable,
 ) : SelectionBasedPluginModelAction<C?>(
   getText(selection, pluginModelGetter),
   pluginModelFacade,
@@ -62,103 +60,110 @@ internal class UninstallAction<C : JComponent>(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    operationLauncher.launch(Dispatchers.EDT + ModalityState.stateForComponent(myUiParent).asContextElement()) {
-      val selection = getSelection()
-
-      val toDeleteWithAsk = mutableListOf<PluginUiModel>()
-      val toDelete = mutableListOf<PluginUiModel>()
-
-      val pluginIds = selection.values.map { it.pluginId }
-      val prepareToUninstallResult = withContext(Dispatchers.EDT) { UiPluginManager.getInstance().prepareToUninstall(pluginIds) }
-
-      for ((component, model) in selection) {
-        val dependents = prepareToUninstallResult.dependants[model.pluginId]?.map { it.name } ?: emptyList()
-
-        if (dependents.isEmpty()) {
-          toDeleteWithAsk.add(model)
-        }
-        else {
-          val bundledUpdate = prepareToUninstallResult.isPluginBundled(model.pluginId)
-          if (askToUninstall(getUninstallDependentsMessage(model, dependents, bundledUpdate), component!!, bundledUpdate)) {
-            toDelete.add(model)
-          }
-        }
-      }
-
-      var runFinishAction = false
-
-      if (toDeleteWithAsk.isNotEmpty()) {
-        val bundledUpdate = toDeleteWithAsk.size == 1 && prepareToUninstallResult.isPluginBundled(toDeleteWithAsk.first().pluginId)
-        if (askToUninstall(getUninstallAllMessage(toDeleteWithAsk, bundledUpdate), myUiParent, bundledUpdate)) {
-          for (model in toDeleteWithAsk) {
-            uninstallAndUpdateUi(model)
-          }
-          runFinishAction = true
-        }
-      }
-
-      for (model in toDelete) {
-        uninstallAndUpdateUi(model)
-      }
-
-      if (runFinishAction || toDelete.isNotEmpty()) {
-        myOnFinishAction.run()
-      }
+    val models = allDescriptors.toList()
+    val modelFacade = myPluginModelFacade
+    val operationUi = operationUi
+    val operationContext = operationUi.captureContext()
+    operationLauncher.launch(Dispatchers.EDT + operationContext.modalityState.asContextElement()) {
+      uninstallPlugins(modelFacade, operationContext, models)
     }
-  }
-
-  suspend fun uninstallAndUpdateUi(model: PluginUiModel) {
-    val pluginManagerCustomizer = PluginManagerCustomizer.getInstance()
-    if (pluginManagerCustomizer == null) {
-      myPluginModelFacade.uninstallAndUpdateUi(model)
-      return
-    }
-    pluginManagerCustomizer.getUninstallButtonCustomizationModel(myPluginModelFacade, model)?.action()
   }
 
   companion object {
     private val SHORTCUT_SET: ShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE)
                                             ?: CustomShortcutSet(EventHandler.DELETE_CODE)
-
-    private fun getUninstallAllMessage(descriptors: Collection<PluginUiModel>, bundledUpdate: Boolean): @Nls String {
-      return if (descriptors.size == 1) {
-        val descriptor = descriptors.first()
-        IdeBundle.message("prompt.uninstall.plugin", descriptor.name, if (bundledUpdate) 1 else 0)
-      }
-      else {
-        IdeBundle.message("prompt.uninstall.several.plugins", descriptors.size)
-      }
-    }
-
-    private fun getUninstallDependentsMessage(
-      descriptor: PluginUiModel,
-      dependents: List<String>,
-      bundledUpdate: Boolean,
-    ): @Nls String {
-      val listOfDeps = StringUtil.join(
-        dependents,
-        { plugin -> "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$plugin" },
-        "<br>"
-      )
-      val message = IdeBundle.message(
-        "dialog.message.following.plugin.depend.on",
-        dependents.size,
-        descriptor.name,
-        listOfDeps,
-        if (bundledUpdate) 1 else 0
-      )
-      return XmlStringUtil.wrapInHtml(message)
-    }
-
-    private fun askToUninstall(message: @Nls String, parentComponent: JComponent, bundledUpdate: Boolean): Boolean {
-      return MessageDialogBuilder.yesNo(
-        IdeBundle.message("title.plugin.uninstall", if (bundledUpdate) 1 else 0),
-        message
-      ).ask(parentComponent)
-    }
-
   }
 
+}
+
+private suspend fun uninstallPlugins(
+  modelFacade: PluginModelFacade,
+  operationUi: PluginOperationUiContext,
+  models: List<PluginUiModel>,
+) {
+  val toDeleteWithAsk = mutableListOf<PluginUiModel>()
+  val toDelete = mutableListOf<PluginUiModel>()
+  val pluginIds = models.map { it.pluginId }
+  val prepareToUninstallResult = withContext(Dispatchers.EDT) {
+    UiPluginManager.getInstance().prepareToUninstall(pluginIds)
+  }
+
+  for (model in models) {
+    val dependents = prepareToUninstallResult.dependants[model.pluginId]?.map { it.name } ?: emptyList()
+    if (dependents.isEmpty()) {
+      toDeleteWithAsk.add(model)
+    }
+    else {
+      val bundledUpdate = prepareToUninstallResult.isPluginBundled(model.pluginId)
+      val message = getUninstallDependentsMessage(model, dependents, bundledUpdate)
+      if (askToUninstall(message, operationUi, bundledUpdate)) {
+        toDelete.add(model)
+      }
+    }
+  }
+
+  if (toDeleteWithAsk.isNotEmpty()) {
+    val bundledUpdate = toDeleteWithAsk.size == 1 && prepareToUninstallResult.isPluginBundled(toDeleteWithAsk.first().pluginId)
+    val message = getUninstallAllMessage(toDeleteWithAsk, bundledUpdate)
+    if (askToUninstall(message, operationUi, bundledUpdate)) {
+      toDelete.addAll(toDeleteWithAsk)
+    }
+  }
+
+  for (model in toDelete) {
+    uninstallAndUpdateUi(modelFacade, model)
+  }
+}
+
+private suspend fun uninstallAndUpdateUi(modelFacade: PluginModelFacade, model: PluginUiModel) {
+  val pluginManagerCustomizer = PluginManagerCustomizer.getInstance()
+  if (pluginManagerCustomizer == null) {
+    modelFacade.uninstallAndUpdateUi(model)
+    return
+  }
+  pluginManagerCustomizer.getUninstallButtonCustomizationModel(modelFacade, model)?.action()
+}
+
+private fun getUninstallAllMessage(descriptors: Collection<PluginUiModel>, bundledUpdate: Boolean): @Nls String {
+  return if (descriptors.size == 1) {
+    val descriptor = descriptors.first()
+    IdeBundle.message("prompt.uninstall.plugin", descriptor.name, if (bundledUpdate) 1 else 0)
+  }
+  else {
+    IdeBundle.message("prompt.uninstall.several.plugins", descriptors.size)
+  }
+}
+
+private fun getUninstallDependentsMessage(
+  descriptor: PluginUiModel,
+  dependents: List<String>,
+  bundledUpdate: Boolean,
+): @Nls String {
+  val listOfDeps = StringUtil.join(
+    dependents,
+    { plugin -> "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$plugin" },
+    "<br>"
+  )
+  val message = IdeBundle.message(
+    "dialog.message.following.plugin.depend.on",
+    dependents.size,
+    descriptor.name,
+    listOfDeps,
+    if (bundledUpdate) 1 else 0
+  )
+  return XmlStringUtil.wrapInHtml(message)
+}
+
+private fun askToUninstall(
+  message: @Nls String,
+  operationUi: PluginOperationUiContext,
+  bundledUpdate: Boolean,
+): Boolean {
+  val parentComponent = operationUi.getParentComponent() ?: return false
+  return MessageDialogBuilder.yesNo(
+    IdeBundle.message("title.plugin.uninstall", if (bundledUpdate) 1 else 0),
+    message
+  ).ask(parentComponent)
 }
 
 @Suppress("UNCHECKED_CAST")

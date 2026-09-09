@@ -130,12 +130,36 @@ import kotlin.coroutines.coroutineContext
 import kotlin.time.TimeSource
 
 @Internal
-class PluginDetailsPageComponent @JvmOverloads constructor(
+class PluginDetailsPageComponent private constructor(
   private val pluginModel: PluginModelFacade,
   private val searchListener: LinkListener<Any>,
   private val isMarketplace: Boolean,
-  private val customizationStrategy: PluginDetailsPageCustomizationStrategy = DefaultPluginDetailsPageCustomizationStrategy,
+  private val customizationStrategy: PluginDetailsPageCustomizationStrategy,
+  operationLauncherOverride: OperationLauncherOverride?,
 ) : MultiPanel() {
+  @JvmOverloads
+  constructor(
+    pluginModel: PluginModelFacade,
+    searchListener: LinkListener<Any>,
+    isMarketplace: Boolean,
+    customizationStrategy: PluginDetailsPageCustomizationStrategy = DefaultPluginDetailsPageCustomizationStrategy,
+  ) : this(pluginModel, searchListener, isMarketplace, customizationStrategy, null)
+
+  internal constructor(
+    pluginModel: PluginModelFacade,
+    searchListener: LinkListener<Any>,
+    isMarketplace: Boolean,
+    customizationStrategy: PluginDetailsPageCustomizationStrategy,
+    operationLauncher: PluginOperationLauncher,
+    operationUiBridge: PluginOperationUiBridge? = null,
+  ) : this(
+    pluginModel,
+    searchListener,
+    isMarketplace,
+    customizationStrategy,
+    OperationLauncherOverride(operationLauncher, operationUiBridge),
+  )
+
   @Suppress("OPT_IN_USAGE")
   private val limitedDispatcher = Dispatchers.IO.limitedParallelism(2)
 
@@ -224,7 +248,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private val pluginManagerCustomizer: PluginManagerCustomizer?
   private val notificationsUpdateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private val coroutineScope = pluginModel.getModel().coroutineScope.childScope("Plugin details")
-  private val operationLauncher = PluginOperationLauncher(coroutineScope)
+  private val operationLauncher = operationLauncherOverride?.launcher ?: PluginOperationLauncher(coroutineScope)
+  private val operationUi = operationLauncherOverride?.operationUiBridge?.createHandle(this) ?: PluginOperationUiHandle(this)
   private val showPluginSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private var buttonsLoadedDeferred: Deferred<Unit>? = null
   private var detached = false
@@ -296,6 +321,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
+  private class OperationLauncherOverride(
+    val launcher: PluginOperationLauncher,
+    val operationUiBridge: PluginOperationUiBridge?,
+  )
+
   val descriptorForActions: PluginUiModel?
     get() = if (!isMarketplace || installedDescriptorForMarketplace == null) plugin else installedDescriptorForMarketplace
 
@@ -305,6 +335,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     detached = true
 
     pluginModel.getModel().removeDetailPanel(this)
+    operationUi.detach()
 
     val currentDescriptor = descriptorForActions
     val currentIndicator = indicator
@@ -559,30 +590,21 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun updatePlugin() {
-    coroutineScope.launch {
-      val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(updateDescriptor ?: descriptorForActions!!, pluginModel)
-      pluginUpdateSourceApplier.runWithRevertOnException {
-        val modalityState = ModalityState.stateForComponent(updateButton!!)
-        val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
-                                                                                          descriptorForActions!!,
-                                                                                          updateDescriptor,
-                                                                                          modalityState)?.action
-
-        withContext(Dispatchers.EDT + ModalityState.stateForComponent(this@PluginDetailsPageComponent).asContextElement()) {
-          if (customizedAction != null) {
-            customizedAction()
-          }
-          else {
-            val result = pluginModel.installOrUpdatePlugin(
-              this@PluginDetailsPageComponent,
-              descriptorForActions!!, updateDescriptor,
-              modalityState,
-            )
-            pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
-          }
-        }
-      }
-    }
+    val operation = capturePluginDetailsUpdateOperation(
+      descriptorForActions,
+      updateDescriptor,
+      operationUi,
+      updateButton ?: return,
+    ) ?: return
+    PluginModelAsyncOperationsExecutor.updatePlugin(
+      operationLauncher,
+      pluginModel,
+      operation.plugin,
+      operation.updateDescriptor,
+      pluginManagerCustomizer,
+      operation.operationUi,
+      operation.updateDescriptor,
+    )
   }
 
   private fun createScrollPane(component: JComponent): JBScrollPane {
@@ -1366,14 +1388,12 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private fun createUninstallAction(): UninstallAction<PluginDetailsPageComponent> {
     return UninstallAction(
       operationLauncher,
-      pluginModel, false, this, java.util.List.of(this),
+      pluginModel,
+      false,
+      operationUi,
+      java.util.List.of(this),
       { obj: PluginDetailsPageComponent -> obj.descriptorForActions },
-      {
-        scheduleNotificationsUpdate()
-        descriptorForActions?.let {
-          PluginUpdateSourceService.getInstance().erasePluginUpdateSourceId(it.pluginId)
-        }
-      })
+    )
   }
 
   private val isPluginFromMarketplace: Boolean
@@ -1762,14 +1782,15 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun installOrUpdatePlugin() {
-    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
-      val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(plugin!!, pluginModel)
-      pluginUpdateSourceApplier.runWithRevertOnException {
-        val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
-        val result = pluginModel.installOrUpdatePlugin(this@PluginDetailsPageComponent, plugin!!, null, modalityState)
-        pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
-      }
-    }
+    val descriptor = plugin ?: return
+    val operationUi = operationUi.captureContext(installButton?.getComponent() ?: return)
+    PluginModelAsyncOperationsExecutor.performAutoInstall(
+      operationLauncher,
+      pluginModel,
+      descriptor,
+      pluginManagerCustomizer,
+      operationUi,
+    )
   }
 
   private fun updateEnableForNameAndIcon() {
@@ -1813,6 +1834,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   suspend fun updateAfterUninstall(showRestart: Boolean) {
     if (pluginManagerCustomizer != null) {
       updateButtonsAndApplyCustomization()
+      scheduleNotificationsUpdate()
       return
     }
     installButton!!.setVisible(false)
@@ -1829,9 +1851,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       installButton!!.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"))
     }
 
-    if (!showRestart) {
-      scheduleNotificationsUpdate()
-    }
+    scheduleNotificationsUpdate()
     fullRepaint()
   }
 
@@ -2011,6 +2031,26 @@ private fun createNotificationPanel(icon: Icon, message: @Nls String): BorderLay
 
   panel.addToCenter(notificationLabel)
   return panel
+}
+
+internal data class PluginDetailsUpdateOperation(
+  val plugin: PluginUiModel,
+  val updateDescriptor: PluginUiModel,
+  val operationUi: PluginOperationUiContext,
+)
+
+@RequiresEdt
+internal fun capturePluginDetailsUpdateOperation(
+  plugin: PluginUiModel?,
+  updateDescriptor: PluginUiModel?,
+  operationUi: PluginOperationUiHandle,
+  modalityComponent: JComponent,
+): PluginDetailsUpdateOperation? {
+  return PluginDetailsUpdateOperation(
+    plugin ?: return null,
+    updateDescriptor ?: return null,
+    operationUi.captureContext(modalityComponent),
+  )
 }
 
 private fun createBaseNotificationPanel(): BorderLayoutPanel {

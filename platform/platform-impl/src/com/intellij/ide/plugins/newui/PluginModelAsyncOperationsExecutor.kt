@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import fleet.rpc.client.RpcClientDisconnectedException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,48 @@ import java.util.function.Consumer
 import java.util.function.Function
 import javax.swing.JComponent
 import kotlin.coroutines.CoroutineContext
+
+internal class PluginOperationUiBridge {
+  private val handles = mutableSetOf<PluginOperationUiHandle>()
+
+  @RequiresEdt
+  fun createHandle(parentComponent: JComponent): PluginOperationUiHandle {
+    return PluginOperationUiHandle(parentComponent) { handle ->
+      handles.remove(handle)
+    }.also(handles::add)
+  }
+
+  @RequiresEdt
+  fun detach() {
+    handles.toList().forEach(PluginOperationUiHandle::detach)
+  }
+}
+
+internal class PluginOperationUiHandle(
+  parentComponent: JComponent,
+  private val onDetached: (PluginOperationUiHandle) -> Unit = {},
+) {
+  private var parentComponent: JComponent? = parentComponent
+  private var detached = false
+
+  @RequiresEdt
+  fun captureContext(modalityComponent: JComponent? = parentComponent): PluginOperationUiContext {
+    if (modalityComponent == null) return PluginOperationUiContext(ModalityState.defaultModalityState()) { null }
+    val modalityState = ModalityState.stateForComponent(modalityComponent)
+    return PluginOperationUiContext(modalityState, ::getParentComponent)
+  }
+
+  @RequiresEdt
+  fun detach() {
+    if (detached) return
+    detached = true
+    parentComponent = null
+    onDetached(this)
+  }
+
+  @RequiresEdt
+  private fun getParentComponent(): JComponent? = parentComponent
+}
 
 internal class PluginOperationUiContext(
   val modalityState: ModalityState,
