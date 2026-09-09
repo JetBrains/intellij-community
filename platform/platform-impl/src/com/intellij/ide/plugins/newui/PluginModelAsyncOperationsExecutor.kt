@@ -320,4 +320,21 @@ internal object PluginModelAsyncOperationsExecutor {
       }
     }
   }
+
+  fun switchPlugins(
+    coroutineScope: CoroutineScope,
+    pluginModelFacade: PluginModelFacade,
+    installedPlugins: List<PluginUiModel>,
+    enable: Boolean,
+    callback: (List<PluginUiModel>) -> Unit,
+  ) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      try {
+        callback(installedPlugins.filter { pluginModelFacade.isEnabled(it) != enable })
+      }
+      catch (_: RpcClientDisconnectedException) {
+        // Bulk plugin switch refresh can race with remote plugin manager disconnect.
+      }
+    }
+  }
 }
