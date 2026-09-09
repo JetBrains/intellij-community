@@ -278,7 +278,7 @@
 - com.intellij.platform.searchEverywhere.SeItem
 - <init>(java.lang.Object,com.intellij.ide.util.PsiElementListCellRenderer$ItemMatchers,I,com.intellij.platform.backend.presentation.TargetPresentation,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z,Z):V
 - f:getExtendedInfo():com.intellij.platform.searchEverywhere.SeExtendedInfo
-- f:getRawItem():java.lang.Object
+- getRawObject():java.lang.Object
 - f:isExactMatch():Z
 - f:isMultiSelectionSupported():Z
 - presentation(kotlin.coroutines.Continuation):java.lang.Object
@@ -286,7 +286,7 @@
 *f:com.intellij.platform.searchEverywhere.providers.target.SeTargetRawItem
 - <init>(java.lang.Object,java.lang.Integer,com.intellij.ide.util.PsiElementListCellRenderer$ItemMatchers):V
 - f:getMatchers():com.intellij.ide.util.PsiElementListCellRenderer$ItemMatchers
-- f:getRawItem():java.lang.Object
+- f:getRawObject():java.lang.Object
 - f:getRawWeight():java.lang.Integer
 *:com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider
 - *sf:Companion:com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider$Companion

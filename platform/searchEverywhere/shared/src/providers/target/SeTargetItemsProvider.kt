@@ -95,10 +95,10 @@ import kotlin.coroutines.cancellation.CancellationException
  * A raw search result, with the matchers that decide which parts of its presentation the UI highlights.
  */
 @ApiStatus.Experimental
-class SeTargetRawItem(val rawItem: Any, val rawWeight: Int?, val matchers: ItemMatchers?)
+class SeTargetRawItem(val rawObject: Any, val rawWeight: Int?, val matchers: ItemMatchers?)
 
 @ApiStatus.Experimental
-class SeTargetPresentableItem(val rawItem: Any,
+class SeTargetPresentableItem(override val rawObject: Any,
                               private val matchers: ItemMatchers?,
                               private val weight: Int,
                               private val presentation: TargetPresentation,
@@ -145,11 +145,11 @@ class SeTargetItemsProvider<T> private constructor(
     inputQueryHasNoExtension: Boolean,
   ): SeTargetPresentableItem {
     val weight = item.rawWeight ?: 0
-    val presentation = SeTargetPresentationProvider.computePresentation(item.rawItem)
+    val presentation = SeTargetPresentationProvider.computePresentation(item.rawObject)
                        ?: TargetPresentation.builder("").presentation()
 
     return SeTargetPresentableItem(
-      rawItem = item.rawItem,
+      rawObject = item.rawObject,
       matchers = item.matchers,
       weight = weight,
       presentation = presentation,
@@ -162,7 +162,7 @@ class SeTargetItemsProvider<T> private constructor(
         inputQuery = inputQuery,
         isFile = isFileProvider,
         inputQueryHasNoExtension = inputQueryHasNoExtension,
-        isDirectory = PSIPresentationBgRendererWrapper.toPsi(item.rawItem) is PsiDirectory,
+        isDirectory = PSIPresentationBgRendererWrapper.toPsi(item.rawObject) is PsiDirectory,
       ),
     )
   }
@@ -524,7 +524,7 @@ class SeTargetItemsProvider<T> private constructor(
    * Builds the preview of [item], or returns null when the item shows none.
    */
   suspend fun getPreviewInfo(item: SeItem): SePreviewInfo? {
-    val rawItem = (item as? SeTargetPresentableItem)?.rawItem ?: return null
+    val rawItem = (item as? SeTargetPresentableItem)?.rawObject ?: return null
     return fetchPreviewInfo(rawItem, project) { previewDisposables.add(it) }
   }
 

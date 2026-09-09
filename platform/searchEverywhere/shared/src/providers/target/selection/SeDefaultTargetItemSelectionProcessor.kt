@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
  */
 internal class SeDefaultTargetItemSelectionProcessor : SeTargetItemSelectionProcessor {
   override suspend fun process(item: SeItem, provider: SeItemsProvider, modifiers: Int, searchText: String): Boolean? {
-    val rawItem = (item as? SeTargetPresentableItem)?.rawItem ?: return null
+    val rawItem = (item as? SeTargetPresentableItem)?.rawObject ?: return null
 
     val psiElement = readAction {
       PSIPresentationBgRendererWrapper.toPsi(rawItem)?.takeIf { it.isValid }
