@@ -10,14 +10,17 @@ import java.util.function.LongConsumer
 /**
  * Immutable persistent marker-state root.
  *
- * A root represents the complete marker state associated with one immutable document snapshot instance. Each
- * snapshot stores an atomic reference to its current root.
+ * A root represents the complete marker state associated with one immutable document snapshot instance. A marker
+ * store holds the atomic reference to the current root.
  *
  * None of the operations in this interface mutate the receiver. Operations
  * that change marker state return a new root that may structurally share data
  * with the receiver.
  */
 interface PMarkerRoot {
+  /** Returns an empty root with the same implementation and configuration as this root. */
+  fun emptyRoot(): PMarkerRoot
+
   /**
    * Resolves [markerId] in this root.
    *

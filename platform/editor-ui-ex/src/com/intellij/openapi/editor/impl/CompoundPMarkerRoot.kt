@@ -23,6 +23,8 @@ class CompoundPMarkerRoot private constructor(
   val exactRangeRoot: PMarkerRoot,
   val linesInRangeRoot: PMarkerRoot,
 ) : PMarkerRoot {
+  override fun emptyRoot(): CompoundPMarkerRoot = empty()
+
   override fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution {
     val exactResolution = exactRangeRoot.resolve(markerId, absentRange)
     if (exactResolution !is PMarkerResolution.Absent) return exactResolution

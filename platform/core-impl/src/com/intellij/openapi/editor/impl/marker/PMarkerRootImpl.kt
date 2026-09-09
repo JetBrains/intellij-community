@@ -31,6 +31,8 @@ open class PMarkerRootImpl private constructor(
 ) : PMarkerRoot {
   private val cachedDelta: ConcurrentLongObjectMap<Int> = Java11Shim.createConcurrentLongObjectMap()
 
+  override fun emptyRoot(): PMarkerRootImpl = empty()
+
   override fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution {
     return when (val state = states.getUnchecked(markerId)) {
       null -> PMarkerResolution.Absent(absentRange.startOffset, absentRange.endOffset)
