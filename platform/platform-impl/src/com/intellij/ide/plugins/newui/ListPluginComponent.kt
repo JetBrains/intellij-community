@@ -39,9 +39,12 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.OnOffButton
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
@@ -80,6 +83,7 @@ import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.JToggleButton
 import javax.swing.SwingConstants
 import javax.swing.UIManager
 import javax.swing.plaf.ButtonUI
@@ -123,7 +127,10 @@ class ListPluginComponent internal constructor(
   marketplace: Boolean,
   private val myUseSecondaryButtons: Boolean = false,
   private val myUseBadgeTags: Boolean = false,
-) : JPanel() {
+  private val myUseIslandSelection: Boolean = false,
+  private val myUseToggleForEnablement: Boolean = false,
+  private val myPluginIconScale: Float = 1.0f,
+) : SelectablePanel() {
   constructor(
     pluginModelFacade: PluginModelFacade,
     pluginUiModel: PluginUiModel,
@@ -166,7 +173,7 @@ class ListPluginComponent internal constructor(
   var myInstalledDescriptorForMarketplace: PluginUiModel? = null
 
   private val myNameComponent = JBLabel()
-  private val myIconComponent = JLabel(AllIcons.Plugins.PluginLogo)
+  private val myIconComponent = JLabel(scalePluginIcon(AllIcons.Plugins.PluginLogo))
   private val myLayout = BaselineLayout()
   private var successfullyFinishedOnce = false
 
@@ -178,7 +185,7 @@ class ListPluginComponent internal constructor(
 
   @JvmField
   var myUpdateButton: JButton? = null
-  private var myEnableDisableButton: JComponent? = null
+  private var myEnableDisableButton: JToggleButton? = null
   private var myChooseUpdateButton: JCheckBox? = null
   private var myAlignButton: JComponent? = null
   private var myMetricsPanel: JPanel? = null
@@ -205,7 +212,11 @@ class ListPluginComponent internal constructor(
     pluginModelFacade.addComponent(this)
     myCustomizer = if (UiPluginManager.isCombinedPluginManagerEnabled()) PluginManagerCustomizer.getInstance() else null
     isOpaque = true
-    border = JBUI.Borders.empty(10)
+    border = if (myUseIslandSelection) JBUI.Borders.empty(12, 16) else JBUI.Borders.empty(10)
+    if (myUseIslandSelection) {
+      selectionArc = JBUI.scale(8)
+      selectionInsets = JBUI.insets(0, 8)
+    }
     layout = myLayout
 
     myIconComponent.verticalAlignment = SwingConstants.TOP
@@ -414,7 +425,7 @@ class ListPluginComponent internal constructor(
 
       myAlignButton = object : JComponent() {
         override fun getPreferredSize(): Dimension {
-          return if (myEnableDisableButton is JCheckBox) {
+          return if (myEnableDisableButton != null) {
             myEnableDisableButton!!.preferredSize
           }
           else {
@@ -452,7 +463,7 @@ class ListPluginComponent internal constructor(
         PluginEnableDisableAction.DISABLE_GLOBALLY
       }
       myModelFacade.setEnabledState(Collections.singletonList(pluginToSwitch), action)
-    })
+    }, myUseToggleForEnablement)
 
     myLayout.addButtonComponent(myEnableDisableButton!!)
     myEnableDisableButton!!.isOpaque = false
@@ -685,12 +696,24 @@ class ListPluginComponent internal constructor(
       SELECTION_COLOR
     }
 
-    updateColors(GRAY_COLOR, JBColor.lazy { ColorUtil.alphaBlending(foreground, background) })
+    val rowColor = JBColor.lazy { ColorUtil.alphaBlending(foreground, background) }
+    if (myUseIslandSelection) {
+      setBackground(background)
+      selectionColor = rowColor.takeIf { type != EventHandler.SelectionType.NONE }
+      updateForegroundColors(GRAY_COLOR)
+    }
+    else {
+      selectionColor = null
+      updateColors(rowColor)
+    }
   }
 
-  private fun updateColors(grayedFg: Color, background: Color) {
+  private fun updateColors(background: Color) {
     setBackground(background)
+    updateForegroundColors(GRAY_COLOR)
+  }
 
+  private fun updateForegroundColors(grayedFg: Color) {
     var nameForeground: Color? = null
     var otherForeground: Color = grayedFg
     var calcColor = true
@@ -810,7 +833,11 @@ class ListPluginComponent internal constructor(
   }
 
   private fun updateIcon(errors: Boolean, disabled: Boolean) {
-    myIconComponent.icon = myModelFacade.getIcon(myPlugin, false, errors, disabled)
+    myIconComponent.icon = scalePluginIcon(myModelFacade.getIcon(myPlugin, false, errors, disabled))
+  }
+
+  private fun scalePluginIcon(icon: Icon): Icon {
+    return if (myPluginIconScale == 1.0f) icon else IconUtil.scale(icon, null, myPluginIconScale)
   }
 
   fun showProgress() {
@@ -995,9 +1022,7 @@ class ListPluginComponent internal constructor(
   }
 
   private fun updateEnabledStateUI() {
-    if (myEnableDisableButton is JCheckBox) {
-      (myEnableDisableButton as JCheckBox).isSelected = myModelFacade.isEnabled(getDescriptorForActions()) && !myIsNotFreeInFreeMode
-    }
+    myEnableDisableButton?.isSelected = myModelFacade.isEnabled(getDescriptorForActions()) && !myIsNotFreeInFreeMode
   }
 
   fun updateAfterUninstall(needRestartForUninstall: Boolean, pluginInstallationState: PluginInstallationState) {
@@ -1614,11 +1639,13 @@ class ListPluginComponent internal constructor(
     }
 
     private fun setBaselineBounds(x: Int, y: Int, component: Component, size: Dimension) {
-      if (component is ActionToolbar) {
-        component.setBounds(x, insets.top - JBUI.scale(1), size.width, size.height)
-      }
-      else {
-        component.setBounds(x, y - component.getBaseline(size.width, size.height), size.width, size.height)
+      when (component) {
+        is ActionToolbar -> component.setBounds(x, insets.top - JBUI.scale(1), size.width, size.height)
+        is OnOffButton -> {
+          val nameBounds = myNameComponent!!.bounds
+          component.setBounds(x, nameBounds.y + (nameBounds.height - size.height) / 2, size.width, size.height)
+        }
+        else -> component.setBounds(x, y - component.getBaseline(size.width, size.height), size.width, size.height)
       }
     }
 
@@ -1771,8 +1798,8 @@ class ListPluginComponent internal constructor(
         }
       }
 
-      if (isNotNullAndVisible(myEnableDisableButton) && myEnableDisableButton is JCheckBox) {
-        val key = if ((myEnableDisableButton as JCheckBox).isSelected) "plugins.configurable.enabled" else "plugins.configurable.disabled"
+      if (isNotNullAndVisible(myEnableDisableButton)) {
+        val key = if (myEnableDisableButton!!.isSelected) "plugins.configurable.enabled" else "plugins.configurable.disabled"
         description.add(IdeBundle.message(key))
       }
 
@@ -1930,7 +1957,12 @@ class ListPluginComponent internal constructor(
       }
     }
 
-    private fun createEnableDisableButton(listener: ActionListener): JCheckBox {
+    private fun createEnableDisableButton(listener: ActionListener, useToggle: Boolean): JToggleButton {
+      if (useToggle) {
+        return OnOffButton().apply {
+          addActionListener(listener)
+        }
+      }
       return object : JCheckBox() {
         private var myBaseline = -1
 
