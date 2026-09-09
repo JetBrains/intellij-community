@@ -19,7 +19,7 @@ import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 
-private const val MIN_BLINK_PERIOD_MS = 10L
+private const val MIN_BLINK_PERIOD_MS: Long = 10L
 
 @RequiresEdt
 internal fun caretPlacements(editor: EditorImpl): List<CaretPlacement> = editor.caretModel.allCarets.map { caret ->

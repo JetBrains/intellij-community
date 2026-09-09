@@ -50,6 +50,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -95,6 +96,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindowHolder
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
@@ -193,7 +195,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
   // null renderer means we should not show a traffic light icon
   private var errorStripeRenderer: ErrorStripeRenderer? = null
-  private val resourcesDisposable = Disposer.newCheckedDisposable()
+  private val resourcesDisposable: CheckedDisposable = Disposer.newCheckedDisposable()
   private val trafficLightVisibilityUpdateQueue: UpdateQueue<Unit>?
   private val toolbarForcingUpdateQueue: UpdateQueue<Unit>?
 
@@ -202,40 +204,40 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
   private val errorStripeMarkersModel: ErrorStripeMarkersModel
 
-  private var dimensionsAreValid = false
-  private var myEditorScrollbarTop = -1
-  private var myEditorTargetHeight = -1
-  private var myEditorSourceHeight = -1
+  private var dimensionsAreValid: Boolean = false
+  private var myEditorScrollbarTop: Int = -1
+  private var myEditorTargetHeight: Int = -1
+  private var myEditorSourceHeight: Int = -1
   private var myDirtyYPositions: ProperTextRange? = null
   private var tooltipRendererProvider: ErrorStripTooltipRendererProvider = BasicTooltipRendererProvider()
 
-  private var minMarkHeight = 0 // height for horizontal, width for vertical stripes
-  private val editorFragmentRenderer = EditorFragmentRenderer(editor)
-  private val mouseMovementTracker = MouseMovementTracker()
-  private var myRowAdjuster = 0
-  private var myWheelAccumulator = 0
-  private var myLastVisualLine = 0
+  private var minMarkHeight: Int = 0 // height for horizontal, width for vertical stripes
+  private val editorFragmentRenderer: EditorFragmentRenderer = EditorFragmentRenderer(editor)
+  private val mouseMovementTracker: MouseMovementTracker = MouseMovementTracker()
+  private var myRowAdjuster: Int = 0
+  private var myWheelAccumulator: Int = 0
+  private var myLastVisualLine: Int = 0
   private var myCurrentHint: Reference<LightweightHint?>? = null
-  private var myCurrentHintAnchorY = 0
-  private var myKeepHint = false
+  private var myCurrentHintAnchorY: Int = 0
+  private var myKeepHint: Boolean = false
 
   val statusToolbar: ActionToolbarImpl
-  private var showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget
-  private var trafficLightVisible = mayRenderTrafficLight
+  private var showToolbar: Boolean = EditorSettingsExternalizable.getInstance().isShowInspectionWidget
+  private var trafficLightVisible: Boolean = mayRenderTrafficLight
   private val toolbarComponentListener: ComponentListener
-  private var cachedToolbarBounds = Rectangle()
-  private val smallIconLabel = JLabel()
+  private var cachedToolbarBounds: Rectangle = Rectangle()
+  private val smallIconLabel: JLabel = JLabel()
 
   @Volatile
-  private var analyzerStatus = EMPTY
-  private var hasAnalyzed = false
-  private var isAnalyzing = false
-  private var showNavigation = false
-  private var reportErrorStripeInconsistency = true
+  private var analyzerStatus: AnalyzerStatus = EMPTY
+  private var hasAnalyzed: Boolean = false
+  private var isAnalyzing: Boolean = false
+  private var showNavigation: Boolean = false
+  private var reportErrorStripeInconsistency: Boolean = true
   private val trafficLightPopup: TrafficLightPopup
-  private val statusTimer = Alarm(resourcesDisposable)
+  private val statusTimer: Alarm = Alarm(resourcesDisposable)
   private val extraActions: DefaultActionGroup
-  private val extensionActions = HashMap<InspectionWidgetActionProvider, AnAction>()
+  private val extensionActions: HashMap<InspectionWidgetActionProvider, AnAction> = HashMap<InspectionWidgetActionProvider, AnAction>()
 
   init {
     setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().errorStripeMarkMinHeight)
@@ -395,16 +397,16 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
     @JvmField
     val DISABLE_CODE_LENS: Key<Boolean> = Key<Boolean>("DISABLE_CODE_LENS")
-    private const val LEFT_RIGHT_INDENT = 5
-    private const val INTER_GROUP_OFFSET = 6
-    private const val QUICK_ANALYSIS_TIMEOUT_MS = 3000
-    private val LOG = logger<EditorMarkupModelImpl>()
+    private const val LEFT_RIGHT_INDENT: Int = 5
+    private const val INTER_GROUP_OFFSET: Int = 6
+    private const val QUICK_ANALYSIS_TIMEOUT_MS: Int = 3000
+    private val LOG: Logger = logger<EditorMarkupModelImpl>()
 
-    private val ERROR_STRIPE_TOOLTIP_GROUP = TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0)
+    private val ERROR_STRIPE_TOOLTIP_GROUP: TooltipGroup = TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0)
 
     private val SCROLLBAR_WIDTH: JBValue = UIInteger("Editor.scrollBarWidth", 14)
 
-    internal val ICON_TEXT_COLOR = ColorKey.createColorKey("ActionButton.iconTextForeground", UIUtil.getContextHelpForeground())
+    internal val ICON_TEXT_COLOR: ColorKey = ColorKey.createColorKey("ActionButton.iconTextForeground", UIUtil.getContextHelpForeground())
 
     private val thinGap: Int
       get() = scale(2)
@@ -418,10 +420,10 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     internal val statusIconSize: Int
       get() = scale(18)
 
-    private val WHOLE_DOCUMENT = ProperTextRange(0, 0)
+    private val WHOLE_DOCUMENT: ProperTextRange = ProperTextRange(0, 0)
 
-    private val EXPANDED_STATUS = Key<List<StatusItem>>("EXPANDED_STATUS")
-    private val TRANSLUCENT_STATE = Key<Boolean>("TRANSLUCENT_STATE")
+    private val EXPANDED_STATUS: Key<List<StatusItem>> = Key<List<StatusItem>>("EXPANDED_STATUS")
+    private val TRANSLUCENT_STATE: Key<Boolean> = Key<Boolean>("TRANSLUCENT_STATE")
   }
 
   override fun toString(): String = "EditorMarkupModel for $editor"
@@ -933,7 +935,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   private inner class MyErrorPanel : ButtonlessScrollBarUI(), MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
     private var handler: PopupHandler? = null
     private var cachedTrack: BufferedImage? = null
-    private var cachedHeight = -1
+    private var cachedHeight: Int = -1
 
     fun dropCache() {
       cachedTrack = null
@@ -1582,13 +1584,13 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     place: String,
     colorsScheme: EditorColorsScheme,
   ) : JPanel() {
-    private var mousePressed = false
-    private var mouseHover = false
+    private var mousePressed: Boolean = false
+    private var mouseHover: Boolean = false
     private val buttonLook: ActionButtonLook
     private val mouseListener: MouseListener
     private val colorsScheme: EditorColorsScheme
     private var items: List<StatusItem?>? = null
-    private var translucent = false
+    private var translucent: Boolean = false
 
     init {
       setLayout(GridBagLayout())
@@ -1764,7 +1766,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
   @ApiStatus.Internal
   class StatusComponentLayout : LayoutManager {
-    private val actionButtons = ArrayList<Pair<Component?, String?>>()
+    private val actionButtons: ArrayList<Pair<Component?, String?>> = ArrayList()
 
     override fun addLayoutComponent(s: String?, component: Component?) {
       actionButtons.add(Pair(component, s))

@@ -166,7 +166,7 @@ sealed class BreakpointArea(open val line: Int, val keyModifier: Int) {
     override val isBetweenLines: Boolean get() = false
 
     companion object {
-      internal val MODIFIER = if (SystemInfo.isMac) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
+      internal val MODIFIER: Int = if (SystemInfo.isMac) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
     }
   }
 
@@ -178,7 +178,7 @@ sealed class BreakpointArea(open val line: Int, val keyModifier: Int) {
     override val isBetweenLines: Boolean get() = true
 
     companion object {
-      internal const val MODIFIER = InputEvent.SHIFT_DOWN_MASK
+      internal const val MODIFIER: Int = InputEvent.SHIFT_DOWN_MASK
     }
   }
 

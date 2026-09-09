@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityStateListener
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ClientEditorManager
@@ -51,12 +52,12 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
-private val EP = ExtensionPointName<EditorFactoryListener>("com.intellij.editorFactoryListener")
-private val LOG = logger<EditorFactoryImpl>()
+private val EP: ExtensionPointName<EditorFactoryListener> = ExtensionPointName<EditorFactoryListener>("com.intellij.editorFactoryListener")
+private val LOG: Logger = logger<EditorFactoryImpl>()
 
 class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
-  private val editorEventMulticaster = EditorEventMulticasterImpl()
-  private val editorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener::class.java)
+  private val editorEventMulticaster: EditorEventMulticasterImpl = EditorEventMulticasterImpl()
+  private val editorFactoryEventDispatcher: EventDispatcher<EditorFactoryListener?> = EventDispatcher.create(EditorFactoryListener::class.java)
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.simpleConnect()

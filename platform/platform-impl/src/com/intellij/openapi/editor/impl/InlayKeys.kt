@@ -7,9 +7,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 object InlayKeys {
   @JvmField
-  val ID_BEFORE_DISPOSAL = Key.create<Long>("inlay.id.before.disposal")
+  val ID_BEFORE_DISPOSAL: Key<Long?> = Key.create<Long>("inlay.id.before.disposal")
   @JvmField
-  internal val OFFSET_BEFORE_DISPOSAL = Key.create<Int>("inlay.offset.before.disposal")
+  internal val OFFSET_BEFORE_DISPOSAL: Key<Int?> = Key.create<Int>("inlay.offset.before.disposal")
   @JvmField
-  internal val ORDER_BEFORE_DISPOSAL = Key.create<Int>("inlay.order.before.disposal")
+  internal val ORDER_BEFORE_DISPOSAL: Key<Int?> = Key.create<Int>("inlay.order.before.disposal")
 }

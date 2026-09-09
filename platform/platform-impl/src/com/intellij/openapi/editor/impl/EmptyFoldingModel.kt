@@ -14,7 +14,7 @@ class EmptyFoldingModel : FoldingModel, ModificationTracker {
   override fun getCollapsedRegionAtOffset(offset: Int): FoldRegion? = null
 
   override fun addFoldRegion(startOffset: Int, endOffset: Int, placeholderText: String): FoldRegion? = null
-  override fun removeFoldRegion(region: FoldRegion) = Unit
+  override fun removeFoldRegion(region: FoldRegion): Unit = Unit
 
   override fun runBatchFoldingOperation(operation: Runnable, allowMovingCaret: Boolean, keepRelativeCaretPosition: Boolean) {
     operation.run()

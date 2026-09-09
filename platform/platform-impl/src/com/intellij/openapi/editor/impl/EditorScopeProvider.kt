@@ -33,7 +33,7 @@ class EditorScopeProvider(private val cs: CoroutineScope) {
   companion object {
     fun getInstance(project: Project): EditorScopeProvider = project.service()
 
-    private val EDITOR_SCOPE_KEY = Key.create<CoroutineScope>("EDITOR_SCOPE_KEY")
+    private val EDITOR_SCOPE_KEY: Key<CoroutineScope?> = Key.create<CoroutineScope>("EDITOR_SCOPE_KEY")
   }
 }
 

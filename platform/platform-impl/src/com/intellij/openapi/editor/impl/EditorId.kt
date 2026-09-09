@@ -49,7 +49,7 @@ data class EditorId(private val id: UID) {
 }
 
 @ApiStatus.Internal
-val KERNEL_EDITOR_ID_KEY = Key.create<EditorId>("EditorImpl.KERNEL_EDITOR_ID")
+val KERNEL_EDITOR_ID_KEY: Key<EditorId?> = Key.create<EditorId>("EditorImpl.KERNEL_EDITOR_ID")
 
 /**
  * Provides [EditorId] for the given [Editor].

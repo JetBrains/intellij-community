@@ -3,11 +3,13 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.diagnostic.Dumpable
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.CustomWrap
 import com.intellij.openapi.editor.CustomWrapModel
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.ElfCandidate
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.ex.RangeMarkerEx
@@ -22,12 +24,12 @@ import org.jetbrains.annotations.TestOnly
 @ElfCandidate
 internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapModel, CustomWrapModel.Mutator, PrioritizedDocumentListener,
                                                                      Dumpable, Disposable {
-  private val document = editor.elfDocument
+  private val document: DocumentEx = editor.elfDocument
   private val tree: CustomWrapTree? = if (RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION) null else CustomWrapTree(document)
   @Volatile
   private var snapshotStorage: SnapshotCustomWrapStorage? = null
-  private val eventDispatcher = EventDispatcher.create(CustomWrapModel.Listener::class.java)
-  private var isInsideBatchMutation = false
+  private val eventDispatcher: EventDispatcher<CustomWrapModel.Listener?> = EventDispatcher.create(CustomWrapModel.Listener::class.java)
+  private var isInsideBatchMutation: Boolean = false
 
   fun addListener(listener: CustomWrapModel.Listener) {
     eventDispatcher.addListener(listener)
@@ -258,9 +260,9 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
   }
 }
 
-private val LOG = logger<CustomWrapModelImpl>()
+private val LOG: Logger = logger<CustomWrapModelImpl>()
 
-private val CUSTOM_WRAP_COMPARATOR = compareBy<CustomWrap> { it.offset }.thenBy { it.priority }
+private val CUSTOM_WRAP_COMPARATOR: Comparator<CustomWrap> = compareBy<CustomWrap> { it.offset }.thenBy { it.priority }
 
 @ApiStatus.Internal
 fun isValidCustomWrapOffset(offset: Int, document: Document): Boolean =

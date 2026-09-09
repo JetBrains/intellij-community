@@ -77,7 +77,7 @@ internal object ComponentInlayManager {
  */
 private class ComponentInlaysContainer private constructor(val editor: EditorEx) : JComponent(), EditorHostedComponent, Disposable {
   companion object {
-    private val INLAYS_CONTAINER = Key<ComponentInlaysContainer>("INLAYS_CONTAINER")
+    private val INLAYS_CONTAINER: Key<ComponentInlaysContainer> = Key<ComponentInlaysContainer>("INLAYS_CONTAINER")
 
     fun addInlay(inlay: Inlay<ComponentInlayRenderer<*>>) {
       if (AppMode.isRemoteDevHost())
@@ -106,21 +106,21 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     }
   }
 
-  private var visibleAreaAwareInlaysCount = 0
-  private var contentSizeAwareInlayCount = 0
+  private var visibleAreaAwareInlaysCount: Int = 0
+  private var contentSizeAwareInlayCount: Int = 0
 
-  private val inlays = mutableListOf<Inlay<ComponentInlayRenderer<*>>>()
-  private val contentResizeListener = object : ComponentAdapter() {
+  private val inlays: MutableList<Inlay<ComponentInlayRenderer<*>>> = mutableListOf<Inlay<ComponentInlayRenderer<*>>>()
+  private val contentResizeListener: ComponentAdapter = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
       revalidate()
       repaint()
     }
   }
-  private val visibleAreaListener = VisibleAreaListener {
+  private val visibleAreaListener: VisibleAreaListener = VisibleAreaListener {
     revalidate()
     repaint()
   }
-  private val foldingListener = object : FoldingListener {
+  private val foldingListener: FoldingListener = object : FoldingListener {
     override fun onFoldProcessingEnd() {
       revalidate()
       repaint()

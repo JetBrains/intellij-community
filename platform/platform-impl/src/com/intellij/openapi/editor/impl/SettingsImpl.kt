@@ -10,6 +10,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -37,7 +38,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import kotlin.math.max
 
-private val LOG = logger<SettingsImpl>()
+private val LOG: Logger = logger<SettingsImpl>()
 internal const val EDITOR_SHOW_SPECIAL_CHARS: String = "editor.show.special.chars"
 
 @Internal
@@ -45,16 +46,16 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   private var languageSupplier: (() -> Language?)? = null
 
   private val state: EditorSettingsState
-  private var doNotRefreshEditorFlag = false
+  private var doNotRefreshEditorFlag: Boolean = false
 
   // This group of settings does not have a UI
 
   @get:Deprecated("use {@link EditorKind}")
   val softWrapAppliancePlace: SoftWrapAppliancePlaces
-  private val computableSettings = ArrayList<CacheableBackgroundComputable<*>>()
+  private val computableSettings: ArrayList<CacheableBackgroundComputable<*>> = ArrayList<CacheableBackgroundComputable<*>>()
 
   private var indentOptionsUpdateJob: Job? = null
-  private val tabSize = object : CacheableBackgroundComputable<Int>(
+  private val tabSize: CacheableBackgroundComputable<Int> = object : CacheableBackgroundComputable<Int>(
     CodeStyleSettings.getDefaults().indentOptions.TAB_SIZE) {
     override fun computeValue(project: Project?): Int {
       val tabSize = if (project == null) {
@@ -92,7 +93,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   // writes, so a wrong seed reaches the document, and `DiffUtil` and the review gutters copy it into a
   // satellite editor permanently. The project setting is right for every file that no
   // `FileIndentOptionsProvider` overrides.
-  private val useTabCharacter = object : CacheableBackgroundComputable<Boolean>(
+  private val useTabCharacter: CacheableBackgroundComputable<Boolean> = object : CacheableBackgroundComputable<Boolean>(
     CodeStyle.getProjectOrDefaultSettings(project).indentOptions.USE_TAB_CHARACTER) {
     override fun computeValue(project: Project?): Boolean {
       val file = getVirtualFile()
@@ -752,7 +753,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     private var overwrittenValue: T? = null
     private var cachedValue: T? = null
     private var defaultValue: T
-    private val currentReadActionRef = AtomicReference<Job?>()
+    private val currentReadActionRef: AtomicReference<Job?> = AtomicReference<Job?>()
 
     init {
       @Suppress("LeakingThis")
@@ -840,7 +841,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   }
 }
 
-private val VALUE_LOCK = Any()
+private val VALUE_LOCK: Any = Any()
 
 private fun computeIndentOptions(project: Project, file: VirtualFile, editorSettings: CodeStyleSettings?): CommonCodeStyleSettings.IndentOptions {
   val settings = editorSettings ?: CodeStyle.getSettings(project, file)
