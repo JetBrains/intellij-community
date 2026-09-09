@@ -50,6 +50,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -201,10 +202,35 @@ open class MyPluginModel @JvmOverloads constructor(
   }
 
   fun pluginInstalledFromDisk(callbackData: PluginInstallCallbackData, errors: List<HtmlChunk>) {
+    pluginInstalledFromDisk(callbackData, errors, PluginSource.LOCAL)
+  }
+
+  internal fun pluginInstalledFromDisk(
+    callbackData: PluginInstallCallbackData,
+    errors: List<HtmlChunk>,
+    source: PluginSource,
+  ) {
     val descriptor = callbackData.pluginDescriptor
+    val presentationModel = PluginUiModelAdapter(descriptor)
+    val operationContext = PluginOperationContext.create(
+      descriptor.pluginId, source, PluginOperationKind.INSTALL
+    )
     coroutineScope.launch {
-      appendOrUpdateDescriptor(PluginUiModelAdapter(descriptor), callbackData.restartNeeded, errors)
-      myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.INSTALL_FROM_DISK, listOf(descriptor.pluginId))
+      operationStarted(operationContext, presentationModel)
+      var terminalResult = PluginOperationTerminalResult.FAILED
+      try {
+        appendOrUpdateDescriptor(presentationModel, callbackData.restartNeeded, errors)
+        myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.INSTALL_FROM_DISK, listOf(descriptor.pluginId))
+        terminalResult = PluginOperationTerminalResult.SUCCEEDED
+      }
+      catch (c: CancellationException) {
+        terminalResult = PluginOperationTerminalResult.CANCELLED
+        throw c
+      }
+      finally {
+        operationTargetFinished(operationContext, source, terminalResult, restartRequired = callbackData.restartNeeded)
+        operationFinished(operationContext)
+      }
     }
   }
 
