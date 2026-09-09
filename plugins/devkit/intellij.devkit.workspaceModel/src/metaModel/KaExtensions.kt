@@ -144,7 +144,7 @@ internal fun isEntitySource(classSymbol: KaClassSymbol): Boolean =
 context(session: KaSession)
 internal fun computeKind(property: KaPropertySymbol): ObjProperty.ValueKind {
   val getter = property.getter ?: return ObjProperty.ValueKind.Plain
-  if (!getter.hasBody) return ObjProperty.ValueKind.Plain
+  if (!getter.isNotDefault) return ObjProperty.ValueKind.Plain
   val declaration = getter.psi as? KtDeclarationWithBody ?: return ObjProperty.ValueKind.Plain
   val getterText = (declaration.bodyExpression ?: declaration.bodyBlockExpression)?.text
   return when {

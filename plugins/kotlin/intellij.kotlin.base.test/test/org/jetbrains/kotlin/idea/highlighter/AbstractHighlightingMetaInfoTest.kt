@@ -58,7 +58,9 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
     }
 
     protected fun File.getExpectedHighlightingFile(suffix: String = highlightingFileNameSuffix(this)): File {
-        return resolveSibling("$name.$suffix")
+        val expectedFile = resolveSibling("$name.$suffix")
+        val testPlatform = (this@AbstractHighlightingMetaInfoTest as? KMPTest)?.testPlatform ?: return expectedFile
+        return KMPTest.withPlatformExtension(expectedFile.toPath(), testPlatform).toFile()
     }
 
     protected open fun highlightingFileNameSuffix(ktFilePath: File): String = HIGHLIGHTING_EXTENSION
