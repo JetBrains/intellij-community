@@ -803,7 +803,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   @Override
   public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
     ThreadContext.installThreadContext(ThreadContext.currentThreadContext().minusKey(ClientIdContextElement.Key), true, () -> {
-      ThreadingAssertions.assertEventDispatchThread();
+      ThreadingAssertions.assertWriteIntentReadAccess();
 
       VirtualFile file = getFile(document);
       assert file != null;
