@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.stubindex;
 
@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.psi.stubs.KotlinAnnotationEntryStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassOrObjectStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinFileStub;
+import org.jetbrains.kotlin.psi.stubs.KotlinFileStubKind;
 import org.jetbrains.kotlin.psi.stubs.KotlinFunctionStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinModifierListStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinObjectStub;
@@ -35,7 +36,6 @@ import org.jetbrains.kotlin.psi.stubs.KotlinScriptStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinStubWithFqName;
 import org.jetbrains.kotlin.psi.stubs.KotlinTypeAliasStub;
 import org.jetbrains.kotlin.psi.stubs.elements.StubIndexService;
-import org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -48,19 +48,16 @@ public class IdeStubIndexService extends StubIndexService {
         FqName packageFqName = stub.getPackageFqName();
 
         sink.occurrence(KotlinExactPackagesIndex.NAME, packageFqName.asString());
-        if (stub.isScript()) return;
 
-        KotlinFileStubImpl fileStub = (KotlinFileStubImpl) stub;
-        FqName facadeFqName = fileStub.getFacadeFqName();
-        if (facadeFqName != null) {
-            sink.occurrence(KotlinFileFacadeFqNameIndex.Helper.getIndexKey(), facadeFqName.asString());
-            sink.occurrence(KotlinFileFacadeShortNameIndex.Helper.getIndexKey(), facadeFqName.shortName().asString());
-            sink.occurrence(KotlinFileFacadeClassByPackageIndex.Helper.getIndexKey(), packageFqName.asString());
-        }
+        if (!(stub.getKind() instanceof KotlinFileStubKind.WithPackage.Facade facade)) return;
 
-        List<String> partNames = fileStub.getFacadePartSimpleNames();
-        if (partNames != null) {
-            for (String partName : partNames) {
+        FqName facadeFqName = facade.getFacadeFqName();
+        sink.occurrence(KotlinFileFacadeFqNameIndex.Helper.getIndexKey(), facadeFqName.asString());
+        sink.occurrence(KotlinFileFacadeShortNameIndex.Helper.getIndexKey(), facadeFqName.shortName().asString());
+        sink.occurrence(KotlinFileFacadeClassByPackageIndex.Helper.getIndexKey(), packageFqName.asString());
+
+        if (facade instanceof KotlinFileStubKind.WithPackage.Facade.MultifileClass multifileClass) {
+            for (String partName : multifileClass.getFacadePartSimpleNames()) {
                 FqName multiFileClassPartFqName = packageFqName.child(Name.identifier(partName));
                 sink.occurrence(KotlinMultiFileClassPartIndex.Helper.getIndexKey(), multiFileClassPartFqName.asString());
             }
