@@ -75,7 +75,7 @@ internal object LibrariesRequiredForWorkspace {
         listOf(kotlinCompilerCommon)
       }
       "intellij.kotlin.gradle.scripting" -> {
-        listOf(kotlinBaseScripting)
+        listOf(kotlinBaseScripting, gradle, gradleToolingExtension, gradleExternalSystemImpl)
       }
       "intellij.bazel.backend" -> {
         listOf(bazelCommons)

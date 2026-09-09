@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleKotlinScriptEntitySource
+import org.jetbrains.kotlin.gradle.scripting.workspaceModel.GradleKotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceUntilWithRangeUntilInspection
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile

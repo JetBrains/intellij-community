@@ -25,7 +25,7 @@ jvm_library(
         "//plugins/gradle/completion/toml",
         "//plugins/gradle/completion/kotlin",
         "//plugins/gradle",
-        "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting",
+        "//plugins/kotlin/gradle/scripting",
     ],
 )
 
@@ -47,7 +47,7 @@ jvm_library(
         ":tests",
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/ide-core:ide-core_test_lib",
-        "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting_test_lib",
+        "//plugins/kotlin/gradle/scripting:scripting_test_lib",
     ],
     deps = [
         # do not sort,

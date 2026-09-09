@@ -64,7 +64,6 @@
     <module name="intellij.kotlin.gradle.codeInsight.toml"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="intellij.kotlin.gradle.java"/>
-    <module name="kotlin.gradle.scripting.shared"/>
     <module name="intellij.kotlin.gradle.scripting"/>
 
     <module name="intellij.kotlin.onboarding" required-if-available="intellij.platform.backend"/>

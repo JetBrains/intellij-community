@@ -169,7 +169,6 @@ dev_dist_plugin(
         "intellij.kotlin.gradle.tooling",
         "intellij.kotlin.gradle.gradle",
         "intellij.kotlin.gradle.scripting",
-        "kotlin.gradle.scripting.shared",
         "intellij.kotlin.grazie",
         "intellij.kotlin.highlighting",
         "intellij.kotlin.highlighting.minimal",
