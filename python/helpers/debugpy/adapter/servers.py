@@ -131,7 +131,11 @@ class Connection(object):
                 self,
             )
             parent_session = None
-        if parent_session is None:
+        if parent_session is None and not is_first_server:
+            # The first connection is the root process itself: the session that started
+            # it claims it via wait_for_connection(). Reporting it would start a second
+            # session for the same process, and one of the two "attach" requests then
+            # fails with "already being debugged".
             parent_session = sessions.get_primary()
             if parent_session is not None:
                 log.info(
