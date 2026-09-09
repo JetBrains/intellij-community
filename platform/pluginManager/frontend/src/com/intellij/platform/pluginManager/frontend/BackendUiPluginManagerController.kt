@@ -15,6 +15,8 @@ import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.ResetPluginsStateResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
+import com.intellij.ide.plugins.newui.PluginInventoryEntry
+import com.intellij.ide.plugins.newui.PluginInventorySnapshot
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManagerController
@@ -47,6 +49,14 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   }
 
   override fun getTarget(): PluginSource = PluginSource.REMOTE
+
+  override suspend fun getPluginInventory(): PluginInventorySnapshot {
+    val snapshot = PluginManagerApi.getInstance().getPluginInventory()
+    return PluginInventorySnapshot(
+      runtimePlugins = snapshot.runtimePlugins.map(PluginDto::toInventoryEntry),
+      stagedPlugins = snapshot.stagedPlugins.map(PluginDto::toInventoryEntry),
+    )
+  }
 
   override suspend fun getPlugins(): List<PluginUiModel> {
     return PluginManagerApi.getInstance().getPlugins().withSource()
@@ -310,6 +320,14 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
       }
     }
   }
+}
+
+private fun PluginDto.toInventoryEntry(): PluginInventoryEntry {
+  source = PluginSource.REMOTE
+  return PluginInventoryEntry(
+    model = this,
+    side = PluginSource.REMOTE,
+  )
 }
 
 

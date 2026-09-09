@@ -40,6 +40,10 @@ import javax.swing.JComponent
 @Service
 @ApiStatus.Internal
 class UiPluginManager {
+  suspend fun loadPluginInventory(): PluginInventoryLoadResult {
+    return getController().loadPluginInventory()
+  }
+
   suspend fun getPlugins(): List<PluginUiModel> {
     return getController().getPlugins()
   }

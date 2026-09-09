@@ -14,12 +14,14 @@ import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
+import com.intellij.ide.plugins.newui.PluginInventoryEntry
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
+import com.intellij.platform.pluginManager.shared.rpc.PluginInventoryDto
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +30,14 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class BackendPluginManagerApi : PluginManagerApi {
+  override suspend fun getPluginInventory(): PluginInventoryDto {
+    val snapshot = DefaultUiPluginManagerController.getPluginInventory()
+    return PluginInventoryDto(
+      runtimePlugins = snapshot.runtimePlugins.map { entry -> PluginDto.fromModel(entry.model, true) },
+      stagedPlugins = snapshot.stagedPlugins.map { entry -> PluginDto.fromModel(entry.model, true) },
+    )
+  }
+
   override suspend fun getPlugins(): List<PluginDto> {
     return DefaultUiPluginManagerController.getPlugins().map { PluginDto.fromModel(it) }
   }

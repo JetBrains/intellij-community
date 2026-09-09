@@ -23,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 @ApiStatus.Internal
 interface PluginManagerApi : RemoteApi<Unit> {
+  suspend fun getPluginInventory(): PluginInventoryDto
   suspend fun getPlugins(): List<PluginDto>
   suspend fun getPluginById(pluginId: PluginId): PluginDto?
   suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginDto>

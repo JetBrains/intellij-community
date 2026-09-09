@@ -91,6 +91,16 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override fun getTarget(): PluginSource = PluginSource.LOCAL
 
+  override suspend fun getPluginInventory(): PluginInventorySnapshot {
+    val runtimeDescriptors = PluginManager.getVisiblePlugins(false).toList()
+    val state = InstalledPluginsState.getInstance()
+    val stagedDescriptors = state.installedPlugins + state.updatedPluginDescriptors
+    return PluginInventorySnapshot(
+      runtimePlugins = runtimeDescriptors.map(::toInventoryEntry),
+      stagedPlugins = stagedDescriptors.map(::toInventoryEntry),
+    )
+  }
+
   override suspend fun getPlugins(): List<PluginUiModel> {
     return PluginManagerCore.plugins.map { PluginUiModelAdapter(it).withSource() }
   }
@@ -1415,6 +1425,13 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   private fun PluginUiModel.withSource(): PluginUiModel {
     source = PluginSource.LOCAL
     return this
+  }
+
+  private fun toInventoryEntry(descriptor: IdeaPluginDescriptor): PluginInventoryEntry {
+    return PluginInventoryEntry(
+      model = PluginUiModelAdapter(descriptor).withSource(),
+      side = PluginSource.LOCAL,
+    )
   }
 
   private fun collectInitialPluginState(): InitialPluginState {

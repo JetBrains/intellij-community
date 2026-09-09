@@ -30,6 +30,8 @@ import javax.swing.JComponent
 interface UiPluginManagerController {
   fun isEnabled(): Boolean
   fun getTarget(): PluginSource
+  suspend fun getPluginInventory(): PluginInventorySnapshot
+  suspend fun loadPluginInventory(): PluginInventoryLoadResult = PluginInventoryLoadResult(getPluginInventory())
   suspend fun getPlugins(): List<PluginUiModel>
   suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel>
   suspend fun initSession(sessionId: String): InitSessionResult
