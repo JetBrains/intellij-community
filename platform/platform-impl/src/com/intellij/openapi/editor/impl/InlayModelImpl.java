@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Predicates;
@@ -812,6 +813,11 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   @TestOnly
   boolean isUsingSnapshotInlayStorage() {
     return mySnapshotMarkerStorage != null;
+  }
+
+  @TestOnly
+  @NotNull SnapshotMarkerRootStore rootStore() {
+    return Objects.requireNonNull(mySnapshotMarkerStorage).getRootStore();
   }
 
   private void notifyBatchModeStarting() {

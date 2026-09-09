@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.marker.PMarker
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -27,12 +28,13 @@ class SnapshotInlayModelTest {
     val state = withEditor("abcdef") { editor ->
       val document = editor.elfDocument as DocumentImpl
       val initialSnapshot = document.core.snapshot()
-      val marker = editor.inlayModel.addInlineElement(2, false, renderer)!! as PMarker
-      val shiftedSnapshot = initialSnapshot.applyOp(textPatch(0, 0, "xy"))
+      val marker = editor.inlayModel.addInlineElement(2, false, renderer)!! as SnapshotRangeMarkerImpl
+      val rootStore = editor.inlayModel.rootStore()
+      val shiftedSnapshot = document.snapshotMarkerStores.applyOp(initialSnapshot, textPatch(0, 0, "xy"))
 
       BranchState(
-        initialOffset = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, initialSnapshot).startOffset,
-        shiftedOffset = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, shiftedSnapshot).startOffset,
+        initialOffset = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, rootStore.rootReference(initialSnapshot).get()).startOffset,
+        shiftedOffset = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, rootStore.rootReference(shiftedSnapshot).get()).startOffset,
       )
     }
 
@@ -261,6 +263,23 @@ class SnapshotInlayModelTest {
       val editor = editorFactory.createEditor(DocumentImpl(text, true)) as EditorImpl
       try {
         action(editor)
+      }
+      finally {
+        editorFactory.releaseEditor(editor)
+      }
+    }
+  }
+
+  private suspend fun createReleasedEditorStorage(): ReleasedEditorStorage {
+    return withContext(Dispatchers.EDT) {
+      val editorFactory = EditorFactory.getInstance()
+      val document = DocumentImpl("abc", true)
+      val editor = editorFactory.createEditor(document) as EditorImpl
+      try {
+        ReleasedEditorStorage(
+          document,
+          WeakReference(editor.inlayModel.rootStore()),
+        )
       }
       finally {
         editorFactory.releaseEditor(editor)

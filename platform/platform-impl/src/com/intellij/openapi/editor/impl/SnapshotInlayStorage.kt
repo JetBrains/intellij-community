@@ -28,10 +28,6 @@ import it.unimi.dsi.fastutil.longs.LongList
 import it.unimi.dsi.fastutil.longs.LongLists
 import java.util.concurrent.atomic.AtomicReference
 
-private const val INLINE_FLAVOR: Int = 1
-private const val AFTER_LINE_END_FLAVOR: Int = 2
-private const val BLOCK_FLAVOR: Int = 4
-
 /** Stores inline, after-line-end, and block inlays for one editor. */
 internal class SnapshotInlayStorage(
   private val model: InlayModelImpl,
@@ -39,7 +35,7 @@ internal class SnapshotInlayStorage(
   val document: DocumentImpl,
 ) {
   private val markersById: ConcurrentLongObjectMap<SnapshotInlayMarker<*>> = Java11Shim.createConcurrentLongObjectMap()
-  private val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(
+  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(
     document,
     onMarkersInvalidated = ::saveInvalidatedMarkers,
     onDocumentChanged = ::processInvalidatedMarkers,
@@ -177,7 +173,7 @@ internal class SnapshotInlayStorage(
 
   fun dispose() {
     allInlays().forEach(Disposer::dispose)
-    rootStore.dispose()
+    rootStore.dispose(document.snapshotMarkerStores)
     markersById.clear()
   }
 
@@ -279,8 +275,6 @@ internal abstract class SnapshotInlayMarker<R : EditorCustomElementRenderer>(
   override fun isValid(): Boolean = !editor.isDisposed && super.isValid()
 
   final override fun currentRootReference(): AtomicReference<PMarkerRoot> = storage.rootReference(storage.currentSnapshot())
-
-  final override fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> = storage.rootReference(snapshot)
 
   final override fun afterDispose() {
     storage.afterDisposed(this)
@@ -448,3 +442,7 @@ private object InlineInlayMarkerPolicy : MarkerPolicy {
     }
   }
 }
+
+private const val INLINE_FLAVOR: Int = 1
+private const val AFTER_LINE_END_FLAVOR: Int = 2
+private const val BLOCK_FLAVOR: Int = 4

@@ -24,7 +24,7 @@ internal class SnapshotCaretMarkerStorage(
   private val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document, onDocumentChanged = documentChanged::accept)
 
   fun dispose() {
-    rootStore.dispose()
+    rootStore.dispose(document.snapshotMarkerStores)
   }
 
   fun nextMarkerId(): Long = SnapshotMarkerEngineImpl.nextMarkerId()

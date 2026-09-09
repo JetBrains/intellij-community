@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -233,6 +234,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @TestOnly
   boolean containsSnapshotHighlighterId(long markerId) {
     return mySnapshotHighlighterStorage != null && mySnapshotHighlighterStorage.containsHighlighterId(markerId);
+  }
+
+  @TestOnly
+  @NotNull SnapshotMarkerRootStore rootStore() {
+    return Objects.requireNonNull(mySnapshotHighlighterStorage).getRootStore();
   }
 
   public void addRangeHighlighter(@NotNull RangeHighlighterEx marker,

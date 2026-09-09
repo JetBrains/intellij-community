@@ -1139,7 +1139,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       return true;
     });
     if (snapshotMarker) {
-      assertFalse(SnapshotMarkerEngineImpl.INSTANCE.containsMarkerId(((DocumentImpl)document).getCore().snapshot(), markerId));
+      var documentImpl = (DocumentImpl)document;
+      assertFalse(documentImpl.getRangeMarkers().rootStore().containsMarkerId(documentImpl.getCore().snapshot(), markerId));
     }
   }
 

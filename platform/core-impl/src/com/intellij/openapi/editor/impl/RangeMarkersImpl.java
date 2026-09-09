@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.marker.MarkerSpec;
 import com.intellij.openapi.editor.impl.marker.PMarker;
 import com.intellij.openapi.editor.impl.marker.PersistentMarkerPolicy;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,27 +28,40 @@ import java.util.Objects;
 
 @ApiStatus.Internal
 public final class RangeMarkersImpl implements RangeMarkers {
-  private final @Nullable RangeMarkerTree<RangeMarkerEx> myRangeMarkers;
-  private final @Nullable RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkers;
+  private final @Nullable RangeMarkerTree<RangeMarkerEx> myRangeMarkerTree;
+  private final @Nullable RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkerTree;
   private final @NotNull DocumentImpl myDocument;
+  private final @NotNull SnapshotMarkerRootStore mySnapshotMarkerRootStore;
 
-  RangeMarkersImpl(@NotNull DocumentEventDispatcher dispatcher, @NotNull DocumentImpl document) {
+  RangeMarkersImpl(@NotNull DocumentEventDispatcher dispatcher,
+                   @NotNull DocumentImpl document,
+                   @Nullable DocumentImpl hostDocument) {
+    myDocument = document;
     if (RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION) {
-      myRangeMarkers = null;
-      myPersistentRangeMarkers = null;
+      myRangeMarkerTree = null;
+      myPersistentRangeMarkerTree = null;
+      mySnapshotMarkerRootStore = hostDocument == null
+                                  ? new SnapshotMarkerRootStore(myDocument)
+                                  : hostDocument.getRangeMarkers().mySnapshotMarkerRootStore;
     }
     else {
-      myRangeMarkers = new RangeMarkerTree<>(dispatcher);
-      myPersistentRangeMarkers = new PersistentRangeMarkerTree(dispatcher);
+      myRangeMarkerTree = new RangeMarkerTree<>(dispatcher);
+      myPersistentRangeMarkerTree = new PersistentRangeMarkerTree(dispatcher);
+      mySnapshotMarkerRootStore = null; // never accessed anyway
     }
-    myDocument = document;
   }
+
+  @ApiStatus.Internal
+  public @NotNull SnapshotMarkerRootStore rootStore() {
+    return mySnapshotMarkerRootStore;
+  }
+
   @Override
   public @NotNull RangeMarkerEx createRangeMarker(@NotNull DocumentEx hostDocument,
                                                   int startOffset,
                                                   int endOffset,
                                                   boolean surviveOnExternalChange) {
-    if (myRangeMarkers == null) {
+    if (myRangeMarkerTree == null) {
       MarkerSpec spec = new MarkerSpec(false, false, false,
                                        surviveOnExternalChange ? PersistentMarkerPolicy.INSTANCE : DefaultMarkerPolicy.INSTANCE);
       return SnapshotMarkerEngineImpl.INSTANCE.createRangeMarker(
@@ -78,7 +92,7 @@ public final class RangeMarkersImpl implements RangeMarkers {
   @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     if (rangeMarker instanceof PMarker) {
-      return SnapshotMarkerEngineImpl.INSTANCE.removeRangeMarker((PMarker)rangeMarker, null);
+      return SnapshotMarkerEngineImpl.INSTANCE.removeRangeMarker((PMarker)rangeMarker);
     }
     return treeFor(rangeMarker).removeInterval(rangeMarker);
   }
@@ -93,17 +107,17 @@ public final class RangeMarkersImpl implements RangeMarkers {
                                                              int end,
                                                              byte tastePreference,
                                                              @NotNull Processor<? super RangeMarker> processor) {
-    RangeMarkerTree<RangeMarkerEx> rangeMarkers = myRangeMarkers;
-    if (rangeMarkers == null) {
+    RangeMarkerTree<RangeMarkerEx> rangeMarkerTree = myRangeMarkerTree;
+    if (rangeMarkerTree == null) {
       return SnapshotMarkerEngineImpl.INSTANCE.processRangeMarkersOverlappingWith(
-        myDocument.getCore().snapshot(), start, end, tastePreference, processor
+        mySnapshotMarkerRootStore, myDocument.getCore().snapshot(), start, end, tastePreference, processor
       );
     }
 
-    RangeMarkerTree<RangeMarkerEx> persistentRangeMarkers = Objects.requireNonNull(myPersistentRangeMarkers);
+    RangeMarkerTree<RangeMarkerEx> persistentRangeMarkers = Objects.requireNonNull(myPersistentRangeMarkerTree);
     TextRange interval = new ProperTextRange(start, end);
     try (MarkupIterator<RangeMarkerEx> treeIterator =
-           IntervalTreeImpl.mergingOverlappingIterator(rangeMarkers, interval,
+           IntervalTreeImpl.mergingOverlappingIterator(rangeMarkerTree, interval,
                                                        persistentRangeMarkers, interval,
                                                        tastePreference, RangeMarker.BY_START_OFFSET)) {
       return ContainerUtil.process(treeIterator, processor);
@@ -112,28 +126,28 @@ public final class RangeMarkersImpl implements RangeMarkers {
 
   @Override
   public void restoreRangeMarkersFromFile(@NotNull VirtualFile source, @NotNull DocumentEx target, int tabSize) {
-    RangeMarkerTree<RangeMarkerEx> rangeMarkers = myRangeMarkers;
-    if (rangeMarkers != null) {
-      RMTreeReference.getSaveRMTree(source, target, rangeMarkers, Objects.requireNonNull(myPersistentRangeMarkers), tabSize);
+    RangeMarkerTree<RangeMarkerEx> rangeMarkerTree = myRangeMarkerTree;
+    if (rangeMarkerTree != null) {
+      RMTreeReference.getSaveRMTree(source, target, rangeMarkerTree, Objects.requireNonNull(myPersistentRangeMarkerTree), tabSize);
     }
   }
 
   @TestOnly
   @Override
   public int getRangeMarkersSize() {
-    RangeMarkerTree<RangeMarkerEx> rangeMarkers = myRangeMarkers;
-    return rangeMarkers == null ? 0 : rangeMarkers.size() + Objects.requireNonNull(myPersistentRangeMarkers).size();
+    RangeMarkerTree<RangeMarkerEx> rangeMarkerTree = myRangeMarkerTree;
+    return rangeMarkerTree == null ? 0 : rangeMarkerTree.size() + Objects.requireNonNull(myPersistentRangeMarkerTree).size();
   }
 
   @TestOnly
   @Override
   public int getRangeMarkersNodeSize() {
-    RangeMarkerTree<RangeMarkerEx> rangeMarkers = myRangeMarkers;
-    return rangeMarkers == null ? 0 : rangeMarkers.nodeSize() + Objects.requireNonNull(myPersistentRangeMarkers).nodeSize();
+    RangeMarkerTree<RangeMarkerEx> rangeMarkerTree = myRangeMarkerTree;
+    return rangeMarkerTree == null ? 0 : rangeMarkerTree.nodeSize() + Objects.requireNonNull(myPersistentRangeMarkerTree).nodeSize();
   }
 
   private @NotNull RangeMarkerTree<RangeMarkerEx> treeFor(@NotNull RangeMarkerEx rangeMarker) {
-    return Objects.requireNonNull(rangeMarker instanceof PersistentRangeMarker ? myPersistentRangeMarkers : myRangeMarkers);
+    return Objects.requireNonNull(rangeMarker instanceof PersistentRangeMarker ? myPersistentRangeMarkerTree : myRangeMarkerTree);
   }
   public static <E extends Throwable> void usePMarkerImplementationIn(@NotNull ThrowableRunnable<E> runnable) throws E {
     usePMarkerImplementationIn(true, runnable);

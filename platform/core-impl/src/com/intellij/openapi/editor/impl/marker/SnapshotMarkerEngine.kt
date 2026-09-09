@@ -9,9 +9,8 @@ import com.intellij.util.Processor
 /**
  * Mutable marker engine for immutable document snapshots.
  *
- * Each supported [DocumentSnapshot] instance owns a reference to one [PMarkerRoot].
- * Distinct snapshot instances remain independent even when they have the same
- * modification sequence.
+ * Each range marker storage owns marker roots for its [DocumentSnapshot] instances. Distinct snapshot instances remain
+ * independent even when they have the same modification sequence.
  *
  * [SnapshotMarkerEngine] is mutable, while every [PMarkerRoot] is an immutable,
  * persistent value.
@@ -52,22 +51,14 @@ interface SnapshotMarkerEngine {
   ): PMarker
 
   /**
-   * Disposes [marker] and removes it from the current root associated with [snapshot].
+   * Disposes [marker] and removes it from its current root.
    *
-   * Existing descendant roots remain unchanged, but resolution through the disposed handle is invalid. Future
-   * children created from [snapshot] inherit the root without the marker.
-   *
-   * @return `true` if the marker was present and removed, or `false` if it
-   * was already absent or disposed
+   * @return `true` if the marker was present and removed
    */
-  fun removeRangeMarker(snapshot: DocumentSnapshot, marker: PMarker): Boolean
-
-  /**
-   * Resolves [marker] using the current root associated with [snapshot].
-   */
-  fun resolveRangeMarker(marker: PMarker, snapshot: DocumentSnapshot): PMarkerResolution
+  fun removeRangeMarker(marker: PMarker): Boolean
 
   fun processRangeMarkersOverlappingWith(
+    rootStore: SnapshotMarkerRootStore,
     snapshot: DocumentSnapshot,
     startOffset: Int,
     endOffset: Int,

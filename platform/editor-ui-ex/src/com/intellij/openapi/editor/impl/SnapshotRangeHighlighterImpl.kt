@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
@@ -65,12 +64,8 @@ internal class SnapshotRangeHighlighterImpl private constructor(
   private var inBatchChange: Boolean = false
   private var batchChangeStatus: Int = 0
 
-  override fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
-    return storage.rootReference(snapshot)
-  }
-
   override fun currentRootReference(): AtomicReference<PMarkerRoot> {
-    return rootReference(storage.currentSnapshot())
+    return storage.rootReference(storage.currentSnapshot())
   }
 
   override fun getLayer(): Int = layer
@@ -81,7 +76,7 @@ internal class SnapshotRangeHighlighterImpl private constructor(
 
   override fun getFlavorFlags(): Byte {
     return ((if (getErrorStripeMarkColor(null) != null) RangeHighlighterTree.ERROR_STRIPE_FLAVOR_FLAG.toInt() else 0) or
-            (if (isRenderedInGutter) RangeHighlighterTree.RENDER_IN_GUTTER_FLAVOR_FLAG.toInt() else 0)).toByte()
+      (if (isRenderedInGutter) RangeHighlighterTree.RENDER_IN_GUTTER_FLAVOR_FLAG.toInt() else 0)).toByte()
   }
 
   override fun getTextAttributesKey(): TextAttributesKey? = textAttributesKey

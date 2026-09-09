@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicReference
 internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
   private val regionQueue: ReferenceQueue<SnapshotFocusRegion> = ReferenceQueue<SnapshotFocusRegion>()
   private val regionsById: ConcurrentLongObjectMap<RegionReference> = Java11Shim.createConcurrentLongObjectMap()
-  private val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document)
+  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document)
 
   fun dispose() {
-    rootStore.dispose()
+    rootStore.dispose(document.snapshotMarkerStores)
     regionsById.clear()
   }
 
@@ -112,8 +112,6 @@ internal class SnapshotFocusRegion(
   initialRange: TextRange,
 ) : SnapshotRangeMarkerImpl(storage.document, markerId, spec, initialRange) {
   override fun currentRootReference(): AtomicReference<PMarkerRoot> = storage.rootReference(storage.currentSnapshot())
-
-  override fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> = storage.rootReference(snapshot)
 
   override fun afterDispose() {
     storage.afterDisposed(this)

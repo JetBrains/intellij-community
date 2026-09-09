@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
-import com.intellij.openapi.editor.ex.DocumentSnapshot;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
@@ -1757,12 +1756,6 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       return storage.rootReference(storage.currentSnapshot());
     }
 
-    @Override
-    @NotNull
-    public AtomicReference<PMarkerRoot> rootReference(@NotNull DocumentSnapshot snapshot) {
-      return storage.rootReference(snapshot);
-    }
-
     private void beforeDocumentChange() {
       offsetBeforeChange = getStartOffset();
     }
@@ -1829,12 +1822,6 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     @Override
     public @NotNull AtomicReference<PMarkerRoot> currentRootReference() {
       return storage.rootReference(storage.currentSnapshot());
-    }
-
-    @Override
-    @NotNull
-    public AtomicReference<PMarkerRoot> rootReference(@NotNull DocumentSnapshot snapshot) {
-      return storage.rootReference(snapshot);
     }
 
     @Override

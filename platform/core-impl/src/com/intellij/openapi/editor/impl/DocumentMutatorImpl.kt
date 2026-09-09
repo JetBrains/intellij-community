@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentSputnik
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ProperTextRange
@@ -28,7 +29,8 @@ internal abstract class DocumentMutatorImpl(
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
 ) : DocumentMutator {
-  @Volatile private var textChangeInProgress = false
+  @Volatile private var textChangeInProgress: Boolean = false
+  abstract val snapshotMarkerStores: SnapshotMarkerStores
 
   protected abstract fun getSnapshot(): DocumentSnapshot
   protected abstract fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
@@ -36,21 +38,20 @@ internal abstract class DocumentMutatorImpl(
   override fun setModStamp(newModStamp: Long, incrementModSequence: Boolean) {
     val newOps = DocumentNewOps.getInstance()
     val op = newOps.createModStampOp(newModStamp, incrementModSequence)
-    updateAndGet { it.applyOp(op) }
+    updateAndGet { snapshotMarkerStores.applyOp(it, op) }
   }
 
   override fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray) {
     val newOps = DocumentNewOps.getInstance()
     val op = newOps.createUnmodifiedLinesOp(startLine, endLine, exceptLines)
-    updateAndGet { it.applyOp(op) }
+    updateAndGet { snapshotMarkerStores.applyOp(it, op) }
   }
 
   override fun <S : DocumentSputnik> setSputnik(key: Key<S>, sputnik: (DocumentSnapshot) -> S?): DocumentSnapshot {
     val newOps = DocumentNewOps.getInstance()
     return updateAndGet { snapshot ->
-      val s = sputnik.invoke(snapshot)
-      val op = newOps.createSetSputnikOp(key, s)
-      snapshot.applyOp(op)
+      val op = newOps.createSetSputnikOp(key, sputnik.invoke(snapshot))
+      snapshotMarkerStores.applyOp(snapshot, op)
     }
   }
 
@@ -337,7 +338,7 @@ internal abstract class DocumentMutatorImpl(
     patch: DocumentTextPatch,
   ): DocumentSnapshot {
     val merged = snapshotBefore.withMetadata(latest)
-    return merged.applyOp(patch)
+    return snapshotMarkerStores.applyOp(merged, patch)
   }
 
   private fun trimToSize(hostDocument: Document, snapshot: DocumentSnapshot): DocumentSnapshot {

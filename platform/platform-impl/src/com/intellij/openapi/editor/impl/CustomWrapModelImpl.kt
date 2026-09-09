@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.ex.RangeMarkers
 import com.intellij.openapi.editor.impl.customwrap.CustomWrapImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.util.DocumentUtil
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
@@ -22,10 +23,12 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
 @ElfCandidate
-internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapModel, CustomWrapModel.Mutator, PrioritizedDocumentListener,
-                                                                     Dumpable, Disposable {
+@ApiStatus.Internal
+class CustomWrapModelImpl internal constructor(private val editor: EditorImpl) : CustomWrapModel, CustomWrapModel.Mutator,
+                                                                                  PrioritizedDocumentListener, Dumpable, Disposable {
   private val document: DocumentEx = editor.elfDocument
   private val tree: CustomWrapTree? = if (RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION) null else CustomWrapTree(document)
+
   @Volatile
   private var snapshotStorage: SnapshotCustomWrapStorage? = null
   private val eventDispatcher: EventDispatcher<CustomWrapModel.Listener?> = EventDispatcher.create(CustomWrapModel.Listener::class.java)
@@ -184,7 +187,7 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
   override fun dumpState(): @NonNls String {
     return "${getWraps()}"
   }
-  
+
   @TestOnly
   fun validateState() {
     val customWraps = getWraps()
@@ -231,6 +234,11 @@ internal class CustomWrapModelImpl(private val editor: EditorImpl) : CustomWrapM
       snapshotStorage = storage
     }
     return storage
+  }
+
+  @TestOnly
+  fun rootStore(): SnapshotMarkerRootStore {
+    return getOrCreateSnapshotStorage().rootStore
   }
 
   private inner class CustomWrapTree(document: Document) : HardReferencingRangeMarkerTree<CustomWrapImpl>(document) {

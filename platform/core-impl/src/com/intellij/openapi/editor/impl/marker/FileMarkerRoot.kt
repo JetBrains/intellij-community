@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -134,6 +133,6 @@ internal class FileMarkerRoot private constructor(
     }
 
     private fun markerRoot(document: DocumentImpl): AtomicReference<PMarkerRoot> =
-      (document.core.snapshot() as DocumentSnapshotImpl).markerRoot
+      document.rangeMarkers.rootStore().retainedRootReference(document.core.snapshot())
   }
 }

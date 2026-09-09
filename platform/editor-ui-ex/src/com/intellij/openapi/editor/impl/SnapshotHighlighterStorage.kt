@@ -42,14 +42,10 @@ internal class SnapshotHighlighterStorage(
   /** A positive value prevents nested changes during removal notifications on the current thread. */
   private val removalDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
 
-  private val rootStore = SnapshotMarkerRootStore(
-    document,
-    emptyRoot = CompoundPMarkerRoot.empty(),
-    onMarkersInvalidated = ::highlightersChanged,
-  )
+  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document, onMarkersInvalidated = ::highlightersChanged)
 
   fun dispose() {
-    rootStore.dispose()
+    rootStore.dispose(document.snapshotMarkerStores)
     highlightersById.clear()
   }
 
@@ -61,20 +57,20 @@ internal class SnapshotHighlighterStorage(
     val previous = highlightersById.putIfAbsent(markerId, HighlighterReference(highlighter, highlighterQueue))
     check(previous == null) { "Highlighter $markerId is already registered" }
     val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(highlighter, retainStrong = true)
-    rootStore.updateRoot(snapshot) {
+    rootStore.updateRoot(snapshot, CompoundPMarkerRoot.empty()) {
       it.insert(markerId, startOffset, endOffset, spec, highlighter.flavorFlags, markerReference)
     }
     model.invalidateHighlighterCache()
   }
 
   fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
-    return rootStore.rootReference(snapshot)
+    return rootStore.rootReference(snapshot, CompoundPMarkerRoot.empty())
   }
 
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   fun updateFlavor(highlighter: SnapshotRangeHighlighterImpl) {
-    rootStore.updateRoot(currentSnapshot()) {
+    rootStore.updateRoot(currentSnapshot(), CompoundPMarkerRoot.empty()) {
       it.updateFlavor(highlighter.idForStorage(), highlighter.flavorFlags)
     }
   }
@@ -239,7 +235,7 @@ internal class SnapshotHighlighterStorage(
   }
 
   companion object {
-    private val SNAPSHOT_HIGHLIGHTER_COMPARATOR = Comparator<RangeHighlighterEx> { first, second ->
+    private val SNAPSHOT_HIGHLIGHTER_COMPARATOR: Comparator<RangeHighlighterEx> = Comparator<RangeHighlighterEx> { first, second ->
       val byStartOffset = first.affectedAreaStartOffset.compareTo(second.affectedAreaStartOffset)
       if (byStartOffset != 0) return@Comparator byStartOffset
       val byLayer = second.layer.compareTo(first.layer)

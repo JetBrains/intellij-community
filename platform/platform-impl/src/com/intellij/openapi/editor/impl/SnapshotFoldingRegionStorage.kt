@@ -40,7 +40,7 @@ internal class SnapshotFoldingRegionStorage(
   val document: DocumentImpl,
 ) : FoldingRegionStorage {
   private val regionsById: ConcurrentLongObjectMap<SnapshotFoldRegion> = Java11Shim.createConcurrentLongObjectMap()
-  private val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(
+  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(
     document,
     onMarkersInvalidated = ::processInvalidatedRegions,
     onMarkersAffected = ::processAffectedRegions,
@@ -98,7 +98,7 @@ internal class SnapshotFoldingRegionStorage(
   }
 
   override fun dispose() {
-    rootStore.dispose()
+    rootStore.dispose(document.snapshotMarkerStores)
     regionsById.clear()
   }
 
@@ -208,7 +208,9 @@ internal class SnapshotFoldingRegionStorage(
 
   private fun invalidateDuplicate(region: SnapshotFoldRegion) {
     rootStore.updateRoot(currentSnapshot()) { it.remove(region.id) }
-    if (regionsById.remove(region.id, region)) model.snapshotFoldRegionInvalidated(region)
+    if (regionsById.remove(region.id, region)) {
+      model.snapshotFoldRegionInvalidated(region)
+    }
   }
 
   private fun sizeBeforeUpdate(region: SnapshotFoldRegion): Int = sizesBeforeUpdate[region.id] ?: 0
@@ -218,7 +220,9 @@ internal class SnapshotFoldingRegionStorage(
     for (index in 0 until size) {
       val markerId = markerIds.getLong(index)
       val region = regionsById.get(markerId) ?: continue
-      if (regionsById.remove(markerId, region)) model.snapshotFoldRegionInvalidated(region)
+      if (regionsById.remove(markerId, region)) {
+        model.snapshotFoldRegionInvalidated(region)
+      }
     }
   }
 
@@ -356,8 +360,6 @@ internal open class SnapshotFoldRegion(
   }
 
   override fun currentRootReference(): AtomicReference<PMarkerRoot> = storage.rootReference(storage.currentSnapshot())
-
-  override fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> = storage.rootReference(snapshot)
 
   override fun toString(): String {
     return "FoldRegion ${if (expanded) "-" else "+"}($startOffset:$endOffset)" +

@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -32,6 +33,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.AWTEvent;
 import java.awt.Color;
@@ -214,6 +216,11 @@ public final class FocusModeModel implements Disposable {
       mySnapshotFocusRegionStorage = storage;
     }
     return storage;
+  }
+
+  @TestOnly
+  @NotNull SnapshotMarkerRootStore rootStore() {
+    return getOrCreateSnapshotFocusRegionStorage().getRootStore();
   }
 
   @ApiStatus.Internal

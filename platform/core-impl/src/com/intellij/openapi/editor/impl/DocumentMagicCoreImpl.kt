@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ex.DocumentMagicCore
 import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.concurrent.Volatile
 
@@ -40,8 +41,8 @@ internal class DocumentMagicCoreImpl private constructor(
   private val settingsReal: DocumentSettings,
 ): DocumentMagicCore {
   private val dispatcher: DocumentMagicEventDispatcher = DocumentMagicEventDispatcherImpl()
-  private val mutatorElf: DocumentElfMutator = DocumentElfMutatorImpl()
-  private val mutatorReal: DocumentRealMutator = DocumentRealMutatorImpl()
+  private val mutatorReal: DocumentRealMutator = DocumentRealMutatorImpl(SnapshotMarkerStores())
+  private val mutatorElf: DocumentElfMutator = DocumentElfMutatorImpl(mutatorReal.snapshotMarkerStores)
   private val sync: ElfRealSync = ElfRealSyncImpl()
   private val liveElf: LiveElf = LiveElf()
   private val liveReal: LiveReal = LiveReal()
@@ -247,7 +248,9 @@ internal class DocumentMagicCoreImpl private constructor(
     }
   }
 
-  private inner class DocumentRealMutatorImpl : DocumentRealMutator(settingsReal, dispatcher) {
+  private inner class DocumentRealMutatorImpl(override val snapshotMarkerStores: SnapshotMarkerStores) :
+    DocumentRealMutator(settingsReal, dispatcher) {
+
     override fun getSnapshot(): DocumentSnapshot {
       return this@DocumentMagicCoreImpl.snapshot.real
     }
@@ -269,7 +272,8 @@ internal class DocumentMagicCoreImpl private constructor(
     }
   }
 
-  private inner class DocumentElfMutatorImpl : DocumentElfMutator(settingsElf, dispatcher) {
+  private inner class DocumentElfMutatorImpl(override val snapshotMarkerStores: SnapshotMarkerStores) :
+    DocumentElfMutator(settingsElf, dispatcher) {
     override fun getSnapshot(): DocumentSnapshot {
       return this@DocumentMagicCoreImpl.snapshot.elf
     }

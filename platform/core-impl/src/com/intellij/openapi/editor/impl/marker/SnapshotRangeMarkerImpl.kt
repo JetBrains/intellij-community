@@ -2,10 +2,8 @@
 package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
@@ -20,31 +18,32 @@ import java.util.concurrent.atomic.AtomicReference
 open class SnapshotRangeMarkerImpl private constructor(
   private val documentOrFile: Any,
   internal val fileRoot: FileMarkerRoot?,
+  private val rootStore: SnapshotMarkerRootStore?,
   internal val markerId: Long,
   initialSpec: MarkerSpec,
   internal val initialRange: TextRange,
 ) : UserDataHolderBase(), PMarker, RangeMarkerEx {
   internal constructor(
-    document: Document,
+    document: DocumentImpl,
     fileRoot: FileMarkerRoot?,
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,
-  ) : this(fileRoot?.file ?: document, fileRoot, markerId, initialSpec, initialRange)
+  ) : this(fileRoot?.file ?: document, fileRoot, document.rangeMarkers.rootStore(), markerId, initialSpec, initialRange)
 
   internal constructor(
     fileRoot: FileMarkerRoot,
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,
-  ) : this(fileRoot.file, fileRoot, markerId, initialSpec, initialRange)
+  ) : this(fileRoot.file, fileRoot, null, markerId, initialSpec, initialRange)
 
   protected constructor(
     document: Document,
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,
-  ) : this(document, null, markerId, initialSpec, initialRange)
+  ) : this(document, null, (document as DocumentImpl).rangeMarkers.rootStore(), markerId, initialSpec, initialRange)
 
   @Volatile
   internal var disposed: Boolean = false
@@ -79,7 +78,9 @@ open class SnapshotRangeMarkerImpl private constructor(
 
   override fun getTextRange(): TextRange = currentResolution()
 
-  override fun isValid(): Boolean = !disposed && currentResolution().isValid && (documentOrFile is Document || (documentOrFile as VirtualFile).isValid)
+  override fun isValid(): Boolean {
+    return !disposed && currentResolution().isValid && (documentOrFile is Document || (documentOrFile as VirtualFile).isValid)
+  }
 
   override fun isGreedyToLeft(): Boolean = spec.isGreedyToLeft
 
@@ -159,15 +160,10 @@ open class SnapshotRangeMarkerImpl private constructor(
       return checkNotNull(fileRoot).rootReference()
     }
     val document = documentOrFile as DocumentImpl
-    return (document.core.snapshot() as DocumentSnapshotImpl).markerRoot
-  }
-
-  @ApiStatus.Internal
-  open fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
-    return (snapshot as DocumentSnapshotImpl).markerRoot
+    return checkNotNull(rootStore).rootReference(document.core.snapshot())
   }
 
   override fun toString(): String = "SnapshotRangeMarker(id=$markerId" +
                                     (if (disposed) ", disposed" else "") +
-                                                   ")"
+                                    ")"
 }

@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.CustomWrapModel
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.DocumentTextPatch
-import com.intellij.openapi.editor.impl.marker.PMarker
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
@@ -33,12 +32,14 @@ class SnapshotCustomWrapModelTest {
       val document = editor.elfDocument as DocumentImpl
       val initialSnapshot = document.core.snapshot()
       val wrap = editor.customWrapModel.runBatchMutation { addWrap(5) }!!
-      val snapshotWrap = wrap as PMarker
-      val shiftedBranch = initialSnapshot.applyOp(textPatch(0, 0, "x"))
-      val invalidBranch = initialSnapshot.applyOp(textPatch(4, 5, ""))
-      val initialResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotWrap, initialSnapshot)
-      val shiftedResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotWrap, shiftedBranch)
-      val invalidResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotWrap, invalidBranch)
+      val snapshotWrap = wrap as SnapshotRangeMarkerImpl
+      val rootStore = (editor.customWrapModel as CustomWrapModelImpl).rootStore()
+      val markerStores = document.snapshotMarkerStores
+      val shiftedBranch = markerStores.applyOp(initialSnapshot, textPatch(0, 0, "x"))
+      val invalidBranch = markerStores.applyOp(initialSnapshot, textPatch(4, 5, ""))
+      val initialResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotWrap, rootStore.rootReference(initialSnapshot).get())
+      val shiftedResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotWrap, rootStore.rootReference(shiftedBranch).get())
+      val invalidResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotWrap, rootStore.rootReference(invalidBranch).get())
       BranchState(
         wrap = wrap,
         initialRange = initialResolution.startOffset to initialResolution.endOffset,

@@ -86,12 +86,11 @@ public class SnapshotMarkerEngineBenchmark {
   public long resolve4MMarkers(ResolveState state) {
     PMarker[] markers = state.markers;
     int[] resolveOrder = state.resolveOrder;
-    DocumentSnapshot snapshot = state.snapshot;
     long checksum = 0L;
 
     for (int index = 0; index < RESOLVE_CALLS; index++) {
-      PMarkerResolution resolution = SnapshotMarkerEngineImpl.INSTANCE.resolveRangeMarker(markers[resolveOrder[index]], snapshot);
-      checksum += (long)resolution.getStartOffset() + resolution.getEndOffset();
+      PMarker marker = markers[resolveOrder[index]];
+      checksum += (long)marker.getStartOffset() + marker.getEndOffset();
     }
 
     return checksum;
@@ -139,6 +138,7 @@ public class SnapshotMarkerEngineBenchmark {
 
     for (int index = 0; index < INTERSECTION_CALLS; index++) {
       SnapshotMarkerEngineImpl.INSTANCE.processRangeMarkersOverlappingWith(
+        state.rootStore,
         snapshot,
         queryStarts[index],
         queryEnds[index],
@@ -233,6 +233,7 @@ public class SnapshotMarkerEngineBenchmark {
 
     DocumentImpl document;
     DocumentSnapshot snapshot;
+    SnapshotMarkerRootStore rootStore;
     PMarker[] markers;
     int[] queryStarts;
     int[] queryEnds;
@@ -243,6 +244,7 @@ public class SnapshotMarkerEngineBenchmark {
     public void setUp() {
       document = new DocumentImpl(BENCHMARK_TEXT);
       snapshot = document.getCore().snapshot();
+      rootStore = document.getRangeMarkers().rootStore();
       markers = new PMarker[MARKER_COUNT];
 
       for (int index = 0; index < MARKER_COUNT; index++) {

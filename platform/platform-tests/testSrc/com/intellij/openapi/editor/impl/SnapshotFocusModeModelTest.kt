@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.DocumentTextPatch
-import com.intellij.openapi.editor.impl.marker.PMarker
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
@@ -23,16 +22,17 @@ class SnapshotFocusModeModelTest {
     val document = editor.elfDocument as DocumentImpl
     val initialSnapshot = document.core.snapshot()
     val region = editor.focusModeModel.createFocusRegion(2, 4)
-    val snapshotRegion = region as PMarker
+    val snapshotRegion = region as SnapshotRangeMarkerImpl
+    val rootStore = editor.focusModeModel.rootStore()
 
     assertThat(region).isInstanceOf(SnapshotRangeMarkerImpl::class.java)
-    assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotRegion, initialSnapshot))
+    assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotRegion, rootStore.rootReference(initialSnapshot).get()))
       .extracting("startOffset", "endOffset").containsExactly(2, 4)
 
-    val branch = initialSnapshot.applyOp(textPatch(0, 0, "x"))
-    assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotRegion, branch))
+    val branch = document.snapshotMarkerStores.applyOp(initialSnapshot, textPatch(0, 0, "x"))
+    assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotRegion, rootStore.rootReference(branch).get()))
       .extracting("startOffset", "endOffset").containsExactly(3, 5)
-    assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotRegion, initialSnapshot))
+    assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotRegion, rootStore.rootReference(initialSnapshot).get()))
       .extracting("startOffset", "endOffset").containsExactly(2, 4)
   }
 

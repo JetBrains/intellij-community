@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.marker.FileMarkerRoot;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -80,8 +81,8 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
 
   public DocumentImpl(@NotNull CharSequence chars, boolean acceptSlashR, boolean forUseInNonAWTThread) {
     this(forUseInNonAWTThread
-         ? DocumentCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread)
-         : DocumentMagicCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread));
+         ? DocumentCoreImpl.createCore(chars, acceptSlashR, true)
+         : DocumentMagicCoreImpl.createCore(chars, acceptSlashR, false));
   }
 
   private DocumentImpl(@NotNull DocumentCore impl) {
@@ -96,7 +97,7 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
   public DocumentImpl(@NotNull DocumentCore impl, @Nullable DocumentImpl hostDocument) {
     this.impl = impl;
     this.hostDocument = hostDocument;
-    rangeMarkers = new RangeMarkersImpl(impl.dispatcher(), hostDocument());
+    rangeMarkers = new RangeMarkersImpl(impl.dispatcher(), this, hostDocument);
     guardedBlocks = new GuardedBlocksImpl(rangeMarkers);
   }
 
@@ -450,6 +451,18 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
   @ApiStatus.Internal
   public @NotNull DocumentCore getCore() {
     return impl;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull SnapshotMarkerStores getSnapshotMarkerStores() {
+    return hostDocument == null
+           ? ((DocumentMutatorImpl)impl.mutator()).getSnapshotMarkerStores()
+           : hostDocument.getSnapshotMarkerStores();
+  }
+
+  @ApiStatus.Internal
+  public @NotNull RangeMarkersImpl getRangeMarkers() {
+    return (RangeMarkersImpl)rangeMarkers;
   }
 
   @TestOnly

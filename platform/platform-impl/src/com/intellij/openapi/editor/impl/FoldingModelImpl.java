@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -721,6 +722,11 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   @TestOnly
   boolean isUsingSnapshotFoldingStorage() {
     return myRegionStorage instanceof SnapshotFoldingRegionStorage;
+  }
+
+  @TestOnly
+  @NotNull SnapshotMarkerRootStore rootStore() {
+    return ((SnapshotFoldingRegionStorage)myRegionStorage).getRootStore();
   }
 
   private void updateTextAttributes() {
