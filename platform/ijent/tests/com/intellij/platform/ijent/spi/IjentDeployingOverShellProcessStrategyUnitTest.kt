@@ -344,6 +344,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         whoami = "whoami",
         getent = "getent",
         id = "id",
+        cacheCommands = cacheCommands(),
       ))
     }
 
@@ -367,6 +368,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         whoami = "whoami",
         getent = "getent",
         id = "id",
+        cacheCommands = cacheCommands(),
       ))
     }
 
@@ -390,6 +392,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         whoami = "whoami",
         getent = "getent",
         id = "id",
+        cacheCommands = cacheCommands(),
       ))
     }
 
@@ -415,6 +418,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         whoami = "whoami",
         getent = null,
         id = "id",
+        cacheCommands = cacheCommands(),
       ))
     }
 
@@ -438,6 +442,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         whoami = "busybox whoami",
         getent = "busybox getent",
         id = "busybox id",
+        cacheCommands = cacheCommands("busybox "),
       ))
     }
 
@@ -452,6 +457,24 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
       }
       errorAssertion.message should include("busybox")
     }
+
+    @Test
+    fun `macOS uses shasum for the cache`(): Unit = timeoutRunBlocking {
+      createDeployingContext { it - setOf("busybox", "sha256sum") }
+        .cacheCommands?.checksum shouldBe "shasum -a 256"
+    }
+
+    @Test
+    fun `deployment does not require cache utilities`(): Unit = timeoutRunBlocking {
+      createDeployingContext { it - setOf("busybox", "mkdir", "mv", "sha256sum", "shasum") }
+        .cacheCommands shouldBe null
+    }
+
+    private fun cacheCommands(prefix: String = ""): IjentBinaryCache.PosixCommands = IjentBinaryCache.PosixCommands(
+      mkdir = "${prefix}mkdir",
+      mv = "${prefix}mv",
+      checksum = "${prefix}sha256sum",
+    )
   }
 }
 

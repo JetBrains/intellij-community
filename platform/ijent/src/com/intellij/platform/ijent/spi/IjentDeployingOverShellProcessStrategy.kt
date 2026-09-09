@@ -591,6 +591,8 @@ internal data class DeployingContext(
 
   /** Although `id` is defined by POSIX, there's no guarantee that a stripped down system has it. */
   val id: String?,
+
+  val cacheCommands: IjentBinaryCache.PosixCommands? = null,
 )
 
 /**
@@ -634,6 +636,10 @@ internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend 
   val optionalCommands: Set<String> = setOf(
     "getent",
     "id",
+    "mkdir",
+    "mv",
+    "sha256sum",
+    "shasum",
   )
 
   val outputOfWhich = mutableListOf<String>()
@@ -672,6 +678,13 @@ internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend 
     whoami = getCommandPath("whoami"),
     getent = getOptionalCommandPath("getent"),
     id = getOptionalCommandPath("id"),
+    cacheCommands = run {
+      IjentBinaryCache.PosixCommands(
+        mkdir = getOptionalCommandPath("mkdir") ?: return@run null,
+        mv = getOptionalCommandPath("mv") ?: return@run null,
+        checksum = getOptionalCommandPath("sha256sum") ?: getOptionalCommandPath("shasum")?.let { "$it -a 256" } ?: return@run null,
+      )
+    },
   )
 }
 
@@ -711,21 +724,29 @@ private class PosixShellSession(
   }
 
   override suspend fun uploadBinary(localBinary: Path, mappedPath: String?): String {
-    // TODO Don't upload a new binary every time if the binary is already on the server. However, hashes must be checked.
     val ijentBinarySize = localBinary.fileSize()
+    val cache = if (mappedPath == null && context.cacheCommands != null) IjentBinaryCache.forBinary(localBinary) else null
 
     // This trap owns the temporary directory until IJent is launched. It also cleans up when upload or shell setup fails midway.
     io.process.write(context.run {
       "BINARY_DIR=\"\$($mktemp -d)\"; BINARY=\"\$BINARY_DIR/ijent\"; trap '$rm -rf \"\$BINARY_DIR\"' 0;\n"
     })
 
-    val chmodAndEcho = context.run {
-      "$chmod 500 \"\$BINARY\"; echo \"\$BINARY\";\n"
+    if (cache != null) {
+      io.executeCommand(cache.posixRestore(context)).lastOrNull { it.isNotBlank() }?.let { return it }
+    }
+
+    val finishUpload = context.run {
+      $$"""
+      $$chmod 500 "$BINARY";
+      $${cache?.posixPublish(this).orEmpty()}
+      echo "$BINARY";
+      """.trimIndent()
     }
 
     if (mappedPath != null) {
       io.process.write(context.run {
-        "$cp ${posixQuote(mappedPath)} \$BINARY; $chmodAndEcho"
+        "$cp ${posixQuote(mappedPath)} \$BINARY; $finishUpload"
       })
     }
     else {
@@ -746,11 +767,13 @@ private class PosixShellSession(
         // is also unreliable, macOS can make this buffer for Unix sockets bigger.
         // Therefore, exploiting the trick with BUGGY_DASH_BUFFER_FILLER again would be unreliable.
         $$"""
+        {
         $$head -c $${ijentBinarySize + BUGGY_DASH_BUFFER_FILLER.length} > $BINARY.tmp; \
         BYTES_TO_SKIP=$(LC_ALL=C $$sed -n -e '/./{=;q;}' $BINARY.tmp | LC_ALL=C $$head -n1); \
         LC_ALL=C $$tail -c+$BYTES_TO_SKIP $BINARY.tmp | LC_ALL=C $$head -c $$ijentBinarySize > $BINARY; \
         $$rm -f $BINARY.tmp; \
-        $$chmodAndEcho
+        $$finishUpload
+        }
         """.trimIndent()
       })
 
@@ -833,19 +856,31 @@ private class PowerShellSession(
     if (mappedPath != null) return mappedPath
 
     val binarySize = localBinary.fileSize()
+    val cache = IjentBinaryCache.forBinary(localBinary)
     val readyBoundary = randomBoundary()
     val pathMarker = randomBoundary()
     val directoryMarker = randomBoundary()
     val doneBoundary = randomBoundary()
-    io.process.write(
+    val paths = io.executeCommand(
       "\$ijentDir = Join-Path ([IO.Path]::GetTempPath()) ('ijent-' + [Guid]::NewGuid().ToString('N')); " +
       "[IO.Directory]::CreateDirectory(\$ijentDir) | Out-Null; " +
       "\$ijentBinary = Join-Path \$ijentDir 'ijent.exe'; " +
       "Write-Output ('$directoryMarker' + \$ijentDir); " +
       "Write-Output ('$pathMarker' + \$ijentBinary); " +
-      "Write-Output '$readyBoundary'; " +
+      cache.powerShellRestore()
+    )
+    uploadedBinaryDirectory = paths.singleOrNull { it.startsWith(directoryMarker) }?.removePrefix(directoryMarker)
+      ?: throw CommunicationFailure("PowerShell did not report the uploaded IJent binary directory", null)
+    val remoteBinaryPath = paths.singleOrNull { it.startsWith(pathMarker) }?.removePrefix(pathMarker)
+      ?: throw CommunicationFailure("PowerShell did not report the uploaded IJent binary path", null)
+    if (paths.any { it == remoteBinaryPath }) {
+      return remoteBinaryPath
+    }
+
+    io.process.write(
+      "& { Write-Output '$readyBoundary'; " +
       "\$ijentInput = [Console]::OpenStandardInput(); " +
-      "try { \$ijentOutput = [IO.File]::Open(\$ijentBinary, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None); " +
+      "try { \$ijentOutput = [IO.File]::Open(\$ijentBinary, [IO.FileMode]::Create, [IO.FileAccess]::Write, [IO.FileShare]::None); " +
       "try { \$ijentRemaining = [long]$binarySize; \$ijentBuffer = New-Object byte[] 65536; " +
       "while (\$ijentRemaining -gt 0) { \$ijentToRead = [int][Math]::Min(\$ijentBuffer.Length, \$ijentRemaining); " +
       "\$ijentRead = \$ijentInput.Read(\$ijentBuffer, 0, \$ijentToRead); " +
@@ -853,26 +888,8 @@ private class PowerShellSession(
       "\$ijentOutput.Write(\$ijentBuffer, 0, \$ijentRead); \$ijentRemaining -= \$ijentRead } } " +
       "finally { \$ijentOutput.Dispose() } } " +
       "catch { Remove-Item -LiteralPath \$ijentDir -Recurse -Force -ErrorAction SilentlyContinue; throw }; " +
-      "Write-Output '$doneBoundary'"
+      cache.powerShellPublish() + "; Write-Output '$doneBoundary' }"
     )
-
-    var remoteBinaryDirectory: String? = null
-    var remoteBinaryPath: String? = null
-    while (remoteBinaryPath == null) {
-      val line = io.readLine()
-      if (line.startsWith(directoryMarker)) {
-        remoteBinaryDirectory = line.removePrefix(directoryMarker)
-        continue
-      }
-      if (line.startsWith(pathMarker)) {
-        remoteBinaryPath = line.removePrefix(pathMarker)
-      }
-      else {
-        LOG.debug { "Dropped shell output while waiting for the uploaded IJent binary path: $line" }
-      }
-    }
-    uploadedBinaryDirectory = remoteBinaryDirectory
-      ?: throw CommunicationFailure("PowerShell did not report the uploaded IJent binary directory", null)
 
     // Only raw bytes follow the ready marker. PowerShell has parsed the complete command and is already waiting in its binary reader.
     io.dropOutputUntil(readyBoundary)
