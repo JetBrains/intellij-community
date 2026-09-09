@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
@@ -51,6 +52,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -140,8 +142,10 @@ class ListPluginComponent(
   private var myIndicator: ProgressIndicatorEx? = null
   private var myEventHandler: EventHandler? = null
   private var myCustomizer: PluginManagerCustomizer? = null
-  private val myCoroutineScope: CoroutineScope = coroutineScope
+  private val myUiCoroutineScope: CoroutineScope = coroutineScope.childScope("Plugin row ${pluginUiModel.pluginId}")
+  private val myOperationCoroutineScope: CoroutineScope = coroutineScope
   private var mySelection: EventHandler.SelectionType = EventHandler.SelectionType.NONE
+  private var myClosed = false
 
   init {
     myInstalledDescriptorForMarketplace = listModel.installedModels.get(pluginUiModel.pluginId)
@@ -297,7 +301,7 @@ class ListPluginComponent(
         myLayout.addButtonComponent(myInstallButton!!)
 
         myInstallButton!!.addActionListener {
-          PluginModelAsyncOperationsExecutor.performAutoInstall(myCoroutineScope,
+          PluginModelAsyncOperationsExecutor.performAutoInstall(myOperationCoroutineScope,
                                                                 myModelFacade,
                                                                 myPlugin,
                                                                 myCustomizer,
@@ -753,7 +757,7 @@ class ListPluginComponent(
       updateErrors(emptyList())
     }
     else {
-      PluginModelAsyncOperationsExecutor.updateErrors(myCoroutineScope, myModelFacade.getModel().sessionId, plugin.pluginId) { res ->
+      PluginModelAsyncOperationsExecutor.updateErrors(myUiCoroutineScope, myModelFacade.getModel().sessionId, plugin.pluginId) { res ->
         updateErrors(res)
       }
     }
@@ -761,7 +765,7 @@ class ListPluginComponent(
 
   private fun updatePlugin(descriptorForActions: PluginUiModel, updateDescriptor: PluginUiModel) {
     PluginModelAsyncOperationsExecutor.updatePlugin(
-      myCoroutineScope,
+      myOperationCoroutineScope,
       myModelFacade,
       descriptorForActions,
       updateDescriptor,
@@ -1015,11 +1019,15 @@ class ListPluginComponent(
   }
 
   fun close() {
+    if (myClosed) return
+    myClosed = true
+
     if (myIndicator != null) {
       PluginModelFacade.removeProgress(getDescriptorForActions(), myIndicator!!)
       myIndicator = null
     }
     myModelFacade.removeComponent(this)
+    myUiCoroutineScope.cancel()
   }
 
   fun createPopupMenu(group: DefaultActionGroup, selection: List<ListPluginComponent>) {
@@ -1293,8 +1301,8 @@ class ListPluginComponent(
     myInstalledPluginMarketplaceNode = model
   }
 
-  fun getCoroutineScope(): CoroutineScope {
-    return myCoroutineScope
+  fun getUiCoroutineScope(): CoroutineScope {
+    return myUiCoroutineScope
   }
 
   fun getModelFacade(): PluginModelFacade {
@@ -1346,7 +1354,7 @@ class ListPluginComponent(
     selection: MutableList<ListPluginComponent>,
     function: Function<ListPluginComponent, PluginUiModel?>,
   ): UninstallAction<ListPluginComponent> {
-    return UninstallAction(myCoroutineScope, myModelFacade, true, this, selection, function) {
+    return UninstallAction(myOperationCoroutineScope, myModelFacade, true, this, selection, function) {
       selection.forEach { PluginUpdateSourceService.getInstance().erasePluginUpdateSourceId(it.myPlugin.pluginId) }
     }
   }

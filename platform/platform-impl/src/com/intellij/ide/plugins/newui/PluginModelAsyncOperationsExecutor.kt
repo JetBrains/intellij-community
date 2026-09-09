@@ -148,7 +148,7 @@ internal object PluginModelAsyncOperationsExecutor {
       return
     }
     val modelFacade = component.getModelFacade()
-    component.getCoroutineScope().launch(Dispatchers.IO) {
+    component.getUiCoroutineScope().launch(Dispatchers.IO) {
       val stateForComponent = ModalityState.stateForComponent(component)
       val popupSelection = selection.map {
         PluginPopupMenuActionData(it.getPluginModel(), it.getInstalledDescriptorForMarketplace(), it.getDescriptorForActions())
