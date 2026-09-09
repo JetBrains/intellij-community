@@ -15,6 +15,9 @@ import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.ResetPluginsStateResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
@@ -30,6 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import javax.swing.JComponent
@@ -86,7 +90,8 @@ class UiPluginManager {
     callback: (ResetPluginsStateResult) -> Unit = {},
   ): Job {
     return launchRpcTask {
-      callback(getController().resetSession(sessionId, removeSession, parentComponent))
+      val result = getController().resetSession(sessionId, removeSession, parentComponent)
+      invokeResetSessionCallback(result, callback)
     }
   }
 
@@ -315,6 +320,15 @@ class UiPluginManager {
       val frontendType = FrontendApplicationInfo.getFrontendType()
       return frontendType is FrontendType.Remote && frontendType.isController() && Registry.`is`("reworked.plugin.manager.enabled", false)
     }
+  }
+}
+
+internal suspend fun invokeResetSessionCallback(
+  result: ResetPluginsStateResult,
+  callback: (ResetPluginsStateResult) -> Unit,
+) {
+  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    callback(result)
   }
 }
 
