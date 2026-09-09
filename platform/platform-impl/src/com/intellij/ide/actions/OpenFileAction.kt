@@ -153,7 +153,6 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
 
       if (e.getData(WelcomeScreenActionsUtil.NON_MODAL_WELCOME_SCREEN) == true) {
         presentation.icon = AllIcons.Nodes.Folder
-        presentation.text = ActionsBundle.message("action.Tabbed.WelcomeScreen.NonModal.OpenProject.text")
       }
       else if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
         presentation.icon = AllIcons.Welcome.Open
