@@ -44,6 +44,7 @@ import git4idea.GitUtil.getHead
 import git4idea.GitUtil.getRepositories
 import git4idea.GitUtil.getRepositoriesForFiles
 import git4idea.changes.GitChangeUtils
+import git4idea.commit.GitMergeCommitMessageReader
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitHistoryUtils
 import git4idea.history.GitLogUtil
@@ -58,6 +59,9 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JPanel
 
 private val LOG = logger<GitDefaultMergeDialogCustomizer>()
+
+// git quotes each ref in the MERGE_MSG first line, for example: Merge branch 'main' into feature
+private val MERGE_MSG_REF_NAME_PATTERN = Regex("'([^']+)'")
 
 internal open class GitDefaultMergeDialogCustomizer(
   private val project: Project
@@ -283,19 +287,43 @@ private fun resolveMergeBranchOrCherryPick(repository: GitRepository): String? {
 
 private fun resolveMergeBranch(repository: GitRepository): RefInfo? {
   val mergeHead = tryResolveRef(repository, MERGE_HEAD) ?: return null
-  return resolveBranchName(repository, mergeHead)
+  return resolveBranchName(repository, mergeHead, preferredName = { readMergedRefName(repository) })
 }
 
 private fun resolveRebaseOntoBranch(repository: GitRepository): RefInfo? {
   val ontoHash = GitRebaseUtils.getOntoHash(repository.project, repository.root) ?: return null
   val repo = GitRepositoryManager.getInstance(repository.project).getRepositoryForRoot(repository.root) ?: return null
+  // No preferred names here. A rebase writes the replayed commit message to MERGE_MSG, not the onto branch.
+  // MERGE_MSG would mislabel the onto branch.
   return resolveBranchName(repo, ontoHash)
 }
 
-private fun resolveBranchName(repository: GitRepository, hash: Hash): RefInfo {
+/**
+ * Resolves [hash] to the name of a branch that points at it.
+ *
+ * A single branch is unambiguous. When several branches share the commit, the lookup by hash cannot choose, so
+ * [preferredName] breaks the tie with the branch that git recorded for the operation.
+ */
+private fun resolveBranchName(repository: GitRepository, hash: Hash, preferredName: () -> String? = { null }): RefInfo {
   var branches: Collection<GitBranch> = repository.branches.findLocalBranchesByHash(hash)
   if (branches.isEmpty()) branches = repository.branches.findRemoteBranchesByHash(hash)
-  return RefInfo(hash, branches.singleOrNull()?.name)
+  val name = branches.singleOrNull()?.name
+             ?: preferredName()?.let { preferred -> branches.firstOrNull { it.name == preferred }?.name }
+  return RefInfo(hash, name)
+}
+
+/**
+ * Reads the branch name that git recorded in MERGE_MSG for the merge in progress.
+ *
+ * git writes the ref you asked to merge, for example `Merge branch 'main' into feature`. The commit hash cannot
+ * identify that branch when several branches share the commit, so the caller uses this name to break the tie.
+ * The caller resolves MERGE_HEAD to one commit. A normal merge records one branch. An octopus merge records its
+ * branches in head order, so the first name matches that commit.
+ */
+private fun readMergedRefName(repository: GitRepository): String? {
+  val message = GitMergeCommitMessageReader.getInstance(repository.project).read(repository) ?: return null
+  val firstLine = message.lineSequence().firstOrNull() ?: return null
+  return MERGE_MSG_REF_NAME_PATTERN.find(firstLine)?.groupValues?.get(1)
 }
 
 private fun tryResolveRef(repository: GitRepository, @NlsSafe ref: String): Hash? {
