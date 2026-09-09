@@ -12,9 +12,11 @@ import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.rpc.rpcId
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.isControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -58,6 +60,7 @@ import fleet.kernel.change
 import fleet.kernel.rebase.shared
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
@@ -105,6 +108,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
   val removeSessionRef: AtomicBoolean = AtomicBoolean(true)
 
   override fun show(tabId: String, searchText: String?, initEvent: AnActionEvent) {
+    show(tabId, searchText, initEvent, false)
+  }
+
+  private fun show(tabId: String, searchText: String?, initEvent: AnActionEvent, isRetry: Boolean) {
     EDT.assertIsEdt()
 
     val showPopupStartTime = System.currentTimeMillis()
@@ -188,12 +195,38 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
           }
         }
       }
+      catch (e: Throwable) {
+        if (e.isControlFlowException) throw e
+
+        if (!popupFuture.isDone) {
+          // The popup view model hasn't reached the popup panel because of an exception. Try to reopen once.
+          withContext(Dispatchers.EDT) {
+            popup.cancel()
+
+            if (isRetry) {
+              SeLog.log(LIFE_CYCLE) { "Exception while opening the popup. Closing the popup. Exception: ${e.message}\n${e.stackTraceToString()}" }
+            }
+            else {
+              SeLog.log(LIFE_CYCLE) { "Exception while opening the popup. Will try to reopen once. Exception: ${e.message}\n${e.stackTraceToString()}" }
+              show(tabId, searchText, initEvent, true)
+            }
+          }
+        }
+      }
       finally {
         popupInstanceFuture = null
         localProvidersHolder?.let { Disposer.dispose(it) }
         localProvidersHolder = null
 
         withContext(NonCancellable) {
+          if (!popupFuture.isDone) {
+            withContext(Dispatchers.EDT) {
+              if (!popup.isDisposed) {
+                SeLog.log(LIFE_CYCLE) { "The viewModel hasn't reached the popup without an exception. Closing the popup." }
+                popup.cancel()
+              }
+            }
+          }
           popupScope.cancel()
           if (removeSessionRef.get()) {
             change {
