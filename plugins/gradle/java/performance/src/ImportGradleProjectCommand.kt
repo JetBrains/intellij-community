@@ -35,6 +35,7 @@ import kotlinx.coroutines.withTimeout
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.open.setupGradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.SuggestGradleVersionOptions
@@ -115,51 +116,11 @@ class ImportGradleProjectCommand(text: String, line: Int) : PerformanceCommandCo
     try {
       for (settings in projectsSettings) {
         val importSpecBuilder = ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
-        importSpecBuilder
-          .withImportProjectData(false)
-          .withCallback(object : ExternalProjectRefreshCallback {
-
-          override fun onSuccess(externalProject: DataNode<ProjectData>?) {
-            context.message("Gradle resolve finished for: ${externalProject!!.data.linkedExternalProjectPath}", line)
-            val connection: SimpleMessageBusConnection = project.messageBus.simpleConnect()
-            connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
-              override fun onFinalTasksFinished(projectPath: String?) {
-                handleImportFinished(projectPath)
-              }
-
-              override fun onImportFailed(projectPath: String?, failure: Throwable) {
-                handleImportFinished(projectPath)
-              }
-
-              private fun handleImportFinished(projectPath: String?) {
-                if (projectPath !in projectsPaths) return
-                connection.disconnect()
-                if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
-                  ApplicationManager.getApplication().invokeLater {
-                    importDeferred.complete(Unit)
-                  }
-                }
-              }
-            })
-
-            ProjectDataManager.getInstance().importData(externalProject, project)
-          }
-
-          override fun onFailure(errorMessage: String, errorDetails: String?) {
-            context.error("Gradle resolve failed for: ${settings.externalProjectPath}:$errorMessage:$errorDetails", line)
-            synchronized(projectsWithResolveErrors) {
-              if (projectsWithResolveErrors.isNotEmpty()) {
-                projectsWithResolveErrors.append(", ")
-              }
-              projectsWithResolveErrors.append("'${Paths.get(settings.externalProjectPath!!).fileName?.toString() ?: ""}'")
-            }
-            if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
-              ApplicationManager.getApplication().invokeLater {
-                importDeferred.completeExceptionally(IllegalStateException(projectsWithResolveErrors.toString()))
-              }
-            }
-          }
-        })
+        importSpecBuilder.withImportProjectData(false).withCallback(
+          MyExternalProjectRefreshCallback(
+            project, context, settings, projectsPaths, gradleProjectsToRefreshCount, projectsWithResolveErrors, importDeferred
+          )
+        )
         ExternalSystemUtil.refreshProject(settings.externalProjectPath, importSpecBuilder)
       }
       importDeferred.await()
@@ -208,6 +169,58 @@ class ImportGradleProjectCommand(text: String, line: Int) : PerformanceCommandCo
         syncTasksFinished.complete(Unit)
       }
     })
+  }
+
+  private inner class MyExternalProjectRefreshCallback(
+    private val project: Project,
+    private val context: PlaybackContext,
+    private val settings: GradleProjectSettings,
+    private val projectsPaths: List<String?>,
+    private val gradleProjectsToRefreshCount: AtomicInteger,
+    private val projectsWithResolveErrors: StringBuilder,
+    private val importDeferred: CompletableDeferred<Unit>,
+  ) : ExternalProjectRefreshCallback {
+
+    override fun onSuccess(externalProject: DataNode<ProjectData>?) {
+      context.message("Gradle resolve finished for: ${externalProject!!.data.linkedExternalProjectPath}", line)
+      val connection: SimpleMessageBusConnection = project.messageBus.simpleConnect()
+      connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
+        override fun onFinalTasksFinished(projectPath: String?) {
+          handleImportFinished(projectPath)
+        }
+
+        override fun onImportFailed(projectPath: String?, failure: Throwable) {
+          handleImportFinished(projectPath)
+        }
+
+        private fun handleImportFinished(projectPath: String?) {
+          if (projectPath !in projectsPaths) return
+          connection.disconnect()
+          if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
+            ApplicationManager.getApplication().invokeLater {
+              importDeferred.complete(Unit)
+            }
+          }
+        }
+      })
+
+      ProjectDataManager.getInstance().importData(externalProject, project)
+    }
+
+    override fun onFailure(errorMessage: String, errorDetails: String?) {
+      context.error("Gradle resolve failed for: ${settings.externalProjectPath}:$errorMessage:$errorDetails", line)
+      synchronized(projectsWithResolveErrors) {
+        if (projectsWithResolveErrors.isNotEmpty()) {
+          projectsWithResolveErrors.append(", ")
+        }
+        projectsWithResolveErrors.append("'${Paths.get(settings.externalProjectPath!!).fileName?.toString() ?: ""}'")
+      }
+      if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
+        ApplicationManager.getApplication().invokeLater {
+          importDeferred.completeExceptionally(IllegalStateException(projectsWithResolveErrors.toString()))
+        }
+      }
+    }
   }
 
   companion object {
