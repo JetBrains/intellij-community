@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 
 internal object TypeTextProvider {
     /**
@@ -34,9 +35,10 @@ internal object TypeTextProvider {
     context(_: KaSession)
     fun getTypeTextForCallable(
         signature: KaCallableSignature<*>,
-        treatAsFunctionCall: Boolean
+        treatAsFunctionCall: Boolean,
+        smartCastType: KaType? = null,
     ): String {
-        val type = signature.returnType
+        val type = smartCastType ?: signature.returnType
         val typeToRender = when (signature) {
             is KaFunctionSignature<*> -> type.takeUnless { it is KaErrorType }
                 ?: signature.symbol.returnType

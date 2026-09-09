@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.Key
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.smartCastTypeForSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.UserDataProperty
 
@@ -50,15 +52,15 @@ internal object ExpectedTypeWeigher: KotlinLookupElementWeigher("kotlin.expected
         val expectedType = sectionContext.weighingContext.expectedType?.upperBoundIfFlexible()
 
         lookupElement.matchesExpectedType = when {
-            symbol != null -> symbol.matchesExpectedType(expectedType)
+            symbol != null -> symbol.matchesExpectedType(expectedType, symbolWithOrigin.scopeKind)
             lookupElement.`object` is NamedArgumentLookupObject -> MatchesExpectedType.MATCHES
             lookupElement.`object` is KeywordLookupObject -> keywordMatchesExpectedType(lookupElement.lookupString, expectedType)
             else -> null
         }
     }
 
-    context(_: KaSession)
-    private fun KaSymbol.matchesExpectedType(expectedType: KaType?): MatchesExpectedType {
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<*>)
+    private fun KaSymbol.matchesExpectedType(expectedType: KaType?, scopeKind: KaScopeKind?): MatchesExpectedType {
         if (expectedType == null) return MatchesExpectedType.NON_TYPABLE
 
         // If the symbol is a Typealias, we want to use the original symbol for matching the expected type
@@ -73,7 +75,12 @@ internal object ExpectedTypeWeigher: KotlinLookupElementWeigher("kotlin.expected
             expandedSymbol !is KaCallableSymbol -> MatchesExpectedType.NON_TYPABLE
 
             expectedType.classId == KaStandardTypeClassIds.UNIT -> MatchesExpectedType.MATCHES
-            else -> MatchesExpectedType.matches(expandedSymbol.returnType, expectedType)
+            else -> {
+                val originalType = expandedSymbol.returnType
+                val smartCastType = smartCastTypeForSymbol(this, originalType, scopeKind)
+                val bestMatch = MatchesExpectedType.matches(smartCastType ?: originalType, expectedType)
+                bestMatch
+            }
         }
     }
 
@@ -158,5 +165,4 @@ internal object ExpectedTypeWeigher: KotlinLookupElementWeigher("kotlin.expected
         }
     }
 }
-
 

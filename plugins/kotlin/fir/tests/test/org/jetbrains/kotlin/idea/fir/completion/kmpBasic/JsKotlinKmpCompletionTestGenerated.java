@@ -3309,6 +3309,144 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/basic/common/smartCastType")
+    public static class SmartCastType extends AbstractKotlinKmpCompletionTest {
+        @java.lang.Override
+        public KMPTestPlatform getTestPlatform() {
+            return KMPTestPlatform.Js;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ConflictingImplicitReceiverCasts.kt")
+        public void testConflictingImplicitReceiverCasts() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/ConflictingImplicitReceiverCasts.kt");
+        }
+
+        @TestMetadata("ContextParameter.kt")
+        public void testContextParameter() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/ContextParameter.kt");
+        }
+
+        @TestMetadata("ContextParameterAndImplicitReceiver.kt")
+        public void testContextParameterAndImplicitReceiver() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/ContextParameterAndImplicitReceiver.kt");
+        }
+
+        @TestMetadata("ContextParameterDifferentReceiver.kt")
+        public void testContextParameterDifferentReceiver() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/ContextParameterDifferentReceiver.kt");
+        }
+
+        @TestMetadata("ContextParameterNullCheck.kt")
+        public void testContextParameterNullCheck() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/ContextParameterNullCheck.kt");
+        }
+
+        @TestMetadata("ContextParameterPropertyGetter.kt")
+        public void testContextParameterPropertyGetter() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/ContextParameterPropertyGetter.kt");
+        }
+
+        @TestMetadata("ContextParameterReceiverChain.kt")
+        public void testContextParameterReceiverChain() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/ContextParameterReceiverChain.kt");
+        }
+
+        @TestMetadata("DeclaredTypeMatches.kt")
+        public void testDeclaredTypeMatches() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/DeclaredTypeMatches.kt");
+        }
+
+        @TestMetadata("DifferentImplicitReceiver.kt")
+        public void testDifferentImplicitReceiver() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/DifferentImplicitReceiver.kt");
+        }
+
+        @TestMetadata("DifferentImplicitRootOfReceiverChain.kt")
+        public void testDifferentImplicitRootOfReceiverChain() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/DifferentImplicitRootOfReceiverChain.kt");
+        }
+
+        @TestMetadata("DifferentReceiver.kt")
+        public void testDifferentReceiver() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/DifferentReceiver.kt");
+        }
+
+        @TestMetadata("FunctionReturnType.kt")
+        public void testFunctionReturnType() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/FunctionReturnType.kt");
+        }
+
+        @TestMetadata("GenericProperty.kt")
+        public void testGenericProperty() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/GenericProperty.kt");
+        }
+
+        @TestMetadata("IntersectionConjunct.kt")
+        public void testIntersectionConjunct() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/IntersectionConjunct.kt");
+        }
+
+        @TestMetadata("IntersectionDoesNotMatch.kt")
+        public void testIntersectionDoesNotMatch() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/IntersectionDoesNotMatch.kt");
+        }
+
+        @TestMetadata("LocalVariable.kt")
+        public void testLocalVariable() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/LocalVariable.kt");
+        }
+
+        @TestMetadata("NoExpectedType.kt")
+        public void testNoExpectedType() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/NoExpectedType.kt");
+        }
+
+        @TestMetadata("NoSmartCast.kt")
+        public void testNoSmartCast() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/NoSmartCast.kt");
+        }
+
+        @TestMetadata("NullCheck.kt")
+        public void testNullCheck() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/NullCheck.kt");
+        }
+
+        @TestMetadata("NullableExpectedType.kt")
+        public void testNullableExpectedType() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/NullableExpectedType.kt");
+        }
+
+        @TestMetadata("QualifiedProperty.kt")
+        public void testQualifiedProperty() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/QualifiedProperty.kt");
+        }
+
+        @TestMetadata("SelectedImplicitReceiver.kt")
+        public void testSelectedImplicitReceiver() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/SelectedImplicitReceiver.kt");
+        }
+
+        @TestMetadata("SelectedImplicitRootOfReceiverChain.kt")
+        public void testSelectedImplicitRootOfReceiverChain() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/SelectedImplicitRootOfReceiverChain.kt");
+        }
+
+        @TestMetadata("SmartCastDoesNotMatch.kt")
+        public void testSmartCastDoesNotMatch() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/SmartCastDoesNotMatch.kt");
+        }
+
+        @TestMetadata("UnstableProperty.kt")
+        public void testUnstableProperty() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/UnstableProperty.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/common/staticMembers")
     public static class StaticMembers extends AbstractKotlinKmpCompletionTest {
         @java.lang.Override

@@ -91,9 +91,10 @@ object KotlinFirLookupElementFactory {
         options: CallableInsertionOptions,
         expectedType: KaType? = null,
         aliasName: Name? = null,
+        smartCastType: KaType? = null,
     ): LookupElementBuilder = when (signature) {
         is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookup(name, signature, options, expectedType, aliasName)
-        is KaVariableSignature<*> -> VariableLookupElementFactory.createLookup(signature, options, aliasName)
+        is KaVariableSignature<*> -> VariableLookupElementFactory.createLookup(signature, options, aliasName, smartCastType)
     }
 
     context(_: KaSession)

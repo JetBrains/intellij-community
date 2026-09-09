@@ -5,5 +5,3 @@ fun f(p: Any) {
 }
 
 // EXIST: { itemText:"p" }
-
-// IGNORE_K2

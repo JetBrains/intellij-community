@@ -24,12 +24,12 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WrapSingleStringTem
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.addSmartCompletionTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.keepOldArgumentListOnTab
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionCallLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.CompletionContributorGroupWeigher.groupPriority
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
 import org.jetbrains.kotlin.idea.completion.isAtFunctionLiteralStart
 import org.jetbrains.kotlin.idea.completion.suppressItemSelectionByCharsOnTyping
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.CompletionContributorGroupWeigher.groupPriority
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import java.util.Optional
@@ -164,7 +164,7 @@ internal class K2CompletionSectionContext<out P : KotlinRawPositionContext>(
  * This class uses Optionals internally to distinguish between a non-initialized property and a property initialized
  * with a null value.
  */
-internal class LazyCompletionSessionProperty<T, P: KotlinRawPositionContext>(
+internal class LazyCompletionSessionProperty<T, P : KotlinRawPositionContext>(
     // We use an anonymous key by default because the name does not matter to us.
     // Different instances of a key with the same name are distinct.
     private val userDataKey: Key<Optional<T>> = Key.create(""),

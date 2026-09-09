@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
@@ -50,6 +51,7 @@ internal object VariableLookupElementFactory {
         signature: KaVariableSignature<*>,
         options: CallableInsertionOptions,
         aliasName: Name? = null,
+        smartCastType: KaType? = null,
     ): LookupElementBuilder {
         val rendered = renderVariable(signature)
         var builder = createLookupElementBuilder(options, signature, rendered, aliasName = aliasName)
@@ -60,7 +62,7 @@ internal object VariableLookupElementFactory {
             symbol.javaSetterName?.let { builder = builder.withLookupString(it.asString()) }
         }
 
-        return withCallableSignatureInfo(signature, builder)
+        return withCallableSignatureInfo(signature, builder, smartCastType)
     }
 
     context(_: KaSession)
