@@ -485,17 +485,14 @@ private fun MutableEntityStorage.mergeRoots(
 }
 
 /**
- * Make a source root that the IDE can compare with a root that the user marks.
+ * Make a source root for the sync.
  *
- * `ModifiableContentEntryBridge` compares a java source root by its properties. A root without a
- * `JavaSourceRootPropertiesEntity` never matches, so the bridge writes a second entity for one directory. The `.iml`
- * serializer gives that child to every java source root that it reads. This factory keeps a new root equal to the same
- * root after a reload.
+ * The root holds no [JavaSourceRootPropertiesEntity]. Python has no package prefix and no generated flag, so the
+ * default properties are correct. `ModifiableContentEntryBridge` reads a missing child as the default properties
+ * (IJPL-254041), so the bridge finds this root when the user marks the same directory.
  */
 private fun pyProjectSourceRoot(url: VirtualFileUrl, entitySource: EntitySource): SourceRootEntityBuilder =
-  SourceRootEntity(url, JAVA_SOURCE_ROOT_TYPE, entitySource) {
-    javaSourceRoots = listOf(JavaSourceRootPropertiesEntity(generated = false, packagePrefix = "", entitySource = entitySource))
-  }
+  SourceRootEntity(url, JAVA_SOURCE_ROOT_TYPE, entitySource)
 
 /**
  * Copy [sourceRoot] for another content root, with [entitySource].
