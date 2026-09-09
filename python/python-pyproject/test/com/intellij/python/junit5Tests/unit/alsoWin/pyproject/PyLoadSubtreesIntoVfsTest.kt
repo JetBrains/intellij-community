@@ -81,6 +81,12 @@ internal class PyLoadSubtreesIntoVfsTest {
   }
 
   @Test
+  fun testTheLoaderSkipsAChildOfAnExcludedDirectory(): Unit = timeoutRunBlocking {
+    loadSubtreesIntoVfs(setOf(child("out", "nested")), excludedPaths = setOf(root.resolve("out")))
+    assertThat(descendedInto("out", "nested")).describedAs("a child of an excluded directory").isFalse()
+  }
+
+  @Test
   fun testTheLoaderSkipsAPrunedName(): Unit = timeoutRunBlocking {
     loadSubtreesIntoVfs(setOf(rootFile))
     assertThat(descendedInto(".hidden")).describedAs("a dot directory").isFalse()
