@@ -188,6 +188,7 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
     val pluginIds = marketplaceData.flatMap { it.value.getPlugins().map { plugin -> plugin.pluginId } }.toSet() +
                     customRepositoriesMap.flatMap { it.value.map { plugin -> plugin.pluginId } }.toSet()
     val installedPlugins = pluginManager.findInstalledPlugins(pluginIds)
+    pluginManagerCustomizer?.awaitPluginStatesLoaded()
 
     return CreateMarketplacePanelModel(
       marketplaceData,
@@ -336,9 +337,6 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
             model.installationStates,
           )
         }
-      }
-      if (pluginManagerCustomizer != null) {
-        pluginManagerCustomizer.ensurePluginStatesLoaded()
       }
     }
     finally {

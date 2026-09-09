@@ -51,6 +51,8 @@ interface UiPluginManagerController {
   suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
   suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
   suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>>
+  suspend fun getCustomPluginRepositories(): List<CustomPluginRepository>
+  suspend fun loadCustomPluginRepository(repository: CustomPluginRepository): CustomPluginRepositoryLoadResult
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
   suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
   suspend fun isPluginInstalled(pluginId: PluginId): Boolean

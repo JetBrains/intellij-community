@@ -25,6 +25,7 @@ import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.plugins.PluginManagerStateService
 import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginUtils.toPluginDescriptors
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.getMainDescriptor
 import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
@@ -79,7 +80,10 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.FileVisitResult
 import java.util.EnumMap
+import java.util.LinkedHashMap
+import java.util.LinkedHashSet
 import java.util.UUID
+import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 import kotlin.coroutines.CoroutineContext
 
@@ -151,6 +155,24 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
     return CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap()
+  }
+
+  override suspend fun getCustomPluginRepositories(): List<CustomPluginRepository> {
+    return RepositoryHelper.getCustomPluginRepositoryHosts().map { repositoryId ->
+      CustomPluginRepository(repositoryId, PluginSource.LOCAL)
+    }
+  }
+
+  override suspend fun loadCustomPluginRepository(repository: CustomPluginRepository): CustomPluginRepositoryLoadResult {
+    return try {
+      CustomPluginRepositoryLoadResult(RepositoryHelper.loadPluginModels(repository.id, null, null).withSource())
+    }
+    catch (c: CancellationException) {
+      throw c
+    }
+    catch (t: Throwable) {
+      CustomPluginRepositoryLoadResult(emptyList(), t.message ?: t.javaClass.simpleName)
+    }
   }
 
   override suspend fun installOrUpdatePlugin(

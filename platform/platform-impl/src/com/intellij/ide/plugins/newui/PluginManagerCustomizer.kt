@@ -63,7 +63,7 @@ interface PluginManagerCustomizer {
   @Nls
   fun getUpdateSourceText(pluginModel: PluginUiModel): String?
 
-  fun ensurePluginStatesLoaded()
+  suspend fun awaitPluginStatesLoaded()
 
   fun updateCustomRepositories(
     addedRepoUrls: List<String>,

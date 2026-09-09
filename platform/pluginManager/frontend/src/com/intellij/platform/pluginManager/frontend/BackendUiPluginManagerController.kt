@@ -15,6 +15,8 @@ import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.ResetPluginsStateResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
+import com.intellij.ide.plugins.newui.CustomPluginRepository
+import com.intellij.ide.plugins.newui.CustomPluginRepositoryLoadResult
 import com.intellij.ide.plugins.newui.PluginInventoryEntry
 import com.intellij.ide.plugins.newui.PluginInventorySnapshot
 import com.intellij.ide.plugins.newui.PluginSource
@@ -203,6 +205,17 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
     return PluginManagerApi.getInstance().getCustomRepositoryPluginMap()
+  }
+
+  override suspend fun getCustomPluginRepositories(): List<CustomPluginRepository> {
+    return PluginManagerApi.getInstance().getCustomPluginRepositoryIds().map { repositoryId ->
+      CustomPluginRepository(repositoryId, PluginSource.REMOTE)
+    }
+  }
+
+  override suspend fun loadCustomPluginRepository(repository: CustomPluginRepository): CustomPluginRepositoryLoadResult {
+    val result = PluginManagerApi.getInstance().loadCustomPluginRepository(repository.id)
+    return CustomPluginRepositoryLoadResult(result.plugins.withSource(), result.error)
   }
 
   override fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean {

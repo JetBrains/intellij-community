@@ -192,6 +192,14 @@ class UiPluginManager {
     return getController().getCustomRepositoryPluginMap()
   }
 
+  suspend fun getCustomPluginRepositories(): List<CustomPluginRepository> {
+    return getController().getCustomPluginRepositories()
+  }
+
+  suspend fun loadCustomPluginRepository(repository: CustomPluginRepository): CustomPluginRepositoryLoadResult {
+    return getController().loadCustomPluginRepository(repository)
+  }
+
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {
     return getController().isDisabledInDiff(sessionId, pluginId)
   }

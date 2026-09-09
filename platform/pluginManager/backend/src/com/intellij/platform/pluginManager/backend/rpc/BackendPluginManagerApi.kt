@@ -14,13 +14,16 @@ import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
+import com.intellij.ide.plugins.newui.CustomPluginRepository
 import com.intellij.ide.plugins.newui.PluginInventoryEntry
 import com.intellij.ide.plugins.newui.PluginInstallationState
+import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
+import com.intellij.platform.pluginManager.shared.rpc.CustomPluginRepositoryLoadResultDto
 import com.intellij.platform.pluginManager.shared.rpc.PluginInventoryDto
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
@@ -142,6 +145,19 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.getCustomRepositoryPluginMap().mapValues { entry ->
       entry.value.map { PluginDto.fromModel(it) }
     }
+  }
+
+  override suspend fun getCustomPluginRepositoryIds(): List<String> {
+    return DefaultUiPluginManagerController.getCustomPluginRepositories().map { it.id }
+  }
+
+  override suspend fun loadCustomPluginRepository(repositoryId: String): CustomPluginRepositoryLoadResultDto {
+    val repository = CustomPluginRepository(repositoryId, PluginSource.LOCAL)
+    val result = DefaultUiPluginManagerController.loadCustomPluginRepository(repository)
+    return CustomPluginRepositoryLoadResultDto(
+      plugins = result.plugins.map { PluginDto.fromModel(it) },
+      error = result.error,
+    )
   }
 
   override suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
