@@ -13,6 +13,7 @@ This overrides the "Prefer Kotlin for new files" rule of the
 - Write new code in modern Java, inside the language level of the module. The feature table is in
   [Modern Java](../.agents/skills/code-style/references/modern-java.md).
 - Add a Kotlin file only for code that needs `suspend` or `Flow`.
+- Exception: `debugger/` takes either language. Pick the one that fits the code you extend.
 - Exception: keep the language of a package that is already all Kotlin, such as
   `codeInsight/completion/commands/impl` in `java-impl`.
 - Keep an existing Java file in Java unless the task asks for a conversion.
