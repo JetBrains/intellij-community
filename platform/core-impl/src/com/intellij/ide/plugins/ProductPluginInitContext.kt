@@ -92,6 +92,9 @@ class ProductPluginInitContext(
   override val disablePluginLoadingCompletely: Boolean
     get() = !System.getProperty("idea.load.plugins", "true").toBoolean()
 
+  override val disableRequiredIfAvailable: Boolean =
+    System.getProperty("idea.plugins.required.if.available.disabled").toBoolean()
+
   override val pluginsPerProjectConfig: PluginsPerProjectConfig? by lazy {
     if (java.lang.Boolean.getBoolean("ide.per.project.instance")) {
       PluginsPerProjectConfig(

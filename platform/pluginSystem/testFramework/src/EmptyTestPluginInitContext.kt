@@ -22,6 +22,7 @@ abstract class EmptyTestPluginInitContext : PluginInitializationContext {
   override val checkEssentialPlugins: Boolean = false
   override val explicitPluginSubsetToLoad: Set<PluginId>? = null
   override val disablePluginLoadingCompletely: Boolean = false
+  override val disableRequiredIfAvailable: Boolean = false
   override val pluginsPerProjectConfig: PluginsPerProjectConfig? = null
   override val environmentConfiguredModules: Map<PluginModuleId, PluginInitializationContext.EnvironmentConfiguredModuleData> = emptyMap()
 
