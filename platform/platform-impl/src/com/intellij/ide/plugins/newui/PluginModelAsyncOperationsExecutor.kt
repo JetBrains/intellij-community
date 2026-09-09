@@ -22,16 +22,23 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 import java.util.function.Function
 import javax.swing.JComponent
+import kotlin.coroutines.CoroutineContext
+
+internal class PluginOperationLauncher(private val coroutineScope: CoroutineScope) {
+  fun launch(context: CoroutineContext, operation: suspend CoroutineScope.() -> Unit) {
+    coroutineScope.launch(context, block = operation)
+  }
+}
 
 internal object PluginModelAsyncOperationsExecutor {
   fun performAutoInstall(
-    cs: CoroutineScope,
+    operationLauncher: PluginOperationLauncher,
     modelFacade: PluginModelFacade,
     descriptor: PluginUiModel,
     customizer: PluginManagerCustomizer?,
     component: JComponent,
   ) {
-    cs.launch(Dispatchers.IO) {
+    operationLauncher.launch(Dispatchers.IO) {
       val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(descriptor, modelFacade)
       pluginUpdateSourceApplier.runWithRevertOnException {
         val stateForComponent = ModalityState.stateForComponent(component)
@@ -111,7 +118,7 @@ internal object PluginModelAsyncOperationsExecutor {
   }
 
   fun updatePlugin(
-    cs: CoroutineScope,
+    operationLauncher: PluginOperationLauncher,
     modelFacade: PluginModelFacade,
     plugin: PluginUiModel,
     updateDescriptor: PluginUiModel?,
@@ -120,7 +127,7 @@ internal object PluginModelAsyncOperationsExecutor {
     component: JComponent?,
     pluginDescriptorForPluginUpdateSourceApplier: PluginUiModel,
   ) {
-    cs.launch(Dispatchers.IO) {
+    operationLauncher.launch(Dispatchers.IO) {
       val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(pluginDescriptorForPluginUpdateSourceApplier, modelFacade)
       pluginUpdateSourceApplier.runWithRevertOnException {
         val model = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(modelFacade, plugin, updateDescriptor, modalityState)

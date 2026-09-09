@@ -85,15 +85,35 @@ import javax.swing.plaf.ButtonUI
 import javax.swing.text.BadLocationException
 
 @ApiStatus.Internal
-class ListPluginComponent(
+class ListPluginComponent internal constructor(
   pluginModelFacade: PluginModelFacade,
   pluginUiModel: PluginUiModel,
   group: PluginsGroup,
   listModel: ListPluginModel,
   searchListener: LinkListener<Any>,
   coroutineScope: CoroutineScope,
+  private val myOperationLauncher: PluginOperationLauncher,
   marketplace: Boolean,
 ) : JPanel() {
+  constructor(
+    pluginModelFacade: PluginModelFacade,
+    pluginUiModel: PluginUiModel,
+    group: PluginsGroup,
+    listModel: ListPluginModel,
+    searchListener: LinkListener<Any>,
+    coroutineScope: CoroutineScope,
+    marketplace: Boolean,
+  ) : this(
+    pluginModelFacade,
+    pluginUiModel,
+    group,
+    listModel,
+    searchListener,
+    coroutineScope,
+    PluginOperationLauncher(coroutineScope),
+    marketplace,
+  )
+
   private val myModelFacade: PluginModelFacade = pluginModelFacade
   private val mySearchListener: LinkListener<Any> = searchListener
   private val myMarketplace: Boolean = marketplace
@@ -143,7 +163,6 @@ class ListPluginComponent(
   private var myEventHandler: EventHandler? = null
   private var myCustomizer: PluginManagerCustomizer? = null
   private val myUiCoroutineScope: CoroutineScope = coroutineScope.childScope("Plugin row ${pluginUiModel.pluginId}")
-  private val myOperationCoroutineScope: CoroutineScope = coroutineScope
   private var mySelection: EventHandler.SelectionType = EventHandler.SelectionType.NONE
   private var myClosed = false
 
@@ -301,7 +320,7 @@ class ListPluginComponent(
         myLayout.addButtonComponent(myInstallButton!!)
 
         myInstallButton!!.addActionListener {
-          PluginModelAsyncOperationsExecutor.performAutoInstall(myOperationCoroutineScope,
+          PluginModelAsyncOperationsExecutor.performAutoInstall(myOperationLauncher,
                                                                 myModelFacade,
                                                                 myPlugin,
                                                                 myCustomizer,
@@ -765,7 +784,7 @@ class ListPluginComponent(
 
   private fun updatePlugin(descriptorForActions: PluginUiModel, updateDescriptor: PluginUiModel) {
     PluginModelAsyncOperationsExecutor.updatePlugin(
-      myOperationCoroutineScope,
+      myOperationLauncher,
       myModelFacade,
       descriptorForActions,
       updateDescriptor,
@@ -1354,7 +1373,7 @@ class ListPluginComponent(
     selection: MutableList<ListPluginComponent>,
     function: Function<ListPluginComponent, PluginUiModel?>,
   ): UninstallAction<ListPluginComponent> {
-    return UninstallAction(myOperationCoroutineScope, myModelFacade, true, this, selection, function) {
+    return UninstallAction(myOperationLauncher, myModelFacade, true, this, selection, function) {
       selection.forEach { PluginUpdateSourceService.getInstance().erasePluginUpdateSourceId(it.myPlugin.pluginId) }
     }
   }

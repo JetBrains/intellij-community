@@ -13,16 +13,14 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.xml.util.XmlStringUtil
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.util.function.Function
 import javax.swing.JComponent
 
 internal class UninstallAction<C : JComponent>(
-  private val coroutineScope: CoroutineScope,
+  private val operationLauncher: PluginOperationLauncher,
   pluginModelFacade: PluginModelFacade,
   showShortcut: Boolean,
   private val myUiParent: JComponent,
@@ -64,7 +62,7 @@ internal class UninstallAction<C : JComponent>(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(myUiParent).asContextElement()) {
+    operationLauncher.launch(Dispatchers.EDT + ModalityState.stateForComponent(myUiParent).asContextElement()) {
       val selection = getSelection()
 
       val toDeleteWithAsk = mutableListOf<PluginUiModel>()

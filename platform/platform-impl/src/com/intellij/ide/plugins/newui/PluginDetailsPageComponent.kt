@@ -224,6 +224,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private val pluginManagerCustomizer: PluginManagerCustomizer?
   private val notificationsUpdateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private val coroutineScope = pluginModel.getModel().coroutineScope.childScope("Plugin details")
+  private val operationLauncher = PluginOperationLauncher(coroutineScope)
   private val showPluginSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private var buttonsLoadedDeferred: Deferred<Unit>? = null
   private var detached = false
@@ -1364,7 +1365,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createUninstallAction(): UninstallAction<PluginDetailsPageComponent> {
     return UninstallAction(
-      coroutineScope,
+      operationLauncher,
       pluginModel, false, this, java.util.List.of(this),
       { obj: PluginDetailsPageComponent -> obj.descriptorForActions },
       {
