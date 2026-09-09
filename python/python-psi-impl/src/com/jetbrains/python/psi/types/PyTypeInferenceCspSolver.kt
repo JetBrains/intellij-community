@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.AccessDirection
+import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
@@ -727,6 +728,9 @@ private object ConstraintReducer {
         || (pVariance == PyVariance.INVARIANT && !(isRawSubtype(pLeft, pRight, cp.context) || isRawSubtype(pRight, pLeft, cp.context)))) {
       cp.fail()
     }
+    // Illustrating example:
+    // f[T](arg: tuple[T, str]) ---> pLeft  is tuple[IV1, str]
+    // f((1, "s"))              ---> pRight is tuple[Literal[1], Literal["s"]]
 
     val left: PyType?
     val right: PyType?
@@ -742,8 +746,10 @@ private object ConstraintReducer {
 
     // Here we check supertypes of C, see the example in KDoc above
     // G[IV] :> C
-    val substitutionsLeft = PyTypeChecker.unifyReceiver(left, cp.context)
-    val substitutionsRight = PyTypeChecker.unifyReceiver(right, cp.context)
+    val commonSuperClass = findSmallestUpperBound(left, right, cp.context)
+    val substitutionsCommonSuperClass = PyTypeChecker.unifyReceiver(commonSuperClass, cp.context)
+    val substitutionsLeft = PyTypeChecker.unifyReceiver(left, cp.context).subtract(substitutionsCommonSuperClass)
+    val substitutionsRight = PyTypeChecker.unifyReceiver(right, cp.context).subtract(substitutionsCommonSuperClass)
     for (leftTV in substitutionsLeft.typeVars.keys) {
       val leftTypeArg = substitutionsLeft.typeVars[leftTV] ?: continue
       if (substitutionsRight.typeVars.containsKey(leftTV)) {
@@ -754,6 +760,51 @@ private object ConstraintReducer {
         reduce(typeVarSubst, typeArgSubst, defSiteVariance, cp)
       }
     }
+  }
+
+  /**
+   * Returns the first common superclass of [leftType] and [rightType].
+   *
+   * Assume [leftType] is `tuple[IV1, str]` (IV1 is an inference variable) and [rightType] is `list[str|bool]`:
+   * The superclasses of `tuple` and `list` are `Sequence`, then `Collection`, then `Iterable` (among others).
+   * Their first common superclass i.e., smallest supper bound, is `Sequence[_T_co]`.
+   */
+  private fun findSmallestUpperBound(leftType: PyType?, rightType: PyType?, context: TypeEvalContext): PyType? {
+    val leftClass = (leftType as? PyClassType)?.pyClass ?: return null
+    val rightClass = (rightType as? PyClassType)?.pyClass ?: return null
+    val leftAncestors = sequenceOf(leftClass) + leftClass.getAncestorClasses(context)
+    val rightAncestors = (sequenceOf(rightClass) + rightClass.getAncestorClasses(context)).toSet()
+    val common = leftAncestors.firstOrNull { candidate -> candidate in rightAncestors } ?: return null
+    return context.getType(common)
+  }
+
+  /**
+   * Returns a copy of this substitution map without the entries that [other] also contains.
+   * The common superclass entries stay because the caller relates the two sides through that class.
+   *
+   * Given two types `S = tuple[IV1, str]` and `T = list[str|bool]`: We get substitutions that contain all type parameters of tuple,
+   * Sequence, Collection, Iterable, etc. for `tuple`, and all type parameters of list, Sequence, Collection, Iterable, etc. for `list`.
+   * This method removes all duplicates (i.e., from Collection, Iterable, etc.) except for those that belong to the common superclass
+   * where S and T meet in the type hierarchy (i.e., from Sequence).
+   *
+   * The motivation to remove duplicates is (1) a slight performance improvement, and (2) to deal with a specific case of tuple types:
+   * `tuples` are declared as `class tuple(Sequence[_T_co]): ...` but treated in PyCharm type checker differently: In method
+   * [PyTypeChecker.expandTupleTypeParameters], we expand `_T_co` so that we end up with parameters `_T_co` and `_T_co#1`, `_T_co#2`, etc.
+   * The reason is to not lose positional information. However, `_T_co` still is available and typed as the union of all `_T_co#n`
+   * type parameters to support the upwards type hierarchy. The upwards type hierarchy is needed to support reduction of types that have
+   * `Sequence` as a common superclass, e.g., when reducing `tuple[str, str]` and `list[str]`.
+   */
+  private fun PyTypeChecker.GenericSubstitutions.subtract(other: PyTypeChecker.GenericSubstitutions): PyTypeChecker.GenericSubstitutions {
+    val commonSuperClass = (other.selfType as? PyClassType)?.pyClass
+    fun belongsToSelfClass(typeParameter: PyTypeParameterType): Boolean {
+      return commonSuperClass != null && typeParameter.scopeOwner == commonSuperClass
+    }
+    return PyTypeChecker.GenericSubstitutions(
+      typeVars = this.typeVars.filterKeys { it !in other.typeVars || belongsToSelfClass(it) },
+      typeVarTuples = this.typeVarTuples.filterKeys { it !in other.typeVarTuples || belongsToSelfClass(it) },
+      paramSpecs = this.paramSpecs.filterKeys { it !in other.paramSpecs || belongsToSelfClass(it) },
+      selfType = this.selfType,
+    )
   }
 
 
@@ -1193,7 +1244,8 @@ private object TypeBoundIncorporator {
         var newRight = bound.right
         for (ref in bound.referencedInfVars) {
           val refInst = cp.instantiations[ref] ?: continue
-          newRight = substituteInferenceVariable(newRight, ref, refInst, context)
+          val refInstWidened = widenOrKeepBounds(ref.typeVariable, refInst, context)
+          newRight = substituteInferenceVariable(newRight, ref, refInstWidened, context)
         }
 
         // If nothing changed, skip.
@@ -1468,7 +1520,7 @@ private object TypeBoundResolver {
       return PyAnyType.unknown
     }
     else if (lowerBounds.isNotEmpty() && upperBounds.isEmpty()) {
-      val lowerBoundsWidened = lowerBounds.map { lowerBound -> PyLiteralType.upcastLiteralToClass(lowerBound) }
+      val lowerBoundsWidened = widenOrKeepBounds(infVar.typeVariable, lowerBounds, cp.context)
       return PyUnionType.union(lowerBoundsWidened)
     }
     else if (lowerBounds.isEmpty() && upperBounds.isNotEmpty()) {
@@ -1492,7 +1544,7 @@ private object TypeBoundResolver {
     }
     else {
       if (infVar.typeVariable.constraints.isEmpty()) {
-        val lowerBoundsWidened = lowerBounds.map { lowerBound -> PyLiteralType.upcastLiteralToClass(lowerBound) }
+        val lowerBoundsWidened = widenOrKeepBounds(infVar.typeVariable, lowerBounds, cp.context)
         val mergedBounds = lowerBoundsWidened.filter { lowerBound -> isSubtypeOfAll(context, lowerBound, *upperBounds) }
         if (mergedBounds.isEmpty() && upperBounds.isNotEmpty()) {
           return PyUnionType.union(upperBounds.toList())
@@ -1740,6 +1792,36 @@ private fun collectInferenceVariables(root: PyType?, context: TypeEvalContext): 
     })
   }
   return result
+}
+
+/**
+ * Keeps literal [bound] only if the variance of [typeParam] is covariant, otherwise widens to its class type.
+ *
+ * Note that for type parameters of functions, the variance is only determined by the return type. Additionally, the special case of
+ * returning a `Callable[[T], T]` with `T` being an unbound type parameter, we treat that callable as the effective scope owner of `T`
+ * (see [PyInferredVarianceJudgment.getFunctionReturnVariance]).
+ */
+internal fun widenOrKeepBounds(typeParam: PyTypeParameterType, bound: PyType?, context: TypeEvalContext): PyType? {
+  return widenOrKeepBounds(typeParam, arrayOf(bound), context).firstOrNull()
+}
+
+private fun widenOrKeepBounds(typeParam: PyTypeParameterType, bounds: Array<PyType?>, context: TypeEvalContext): List<PyType?> {
+  if (isWidenBoundsCase(typeParam, context)) {
+    // widen literal types
+    return bounds.map { lowerBound -> PyLiteralType.upcastLiteralToClassDeep(lowerBound, context) }
+  }
+  return bounds.toList() // keep literal types
+}
+
+internal fun isWidenBoundsCase(typeParam: PyTypeParameterType, context: TypeEvalContext): Boolean {
+  val tpFromFunction = typeParam.scopeOwner is PyCallable
+  val variance = if (tpFromFunction) {
+    PyInferredVarianceJudgment.getFunctionReturnVariance(typeParam, context)
+  }
+  else {
+    PyInferredVarianceJudgment.getDeclaredOrInferredVariance(typeParam, context)
+  }
+  return variance != PyVariance.COVARIANT
 }
 
 private fun PyType?.containsType(t2: PyType, context: TypeEvalContext): Boolean {

@@ -43,7 +43,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-19220"])
     fun `multi line assignment type comment`() = test("""
       expr = [
-      #      └ WARNING Expected type 'list[str]', got 'list[Literal[1, 2]]' instead
+      #      └ WARNING Expected type 'list[str]', got 'list[int]' instead
           1,
           2,
       ]  # type: list[str]

@@ -344,7 +344,7 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
             self.x = value
     c = Box([10])
     data = [True]
-    c.put(data)  # WARNING FIXME TOOLTIP invariant \n <code>_T</code> \n element/builtins.list # PY-89564
+    c.put(data)  # WARNING TOOLTIP <code>_T</code> \n element/builtins.list \n invariant # PY-89564
     """.trimIndent())
 
   @Test
@@ -625,6 +625,6 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
             self.x = value
     c = Box([10])
     data = [True]
-    c.put(data)  # WARNING FIXME Expected type 'list[int]', got 'list[bool]' instead # PY-89564
+    c.put(data)  # WARNING Expected type 'list[int]', got 'list[bool]' instead # PY-89564
     """.trimIndent())
 }

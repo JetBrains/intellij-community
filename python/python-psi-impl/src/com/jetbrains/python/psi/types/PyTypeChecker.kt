@@ -614,7 +614,8 @@ object PyTypeChecker {
     if (!safeActual.isUnknown) {
       val type = if (constraints.isEmpty())
         // temporary special casing to avoid Literal problems PY-90366
-        if (context.literalInference) safeActual else PyLiteralType.upcastLiteralToClass(safeActual)
+        if (isWidenBoundsCase(expected, context.context)) PyLiteralType.upcastLiteralToClass(safeActual)
+        else safeActual
       else constraints[matchedConstraintIndex]
       context.mySubstitutions.putTypeVar(expected, Ref(type), KeyImpl)
     }
@@ -1009,7 +1010,7 @@ object PyTypeChecker {
     // It should be equivalent to replacing Self in the protocol with the Foo class we're matching it with.
     val protocolSubstitutions = GenericSubstitutions()
     protocolSubstitutions.selfType = actual.toInstance()
-    val protocolContext = MatchContext(matchContext.context, protocolSubstitutions, matchContext.reversedSubstitutions, matchContext.literalInference)
+    val protocolContext = MatchContext(matchContext.context, protocolSubstitutions, matchContext.reversedSubstitutions)
     protocolContext.diagnostics = matchContext.diagnostics
     protocolContext.anchor = matchContext.anchor
 
@@ -1518,12 +1519,19 @@ object PyTypeChecker {
           }
           else -> {
             var elementTypes = classType.typeArguments
-            if (classType is PyTupleType && !classType.isHomogeneous) {
-              val unionTypes = classType.typeArguments.flatMap { et -> if (et is PyUnpackedTupleType) et.elementTypes else listOf(et) }
-              elementTypes = listOf(PyUnionType.union(unionTypes))
+            var typeParameters = definitionTypeParameters
+
+            if (shouldExpandElementwiseCollectionType(classType)) {
+              /** treat tuples as `class tuple[_T_co#1, _T_co#2, ..., _T_co#n](Sequence[_T_co]): ...`. @see [expandTupleTypeParameters]. */
+              val expandedTypeParameters = expandTupleTypeParameters(definitionTypeParameters, classType.typeArguments.size)
+              if (expandedTypeParameters != null) {
+                val unionTypes = classType.typeArguments.flatMap { et -> if (et is PyUnpackedTupleType) et.elementTypes else listOf(et) }
+                elementTypes = listOf(PyUnionType.union(unionTypes)) + classType.typeArguments
+                typeParameters = definitionTypeParameters + expandedTypeParameters
+              }
             }
             mapTypeParametersToSubstitutions(
-              result, definitionTypeParameters, elementTypes,
+              result, typeParameters, elementTypes,
               PyTypeParameterMapping.Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY
             )
           }
@@ -1532,6 +1540,48 @@ object PyTypeChecker {
       if (result.typeVars.isNotEmpty() || result.typeVarTuples.isNotEmpty() || result.paramSpecs.isNotEmpty()) {
         return result
       }
+    }
+    return result
+  }
+
+  /** @see [expandTupleTypeParameters] */
+  private fun shouldExpandElementwiseCollectionType(classType: PyClassType): Boolean {
+    if (classType is PyTupleType) {
+      return !classType.isHomogeneous
+    }
+    return false
+  }
+
+  /**
+   * Creates [size] synthetic copies of the single type variable in [definitionTypeParameters].
+   * Each copy gets the name `"<name>#<index>"` to keep the copies distinct. Returns null when the expansion is not possible.
+   *
+   * Note that Python tuple types are defined as `class tuple(Sequence[_T_co]): ...`. This models the upwards type hierarchy.
+   * However, tuples can be used as `tuple[int, str]` which is not represented by that definition. The expansion will create additional
+   * type variables for tuples that can be roughly understood as `class tuple[_T_co#1, _T_co#2](Sequence[_T_co]): ...`
+   * with `_T_co = _T_co#1 | _T_co#2 | ... | _T_co#n`.
+   *
+   * Also note the explanations at the use-site of expanded type parameters: [ConstraintReducer.subtract]
+   */
+  private fun expandTupleTypeParameters(definitionTypeParameters: List<PyType?>, size: Int): List<PyType?>? {
+    if (definitionTypeParameters.size != 1 || size <= 1) {
+      return null
+    }
+    val typeVar = definitionTypeParameters.single() as? PyTypeVarType ?: return null
+    val result = ArrayList<PyType?>(size)
+    for (index in 1..size) {
+      result.add(
+        @Suppress("UNCHECKED_CAST") // cast is necessary to select the correct constructor
+        PyTypeVarTypeImpl(
+          "${typeVar.name}#$index",
+          typeVar.constraints,
+          typeVar.bound,
+          typeVar.defaultType as Ref<PyType>?,
+          typeVar.variance
+        )
+          .withScopeOwner(typeVar.scopeOwner)
+          .withDeclarationElement(typeVar.declarationElement)
+      )
     }
     return result
   }
@@ -2633,7 +2683,7 @@ object PyTypeChecker {
   @JvmStatic
   @ApiStatus.Internal
   fun convertToType(type: PyType?, superType: PyClassType, context: TypeEvalContext): PyType? {
-    val matchContext = MatchContext(context, GenericSubstitutions(), false, literalInference=true)
+    val matchContext = MatchContext(context, GenericSubstitutions(), false)
     val matched = match(superType, type, matchContext)
     if (matched.orElse(false)) {
       // There is a tricky problem with handling type parameter binds to Any. Namely, during matching list[Any] to Iterable[T@Iterable],
@@ -2844,15 +2894,6 @@ object PyTypeChecker {
     val context: TypeEvalContext,
     val mySubstitutions: GenericSubstitutions,
     val reversedSubstitutions: Boolean,
-    /**
-     * When `true`, a type variable inferred from an actual value keeps that value's literal type (e.g. `Literal[1]`);
-     * when `false` (the default), the literal is widened to its class (e.g. `int`) at the bind site.
-     *
-     * It is enabled only by [convertToType] (upcasting/conversion: iteration, `Sequence`/`Mapping` patterns,
-     * with-items), where preserving literals is desirable. Regular generic-call inference uses the default `false`
-     * and relies on widening here.
-     */
-    val literalInference: Boolean = false,
   ) {
     /**
      * `null` during normal (cheap) matching, so it adds no overhead. Non-null only while
@@ -2873,12 +2914,12 @@ object PyTypeChecker {
     var anchor: PsiElement? = null
 
     fun reverseSubstitutions(): MatchContext {
-      return MatchContext(context, mySubstitutions, !reversedSubstitutions, literalInference)
+      return MatchContext(context, mySubstitutions, !reversedSubstitutions)
         .also { it.diagnostics = diagnostics; it.anchor = anchor }
     }
 
     fun resetSubstitutions(): MatchContext {
-      return MatchContext(context, mySubstitutions, false, literalInference)
+      return MatchContext(context, mySubstitutions, false)
         .also { it.diagnostics = diagnostics; it.anchor = anchor }
     }
   }

@@ -430,7 +430,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       def f[T](t: T, fn: Callable[[T], object]) -> T: ...
 
       f(1, lambda expr: expr)
-      #                     └ TYPE int
+      #                     └ TYPE Literal[1]
       """.trimIndent())
 
     @Test
@@ -1657,13 +1657,13 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `max result`() = test("""
       expr = max(1, 2, 3)
-      #└ TYPE int
+      #└ TYPE Literal[3, 2, 1]
       """.trimIndent())
 
     @Test
     fun `min result`() = test("""
       expr = min(1, 2, 3)
-      #└ TYPE int
+      #└ TYPE Literal[3, 2, 1]
       """.trimIndent())
 
     @Test
@@ -2327,7 +2327,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       from a import foo
 
       expr = foo(42)
-      #└ TYPE int
+      #└ TYPE Literal[42]
       """.trimIndent(),
       "a.py" to """
         def foo[T](x: T) -> T:

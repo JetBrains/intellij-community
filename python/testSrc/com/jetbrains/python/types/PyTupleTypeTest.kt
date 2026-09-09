@@ -270,7 +270,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `tuple from list`() = test("""
       expr = tuple(['1', 2, 3])
-      #└ TYPE tuple[str | int, ...]
+      #└ TYPE tuple[Literal["1", 2, 3], ...]
       """.trimIndent())
 
     @Test
@@ -282,7 +282,7 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `tuple from set`() = test("""
       expr = tuple({'1', 2, 3})
-      #└ TYPE tuple[str | int, ...]
+      #└ TYPE tuple[Literal["1", 2, 3], ...]
       """.trimIndent())
   }
 

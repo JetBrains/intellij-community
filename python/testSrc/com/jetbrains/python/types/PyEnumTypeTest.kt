@@ -845,7 +845,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       
       special_painter(Colors.GREEN) # WARNING Expected type 'Literal[Colors.RED]', got 'Literal[Colors.GREEN]' instead
       
-      costs: dict[SpecialColors, int] = {Colors.GREEN: 7} # WARNING Expected type 'dict[Literal[Colors.RED], int]', got 'dict[Literal[Colors.GREEN], Literal[7]]' instead
+      costs: dict[SpecialColors, int] = {Colors.GREEN: 7} # WARNING Expected type 'dict[Literal[Colors.RED], int]', got 'dict[Colors, int]' instead
       """.trimIndent())
 
     @Test

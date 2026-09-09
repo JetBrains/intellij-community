@@ -565,7 +565,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
   inner class TypeCheckerInspectionsOnUnions {
     @Test
     fun `assigning list to None-int-str bitwise-or union is reported`() = test("""
-      bar: None | int | str = [42] # WARNING Expected type 'None | int | str', got 'list[Literal[42]]' instead
+      bar: None | int | str = [42] # WARNING Expected type 'None | int | str', got 'list[int]' instead
       """.trimIndent())
 
     @Test

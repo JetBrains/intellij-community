@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.PyDecoratorList
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PySetLiteralExpression
 import com.jetbrains.python.psi.PyStarExpression
@@ -37,15 +38,7 @@ object PyTypeInferenceCspFactory {
   @JvmStatic
   fun unifySequenceExpression(expression: PySequenceExpression, cls: PyClass, context: TypeEvalContext): GenericSubstitutions {
     val solution = enterCsp(SubstitutionsIdentifier(expression), context )
-    if (solution != null) {
-      return solution
-    }
-    else {
-      val genericType = PyTypeChecker.findGenericDefinitionType(cls, context)
-      val typeVar = genericType?.typeArguments?.firstOrNull() as PyTypeParameterType
-      val typeArgument = PyCollectionTypeUtil.getListOrSetIteratedValueType(expression, context)
-      return GenericSubstitutions(mapOf(typeVar to typeArgument))
-    }
+    return solution ?: PyCollectionTypeUtil.getListOrSetSubstitutionsFallback(expression, cls, context)
   }
 
   @JvmStatic
@@ -361,8 +354,10 @@ object PyTypeInferenceCspFactory {
     }
   }
 
-  fun findChildCsp(expression: PyExpression) : PyExpression? {
+  fun findChildCsp(expression: PyExpression?) : PyExpression? {
     when (expression) {
+      is PyParenthesizedExpression
+        -> return findChildCsp(expression.containedExpression)
       is PyKeywordArgument
         -> return expression.valueExpression
       else
@@ -383,7 +378,8 @@ object PyTypeInferenceCspFactory {
         }
       }
       is PyArgumentList,
-      is PyKeywordArgument
+      is PyKeywordArgument,
+      is PyParenthesizedExpression
         -> return findParentCsp(parent)
       else if (isCsp(parent))
         -> return parent

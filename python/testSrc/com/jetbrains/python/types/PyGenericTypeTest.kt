@@ -294,7 +294,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       def foo(i: T) -> Tuple[T, ...]:
           pass
       expr = foo(5)
-      #└ TYPE Tuple[int, ...]
+      #└ TYPE Tuple[Literal[5], ...]
       """.trimIndent())
 
     @Test
@@ -756,7 +756,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
           return type(x)
          
       expr = f(42)
-      #└ TYPE type[int]
+      #└ TYPE type[Literal[42]]
       """.trimIndent())
 
     @Test
@@ -972,7 +972,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = second(StrFirstPair(42))
-      #└ TYPE int
+      #└ TYPE Literal[42]
       """.trimIndent())
 
     @Test
@@ -997,7 +997,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = to_tuple(PairExt(42, 'foo'))
-      #└ TYPE tuple[int, str]
+      #└ TYPE tuple[Literal[42], Literal["foo"]]
       """.trimIndent())
 
     @Test
@@ -1018,7 +1018,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = to_tuple(PairExt(42, 'foo'))
-      #└ TYPE tuple[int, str]
+      #└ TYPE tuple[Literal[42], Literal["foo"]]
       """.trimIndent())
 
     @Test
@@ -1510,7 +1510,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
         return x
       
       expr = foo(1)
-      #└ TYPE int
+      #└ TYPE Literal[1]
       """.trimIndent())
 
     @Test
@@ -1570,7 +1570,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
               pass
       
       expr = C(10).foo()
-      #└ TYPE int
+      #└ TYPE Literal[10]
       """.trimIndent())
 
     @Test

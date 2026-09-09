@@ -1740,7 +1740,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               y4: Self | int = 3
               y5: Self | int | list[Self] = [self]
               y6: Self | int | list[Self] = [3] # E
-      #                                     ^^^ WARNING Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'list[Literal[3]]' instead
+      #                                     ^^^ WARNING Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'list[int]' instead
               y7: Self | int | list[Self] = "str" # E
       #                                     ^^^^^ WARNING Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'Literal["str"]' instead
       """.trimIndent())

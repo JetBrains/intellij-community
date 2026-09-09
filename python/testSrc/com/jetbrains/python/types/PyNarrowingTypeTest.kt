@@ -1463,11 +1463,9 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       from typing import List
       from typing_extensions import TypeIs
 
-
       def is_str_list(val: List[object]) -> TypeIs[List[str]]: 
-      # WARNING FIXME Return type of TypeIs 'list[str]' is not consistent with the type of the first parameter 'list[object]' # PY-89564
+      #   ^^^^^^^^^^^ WARNING Return type of TypeIs 'list[str]' is not consistent with the type of the first parameter 'list[object]'
           return all(isinstance(x, str) for x in val)
-
 
       def func1(val: List[object]):
           expr = is_str_list(val)
@@ -1480,7 +1478,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import TypeIs
 
       def is_str_list(val: List[object]) -> TypeIs[List[str]]: 
-      # WARNING FIXME Return type of TypeIs 'list[str]' is not consistent with the type of the first parameter 'list[object]' # PY-89564
+      #   ^^^^^^^^^^^ WARNING Return type of TypeIs 'list[str]' is not consistent with the type of the first parameter 'list[object]'
           return all(isinstance(x, str) for x in val)
 
       def func1(val: List[object]):
@@ -1498,13 +1496,13 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       MyTypeIs = TypeIs[List[str]]
 
       def is_str_list(val: List[object]) -> MyTypeIs: 
-      # WARNING FIXME Return type of TypeIs 'list[str]' is not consistent with the type of the first parameter 'list[object]' # PY-89564
+      #   ^^^^^^^^^^^ WARNING Return type of TypeIs 'list[str]' is not consistent with the type of the first parameter 'list[object]'
           return all(isinstance(x, str) for x in val)
 
       def func1(val: List[object]):
           if is_str_list(val):
               expr = val
-      #       └ TYPE list[str] FIXME list[object] & list[str] # PY-89564
+      #       └ TYPE list[object] & list[str]
       """.trimIndent())
 
     @Test
@@ -1515,13 +1513,13 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       type MyTypeIs[T] = TypeIs[T]
 
       def is_str_list(val: List[object]) -> MyTypeIs[List[str]]: 
-      # WARNING FIXME Return type of TypeIs 'list[str]' is not consistent with the type of the first parameter 'list[object]' # PY-89564
+      #   ^^^^^^^^^^^ WARNING Return type of TypeIs 'list[str]' is not consistent with the type of the first parameter 'list[object]'
           return all(isinstance(x, str) for x in val)
 
       def func1(val: List[object]):
           if is_str_list(val):
               expr = val
-      #       └ TYPE list[str] FIXME list[object] & list[str] # PY-89564
+      #       └ TYPE list[object] & list[str]
       """.trimIndent())
 
     @Test
@@ -1681,7 +1679,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
 
       def func1(val: List[int] | List[str]):
           if not is_str_list(val):
-      # WARNING FIXME Expected type 'list[object]', got 'list[int] | list[str]' instead # PY-89564
+      #                      ^^^ WARNING Expected type 'list[object]', got 'list[int] | list[str]' instead
               expr = val
       #       └ TYPE list[int] | list[str]
           else:
@@ -1694,12 +1692,12 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       from typing_extensions import TypeIs
 
       def is_str_list(val: List[object]) -> TypeIs[List[str]]: 
-      # WARNING FIXME Return type of TypeIs 'list[str]' is not consistent with the type of the first parameter 'list[object]' # PY-89564
+      #   ^^^^^^^^^^^ WARNING Return type of TypeIs 'list[str]' is not consistent with the type of the first parameter 'list[object]'
           return all(isinstance(x, str) for x in val)
 
       def func1(val: List[int] | List[str]):
           if not is_str_list(val):
-      # WARNING FIXME Expected type 'list[object]', got 'list[int] | list[str]' instead # PY-89564
+      #                      ^^^ WARNING Expected type 'list[object]', got 'list[int] | list[str]' instead
               expr = val
       #       └ TYPE list[int]
           else:

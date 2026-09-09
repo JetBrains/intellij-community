@@ -80,7 +80,8 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
       val message = getSingleCalleeProblemMessage(argumentResult, context)
       val type = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
       // The breakdown tooltip re-runs the match, so reportWithTooltip invokes the supplier only on-the-fly.
-      val expected = argumentResult.expectedTypeAfterSubstitution ?: argumentResult.expectedType
+      val expectedTypeAfterSubstitution = if (argumentResult.expectedTypeAfterSubstitution.isUnknown) null else argumentResult.expectedTypeAfterSubstitution
+      val expected = expectedTypeAfterSubstitution ?: argumentResult.expectedType
       PyTypeCheckerProblemReporter.reportWithTooltip(holder, code, argument, message, type) {
         breakdownTooltip(message,
                          expected,

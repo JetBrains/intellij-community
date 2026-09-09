@@ -4,6 +4,7 @@
 package com.jetbrains.python.psi.types
 
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyDictLiteralExpression
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyListLiteralExpression
@@ -12,6 +13,7 @@ import com.jetbrains.python.psi.PySetLiteralExpression
 import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 
 object PyCollectionTypeUtil {
 
@@ -35,8 +37,14 @@ object PyCollectionTypeUtil {
     return concreteListType
   }
 
-  @JvmStatic
-  fun getListOrSetIteratedValueType(sequence: PySequenceExpression, context: TypeEvalContext): PyType? {
+  internal fun getListOrSetSubstitutionsFallback(expression: PySequenceExpression, cls: PyClass, context: TypeEvalContext) : GenericSubstitutions {
+    val genericType = PyTypeChecker.findGenericDefinitionType(cls, context)
+    val typeVar = genericType?.typeArguments?.firstOrNull() as PyTypeParameterType
+    val typeArgument = getListOrSetIteratedValueType(expression, context)
+    return GenericSubstitutions(mapOf(typeVar to typeArgument))
+  }
+
+  private fun getListOrSetIteratedValueType(sequence: PySequenceExpression, context: TypeEvalContext): PyType? {
     val elements = sequence.elements
     val analyzedElementsType = PyUnionType.union(
       elements.take(MAX_ANALYZED_ELEMENTS_OF_LITERALS).map { element ->

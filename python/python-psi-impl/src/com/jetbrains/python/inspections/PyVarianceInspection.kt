@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentOfTypes
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.isProtocol
@@ -23,6 +24,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypeDeclarationStatement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment
@@ -127,14 +129,16 @@ class PyVarianceInspection : PyInspection() {
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
       val type = PyTypingTypeProvider.getType(node, context)?.get() ?: return
       if (type !is PyTypeVarType) return
-      onPyTypeValTypeUsedInAnnotation(holder, node, context)
+      onPyTypeVarTypeUsedInAnnotation(holder, node, context)
     }
   }
 
 
-  private fun onPyTypeValTypeUsedInAnnotation(holder: ProblemsHolder, node: PyReferenceExpression, context: TypeEvalContext) {
+  private fun onPyTypeVarTypeUsedInAnnotation(holder: ProblemsHolder, node: PyReferenceExpression, context: TypeEvalContext) {
     val typeParameterType = PyInferredVarianceJudgment.findTypeVariable(node, context) ?: return
+    if (isIgnoredLocation(node)) return
     if (!isOpenTypeParameter(node, typeParameterType)) return
+
     val isInProtocol = node.parentOfType<PyClass>()?.isProtocol(context) ?: false
     val subscriptionExpression = node.parentOfType<PySubscriptionExpression>()
     val isInProtocolHeader = subscriptionExpression?.parent is PyArgumentList && subscriptionExpression.parent?.parent is PyClass
@@ -194,6 +198,25 @@ class PyVarianceInspection : PyInspection() {
     val varianceInferred = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(typeParameterType, context)
 
     checkIncompatibleVariance(varianceInferred, varianceExpected, holder, node)
+  }
+
+  private fun isIgnoredLocation(node: PyReferenceExpression): Boolean {
+    val parent = generateSequence(PyUtil.getFragmentContextAwareParent(node)) { PyUtil.getFragmentContextAwareParent(it) }
+      .firstOrNull { it is PyFunction || it is PyClass || it is PyTypeDeclarationStatement || it is PyAssignmentStatement }
+
+    when (parent) {
+      is PyFunction -> if (PyInferredVarianceJudgment.functionDoesNotAffectVarianceInference(parent)) return true
+      is PyTypeDeclarationStatement -> {
+        val tgtExpr = parent.target
+        if (tgtExpr is PyTargetExpression && PyInferredVarianceJudgment.attributeDoesNotAffectVarianceInference(tgtExpr)) return true
+      }
+      is PyAssignmentStatement -> {
+        for (tgtExpr in parent.targets) {
+          if (tgtExpr is PyTargetExpression && PyInferredVarianceJudgment.attributeDoesNotAffectVarianceInference(tgtExpr)) return true
+        }
+      }
+    }
+    return false
   }
 
   private fun isOpenTypeParameter(node: PyReferenceExpression, typeParameterType: PyTypeParameterType): Boolean {

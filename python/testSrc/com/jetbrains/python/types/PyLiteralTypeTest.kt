@@ -241,7 +241,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       from typing import Literal
       a: Literal["22"] = f"22"
       b: Literal["22"] = f"32"
-      #                  ^^^^^ WARNING Expected type 'Literal["22"]', got 'Literal[f"32"]' instead
+      #                  ^^^^^ WARNING Expected type 'Literal["22"]', got 'str' instead
       two = "2"
       c: Literal["22"] = f"2{two}"
       #                  ^^^^^^^^^ WARNING Expected type 'Literal["22"]', got 'str' instead
@@ -841,6 +841,43 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       """.trimIndent(),
       "m.py" to "foo = 1",
     )
+
+    @Test
+    fun `literal result of generic call widens in list display`() = test("""
+      def ident[T](x: T) -> T: ...
+
+      res = ident(1)
+      #└ TYPE Literal[1]
+      xs = [res]
+      #└ TYPE list[int]
+      xs.append(2)
+      """.trimIndent())
+
+    @Test
+    fun `literal result of generic call widens in set display`() = test("""
+      def ident[T](x: T) -> T: ...
+
+      xs = {ident(1)}
+      #└ TYPE set[int]
+      xs.add(2)
+      """.trimIndent())
+
+    @Test
+    fun `literal result of generic call widens in dict display`() = test("""
+      def ident[T](x: T) -> T: ...
+
+      dct = {ident(1): ident("a")}
+      #└ TYPE dict[int, str]
+      dct[2] = "b"
+      """.trimIndent())
+
+    @Test
+    fun `literal results of generic calls widen to union in list display`() = test("""
+      def ident[T](x: T) -> T: ...
+
+      xs = [ident(1), ident("s")]
+      #└ TYPE list[int | str]
+      """.trimIndent())
   }
 
   @Nested
@@ -906,11 +943,11 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
       def func(strings: list[str]):
           l1: list[Literal[1]] = [1 for x in strings]
-          l2: list[Literal[1]] = [2 for x in strings] # WARNING Expected type 'list[Literal[1]]', got 'list[Literal[2]]' instead
+          l2: list[Literal[1]] = [2 for x in strings] # WARNING Expected type 'list[Literal[1]]', got 'list[int]' instead
           s1: set[Literal[1]] = {1 for x in strings}
-          s2: set[Literal[1]] = {2 for x in strings} # WARNING Expected type 'set[Literal[1]]', got 'set[Literal[2]]' instead
+          s2: set[Literal[1]] = {2 for x in strings} # WARNING Expected type 'set[Literal[1]]', got 'set[int]' instead
           d1: dict[str, Literal[1]] = {x: 1 for x in strings}
-          d2: dict[str, Literal[1]] = {x: 2 for x in strings} # WARNING Expected type 'dict[str, Literal[1]]', got 'dict[str, Literal[2]]' instead
+          d2: dict[str, Literal[1]] = {x: 2 for x in strings} # WARNING Expected type 'dict[str, Literal[1]]', got 'dict[str, int]' instead
       """.trimIndent())
 
     @Test
@@ -1096,7 +1133,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
       tuple_of_list_and_tuple_set: Tuple[List[Tuple[L2, L1]], Set[L2]] = ([('b', 'test'), (5, 'test')], {'b', 5})
       tuple_of_list_and_tuple_set_incorrect: Tuple[List[Tuple[L2, L1]], Set[L2]] = ([('r', 'test'), (5, 'test')], {'b', 5})
-      #                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'tuple[list[tuple[Literal['a', 'b', 5], Literal['test']]], set[Literal['a', 'b', 5]]]', got 'tuple[list[tuple[Literal['r'], Literal['test']] | tuple[Literal[5], Literal['test']]], set[Literal['b', 5]]]' instead
+      #                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'tuple[list[tuple[Literal['a', 'b', 5], Literal['test']]], set[Literal['a', 'b', 5]]]', got 'tuple[list[tuple[str, str] | tuple[int, str]], set[str | int]]' instead
 
       FooTuple = Tuple[Literal["a", "b"], int]
 
@@ -1114,23 +1151,23 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
       list_one_literal: List[L1] = ['test', 'test']
       list_one_literal_incorrect: List[L1] = ['r', 'a']
-      #                                      ^^^^^^^^^^ WARNING Expected type 'list[Literal['test']]', got 'list[Literal['r', 'a']]' instead
+      #                                      ^^^^^^^^^^ WARNING Expected type 'list[Literal['test']]', got 'list[str]' instead
 
       list_several_literal: List[L2] = ['a', 5]
       list_several_literal_incorrect: List[L2] = ['r', 'a']
-      #                                          ^^^^^^^^^^ WARNING Expected type 'list[Literal['a', 'b', 5]]', got 'list[Literal['r', 'a']]' instead
+      #                                          ^^^^^^^^^^ WARNING Expected type 'list[Literal['a', 'b', 5]]', got 'list[str]' instead
       list_several_literal_incorrect: List[L2] = ['a', 'r']
-      #                                          ^^^^^^^^^^ WARNING Expected type 'list[Literal['a', 'b', 5]]', got 'list[Literal['a', 'r']]' instead
+      #                                          ^^^^^^^^^^ WARNING Expected type 'list[Literal['a', 'b', 5]]', got 'list[str]' instead
 
       list_union_literal: List[Union[L2, L1]] = ['b', 'test', 5]
       list_union_literal_incorrect: List[Union[L2, L1]] = ['r', 'a']
-      #                                                   ^^^^^^^^^^ WARNING Expected type 'list[Literal['a', 'b', 5, 'test']]', got 'list[Literal['r', 'a']]' instead
+      #                                                   ^^^^^^^^^^ WARNING Expected type 'list[Literal['a', 'b', 5, 'test']]', got 'list[str]' instead
       list_union_literal_incorrect: List[Union[L2, L1]] = ['a', 'r']
-      #                                                   ^^^^^^^^^^ WARNING Expected type 'list[Literal['a', 'b', 5, 'test']]', got 'list[Literal['a', 'r']]' instead
+      #                                                   ^^^^^^^^^^ WARNING Expected type 'list[Literal['a', 'b', 5, 'test']]', got 'list[str]' instead
 
       list_tuple: List[Tuple[L2, L1]] = [('b', 'test'), (5, 'test')]
       list_tuple_incorrect: List[Tuple[L2, L1]] = [('a',), (5, 'test')]
-      #                                           ^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'list[tuple[Literal['a', 'b', 5], Literal['test']]]', got 'list[tuple[Literal['a']] | tuple[Literal[5], Literal['test']]]' instead
+      #                                           ^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'list[tuple[Literal['a', 'b', 5], Literal['test']]]', got 'list[tuple[str] | tuple[int, str]]' instead
       """.trimIndent())
 
     @Test
@@ -1143,23 +1180,23 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
       set_one_literal: Set[L1] = {'test', 'test'}
       set_one_literal_incorrect: Set[L1] = {'r', 'a'}
-      #                                    ^^^^^^^^^^ WARNING Expected type 'set[Literal['test']]', got 'set[Literal['r', 'a']]' instead
+      #                                    ^^^^^^^^^^ WARNING Expected type 'set[Literal['test']]', got 'set[str]' instead
 
       set_several_literal: Set[L2] = {'b', 5}
       set_several_literal_incorrect: Set[L2] = {'r', 'a'}
-      #                                        ^^^^^^^^^^ WARNING Expected type 'set[Literal['a', 'b', 5]]', got 'set[Literal['r', 'a']]' instead
+      #                                        ^^^^^^^^^^ WARNING Expected type 'set[Literal['a', 'b', 5]]', got 'set[str]' instead
       set_several_literal_incorrect2: Set[L2] = {'a', 'r'}
-      #                                         ^^^^^^^^^^ WARNING Expected type 'set[Literal['a', 'b', 5]]', got 'set[Literal['a', 'r']]' instead
+      #                                         ^^^^^^^^^^ WARNING Expected type 'set[Literal['a', 'b', 5]]', got 'set[str]' instead
 
       set_union_literal: Set[Union[L2, L1]] = {'b', 'test', 5}
       set_union_literal_incorrect: Set[Union[L2, L1]] = {'r', 'a'}
-      #                                                 ^^^^^^^^^^ WARNING Expected type 'set[Literal['a', 'b', 5, 'test']]', got 'set[Literal['r', 'a']]' instead
+      #                                                 ^^^^^^^^^^ WARNING Expected type 'set[Literal['a', 'b', 5, 'test']]', got 'set[str]' instead
       set_union_literal_incorrect2: Set[Union[L2, L1]] = {'a', 'r'}
-      #                                                  ^^^^^^^^^^ WARNING Expected type 'set[Literal['a', 'b', 5, 'test']]', got 'set[Literal['a', 'r']]' instead
+      #                                                  ^^^^^^^^^^ WARNING Expected type 'set[Literal['a', 'b', 5, 'test']]', got 'set[str]' instead
 
       set_of_tuple_and_list: Set[Union[Tuple[L2, L1], List[L1]]] = {('b', 'test'), ['test', 'test'], (5, 'test')}
       set_of_tuple_and_list_incorrect: Set[Union[Tuple[L2, L1], List[L1]]] = {('b', 'r'), ['test', 'test'], (5, 'test')}
-      #                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'set[tuple[Literal['a', 'b', 5], Literal['test']] | list[Literal['test']]]', got 'set[tuple[Literal['b'], Literal['r']] | list[Literal['test']] | tuple[Literal[5], Literal['test']]]' instead
+      #                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'set[tuple[Literal['a', 'b', 5], Literal['test']] | list[Literal['test']]]', got 'set[tuple[str, str] | list[str] | tuple[int, str]]' instead
       """.trimIndent())
 
     @Test
@@ -1172,18 +1209,18 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
       d1: Dict[L1, L2] = {'k1': 'b', 'k2': 5}
       d2: Dict[L1, L2] = {'k1': 'r'}
-      #                  ^^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], Literal['a', 'b', 5]]', got 'dict[Literal['k1'], Literal['r']]' instead
+      #                  ^^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], Literal['a', 'b', 5]]', got 'dict[str, str]' instead
       d3: Dict[L1, L2] = {'r': 'b'}
-      #                  ^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], Literal['a', 'b', 5]]', got 'dict[Literal['r'], Literal['b']]' instead
+      #                  ^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], Literal['a', 'b', 5]]', got 'dict[str, str]' instead
       d4: Dict[L1, List[L2]] = {'k2': ['b', 5]}
       d5: Dict[L1, List[L2]] = {'k2': ['r', 5]}
-      #                        ^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], list[Literal['a', 'b', 5]]]', got 'dict[Literal['k2'], list[Literal['r', 5]]]' instead
+      #                        ^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], list[Literal['a', 'b', 5]]]', got 'dict[str, list[str | int]]' instead
       d6: Dict[L1, Tuple[L2, L2]] = {'k2': ('a', 5)}
       d7: Dict[L1, Tuple[L2, L2]] = {'k2': ('r', 5)}
-      #                             ^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], tuple[Literal['a', 'b', 5], Literal['a', 'b', 5]]]', got 'dict[Literal['k2'], tuple[Literal['r'], Literal[5]]]' instead
+      #                             ^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], tuple[Literal['a', 'b', 5], Literal['a', 'b', 5]]]', got 'dict[str, tuple[str, int]]' instead
       d8: Dict[L1, Dict[L1, L2]] = {'k1': {'k2': 'a', 'k1': 5}}
       d9: Dict[L1, Dict[L1, L2]] = {'k1': {'k2': 'r', 'k1': 9}}
-      #                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], dict[Literal['k1', 'k2'], Literal['a', 'b', 5]]]', got 'dict[Literal['k1'], dict[Literal['k2', 'k1'], Literal['r', 9]]]' instead
+      #                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[Literal['k1', 'k2'], dict[Literal['k1', 'k2'], Literal['a', 'b', 5]]]', got 'dict[str, dict[str, str | int]]' instead
       """.trimIndent())
 
     @Test

@@ -726,7 +726,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           f = a.f
       #   └ TYPE [U](x: U) -> U
           expr = f('abb')
-      #   └ TYPE str
+      #   └ TYPE Literal["abb"]
       """.trimIndent())
 
     @Test
@@ -754,7 +754,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           f = a.f
       #   └ TYPE [U](x: U) -> tuple[int, U]
           expr = f('abb')
-      #   └ TYPE tuple[int, str]
+      #   └ TYPE tuple[int, Literal["abb"]]
     """.trimIndent())
 
     @Test
@@ -776,7 +776,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           f = a.f
       #   └ TYPE Overload[[U](x: U, y: int) -> tuple[int, U, str], [U](x: U, y: str) -> tuple[int, U, bytes]]
           expr = f('abb', 'abc')
-      #   └ TYPE tuple[int, str, bytes]
+      #   └ TYPE tuple[int, Literal["abb"], bytes]
       """.trimIndent())
 
     @Test
@@ -975,7 +975,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           _ = item(-7)
       #   └ TYPE int
           _ = items[0](1)
-      #   └ TYPE int
+      #   └ TYPE Literal[1]
       """.trimIndent())
 
     @Test
@@ -1270,7 +1270,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       with generator_function() as value:
           expr = value
-      #   └ TYPE str
+      #   └ TYPE Literal["some value"]
       """.trimIndent())
 
     @Test

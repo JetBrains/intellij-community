@@ -97,13 +97,13 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `min result`() = test("""
       expr = min(1, 2, 3)
-      #└ TYPE int
+      #└ TYPE Literal[3, 2, 1]
       """.trimIndent())
 
     @Test
     fun `max result`() = test("""
       expr = max(1, 2, 3)
-      # └ TYPE int
+      # └ TYPE Literal[3, 2, 1]
       """.trimIndent())
 
     @Test

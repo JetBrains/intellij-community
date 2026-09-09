@@ -174,7 +174,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testStackOfAnnotatedDecoratorsChangesFunctionSignature() {
-    doTest("int", "(str) -> int",
+    doTest("int", "(str) -> Literal[1]",
            """
              from typing import Callable
              from functools import wraps
@@ -408,7 +408,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   }
 
   public void testUntypedFunctionDecoratedWithTypedDecorator() {
-    doTest("str", "() -> str", """
+    doTest("str", "() -> Literal[\"foo\"]", """
       from typing import Callable, TypeVar
       
       T = TypeVar('T')

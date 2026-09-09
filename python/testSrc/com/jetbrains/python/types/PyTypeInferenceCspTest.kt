@@ -21,7 +21,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
       return None
 
     r1 = bar(1, "s")
-    #└ TYPE int | str
+    #└ TYPE Literal[1, "s"]
     """.trimIndent())
 
   @Test
@@ -72,7 +72,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     f(3)
     #  └ TYPE str
     f([True])
-    #       └ TYPE bool
+    #       └ TYPE Literal[True]
     """.trimIndent())
 
   @Test
@@ -248,7 +248,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
       return None
 
     r4b = merge(Pair("s", 1))
-    # └ TYPE str | int
+    # └ TYPE Literal["s", 1]
     """.trimIndent())
 
   @Test
@@ -285,7 +285,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
         ...
 
     res = f([[[1]]])
-    #              └ TYPE int
+    #              └ TYPE Literal[1]
     """.trimIndent())
 
   @Test
@@ -411,7 +411,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     def f[F: Callable[..., Any]]() -> Callable[[F], F]:
         return lambda x: x
 
-    res = f()(lambda x: 1)(1)
+    res = f()(lambda x: 1)(2)
     # └ TYPE Literal[1]
     """.trimIndent())
 
@@ -420,7 +420,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     def f[T = str](*args: T) -> T: ...
 
     f(2)
-    #  └ TYPE int
+    #  └ TYPE Literal[2]
     f()
     # └ TYPE str
     """.trimIndent())
@@ -432,7 +432,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     def f[T = Any](*args: T) -> T: ...
 
     f(2)
-    #  └ TYPE int
+    #  └ TYPE Literal[2]
     f()
     # └ TYPE Any
     """.trimIndent())
@@ -533,7 +533,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     def f[T](t: T) -> T: ...
 
     a: str = f(1)
-    #        ^^^^ WARNING Expected type 'str', got 'int' instead
+    #        ^^^^ WARNING Expected type 'str', got 'Literal[1]' instead
     """.trimIndent())
 
   @TestFor(issues = ["PY-89047"])
@@ -545,9 +545,9 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
         raise NotImplementedError
 
     foo([1], [])
-    #          └ TYPE int
+    #          └ TYPE Literal[1]
     foo([], [1])
-    #          └ TYPE int
+    #          └ TYPE Literal[1]
     """.trimIndent())
 
   @TestFor(issues = ["PY-90270"])
@@ -653,9 +653,114 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     from typing import Callable, assert_type
     def f[T]() -> Callable[[T], T]: ...
     fn = f()
-    assert_type(fn(1), int)
+    fn(1)
+    #   └ TYPE Literal[1]
     """.trimIndent())
 
+  @TestFor(issues = ["PY-90463"])
+  @Test
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `Widen list type when expected at argument`() = test("""
+    def foo(_: list[int | str | None]) -> None: ...
+    foo([1, "a"]) # no issue
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-90463"])
+  @Test
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `Widen list type when expected in a union at argument`() = test("""
+    def f(x: list[str] | int): ...
+    f(["abc"]) # no issue
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-90472"])
+  @Test
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `Widen list of list type when expected in a union at argument`() = test("""
+    def foo2(param: list[list[int]]) -> None: ...
+    foo2([[0, 2, 5], [0, 1, 2], [1, 2, 1], [3, 0, 3]])
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-90086"])
+  @Test
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `Widen list of list type when expected at argument`() = test("""
+    def foo(_: list[list[int | str | None]]) -> None: ...
+    foo([[1], ["a"]]) # no issue
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-90086"])
+  @Test
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `Widen list of set type when expected at argument`() = test("""
+    def foo(_: list[set[int | str | None]]) -> None: ...
+    foo([{1}, {"a"}]) # no issue
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-90086"])
+  @Test
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `Widen invalid list of set of list type when expected at argument`() = test("""
+    def foo(_: list[set[list[int | str | None]]]) -> None: ...
+    foo([{[1], ["a"]}]) # no issue on invalid set of lists
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-90086"])
+  @Test
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `Widen list of list type when expected at assignment`() = test("""
+    lst: list[list[int | str | None]] = [[1], ["a"]] # no issue
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-86374"])
+  @Test
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `Keep narrowed type for covariant generic classes`() = test("""
+    from typing import TypeVar, Generic, Literal
+    out_T = TypeVar("out_T", covariant=True)
+    class A(Generic[out_T]):
+        def __init__(self, t: out_T): ...
+    a1 = A(1)
+    #└ TYPE A[Literal[1]]
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-90366"])
+  @Test
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `Widen list of union of list at assignment`() = test("""
+    a: list[int | list[int]] = [1, [1]]  # expect no error
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-90366"])
+  @Test
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `Widen typed dict literal at assignment`() = test("""
+    from typing import TypedDict
+    class TD(TypedDict):
+        a: list[int]
+    t: TD = {"a": [1]}  # expect no error
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-90366"])
+  @Test
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `Identify generic class declared with type var tuple`() = test("""
+    class A[T, *Ts]:
+        def __init__(self, t: T):
+            self.t = t
+
+    a = A(1)  # should infer as `A[int]`
+    b: A[int] = a
+    """.trimIndent())
+
+  @Test
+  @TestCaseOptions(enableRegistryKeys = ["python.subtypechecks.respect.variance"])
+  fun `Part solution on failed csp`() = test("""
+    def f1[T](a: tuple[T, str], b: T) -> T: ...
+    x0 = f1((1, 2), "s")
+    #│      ^^^^^^ WARNING Expected type 'tuple[Literal[1], str]' (matched generic type 'tuple[T, str]'), got 'tuple[Literal[1], Literal[2]]' instead
+    #└ TYPE Unknown FIXME int | str # PY-89563
+    """.trimIndent())
 
   @Test
   @TestFor(issues = ["PY-91164"])
@@ -676,6 +781,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
         def instantiate(self):
             return BasicFilteredWalker[WT](  # Removing the [WT] fixes the StackOverflowError
                 self._instantiate_dict(self.enter_cbs),
+    #                                  ^^^^^^^^^^^^^^ WARNING Expected type 'dict[type[WT], (*Ps, WT) -> bool]' (matched generic type 'dict[WTT ≤: type, (Concatenate(*Ps, **Q)) -> bool]'), got 'dict[type[WT], (*Ps, WT) -> bool]' instead # PY-91975
             )
 
         def _instantiate_dict(
