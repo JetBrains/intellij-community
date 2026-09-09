@@ -4,9 +4,9 @@ Entry point: `CommunityLibraryLicenseValidator` (`NodeIds.COMMUNITY_LIBRARY_LICE
 
 ## Overview
 
-A community product reads `CommunityLibraryLicenses.LICENSES_LIST` alone. `ProductProperties.allLibraryLicenses`
+A community product reads `CommunityLibraryLicenses.COMMUNITY_LICENSES_LIST` alone. `ProductProperties.allLibraryLicenses`
 defaults to it, and `IdeaCommunityProperties` and `PyCharmCommunityProperties` never override that default. An
-ultimate product overrides it with `UltimateLibraryLicenses.LICENSES_LIST`, which **holds the community list**
+ultimate product overrides it with `UltimateLibraryLicenses.ULTIMATE_LICENSE_LIST`, which **holds the community list**
 through its own concatenation.
 
 [library-license.md](library-license.md) reads `libraryLicenses`, and the ultimate generator fills that field with

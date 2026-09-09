@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 import com.intellij.platform.buildData.productInfo.CustomProperty
-import com.intellij.platform.buildScripts.licenses.CommunityLibraryLicenses
+import com.intellij.platform.buildScripts.licenses.COMMUNITY_LICENSES_LIST
 import com.intellij.platform.buildScripts.licenses.LibraryLicense
 import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import com.intellij.platform.runtime.product.ProductMode
@@ -188,7 +188,7 @@ abstract class ProductProperties {
   /**
    * List of licenses information about all libraries that can be used in the product modules.
    */
-  var allLibraryLicenses: List<LibraryLicense> = CommunityLibraryLicenses.LICENSES_LIST
+  var allLibraryLicenses: List<LibraryLicense> = COMMUNITY_LICENSES_LIST
 
   /**
    * If `true`, the product's main JAR file will be scrambled using [ProprietaryBuildTools.scrambleTool].
@@ -280,8 +280,9 @@ abstract class ProductProperties {
   /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
    */
-  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String =
-    getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  }
 
   /**
    * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker], when .class file version verification is necessary.
