@@ -5,18 +5,30 @@ package com.intellij.platform.eel.nioFs.impl
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelSharedSecrets
+import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode
+import com.intellij.platform.eel.fs.StreamingWriteResult
+import com.intellij.platform.eel.fs.WriteOptionsBuilder
 import com.intellij.platform.eel.fs.readFile
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
+import com.intellij.platform.eel.provider.utils.throwFileSystemException
 import com.intellij.util.io.toByteArray
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
+import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import java.nio.file.FileSystems
+import java.nio.file.OpenOption
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption.APPEND
+import java.nio.file.StandardOpenOption.CREATE
+import java.nio.file.StandardOpenOption.CREATE_NEW
+import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
+import java.nio.file.StandardOpenOption.WRITE
 
 internal class EelFilesAccessorImpl : EelSharedSecrets.EelFilesAccessor {
   private val default = EelSharedSecrets.EelFilesAccessor.Default
@@ -42,7 +54,35 @@ internal class EelFilesAccessorImpl : EelSharedSecrets.EelFilesAccessor {
     return String(readAllBytes(path), cs)
   }
 
+  @Throws(IOException::class)
+  override fun write(path: Path, bytes: ByteArray, vararg options: OpenOption): Path {
+    if (shouldInvokeOriginal(path) || options.any { it !in streamingWriteOptions }) {
+      return default.write(path, bytes, *options)
+    }
+    require(!(APPEND in options && TRUNCATE_EXISTING in options)) { "APPEND + TRUNCATE_EXISTING not allowed" }
+
+    return runBlocking {
+      val eelPath = path.asEelPath()
+      val writeOptions = WriteOptionsBuilder(eelPath)
+        .append(APPEND in options)
+        .truncateExisting(options.isEmpty() || TRUNCATE_EXISTING in options)
+        .creationMode(when {
+          CREATE_NEW in options -> FileWriterCreationMode.ONLY_CREATE
+          options.isEmpty() || CREATE in options -> FileWriterCreationMode.ALLOW_CREATE
+          else -> FileWriterCreationMode.ONLY_OPEN_EXISTING
+        })
+        .build()
+      val chunks = flow { emit(ByteBuffer.wrap(bytes)) }
+      when (val result = eelPath.descriptor.toEelApi().fs.streamingWrite(chunks, writeOptions)) {
+        is StreamingWriteResult.Ok -> path
+        is StreamingWriteResult.Error -> result.error.throwFileSystemException()
+      }
+    }
+  }
+
   companion object {
+    private val streamingWriteOptions: Set<OpenOption> = setOf(WRITE, APPEND, CREATE, CREATE_NEW, TRUNCATE_EXISTING)
+
     /**
      * Although functions from this class must behave the same as their nio counterparts,
      * there's still a chance of performance degradations if Eel API is used for the local descriptor,

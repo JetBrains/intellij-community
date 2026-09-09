@@ -5,6 +5,7 @@ import com.intellij.platform.eel.EelSharedSecrets
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.charset.Charset
+import java.nio.file.OpenOption
 import java.nio.file.Path
 
 /**
@@ -38,4 +39,13 @@ object EelFiles {
   @JvmStatic
   @Throws(IOException::class)
   fun readString(path: Path, cs: Charset): String = EelSharedSecrets.filesImpl.readString(path, cs)
+
+  /**
+   * Writes [bytes] to [path] with the same behavior as [java.nio.file.Files.write].
+   * For common open options, IJent opens, writes, and closes the file in one RPC.
+   * Other options use the file system provider.
+   */
+  @JvmStatic
+  @Throws(IOException::class)
+  fun write(path: Path, bytes: ByteArray, vararg options: OpenOption): Path = EelSharedSecrets.filesImpl.write(path, bytes, *options)
 }

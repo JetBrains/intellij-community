@@ -9,6 +9,7 @@
 - sf:readAllBytes(java.nio.file.Path):B[]
 - sf:readString(java.nio.file.Path):java.lang.String
 - sf:readString(java.nio.file.Path,java.nio.charset.Charset):java.lang.String
+- sf:write(java.nio.file.Path,B[],java.nio.file.OpenOption[]):java.nio.file.Path
 *f:com.intellij.platform.eel.provider.EelNioBridgeServiceKt
 - s:asEelPath(java.nio.file.Path):com.intellij.platform.eel.path.EelPath
 - s:asNioPath(com.intellij.platform.eel.path.EelPath):java.nio.file.Path

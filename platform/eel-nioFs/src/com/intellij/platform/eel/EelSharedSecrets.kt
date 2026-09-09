@@ -10,6 +10,7 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.charset.Charset
 import java.nio.file.Files
+import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.util.ServiceLoader
 
@@ -34,8 +35,13 @@ object EelSharedSecrets {
     @Throws(IOException::class)
     fun readString(path: Path, cs: Charset): String
 
+    @Throws(IOException::class)
+    fun write(path: Path, bytes: ByteArray, vararg options: OpenOption): Path
+
     object Default : EelFilesAccessor {
       override fun readAllBytes(path: Path): ByteArray = Files.readAllBytes(path)
+
+      override fun write(path: Path, bytes: ByteArray, vararg options: OpenOption): Path = Files.write(path, bytes, *options)
 
       private val readString =
         try {
