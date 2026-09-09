@@ -12877,77 +12877,77 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-core-jvm-1.10.2-intellij-2.jar_copy",
-    src = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_2-intellij-2_http//file",
-    out = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-core-jvm-1.10.2-intellij-2.jar",
+    name = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-core-jvm-1.10.2-intellij-3.jar_copy",
+    src = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_2-intellij-3_http//file",
+    out = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-core-jvm-1.10.2-intellij-3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-kotlinx-coroutines-core-kotlinx-coroutines-core",
-    jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_2-intellij-2_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_2-intellij-2-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_2-intellij-3_http//file",
+    source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_2-intellij-3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-debug-1.10.2-intellij-2.jar_copy",
-    src = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_2-intellij-2_http//file",
-    out = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-debug-1.10.2-intellij-2.jar",
+    name = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-debug-1.10.2-intellij-3.jar_copy",
+    src = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_2-intellij-3_http//file",
+    out = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-debug-1.10.2-intellij-3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-kotlinx-coroutines-debug-kotlinx-coroutines-debug",
-    jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_2-intellij-2_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_2-intellij-2-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_2-intellij-3_http//file",
+    source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_2-intellij-3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-guava-1.10.2-intellij-2.jar_copy",
-    src = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_2-intellij-2_http//file",
-    out = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-guava-1.10.2-intellij-2.jar",
+    name = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-guava-1.10.2-intellij-3.jar_copy",
+    src = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_2-intellij-3_http//file",
+    out = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-guava-1.10.2-intellij-3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-kotlinx-coroutines-guava-kotlinx-coroutines-guava",
-    jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_2-intellij-2_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_2-intellij-2-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_2-intellij-3_http//file",
+    source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_2-intellij-3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-slf4j-1.10.2-intellij-2.jar_copy",
-    src = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_2-intellij-2_http//file",
-    out = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-slf4j-1.10.2-intellij-2.jar",
+    name = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-slf4j-1.10.2-intellij-3.jar_copy",
+    src = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_2-intellij-3_http//file",
+    out = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-slf4j-1.10.2-intellij-3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-kotlinx-coroutines-slf4j-kotlinx-coroutines-slf4j",
-    jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_2-intellij-2_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_2-intellij-2-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_2-intellij-3_http//file",
+    source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_2-intellij-3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-test-jvm-1.10.2-intellij-2.jar_copy",
-    src = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_2-intellij-2_http//file",
-    out = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-test-jvm-1.10.2-intellij-2.jar",
+    name = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-test-jvm-1.10.2-intellij-3.jar_copy",
+    src = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_2-intellij-3_http//file",
+    out = "org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-test-jvm-1.10.2-intellij-3.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-kotlinx-coroutines-test-kotlinx-coroutines-test",
-    jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_2-intellij-2_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_2-intellij-2-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_2-intellij-3_http//file",
+    source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_2-intellij-3-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
