@@ -4,8 +4,7 @@ package com.intellij.internal.statistic.collectors.fus.environment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo
-import com.sun.jna.platform.win32.Advapi32Util
-import com.sun.jna.platform.win32.WinReg
+import com.intellij.util.system.WindowsRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.io.path.Path
@@ -65,12 +64,7 @@ internal class VisualStudioCollectionDataProvider : ExternalEditorCollectionData
 
   private fun readVersionsFromRegistry(): Sequence<String> = logger.runAndLogException {
     val key = "SOFTWARE\\Microsoft\\VisualStudio"
-    val registry = if (Advapi32Util.registryKeyExists(WinReg.HKEY_CURRENT_USER, key)) {
-      Advapi32Util.registryGetKeys(WinReg.HKEY_CURRENT_USER, key)
-    }
-    else {
-      return emptySequence()
-    }
+    val registry = WindowsRegistry.subKeys(WindowsRegistry.Hive.CURRENT_USER, key) ?: return emptySequence()
 
     registry.asSequence()
       .mapNotNull { matchVersion(it) }
