@@ -1030,6 +1030,10 @@ open class MyPluginModel @JvmOverloads constructor(
     myCancelInstallCallback = callback
   }
 
+  fun clearCancelInstallCallback() {
+    myCancelInstallCallback = null
+  }
+
   private suspend fun updateButtons(applyResult: ApplyPluginsStateResult) {
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       for (component in myInstalledPluginComponents) {
