@@ -145,22 +145,20 @@ internal class PyProjectTomlDiscoveryBenchmarkTest {
       }
     }
 
-    // The check that the loader runs now: a cheap gate over the loaded names, then the real call.
+    // The check that the loader runs now: the method that reads the names of the children first.
     val byTwoStage = sortedSetOf<String>()
-    var candidates = 0
     val twoStageTime = measure {
       walk(rootFile) { file ->
         val path = file.toNioPathOrNull() ?: return@walk
-        if (!virtualEnvReader.mayContainPython(path, file.children.asSequence().map { it.name })) return@walk
-        candidates++
-        if (virtualEnvReader.findPythonInPythonRoot(path) != null) byTwoStage.add(path.toString())
+        val names = file.children.asSequence().map { it.name }
+        if (virtualEnvReader.findPythonUsingDirectoryListing(directory = path, childNames = names) != null) byTwoStage.add(path.toString())
       }
     }
 
     println("[PY-91841] loadSubtreesIntoVfs      ${loadTime.ms()} over $directories directories")
     println("[PY-91841] walk only                ${walkTime.ms()} (${perDirectory(walkTime, directories)} us per directory)")
     println("[PY-91841] walk + filesystem check  ${filesystemTime.ms()} (${perDirectory(filesystemTime, directories)} us), found ${byFilesystem.size}")
-    println("[PY-91841] walk + two stage check   ${twoStageTime.ms()} (${perDirectory(twoStageTime, directories)} us), found ${byTwoStage.size}, $candidates candidates")
+    println("[PY-91841] walk + two stage check   ${twoStageTime.ms()} (${perDirectory(twoStageTime, directories)} us), found ${byTwoStage.size}")
     println("[PY-91841] the check cost, before   ${(filesystemTime - walkTime).ms()}, after ${(twoStageTime - walkTime).ms()}")
 
     assertThat(directories).describedAs("the walk must visit the project").isGreaterThan(0)
