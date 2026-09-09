@@ -159,9 +159,11 @@ import com.sun.jdi.request.InvalidRequestStateException;
 import com.sun.jdi.request.StepRequest;
 import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CompletableJob;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Job;
+import kotlinx.coroutines.SupervisorKt;
 import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
 import one.util.streamex.StreamEx;
@@ -244,6 +246,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected volatile DebuggerSession mySession;
   protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
   private final CoroutineScope myCoroutineScope;
+  private final CompletableJob myWorkJob = SupervisorKt.SupervisorJob(null);
   private final ShowStatusManager myShowStatusManager;
 
   final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, disposable);
@@ -307,7 +310,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private DebuggerManagerThreadImpl createManagerThread() {
     CoroutineScope projectScope = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getCoroutineScope();
-    return new DebuggerManagerThreadImpl(disposable, projectScope);
+    return new DebuggerManagerThreadImpl(disposable, projectScope, myWorkJob);
   }
 
   @ApiStatus.Internal
@@ -1265,11 +1268,23 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void dispose() {
+    myIsStopped.set(true);
     CoroutineScopeKt.cancel(myCoroutineScope, null);
     LOG.debug("Debug has been finished");
     closeRootProcess();
-    Disposer.dispose(disposable);
-    requestManager.setThreadFilter(null);
+    try {
+      Disposer.dispose(disposable);
+      requestManager.setThreadFilter(null);
+    }
+    finally {
+      myWorkJob.complete();
+    }
+  }
+
+  /** Completes after final disposal and all worker tasks, including tasks from earlier connections. */
+  @ApiStatus.Internal
+  public final @NotNull Job getTerminationJob() {
+    return myWorkJob;
   }
 
   /**
@@ -2778,6 +2793,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       debuggerManagerThread.schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() {
+          if (myIsStopped.get()) return;
           detachVm.run();
           getCommandManagerThread().processRemaining();
           doReattach();
@@ -2791,6 +2807,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
         private void doReattach() {
           DebuggerInvocationUtil.invokeLaterAnyModality(project, () -> {
+            if (myIsStopped.get()) return;
             ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
             myRootProcessClosed.set(false);
             myState.set(State.INITIAL);
