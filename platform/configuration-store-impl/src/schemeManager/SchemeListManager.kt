@@ -9,7 +9,6 @@ import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.Scheme
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.UniqueNameGenerator
-import java.util.Collections
 import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
@@ -61,8 +60,7 @@ internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeMa
     val list = ArrayList(old.list)
     val schemeToInfo = IdentityHashMap(old.schemeToInfo)
     task(list, schemeToInfo, readOnlyExternalizableSchemes)
-    replaceSchemeList(old, SchemeCollection(list = Collections.synchronizedList(list),
-                                            schemeToInfo = Collections.synchronizedMap(schemeToInfo)))
+    replaceSchemeList(old, toSchemeCollection(list, schemeToInfo))
   }
 
   fun getExternalInfo(scheme: T): ExternalInfo? = schemeListRef.get().schemeToInfo.get(scheme)
