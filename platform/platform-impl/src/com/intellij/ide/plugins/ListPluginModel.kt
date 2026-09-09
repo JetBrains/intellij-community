@@ -36,4 +36,18 @@ data class ListPluginModel(
   fun setPluginInstallationState(pluginId: PluginId, state: PluginInstallationState) {
     pluginInstallationStates[pluginId] = state
   }
+
+  fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
+    return pluginInstallationStates[pluginId] ?: PluginInstallationState(pluginId in installedModels)
+  }
+
+  fun replaceAll(
+    installedModels: Map<PluginId, PluginUiModel>,
+    errors: Map<PluginId, List<HtmlChunk>>,
+    installationStates: Map<PluginId, PluginInstallationState>,
+  ) {
+    setInstalledPlugins(installedModels)
+    setErrors(errors)
+    setPluginInstallationStates(installationStates)
+  }
 }
