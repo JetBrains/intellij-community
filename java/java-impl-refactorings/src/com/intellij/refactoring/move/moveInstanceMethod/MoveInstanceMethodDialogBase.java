@@ -143,7 +143,6 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   private static class MyListCellRenderer extends DefaultListCellRenderer {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (value instanceof PsiVariable psiVariable) {
         WriteIntentReadAction.run(() -> {
           final String text = PsiFormatUtil.formatVariable(psiVariable,
