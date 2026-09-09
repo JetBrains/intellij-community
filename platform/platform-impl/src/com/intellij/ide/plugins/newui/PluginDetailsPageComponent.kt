@@ -2130,8 +2130,7 @@ private suspend fun getDeletedState(pluginUiModel: PluginUiModel): BooleanArray 
   val state = UiPluginManager.getInstance().getPluginInstallationState(pluginId)
   val uninstalledWithoutRestart = state.status == PluginStatus.UNINSTALLED_WITHOUT_RESTART
   if (!uninstalled) {
-    uninstalled =
-      state.status in listOf(PluginStatus.INSTALLED_AND_REQUIRED_RESTART, PluginStatus.UPDATED, PluginStatus.UPDATED_WITH_RESTART)
+    uninstalled = state.status.isRestartRequired()
   }
 
   return booleanArrayOf(uninstalled, uninstalledWithoutRestart)
