@@ -56,6 +56,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -203,8 +204,8 @@ open class MyPluginModel @JvmOverloads constructor(
     }
   }
 
-  fun cancel(parentComponent: JComponent?, removeSession: Boolean) {
-    UiPluginManager.getInstance().resetSession(mySessionId.toString(), removeSession, parentComponent) {
+  fun cancel(parentComponent: JComponent?, removeSession: Boolean): Job {
+    return UiPluginManager.getInstance().resetSession(mySessionId.toString(), removeSession, parentComponent) {
       applyChangedStates(it.changedEnabledStates)
       applyChangedUpdateSourcesToUI(it.updateSourceStatesToRevert)
       myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.RESET)

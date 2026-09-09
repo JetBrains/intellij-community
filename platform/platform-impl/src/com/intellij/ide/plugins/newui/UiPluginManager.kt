@@ -27,6 +27,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import fleet.rpc.client.RpcClientDisconnectedException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
@@ -83,8 +84,8 @@ class UiPluginManager {
     removeSession: Boolean,
     parentComponent: JComponent? = null,
     callback: (ResetPluginsStateResult) -> Unit = {},
-  ) {
-    launchRpcTask {
+  ): Job {
+    return launchRpcTask {
       callback(getController().resetSession(sessionId, removeSession, parentComponent))
     }
   }
@@ -275,8 +276,8 @@ class UiPluginManager {
     return PluginUpdatesService.getInstance().subscribe { updatedPlugins -> callback(updatedPlugins.all.filter { session.isPluginEnabled(it.pluginId) }) }
   }
 
-  private fun launchRpcTask(block: suspend () -> Unit) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+  private fun launchRpcTask(block: suspend () -> Unit): Job {
+    return service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
       try {
         block()
       }
