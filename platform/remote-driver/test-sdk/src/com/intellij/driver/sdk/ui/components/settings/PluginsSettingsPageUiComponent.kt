@@ -69,24 +69,35 @@ fun Driver.openPluginsSettings() {
 }
 
 private fun Finder.onPluginsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
-  x("${xQuery { byType("com.intellij.ide.plugins.newui.PluginSearchTextField") }}/ancestor::div[.//div[@accessiblename='Installed' and @javaclass='javax.swing.JLabel']][1]",
+  x("${xQuery { byAccessibleName("Search plugins") }}/ancestor::div[" +
+    ".//div[@accessiblename='Installed' and @javaclass='javax.swing.JLabel'] or " +
+    ".//div[@accessiblename='Plugins' and @class='OnePixelSplitter']][1]",
     PluginsSettingsPageUiComponent::class.java).apply {
   }.apply(action)
 
 
 abstract class LoadablePluginsUiComponent(data: ComponentData) : UiComponent(data) {
   val progressIcons: UIComponentsList<UiComponent> = xx { byType("com.intellij.util.ui.AsyncProcessIcon") }
+  private val sectionLoadingLabels: UIComponentsList<UiComponent> = xx {
+    and(byType(JLabel::class.java), contains(byAccessibleName("Loading ")))
+  }
 
   fun waitLoaded(timeout: Duration = 40.seconds) {
     waitFor("Expected NO progress indicators", timeout) {
-      progressIcons.list().isEmpty()
+      progressIcons.list().isEmpty() && sectionLoadingLabels.list().isEmpty()
     }
   }
 }
 
 class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiComponent(data) {
 
+  private val unifiedPageRoot: UiComponent =
+    x("Unified plugins page") { and(byType("com.intellij.ui.OnePixelSplitter"), byAccessibleName("Plugins")) }
+
+  val isUnifiedPage: Boolean get() = unifiedPageRoot.present()
   val searchPluginTextField: JTextFieldUI = textField("Plugins search textfield") { byAccessibleName("Search plugins") }
+  val unifiedFilterButton: JButtonUiComponent =
+    button("Unified Plugins filter button") { byAccessibleName("Filter plugins") }
   val installedTab: JLabelUiComponent =
     x(JLabelUiComponent::class.java, readableName = "Installed tab") { and(byType(JLabel::class.java), byAccessibleName("Installed")) }
   val marketplaceTab: UiComponent = x("Marketplace tab") { and(byType(JLabel::class.java), byAccessibleName("Marketplace")) }
@@ -107,6 +118,12 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
   }
 
   fun openInstalledTab(): PluginsSettingsPageUiComponent {
+    if (isUnifiedPage) {
+      step("Use the unified Plugins page instead of opening the Installed tab") {
+        waitLoaded()
+      }
+      return this
+    }
     step("Go to the Installed tab") {
       installedTab.click()
       waitLoaded()
@@ -115,6 +132,12 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
   }
 
   fun openMarketplaceTab(): PluginsSettingsPageUiComponent {
+    if (isUnifiedPage) {
+      step("Use the unified Plugins page instead of opening the Marketplace tab") {
+        waitLoaded()
+      }
+      return this
+    }
     step("Go to the Marketplace tab") {
       marketplaceTab.click()
     }
@@ -130,6 +153,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
   }
 
   fun getUpdatesCountIndicator(): CountIcon? {
+    if (isUnifiedPage) return null
     val icon = installedTab.getIcon() ?: return null
     return driver.cast(icon, CountIcon::class)
   }
@@ -138,22 +162,80 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     return getUpdatesCountIndicator()?.getText()?.toIntOrNull() ?: 0
   }
 
+  @Suppress("OPT_IN_USAGE")
   fun searchForPlugin(pluginName: String): PluginsSettingsPageUiComponent {
     step("Search for '$pluginName'") {
       searchPluginTextField.waitFound()
-      searchPluginTextField.text = pluginName
+      if (isUnifiedPage) {
+        searchPluginTextField.click()
+        searchPluginTextField.keyboard {
+          hotKeyWithDefaultModifierKey(KeyEvent.VK_A)
+          typeText(pluginName)
+        }
+      }
+      else {
+        searchPluginTextField.text = pluginName
+      }
     }
     return this
   }
 
+  @Suppress("OPT_IN_USAGE")
   fun clearPluginsSearchField(): PluginsSettingsPageUiComponent {
     step("Click on 'Clear all' button") {
-      searchPluginTextField.run {
+      if (isUnifiedPage) {
+        searchPluginTextField.click()
+        searchPluginTextField.keyboard {
+          hotKeyWithDefaultModifierKey(KeyEvent.VK_A)
+          key(KeyEvent.VK_BACK_SPACE)
+        }
+      }
+      else searchPluginTextField.run {
         val bounds = boundsOnScreen
         click(Point(bounds.width - 20, bounds.height / 2))
       }
     }
     return this
+  }
+
+  fun getPluginsSearchPlaceholder(): String {
+    return driver.cast(searchPluginTextField.component, JBTextFieldRef::class).getEmptyText().getText()
+  }
+
+  fun unifiedSortButton(sortOption: String): JButtonUiComponent =
+    button("Unified Plugins sort button") { byAccessibleName("Sort Marketplace results: $sortOption") }
+
+  fun selectUnifiedFilter(filter: String): PluginsSettingsPageUiComponent {
+    check(isUnifiedPage) { "Unified search filters are unavailable on the legacy Plugins page" }
+    step("Select '$filter' in the unified Plugins filter popup") {
+      unifiedFilterButton.click()
+      driver.ui.popup().apply {
+        list().clickItem(filter)
+        close()
+      }
+    }
+    return this
+  }
+
+  fun selectUnifiedSort(currentSort: String, newSort: String): PluginsSettingsPageUiComponent {
+    check(isUnifiedPage) { "Unified Marketplace sorting is unavailable on the legacy Plugins page" }
+    step("Change unified Marketplace sorting from '$currentSort' to '$newSort'") {
+      unifiedSortButton(currentSort).click()
+      driver.ui.popup().apply {
+        val actions = list()
+        val targetIndex = actions.rawItems.indexOfFirst { it == newSort }
+        check(targetIndex >= 0) { "Sort action '$newSort' not found; available actions: ${actions.rawItems}" }
+        actions.clickItemAtIndex(targetIndex)
+        close()
+      }
+    }
+    return this
+  }
+
+  fun waitForPluginsSearchQuery(query: String, timeout: Duration = 10.seconds) {
+    waitFor("Plugins search query should become '$query'", timeout) {
+      searchPluginTextField.text == query
+    }
   }
 
   fun waitForPluginInList(pluginName: String, timeout: Duration = 10.seconds): ListPluginComponent {
@@ -171,6 +253,11 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
       "/following-sibling::*[@javaclass='com.intellij.ide.plugins.newui.ListPluginComponent']",
       ListPluginComponent::class.java
     ).list()
+
+  fun getUnifiedSection(sectionName: String): UnifiedPluginsSectionUiComponent =
+    x(UnifiedPluginsSectionUiComponent::class.java, readableName = "'$sectionName' plugins section") {
+      and(byType(JLabel::class.java), byAccessibleName(sectionName))
+    }
 
   fun getPluginFromList(pluginName: String, action: ListPluginComponent.() -> Unit = {}): ListPluginComponent =
     x(ListPluginComponent::class.java, readableName = "Plugin '$pluginName' in a list") {
@@ -318,6 +405,8 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     }
   }
 
+  class UnifiedPluginsSectionUiComponent(data: ComponentData) : UiComponent(data)
+
   @Remote("com.intellij.ide.plugins.newui.ListPluginComponent")
   interface ListPluginComponentRef {
     fun getPluginModel(): PluginUiModel
@@ -327,6 +416,16 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
   interface PluginUiModel {
     val pluginId: PluginId
     fun getDescriptor(): PluginDescriptor
+  }
+
+  @Remote("com.intellij.ui.components.JBTextField")
+  interface JBTextFieldRef {
+    fun getEmptyText(): StatusTextRef
+  }
+
+  @Remote("com.intellij.util.ui.StatusText")
+  interface StatusTextRef {
+    fun getText(): String
   }
 
   class PluginDetailsPage(data: ComponentData) : LoadablePluginsUiComponent(data) {
