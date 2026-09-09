@@ -8,8 +8,10 @@ import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum
+import com.intellij.ide.plugins.newui.PluginInstallationProgressSink
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
+import com.intellij.ide.plugins.newui.withDownloadProgressSink
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -19,6 +21,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -48,6 +51,7 @@ class PluginInstallOperation(
   private val myCustomReposPlugins: Collection<PluginUiModel>,
   private val myIndicator: ProgressIndicator,
   private val myPluginEnabler: PluginEnabler,
+  private val myProgressSink: PluginInstallationProgressSink = PluginInstallationProgressSink.NONE,
 ) {
   private var mySuccess = true
   private val myDependant: MutableSet<PluginInstallCallbackData> = HashSet()
@@ -69,6 +73,7 @@ class PluginInstallOperation(
     customReposPlugins.map { PluginUiModelAdapter(it) },
     indicator,
     pluginEnabler,
+    PluginInstallationProgressSink.NONE,
   )
 
   init {
@@ -236,7 +241,10 @@ class PluginInstallOperation(
       previousVersion,
     )
 
-    val prepared = downloader.prepareToInstall(myIndicator, pluginNode.pluginId == myPendingUpdateToReplace)
+    val prepared = downloader.prepareToInstall(
+      myIndicator.withDownloadProgressSink(myProgressSink),
+      pluginNode.pluginId == myPendingUpdateToReplace,
+    )
     if (prepared) {
       val descriptor = downloader.descriptor as PluginMainDescriptor
       if (!checkMissingDependencies(descriptor, installModel)) {
@@ -478,6 +486,7 @@ class PluginInstallOperation(
 
     try {
       val result = Ref(false)
+      val scheduledDependencies = ArrayList<PluginUiModel>()
 
       ApplicationManager.getApplication().invokeAndWait({
         synchronized(ourInstallLock) {
@@ -508,6 +517,7 @@ class PluginInstallOperation(
             for (dependency in dependenciesToShow) {
               createInstallCallback(dependency)
             }
+            dependencies.filterTo(scheduledDependencies) { it.pluginId in dependenciesToShow }
             result.set(true)
           }
           else {
@@ -524,13 +534,21 @@ class PluginInstallOperation(
               for (dependency in dependenciesToShow) {
                 createInstallCallback(dependency)
               }
+              dependencies.filterTo(scheduledDependencies) { it.pluginId in dependenciesToShow }
             }
           }
         }
       }, ModalityState.any())
 
+      if (scheduledDependencies.isNotEmpty()) {
+        myProgressSink.dependenciesScheduled(scheduledDependencies)
+      }
+
       return dependencies.isEmpty() ||
              result.get() && prepareToInstall(dependencies, installModel)
+    }
+    catch (c: ProcessCanceledException) {
+      throw c
     }
     catch (_: Exception) {
       return false

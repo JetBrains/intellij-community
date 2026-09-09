@@ -269,6 +269,7 @@ open class MyPluginModel @JvmOverloads constructor(
     installationScope: CoroutineScope,
     modalityState: ModalityState,
     controller: UiPluginManagerController,
+    progressSink: PluginInstallationProgressSink = PluginInstallationProgressSink.NONE,
   ): InstallPluginResult? {
     return withContext(Dispatchers.EDT + modalityState.asContextElement()) {
       val actionDescriptor: PluginUiModel = updateDescriptor ?: descriptor
@@ -276,10 +277,23 @@ open class MyPluginModel @JvmOverloads constructor(
         return@withContext null
       }
       val bgProgressIndicator = PluginDownloadBgProgressIndicator()
+      val indicatorProgressSink = progressSink.withDownloadProgressIndicator(bgProgressIndicator)
       val projectNotNull = tryToFindProject()
 
       val info = InstallPluginInfo(bgProgressIndicator, descriptor, this@MyPluginModel, updateDescriptor == null)
-      val installResult = runPluginInstallation(projectNotNull, bgProgressIndicator, descriptor, updateDescriptor, controller, parentComponent, modalityState, installationScope, actionDescriptor, info)
+      val installResult = runPluginInstallation(
+        projectNotNull,
+        bgProgressIndicator,
+        descriptor,
+        updateDescriptor,
+        controller,
+        parentComponent,
+        modalityState,
+        installationScope,
+        actionDescriptor,
+        info,
+        indicatorProgressSink,
+      )
       applyInstallResult(installResult, info, actionDescriptor, controller)
     }
   }
@@ -295,14 +309,35 @@ open class MyPluginModel @JvmOverloads constructor(
     installationScope: CoroutineScope,
     actionDescriptor: PluginUiModel,
     installPluginInfo: InstallPluginInfo,
+    progressSink: PluginInstallationProgressSink,
   ): InstallPluginResult = withContext(Dispatchers.IO) {
     if (project == null) {
-      return@withContext installOrUpdatePlugin(installPluginInfo, controller, parentComponent, descriptor, updateDescriptor, installationScope, modalityState, actionDescriptor)
+      return@withContext installOrUpdatePlugin(
+        installPluginInfo,
+        controller,
+        parentComponent,
+        descriptor,
+        updateDescriptor,
+        installationScope,
+        modalityState,
+        actionDescriptor,
+        progressSink,
+      )
     }
     return@withContext withBackgroundProgress(project, IdeBundle.message("progress.title.loading.plugin.details")) {
       jobToIndicator(coroutineContext.job, bgProgressIndicator) {
         return@jobToIndicator runBlockingCancellable {
-          return@runBlockingCancellable installOrUpdatePlugin(installPluginInfo, controller, parentComponent, descriptor, updateDescriptor, installationScope, modalityState, actionDescriptor)
+          return@runBlockingCancellable installOrUpdatePlugin(
+            installPluginInfo,
+            controller,
+            parentComponent,
+            descriptor,
+            updateDescriptor,
+            installationScope,
+            modalityState,
+            actionDescriptor,
+            progressSink,
+          )
         }
       }
     }
@@ -317,17 +352,38 @@ open class MyPluginModel @JvmOverloads constructor(
     installationScope: CoroutineScope,
     modalityState: ModalityState,
     actionDescriptor: PluginUiModel,
+    progressSink: PluginInstallationProgressSink,
   ): InstallPluginResult {
     withContext(Dispatchers.EDT + modalityState.asContextElement()) {
       prepareToInstall(installPluginInfo, installationScope)
     }
     val customPlugins = customRepoPlugins?.toList()
-    val result = controller.installOrUpdatePlugin(sessionId, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null, customPlugins)
+    val result = controller.installOrUpdatePlugin(
+      sessionId,
+      parentComponent,
+      descriptor,
+      updateDescriptor,
+      myInstallSource,
+      modalityState,
+      null,
+      customPlugins,
+      progressSink,
+    )
     if (result.disabledPlugins.isEmpty() && result.disabledDependants.isEmpty()) {
       return result
     }
     val enableDependencies = withContext(Dispatchers.EDT + modalityState.asContextElement()) { PluginManagerMain.askToEnableDependencies(1, result.disabledPlugins, result.disabledDependants) }
-    return controller.continueInstallation(sessionId, actionDescriptor.pluginId, enableDependencies, result.allowInstallWithoutRestart, null, modalityState, parentComponent, customPlugins)
+    return controller.continueInstallation(
+      sessionId,
+      actionDescriptor.pluginId,
+      enableDependencies,
+      result.allowInstallWithoutRestart,
+      null,
+      modalityState,
+      parentComponent,
+      customPlugins,
+      progressSink,
+    )
   }
 
   suspend fun applyInstallResult(result: InstallPluginResult, info: InstallPluginInfo, descriptor: PluginUiModel, controller: UiPluginManagerController): InstallPluginResult {

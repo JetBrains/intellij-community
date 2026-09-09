@@ -184,6 +184,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     modalityState: ModalityState?,
     pluginEnabler: PluginEnabler?,
     customRepoPlugins: List<PluginUiModel>?,
+    progressSink: PluginInstallationProgressSink,
   ): InstallPluginResult {
     val session = findSession(sessionId) ?: return InstallPluginResult.FAILED
     val customPlugins = customRepoPlugins ?: CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins().toList()
@@ -271,6 +272,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         return@withContext performInstallOperation(
           installPluginRequest, parentComponent, modalityState, pluginEnabler, customPlugins,
           pluginUiModel.pluginId.takeIf { replacePendingUpdate },
+          progressSink,
         )
       }
     }
@@ -285,6 +287,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     modalityState: ModalityState?,
     parentComponent: JComponent?,
     customRepoPlugins: List<PluginUiModel>?,
+    progressSink: PluginInstallationProgressSink,
   ): InstallPluginResult {
     val session = findSession(sessionId) ?: return InstallPluginResult.FAILED
     val customPlugins = customRepoPlugins ?: CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins().toList()
@@ -313,6 +316,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return performInstallOperation(
       installPluginRequest, parentComponent, modalityState, pluginEnabler, customPlugins,
       pluginId.takeIf { replacePendingUpdate },
+      progressSink,
     )
   }
 
@@ -628,12 +632,13 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     pluginEnabler: PluginEnabler,
     customRepoPlugins: List<PluginUiModel>,
     pendingUpdateToReplace: PluginId? = null,
+    progressSink: PluginInstallationProgressSink = PluginInstallationProgressSink.NONE,
   ): InstallPluginResult {
     val session = findSession(request.sessionId) ?: return InstallPluginResult.FAILED
     val result = InstallPluginResult()
     val pluginsToInstallSynchronously: MutableList<PendingDynamicPluginInstall> = mutableListOf()
     coroutineToIndicator {
-      val operation = PluginInstallOperation(request.pluginsToInstall, customRepoPlugins, it, pluginEnabler)
+      val operation = PluginInstallOperation(request.pluginsToInstall, customRepoPlugins, it, pluginEnabler, progressSink)
       operation.setAllowInstallWithoutRestart(request.allowInstallWithoutRestart)
       operation.setPendingUpdateToReplace(pendingUpdateToReplace)
       var terminalState = InstallPluginTerminalState.FAILED

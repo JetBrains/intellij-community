@@ -15,6 +15,7 @@ import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.ResetPluginsStateResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
+import com.intellij.ide.plugins.newui.PluginInstallationProgressSink
 import com.intellij.ide.plugins.newui.CustomPluginRepository
 import com.intellij.ide.plugins.newui.CustomPluginRepositoryLoadResult
 import com.intellij.ide.plugins.newui.PluginInventoryEntry
@@ -96,11 +97,31 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginInstallerApi.getInstance().performUninstall(sessionId, pluginId)
   }
 
-  override suspend fun installOrUpdatePlugin(sessionId: String, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?, customRepoPlugins: List<PluginUiModel>?): InstallPluginResult {
+  override suspend fun installOrUpdatePlugin(
+    sessionId: String,
+    parentComponent: JComponent?,
+    descriptor: PluginUiModel,
+    updateDescriptor: PluginUiModel?,
+    installSource: FUSEventSource?,
+    modalityState: ModalityState?,
+    pluginEnabler: PluginEnabler?,
+    customRepoPlugins: List<PluginUiModel>?,
+    progressSink: PluginInstallationProgressSink,
+  ): InstallPluginResult {
     return PluginInstallerApi.getInstance().installOrUpdatePlugin(sessionId, PluginDto.fromModel(descriptor), updateDescriptor?.let { PluginDto.fromModel(it) }, installSource, customRepoPlugins?.map { PluginDto.fromModel(it) })
   }
 
-  override suspend fun continueInstallation(sessionId: String, pluginId: PluginId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?, customRepoPlugins: List<PluginUiModel>?): InstallPluginResult {
+  override suspend fun continueInstallation(
+    sessionId: String,
+    pluginId: PluginId,
+    enableRequiredPlugins: Boolean,
+    allowInstallWithoutRestart: Boolean,
+    pluginEnabler: PluginEnabler?,
+    modalityState: ModalityState?,
+    parentComponent: JComponent?,
+    customRepoPlugins: List<PluginUiModel>?,
+    progressSink: PluginInstallationProgressSink,
+  ): InstallPluginResult {
     return PluginInstallerApi.getInstance().continueInstallation(sessionId, pluginId, enableRequiredPlugins, allowInstallWithoutRestart, customRepoPlugins?.map { PluginDto.fromModel(it) })
   }
 

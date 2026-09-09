@@ -43,8 +43,29 @@ interface UiPluginManagerController {
   suspend fun closeSession(sessionId: String)
   suspend fun getPlugin(id: PluginId): PluginUiModel?
   suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean
-  suspend fun installOrUpdatePlugin(sessionId: String, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?, customRepoPlugins: List<PluginUiModel>?): InstallPluginResult
-  suspend fun continueInstallation(sessionId: String, pluginId: PluginId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?, customRepoPlugins: List<PluginUiModel>?): InstallPluginResult
+  suspend fun installOrUpdatePlugin(
+    sessionId: String,
+    parentComponent: JComponent?,
+    descriptor: PluginUiModel,
+    updateDescriptor: PluginUiModel?,
+    installSource: FUSEventSource?,
+    modalityState: ModalityState?,
+    pluginEnabler: PluginEnabler?,
+    customRepoPlugins: List<PluginUiModel>?,
+    progressSink: PluginInstallationProgressSink = PluginInstallationProgressSink.NONE,
+  ): InstallPluginResult
+
+  suspend fun continueInstallation(
+    sessionId: String,
+    pluginId: PluginId,
+    enableRequiredPlugins: Boolean,
+    allowInstallWithoutRestart: Boolean,
+    pluginEnabler: PluginEnabler?,
+    modalityState: ModalityState?,
+    parentComponent: JComponent?,
+    customRepoPlugins: List<PluginUiModel>?,
+    progressSink: PluginInstallationProgressSink = PluginInstallationProgressSink.NONE,
+  ): InstallPluginResult
   suspend fun apply(parent: JComponent? = null, project: Project?): ApplyPluginsStateResult
   suspend fun updatePluginDependencies(sessionId: String): Set<PluginId>
   suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult
@@ -98,5 +119,17 @@ interface UiPluginManagerController {
 
   companion object {
     val EP_NAME: ExtensionPointName<UiPluginManagerController> = ExtensionPointName<UiPluginManagerController>("com.intellij.uiPluginManagerController")
+  }
+}
+
+@ApiStatus.Internal
+fun interface PluginInstallationProgressSink {
+  fun dependenciesScheduled(dependencies: List<PluginUiModel>)
+
+  fun downloadProgressChanged(fraction: Double?) { }
+
+  companion object {
+    @JvmField
+    val NONE: PluginInstallationProgressSink = PluginInstallationProgressSink { }
   }
 }
