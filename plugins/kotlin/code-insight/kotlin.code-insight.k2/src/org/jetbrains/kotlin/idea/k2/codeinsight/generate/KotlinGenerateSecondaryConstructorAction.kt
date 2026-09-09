@@ -13,9 +13,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -90,10 +89,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
 
     context(_: KaSession)
     private fun KtProperty.isPropertyNotInitialized(): Boolean {
-        // TODO: when KT-63221 is fixed use `diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)` instead
-        return containingKtFile.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-            .filter { it.psi == this@isPropertyNotInitialized }
-            .any { it is KaFirDiagnostic.MustBeInitializedOrBeAbstract }
+        return diagnostics().directOnly(true).any { it is KaFirDiagnostic.MustBeInitializedOrBeAbstract }
     }
 
     context(_: KaSession)

@@ -14,10 +14,9 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -184,7 +183,8 @@ object IfThenTransformationUtils {
     context(_: KaSession)
     private fun conditionIsSenseless(data: IfThenTransformationData): Boolean =
         data.condition
-            .directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            .diagnostics()
+            .directOnly(true)
             .map { it.diagnosticClass }
             .any { it == KaFirDiagnostic.SenselessComparison::class || it == KaFirDiagnostic.UselessIsCheck::class }
 

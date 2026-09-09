@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -174,22 +175,19 @@ context(session: KaSession)
 private fun restoreTypes(typePointers: List<KaTypePointer<KaType>>): List<KaType>? =
     typePointers.map { it.restore(session) ?: return null }
 
-// TODO: when KT-63221 is fixed use `diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)` to reduce resolve and avoid psi checks
 context(_: KaSession)
 private val KtCallExpression.nestedDiagnostics: List<KaDiagnosticWithPsi<*>>
-    get() = containingKtFile
-        .collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-        .filter { diagnostic ->
+    get() = diagnostics().filter { diagnostic ->
             when (diagnostic) {
                 is KaFirDiagnostic.UnresolvedReference,
                 is KaFirDiagnostic.BuilderInferenceStubReceiver,
                 is KaFirDiagnostic.ImplicitNothingReturnType,
                 is KaFirDiagnostic.AmbiguousContextArgument
-                    -> isAncestor(diagnostic.psi, strict = false)
+                    -> true
 
                 else -> false
             }
-        }
+        }.toList()
 
 context(session: KaSession)
 private fun areTypesEqual(

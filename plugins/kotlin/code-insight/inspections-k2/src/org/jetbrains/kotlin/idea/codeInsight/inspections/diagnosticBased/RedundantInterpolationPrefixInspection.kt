@@ -9,7 +9,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -27,7 +27,7 @@ internal class RedundantInterpolationPrefixInspection :
     override val diagnosticType: KClass<KaFirDiagnostic.RedundantInterpolationPrefix>
         get() = KaFirDiagnostic.RedundantInterpolationPrefix::class
 
-    override val diagnosticFilter: KaDiagnosticCheckerFilter = KaDiagnosticCheckerFilter.ONLY_EXPERIMENTAL_CHECKERS
+    override val diagnosticCheckers: Set<KaDiagnosticCheckerKind> = setOf(KaDiagnosticCheckerKind.EXPERIMENTAL)
 
     override fun isApplicableByPsi(element: KtElement): Boolean =
         element is KtStringTemplateExpression && element.interpolationPrefix != null

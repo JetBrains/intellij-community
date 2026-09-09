@@ -10,10 +10,9 @@ import com.intellij.modcommand.Presentation
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -638,7 +637,7 @@ internal object ChangeTypeQuickFixFactories {
 context(session: KaSession)
 private fun isValReassignment(assignment: KtBinaryExpression): Boolean {
     val left = assignment.left ?: return false
-    return left.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).any {
+    return left.diagnostics().directOnly(true).any {
         it is KaFirDiagnostic.ValReassignment
     }
 }

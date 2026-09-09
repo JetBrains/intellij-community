@@ -31,9 +31,8 @@ import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.util.application
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
@@ -208,7 +207,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 allowAnalysisFromWriteAction {
                     analyze(property) {
                         if (initializer is KtObjectLiteralExpression &&
-                            property.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).any {
+                            property.diagnostics().directOnly(true).any {
                                 it is KaFirDiagnostic.AmbiguousAnonymousTypeInferred
                             }
                         ) {
@@ -672,10 +671,11 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         val call = expression.getPossiblyQualifiedCallExpression() ?: return false
         if (call.typeArgumentList != null) return false
         val callee = call.calleeExpression ?: return false
-        val diagnostics = analyzeInModalWindow(callee, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            callee.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        return analyzeInModalWindow(callee, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            callee.diagnostics().directOnly(true).any { diagnostic ->
+                diagnostic is KaFirDiagnostic.CannotInferParameterType
+            }
         }
-        return (diagnostics.any { diagnostic -> diagnostic is KaFirDiagnostic.CannotInferParameterType })
     }
 
     override fun filterContainersWithContainedLambdasByAnalyze(

@@ -10,9 +10,9 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.endOffset
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.diagnostics
 import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -104,7 +104,9 @@ fun prepareData(element: KtIfExpression, enforceNonNullableTypeIfPossible: Boole
 
     val couldBeVal = variableDeclaration.isVar &&
             variableDeclaration
-                .diagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
+                .diagnostics()
+                .withCheckers(KaDiagnosticCheckerKind.EXTENDED)
+                .directOnly(true)
                 .any { it is KaFirDiagnostic.CanBeVal }
 
     val type = calculateType(variableDeclaration, element, initializer, couldBeVal && enforceNonNullableTypeIfPossible)?.let { type ->

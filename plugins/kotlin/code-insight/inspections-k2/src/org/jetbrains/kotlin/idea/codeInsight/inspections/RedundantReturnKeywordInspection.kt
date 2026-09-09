@@ -8,8 +8,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -91,7 +91,7 @@ internal class RedundantReturnKeywordInspection : KotlinApplicableInspectionBase
      */
     context(session: KaSession)
     override fun prepareContext(element: KtReturnExpression): Unit? =
-        element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
+        element.diagnostics().withCheckers(KaDiagnosticCheckerKind.EXTENDED).directOnly(true)
             .none { it is KaFirDiagnostic.UnreachableCode }
             .asUnit
 

@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 import kotlin.reflect.safeCast
@@ -27,7 +27,7 @@ abstract class KotlinPsiDiagnosticBasedInspectionBase<
 
     protected abstract val diagnosticType: KClass<D>
 
-    open val diagnosticFilter: KaDiagnosticCheckerFilter = KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS
+    open val diagnosticCheckers: Set<KaDiagnosticCheckerKind> = setOf(KaDiagnosticCheckerKind.EXTENDED)
 
     /**
      * Provides some context for [apply] given some [element] and [diagnostic].
@@ -44,7 +44,9 @@ abstract class KotlinPsiDiagnosticBasedInspectionBase<
 
     context(session: KaSession)
     final override fun prepareContext(element: E): C? =
-        element.directDiagnostics(filter = diagnosticFilter)
+        element.diagnostics()
+            .withCheckers(diagnosticCheckers)
+            .directOnly(true)
             .firstNotNullOfOrNull { diagnosticType.safeCast(it) }
             ?.let { prepareContextByDiagnostic(element, it) }
 }

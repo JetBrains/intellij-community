@@ -7,7 +7,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -22,7 +22,7 @@ internal class UnusedLambdaExpressionInspection : KotlinPsiDiagnosticBasedInspec
     override val diagnosticType: KClass<KaFirDiagnostic.UnusedLambdaExpression>
         get() = KaFirDiagnostic.UnusedLambdaExpression::class
 
-    override val diagnosticFilter: KaDiagnosticCheckerFilter = KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
+    override val diagnosticCheckers: Set<KaDiagnosticCheckerKind> = setOf(KaDiagnosticCheckerKind.COMMON)
 
     override fun buildVisitor(
         holder: ProblemsHolder,

@@ -5,9 +5,8 @@ import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -23,7 +22,7 @@ internal class UnlabeledReturnInsideLambdaInspection : AbstractKotlinInspection(
 
     private fun hasDiagnosticError(returnExpression: KtReturnExpression): Boolean {
         return analyze(returnExpression) {
-            returnExpression.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).any {
+            returnExpression.diagnostics().directOnly(true).any {
                 it.severity == KaSeverity.ERROR
             }
         }

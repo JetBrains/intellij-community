@@ -3,9 +3,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.computeMissingCases
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
@@ -245,8 +244,9 @@ object BranchedFoldingUtils {
         // Check if they satisfy the above condition 3.
         if (secondRight != null && analyze(secondRight) {
                 secondRight
-                    .directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-                    .isNotEmpty()
+                    .diagnostics()
+                    .directOnly(true)
+                    .any()
             }) return false
 
         // Check if they satisfy the first of condition 4.

@@ -31,11 +31,10 @@ import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
-import org.jetbrains.kotlin.analysis.api.components.diagnostics
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -163,7 +162,7 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
     /**
      * This is a hack to force the Analysis API to calculate and cache the result of diagnostic collectors.
      *
-     * [org.jetbrains.kotlin.analysis.api.components.KaDiagnosticProvider.diagnostics] will resolve the corresponding
+     * [org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics] will resolve the corresponding
      * non-local declaration and calculate diagnostics.
      *
      * The following [org.jetbrains.kotlin.analysis.api.components.KaDiagnosticProvider.collectDiagnostics]
@@ -179,7 +178,8 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
             readAction {
                 val declaration = pointer.element ?: return@readAction
                 analyze(declaration) {
-                    declaration.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    // The query is lazy, so it has to be iterated to force the analysis.
+                    declaration.diagnostics().directOnly(true).count()
                 }
             }
         }
@@ -282,7 +282,8 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
 
             analyze(restoredPsi) {
                 val restoredDiagnostics = restoredPsi
-                    .directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    .diagnostics()
+                    .directOnly(true)
                     .filter { it.factoryName == diagnosticFactoryName }
 
                 for (diagnostic in restoredDiagnostics) {

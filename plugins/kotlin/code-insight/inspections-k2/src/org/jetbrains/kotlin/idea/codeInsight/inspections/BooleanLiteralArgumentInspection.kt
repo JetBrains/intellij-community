@@ -16,9 +16,8 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
@@ -65,7 +64,7 @@ internal class BooleanLiteralArgumentInspection(
         val call = element.getStrictParentOfType<KtCallExpression>() ?: return null
         val valueArguments = call.valueArguments
 
-        val diagnostics = argumentExpression.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        val diagnostics = argumentExpression.diagnostics().directOnly(true)
         if (diagnostics.any { it.severity == KaSeverity.ERROR }) return null
         val name = getStableNameFor(element) ?: return null
 

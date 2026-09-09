@@ -10,8 +10,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -76,10 +75,9 @@ internal class ReplaceNotNullAssertionWithElvisReturnInspection :
             KtNamedFunction::class.java
         ) ?: return null
 
-        if (element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).any {
-                it is KaFirDiagnostic.UnnecessaryNotNullAssertion
-            }
-        ) return null
+        if (element.diagnostics().directOnly(true).any { it is KaFirDiagnostic.UnnecessaryNotNullAssertion }) {
+            return null
+        }
 
         return when (parent) {
             is KtNamedFunction -> {

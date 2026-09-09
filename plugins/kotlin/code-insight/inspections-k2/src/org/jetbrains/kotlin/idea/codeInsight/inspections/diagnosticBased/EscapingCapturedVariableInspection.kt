@@ -8,8 +8,8 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -21,7 +21,9 @@ internal class EscapingCapturedVariableInspection : KotlinApplicableInspectionBa
 
     context(session: KaSession)
     override fun prepareContext(element: KtSimpleNameExpression): String? =
-        element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
+        element.diagnostics()
+            .withCheckers(KaDiagnosticCheckerKind.EXTENDED)
+            .directOnly(true)
             .firstNotNullOfOrNull { it as? KaFirDiagnostic.EscapingCapturedVariable }
             ?.variable?.name?.asString()
 

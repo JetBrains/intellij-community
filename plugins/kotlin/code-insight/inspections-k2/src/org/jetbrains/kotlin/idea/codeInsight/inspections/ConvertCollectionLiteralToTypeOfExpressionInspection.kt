@@ -8,8 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
@@ -66,7 +65,7 @@ internal class ConvertCollectionLiteralToTypeOfExpressionInspection :
 
     context(session: KaSession)
     override fun prepareContext(element: KtCollectionLiteralExpression): Context? {
-        if (element.directDiagnostics(filter = KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).isNotEmpty()) return null
+        if (element.diagnostics().directOnly(true).any()) return null
         val classSymbol = findClassSymbolForLiteral(element) ?: return null
         val className = classSymbol.name.asString()
 
