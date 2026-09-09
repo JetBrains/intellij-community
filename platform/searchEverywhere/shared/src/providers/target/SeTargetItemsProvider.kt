@@ -80,6 +80,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -87,6 +88,7 @@ import java.awt.event.InputEvent
 import java.util.UUID
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -166,31 +168,51 @@ class SeTargetItemsProvider<T> private constructor(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun getItemsFlow(params: SeParams, presentationProvider: suspend (SeTargetRawItem) -> SeTargetPresentableItem): Flow<SeTargetPresentableItem> =
-    getItemsFlow(params)
-      .buffer(capacity = 64)                            // let the search run ahead
-      .flatMapMerge(concurrency = 10) { rawItem ->
+  fun getItemsFlow(params: SeParams, presentationProvider: suspend (SeTargetRawItem) -> SeTargetPresentableItem): Flow<SeTargetPresentableItem> {
+    val stats = SeFetchStats(LOG.isDebugEnabled)
+    val presentationNanos = AtomicLong(0)
+    val presentedCount = AtomicInteger(0)
+    val startedAtNano = System.nanoTime()
+
+    return getItemsFlow(params)
+      .buffer(capacity = RAW_ITEMS_BUFFER)              // let the search run ahead
+      .flatMapMerge(concurrency = PRESENTATION_CONCURRENCY) { rawItem ->
         flow {
-          emit(presentationProvider(rawItem))
+          val item = stats.measure(presentationNanos) { presentationProvider(rawItem) }
+          presentedCount.incrementAndGet()
+          emit(item)
         }
       }
+      .onCompletion {
+        LOG.debug {
+          // The summed time counts every one of the parallel coroutines, so it can pass the wall time.
+          "$label: presentation done, items=${presentedCount.get()}, " +
+          "summedMs=${presentationNanos.get() / 1_000_000}, wallMs=${(System.nanoTime() - startedAtNano) / 1_000_000}, " +
+          "concurrency=$PRESENTATION_CONCURRENCY, buffer=$RAW_ITEMS_BUFFER"
+        }
+      }
+  }
 
   fun getItemsFlow(params: SeParams): Flow<SeTargetRawItem> = channelFlow {
     // The counters live outside the read action, because `readAction` restarts the block after a write action.
     val attemptCount = AtomicInteger(0)
-    val sentCount = AtomicInteger(0)
+    val stats = SeFetchStats(LOG.isDebugEnabled)
+    val sentCount = stats.sentCount
     val startedAtNano = System.nanoTime()
     val pattern = normalizeQuery(params.inputQuery)
     if (pattern.isBlank()) return@channelFlow
 
-    val (scopeDescriptor, hiddenTypes) = SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
-      scopes.getValue().byId[isEverywhere] to null
-    } ?: run {
-      val targetsFilter = SeTargetsFilter.from(params.filter)
+    // The first search of a session builds the scope list here, so this can dominate its latency.
+    val (scopeDescriptor, hiddenTypes) = stats.measure(stats.scopeResolveNanos) {
+      SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
+        scopes.getValue().byId[isEverywhere] to null
+      } ?: run {
+        val targetsFilter = SeTargetsFilter.from(params.filter)
 
-      targetsFilter.selectedScopeId?.let {
-        scopes.getValue().byId[it]
-      } to targetsFilter.hiddenTypes
+        targetsFilter.selectedScopeId?.let {
+          scopes.getValue().byId[it]
+        } to targetsFilter.hiddenTypes
+      }
     }
 
     val scope = scopeDescriptor?.scope as? GlobalSearchScope ?: GlobalSearchScope.projectScope(project)
@@ -213,7 +235,7 @@ class SeTargetItemsProvider<T> private constructor(
           }
         }
 
-        val model = gotoModelProvider(project, scopeDescriptor, hiddenTypeRefs)
+        val model = stats.measure(stats.modelCreateNanos) { gotoModelProvider(project, scopeDescriptor, hiddenTypeRefs) }
         if (operationDisposable != null && model is Disposable) {
           Disposer.register(operationDisposable, model)
         }
@@ -239,43 +261,45 @@ class SeTargetItemsProvider<T> private constructor(
 
         blockingContextToIndicator {
           val progressIndicator = ProgressManager.getGlobalProgressIndicator()
-          val fromModelCount = AtomicInteger(0)
+          val fromModelCount = stats.fromModelCount
 
-          when (provider) {
-            is ChooseByNameInScopeItemProvider -> {
-              val parameters = FindSymbolParameters.wrap(pattern, scope)
-              provider.filterElementsWithWeights(viewModel, parameters, progressIndicator
-              ) { item: FoundItemDescriptor<*> ->
-                fromModelCount.incrementAndGet()
-                processElement(progressIndicator, model, item.item, item.weight, defaultMatchers, sentCount)
+          stats.measure(stats.modelSearchNanos) {
+            when (provider) {
+              is ChooseByNameInScopeItemProvider -> {
+                val parameters = FindSymbolParameters.wrap(pattern, scope)
+                provider.filterElementsWithWeights(viewModel, parameters, progressIndicator
+                ) { item: FoundItemDescriptor<*> ->
+                  fromModelCount.incrementAndGet()
+                  processElement(progressIndicator, model, item.item, item.weight, defaultMatchers, stats, startedAtNano)
+                }
               }
-            }
-            is ChooseByNameWeightedItemProvider -> {
-              provider.filterElementsWithWeights(viewModel, pattern, isEverywhere, progressIndicator
-              ) { item: FoundItemDescriptor<*> ->
-                fromModelCount.incrementAndGet()
-                processElement(progressIndicator, model, item.item, item.weight, defaultMatchers, sentCount)
+              is ChooseByNameWeightedItemProvider -> {
+                provider.filterElementsWithWeights(viewModel, pattern, isEverywhere, progressIndicator
+                ) { item: FoundItemDescriptor<*> ->
+                  fromModelCount.incrementAndGet()
+                  processElement(progressIndicator, model, item.item, item.weight, defaultMatchers, stats, startedAtNano)
+                }
               }
-            }
-            else -> {
-              provider.filterElements(viewModel, pattern, isEverywhere, progressIndicator) { element: Any ->
-                fromModelCount.incrementAndGet()
-                processElement(progressIndicator, model, element, null, defaultMatchers, sentCount)
+              else -> {
+                provider.filterElements(viewModel, pattern, isEverywhere, progressIndicator) { element: Any ->
+                  fromModelCount.incrementAndGet()
+                  processElement(progressIndicator, model, element, null, defaultMatchers, stats, startedAtNano)
+                }
               }
             }
           }
 
           LOG.debug {
-            "$label: attempt=$attempt done, elementsFromModel=${fromModelCount.get()}, sent=${sentCount.get()}"
+            "$label: attempt=$attempt done, ${stats.toLogString()}"
           }
         }
       }
-      logSearchOutcome("finished", pattern, sentCount, attemptCount, startedAtNano)
+      logSearchOutcome("finished", pattern, stats, attemptCount, startedAtNano)
     }
     catch (e: Throwable) {
       // `ProcessCanceledException` is a `CancellationException`, so one check covers both.
       val outcome = if (e is CancellationException) "cancelled" else "failed with ${e::class.simpleName}"
-      logSearchOutcome(outcome, pattern, sentCount, attemptCount, startedAtNano)
+      logSearchOutcome(outcome, pattern, stats, attemptCount, startedAtNano)
       throw e
     }
   }
@@ -286,11 +310,12 @@ class SeTargetItemsProvider<T> private constructor(
     element: Any?,
     weight: Int?,
     defaultMatchers: ItemMatchers,
-    sentCount: AtomicInteger,
+    stats: SeFetchStats,
+    startedAtNano: Long,
   ): Boolean {
     if (indicator.isCanceled) {
       LOG.debug {
-        "$label: stopped, the indicator is cancelled after ${sentCount.get()} items"
+        "$label: stopped, the indicator is cancelled after ${stats.sentCount.get()} items"
       }
       return false
     }
@@ -303,9 +328,13 @@ class SeTargetItemsProvider<T> private constructor(
       LOG.debug {
         "$label: emitting ${element.toString().split('\n').firstOrNull()}, weight=$weight"
       }
-      send(SeTargetRawItem(element, weight, itemMatchers(defaultMatchers, model, element)))
+      // `send` waits for the consumer while the read lock is held, so the wait goes into the log.
+      stats.measure(stats.blockedInSendNanos) {
+        send(SeTargetRawItem(element, weight, itemMatchers(defaultMatchers, model, element)))
+      }
     }
-    sentCount.incrementAndGet()
+    stats.sentCount.incrementAndGet()
+    stats.recordFirstItem(startedAtNano)
 
     return true
   }
@@ -323,11 +352,11 @@ class SeTargetItemsProvider<T> private constructor(
     }
 
   private fun logSearchOutcome(
-    outcome: String, pattern: String, sentCount: AtomicInteger, attemptCount: AtomicInteger, startedAtNano: Long,
+    outcome: String, pattern: String, stats: SeFetchStats, attemptCount: AtomicInteger, startedAtNano: Long,
   ) {
     LOG.debug {
-      "$label: $outcome, pattern='$pattern', sent=${sentCount.get()}, attempts=${attemptCount.get()}, " +
-      "durationMs=${(System.nanoTime() - startedAtNano) / 1_000_000}"
+      "$label: $outcome, pattern='$pattern', attempts=${attemptCount.get()}, " +
+      "durationMs=${(System.nanoTime() - startedAtNano) / 1_000_000}, ${stats.toLogString()}"
     }
   }
 
@@ -510,6 +539,12 @@ class SeTargetItemsProvider<T> private constructor(
     private val LOG = logger<SeTargetItemsProvider<*>>()
     private const val COROUTINE_BASED_GOTO_KEY = "search.everywhere.coroutine.based.goto"
 
+    /** How many raw items wait for the presentation stage. It lets the model search run ahead. */
+    private const val RAW_ITEMS_BUFFER = 64
+
+    /** How many presentations compute at once. */
+    private const val PRESENTATION_CONCURRENCY = 10
+
     suspend fun isCoroutineBasedGotoEnabled(legacyContributor: SearchEverywhereContributor<Any>, providerId: String): Boolean {
       if (!RegistryManager.getInstanceAsync().`is`(COROUTINE_BASED_GOTO_KEY)) return false
 
@@ -612,6 +647,61 @@ class SeTargetItemsProvider<T> private constructor(
                                    extendedInfoCalculator, isFileProvider)
     }
   }
+}
+
+/**
+ * The counters and the timings of one search, for the performance log.
+ *
+ * A clock reads only when [isEnabled] is true, so a search that does not log pays almost nothing.
+ * A summed time comes from several coroutines at once, so it can pass the wall time of the search.
+ */
+private class SeFetchStats(
+  /** False turns every clock off, so a search that does not log pays one boolean test per item. */
+  val isEnabled: Boolean,
+) {
+
+  /** The items that the model produced. It counts an item again after a read action restart. */
+  val fromModelCount: AtomicInteger = AtomicInteger(0)
+
+  /** The items that reached the channel. */
+  val sentCount: AtomicInteger = AtomicInteger(0)
+
+  val scopeResolveNanos: AtomicLong = AtomicLong(0)
+  val modelCreateNanos: AtomicLong = AtomicLong(0)
+  val modelSearchNanos: AtomicLong = AtomicLong(0)
+
+  /**
+   * The time that `send` waited for the consumer.
+   *
+   * The search holds the read lock while it waits, so this time adds to the risk of a read action
+   * restart. A large value means that the consumer of the flow is the bottleneck, not the model.
+   */
+  val blockedInSendNanos: AtomicLong = AtomicLong(0)
+
+  /** The delay before the first item reached the channel. This is the latency that the user sees. */
+  val firstItemNanos: AtomicLong = AtomicLong(0)
+
+  inline fun <T> measure(target: AtomicLong, action: () -> T): T {
+    if (!isEnabled) return action()
+
+    val startedAt = System.nanoTime()
+    try {
+      return action()
+    }
+    finally {
+      target.addAndGet(System.nanoTime() - startedAt)
+    }
+  }
+
+  fun recordFirstItem(startedAtNano: Long) {
+    if (isEnabled) firstItemNanos.compareAndSet(0, System.nanoTime() - startedAtNano)
+  }
+
+  fun toLogString(): String =
+    "elementsFromModel=${fromModelCount.get()}, sent=${sentCount.get()}, " +
+    "firstItemMs=${firstItemNanos.get() / 1_000_000}, scopesMs=${scopeResolveNanos.get() / 1_000_000}, " +
+    "modelMs=${modelCreateNanos.get() / 1_000_000}, searchMs=${modelSearchNanos.get() / 1_000_000}, " +
+    "blockedInSendMs=${blockedInSendNanos.get() / 1_000_000}"
 }
 
 private class MyViewModel(private val myProject: Project, private val myModel: ChooseByNameModel) : ChooseByNameViewModel {
