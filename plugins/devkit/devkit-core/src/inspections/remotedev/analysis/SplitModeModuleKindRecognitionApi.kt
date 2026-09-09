@@ -17,7 +17,7 @@ data class RecognizedSplitModeModuleKind(
 fun recognizeSplitModeModuleKind(descriptorFile: PsiFile): RecognizedSplitModeModuleKind? {
   val xmlFile = descriptorFile as? XmlFile ?: return null
   val module = ModuleUtilCore.findModuleForPsiElement(descriptorFile) ?: return null
-  val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, xmlFile)
+  val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(xmlFile)
   return RecognizedSplitModeModuleKind(
     moduleName = module.name,
     kind = moduleAnalysis.resolvedModuleKind.kind,

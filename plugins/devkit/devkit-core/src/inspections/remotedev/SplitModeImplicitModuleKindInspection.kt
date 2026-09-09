@@ -31,7 +31,7 @@ internal class SplitModeImplicitModuleKindInspection : DevKitPluginXmlInspection
     if (element.xmlElement == null) return
     val exclusionsService = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project)
 
-    val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, currentXmlFile)
+    val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(currentXmlFile)
     if (!SplitModeInspectionUtil.isImplicitFrontendOrBackendMainPluginXml(currentXmlFile, moduleAnalysis)) {
       return
     }

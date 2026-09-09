@@ -705,8 +705,9 @@ private fun resolveDescriptorDependencyKind(
 
   val containingFile = dependencyDescriptor.xmlElement?.containingFile
   val xmlFile = containingFile as? XmlFile ?: return null
-  val module = ModuleUtilCore.findModuleForPsiElement(xmlFile) ?: return null
-  return SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, xmlFile).resolvedModuleKind.kind
+  if (ModuleUtilCore.findModuleForPsiElement(xmlFile) == null) return null
+
+  return SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(xmlFile).resolvedModuleKind.kind
 }
 
 private fun SplitModeApiRestrictionsService.ModuleKind.toFixableSplitKinds(): List<SplitModeApiRestrictionsService.ModuleKind> {

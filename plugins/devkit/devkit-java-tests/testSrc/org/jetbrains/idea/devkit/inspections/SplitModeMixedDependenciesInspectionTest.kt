@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.xml.XmlFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
@@ -656,6 +657,35 @@ via dependency 'unique.module.name.51.backend.support' -> descriptor 'unique.mod
     Assert.assertNotNull("Module kind should be recognized", recognizedKind)
     Assert.assertEquals("unique.module.name.41", recognizedKind!!.moduleName)
     Assert.assertEquals("backend", recognizedKind.kind.id)
+  }
+
+  fun testDescriptorAnalysisStaysStableAfterCacheInvalidation() {
+    val contentModuleDescriptor = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.65",
+      descriptorRelativePathToResourcesDirectory = "unique.module.name.65.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <dependencies>
+            <module name="intellij.platform.backend"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent()
+    ) as XmlFile
+
+    val firstAnalysis = SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(contentModuleDescriptor)
+
+    // A new module invalidates the cached analysis. The platform then checks that the cached value provider is idempotent.
+    addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.66",
+      descriptorRelativePathToResourcesDirectory = "unique.module.name.66.xml",
+      pluginXmlContent = """
+        <idea-plugin/>
+      """.trimIndent()
+    )
+
+    val secondAnalysis = SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(contentModuleDescriptor)
+    Assert.assertEquals("backend", secondAnalysis.resolvedModuleKind.kind.id)
+    Assert.assertEquals(firstAnalysis, secondAnalysis)
   }
 
   private fun assertSharedModuleKindWithContainingPluginsOfDifferentKinds(moduleName: String) {
