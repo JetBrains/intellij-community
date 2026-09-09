@@ -76,8 +76,10 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * A raw search result, with the matchers that decide which parts of its presentation the UI highlights.
  */
+@ApiStatus.Experimental
 class SeTargetRawItem(val rawItem: Any, val rawWeight: Int?, val matchers: ItemMatchers?)
 
+@ApiStatus.Experimental
 class SeTargetPresentableItem(val rawItem: Any,
                               private val matchers: ItemMatchers?,
                               private val weight: Int,
@@ -91,7 +93,7 @@ class SeTargetPresentableItem(val rawItem: Any,
     .build()
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class SeTargetItemsProvider private constructor(
   private val project: Project,
   private val psiContext: SmartPsiElementPointer<PsiElement?>?,

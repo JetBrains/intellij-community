@@ -11,9 +11,8 @@ import org.jetbrains.annotations.ApiStatus
  *
  * The extension point is ordered. The platform asks each extension in the declaration order and takes
  * the first answer that is not null. Use the `order` attribute to run before another extension.
- * [SeDefaultTargetItemSelectionProcessor] carries `order="last"` and navigates to the item.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface SeTargetItemSelectionProcessor {
   /**
    * Acts on [item] of [provider], and returns whether the search popup should close.
@@ -26,6 +25,7 @@ interface SeTargetItemSelectionProcessor {
   suspend fun process(item: SeItem, provider: SeItemsProvider, modifiers: Int, searchText: String): Boolean?
 
   companion object {
+    @ApiStatus.Internal
     val EP_NAME: ExtensionPointName<SeTargetItemSelectionProcessor> =
       ExtensionPointName("com.intellij.searchEverywhere.targetItemSelectionProcessor")
 
@@ -35,6 +35,7 @@ interface SeTargetItemSelectionProcessor {
      * The result is null only when no extension handled the item. That happens for an item that
      * cannot navigate, because [SeDefaultTargetItemSelectionProcessor] handles every other one.
      */
+    @ApiStatus.Internal
     suspend fun process(item: SeItem, provider: SeItemsProvider, modifiers: Int, searchText: String): Boolean? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.process(item, provider, modifiers, searchText) }
   }

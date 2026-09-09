@@ -251,3 +251,45 @@
 - f:withShouldKeepLocationVisible(Z):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 - f:withTargetPresentation(com.intellij.platform.backend.presentation.TargetPresentation,com.intellij.ide.util.PsiElementListCellRenderer$ItemMatchers,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 *f:com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder$Companion
+*:com.intellij.platform.searchEverywhere.providers.target.SeExtendedInfoCalculator
+- a:infoFor(com.intellij.platform.searchEverywhere.providers.target.SeTargetRawItem,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider
+- com.intellij.openapi.Disposable
+- sf:COROUTINE_BASED_GOTO_KEY:java.lang.String
+- *sf:Companion:com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider$Companion
+- dispose():V
+- f:getExtendedInfo(com.intellij.platform.searchEverywhere.providers.target.SeTargetRawItem,kotlin.coroutines.Continuation):java.lang.Object
+- f:getItemsFlow(com.intellij.platform.searchEverywhere.SeParams):kotlinx.coroutines.flow.Flow
+- f:getItemsFlow(com.intellij.platform.searchEverywhere.SeParams,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
+- f:getPreviewInfo(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+- f:getSearchScopesInfo(kotlin.coroutines.Continuation):java.lang.Object
+- f:getTypeVisibilityStates(I,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider$Companion
+- f:create(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.Disposable,java.lang.String,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function1,com.intellij.platform.searchEverywhere.providers.target.SeExtendedInfoCalculator,kotlin.coroutines.Continuation):java.lang.Object
+- bs:create$default(com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider$Companion,com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.Disposable,java.lang.String,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function1,com.intellij.platform.searchEverywhere.providers.target.SeExtendedInfoCalculator,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:fetchPreviewInfo(java.lang.Object,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- f:isExactMatch(Z,java.lang.String,java.lang.String,Z,Z,Z):Z
+- f:normalizeQuery(java.lang.String):java.lang.String
+*f:com.intellij.platform.searchEverywhere.providers.target.SeTargetPresentableItem
+- com.intellij.platform.searchEverywhere.SeItem
+- <init>(java.lang.Object,com.intellij.ide.util.PsiElementListCellRenderer$ItemMatchers,I,com.intellij.platform.backend.presentation.TargetPresentation,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z,Z):V
+- f:getExtendedInfo():com.intellij.platform.searchEverywhere.SeExtendedInfo
+- f:getRawItem():java.lang.Object
+- f:isExactMatch():Z
+- f:isMultiSelectionSupported():Z
+- presentation(kotlin.coroutines.Continuation):java.lang.Object
+- weight():I
+*f:com.intellij.platform.searchEverywhere.providers.target.SeTargetRawItem
+- <init>(java.lang.Object,java.lang.Integer,com.intellij.ide.util.PsiElementListCellRenderer$ItemMatchers):V
+- f:getMatchers():com.intellij.ide.util.PsiElementListCellRenderer$ItemMatchers
+- f:getRawItem():java.lang.Object
+- f:getRawWeight():java.lang.Integer
+*:com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider
+- *sf:Companion:com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider$Companion
+- a:appliesTo(java.lang.Object):Z
+- a:getPresentation(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider$Companion
+*:com.intellij.platform.searchEverywhere.providers.target.selection.SeTargetItemSelectionProcessor
+- *sf:Companion:com.intellij.platform.searchEverywhere.providers.target.selection.SeTargetItemSelectionProcessor$Companion
+- a:process(com.intellij.platform.searchEverywhere.SeItem,com.intellij.platform.searchEverywhere.SeItemsProvider,I,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.searchEverywhere.providers.target.selection.SeTargetItemSelectionProcessor$Companion
