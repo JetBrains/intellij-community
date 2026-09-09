@@ -3461,6 +3461,43 @@ interface UastResolveApiFixtureTestBase {
         }
     }
 
+    fun checkResolveCompiledKotlinProperty_BooleanVarWithIsConvention(myFixture: JavaCodeInsightTestFixture) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "test/pkg/Lib.kt", """
+                package test.pkg
+
+                class Lib {
+                    var isEnabled: Boolean = true
+                }
+            """.trimIndent()
+        )
+        try {
+            myFixture.configureByText(
+                "read.kt", """
+                    package test.pkg
+
+                    fun test(lib: Lib) {
+                        val x = lib.is<caret>Enabled
+                    }
+                """.trimIndent()
+            )
+            myFixture.assertCaretResolvesToMethod("isEnabled")
+
+            myFixture.configureByText(
+                "write.kt", """
+                    package test.pkg
+
+                    fun test(lib: Lib) {
+                        lib.is<caret>Enabled = false
+                    }
+                """.trimIndent()
+            )
+            myFixture.assertCaretResolvesToMethod("setEnabled")
+        } finally {
+            mockLibraryFacility.tearDown(myFixture.module)
+        }
+    }
+
     fun checkResolveSourceKotlinProperty(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
@@ -3508,6 +3545,38 @@ interface UastResolveApiFixtureTestBase {
             """.trimIndent()
         )
         myFixture.assertCaretResolvesToMethod("setProp")
+    }
+
+    fun checkResolveSourceKotlinProperty_BooleanVarWithIsConvention(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "read.kt", """
+                package test.pkg
+
+                class Lib {
+                    var isEnabled: Boolean = false
+                }
+
+                fun test(lib: Lib) {
+                    val x = lib.is<caret>Enabled
+                }
+            """.trimIndent()
+        )
+        myFixture.assertCaretResolvesToMethod("isEnabled")
+
+        myFixture.configureByText(
+            "write.kt", """
+                package test.pkg
+
+                class Lib {
+                    var isEnabled: Boolean = false
+                }
+
+                fun test(lib: Lib) {
+                    lib.is<caret>Enabled = true
+                }
+            """.trimIndent()
+        )
+        myFixture.assertCaretResolvesToMethod("setEnabled")
     }
 
     private fun JavaCodeInsightTestFixture.assertCaretResolvesToMethod(expectedMethodName: String) {

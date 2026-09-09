@@ -380,11 +380,19 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveCompiledKotlinProperty_var(myFixture)
     }
 
+    fun testResolveCompiledKotlinProperty_BooleanVarWithIsConvention() {
+        checkResolveCompiledKotlinProperty_BooleanVarWithIsConvention(myFixture)
+    }
+
     fun testResolveSourceKotlinProperty() {
         checkResolveSourceKotlinProperty(myFixture)
     }
 
     fun testResolveSourceKotlinProperty_var() {
         checkResolveSourceKotlinProperty_var(myFixture)
+    }
+
+    fun testResolveSourceKotlinProperty_BooleanVarWithIsConvention() {
+        checkResolveSourceKotlinProperty_BooleanVarWithIsConvention(myFixture)
     }
 }
