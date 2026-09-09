@@ -622,6 +622,7 @@ private fun CheckboxImpl(
                 alignment = Stroke.Alignment.Center,
             )
 
+    val iconState = if (outline != Outline.None) checkboxState.copy(focused = false) else checkboxState
     val painterProvider = rememberResourcePainterProvider(icons.checkbox)
     val checkboxPainter by
         painterProvider.getPainter(
@@ -630,8 +631,8 @@ private fun CheckboxImpl(
             } else {
                 PainterHint.None
             },
-            Selected(checkboxState.toggleableState != ToggleableState.Off),
-            Stateful(checkboxState),
+            Selected(iconState.toggleableState != ToggleableState.Off),
+            Stateful(iconState),
         )
 
     val checkboxBoxModifier = Modifier.size(metrics.checkboxSize)
