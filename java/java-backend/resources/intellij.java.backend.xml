@@ -7,12 +7,13 @@
     <plugin id="com.intellij.modules.xml"/>
     <plugin id="com.intellij.modules.java-capable"/>
     <module name="intellij.spellchecker"/>
-    <module name="intellij.java.typeMigration"/>
     <module name="intellij.java.manifest"/>
     <module name="intellij.java.frontback.impl"/>
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.frontback.psi.impl"/>
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.regexp"/>
     <module name="intellij.java"/>
     <module name="intellij.java.analysis"/>
     <module name="intellij.java.analysis.impl"/>
@@ -39,8 +40,6 @@
     <module name="intellij.platform.testIntegration.ui"/>
     <module name="intellij.platform.uast"/>
     <module name="intellij.platform.uast.ide"/>
-    <module name="intellij.platform.builtInServer.impl"/>
-    <module name="intellij.regexp"/>
   </dependencies>
   <!-- endregion -->
 
