@@ -243,6 +243,9 @@ class PluginDetailsPageComponent private constructor(
   private var reviewPanel: ReviewCommentListContainer? = null
   private var reviewNextPageButton: JButton? = null
   private var indicator: OneLineProgressIndicator? = null
+  private var readOnlyProgressRequested: PluginProgressState? = null
+  private var readOnlyIndicator: OneLineProgressIndicator? = null
+  private var readOnlyPreparedUpdate: PluginPreparedUpdateState? = null
 
   private var plugin: PluginUiModel? = null
   private var isPluginAvailable = false
@@ -355,6 +358,7 @@ class PluginDetailsPageComponent private constructor(
     if (currentDescriptor != null && currentIndicator != null) {
       PluginModelFacade.removeProgress(currentDescriptor, currentIndicator)
     }
+    setReadOnlyProgress(null)
     hideProgress()
 
     showComponent = null
@@ -973,10 +977,18 @@ class PluginDetailsPageComponent private constructor(
   }
 
   fun showPlugins(selection: List<ListPluginComponent?>) {
+    showPlugins(selection, readOnlyProgress = null, preparedUpdate = null)
+  }
+
+  fun showPlugins(
+    selection: List<ListPluginComponent?>,
+    readOnlyProgress: PluginProgressState?,
+    preparedUpdate: PluginPreparedUpdateState?,
+  ) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
       showPluginSemaphore.withPermit {
         val size = selection.size
-        showPlugin(if (size == 1) selection[0] else null, size > 1)
+        showPlugin(if (size == 1) selection[0] else null, size > 1, readOnlyProgress, preparedUpdate)
       }
     }
   }
@@ -984,15 +996,31 @@ class PluginDetailsPageComponent private constructor(
   fun showPlugin(component: ListPluginComponent?) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
       showPluginSemaphore.withPermit {
-        showPlugin(component, false)
+        showPlugin(component, false, readOnlyProgress = null, preparedUpdate = null)
       }
     }
   }
 
-  private suspend fun showPlugin(component: ListPluginComponent?, multiSelection: Boolean) {
-    if (showComponent == component && (component == null || updateDescriptor === component.getUpdatePluginDescriptor())) {
+  private suspend fun showPlugin(
+    component: ListPluginComponent?,
+    multiSelection: Boolean,
+    readOnlyProgress: PluginProgressState?,
+    preparedUpdate: PluginPreparedUpdateState?,
+  ) {
+    if (showComponent == component &&
+        (component == null || updateDescriptor === component.getUpdatePluginDescriptor()) &&
+        readOnlyPreparedUpdate == preparedUpdate) {
+      setReadOnlyProgress(readOnlyProgress)
       return
     }
+    setReadOnlyProgress(null)
+    if (readOnlyPreparedUpdate != null && preparedUpdate == null) {
+      updateButton?.apply {
+        text = IdeBundle.message("plugins.configurable.update.button")
+        isEnabled = true
+      }
+    }
+    readOnlyPreparedUpdate = preparedUpdate
     showComponent = component
 
     if (indicator != null) {
@@ -1080,6 +1108,7 @@ class PluginDetailsPageComponent private constructor(
         pluginCardOpened(component.getPluginModel().getDescriptor(), component.getGroup())
       }
     }
+    setReadOnlyProgress(readOnlyProgress)
   }
 
   private fun doLoad(component: ListPluginComponent, task: suspend () -> Unit) {
@@ -1138,6 +1167,7 @@ class PluginDetailsPageComponent private constructor(
     if (!this@PluginDetailsPageComponent.pluginModel.isPluginInstallingOrUpdating(pluginUiModel)) {
       applyCustomization()
     }
+    applyReadOnlyPreparedUpdate()
   }
 
   private enum class EmptyState {
@@ -1694,6 +1724,10 @@ class PluginDetailsPageComponent private constructor(
   }
 
   fun showProgress(storeIndicator: Boolean, installationScope: CoroutineScope, cancelRunnable: suspend () -> Unit) {
+    if (readOnlyIndicator != null) {
+      readOnlyIndicator = null
+      nameAndButtons?.removeProgressComponent()
+    }
     indicator = OneLineProgressIndicatorWithAsyncCallback(installationScope, false, cancelRunnable)
     nameAndButtons!!.setProgressComponent(null, indicator!!.createBaselineWrapper())
     if (storeIndicator) {
@@ -1756,6 +1790,57 @@ class PluginDetailsPageComponent private constructor(
   fun hideProgress() {
     indicator = null
     nameAndButtons?.removeProgressComponent()
+    updateReadOnlyProgress()
+  }
+
+  private fun setReadOnlyProgress(progress: PluginProgressState?) {
+    readOnlyProgressRequested = progress
+    updateReadOnlyProgress()
+  }
+
+  private fun updateReadOnlyProgress() {
+    val progress = readOnlyProgressRequested?.takeIf { indicator == null }
+    val shouldShow = progress != null
+    if (shouldShow && readOnlyIndicator == null) {
+      readOnlyIndicator = OneLineProgressIndicator(false, false)
+      val updateAction = checkNotNull(updateButton)
+      updateAction.isVisible = true
+      nameAndButtons?.setProgressDisabledButton(updateAction)
+      nameAndButtons?.setProgressComponent(null, readOnlyIndicator!!.createBaselineWrapper())
+      fullRepaint()
+    }
+    if (progress != null) {
+      when (progress) {
+        PluginProgressState.Indeterminate -> readOnlyIndicator?.isIndeterminate = true
+        is PluginProgressState.Determinate -> {
+          readOnlyIndicator?.isIndeterminate = false
+          readOnlyIndicator?.fraction = progress.fraction
+        }
+      }
+    }
+    else if (readOnlyIndicator != null) {
+      readOnlyIndicator = null
+      if (indicator == null) {
+        nameAndButtons?.removeProgressComponent()
+      }
+      fullRepaint()
+    }
+  }
+
+  private fun applyReadOnlyPreparedUpdate() {
+    val preparedUpdate = readOnlyPreparedUpdate ?: return
+    val restartRequired = preparedUpdate.restartRequired
+    restartButton?.isVisible = restartRequired && isPluginAvailable
+    installButton?.setVisible(false)
+    updateButton?.apply {
+      isVisible = !restartRequired && isPluginAvailable
+      isEnabled = false
+      text = IdeBundle.message("plugin.status.installed")
+    }
+    gearButton?.isVisible = false
+    myUninstallButton?.isVisible = false
+    myEnableDisableButton?.isVisible = false
+    fullRepaint()
   }
 
   suspend fun finishInstall(success: Boolean, restartRequired: Boolean, pluginId: PluginId? = null, installedPlugin: PluginUiModel? = null) {
@@ -1781,6 +1866,7 @@ class PluginDetailsPageComponent private constructor(
                                                          installedPlugin?.isBundledUpdate ?: false)
                 myVersion1!!.isVisible = true
                 updateEnabledState()
+                applyReadOnlyPreparedUpdate()
                 return
               }
             }
@@ -1794,6 +1880,7 @@ class PluginDetailsPageComponent private constructor(
       }
     }
 
+    applyReadOnlyPreparedUpdate()
     fullRepaint()
   }
 
