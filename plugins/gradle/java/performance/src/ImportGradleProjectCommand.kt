@@ -24,7 +24,6 @@ import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -70,15 +69,7 @@ class ImportGradleProjectCommand(text: String, line: Int) : PerformanceCommandCo
 
       context.message("Import of the project has been started", line)
       val gradleSettings = GradleSettings.getInstance(project)
-      try {
-        linkGradleProjectIfNeeded(project, context, gradleSettings)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Exception) {
-        throw IllegalStateException("Link of a gradle project failed. Not a gradle project. ${e.message}", e)
-      }
+      linkGradleProjectIfNeeded(project, context, gradleSettings)
       doGradleSync(project, context, gradleSettings)
     }
     finally {

@@ -5,7 +5,6 @@ import com.intellij.gradle.java.performance.ImportGradleProjectCommand.Companion
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import com.jetbrains.performancePlugin.commands.SetupProjectSdkUtil
-import kotlinx.coroutines.CancellationException
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 /**
@@ -25,15 +24,7 @@ class SetGradleJdkCommand(text: String, line: Int) : PerformanceCommandCoroutine
 
     val sdk = SetupProjectSdkUtil.setupOrDetectSdk(sdkName, sdkType, sdkHome)
     val settings = GradleSettings.getInstance(project)
-    try {
-      linkGradleProjectIfNeeded(project, context, settings)
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Exception) {
-      throw IllegalStateException("Link of a gradle project failed. Not a gradle project. ${e.message}", e)
-    }
+    linkGradleProjectIfNeeded(project, context, settings)
     settings.linkedProjectsSettings.forEach {
       it.gradleJvm = sdk.name
     }
