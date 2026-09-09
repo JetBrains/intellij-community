@@ -593,6 +593,19 @@ public final class TableResultView extends JBTableWithResizableCells
       }
 
       @Override
+      public Rectangle getVisibleRect(TableCell key) {
+        Rectangle visible = super.getVisibleRect(key);
+        if (myIsFrozenStrip) {
+          // Include grid spacing so the hint cannot cover the pointer and trigger a show/hide loop.
+          Rectangle cell = TableResultView.this.getCellRect(key.row, key.column, true);
+          Rectangle table = TableResultView.this.getVisibleRect();
+          int right = Math.min(cell.x + cell.width, table.x + table.width);
+          visible.width = Math.max(0, right - visible.x);
+        }
+        return visible;
+      }
+
+      @Override
       protected void handleSelectionChange(TableCell selected, boolean processIfUnfocused) {
         if (selected == null) {
           super.handleSelectionChange(null, processIfUnfocused);
