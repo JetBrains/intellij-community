@@ -31,6 +31,7 @@ import com.intellij.terminal.actions.TerminalActionUtil
 import com.intellij.terminal.frontend.fus.TerminalCommandCompletionStatistics
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
+import com.intellij.terminal.frontend.fus.installTypingLatencyTracker
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalKeyEventsListener
 import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
@@ -456,6 +457,13 @@ class TerminalViewImpl(
         shellIntegration = shellIntegration,
         coroutineScope = coroutineScope.childScope("TerminalTypingTracker")
       )
+      installTypingLatencyTracker(
+        terminalView = this@TerminalViewImpl,
+        editor = outputEditor,
+        typingTracker = typingTracker,
+        coroutineScope = coroutineScope.childScope("TerminalTypingLatencyTracker"),
+      )
+
       if (TerminalAiInlineCompletion.isEnabled()) {
         configureInlineCompletion(outputModel, shellIntegration, typingTracker)
       }
