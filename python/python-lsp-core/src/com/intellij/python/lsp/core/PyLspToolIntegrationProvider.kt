@@ -16,6 +16,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -25,6 +26,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Disposer
@@ -66,12 +68,14 @@ import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.DiagnosticSeverity
 import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.lsp4j.InitializeResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.Collections
 
@@ -118,23 +122,24 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
       .subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, LspPackageListener(pyTool, project))
   }
 
+  /**
+   * Starts the server when [pyTool] becomes a package of an interpreter of [project]. Stops the server when the
+   * tool leaves that interpreter.
+   */
   inner class LspPackageListener(val pyTool: PyTool<*>, val project: Project) : PythonPackageManagementListener {
-    var wasThisToolInstalled: Boolean? = null
+    /** The last known answer per interpreter. An interpreter that is absent from the map has no answer yet. */
+    private val toolIsPackageOf: MutableMap<Sdk, Boolean> = Collections.synchronizedMap(HashMap())
 
     override fun packagesChanged(sdk: Sdk) {
-      val lspServerManager = LspClientManager.getInstance(project)
-      val manager = PythonPackageManager.forSdk(project, sdk)
-      val isInstalled = manager.getInstalledToolPackage(pyTool) != null
-      if (isInstalled != wasThisToolInstalled) {
-        val providerClass = this@PyLspToolIntegrationProvider::class.java
-        if (isInstalled) {
-          lspServerManager.startClientsIfNeeded(providerClass)
-        }
-        else {
-          lspServerManager.stopClients(providerClass)
-        }
+      if (!usesSdk(project, sdk)) return
+      val isPackage = PythonPackageManager.forSdk(project, sdk).getInstalledToolPackage(pyTool) != null
+      val previous = toolIsPackageOf.put(sdk, isPackage)
+      val providerClass = this@PyLspToolIntegrationProvider::class.java
+      when (lspPackageAction(previous, isPackage)) {
+        LspPackageAction.START -> LspClientManager.getInstance(project).startClientsIfNeeded(providerClass)
+        LspPackageAction.STOP -> LspClientManager.getInstance(project).stopClients(providerClass)
+        LspPackageAction.NONE -> Unit
       }
-      wasThisToolInstalled = isInstalled
     }
   }
 
@@ -405,6 +410,35 @@ open class PyLspToolCustomization(
   }
 
   open fun codeCustomizer(@Nls code: String): @Nls String = code
+}
+
+/**
+ * True while [sdk] is the interpreter of a module of [project].
+ *
+ * [PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC] is an application topic that reaches every open project. An
+ * event about the interpreter of another project must not stop the servers of this one (PY-91655).
+ */
+private fun usesSdk(project: Project, sdk: Sdk): Boolean =
+  runReadActionBlocking { project.modules.any { it.pythonSdk == sdk } }
+
+/** What [lspPackageAction] tells the caller to do with the servers of one tool. */
+@ApiStatus.Internal
+enum class LspPackageAction { START, STOP, NONE }
+
+/**
+ * What to do after the answer to "the tool is a package of this interpreter" moved from [previous] to [current].
+ *
+ * [previous] is `null` while the interpreter has no earlier answer. A first answer of `false` is no reason to
+ * stop a server, because the tool also runs from a custom path, from `PATH`, or through `uvx`, and none of those
+ * makes it a package. A first `false` stopped the server that the reopened editors had just started (PY-92163).
+ * A first answer of `true` still starts the server, because an install is the event this rule exists for.
+ */
+@ApiStatus.Internal
+fun lspPackageAction(previous: Boolean?, current: Boolean): LspPackageAction = when {
+  previous == current -> LspPackageAction.NONE
+  current -> LspPackageAction.START
+  previous == null -> LspPackageAction.NONE
+  else -> LspPackageAction.STOP
 }
 
 @Service(Service.Level.PROJECT)
