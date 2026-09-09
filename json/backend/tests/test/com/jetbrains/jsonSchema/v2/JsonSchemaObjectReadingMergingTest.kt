@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.parentOfType
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.asSafely
@@ -431,6 +432,11 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
     return readResourceAsString("$testDataPath/specs/petstore31.json")
   }
 
+  private fun yamlspec8k(): String {
+    return readResourceAsString("$testDataPath/specs/largespec8k.yaml")
+  }
+
+
   private fun petstore30jsonCut(): String {
     return readResourceAsString("$testDataPath/specs/petstore30cut.json")
   }
@@ -464,4 +470,9 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
     )
   }
 
+  @PerformanceUnitTest
+  fun `test measure performance here`() {
+    myFixture.configureByText("openapi.yaml", yamlspec8k())
+    myFixture.checkHighlighting()
+  }
 }

@@ -368,7 +368,6 @@ jps/model-test-framework
 jps/standalone-builder
 json
 json/backend
-json/backend/performanceTests
 json/backend/regexp
 json/backend/tests
 json/networknt.wrapper

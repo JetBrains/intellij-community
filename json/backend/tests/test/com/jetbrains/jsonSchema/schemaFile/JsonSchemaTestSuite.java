@@ -6,6 +6,7 @@ import com.jetbrains.jsonSchema.JsonSchemaDocumentationTest;
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTest;
 import com.jetbrains.jsonSchema.JsonSchemaInjectionTest;
 import com.jetbrains.jsonSchema.JsonSchemaPatternComparatorTest;
+import com.jetbrains.jsonSchema.JsonSchemaPerformanceTest;
 import com.jetbrains.jsonSchema.JsonSchemaReSharperHighlightingTest;
 import com.jetbrains.jsonSchema.JsonSchemaSelfHighlightingTest;
 import com.jetbrains.jsonSchema.fixes.JsonSchemaQuickFixTest;
@@ -34,6 +35,7 @@ public final class JsonSchemaTestSuite {
     suite.addTestSuite(JsonBySchemaHeavyNestedCompletionTest.class);
     suite.addTestSuite(JsonSchemaReadTest.class);
     suite.addTestSuite(JsonSchemaFileResolveTest.class);
+    suite.addTestSuite(JsonSchemaPerformanceTest.class);
     suite.addTestSuite(JsonSchemaQuickFixTest.class);
     return suite;
   }
