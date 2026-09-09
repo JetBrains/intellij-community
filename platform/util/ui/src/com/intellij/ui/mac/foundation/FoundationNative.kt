@@ -2,7 +2,6 @@ package com.intellij.ui.mac.foundation
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
-import org.jetbrains.annotations.ApiStatus
 import java.lang.foreign.Arena
 import java.lang.foreign.FunctionDescriptor
 import java.lang.foreign.GroupLayout
@@ -22,7 +21,6 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.util.concurrent.ConcurrentHashMap
 
-@ApiStatus.Internal
 internal object FoundationNative {
   private object Bindings {
     init {

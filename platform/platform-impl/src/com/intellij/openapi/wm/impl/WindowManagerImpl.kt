@@ -37,7 +37,6 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.sun.jna.platform.WindowUtils
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -181,7 +180,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
         window.shape = mask
       }
       else {
-        WindowUtils.setWindowMask(window, mask)
+        WindowEffects.setMask(window, mask)
       }
     }
     catch (e: Throwable) {
@@ -405,12 +404,11 @@ private fun calcAlphaModelSupported(): Boolean {
     return true
   }
 
-  // GTW-3304 WindowUtils crashes on X11-enabled RD hosts
   if (AppMode.isRemoteDevHost())
     return false
 
   return try {
-    WindowUtils.isWindowAlphaSupported()
+    WindowEffects.isAlphaSupported()
   }
   catch (_: Throwable) {
     false
@@ -438,7 +436,7 @@ private fun setAlphaMode(window: Window, ratio: Float) {
         window.opacity = 1.0f - ratio
       }
       else -> {
-        WindowUtils.setWindowAlpha(window, 1.0f - ratio)
+        WindowEffects.setAlpha(window, 1.0f - ratio)
       }
     }
   }

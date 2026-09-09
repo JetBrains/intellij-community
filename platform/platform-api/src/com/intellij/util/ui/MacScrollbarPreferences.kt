@@ -1,7 +1,6 @@
 package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.logger
-import org.jetbrains.annotations.ApiStatus
 import java.lang.foreign.Arena
 import java.lang.foreign.FunctionDescriptor
 import java.lang.foreign.Linker
@@ -16,7 +15,6 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
-@ApiStatus.Internal
 internal object MacScrollbarPreferences {
   private val observers = ConcurrentHashMap<Long, Observer>()
 

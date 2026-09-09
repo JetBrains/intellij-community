@@ -1,6 +1,5 @@
 package com.intellij.ui.mac.foundation
 
-import org.jetbrains.annotations.ApiStatus
 import java.lang.foreign.FunctionDescriptor
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.ValueLayout.ADDRESS
@@ -11,17 +10,14 @@ import java.lang.foreign.ValueLayout.JAVA_INT
 import java.lang.foreign.ValueLayout.JAVA_LONG
 import java.lang.foreign.ValueLayout.JAVA_SHORT
 
-@ApiStatus.Internal
 internal data class ObjcType(val code: Char, val layout: MemoryLayout?)
 
-@ApiStatus.Internal
 internal data class ObjcSignature(val result: ObjcType, val arguments: List<ObjcType>) {
   val descriptor: FunctionDescriptor =
     result.layout?.let { FunctionDescriptor.of(it, *arguments.map { type -> requireNotNull(type.layout) }.toTypedArray()) }
     ?: FunctionDescriptor.ofVoid(*arguments.map { requireNotNull(it.layout) }.toTypedArray())
 }
 
-@ApiStatus.Internal
 internal class ObjcTypeEncoding(private val encoding: String) {
   private var position = 0
 
