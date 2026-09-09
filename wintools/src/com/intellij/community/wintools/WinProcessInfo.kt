@@ -7,9 +7,12 @@ import com.intellij.community.wintools.ntdll.RTL_USER_PROCESS_PARAMETERS
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.sun.jna.Pointer
+import com.sun.jna.WString
 import com.sun.jna.platform.win32.Kernel32
+import com.sun.jna.platform.win32.Shell32
 import com.sun.jna.platform.win32.WinNT.PROCESS_QUERY_INFORMATION
 import com.sun.jna.platform.win32.WinNT.PROCESS_VM_READ
+import com.sun.jna.ptr.IntByReference
 import java.nio.file.Path
 import kotlin.io.path.Path
 
@@ -22,6 +25,14 @@ class WinProcessInfo private constructor(
   val executable: Path,
   val parentId: Long?,
 ) {
+  /**
+   * [commandLine], split into the arguments the process itself sees. The first element is the executable.
+   *
+   * Windows gives a process one string and lets the process split it, so a split on a space is wrong.
+   * It breaks a quoted path such as `"C:\Program Files\app.exe" -c`.
+   */
+  val arguments: List<@NlsSafe String> by lazy { commandLine.toArgv() }
+
   companion object {
     /**
      * @return process information by [pid]
@@ -72,5 +83,26 @@ class WinProcessInfo private constructor(
 
   override fun toString(): String {
     return "WinProcessInfo(pid=$pid, commandLine='$commandLine', executable=$executable, parentId=$parentId)"
+  }
+}
+
+/**
+ * Splits a Windows command line with `CommandLineToArgvW`. Windows itself uses this function, so the result is the
+ * argument vector that the process sees.
+ *
+ * @return the executable and the arguments. An empty list for a blank command line, because `CommandLineToArgvW`
+ * reports the executable of the current process for an empty string.
+ */
+private fun String.toArgv(): List<String> {
+  if (isBlank()) {
+    return emptyList()
+  }
+  val argc = IntByReference()
+  val argv = Shell32.INSTANCE.CommandLineToArgvW(WString(this), argc) ?: return emptyList()
+  try {
+    return argv.getWideStringArray(0, argc.value).asList()
+  }
+  finally {
+    Kernel32.INSTANCE.LocalFree(argv)
   }
 }
