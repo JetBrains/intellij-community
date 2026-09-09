@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import java.nio.file.Path
 
 internal class OpenEventsSchemeFileAction : DumbAwareAction {
@@ -48,7 +48,9 @@ internal class OpenEventsSchemeFileAction : DumbAwareAction {
 
   internal object Manager {
     fun openFileInEditor(file: Path, project: Project) {
-      val virtualFile = VfsUtil.findFile(file, true)
+      val fileSystem = LocalFileSystem.getInstance()
+      val virtualFile = fileSystem.findFileByNioFile(file)?.takeIf { it.isValid }
+                        ?: fileSystem.refreshAndFindFileByNioFile(file)
       if (virtualFile == null) {
         showNotification(project, NotificationType.WARNING, StatisticsBundle.message("stats.file.0.does.not.exist", file.toString()))
         return
