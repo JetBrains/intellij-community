@@ -33,10 +33,10 @@ InlineStackFrame baz1 (nestedInlineFunctions5.kt:32)
     JavaValue[local] baz1Param: int = 2
     JavaValue[local] baz1Var: int = 3
 InlineStackFrame lambda 'baz1' in 'baz' (nestedInlineFunctions5.kt:18)
-    JavaValue[local] bazParam: int = 1
-    JavaValue[local] bazVar: int = 3
     JavaValue[local] baz1BlockParam: int = 1
     JavaValue[local] baz1LambdaVar: int = 1
+    JavaValue[local] bazParam: int = 1
+    JavaValue[local] bazVar: int = 3
 InlineStackFrame baz1 (nestedInlineFunctions5.kt:33)
     JavaValue[local] baz1Param: int = 1
     JavaValue[local] baz1Var: int = 3
@@ -53,20 +53,20 @@ KotlinStackFrame (nestedInlineFunctions5.kt:58)
 nestedInlineFunctions5.kt:21
 Compile bytecode for bazParam + bazVar + baz1BlockParam + baz1LambdaVar + baz1BlockParam1 + baz1LambdaVar1
 InlineStackFrame lambda 'baz1' in 'baz' (nestedInlineFunctions5.kt:21)
+    JavaValue[local] baz1BlockParam: int = 1 (nestedInlineFunctions5.kt:16)
+    JavaValue[local] baz1BlockParam1: int = 1 (nestedInlineFunctions5.kt:18)
+    JavaValue[local] baz1LambdaVar: int = 1 (nestedInlineFunctions5.kt:17)
+    JavaValue[local] baz1LambdaVar1: int = 1 (nestedInlineFunctions5.kt:19)
     JavaValue[local] bazParam: int = 1 (nestedInlineFunctions5.kt:14)
     JavaValue[local] bazVar: int = 3 (nestedInlineFunctions5.kt:15)
-    JavaValue[local] baz1BlockParam: int = 1 (nestedInlineFunctions5.kt:16)
-    JavaValue[local] baz1LambdaVar: int = 1 (nestedInlineFunctions5.kt:17)
-    JavaValue[local] baz1BlockParam1: int = 1 (nestedInlineFunctions5.kt:18)
-    JavaValue[local] baz1LambdaVar1: int = 1 (nestedInlineFunctions5.kt:19)
 InlineStackFrame baz1 (nestedInlineFunctions5.kt:33)
     JavaValue[local] baz1Param: int = 2
     JavaValue[local] baz1Var: int = 3
 InlineStackFrame lambda 'baz1' in 'baz' (nestedInlineFunctions5.kt:18)
-    JavaValue[local] bazParam: int = 1 (nestedInlineFunctions5.kt:14)
-    JavaValue[local] bazVar: int = 3 (nestedInlineFunctions5.kt:15)
     JavaValue[local] baz1BlockParam: int = 1 (nestedInlineFunctions5.kt:16)
     JavaValue[local] baz1LambdaVar: int = 1 (nestedInlineFunctions5.kt:17)
+    JavaValue[local] bazParam: int = 1 (nestedInlineFunctions5.kt:14)
+    JavaValue[local] bazVar: int = 3 (nestedInlineFunctions5.kt:15)
 InlineStackFrame baz1 (nestedInlineFunctions5.kt:33)
     JavaValue[local] baz1Param: int = 1
     JavaValue[local] baz1Var: int = 3
@@ -83,10 +83,10 @@ KotlinStackFrame (nestedInlineFunctions5.kt:58)
 nestedInlineFunctions5.kt:25
 Compile bytecode for bazParam + bazVar + baz1BlockParam + baz1LambdaVar
 InlineStackFrame lambda 'baz1' in 'baz' (nestedInlineFunctions5.kt:25)
-    JavaValue[local] bazParam: int = 1 (nestedInlineFunctions5.kt:14)
-    JavaValue[local] bazVar: int = 3 (nestedInlineFunctions5.kt:15)
     JavaValue[local] baz1BlockParam: int = 1 (nestedInlineFunctions5.kt:16)
     JavaValue[local] baz1LambdaVar: int = 1 (nestedInlineFunctions5.kt:17)
+    JavaValue[local] bazParam: int = 1 (nestedInlineFunctions5.kt:14)
+    JavaValue[local] bazVar: int = 3 (nestedInlineFunctions5.kt:15)
 InlineStackFrame baz1 (nestedInlineFunctions5.kt:33)
     JavaValue[local] baz1Param: int = 1
     JavaValue[local] baz1Var: int = 3
@@ -103,11 +103,11 @@ KotlinStackFrame (nestedInlineFunctions5.kt:58)
 nestedInlineFunctions5.kt:49
 Compile bytecode for flafVar + fooLambdaParam + fooLambdaVar + barLambdaParam + barLambdaVar
 InlineStackFrame lambda 'bar' in 'flaf' (nestedInlineFunctions5.kt:49)
+    JavaValue[local] barLambdaParam: int = 1 (nestedInlineFunctions5.kt:46)
+    JavaValue[local] barLambdaVar: int = 3 (nestedInlineFunctions5.kt:47)
     JavaValue[local] flafVar: int = 1 (nestedInlineFunctions5.kt:43)
     JavaValue[local] fooLambdaParam: int = 1 (nestedInlineFunctions5.kt:44)
     JavaValue[local] fooLambdaVar: int = 2 (nestedInlineFunctions5.kt:45)
-    JavaValue[local] barLambdaParam: int = 1 (nestedInlineFunctions5.kt:46)
-    JavaValue[local] barLambdaVar: int = 3 (nestedInlineFunctions5.kt:47)
 InlineStackFrame bar (nestedInlineFunctions5.kt:11)
     JavaValue[local] barParam: int = 2
     JavaValue[local] barVar: int = 2
@@ -158,10 +158,10 @@ InlineStackFrame baz1 (nestedInlineFunctions5.kt:32)
     JavaValue[local] baz1Param: int = 2
     JavaValue[local] baz1Var: int = 3
 InlineStackFrame lambda 'baz1' in 'baz' (nestedInlineFunctions5.kt:18)
-    JavaValue[local] bazParam: int = 1
-    JavaValue[local] bazVar: int = 3
     JavaValue[local] baz1BlockParam: int = 1
     JavaValue[local] baz1LambdaVar: int = 1
+    JavaValue[local] bazParam: int = 1
+    JavaValue[local] bazVar: int = 3
 InlineStackFrame baz1 (nestedInlineFunctions5.kt:33)
     JavaValue[local] baz1Param: int = 1
     JavaValue[local] baz1Var: int = 3
@@ -175,20 +175,20 @@ KotlinStackFrame (nestedInlineFunctions5.kt:59)
     JavaValue[local] mainVar: int = 1
 nestedInlineFunctions5.kt:21
 InlineStackFrame lambda 'baz1' in 'baz' (nestedInlineFunctions5.kt:21)
+    JavaValue[local] baz1BlockParam: int = 1 (nestedInlineFunctions5.kt:16)
+    JavaValue[local] baz1BlockParam1: int = 1 (nestedInlineFunctions5.kt:18)
+    JavaValue[local] baz1LambdaVar: int = 1 (nestedInlineFunctions5.kt:17)
+    JavaValue[local] baz1LambdaVar1: int = 1 (nestedInlineFunctions5.kt:19)
     JavaValue[local] bazParam: int = 1 (nestedInlineFunctions5.kt:14)
     JavaValue[local] bazVar: int = 3 (nestedInlineFunctions5.kt:15)
-    JavaValue[local] baz1BlockParam: int = 1 (nestedInlineFunctions5.kt:16)
-    JavaValue[local] baz1LambdaVar: int = 1 (nestedInlineFunctions5.kt:17)
-    JavaValue[local] baz1BlockParam1: int = 1 (nestedInlineFunctions5.kt:18)
-    JavaValue[local] baz1LambdaVar1: int = 1 (nestedInlineFunctions5.kt:19)
 InlineStackFrame baz1 (nestedInlineFunctions5.kt:33)
     JavaValue[local] baz1Param: int = 2
     JavaValue[local] baz1Var: int = 3
 InlineStackFrame lambda 'baz1' in 'baz' (nestedInlineFunctions5.kt:18)
-    JavaValue[local] bazParam: int = 1 (nestedInlineFunctions5.kt:14)
-    JavaValue[local] bazVar: int = 3 (nestedInlineFunctions5.kt:15)
     JavaValue[local] baz1BlockParam: int = 1 (nestedInlineFunctions5.kt:16)
     JavaValue[local] baz1LambdaVar: int = 1 (nestedInlineFunctions5.kt:17)
+    JavaValue[local] bazParam: int = 1 (nestedInlineFunctions5.kt:14)
+    JavaValue[local] bazVar: int = 3 (nestedInlineFunctions5.kt:15)
 InlineStackFrame baz1 (nestedInlineFunctions5.kt:33)
     JavaValue[local] baz1Param: int = 1
     JavaValue[local] baz1Var: int = 3
@@ -202,10 +202,10 @@ KotlinStackFrame (nestedInlineFunctions5.kt:59)
     JavaValue[local] mainVar: int = 1
 nestedInlineFunctions5.kt:25
 InlineStackFrame lambda 'baz1' in 'baz' (nestedInlineFunctions5.kt:25)
-    JavaValue[local] bazParam: int = 1 (nestedInlineFunctions5.kt:14)
-    JavaValue[local] bazVar: int = 3 (nestedInlineFunctions5.kt:15)
     JavaValue[local] baz1BlockParam: int = 1 (nestedInlineFunctions5.kt:16)
     JavaValue[local] baz1LambdaVar: int = 1 (nestedInlineFunctions5.kt:17)
+    JavaValue[local] bazParam: int = 1 (nestedInlineFunctions5.kt:14)
+    JavaValue[local] bazVar: int = 3 (nestedInlineFunctions5.kt:15)
 InlineStackFrame baz1 (nestedInlineFunctions5.kt:33)
     JavaValue[local] baz1Param: int = 1
     JavaValue[local] baz1Var: int = 3
@@ -220,18 +220,18 @@ KotlinStackFrame (nestedInlineFunctions5.kt:59)
 nestedInlineFunctions5.kt:64
 Compile bytecode for mainVar + fooLambdaParam + fooLambdaVar + barLambdaParam + barLambdaVar
 InlineStackFrame lambda 'bar' in 'main' (nestedInlineFunctions5.kt:64)
-    JavaValue[local] mainVar: int = 1 (nestedInlineFunctions5.kt:57)
-    JavaValue[local] fooLambdaParam: int = 1 (nestedInlineFunctions5.kt:59)
-    JavaValue[local] fooLambdaVar: int = 2 (nestedInlineFunctions5.kt:60)
     JavaValue[local] barLambdaParam: int = 1 (nestedInlineFunctions5.kt:61)
     JavaValue[local] barLambdaVar: int = 3 (nestedInlineFunctions5.kt:62)
+    JavaValue[local] fooLambdaParam: int = 1 (nestedInlineFunctions5.kt:59)
+    JavaValue[local] fooLambdaVar: int = 2 (nestedInlineFunctions5.kt:60)
+    JavaValue[local] mainVar: int = 1 (nestedInlineFunctions5.kt:57)
 InlineStackFrame bar (nestedInlineFunctions5.kt:11)
     JavaValue[local] barParam: int = 2
     JavaValue[local] barVar: int = 2
 InlineStackFrame lambda 'foo' in 'main' (nestedInlineFunctions5.kt:61)
-    JavaValue[local] mainVar: int = 1 (nestedInlineFunctions5.kt:57)
     JavaValue[local] fooLambdaParam: int = 1 (nestedInlineFunctions5.kt:59)
     JavaValue[local] fooLambdaVar: int = 2 (nestedInlineFunctions5.kt:60)
+    JavaValue[local] mainVar: int = 1 (nestedInlineFunctions5.kt:57)
 InlineStackFrame foo (nestedInlineFunctions5.kt:6)
     JavaValue[local] fooParam: int = 1
     JavaValue[local] fooVar: int = 1
@@ -240,9 +240,9 @@ KotlinStackFrame (nestedInlineFunctions5.kt:59)
 nestedInlineFunctions5.kt:67
 Compile bytecode for mainVar + fooLambdaParam + fooLambdaVar
 InlineStackFrame lambda 'foo' in 'main' (nestedInlineFunctions5.kt:67)
-    JavaValue[local] mainVar: int = 1 (nestedInlineFunctions5.kt:57)
     JavaValue[local] fooLambdaParam: int = 1 (nestedInlineFunctions5.kt:59)
     JavaValue[local] fooLambdaVar: int = 2 (nestedInlineFunctions5.kt:60)
+    JavaValue[local] mainVar: int = 1 (nestedInlineFunctions5.kt:57)
 InlineStackFrame foo (nestedInlineFunctions5.kt:6)
     JavaValue[local] fooParam: int = 1
     JavaValue[local] fooVar: int = 1

@@ -12,23 +12,23 @@ Run Java
 Connected to the target VM
 optimisedVariablesInNestedFunctions.kt:12
 KotlinStackFrame (optimisedVariablesInNestedFunctions.kt:12)
-    JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:9)
     JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:10)
+    JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:9)
 optimisedVariablesInNestedFunctions.kt:18
 CoroutinePreflightFrame invokeSuspend$suspendFoo (optimisedVariablesInNestedFunctions.kt:18)
+    JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:16)
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:15)
     JavaValue[local] result = null
-    JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:16)
 optimisedVariablesInNestedFunctions.kt:20
 CoroutinePreflightFrame invokeSuspend$suspendFoo (optimisedVariablesInNestedFunctions.kt:20)
+    JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:16)
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:15)
     JavaValue[local] result = null
-    JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:16)
 optimisedVariablesInNestedFunctions.kt:22
 CoroutinePreflightFrame invokeSuspend$suspendFoo (optimisedVariablesInNestedFunctions.kt:22)
+    JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:16)
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:15)
     JavaValue[local] result = null
-    JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:16)
 optimisedVariablesInNestedFunctions.kt:27
 KotlinStackFrame (optimisedVariablesInNestedFunctions.kt:27)
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:25)

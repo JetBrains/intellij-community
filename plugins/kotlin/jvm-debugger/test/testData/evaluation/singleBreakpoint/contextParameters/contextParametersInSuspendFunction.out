@@ -30,11 +30,11 @@ Compile bytecode for kotlinx.coroutines.runBlocking(
 }
 KotlinStackFrame (contextParametersInSuspendFunction.kt:44)
     JavaValue[local] ctx1: forTests.Ctx1 = forTests.Ctx1@hashCode (contextParametersInSuspendFunction.kt:19)
-        JavaValue[field] name1: java.lang.String = ctx1 (contexts.kt:4)
         JavaValue[field] name: java.lang.String = ctx1 (contexts.kt:5)
+        JavaValue[field] name1: java.lang.String = ctx1 (contexts.kt:4)
     JavaValue[local] ctx2: forTests.Ctx2 = forTests.Ctx2@hashCode (contextParametersInSuspendFunction.kt:19)
-        JavaValue[field] name2: java.lang.String = ctx2 (contexts.kt:12)
         JavaValue[field] name: java.lang.String = ctx2 (contexts.kt:13)
+        JavaValue[field] name2: java.lang.String = ctx2 (contexts.kt:12)
 Disconnected from the target VM
 
 Process finished with exit code 0

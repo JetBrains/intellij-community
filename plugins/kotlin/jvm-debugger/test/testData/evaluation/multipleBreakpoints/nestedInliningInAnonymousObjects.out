@@ -20,10 +20,10 @@ KotlinStackFrame (nestedInliningInAnonymousObjects.kt:40)
 nestedInliningInAnonymousObjects.kt:44
 Compile bytecode for g + x
 InlineStackFrame lambda 'inlineCall' in 'foo' (nestedInliningInAnonymousObjects.kt:44)
+    JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:42)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$1@hashCode
         DummyMessageValueNode = Class has no properties
     JavaValue[local] x: int = 5 (nestedInliningInAnonymousObjects.kt:39)
-    JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:42)
 InlineStackFrame inlineCall (nestedInliningInAnonymousObjects.kt:32)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$1@hashCode
         DummyMessageValueNode = Class has no properties
@@ -44,10 +44,10 @@ KotlinStackFrame (nestedInliningInAnonymousObjects.kt:47)
 nestedInliningInAnonymousObjects.kt:51
 Compile bytecode for g + x
 InlineStackFrame lambda 'inlineCall' in 'foo' (nestedInliningInAnonymousObjects.kt:51)
+    JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:49)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$1@hashCode
         DummyMessageValueNode = Class has no properties
     JavaValue[local] x: int = 5 (nestedInliningInAnonymousObjects.kt:39)
-    JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:49)
 InlineStackFrame inlineCall (nestedInliningInAnonymousObjects.kt:32)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$1@hashCode
         DummyMessageValueNode = Class has no properties
@@ -58,19 +58,19 @@ KotlinStackFrame (nestedInliningInAnonymousObjects.kt:48)
 nestedInliningInAnonymousObjects.kt:11
 Compile bytecode for g + b
 InlineStackFrame lambda 'inlineCall' in 'bar' (nestedInliningInAnonymousObjects.kt:11)
-    JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@hashCode
-        DummyMessageValueNode = Class has no properties
-    JavaValue[local] param: int = 6 (nestedInliningInAnonymousObjects.kt:5)
     JavaValue[local] b: int = 2 (nestedInliningInAnonymousObjects.kt:6)
     JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:9)
+    JavaValue[local] param: int = 6 (nestedInliningInAnonymousObjects.kt:5)
+    JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@hashCode
+        DummyMessageValueNode = Class has no properties
 InlineStackFrame inlineCall (nestedInliningInAnonymousObjects.kt:32)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@hashCode
         DummyMessageValueNode = Class has no properties
 KotlinStackFrame (nestedInliningInAnonymousObjects.kt:8)
+    JavaValue[local] b: int = 2 (nestedInliningInAnonymousObjects.kt:6)
+    JavaValue[local] param: int = 6 (nestedInliningInAnonymousObjects.kt:5)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@hashCode
         DummyMessageValueNode = Class has no properties
-    JavaValue[local] param: int = 6 (nestedInliningInAnonymousObjects.kt:5)
-    JavaValue[local] b: int = 2 (nestedInliningInAnonymousObjects.kt:6)
 nestedInliningInAnonymousObjects.kt:62
 InlineStackFrame lambda 'foo' in 'main' (nestedInliningInAnonymousObjects.kt:62)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$2@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$2@hashCode
@@ -83,10 +83,10 @@ KotlinStackFrame (nestedInliningInAnonymousObjects.kt:40)
     JavaValue[local] x: int = 5
 nestedInliningInAnonymousObjects.kt:44
 InlineStackFrame lambda 'inlineCall' in 'foo' (nestedInliningInAnonymousObjects.kt:44)
+    JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:42)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$2@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$2@hashCode
         DummyMessageValueNode = Class has no properties
     JavaValue[local] x: int = 5 (nestedInliningInAnonymousObjects.kt:39)
-    JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:42)
 InlineStackFrame inlineCall (nestedInliningInAnonymousObjects.kt:32)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$2@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$2@hashCode
         DummyMessageValueNode = Class has no properties
@@ -106,10 +106,10 @@ KotlinStackFrame (nestedInliningInAnonymousObjects.kt:47)
     JavaValue[local] x: int = 5
 nestedInliningInAnonymousObjects.kt:51
 InlineStackFrame lambda 'inlineCall' in 'foo' (nestedInliningInAnonymousObjects.kt:51)
+    JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:49)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$2@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$2@hashCode
         DummyMessageValueNode = Class has no properties
     JavaValue[local] x: int = 5 (nestedInliningInAnonymousObjects.kt:39)
-    JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:49)
 InlineStackFrame inlineCall (nestedInliningInAnonymousObjects.kt:32)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$2@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$2@hashCode
         DummyMessageValueNode = Class has no properties
@@ -120,19 +120,19 @@ KotlinStackFrame (nestedInliningInAnonymousObjects.kt:48)
 nestedInliningInAnonymousObjects.kt:17
 Compile bytecode for g + b
 InlineStackFrame lambda 'inlineCall' in 'bar' (nestedInliningInAnonymousObjects.kt:17)
-    JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@hashCode
-        DummyMessageValueNode = Class has no properties
-    JavaValue[local] param: int = 6 (nestedInliningInAnonymousObjects.kt:5)
     JavaValue[local] b: int = 2 (nestedInliningInAnonymousObjects.kt:6)
     JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:15)
+    JavaValue[local] param: int = 6 (nestedInliningInAnonymousObjects.kt:5)
+    JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@hashCode
+        DummyMessageValueNode = Class has no properties
 InlineStackFrame inlineCall (nestedInliningInAnonymousObjects.kt:32)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@hashCode
         DummyMessageValueNode = Class has no properties
 KotlinStackFrame (nestedInliningInAnonymousObjects.kt:14)
+    JavaValue[local] b: int = 2 (nestedInliningInAnonymousObjects.kt:6)
+    JavaValue[local] param: int = 6 (nestedInliningInAnonymousObjects.kt:5)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@hashCode
         DummyMessageValueNode = Class has no properties
-    JavaValue[local] param: int = 6 (nestedInliningInAnonymousObjects.kt:5)
-    JavaValue[local] b: int = 2 (nestedInliningInAnonymousObjects.kt:6)
 nestedInliningInAnonymousObjects.kt:62
 InlineStackFrame lambda 'foo' in 'main' (nestedInliningInAnonymousObjects.kt:62)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$3@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$3@hashCode
@@ -145,10 +145,10 @@ KotlinStackFrame (nestedInliningInAnonymousObjects.kt:40)
     JavaValue[local] x: int = 5
 nestedInliningInAnonymousObjects.kt:44
 InlineStackFrame lambda 'inlineCall' in 'foo' (nestedInliningInAnonymousObjects.kt:44)
+    JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:42)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$3@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$3@hashCode
         DummyMessageValueNode = Class has no properties
     JavaValue[local] x: int = 5 (nestedInliningInAnonymousObjects.kt:39)
-    JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:42)
 InlineStackFrame inlineCall (nestedInliningInAnonymousObjects.kt:32)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$3@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$3@hashCode
         DummyMessageValueNode = Class has no properties
@@ -168,10 +168,10 @@ KotlinStackFrame (nestedInliningInAnonymousObjects.kt:47)
     JavaValue[local] x: int = 5
 nestedInliningInAnonymousObjects.kt:51
 InlineStackFrame lambda 'inlineCall' in 'foo' (nestedInliningInAnonymousObjects.kt:51)
+    JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:49)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$3@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$3@hashCode
         DummyMessageValueNode = Class has no properties
     JavaValue[local] x: int = 5 (nestedInliningInAnonymousObjects.kt:39)
-    JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:49)
 InlineStackFrame inlineCall (nestedInliningInAnonymousObjects.kt:32)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$3@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1$3@hashCode
         DummyMessageValueNode = Class has no properties
@@ -182,19 +182,19 @@ KotlinStackFrame (nestedInliningInAnonymousObjects.kt:48)
 nestedInliningInAnonymousObjects.kt:24
 Compile bytecode for g + b
 InlineStackFrame lambda 'inlineCall' in 'bar' (nestedInliningInAnonymousObjects.kt:24)
-    JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@hashCode
-        DummyMessageValueNode = Class has no properties
-    JavaValue[local] param: int = 6 (nestedInliningInAnonymousObjects.kt:5)
     JavaValue[local] b: int = 2 (nestedInliningInAnonymousObjects.kt:6)
     JavaValue[local] g: int = 7 (nestedInliningInAnonymousObjects.kt:22)
+    JavaValue[local] param: int = 6 (nestedInliningInAnonymousObjects.kt:5)
+    JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@hashCode
+        DummyMessageValueNode = Class has no properties
 InlineStackFrame inlineCall (nestedInliningInAnonymousObjects.kt:32)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@hashCode
         DummyMessageValueNode = Class has no properties
 KotlinStackFrame (nestedInliningInAnonymousObjects.kt:21)
+    JavaValue[local] b: int = 2 (nestedInliningInAnonymousObjects.kt:6)
+    JavaValue[local] param: int = 6 (nestedInliningInAnonymousObjects.kt:5)
     JavaValue[this] this: NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@uniqueID = nestedInliningInAnonymousObjects.NestedInliningInAnonymousObjectsKt$main$$inlined$foo$1@hashCode
         DummyMessageValueNode = Class has no properties
-    JavaValue[local] param: int = 6 (nestedInliningInAnonymousObjects.kt:5)
-    JavaValue[local] b: int = 2 (nestedInliningInAnonymousObjects.kt:6)
 Disconnected from the target VM
 
 Process finished with exit code 0
