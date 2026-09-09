@@ -13,6 +13,7 @@ import com.intellij.testFramework.junit5.TestDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -158,6 +159,28 @@ internal class PluginUpdatesServiceTest {
       assertThat(service.awaitHasUpdate(PluginId.getId("plugin.absent")))
         .describedAs("awaitHasUpdate is false for an unknown plugin").isFalse()
     }
+
+  @Test
+  fun `updates flow triggers initial provider calculation`(@TestDisposable disposable: Disposable): Unit = runTest {
+    val events = MutableSharedFlow<PluginUpdatesEvent>(replay = 1)
+    var updateCount = 0
+    val provider = object : PluginUpdatesProvider {
+      override suspend fun pluginUpdateEvents(): Flow<PluginUpdatesEvent?> = events
+
+      override suspend fun update() {
+        updateCount++
+        events.emit(eventWith("plugin.initial"))
+      }
+    }
+    ExtensionTestUtil.maskExtensions(PluginUpdatesProvider.EP_NAME, listOf(provider), disposable)
+    val service = PluginUpdatesService(backgroundScope)
+
+    val firstUpdate = async { service.updatesFlow().first() }
+    advanceUntilIdle()
+
+    assertThat(firstUpdate.await().hasUpdateFor("plugin.initial")).isTrue()
+    assertThat(updateCount).isEqualTo(1)
+  }
 
   @Test
   fun `rerunCallbacks re-delivers the last snapshot to callbacks`(@TestDisposable disposable: Disposable): Unit =

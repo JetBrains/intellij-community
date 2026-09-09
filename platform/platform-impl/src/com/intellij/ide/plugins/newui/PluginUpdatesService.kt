@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -158,6 +160,11 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
   suspend fun awaitUpdates(): Collection<PluginUiModel> {
     ensureUpdatesStarted()
     return pluginUpdateFlow.first().all
+  }
+
+  fun updatesFlow(): Flow<PluginUpdatesEvent> = flow {
+    ensureUpdatesStarted()
+    emitAll(pluginUpdateFlow)
   }
 
   @VisibleForTesting
