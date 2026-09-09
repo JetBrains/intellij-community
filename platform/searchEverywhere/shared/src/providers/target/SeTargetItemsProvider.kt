@@ -3,10 +3,13 @@ package com.intellij.platform.searchEverywhere.providers.target
 
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
-import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorWrapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewFetcher
+import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.ide.util.gotoByName.ChooseByNameInScopeItemProvider
@@ -16,7 +19,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameModelEx
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
 import com.intellij.ide.util.gotoByName.ChooseByNameWeightedItemProvider
-import com.intellij.ide.util.gotoByName.FileTypeRef
+import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel
 import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
@@ -26,6 +29,7 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -38,11 +42,13 @@ import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SePreviewInfoFactory
@@ -50,8 +56,11 @@ import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
 import com.intellij.platform.searchEverywhere.providers.SeLog
+import com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider
+import com.intellij.platform.searchEverywhere.providers.target.selection.SeTargetItemSelectionProcessor
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.suspendLazy
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.SmartPointerManager
@@ -62,14 +71,19 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.text.matching.MatchingMode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.event.InputEvent
 import java.util.UUID
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
@@ -96,16 +110,60 @@ class SeTargetPresentableItem(val rawItem: Any,
 }
 
 @ApiStatus.Experimental
-class SeTargetItemsProvider private constructor(
+class SeTargetItemsProvider<T> private constructor(
   private val project: Project,
   private val psiContext: SmartPsiElementPointer<PsiElement?>?,
   private val operationDisposable: Disposable?,
   private val label: String,
-  private val gotoModelProvider: (Project, ScopeDescriptor?, Set<FileTypeRef>) -> (FilteringGotoByModel<*>),
-  private val typeFilterProvider: (Project) -> List<PersistentSearchEverywhereContributorFilter<*>>,
+  private val gotoModelProvider: (Project, ScopeDescriptor?, Set<T>) -> (FilteringGotoByModel<*>),
+  private val typeFilterProvider: (Project) -> List<PersistentSearchEverywhereContributorFilter<T>>,
   private val extendedInfoCalculator: SeExtendedInfoCalculator,
+  private val isFileProvider: Boolean,
 ) : Disposable {
   //region Search
+
+  /**
+   * Runs the search of [params] and sends every result to [collector].
+   */
+  suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector): Unit = coroutineScope {
+    val inputQuery = normalizeQuery(params.inputQuery)
+    val inputQueryHasNoExtension = !inputQuery.contains('.')
+
+    getItemsFlow(params, presentationProvider = { fetchPresentation(it, inputQuery, inputQueryHasNoExtension) })
+      .buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND)
+      .takeWhile {
+        collector.put(it)
+      }
+      .collect()
+  }
+
+  private suspend fun fetchPresentation(
+    item: SeTargetRawItem,
+    inputQuery: String,
+    inputQueryHasNoExtension: Boolean,
+  ): SeTargetPresentableItem {
+    val weight = item.rawWeight ?: 0
+    val presentation = SeTargetPresentationProvider.computePresentation(item.rawItem)
+                       ?: TargetPresentation.builder("").presentation()
+
+    return SeTargetPresentableItem(
+      rawItem = item.rawItem,
+      matchers = item.matchers,
+      weight = weight,
+      presentation = presentation,
+      extendedInfo = getExtendedInfo(item),
+      isMultiSelectionSupported = true, // AbstractGotoSEContributor supports it for every goto model
+      isExactMatch = isExactMatch(
+        // The legacy verdict of the item. SeAsyncContributorWrapper derives it the same way.
+        isExactMatchFromItem = DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(weight),
+        presentableText = presentation.presentableText,
+        inputQuery = inputQuery,
+        isFile = isFileProvider,
+        inputQueryHasNoExtension = inputQueryHasNoExtension,
+        isDirectory = PSIPresentationBgRendererWrapper.toPsi(item.rawItem) is PsiDirectory,
+      ),
+    )
+  }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   fun getItemsFlow(params: SeParams, presentationProvider: suspend (SeTargetRawItem) -> SeTargetPresentableItem): Flow<SeTargetPresentableItem> =
@@ -139,8 +197,11 @@ class SeTargetItemsProvider private constructor(
 
     persistHiddenTypes(hiddenTypes)
 
-    val hiddenTypeRefs = hiddenTypes?.toSet()?.let { hiddenTypes ->
-      FileSearchEverywhereContributor.getAllFileTypes().filter { hiddenTypes.contains(it.displayName) }
+    // The filters of the model know their own elements, so this stays free of any one model.
+    val hiddenTypeRefs = hiddenTypes?.toSet()?.let { hiddenNames ->
+      typeFilters.getValue().flatMap { filter ->
+        filter.allElements.filter { hiddenNames.contains(filter.getElementText(it)) }
+      }
     }?.toSet() ?: emptySet()
 
     try {
@@ -358,7 +419,7 @@ class SeTargetItemsProvider private constructor(
   /**
    * The persistent type filters of the model, in the order that the filter actions appear.
    */
-  private val typeFilters: SuspendLazyProperty<List<PersistentSearchEverywhereContributorFilter<*>>> = suspendLazy {
+  private val typeFilters: SuspendLazyProperty<List<PersistentSearchEverywhereContributorFilter<T>>> = suspendLazy {
     typeFilterProvider(project)
   }
 
@@ -370,7 +431,7 @@ class SeTargetItemsProvider private constructor(
       typeVisibilityStates(it)
     } ?: emptyList()
 
-  private fun <T> typeVisibilityStates(filter: PersistentSearchEverywhereContributorFilter<T>): List<SeTypeVisibilityStatePresentation> =
+  private fun typeVisibilityStates(filter: PersistentSearchEverywhereContributorFilter<T>): List<SeTypeVisibilityStatePresentation> =
     filter.allElements.map { element ->
       SeTypeVisibilityStatePresentation(filter.getElementText(element), filter.getElementIcon(element)?.rpcId(), filter.isSelected(element))
     }
@@ -385,11 +446,9 @@ class SeTargetItemsProvider private constructor(
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
-  private fun persistHiddenTypes(filter: PersistentSearchEverywhereContributorFilter<*>, hiddenTypes: Set<String>) {
-    val typedFilter = filter as PersistentSearchEverywhereContributorFilter<Any?>
-    typedFilter.allElements.forEach { element ->
-      typedFilter.setSelected(element, !hiddenTypes.contains(typedFilter.getElementText(element)))
+  private fun persistHiddenTypes(filter: PersistentSearchEverywhereContributorFilter<T>, hiddenTypes: Set<String>) {
+    filter.allElements.forEach { element ->
+      filter.setSelected(element, !hiddenTypes.contains(filter.getElementText(element)))
     }
   }
 
@@ -398,6 +457,27 @@ class SeTargetItemsProvider private constructor(
   //region Extended info
 
   suspend fun getExtendedInfo(item: SeTargetRawItem): SeExtendedInfo = extendedInfoCalculator.infoFor(item)
+
+  //endregion
+
+  //region Selection
+
+  /**
+   * Acts on the item that the user chose, and returns whether the popup should close.
+   */
+  suspend fun itemSelected(item: SeItem, provider: SeItemsProvider, modifiers: Int, searchText: String): Boolean {
+    SeLog.log(SeLog.USER_ACTION) { "$label: item selected" }
+    // A null answer means that no extension handled the item, so the popup stays open.
+    return SeTargetItemSelectionProcessor.process(item, provider, modifiers, searchText) ?: false
+  }
+
+  /**
+   * Runs the item through the selection chain as a selection with Shift held.
+   */
+  suspend fun performExtendedAction(item: SeItem, provider: SeItemsProvider): Boolean {
+    SeLog.log(SeLog.USER_ACTION) { "$label: extended action" }
+    return SeTargetItemSelectionProcessor.process(item, provider, InputEvent.SHIFT_DOWN_MASK, "") ?: false
+  }
 
   //endregion
 
@@ -412,13 +492,12 @@ class SeTargetItemsProvider private constructor(
   private val previewDisposables = ConcurrentLinkedQueue<Disposable>()
 
   /**
-   * Builds the preview of [rawItem], or returns null when the item shows none.
-   *
-   * `SearchEverywherePreviewFetcher.findFirstChild` starts with
-   * `PSIPresentationBgRendererWrapper.toPsi`, so a raw item goes in with no wrapper around it.
+   * Builds the preview of [item], or returns null when the item shows none.
    */
-  suspend fun getPreviewInfo(rawItem: Any): SePreviewInfo? =
-    fetchPreviewInfo(rawItem, project) { previewDisposables.add(it) }
+  suspend fun getPreviewInfo(item: SeItem): SePreviewInfo? {
+    val rawItem = (item as? SeTargetPresentableItem)?.rawItem ?: return null
+    return fetchPreviewInfo(rawItem, project) { previewDisposables.add(it) }
+  }
 
   override fun dispose() {
     previewDisposables.forEach { Disposer.dispose(it) }
@@ -428,8 +507,21 @@ class SeTargetItemsProvider private constructor(
   //endregion
 
   companion object {
-    private val LOG = logger<SeTargetItemsProvider>()
-    const val COROUTINE_BASED_GOTO_KEY = "search.everywhere.coroutine.based.goto"
+    private val LOG = logger<SeTargetItemsProvider<*>>()
+    private const val COROUTINE_BASED_GOTO_KEY = "search.everywhere.coroutine.based.goto"
+
+    suspend fun isCoroutineBasedGotoEnabled(legacyContributor: SearchEverywhereContributor<Any>, providerId: String): Boolean {
+      if (!RegistryManager.getInstanceAsync().`is`(COROUTINE_BASED_GOTO_KEY)) return false
+
+      val effectiveContributor = (legacyContributor as? SearchEverywhereContributorWrapper)?.getEffectiveContributor()
+                                 ?: legacyContributor
+      if (effectiveContributor is SemanticSearchEverywhereContributor && !ApplicationManager.getApplication().isInternal) {
+        SeLog.log(SeLog.LIFE_CYCLE) { "$providerId: the semantic contributor is on, keeping the legacy provider" }
+        return false
+      }
+
+      return true
+    }
 
     /**
      * Builds the preview of [rawItem], or returns null when the item shows none.
@@ -500,15 +592,16 @@ class SeTargetItemsProvider private constructor(
       !isDirectory && ((presentableText == inputQuery) || // IJPL-55665
                        (isFile && inputQueryHasNoExtension && presentableText.startsWith("$inputQuery."))) // IJPL-55732, IJPL-156298
 
-    suspend fun create(
+    suspend fun <T> create(
       project: Project,
       dataContext: DataContext,
       operationDisposable: Disposable?,
       label: String,
-      gotoModelProvider: (Project, ScopeDescriptor?, Set<FileTypeRef>) -> (FilteringGotoByModel<*>),
-      typeFilterProvider: (Project) -> List<PersistentSearchEverywhereContributorFilter<*>> = { emptyList() },
+      gotoModelProvider: (Project, ScopeDescriptor?, Set<T>) -> (FilteringGotoByModel<*>),
+      typeFilterProvider: (Project) -> List<PersistentSearchEverywhereContributorFilter<T>> = { emptyList() },
       extendedInfoCalculator: SeExtendedInfoCalculator = SePsiExtendedInfoCalculator(),
-    ): SeTargetItemsProvider {
+      isFileProvider: Boolean = false,
+    ): SeTargetItemsProvider<T> {
       val psiContext = readAction {
         GotoActionBase.getPsiContext(dataContext)?.let { context ->
           SmartPointerManager.getInstance(project).createSmartPsiElementPointer(context)
@@ -516,7 +609,7 @@ class SeTargetItemsProvider private constructor(
       }
 
       return SeTargetItemsProvider(project, psiContext, operationDisposable, label, gotoModelProvider, typeFilterProvider,
-                                   extendedInfoCalculator)
+                                   extendedInfoCalculator, isFileProvider)
     }
   }
 }

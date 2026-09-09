@@ -1,11 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.backend.providers.files
+package com.intellij.platform.searchEverywhere.providers.symbols
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
-import com.intellij.ide.util.gotoByName.FileTypeRef
+import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel
-import com.intellij.ide.util.gotoByName.GotoFileModel
+import com.intellij.ide.util.gotoByName.GotoSymbolModel2
+import com.intellij.ide.util.gotoByName.LanguageRef
+import com.intellij.ide.util.gotoByName.LanguageRef.Companion.forAllLanguages
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -21,17 +23,20 @@ import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
 import com.intellij.platform.searchEverywhere.SeTypeVisibilityStateProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-internal class SeFilesProvider private constructor(
-  private val targetProvider: SeTargetItemsProvider<FileTypeRef>,
+/** The coroutine based counterpart of [SeSymbolsLegacyBasedProvider]. */
+@ApiStatus.Internal
+class SeSymbolsProvider private constructor(
+  private val targetProvider: SeTargetItemsProvider<LanguageRef>,
 ) : SeItemsProvider,
     SeSearchScopesProvider,
     SeTypeVisibilityStateProvider,
     SeItemsPreviewProvider,
     SeExtendedInfoProvider {
-  override val id: String get() = SeProviderIdUtils.FILES_ID
-  override val displayName: @Nls String get() = IdeBundle.message("search.everywhere.group.name.files")
+  override val id: String get() = SeProviderIdUtils.SYMBOLS_ID
+  override val displayName: @Nls String get() = IdeBundle.message("search.everywhere.group.name.symbols")
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector): Unit =
     targetProvider.collectItems(params, collector)
@@ -58,32 +63,38 @@ internal class SeFilesProvider private constructor(
   }
 
   companion object {
-    /**
-     * `setFilterItems` is a whitelist of the types to show. An empty set rejects every file, and an
-     * unset filter accepts every file.
-     */
-    private fun createModel(project: Project, hiddenTypes: Set<FileTypeRef>): FilteringGotoByModel<FileTypeRef> {
-      val model = GotoFileModel(project)
-      model.setFilterItems(FileSearchEverywhereContributor.getAllFileTypes().filterNot { it in hiddenTypes })
+    /** The symbol model shares the language filter of the class model. */
+    private fun createModel(
+      project: Project,
+      modelParent: Disposable,
+      hiddenLanguages: Set<LanguageRef>,
+    ): FilteringGotoByModel<LanguageRef> {
+      val model = GotoSymbolModel2(project, modelParent)
+      model.setFilterItems(forAllLanguages().filterNot { it in hiddenLanguages })
       return model
     }
 
-    suspend fun create(project: Project, dataContext: DataContext): SeFilesProvider {
+    suspend fun create(project: Project, dataContext: DataContext): SeSymbolsProvider {
+      // GotoSymbolModel2 puts an extension point listener on this disposable, so it must live as long
+      // as the model does. `SymbolSearchEverywhereContributor` passes itself for the same reason, so
+      // this disposable takes the lifetime of the provider.
+      val modelParent = Disposer.newDisposable("SeSymbolsProvider goto models")
+
       val targetProvider = SeTargetItemsProvider.create(
         project = project,
         dataContext = dataContext,
         operationDisposable = null,
-        label = "SeFiles",
-        gotoModelProvider = { project, _, hiddenTypes ->
-          createModel(project, hiddenTypes)
+        label = "SeSymbols",
+        gotoModelProvider = { project, _, hiddenLanguages ->
+          createModel(project, modelParent, hiddenLanguages)
         },
         typeFilterProvider = {
-          listOf(FileSearchEverywhereContributor.createFileTypeFilter(it))
+          listOf(ClassSearchEverywhereContributor.createLanguageFilter(it))
         },
-        isFileProvider = true,
       )
+      Disposer.register(targetProvider, modelParent)
 
-      return SeFilesProvider(targetProvider)
+      return SeSymbolsProvider(targetProvider)
     }
   }
 }
