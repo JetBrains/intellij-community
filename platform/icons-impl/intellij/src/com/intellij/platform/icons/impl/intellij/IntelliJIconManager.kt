@@ -7,11 +7,11 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
-import com.intellij.platform.icons.Icon
+import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.IconIdentifier
 import com.intellij.platform.icons.ImageResourceLocation
 import com.intellij.platform.icons.design.IconDesigner
-import com.intellij.platform.icons.impl.DefaultDeferredIcon
+import com.intellij.platform.icons.impl.DefaultDeferredIconDescriptor
 import com.intellij.platform.icons.impl.DefaultIconManager
 import com.intellij.platform.icons.impl.DeferredIconResolver
 import com.intellij.platform.icons.impl.iconLayer
@@ -41,8 +41,8 @@ class IntelliJIconManager : DefaultIconManager() {
 
   override fun createDeferredIconResolver(
     id: IconIdentifier,
-    ref: WeakReference<DefaultDeferredIcon>,
-    evaluator: (suspend () -> Icon)?
+    ref: WeakReference<DefaultDeferredIconDescriptor>,
+    evaluator: (suspend () -> IconDescriptor)?
   ): DeferredIconResolver {
     if (evaluator == null) {
       throw NotImplementedError("Remote Icon evaluation is not supported")
@@ -52,19 +52,19 @@ class IntelliJIconManager : DefaultIconManager() {
     }
   }
 
-  override fun icon(designer: IconDesigner.() -> Unit): Icon {
+  override fun iconDescriptor(designer: IconDesigner.() -> Unit): IconDescriptor {
     val ijIconDesigner = IntelliJIconDesigner()
     ijIconDesigner.designer()
     return ijIconDesigner.build()
   }
 
-  override fun toSwingIcon(icon: Icon, scale: IconScale): ScalableSwingIcon {
-    return SwingIcon(icon, scale)
+  override fun createSwingIcon(iconDescriptor: IconDescriptor, scale: IconScale): ScalableSwingIcon {
+    return SwingIcon(iconDescriptor, scale)
   }
 
   override fun addSwingLayer(designer: IconDesigner, swingIcon: javax.swing.Icon, modifier: IconModifier) {
     if (swingIcon is SwingIcon) {
-      return designer.icon(swingIcon.icon, modifier)
+      return designer.icon(swingIcon.iconDescriptor, modifier)
     }
     if (designer !is IntelliJIconDesigner) {
       error("Only IntelliJIconDesigner can handle swing icons.")
@@ -72,12 +72,12 @@ class IntelliJIconManager : DefaultIconManager() {
     designer.addSwingLayer(swingIcon, modifier)
   }
 
-  override fun toNewIcon(swingIcon: javax.swing.Icon): Icon {
-    if (swingIcon is SwingIcon && swingIcon.scale == null) return swingIcon.icon
+  override fun toIconDescriptor(swingIcon: javax.swing.Icon): IconDescriptor {
+    if (swingIcon is SwingIcon && swingIcon.scale == null) return swingIcon.iconDescriptor
     return if (swingIcon is SwingIcon) {
       unpackSwingIcon(swingIcon)
     } else {
-      convertLegacyIcon(swingIcon) ?: icon {
+      convertLegacyIcon(swingIcon) ?: iconDescriptor {
         addSwingLayer(
           this,
           swingIcon,
@@ -87,7 +87,7 @@ class IntelliJIconManager : DefaultIconManager() {
     }
   }
 
-  private fun convertLegacyIcon(swingIcon: javax.swing.Icon): Icon? {
+  private fun convertLegacyIcon(swingIcon: javax.swing.Icon): IconDescriptor? {
     return when (swingIcon) {
         is AnimatedIcon -> {
           swingIcon.extractAsNewIcon()
@@ -96,24 +96,23 @@ class IntelliJIconManager : DefaultIconManager() {
     }
   }
 
-  private fun unpackSwingIcon(swingIcon: SwingIcon): Icon {
-    @Suppress("KotlinConstantConditions")
+  private fun unpackSwingIcon(swingIcon: SwingIcon): IconDescriptor {
     return if (swingIcon.scale != null) {
-      icon {
+      iconDescriptor {
         addSwingLayer(
           this,
           swingIcon,
           IconModifier.scale(swingIcon.scale)
         )
       }
-    } else swingIcon.icon
+    } else swingIcon.iconDescriptor
   }
 
   override fun markDeferredIconUnused(id: IconIdentifier) {
     // TODO delete unused deferred icons
   }
 
-  override suspend fun sendDeferredNotifications(id: IconIdentifier, result: Icon) {
+  override suspend fun sendDeferredNotifications(id: IconIdentifier, result: IconDescriptor) {
     val deferredIconListener = ApplicationManager.getApplication().messageBus.syncPublisher(DeferredIconListener.TOPIC)
     withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       deferredIconListener.evaluated(id, result)
@@ -157,7 +156,7 @@ class IntelliJIconManager : DefaultIconManager() {
 
 @ApiStatus.Internal
 interface DeferredIconListener {
-  fun evaluated(id: IconIdentifier, result: Icon)
+  fun evaluated(id: IconIdentifier, result: IconDescriptor)
 
   companion object {
     @JvmField

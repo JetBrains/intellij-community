@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.design
 
-import com.intellij.platform.icons.Icon
+import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.ImageResourceLocation
 import com.intellij.platform.icons.design.Color
 import com.intellij.platform.icons.design.IconAnimationDesigner
 import com.intellij.platform.icons.design.IconDesigner
 import com.intellij.platform.icons.design.Shape
-import com.intellij.platform.icons.impl.DefaultLayeredIcon
+import com.intellij.platform.icons.impl.DefaultLayeredIconDescriptor
 import com.intellij.platform.icons.impl.layers.AnimatedIconLayer
 import com.intellij.platform.icons.impl.layers.ImageIconLayer
 import com.intellij.platform.icons.impl.layers.LayoutIconLayer
@@ -24,8 +24,8 @@ abstract class DefaultIconDesigner : IconDesigner {
         layers.add(ImageIconLayer(resourceLoader, modifier))
     }
 
-    override fun icon(icon: Icon, modifier: IconModifier) {
-        layers.add(NestedIconLayer(icon, modifier))
+    override fun icon(iconDescriptor: IconDescriptor, modifier: IconModifier) {
+        layers.add(NestedIconLayer(iconDescriptor, modifier))
     }
 
     override fun box(modifier: IconModifier, builder: IconDesigner.() -> Unit) {
@@ -66,7 +66,7 @@ abstract class DefaultIconDesigner : IconDesigner {
 
     abstract fun createNestedDesigner(): DefaultIconDesigner
 
-    fun build(): DefaultLayeredIcon = DefaultLayeredIcon(buildLayers())
+    fun build(): DefaultLayeredIconDescriptor = DefaultLayeredIconDescriptor(buildLayers())
 
     fun buildLayers(): List<IconLayer> = layers.toList()
 }

@@ -2,7 +2,7 @@
 package com.intellij.platform.icons.impl.intellij.modifiers
 
 import com.intellij.platform.icons.design.dp
-import com.intellij.platform.icons.icon
+import com.intellij.platform.icons.iconDescriptor
 import com.intellij.platform.icons.impl.intellij.testIcons
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.scale
@@ -17,7 +17,7 @@ class ScaleModifierTest {
       val imgA = testImage(20, 20)
 
       val result = pretendToRender(
-        icon {
+        iconDescriptor {
           row {
             image(imgA, modifier = IconModifier.scale(fitArea(25.dp, 25.dp)))
           }
@@ -35,7 +35,7 @@ class ScaleModifierTest {
       val imgA = testImage(20, 20)
 
       val result = pretendToRender(
-        icon {
+        iconDescriptor {
           row {
             image(imgA, modifier = IconModifier.scale(factor(2.0f)))
           }

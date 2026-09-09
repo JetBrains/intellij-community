@@ -4,7 +4,7 @@ package com.intellij.platform.icons.impl.intellij.rendering
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import com.intellij.platform.icons.Icon
+import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.impl.rendering.MutableIconUpdateFlowBase
 
 internal class IntelliJMutableIconUpdateFlowImpl(
@@ -22,7 +22,7 @@ internal class IntelliJMutableIconUpdateFlowImpl(
     } else super.triggerUpdate()
   }
 
-  override fun collectDynamic(flow: Flow<Icon>, handler: (Icon) -> Unit) {
+  override fun collectDynamic(flow: Flow<IconDescriptor>, handler: (IconDescriptor) -> Unit) {
     IconUpdateService.getInstance().scope.launch {
       flow.collect { handler(it) }
     }

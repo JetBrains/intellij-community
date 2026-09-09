@@ -67,13 +67,13 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   }
 
   @ApiStatus.Internal
-  public JBLabel(@NotNull com.intellij.platform.icons.Icon icon, IconScale scale) {
-    super(SwingIconKt.toSwingIcon(icon, scale));
+  public JBLabel(@NotNull com.intellij.platform.icons.IconDescriptor iconDescriptor, IconScale scale) {
+    super(SwingIconKt.createSwingIcon(iconDescriptor, scale));
   }
 
   @ApiStatus.Internal
-  public JBLabel(@NotNull com.intellij.platform.icons.Icon icon) {
-    this(icon, IconScale.Default);
+  public JBLabel(@NotNull com.intellij.platform.icons.IconDescriptor iconDescriptor) {
+    this(iconDescriptor, IconScale.Default);
   }
 
   public JBLabel(@NotNull @NlsContexts.Label String text) {

@@ -22,21 +22,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
-import com.intellij.platform.icons.Icon
-import com.intellij.platform.icons.deferredIcon
+import com.intellij.platform.icons.AllIconsDescriptors
+import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.deferredIconDescriptor
 import com.intellij.platform.icons.design.IconAlign
 import com.intellij.platform.icons.design.badge
+import com.intellij.platform.icons.design.iconsFrames
 import com.intellij.platform.icons.design.sRGB
-import com.intellij.platform.icons.icon
+import com.intellij.platform.icons.iconDescriptor
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.align
 import com.intellij.platform.icons.modifiers.patchSvg
 import com.intellij.platform.icons.scale.IconScale
 import com.intellij.platform.icons.scale.factor
-import com.intellij.platform.icons.swing.swingIcon
 import com.intellij.platform.icons.swing.toAwtColor
-import com.intellij.platform.icons.swing.toNewIcon
-import com.intellij.platform.icons.swing.toSwingIcon
+import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.ui.BadgeDotProvider
 import com.intellij.ui.BadgeIcon
 import com.intellij.ui.RowIcon
@@ -59,15 +59,9 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 internal fun Icons() {
   val icons = mutableListOf<ShowcaseIcon>()
-  val missingIcon = remember {
-    AllIcons.General.Error.toNewIcon()
-  }
-  val warningIcon = remember {
-    AllIcons.General.Warning.toNewIcon()
-  }
-  val settingsIcon = remember {
-    AllIcons.General.Settings.toNewIcon()
-  }
+  val missingIcon = AllIconsDescriptors.General.Error
+  val warningIcon = AllIconsDescriptors.General.Warning
+  val settingsIcon = AllIconsDescriptors.General.Settings
 
   val transition = rememberInfiniteTransition()
   val iconScale by transition.animateFloat(
@@ -77,11 +71,7 @@ internal fun Icons() {
   )
 
   icons.add(ShowcaseIcon(
-    remember {
-      icon {
-        swingIcon(AllIcons.Actions.NewFolder)
-      }
-    },
+    AllIconsDescriptors.Actions.NewFolder,
     null,
     "Animated Scale Icon",
     scale = fitArea(iconScale.dp, iconScale.dp),
@@ -90,40 +80,27 @@ internal fun Icons() {
 
   val duration = 50L
   val animatedIcon = remember {
-    icon {
+    iconDescriptor {
       animation {
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_1)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_2)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_3)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_4)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_5)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_6)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_7)
-        }
-        frame(duration) {
-          swingIcon(AllIcons.Process.Step_8)
-        }
+        iconsFrames(
+          duration,
+          AllIconsDescriptors.Process.Step_1,
+          AllIconsDescriptors.Process.Step_2,
+          AllIconsDescriptors.Process.Step_3,
+          AllIconsDescriptors.Process.Step_4,
+          AllIconsDescriptors.Process.Step_5,
+          AllIconsDescriptors.Process.Step_6,
+          AllIconsDescriptors.Process.Step_7,
+          AllIconsDescriptors.Process.Step_8
+        )
       }
     }
   }
 
   icons.add(remember {
     ShowcaseIcon(
-      icon {
-        icon(AllIcons.General.Web.toNewIcon())
+      iconDescriptor {
+        icon(AllIconsDescriptors.General.Web)
       },
       RowIcon(IconUtil.scale(AllIcons.General.Web, null, 2f)),
       "Scaled Icon",
@@ -135,22 +112,22 @@ internal fun Icons() {
 
   icons.add(remember {
     ShowcaseIcon(
-      icon {
+      iconDescriptor {
         icon(settingsIcon)
         badge(blueColor, modifier = IconModifier.align(IconAlign.TopRight))
       },
-      BadgeIcon(settingsIcon.toSwingIcon(), blueColor.toAwtColor(), BadgeDotProvider()),
+      BadgeIcon(settingsIcon.createSwingIcon(), blueColor.toAwtColor(), BadgeDotProvider()),
       "Icon with Badge"
     )
   })
 
   icons.add(remember {
     ShowcaseIcon(
-      icon {
+      iconDescriptor {
         icon(settingsIcon)
         badge(blueColor, modifier = IconModifier.align(IconAlign.TopRight))
       },
-      BadgeIcon(settingsIcon.toSwingIcon(), blueColor.toAwtColor(), BadgeDotProvider()).scale(10f),
+      BadgeIcon(settingsIcon.createSwingIcon(), blueColor.toAwtColor(), BadgeDotProvider()).scale(10f),
       "Icon with Badge 10x",
       factor(10f)
     )
@@ -158,7 +135,7 @@ internal fun Icons() {
 
   icons.add(remember {
     ShowcaseIcon(
-      icon {
+      iconDescriptor {
         icon(missingIcon)
         badge(Color.Green, circle(2.3.dp))
       },
@@ -169,20 +146,20 @@ internal fun Icons() {
 
   icons.add(remember {
     ShowcaseIcon(
-      icon {
+      iconDescriptor {
         row {
           icon(missingIcon)
           icon(warningIcon)
         }
       },
-      RowIcon(missingIcon.toSwingIcon(), warningIcon.toSwingIcon()),
+      RowIcon(missingIcon.createSwingIcon(), warningIcon.createSwingIcon()),
       "Row Icon"
     )
   })
 
   icons.add(remember {
     ShowcaseIcon(
-      icon {
+      iconDescriptor {
         column {
           icon(missingIcon)
           icon(warningIcon)
@@ -202,9 +179,9 @@ internal fun Icons() {
   })
 
   val dynIcon = remember {
-    deferredIcon(missingIcon) {
+    deferredIconDescriptor(missingIcon) {
       delay(5000.milliseconds)
-      icon {
+      iconDescriptor {
         icon(missingIcon, modifier = IconModifier.patchSvg {
           replaceUnlessMatches("fill", "white", "green")
         })
@@ -239,10 +216,10 @@ internal fun Icons() {
         Row(rowModifier) {
           Text(icon.title, Modifier.weight(1f))
           Column(Modifier.weight(1f)) {
-            Icon(icon.icon, "Icon", scale = icon.scale)
+            Icon(icon.iconDescriptor, "Icon", scale = icon.scale)
           }
           wrapStaticSwingIcon(
-            icon.icon.toSwingIcon(icon.scale),
+            icon.iconDescriptor.createSwingIcon(icon.scale),
             modifier = Modifier.weight(1f)
           )
           wrapStaticSwingIcon(
@@ -256,7 +233,7 @@ internal fun Icons() {
 }
 
 class ShowcaseIcon(
-  val icon: Icon,
+  val iconDescriptor: IconDescriptor,
   val swingAlternative: javax.swing.Icon?,
   val title: String,
   val scale: IconScale = factor(1f),
@@ -279,7 +256,6 @@ private fun wrapStaticSwingIcon(icon: javax.swing.Icon, modifier: Modifier = Mod
         )
       }
     },
-    background = Color.Transparent,
     modifier = modifier.fillMaxHeight(),
   )
 }

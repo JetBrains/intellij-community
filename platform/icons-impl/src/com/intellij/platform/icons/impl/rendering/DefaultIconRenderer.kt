@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.rendering
 
-import com.intellij.platform.icons.Icon
-import com.intellij.platform.icons.impl.DefaultLayeredIcon
+import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.impl.DefaultLayeredIconDescriptor
 import com.intellij.platform.icons.impl.rendering.layers.CompoundDimensions
 import com.intellij.platform.icons.impl.rendering.layers.IconLayerManager
 import com.intellij.platform.icons.impl.rendering.layers.IconLayerRenderer
@@ -13,8 +13,8 @@ import com.intellij.platform.icons.rendering.LayerPaintingContext
 import com.intellij.platform.icons.rendering.RenderingContext
 import com.intellij.platform.icons.rendering.ScalingContext
 
-class DefaultIconRenderer(val iconInstance: DefaultLayeredIcon, private val context: RenderingContext) : IconRenderer {
-    override val icon: Icon = iconInstance
+class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, private val context: RenderingContext) : IconRenderer {
+    override val iconDescriptor: IconDescriptor = iconInstance
     private var layerRenderers = createRenderers()
     private var lastThemeDigest: String = context.theme.digest()
 

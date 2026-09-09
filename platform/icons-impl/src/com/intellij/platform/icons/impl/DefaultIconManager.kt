@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl
 
-import com.intellij.platform.icons.DeferredIcon
-import com.intellij.platform.icons.Icon
+import com.intellij.platform.icons.DeferredIconDescriptor
+import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.IconIdentifier
 import com.intellij.platform.icons.IconManager
 import com.intellij.platform.icons.design.IconDesigner
@@ -41,33 +41,33 @@ abstract class DefaultIconManager : IconManager {
 
     private val deferredIconDeserializer by lazy { DefaultDeferredIconSerializer(this) }
 
-    override fun deferredIcon(
-        placeholder: Icon?,
-        evaluator: suspend () -> Icon,
-    ): Icon =
+    override fun deferredIconDescriptor(
+      placeholder: IconDescriptor?,
+      evaluator: suspend () -> IconDescriptor,
+    ): IconDescriptor =
         resolverService.getOrCreateDeferredIcon(generateDeferredIconIdentifier(), placeholder) {
             id,
             ref ->
             createDeferredIconResolver(id, ref, evaluator)
         }
 
-    internal fun registerDeserializedDeferredIcon(icon: DefaultDeferredIcon): DefaultDeferredIcon =
+    internal fun registerDeserializedDeferredIcon(icon: DefaultDeferredIconDescriptor): DefaultDeferredIconDescriptor =
         resolverService.register(icon) { id, ref -> createDeferredIconResolver(id, ref, null) }
 
     protected open fun generateDeferredIconIdentifier(): IconIdentifier {
         return StringIconIdentifier("dynamicIcon_" + dynamicIconNextId.getAndIncrement().toString())
     }
 
-    override suspend fun forceEvaluation(icon: DeferredIcon): Icon = resolverService.forceEvaluation(icon)
+    override suspend fun forceEvaluation(icon: DeferredIconDescriptor): IconDescriptor = resolverService.forceEvaluation(icon)
 
-    fun scheduleEvaluation(icon: DeferredIcon) {
+    fun scheduleEvaluation(icon: DeferredIconDescriptor) {
         resolverService.scheduleEvaluation(icon)
     }
 
     protected open fun createDeferredIconResolver(
-        id: IconIdentifier,
-        ref: WeakReference<DefaultDeferredIcon>,
-        evaluator: (suspend () -> Icon)?,
+      id: IconIdentifier,
+      ref: WeakReference<DefaultDeferredIconDescriptor>,
+      evaluator: (suspend () -> IconDescriptor)?,
     ): DeferredIconResolver {
         if (evaluator == null) error("Evaluator is not specified for icon $id")
         return InPlaceDeferredIconResolver(resolverService, id, ref, evaluator)
@@ -77,14 +77,14 @@ abstract class DefaultIconManager : IconManager {
         // Add nothing by default
     }
 
-    abstract suspend fun sendDeferredNotifications(id: IconIdentifier, result: Icon)
+    abstract suspend fun sendDeferredNotifications(id: IconIdentifier, result: IconDescriptor)
 
     abstract fun markDeferredIconUnused(id: IconIdentifier)
 
     open fun getSerializersModule(): SerializersModule = SerializersModule {
-        polymorphic(Icon::class, DefaultLayeredIcon::class, DefaultLayeredIcon.serializer())
-        polymorphic(Icon::class, DefaultDeferredIcon::class, deferredIconDeserializer)
-        polymorphic(DeferredIcon::class, DefaultDeferredIcon::class, deferredIconDeserializer)
+        polymorphic(IconDescriptor::class, DefaultLayeredIconDescriptor::class, DefaultLayeredIconDescriptor.serializer())
+        polymorphic(IconDescriptor::class, DefaultDeferredIconDescriptor::class, deferredIconDeserializer)
+        polymorphic(DeferredIconDescriptor::class, DefaultDeferredIconDescriptor::class, deferredIconDeserializer)
         polymorphic(IconModifier::class, IconModifier.Companion::class, IconModifierConstSerializer)
         polymorphic(IconIdentifier::class, StringIconIdentifier::class, StringIconIdentifier.serializer())
 
@@ -97,11 +97,11 @@ abstract class DefaultIconManager : IconManager {
         buildCustomSerializers()
     }
 
-    override fun toSwingIcon(icon: Icon, scale: IconScale): ScalableSwingIcon {
+    override fun createSwingIcon(iconDescriptor: IconDescriptor, scale: IconScale): ScalableSwingIcon {
         error("Swing Icons are not supported.")
     }
 
-    override fun toNewIcon(swingIcon: javax.swing.Icon): Icon {
+    override fun toIconDescriptor(swingIcon: javax.swing.Icon): IconDescriptor {
         error("Swing Icons are not supported.")
     }
 

@@ -3,12 +3,12 @@ package com.intellij.platform.icons.impl.intellij
 
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.platform.icons.design.dp
-import com.intellij.platform.icons.icon
-import com.intellij.platform.icons.imageIcon
+import com.intellij.platform.icons.iconDescriptor
+import com.intellij.platform.icons.imageIconDescriptor
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.scale
 import com.intellij.platform.icons.scale.fitArea
-import com.intellij.platform.icons.swing.toSwingIcon
+import com.intellij.platform.icons.swing.createSwingIcon
 import org.junit.jupiter.api.Test
 import java.awt.image.BufferedImage
 
@@ -21,7 +21,7 @@ class IconTest {
       val imgB = testImage(20, 20)
 
       val run = createTestRun(
-        icon {
+        iconDescriptor {
           animation {
             frame(500) {
               image(imgA)
@@ -46,7 +46,7 @@ class IconTest {
       val imgB = testImage(5, 5)
 
       val result = pretendToRender(
-        icon {
+        iconDescriptor {
           row {
             image(imgA)
             image(imgB)
@@ -67,7 +67,7 @@ class IconTest {
       val imgB = testImage(5, 5)
 
       val result = pretendToRender(
-        icon {
+        iconDescriptor {
           column {
             image(imgA)
             image(imgB)
@@ -88,7 +88,7 @@ class IconTest {
       val imgB = testImage(5, 5)
 
       val result = pretendToRender(
-        icon {
+        iconDescriptor {
           box {
             image(imgA)
             image(imgB)
@@ -109,7 +109,7 @@ class IconTest {
       val imgB = testImage(20, 20)
 
       val result = pretendToRender(
-        icon {
+        iconDescriptor {
           image(imgA)
           image(imgB, IconModifier.scale(fitArea(5.dp, 5.dp)))
         }
@@ -126,7 +126,7 @@ class IconTest {
       val imgA = testImage(5, 5)
 
       val result = pretendToRender(
-        icon {
+        iconDescriptor {
           image(imgA, IconModifier.scale(fitArea(10.dp, 10.dp)))
           image(imgA, IconModifier.scale(fitArea(10.dp, 10.dp, relative = false)))
         },
@@ -142,9 +142,9 @@ class IconTest {
   @Test
   fun `should render icon to buffered image`() {
     IntelliJIconManager.activate()
-    val icon = imageIcon("actions/addFile.svg", IconTest::class.java.classLoader)
+    val icon = imageIconDescriptor("actions/addFile.svg", IconTest::class.java.classLoader)
 
-    val swingIcon = icon.toSwingIcon()
+    val swingIcon = icon.createSwingIcon()
     val image = BufferedImage(swingIcon.iconWidth, swingIcon.iconHeight, BufferedImage.TYPE_INT_ARGB)
     val g2 = image.createGraphics()
     try {

@@ -4,7 +4,7 @@ package com.intellij.platform.icons.impl.intellij
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
-import com.intellij.platform.icons.Icon
+import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.IconIdentifier
 import com.intellij.platform.icons.IconManager
 import com.intellij.platform.icons.ImageResourceLocation
@@ -42,14 +42,14 @@ class IconTester {
     return TestImageResourceLocation(width, height)
   }
 
-  fun pretendToRender(icon: Icon, scale: IconScale = factor(1f), density: Float = 1f): TestRenderResult {
-    val run = createTestRun(icon)
+  fun pretendToRender(iconDescriptor: IconDescriptor, scale: IconScale = factor(1f), density: Float = 1f): TestRenderResult {
+    val run = createTestRun(iconDescriptor)
     return run.performRender(scale, density)
   }
 
-  fun createTestRun(icon: Icon, defaultScale: IconScale = factor(1f), defaultDensity: Float = 1f): IconTestRun {
+  fun createTestRun(iconDescriptor: IconDescriptor, defaultScale: IconScale = factor(1f), defaultDensity: Float = 1f): IconTestRun {
     val renderer = rendererManager.createRenderer(
-      icon,
+      iconDescriptor,
       rendererManager.createRenderingContext(EmptyMutableIconUpdateFlow, null),
     )
     return IconTestRun(renderer, defaultScale, defaultDensity)
@@ -75,7 +75,7 @@ class TestIconManager: DefaultIconManager() {
   override val resolverService: DeferredIconResolverService
     get() = throw NotImplementedError()
 
-  override suspend fun sendDeferredNotifications(id: IconIdentifier, result: Icon) {
+  override suspend fun sendDeferredNotifications(id: IconIdentifier, result: IconDescriptor) {
     throw NotImplementedError()
   }
 
@@ -83,7 +83,7 @@ class TestIconManager: DefaultIconManager() {
     throw NotImplementedError()
   }
 
-  override fun icon(designer: IconDesigner.() -> Unit): Icon {
+  override fun iconDescriptor(designer: IconDesigner.() -> Unit): IconDescriptor {
     val ijIconDesigner = IntelliJIconDesigner()
     ijIconDesigner.designer()
     return ijIconDesigner.build()
@@ -259,7 +259,7 @@ private object EmptyMutableIconUpdateFlow : MutableIconUpdateFlow {
     // Do nothing
   }
 
-  override fun collectDynamic(flow: Flow<Icon>, handler: (Icon) -> Unit) {
+  override fun collectDynamic(flow: Flow<IconDescriptor>, handler: (IconDescriptor) -> Unit) {
     // Do nothing
   }
 }

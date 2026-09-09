@@ -424,7 +424,7 @@ package org.jetbrains.jewel.ui.component {
     method @androidx.compose.runtime.Composable public static void Icon(androidx.compose.ui.graphics.painter.Painter painter, String? contentDescription, androidx.compose.ui.graphics.ColorFilter? colorFilter, optional androidx.compose.ui.Modifier modifier);
     method @androidx.compose.runtime.Composable public static void Icon(androidx.compose.ui.graphics.painter.Painter painter, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional long tint);
     method @androidx.compose.runtime.Composable public static void Icon(androidx.compose.ui.graphics.vector.ImageVector imageVector, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional long tint);
-    method @androidx.compose.runtime.Composable public static void Icon(com.intellij.platform.icons.Icon icon, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional com.intellij.platform.icons.scale.IconScale? scale);
+    method @androidx.compose.runtime.Composable public static void Icon(com.intellij.platform.icons.IconDescriptor iconDescriptor, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional com.intellij.platform.icons.scale.IconScale? scale);
     method @androidx.compose.runtime.Composable public static void Icon(String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional com.intellij.platform.icons.scale.IconScale? scale, kotlin.jvm.functions.Function1<? super com.intellij.platform.icons.design.IconDesigner,kotlin.Unit> iconDesigner);
     method @androidx.compose.runtime.Composable public static void Icon(org.jetbrains.jewel.ui.icon.IconKey key, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional Class<? extends java.lang.Object?> iconClass, androidx.compose.ui.graphics.ColorFilter? colorFilter, org.jetbrains.jewel.ui.painter.PainterHint hint);
     method @androidx.compose.runtime.Composable public static void Icon(org.jetbrains.jewel.ui.icon.IconKey key, String? contentDescription, optional androidx.compose.ui.Modifier modifier, optional Class<? extends java.lang.Object?> iconClass, androidx.compose.ui.graphics.ColorFilter? colorFilter, org.jetbrains.jewel.ui.painter.PainterHint... hints);
@@ -3169,9 +3169,13 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToBottomLeft;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToBottomRight;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToButton;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToLeft;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToLeftBottom;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToLeftSideBySide;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToLeftTop;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToRight;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToRightBottom;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToRightSideBySide;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToRightTop;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToTopLeft;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToTopRight;
@@ -3711,6 +3715,7 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowInfos;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowWarning;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Show_to_implement;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SortBy;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SuccessDialog;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SuccessLogin;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey TbHidden;

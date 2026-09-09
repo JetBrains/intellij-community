@@ -200,7 +200,7 @@ dependencies {
     `DisabledAppearanceValues`.
 * `ide-laf-bridge`:
   * The `TextColors` and `ThemeDefinition` secondary constructors were removed as in `foundation`.
-  * Both `bridgePainterProvider` functions were removed; use an `IconKey` with the `Icon` composable instead.
+  * Both `bridgePainterProvider` functions were removed; use an `IconKey` with the `IconDescriptor` composable instead.
   * The `compose`, `JewelComposePanel`, `composeWithoutTheme`, `JewelComposeNoThemePanel`, and
     `ToolWindow.addComposeTab` overloads without `focusOnClickInside` were removed; use the overloads that provide it.
   * `LocalComponent` was removed; use `foundation`'s `LocalComponent` instead.
@@ -211,7 +211,7 @@ dependencies {
   * `InlinesStyling.create` no longer takes `renderInlineHtml`; use the overload without it.
 * `int-ui-standalone`:
   * `WhenScrolling.default` was replaced with the no-argument function `WhenScrolling.default()`.
-  * `standalonePainterProvider` was removed; use an `IconKey` with the `Icon` composable instead.
+  * `standalonePainterProvider` was removed; use an `IconKey` with the `IconDescriptor` composable instead.
 * `markdown`:
   * The `Markdown` and `LazyMarkdown` overloads taking `onTextClick` were removed; use the overloads without it.
   * The deprecated lower-case Markdown block-rendering APIs were removed. Migrate `MarkdownBlockRenderer.render(...)`
@@ -226,7 +226,7 @@ dependencies {
   * `InformationInlineBanner`, `SuccessInlineBanner`, `WarningInlineBanner`, and `ErrorInlineBanner` overloads without
     link and icon actions were removed; use `InlineInformationBanner`, `InlineSuccessBanner`, `InlineWarningBanner`, and
     `InlineErrorBanner` with `linkActions` and `iconActions`.
-  * `painterResource(resourcePath)` was removed; use an `IconKey` with `Icon` or `Image` instead.
+  * `painterResource(resourcePath)` was removed; use an `IconKey` with `IconDescriptor` or `Image` instead.
   * The `Tooltip` overload taking `AutoHideBehavior`, and `AutoHideBehavior` itself, were removed; configure
     `TooltipAutoHideBehavior` through `TooltipStyle.autoHideBehavior`.
   * The legacy `SimpleListItem` overloads were removed. Use `ListItemState` or the current `selected`/`active`

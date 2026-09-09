@@ -306,7 +306,7 @@ Please refer to the [release notes](RELEASE%20NOTES.md) to determine the compati
 
 ## Icons
 
-Loading icons is best done with the `Icon` composable, which offers a key-based API that is portable across bridge and
+Loading icons is best done with the `IconDescriptor` composable, which offers a key-based API that is portable across bridge and
 standalone modules. Icon keys implement the `IconKey` interface, which is then internally used to obtain a resource path
 to load the icon from.
 
@@ -359,7 +359,7 @@ In your holders, you can choose which implementation of `IconKey` to use:
 
 ### Painter hints
 
-Jewel has an API to influence the loading and drawing of icons, called `PainterHint`. `Icon` composables have overloads
+Jewel has an API to influence the loading and drawing of icons, called `PainterHint`. `IconDescriptor` composables have overloads
 that take zero, one or more `PainterHint`s that will be used to compute the end result that shows up on screen.
 
 `PainterHint`s can change the icon path (by adding a prefix/suffix, or changing it completely), tweak the contents of an
