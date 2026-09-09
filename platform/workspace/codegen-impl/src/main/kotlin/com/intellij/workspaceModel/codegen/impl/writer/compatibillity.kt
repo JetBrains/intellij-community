@@ -11,37 +11,50 @@ import com.intellij.workspaceModel.codegen.impl.dsl.additionalAnnotations
 import com.intellij.workspaceModel.codegen.impl.dsl.annotation
 import com.intellij.workspaceModel.codegen.impl.dsl.notReferenceError
 import com.intellij.workspaceModel.codegen.impl.dsl.unsupportedTypeError
+import com.intellij.workspaceModel.codegen.impl.writer.entityImplementation.lineComment
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.builderWithTypeParameter
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.compatibleJavaBuilderName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.defaultJavaBuilderName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReferenceType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.requiresModuleId
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.unwrapReferenceType
 
 private val DEPRECATION = "${Deprecated::class.fqn}(message = \"Use new API instead\")"
+private val FAKE_MODULE_ID_PROPERTY =
+  PropertyData("moduleId", ValueType.Any, QualifiedName("#uC03o#com.intellij.platform.workspace.jps.entities@@ModuleId#ModuleId"))
 
 fun CodeContext.compatibilityInvoke(
   mandatoryProperties: List<ObjProperty<*, *>>,
-  javaFullName: QualifiedName,
+  objClass: ObjClass<*>,
   builderGeneric: String,
 ) {
-  val builderSymbol = "$javaFullName.Builder$builderGeneric"
+  val builderSymbol = "${objClass.javaFullName}.Builder$builderGeneric"
   annotation(DEPRECATION)
-  if (mandatoryProperties.isNotEmpty()) {
+  val convertedGiven = mandatoryProperties.map { PropertyData(it.name, it.valueType, getJavaType(it)) }
+  val requiresModuleId = objClass.requiresModuleId
+  val propertiesData = if (requiresModuleId) {
+    listOf(FAKE_MODULE_ID_PROPERTY) + convertedGiven
+  }
+  else {
+    convertedGiven
+  }
+  if (propertiesData.isNotEmpty()) {
     line("fun compatibilityInvoke(")
-    mandatoryProperties.forEach { field ->
-      line("${field.name}: ${getJavaType(field)},")
+    for (propertyData in propertiesData) {
+      line("${propertyData.name}: ${propertyData.javaType},")
     }
     line("init: ($builderSymbol.() -> Unit)? = null,")
     section("): $builderSymbol") {
       line("val builder = builder() as $builderSymbol")
-      for (property in mandatoryProperties) {
-        val name = property.name
-        if (property.valueType is ValueType.Set<*> && !property.valueType.isReferenceType()) {
+      for (propertyData in propertiesData) {
+        val name = propertyData.name
+        if (requiresModuleId && name == FAKE_MODULE_ID_PROPERTY.name) continue
+        if (propertyData.valueType is ValueType.Set<*> && !propertyData.valueType.isReferenceType()) {
           +"builder.$name = $name.${StorageCollection.toMutableWorkspaceSet}()"
         }
-        else if (property.valueType is ValueType.List<*> && !property.valueType.isReferenceType()) {
+        else if (propertyData.valueType is ValueType.List<*> && !propertyData.valueType.isReferenceType()) {
           +"builder.$name = $name.${StorageCollection.toMutableWorkspaceList}()"
         }
         else {
@@ -60,6 +73,29 @@ fun CodeContext.compatibilityInvoke(
     }
   }
 }
+
+fun CodeContext.generateCompatibilityConstructorCode(objClass: ObjClass<*>) {
+  if (!objClass.requiresModuleId) return
+  lineComment("IJPL-150365")
+  val mandatoryProperties = mandatoryProperties(objClass)
+  val builderGeneric = if (objClass.openness.extendable) "<${objClass.javaFullName}>" else ""
+  val javaBuilderName = objClass.defaultJavaBuilderName
+
+  val propertiesData = listOf(FAKE_MODULE_ID_PROPERTY) + mandatoryProperties.map { PropertyData(it.name, it.valueType, getJavaType(it)) }
+
+  annotation("${Deprecated::class.fqn}(message = \"Use new constructor without moduleId\")")
+  additionalAnnotations(objClass)
+  annotation(JvmOverloads::class.fqn.toString())
+  annotation("${JvmName::class.fqn}(\"create${objClass.name}\")")
+  line("${explicitApiModifier}fun ${objClass.name}(")
+  for (property in propertiesData) {
+    line("${property.name}: ${property.javaType},")
+  }
+  line("init: ($javaBuilderName$builderGeneric.() -> Unit)? = null,")
+  line("): $javaBuilderName = ${objClass.name}Type(${mandatoryProperties.joinToString(", ") { it.name }}, init)")
+}
+
+private data class PropertyData(val name: String, val valueType: ValueType<*>, val javaType: QualifiedName)
 
 fun CodeContext.compatibilityModifyCode(objClass: ObjClass<*>) {
   annotation(DEPRECATION)

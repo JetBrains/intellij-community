@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.codegen.impl.dsl.GeneratorContext
 import com.intellij.workspaceModel.codegen.impl.dsl.annotation
 import com.intellij.workspaceModel.codegen.impl.dsl.generateCode
 import com.intellij.workspaceModel.codegen.impl.dsl.packageDirective
+import com.intellij.workspaceModel.codegen.impl.writer.generateCompatibilityConstructorCode
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaImplName
 
 fun GeneratorContext.generateTopLevelCode(objClass: ObjClass<*>): String = generateCode {
@@ -19,5 +20,6 @@ fun GeneratorContext.generateTopLevelCode(objClass: ObjClass<*>): String = gener
     generateEntityTypeObject(objClass)
   }
   generateModifyAndExtensionCode(objClass)
+  generateCompatibilityConstructorCode(objClass)
   generateConstructorCode(objClass)
 }

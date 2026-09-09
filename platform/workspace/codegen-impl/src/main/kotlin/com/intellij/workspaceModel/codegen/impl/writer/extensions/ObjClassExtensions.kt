@@ -101,3 +101,9 @@ private val compatibilityEntities = mapOf(
   "org.jetbrains.kotlin.idea.workspaceModel" to setOf(
     "KotlinSettingsEntity"
   ))
+
+internal val ObjClass<*>.requiresModuleId: Boolean
+  get() = name in moduleIdRemoved[module.name].orEmpty()
+
+private val moduleIdRemoved = mapOf("com.intellij.platform.workspace.jps.entities" to setOf("FacetEntity"),
+                                    "org.jetbrains.kotlin.idea.workspaceModel" to setOf("KotlinSettingsEntity"))
