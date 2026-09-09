@@ -65,6 +65,19 @@ class TerminalOutputScrollingModelImpl(
       field = value
     }
 
+  /**
+   * Our own record of the scroll offset last decided on, used as the floor in the regular case of
+   * [updateScrollPosition] instead of the editor's live scroll offset. The editor's own scrolling model can
+   * silently re-clamp that live offset down when content briefly shrinks.
+   */
+  private var lastScrollY: Int = 0
+
+  /**
+   * [TerminalOutputModel.screenTopOffset] as of the previous [updateScrollPosition] call, used to detect a real
+   * reset (Terminal.ClearBuffer, or "clear") and discard [lastScrollY].
+   */
+  private var lastScreenTopOffset: TerminalOffset = TerminalOffset.ZERO
+
   /** The state of the output model already processed by this class, whether or not a scroll was performed for it. */
   private val appliedOutputModelState = MutableStateFlow(getCurrentOutputModelState())
 
@@ -194,7 +207,14 @@ class TerminalOutputScrollingModelImpl(
 
     val screenTopY = editor.visualLineToY(screenTopVisualLine) - topInset
     val screenHeight = editor.scrollingModel.visibleArea.height
-    val currentOffset = editor.scrollingModel.verticalScrollOffset
+    val liveOffset = editor.scrollingModel.verticalScrollOffset
+
+    if (outputModel.screenTopOffset < lastScreenTopOffset) {
+      // The screen top itself moved backward (Terminal.ClearBuffer, "clear" or increasing size).
+      // Forget the pre-reset floor so it doesn't hold the viewport down at a position that no longer exists.
+      lastScrollY = 0
+    }
+    lastScreenTopOffset = outputModel.screenTopOffset
 
     val isCursorAtTop = isCursorVisible && cursorVisualLine == screenTopVisualLine
     val scrollY = if (isCursorAtTop) {
@@ -204,28 +224,30 @@ class TerminalOutputScrollingModelImpl(
       screenTopY
     }
     else {
-      // In a regular case always try to scroll to the bottom and do not scroll up
-      // to not cause blinking when lines are frequently added and removed from the bottom of the screen
-      maxOf(screenBottomY - screenHeight, screenTopY, currentOffset)
+      // In a regular case always try to scroll to the bottom and do not scroll up, to not cause blinking when
+      // lines are frequently added and removed from the bottom of the screen.
+      maxOf(screenBottomY - screenHeight, screenTopY, lastScrollY)
     }
 
     scrollPadding.ensureReachable(screenTopY, screenHeight)
 
-    if (scrollY != currentOffset) {
+    if (scrollY != liveOffset) {
       editor.doWithoutScrollingAnimation {
         editor.scrollingModel.scrollVertically(scrollY)
       }
     }
+    val oldLastScrollY = lastScrollY
+    lastScrollY = editor.scrollingModel.verticalScrollOffset
 
     LOG.trace {
-      "updateScrollPosition: currentOffset=$currentOffset -> scrollY=$scrollY " +
-      "(${if (scrollY != currentOffset) "scrolling" else "no change"}); " +
+      "updateScrollPosition: liveOffset=$liveOffset -> scrollY=$scrollY " +
+      "(${if (scrollY != liveOffset) "scrolling" else "no change"}); " +
       "resulting verticalScrollOffset=${editor.scrollingModel.verticalScrollOffset}, " +
       "cursor(visible=$isCursorVisible, line=$cursorVisualLine, atTop=$isCursorAtTop), " +
       "screen(topLine=$screenTopVisualLine, height=$screenHeight), " +
       "insets(top=$topInset, bottom=$bottomInset), lastNotBlankLine=$lastNotBlankVisualLine, " +
       "y(top=$screenTopY, bottom=$screenBottomY), " +
-      "candidates(bottomAligned=${screenBottomY - screenHeight}, topAligned=$screenTopY, current=$currentOffset)"
+      "candidates(bottomAligned=${screenBottomY - screenHeight}, topAligned=$screenTopY, lastScrollY=$oldLastScrollY)"
     }
 
     appliedOutputModelState.value = OutputModelState(cursorOffset, outputModel.modificationStamp)

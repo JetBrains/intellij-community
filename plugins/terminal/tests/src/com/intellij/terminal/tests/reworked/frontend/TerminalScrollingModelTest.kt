@@ -727,6 +727,30 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
       }
     }
 
+  @Test
+  fun `scroll position recovers to the same high-water mark after a real line-count shrink without a screen top move`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val editor = createEditor(rows = 5)
+      // The first three lines are hidden, the rest fully visible with the bottom inset - the usual steady state.
+      val expected = TerminalUi.blockTopInset + TerminalUi.blockBottomInset + 3 * editor.lineHeight
+      doTest(editor, expected) {
+        updateText(0, outputPattern("1\n2\n3\n4\n5\n6\n7\n8<cursor>"), screenTopLine = 3)
+        val highWaterMark = currentScrollOffset()
+
+        // A build tool rewrites its progress lines (e.g. bazel): the cursor briefly moves back as real content
+        // shrinks by one line, without the terminal's own screen top moving (unlike Ctrl+L / Terminal.ClearBuffer,
+        // this is not a reset, so lastScrollY must not be discarded here). The editor's own scrolling model can
+        // still auto-clamp its live offset down as a side effect of the shrink - the dip that leaks through from
+        // that, if any, must stay well under one line (nowhere near the multi-line, repeated oscillation this
+        // fixes), and must fully recover once content regrows, rather than leaving any lasting drift.
+        updateText(6, outputPattern("7<cursor>"))
+        assertThat(highWaterMark - currentScrollOffset()).isLessThan(editor.lineHeight)
+
+        updateText(6, outputPattern("7\n8<cursor>"))
+        assertThat(currentScrollOffset()).isEqualTo(highWaterMark)
+      }
+    }
+
   private suspend fun CoroutineScope.doTest(
     editor: EditorImpl,
     expectedScrollOffset: Int,
@@ -832,6 +856,8 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     fun scrollWithoutUserAction(offset: Int) {
       editor.scrollingModel.scrollVertically(offset)
     }
+
+    fun currentScrollOffset(): Int = editor.scrollingModel.verticalScrollOffset
 
     fun scrollToCursor(force: Boolean) {
       scrollingModel.scrollToCursor(force)
