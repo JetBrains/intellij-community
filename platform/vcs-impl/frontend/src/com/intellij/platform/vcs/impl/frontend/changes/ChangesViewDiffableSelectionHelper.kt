@@ -45,6 +45,11 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
   }
 
   /**
+   * The position of the selected file comes from [getGroupOrSelectionScopedPosition] or from [getTreeScopedPosition],
+   * depending on [ChangesUtil.isScopeNavigationToGroupEnabled]. This mirrors
+   * `ChangeViewDiffRequestProcessor.createGoToChangeAction`, which picks between
+   * `getGroupOrMultiSelectionListSelection` and `getChanges` the same way.
+   *
    * @param currentChange the change that is currently shown in the diff preview, if any. It is kept as the selected one
    * as long as it is still selected, so that selecting a parent node (e.g. a changelist) doesn't switch the previewed
    * file. Everything else depends on the whole selection and is always recalculated.
@@ -55,62 +60,87 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
     val selectedNodePath =
       getPathOrLog(selectedDiffableNode) { LOG.warn("Could not create path for selected node: $it") } ?: return null
 
-    // An explicit selection of 2+ diffable files scopes navigation to itself, as monolith mode does, so that
-    // "Compare Previous/Next File" walks the selected files only. Moving inside it must not change the tree selection,
-    // see [moveWithinExplicitSelection].
-    val selectedObjects = selectedDiffableObjects().toList()
-    val explicitSelection = selectedObjects.takeIf { it.size > 1 }
-
-    // When the counter is scoped to the group or to the selection, it is calculated by `getSelectionOrGroupCounter`, so
-    // the whole tree doesn't have to be visited and the walk can stop as soon as the tree-scoped values are known.
-    val scopeToGroup = ChangesUtil.isScopeNavigationToGroupEnabled()
-
-    var previousNode: Any? = null
-    var nextNode: Any? = null
-    var selectedNode: ChangesBrowserNode<*>? = null
-    var selectedNodeIndex: Int? = null
-    var diffableNodesCount = 0
-
-    val changeNodes = VcsTreeModelData.all(changesView).iterateNodes()
-    for (node in changeNodes) {
-      if (!isDiffableNode(node)) continue
-      val userObject = node.userObject
-
-      when {
-        userObject === selectedDiffableNode -> {
-          selectedNode = node
-          selectedNodeIndex = diffableNodesCount
-        }
-        // Previous change is set to the current node until the selected one is found
-        selectedNode == null -> {
-          previousNode = userObject
-        }
-        // Next change is set only after the selected one is found and the walk moves one step further
-        nextNode == null -> {
-          nextNode = userObject
-        }
-      }
-      diffableNodesCount++
-
-      // Nothing is left to take from the tree once the selected node and all the tree-scoped values are known.
-      if (scopeToGroup && selectedNode != null && (explicitSelection != null || nextNode != null)) break
-    }
-
-    val neighbours = explicitSelection?.let { neighboursWithin(it, selectedDiffableNode) }
-                     ?: Neighbours(previousNode, nextNode)
-
-    val counter = when {
-      selectedNode == null -> FilesCounter.UNKNOWN
-      scopeToGroup -> getSelectionOrGroupCounter(selectedNode, selectedObjects)
-      else -> FilesCounter(selectedNodeIndex, diffableNodesCount)
-    }
+    val explicitSelection = selectedDiffableObjects().toList()
+    val position =
+      if (ChangesUtil.isScopeNavigationToGroupEnabled()) getGroupOrSelectionScopedPosition(selectedDiffableNode, explicitSelection)
+      else getTreeScopedPosition(selectedDiffableNode, explicitSelection)
 
     return ChangesViewDiffableSelection(
       selectedChange = selectedNodePath,
-      previousChange = getPathOrLog(neighbours.previous) { LOG.warn("Could not create path for previous node: $it") },
-      nextChange = getPathOrLog(neighbours.next) { LOG.warn("Could not create path for next node: $it") },
-      selectedIndex = counter.selectedIndex,
-      changesCount = counter.changesCount)
+      previousChange = getPathOrLog(position.neighbours.previous) { LOG.warn("Could not create path for previous node: $it") },
+      nextChange = getPathOrLog(position.neighbours.next) { LOG.warn("Could not create path for next node: $it") },
+      selectedIndex = position.counter.selectedIndex,
+      changesCount = position.counter.changesCount)
+  }
+
+  /**
+   * Position with the counter scoped to the explicit selection of 2+ diffable files, or to the group of the selected
+   * file.
+   *
+   * Mirrors `ChangeViewDiffRequestProcessor.getGroupOrMultiSelectionListSelection`, so that the counter shows the same
+   * values in monolith and split mode: an explicit multiple selection scopes the counter to itself, a single selection
+   * to the group of the selected file.
+   *
+   * Only the resulting numbers are sent to the backend, which has no notion of the selection being explicit.
+   *
+   * The previous and the next file stay scoped to the whole tree, as they are in monolith mode, so navigation can leave
+   * the group.
+   */
+  @RequiresEdt
+  private fun getGroupOrSelectionScopedPosition(selectedObject: Any, explicitSelection: List<Any>): SelectionPosition {
+    // An explicit selection of 2+ diffable files scopes navigation to itself, as monolith mode does, so that
+    // "Compare Previous/Next File" walks the selected files only. Moving inside it must not change the tree selection,
+    // see [moveWithinExplicitSelection]. The tree is not visited at all, because both values come from the selection.
+    if (explicitSelection.size > 1) {
+      return SelectionPosition(neighboursWithin(explicitSelection, selectedObject),
+                               counterWithin(explicitSelection, selectedObject))
+    }
+
+    val nodeWithNeighbours = findNodeWithNeighbours(selectedObject)
+                             ?: return SelectionPosition(Neighbours(null, null), FilesCounter.UNKNOWN)
+    val (selectedNode, neighbours) = nodeWithNeighbours
+    return SelectionPosition(neighbours, getGroupCounter(selectedNode, explicitSelection))
+  }
+
+  /**
+   * Position with the counter scoped to the whole tree.
+   *
+   * Mirrors `ChangeViewDiffRequestProcessor.getChanges`. An explicit selection of 2+ diffable files still scopes the
+   * previous and the next file to itself, as it does in monolith mode.
+   */
+  @RequiresEdt
+  private fun getTreeScopedPosition(selectedObject: Any, explicitSelection: List<Any>): SelectionPosition {
+    var previousObject: Any? = null
+    var nextObject: Any? = null
+    var selectedIndex: Int? = null
+    var diffableNodesCount = 0
+
+    for (node in diffableNodes()) {
+      val userObject = node.userObject
+
+      when {
+        userObject === selectedObject -> {
+          selectedIndex = diffableNodesCount
+        }
+        // The previous file is set to the current node until the selected one is found
+        selectedIndex == null -> {
+          previousObject = userObject
+        }
+        // The next file is set only after the selected one is found and the walk moves one step further
+        nextObject == null -> {
+          nextObject = userObject
+        }
+      }
+      diffableNodesCount++
+    }
+
+    val neighbours = if (explicitSelection.size > 1) {
+      neighboursWithin(explicitSelection, selectedObject)
+    } else {
+      Neighbours(previousObject, nextObject)
+    }
+    val counter = if (selectedIndex == null) FilesCounter.UNKNOWN else FilesCounter(selectedIndex, diffableNodesCount)
+    return SelectionPosition(neighbours, counter)
   }
 
   /**
@@ -130,26 +160,12 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
     return true
   }
 
+  private data class SelectionPosition(val neighbours: Neighbours, val counter: FilesCounter)
+
   private data class FilesCounter(val selectedIndex: Int?, val changesCount: Int) {
     companion object {
       val UNKNOWN: FilesCounter = FilesCounter(null, 0)
     }
-  }
-
-  /**
-   * File counter values scoped to the explicit selection of 2+ diffable files, or to the group of the selected node.
-   *
-   * Mirrors `ChangeViewDiffRequestProcessor.getGroupOrMultiSelectionListSelection`, so that the counter shows the same
-   * values in monolith and split mode: an explicit multiple selection scopes the counter to itself, a single selection
-   * to the group of the selected file.
-   *
-   * Only the resulting numbers are sent to the backend, which has no notion of the selection being explicit.
-   */
-  @RequiresEdt
-  private fun getSelectionOrGroupCounter(selectedNode: ChangesBrowserNode<*>, selectedObjects: List<Any>): FilesCounter {
-    if (selectedObjects.size > 1) return counterWithin(selectedObjects, selectedNode.userObject)
-
-    return getGroupCounter(selectedNode, selectedObjects)
   }
 
   /**
@@ -199,6 +215,31 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
       if (stillSelected != null) return stillSelected
     }
     return changesView.selectedDiffableNode
+  }
+
+  /**
+   * All diffable nodes of the tree, in the display order. Lazy, so that a caller can stop the walk.
+   */
+  @RequiresEdt
+  private fun diffableNodes(): Sequence<ChangesBrowserNode<*>> =
+    VcsTreeModelData.all(changesView).iterateNodes().asSequence().filter { isDiffableNode(it) }
+
+  /**
+   * The node of [selectedObject] and the diffable objects around it, or `null` when the tree holds no node for it.
+   *
+   * [Sequence.windowed] is lazy, so the walk stops one node past the selected one.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  private fun findNodeWithNeighbours(selectedObject: Any): Pair<ChangesBrowserNode<*>, Neighbours>? {
+    // The padding gives the first and the last node a window too, and marks their missing neighbour as absent.
+    val padding = sequenceOf<ChangesBrowserNode<*>?>(null)
+    val window = (padding + diffableNodes() + padding)
+      .windowed(size = 3)
+      .firstOrNull { (_, selected, _) -> selected?.userObject === selectedObject } ?: return null
+
+    val (previous, selected, next) = window
+    // The window matched, so its middle node is present.
+    return checkNotNull(selected) to Neighbours(previous?.userObject, next?.userObject)
   }
 
   private fun isDiffableNode(node: ChangesBrowserNode<*>): Boolean = when (node.userObject) {
