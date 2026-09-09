@@ -21,7 +21,7 @@ internal class SnapshotCaretMarkerStorage(
   val document: DocumentImpl,
   documentChanged: Consumer<DocumentEvent>,
 ) {
-  private val rootStore = SnapshotMarkerRootStore(document, onDocumentChanged = documentChanged::accept)
+  private val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document, onDocumentChanged = documentChanged::accept)
 
   fun dispose() {
     rootStore.dispose()
@@ -50,8 +50,8 @@ internal class SnapshotCaretMarkerStorage(
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   companion object {
-    private val POSITION_SPEC = MarkerSpec(false, false, policy = CaretPositionMarkerPolicy)
-    private val SELECTION_SPEC = MarkerSpec(false, false, policy = CaretSelectionMarkerPolicy)
+    private val POSITION_SPEC: MarkerSpec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, policy = CaretPositionMarkerPolicy)
+    private val SELECTION_SPEC: MarkerSpec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, policy = CaretSelectionMarkerPolicy)
   }
 }
 
@@ -62,8 +62,7 @@ private object CaretPositionMarkerPolicy : MarkerPolicy {
     beforeText: DocumentText,
     afterText: DocumentText,
   ): MarkerTransformResult {
-    val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
-    val updatedEntry = when (transformed) {
+    val updatedEntry = when (val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)) {
       is MarkerTransformResult.Valid -> transformed.entry
       is MarkerTransformResult.Invalid -> {
         val offset = minOf(entry.startOffset, patch.startOffset() + patch.newFragment().length)
