@@ -1,4 +1,4 @@
-<idea-plugin implementation-detail="true" require-restart="true">
+<idea-plugin implementation-detail="true">
   <id>com.intellij.idea.customization</id>
   <!--suppress PluginXmlValidity -->
   <name>IntelliJ IDEA Customization</name>
