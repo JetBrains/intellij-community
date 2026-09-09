@@ -194,7 +194,9 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
 
   span("set QoS for EDT") {
     if (!isHeadless && setUserInteractiveQosForEdt) {
-      UiThreadPriority.adjust()
+      withContext(Dispatchers.IO) {
+        UiThreadPriority.adjust()
+      }
     }
   }
 }
