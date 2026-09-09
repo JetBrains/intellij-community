@@ -15,8 +15,17 @@ class InstallOptionButton @JvmOverloads constructor(
   isUpgradeRequired: Boolean = false,
   action: Action? = null,
   options: Array<Action>? = null,
+  useNaturalWidth: Boolean = false,
 ) : OptionButton(action, options), PluginInstallButton {
   private val isUpgradeRequired = isUpgradeRequired
+  private var useNaturalWidth = false
+
+  init {
+    // JButton(Action) may call the overridden setAction before this class is initialized.
+    // Keep the legacy width during superclass construction, then apply the requested mode.
+    this.useNaturalWidth = useNaturalWidth
+    applyActionWidth()
+  }
 
   override fun updateUI() {
     super.updateUI()
@@ -33,7 +42,7 @@ class InstallOptionButton @JvmOverloads constructor(
       setWidth(this, 80)
     }
     else {
-      setWidth72(this)
+      applyInstallTextWidth()
     }
   }
 
@@ -53,7 +62,7 @@ class InstallOptionButton @JvmOverloads constructor(
 
   override fun setAction(a: Action?) {
     super.setAction(a)
-    setWidth(this, 80)
+    applyActionWidth()
   }
 
   override fun setEnabled(b: Boolean) {
@@ -62,4 +71,22 @@ class InstallOptionButton @JvmOverloads constructor(
   }
 
   override fun getComponent(): JComponent = this
+
+  private fun applyActionWidth() {
+    if (useNaturalWidth) {
+      preferredSize = null
+    }
+    else {
+      setWidth(this, 80)
+    }
+  }
+
+  private fun applyInstallTextWidth() {
+    if (useNaturalWidth) {
+      preferredSize = null
+    }
+    else {
+      setWidth72(this)
+    }
+  }
 }

@@ -1338,6 +1338,7 @@ f:com.intellij.ide.plugins.marketplace.MarketplaceRequestsKt
 c:com.intellij.ide.plugins.newui.ColorButton
 - javax.swing.JButton
 - <init>():V
+- pf:clearCustomColors():V
 - pf:setBgColor(java.awt.Color):V
 - pf:setBorderColor(java.awt.Color):V
 - pf:setFocusedBgColor(java.awt.Color):V

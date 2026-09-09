@@ -47,6 +47,15 @@ public class ColorButton extends JButton {
     putClientProperty("JButton.focusedBorderColor", color);
   }
 
+  protected final void clearCustomColors() {
+    putClientProperty("JButton.textColor", null);
+    putClientProperty("JButton.focusedTextColor", null);
+    putClientProperty("JButton.backgroundColor", null);
+    putClientProperty("JButton.focusedBackgroundColor", null);
+    putClientProperty("JButton.borderColor", null);
+    putClientProperty("JButton.focusedBorderColor", null);
+  }
+
   public static void setWidth72(@NotNull JButton button) {
     setWidth(button, 72);
   }

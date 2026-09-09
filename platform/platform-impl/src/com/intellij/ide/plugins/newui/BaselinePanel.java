@@ -32,6 +32,7 @@ public final class BaselinePanel extends NonOpaquePanel {
   private final JBValue myBeforeButtonOffset;
   private final JBValue myButtonOffset = new JBValue.Float(6);
   private final boolean myLeftOrder;
+  private int myLeadingVisualInset;
 
   private EventHandler myEventHandler;
 
@@ -165,7 +166,7 @@ public final class BaselinePanel extends NonOpaquePanel {
           }
           else {
             Dimension buttonSize = myProgressDisabledButton.getPreferredSize();
-            int x = 0;
+            int x = -JBUI.scale(myLeadingVisualInset);
             setBaselineBounds(x, y, myProgressDisabledButton, buttonSize);
             x += buttonSize.width + myOffset.get();
             setBaselineBounds(x, y, myProgressComponent, size, parent.getWidth() - x, size.height);
@@ -173,7 +174,7 @@ public final class BaselinePanel extends NonOpaquePanel {
           return;
         }
 
-        int x = 0;
+        int x = -JBUI.scale(myLeadingVisualInset);
         boolean buttons = false;
 
         for (Component component : myButtonComponents) {
@@ -223,6 +224,11 @@ public final class BaselinePanel extends NonOpaquePanel {
 
   public void setYOffset(int YOffset) {
     myYOffset = YOffset;
+  }
+
+  public void setLeadingVisualInset(int leadingVisualInset) {
+    myLeadingVisualInset = leadingVisualInset;
+    revalidate();
   }
 
   @Override

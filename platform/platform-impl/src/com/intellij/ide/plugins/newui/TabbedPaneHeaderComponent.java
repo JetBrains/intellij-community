@@ -142,9 +142,9 @@ public class TabbedPaneHeaderComponent extends JPanel implements UiDataProvider 
     myIsWelcomeScreen = welcomeScreen;
   }
 
-  static @NotNull JComponent createToolbar(@NotNull DefaultActionGroup actions,
-                                           @Nullable @NlsActions.ActionText String tooltip,
-                                           @NotNull Icon icon) {
+  public static @NotNull JComponent createToolbar(@NotNull DefaultActionGroup actions,
+                                                  @Nullable @NlsActions.ActionText String tooltip,
+                                                  @NotNull Icon icon) {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("PluginsHeaderToolbar", toolbarActionGroup, true);
     toolbar.setTargetComponent(toolbar.getComponent());

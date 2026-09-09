@@ -33,13 +33,19 @@ public class InstallButton extends ColorButton implements PluginInstallButton {
   private static final Color BorderColor = JBColor.namedColor("Plugins.Button.installBorderColor", GreenColor);
 
   private final boolean myIsUpgradeRequired;
+  private final boolean myUseSecondaryStyle;
 
   public InstallButton(boolean fill) {
-    this(fill, false);
+    this(fill, false, false);
   }
 
   public InstallButton(boolean fill, boolean isUpgradeRequired) {
+    this(fill, isUpgradeRequired, false);
+  }
+
+  InstallButton(boolean fill, boolean isUpgradeRequired, boolean useSecondaryStyle) {
     myIsUpgradeRequired = isUpgradeRequired;
+    myUseSecondaryStyle = useSecondaryStyle;
 
     setButtonColors(fill);
   }
@@ -60,6 +66,12 @@ public class InstallButton extends ColorButton implements PluginInstallButton {
 
   @Override
   public void setButtonColors(boolean fill) {
+    if (myUseSecondaryStyle) {
+      clearCustomColors();
+      setTextAndSize();
+      return;
+    }
+
     if (fill) {
       setTextColor(FillForegroundColor);
       setBgColor(FillBackgroundColor);

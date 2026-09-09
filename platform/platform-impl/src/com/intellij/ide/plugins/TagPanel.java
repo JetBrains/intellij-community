@@ -4,6 +4,8 @@ package com.intellij.ide.plugins;
 import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.newui.HorizontalLayout;
+import com.intellij.ide.plugins.newui.LinkComponent;
+import com.intellij.ide.plugins.newui.PluginTagBadge;
 import com.intellij.ide.plugins.newui.TagComponent;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.ui.components.labels.LinkListener;
@@ -27,10 +29,16 @@ import java.util.List;
 @ApiStatus.Internal
 public final class TagPanel extends NonOpaquePanel {
   private final LinkListener<Object> mySearchListener;
+  private final boolean myUseBadges;
 
   public TagPanel(@NotNull LinkListener<Object> searchListener) {
+    this(searchListener, false);
+  }
+
+  public TagPanel(@NotNull LinkListener<Object> searchListener, boolean useBadges) {
     super(new HorizontalLayout(JBUIScale.scale(6)));
     mySearchListener = searchListener;
+    myUseBadges = useBadges;
     setBorder(JBUI.Borders.emptyTop(2));
   }
 
@@ -45,18 +53,28 @@ public final class TagPanel extends NonOpaquePanel {
     int commonSize = Math.min(newSize, oldSize);
 
     for (int i = 0; i < commonSize; i++) {
-      TagComponent component = (TagComponent)getComponent(i);
+      JComponent component = (JComponent)getComponent(i);
       component.setToolTipText(null);
-      component.setText(tags.get(i));
+      if (myUseBadges) {
+        PluginTagBadge.update((LinkComponent)component, tags.get(i), mySearchListener);
+      }
+      else {
+        ((TagComponent)component).setText(tags.get(i));
+      }
       component.setVisible(true);
     }
 
     if (newSize > oldSize) {
       for (int i = oldSize; i < newSize; i++) {
-        TagComponent component = new TagComponent(tags.get(i));
-        add(PluginManagerConfigurable.setTinyFont(component));
-        //noinspection unchecked
-        component.setListener(mySearchListener, component);
+        if (myUseBadges) {
+          add(PluginTagBadge.create(tags.get(i), mySearchListener));
+        }
+        else {
+          TagComponent component = new TagComponent(tags.get(i));
+          add(PluginManagerConfigurable.setTinyFont(component));
+          //noinspection unchecked
+          component.setListener(mySearchListener, component);
+        }
       }
     }
     else if (newSize < oldSize) {
