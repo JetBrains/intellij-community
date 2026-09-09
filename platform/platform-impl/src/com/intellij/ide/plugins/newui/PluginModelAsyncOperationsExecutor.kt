@@ -51,7 +51,7 @@ internal class PluginOperationUiHandle(
 
   @RequiresEdt
   fun captureContext(modalityComponent: JComponent? = parentComponent): PluginOperationUiContext {
-    if (modalityComponent == null) return PluginOperationUiContext(ModalityState.defaultModalityState()) { null }
+    if (modalityComponent == null) return PluginOperationUiContext.withoutParent()
     val modalityState = ModalityState.stateForComponent(modalityComponent)
     return PluginOperationUiContext(modalityState, ::getParentComponent)
   }
@@ -72,7 +72,14 @@ internal class PluginOperationUiContext(
   val modalityState: ModalityState,
   private val parentComponent: () -> JComponent?,
 ) {
+  @RequiresEdt
   fun getParentComponent(): JComponent? = parentComponent()
+
+  companion object {
+    fun withoutParent(modalityState: ModalityState = ModalityState.defaultModalityState()): PluginOperationUiContext {
+      return PluginOperationUiContext(modalityState) { null }
+    }
+  }
 }
 
 internal class PluginOperationLauncher(
