@@ -1,17 +1,40 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remote.hosting
 
-import junit.framework.Assert
-import junit.framework.TestCase
-import org.junit.Test
 import java.net.URI
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
 internal class GitHostingUrlUtilTest {
   private fun <T> checkStringConversion(mapping: List<Pair<String, T>>, mapper: (String) -> T) {
     for ((initial, expected) in mapping) {
       val actual = mapper(initial)
-      Assert.assertEquals(initial, expected, actual)
+      assertThat(actual).describedAs(initial).isEqualTo(expected)
     }
+  }
+
+  @Test
+  fun isSshUrl() {
+    checkStringConversion(
+      listOf(
+        "ssh://git@example.com/user/repo.git" to true,
+        "git+ssh://git@example.com/user/repo.git" to true,
+        "ssh+git://git@example.com/user/repo.git" to true,
+        "git@example.com:user/repo.git" to true,
+        "example.com:user/repo.git" to true,
+        "[::1]:user/repo.git" to true,
+        "https://example.com/user/repo.git" to false,
+        "http://example.com/user/repo.git" to false,
+        "git://example.com/user/repo.git" to false,
+        "file:///path/to/repo.git" to false,
+        "/path/to/repo.git" to false,
+        "path/to/repo.git" to false,
+        "C:" to false,
+        "C:/path/to/repo.git" to false,
+        "C:\\path\\to\\repo.git" to false,
+      ),
+      GitHostingUrlUtil::isSshUrl,
+    )
   }
 
   @Test
@@ -97,16 +120,11 @@ internal class GitHostingUrlUtilTest {
     val sshServer = "ssh://$host"
     val sshUserServer = "ssh://username@$host"
 
-    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $httpServer", shouldMatch,
-                          GitHostingUrlUtil.match(uri, httpServer))
-    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $httpsServer", shouldMatch,
-                          GitHostingUrlUtil.match(uri, httpsServer))
-    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $gitServer", shouldMatch,
-                          GitHostingUrlUtil.match(uri, gitServer))
-    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $sshServer", shouldMatch,
-                          GitHostingUrlUtil.match(uri, sshServer))
-    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $sshUserServer", shouldMatch,
-                          GitHostingUrlUtil.match(uri, sshUserServer))
+    assertMatch(shouldMatch, serverUri, uri, httpServer)
+    assertMatch(shouldMatch, serverUri, uri, httpsServer)
+    assertMatch(shouldMatch, serverUri, uri, gitServer)
+    assertMatch(shouldMatch, serverUri, uri, sshServer)
+    assertMatch(shouldMatch, serverUri, uri, sshUserServer)
 
     val httpRemote = "http://$host/$path"
     val httpsRemote = "https://$host/$path"
@@ -115,17 +133,16 @@ internal class GitHostingUrlUtilTest {
     val sshUserRemote = "ssh://username@$host/$path"
     val scpRemote = "username@$host:$path"
 
-    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $httpRemote", shouldMatch,
-                          GitHostingUrlUtil.match(uri, httpRemote))
-    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $httpsRemote", shouldMatch,
-                          GitHostingUrlUtil.match(uri, httpsRemote))
-    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $gitRemote", shouldMatch,
-                          GitHostingUrlUtil.match(uri, gitRemote))
-    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $sshRemote", shouldMatch,
-                          GitHostingUrlUtil.match(uri, sshRemote))
-    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $sshUserRemote", shouldMatch,
-                          GitHostingUrlUtil.match(uri, sshUserRemote))
-    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $scpRemote", shouldMatch,
-                          GitHostingUrlUtil.match(uri, scpRemote))
+    assertMatch(shouldMatch, serverUri, uri, httpRemote)
+    assertMatch(shouldMatch, serverUri, uri, httpsRemote)
+    assertMatch(shouldMatch, serverUri, uri, gitRemote)
+    assertMatch(shouldMatch, serverUri, uri, sshRemote)
+    assertMatch(shouldMatch, serverUri, uri, sshUserRemote)
+    assertMatch(shouldMatch, serverUri, uri, scpRemote)
+  }
+
+  private fun assertMatch(shouldMatch: Boolean, serverUri: String, uri: URI, remoteUrl: String) {
+    val message = "$serverUri should ${if (!shouldMatch) "not " else ""}match $remoteUrl"
+    assertThat(GitHostingUrlUtil.match(uri, remoteUrl)).describedAs(message).isEqualTo(shouldMatch)
   }
 }

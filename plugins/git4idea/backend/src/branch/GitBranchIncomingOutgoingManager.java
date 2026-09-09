@@ -21,11 +21,11 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.update.DebouncedUpdates;
 import com.intellij.util.ui.update.UpdateQueue;
+import git4idea.remote.hosting.GitHostingUrlUtil;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Dispatchers;
@@ -461,11 +461,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   }
 
   private static boolean shouldAvoidUserInteraction(@NotNull GitRemote remote) {
-    return containsSSHUrl(remote) && HAS_EXTERNAL_SSH_AGENT.get();
-  }
-
-  private static boolean containsSSHUrl(@NotNull GitRemote remote) {
-    return ContainerUtil.exists(remote.getUrls(), url -> !url.startsWith(URLUtil.HTTP_PROTOCOL));
+    return ContainerUtil.exists(remote.getUrls(), url -> GitHostingUrlUtil.isSshUrl(url)) && HAS_EXTERNAL_SSH_AGENT.get();
   }
 
   private @NotNull Map<String, Hash> lsRemote(@NotNull GitRepository repository,
