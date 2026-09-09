@@ -33,7 +33,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -48,7 +47,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
-import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
@@ -999,10 +997,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private fun doLoad(component: ListPluginComponent, task: suspend () -> Unit) {
     startLoading()
     val loadStart = TimeSource.Monotonic.markNow()
-    val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
+    val modalityState = ModalityState.stateForComponent(component)
     coroutineScope.launch(limitedDispatcher) {
       task()
-      coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
+      withContext(Dispatchers.EDT + modalityState.asContextElement()) {
         if (showComponent == component) {
           stopLoading()
           showPluginImpl(component.getPluginModel(), component.getUpdatePluginDescriptor())
