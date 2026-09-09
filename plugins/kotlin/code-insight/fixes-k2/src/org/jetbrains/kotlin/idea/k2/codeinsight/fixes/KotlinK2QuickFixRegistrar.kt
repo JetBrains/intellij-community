@@ -458,6 +458,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(WrapWithSafeLetCallFixFactories.forArgumentTypeMismatch)
 
         registerPsiQuickFixes(KaFirDiagnostic.NullableSupertype::class, RemoveNullableFix.removeForSuperType)
+        registerPsiQuickFixes(
+            KaFirDiagnostic.CompanionExtensionNullableReceiver::class,
+            RemoveNullableFix.removeForCompanionExtensionNullableReceiver
+        )
         registerPsiQuickFixes(KaFirDiagnostic.InapplicableLateinitModifier::class, RemoveNullableFix.removeForLateInitProperty)
         registerPsiQuickFixes(KaFirDiagnostic.RedundantNullable::class, RemoveNullableFix.removeForRedundant)
         registerPsiQuickFixes(

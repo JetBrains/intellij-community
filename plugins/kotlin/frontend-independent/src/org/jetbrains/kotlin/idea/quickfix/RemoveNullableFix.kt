@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
@@ -39,10 +40,11 @@ class RemoveNullableFix(element: KtNullableType, private val typeOfError: Nullab
     companion object {
         val removeForRedundant: QuickFixesPsiBasedFactory<KtElement> = createFactory(NullableKind.REDUNDANT)
         val removeForSuperType: QuickFixesPsiBasedFactory<KtElement> = createFactory(NullableKind.SUPERTYPE)
+        val removeForCompanionExtensionNullableReceiver: QuickFixesPsiBasedFactory<PsiElement> = createFactory(NullableKind.SUPERTYPE)
         val removeForUseless: QuickFixesPsiBasedFactory<KtElement> = createFactory(NullableKind.USELESS)
         val removeForLateInitProperty: QuickFixesPsiBasedFactory<KtElement> = createFactory(NullableKind.PROPERTY)
 
-        private fun createFactory(typeOfError: NullableKind): QuickFixesPsiBasedFactory<KtElement> {
+        private inline fun <reified PSI : PsiElement> createFactory(typeOfError: NullableKind): QuickFixesPsiBasedFactory<PSI> {
             return quickFixesPsiBasedFactory { e ->
                 when (typeOfError) {
                     NullableKind.REDUNDANT, NullableKind.SUPERTYPE, NullableKind.USELESS -> {

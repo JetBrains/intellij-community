@@ -11436,6 +11436,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("removeCompanionExtensionNullableReceiver.kt")
+            public void testRemoveCompanionExtensionNullableReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/nullables/removeCompanionExtensionNullableReceiver.kt");
+            }
+
             @TestMetadata("removeRedundantNullable.kt")
             public void testRemoveRedundantNullable() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/nullables/removeRedundantNullable.kt");
