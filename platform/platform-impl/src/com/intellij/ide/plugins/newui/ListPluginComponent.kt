@@ -126,6 +126,7 @@ class ListPluginComponent private constructor(
   operationUiBridge: PluginOperationUiBridge?,
   marketplace: Boolean,
   precomputedRenderKey: PluginRowRenderKey?,
+  registerInstallingWithoutGroup: Boolean,
   private val myUseSecondaryButtons: Boolean,
   private val myUseBadgeTags: Boolean,
   private val myUseIslandSelection: Boolean,
@@ -159,6 +160,7 @@ class ListPluginComponent private constructor(
     operationUiBridge,
     marketplace,
     null,
+    false,
     secondaryButtons,
     badgeTags,
     islandSelection,
@@ -178,6 +180,7 @@ class ListPluginComponent private constructor(
     operationUiBridge: PluginOperationUiBridge?,
     marketplace: Boolean,
     renderKey: PluginRowRenderKey,
+    registerInstallingWithoutGroup: Boolean = false,
     secondaryButtons: Boolean = false,
     badgeTags: Boolean = false,
     islandSelection: Boolean = false,
@@ -194,6 +197,7 @@ class ListPluginComponent private constructor(
     operationUiBridge,
     marketplace,
     renderKey,
+    registerInstallingWithoutGroup,
     secondaryButtons,
     badgeTags,
     islandSelection,
@@ -280,7 +284,7 @@ class ListPluginComponent private constructor(
     myInstalledDescriptorForMarketplace = listModel.installedModels.get(pluginUiModel.pluginId)
     val pluginId = myPlugin.pluginId
     val pluginInstallationState = listModel.pluginInstallationStates.get(pluginId)
-    pluginModelFacade.addComponent(this)
+    pluginModelFacade.addComponent(this, registerInstallingWithoutGroup)
     myCustomizer = if (UiPluginManager.isCombinedPluginManagerEnabled()) PluginManagerCustomizer.getInstance() else null
     isOpaque = true
     border = if (myUseIslandSelection) JBUI.Borders.empty(12, 16) else JBUI.Borders.empty(10)

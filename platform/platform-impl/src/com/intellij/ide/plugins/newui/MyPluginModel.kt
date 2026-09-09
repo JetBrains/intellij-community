@@ -72,6 +72,14 @@ import java.util.function.Consumer
 import javax.swing.Icon
 import javax.swing.JComponent
 
+internal fun shouldRegisterNonMarketplaceComponent(
+  installing: Boolean,
+  registeredInLegacyInstallingGroup: Boolean,
+  registerInstallingWithoutGroup: Boolean,
+): Boolean {
+  return !installing || registeredInLegacyInstallingGroup || registerInstallingWithoutGroup
+}
+
 @ApiStatus.Internal
 open class MyPluginModel @JvmOverloads constructor(
   project: Project?,
@@ -234,13 +242,16 @@ open class MyPluginModel @JvmOverloads constructor(
     }
   }
 
-  fun addComponent(component: ListPluginComponent) {
+  fun addComponent(component: ListPluginComponent, registerInstallingWithoutGroup: Boolean = false) {
     val descriptor = component.getPluginModel()
     val pluginId = descriptor.pluginId
     if (!component.isMarketplace()) {
-      if (installingPlugins.contains(descriptor) &&
-          (myInstalling == null || myInstalling!!.ui == null || myInstalling!!.ui!!.findComponent(pluginId) == null)
-      ) {
+      val registeredInLegacyInstallingGroup = myInstalling?.ui?.findComponent(pluginId) != null
+      if (!shouldRegisterNonMarketplaceComponent(
+          installing = installingPlugins.contains(descriptor),
+          registeredInLegacyInstallingGroup = registeredInLegacyInstallingGroup,
+          registerInstallingWithoutGroup = registerInstallingWithoutGroup,
+        )) {
         return
       }
 

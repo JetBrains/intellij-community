@@ -162,8 +162,8 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return pluginModel.isRequiredPluginForProject(model.pluginId)
   }
 
-  fun addComponent(component: ListPluginComponent) {
-    pluginModel.addComponent(component)
+  fun addComponent(component: ListPluginComponent, registerInstallingWithoutGroup: Boolean = false) {
+    pluginModel.addComponent(component, registerInstallingWithoutGroup)
   }
 
   fun removeComponent(component: ListPluginComponent) {
