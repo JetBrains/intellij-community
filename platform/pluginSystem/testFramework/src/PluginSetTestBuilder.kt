@@ -21,7 +21,7 @@ import com.intellij.ide.plugins.withCustomFactoryInUnitTests
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.lang.UrlClassLoader
 import java.nio.file.Path

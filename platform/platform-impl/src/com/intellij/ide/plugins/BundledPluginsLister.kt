@@ -9,7 +9,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.io.jackson.writeStringField

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.platform.runtime.product.impl.ProductModeLoadingRules
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.impl.moduleBased.JpsProductModeMatcher

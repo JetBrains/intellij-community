@@ -7,8 +7,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.platform.project.projectId
-import com.intellij.platform.runtime.product.ProductMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus

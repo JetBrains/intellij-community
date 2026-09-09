@@ -3,7 +3,7 @@
  * Classes in this package are used to provide information about how the product based on IntelliJ Platform is structured.
  * {@link com.intellij.platform.runtime.product.ProductModules ProductModules} describes which modules are included in the main part, and 
  * which belong to plugins. 
- * {@link com.intellij.platform.runtime.product.ProductMode ProductMode} specifies in which mode the product can be started.
+ * {@link com.intellij.platform.productMode.ProductMode ProductMode} specifies in which mode the product can be started.
  * 
  * <p>
  * All classes in this package <strong>are experimental</strong> and their API may change in future versions.

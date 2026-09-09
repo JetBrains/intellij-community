@@ -30,12 +30,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//platform/productMode"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
         "//platform/runtime/repository",
         "@lib//:kotlin-stdlib",
         "//platform/util/base",
+        "//platform/productMode",
     ],
 )
 
@@ -49,12 +51,18 @@ jvm_library(
     kotlinc_opts = ":custom_product",
     module_name = "intellij.platform.runtime.product",
     visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/productMode",
+        "//platform/productMode:productMode_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":product",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/runtime/repository:repository_test_lib",
         "//platform/util/base:base_test_lib",
+        "//platform/productMode:productMode_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.runtime.product` end

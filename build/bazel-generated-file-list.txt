@@ -981,6 +981,7 @@ platform/problemsView/frontend
 platform/problemsView/plugin
 platform/problemsView/shared
 platform/problemsView/ui
+platform/productMode
 platform/progress/backend
 platform/progress/shared
 platform/project-frame

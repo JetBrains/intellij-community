@@ -6,11 +6,11 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesCoroutineScopeProvider
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
-import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.util.coroutines.childScope
 import fleet.rpc.client.durable
 import fleet.rpc.remoteApiDescriptor

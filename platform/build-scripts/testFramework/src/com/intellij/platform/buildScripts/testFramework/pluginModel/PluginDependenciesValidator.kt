@@ -50,7 +50,7 @@ import com.intellij.platform.pluginSystem.testFramework.isModuleSetPath
 import com.intellij.platform.pluginSystem.testFramework.loadRawPluginDescriptorInTest
 import com.intellij.platform.pluginSystem.testFramework.loadXIncludeReferenceFromResolvedRoots
 import com.intellij.platform.pluginSystem.testFramework.resolveModuleSetPath
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.lang.UrlClassLoader

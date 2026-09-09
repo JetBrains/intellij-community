@@ -2,7 +2,7 @@
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItemKind
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.SoftAssertions

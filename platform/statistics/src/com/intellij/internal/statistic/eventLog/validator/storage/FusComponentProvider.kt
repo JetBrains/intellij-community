@@ -41,7 +41,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.PlatformUtils
 import com.jetbrains.fus.reporting.DICTIONARY_LIST_LOAD_FAILED_TOPIC
 import com.jetbrains.fus.reporting.DICTIONARY_LIST_UPDATE_FAILED_TOPIC

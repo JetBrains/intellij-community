@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.terminal.frontend.dnd.TerminalDropData
 import com.intellij.terminal.frontend.dnd.TerminalDroppedContentResolver
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalFilePathHandler

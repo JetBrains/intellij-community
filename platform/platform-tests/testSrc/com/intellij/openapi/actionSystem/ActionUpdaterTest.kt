@@ -30,7 +30,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.DockToolWindowAction
 import com.intellij.platform.ide.productMode.IdeProductMode
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.testFramework.UsefulTestCase.assertEmpty

@@ -2,7 +2,7 @@
 package com.intellij.platform.ide.productMode
 
 import com.intellij.openapi.components.service
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 

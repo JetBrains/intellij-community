@@ -8,7 +8,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.TriConsumer
 import com.intellij.util.system.CpuArch

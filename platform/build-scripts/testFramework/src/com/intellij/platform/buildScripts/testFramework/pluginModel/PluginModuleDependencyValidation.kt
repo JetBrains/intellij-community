@@ -5,7 +5,7 @@ import com.intellij.platform.buildScripts.testFramework.distributionContent.Pack
 import com.intellij.platform.buildScripts.testFramework.distributionContent.PackagingTargetValidationContext
 import com.intellij.platform.buildScripts.testFramework.distributionContent.PackagingTargetValidationSpec
 import com.intellij.platform.buildScripts.testFramework.distributionContent.PackagingTargetValidationStage
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder

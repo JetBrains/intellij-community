@@ -3,7 +3,7 @@ package com.intellij.platform.ide.productMode.impl
 
 import com.intellij.ide.plugins.ProductLoadingStrategy
 import com.intellij.platform.ide.productMode.IdeProductMode
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 
 internal class IdeProductModeImpl : IdeProductMode {
   override val currentMode: ProductMode

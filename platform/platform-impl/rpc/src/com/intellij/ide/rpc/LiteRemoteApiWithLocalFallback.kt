@@ -4,7 +4,7 @@ package com.intellij.ide.rpc
 
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import fleet.rpc.RemoteApi
 import fleet.rpc.RemoteApiDescriptor
 import org.jetbrains.annotations.ApiStatus

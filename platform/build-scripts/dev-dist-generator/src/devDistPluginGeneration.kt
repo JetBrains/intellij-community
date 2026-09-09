@@ -11,7 +11,7 @@ import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicPrepared
 import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicPreparedSourceManifest
 import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicVariant
 import com.intellij.platform.distributionContent.DevDistPlatformJars
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider

@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.zombie
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.ide.productMode.IdeProductMode
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.replaceService
 

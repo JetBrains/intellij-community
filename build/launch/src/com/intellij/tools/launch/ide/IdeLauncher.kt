@@ -1,7 +1,7 @@
 package com.intellij.tools.launch.ide
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.tools.launch.PathsProvider
 import com.intellij.tools.launch.environments.LaunchCommand
 import com.intellij.util.JavaModuleOptions

@@ -1823,6 +1823,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/problemsView/shared/intellij.platform.problemView.shared.iml" filepath="$PROJECT_DIR$/platform/problemsView/shared/intellij.platform.problemView.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/problemsView/ui/intellij.platform.problemView.ui.iml" filepath="$PROJECT_DIR$/platform/problemsView/ui/intellij.platform.problemView.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/problemsView/ui/intellij.platform.problemView.ui.tests.iml" filepath="$PROJECT_DIR$/platform/problemsView/ui/intellij.platform.problemView.ui.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/productMode/intellij.platform.productMode.iml" filepath="$PROJECT_DIR$/platform/productMode/intellij.platform.productMode.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/progress/backend/intellij.platform.progress.backend.iml" filepath="$PROJECT_DIR$/platform/progress/backend/intellij.platform.progress.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/project/shared/intellij.platform.project.iml" filepath="$PROJECT_DIR$/platform/project/shared/intellij.platform.project.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/project/backend/intellij.platform.project.backend.iml" filepath="$PROJECT_DIR$/platform/project/backend/intellij.platform.project.backend.iml" />

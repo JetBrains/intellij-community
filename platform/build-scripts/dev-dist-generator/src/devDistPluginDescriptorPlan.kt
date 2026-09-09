@@ -17,7 +17,7 @@ import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.jetbrains.intellij.build.impl.DescriptorMarker
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SupportedDistribution
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import org.jetbrains.intellij.build.impl.createContentModuleFilter
 import org.jetbrains.intellij.build.impl.createFrontendModuleFilter
 import org.jetbrains.intellij.build.impl.createProductModeContentModuleFilter
@@ -49,7 +49,7 @@ import kotlin.io.path.invariantSeparatorsPathString
  */
 internal class PluginDescriptorPlan(
   @JvmField val platformPrefix: String,
-  /** The [com.intellij.platform.runtime.product.ProductMode] id, such as `monolith` or `frontend`, or empty when a test states none. */
+  /** The [com.intellij.platform.productMode.ProductMode] id, such as `monolith` or `frontend`, or empty when a test states none. */
   @JvmField val mode: String = "",
   /** The generator sorts entries by main module. Explicit source configuration retains captured request order. */
   @JvmField val plugins: List<PluginDescriptorEntry>,

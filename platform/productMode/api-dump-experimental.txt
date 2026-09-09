@@ -1,0 +1,9 @@
+*e:com.intellij.platform.productMode.ProductMode
+- java.lang.Enum
+- sf:BACKEND:com.intellij.platform.productMode.ProductMode
+- sf:FRONTEND:com.intellij.platform.productMode.ProductMode
+- sf:MONOLITH:com.intellij.platform.productMode.ProductMode
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getId():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.platform.productMode.ProductMode
+- s:values():com.intellij.platform.productMode.ProductMode[]

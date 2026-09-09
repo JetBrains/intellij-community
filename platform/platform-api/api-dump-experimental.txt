@@ -293,7 +293,7 @@ com.intellij.openapi.wm.ToolWindowFactory
 - createQuickAccessActions(com.intellij.openapi.Disposable):java.util.List
 - createQuickAccessComponent(com.intellij.openapi.Disposable):java.awt.Component
 com.intellij.platform.ide.productMode.IdeProductMode
-- *a:getCurrentMode():com.intellij.platform.runtime.product.ProductMode
+- *a:getCurrentMode():com.intellij.platform.productMode.ProductMode
 *:com.intellij.ui.AutoScrollToSourceTaskManager
 - *sf:Companion:com.intellij.ui.AutoScrollToSourceTaskManager$Companion
 - *s:getInstance():com.intellij.ui.AutoScrollToSourceTaskManager

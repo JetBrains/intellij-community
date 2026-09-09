@@ -2,7 +2,7 @@ package com.intellij.tools.launch.ide.splitMode
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.tools.launch.PathsProvider
 import com.intellij.tools.launch.ide.IdeDebugOptions
 import com.intellij.tools.launch.ide.IdeLaunchContext

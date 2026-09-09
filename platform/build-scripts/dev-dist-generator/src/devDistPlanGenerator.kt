@@ -12,7 +12,7 @@ import com.intellij.platform.distributionContent.DevDistPlatformJars
 import com.intellij.platform.pluginSystem.parser.impl.ContentParseResult
 import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
@@ -1453,7 +1453,7 @@ private fun collectFragmentPlan(
     }
     platformPayload.runtimeClasspathModules.add(moduleName)
   }
-  val isFrontend = properties.productMode == com.intellij.platform.runtime.product.ProductMode.FRONTEND
+  val isFrontend = properties.productMode == com.intellij.platform.productMode.ProductMode.FRONTEND
   // A product uses its product descriptor action when the action patches the application-info module jar, or, for a
   // frontend, for the plugin-classpath prefix alone.
   fun usesProductDescriptor(residualJars: Collection<ResidualPlatformJar>): Boolean {
@@ -1553,7 +1553,7 @@ private fun collectFragmentPlan(
       // A `content_module_jar` has neither the stamped application info nor the product descriptor. A frontend is the
       // exception: its root descriptor jar packs the application-info module, see the handover below.
       check(
-        properties.productMode == com.intellij.platform.runtime.product.ProductMode.FRONTEND ||
+        properties.productMode == com.intellij.platform.productMode.ProductMode.FRONTEND ||
         properties.applicationInfoModule !in contentModules
       ) {
         "Split dev distribution '${product.name}' declares its application-info module '${properties.applicationInfoModule}'" +
@@ -1572,7 +1572,7 @@ private fun collectFragmentPlan(
       reached.asSequence()
         .filterNot { it in payload.modulesPackedUnderAnotherName || it in modulePatches }
         .mapNotNull { module ->
-          if (properties.productMode == com.intellij.platform.runtime.product.ProductMode.FRONTEND && module == properties.applicationInfoModule) {
+          if (properties.productMode == com.intellij.platform.productMode.ProductMode.FRONTEND && module == properties.applicationInfoModule) {
             // The jar that packs the embedded descriptor of the product that embeds this frontend, as the root descriptor.
             requireNotNull(verdicts.frontendRootDescriptorJars.get(product.name)) {
               "Frontend product '${product.name}' has no frontend root descriptor jar"
@@ -1616,7 +1616,7 @@ private fun collectFragmentPlan(
           continue
         }
         // The frontend root descriptor jar packs the application-info module of a frontend, see the handover above.
-        if (properties.productMode == com.intellij.platform.runtime.product.ProductMode.FRONTEND && properties.applicationInfoModule in memberNames) {
+        if (properties.productMode == com.intellij.platform.productMode.ProductMode.FRONTEND && properties.applicationInfoModule in memberNames) {
           handedOver.add(destination)
           verdicts.frontendRootDescriptorJars.get(product.name)?.let(placedLabels::add)
           continue

@@ -1,6 +1,6 @@
 package com.intellij.tools.launch
 
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.productMode.ProductMode
 import java.net.InetAddress
 
 interface LauncherOptions {

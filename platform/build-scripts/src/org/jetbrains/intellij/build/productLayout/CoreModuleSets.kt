@@ -104,6 +104,7 @@ object CoreModuleSets {
     moduleSet(librariesDap())
     moduleSet(telemetry())
 
+    embeddedModule("intellij.platform.productMode")
     embeddedModule("intellij.platform.runtime.product")
     embeddedModule("intellij.platform.bazel.runfiles")
 

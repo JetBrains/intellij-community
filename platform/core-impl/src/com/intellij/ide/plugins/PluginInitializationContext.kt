@@ -49,7 +49,7 @@ interface PluginInitializationContext {
   val pluginsPerProjectConfig: PluginsPerProjectConfig?
 
   /**
-   * Returns ID of the current [com.intellij.platform.runtime.product.ProductMode]
+   * Returns ID of the current [com.intellij.platform.productMode.ProductMode]
    */
   val currentProductModeId: String
 

@@ -34,12 +34,12 @@ abstract class ProductLoadingStrategy {
   }
 
   /**
-   * Returns ID of current [ProductMode][com.intellij.platform.runtime.product.ProductMode].
+   * Returns ID of current [ProductMode][com.intellij.platform.productMode.ProductMode].
    */
   abstract val currentModeId: String
 
   /**
-   * Emits the ID of the current [ProductMode][com.intellij.platform.runtime.product.ProductMode] and a new value
+   * Emits the ID of the current [ProductMode][com.intellij.platform.productMode.ProductMode] and a new value
    * whenever the mode advances (see [advanceToLightWithRdConnectionMode] and [advanceToFrontendMode]).
    */
   abstract val currentModeIdFlow: StateFlow<String>

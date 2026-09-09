@@ -1,8 +1,3 @@
-*f:com.intellij.platform.runtime.product.ProductMode
-- sf:BACKEND:com.intellij.platform.runtime.product.ProductMode
-- sf:FRONTEND:com.intellij.platform.runtime.product.ProductMode
-- sf:MONOLITH:com.intellij.platform.runtime.product.ProductMode
-- getId():java.lang.String
 *:com.intellij.platform.runtime.product.ProductModules
 - a:getBundledPluginDescriptorModules():java.util.List
 *f:com.intellij.platform.runtime.product.serialization.ProductModulesSerialization

@@ -1,16 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.impl;
 
-import com.intellij.platform.runtime.product.ProductMode;
+import com.intellij.platform.productMode.ProductMode;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.platform.runtime.product.ProductMode.BACKEND;
-import static com.intellij.platform.runtime.product.ProductMode.FRONTEND;
-import static com.intellij.platform.runtime.product.ProductMode.MONOLITH;
+import static com.intellij.platform.productMode.ProductMode.BACKEND;
+import static com.intellij.platform.productMode.ProductMode.FRONTEND;
+import static com.intellij.platform.productMode.ProductMode.MONOLITH;
 
 /**
  * This class is used to determine whether a module should be loaded based on the current {@link ProductMode}.
