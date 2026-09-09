@@ -30,6 +30,7 @@ internal class XLineBreakpointVerticalPlacementTest {
   fun testSuggestionAndRemovalRequireSameKeys_InterLine() {
     val config = InterLineBreakpointConfiguration(
       AllIcons.Actions.Cancel,
+      AllIcons.Actions.Cancel,
       "test",
       InterLineBreakpointProperties(false),
     )

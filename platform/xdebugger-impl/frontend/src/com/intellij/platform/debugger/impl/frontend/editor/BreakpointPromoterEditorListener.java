@@ -13,9 +13,9 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.BreakpointArea;
+import com.intellij.openapi.editor.impl.InterLineBreakpointConfiguration;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.Icon;
 import java.awt.Cursor;
@@ -35,20 +36,22 @@ import java.util.Objects;
 
 @ApiStatus.Internal
 public final class BreakpointPromoterEditorListener implements EditorMouseMotionListener, EditorMouseListener {
+  private static final GutterHoverModifiers NO_MODIFIERS = new GutterHoverModifiers(false, false);
+
   private XSourcePositionImpl myLastPosition = null;
   private Icon myLastIcon = null;
   private boolean myLastInterLine = false;
+  private GutterHoverModifiers myLastModifiers = NO_MODIFIERS;
 
   private final Project myProject;
   private final XDebuggerLineChangeHandler lineChangeHandler;
 
   public BreakpointPromoterEditorListener(Project project, CoroutineScope coroutineScope) {
     myProject = project;
-    lineChangeHandler = new XDebuggerLineChangeHandler(coroutineScope,
-                                                         (gutter, position, breakpointType, breakpointArea) -> {
-                                                           onBreakpointTypeResolved(gutter, position, breakpointType, breakpointArea);
-                                                           return Unit.INSTANCE;
-                                                         });
+    lineChangeHandler = new XDebuggerLineChangeHandler(coroutineScope, (gutter, position, suggestion, breakpointArea, modifiers) -> {
+      onBreakpointTypeResolved(gutter, position, suggestion, breakpointArea, modifiers);
+      return Unit.INSTANCE;
+    });
   }
 
   @Override
@@ -62,6 +65,7 @@ public final class BreakpointPromoterEditorListener implements EditorMouseMotion
       BreakpointArea breakpointArea = EditorUtil.yToLogicalLineWithInterLineDetection(editor, mouseEvent);
       int line = breakpointArea.getLine();
       boolean isBetweenLines = breakpointArea.isBetweenLines();
+      GutterHoverModifiers modifiers = new GutterHoverModifiers(mouseEvent.isShiftDown(), mouseEvent.isAltDown());
       Document document = editor.getDocument();
       if (DocumentUtil.isValidLine(line, document)) {
         XSourcePositionImpl position = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(document), line);
@@ -69,14 +73,16 @@ public final class BreakpointPromoterEditorListener implements EditorMouseMotion
           boolean lineChanged = myLastPosition == null ||
                                 !myLastPosition.getFile().equals(position.getFile()) ||
                                 myLastPosition.getLine() != line ||
-                                myLastInterLine != isBetweenLines;
+                                myLastInterLine != isBetweenLines ||
+                                !myLastModifiers.equals(modifiers);
 
           if (lineChanged) {
             // drop an icon first and schedule the available types calculation
             clear(gutter);
             myLastInterLine = isBetweenLines;
+            myLastModifiers = modifiers;
             myLastPosition = position;
-            lineChangeHandler.lineChanged(editor, position, breakpointArea);
+            lineChangeHandler.lineChanged(editor, position, breakpointArea, modifiers);
           }
           return;
         }
@@ -106,6 +112,7 @@ public final class BreakpointPromoterEditorListener implements EditorMouseMotion
       clear(gutter);
       myLastPosition = null;
       myLastInterLine = false;
+      myLastModifiers = NO_MODIFIERS;
       lineChangeHandler.exitedGutter();
     }
   }
@@ -114,26 +121,49 @@ public final class BreakpointPromoterEditorListener implements EditorMouseMotion
     updateActiveLineNumberIcon(gutter, null, null, null, false);
     myLastIcon = null;
   }
+
   private void onBreakpointTypeResolved(EditorGutterComponentEx gutter,
                                         XSourcePositionImpl position,
-                                        @Nullable XBreakpointTypeProxy breakpointType,
-                                        BreakpointArea breakpointArea) {
+                                        @Nullable BreakpointTypeSuggestion suggestion,
+                                        BreakpointArea breakpointArea,
+                                        GutterHoverModifiers modifiers) {
 
-    if (breakpointType == null) {
+    if (suggestion == null) {
       clear(gutter);
       return;
     }
 
-    if (breakpointArea instanceof BreakpointArea.InterLine interLine) {
-      myLastIcon = interLine.getConfiguration().getIcon();
-      updateActiveLineNumberIcon(gutter, myLastIcon, position.getLine(), interLine.getConfiguration().getHoverTooltip(), true);
-      return;
+    InterLineBreakpointConfiguration configuration =
+      breakpointArea instanceof BreakpointArea.InterLine interLine ? interLine.getConfiguration() : null;
+    BreakpointHoverType hoverType =
+      getBreakpointHoverType(breakpointArea.isBetweenLines(), suggestion.getUseInterLinePlacement(), modifiers);
+    switch (hoverType) {
+      case INTER_LINE_ONLY -> {
+        myLastIcon = Objects.requireNonNull(configuration).getSmallIcon();
+        updateActiveLineNumberIcon(gutter, myLastIcon, position.getLine(), configuration.getHoverTooltip(), true);
+      }
+      case ON_LINE_AS_FALLBACK -> {
+        myLastIcon = configuration != null ? configuration.getIcon() : suggestion.getBreakpointType().getSuspendNoneIcon();
+        updateActiveLineNumberIcon(gutter, myLastIcon, position.getLine(), XDebuggerBundle.message("xbreakpoint.add.hover.tooltip"), false);
+      }
+      case ON_LINE_ONLY -> {
+        myLastIcon = suggestion.getBreakpointType().getEnabledIcon();
+        updateActiveLineNumberIcon(gutter, myLastIcon, position.getLine(), XDebuggerBundle.message("xbreakpoint.add.hover.tooltip"), false);
+      }
     }
+  }
 
-    myLastIcon = breakpointType.getEnabledIcon();
-    updateActiveLineNumberIcon(gutter, myLastIcon, position.getLine(),
-                               XDebuggerBundle.message("xbreakpoint.add.hover.tooltip"),
-                               false);
+  @VisibleForTesting
+  public static BreakpointHoverType getBreakpointHoverType(boolean isInterLineArea,
+                                                           boolean useInterLinePlacement,
+                                                           GutterHoverModifiers modifiers) {
+    if (isInterLineArea && useInterLinePlacement) {
+      return BreakpointHoverType.INTER_LINE_ONLY;
+    }
+    if (modifiers.isShiftDown() && !modifiers.isAltDown()) {
+      return BreakpointHoverType.ON_LINE_AS_FALLBACK;
+    }
+    return BreakpointHoverType.ON_LINE_ONLY;
   }
 
   private static void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter,
@@ -173,5 +203,13 @@ public final class BreakpointPromoterEditorListener implements EditorMouseMotion
     }
   }
 
-  private record MouseEventContext(@NotNull Editor editor, @NotNull EditorGutterComponentEx gutter) { }
+  private record MouseEventContext(@NotNull Editor editor, @NotNull EditorGutterComponentEx gutter) {
+  }
+
+  @VisibleForTesting
+  public enum BreakpointHoverType {
+    ON_LINE_ONLY,
+    ON_LINE_AS_FALLBACK,
+    INTER_LINE_ONLY,
+  }
 }

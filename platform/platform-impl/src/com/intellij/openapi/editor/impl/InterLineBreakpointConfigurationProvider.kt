@@ -26,7 +26,8 @@ private val INTER_LINE_BREAKPOINT_CONFIGS_KEY: Key<Map<String, InterLineBreakpoi
 /**
  * Configuration for inter-line hit detection and rendering.
  *
- * @param icon icon to show in the inter-line area
+ * @param icon the icon of the breakpoint, at the ordinary gutter size
+ * @param smallIcon the icon of the breakpoint, reduced to fit between the lines
  * @param hoverTooltip tooltip to show on hover
  * @param breakpointProperties properties for the breakpoint (e.g., logging)
  * @param animator optional animator for line shift effects (null for no animation)
@@ -36,6 +37,7 @@ private val INTER_LINE_BREAKPOINT_CONFIGS_KEY: Key<Map<String, InterLineBreakpoi
 @ApiStatus.Internal
 class InterLineBreakpointConfiguration(
   val icon: Icon,
+  val smallIcon: Icon,
   val hoverTooltip: @Nls String,
   val breakpointProperties: InterLineBreakpointProperties,
   val animator: InterLineShiftAnimator? = null,
