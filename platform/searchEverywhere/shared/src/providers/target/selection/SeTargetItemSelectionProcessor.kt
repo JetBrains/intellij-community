@@ -18,12 +18,6 @@ interface SeTargetItemSelectionProcessor {
   /**
    * Acts on [item] of [provider], and returns whether the search popup should close.
    *
-   * Returns null when this extension does not handle the item. The platform then asks the next
-   * extension.
-   *
-   * A true answer does not promise that the action finished. Navigation can continue on another
-   * coroutine.
-   *
    * The caller holds no read lock and runs off the EDT, so switch to what the action needs.
    *
    * @param modifiers the modifier keys held during the selection, as in [java.awt.event.InputEvent]

@@ -43,20 +43,6 @@ internal class SeDefaultTargetItemSelectionProcessor : SeTargetItemSelectionProc
     return true
   }
 
-  /**
-   * Picks the navigation handler of [psiElement].
-   *
-   * A file needs [FileSearchEverywhereNavigationContributionHandler], the handler that
-   * `FileSearchEverywhereContributor` installs. It builds a `SourceNavigationRequest`, and only that
-   * request type carries the navigation options through `IdeNavigationService`.
-   *
-   * The base handler calls `PsiElement.navigationRequest()` instead. The default of that method returns
-   * a raw request, and `IdeNavigationService` passes only `requestFocus` for a raw request. So
-   * `openInRightSplit` is dropped, and Shift opens the file in the current window.
-   *
-   * Anything else keeps the base handler. A directory in particular must keep it, because
-   * `PsiDirectoryImpl.navigationRequest` returns a directory request, which opens the project view.
-   */
   private fun navigationHandler(psiElement: PsiElement): SearchEverywhereNavigationHandler =
     if (psiElement is PsiFile) FileSearchEverywhereNavigationContributionHandler(psiElement.project)
     else SearchEverywhereNavigationHandler(psiElement.project)
