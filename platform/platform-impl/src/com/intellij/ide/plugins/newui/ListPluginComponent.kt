@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.ListPluginModel
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.PluginsGroupType
 import com.intellij.ide.plugins.getUiInspectorContextFor
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorContextProvider
@@ -22,9 +23,11 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -84,6 +87,31 @@ import javax.swing.UIManager
 import javax.swing.plaf.ButtonUI
 import javax.swing.text.BadLocationException
 
+/** Constructor-time row semantics which do not have a complete in-place update operation. */
+internal data class PluginRowRenderKey(
+  val pluginId: PluginId,
+  val groupType: PluginsGroupType,
+  val marketplace: Boolean,
+  val name: @NlsSafe String?,
+  val firstTag: @Nls String?,
+  val downloads: @NlsSafe String?,
+  val rating: @NlsSafe String?,
+  val installedCounterpartPresent: Boolean,
+  val version: @NlsSafe String?,
+  val versionIsBundledUpdate: Boolean,
+  val vendor: @NlsSafe String?,
+  val licenseProductCode: String?,
+  val licenseOptional: Boolean,
+  val bundled: Boolean,
+  val requiresUpgrade: Boolean,
+  val compatible: Boolean,
+  val available: Boolean,
+  val disableAllowed: Boolean,
+  val restrictedByProduct: Boolean,
+  val listCustomizerClassName: String,
+  val pluginManagerCustomizerClassName: String?,
+)
+
 @ApiStatus.Internal
 class ListPluginComponent internal constructor(
   pluginModelFacade: PluginModelFacade,
@@ -118,11 +146,12 @@ class ListPluginComponent internal constructor(
   private val mySearchListener: LinkListener<Any> = searchListener
   private val myMarketplace: Boolean = marketplace
   private val myGroup: PluginsGroup = group
-  private val myIsAvailable: Boolean
+  private val myRenderKey = createRenderKey(pluginModelFacade, pluginUiModel, group, listModel, marketplace)
+  private val myIsAvailable: Boolean = myRenderKey.available
 
   /** FIXME value logic is duplicated with {@link com.intellij.ide.plugins.newui.PluginDetailsPageComponent} */
-  private val myIsDisableAllowed: Boolean
-  private val myIsNotFreeInFreeMode: Boolean
+  private val myIsDisableAllowed: Boolean = myRenderKey.disableAllowed
+  private val myIsNotFreeInFreeMode: Boolean = myRenderKey.restrictedByProduct
   private var myPlugin: PluginUiModel = pluginUiModel
   private var myInstalledPluginMarketplaceNode: PluginUiModel? = null
   private var myOnlyUpdateMode = false
@@ -169,13 +198,7 @@ class ListPluginComponent internal constructor(
   init {
     myInstalledDescriptorForMarketplace = listModel.installedModels.get(pluginUiModel.pluginId)
     val pluginId = myPlugin.pluginId
-    val compatible = !myPlugin.isIncompatibleWithCurrentPlatform
     val pluginInstallationState = listModel.pluginInstallationStates.get(pluginId)
-    myIsAvailable = (compatible || isInstalledAndEnabled(pluginInstallationState!!)) && pluginUiModel.canBeEnabled
-    val pluginManager = UiPluginManager.getInstance()
-    myIsNotFreeInFreeMode =
-      pluginManager.isPluginRequiresUltimateButItIsDisabled(pluginModelFacade.getModel().sessionId, pluginUiModel.pluginId)
-    myIsDisableAllowed = pluginUiModel.isDisableAllowed && !myIsNotFreeInFreeMode
     pluginModelFacade.addComponent(this)
     myCustomizer = if (UiPluginManager.isCombinedPluginManagerEnabled()) PluginManagerCustomizer.getInstance() else null
     isOpaque = true
@@ -186,7 +209,7 @@ class ListPluginComponent internal constructor(
     myIconComponent.isOpaque = false
     myLayout.setIconComponent(myIconComponent)
 
-    myNameComponent.setText(pluginUiModel.name)
+    myNameComponent.setText(myRenderKey.name)
     myLayout.setNameComponent(RelativeFont.BOLD.install(myNameComponent))
 
     createTag()
@@ -197,7 +220,7 @@ class ListPluginComponent internal constructor(
       createLicensePanel()
     }
     else {
-      createNotAvailableMarker(compatible)
+      createNotAvailableMarker(myRenderKey.compatible)
     }
 
     if (marketplace && myInstalledDescriptorForMarketplace == null) {
@@ -211,7 +234,7 @@ class ListPluginComponent internal constructor(
     }
     updateColors(EventHandler.SelectionType.NONE)
 
-    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, pluginUiModel.name)
+    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, myRenderKey.name)
 
     UiInspectorUtil.registerProvider(this, PluginIdUiInspectorContextProvider())
 
@@ -412,7 +435,7 @@ class ListPluginComponent internal constructor(
   }
 
   private fun createInstallButton(): InstallButton {
-    return InstallButton(false, myPlugin.requiresUpgrade)
+    return InstallButton(false, myRenderKey.requiresUpgrade)
   }
 
   private fun createEnableDisableButton(modelFunction: Supplier<PluginUiModel>) {
@@ -438,54 +461,41 @@ class ListPluginComponent internal constructor(
     myMetricsPanel!!.border = JBUI.Borders.emptyTop(5)
     myLayout.addLineComponent(myMetricsPanel!!)
     if (myMarketplace) {
-      val downloads = myPlugin.presentableDownloads()
+      val downloads = myRenderKey.downloads
       if (downloads != null) {
         myDownloads = createRatingLabel(myMetricsPanel!!, downloads, AllIcons.Plugins.Downloads)
       }
 
-      val rating = myPlugin.presentableRating()
+      val rating = myRenderKey.rating
       if (rating != null) {
         myRating = createRatingLabel(myMetricsPanel!!, rating, AllIcons.Plugins.Rating)
       }
-      val version = if (myInstalledDescriptorForMarketplace == null) "" else myInstalledDescriptorForMarketplace!!.version
-      myVersion = createVersionLabel(myMetricsPanel!!, version, false)
-      myVersion!!.isVisible = !StringUtil.isEmptyOrSpaces(version)
+      val version = myRenderKey.version
+      @Suppress("HardCodedStringLiteral")
+      val displayVersion: @NlsSafe String = version.orEmpty()
+      myVersion = createVersionLabel(myMetricsPanel!!, displayVersion, myRenderKey.versionIsBundledUpdate)
+      myVersion!!.isVisible = version != null
     }
     else {
-      val version = myPlugin.version
-      if (!StringUtil.isEmptyOrSpaces(version)) {
-        myVersion = createVersionLabel(myMetricsPanel!!, version, myPlugin.isBundledUpdate)
+      val version = myRenderKey.version
+      if (version != null) {
+        myVersion = createVersionLabel(myMetricsPanel!!, version, myRenderKey.versionIsBundledUpdate)
       }
     }
 
-    if (!myPlugin.isBundled) {
-      val vendor = StringUtil.defaultIfEmpty(Strings.trim(myPlugin.vendor), Strings.trim(myPlugin.organization))
-      if (!StringUtil.isEmptyOrSpaces(vendor)) {
-        myVendor = createRatingLabel(myMetricsPanel!!, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true)
-      }
+    val vendor = myRenderKey.vendor
+    if (vendor != null) {
+      myVendor = createRatingLabel(myMetricsPanel!!, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true)
     }
   }
 
   private fun createTag() {
-    var tags = myPlugin.calculateTags()
-    var tooltip: String? = null
-
+    val tag: @NlsSafe String = myRenderKey.firstTag ?: return
+    val tagComponent = createTagComponent(tag)
     if (myIsNotFreeInFreeMode) {
-      if (PlatformUtils.isPyCharmPro()) {
-        tags = Collections.singletonList(Tags.Pro.name)
-      }
-      else {
-        tags = Collections.singletonList(Tags.Ultimate.name)
-      }
-      tooltip = UnavailableWithoutSubscriptionComponent.getHelpTooltip()
+      tagComponent.toolTipText = UnavailableWithoutSubscriptionComponent.getHelpTooltip()
     }
-    if (!tags.isEmpty()) {
-      val tagComponent = createTagComponent(tags[0])
-      if (tooltip != null) {
-        tagComponent.toolTipText = tooltip
-      }
-      myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(tagComponent))
-    }
+    myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(tagComponent))
   }
 
   private fun createTagComponent(tag: @Nls String): TagComponent {
@@ -502,9 +512,9 @@ class ListPluginComponent internal constructor(
   }
 
   private fun createLicensePanel() {
-    val productCode = myPlugin.productCode
+    val productCode = myRenderKey.licenseProductCode
     val instance = LicensingFacade.getInstance()
-    if (myMarketplace || productCode == null || instance == null || myPlugin.isBundled || LicensePanel.isEA2Product(productCode)) {
+    if (productCode == null || instance == null || LicensePanel.isEA2Product(productCode)) {
       return
     }
 
@@ -518,7 +528,7 @@ class ListPluginComponent internal constructor(
         return
       }
 
-      if (myPlugin.isLicenseOptional) {
+      if (myRenderKey.licenseOptional) {
         return // do not show "No License" for Freemium plugins
       }
 
@@ -1324,6 +1334,11 @@ class ListPluginComponent internal constructor(
     return myUiCoroutineScope
   }
 
+  @Suppress("unused")
+  internal fun canReuseFor(renderKey: PluginRowRenderKey): Boolean {
+    return myRenderKey == renderKey
+  }
+
   fun getModelFacade(): PluginModelFacade {
     return myModelFacade
   }
@@ -1718,10 +1733,6 @@ class ListPluginComponent internal constructor(
     }
   }
 
-  private fun isInstalledAndEnabled(pluginInstallationState: PluginInstallationState): Boolean {
-    return pluginInstallationState.fullyInstalled && !myModelFacade.getState(myPlugin).isDisabled
-  }
-
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
       accessibleContext = AccessibleListPluginComponent()
@@ -1807,6 +1818,88 @@ class ListPluginComponent internal constructor(
   }
 
   companion object {
+    internal fun createRenderKey(
+      pluginModelFacade: PluginModelFacade,
+      plugin: PluginUiModel,
+      group: PluginsGroup,
+      listModel: ListPluginModel,
+      marketplace: Boolean,
+    ): PluginRowRenderKey {
+      val installedPlugin = listModel.installedModels[plugin.pluginId]
+      val installationState = checkNotNull(listModel.pluginInstallationStates[plugin.pluginId])
+      val restrictedByProduct = UiPluginManager.getInstance()
+        .isPluginRequiresUltimateButItIsDisabled(pluginModelFacade.getModel().sessionId, plugin.pluginId)
+      val pluginManagerCustomizerClassName = if (UiPluginManager.isCombinedPluginManagerEnabled()) {
+        PluginManagerCustomizer.getInstance()?.javaClass?.name
+      }
+      else {
+        null
+      }
+      return createRenderKey(
+        plugin = plugin,
+        installedPlugin = installedPlugin,
+        installationState = installationState,
+        groupType = group.type,
+        marketplace = marketplace,
+        pluginEnabled = !pluginModelFacade.getState(plugin).isDisabled,
+        restrictedByProduct = restrictedByProduct,
+        listCustomizerClassName = getListPluginComponentCustomizer().javaClass.name,
+        pluginManagerCustomizerClassName = pluginManagerCustomizerClassName,
+      )
+    }
+
+    internal fun createRenderKey(
+      plugin: PluginUiModel,
+      installedPlugin: PluginUiModel?,
+      installationState: PluginInstallationState,
+      groupType: PluginsGroupType,
+      marketplace: Boolean,
+      pluginEnabled: Boolean,
+      restrictedByProduct: Boolean,
+      listCustomizerClassName: String,
+      pluginManagerCustomizerClassName: String?,
+    ): PluginRowRenderKey {
+      val compatible = !plugin.isIncompatibleWithCurrentPlatform
+      val available = (compatible || installationState.fullyInstalled && pluginEnabled) && plugin.canBeEnabled
+      @Suppress("HardCodedStringLiteral")
+      val firstTag = if (restrictedByProduct) {
+        if (PlatformUtils.isPyCharmPro()) Tags.Pro.name else Tags.Ultimate.name
+      }
+      else {
+        plugin.calculateTags().firstOrNull()
+      }
+      val versionModel = if (marketplace) installedPlugin else plugin
+      val version = versionModel?.version?.takeUnless(StringUtil::isEmptyOrSpaces)
+      val vendor = if (plugin.isBundled) null else {
+        StringUtil.defaultIfEmpty(Strings.trim(plugin.vendor), Strings.trim(plugin.organization))
+          ?.takeUnless(StringUtil::isEmptyOrSpaces)
+      }
+
+      return PluginRowRenderKey(
+        pluginId = plugin.pluginId,
+        groupType = groupType,
+        marketplace = marketplace,
+        name = plugin.name,
+        firstTag = firstTag,
+        downloads = if (marketplace) plugin.presentableDownloads() else null,
+        rating = if (marketplace) plugin.presentableRating() else null,
+        installedCounterpartPresent = installedPlugin != null,
+        version = version,
+        versionIsBundledUpdate = !marketplace && versionModel?.isBundledUpdate == true,
+        vendor = vendor,
+        licenseProductCode = if (!marketplace && !plugin.isBundled) plugin.productCode else null,
+        licenseOptional = !marketplace && !plugin.isBundled && plugin.isLicenseOptional,
+        bundled = plugin.isBundled,
+        requiresUpgrade = plugin.requiresUpgrade,
+        compatible = compatible,
+        available = available,
+        disableAllowed = plugin.isDisableAllowed && !restrictedByProduct,
+        restrictedByProduct = restrictedByProduct,
+        listCustomizerClassName = listCustomizerClassName,
+        pluginManagerCustomizerClassName = pluginManagerCustomizerClassName,
+      )
+    }
+
     @JvmField
     val DisabledColor: Color = JBColor.namedColor("Plugins.disabledForeground", JBColor(0xB1B1B1, 0x696969))
 
