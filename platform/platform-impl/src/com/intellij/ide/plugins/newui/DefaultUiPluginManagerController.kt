@@ -636,10 +636,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       val operation = PluginInstallOperation(request.pluginsToInstall, customRepoPlugins, it, pluginEnabler)
       operation.setAllowInstallWithoutRestart(request.allowInstallWithoutRestart)
       operation.setPendingUpdateToReplace(pendingUpdateToReplace)
-      var cancel = false
-      var success = true
-      var showErrors = true
-      var restartRequired = true
+      var terminalState = InstallPluginTerminalState.FAILED
       try {
         operation.run()
         for (install in operation.pendingDynamicPluginInstalls) {
@@ -652,9 +649,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
           }
         }
 
-        success = operation.isSuccess
-        showErrors = !operation.isShownErrors
-        restartRequired = operation.isRestartRequired
+        terminalState = InstallPluginTerminalState.completed(
+          success = operation.isSuccess,
+          showErrors = !operation.isShownErrors,
+          restartRequired = operation.isRestartRequired,
+        )
         if (pluginEnabler is SessionStatePluginEnabler) {
           result.pluginsToDisable = pluginEnabler.pluginsToDisable
           result.pluginsToEnable = pluginEnabler.pluginsToEnable
@@ -662,18 +661,14 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         result.dependentPluginUpdateSourceIds = operation.dependentPluginUpdateSourceIds
       }
       catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
-        cancel = true
+        terminalState = InstallPluginTerminalState.CANCELED
       }
       catch (e: Throwable) {
         LOG.error(e)
-        success = false
       }
 
-      result.success = success
-      result.cancel = cancel
-      result.showErrors = showErrors
-      result.restartRequired = restartRequired
-      session.needRestart = session.needRestart || restartRequired
+      result.applyTerminalState(terminalState)
+      session.needRestart = session.needRestart || terminalState.restartRequired
     }
     return withContext(getContextElement(modalityState)) {
       installDynamicPluginsSynchronously(request, pluginsToInstallSynchronously, session, parentComponent, result)
@@ -1499,4 +1494,27 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val visiblePlugins: List<PluginUiModel>,
     val pluginStates: MutableMap<PluginId, PluginEnabledState?>,
   )
+}
+
+internal data class InstallPluginTerminalState(
+  val success: Boolean,
+  val cancel: Boolean,
+  val showErrors: Boolean,
+  val restartRequired: Boolean,
+) {
+  companion object {
+    val CANCELED = InstallPluginTerminalState(success = false, cancel = true, showErrors = false, restartRequired = false)
+    val FAILED = InstallPluginTerminalState(success = false, cancel = false, showErrors = true, restartRequired = false)
+
+    fun completed(success: Boolean, showErrors: Boolean, restartRequired: Boolean): InstallPluginTerminalState {
+      return InstallPluginTerminalState(success, cancel = false, showErrors, restartRequired)
+    }
+  }
+}
+
+internal fun InstallPluginResult.applyTerminalState(state: InstallPluginTerminalState) {
+  success = state.success
+  cancel = state.cancel
+  showErrors = state.showErrors
+  restartRequired = state.restartRequired
 }
