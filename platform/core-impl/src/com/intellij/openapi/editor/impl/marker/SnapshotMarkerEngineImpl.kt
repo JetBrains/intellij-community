@@ -19,10 +19,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
-import java.util.Collections
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.LongConsumer
 
 /**
  * Mutable snapshot-marker engine backed by immutable persistent [PMarkerRoot] values.
@@ -39,9 +37,6 @@ import java.util.function.LongConsumer
 object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
   private val markerQueue: ReferenceQueue<SnapshotRangeMarkerImpl> = ReferenceQueue()
   private val nextMarkerId: StripedIDGenerator = StripedIDGenerator().also { it.next() /* id must not be 0 */ }
-  /** Weakly tracks snapshots whose parent edit invalidated at least one marker. */
-  private val snapshotsWithInvalidatedMarkers: MutableSet<DocumentSnapshot> =
-    Collections.newSetFromMap(CollectionFactory.createConcurrentWeakIdentityMap<DocumentSnapshot, Boolean>())
   /** collection of [SnapshotMarkerRootStore] that need to be updated on [DocumentSnapshot] change */
   private val rootStores: ConcurrentMap<SnapshotMarkerRootStore, Boolean> = CollectionFactory.createConcurrentWeakIdentityMap<SnapshotMarkerRootStore, Boolean>()
 
@@ -95,10 +90,8 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
    */
   private fun applyPatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentTextPatch) {
     validatePatch(beforeSnapshot, afterSnapshot, patch)
-    var hasInvalidatedMarkers = false
-    val invalidatedMarkerConsumer = LongConsumer { hasInvalidatedMarkers = true }
     val beforeRoot = markerRoot(afterSnapshot).get()
-    val afterRoot = beforeRoot.applyPatch(patch, beforeSnapshot.text(), afterSnapshot.text(), invalidatedMarkerConsumer)
+    val afterRoot = beforeRoot.applyPatch(patch, beforeSnapshot.text(), afterSnapshot.text())
     processQueue()
     require(afterSnapshot !== beforeSnapshot) {
       "Before and after snapshots must be different instances"
@@ -107,20 +100,10 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
     require(updated) {
       "After snapshot marker root is already initialized"
     }
-    if (hasInvalidatedMarkers) {
-      snapshotsWithInvalidatedMarkers.add(afterSnapshot)
-    }
-    else {
-      snapshotsWithInvalidatedMarkers.remove(afterSnapshot) // to call snapshotsWithInvalidatedMarkers.processQueue()
-    }
     if (!rootStores.isEmpty()) {
       rootStores.keys.forEach { it.applyPatch(beforeSnapshot, afterSnapshot, patch) }
     }
   }
-
-  /** Returns true if the snapshot derivation invalidated at least one marker. */
-  @ApiStatus.Internal
-  fun hasInvalidatedMarkers(snapshot: DocumentSnapshot): Boolean = snapshotsWithInvalidatedMarkers.contains(snapshot)
 
   private fun inherit(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot) {
     require(beforeSnapshot.text() === afterSnapshot.text()) {
