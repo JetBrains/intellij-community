@@ -98,6 +98,9 @@ import com.jetbrains.lsp.protocol.SignatureHelp
 import com.jetbrains.lsp.protocol.SignatureHelpParams
 import com.jetbrains.lsp.protocol.SignatureHelpRegistrationOptions
 import com.jetbrains.lsp.protocol.SignatureHelpRequest
+import com.jetbrains.lsp.protocol.TextDocumentContentOptions
+import com.jetbrains.lsp.protocol.TextDocumentContentParams
+import com.jetbrains.lsp.protocol.TextDocumentContentResult
 import com.jetbrains.lsp.protocol.TextDocumentSync
 import com.jetbrains.lsp.protocol.TextEdit
 import com.jetbrains.lsp.protocol.TypeDefinitionParams
@@ -427,6 +430,20 @@ fun LspServerCapabilitiesBuilder.workspaceSymbolProvider(
     handler: suspend context(LspHandlerContext) CoroutineScope.(WorkspaceSymbolParams) -> List<WorkspaceSymbol>,
 ): Unit = capability(update = { copy(workspaceSymbolProvider = value) }, register = {
     request(WorkspaceSymbolRequests.WorkspaceSymbolRequest, handler)
+})
+
+/**
+ * `workspace.textDocumentContent`. Merges into [ServerWorkspaceCapabilities] rather than replacing it,
+ * so it composes with the other `workspace` capabilities.
+ */
+fun LspServerCapabilitiesBuilder.textDocumentContentProvider(
+    options: TextDocumentContentOptions,
+    handler: suspend context(LspHandlerContext) CoroutineScope.(TextDocumentContentParams) -> TextDocumentContentResult,
+): Unit = capability(update = {
+    val workspace = workspace ?: ServerWorkspaceCapabilities()
+    copy(workspace = workspace.copy(textDocumentContent = options))
+}, register = {
+    request(Workspace.TextDocumentContent, handler)
 })
 
 /**

@@ -529,6 +529,13 @@ data class ServerWorkspaceCapabilities(
      * @since 3.16.0
      */
     val fileOperations: FileOperations? = null,
+
+    /**
+     * The server supports the `workspace/textDocumentContent` request.
+     *
+     * @since 3.18.0
+     */
+    val textDocumentContent: TextDocumentContentOptions? = null,
 )
 
 @Serializable

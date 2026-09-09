@@ -287,6 +287,48 @@ sealed interface WorkspaceSymbolResult {
     }
 }
 
+/**
+ * Parameters for the `workspace/textDocumentContent` request.
+ *
+ * @since 3.18.0
+ */
+@Serializable
+data class TextDocumentContentParams(
+    /**
+     * The uri of the text document.
+     */
+    val uri: DocumentUri,
+)
+
+/**
+ * Result of the `workspace/textDocumentContent` request.
+ *
+ * @since 3.18.0
+ */
+@Serializable
+data class TextDocumentContentResult(
+    /**
+     * The text content of the text document. Please note, that the content of
+     * any subsequent open notifications for the text document might differ
+     * from the returned content due to whitespace and line ending
+     * normalizations done on the client.
+     */
+    val text: String,
+)
+
+/**
+ * Text document content provider options.
+ *
+ * @since 3.18.0
+ */
+@Serializable
+data class TextDocumentContentOptions(
+    /**
+     * The schemes for which the server provides content.
+     */
+    val schemes: List<String>,
+)
+
 object Workspace {
     val WorkspaceFolders: RequestType<Unit, List<WorkspaceFolder>, Unit> =
         RequestType("workspace/folders", Unit.serializer(), ListSerializer(WorkspaceFolder.serializer()), Unit.serializer())
@@ -313,6 +355,16 @@ object Workspace {
         NotificationType("workspace/didChangeWatchedFiles", DidChangeWatchedFilesParams.serializer())
     // val ExecuteCommand: RequestType<ExecuteCommandParams, ExecuteCommandResponse?, ExecuteCommandError> =
     //     RequestType("workspace/executeCommand", ExecuteCommandParams.serializer(), ExecuteCommandResponse.serializer().nullable, ExecuteCommandError.serializer())
+
+    /**
+     * The `workspace/textDocumentContent` request is sent from the client to the server
+     * to request the content of a text document the server provides, for a URI scheme
+     * declared in [TextDocumentContentOptions.schemes].
+     *
+     * @since 3.18.0
+     */
+    val TextDocumentContent: RequestType<TextDocumentContentParams, TextDocumentContentResult, Unit> =
+        RequestType("workspace/textDocumentContent", TextDocumentContentParams.serializer(), TextDocumentContentResult.serializer(), Unit.serializer())
 
     val Symbol: RequestType<WorkspaceSymbolParams, WorkspaceSymbolResult?, Unit> =
         RequestType("workspace/symbol", WorkspaceSymbolParams.serializer(), WorkspaceSymbolResult.serializer().nullable, Unit.serializer())

@@ -93,6 +93,13 @@ data class ClientWorkspaceCapabilities(
      * @since 3.17.0.
      */
     val diagnostics: DiagnosticWorkspaceClientCapabilities? = null,
+
+      /**
+     * Capabilities specific to the `workspace/textDocumentContent` request.
+     *
+     * @since 3.18.0
+     */
+    val textDocumentContent: TextDocumentContentClientCapabilities? = null,
 )
 
 @Serializable
@@ -204,6 +211,14 @@ data class InlineValueWorkspaceClientCapabilities(
      * change that requires such a calculation.
      */
     val refreshSupport: Boolean?,
+)
+
+@Serializable
+data class TextDocumentContentClientCapabilities(
+    /**
+     * Text document content supports dynamic registration.
+     */
+    val dynamicRegistration: Boolean?,
 )
 
 @Serializable
