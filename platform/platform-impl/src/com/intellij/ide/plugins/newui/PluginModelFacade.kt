@@ -36,6 +36,25 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     getOperationLauncher().launch(context, operation)
   }
 
+  @ApiStatus.Internal
+  fun updatePlugin(
+    plugin: PluginUiModel,
+    updateDescriptor: PluginUiModel,
+    modalityState: ModalityState,
+    operationContext: PluginOperationContext,
+  ) {
+    PluginModelAsyncOperationsExecutor.updatePlugin(
+      getOperationLauncher(),
+      this,
+      plugin,
+      updateDescriptor,
+      PluginManagerCustomizer.getInstance(),
+      PluginOperationUiContext.withoutParent(modalityState),
+      updateDescriptor,
+      operationContext = operationContext,
+    )
+  }
+
   private fun getOperationLauncher(): PluginOperationLauncher =
     operationLauncher ?: PluginOperationLauncher(service<PluginManagerCoroutineScopeHolder>().coroutineScope)
 
