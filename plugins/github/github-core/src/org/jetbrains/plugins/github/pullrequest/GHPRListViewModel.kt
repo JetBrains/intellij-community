@@ -129,7 +129,6 @@ class GHPRListViewModel internal constructor(
 
   override fun refresh() {
     _reloadSignal.tryEmit(Unit)
-    repositoryDataService.resetData()
   }
 
   fun requestMore() {
