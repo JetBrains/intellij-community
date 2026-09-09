@@ -47,7 +47,7 @@ internal class BundledPluginsLister : ModernApplicationStarter() {
       JsonFactory().createGenerator(ObjectWriteContext.empty(), out).use { writer ->
         val pluginSet = PluginManagerCore.getPluginSet()
         val plugins = pluginSet.enabledPlugins
-        val skipExcludedModules = ProductLoadingStrategy.strategy.currentModeId != ProductMode.MONOLITH.id
+        val skipExcludedModules = CurrentProductMode.value != ProductMode.MONOLITH
         val layout = HashSet<LayoutItemDescriptor>()
         val pluginIds = ArrayList<String>(plugins.size)
         val homeDir = PathManager.getHomeDir()

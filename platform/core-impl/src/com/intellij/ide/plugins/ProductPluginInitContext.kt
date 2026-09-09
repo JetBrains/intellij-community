@@ -40,6 +40,7 @@ import javax.swing.JOptionPane
 @VisibleForTesting
 @ApiStatus.Internal
 class ProductPluginInitContext(
+  private val productMode: ProductMode = CurrentProductMode.value,
   private val buildNumberOverride: BuildNumber? = null,
   private val disabledPluginsOverride: Set<PluginId>? = null,
   private val expiredPluginsOverride: Set<PluginId>? = null,
@@ -106,20 +107,15 @@ class ProductPluginInitContext(
     else null
   }
 
-  private val productMode: ProductMode
-    get() = ProductMode.getById(ProductLoadingStrategy.strategy.currentModeId)
-
   override val currentProductModeId: String
     get() = productMode.id
 
   /** Read once, so the flag stays the same for the whole life of this context. */
   private val aiEnabled: Boolean by lazy { AiEnabledState.isEnabled() }
 
-  override val environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData> by lazy {
-    buildMap {
-      configureProductModeModules(productMode)
-    }
-  }
+  // Not lazy: the mode is a constructor input now, so there is no global read left to defer.
+  override val environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData> =
+    buildMap { configureProductModeModules(productMode) }
 
   override fun provideCompatibilityDependencies(descriptor: IdeaPluginDescriptorImpl, pluginSet: UnambiguousPluginSet): Sequence<DependencyRef> =
     defaultProductCompatibilityDependenciesProvider(descriptor, pluginSet)

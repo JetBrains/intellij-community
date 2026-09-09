@@ -17,7 +17,6 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.platform.productMode.ProductMode
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
@@ -32,21 +31,11 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
 
 internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
-  private val currentMode: MutableStateFlow<String> by lazy { MutableStateFlow(computeInitialModeId()) }
-
-  override val currentModeId: String
-    get() = currentMode.value
-
-  override val currentModeIdFlow: StateFlow<String>
-    get() = currentMode
-
   private val productModules by lazy {
     val rootModuleId = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY)
     if (rootModuleId == null) {
@@ -63,22 +52,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       error("$productModulesPath is not found in '$rootModuleId' module")
     }
     ProductModulesSerialization.loadProductModules(moduleGroupStream, productModulesPath, moduleRepository)
-  }
-
-  private fun computeInitialModeId(): String {
-    val initialModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
-    if (ProductMode.findById(initialModeId) == null) {
-      error("Unknown mode '$initialModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
-    }
-    return initialModeId
-  }
-
-  override fun advanceToLightWithRdConnectionMode(): Boolean {
-    return currentMode.compareAndSet(ProductMode.LIGHT.id, ProductMode.LIGHT_WITH_RD_CONNECTION.id)
-  }
-
-  override fun advanceToFrontendMode(): Boolean {
-    return currentMode.compareAndSet(ProductMode.LIGHT_WITH_RD_CONNECTION.id, ProductMode.FRONTEND.id)
   }
 
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
@@ -330,4 +303,3 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
 private const val PLATFORM_CORE_PLUGIN_DESCRIPTOR_MODULE_PROPERTY = "intellij.platform.core.plugin.descriptor.module"
 private const val PLATFORM_ROOT_MODULE_PROPERTY = "intellij.platform.root.module"
-private const val PLATFORM_PRODUCT_MODE_PROPERTY = "intellij.platform.product.mode"

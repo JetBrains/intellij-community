@@ -3,8 +3,10 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.productMode.ProductMode
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Acts as the only source of [PluginInitializationContext] instances that are used to initialize
@@ -55,7 +57,7 @@ private class ProductPluginInitContextFactory : PluginInitContextFactory {
   }
 
   override fun getContextForEffectiveModuleLoadingRuleDetermination(): PluginInitializationContext {
-    return moduleRuleDeterminationContext
+    return moduleRuleDeterminationContexts.computeIfAbsent(CurrentProductMode.value) { ProductPluginInitContext(productMode = it) }
   }
 
   override fun createMockContextWithOverrides(
@@ -73,8 +75,11 @@ private class ProductPluginInitContextFactory : PluginInitContextFactory {
   }
 
   private companion object {
-    // outside the class so that it is initialized only on the first access, and using lazy property may be costly
-    private val moduleRuleDeterminationContext = ProductPluginInitContext()
+    /**
+     * One context per product mode. A single shared instance would freeze the module map of the mode
+     * that touched it first, and a light process moves between modes while it runs.
+     */
+    private val moduleRuleDeterminationContexts = ConcurrentHashMap<ProductMode, ProductPluginInitContext>()
   }
 }
 

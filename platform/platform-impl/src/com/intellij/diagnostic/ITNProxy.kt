@@ -5,6 +5,7 @@ import com.intellij.errorreport.error.InternalEAPException
 import com.intellij.errorreport.error.UpdateAvailableException
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.ProductLoadingStrategy
+import com.intellij.ide.plugins.CurrentProductMode
 import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.internal.statistic.utils.getPluginInfoById
@@ -170,7 +171,7 @@ object ITNProxy {
       append(builder, "app.version.major", versionParts[0])
       append(builder, "app.version.minor", versionParts.getOrNull(1) ?: "0")
       append(builder, "app.product.code", productCode)
-      append(builder, "app.product.mode", ProductLoadingStrategy.strategy.currentModeId)
+      append(builder, "app.product.mode", CurrentProductMode.value.id)
       append(builder, "app.build.number", buildNumber)
     }
     catch (e: Exception) {
@@ -299,7 +300,7 @@ object ITNProxy {
     TEMPLATE_SAFE.forEach { (key, value) -> append(builder, key, value) }
     TEMPLATE_APP.forEach { (key, value) -> append(builder, key, value) }
     // product mode may change in runtime. E.g. light > frontend
-    append(builder, "app.product.mode", ProductLoadingStrategy.strategy.currentModeId)
+    append(builder, "app.product.mode", CurrentProductMode.value.id)
   }
 
   @Throws(Exception::class)

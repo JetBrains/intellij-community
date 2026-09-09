@@ -80,6 +80,7 @@ jvm_library(
         "//libraries/fus-ap-validation",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "@lib//:jetbrains-fus-reporting-api-jvm",
+        "//platform/productMode",
     ],
 )
 
@@ -132,6 +133,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/fus-ap-validation:fus-ap-validation_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/productMode:productMode_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.statistics` end

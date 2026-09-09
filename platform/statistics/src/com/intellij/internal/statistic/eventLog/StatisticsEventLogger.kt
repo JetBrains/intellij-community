@@ -12,8 +12,6 @@ import com.jetbrains.fus.reporting.FeatureUsageLogWriter
 import com.jetbrains.fus.reporting.FusClient
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.ValidatedFusReport
-import com.intellij.platform.productMode.ProductMode
-import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
