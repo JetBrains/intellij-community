@@ -1706,4 +1706,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.python.venv.tests",
   "kotlin.gradle.gradle-java.tests.shared",
   "intellij.community.wintools.tests",
+  "intellij.platform.ide.util.io.native.tests",
 )
