@@ -2,8 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -29,7 +28,7 @@ object ReplaceWithDotCallFixFactory {
     context(_: KaSession)
     private fun KtSafeQualifiedExpression.getSafeCallChainCount(): Int {
         val unnecessarySafeCalls = containingKtFile
-            .collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            .diagnostics()
             .filterIsInstance<KaFirDiagnostic.UnnecessarySafeCall>()
             .mapNotNullTo(hashSetOf()) { it.psi.getParentOfType<KtSafeQualifiedExpression>(strict = false) }
 

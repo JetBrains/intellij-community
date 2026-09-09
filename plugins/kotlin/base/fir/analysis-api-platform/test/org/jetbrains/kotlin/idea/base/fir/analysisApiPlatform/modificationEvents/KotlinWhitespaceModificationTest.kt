@@ -4,8 +4,7 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvent
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -213,11 +212,12 @@ class KotlinWhitespaceModificationTest : KotlinLightCodeInsightFixtureTestCase()
         runReadAction {
             analyze(file) {
                 // We only want to grab "literals must be surrounded by whitespace" diagnostics, which are `Unsupported`.
-                val diagnostics = file
-                    .collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                val diagnosticsCount = file
+                    .diagnostics()
                     .filterIsInstance<KaFirDiagnostic.Unsupported>()
+                    .count()
 
-                assertEquals(expectedCount, diagnostics.size)
+                assertEquals(expectedCount, diagnosticsCount)
             }
         }
     }

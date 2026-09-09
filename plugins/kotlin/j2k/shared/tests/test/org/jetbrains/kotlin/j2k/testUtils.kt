@@ -14,9 +14,8 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
-import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -90,7 +89,7 @@ internal fun getExpectedFile(testFile: File, isCopyPaste: Boolean): File {
 fun getK2FileTextWithErrors(file: KtFile): String {
     val errors: List<String> = allowAnalysisOnEdt {
         analyze(file) {
-            val diagnostics = file.collectDiagnostics(filter = ONLY_COMMON_CHECKERS).asSequence()
+            val diagnostics = file.diagnostics()
             diagnostics
                 // TODO KTIJ-29640: For some reason, there is a "redeclaration" error on every declaration for K2 tests
                 .filter { it.factoryName != "CLASSIFIER_REDECLARATION" && it.factoryName != "PACKAGE_CONFLICTS_WITH_CLASSIFIER" }

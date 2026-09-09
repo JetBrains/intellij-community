@@ -17,9 +17,8 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
-import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbols
@@ -58,7 +57,7 @@ class KotlinCleanupInspection : AbstractKotlinInspection(), CleanupLocalInspecti
                     add(createProblemDescriptor(importDirective, removeImportFix.text, listOf(removeImportFix), manager))
                 }
 
-                for (diagnostic in file.collectDiagnostics(ONLY_COMMON_CHECKERS)) {
+                for (diagnostic in file.diagnostics()) {
                     if (!diagnostic.isCleanup()) continue
 
                     val fixes = getCleanupQuickFix(diagnostic)

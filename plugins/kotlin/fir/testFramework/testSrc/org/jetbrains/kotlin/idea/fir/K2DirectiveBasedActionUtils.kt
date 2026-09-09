@@ -2,9 +2,8 @@
 package org.jetbrains.kotlin.idea.fir
 
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -74,11 +73,12 @@ object K2DirectiveBasedActionUtils {
                     val diagnostics =
                         // filter level has to be consistent with
                         // [org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor#analyzeFile]
-                        file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                        file.diagnostics()
                     diagnostics
                         .filter { it.severity == severity }
                         .map { "$directive ${it.factoryName}" }
                         .sorted()
+                        .toList()
                 }
             }
 
