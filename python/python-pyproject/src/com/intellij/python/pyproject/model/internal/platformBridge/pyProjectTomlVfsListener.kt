@@ -123,7 +123,7 @@ internal suspend fun loadSubtreesIntoVfs(directories: Set<VirtualFile>, excluded
           // `findPythonInPythonRoot` opens a directory stream, so a call for each visited directory reads
           // the whole project from the disk. Very few directories hold an interpreter, hence almost every
           // call finds nothing. [mayContainPython] reads the names that the walk loaded anyway (PY-91841).
-          if (!virtualEnvReader.mayContainPython(file.children.asSequence().map { it.name })) return true
+          if (!virtualEnvReader.mayContainPython(path, file.children.asSequence().map { it.name })) return true
           return virtualEnvReader.findPythonInPythonRoot(path) == null
         }
       })

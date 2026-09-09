@@ -4,6 +4,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import kotlin.io.path.Path
 
 /**
  * Pins the filter that guards `findPythonInPythonRoot` in the subtree load of PY-91841.
@@ -11,57 +12,72 @@ import org.junit.jupiter.api.Test
  * The filter must answer a superset. A `false` for a directory that holds an interpreter would stop the
  * load from pruning an environment, and the VFS would take thousands of files of it.
  *
- * The filter covers both layouts at once, so a name of either one passes on every operating system.
+ * The filter reads the layout of one system, the one that the guarded method reads for the same path. Each
+ * case therefore forces the family of the system, so the answer never depends on the host of the test.
  */
 internal class PyMayContainPythonTest {
 
-  private val reader = VirtualEnvReader()
+  private val someDirectory = Path("project", "member")
 
-  private fun mayContain(vararg childNames: String): Boolean = reader.mayContainPython(childNames.asSequence())
+  private fun posix(vararg childNames: String): Boolean =
+    VirtualEnvReader(isWindows = false).mayContainPython(someDirectory, childNames.asSequence())
+
+  private fun windows(vararg childNames: String): Boolean =
+    VirtualEnvReader(isWindows = true).mayContainPython(someDirectory, childNames.asSequence())
 
   @Test
-  fun testADirectoryOfInterpretersPasses() {
-    assertThat(mayContain("bin")).describedAs("the posix layout").isTrue()
-    assertThat(mayContain("Scripts")).describedAs("the windows layout").isTrue()
+  fun testTheDirectoryOfInterpretersPasses() {
+    assertThat(posix("bin")).describedAs("the posix layout").isTrue()
+    assertThat(windows("Scripts")).describedAs("the windows layout").isTrue()
   }
 
   /**
-   * `findPythonInPythonRoot` resolves the directory of interpreters with `Path.resolve`, and the filesystem
-   * of macOS and of Windows resolves a name without the case. A directory named `Bin` answers to
-   * `resolve("bin")` there, so the filter must accept it or it stops being a superset.
+   * `findPythonInPythonRoot` resolves the directory of interpreters with `Path.resolve`, and a filesystem
+   * that ignores the case answers `resolve("bin")` with a directory named `Bin`. The default volume of
+   * macOS does that, so the filter must accept the other case or it stops being a superset.
    */
   @Test
   fun testTheCaseOfTheDirectoryNameDoesNotMatter() {
-    for (name in listOf("Bin", "BIN", "scripts", "SCRIPTS")) {
-      assertThat(mayContain(name)).describedAs("a directory that holds '$name'").isTrue()
+    for (name in listOf("Bin", "BIN")) {
+      assertThat(posix(name)).describedAs("a directory that holds '$name'").isTrue()
     }
-  }
-
-  /**
-   * The name of a binary follows the pattern of the layout, and the pattern of posix reads the case. A file
-   * named `Python3` therefore reaches no interpreter through `findInterpreter` either, so the filter may
-   * reject it and stays a superset.
-   */
-  @Test
-  fun testTheCaseOfABinaryNameFollowsTheLayout() {
-    assertThat(mayContain("python3")).describedAs("the name of the posix layout").isTrue()
-    assertThat(mayContain("Python3")).describedAs("the posix pattern reads the case").isFalse()
-    assertThat(mayContain("PYTHON.EXE")).describedAs("the windows pattern ignores the case").isTrue()
+    for (name in listOf("scripts", "SCRIPTS")) {
+      assertThat(windows(name)).describedAs("a directory that holds '$name'").isTrue()
+    }
   }
 
   /** The second way: the binary lies directly in the directory, as in the root of an installation. */
   @Test
   fun testABinaryInTheDirectoryPasses() {
-    for (name in listOf("python", "python3", "python3.11", "pythonw", "pypy", "pypy3.10", "python3.13t",
-                        "python.exe", "pythonw.exe", "python3.11.exe", "python_d.exe")) {
-      assertThat(mayContain(name)).describedAs("a directory that holds '$name'").isTrue()
+    for (name in listOf("python", "python3", "python3.11", "pythonw", "pypy", "pypy3.10", "python3.13t")) {
+      assertThat(posix(name)).describedAs("the posix layout holds '$name'").isTrue()
     }
+    for (name in listOf("python.exe", "pythonw.exe", "python3.11.exe", "python_d.exe")) {
+      assertThat(windows(name)).describedAs("the windows layout holds '$name'").isTrue()
+    }
+  }
+
+  /**
+   * The pattern of the layout decides, and the pattern of posix reads the case. `findInterpreter` matches a
+   * name the same way, so a file named `Python3` reaches no interpreter there either.
+   */
+  @Test
+  fun testTheCaseOfABinaryNameFollowsTheLayout() {
+    assertThat(posix("Python3")).describedAs("the posix pattern reads the case").isFalse()
+    assertThat(windows("PYTHON.EXE")).describedAs("the windows pattern ignores the case").isTrue()
+  }
+
+  /** The layout of the other system does not count, because the method reads one layout for one path. */
+  @Test
+  fun testTheLayoutOfTheOtherSystemDoesNotCount() {
+    assertThat(posix("Scripts", "python.exe")).describedAs("windows names under the posix layout").isFalse()
+    assertThat(windows("python")).describedAs("a posix binary name under the windows layout").isFalse()
   }
 
   @Test
   fun testAnOrdinaryDirectoryDoesNotPass() {
-    assertThat(mayContain("src", "tests", "README.md", "pyproject.toml")).isFalse()
-    assertThat(mayContain()).describedAs("no child at all").isFalse()
+    assertThat(posix("src", "tests", "README.md", "pyproject.toml")).isFalse()
+    assertThat(posix()).describedAs("no child at all").isFalse()
   }
 
   /**
@@ -70,8 +86,8 @@ internal class PyMayContainPythonTest {
    */
   @Test
   fun testANameThatOnlyStartsLikeABinaryDoesNotPass() {
-    assertThat(mayContain("python_helper")).isFalse()
-    assertThat(mayContain("pythonrc")).isFalse()
-    assertThat(mayContain("bins")).describedAs("`bins` is not `bin`").isFalse()
+    assertThat(posix("python_helper")).isFalse()
+    assertThat(posix("pythonrc")).isFalse()
+    assertThat(posix("bins")).describedAs("`bins` is not `bin`").isFalse()
   }
 }

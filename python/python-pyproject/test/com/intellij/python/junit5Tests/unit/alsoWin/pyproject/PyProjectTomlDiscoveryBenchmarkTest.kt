@@ -151,7 +151,7 @@ internal class PyProjectTomlDiscoveryBenchmarkTest {
     val twoStageTime = measure {
       walk(rootFile) { file ->
         val path = file.toNioPathOrNull() ?: return@walk
-        if (!virtualEnvReader.mayContainPython(file.children.asSequence().map { it.name })) return@walk
+        if (!virtualEnvReader.mayContainPython(path, file.children.asSequence().map { it.name })) return@walk
         candidates++
         if (virtualEnvReader.findPythonInPythonRoot(path) != null) byTwoStage.add(path.toString())
       }

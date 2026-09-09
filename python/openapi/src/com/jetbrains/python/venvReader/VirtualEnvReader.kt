@@ -138,30 +138,29 @@ class VirtualEnvReader private constructor(
 
 
   /**
-   * True when a child of these names can lead [findPythonInPythonRoot] to an interpreter in that directory.
+   * True when a child of [childNames] can lead [findPythonInPythonRoot] to an interpreter in [pathOrDir].
    *
    * [findPythonInPythonRoot] reads the filesystem on every call, and [findInterpreter] opens a directory
    * stream. A caller that walks a tree can ask this first, because it reads only the names that the walk
-   * holds already. It reaches the filesystem for the few directories that pass.
+   * holds already. The filesystem is then reached for the few directories that pass.
    *
-   * The answer is a superset. A name that passes only costs one call of the method, and a name that fails
-   * hides no interpreter. Both layouts count, so the answer holds for a tree of either system.
+   * The answer is a superset. A name that passes costs one call of the method, and a name that fails hides
+   * no interpreter. The layout comes from [pathOrDir], so it is the layout that the method itself reads.
    *
-   * The rules follow [findPythonInPythonRoot]. A child named as [PythonOsLayout.dirWithPython] may hold the
-   * binary, and the comparison ignores the case because that method resolves the name with `Path.resolve`,
-   * which macOS and Windows resolve without the case. A child that matches
-   * [PythonOsLayout.pyBinaryPattern] may be the binary itself, and [findInterpreter] matches a name the
-   * same way.
+   * A child named as [PythonOsLayout.dirWithPython] may hold the binary. That comparison ignores the case,
+   * because the method resolves the name with `Path.resolve`, and a filesystem that ignores the case
+   * answers `resolve("bin")` with a directory named `Bin`. The default volume of macOS does that, so the
+   * rule follows the filesystem and not the family of the system. A filesystem that keeps the case pays one
+   * call of the method for such a name, and nothing more.
+   *
+   * A child that matches [PythonOsLayout.pyBinaryPattern] may be the binary itself. That pattern reads the
+   * case on posix, and [findInterpreter] matches a name the same way.
    */
   @ApiStatus.Internal
-  fun mayContainPython(childNames: Sequence<String>): Boolean {
-    val posix = getLayout(EelOsFamily.Posix)
-    val windows = getLayout(EelOsFamily.Windows)
+  fun mayContainPython(pathOrDir: PythonHomePath, childNames: Sequence<String>): Boolean {
+    val layout = getLayout(forcedOs ?: pathOrDir.osFamily)
     return childNames.any { name ->
-      name.equals(posix.dirWithPython, ignoreCase = true) ||
-      name.equals(windows.dirWithPython, ignoreCase = true) ||
-      posix.pyBinaryPattern.matches(name) ||
-      windows.pyBinaryPattern.matches(name)
+      name.equals(layout.dirWithPython, ignoreCase = true) || layout.pyBinaryPattern.matches(name)
     }
   }
 
