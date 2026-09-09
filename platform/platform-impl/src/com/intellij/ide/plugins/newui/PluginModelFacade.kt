@@ -68,7 +68,7 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
       kind = if (updateDescriptor == null) PluginOperationKind.INSTALL else PluginOperationKind.UPDATE,
     )
     val finishOperation = operationContext == null
-    pluginModel.operationStarted(context)
+    pluginModel.operationStarted(context, updateDescriptor ?: model)
     try {
       val installTask = service<PluginManagerCoroutineScopeHolder>().coroutineScope.async(
         CoroutineName("Install plugin ${model.pluginId}")
@@ -94,8 +94,8 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     }
   }
 
-  fun startOperation(context: PluginOperationContext) {
-    pluginModel.operationStarted(context)
+  fun startOperation(context: PluginOperationContext, presentationModel: PluginUiModel) {
+    pluginModel.operationStarted(context, presentationModel)
   }
 
   fun finishOperation(context: PluginOperationContext) {

@@ -17,6 +17,7 @@ sealed interface PluginModelEvent {
     val sessionId: String,
     val operationId: UUID,
     val displayPluginId: PluginId,
+    val presentationModel: PluginUiModel,
     val target: PluginSource,
     val kind: PluginOperationKind,
   ) : PluginModelEvent
@@ -100,7 +101,10 @@ internal class PluginModelEventPublisher(private val sink: PluginModelEventSink)
     sink.onEvent(PluginModelEvent.InventoryInvalidated(reason, pluginIds.toSet()))
   }
 
-  fun operationStarted(sessionId: String, context: PluginOperationContext) {
+  fun operationStarted(sessionId: String, context: PluginOperationContext, presentationModel: PluginUiModel) {
+    require(presentationModel.pluginId == context.displayPluginId) {
+      "Plugin operation display ID ${context.displayPluginId} does not match presentation model ${presentationModel.pluginId}"
+    }
     synchronized(operations) {
       if (operations.containsKey(context.operationId)) {
         return
@@ -111,6 +115,7 @@ internal class PluginModelEventPublisher(private val sink: PluginModelEventSink)
           sessionId = sessionId,
           operationId = context.operationId,
           displayPluginId = context.displayPluginId,
+          presentationModel = presentationModel,
           target = context.target,
           kind = context.kind,
         )

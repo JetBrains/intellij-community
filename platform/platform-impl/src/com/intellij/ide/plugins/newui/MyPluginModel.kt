@@ -118,8 +118,8 @@ open class MyPluginModel @JvmOverloads constructor(
     this.myInstallSource = source
   }
 
-  internal fun operationStarted(context: PluginOperationContext) {
-    myEventPublisher.operationStarted(sessionId, context)
+  internal fun operationStarted(context: PluginOperationContext, presentationModel: PluginUiModel) {
+    myEventPublisher.operationStarted(sessionId, context, presentationModel)
   }
 
   internal fun operationTargetFinished(

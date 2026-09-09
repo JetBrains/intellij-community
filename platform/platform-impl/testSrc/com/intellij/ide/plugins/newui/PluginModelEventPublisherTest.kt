@@ -38,15 +38,16 @@ internal class PluginModelEventPublisherTest {
     val events = mutableListOf<PluginModelEvent>()
     val publisher = PluginModelEventPublisher(events::add)
     val pluginId = PluginId.getId("plugin.id")
+    val model = plugin(pluginId)
     val context = PluginOperationContext.create(pluginId, PluginSource.LOCAL, PluginOperationKind.INSTALL)
 
-    publisher.operationStarted("session", context)
+    publisher.operationStarted("session", context, model)
     publisher.operationTargetFinished(context, PluginSource.LOCAL, PluginOperationTerminalResult.SUCCEEDED)
     publisher.operationFinished(context)
 
     assertThat(events).containsExactly(
       PluginModelEvent.OperationStarted(
-        "session", context.operationId, pluginId, PluginSource.LOCAL, PluginOperationKind.INSTALL
+        "session", context.operationId, pluginId, model, PluginSource.LOCAL, PluginOperationKind.INSTALL
       ),
       PluginModelEvent.OperationFinished(
         "session", context.operationId, pluginId, PluginSource.LOCAL, PluginOperationKind.INSTALL,
@@ -60,11 +61,12 @@ internal class PluginModelEventPublisherTest {
     val events = mutableListOf<PluginModelEvent>()
     val publisher = PluginModelEventPublisher(events::add)
     val pluginId = PluginId.getId("plugin.id")
+    val model = plugin(pluginId)
     val context = PluginOperationContext.create(pluginId, PluginSource.BOTH, PluginOperationKind.INSTALL)
 
-    publisher.operationStarted("session", context)
+    publisher.operationStarted("session", context, model)
     publisher.operationTargetFinished(context, PluginSource.LOCAL, PluginOperationTerminalResult.SUCCEEDED)
-    publisher.operationStarted("session", context)
+    publisher.operationStarted("session", context, model)
     publisher.operationTargetFinished(context, PluginSource.REMOTE, PluginOperationTerminalResult.SUCCEEDED)
     publisher.operationFinished(context)
 
@@ -81,7 +83,7 @@ internal class PluginModelEventPublisherTest {
       PluginId.getId("plugin.id"), PluginSource.BOTH, PluginOperationKind.UPDATE
     )
 
-    publisher.operationStarted("session", context)
+    publisher.operationStarted("session", context, plugin(context.displayPluginId))
     publisher.operationTargetFinished(context, PluginSource.LOCAL, PluginOperationTerminalResult.SUCCEEDED)
     publisher.operationFinished(context)
 
@@ -97,11 +99,27 @@ internal class PluginModelEventPublisherTest {
       PluginId.getId("plugin.id"), PluginSource.BOTH, PluginOperationKind.INSTALL
     )
 
-    publisher.operationStarted("session", context)
+    publisher.operationStarted("session", context, plugin(context.displayPluginId))
     publisher.operationTargetFinished(context, PluginSource.LOCAL, PluginOperationTerminalResult.FAILED)
     publisher.operationFinished(context)
 
     assertThat(events.filterIsInstance<PluginModelEvent.OperationFinished>().map { it.result })
       .containsExactly(PluginOperationTerminalResult.FAILED)
+  }
+
+  @Test
+  fun `operation rejects a presentation model with another display id`() {
+    val publisher = PluginModelEventPublisher {}
+    val context = PluginOperationContext.create(
+      PluginId.getId("display.plugin"), PluginSource.LOCAL, PluginOperationKind.INSTALL
+    )
+
+    org.assertj.core.api.Assertions.assertThatThrownBy {
+      publisher.operationStarted("session", context, plugin(PluginId.getId("other.plugin")))
+    }.isInstanceOf(IllegalArgumentException::class.java)
+  }
+
+  private fun plugin(pluginId: PluginId): PluginUiModel {
+    return PluginNodeModelBuilderFactory.createBuilder(pluginId).setName(pluginId.idString).build()
   }
 }
