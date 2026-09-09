@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -133,6 +134,7 @@ internal object KotlinChangeSignatureUsageSearcher {
             val declarationSymbol = ktCallableDeclaration.symbol as KaCallableSymbol
             ktCallableDeclaration.accept(object : KtTreeVisitorVoid() {
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                    if (expression.isCallableReferenceCallee()) return
                     val memberCall = expression.resolveSuccessfulExpressionCall()?.simple ?: return
 
                     val symbol = memberCall.symbol
@@ -180,6 +182,7 @@ internal object KotlinChangeSignatureUsageSearcher {
 
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                     super.visitSimpleNameExpression(expression)
+                    if (expression.isCallableReferenceCallee()) return
 
                     val attempt = (expression as? KtResolvableCall)?.tryResolveCall()
 
@@ -268,5 +271,7 @@ internal object KotlinChangeSignatureUsageSearcher {
             })
         }
     }
+    private fun KtSimpleNameExpression.isCallableReferenceCallee(): Boolean =
+        (parent as? KtCallableReferenceExpression)?.callableReference == this
 
 }
