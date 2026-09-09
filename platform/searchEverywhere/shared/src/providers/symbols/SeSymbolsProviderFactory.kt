@@ -17,6 +17,6 @@ class SeSymbolsProviderFactory : SeWrappedLegacyContributorItemsProviderFactory 
 
   override suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? {
     if (project == null || legacyContributor !is WeightedSearchEverywhereContributor<Any>) return null
-    return SeSymbolsProvider(SeAsyncContributorWrapper(legacyContributor))
+    return SeSymbolsLegacyBasedProvider(SeAsyncContributorWrapper(legacyContributor))
   }
 }
