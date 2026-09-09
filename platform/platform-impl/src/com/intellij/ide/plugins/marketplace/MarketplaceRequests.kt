@@ -638,9 +638,11 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
   private val mutex: Mutex = Mutex()
 
-  val marketplaceTagsSupplier: Supplier<Set<String>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
-    getAllPluginsTags()
+  val marketplaceTagCountsSupplier: Supplier<Map<String, Int>> = TimeoutCachedValue(24, TimeUnit.HOURS) {
+    getMarketplaceTagCounts()
   }
+
+  val marketplaceTagsSupplier: Supplier<Set<String>> = Supplier { marketplaceTagCountsSupplier.get().keys }
 
   val marketplaceVendorsSupplier: Supplier<Set<String>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
     getAllPluginsVendors()
@@ -834,7 +836,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     }
   }
 
-  private fun getAllPluginsTags(): Set<String> {
+  private fun getMarketplaceTagCounts(): Map<String, Int> {
     try {
       return HttpRequests
         .request(MarketplaceUrls.getSearchAggregationUrl("tags"))
@@ -842,12 +844,12 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
-          objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toSet()
+          objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.toMap()
         }
     }
     catch (e: Exception) {
       LOG.infoOrDebug("Can not get tags from Marketplace", e)
-      return emptySet()
+      return emptyMap()
     }
   }
 

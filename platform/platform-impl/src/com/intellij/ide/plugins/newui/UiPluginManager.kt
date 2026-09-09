@@ -228,6 +228,10 @@ class UiPluginManager {
     return getController().getAllPluginsTags()
   }
 
+  suspend fun getMarketplaceTagCounts(): Map<String, Int> {
+    return getController().getMarketplaceTagCounts()
+  }
+
   fun getAllVendors(): Set<String> {
     return getController().getAllVendors()
   }

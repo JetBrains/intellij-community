@@ -243,6 +243,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().getAllPluginsTags() }
   }
 
+  override suspend fun getMarketplaceTagCounts(): Map<String, Int> {
+    return PluginManagerApi.getInstance().getMarketplaceTagCounts()
+  }
+
   override fun getAllVendors(): Set<String> {
     return awaitForResult { PluginManagerApi.getInstance().getAllVendors() }
   }

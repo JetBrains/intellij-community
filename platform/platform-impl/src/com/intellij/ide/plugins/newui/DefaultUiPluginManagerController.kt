@@ -560,6 +560,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return MarketplaceRequests.getInstance().marketplaceTagsSupplier.get()
   }
 
+  override suspend fun getMarketplaceTagCounts(): Map<String, Int> {
+    return MarketplaceRequests.getInstance().marketplaceTagCountsSupplier.get()
+  }
+
   override fun getAllVendors(): Set<String> {
     return MarketplaceRequests.getInstance().marketplaceVendorsSupplier.get()
   }
