@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.actions.impl.LinkAction
-import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -27,7 +26,7 @@ class PresentableGoToChangePopupAction<T : Any> private constructor(
   override fun update(e: AnActionEvent) {
     val counterState = DiffFilesCounterState(getChanges())
     e.presentation.apply {
-      isVisible = e.getData(DiffDataKeys.DIFF_CONTEXT) != null
+      isVisible = true
       isEnabled = counterState.hasMultipleFiles
       icon = null
       text = counterState.text
