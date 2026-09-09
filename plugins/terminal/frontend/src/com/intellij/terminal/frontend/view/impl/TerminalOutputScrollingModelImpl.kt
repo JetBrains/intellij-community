@@ -177,7 +177,7 @@ class TerminalOutputScrollingModelImpl(
 
     val screenTopVisualLine = editor.offsetToVisualLine(outputModel.screenTopOffset.toRelative(outputModel), false)
 
-    val topInset = getTopInset()
+    val topInset = getTopInset(screenTopVisualLine)
     val bottomInset = JBUI.scale(TerminalUi.blockBottomInset)
 
     val lastNotBlankVisualLine = findLastNotBlankVisualLine(screenTopVisualLine)
@@ -271,7 +271,12 @@ class TerminalOutputScrollingModelImpl(
     return lastNotBlankVisualLine
   }
 
-  private fun getTopInset(): Int {
+  private fun getTopInset(screenTopVisualLine: Int): Int {
+    // The very first visual line always has the top inset (TerminalEditorFactory.addTopAndBottomInsets) above it,
+    // regardless of shell integration - there is no "previous line" to reveal there, so it's always safe.
+    if (screenTopVisualLine == 0) {
+      return JBUI.scale(TerminalUi.blockTopInset)
+    }
     // It looks better when we place the scroll position a little bit above the text (by top inset).
     // But in the case of Ctrl+L, the screen should be scrolled to hide the previous lines.
     // When both shell integration and 'showSeparatorsBetweenBlocks' are enabled,

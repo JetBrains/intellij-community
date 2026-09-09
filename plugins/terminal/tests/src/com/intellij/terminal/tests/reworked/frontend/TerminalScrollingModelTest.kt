@@ -714,17 +714,31 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
       }
     }
 
+  @Test
+  fun `scroll position reveals the top inset at the very first line even without shell integration`() =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val editor = createEditor(rows = 3)
+      // Right after a terminal opens, isShellIntegrationEnabled starts false and flips true only once the
+      // handshake completes. Without the screenTopVisualLine==0 special case in getTopInset, this state alone
+      // (with isShellIntegrationEnabled=false, nothing about the actual content changing) would leave the cursor
+      // touching the top border instead of revealing the platform-wide top inset that is always there regardless.
+      doTest(editor, expectedScrollOffset = 0, isShellIntegrationEnabled = false) {
+        updateText(0, outputPattern("prompt> <cursor>"), screenTopLine = 0)
+      }
+    }
+
   private suspend fun CoroutineScope.doTest(
     editor: EditorImpl,
     expectedScrollOffset: Int,
     showCursor: Boolean = true,
     maxOutputLength: Int = 0,
+    isShellIntegrationEnabled: Boolean = true,
     operations: suspend ScrollingModelTestContext.() -> Unit,
   ) {
     val scrollingModelScope = childScope("TerminalOutputScrollingModel")
     try {
       val outputModel = MutableTerminalOutputModelImpl(editor.document, maxOutputLength)
-      val sessionModel = createSessionModel(showCursor)
+      val sessionModel = createSessionModel(showCursor, isShellIntegrationEnabled)
       val scrollingModel = TerminalOutputScrollingModelImpl(editor, outputModel, sessionModel, scrollingModelScope)
       editor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
 
@@ -763,10 +777,10 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     assertThat(grid.columns).isEqualTo(columns)
   }
 
-  private fun createSessionModel(isCursorVisible: Boolean): TerminalSessionModel {
+  private fun createSessionModel(isCursorVisible: Boolean, isShellIntegrationEnabled: Boolean = true): TerminalSessionModel {
     val sessionModel = TerminalSessionModelImpl()
     val newState = sessionModel.terminalState.value.copy(
-      isShellIntegrationEnabled = true, // Scrolling model relies on shell integration presence to take into account the top inset
+      isShellIntegrationEnabled = isShellIntegrationEnabled, // Affects the top inset away from the very first line, see getTopInset
       isCursorVisible = isCursorVisible
     )
     sessionModel.updateTerminalState(newState)
