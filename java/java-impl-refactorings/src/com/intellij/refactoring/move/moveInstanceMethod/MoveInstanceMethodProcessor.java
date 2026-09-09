@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -388,11 +388,10 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
       PsiExpression newArgument = null;
       if (classReferencedByThis != null && !myOldClassParameterNames.isEmpty()) {
-        @NonNls String thisArgumentText = null;
-        if (manager.areElementsEquivalent(myMethod.getContainingClass(), classReferencedByThis)) {
-          if (myOldClassParameterNames.containsKey(myMethod.getContainingClass())) {
-            thisArgumentText = "this";
-          }
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(methodExpression, PsiClass.class);
+        @NonNls String thisArgumentText;
+        if (manager.areElementsEquivalent(containingClass, classReferencedByThis) && myOldClassParameterNames.containsKey(containingClass)) {
+          thisArgumentText = "this";
         }
         else {
           final String name = classReferencedByThis.getName();
@@ -404,9 +403,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           }
         }
 
-        if (thisArgumentText != null) {
-          newArgument = JavaPsiFacade.getElementFactory(manager.getProject()).createExpressionFromText(thisArgumentText, null);
-        }
+        newArgument = JavaPsiFacade.getElementFactory(manager.getProject()).createExpressionFromText(thisArgumentText, null);
       } else {
         if (!isInternalCall && oldQualifier != null) {
           final PsiType type = oldQualifier.getType();
