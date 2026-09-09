@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.FrozenDocument
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
@@ -59,29 +58,29 @@ open class SelfElementInfo internal constructor(
     switchTo(element, findAnchor(element))
   }
 
-  private fun findAnchor(element: PsiElement): Pair<Identikit.ByAnchor, PsiElement>? {
+  private fun findAnchor(element: PsiElement): Identikit.AnchorWithElement? {
     val language = myIdentikit.fileLanguage ?: return null
     return Identikit.withAnchor(element, language)
   }
 
-  private fun switchTo(element: PsiElement, pair: Pair<Identikit.ByAnchor, PsiElement>?) {
-    if (pair == null) {
+  private fun switchTo(element: PsiElement, anchorWithElement: Identikit.AnchorWithElement?) {
+    if (anchorWithElement == null) {
       setRange(element.textRange)
       return
     }
 
-    assert(pair.first.hashCode() == myIdentikit.hashCode())
-    myIdentikit = pair.first
-    setRange(pair.second.textRange)
+    assert(anchorWithElement.identikit.hashCode() == myIdentikit.hashCode())
+    myIdentikit = anchorWithElement.identikit
+    setRange(anchorWithElement.anchorElement.textRange)
   }
 
   fun updateRangeToPsi(pointerRange: Segment, cachedElement: PsiElement): Boolean {
-    val pair = findAnchor(cachedElement)
-    val range = (pair?.second ?: cachedElement).textRange
+    val anchorWithElement = findAnchor(cachedElement)
+    val range = (anchorWithElement?.anchorElement ?: cachedElement).textRange
     if (range == null || !range.intersects(pointerRange)) {
       return false
     }
-    switchTo(cachedElement, pair)
+    switchTo(cachedElement, anchorWithElement)
     return true
   }
 

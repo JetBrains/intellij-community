@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.PsiDirectory;
@@ -58,6 +57,24 @@ public abstract class Identikit {
     return fromTypes(element.getClass(), PsiUtilCore.getElementType(element), fileLanguage);
   }
 
+  static class AnchorWithElement {
+    private final @NotNull ByAnchor identikit;
+    private final @NotNull PsiElement anchor;
+
+    AnchorWithElement(@NotNull ByAnchor identikit, @NotNull PsiElement anchor) {
+      this.identikit = identikit;
+      this.anchor = anchor;
+    }
+
+    @NotNull ByAnchor getIdentikit() {
+      return identikit;
+    }
+
+    @NotNull PsiElement getAnchorElement() {
+      return anchor;
+    }
+  }
+
   /**
    * Attempts to create a {@link ByAnchor} identikit by querying registered
    * {@link SmartPointerAnchorProvider}s for an anchor element.
@@ -65,14 +82,14 @@ public abstract class Identikit {
    * @return a pair of the interned {@code ByAnchor} and the anchor element,
    * or {@code null} if no provider applies
    */
-  static @Nullable Pair<ByAnchor, PsiElement> withAnchor(@NotNull PsiElement element, @NotNull Language fileLanguage) {
+  static @Nullable AnchorWithElement withAnchor(@NotNull PsiElement element, @NotNull Language fileLanguage) {
     PsiUtilCore.ensureValid(element);
     if (element.isPhysical()) {
       for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensionList()) {
         PsiElement anchor = provider.getAnchor(element);
         if (anchor != null && anchor.isPhysical() && provider.restoreElement(anchor) == element) {
           ByAnchor anchorKit = new ByAnchor(fromPsi(element, fileLanguage), fromPsi(anchor, fileLanguage), provider);
-          return Pair.create(ourAnchorInterner.intern(anchorKit), anchor);
+          return new AnchorWithElement(ourAnchorInterner.intern(anchorKit), anchor);
         }
       }
     }
