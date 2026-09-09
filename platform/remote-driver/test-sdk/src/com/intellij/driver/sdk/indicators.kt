@@ -26,10 +26,12 @@ private fun Driver.logProgressIndicators(project: Project) {
   }
 }
 
-fun Driver.areIndicatorsVisible(project: Project): Boolean {
-  if (service<DumbService>(project).isDumb()) return true
-
+fun Driver.indicatorsRunning(project: Project): Boolean {
   return getProgressIndicators(project).isNotEmpty()
+}
+
+fun Driver.indicatorsRunningOrDumbMode(project: Project): Boolean {
+  return indicatorsRunning(project) || service<DumbService>(project).isDumb()
 }
 
 /**
@@ -70,8 +72,12 @@ internal fun Driver.waitForIndicators(projectGet: () -> Project?, timeout: Durat
   waitFor("Indicators with waitSmartLongEnough=$waitSmartLongEnough", timeout) {
     val project = runCatching { projectGet.invoke() }.getOrNull()
     val projectReady = (project != null && isProjectOpened(project))
-    val lightSession = projectReady && isLightSession()
-    val indicatorsVisible = projectReady && if (lightSession) getProgressIndicators(project).isNotEmpty() else areIndicatorsVisible(project)
+    val indicatorsVisible = projectReady && if (isLightSession()) {
+      indicatorsRunning(project)
+    }
+    else {
+      indicatorsRunningOrDumbMode(project)
+    }
     if (!projectReady) {
       logger<Driver>().info("The project is not opened.")
     }
