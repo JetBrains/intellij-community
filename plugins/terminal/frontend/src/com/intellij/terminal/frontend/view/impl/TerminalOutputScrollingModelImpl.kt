@@ -209,22 +209,23 @@ class TerminalOutputScrollingModelImpl(
       maxOf(screenBottomY - screenHeight, screenTopY, currentOffset)
     }
 
-    LOG.trace {
-      "updateScrollPosition: currentOffset=$currentOffset -> scrollY=$scrollY " +
-      "(${if (scrollY != currentOffset) "scrolling" else "no change"}); " +
-      "cursor(visible=$isCursorVisible, line=$cursorVisualLine, atTop=$isCursorAtTop), " +
-      "screen(topLine=$screenTopVisualLine, height=$screenHeight), " +
-      "insets(top=$topInset, bottom=$bottomInset), lastNotBlankLine=$lastNotBlankVisualLine, " +
-      "y(top=$screenTopY, bottom=$screenBottomY), " +
-      "candidates(bottomAligned=${screenBottomY - screenHeight}, topAligned=$screenTopY, current=$currentOffset)"
-    }
-
     scrollPadding.ensureReachable(screenTopY, screenHeight)
 
     if (scrollY != currentOffset) {
       editor.doWithoutScrollingAnimation {
         editor.scrollingModel.scrollVertically(scrollY)
       }
+    }
+
+    LOG.trace {
+      "updateScrollPosition: currentOffset=$currentOffset -> scrollY=$scrollY " +
+      "(${if (scrollY != currentOffset) "scrolling" else "no change"}); " +
+      "resulting verticalScrollOffset=${editor.scrollingModel.verticalScrollOffset}, " +
+      "cursor(visible=$isCursorVisible, line=$cursorVisualLine, atTop=$isCursorAtTop), " +
+      "screen(topLine=$screenTopVisualLine, height=$screenHeight), " +
+      "insets(top=$topInset, bottom=$bottomInset), lastNotBlankLine=$lastNotBlankVisualLine, " +
+      "y(top=$screenTopY, bottom=$screenBottomY), " +
+      "candidates(bottomAligned=${screenBottomY - screenHeight}, topAligned=$screenTopY, current=$currentOffset)"
     }
 
     appliedOutputModelState.value = OutputModelState(cursorOffset, outputModel.modificationStamp)
