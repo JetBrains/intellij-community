@@ -3,6 +3,14 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 
 ### auto-generated section `build intellij.platform.benchmarks` start
 
+kt_javac_options(
+    name = "custom-javac-options",
+    add_exports = [],
+    no_proc = False,
+    warn = "off",
+    x_ep_disable_all_checks = True,
+)
+
 jvm_library(
     name = "benchmarks",
     srcs = glob(
@@ -31,6 +39,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    javac_opts = ":custom-javac-options",
     module_name = "intellij.platform.benchmarks",
     visibility = ["//visibility:public"],
     runtime_deps = [
