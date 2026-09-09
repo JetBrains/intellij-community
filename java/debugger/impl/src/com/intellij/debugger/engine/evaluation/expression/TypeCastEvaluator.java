@@ -64,22 +64,22 @@ public class TypeCastEvaluator implements Evaluator {
                                                                                        myPrimitiveCastType));
       }
     }
-    else if (value instanceof BooleanValue) {
-      value = DebuggerUtilsEx.createValue(vm, myPrimitiveCastType, ((BooleanValue)value).booleanValue());
+    else if (value instanceof BooleanValue booleanValue) {
+      value = DebuggerUtilsEx.createValue(vm, myPrimitiveCastType, booleanValue.booleanValue());
       if (value == null) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.cast.boolean",
                                                                                        myPrimitiveCastType));
       }
     }
-    else if (value instanceof CharValue) {
-      value = DebuggerUtilsEx.createValue(vm, myPrimitiveCastType, ((CharValue)value).charValue());
+    else if (value instanceof CharValue charValue) {
+      value = DebuggerUtilsEx.createValue(vm, myPrimitiveCastType, charValue.charValue());
       if (value == null) {
         throw EvaluateExceptionUtil.createEvaluateException(
           JavaDebuggerBundle.message("evaluation.error.cannot.cast.char", myPrimitiveCastType));
       }
     }
-    else if (value instanceof ObjectReference) {
-      ReferenceType type = ((ObjectReference)value).referenceType();
+    else if (value instanceof ObjectReference reference) {
+      ReferenceType type = reference.referenceType();
       if (myTypeCastEvaluator == null) {
         throw EvaluateExceptionUtil.createEvaluateException(
           JavaDebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), myPrimitiveCastType));

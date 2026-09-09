@@ -25,8 +25,8 @@ final class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B,
 
   @Override
   public XBreakpointClassGroup getGroup(@NotNull B b) {
-    if (b instanceof XBreakpoint) {
-      Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint((XBreakpoint)b);
+    if (b instanceof XBreakpoint breakpoint) {
+      Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
       if (javaBreakpoint == null) {
         return null;
       }

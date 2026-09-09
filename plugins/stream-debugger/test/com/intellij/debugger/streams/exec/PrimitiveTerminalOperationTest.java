@@ -40,7 +40,7 @@ public class PrimitiveTerminalOperationTest extends TraceExecutionTestCase {
         assertNotNull(result);
         assertInstanceOf(result, PrimitiveValue.class);
         println("Result type:" + result.typeName(), ProcessOutputTypes.SYSTEM);
-        println("value = " + result.toString(), ProcessOutputTypes.SYSTEM);
+        println("value = " + result, ProcessOutputTypes.SYSTEM);
       }
     };
   }

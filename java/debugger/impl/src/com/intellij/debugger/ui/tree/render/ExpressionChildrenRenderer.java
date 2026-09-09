@@ -168,8 +168,8 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
         if (!StringUtil.isEmpty(myChildrenExpandable.getReferenceExpression().getText())) {
           try {
             Value expanded = myChildrenExpandable.getEvaluator(evaluationContext.getProject()).evaluate(evaluationContext);
-            if (expanded instanceof BooleanValue) {
-              res.complete(((BooleanValue)expanded).booleanValue());
+            if (expanded instanceof BooleanValue booleanValue) {
+              res.complete(booleanValue.booleanValue());
               return;
             }
           }

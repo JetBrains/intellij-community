@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
@@ -54,9 +53,9 @@ final class ClassObjectRenderer extends CompoundRendererProvider {
             try {
               final DebugProcessImpl process = evaluationContext.getDebugProcess();
               Value res = process.invokeMethod(evaluationContext, (ObjectReference)value, nameMethod, Collections.emptyList());
-              if (res instanceof StringReference) {
+              if (res instanceof StringReference reference) {
                 callback.evaluated("");
-                String className = ((StringReference)res).value();
+                String className = reference.value();
                 ReadAction.runBlocking(() -> {
                   PsiClass psiClass = DebuggerUtils.findClass(className, valueDescriptor.getProject(), process.getSearchScope());
                   if (psiClass != null) {

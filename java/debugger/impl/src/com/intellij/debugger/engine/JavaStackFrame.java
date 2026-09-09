@@ -183,8 +183,8 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       XDebugSession xSession = session.getXDebugSession();
       if (xSession != null) {
         XStackFrame frame = xSession.getCurrentStackFrame();
-        if (frame instanceof JavaStackFrame) {
-          result = ((JavaStackFrame)frame).getDescriptor();
+        if (frame instanceof JavaStackFrame stackFrame) {
+          result = stackFrame.getDescriptor();
         }
       }
     }
@@ -730,8 +730,8 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       for (PsiElement _elem = elem; _elem.getTextOffset() >= _start; _elem = _elem.getParent()) {
         alreadyChecked = _elem.getTextRange();
 
-        if (_elem instanceof PsiDeclarationStatement) {
-          final PsiElement[] declared = ((PsiDeclarationStatement)_elem).getDeclaredElements();
+        if (_elem instanceof PsiDeclarationStatement statement) {
+          final PsiElement[] declared = statement.getDeclaredElements();
           for (PsiElement declaredElement : declared) {
             if (declaredElement instanceof PsiVariable) {
               return false;
@@ -739,9 +739,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
           }
         }
 
-        if (_elem instanceof PsiJavaCodeReferenceElement) {
+        if (_elem instanceof PsiJavaCodeReferenceElement element) {
           try {
-            final PsiElement resolved = ((PsiJavaCodeReferenceElement)_elem).resolve();
+            final PsiElement resolved = element.resolve();
             if (resolved instanceof PsiVariable) {
               return false;
             }

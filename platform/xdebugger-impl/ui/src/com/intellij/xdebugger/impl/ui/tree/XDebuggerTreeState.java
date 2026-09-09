@@ -129,13 +129,13 @@ public final class XDebuggerTreeState {
       List<NodeInfo> infos = (List<NodeInfo>)myChildren.get(name);
       if (infos.size() > 1) {
         TreeNode parent = node.getParent();
-        if (parent instanceof XDebuggerTreeNode) {
+        if (parent instanceof XDebuggerTreeNode debuggerTreeNode) {
           int idx = 0;
-          for (XDebuggerTreeNode treeNode : ((XDebuggerTreeNode)parent).getLoadedChildren()) {
+          for (XDebuggerTreeNode treeNode : debuggerTreeNode.getLoadedChildren()) {
             if (treeNode == node) {
               break;
             }
-            if (treeNode instanceof XNamedTreeNode && Objects.equals(((XNamedTreeNode)treeNode).getName(), name)) {
+            if (treeNode instanceof XNamedTreeNode namedTreeNode && Objects.equals(namedTreeNode.getName(), name)) {
               idx++;
             }
           }

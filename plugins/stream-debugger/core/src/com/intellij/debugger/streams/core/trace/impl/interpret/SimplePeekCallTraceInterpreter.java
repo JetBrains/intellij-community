@@ -25,9 +25,9 @@ public class SimplePeekCallTraceInterpreter implements CallTraceInterpreter {
     if (value instanceof ArrayReference trace) {
       final Value before = trace.getValue(0);
       final Value after = trace.getValue(1);
-      if (before instanceof ArrayReference && after instanceof ArrayReference) {
-        final Map<Integer, TraceElement> beforeTrace = resolveTrace((ArrayReference)before);
-        final Map<Integer, TraceElement> afterTrace = resolveTrace((ArrayReference)after);
+      if (before instanceof ArrayReference arrayReference && after instanceof ArrayReference reference) {
+        final Map<Integer, TraceElement> beforeTrace = resolveTrace(arrayReference);
+        final Map<Integer, TraceElement> afterTrace = resolveTrace(reference);
         return new ValuesOrderInfo(call, beforeTrace, afterTrace);
       }
     }
@@ -38,8 +38,8 @@ public class SimplePeekCallTraceInterpreter implements CallTraceInterpreter {
   protected static @NotNull Map<Integer, TraceElement> resolveTrace(@NotNull ArrayReference mapArray) {
     final Value keys = mapArray.getValue(0);
     final Value values = mapArray.getValue(1);
-    if (keys instanceof ArrayReference && values instanceof ArrayReference) {
-      return resolveTrace((ArrayReference)keys, (ArrayReference)values);
+    if (keys instanceof ArrayReference arrayReference && values instanceof ArrayReference reference) {
+      return resolveTrace(arrayReference, reference);
     }
 
     throw new UnexpectedValueException("keys and values must be stored in arrays in peek resolver");
@@ -60,8 +60,8 @@ public class SimplePeekCallTraceInterpreter implements CallTraceInterpreter {
   }
 
   private static @NotNull TraceElement resolveTraceElement(@NotNull Value key, @Nullable Value value) {
-    if (key instanceof IntegerValue) {
-      return new TraceElementImpl(((IntegerValue)key).value(), value);
+    if (key instanceof IntegerValue integerValue) {
+      return new TraceElementImpl(integerValue.value(), value);
     }
 
     throw new UnexpectedValueException("key must be an integer value");

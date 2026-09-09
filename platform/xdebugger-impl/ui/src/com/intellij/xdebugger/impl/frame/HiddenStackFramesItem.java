@@ -51,7 +51,7 @@ public class HiddenStackFramesItem extends XStackFrame implements XStackFrameWit
   private Optional<XStackFrameWithSeparatorAbove> findFrameWithSeparator() {
     // We check only the first frame; otherwise, it's not clear what to do.
     // Might be reconsidered in the future.
-    return hiddenFrames.get(0) instanceof XStackFrameWithSeparatorAbove frame
+    return hiddenFrames.getFirst() instanceof XStackFrameWithSeparatorAbove frame
            ? Optional.of(frame)
            : Optional.empty();
   }

@@ -27,8 +27,8 @@ public final class WatchItemData extends DescriptorData<WatchItemDescriptor> {
 
   @Override
   public boolean equals(final Object object) {
-    if (object instanceof WatchItemData) {
-      return myText.equals(((WatchItemData)object).myText);
+    if (object instanceof WatchItemData data) {
+      return myText.equals(data.myText);
     }
     return false;
   }

@@ -166,8 +166,8 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   @Override
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
-    if (event instanceof ExceptionEvent) {
-      return ((ExceptionEvent)event).exception();
+    if (event instanceof ExceptionEvent exceptionEvent) {
+      return exceptionEvent.exception();
     }
     return super.getThisObject(context, event);
   }
@@ -207,8 +207,8 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   @Override
   public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    if (getProperties().isCatchFiltersEnabled() && event instanceof ExceptionEvent) {
-      Location location = ((ExceptionEvent)event).catchLocation();
+    if (getProperties().isCatchFiltersEnabled() && event instanceof ExceptionEvent exceptionEvent) {
+      Location location = exceptionEvent.catchLocation();
       if (location != null && !typeMatchesClassFilters(location.declaringType().name(),
                                                        getProperties().getCatchClassFilters(),
                                                        getProperties().getCatchClassExclusionFilters())) {

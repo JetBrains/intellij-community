@@ -155,8 +155,8 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
     myLabelRenderer = isBaseRenderer(labelRenderer) ? null : labelRenderer;
     final ValueLabelRenderer currentRenderer = getLabelRenderer();
     if (prevRenderer != currentRenderer) {
-      if (currentRenderer instanceof ReferenceRenderer) {
-        ((ReferenceRenderer)currentRenderer).setClassName(getClassName());
+      if (currentRenderer instanceof ReferenceRenderer renderer) {
+        renderer.setClassName(getClassName());
       }
     }
   }
@@ -166,8 +166,8 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
     myChildrenRenderer = isBaseRenderer(childrenRenderer) ? null : childrenRenderer;
     final ChildrenRenderer currentRenderer = getChildrenRenderer();
     if (prevRenderer != currentRenderer) {
-      if (currentRenderer instanceof ReferenceRenderer) {
-        ((ReferenceRenderer)currentRenderer).setClassName(getClassName());
+      if (currentRenderer instanceof ReferenceRenderer renderer) {
+        renderer.setClassName(getClassName());
       }
     }
   }
@@ -199,14 +199,14 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
   public void setClassName(@NotNull String name) {
     myProperties.setClassName(name);
     if (getRawLabelRenderer() != null) {
-      if (myLabelRenderer instanceof ReferenceRenderer) {
-        ((ReferenceRenderer)myLabelRenderer).setClassName(name);
+      if (myLabelRenderer instanceof ReferenceRenderer renderer) {
+        renderer.setClassName(name);
       }
     }
 
     if (getRawChildrenRenderer() != null) {
-      if (myChildrenRenderer instanceof ReferenceRenderer) {
-        ((ReferenceRenderer)myChildrenRenderer).setClassName(name);
+      if (myChildrenRenderer instanceof ReferenceRenderer renderer) {
+        renderer.setClassName(name);
       }
     }
   }

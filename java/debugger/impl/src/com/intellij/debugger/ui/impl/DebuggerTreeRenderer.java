@@ -93,9 +93,9 @@ public final class DebuggerTreeRenderer {
       nodeIcon = AllIcons.Debugger.Value;
     }
 
-    if (valueDescriptor instanceof UserExpressionDescriptorImpl) {
+    if (valueDescriptor instanceof UserExpressionDescriptorImpl descriptor) {
       EnumerationChildrenRenderer enumerationChildrenRenderer =
-        EnumerationChildrenRenderer.getCurrent(((UserExpressionDescriptorImpl)valueDescriptor).getParentDescriptor());
+        EnumerationChildrenRenderer.getCurrent(descriptor.getParentDescriptor());
       if (enumerationChildrenRenderer != null && enumerationChildrenRenderer.isAppendDefaultChildren()) {
         nodeIcon = AllIcons.Debugger.Db_watch;
       }
@@ -112,11 +112,11 @@ public final class DebuggerTreeRenderer {
   }
 
   private static boolean isParameter(ValueDescriptorImpl valueDescriptor) {
-    if (valueDescriptor instanceof LocalVariableDescriptorImpl) {
-      return ((LocalVariableDescriptorImpl)valueDescriptor).isParameter();
+    if (valueDescriptor instanceof LocalVariableDescriptorImpl variableDescriptor) {
+      return variableDescriptor.isParameter();
     }
-    else if (valueDescriptor instanceof ArgumentValueDescriptorImpl) {
-      return ((ArgumentValueDescriptorImpl)valueDescriptor).isParameter();
+    else if (valueDescriptor instanceof ArgumentValueDescriptorImpl descriptor) {
+      return descriptor.isParameter();
     }
     return false;
   }

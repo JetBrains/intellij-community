@@ -11,10 +11,10 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,7 @@ import java.util.Set;
 public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
   private static final Color DEFAULT_COLOR = JBColor.RED;
   private final @NotNull Set<String> myExistingMarkups;
-  private SimpleColoredComponent myColorSample;
+  private final SimpleColoredComponent myColorSample;
   private Color myColor;
   private final JPanel myMainPanel;
   private final JTextField myLabelField;
@@ -100,7 +100,7 @@ public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
     }
     setTitle(XDebuggerBundle.message("value.marker.dialog.select.object.label"));
     setModal(true);
-    myExistingMarkups = StreamEx.of(markups).map(ValueMarkup::getText).toSet();
+    myExistingMarkups = ContainerUtil.map2Set(markups, ValueMarkup::getText);
     myLabelField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(final @NotNull DocumentEvent e) {

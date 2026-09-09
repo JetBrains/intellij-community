@@ -37,7 +37,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Dispatchers;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -151,7 +150,7 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
   }
 
   private static @NlsSafe String buildMessage(List<String> messages) {
-    return StreamEx.of(messages).joining("\n");
+    return String.join("\n", messages);
   }
 
   @Override

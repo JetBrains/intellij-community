@@ -33,9 +33,9 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
   public boolean locationMatches(DebugProcessImpl process, Location location, @Nullable StackFrameProxyImpl frameProxy) throws EvaluateException {
     if (super.locationMatches(process, location, frameProxy) && frameProxy != null) {
       Value lambdaReference = getLambdaReference(frameProxy);
-      if (lambdaReference instanceof ObjectReference) {
+      if (lambdaReference instanceof ObjectReference reference) {
         Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(
-          ((ObjectReference)lambdaReference).referenceType(), lambdaReference.virtualMachine()::classesByName);
+          reference.referenceType(), lambdaReference.virtualMachine()::classesByName);
         Location newLocation = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
         return newLocation != null && myMethodFilter.locationMatches(process, newLocation);
       }
@@ -49,11 +49,11 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
       StackFrameProxyImpl proxy = context.getFrameProxy();
       if (proxy != null) {
         Value lambdaReference = getLambdaReference(proxy);
-        if (lambdaReference instanceof ObjectReference) {
+        if (lambdaReference instanceof ObjectReference reference) {
           final SourcePosition pos = myMethodFilter.getBreakpointPosition();
           if (pos != null) {
             Project project = context.getDebugProcess().getProject();
-            long lambdaId = ((ObjectReference)lambdaReference).uniqueID();
+            long lambdaId = reference.uniqueID();
             StepIntoBreakpoint breakpoint = new LambdaInstanceBreakpoint(project, lambdaId, pos, myMethodFilter);
             DebugProcessImpl.prepareAndSetSteppingBreakpoint(context, breakpoint, hint, true);
             return RequestHint.RESUME;

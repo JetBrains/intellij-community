@@ -48,7 +48,7 @@ public class RunHotswapDialog extends OptionsDialog {
     myPanel.add(myElementsChooser, BorderLayout.CENTER);
     //myPanel.add(new JLabel("Choose debug sessions to reload classes:"), BorderLayout.NORTH);
     if (sessions.size() == 1) {
-      setTitle(JavaDebuggerBundle.message("hotswap.dialog.title.with.session", sessions.get(0).getSessionName()));
+      setTitle(JavaDebuggerBundle.message("hotswap.dialog.title.with.session", sessions.getFirst().getSessionName()));
       myPanel.setVisible(false);
     }
     else {

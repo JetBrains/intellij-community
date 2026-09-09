@@ -21,9 +21,9 @@ public class LocalData extends DescriptorData<LocalVariableDescriptorImpl> {
 
   @Override
   public boolean equals(Object object) {
-    if (!(object instanceof LocalData)) return false;
+    if (!(object instanceof LocalData data)) return false;
 
-    return ((LocalData)object).myLocalVariable.equals(myLocalVariable);
+    return data.myLocalVariable.equals(myLocalVariable);
   }
 
   @Override

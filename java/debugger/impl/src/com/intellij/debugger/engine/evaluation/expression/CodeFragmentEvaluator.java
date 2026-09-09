@@ -40,37 +40,37 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator {
       }
     }
     Object value = mySyntheticLocals.get(localName);
-    if (value instanceof Value) {
-      return (Value)value;
+    if (value instanceof Value value1) {
+      return value1;
     }
     else if (value == null) {
       return null;
     }
 
     @NotNull VirtualMachineProxyImpl vm = context.getSuspendContext().getVirtualMachineProxy();
-    if (value instanceof Boolean) {
-      return vm.mirrorOf(((Boolean)value).booleanValue());
+    if (value instanceof Boolean aBoolean) {
+      return vm.mirrorOf(aBoolean.booleanValue());
     }
-    else if (value instanceof Byte) {
-      return vm.mirrorOf(((Byte)value).byteValue());
+    else if (value instanceof Byte b) {
+      return vm.mirrorOf(b.byteValue());
     }
-    else if (value instanceof Character) {
-      return vm.mirrorOf(((Character)value).charValue());
+    else if (value instanceof Character c) {
+      return vm.mirrorOf(c.charValue());
     }
-    else if (value instanceof Short) {
-      return vm.mirrorOf(((Short)value).shortValue());
+    else if (value instanceof Short aShort) {
+      return vm.mirrorOf(aShort.shortValue());
     }
-    else if (value instanceof Integer) {
-      return vm.mirrorOf(((Integer)value).intValue());
+    else if (value instanceof Integer i) {
+      return vm.mirrorOf(i.intValue());
     }
-    else if (value instanceof Long) {
-      return vm.mirrorOf(((Long)value).longValue());
+    else if (value instanceof Long l) {
+      return vm.mirrorOf(l.longValue());
     }
-    else if (value instanceof Float) {
-      return vm.mirrorOf(((Float)value).floatValue());
+    else if (value instanceof Float aFloat) {
+      return vm.mirrorOf(aFloat.floatValue());
     }
-    else if (value instanceof Double) {
-      return vm.mirrorOf(((Double)value).doubleValue());
+    else if (value instanceof Double v) {
+      return vm.mirrorOf(v.doubleValue());
     }
     else if (value instanceof String stringValue) {
       return DebuggerUtilsEx.mirrorOfString(stringValue, context);

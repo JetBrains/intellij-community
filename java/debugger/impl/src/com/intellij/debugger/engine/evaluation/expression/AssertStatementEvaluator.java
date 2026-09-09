@@ -38,8 +38,8 @@ public class AssertStatementEvaluator implements Evaluator {
       Method method = DebuggerUtils.findMethod(classObjectReference.referenceType(), "desiredAssertionStatus", "()Z");
       if (method != null) {
         Value res = context.getDebugProcess().invokeMethod(context, classObjectReference, method, Collections.emptyList());
-        if (res instanceof BooleanValue) {
-          status = ThreeState.fromBoolean(((BooleanValue)res).value());
+        if (res instanceof BooleanValue value) {
+          status = ThreeState.fromBoolean(value.value());
         }
       }
     }

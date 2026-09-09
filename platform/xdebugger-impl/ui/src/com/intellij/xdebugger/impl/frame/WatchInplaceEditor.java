@@ -54,14 +54,14 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     super.doOKAction();
     int index = myRootNode.removeChildNode(myNode);
     XDebuggerWatchesManager watchesManager = null;
-    if (myNode instanceof InlineWatchNodeImpl) {
-      InlineWatch inlineWatch = ((InlineWatchNodeImpl)myNode).getWatch();
+    if (myNode instanceof InlineWatchNodeImpl watchNode) {
+      InlineWatch inlineWatch = watchNode.getWatch();
       watchesManager = XDebugManagerProxy.getInstance().getWatchesManager(getProject());
       watchesManager.inlineWatchesRemoved(Collections.singletonList(inlineWatch), (XInlineWatchesView)myWatchesView);
     }
     if (!DebuggerUIUtil.isEmptyExpression(expression) && index != -1) {
-      if (myNode instanceof InlineWatchNodeImpl) {
-        watchesManager.addInlineWatchExpression(expression, index, ((InlineWatchNodeImpl)myNode).getPosition(), false);
+      if (myNode instanceof InlineWatchNodeImpl node) {
+        watchesManager.addInlineWatchExpression(expression, index, node.getPosition(), false);
       } else  {
         myWatchesView.addWatchExpression(expression, index, false);
       }

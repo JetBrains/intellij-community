@@ -194,11 +194,11 @@ public class MethodReturnValueWatcher {
   private @NotNull <T extends EventRequest> T prepareRequest(T request) {
     request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
     if (myThread != null) {
-      if (request instanceof MethodEntryRequest) {
-        ((MethodEntryRequest)request).addThreadFilter(myThread);
+      if (request instanceof MethodEntryRequest entryRequest) {
+        entryRequest.addThreadFilter(myThread);
       }
-      else if (request instanceof MethodExitRequest) {
-        ((MethodExitRequest)request).addThreadFilter(myThread);
+      else if (request instanceof MethodExitRequest exitRequest) {
+        exitRequest.addThreadFilter(myThread);
       }
     }
     request.putProperty(WATCHER_REQUEST_KEY, true);
@@ -211,11 +211,11 @@ public class MethodReturnValueWatcher {
       return false;
     }
 
-    if (event instanceof MethodEntryEvent) {
-      processMethodEntryEvent(((MethodEntryEvent)event));
+    if (event instanceof MethodEntryEvent entryEvent) {
+      processMethodEntryEvent(entryEvent);
     }
-    else if (event instanceof MethodExitEvent) {
-      processMethodExitEvent(((MethodExitEvent)event));
+    else if (event instanceof MethodExitEvent exitEvent) {
+      processMethodExitEvent(exitEvent);
     }
     return true;
   }

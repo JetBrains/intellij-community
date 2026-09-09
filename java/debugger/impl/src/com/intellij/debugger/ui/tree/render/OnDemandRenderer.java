@@ -60,8 +60,8 @@ public interface OnDemandRenderer extends FullValueEvaluatorProvider {
     return new XFullValueEvaluator(text) {
       @Override
       public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
-        if (callback instanceof HeadlessValueEvaluationCallback) {
-          XValueNodeImpl node = ((HeadlessValueEvaluationCallback)callback).getNode();
+        if (callback instanceof HeadlessValueEvaluationCallback evaluationCallback) {
+          XValueNodeImpl node = evaluationCallback.getNode();
           node.clearFullValueEvaluator();
           setCalculated(((JavaValue)node.getValueContainer()).getDescriptor());
           node.getValueContainer().computePresentation(node, XValuePlace.TREE);

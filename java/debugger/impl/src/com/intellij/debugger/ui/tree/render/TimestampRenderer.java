@@ -27,8 +27,8 @@ public final class TimestampRenderer extends CompoundRendererProvider {
         if (value == null) {
           return "null";
         }
-        else if (value instanceof LongValue) {
-          return new Timestamp(((LongValue)value).longValue()).toString();
+        else if (value instanceof LongValue longValue) {
+          return new Timestamp(longValue.longValue()).toString();
         }
         return null;
       }

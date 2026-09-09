@@ -19,7 +19,7 @@ public class MultiProcessCommand implements Runnable {
         if (myCommands.isEmpty()) {
           break;
         }
-        pair = myCommands.remove(0);
+        pair = myCommands.removeFirst();
       }
       pair.getFirst().getManagerThread().invokeAndWait(pair.getSecond());
     }
@@ -28,7 +28,7 @@ public class MultiProcessCommand implements Runnable {
   public void cancel() {
     synchronized (myCommands) {
       while (!myCommands.isEmpty()) {
-        Pair<DebugProcessImpl, DebuggerCommandImpl> pair = myCommands.remove(0);
+        Pair<DebugProcessImpl, DebuggerCommandImpl> pair = myCommands.removeFirst();
         pair.getSecond().notifyCancelled();
       }
     }

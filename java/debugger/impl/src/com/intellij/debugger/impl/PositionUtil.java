@@ -16,13 +16,13 @@ import org.jetbrains.annotations.Nullable;
 
 public class PositionUtil extends ContextUtil {
   public static SourcePosition getSourcePosition(final StackFrameContext context) {
-    if (context instanceof DebuggerContextImpl) return ((DebuggerContextImpl)context).getSourcePosition();
+    if (context instanceof DebuggerContextImpl debuggerContext) return debuggerContext.getSourcePosition();
 
     return ContextUtil.getSourcePosition(context);
   }
 
   public static @Nullable PsiElement getContextElement(final StackFrameContext context) {
-    if (context instanceof DebuggerContextImpl) return ((DebuggerContextImpl)context).getContextElement();
+    if (context instanceof DebuggerContextImpl debuggerContext) return debuggerContext.getContextElement();
 
     return ContextUtil.getContextElement(context);
   }

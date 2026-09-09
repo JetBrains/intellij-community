@@ -41,8 +41,8 @@ public final class CaptureSettingsProvider {
     return CaptureConfigurable.processCaptureAnnotations(project, (capture, e, annotation) -> {
       PsiMethod method;
       KeyProvider keyProvider;
-      if (e instanceof PsiMethod) {
-        method = (PsiMethod)e;
+      if (e instanceof PsiMethod psiMethod) {
+        method = psiMethod;
         keyProvider = THIS_KEY;
       }
       else if (e instanceof PsiParameter psiParameter) {

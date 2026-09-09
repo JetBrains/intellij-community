@@ -75,10 +75,10 @@ public class IntermediateBuilderPositiveTest extends StreamChainBuilderPositiveT
   @Override
   protected void checkResultChains(@NotNull List<StreamChain> chains) {
     assertFalse(chains.isEmpty());
-    final StreamChain chain = chains.get(0);
+    final StreamChain chain = chains.getFirst();
     assertEquals(1, chain.getIntermediateCalls().size());
     final String callName = getTestName(true);
-    final StreamCall call = chain.getIntermediateCalls().get(0);
+    final StreamCall call = chain.getIntermediateCalls().getFirst();
     assertEquals(StreamCallType.INTERMEDIATE, call.getType());
     assertEquals(callName, call.getName());
   }

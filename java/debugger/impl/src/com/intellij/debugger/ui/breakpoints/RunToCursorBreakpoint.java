@@ -67,8 +67,8 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
     VirtualFile file = position.getFile().getVirtualFile();
     int line = position.getLine();
     for (XLineBreakpointType<?> type : XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
-      if (type instanceof JavaLineBreakpointType && type.canPutAt(file, line, myProject)) {
-        return ((JavaLineBreakpointType)type);
+      if (type instanceof JavaLineBreakpointType breakpointType && type.canPutAt(file, line, myProject)) {
+        return breakpointType;
       }
     }
     return null;

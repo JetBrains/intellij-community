@@ -57,8 +57,8 @@ public class HexRenderer extends NodeRendererImpl {
     if (value == null) {
       return "null";
     }
-    else if (value instanceof CharValue) {
-      PrimitiveRenderer.appendCharValue((CharValue)value, buf);
+    else if (value instanceof CharValue charValue) {
+      PrimitiveRenderer.appendCharValue(charValue, buf);
       buf.append(' ');
       appendHexValue((PrimitiveValue)value, buf);
       return buf.toString();

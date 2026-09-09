@@ -771,7 +771,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         long endTimeNs = 0;
         try {
           if (event.request().isEnabled()) {
-            requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
+            requestHit = requestor != null && requestor.processLocatableEvent(this, event);
           }
         }
         catch (final LocatableEventRequestor.EventProcessingException ex) {
@@ -785,7 +785,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           XBreakpoint<?> xBreakpoint = requestor instanceof Breakpoint<?> breakpoint ? breakpoint.getXBreakpoint() : null;
           XDebugSession xDebugSession = getSession().getXDebugSession();
           BreakpointErrorData errorData = new BreakpointErrorData(title, exceptionMessage, ex.getCause());
-          BreakpointErrorAction policyAction = (xDebugSession == null || xBreakpoint == null)
+          BreakpointErrorAction policyAction = xDebugSession == null || xBreakpoint == null
                                                ? BreakpointErrorAction.UNHANDLED
                                                : XBreakpointBehaviorPolicy.doChooseBreakpointErrorAction(xDebugSession, xBreakpoint, errorData);
 
@@ -965,7 +965,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
       noStandardSuspendNeeded = true;
       ThreadReferenceProxyImpl threadProxy = suspendContext.getVirtualMachineProxy().getThreadReferenceProxy(thread);
-      SuspendContextImpl firstSuspendAllContext = suspendAllContexts.get(0);
+      SuspendContextImpl firstSuspendAllContext = suspendAllContexts.getFirst();
       if (suspendAllContexts.size() == 1 && firstSuspendAllContext.mySteppingThreadForResumeOneSteppingCurrentMode == threadProxy) {
         // Stepping in "Resume only one thread in suspend-all" mode met a breakpoint
 
@@ -975,7 +975,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         suspendContext.getVirtualMachineProxy().suspend();
         // Inside switchToSuspendAll the engine will replace the placeholder context with the new one.
         // It is necessary to cancel all current activities with the placeholder context (and the stepping monitor also).
-        SuspendOtherThreadsRequestor.switchToSuspendAll(suspendContext, (s) -> true);
+        SuspendOtherThreadsRequestor.switchToSuspendAll(suspendContext, _ -> true);
       }
       else if (suspendManager.myExplicitlyResumedThreads.contains(threadProxy)) {
         for (SuspendContextImpl context : suspendAllContexts) {
@@ -1005,7 +1005,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
     else {
       logSuspendContext(suspendContext, () -> "initiate transfer to suspend-all");
-      noStandardSuspendNeeded = SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext, c -> true);
+      noStandardSuspendNeeded = SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext, _ -> true);
     }
 
     return noStandardSuspendNeeded;
@@ -1082,7 +1082,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private static @Nullable LocatableEvent getLocatableEvent(EventSet eventSet) {
-    return StreamEx.of(eventSet).select(LocatableEvent.class).findFirst().orElse(null);
+    return ContainerUtil.findInstance(eventSet, LocatableEvent.class);
   }
 
   private void processDefaultEvent(SuspendContextImpl suspendContext) {

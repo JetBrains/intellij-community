@@ -19,11 +19,11 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueGroup;
 import com.sun.jdi.Field;
 import com.sun.jdi.ReferenceType;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -85,7 +85,7 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
                 .toArray(CompletableFuture[]::new);
               CompletableFuture.allOf(futures)
                 .thenAccept(_ -> {
-                  StreamEx.of(futures).map(CompletableFuture::join).forEach(c -> node.addChildren(c, false));
+                  Arrays.stream(futures).map(CompletableFuture::join).forEach(c -> node.addChildren(c, false));
                   node.addChildren(XValueChildrenList.EMPTY, true);
                 });
             }

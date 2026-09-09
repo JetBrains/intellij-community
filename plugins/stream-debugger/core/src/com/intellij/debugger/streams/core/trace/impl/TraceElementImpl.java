@@ -24,8 +24,8 @@ public class TraceElementImpl implements TraceElement, Comparable<TraceElement> 
 
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof TraceElement) {
-      final int time = ((TraceElement)obj).getTime();
+    if (obj instanceof TraceElement element) {
+      final int time = element.getTime();
       return time == myTime;
     }
 

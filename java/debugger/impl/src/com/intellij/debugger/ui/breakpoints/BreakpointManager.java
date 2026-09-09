@@ -284,7 +284,7 @@ public class BreakpointManager {
    */
   public @Nullable <T extends BreakpointWithHighlighter> T findBreakpoint(final Document document, final int offset, final @Nullable Key<T> category) {
     for (final Breakpoint breakpoint : getBreakpoints()) {
-      if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter<?>)breakpoint).isAt(document, offset)) {
+      if (breakpoint instanceof BreakpointWithHighlighter<?> highlighter && highlighter.isAt(document, offset)) {
         if (category == null || category.equals(breakpoint.getCategory())) {
           // noinspection unchecked
           return (T)breakpoint;
@@ -597,8 +597,8 @@ public class BreakpointManager {
       }
       catch (Exception e) {
         Throwable cause = DebuggerUtilsAsync.unwrap(e);
-        if (cause instanceof VMDisconnectedException) {
-          throw (VMDisconnectedException)cause;
+        if (cause instanceof VMDisconnectedException exception) {
+          throw exception;
         }
         LOG.error(new Exception(e));
       }

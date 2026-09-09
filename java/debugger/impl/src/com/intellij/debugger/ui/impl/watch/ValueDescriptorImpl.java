@@ -347,12 +347,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
 
     //set label id
-    if (isShowIdLabel() && renderer instanceof NodeRendererImpl) {
-      setIdLabel(((NodeRendererImpl)renderer).calcIdLabel(this, debugProcess, labelListener));
+    if (isShowIdLabel() && renderer instanceof NodeRendererImpl renderer1) {
+      setIdLabel(renderer1.calcIdLabel(this, debugProcess, labelListener));
     }
 
     if (valueException == null) {
-      long start = renderer instanceof NodeRendererImpl && ((NodeRendererImpl)renderer).hasOverhead() ? System.currentTimeMillis() : 0;
+      long start = renderer instanceof NodeRendererImpl nodeRenderer && nodeRenderer.hasOverhead() ? System.currentTimeMillis() : 0;
       try {
         setValueLabel(renderer.calcLabel(this, context, labelListener));
       }
@@ -549,8 +549,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public Renderer getLastLabelRenderer() {
     Renderer lastRenderer = getLastRenderer();
-    if (lastRenderer instanceof CompoundReferenceRenderer) {
-      lastRenderer = ((CompoundReferenceRenderer)lastRenderer).getLabelRenderer();
+    if (lastRenderer instanceof CompoundReferenceRenderer renderer) {
+      lastRenderer = renderer.getLabelRenderer();
     }
     return lastRenderer;
   }
@@ -712,10 +712,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public static @Nullable String calcIdLabel(ValueDescriptor descriptor, @NotNull DescriptorLabelListener labelListener) {
     Value value = descriptor.getValue();
-    if (!(value instanceof ObjectReference)) {
+    if (!(value instanceof ObjectReference reference)) {
       return null;
     }
-    return calcIdLabel((ObjectReference)value, descriptor, labelListener);
+    return calcIdLabel(reference, descriptor, labelListener);
   }
 
   private static @Nullable String calcIdLabel(ObjectReference objRef,
@@ -746,14 +746,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       //buf.append('}');
     }
 
-    if (objRef instanceof ArrayReference) {
+    if (objRef instanceof ArrayReference reference) {
       int idx = buf.indexOf("[");
       if (idx >= 0) {
         if (labelListener == null || descriptor == null) {
-          buf.insert(idx + 1, ((ArrayReference)objRef).length());
+          buf.insert(idx + 1, reference.length());
         }
         else {
-          CompletableFuture<String> asyncId = DebuggerUtilsAsync.length((ArrayReference)objRef)
+          CompletableFuture<String> asyncId = DebuggerUtilsAsync.length(reference)
             .thenApply(length -> buf.insert(idx + 1, length).toString());
           if (asyncId.isDone()) {
             return asyncId.join();
@@ -774,7 +774,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private static boolean isEnumConstant(final ObjectReference objRef) {
     try {
       Type type = objRef.type();
-      return type instanceof ClassType && ((ClassType)type).isEnum();
+      return type instanceof ClassType classType && classType.isEnum();
     }
     catch (ObjectCollectedException ignored) {
     }

@@ -380,8 +380,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     try {
       Object renderer = myNodeRenderersMap.get(type);
-      if (renderer instanceof NodeRenderer) {
-        return CompletableFuture.completedFuture((NodeRenderer)renderer);
+      if (renderer instanceof NodeRenderer nodeRenderer) {
+        return CompletableFuture.completedFuture(nodeRenderer);
       }
       else if (renderer instanceof CompletableFuture) {
         //noinspection unchecked
@@ -479,8 +479,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected int getTraceMask() {
     int mask = ourTraceMask;
     DebugEnvironment environment = mySession.getDebugEnvironment();
-    if (environment instanceof DefaultDebugEnvironment) {
-      mask |= ((DefaultDebugEnvironment)environment).getTraceMode();
+    if (environment instanceof DefaultDebugEnvironment debugEnvironment) {
+      mask |= debugEnvironment.getTraceMode();
     }
     return mask;
   }
@@ -537,8 +537,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       if (myConnection.isServerMode()) {
         Connector connector = getConnector();
-        if (connector instanceof ListeningConnector) {
-          ((ListeningConnector)connector).stopListening(arguments);
+        if (connector instanceof ListeningConnector listeningConnector) {
+          listeningConnector.stopListening(arguments);
         }
       }
     }
@@ -730,8 +730,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       Connector connector = getConnector();
       myArguments = connector.defaultArguments();
-      if (myConnection instanceof PidRemoteConnection && !((PidRemoteConnection)myConnection).isFixedAddress()) {
-        String pid = ((PidRemoteConnection)myConnection).getPid();
+      if (myConnection instanceof PidRemoteConnection connection && !connection.isFixedAddress()) {
+        String pid = connection.getPid();
         if (StringUtil.isEmpty(pid)) {
           throw new CantRunException(JavaDebuggerBundle.message("error.no.pid"));
         }
@@ -765,8 +765,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         setConnectorArgument("timeout", "0"); // wait forever
       }
-      return connector instanceof AttachingConnector
-             ? attachConnector((AttachingConnector)connector)
+      return connector instanceof AttachingConnector attachingConnector
+             ? attachConnector(attachingConnector)
              : connectorListen(port, (ListeningConnector)connector);
     }
     catch (IOException e) {
@@ -893,8 +893,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private Connector getConnector() throws ExecutionException {
-    if (myConnection instanceof PidRemoteConnection && !((PidRemoteConnection)myConnection).isFixedAddress()) {
-      return ((PidRemoteConnection)myConnection).getConnector(this);
+    if (myConnection instanceof PidRemoteConnection connection && !connection.isFixedAddress()) {
+      return connection.getConnector(this);
     }
     return findConnector(myConnection.isUseSockets(), myConnection.isServerMode());
   }
@@ -1222,8 +1222,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     else if (e instanceof VMDisconnectedException) {
       message = JavaDebuggerBundle.message("error.vm.disconnected");
     }
-    else if (e instanceof IOException) {
-      message = processIOException((IOException)e, null);
+    else if (e instanceof IOException exception) {
+      message = processIOException(exception, null);
     }
     else if (e instanceof ExecutionException) {
       message = e.getLocalizedMessage();
@@ -1572,7 +1572,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
             // workaround for jdi hang in trace mode, see IDEA-183387
             if (Patches.JDK_BUG_WITH_TRACE_SEND && (getTraceMask() & VirtualMachine.TRACE_SENDS) != 0) {
-              StreamEx.of(myArgs).findAny(ThreadReference.class::isInstance).ifPresent(t -> {
+              StreamEx.of(myArgs).findAny(ThreadReference.class::isInstance).ifPresent(_ -> {
                 //noinspection UseOfSystemOutOrSystemErr
                 System.err.println("[JDI: workaround for invocation of " + myMethod + "]");
                 myMethod.virtualMachine().setDebugTraceMode(getTraceMask() & ~VirtualMachine.TRACE_SENDS);
@@ -1598,20 +1598,20 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       try {
         Exception ex = exception.get();
         if (ex != null) {
-          if (ex instanceof InvocationException) {
-            throw (InvocationException)ex;
+          if (ex instanceof InvocationException invocationException) {
+            throw invocationException;
           }
-          else if (ex instanceof ClassNotLoadedException) {
-            throw (ClassNotLoadedException)ex;
+          else if (ex instanceof ClassNotLoadedException loadedException) {
+            throw loadedException;
           }
-          else if (ex instanceof IncompatibleThreadStateException) {
-            throw (IncompatibleThreadStateException)ex;
+          else if (ex instanceof IncompatibleThreadStateException stateException) {
+            throw stateException;
           }
-          else if (ex instanceof InvalidTypeException) {
-            throw (InvalidTypeException)ex;
+          else if (ex instanceof InvalidTypeException typeException) {
+            throw typeException;
           }
-          else if (ex instanceof RuntimeException) {
-            throw (RuntimeException)ex;
+          else if (ex instanceof RuntimeException runtimeException) {
+            throw runtimeException;
           }
           else {
             logError("Unexpected exception", new Throwable(ex));
@@ -1794,6 +1794,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
 
+  @SuppressWarnings("SSBasedInspection")
   @Override
   public ArrayReference newInstance(final ArrayType arrayType,
                                     final int dimension)
@@ -1924,8 +1925,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     // for this refType and the refType is not visible to the loader.
     // Attempt to evaluate method with this refType will yield ClassNotLoadedException.
     // The only way to say for sure whether the class is _visible_ to the given loader, is to use the following API call
-    if (fromLoader instanceof ClassLoaderReferenceImpl) {
-      return ((ClassLoaderReferenceImpl)fromLoader).isVisible(refType);
+    if (fromLoader instanceof ClassLoaderReferenceImpl reference) {
+      return reference.isVisible(refType);
     }
     return fromLoader.visibleClasses().contains(refType);
   }
@@ -1993,10 +1994,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       return null;
     }
     Value classReference = invokeMethod(evaluationContext, classClassType, forNameMethod, args, MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
-    if (classReference instanceof ClassObjectReference) {
-      ReferenceType refType = ((ClassObjectReference)classReference).reflectedType();
-      if (classLoader instanceof ClassLoaderReferenceImpl) {
-        ((ClassLoaderReferenceImpl)classLoader).addVisible(refType);
+    if (classReference instanceof ClassObjectReference objectReference) {
+      ReferenceType refType = objectReference.reflectedType();
+      if (classLoader instanceof ClassLoaderReferenceImpl reference) {
+        reference.addVisible(refType);
       }
       return refType;
     }
@@ -2051,7 +2052,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @Override
-    public Priority getPriority() {
+    public @NotNull Priority getPriority() {
       return Priority.HIGH;
     }
 
@@ -2150,9 +2151,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                            int stepSize) {
       super(suspendContext, methodFilter);
       myForcedIgnoreFilters = ignoreFilters || methodFilter != null;
-      myBreakpoint = methodFilter instanceof BreakpointStepMethodFilter ?
-        DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().addStepIntoBreakpoint(((BreakpointStepMethodFilter)methodFilter)) :
-        null;
+      myBreakpoint = methodFilter instanceof BreakpointStepMethodFilter filter ?
+                     DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().addStepIntoBreakpoint(filter) :
+                     null;
       myStepSize = stepSize;
     }
 
@@ -2432,7 +2433,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @Override
-    public Priority getPriority() {
+    public @NotNull Priority getPriority() {
       return Priority.HIGH;
     }
 
@@ -2480,7 +2481,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       myPredefinedThread = thread;
     }
 
-    private boolean isDebuggerAgentAvailable() {
+    private static boolean isDebuggerAgentAvailable() {
       return !VirtualMachineProxy.getCurrent().classesByName("com.intellij.rt.debugger.agent.DebuggerAgent").isEmpty();
     }
 
@@ -2539,7 +2540,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       long timeout = Registry.intValue("debugger.evaluate.on.pause.timeout.ms", 500);
       evaluatableContextObtained
         .orTimeout(timeout, TimeUnit.MILLISECONDS)
-        .whenComplete((evaluatableContext, error) -> {
+        .whenComplete((_, error) -> {
           getManagerThread().schedule(new DebuggerCommandImpl() {
             @Override
             protected void action() {
@@ -2596,7 +2597,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           DebuggerDiagnosticsUtil.checkThreadsConsistency(DebugProcessImpl.this, true);
         }
         @Override
-        public Priority getPriority() {
+        public @NotNull Priority getPriority() {
           return Priority.LOWEST;
         }
       });
@@ -2667,7 +2668,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           }
         }
         mySuspendManager.myExplicitlyResumedThreads.remove(myThread);
-        SuspendManagerUtil.switchToThreadInSuspendAllContext(pausedSuspendAllContexts.get(0), myThread);
+        SuspendManagerUtil.switchToThreadInSuspendAllContext(pausedSuspendAllContexts.getFirst(), myThread);
         return;
       }
 
@@ -2864,8 +2865,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw e;
     }
 
-    if (myConnection instanceof DelayedRemoteConnection) {
-      ((DelayedRemoteConnection)myConnection).setAttachRunnable(() -> createVirtualMachine(environment));
+    if (myConnection instanceof DelayedRemoteConnection connection) {
+      connection.setAttachRunnable(() -> createVirtualMachine(environment));
     }
     else if (!(myConnection instanceof RemoteConnectionStub) && !myConnection.isServerMode()) {
       createVirtualMachine(environment);
@@ -3040,7 +3041,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
 
       @Override
-      public Priority getPriority() {
+      public @NotNull Priority getPriority() {
         return priority;
       }
     };
@@ -3050,7 +3051,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return createStepOverCommand(suspendContext, ignoreBreakpoints, StepRequest.STEP_LINE);
   }
 
-  public @NotNull ResumeCommand createStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, int stepSize) {
+  public @NotNull ResumeCommand createStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, int ignoredStepSize) {
     return createStepOverCommand(suspendContext, ignoreBreakpoints, null, StepRequest.STEP_LINE);
   }
 

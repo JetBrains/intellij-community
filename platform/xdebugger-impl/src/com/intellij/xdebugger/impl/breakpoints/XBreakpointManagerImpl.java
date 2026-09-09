@@ -805,10 +805,10 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                  @NotNull String fileUrl,
                                                                                  int line) {
     assert !myLock.isHeldByCurrentThread();
-    if (!(source instanceof XLineBreakpointImpl<?>)) {
+    if (!(source instanceof XLineBreakpointImpl<?> lineBreakpoint)) {
       return null;
     }
-    LineBreakpointState sourceState = ((XLineBreakpointImpl<?>)source).getState();
+    LineBreakpointState sourceState = lineBreakpoint.getState();
 
     Element element = XmlSerializer.serialize(sourceState);
     LineBreakpointState newState =
@@ -896,7 +896,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     }
 
     boolean isRestorable() {
-      return !(myBreakpoint instanceof XLineBreakpointImpl) || ((XLineBreakpointImpl<?>)myBreakpoint).getFile() != null;
+      return !(myBreakpoint instanceof XLineBreakpointImpl<?> breakpoint) || breakpoint.getFile() != null;
     }
 
     @Nullable

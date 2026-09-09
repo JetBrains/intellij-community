@@ -122,11 +122,11 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     final List<TraceControllerImpl> controllers = createControllers(resolvedTrace);
 
     if (controllers.isEmpty()) return;
-    final List<TraceElement> trace = controllers.get(0).getTrace();
-    final CollectionTree tree = CollectionTree.create(controllers.get(0).getStreamResult(), trace, launcher, context, builder, "setTrace#Tree#0#");
+    final List<TraceElement> trace = controllers.getFirst().getTrace();
+    final CollectionTree tree = CollectionTree.create(controllers.getFirst().getStreamResult(), trace, launcher, context, builder, "setTrace#Tree#0#");
     final CollectionView sourceView = new CollectionView(tree);
-    controllers.get(0).register(sourceView);
-    myTabContents.get(0).setContent(sourceView, BorderLayout.CENTER);
+    controllers.getFirst().register(sourceView);
+    myTabContents.getFirst().setContent(sourceView, BorderLayout.CENTER);
 
     for (int i = 1; i < myTabContents.size(); i++) {
       if (i == myTabContents.size() - 1 &&
@@ -145,7 +145,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     }
 
     final TraceElement result = resolvedTrace.getResult();
-    final MyPlaceholder resultTab = myTabContents.get(myTabContents.size() - 1);
+    final MyPlaceholder resultTab = myTabContents.getLast();
 
     if (resolvedTrace.exceptionThrown()) {
       JBLabel label = new JBLabel(StreamDebuggerBundle.message("tab.content.exception.thrown"), SwingConstants.CENTER);
@@ -194,7 +194,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     final List<ResolvedStreamCall.Intermediate> intermediateCalls = chain.getIntermediateCalls();
     final NextAwareState firstState = intermediateCalls.isEmpty()
                                       ? chain.getTerminator().getStateBefore()
-                                      : intermediateCalls.get(0).getStateBefore();
+                                      : intermediateCalls.getFirst().getStateBefore();
     final TraceControllerImpl firstController = new TraceControllerImpl(firstState);
 
     controllers.add(firstController);

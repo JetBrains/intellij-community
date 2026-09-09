@@ -49,7 +49,7 @@ public class TerminationCallTypeTest extends StreamChainBuilderPositiveTestBase 
     final List<StreamChain> chains = getChainBuilder().build(elementAtCaret);
     assertEquals(1, chains.size());
 
-    final StreamChain chain = chains.get(0);
+    final StreamChain chain = chains.getFirst();
     assertNotNull(chain);
     assertEquals(returnType, chain.getTerminationCall().getResultType());
   }

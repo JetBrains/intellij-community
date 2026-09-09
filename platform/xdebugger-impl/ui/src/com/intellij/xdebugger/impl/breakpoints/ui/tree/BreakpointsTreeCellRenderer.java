@@ -26,10 +26,10 @@ class BreakpointsTreeCellRenderer  {
       BreakpointItem breakpoint = node.getBreakpointItem();
       breakpoint.setupRenderer(renderer, project, selected);
     }
-    else if (value instanceof BreakpointsGroupNode) {
-      XBreakpointGroup group = ((BreakpointsGroupNode<?>)value).getGroup();
+    else if (value instanceof BreakpointsGroupNode<?> node) {
+      XBreakpointGroup group = node.getGroup();
       renderer.setIcon(group.getIcon(expanded));
-      if (group instanceof XBreakpointCustomGroup && ((XBreakpointCustomGroup)group).isDefault()) {
+      if (group instanceof XBreakpointCustomGroup customGroup && customGroup.isDefault()) {
         renderer.append(group.getName(), SIMPLE_CELL_ATTRIBUTES_BOLD);
       }
       else {

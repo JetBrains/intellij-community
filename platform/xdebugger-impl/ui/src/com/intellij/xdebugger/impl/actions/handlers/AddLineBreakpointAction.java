@@ -75,8 +75,8 @@ class AddLineBreakpointAction extends DumbAwareAction implements SplitDebuggerAc
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project != null && editor != null && file != null) {
       EditorGutter gutter = editor.getGutter();
-      if (gutter instanceof EditorGutterComponentEx) {
-        Object lineNumber = ((EditorGutterComponentEx)gutter).getClientProperty("active.line.number");
+      if (gutter instanceof EditorGutterComponentEx ex) {
+        Object lineNumber = ex.getClientProperty("active.line.number");
         if (!(lineNumber instanceof Integer)) {
           lineNumber = e.getData(DebuggerUIUtil.ACTIVE_LINE_NUMBER);
         }

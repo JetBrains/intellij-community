@@ -49,8 +49,8 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   }
 
   void restore(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo parentInfo) {
-    if (treeNode instanceof RestorableStateNode) {
-      doRestoreNode((RestorableStateNode)treeNode, parentInfo);
+    if (treeNode instanceof RestorableStateNode node) {
+      doRestoreNode(node, parentInfo);
     }
     else {
       restoreChildren(treeNode, parentInfo);
@@ -108,8 +108,8 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     do {
       Object component1 = path1.getLastPathComponent();
       Object component2 = path2.getLastPathComponent();
-      if (component1 instanceof XNamedTreeNode && component2 instanceof XNamedTreeNode) {
-        if (!Objects.equals(((XNamedTreeNode)component1).getName(), ((XNamedTreeNode)component2).getName())) {
+      if (component1 instanceof XNamedTreeNode treeNode && component2 instanceof XNamedTreeNode node) {
+        if (!Objects.equals(treeNode.getName(), node.getName())) {
           return false;
         }
       }

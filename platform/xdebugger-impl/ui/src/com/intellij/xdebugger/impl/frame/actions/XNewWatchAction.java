@@ -20,8 +20,8 @@ public class XNewWatchAction extends DumbAwareAction implements SplitDebuggerAct
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     XWatchesView view = DebuggerUIUtil.getWatchesView(e);
-    if (view instanceof XVariablesViewBase) {
-      XDebuggerTreeNode root = ((XVariablesViewBase)view).getTree().getRoot();
+    if (view instanceof XVariablesViewBase base) {
+      XDebuggerTreeNode root = base.getTree().getRoot();
       if (root instanceof WatchesRootNode watchesRootNode) {
         XDebugSessionProxy proxy = DebuggerUIUtil.getSessionProxy(e);
         if (proxy != null) {

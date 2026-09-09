@@ -33,7 +33,7 @@ public abstract class ArrayFilterAction extends AnAction {
   }
 
   public static boolean isArrayFilter(TreeNode node) {
-    return node instanceof MessageTreeNode && ((MessageTreeNode)node).getLink() == ArrayRenderer.Filtered.FILTER_HYPERLINK;
+    return node instanceof MessageTreeNode treeNode && treeNode.getLink() == ArrayRenderer.Filtered.FILTER_HYPERLINK;
   }
 
   private static @Nullable MessageTreeNode getFilterNode(AnActionEvent e) {

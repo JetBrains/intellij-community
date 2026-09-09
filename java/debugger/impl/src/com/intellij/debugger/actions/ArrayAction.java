@@ -81,7 +81,7 @@ public abstract class ArrayAction extends DebuggerAction {
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     XDebugSessionProxy sessionProxy = DebuggerUIUtil.getSessionProxy(e);
     if (values.size() == 1 && sessionProxy != null) {
-      enable = getArrayRenderer(values.get(0), sessionProxy) != null;
+      enable = getArrayRenderer(values.getFirst(), sessionProxy) != null;
     }
     e.getPresentation().setEnabledAndVisible(enable);
   }
@@ -153,7 +153,7 @@ public abstract class ArrayAction extends DebuggerAction {
     if (node != null) {
       DebuggerTreeNodeImpl parent = node.getParent();
       NodeDescriptorImpl descriptor = parent.getDescriptor();
-      if (descriptor instanceof ValueDescriptorImpl && ((ValueDescriptorImpl)descriptor).isArray()) {
+      if (descriptor instanceof ValueDescriptorImpl valueDescriptor && valueDescriptor.isArray()) {
         int index = parent.getIndex(node);
         return createNodeTitle(prefix, parent) + "[" + index + "]";
       }

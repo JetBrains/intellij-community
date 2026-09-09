@@ -30,7 +30,7 @@ final class ByteArrayAsStringRenderer extends CompoundRendererProvider {
       @Override
       public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
         throws EvaluateException {
-        if (evaluationContext instanceof EvaluationContextImpl && !((EvaluationContextImpl)evaluationContext).isEvaluationPossible()) {
+        if (evaluationContext instanceof EvaluationContextImpl context && !context.isEvaluationPossible()) {
           Value value = descriptor.getValue();
           if (value instanceof ArrayReference) {
             // TODO: read charset from the target vm

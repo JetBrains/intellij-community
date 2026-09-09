@@ -75,7 +75,7 @@ import java.util.List;
 class CompoundRendererConfigurable extends JPanel {
   private CompoundReferenceRenderer myRenderer;
   private CompoundReferenceRenderer myOriginalRenderer;
-  private Project myProject;
+  private final Project myProject;
   private final ClassNameEditorWithBrowseButton myClassNameField;
   private final JRadioButton myRbDefaultLabel;
   private final JRadioButton myRbExpressionLabel;
@@ -225,8 +225,8 @@ class CompoundRendererConfigurable extends JPanel {
   }
 
   public void setRenderer(NodeRenderer renderer) {
-    if (renderer instanceof CompoundReferenceRenderer) {
-      myRenderer = (CompoundReferenceRenderer)renderer;
+    if (renderer instanceof CompoundReferenceRenderer referenceRenderer) {
+      myRenderer = referenceRenderer;
       myOriginalRenderer = (CompoundReferenceRenderer)renderer.clone();
     }
     else {

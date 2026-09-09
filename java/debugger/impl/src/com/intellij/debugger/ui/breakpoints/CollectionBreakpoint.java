@@ -508,15 +508,10 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
   }
 
   private void emulateFieldWatchpoint(DebugProcessImpl debugProcess, SuspendContextImpl context) {
-    try {
-      putFieldToCapture(debugProcess, context);
-      transformClassesToEmulateFieldWatchpoint(debugProcess, context);
-      if (suspendOnBreakpointHit()) {
-        setLineBreakpoints(context);
-      }
-    }
-    catch (EvaluateException e) {
-      DebuggerUtilsImpl.logError(e);
+    putFieldToCapture(debugProcess, context);
+    transformClassesToEmulateFieldWatchpoint(debugProcess, context);
+    if (suspendOnBreakpointHit()) {
+      setLineBreakpoints(context);
     }
   }
 
@@ -539,7 +534,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
   }
 
   private void transformClassesToEmulateFieldWatchpoint(DebugProcessImpl debugProcess,
-                                                        SuspendContextImpl context) throws EvaluateException {
+                                                        SuspendContextImpl context) {
     StackFrameProxyImpl frameProxy = context.getFrameProxy();
     if (frameProxy == null) {
       return;
@@ -759,7 +754,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
     }
 
     @Override
-    public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
+    public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) {
       SuspendContextImpl context = action.getSuspendContext();
       if (context == null) {
         return false;
@@ -768,8 +763,8 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       DebugProcessImpl debugProcess = context.getDebugProcess();
       ObjectReference thisObj = getThisObject(context, event);
 
-      if (event instanceof ModificationWatchpointEvent) {
-        Value valueToBe = ((ModificationWatchpointEvent)event).valueToBe();
+      if (event instanceof ModificationWatchpointEvent watchpointEvent) {
+        Value valueToBe = watchpointEvent.valueToBe();
         captureFieldModification(valueToBe, thisObj, true, debugProcess, context);
       }
       else {
@@ -800,7 +795,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
     }
 
     @Override
-    public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
+    public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) {
       return processBreakpointHit(action);
     }
 

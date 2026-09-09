@@ -36,8 +36,8 @@ public class TraceControllerImpl implements TraceController, Disposable {
 
   TraceControllerImpl(@NotNull IntermediateState state) {
     myState = state;
-    myToPrev = state instanceof PrevAwareState ? (PrevAwareState)state : null;
-    myToNext = state instanceof NextAwareState ? (NextAwareState)state : null;
+    myToPrev = state instanceof PrevAwareState prevAwareState ? prevAwareState : null;
+    myToNext = state instanceof NextAwareState awareState ? awareState : null;
 
     mySelectionListener = elements -> {
       selectAll(elements);

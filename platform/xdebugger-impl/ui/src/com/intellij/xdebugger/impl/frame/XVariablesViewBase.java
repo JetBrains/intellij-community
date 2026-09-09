@@ -153,8 +153,8 @@ public abstract class XVariablesViewBase extends XDebugView {
                                        final Project project) {
     final VirtualFile file = position.getFile();
     final FileEditor fileEditor = FileEditorManagerEx.getInstanceEx(project).getSelectedEditor(file);
-    if (fileEditor instanceof PsiAwareTextEditorImpl) {
-      final Editor editor = ((PsiAwareTextEditorImpl)fileEditor).getEditor();
+    if (fileEditor instanceof PsiAwareTextEditorImpl textEditor) {
+      final Editor editor = textEditor.getEditor();
       removeSelectionListener();
       mySelectionListener = new MySelectionListener(editor, stackFrame, project, myTreePanel);
       editor.getSelectionModel().addSelectionListener(mySelectionListener);

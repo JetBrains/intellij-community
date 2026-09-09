@@ -352,8 +352,8 @@ public abstract class XDebuggerEditorBase implements Expandable {
       return new DocumentImpl(text.getExpression());
     }
     XDebuggerEditorsProvider provider = getEditorsProvider();
-    if (myContext != null && provider instanceof XDebuggerEditorsProviderBase) {
-      return ((XDebuggerEditorsProviderBase)provider).createDocument(myProject, text, myContext, myMode);
+    if (myContext != null && provider instanceof XDebuggerEditorsProviderBase base) {
+      return base.createDocument(myProject, text, myContext, myMode);
     }
     else if (myPurpose == null) {
       return provider.createDocument(myProject, text, mySourcePosition, myMode);
@@ -506,8 +506,8 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   public void addCollapseButton(Runnable handler) {
     JComponent component = getEditorComponent();
-    if (component instanceof EditorTextField) {
-      ((EditorTextField)component).addSettingsProvider(editor -> {
+    if (component instanceof EditorTextField field) {
+      field.addSettingsProvider(editor -> {
         editor.getContentComponent().putClientProperty(Expandable.class, new Expandable() {
           @Override
           public void expand() {

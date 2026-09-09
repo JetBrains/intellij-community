@@ -84,10 +84,10 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
         enumerationChildrenRenderer.setAppendDefaultChildren(true);
 
         Renderer lastRenderer = descriptor.getLastRenderer();
-        if (lastRenderer instanceof CompoundReferenceRenderer &&
+        if (lastRenderer instanceof CompoundReferenceRenderer referenceRenderer &&
             NodeRendererSettings.getInstance().getCustomRenderers().contains((NodeRenderer)lastRenderer) &&
-            !(((CompoundReferenceRenderer)lastRenderer).getChildrenRenderer() instanceof ExpressionChildrenRenderer)) {
-          ((CompoundReferenceRenderer)lastRenderer).setChildrenRenderer(enumerationChildrenRenderer);
+            !(referenceRenderer.getChildrenRenderer() instanceof ExpressionChildrenRenderer)) {
+          referenceRenderer.setChildrenRenderer(enumerationChildrenRenderer);
         }
         else {
           NodeRenderer renderer =
@@ -115,7 +115,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
     List<EnumerationChildrenRenderer.ChildInfo> children = getRendererChildren();
     TextWithImports newText = TextWithImportsImpl.fromXExpression(myExpressionEditor.getExpression());
     if (myDescriptor == null) {
-      children.add(0, new EnumerationChildrenRenderer.ChildInfo("", newText, false));
+      children.addFirst(new EnumerationChildrenRenderer.ChildInfo("", newText, false));
     }
     else {
       int index = myDescriptor.getEnumerationIndex();

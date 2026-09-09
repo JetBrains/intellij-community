@@ -49,7 +49,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
     Object[] initialValues = null;
     if (myDimensionEvaluator != null) {
       Object o = myDimensionEvaluator.evaluate(context);
-      if (!(o instanceof Value && DebuggerUtils.isNumeric((Value)o))) {
+      if (!(o instanceof Value value1 && DebuggerUtils.isNumeric(value1))) {
         throw EvaluateExceptionUtil.createEvaluateException(
           JavaDebuggerBundle.message("evaluation.error.array.dimention.numeric.value.expected")
         );
@@ -59,10 +59,10 @@ class NewArrayInstanceEvaluator implements Evaluator {
     }
     else { // myInitializerEvaluator must not be null
       Object o = myInitializerEvaluator.evaluate(context);
-      if (!(o instanceof Object[])) {
+      if (!(o instanceof Object[] objects)) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.array.initializer"));
       }
-      initialValues = (Object[])o;
+      initialValues = objects;
       dimension = initialValues.length;
     }
     ArrayReference arrayReference = DebuggerUtilsEx.mirrorOfArray(arrayType, dimension, context);
@@ -83,8 +83,8 @@ class NewArrayInstanceEvaluator implements Evaluator {
         int length = arrayReference.length();
         for (int idx = 0; idx < length; idx++) {
           Object value = values[idx];
-          if (value instanceof Value) {
-            arrayReference.setValue(idx, (Value)value);
+          if (value instanceof Value value1) {
+            arrayReference.setValue(idx, value1);
           }
           else {
             ArrayReference componentArray = (ArrayReference)arrayReference.getValue(idx);

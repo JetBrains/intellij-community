@@ -21,12 +21,12 @@ public abstract class DebuggerTreeAction extends XDebuggerTreeActionBase {
 
   @ApiStatus.Internal
   public static @Nullable ObjectReference getObjectReference(@NotNull XValue valueContainer) {
-    if (valueContainer instanceof NodeDescriptorProvider) {
-      NodeDescriptor descriptor = ((NodeDescriptorProvider)valueContainer).getDescriptor();
-      if (descriptor instanceof ValueDescriptorImpl) {
-        if (((ValueDescriptorImpl)descriptor).isValueReady()) {
-          Value value = ((ValueDescriptorImpl)descriptor).getValue();
-          return value instanceof ObjectReference ? (ObjectReference)value : null;
+    if (valueContainer instanceof NodeDescriptorProvider provider) {
+      NodeDescriptor descriptor = provider.getDescriptor();
+      if (descriptor instanceof ValueDescriptorImpl valueDescriptor) {
+        if (valueDescriptor.isValueReady()) {
+          Value value = valueDescriptor.getValue();
+          return value instanceof ObjectReference reference ? reference : null;
         }
       }
     }

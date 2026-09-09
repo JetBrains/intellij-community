@@ -62,7 +62,7 @@ public abstract class CachedEvaluator {
       CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(myReferenceExpression, context);
       PsiCodeFragment codeFragment = factory.createPsiCodeFragment(myReferenceExpression, overrideContext(context), project);
       DebuggerUtils.checkSyntax(codeFragment);
-      cache.myPsiChildrenExpression = codeFragment instanceof PsiExpressionCodeFragment ? ((PsiExpressionCodeFragment)codeFragment).getExpression() : null;
+      cache.myPsiChildrenExpression = codeFragment instanceof PsiExpressionCodeFragment fragment ? fragment.getExpression() : null;
 
       try {
         if (Registry.is("debugger.compiling.evaluator.force")) throw new UnsupportedExpressionException("force compilation");

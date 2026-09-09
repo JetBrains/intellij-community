@@ -36,14 +36,14 @@ public final class TraceUtil {
   public static @Nullable Object extractKey(@NotNull TraceElement element) {
     final Value value = element.getValue();
     if (!(value instanceof PrimitiveValue)) return value;
-    if (value instanceof IntegerValue) return ((IntegerValue)value).value();
-    if (value instanceof DoubleValue) return ((DoubleValue)value).value();
-    if (value instanceof LongValue) return ((LongValue)value).value();
-    if (value instanceof BooleanValue) return ((BooleanValue)value).value();
-    if (value instanceof ByteValue) return ((ByteValue)value).value();
-    if (value instanceof CharValue) return ((CharValue)value).value();
-    if (value instanceof FloatValue) return ((FloatValue)value).value();
-    if (value instanceof ShortValue) return ((ShortValue)value).value();
+    if (value instanceof IntegerValue integerValue) return integerValue.value();
+    if (value instanceof DoubleValue doubleValue) return doubleValue.value();
+    if (value instanceof LongValue longValue) return longValue.value();
+    if (value instanceof BooleanValue booleanValue) return booleanValue.value();
+    if (value instanceof ByteValue byteValue) return byteValue.value();
+    if (value instanceof CharValue charValue) return charValue.value();
+    if (value instanceof FloatValue floatValue) return floatValue.value();
+    if (value instanceof ShortValue shortValue) return shortValue.value();
 
     throw new RuntimeException("unknown primitive value: " + value.typeName());
   }

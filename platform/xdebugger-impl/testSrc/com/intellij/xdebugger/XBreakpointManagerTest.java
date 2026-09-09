@@ -91,7 +91,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     List<XBreakpoint<?>> breakpoints = getAllBreakpoints();
     assertEquals("Expected 3 breakpoints, actual: " + breakpoints, 3, breakpoints.size());
 
-    assertTrue(myBreakpointManager.isDefaultBreakpoint(breakpoints.get(0)));
+    assertTrue(myBreakpointManager.isDefaultBreakpoint(breakpoints.getFirst()));
     assertEquals("default", assertInstanceOf(breakpoints.get(0).getProperties(), MyBreakpointProperties.class).myOption);
     assertTrue(breakpoints.get(0).isEnabled());
 

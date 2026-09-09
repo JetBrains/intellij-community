@@ -28,11 +28,11 @@ class LiteralEvaluator implements Evaluator {
       return null;
     }
     VirtualMachineProxyImpl vm = context.getVirtualMachineProxy();
-    if (myValue instanceof Boolean) {
-      return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Boolean)myValue).booleanValue());
+    if (myValue instanceof Boolean b) {
+      return DebuggerUtilsEx.createValue(vm, myExpectedType, b.booleanValue());
     }
-    if (myValue instanceof Character) {
-      return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Character)myValue).charValue());
+    if (myValue instanceof Character c) {
+      return DebuggerUtilsEx.createValue(vm, myExpectedType, c.charValue());
     }
     if (myValue instanceof Double) {
       return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Number)myValue).doubleValue());
@@ -40,8 +40,8 @@ class LiteralEvaluator implements Evaluator {
     if (myValue instanceof Float) {
       return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Number)myValue).floatValue());
     }
-    if (myValue instanceof Number) {
-      return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Number)myValue).longValue());
+    if (myValue instanceof Number number) {
+      return DebuggerUtilsEx.createValue(vm, myExpectedType, number.longValue());
     }
     if (myValue instanceof String stringValue) {
       return vm.mirrorOfStringLiteral(stringValue, context);

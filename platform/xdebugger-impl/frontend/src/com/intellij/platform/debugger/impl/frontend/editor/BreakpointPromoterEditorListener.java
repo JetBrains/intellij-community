@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend.editor;
 
-import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;

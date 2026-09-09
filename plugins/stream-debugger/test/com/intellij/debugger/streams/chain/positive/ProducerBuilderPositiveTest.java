@@ -37,7 +37,7 @@ public class ProducerBuilderPositiveTest extends StreamChainBuilderPositiveTestB
   @Override
   protected void checkResultChains(@NotNull List<StreamChain> chains) {
     assertFalse(chains.isEmpty());
-    assertNotNull(chains.get(0).getQualifierExpression());
+    assertNotNull(chains.getFirst().getQualifierExpression());
   }
 
   @NotNull

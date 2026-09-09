@@ -31,9 +31,9 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
 
   @Override
   public @NotNull TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
-    if (value instanceof ArrayReference) {
-      final Value peekTrace = ((ArrayReference)value).getValue(0);
-      final Value trace = ((ArrayReference)value).getValue(1);
+    if (value instanceof ArrayReference reference) {
+      final Value peekTrace = reference.getValue(0);
+      final Value trace = reference.getValue(1);
 
       final TraceInfo order = myPeekResolver.resolve(call, peekTrace);
 
@@ -115,8 +115,8 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
   }
 
   private static int extractIntValue(@NotNull Value value) {
-    if (value instanceof IntegerValue) {
-      return ((IntegerValue)value).value();
+    if (value instanceof IntegerValue integerValue) {
+      return integerValue.value();
     }
 
     throw new UnexpectedValueTypeException("value should be IntegerValue, but actual is " + value.typeName());

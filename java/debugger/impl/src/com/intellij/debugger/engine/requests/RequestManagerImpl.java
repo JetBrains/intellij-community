@@ -130,32 +130,32 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   private static void addClassFilter(EventRequest request, String pattern) {
-    if (request instanceof ExceptionRequest) {
-      ((ExceptionRequest)request).addClassFilter(pattern);
+    if (request instanceof ExceptionRequest exceptionRequest) {
+      exceptionRequest.addClassFilter(pattern);
     }
-    else if (request instanceof MethodEntryRequest) {
-      ((MethodEntryRequest)request).addClassFilter(pattern);
+    else if (request instanceof MethodEntryRequest entryRequest) {
+      entryRequest.addClassFilter(pattern);
     }
-    else if (request instanceof MethodExitRequest) {
-      ((MethodExitRequest)request).addClassFilter(pattern);
+    else if (request instanceof MethodExitRequest exitRequest) {
+      exitRequest.addClassFilter(pattern);
     }
-    else if (request instanceof WatchpointRequest) {
-      ((WatchpointRequest)request).addClassFilter(pattern);
+    else if (request instanceof WatchpointRequest watchpointRequest) {
+      watchpointRequest.addClassFilter(pattern);
     }
   }
 
   private static void addClassExclusionFilter(EventRequest request, String pattern) {
-    if (request instanceof ExceptionRequest) {
-      ((ExceptionRequest)request).addClassExclusionFilter(pattern);
+    if (request instanceof ExceptionRequest exceptionRequest) {
+      exceptionRequest.addClassExclusionFilter(pattern);
     }
-    else if (request instanceof MethodEntryRequest) {
-      ((MethodEntryRequest)request).addClassExclusionFilter(pattern);
+    else if (request instanceof MethodEntryRequest entryRequest) {
+      entryRequest.addClassExclusionFilter(pattern);
     }
-    else if (request instanceof MethodExitRequest) {
-      ((MethodExitRequest)request).addClassExclusionFilter(pattern);
+    else if (request instanceof MethodExitRequest exitRequest) {
+      exitRequest.addClassExclusionFilter(pattern);
     }
-    else if (request instanceof WatchpointRequest) {
-      ((WatchpointRequest)request).addClassExclusionFilter(pattern);
+    else if (request instanceof WatchpointRequest watchpointRequest) {
+      watchpointRequest.addClassExclusionFilter(pattern);
     }
   }
 
@@ -438,14 +438,14 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     try {
       final ThreadReference filterThread = myFilterThread == null ? null : myFilterThread.getRealThread();
       if (filterThread != null && DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
-        if (request instanceof BreakpointRequest) {
-          ((BreakpointRequest)request).addThreadFilter(filterThread);
+        if (request instanceof BreakpointRequest breakpointRequest) {
+          breakpointRequest.addThreadFilter(filterThread);
         }
-        else if (request instanceof MethodEntryRequest) {
-          ((MethodEntryRequest)request).addThreadFilter(filterThread);
+        else if (request instanceof MethodEntryRequest entryRequest) {
+          entryRequest.addThreadFilter(filterThread);
         }
-        else if (request instanceof MethodExitRequest) {
-          ((MethodExitRequest)request).addThreadFilter(filterThread);
+        else if (request instanceof MethodExitRequest exitRequest) {
+          exitRequest.addThreadFilter(filterThread);
         }
       }
       return enabler.apply(request);

@@ -194,7 +194,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
           chooser.show();
           var selectedElements = chooser.getSelectedElements();
           if (selectedElements != null && selectedElements.size() == 1) {
-            var field = (KtProperty)selectedElements.get(0).getElement();
+            var field = (KtProperty)selectedElements.getFirst().getElement();
             myFieldChooser.setText(field.getName());
           }
         }
@@ -214,8 +214,8 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
         }
       }
     }
-    else if (container instanceof KtLightClass) {
-      KtClassOrObject kotlinOrigin = ((KtLightClass)container).getKotlinOrigin();
+    else if (container instanceof KtLightClass aClass) {
+      KtClassOrObject kotlinOrigin = aClass.getKotlinOrigin();
       if (kotlinOrigin != null) {
         for (KtDeclaration declaration : kotlinOrigin.getDeclarations()) {
           ProgressManager.checkCanceled();

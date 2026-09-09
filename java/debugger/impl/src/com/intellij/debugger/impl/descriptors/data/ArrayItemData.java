@@ -34,7 +34,7 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
 
   @Override
   public boolean equals(Object object) {
-    return object instanceof ArrayItemData && myArray.equals(((ArrayItemData)object).myArray) && ((ArrayItemData)object).myIndex == myIndex;
+    return object instanceof ArrayItemData data && myArray.equals(data.myArray) && data.myIndex == myIndex;
   }
 
   @Override
@@ -51,7 +51,7 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
 
     @Override
     public boolean equals(Object o) {
-      return o instanceof ArrayItemDisplayKeyImpl && ((ArrayItemDisplayKeyImpl)o).myIndex == myIndex;
+      return o instanceof ArrayItemDisplayKeyImpl key && key.myIndex == myIndex;
     }
 
     @Override

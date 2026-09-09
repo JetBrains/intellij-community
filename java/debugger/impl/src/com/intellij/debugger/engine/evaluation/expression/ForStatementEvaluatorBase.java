@@ -19,11 +19,11 @@ public abstract class ForStatementEvaluatorBase extends LoopEvaluator {
     while (true) {
       // condition
       Object codition = evaluateCondition(context);
-      if (codition instanceof Boolean) {
-        if (!(Boolean)codition) break;
+      if (codition instanceof Boolean b) {
+        if (!b) break;
       }
-      else if (codition instanceof BooleanValue) {
-        if (!((BooleanValue)codition).booleanValue()) break;
+      else if (codition instanceof BooleanValue booleanValue) {
+        if (!booleanValue.booleanValue()) break;
       }
       else {
         throw EvaluateExceptionUtil.BOOLEAN_EXPECTED;

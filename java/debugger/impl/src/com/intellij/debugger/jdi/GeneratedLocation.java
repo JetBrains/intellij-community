@@ -112,6 +112,6 @@ public class GeneratedLocation implements Location {
 
   private static String firstOrThrow(@NotNull List<String> list) throws AbsentInformationException {
     if (list.isEmpty()) throw new AbsentInformationException();
-    return list.get(0);
+    return list.getFirst();
   }
 }

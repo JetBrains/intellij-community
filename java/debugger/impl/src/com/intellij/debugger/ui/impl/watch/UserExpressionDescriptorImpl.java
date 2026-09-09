@@ -61,8 +61,8 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.type.name", myTypeName));
     }
     PsiCodeFragment fragment = createCodeFragment(psiClassAndType.first);
-    if (fragment instanceof JavaCodeFragment) {
-      ((JavaCodeFragment)fragment).setThisType(psiClassAndType.second);
+    if (fragment instanceof JavaCodeFragment codeFragment) {
+      codeFragment.setThisType(psiClassAndType.second);
     }
     return fragment;
   }

@@ -61,8 +61,8 @@ class UnaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.integer.expected"));
     }
     else if (myOperationType == JavaTokenType.EXCL) {
-      if (operand instanceof BooleanValue) {
-        boolean v = ((BooleanValue)operand).booleanValue();
+      if (operand instanceof BooleanValue value) {
+        boolean v = value.booleanValue();
         return DebuggerUtilsEx.createValue(vm, myExpectedType, !v);
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.boolean.expected"));

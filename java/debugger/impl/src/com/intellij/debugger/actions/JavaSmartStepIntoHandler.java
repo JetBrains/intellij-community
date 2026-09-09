@@ -211,12 +211,12 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
         if (!matchLine(expression)) return;
-        targets.add(0, new LambdaSmartStepTarget(expression,
-                                                 getCurrentParamName(),
-                                                 expression.getBody(),
-                                                 myNextLambdaExpressionOrdinal++,
-                                                 null,
-                                                 !isInsideLambda(expression)));
+        targets.addFirst(new LambdaSmartStepTarget(expression,
+                                                   getCurrentParamName(),
+                                                   expression.getBody(),
+                                                   myNextLambdaExpressionOrdinal++,
+                                                   null,
+                                                   !isInsideLambda(expression)));
       }
 
       @Override

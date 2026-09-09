@@ -62,13 +62,13 @@ public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositi
     assertNotNull(elementAtCaret);
     final List<StreamChain> chains = getChainBuilder().build(elementAtCaret);
     assertFalse(chains.isEmpty());
-    final StreamChain chain = chains.get(0);
+    final StreamChain chain = chains.getFirst();
     final List<IntermediateStreamCall> intermediateCalls = chain.getIntermediateCalls();
     assertEquals(intermediateAfterTypes.length, intermediateCalls.size());
     assertEquals(producerAfterType, chain.getQualifierExpression().getTypeAfter());
 
     if (intermediateAfterTypes.length > 0) {
-      assertEquals(producerAfterType, intermediateCalls.get(0).getTypeBefore());
+      assertEquals(producerAfterType, intermediateCalls.getFirst().getTypeBefore());
       for (int i = 0; i < intermediateAfterTypes.length - 1; i++) {
         assertEquals(intermediateAfterTypes[i], intermediateCalls.get(i).getTypeAfter());
         assertEquals(intermediateAfterTypes[i], intermediateCalls.get(i + 1).getTypeBefore());
@@ -76,7 +76,7 @@ public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositi
 
       final GenericType lastAfterType = intermediateAfterTypes[intermediateAfterTypes.length - 1];
       assertEquals(lastAfterType, chain.getTerminationCall().getTypeBefore());
-      final IntermediateStreamCall lastCall = intermediateCalls.get(intermediateCalls.size() - 1);
+      final IntermediateStreamCall lastCall = intermediateCalls.getLast();
       assertEquals(lastAfterType, lastCall.getTypeAfter());
     }
     else {

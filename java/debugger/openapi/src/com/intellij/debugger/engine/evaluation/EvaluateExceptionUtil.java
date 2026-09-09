@@ -67,8 +67,8 @@ public final class EvaluateExceptionUtil {
     else if (th instanceof AbsentInformationException) {
       return JavaDebuggerBundle.message("evaluation.error.debug.info.unavailable");
     }
-    else if (th instanceof ClassNotLoadedException) {
-      return JavaDebuggerBundle.message("evaluation.error.class.not.loaded", ((ClassNotLoadedException)th).className());
+    else if (th instanceof ClassNotLoadedException exception) {
+      return JavaDebuggerBundle.message("evaluation.error.class.not.loaded", exception.className());
     }
     else if (th instanceof ClassNotPreparedException) {
       return th.getMessage();

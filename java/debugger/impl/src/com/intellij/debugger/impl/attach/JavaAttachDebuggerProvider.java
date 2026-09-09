@@ -511,7 +511,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     }
 
     @Override
-    public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
       return new RemoteStateState(getProject(), myAttachInfo.createConnection(), this);
     }
   }

@@ -33,7 +33,7 @@ public class XMoveWatchDown extends XWatchesTreeActionBase implements SplitDebug
       XDebuggerTreeNode root = tree.getRoot();
       if (root instanceof WatchesRootNode rootNode) {
         int size = rootNode.getWatchChildren().size() - 1 + rootNode.headerNodesCount();
-        return root.getIndex(nodes.get(0)) < size;
+        return root.getIndex(nodes.getFirst()) < size;
       }
     }
     return false;
@@ -41,8 +41,8 @@ public class XMoveWatchDown extends XWatchesTreeActionBase implements SplitDebug
 
   @Override
   protected void perform(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree, @NotNull XWatchesView watchesView) {
-    if (watchesView instanceof XWatchesViewImpl) {
-      ((XWatchesViewImpl)watchesView).moveWatchDown(ContainerUtil.getFirstItem(getSelectedNodes(tree, WatchNodeImpl.class)));
+    if (watchesView instanceof XWatchesViewImpl view) {
+      view.moveWatchDown(ContainerUtil.getFirstItem(getSelectedNodes(tree, WatchNodeImpl.class)));
     }
   }
 }

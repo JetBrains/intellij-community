@@ -92,7 +92,7 @@ public class TerminationBuilderPositiveTest extends StreamChainBuilderPositiveTe
   @Override
   protected void checkResultChains(@NotNull List<StreamChain> chains) {
     assertFalse(chains.isEmpty());
-    final StreamChain chain = chains.get(0);
+    final StreamChain chain = chains.getFirst();
     final StreamCall terminationCall = chain.getTerminationCall();
     assertNotNull(terminationCall);
 

@@ -140,11 +140,11 @@ public class ArrayRenderer extends NodeRendererImpl {
                 });
                 return CompletableFuture.allOf(futures).thenApply(_ -> {
                   List<String> elements = ContainerUtil.map(futures, CompletableFuture::join);
-                  if (descriptor instanceof ValueDescriptorImpl) {
+                  if (descriptor instanceof ValueDescriptorImpl valueDescriptor) {
                     int compactLength = Math.min(shownLength, isString ? 5 : 10);
                     String compact =
                       createLabel(elements.subList(0, compactLength), length - values.size() + (shownLength - compactLength));
-                    ((ValueDescriptorImpl)descriptor).setCompactValueLabel(compact);
+                    valueDescriptor.setCompactValueLabel(compact);
                   }
                   return createLabel(elements, length - values.size());
                 });
@@ -180,8 +180,8 @@ public class ArrayRenderer extends NodeRendererImpl {
   }
 
   private static CompletableFuture<String> getElementAsString(Value value) {
-    if (value instanceof StringReference) {
-      return DebuggerUtilsAsync.getStringValue((StringReference)value).thenApply(e -> "\"" + StringUtil.first(e, 15, true) + "\"");
+    if (value instanceof StringReference reference) {
+      return DebuggerUtilsAsync.getStringValue(reference).thenApply(e -> "\"" + StringUtil.first(e, 15, true) + "\"");
     }
     return CompletableFuture.completedFuture(value != null ? value.toString() : "null");
   }
@@ -326,10 +326,10 @@ public class ArrayRenderer extends NodeRendererImpl {
 
   @Override
   public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    if (!(value instanceof ArrayReference)) {
+    if (!(value instanceof ArrayReference reference)) {
       return CompletableFuture.completedFuture(false);
     }
-    return DebuggerUtilsAsync.length(((ArrayReference)value)).thenApply(l -> l > 0);
+    return DebuggerUtilsAsync.length(reference).thenApply(l -> l > 0);
   }
 
   @Override

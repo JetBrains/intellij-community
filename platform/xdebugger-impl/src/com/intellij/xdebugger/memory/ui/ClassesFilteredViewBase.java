@@ -232,7 +232,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
   @Contract("null -> false")
   private boolean shouldBeUpdated(@Nullable XDebugSession session) {
-    if (session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isReadOnly()) {
+    if (session instanceof XDebugSessionImpl debugSession && debugSession.isReadOnly()) {
       // update memory view only once (initially) if session is in read-only mode
       return myLastUpdatingTime.get() == INITIAL_TIME;
     }

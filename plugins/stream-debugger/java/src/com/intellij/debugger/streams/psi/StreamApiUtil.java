@@ -46,9 +46,9 @@ public final class StreamApiUtil {
     final PsiMethod method = expression.resolveMethod();
     if (method != null && mustResultBeStream == isStreamType(expression.getType())) {
       final PsiElement methodClass = method.getParent();
-      if (methodClass instanceof PsiClass) {
+      if (methodClass instanceof PsiClass aClass) {
         if (mustReceiverBeStream && method.hasModifier(JvmModifier.STATIC)) return false;
-        return mustReceiverBeStream == isStreamType((PsiClass)methodClass);
+        return mustReceiverBeStream == isStreamType(aClass);
       }
     }
 

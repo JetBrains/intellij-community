@@ -50,6 +50,6 @@ public final class DisableGC implements ModifiableEvaluator {
   }
 
   public static Evaluator unwrap(Evaluator evaluator) {
-    return evaluator instanceof DisableGC ? ((DisableGC)evaluator).myDelegate : evaluator;
+    return evaluator instanceof DisableGC gc ? gc.myDelegate : evaluator;
   }
 }

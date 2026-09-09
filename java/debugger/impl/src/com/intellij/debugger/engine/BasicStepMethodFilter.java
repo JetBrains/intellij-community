@@ -133,8 +133,8 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
       SourcePosition position = process.getPositionManager().getSourcePosition(location);
       return ReadAction.compute(() -> {
         PsiElement psiMethod = DebuggerUtilsEx.getContainingMethod(position);
-        if (psiMethod instanceof PsiLambdaExpression) {
-          PsiType type = ((PsiLambdaExpression)psiMethod).getFunctionalInterfaceType();
+        if (psiMethod instanceof PsiLambdaExpression expression) {
+          PsiType type = expression.getFunctionalInterfaceType();
           PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
           if (type != null && interfaceMethod != null && myTargetMethodName.equals(interfaceMethod.getName())) {
             try {
@@ -181,8 +181,8 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
         // standard
         if ("invoke".equals(methodName)) {
           ReferenceType type = method.declaringType();
-          if ((type instanceof ClassType) &&
-              ((ClassType)type).interfaces().stream().map(InterfaceType::name).anyMatch("java.lang.reflect.InvocationHandler"::equals)) {
+          if ((type instanceof ClassType classType) &&
+              classType.interfaces().stream().map(InterfaceType::name).anyMatch("java.lang.reflect.InvocationHandler"::equals)) {
             match = true;
           }
         }
@@ -205,11 +205,11 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
               if (proxyType instanceof ReferenceType &&
                   DebuggerUtils.instanceOf(proxyType, myDeclaringClassName.getName(process))) {
                 Value methodValue = argumentValues.get(size - 2);
-                if (methodValue instanceof ObjectReference) {
+                if (methodValue instanceof ObjectReference reference) {
                   // TODO: no signature check for now
-                  ReferenceType methodType = ((ObjectReference)methodValue).referenceType();
+                  ReferenceType methodType = reference.referenceType();
                   return myTargetMethodName.equals(
-                    ((StringReference)((ObjectReference)methodValue).getValue(DebuggerUtils.findField(methodType, "name"))).value());
+                    ((StringReference)reference.getValue(DebuggerUtils.findField(methodType, "name"))).value());
                 }
               }
             }
@@ -223,7 +223,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     return false;
   }
 
-  private static boolean signatureMatches(Method method, final String expectedSignature) throws EvaluateException {
+  private static boolean signatureMatches(Method method, final String expectedSignature) {
     if (expectedSignature.equals(method.signature())) {
       return true;
     }

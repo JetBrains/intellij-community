@@ -243,8 +243,8 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   protected @Nullable JavaLineBreakpointType getXBreakpointType() {
     XBreakpointType<?, P> type = myXBreakpoint.getType();
     // Nashorn breakpoints do not contain JavaLineBreakpointType
-    if (type instanceof JavaLineBreakpointType) {
-      return (JavaLineBreakpointType)type;
+    if (type instanceof JavaLineBreakpointType breakpointType) {
+      return breakpointType;
     }
     return null;
   }
@@ -503,8 +503,8 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         element = element.getParent();
       }
 
-      if (child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
-        PsiCodeBlock body = ((PsiMethod)child).getBody();
+      if (child instanceof PsiMethod method && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
+        PsiCodeBlock body = method.getBody();
         if (body == null) {
           canAdd[0] = false;
         }

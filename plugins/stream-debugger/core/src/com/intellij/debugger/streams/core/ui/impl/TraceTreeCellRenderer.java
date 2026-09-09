@@ -68,9 +68,9 @@ public class TraceTreeCellRenderer extends ColoredTreeCellRenderer {
     else {
       int visibleRectRightX = treeVisibleRect.x + treeVisibleRect.width;
       int notFittingWidth = rowX + super.getPreferredSize().width - visibleRectRightX;
-      if (node instanceof XValueNodeImpl && notFittingWidth > 0) {
+      if (node instanceof XValueNodeImpl valueNode && notFittingWidth > 0) {
         // text does not fit visible area - show link
-        String rawValue = DebuggerUIUtil.getNodeRawValue((XValueNodeImpl)node);
+        String rawValue = DebuggerUIUtil.getNodeRawValue(valueNode);
         if (!StringUtil.isEmpty(rawValue) && tree.isShowing()) {
           Point treeRightSideOnScreen = new Point(visibleRectRightX, 0);
           SwingUtilities.convertPointToScreen(treeRightSideOnScreen, tree);
@@ -96,7 +96,7 @@ public class TraceTreeCellRenderer extends ColoredTreeCellRenderer {
 
   @Override
   public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-    if (tag instanceof XDebuggerTreeNodeHyperlink && ((XDebuggerTreeNodeHyperlink)tag).alwaysOnScreen()) {
+    if (tag instanceof XDebuggerTreeNodeHyperlink hyperlink && hyperlink.alwaysOnScreen()) {
       myHaveLink = true;
       myLink.append(fragment, attributes, tag);
     }

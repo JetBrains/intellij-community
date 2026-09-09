@@ -62,11 +62,11 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
     }
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (!(psiFile instanceof PsiJavaFile)) {
+    if (!(psiFile instanceof PsiJavaFile javaFile)) {
       return null;
     }
 
-    PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
+    PsiClass[] classes = javaFile.getClasses();
     if (classes.length == 0) {
       return null;
     }
@@ -95,8 +95,8 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
 
     String locationDeclName = null;
     XStackFrame frame = session.getCurrentStackFrame();
-    if (frame instanceof JavaStackFrame) {
-      Location location = ((JavaStackFrame)frame).getDescriptor().getLocation();
+    if (frame instanceof JavaStackFrame stackFrame) {
+      Location location = stackFrame.getDescriptor().getLocation();
       if (location != null) {
         locationDeclName = location.declaringType().name();
       }

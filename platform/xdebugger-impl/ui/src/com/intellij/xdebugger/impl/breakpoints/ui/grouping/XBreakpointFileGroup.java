@@ -32,6 +32,6 @@ public class XBreakpointFileGroup extends XBreakpointGroup {
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof XBreakpointFileGroup && myFile.equals(((XBreakpointFileGroup)obj).myFile);
+    return obj instanceof XBreakpointFileGroup group && myFile.equals(group.myFile);
   }
 }

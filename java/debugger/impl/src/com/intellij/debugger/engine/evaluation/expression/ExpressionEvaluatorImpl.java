@@ -84,8 +84,8 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
     }
     catch (Throwable/*IncompatibleThreadStateException*/ e) {
       LOG.debug(e);
-      if (e instanceof EvaluateException) {
-        throw ((EvaluateException)e);
+      if (e instanceof EvaluateException exception) {
+        throw exception;
       }
       else {
         throw EvaluateExceptionUtil.createEvaluateException(e);

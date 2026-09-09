@@ -238,8 +238,8 @@ public class ExecutionPointHighlighter {
 
   private static @NotNull OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
     Navigatable navigatable = position.createNavigatable(project);
-    if (navigatable instanceof OpenFileDescriptor) {
-      return (OpenFileDescriptor)navigatable;
+    if (navigatable instanceof OpenFileDescriptor descriptor) {
+      return descriptor;
     }
     else {
       return XDebuggerUtilImplShared.createOpenFileDescriptor(project, position);

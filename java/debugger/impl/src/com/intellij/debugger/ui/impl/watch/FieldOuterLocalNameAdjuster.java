@@ -28,8 +28,8 @@ public final class FieldOuterLocalNameAdjuster extends NodeDescriptorNameAdjuste
 
   @Override
   public boolean isApplicable(@NotNull NodeDescriptor descriptor) {
-    if (descriptor instanceof FieldDescriptorImpl && NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
-      return ((FieldDescriptorImpl)descriptor).isOuterLocalVariableValue();
+    if (descriptor instanceof FieldDescriptorImpl fieldDescriptor && NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
+      return fieldDescriptor.isOuterLocalVariableValue();
     }
     return false;
   }

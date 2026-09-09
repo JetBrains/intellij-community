@@ -259,8 +259,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           private void initFullValueEvaluator() {
             Renderer lastRenderer = myValueDescriptor.getLastRenderer();
             boolean fullEvaluatorSet = setFullValueEvaluator(lastRenderer);
-            if (!fullEvaluatorSet && lastRenderer instanceof CompoundReferenceRenderer) {
-              fullEvaluatorSet = setFullValueEvaluator(((CompoundReferenceRenderer)lastRenderer).getLabelRenderer());
+            if (!fullEvaluatorSet && lastRenderer instanceof CompoundReferenceRenderer renderer) {
+              fullEvaluatorSet = setFullValueEvaluator(renderer.getLabelRenderer());
             }
             if (!fullEvaluatorSet) {
               String text = myValueDescriptor.getValueText();
@@ -290,8 +290,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           }
 
           private boolean setFullValueEvaluator(Renderer renderer) {
-            if (renderer instanceof FullValueEvaluatorProvider) {
-              XFullValueEvaluator evaluator = ((FullValueEvaluatorProvider)renderer).getFullValueEvaluator(node, myEvaluationContext, myValueDescriptor);
+            if (renderer instanceof FullValueEvaluatorProvider provider) {
+              XFullValueEvaluator evaluator = provider.getFullValueEvaluator(node, myEvaluationContext, myValueDescriptor);
               if (evaluator != null) {
                 node.setFullValueEvaluator(evaluator);
                 return true;
@@ -423,9 +423,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         childrenList = new XValueChildrenList(nodes.size());
         for (DebuggerTreeNode treeNode : nodes) {
           NodeDescriptor descriptor = treeNode.getDescriptor();
-          if (descriptor instanceof ValueDescriptorImpl) {
+          if (descriptor instanceof ValueDescriptorImpl valueDescriptor) {
             // Value is calculated already in NodeManagerImpl
-            childrenList.add(create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager, false));
+            childrenList.add(create(JavaValue.this, valueDescriptor, myEvaluationContext, myNodeManager, false));
           }
           else if (descriptor instanceof MessageDescriptor) {
             childrenList.add(
@@ -704,8 +704,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           @Override
           protected void action() {
             ValueDescriptorImpl inspectDescriptor = myValueDescriptor;
-            if (myValueDescriptor instanceof WatchItemDescriptor) {
-              Modifier modifier = ((WatchItemDescriptor)myValueDescriptor).getModifier();
+            if (myValueDescriptor instanceof WatchItemDescriptor descriptor) {
+              Modifier modifier = descriptor.getModifier();
               if (modifier != null) {
                 NodeDescriptor item = modifier.getInspectItem(getProject());
                 if (item != null) {

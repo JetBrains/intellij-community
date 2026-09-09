@@ -117,7 +117,7 @@ public abstract class AbstractValueHint {
   private TextRange myCurrentRange;
   private Runnable myHideRunnable;
 
-  HintListener hintListener = new HintListener() {
+  final HintListener hintListener = new HintListener() {
     @Override
     public void hintHidden(@NotNull EventObject event) {
       processHintHidden();
@@ -148,7 +148,7 @@ public abstract class AbstractValueHint {
     myCurrentRange = null;
     if (myCursorSet) {
       myCursorSet = false;
-      if (myEditor instanceof EditorEx) ((EditorEx)myEditor).setCustomCursor(AbstractValueHint.class, null);
+      if (myEditor instanceof EditorEx ex) ex.setCustomCursor(AbstractValueHint.class, null);
       if (LOG.isDebugEnabled()) {
         LOG.debug("restore cursor in editor");
       }
@@ -214,7 +214,7 @@ public abstract class AbstractValueHint {
                                                                   HighlighterTargetArea.EXACT_RANGE);
     if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
       myEditor.getContentComponent().addKeyListener(myEditorKeyListener);
-      if (myEditor instanceof EditorEx) ((EditorEx)myEditor).setCustomCursor(AbstractValueHint.class, hintCursor());
+      if (myEditor instanceof EditorEx ex) ex.setCustomCursor(AbstractValueHint.class, hintCursor());
       if (LOG.isDebugEnabled()) {
         LOG.debug("set hint cursor to editor");
       }
@@ -303,11 +303,11 @@ public abstract class AbstractValueHint {
         @Override
         protected boolean canAutoHideOn(TooltipEvent event) {
           InputEvent inputEvent = event.getInputEvent();
-          if (inputEvent instanceof MouseEvent) {
+          if (inputEvent instanceof MouseEvent mouseEvent) {
             Component comp = inputEvent.getComponent();
-            if (comp instanceof EditorComponentImpl) {
-              EditorImpl editor = ((EditorComponentImpl)comp).getEditor();
-              return !isInsideCurrentRange(editor, ((MouseEvent)inputEvent).getPoint());
+            if (comp instanceof EditorComponentImpl editorComponent) {
+              EditorImpl editor = editorComponent.getEditor();
+              return !isInsideCurrentRange(editor, mouseEvent.getPoint());
             }
           }
           return true;

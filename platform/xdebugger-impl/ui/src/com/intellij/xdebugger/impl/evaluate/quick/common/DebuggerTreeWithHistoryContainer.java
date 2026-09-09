@@ -165,8 +165,8 @@ public abstract class DebuggerTreeWithHistoryContainer<D> {
       TreePath path = myTree.getSelectionPath();
       boolean enabled = path != null && path.getPathCount() > (myTree.isRootVisible() ? 1 : 2);
       Object component = myTree.getLastSelectedPathComponent();
-      if (enabled && component instanceof XValueNodeImpl) {
-        enabled = !((XValueNodeImpl)component).isLeaf();
+      if (enabled && component instanceof XValueNodeImpl node) {
+        enabled = !node.isLeaf();
       }
       e.getPresentation().setEnabled(enabled);
     }
@@ -202,8 +202,8 @@ public abstract class DebuggerTreeWithHistoryContainer<D> {
   }
 
   protected static void registerTreeDisposable(Disposable disposable, Tree tree) {
-    if (tree instanceof Disposable) {
-      Disposer.register(disposable, (Disposable)tree);
+    if (tree instanceof Disposable disposable1) {
+      Disposer.register(disposable, disposable1);
     }
   }
 }

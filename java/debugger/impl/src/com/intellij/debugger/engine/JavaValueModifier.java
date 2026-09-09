@@ -122,8 +122,8 @@ public abstract class JavaValueModifier extends XValueModifier {
         value = DebuggerUtilsEx.mirrorOfString(v, context);
       }
     }
-    if (value instanceof DoubleValue) {
-      double dValue = ((DoubleValue)value).doubleValue();
+    if (value instanceof DoubleValue doubleValue) {
+      double dValue = doubleValue.doubleValue();
       if (varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE) {
         value = context.getVirtualMachineProxy().mirrorOf((float)dValue);
       }

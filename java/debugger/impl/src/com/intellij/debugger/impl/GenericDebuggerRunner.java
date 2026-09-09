@@ -83,15 +83,15 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     RunProfile runProfile = environment.getRunProfile();
     StructuredIdeActivity activity = ProgramRunnerUsageCollector.INSTANCE.startExecute(project, this, runProfile);
     if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
-        state instanceof TargetEnvironmentAwareRunProfileState) {
+        state instanceof TargetEnvironmentAwareRunProfileState profileState) {
       executionManager.startRunProfileWithPromise(environment, state, (ignored) -> {
-        return doExecuteAsync((TargetEnvironmentAwareRunProfileState)state, environment).onSuccess((RunContentDescriptor descr) -> {
+        return doExecuteAsync(profileState, environment).onSuccess(_ -> {
           ProgramRunnerUsageCollector.INSTANCE.finishExecute(activity, this, runProfile, true);
         });
       });
     }
     else {
-      executionManager.startRunProfile(environment, state, state1 -> {
+      executionManager.startRunProfile(environment, state, _ -> {
         return doExecute(state, environment);
       });
       ProgramRunnerUsageCollector.INSTANCE.finishExecute(activity, this, runProfile, false);
@@ -185,8 +185,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
             XDebugSessionImpl sessionImpl = (XDebugSessionImpl)session;
             ExecutionResult executionResult = debugProcess.getExecutionResult();
             sessionImpl.addExtraActions(executionResult.getActions());
-            if (executionResult instanceof DefaultExecutionResult) {
-              sessionImpl.addRestartActions(((DefaultExecutionResult)executionResult).getRestartActions());
+            if (executionResult instanceof DefaultExecutionResult defaultExecutionResult) {
+              sessionImpl.addRestartActions(defaultExecutionResult.getRestartActions());
             }
             sessionImpl.setPauseActionSupported(true); // enable pause by default
             return JavaDebugProcess.create(session, debuggerSession);
@@ -232,7 +232,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
                     @NotNull RunProfile runProfile,
                     boolean beforeExecution) throws ExecutionException {
     doPatch(javaParameters, Objects.requireNonNull(settings), beforeExecution,
-            runProfile instanceof RunConfiguration ? ((RunConfiguration)runProfile).getProject() : null);
+            runProfile instanceof RunConfiguration configuration ? configuration.getProject() : null);
     JavaProgramPatcher
       .runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtensionOrFail(DefaultDebugExecutor.class), runProfile);
   }
@@ -259,8 +259,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
 
   @Override
   public SettingsEditor<GenericDebuggerRunnerSettings> getSettingsEditor(final Executor executor, RunConfiguration configuration) {
-    if (configuration instanceof RunConfigurationWithRunnerSettings) {
-      if (((RunConfigurationWithRunnerSettings)configuration).isSettingsNeeded()) {
+    if (configuration instanceof RunConfigurationWithRunnerSettings settings) {
+      if (settings.isSettingsNeeded()) {
         return new GenericDebuggerParametersRunnerConfigurable(configuration.getProject());
       }
     }

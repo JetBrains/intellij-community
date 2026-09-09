@@ -27,10 +27,10 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl> {
 
   @Override
   public boolean equals(Object object) {
-    if (!(object instanceof StackFrameData)) {
+    if (!(object instanceof StackFrameData data)) {
       return false;
     }
-    return ((StackFrameData)object).myFrame == myFrame;
+    return data.myFrame == myFrame;
   }
 
   @Override

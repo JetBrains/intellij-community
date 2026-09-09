@@ -89,8 +89,8 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
   @Override
   public @NotNull XValue getValueContainer() {
     XValue container = super.getValueContainer();
-    if (container instanceof XWatchValue) {
-      XValue value = ((XWatchValue)container).myValue;
+    if (container instanceof XWatchValue watchValue) {
+      XValue value = watchValue.myValue;
       if (value != null) {
         return value;
       }

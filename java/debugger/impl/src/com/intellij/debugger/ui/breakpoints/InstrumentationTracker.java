@@ -65,8 +65,8 @@ public final class InstrumentationTracker {
         public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) {
           try {
             Value value = ContainerUtil.getFirstItem(DebuggerUtilsEx.getArgumentValues(event.thread().frame(0)));
-            if (value instanceof ArrayReference) {
-              ((ArrayReference)value).getValues().forEach(v -> {
+            if (value instanceof ArrayReference reference) {
+              reference.getValues().forEach(v -> {
                 Value aClass = ((ObjectReference)v).getValue(DebuggerUtils.findField(((ReferenceType)v.type()), "mClass"));
                 noticeRedefineClass(((ClassObjectReference)aClass).reflectedType());
               });
@@ -84,8 +84,8 @@ public final class InstrumentationTracker {
         public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) {
           try {
             Value value = ContainerUtil.getFirstItem(DebuggerUtilsEx.getArgumentValues(event.thread().frame(0)));
-            if (value instanceof ArrayReference) {
-              ((ArrayReference)value).getValues().forEach(v -> noticeRedefineClass(((ClassObjectReference)v).reflectedType()));
+            if (value instanceof ArrayReference reference) {
+              reference.getValues().forEach(v -> noticeRedefineClass(((ClassObjectReference)v).reflectedType()));
             }
           }
           catch (IncompatibleThreadStateException e) {
@@ -110,8 +110,8 @@ public final class InstrumentationTracker {
       .toList();
     requestors.forEach(myDebugProcess.getRequestsManager()::deleteRequest);
 
-    if (type instanceof ReferenceTypeImpl) {
-      ((ReferenceTypeImpl)type).noticeRedefineClass();
+    if (type instanceof ReferenceTypeImpl referenceType) {
+      referenceType.noticeRedefineClass();
     }
     else {
       try {

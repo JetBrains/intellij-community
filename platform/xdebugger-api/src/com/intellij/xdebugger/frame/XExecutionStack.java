@@ -57,7 +57,7 @@ public abstract class XExecutionStack {
     return null;
   }
 
-  private MutableStateFlow<@Nullable Icon> myIconFlow = StateFlowKt.MutableStateFlow(null);
+  private final MutableStateFlow<@Nullable Icon> myIconFlow = StateFlowKt.MutableStateFlow(null);
 
   public final @Nullable Icon getIcon() {
     return myIconFlow.getValue();

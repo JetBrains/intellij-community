@@ -111,7 +111,7 @@ public class ToggleMethodBreakpointAction extends AnAction implements ActionRemo
 
   static @Nullable Editor getEditor(AnActionEvent event) {
     @Nullable FileEditor editor = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
-    return editor instanceof TextEditor ? ((TextEditor)editor).getEditor() : null;
+    return editor instanceof TextEditor textEditor ? textEditor.getEditor() : null;
   }
 
   private static @Nullable PsiMethod findMethod(Project project, Editor editor) {

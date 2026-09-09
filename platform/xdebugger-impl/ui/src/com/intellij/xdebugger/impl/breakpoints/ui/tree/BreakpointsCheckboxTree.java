@@ -48,11 +48,11 @@ public class BreakpointsCheckboxTree extends CheckboxTree {
   protected void installSpeedSearch() {
     TreeSpeedSearch.installOn(this, true, path -> {
       Object node = path.getLastPathComponent();
-      if (node instanceof BreakpointItemNode) {
-        return ((BreakpointItemNode)node).getBreakpointItem().speedSearchText();
+      if (node instanceof BreakpointItemNode itemNode) {
+        return itemNode.getBreakpointItem().speedSearchText();
       }
-      else if (node instanceof BreakpointsGroupNode) {
-        return ((BreakpointsGroupNode<?>)node).getGroup().getName();
+      else if (node instanceof BreakpointsGroupNode<?> groupNode) {
+        return groupNode.getGroup().getName();
       }
       return "";
     });
@@ -60,8 +60,8 @@ public class BreakpointsCheckboxTree extends CheckboxTree {
 
   @Override
   public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    if (value instanceof BreakpointItemNode) {
-      final BreakpointItem breakpointItem = ((BreakpointItemNode)value).getBreakpointItem();
+    if (value instanceof BreakpointItemNode node) {
+      final BreakpointItem breakpointItem = node.getBreakpointItem();
       final String displayText = breakpointItem != null? breakpointItem.getDisplayText() : null;
       if (!StringUtil.isEmptyOrSpaces(displayText)) {
         return displayText;

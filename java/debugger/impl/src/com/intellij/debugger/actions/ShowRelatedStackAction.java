@@ -43,12 +43,12 @@ public class ShowRelatedStackAction extends AnAction {
   private static @Nullable List<StackFrameItem> getRelatedStack(AnActionEvent e) {
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() == 1) {
-      ValueDescriptorImpl descriptor = values.get(0).getDescriptor();
+      ValueDescriptorImpl descriptor = values.getFirst().getDescriptor();
       if (descriptor.isValueReady()) {
         Value value = descriptor.getValue();
-        if (value instanceof ObjectReference) {
+        if (value instanceof ObjectReference reference) {
           DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
-          return StackCapturingLineBreakpoint.getRelatedStack((ObjectReference)value, debuggerContext.getDebugProcess());
+          return StackCapturingLineBreakpoint.getRelatedStack(reference, debuggerContext.getDebugProcess());
         }
       }
     }

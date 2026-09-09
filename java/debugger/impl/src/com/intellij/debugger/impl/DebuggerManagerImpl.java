@@ -218,8 +218,8 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
             if (Registry.is("debugger.stop.on.graceful.exit")) {
               // it is SoftlyKillableProcessHandler responsibility to terminate VM
               debugProcess.stop(willBeDestroyed &&
-                                !(processHandler instanceof SoftlyKillableProcessHandler &&
-                                  ((SoftlyKillableProcessHandler)processHandler).shouldKillProcessSoftly()));
+                                !(processHandler instanceof SoftlyKillableProcessHandler handler &&
+                                  handler.shouldKillProcessSoftly()));
 
               // still need to wait in tests for results stability
               if (ApplicationManager.getApplication().isUnitTestMode()) {

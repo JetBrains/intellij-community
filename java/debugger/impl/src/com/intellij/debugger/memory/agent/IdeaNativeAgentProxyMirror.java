@@ -390,7 +390,7 @@ public class IdeaNativeAgentProxyMirror {
       throw EvaluateExceptionUtil.createEvaluateException("Too many methods \"" + methodName + "\" found. Count: " + methods.size());
     }
 
-    Method method = methods.get(0);
+    Method method = methods.getFirst();
     Value result = evaluationContext
       .computeAndKeep(() -> {
         DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();

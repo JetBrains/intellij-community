@@ -43,17 +43,17 @@ public final class BinaryRenderer extends CompoundRendererProvider {
         StringBuilder buf = new StringBuilder("0b");
         int prefixLength = buf.length();
         String valueStr = "";
-        if (value instanceof ByteValue) {
-          valueStr = Integer.toBinaryString(0xff & ((ByteValue)value).byteValue());
+        if (value instanceof ByteValue byteValue) {
+          valueStr = Integer.toBinaryString(0xff & byteValue.byteValue());
         }
-        else if (value instanceof ShortValue) {
-          valueStr = Integer.toBinaryString(0xffff & ((ShortValue)value).shortValue());
+        else if (value instanceof ShortValue shortValue) {
+          valueStr = Integer.toBinaryString(0xffff & shortValue.shortValue());
         }
         else if (value instanceof IntegerValue) {
           valueStr = Integer.toBinaryString(((PrimitiveValue)value).intValue());
         }
-        else if (value instanceof LongValue) {
-          valueStr = Long.toBinaryString(((LongValue)value).longValue());
+        else if (value instanceof LongValue longValue) {
+          valueStr = Long.toBinaryString(longValue.longValue());
         }
         else {
           LOG.error("Unsupported value " + value);
@@ -62,7 +62,7 @@ public final class BinaryRenderer extends CompoundRendererProvider {
         // add leading zeros
         int remainder = valueStr.length() % 8;
         if (remainder != 0) {
-          buf.append("0".repeat(8 - remainder));
+          buf.repeat("0", 8 - remainder);
         }
 
         buf.append(valueStr);

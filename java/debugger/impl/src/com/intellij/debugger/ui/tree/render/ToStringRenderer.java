@@ -84,8 +84,8 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     }
 
     Value value = valueDescriptor.getValue();
-    if (value instanceof ObjectReference) {
-      DebuggerUtils.ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
+    if (value instanceof ObjectReference reference) {
+      DebuggerUtils.ensureNotInsideObjectConstructor(reference, evaluationContext);
     }
     DescriptorLabelListener wrappedListener = ValueDescriptorImpl.startLabelUpdate(valueDescriptor, labelListener);
     BatchEvaluator.getBatchEvaluator(evaluationContext).invoke(new ToStringCommand(evaluationContext, value) {
@@ -143,8 +143,8 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     }
     if (type instanceof ClassType) {
       return DebuggerUtilsAsync.findAnyBaseType(type, t -> {
-        if (t instanceof ReferenceType) {
-          return DebuggerUtilsAsync.methods((ReferenceType)t)
+        if (t instanceof ReferenceType referenceType) {
+          return DebuggerUtilsAsync.methods(referenceType)
             .thenApply(methods -> {
               return ContainerUtil.exists(methods,
                                           m -> !m.isAbstract() &&

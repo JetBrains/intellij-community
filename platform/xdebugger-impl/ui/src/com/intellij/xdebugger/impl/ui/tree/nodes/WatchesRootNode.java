@@ -223,7 +223,7 @@ public class WatchesRootNode extends XValueContainerNode.Root<XValueContainer> {
     if (ContainerUtil.getFirstItem(myChildren) instanceof ResultNode currentResultNode) {
       removeChildNode(currentResultNode);
     }
-    myChildren.add(0, message);
+    myChildren.addFirst(message);
     fireNodeInserted(0);
     TreeUtil.selectNode(myTree, message);
   }

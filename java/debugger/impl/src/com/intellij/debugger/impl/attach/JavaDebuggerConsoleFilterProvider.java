@@ -52,7 +52,7 @@ public final class JavaDebuggerConsoleFilterProvider implements ConsoleFilterPro
   }
 
   private static class JavaDebuggerAttachFilter implements Filter {
-    @NotNull Project myProject;
+    @NotNull final Project myProject;
 
     private JavaDebuggerAttachFilter(@NotNull Project project) {
       this.myProject = project;

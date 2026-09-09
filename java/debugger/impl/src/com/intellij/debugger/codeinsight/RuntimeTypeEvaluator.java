@@ -81,8 +81,8 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
       return psiType;
     }
 
-    if (type instanceof ClassType) {
-      ClassType superclass = ((ClassType)type).superclass();
+    if (type instanceof ClassType classType) {
+      ClassType superclass = classType.superclass();
       if (superclass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(superclass.name())) {
         psiType = findPsiType(project, superclass);
         if (psiType != null) {
@@ -90,7 +90,7 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
         }
       }
 
-      for (InterfaceType interfaceType : ((ClassType)type).interfaces()) {
+      for (InterfaceType interfaceType : classType.interfaces()) {
         psiType = findPsiType(project, interfaceType);
         if (psiType != null) {
           return psiType;
@@ -109,8 +109,8 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
     if (type instanceof PsiPrimitiveType) {
       return false;
     }
-    if (type instanceof PsiClassType) {
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
+    if (type instanceof PsiClassType classType) {
+      final PsiClass psiClass = classType.resolve();
       if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.FINAL)) {
         return false;
       }

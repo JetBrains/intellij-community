@@ -248,8 +248,8 @@ public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
   }
 
   protected static void registerTreeDisposable(Disposable disposable, Tree tree) {
-    if (tree instanceof Disposable) {
-      Disposer.register(disposable, (Disposable)tree);
+    if (tree instanceof Disposable disposable1) {
+      Disposer.register(disposable, disposable1);
     }
   }
 

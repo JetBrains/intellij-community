@@ -57,14 +57,14 @@ public final class DefaultSourcePositionProvider extends SourcePositionProvider 
       return null;
     }
 
-    if (descriptor instanceof FieldDescriptor) {
-      return getSourcePositionForField((FieldDescriptor)descriptor, project, context, nearest);
+    if (descriptor instanceof FieldDescriptor fieldDescriptor) {
+      return getSourcePositionForField(fieldDescriptor, project, context, nearest);
     }
     else if (descriptor instanceof LocalVariableDescriptor) {
       return getSourcePositionForLocalVariable(descriptor.getName(), project, context, nearest);
     }
-    else if (descriptor instanceof ArgumentValueDescriptorImpl) {
-      Collection<String> names = ((ArgumentValueDescriptorImpl)descriptor).getVariable().getMatchedNames();
+    else if (descriptor instanceof ArgumentValueDescriptorImpl argumentValueDescriptor) {
+      Collection<String> names = argumentValueDescriptor.getVariable().getMatchedNames();
       if (!names.isEmpty()) {
         return getSourcePositionForLocalVariable(names.iterator().next(), project, context, nearest);
       }
@@ -75,10 +75,10 @@ public final class DefaultSourcePositionProvider extends SourcePositionProvider 
         return context.getSourcePosition();
       }
     }
-    else if (descriptor instanceof MethodReturnValueDescriptorImpl) {
+    else if (descriptor instanceof MethodReturnValueDescriptorImpl valueDescriptor) {
       DebugProcessImpl debugProcess = context.getDebugProcess();
       if (debugProcess != null) {
-        return debugProcess.getPositionManager().getSourcePosition(((MethodReturnValueDescriptorImpl)descriptor).getMethod().location());
+        return debugProcess.getPositionManager().getSourcePosition(valueDescriptor.getMethod().location());
       }
     }
     return null;
@@ -102,10 +102,10 @@ public final class DefaultSourcePositionProvider extends SourcePositionProvider 
         return null;
       }
       PsiElement navigationElement = aClass.getNavigationElement();
-      if (!(navigationElement instanceof PsiClass)) {
+      if (!(navigationElement instanceof PsiClass psiClass)) {
         return null;
       }
-      aClass = (PsiClass)navigationElement;
+      aClass = psiClass;
       PsiVariable psiVariable = JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(varName, aClass);
       if (psiVariable == null) {
         return null;

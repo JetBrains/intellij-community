@@ -90,10 +90,10 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
               AsyncStacksUtils.putProcessUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks), process);
             }
             Value key = myCaptureEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frameProxy));
-            if (key instanceof ObjectReference) {
+            if (key instanceof ObjectReference reference) {
               List<StackFrameItem> frames = StackFrameItem.createFrames(suspendContext, true);
               frames = ContainerUtil.getFirstItems(frames, AsyncStacksUtils.getMaxStackLength());
-              stacks.put(getKey((ObjectReference)key), frames);
+              stacks.put(getKey(reference), frames);
             }
           }
         }
@@ -190,7 +190,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
             StringUtil.equals(b.myCapturePoint.myInsertMethodName, methodName)) {
           try {
             Value key = b.myInsertEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frame));
-            return key instanceof ObjectReference ? capturedStacks.get(getKey((ObjectReference)key)) : null;
+            return key instanceof ObjectReference reference ? capturedStacks.get(getKey(reference)) : null;
           }
           catch (EvaluateException e) {
             LOG.debug(e);
@@ -218,7 +218,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
   }
 
   private static Object getKey(ObjectReference reference) {
-    return reference instanceof StringReference ? ((StringReference)reference).value() : reference;
+    return reference instanceof StringReference stringReference ? stringReference.value() : reference;
   }
 
   private static class MyEvaluator {

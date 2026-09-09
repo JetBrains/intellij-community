@@ -149,9 +149,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof NodeRendererSettings)) return false;
+    if (!(o instanceof NodeRendererSettings settings)) return false;
 
-    return DebuggerUtilsEx.elementsEqual(getState(), ((NodeRendererSettings)o).getState());
+    return DebuggerUtilsEx.elementsEqual(getState(), settings.getState());
   }
 
   public void addListener(NodeRendererSettingsListener listener, Disposable disposable) {
@@ -329,10 +329,10 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     if (value == null) {
       return null;
     }
-    if (value instanceof PsiExpression) {
-      Object res = ExpressionUtils.computeConstantExpression(((PsiExpression)value));
-      if (res instanceof String) {
-        return (String)res;
+    if (value instanceof PsiExpression expression) {
+      Object res = ExpressionUtils.computeConstantExpression(expression);
+      if (res instanceof String s) {
+        return s;
       }
     }
     throw new IllegalStateException("Constant string expression expected, but was " + value);
