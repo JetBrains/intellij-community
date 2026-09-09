@@ -276,5 +276,9 @@ public abstract class Identikit {
     public boolean isForPsiFile() {
       return myAnchorInfo.isForPsiFile();
     }
+
+    public @NotNull ByType getElementInfo() {
+      return myElementInfo;
+    }
   }
 }

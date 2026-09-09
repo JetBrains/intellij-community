@@ -35,8 +35,34 @@ open class SelfElementInfo internal constructor(
   val isForInjected: Boolean,
   manager: SmartPointerManagerEx?,
 ) : SmartPointerElementInfo, ContextAwareInfo {
+
+  /**
+   * The [Identikit] that can be used to identify the actual element that the smart pointer references.
+   */
+  private val elementIdentikit: Identikit.ByType
+
+  /**
+   * This field is used when the referenced element permits anchors, thus making the smart pointer more resilient to document commit.
+   * If this field is not used, then no semantical changes to a smart pointer will happen -- it would just behave worse on reparse.
+   *
+   * Invariant: `anchorIdentikit.elementInfo === elementIdentikit`
+   */
   @Volatile
-  private var myIdentikit: Identikit = identikit
+  private var anchorIdentikit: Identikit.ByAnchor?
+
+  init {
+    when (identikit) {
+      is Identikit.ByType -> {
+        elementIdentikit = identikit
+        anchorIdentikit = null
+      }
+      is Identikit.ByAnchor -> {
+        elementIdentikit = identikit.elementInfo
+        anchorIdentikit = identikit
+      }
+      else -> error("Unexpected type of identikit: $identikit")
+    }
+  }
 
   @Volatile
   override var fileHolder: FileHolder = FileHolder.createInterned(containingPsiFile, manager)
@@ -59,18 +85,19 @@ open class SelfElementInfo internal constructor(
   }
 
   private fun findAnchor(element: PsiElement): Identikit.AnchorWithElement? {
-    val language = myIdentikit.fileLanguage ?: return null
+    val language = elementIdentikit.fileLanguage ?: return null
     return Identikit.withAnchor(element, language)
   }
 
   private fun switchTo(element: PsiElement, anchorWithElement: Identikit.AnchorWithElement?) {
     if (anchorWithElement == null) {
       setRange(element.textRange)
+      anchorIdentikit = null
       return
     }
 
-    assert(anchorWithElement.identikit.hashCode() == myIdentikit.hashCode())
-    myIdentikit = anchorWithElement.identikit
+    assert(anchorWithElement.identikit.elementInfo === elementIdentikit)
+    anchorIdentikit = anchorWithElement.identikit
     setRange(anchorWithElement.anchorElement.textRange)
   }
 
@@ -97,8 +124,11 @@ open class SelfElementInfo internal constructor(
 
   fun hasRange(): Boolean = this.psiStartOffset >= 0
 
+  private val actualIdentikit: Identikit
+    get() = anchorIdentikit ?: elementIdentikit
+
   val isGreedy: Boolean
-    get() = isForInjected || myIdentikit.isForPsiFile()
+    get() = isForInjected || actualIdentikit.isForPsiFile()
 
   override val documentToSynchronize: Document?
     get() = ourFileDocManager.getCachedDocument(virtualFile)
@@ -106,7 +136,7 @@ open class SelfElementInfo internal constructor(
   override fun restoreElement(manager: SmartPointerManagerEx): PsiElement? {
     val segment = getPsiRange(manager) ?: return null
     val file = restoreFile(manager)?.takeIf { it.isValid } ?: return null
-    return myIdentikit.findPsiElement(file, segment.startOffset, segment.endOffset)
+    return actualIdentikit.findPsiElement(file, segment.startOffset, segment.endOffset)
   }
 
   override fun getPsiRange(manager: SmartPointerManagerEx): TextRange? = calcPsiRange()
@@ -115,7 +145,7 @@ open class SelfElementInfo internal constructor(
     if (hasRange()) UnfairTextRange(psiStartOffset, psiEndOffset) else null
 
   override fun restoreFile(manager: SmartPointerManagerEx): PsiFile? {
-    val language = myIdentikit.fileLanguage ?: return null
+    val language = elementIdentikit.fileLanguage ?: return null
     val holder = fileHolder
     val vfile = restoreVFile(holder.virtualFile)
 
@@ -133,13 +163,13 @@ open class SelfElementInfo internal constructor(
     setRange(null)
   }
 
-  override fun elementHashCode(): Int = virtualFile.hashCode() + myIdentikit.hashCode() * 31
+  override fun elementHashCode(): Int = virtualFile.hashCode() + elementIdentikit.hashCode() * 31
 
   override fun pointsToTheSameElementAs(other: SmartPointerElementInfo, manager: SmartPointerManagerEx): Boolean {
     if (other !is SelfElementInfo) {
       return false
     }
-    if (virtualFile != other.virtualFile || myIdentikit !== other.myIdentikit) return false
+    if (virtualFile != other.virtualFile || elementIdentikit !== other.elementIdentikit) return false
 
     return runReadActionBlocking {
       val range1 = getPsiRange(manager)
@@ -166,7 +196,7 @@ open class SelfElementInfo internal constructor(
   }
 
   override fun toString(): String {
-    return "psi:range=" + calcPsiRange() + ",type=" + myIdentikit
+    return "psi:range=" + calcPsiRange() + ",elementIdentikit=" + elementIdentikit + ",anchorIdentikit=" + anchorIdentikit
   }
 
   companion object {
