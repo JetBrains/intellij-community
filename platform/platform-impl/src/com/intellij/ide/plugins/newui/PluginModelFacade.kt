@@ -70,6 +70,13 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return pluginModel.getState(model.pluginId)
   }
 
+  fun getEnabledStatesSnapshot(models: Collection<PluginUiModel>): Map<PluginId, Boolean> {
+    val snapshot = pluginModel.enabledStateSnapshot()
+    return models.associate { model ->
+      model.pluginId to (snapshot[model.pluginId] ?: PluginEnabledState.ENABLED).isEnabled
+    }
+  }
+
   fun enable(model: PluginUiModel) {
     pluginModel.enable(listOf(model.getDescriptor()))
   }
