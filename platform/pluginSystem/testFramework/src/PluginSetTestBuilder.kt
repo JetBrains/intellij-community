@@ -123,7 +123,7 @@ class PluginSetTestBuilder private constructor(
       }
       override val explicitPluginSubsetToLoad: Set<PluginId>? = this@PluginSetTestBuilder.explicitPluginSubsetToLoad
       override val disableRequiredIfAvailable: Boolean = this@PluginSetTestBuilder.disableRequiredIfAvailable
-      override val currentProductModeId: String = productMode.id
+      override val productMode: ProductMode = this@PluginSetTestBuilder.productMode
       override val environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData>
         get() = customEnvironmentConfiguredModules ?: super.environmentConfiguredModules
       override fun provideCompatibilityDependenciesForRemainingCandidates(

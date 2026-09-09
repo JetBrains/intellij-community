@@ -71,7 +71,7 @@ class PluginInitializationTargetStateTest {
       override val explicitPluginSubsetToLoad: Set<PluginId>? = explicitPluginSubsetToLoad
       override val disablePluginLoadingCompletely: Boolean = disablePluginLoadingCompletely
       override val checkEssentialPlugins: Boolean = checkEssentialPlugins
-      override val currentProductModeId: String = ProductMode.MONOLITH.id
+      override val productMode: ProductMode = ProductMode.MONOLITH
       override val environmentConfiguredModules: Map<PluginModuleId, PluginInitializationContext.EnvironmentConfiguredModuleData> =
         emptyMap()
       override val expiredPlugins: Set<PluginId> = emptySet()

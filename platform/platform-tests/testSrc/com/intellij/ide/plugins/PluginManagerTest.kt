@@ -2,8 +2,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
-import com.intellij.ide.plugins.ProductPluginInitContext.Companion.computeEssentialPlugins
-import com.intellij.ide.plugins.ProductPluginInitContext.Companion.configureProductModeModules
+import com.intellij.ide.plugins.ProductModeCapabilities.computeEssentialPlugins
+import com.intellij.ide.plugins.ProductModeCapabilities.configureProductModeModules
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
@@ -225,7 +225,7 @@ class PluginManagerTest {
     )
     for ((currentMode, expectedValues) in modes) {
       val map = buildMap {
-        configureProductModeModules(currentMode.id)
+        configureProductModeModules(currentMode)
       }
       val actual = map.map { it.key.name to it.value.isAvailable }.sortedBy { it.first }
         .joinToString("\n") { (if (it.second) "+ " else "- ") + it.first }
@@ -239,10 +239,9 @@ class PluginManagerTest {
     val remoteDev = PluginId.getId("com.jetbrains.remoteDevelopment")
     val declared = listOf(PluginId.getId("com.intellij.java"))
     val modesWithRemoteDev = setOf(ProductMode.BACKEND, ProductMode.FRONTEND, ProductMode.LIGHT, ProductMode.LIGHT_WITH_RD_CONNECTION)
-    listOf(ProductMode.MONOLITH, ProductMode.FRONTEND, ProductMode.BACKEND,
-           ProductMode.LIGHT, ProductMode.LIGHT_WITH_RD_CONNECTION, ProductMode.LANGUAGE_SERVER).forEach { mode ->
+    ProductMode.entries.forEach { mode ->
       val expected = listOf(PluginManagerCore.CORE_ID, declared.single()) + listOfNotNull(remoteDev.takeIf { mode in modesWithRemoteDev })
-      assertThat(computeEssentialPlugins(declared, productModeId = mode.id))
+      assertThat(computeEssentialPlugins(declared, productMode = mode))
         .describedAs("essential plugins for '${mode.id}'")
         .containsExactlyInAnyOrderElementsOf(expected)
     }

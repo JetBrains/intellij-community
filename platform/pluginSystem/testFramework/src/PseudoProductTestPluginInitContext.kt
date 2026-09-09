@@ -7,7 +7,7 @@ import com.intellij.ide.plugins.PluginInitializationContext
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginModuleId
-import com.intellij.ide.plugins.ProductPluginInitContext.Companion.configureProductModeModules
+import com.intellij.ide.plugins.ProductModeCapabilities.configureProductModeModules
 import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultProductCompatibilityDependenciesForRemainingCandidatesProvider
 import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultProductCompatibilityDependenciesProvider
 import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultProductRulesImposedExclusions
@@ -15,6 +15,7 @@ import com.intellij.ide.plugins.ProductPluginInitContext.Companion.defaultShould
 import com.intellij.ide.plugins.ProductRulesImposedExclusion
 import com.intellij.ide.plugins.UnambiguousPluginSet
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.productMode.ProductMode
 
 abstract class PseudoProductTestPluginInitContext : EmptyTestPluginInitContext() {
   abstract val expiredPlugins: Set<PluginId>
@@ -22,9 +23,14 @@ abstract class PseudoProductTestPluginInitContext : EmptyTestPluginInitContext()
   /** The AI flag that the test sets, without the backing file. */
   open val aiEnabled: Boolean get() = true
 
+  abstract val productMode: ProductMode
+
+  override val currentProductModeId: String
+    get() = productMode.id
+
   override val environmentConfiguredModules: Map<PluginModuleId, PluginInitializationContext.EnvironmentConfiguredModuleData> by lazy {
     buildMap {
-      configureProductModeModules(currentProductModeId)
+      configureProductModeModules(productMode)
     }
   }
 
