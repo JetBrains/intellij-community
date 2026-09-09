@@ -4,7 +4,6 @@ package com.intellij.platform.statistics.devkit.toolwindow
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.NonEmptyActionGroup
-import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.platform.statistics.devkit.StatisticsDevKitUtil.DEFAULT_RECORDER
@@ -19,6 +18,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.statistics.devkit.icons.PlatformStatisticsDevkitIcons
 import com.intellij.ui.content.ContentFactory
 import javax.swing.Icon
@@ -31,8 +31,16 @@ import javax.swing.Icon
 @Suppress("SplitModeApiUsage")
 internal open class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(toolWindow: ToolWindow) {
-    toolWindow.title = IdeBundle.message("toolwindow.stripe.Statistics_Event_Log")
-    toolWindow.stripeTitle = IdeBundle.message("toolwindow.stripe.Statistics_Event_Log")
+    // Match the standard "(On Host)" suffix used for duplicated actions.
+    @Suppress("DialogTitleCapitalization")
+    val title = if (IdeProductMode.isBackend) {
+      StatisticsBundle.message("stats.event.log.toolwindow.on.host")
+    }
+    else {
+      IdeBundle.message("toolwindow.stripe.Statistics_Event_Log")
+    }
+    toolWindow.title = title
+    toolWindow.stripeTitle = title
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -61,17 +69,13 @@ internal open class StatisticsEventLogToolWindowFactory : ToolWindowFactory, Dum
   override val icon: Icon
     get() = PlatformStatisticsDevkitIcons.StatisticsEventLog
 
-  override suspend fun isApplicableAsync(project: Project): Boolean {
-    return !AppMode.isRemoteDevHost() && StatisticsRecorderUtil.isAnyTestModeEnabled()
-  }
+  override suspend fun isApplicableAsync(project: Project) = StatisticsRecorderUtil.isAnyTestModeEnabled()
 }
 
-internal class HostStatisticsEventLogToolWindowFactory : StatisticsEventLogToolWindowFactory() {
-  val toolWindowTitle: String
-    get() = StatisticsBundle.message("stats.event.log.toolwindow.on.host")
-
+internal class FrontendStatisticsEventLogToolWindowFactory : StatisticsEventLogToolWindowFactory() {
   override suspend fun isApplicableAsync(project: Project): Boolean {
-    return AppMode.isRemoteDevHost() && StatisticsRecorderUtil.isAnyTestModeEnabled()
+    // The backend registration supplies the tool window in monolith.
+    return IdeProductMode.isFrontend && super.isApplicableAsync(project)
   }
 }
 

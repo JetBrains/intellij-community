@@ -1804,6 +1804,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/intellij.platform.statistics.iml" filepath="$PROJECT_DIR$/platform/statistics/intellij.platform.statistics.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/config/intellij.platform.statistics.config.iml" filepath="$PROJECT_DIR$/platform/statistics/config/intellij.platform.statistics.config.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/devkit/intellij.platform.statistics.devkit.iml" filepath="$PROJECT_DIR$/platform/statistics/devkit/intellij.platform.statistics.devkit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/statistics/devkit/backend/intellij.platform.statistics.devkit.backend.iml" filepath="$PROJECT_DIR$/platform/statistics/devkit/backend/intellij.platform.statistics.devkit.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/statistics/devkit/frontend/intellij.platform.statistics.devkit.frontend.iml" filepath="$PROJECT_DIR$/platform/statistics/devkit/frontend/intellij.platform.statistics.devkit.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/devkit/intellij.platform.statistics.devkit.tests.iml" filepath="$PROJECT_DIR$/platform/statistics/devkit/intellij.platform.statistics.devkit.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/envTests/intellij.platform.statistics.envTests.iml" filepath="$PROJECT_DIR$/platform/statistics/envTests/intellij.platform.statistics.envTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/testFramework/intellij.platform.statistics.testFramework.iml" filepath="$PROJECT_DIR$/platform/statistics/testFramework/intellij.platform.statistics.testFramework.iml" />

@@ -14,6 +14,8 @@
   <!--suppress AllContentModulesOptionalLoadingRule -->
   <content namespace="jetbrains">
     <module name="intellij.platform.statistics.devkit"/>
+    <module name="intellij.platform.statistics.devkit.backend"/>
+    <module name="intellij.platform.statistics.devkit.frontend"/>
     <module name="intellij.platform.ide.ui.inspector"/>
     <module name="intellij.dev.psiViewer"/>
     <module name="intellij.dev.codeInsight"/>

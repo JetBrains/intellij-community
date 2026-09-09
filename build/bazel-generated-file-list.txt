@@ -1010,6 +1010,8 @@ platform/starter
 platform/statistics
 platform/statistics/config
 platform/statistics/devkit
+platform/statistics/devkit/backend
+platform/statistics/devkit/frontend
 platform/statistics/envTests
 platform/statistics/testFramework
 platform/statistics/uploader

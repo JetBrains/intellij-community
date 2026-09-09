@@ -60,13 +60,6 @@
             class="com.intellij.platform.statistics.devkit.actions.TestParseEventsSchemeAction"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
-    <!--suppress SplitModeXmlApiUsage -->
-    <toolWindow id="Statistics Event Log" factoryClass="com.intellij.platform.statistics.devkit.toolwindow.StatisticsEventLogToolWindowFactory"
-                anchor="bottom" canCloseContents="true" order="last"/>
-    <!--suppress SplitModeXmlApiUsage -->
-    <toolWindow id="Statistics Event Log (On Host)"
-                factoryClass="com.intellij.platform.statistics.devkit.toolwindow.HostStatisticsEventLogToolWindowFactory"
-                anchor="bottom" canCloseContents="true" order="last"/>
     <notificationGroup displayType="BALLOON" id="FeatureUsageStatistics" bundle="messages.StatisticsBundle" key="stats.feature.usage.statistics"/>
     <completion.contributor language="JSON"
                             implementationClass="com.intellij.platform.statistics.devkit.actions.scheme.ValidationRulesCompletionContributor"/>

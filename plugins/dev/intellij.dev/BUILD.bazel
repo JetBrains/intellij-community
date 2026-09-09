@@ -16,6 +16,8 @@ dev_dist_plugin(
     prepacked_content_modules = [
         # do not sort,
         "intellij.platform.ide.ui.inspector",
+        "intellij.platform.statistics.devkit.backend",
+        "intellij.platform.statistics.devkit.frontend",
         "intellij.platform.statistics.devkit",
         "intellij.dev.leakDetection",
         "intellij.dev.pluginLoading",

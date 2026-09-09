@@ -16,6 +16,8 @@ jvm_library(
         "//plugins/dev/intellij.dev.psiViewer:psiViewer",
         "//plugins/dev/intellij.dev.pluginLoading:pluginLoading",
         "//platform/statistics/devkit",
+        "//platform/statistics/devkit/backend",
+        "//platform/statistics/devkit/frontend",
     ],
 )
 
@@ -36,6 +38,8 @@ jvm_library(
         "//plugins/dev/intellij.dev.psiViewer:psiViewer_test_lib",
         "//plugins/dev/intellij.dev.pluginLoading:pluginLoading_test_lib",
         "//platform/statistics/devkit:devkit_test_lib",
+        "//platform/statistics/devkit/backend:backend_test_lib",
+        "//platform/statistics/devkit/frontend:frontend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.dev.noJava.plugin.main` end

@@ -9,5 +9,7 @@
     <orderEntry type="module" module-name="intellij.dev.psiViewer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.dev.pluginLoading" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.statistics.devkit" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.devkit.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.devkit.frontend" scope="RUNTIME" />
   </component>
 </module>
