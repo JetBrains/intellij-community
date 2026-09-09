@@ -11,6 +11,7 @@ import com.intellij.python.pytools.backend.statistics.PyToolFusSnapshot
 import com.intellij.python.ruff.server.RuffLspIntegrationProvider
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 /**
  * [Ruff](https://docs.astral.sh/ruff/) — an extremely fast Python linter and code formatter written in
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class RuffPyTool : PyLspTool<RuffConfiguration>() {
   override val lspServerName: String = "Ruff"
+  override val icon: Icon = RuffUtil.getDefaultRuffIcon()
   override val packageName: PyPackageName = PyPackageName.from("ruff")
 
   override fun configuration(project: Project): RuffConfiguration = project.service()

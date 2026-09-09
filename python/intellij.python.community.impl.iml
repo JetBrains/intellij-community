@@ -33,6 +33,10 @@
     <orderEntry type="module" module-name="intellij.json" />
     <orderEntry type="module" module-name="intellij.yaml" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.pipenv.common" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.conda.common" />
+    <orderEntry type="module" module-name="intellij.python.venv.common" />
+    <orderEntry type="module" module-name="intellij.python.hatch.common" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />

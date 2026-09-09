@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.conda.CondaPyTool
 import com.intellij.python.community.impl.conda.PyCondaBundle
-import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
+import com.intellij.python.community.impl.conda.common.icons.PythonCommunityImplCondaCommonIcons
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.runTool
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
@@ -53,7 +53,7 @@ private const val DEFAULT_ENV_NAME: String = "conda"
 internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override val tool: PyTool<*> get() = CondaPyTool.getInstance()
   override val label: String get() = PySdkBundle.message("evolution.node.label.conda")
-  override val icon get() = PythonCommunityImplCondaIcons.Anaconda
+  override val icon get() = PythonCommunityImplCondaCommonIcons.Anaconda
   override val toolId: ToolId get() = CONDA_TOOL_ID
 
   /** An interpreter of this node's environments carries this flavor, which is what names this node as the active one. */

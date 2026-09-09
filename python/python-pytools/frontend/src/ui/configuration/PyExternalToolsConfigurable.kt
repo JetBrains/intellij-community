@@ -9,6 +9,7 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.python.pytools.common.PY_EXTERNAL_TOOLS_SETTINGS_ID
 import com.intellij.python.pytools.frontend.ui.PyToolsUiBundle.message
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
@@ -159,6 +160,6 @@ class PyExternalToolsConfigurable(private val project: Project) : BoundSearchabl
   }
 
   companion object {
-    const val ID: String = "python.external.tools.group.settings"
+    const val ID: String = PY_EXTERNAL_TOOLS_SETTINGS_ID
   }
 }

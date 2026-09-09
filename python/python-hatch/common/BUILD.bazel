@@ -1,0 +1,67 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.hatch.common` start
+content_module_jar(module = ":common")
+### auto-generated section `dev intellij.python.hatch.common` end
+
+### auto-generated section `build intellij.python.hatch.common` start
+create_kotlinc_options(
+    name = "custom_common",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "common",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_common",
+    module_name = "intellij.python.hatch.common",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//platform/util",
+    ],
+)
+
+jvm_library(
+    name = "common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_common",
+    module_name = "intellij.python.hatch.common",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":common",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/util:util_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.hatch.common` end
+
+### auto-generated section `iml intellij.python.hatch.common` start
+exports_files(
+    [
+        "intellij.python.hatch.common.iml",
+        "resources/intellij.python.hatch.common.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.hatch.common` end

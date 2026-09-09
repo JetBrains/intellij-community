@@ -30,8 +30,6 @@ jvm_library(
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
-            "gen/**/*.kt",
-            "gen/**/*.java",
         ],
         allow_empty = True,
     ),
@@ -44,6 +42,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//python/python-venv/common",
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//python/openapi:community",
@@ -75,6 +74,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":venv",
+        "//python/python-venv/common:common_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//python/openapi:community_test_lib",
         "//python/python-exec-service:community-execService_test_lib",

@@ -3,7 +3,7 @@ package com.intellij.python.pyright.frontend
 
 import com.intellij.python.lsp.core.frontend.LspPyToolFrontend
 import com.intellij.python.pytools.common.PyToolId
-import com.intellij.python.pytools.frontend.icons.PythonPytoolsFrontendIcons
+import com.intellij.python.pyright.common.icons.PythonPyrightCommonIcons
 import com.intellij.util.IconUtil
 import javax.swing.Icon
 
@@ -11,5 +11,5 @@ internal class BasedpyrightPyToolFrontend : LspPyToolFrontend {
   override val presentableName: String = "Basedpyright"
   override val description: String get() = PyrightFrontendBundle.message("basedpyright.tool.description")
   override val toolId: PyToolId = PyToolId("basedpyright")
-  override val icon: Icon = IconUtil.resizeSquared(PythonPytoolsFrontendIcons.Expui.Basedpyright, 16)
+  override val icon: Icon = IconUtil.resizeSquared(PythonPyrightCommonIcons.Basedpyright, 16)
 }

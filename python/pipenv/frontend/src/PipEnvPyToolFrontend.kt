@@ -3,7 +3,7 @@ package com.intellij.python.community.impl.pipenv.frontend
 
 import com.intellij.python.pytools.frontend.PackageManagerPyToolFrontend
 import com.intellij.python.pytools.common.PyToolId
-import com.intellij.python.pytools.frontend.icons.PythonPytoolsFrontendIcons
+import com.intellij.python.community.impl.pipenv.common.icons.PythonCommunityImplPipenvCommonIcons
 import com.intellij.python.community.impl.pipenv.frontend.PyPipenvFrontendBundle.message
 import javax.swing.Icon
 
@@ -11,5 +11,5 @@ internal class PipEnvPyToolFrontend : PackageManagerPyToolFrontend {
   override val presentableName: String = "Pipenv"
   override val toolId: PyToolId = PyToolId("pipenv")
   override val description: String get() = message("python.pipenv.tool.description")
-  override val icon: Icon get() = PythonPytoolsFrontendIcons.Expui.Pipenv
+  override val icon: Icon get() = PythonCommunityImplPipenvCommonIcons.Pipenv
 }

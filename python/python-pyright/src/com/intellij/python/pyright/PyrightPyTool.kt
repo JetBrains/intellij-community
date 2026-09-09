@@ -7,6 +7,7 @@ import com.intellij.python.lsp.core.PyLspTool
 import com.intellij.python.pytools.backend.PyTool
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 /**
  * [Pyright](https://microsoft.github.io/pyright/) — a fast static type checker for Python from
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PyrightPyTool : PyLspTool<PyrightConfiguration>() {
   override val lspServerName: String = "Pyright"
+  override val icon: Icon = PyrightUtil.getDefaultPyrightIcon()
   override val packageName: PyPackageName = PyPackageName.from("pyright")
 
   override fun configuration(project: Project): PyrightConfiguration = project.service()

@@ -36,6 +36,7 @@
     <orderEntry type="module" module-name="intellij.python.pytools.common" />
     <orderEntry type="module" module-name="intellij.python.pytools.frontend" />
     <orderEntry type="module" module-name="intellij.python.lsp.core.common" />
+    <orderEntry type="module" module-name="intellij.python.pyright.common" />
     <orderEntry type="module" module-name="intellij.python.lsp.core.frontend" />
     <orderEntry type="module" module-name="intellij.platform.frontend" />
   </component>

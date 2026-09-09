@@ -13,6 +13,7 @@
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.sdk.common"/>
+    <module name="intellij.python.venv.common"/>
   </dependencies>
   <!-- endregion -->
 

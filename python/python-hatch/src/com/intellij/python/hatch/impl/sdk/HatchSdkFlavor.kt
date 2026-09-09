@@ -2,7 +2,7 @@ package com.intellij.python.hatch.impl.sdk
 
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.hatch.icons.PythonHatchIcons
+import com.intellij.python.hatch.common.icons.PythonHatchCommonIcons
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PyFlavorData
@@ -21,7 +21,7 @@ data class HatchSdkFlavorData(val hatchEnvironmentName: String?) : PyFlavorData 
 @ApiStatus.Internal
 @PyInternalExecApi
 object HatchSdkFlavor : CPythonSdkFlavor<HatchSdkFlavorData>() {
-  override fun getIcon(): Icon = PythonHatchIcons.Logo
+  override fun getIcon(): Icon = PythonHatchCommonIcons.Logo
   override fun getFlavorDataClass(): Class<HatchSdkFlavorData> = HatchSdkFlavorData::class.java
   override fun isValidSdkPath(pythonBinaryPath: Path): Boolean = false
   override fun isPlatformIndependent(): Boolean = true

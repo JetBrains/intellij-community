@@ -15,6 +15,7 @@ import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.isActiveOn
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 /**
  * [Pyrefly](https://pyrefly.org/) — a fast Python type checker written in Rust by Meta, providing type
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PyreflyPyTool : PyLspTool<PyreflyConfiguration>() {
   override val lspServerName: String = "Pyrefly"
+  override val icon: Icon = PyreflyUtil.getDefaultPyreflyIcon()
   override val packageName: PyPackageName = PyPackageName.from("pyrefly")
 
   override fun configuration(project: Project): PyreflyConfiguration = project.service()

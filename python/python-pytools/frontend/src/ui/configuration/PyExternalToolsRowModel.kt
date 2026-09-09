@@ -138,8 +138,8 @@ internal sealed interface PathFieldValue {
  */
 internal enum class PathIconKind(val icon: Icon?) {
   NONE(null),
-  INSTALL(PythonPytoolsFrontendIcons.UI.Expui.Install),
-  UPGRADE(PythonPytoolsFrontendIcons.UI.Expui.Upgrade),
+  INSTALL(PythonPytoolsFrontendIcons.Install),
+  UPGRADE(PythonPytoolsFrontendIcons.Upgrade),
   RESET(AllIcons.Diff.Revert),
 }
 

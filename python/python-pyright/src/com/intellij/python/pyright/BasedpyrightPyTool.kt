@@ -7,6 +7,7 @@ import com.intellij.python.lsp.core.PyLspTool
 import com.intellij.python.pytools.backend.PyTool
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 /**
  * [Basedpyright](https://docs.basedpyright.com/) — an open-source fork of Pyright that adds features
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class BasedpyrightPyTool : PyLspTool<BasedpyrightConfiguration>() {
   override val lspServerName: String = "Basedpyright"
+  override val icon: Icon = PyrightUtil.getDefaultBasedPyrightIcon()
   override val packageName: PyPackageName = PyPackageName.from("basedpyright")
 
   override fun configuration(project: Project): BasedpyrightConfiguration = project.service()

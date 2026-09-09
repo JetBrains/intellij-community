@@ -7,6 +7,7 @@ import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.pytools.backend.statistics.PyToolFusSnapshot
 import com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
+import javax.swing.Icon
 
 /**
  * Base for every LSP-backed [PyTool]. Captures the shared, non-UI wiring around a per-project
@@ -18,6 +19,14 @@ import com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
  */
 abstract class PyLspTool<C : PyLspToolConfiguration<*>> : PyTool<PyLspToolConfigurationDto> {
   abstract val lspServerName: @NlsSafe String
+
+  /**
+   * The tool icon that the Language Services widget shows.
+   *
+   * The widget item comes from [PyLspToolIntegrationProvider], which runs where the server runs, so the icon
+   * belongs here and not to the frontend tool.
+   */
+  abstract val icon: Icon
 
   /** Per-project settings service backing this tool — the single source of its configuration. */
   abstract fun configuration(project: Project): C

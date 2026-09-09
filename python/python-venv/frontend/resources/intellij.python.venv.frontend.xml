@@ -5,6 +5,7 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.python.pytools.common"/>
     <module name="intellij.python.pytools.frontend"/>
+    <module name="intellij.python.venv.common"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij"><python.pytools.pyToolFrontend implementation="com.intellij.python.venv.frontend.PipPyToolFrontend"/></extensions>

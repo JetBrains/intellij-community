@@ -12,6 +12,7 @@
     <module name="intellij.platform.rpc"/>
     <module name="intellij.python.lsp.core.common"/>
     <module name="intellij.python.lsp.core.frontend"/>
+    <module name="intellij.python.pyrefly.common"/>
     <module name="intellij.python.pytools.common"/>
     <module name="intellij.python.pytools.frontend"/>
     <module name="intellij.python.typeEngine.common"/>

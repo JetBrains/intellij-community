@@ -5,7 +5,7 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.python.venv.icons.PythonVenvIcons
+import com.intellij.python.venv.common.icons.PythonVenvCommonIcons
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.BASE_DIR
@@ -53,7 +53,7 @@ class VirtualEnvSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.
            pythonBinaryPath.detectPythonEnvironment().successOrNull is VenvEnvironment
   }
 
-  override fun getIcon(): Icon = PythonVenvIcons.VirtualEnv
+  override fun getIcon(): Icon = PythonVenvCommonIcons.VirtualEnv
 
   @Suppress("CompanionObjectInExtension")
   companion object {

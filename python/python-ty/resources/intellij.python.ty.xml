@@ -25,6 +25,7 @@
     <module name="intellij.platform.statistics"/>
     <module name="intellij.python.lsp.core"/>
     <module name="intellij.python.pytools.backend"/>
+    <module name="intellij.python.ty.common"/>
     <module name="intellij.xml.parser"/>
   </dependencies>
   <!-- endregion -->

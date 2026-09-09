@@ -18,17 +18,17 @@ import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
-import com.intellij.python.community.impl.pipenv.icons.PythonCommunityImplPipenvIcons
+import com.intellij.python.community.impl.conda.common.icons.PythonCommunityImplCondaCommonIcons
+import com.intellij.python.community.impl.pipenv.common.icons.PythonCommunityImplPipenvCommonIcons
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
-import com.intellij.python.hatch.icons.PythonHatchIcons
+import com.intellij.python.hatch.common.icons.PythonHatchCommonIcons
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.python.uv.common.icons.PythonUvCommonIcons
-import com.intellij.python.venv.icons.PythonVenvIcons
+import com.intellij.python.venv.common.icons.PythonVenvCommonIcons
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
@@ -152,12 +152,12 @@ enum class PythonSupportedEnvironmentManagers(
   val sshAutoUploadRequired: Boolean,
   val isFSSupported: (FileSystem<*>) -> Boolean = { it.isLocal },
 ) {
-  VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonVenvIcons.VirtualEnv, sshAutoUploadRequired = false, { true }),
-  CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonCommunityImplCondaIcons.Anaconda, sshAutoUploadRequired = false, { true }),
+  VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonVenvCommonIcons.VirtualEnv, sshAutoUploadRequired = false, { true }),
+  CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonCommunityImplCondaCommonIcons.Anaconda, sshAutoUploadRequired = false, { true }),
   POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry, sshAutoUploadRequired = true, { true }),
-  PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PythonCommunityImplPipenvIcons.Pipenv, sshAutoUploadRequired = true, { true }),
+  PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PythonCommunityImplPipenvCommonIcons.Pipenv, sshAutoUploadRequired = true, { true }),
   UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonUvCommonIcons.UV, sshAutoUploadRequired = true, { true }),
-  HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchIcons.Logo, sshAutoUploadRequired = true, { true }),
+  HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchCommonIcons.Logo, sshAutoUploadRequired = true, { true }),
   PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, sshAutoUploadRequired = false, { true })
 }
 

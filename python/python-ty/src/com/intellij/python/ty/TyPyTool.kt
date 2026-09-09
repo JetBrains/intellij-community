@@ -11,6 +11,7 @@ import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.isActiveOn
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 /**
  * [ty](https://github.com/astral-sh/ty) — an extremely fast Python type checker and language server
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class TyPyTool : PyLspTool<TyConfiguration>() {
   override val lspServerName: String = "ty"
+  override val icon: Icon = TyUtil.getDefaultTyIcon()
   override val packageName: PyPackageName = PyPackageName.from("ty")
 
   override fun configuration(project: Project): TyConfiguration = project.service()

@@ -21,8 +21,6 @@ jvm_library(
     name = "conda",
     srcs = glob(
         [
-            "gen/**/*.kt",
-            "gen/**/*.java",
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
@@ -38,6 +36,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//python/conda/common",
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//platform/core-api:core",
@@ -75,6 +74,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":conda",
+        "//python/conda/common:common_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",

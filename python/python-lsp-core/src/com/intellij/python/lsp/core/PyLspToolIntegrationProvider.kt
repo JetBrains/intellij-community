@@ -9,8 +9,10 @@ import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
+import com.intellij.icons.AllIcons
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.lang.LangBundle
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -24,13 +26,17 @@ import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.buildChildren
 import com.intellij.openapi.util.text.buildHtml
@@ -56,12 +62,14 @@ import com.intellij.platform.lsp.api.customization.LspHoverSupport
 import com.intellij.platform.lsp.api.customization.LspInlayHintSupport
 import com.intellij.platform.lsp.api.customization.LspOptimizeImportsCustomizer
 import com.intellij.platform.lsp.api.customization.LspOptimizeImportsDisabled
+import com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.python.community.execService.asGeneralCommandLine
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.getExecutableWithBaseArgs
 import com.intellij.python.pytools.backend.isActiveOn
+import com.intellij.python.pytools.common.PY_EXTERNAL_TOOLS_SETTINGS_ID
 import com.intellij.ui.JBColor
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.onFailure
@@ -78,6 +86,7 @@ import org.eclipse.lsp4j.InitializeResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.Collections
+import javax.swing.Icon
 
 abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
   private val listenerConnectedForProjects: MutableSet<Project> = Collections.synchronizedSet(HashSet<Project>())
@@ -112,7 +121,23 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
     clientStarter.ensureClientStarted(descriptor)
   }
 
+  override fun createWidgetItem(lspClient: LspClient, currentFile: VirtualFile?): LspClientWidgetItem =
+    object : LspClientWidgetItem(lspClient, currentFile, icon = getIcon(lspClient)) {
+      override val itemLabel: @NlsSafe String
+        get() = presentableName(lspClient) + versionPostfix + rootPostfix
+
+      // The External Tools page is a frontend contribution, so LspClientWidgetItem gets no settings class here,
+      // and both settings actions come from this class.
+      override fun createWidgetMainAction(): AnAction =
+        OpenPyExternalToolsSettingsAction(widgetActionText, getIcon(lspClient))
+
+      override fun createWidgetInlineActions(): List<AnAction> =
+        super.createWidgetInlineActions() + OpenPyExternalToolsSettingsAction()
+    }
+
   abstract fun getDescriptor(module: Module): PyLspToolDescriptor
+
+  fun getIcon(lspClient: LspClient): Icon = (lspClient.descriptor as PyLspToolDescriptor).pyTool.icon
 
   fun presentableName(lspClient: LspClient): @NlsSafe String = lspClient.initializeResult?.serverInfo?.name
                                                                ?: lspClient.descriptor.presentableName
@@ -439,6 +464,26 @@ fun lspPackageAction(previous: Boolean?, current: Boolean): LspPackageAction = w
   current -> LspPackageAction.START
   previous == null -> LspPackageAction.NONE
   else -> LspPackageAction.STOP
+}
+
+/**
+ * Opens the External Tools page.
+ *
+ * The page is a frontend contribution, so this module knows the id of the page and not the class of it.
+ * [com.intellij.platform.lang.lsWidget.OpenSettingsAction] needs the class, so this action selects the page by id.
+ */
+private class OpenPyExternalToolsSettingsAction(
+  text: @NlsActions.ActionText String = LangBundle.message("language.services.widget.open.settings.action"),
+  icon: Icon = AllIcons.General.Settings,
+) : AnAction(text, null, icon), DumbAware {
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+    ShowSettingsUtil.getInstance().showSettingsDialog(
+      project,
+      { it is SearchableConfigurable && it.id == PY_EXTERNAL_TOOLS_SETTINGS_ID },
+      null,
+    )
+  }
 }
 
 @Service(Service.Level.PROJECT)

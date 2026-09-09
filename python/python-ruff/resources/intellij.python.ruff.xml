@@ -31,6 +31,7 @@
     <module name="intellij.python.lsp.core.common"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.ruff.common"/>
     <module name="intellij.toml.core"/>
     <module name="intellij.xml.parser"/>
   </dependencies>

@@ -11,6 +11,7 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.community.impl.conda.common"/>
     <module name="intellij.python.community.impl.installer"/>
     <module name="intellij.python.processOutput.common"/>
     <module name="intellij.python.pytools.backend"/>

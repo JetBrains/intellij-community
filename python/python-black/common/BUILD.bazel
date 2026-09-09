@@ -16,6 +16,8 @@ jvm_library(
     name = "common",
     srcs = glob(
         [
+            "gen/**/*.kt",
+            "gen/**/*.java",
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
@@ -33,6 +35,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/serialization/core",
+        "//platform/util",
         "//python/python-pytools/common",
     ],
 )
@@ -51,6 +54,7 @@ jvm_library(
         # do not sort,
         ":common",
         "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/util:util_test_lib",
         "//python/python-pytools/common:common_test_lib",
     ],
 )

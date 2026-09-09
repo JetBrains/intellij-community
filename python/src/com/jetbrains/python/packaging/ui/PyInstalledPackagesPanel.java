@@ -13,7 +13,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons;
+import com.intellij.python.community.impl.conda.common.icons.PythonCommunityImplCondaCommonIcons;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.InstalledPackagesPanel;
 import com.intellij.webcore.packaging.ManagePackagesDialog;
@@ -117,7 +117,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   protected AnAction @NotNull [] getExtraActions() {
     AnAction useCondaButton = new DumbAwareToggleAction(
       PyBundle.messagePointer("action.AnActionButton.text.use.conda.package.manager"),
-      Presentation.NULL_STRING, PythonCommunityImplCondaIcons.Anaconda) {
+      Presentation.NULL_STRING, PythonCommunityImplCondaCommonIcons.Anaconda) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         final Sdk sdk = getSelectedSdk();

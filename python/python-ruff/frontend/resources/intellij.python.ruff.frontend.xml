@@ -13,6 +13,7 @@
     <module name="intellij.python.lsp.core.frontend"/>
     <module name="intellij.python.pytools.common"/>
     <module name="intellij.python.pytools.frontend"/>
+    <module name="intellij.python.ruff.common"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij"><python.pytools.pyToolFrontend implementation="com.intellij.python.ruff.frontend.RuffPyToolFrontend"/></extensions>

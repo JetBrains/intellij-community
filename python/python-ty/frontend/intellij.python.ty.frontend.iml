@@ -41,6 +41,7 @@
     <orderEntry type="module" module-name="intellij.python.pytools.common" />
     <orderEntry type="module" module-name="intellij.python.pytools.frontend" />
     <orderEntry type="module" module-name="intellij.python.lsp.core.common" />
+    <orderEntry type="module" module-name="intellij.python.ty.common" />
     <orderEntry type="module" module-name="intellij.python.lsp.core.frontend" />
     <orderEntry type="module" module-name="intellij.python.typeEngine.frontend" />
     <orderEntry type="module" module-name="intellij.platform.frontend" />

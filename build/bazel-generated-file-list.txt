@@ -1777,6 +1777,7 @@ python/build
 python/build/build-debug-binaries
 python/common
 python/conda
+python/conda/common
 python/conda/frontend
 python/huggingFace
 python/ide-common/ide-customization
@@ -1796,6 +1797,7 @@ python/junit5Tests-framework
 python/mcp
 python/openapi
 python/pipenv
+python/pipenv/common
 python/pipenv/frontend
 python/pluginCore
 python/pluginCore/frontend
@@ -1816,6 +1818,7 @@ python/python-external-index
 python/python-features-trainer
 python/python-grazie
 python/python-hatch
+python/python-hatch/common
 python/python-hatch/frontend
 python/python-lsp-core
 python/python-lsp-core/common
@@ -1834,8 +1837,10 @@ python/python-psi-api
 python/python-psi-impl
 python/python-pyproject
 python/python-pyrefly
+python/python-pyrefly/common
 python/python-pyrefly/frontend
 python/python-pyright
+python/python-pyright/common
 python/python-pyright/frontend
 python/python-pytools/backend
 python/python-pytools/common
@@ -1846,6 +1851,7 @@ python/python-requirements/common
 python/python-requirements/tests
 python/python-restructuredtext
 python/python-ruff
+python/python-ruff/common
 python/python-ruff/frontend
 python/python-ruff/tests
 python/python-sdk-configurator/backend
@@ -1863,6 +1869,7 @@ python/python-test-env/junit5
 python/python-test-env/plain
 python/python-test-env/uv
 python/python-ty
+python/python-ty/common
 python/python-ty/frontend
 python/python-type-engine
 python/python-type-engine/common
@@ -1872,6 +1879,7 @@ python/python-uv/common
 python/python-uv/frontend
 python/python-uv/tests
 python/python-venv
+python/python-venv/common
 python/python-venv/frontend
 python/services/internal-impl
 python/services/shared
