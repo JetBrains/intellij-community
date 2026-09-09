@@ -114,6 +114,8 @@ open class MyPluginModel @JvmOverloads constructor(
 
   protected open val customRepoPlugins: Collection<PluginUiModel>? = null
 
+  protected open fun customRepoPluginsFor(target: PluginSource, plugin: PluginUiModel): Collection<PluginUiModel>? = customRepoPlugins
+
   private val myIcons: MutableMap<String?, Icon?> = HashMap<String?, Icon?>() // local cache for PluginLogo WeakValueMap
 
   init {
@@ -397,7 +399,7 @@ open class MyPluginModel @JvmOverloads constructor(
     withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) {
       prepareToInstall(installPluginInfo, installationScope)
     }
-    val customPlugins = customRepoPlugins?.toList()
+    val customPlugins = customRepoPluginsFor(controller.getTarget(), actionDescriptor)?.toList()
     val result = controller.installOrUpdatePlugin(
       sessionId,
       operationUi::getParentComponent,
