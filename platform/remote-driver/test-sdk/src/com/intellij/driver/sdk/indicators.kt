@@ -34,6 +34,11 @@ fun Driver.indicatorsRunningOrDumbMode(project: Project): Boolean {
   return indicatorsRunning(project) || service<DumbService>(project).isDumb()
 }
 
+@Deprecated("Use indicatorsRunningOrDumbMode instead.", ReplaceWith("indicatorsRunningOrDumbMode(project)"))
+fun Driver.areIndicatorsVisible(project: Project): Boolean {
+  return indicatorsRunningOrDumbMode(project)
+}
+
 /**
  * !!! ATTENTION !!!
  *
