@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,7 +23,6 @@ import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.MultiResolutionImageProvider;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import com.sun.jna.platform.win32.WinDef;
 import org.apache.commons.imaging.common.BinaryOutputStream;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +77,7 @@ public abstract class AppIcon {
       else if (StartupUiUtil.isWaylandToolkit()) {
         ourIcon = new WLAppIcon();
       }
-      else if (SystemInfoRt.isWindows && JnaLoader.isLoaded()) {
+      else if (SystemInfoRt.isWindows && Win7TaskBar.isAvailable()) {
         ourIcon = new Win7AppIcon();
       }
       else {
@@ -590,7 +588,7 @@ public abstract class AppIcon {
         return;
       }
 
-      WinDef.HICON icon = null;
+      long icon = 0;
 
       if (text != null) {
         try {
@@ -629,14 +627,14 @@ public abstract class AppIcon {
       }
 
       try {
-        Win7TaskBar.setOverlayIcon(frame, icon, icon != null);
+        Win7TaskBar.setOverlayIcon(frame, icon, icon != 0);
       }
       catch (Throwable e) {
         LOG.error(e);
       }
     }
 
-    private WinDef.HICON myOkIcon;
+    private long myOkIcon;
 
     @Override
     public void _setOkBadge(@Nullable JFrame frame, boolean visible) {
@@ -645,11 +643,11 @@ public abstract class AppIcon {
         return;
       }
 
-      WinDef.HICON icon = null;
+      long icon = 0;
 
       if (visible) {
         synchronized (Win7AppIcon.class) {
-          if (myOkIcon == null) {
+          if (myOkIcon == 0) {
             try {
               BufferedImage image = ImageIO.read(Objects.requireNonNull(AppIcon.class.getResourceAsStream("/mac/appIconOk512.png")));
               byte[] bytes = writeTransparentIco(image);
@@ -657,7 +655,7 @@ public abstract class AppIcon {
             }
             catch (Throwable e) {
               LOG.error(e);
-              myOkIcon = null;
+              myOkIcon = 0;
             }
           }
 

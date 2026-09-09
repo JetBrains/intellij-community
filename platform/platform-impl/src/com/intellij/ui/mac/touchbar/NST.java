@@ -11,9 +11,6 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.ui.EmptyIcon;
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,12 +30,15 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.awt.peer.ComponentPeer;
 import java.io.File;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SymbolLookup;
+import java.lang.foreign.ValueLayout;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import javax.swing.Icon;
 
@@ -64,8 +64,8 @@ public final class NST {
     if (nstLibrary != null) {
       // small check that loaded library works
       try {
-        final Pointer test = nstLibrary.createTouchBar("test", (uid) -> null, null);
-        if (test == null) {
+        final MemorySegment test = nstLibrary.createTouchBar("test", (uid) -> MemorySegment.NULL, null);
+        if (test.address() == 0) {
           LOG.error("Failed to create native touchbar object, result is null");
           nstLibrary = null;
         }
@@ -88,7 +88,7 @@ public final class NST {
   public static NSTLibrary loadLibraryImpl() {
     Path lib = PathManager.findBinFile("libnst64.dylib");
     assert lib != null : "NST lib missing; bin=" + Arrays.toString(new File(PathManager.getBinPath()).list());
-    return nstLibrary = Native.load(lib.toString(), NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
+    return nstLibrary = new FfmNSTLibrary(SymbolLookup.libraryLookup(lib, Arena.global()));
   }
 
   static boolean isAvailable() {
@@ -99,12 +99,12 @@ public final class NST {
     return id(nstLibrary.createTouchBar(name, creator, escID));
   }
 
-  private static ID id(Pointer pointer) {
-    return pointer == null ? ID.NIL : new ID(Pointer.nativeValue(pointer));
+  private static ID id(MemorySegment pointer) {
+    return pointer.address() == 0 ? ID.NIL : new ID(pointer.address());
   }
 
-  private static Pointer pointer(ID id) {
-    return id == null || id.equals(ID.NIL) ? null : new Pointer(id.longValue());
+  private static MemorySegment pointer(ID id) {
+    return id == null ? MemorySegment.NULL : id.asMemorySegment();
   }
 
   static void releaseNativePeer(ID nativePeer) {
@@ -147,7 +147,7 @@ public final class NST {
         }
       }
     }
-    nstLibrary.setTouchBar(new Pointer(nsViewPtr), pointer(touchBarNativePeer));
+    nstLibrary.setTouchBar(MemorySegment.ofAddress(nsViewPtr), pointer(touchBarNativePeer));
   }
 
   static void selectItemsToShow(ID tbObj, String[] ids, int count) {
@@ -163,7 +163,7 @@ public final class NST {
                          int buttFlags,
                          String text,
                          String hint, int isHintDisabled,
-                         @Nullable Pair<Pointer, Dimension> raster,
+                         @Nullable Pair<MemorySegment, Dimension> raster,
                          NSTLibrary.Action action) {
     return id(nstLibrary.createButton(
       uid, buttWidth, buttFlags,
@@ -181,13 +181,13 @@ public final class NST {
     String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater,
     @NotNull List<TBItemScrubber.ItemData> items, int visibleItems, @Nullable TouchBarStats stats
   ) {
-    final Pair<Pointer, Integer> mem = _packItems(items, visibleItems, false, true);
+    final Pair<MemorySegment, Integer> mem = _packItems(items, visibleItems, false, true);
     return id(nstLibrary.createScrubber(uid, itemWidth, delegate, updater, mem == null ? null : mem.getFirst(),
                                         mem == null ? 0 : mem.getSecond()));
   }
 
   static ID createGroupItem(String uid, ID[] items) {
-    var pointers = items == null || items.length == 0 ? null : Arrays.stream(items).map(NST::pointer).toArray(Pointer[]::new);
+    var pointers = items == null || items.length == 0 ? null : Arrays.stream(items).map(NST::pointer).toArray(MemorySegment[]::new);
     return id(nstLibrary.createGroupItem(uid, pointers, items == null ? 0 : items.length));
   }
 
@@ -197,7 +197,7 @@ public final class NST {
                            int buttonFlags,
                            String text,
                            String hint, int isHintDisabled,
-                           @Nullable Pair<Pointer, Dimension> raster,
+                           @Nullable Pair<MemorySegment, Dimension> raster,
                            NSTLibrary.Action action) {
     nstLibrary.updateButton(
       pointer(buttonObj), updateOptions,
@@ -212,21 +212,21 @@ public final class NST {
 
   static void setArrowImage(ID buttObj, @Nullable Icon arrow) {
     final BufferedImage img = _getImg4ByteRGBA(arrow);
-    final Pointer raster4ByteRGBA = _getRaster(img);
+    final MemorySegment raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
     nstLibrary.setArrowImage(pointer(buttObj), raster4ByteRGBA, w, h);
   }
 
-  private static Pointer _makeIndices(Collection<Integer> indices) {
+  private static MemorySegment _makeIndices(Collection<Integer> indices) {
     if (indices == null || indices.isEmpty()) {
       return null;
     }
-    final int step = Native.getNativeSize(Integer.class);
-    final Pointer mem = new Pointer(Native.malloc((long)indices.size() * step));
+    final int step = Integer.BYTES;
+    final MemorySegment mem = Arena.ofAuto().allocate((long)indices.size() * step, step);
     int offset = 0;
     for (Integer i : indices) {
-      mem.setInt(offset, i);
+      mem.set(ValueLayout.JAVA_INT, offset, i);
       offset += step;
     }
     return mem;
@@ -238,7 +238,7 @@ public final class NST {
   ) {
     final long startNs = withImages && scrubber.getStats() != null ? System.nanoTime() : 0;
     @NotNull List<TBItemScrubber.ItemData> items = scrubber.getItems();
-    final Pair<Pointer, Integer> mem = _packItems(items.subList(fromIndex, fromIndex + itemsCount), itemsCount, withImages, withText);
+    final Pair<MemorySegment, Integer> mem = _packItems(items.subList(fromIndex, fromIndex + itemsCount), itemsCount, withImages, withText);
     synchronized (scrubber) {
       if (scrubber.myNativePeer.equals(ID.NIL)) {
         return;
@@ -256,7 +256,7 @@ public final class NST {
     if (indices == null || indices.isEmpty() || scrubObj == ID.NIL || scrubObj == null) {
       return;
     }
-    final Pointer mem = _makeIndices(indices);
+    final MemorySegment mem = _makeIndices(indices);
     nstLibrary.enableScrubberItems(pointer(scrubObj), mem, indices.size(), enabled);
   }
 
@@ -265,11 +265,11 @@ public final class NST {
     if (scrubObj == ID.NIL || scrubObj == null) {
       return;
     }
-    final Pointer mem = _makeIndices(indices);
+    final MemorySegment mem = _makeIndices(indices);
     nstLibrary.showScrubberItems(pointer(scrubObj), mem, indices == null ? 0 : indices.size(), show, inverseOthers);
   }
 
-  private static @Nullable Pair<Pointer, Integer> _packItems(
+  private static @Nullable Pair<MemorySegment, Integer> _packItems(
     @NotNull List<TBItemScrubber.ItemData> items,
     int visibleItems, boolean withImages, boolean withText
   ) {
@@ -277,7 +277,6 @@ public final class NST {
       return null;
     }
 
-    long ptr = 0;
     try {
       // 1. calculate size
       int byteCount = 2; // first 2 bytes contains count of items
@@ -318,30 +317,30 @@ public final class NST {
       }
 
       // 2. write items
-      final Pointer result = new Pointer(ptr = Native.malloc(byteCount));
-      result.setShort(0, (short)items.size());
+      final MemorySegment result = Arena.ofAuto().allocate(byteCount);
+      result.set(ValueLayout.JAVA_SHORT_UNALIGNED, 0, (short)items.size());
       int offset = 2;
       c = 0;
       for (TBItemScrubber.ItemData id : items) {
         if (c++ >= visibleItems) {
-          result.setShort(offset, (short)0);
-          result.setShort(offset + 2, (short)0);
-          result.setShort(offset + 4, (short)0);
+          result.set(ValueLayout.JAVA_SHORT_UNALIGNED, offset, (short)0);
+          result.set(ValueLayout.JAVA_SHORT_UNALIGNED, offset + 2, (short)0);
+          result.set(ValueLayout.JAVA_SHORT_UNALIGNED, offset + 4, (short)0);
           offset += 6;
           continue;
         }
 
         final byte[] txtBytes = withText ? id.getTextBytes() : null;
         if (txtBytes != null && txtBytes.length > 0) {
-          result.setShort(offset, (short)txtBytes.length);
+          result.set(ValueLayout.JAVA_SHORT_UNALIGNED, offset, (short)txtBytes.length);
           offset += 2;
-          result.write(offset, txtBytes, 0, txtBytes.length);
+          MemorySegment.copy(txtBytes, 0, result, ValueLayout.JAVA_BYTE, offset, txtBytes.length);
           offset += txtBytes.length;
-          result.setByte(offset, (byte)0);
+          result.set(ValueLayout.JAVA_BYTE, offset, (byte)0);
           offset += 1;
         }
         else {
-          result.setShort(offset, (short)0);
+          result.set(ValueLayout.JAVA_SHORT_UNALIGNED, offset, (short)0);
           offset += 2;
         }
 
@@ -353,8 +352,8 @@ public final class NST {
                                   !(id.getIcon() instanceof EmptyIcon) &&
                                   id.getIcon().getIconWidth() > 0 &&
                                   id.getIcon().getIconHeight() > 0;
-          result.setShort(offset, hasIcon ? (short)1 : (short)0);
-          result.setShort(offset + 2, (short)0);
+          result.set(ValueLayout.JAVA_SHORT_UNALIGNED, offset, hasIcon ? (short)1 : (short)0);
+          result.set(ValueLayout.JAVA_SHORT_UNALIGNED, offset + 2, (short)0);
           offset += 4;
         }
       }
@@ -362,15 +361,12 @@ public final class NST {
       return Pair.create(result, byteCount);
     }
     catch (Throwable e) {
-      if (ptr != 0) {
-        Native.free(ptr);
-      }
       LOG.debug(e);
       return null;
     }
   }
 
-  static Pair<Pointer, Dimension> get4ByteRGBARaster(@Nullable Icon icon) {
+  static Pair<MemorySegment, Dimension> get4ByteRGBARaster(@Nullable Icon icon) {
     if (icon == null || icon.getIconHeight() <= 0 || icon.getIconWidth() <= 0) {
       return null;
     }
@@ -380,7 +376,7 @@ public final class NST {
     return new Pair<>(_getRaster(img), new Dimension(img.getWidth(), img.getHeight()));
   }
 
-  private static Pointer _getRaster(BufferedImage img) {
+  private static MemorySegment _getRaster(BufferedImage img) {
     if (img == null) {
       return null;
     }
@@ -403,7 +399,7 @@ public final class NST {
     final int h = Math.round(icon.getIconHeight() * scale);
 
     final int memLength = w * h * 4;
-    Pointer memory = new Memory(memLength);
+    MemorySegment memory = Arena.ofAuto().allocate(memLength, Integer.BYTES);
     return _drawIconIntoMemory(icon, scale, memory, 0);
   }
 
@@ -431,7 +427,7 @@ public final class NST {
   }
 
   // returns count of written bytes
-  private static int _writeIconRaster(@NotNull Icon icon, float scale, @NotNull Pointer memory, int offset, int totalMemoryBytes)
+  private static int _writeIconRaster(@NotNull Icon icon, float scale, @NotNull MemorySegment memory, int offset, int totalMemoryBytes)
     throws Exception {
     final int w = Math.round(icon.getIconWidth() * scale);
     final int h = Math.round(icon.getIconHeight() * scale);
@@ -448,9 +444,9 @@ public final class NST {
         "Incorrect memory offset: offset=" + offset + ", rasterSize=" + rasterSizeInBytes + ", totalMemoryBytes=" + totalMemoryBytes);
     }
 
-    memory.setShort(offset, (short)w);
+    memory.set(ValueLayout.JAVA_SHORT_UNALIGNED, offset, (short)w);
     offset += 2;
-    memory.setShort(offset, (short)h);
+    memory.set(ValueLayout.JAVA_SHORT_UNALIGNED, offset, (short)h);
     offset += 2;
 
     _drawIconIntoMemory(icon, scale, memory, offset);
@@ -459,12 +455,12 @@ public final class NST {
   }
 
   // returns count of written bytes
-  private static @NotNull BufferedImage _drawIconIntoMemory(@NotNull Icon icon, float scale, @NotNull Pointer memory, int offset) {
+  private static @NotNull BufferedImage _drawIconIntoMemory(@NotNull Icon icon, float scale, @NotNull MemorySegment memory, int offset) {
     int w = Math.round(icon.getIconWidth() * scale);
     int h = Math.round(icon.getIconHeight() * scale);
     int rasterSizeInBytes = w * h * 4;
 
-    memory.setMemory(offset, rasterSizeInBytes, (byte)0);
+    memory.asSlice(offset, rasterSizeInBytes).fill((byte)0);
 
     DataBuffer dataBuffer = new DirectDataBufferInt(memory, rasterSizeInBytes, offset);
     DirectColorModel colorModel =
@@ -491,10 +487,10 @@ public final class NST {
 }
 
 final class DirectDataBufferInt extends DataBuffer {
-  Pointer myMemory;
+  MemorySegment myMemory;
   private final int myOffset;
 
-  DirectDataBufferInt(Pointer memory, int memLength, int offset) {
+  DirectDataBufferInt(MemorySegment memory, int memLength, int offset) {
     super(TYPE_INT, memLength);
     this.myMemory = memory;
     this.myOffset = offset;
@@ -502,11 +498,11 @@ final class DirectDataBufferInt extends DataBuffer {
 
   @Override
   public int getElem(int bank, int i) {
-    return myMemory.getInt(myOffset + i * 4L); // same as: *((jint *)((char *)Pointer + offset))
+    return myMemory.get(ValueLayout.JAVA_INT_UNALIGNED, myOffset + i * 4L);
   }
 
   @Override
   public void setElem(int bank, int i, int val) {
-    myMemory.setInt(myOffset + i * 4L, val); // same as: *((jint *)((char *)Pointer + offset)) = value
+    myMemory.set(ValueLayout.JAVA_INT_UNALIGNED, myOffset + i * 4L, val);
   }
 }

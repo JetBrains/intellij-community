@@ -6,7 +6,6 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserPanel;
@@ -100,7 +99,7 @@ final class GotoDesktopDirAction extends FileChooserAction implements LightEditC
         return Path.of(path);
       }
     }
-    else if (OS.CURRENT == OS.macOS && JnaLoader.isLoaded()) {
+    else if (OS.CURRENT == OS.macOS && Foundation.isAvailable()) {
       var manager = Foundation.invoke(Foundation.getObjcClass("NSFileManager"), "defaultManager");
       var selector = "URLForDirectory:inDomain:appropriateForURL:create:error:";
       var url = Foundation.invoke(manager, selector, 12 /*NSDesktopDirectory*/, 1 /*NSUserDomainMask*/, null, false, null);

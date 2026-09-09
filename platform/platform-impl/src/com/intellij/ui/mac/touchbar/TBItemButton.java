@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +22,7 @@ import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.swing.Icon;
 import java.awt.Dimension;
+import java.lang.foreign.MemorySegment;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 
@@ -39,7 +39,7 @@ public class TBItemButton extends TBItem {
   private int myLayoutBits = 0;
   private boolean myHasArrowIcon = false;
   private boolean isGetDisabledIconNeeded = false;
-  private AsyncPromise<Pair<Pointer, Dimension>> rasterPromise;
+  private AsyncPromise<Pair<MemorySegment, Dimension>> rasterPromise;
 
   // action parameters
   private @Nullable Runnable action;
@@ -305,7 +305,7 @@ public class TBItemButton extends TBItem {
       }
 
       // prepare raster (not very fast)
-      Pair<Pointer, Dimension> raster = NST.get4ByteRGBARaster(icon);
+      Pair<MemorySegment, Dimension> raster = NST.get4ByteRGBARaster(icon);
       if (actionStats != null && raster != null) {
         actionStats.iconUpdateIconRasterCount++;
         actionStats.iconRenderingDurationNs += System.nanoTime() - startNs;

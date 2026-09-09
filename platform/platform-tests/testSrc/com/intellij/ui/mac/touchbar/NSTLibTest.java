@@ -1,11 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.sun.jna.Pointer;
 import org.junit.Test;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import java.lang.foreign.MemorySegment;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.junit.Assume.assumeTrue;
 
 public class NSTLibTest {
@@ -21,15 +22,15 @@ public class NSTLibTest {
       fail("Failed to load nst library for touchbar: " + e.getMessage());
     }
 
-    assertNotNull("Failed to load nst library for touchbar: native loader returns null", lib);
+    assertThat(lib).as("The native Touch Bar library").isNotNull();
 
     // NOTE: it's difficult to promise correct library work in the system without running tb-server (this condition must be equals to isSettingsDomainExists())
     assumeTrue("touch bar server not running", Helpers.isTouchBarServerRunning());
 
     try {
       // small check that loaded library can create native objects
-      final Pointer test = lib.createTouchBar("test", (uid) -> null, null);
-      assertNotNull("Failed to create native touchbar object, result is null", test);
+      final MemorySegment test = lib.createTouchBar("test", (uid) -> MemorySegment.NULL, null);
+      assertThat(test.address()).as("The native Touch Bar object").isNotZero();
       lib.releaseNativePeer(test);
     }
     catch (RuntimeException e) {

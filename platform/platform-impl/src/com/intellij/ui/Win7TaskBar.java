@@ -3,17 +3,9 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ui.EDT;
-import com.sun.jna.Function;
-import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid;
-import com.sun.jna.platform.win32.ObjBase;
-import com.sun.jna.platform.win32.Ole32;
-import com.sun.jna.platform.win32.Ole32Util;
-import com.sun.jna.platform.win32.WinDef;
-import com.sun.jna.platform.win32.WinError;
-import com.sun.jna.platform.win32.WinNT;
-import com.sun.jna.ptr.PointerByReference;
+import com.intellij.util.system.WindowsSystemLibraries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -21,7 +13,16 @@ import sun.awt.AWTAccessor;
 import javax.swing.JFrame;
 import java.awt.Window;
 import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
+import java.nio.charset.StandardCharsets;
+
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
 
 /**
  * This class is not thread safe, and must be accessed from EDT only.
@@ -31,22 +32,11 @@ import java.lang.foreign.ValueLayout;
 final class Win7TaskBar {
   private static final Logger LOG = Logger.getInstance("Win7TaskBar");
 
-  private static final int TaskBarList_Methods = 21;
-  private static final int TaskBarList_SetProgressValue = 9;
-  private static final int TaskBarList_SetProgressState = 10;
-  private static final int TaskBarList_SetOverlayIcon = 18;
-
   private static final int ICO_VERSION = 0x00030000;
-  private static final WinDef.DWORD DWORD_ZERO = new WinDef.DWORD(0);
-  private static final WinDef.DWORD TBPF_NOPROGRESS = DWORD_ZERO;
-  private static final WinDef.DWORD TBPF_NORMAL = new WinDef.DWORD(0x2);
-  private static final WinDef.DWORD TBPF_ERROR = new WinDef.DWORD(0x4);
-  private static final WinDef.ULONGLONG TOTAL_PROGRESS = new WinDef.ULONGLONG(100);
-
-  private static Pointer myInterfacePointer;
-  private static Function mySetProgressValue;
-  private static Function mySetProgressState;
-  private static Function mySetOverlayIcon;
+  private static final int TBPF_NOPROGRESS = 0;
+  private static final int TBPF_NORMAL = 2;
+  private static final int TBPF_ERROR = 4;
+  private static TaskbarInterface taskbar;
 
   private static final boolean ourInitialized;
   static {
@@ -55,49 +45,68 @@ final class Win7TaskBar {
       initialized = initialize();
     }
     catch (Throwable t) {
-      LOG.error(t);
+      LOG.warn("The Windows taskbar is unavailable", t);
     }
     ourInitialized = initialized;
   }
 
-  private static boolean initialize() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+  private static boolean initialize() throws Throwable {
+    if (!SystemInfoRt.isWindows || ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode()) {
       return false;
     }
     EDT.assertIsEdt();
 
-    Ole32 ole32 = Ole32.INSTANCE;
-    ole32.CoInitializeEx(Pointer.NULL, Ole32.COINIT_APARTMENTTHREADED);
-
-    Guid.GUID CLSID_TaskBarList = Ole32Util.getGUIDFromString("{56FDF344-FD6D-11d0-958A-006097C9A090}");
-    Guid.GUID IID_ITaskBarList3 = Ole32Util.getGUIDFromString("{EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF}");
-    PointerByReference p = new PointerByReference();
-    WinNT.HRESULT hr = ole32.CoCreateInstance(CLSID_TaskBarList, Pointer.NULL, ObjBase.CLSCTX_INPROC, IID_ITaskBarList3, p);
-    if (!WinError.S_OK.equals(hr)) {
-      LOG.error("Win7TaskBar CoCreateInstance(IID_ITaskBarList3) hResult: " + hr);
-      return false;
+    var linker = Linker.nativeLinker();
+    var ole32 = WindowsSystemLibraries.lookup("ole32.dll");
+    var initialize = linker.downcallHandle(ole32.findOrThrow("CoInitializeEx"), FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT));
+    var uninitialize = linker.downcallHandle(ole32.findOrThrow("CoUninitialize"), FunctionDescriptor.ofVoid());
+    var parseGuid = linker.downcallHandle(ole32.findOrThrow("CLSIDFromString"), FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
+    var createInstance = linker.downcallHandle(ole32.findOrThrow("CoCreateInstance"),
+                                              FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT, ADDRESS, ADDRESS));
+    var initialized = (int)initialize.invokeExact(MemorySegment.NULL, 2);
+    if (initialized != 0x80010106) checkResult("CoInitializeEx", initialized);
+    var success = false;
+    try (var arena = Arena.ofConfined()) {
+      var classId = arena.allocate(16, 4);
+      var interfaceId = arena.allocate(16, 4);
+      checkResult("CLSIDFromString", (int)parseGuid.invokeExact(
+        arena.allocateFrom("{56FDF344-FD6D-11d0-958A-006097C9A090}", StandardCharsets.UTF_16LE), classId));
+      checkResult("CLSIDFromString", (int)parseGuid.invokeExact(
+        arena.allocateFrom("{EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF}", StandardCharsets.UTF_16LE), interfaceId));
+      var result = arena.allocate(ADDRESS);
+      checkResult("CoCreateInstance", (int)createInstance.invokeExact(classId, MemorySegment.NULL, 3, interfaceId, result));
+      var pointer = result.get(ADDRESS, 0);
+      if (pointer.address() == 0) return false;
+      try {
+        taskbar = new TaskbarInterface(pointer);
+        taskbar.init();
+        success = true;
+        return true;
+      }
+      finally {
+        if (!success) {
+          var release = TaskbarInterface.method(pointer, 2, FunctionDescriptor.of(JAVA_INT, ADDRESS));
+          var _ = (int)release.invokeExact(pointer);
+          taskbar = null;
+        }
+      }
     }
-
-    myInterfacePointer = p.getValue();
-    Pointer vTablePointer = myInterfacePointer.getPointer(0);
-    Pointer[] vTable = new Pointer[TaskBarList_Methods];
-    vTablePointer.read(0, vTable, 0, vTable.length);
-
-    mySetProgressValue = Function.getFunction(vTable[TaskBarList_SetProgressValue], Function.ALT_CONVENTION);
-    mySetProgressState = Function.getFunction(vTable[TaskBarList_SetProgressState], Function.ALT_CONVENTION);
-    mySetOverlayIcon = Function.getFunction(vTable[TaskBarList_SetOverlayIcon], Function.ALT_CONVENTION);
-
-    return true;
+    finally {
+      if (!success && initialized >= 0) uninitialize.invokeExact();
+    }
   }
+
+  static boolean isAvailable() { return ourInitialized; }
 
   static void setProgress(@Nullable JFrame frame, double value, boolean isOk) {
     if (!ourInitialized || frame == null) {
       return;
     }
 
-    WinDef.HWND handle = getHandle(frame);
-    mySetProgressState.invokeInt(new Object[]{myInterfacePointer, handle, isOk ? TBPF_NORMAL : TBPF_ERROR});
-    mySetProgressValue.invokeInt(new Object[]{myInterfacePointer, handle, new WinDef.ULONGLONG((long)(value * 100)), TOTAL_PROGRESS});
+    EDT.assertIsEdt();
+    var handle = getHandle(frame);
+    taskbar.setProgressState(handle, isOk ? TBPF_NORMAL : TBPF_ERROR);
+    taskbar.setProgressValue(handle, (long)(value * 100), 100);
   }
 
   static void hideProgress(@NotNull JFrame frame) {
@@ -105,24 +114,25 @@ final class Win7TaskBar {
       return;
     }
 
-    mySetProgressState.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), TBPF_NOPROGRESS});
+    EDT.assertIsEdt();
+    taskbar.setProgressState(getHandle(frame), TBPF_NOPROGRESS);
   }
 
-  static void setOverlayIcon(@NotNull JFrame frame, WinDef.HICON icon, boolean dispose) {
-    if (!ourInitialized) {
-      return;
+  static void setOverlayIcon(@NotNull JFrame frame, long icon, boolean dispose) {
+    try {
+      if (ourInitialized) {
+        EDT.assertIsEdt();
+        taskbar.setOverlayIcon(getHandle(frame), MemorySegment.ofAddress(icon));
+      }
     }
-
-    mySetOverlayIcon.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), icon, Pointer.NULL});
-
-    if (dispose) {
-      User32Ex.destroyIcon(Pointer.nativeValue(icon.getPointer()));
+    finally {
+      if (dispose && icon != 0) User32Ex.destroyIcon(icon);
     }
   }
 
-  static WinDef.HICON createIcon(byte[] ico) {
+  static long createIcon(byte[] ico) {
     if (!ourInitialized) {
-      return null;
+      return 0;
     }
 
     // CreateIconFromResourceEx copies the bits, so the arena can close right after the call
@@ -133,10 +143,10 @@ final class Win7TaskBar {
       var offset = User32Ex.lookupIconIdFromDirectoryEx(memory, true, nSize, nSize, 0);
       if (offset != 0) {
         var icon = User32Ex.createIconFromResourceEx(memory.asSlice(offset), 0, true, ICO_VERSION, nSize, nSize, 0);
-        return icon != 0 ? new WinDef.HICON(new Pointer(icon)) : null;
+        return icon;
       }
 
-      return null;
+      return 0;
     }
   }
 
@@ -156,20 +166,76 @@ final class Win7TaskBar {
     User32Ex.setForegroundWindow(getHandleValue(window));
   }
 
-  private static WinDef.HWND getHandle(@NotNull Window window) {
-    var handle = getHandleValue(window);
-    return handle != 0 ? new WinDef.HWND(new Pointer(handle)) : null;
+  private static MemorySegment getHandle(@NotNull Window window) {
+    return MemorySegment.ofAddress(getHandleValue(window));
   }
 
   private static long getHandleValue(@NotNull Window window) {
     try {
       var peer = AWTAccessor.getComponentAccessor().getPeer(window);
+      if (peer == null) return 0;
       var getHWnd = peer.getClass().getMethod("getHWnd");
       return (Long)getHWnd.invoke(peer);
     }
     catch (Throwable e) {
       LOG.error(e);
       return 0;
+    }
+  }
+
+  private static void checkResult(String operation, int result) {
+    if (result < 0) throw new IllegalStateException(operation + " failed: 0x" + Integer.toHexString(result));
+  }
+
+  static final class TaskbarInterface {
+    private final MemorySegment pointer;
+    private final MethodHandle init;
+    private final MethodHandle progressValue;
+    private final MethodHandle progressState;
+    private final MethodHandle overlayIcon;
+
+    TaskbarInterface(MemorySegment pointer) {
+      this.pointer = pointer;
+      init = method(pointer, 3, FunctionDescriptor.of(JAVA_INT, ADDRESS));
+      progressValue = method(pointer, 9, FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_LONG, JAVA_LONG));
+      progressState = method(pointer, 10, FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT));
+      overlayIcon = method(pointer, 18, FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, ADDRESS, ADDRESS));
+    }
+
+    private static MethodHandle method(MemorySegment pointer, int slot, FunctionDescriptor descriptor) {
+      var table = pointer.reinterpret(ADDRESS.byteSize()).get(ADDRESS, 0).reinterpret(21 * ADDRESS.byteSize());
+      return Linker.nativeLinker().downcallHandle(table.getAtIndex(ADDRESS, slot), descriptor);
+    }
+
+    void init() throws Throwable {
+      checkResult("ITaskbarList.HrInit", (int)init.invokeExact(pointer));
+    }
+
+    void setProgressValue(MemorySegment window, long completed, long total) {
+      try {
+        checkResult("ITaskbarList3.SetProgressValue", (int)progressValue.invokeExact(pointer, window, completed, total));
+      }
+      catch (Throwable error) {
+        LOG.warn(error);
+      }
+    }
+
+    void setProgressState(MemorySegment window, int state) {
+      try {
+        checkResult("ITaskbarList3.SetProgressState", (int)progressState.invokeExact(pointer, window, state));
+      }
+      catch (Throwable error) {
+        LOG.warn(error);
+      }
+    }
+
+    void setOverlayIcon(MemorySegment window, MemorySegment icon) {
+      try {
+        checkResult("ITaskbarList3.SetOverlayIcon", (int)overlayIcon.invokeExact(pointer, window, icon, MemorySegment.NULL));
+      }
+      catch (Throwable error) {
+        LOG.warn(error);
+      }
     }
   }
 }

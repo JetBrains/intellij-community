@@ -23,8 +23,6 @@ import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.UIUtil
-import com.sun.jna.Native
-import com.sun.jna.platform.mac.CoreFoundation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
@@ -51,16 +49,6 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
     const val FULL_SCREEN_PROGRESS: String = "Idea.Is.In.FullScreen.Mode.Progress"
 
     const val IGNORE_EXIT_FULL_SCREEN = "Idea.Ignore.Exit.FullScreen"
-  }
-
-  @Suppress("FunctionName")
-  private interface MyCoreFoundation : CoreFoundation {
-    fun CFPreferencesCopyAppValue(key: CoreFoundation.CFStringRef?, applicationID: CoreFoundation.CFStringRef?): CoreFoundation.CFStringRef?
-
-    companion object {
-      @JvmField
-      val INSTANCE: MyCoreFoundation = Native.load("CoreFoundation", MyCoreFoundation::class.java)
-    }
   }
 
   internal val dispatcher: EventDispatcher<FSListener> = EventDispatcher.create(FSListener::class.java)
@@ -135,12 +123,8 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
       glassPane.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
           if (e.clickCount == 2 && e.y <= UIUtil.getTransparentTitleBarHeight(frame.rootPane)) {
-            val appleActionOnDoubleClick = CoreFoundation.CFStringRef.createCFString("AppleActionOnDoubleClick")
-            val apple_global_domain = CoreFoundation.CFStringRef.createCFString("Apple Global Domain")
-            val res = MyCoreFoundation.INSTANCE.CFPreferencesCopyAppValue(
-              appleActionOnDoubleClick,
-              apple_global_domain)
-            if (res != null && res.stringValue() != "Maximize") {
+            val action = MacWindowPreferences.readString("AppleActionOnDoubleClick", "Apple Global Domain")
+            if (action != null && action != "Maximize") {
               if (frame.extendedState == Frame.ICONIFIED) {
                 frame.setExtendedState(Frame.NORMAL)
               }
@@ -156,9 +140,6 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
                 frame.setExtendedState(Frame.MAXIMIZED_BOTH)
               }
             }
-            apple_global_domain.release()
-            appleActionOnDoubleClick.release()
-            res?.release()
           }
           super.mouseClicked(e)
         }
