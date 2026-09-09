@@ -16,8 +16,8 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -45,7 +45,9 @@ internal class AssignedValueIsNeverReadInspection : KotlinApplicableInspectionBa
     context(session: KaSession)
     override fun prepareContext(element: KtSimpleNameExpression): Unit? {
         return element
-            .directDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
+            .diagnostics()
+            .withCheckers(KaDiagnosticCheckerKind.EXTENDED)
+            .directOnly(true)
             .any { it is KaFirDiagnostic.AssignedValueIsNeverRead }
             .asUnit
     }

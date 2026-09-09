@@ -10,8 +10,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -68,7 +68,10 @@ internal class EmptyRangeInspection : KotlinApplicableInspectionBase<KtElement, 
     private fun isAvailable(element: KtElement): Boolean =
         //checks if the reference expressions are used in the range
         (element as? KtBinaryExpression)?.let { it.left is KtNameReferenceExpression || it.right is KtNameReferenceExpression } == true ||
-                element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_EXPERIMENTAL_CHECKERS).any { it is KaFirDiagnostic.EmptyRange }
+                element.diagnostics()
+                    .withCheckers(KaDiagnosticCheckerKind.EXPERIMENTAL)
+                    .directOnly(true)
+                    .any { it is KaFirDiagnostic.EmptyRange }
 
 
     context(session: KaSession)

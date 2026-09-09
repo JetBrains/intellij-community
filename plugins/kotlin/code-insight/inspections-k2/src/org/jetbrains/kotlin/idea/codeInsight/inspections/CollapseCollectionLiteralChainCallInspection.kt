@@ -7,8 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -64,7 +63,7 @@ internal class CollapseCollectionLiteralChainCallInspection :
             ?: (receiver as? KtParenthesizedExpression)?.expression as? KtCollectionLiteralExpression
             ?: return null
 
-        if (literal.directDiagnostics(filter = KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).isNotEmpty()) return null
+        if (literal.diagnostics().directOnly(true).any()) return null
 
         val callFqName = element.resolveSuccessfulCall()?.symbol?.callableId?.asSingleFqName() ?: return null
         val pkg = callFqName.parent()

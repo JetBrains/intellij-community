@@ -4,9 +4,8 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.diagnostics
 import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -69,7 +68,8 @@ internal class MayBeConstantInspection : MayBeConstantInspectionBase() {
 
     context(_: KaSession)
     private fun KtExpression.usesNonConstValAsConstant(): Boolean {
-        val diagnostics = diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-        return diagnostics.find { it is KaFirDiagnostic.NonConstValUsedInConstantExpression } != null
+        return diagnostics().directOnly(true).find {
+            it is KaFirDiagnostic.NonConstValUsedInConstantExpression
+        } != null
     }
 }

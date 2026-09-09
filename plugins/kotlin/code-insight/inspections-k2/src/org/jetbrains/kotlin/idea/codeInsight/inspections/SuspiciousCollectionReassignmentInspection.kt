@@ -10,9 +10,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
@@ -66,7 +65,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
                 if (!leftType.isReadOnlyCollectionOrMap()) return
 
                 // TODO there are no tests for this check; add the tests or remove it
-                val diagnostics = binaryExpression.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                val diagnostics = binaryExpression.diagnostics().directOnly(true)
                 if (diagnostics.any { it.severity == KaSeverity.ERROR }) return
 
                 val fixes = mutableListOf<LocalQuickFix>()

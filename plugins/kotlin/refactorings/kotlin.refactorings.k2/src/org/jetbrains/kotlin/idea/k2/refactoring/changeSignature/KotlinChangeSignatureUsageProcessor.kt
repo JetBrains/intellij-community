@@ -22,8 +22,7 @@ import com.intellij.refactoring.rename.ResolveSnapshotProvider
 import com.intellij.refactoring.rename.ResolveSnapshotProvider.ResolveSnapshot
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -409,7 +408,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             val brokenSignature = allowAnalysisFromWriteAction {
                 allowAnalysisOnEdt {
                     analyze(element) {
-                        element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                        element.diagnostics().directOnly(true)
                             .any { it.diagnosticClass == KaFirDiagnostic.InapplicableOperatorModifier::class }
                     }
                 }

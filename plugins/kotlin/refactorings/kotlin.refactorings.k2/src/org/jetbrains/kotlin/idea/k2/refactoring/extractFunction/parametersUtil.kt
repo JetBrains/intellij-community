@@ -8,8 +8,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.diagnostics
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
@@ -582,11 +580,12 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
         }
 
         fun hasResolveErrors(): Boolean =
-            analyze(newRef) { newRef.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS) }
-                .any {
+            analyze(newRef) {
+                newRef.diagnostics().directOnly(true).any {
                     it.diagnosticClass == KaFirDiagnostic.UnresolvedReferenceWrongReceiver::class ||
                             it.diagnosticClass == KaFirDiagnostic.UnresolvedReference::class
                 }
+            }
         if ((isBadRef || hasResolveErrors() || smartCast != null) &&
             !originalResolveResult.declaration.isInsideOf(physicalElements)
         ) {

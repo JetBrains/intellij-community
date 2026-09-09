@@ -9,8 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.MixingNamedAndPositionalArguments
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -70,7 +69,7 @@ class AddNameToArgumentIntention :
 
     context(_: KaSession)
     private fun KtExpression.hasMixingDiagnosticsPresent(): Boolean {
-        val diagnostics = directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        val diagnostics = diagnostics().directOnly(true)
         return diagnostics.any { it is MixingNamedAndPositionalArguments }
     }
 

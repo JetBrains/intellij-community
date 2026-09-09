@@ -8,9 +8,8 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -72,8 +71,7 @@ internal class UnusedExpressionInspection : KotlinApplicableInspectionBase<KtExp
 
 context(session: KaSession)
 private fun isAvailable(element: KtExpression): Boolean =
-    element.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-        .any { it is KaFirDiagnostic.UnusedExpression }
+    element.diagnostics().directOnly(true).any { it is KaFirDiagnostic.UnusedExpression }
 
 
 context(session: KaSession)
