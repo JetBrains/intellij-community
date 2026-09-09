@@ -255,16 +255,22 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
   fun computeCursor(): Pair<Long, Int> {
     val cursor = emulator.cursor
     val cursorRow = cursor.row.coerceIn(0, maxOf(0, emulator.size.rows - 1))
-    val rowsAbove = ArrayList<TerminalRow>(cursorRow)
-    for (y in 0 until cursorRow) rowsAbove.add(emulator.screenLine(y))
+    val rows = ArrayList<TerminalRow>(cursorRow + 1)
+    for (y in 0 until cursorRow) rows.add(emulator.screenLine(y))
+    rows.add(emulator.screenLine(cursorRow))
     // The alternate screen has no scrollback, so its logical lines start at 0
     val anchor = if (emulator.usingAlternateScreen) 0L else screenTopLogical
-    return logicalPositionOf(rowsAbove, { rowsAbove[it].toStyledText().text }, cursorRow, cursor.column, anchor)
+    return logicalPositionOf(rows, { rows[it].toStyledText().text }, cursorRow, cursor.column, anchor)
   }
 
   /**
    * The absolute logical position of the cell at [row] and [column] of [rows], where [anchor] is the
    * logical line index of `rows[0]`.
+   *
+   * [column] is a grid column, so `rows[row]` must be present: [TerminalRow.charOffsetOfColumn] compacts it
+   * to the offset [TerminalRow.toStyledText] would give it first, dropping the padding half of any
+   * double-width cell before it — using [column] itself here would land one column too far right for every
+   * such cell.
    *
    * A soft-wrapped row continues the logical line above it, so this backs up to the row that starts the
    * line and extends the column by the text of every row it passes. [textAt] supplies a row's text, so a
@@ -278,7 +284,7 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
     anchor: Long,
   ): Pair<Long, Int> {
     var line = row
-    var resolvedColumn = column
+    var resolvedColumn = rows[row].charOffsetOfColumn(column)
     while (line - 1 >= 0 && rows[line - 1].wrapped) {
       line--
       resolvedColumn += textAt(line).length

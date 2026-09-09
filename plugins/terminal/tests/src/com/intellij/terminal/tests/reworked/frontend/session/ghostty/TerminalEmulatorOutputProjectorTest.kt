@@ -329,6 +329,36 @@ internal class TerminalEmulatorOutputProjectorTest {
     assertThat(column).isEqualTo(200)
   }
 
+  @Test
+  fun `cursorColumnIndex compacts a double-width run to its char offset, not its grid column`() = withProjector {
+    // Five double-width CJK characters: ten grid columns (a WIDE cell plus a SPACER each), but five chars.
+    write("生活習慣病")
+
+    val event = collectUpdate()
+    assertThat(event.text).isEqualTo("生活習慣病")
+    assertThat(event.cursorColumnIndex).isEqualTo(5)
+  }
+
+  @Test
+  fun `cursorColumnIndex compacts double-width characters mixed with narrow ones`() = withProjector {
+    write("a生b活c") // 7 grid columns, 5 chars
+
+    val event = collectUpdate()
+    assertThat(event.text).isEqualTo("a生b活c")
+    assertThat(event.cursorColumnIndex).isEqualTo(5)
+  }
+
+  @Test
+  fun `computeCursor compacts a double-width run the same way as cursorColumnIndex`() = withProjector {
+    write("生活習慣病")
+    val event = collectUpdate()
+
+    val (line, column) = projector.computeCursor()
+    assertThat(line).isEqualTo(event.cursorLogicalLineIndex)
+    assertThat(column).isEqualTo(event.cursorColumnIndex)
+    assertThat(column).isEqualTo(5)
+  }
+
   // ---------------------------------------------------------------------------
   // Styles and colors
   // ---------------------------------------------------------------------------

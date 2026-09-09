@@ -100,6 +100,33 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
   }
 
   // ---------------------------------------------------------------------------
+  // (1c) Double-width characters
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `the cursor after double-width characters sits right after them, with no gap`() = doTest { fixture ->
+    val model = fixture.view.activeOutputModel()
+
+    // Five double-width CJK characters occupy ten grid columns but only five document characters.
+    fixture.connector.feed("生活習慣病")
+    fixture.assertOutputModelState(model) { it.text == "生活習慣病" }
+
+    assertThat(model.text).describedAs("no padding must be inserted after a double-width run").isEqualTo("生活習慣病")
+    assertThat(model.cursorColumn()).isEqualTo(5L)
+  }
+
+  @Test
+  fun `double-width characters mixed with narrow ones do not inflate the cursor column`() = doTest { fixture ->
+    val model = fixture.view.activeOutputModel()
+
+    fixture.connector.feed("a生b活c") // 7 grid columns, 5 document characters
+    fixture.assertOutputModelState(model) { it.text == "a生b活c" }
+
+    assertThat(model.text).isEqualTo("a生b活c")
+    assertThat(model.cursorColumn()).isEqualTo(5L)
+  }
+
+  // ---------------------------------------------------------------------------
   // (2) Adding text to the scrollback
   // ---------------------------------------------------------------------------
 
