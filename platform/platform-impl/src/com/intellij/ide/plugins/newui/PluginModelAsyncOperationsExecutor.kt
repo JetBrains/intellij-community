@@ -195,6 +195,7 @@ internal object PluginModelAsyncOperationsExecutor {
     pluginManagerCustomizer: PluginManagerCustomizer?,
     operationUi: PluginOperationUiContext,
     pluginDescriptorForPluginUpdateSourceApplier: PluginUiModel,
+    operationContext: PluginOperationContext? = null,
   ): Job {
     return operationLauncher.launch(Dispatchers.IO) {
       val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(pluginDescriptorForPluginUpdateSourceApplier, modelFacade)
@@ -204,11 +205,23 @@ internal object PluginModelAsyncOperationsExecutor {
         )
         withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) {
           if (model != null) {
-            model.action()
+            model.action(operationContext)
           }
           else {
-            val result = modelFacade.installOrUpdatePlugin(operationUi, plugin, updateDescriptor)
-            pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
+            try {
+              val result = modelFacade.installOrUpdatePlugin(
+                operationUi,
+                plugin,
+                updateDescriptor,
+                operationContext = operationContext,
+              )
+              pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
+            }
+            finally {
+              if (operationContext != null) {
+                modelFacade.finishOperation(operationContext)
+              }
+            }
           }
         }
       }

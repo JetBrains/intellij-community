@@ -106,7 +106,7 @@ data class PluginPopupMenuActionData(
 
 @ApiStatus.Internal
 data class UpdateButtonCustomizationModel(
-  val action: () -> Unit,
+  val action: (PluginOperationContext?) -> Unit,
 )
 
 @ApiStatus.Internal
