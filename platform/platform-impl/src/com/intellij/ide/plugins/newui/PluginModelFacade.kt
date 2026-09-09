@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
@@ -20,9 +21,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
+import kotlin.coroutines.CoroutineContext
 
 @ApiStatus.Internal
 open class PluginModelFacade(private val pluginModel: MyPluginModel) {
+  private var operationLauncher: PluginOperationLauncher? = null
+
+  internal fun setOperationLauncher(operationLauncher: PluginOperationLauncher) {
+    this.operationLauncher = operationLauncher
+  }
+
+  @ApiStatus.Internal
+  fun launchOperation(context: CoroutineContext, operation: suspend CoroutineScope.() -> Unit) {
+    getOperationLauncher().launch(context, operation)
+  }
+
+  private fun getOperationLauncher(): PluginOperationLauncher =
+    operationLauncher ?: PluginOperationLauncher(service<PluginManagerCoroutineScopeHolder>().coroutineScope)
 
   fun isPluginInstallingOrUpdating(model: PluginUiModel): Boolean {
     return MyPluginModel.isInstallingOrUpdate(model.pluginId)
