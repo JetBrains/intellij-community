@@ -34,7 +34,8 @@ import java.util.Map;
 public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<AbstractTreeNode<T>>
   implements NavigationItem, Queryable.Contributor, LeafState.Supplier {
 
-  private static final TextAttributesKey FILESTATUS_ERRORS = TextAttributesKey.createTextAttributesKey("FILESTATUS_ERRORS");
+  @ApiStatus.Internal
+  protected static final TextAttributesKey FILESTATUS_ERRORS = TextAttributesKey.createTextAttributesKey("FILESTATUS_ERRORS");
   private static final Logger LOG = Logger.getInstance(AbstractTreeNode.class);
   private AbstractTreeNode<?> parent;
   private Object myValue;
