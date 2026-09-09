@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.marker.PMarker
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
@@ -34,8 +35,8 @@ class SnapshotFoldingModelTest {
 
       BranchState(
         usesSnapshotStorage = editor.foldingModel.isUsingSnapshotFoldingStorage,
-        initialStart = region.resolve(initialSnapshot).startOffset,
-        shiftedStart = region.resolve(shiftedSnapshot).startOffset,
+        initialStart = SnapshotMarkerEngineImpl.resolveRangeMarker(region, initialSnapshot).startOffset,
+        shiftedStart = SnapshotMarkerEngineImpl.resolveRangeMarker(region, shiftedSnapshot).startOffset,
       )
     }
 

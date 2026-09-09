@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.marker.PMarker
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -30,8 +31,8 @@ class SnapshotInlayModelTest {
       val shiftedSnapshot = initialSnapshot.applyOp(textPatch(0, 0, "xy"))
 
       BranchState(
-        initialOffset = marker.resolve(initialSnapshot).startOffset,
-        shiftedOffset = marker.resolve(shiftedSnapshot).startOffset,
+        initialOffset = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, initialSnapshot).startOffset,
+        shiftedOffset = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, shiftedSnapshot).startOffset,
       )
     }
 

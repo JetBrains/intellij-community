@@ -61,10 +61,6 @@ open class SnapshotRangeMarkerImpl private constructor(
     return markerId
   }
 
-  override fun resolve(snapshot: DocumentSnapshot): PMarkerResolution {
-    return SnapshotMarkerEngineImpl.resolveRangeMarker(this, rootReference(snapshot).get())
-  }
-
   override fun getDocument(): Document {
     val documentOrFile = documentOrFile
     return if (documentOrFile is VirtualFile) {
@@ -166,10 +162,10 @@ open class SnapshotRangeMarkerImpl private constructor(
     return (document.core.snapshot() as DocumentSnapshotImpl).markerRoot
   }
 
-  protected open fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
+  @ApiStatus.Internal
+  open fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
     return (snapshot as DocumentSnapshotImpl).markerRoot
   }
-
 
   override fun toString(): String = "SnapshotRangeMarker(id=$markerId" +
                                     (if (disposed) ", disposed" else "") +

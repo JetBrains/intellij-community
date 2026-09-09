@@ -80,8 +80,7 @@ public class SnapshotMarkerEngineBenchmark {
    * Resolves markers 4,000,000 times through {@link SnapshotMarkerEngineImpl}.
    *
    * <p>The precomputed access order visits every one of the 50,000 markers exactly 80 times in a permuted order. Each
-   * loop iteration performs one {@code resolve(snapshot)} call and consumes both resolved offsets through the returned
-   * checksum.</p>
+   * loop iteration resolves one marker and consumes both resolved offsets through the returned checksum.</p>
    */
   @Benchmark
   public long resolve4MMarkers(ResolveState state) {
@@ -91,7 +90,7 @@ public class SnapshotMarkerEngineBenchmark {
     long checksum = 0L;
 
     for (int index = 0; index < RESOLVE_CALLS; index++) {
-      PMarkerResolution resolution = markers[resolveOrder[index]].resolve(snapshot);
+      PMarkerResolution resolution = SnapshotMarkerEngineImpl.INSTANCE.resolveRangeMarker(markers[resolveOrder[index]], snapshot);
       checksum += (long)resolution.getStartOffset() + resolution.getEndOffset();
     }
 

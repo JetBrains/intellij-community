@@ -82,8 +82,9 @@ internal class DocumentLineDiffTest {
 
     runConcurrently {
       val snapshot = initialSnapshot.applyOp(patch)
-      assertEquals(expectedStart, marker.getStartOffset(snapshot))
-      assertEquals(expectedStart + 3, marker.getEndOffset(snapshot))
+      val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, snapshot)
+      assertEquals(expectedStart, resolution.startOffset)
+      assertEquals(expectedStart + 3, resolution.endOffset)
     }
   }
 
@@ -118,7 +119,8 @@ internal class DocumentLineDiffTest {
       )
 
       val snapshot = initialSnapshot.applyOp(patch)
-      return marker.getStartOffset(snapshot) to marker.getEndOffset(snapshot)
+      val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, snapshot)
+      return resolution.startOffset to resolution.endOffset
     }
 
     val sharedPatch = createPatch()

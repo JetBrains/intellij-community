@@ -128,11 +128,10 @@ internal class SnapshotHighlighterStorage(
 
   fun collectAll(): List<RangeHighlighterEx> {
     processHighlighterQueue()
-    val snapshot = currentSnapshot()
     val result = ArrayList<RangeHighlighterEx>()
     for (reference in highlightersById.values()) {
       val highlighter = reference.get() ?: continue
-      if (highlighter.resolve(snapshot).isValid) result.add(highlighter)
+      if (highlighter.isValid) result.add(highlighter)
     }
     result.sortWith(SNAPSHOT_HIGHLIGHTER_COMPARATOR)
     return result

@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.impl.marker.PMarker
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.testFramework.junit5.TestApplication
@@ -39,19 +40,19 @@ class SnapshotGuardedBlockTest {
     Assertions.assertThat(document.getRangeGuard(5, 6)).isSameAs(guard)
 
     val snapshotGuard = guard as PMarker
-    Assertions.assertThat(snapshotGuard.resolve(initialSnapshot))
+    Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, initialSnapshot))
       .extracting("startOffset", "endOffset").containsExactly(4, 10)
 
     val insertedBefore = initialSnapshot.applyOp(textPatch(0, 0, "x\n"))
-    Assertions.assertThat(snapshotGuard.resolve(insertedBefore))
+    Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, insertedBefore))
       .extracting("startOffset", "endOffset").containsExactly(6, 12)
 
     val replaced = initialSnapshot.applyOp(textPatch(0, initialSnapshot.text().length(), "prefix\none\ntarget\nlast"))
-    Assertions.assertThat(snapshotGuard.resolve(replaced))
+    Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, replaced))
       .extracting("startOffset", "endOffset").containsExactly(11, 17)
 
     val deleted = initialSnapshot.applyOp(textPatch(3, 11, ""))
-    Assertions.assertThat(snapshotGuard.resolve(deleted).isValid).isFalse()
+    Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, deleted).isValid).isFalse()
 
     document.removeGuardedBlock(guard)
     Assertions.assertThat(guard.isValid).isFalse()

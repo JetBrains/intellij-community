@@ -321,7 +321,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
    */
   override fun resolveRangeMarker(marker: PMarker, snapshot: DocumentSnapshot): PMarkerResolution {
     val storedMarker = marker as SnapshotRangeMarkerImpl
-    return resolveRangeMarker(storedMarker, markerRoot(snapshot).get())
+    return resolveRangeMarker(storedMarker, storedMarker.rootReference(snapshot).get())
   }
 
   internal fun resolveRangeMarker(marker: SnapshotRangeMarkerImpl, root: PMarkerRoot): PMarkerResolution {

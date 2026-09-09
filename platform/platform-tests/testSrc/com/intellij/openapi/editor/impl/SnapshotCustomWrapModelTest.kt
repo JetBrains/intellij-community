@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.marker.PMarker
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.util.Disposer
@@ -35,9 +36,9 @@ class SnapshotCustomWrapModelTest {
       val snapshotWrap = wrap as PMarker
       val shiftedBranch = initialSnapshot.applyOp(textPatch(0, 0, "x"))
       val invalidBranch = initialSnapshot.applyOp(textPatch(4, 5, ""))
-      val initialResolution = snapshotWrap.resolve(initialSnapshot)
-      val shiftedResolution = snapshotWrap.resolve(shiftedBranch)
-      val invalidResolution = snapshotWrap.resolve(invalidBranch)
+      val initialResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotWrap, initialSnapshot)
+      val shiftedResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotWrap, shiftedBranch)
+      val invalidResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotWrap, invalidBranch)
       BranchState(
         wrap = wrap,
         initialRange = initialResolution.startOffset to initialResolution.endOffset,

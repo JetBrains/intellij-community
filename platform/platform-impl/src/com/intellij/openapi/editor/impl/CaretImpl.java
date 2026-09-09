@@ -1758,7 +1758,8 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     }
 
     @Override
-    protected @NotNull AtomicReference<PMarkerRoot> rootReference(@NotNull DocumentSnapshot snapshot) {
+    @NotNull
+    public AtomicReference<PMarkerRoot> rootReference(@NotNull DocumentSnapshot snapshot) {
       return storage.rootReference(snapshot);
     }
 
@@ -1831,7 +1832,8 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     }
 
     @Override
-    protected @NotNull AtomicReference<PMarkerRoot> rootReference(@NotNull DocumentSnapshot snapshot) {
+    @NotNull
+    public AtomicReference<PMarkerRoot> rootReference(@NotNull DocumentSnapshot snapshot) {
       return storage.rootReference(snapshot);
     }
 

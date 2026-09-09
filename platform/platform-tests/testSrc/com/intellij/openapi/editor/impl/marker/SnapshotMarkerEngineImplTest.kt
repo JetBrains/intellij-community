@@ -361,7 +361,7 @@ class SnapshotMarkerEngineImplTest {
     val expectedStart = newText.indexOf("target") + 1
 
     assertRange(persistentMarker, replacedSnapshot, expectedStart, expectedStart + 3)
-    assertTrue(ordinaryMarker.resolve(replacedSnapshot) is PMarkerResolution.Invalid)
+    assertTrue(SnapshotMarkerEngineImpl.resolveRangeMarker(ordinaryMarker, replacedSnapshot) is PMarkerResolution.Invalid)
   }
 
   @Test
@@ -393,7 +393,7 @@ class SnapshotMarkerEngineImplTest {
     val expectedStart = document.text.indexOf("target") + 1
 
     assertRange(persistentMarker, replacedSnapshot, expectedStart, expectedStart + 3)
-    assertTrue(ordinaryMarker.resolve(replacedSnapshot) is PMarkerResolution.Invalid)
+    assertTrue(SnapshotMarkerEngineImpl.resolveRangeMarker(ordinaryMarker, replacedSnapshot) is PMarkerResolution.Invalid)
   }
 
   @Test
@@ -415,7 +415,7 @@ class SnapshotMarkerEngineImplTest {
 
     document.replaceString(replacementStart, replacementEnd, replacement)
 
-    assertTrue(persistentMarker.resolve(document.core.snapshot()) is PMarkerResolution.Invalid)
+    assertTrue(SnapshotMarkerEngineImpl.resolveRangeMarker(persistentMarker, document.core.snapshot()) is PMarkerResolution.Invalid)
   }
 
   @Test
@@ -526,7 +526,7 @@ class SnapshotMarkerEngineImplTest {
 
     marker.dispose()
 
-    val resolution = marker.resolve(fixture.initialSnapshot) as PMarkerResolution.Invalid
+    val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, fixture.initialSnapshot) as PMarkerResolution.Invalid
     assertEquals("Marker is disposed", resolution.reason)
     assertEquals(TextRange(2, 4), resolution)
     assertFalse(marker.isValid)
@@ -546,7 +546,7 @@ class SnapshotMarkerEngineImplTest {
     )
     assertTrue(fixture.document.removeRangeMarker(marker))
 
-    val resolution = marker.resolve(fixture.initialSnapshot) as PMarkerResolution.Invalid
+    val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, fixture.initialSnapshot) as PMarkerResolution.Invalid
     assertEquals("Marker is disposed", resolution.reason)
     assertFalse(marker.isValid)
     assertEquals(0, countOverlappingMarkers(fixture.initialSnapshot, startOffset = 0, endOffset = 6))
@@ -1031,16 +1031,19 @@ class SnapshotMarkerEngineImplTest {
     val child = fixture.editWithNaturalModSequence(fixture.initialSnapshot, startOffset = 0, endOffset = 0, newFragment = "XX")
 
     assertSame(fixture.document, marker.document)
-    assertEquals(2, marker.getStartOffset(fixture.initialSnapshot))
-    assertEquals(4, marker.getEndOffset(fixture.initialSnapshot))
+    val initialResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, fixture.initialSnapshot)
+    assertEquals(2, initialResolution.startOffset)
+    assertEquals(4, initialResolution.endOffset)
 
-    assertEquals(4, marker.getStartOffset(child))
-    assertEquals(6, marker.getEndOffset(child))
+    val childResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, child)
+    assertEquals(4, childResolution.startOffset)
+    assertEquals(6, childResolution.endOffset)
   }
 
   private fun assertRange(marker: PMarker, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
-    assertEquals(startOffset, marker.getStartOffset(snapshot))
-    assertEquals(endOffset, marker.getEndOffset(snapshot))
+    val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, snapshot)
+    assertEquals(startOffset, resolution.startOffset)
+    assertEquals(endOffset, resolution.endOffset)
   }
 
   private fun assertAbsent(marker: PMarker, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
@@ -1049,7 +1052,7 @@ class SnapshotMarkerEngineImplTest {
   }
 
   private fun assertDisposed(marker: PMarker, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
-    val resolution = marker.resolve(snapshot) as PMarkerResolution.Invalid
+    val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, snapshot) as PMarkerResolution.Invalid
     assertEquals("Marker is disposed", resolution.reason)
     assertEquals(TextRange(startOffset, endOffset), resolution)
   }
