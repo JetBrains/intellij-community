@@ -11,8 +11,10 @@ import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.xQuery
 import org.intellij.lang.annotations.Language
+import kotlin.time.Duration.Companion.minutes
 
 fun Finder.ideStatusBar(@Language("xpath") xpath: String = "//div[@class='IdeStatusBarImpl']", action: IdeStatusBarUI.() -> Unit = {}): IdeStatusBarUI {
   return x(xpath, IdeStatusBarUI::class.java).apply(action)
@@ -37,8 +39,15 @@ class IdeStatusBarUI(data: ComponentData) : UiComponent(data) {
   }
 
   class InfoAndProgressPanel(data: ComponentData) : UiComponent(data) {
-    val statusPanel = x("//div[@class='TextPanel']", WidgetStatusBarPanel.WidgetUI::class.java)
-
+    /**
+     * The status text panel.
+     *
+     * The locator holds the `StatusPanel` step because the info panel also holds the text panels of the inline progress.
+     * `@class` gives the short name of the parent class for an anonymous class, so `TextPanel` alone matches all of them.
+     */
+    val statusPanel =
+      x("status panel") { byJavaClass("com.intellij.openapi.wm.impl.status.StatusPanel") }
+      .x(WidgetStatusBarPanel.WidgetUI::class.java, "status text") { byType("com.intellij.openapi.wm.impl.status.TextPanel") }
     class WidgetStatusBarPanel(data: ComponentData) : UiComponent(data) {
       val widgets = xx(xQuery { byType("com.intellij.openapi.wm.impl.status.TextPanel") }, WidgetUI::class.java)
       val memoryUsagePanel = x("//div[@class='MemoryUsagePanelImpl']")
@@ -52,6 +61,9 @@ class IdeStatusBarUI(data: ComponentData) : UiComponent(data) {
       fun isWidgetNotPresented(finder: WidgetFinder): Boolean = isWidgetPresented(finder).not()
       fun assertWidgetIsPresented(finder: WidgetFinder) = assert(isWidgetPresented(finder)) {
         "Widget '${finder.name}' is not visible'"
+      }
+      fun shouldWidgetBePresented(finder: WidgetFinder) = should(timeout = 1.minutes, message = "Widget '${finder.name}' is not visible'") {
+        isWidgetPresented(finder)
       }
       fun assertWidgetIsNotPresented(finder: WidgetFinder) = assert(isWidgetNotPresented(finder)) {
         "Widget '${finder.name}' is visible'"
