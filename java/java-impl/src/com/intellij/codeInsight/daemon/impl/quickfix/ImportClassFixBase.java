@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,7 +28,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,7 +41,6 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImplicitClass;
@@ -87,7 +85,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -101,7 +98,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   private final @NotNull T myReferenceElement;
   private final @NotNull R myReference;
   private final PsiClass[] myClassesToImport;
-  private final @NotNull Set<PsiClass> myClassesRejectedForHint;
   private final boolean myHasUnresolvedImportWhichCanImport;
   private final PsiFile myContainingPsiFile;
   private final boolean myInContent;
@@ -118,7 +114,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     myContainingPsiFile = referenceElement.getContainingFile();
     CalcInfo calcInfo = calcClassesToImport();
     myClassesToImport = calcInfo.classesToImport();
-    myClassesRejectedForHint = calcInfo.classesRejectedForHint();
     myInContent = calcInfo.inContent();
     extensionsAllowToChangeFileSilently = calcInfo.extensionsAllowToChangeFileSilently();
     String firstName;
@@ -179,10 +174,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return myReference;
   }
 
-  private record CalcInfo(@NotNull PsiClass @NotNull [] classesToImport,
-                          @NotNull Set<PsiClass> classesRejectedForHint,
-                          ThreeState extensionsAllowToChangeFileSilently,
-                          boolean inContent) {}
+  private record CalcInfo(@NotNull PsiClass @NotNull [] classesToImport, ThreeState extensionsAllowToChangeFileSilently, boolean inContent) {}
   @RequiresBackgroundThread
   private CalcInfo calcClassesToImport() {
     PsiFile psiFile = myContainingPsiFile;
@@ -190,7 +182,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     Project project = psiFile == null ? null : psiFile.getProject();
     boolean myInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(project, virtualFile, false);
     ThreeState extensionsAllowToChangeFileSilently = virtualFile == null ? ThreeState.UNSURE : SilentChangeVetoer.extensionsAllowToChangeFileSilently(project, virtualFile);
-    CalcInfo empty = new CalcInfo(PsiClass.EMPTY_ARRAY, Collections.emptySet(), extensionsAllowToChangeFileSilently, myInContent);
+    CalcInfo empty = new CalcInfo(PsiClass.EMPTY_ARRAY, extensionsAllowToChangeFileSilently, myInContent);
     if (psiFile == null) {
       return empty;
     }
@@ -270,7 +262,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       classes = classList.toArray(PsiClass.EMPTY_ARRAY);
       CodeInsightUtil.sortIdenticalShortNamedMembers(classes, myReference);
     }
-    return new CalcInfo(classes, calcClassesRejectedForHint(classes), extensionsAllowToChangeFileSilently, myInContent);
+    return new CalcInfo(classes, extensionsAllowToChangeFileSilently, myInContent);
   }
 
   public static boolean qualifiedNameAllowsAutoImport(@NotNull PsiFile placeFile, @NotNull PsiClass aClass) {
@@ -319,42 +311,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
   }
 
-  /**
-   * The editor hint offers a class only when the call can use the static method of the class. The quick fix keeps
-   * every class, because the user did not ask for the hint.
-   *
-   * @return the classes which the editor hint must not offer
-   */
-  private @NotNull Set<PsiClass> calcClassesRejectedForHint(PsiClass @NotNull [] classes) {
-    if (classes.length == 0) return Collections.emptySet();
-    String memberName = getRequiredMemberName(myReferenceElement);
-    PsiExpressionList argumentList = getRequiredMemberCallArguments(myReferenceElement);
-    //no methods, they can be created later; or there is no static method->nothing is rejected
-    if (memberName == null || argumentList == null) return Collections.emptySet();
-    Set<PsiClass> rejected = new HashSet<>();
-    for (PsiClass aClass : classes) {
-      ProgressManager.checkCanceled();
-      if (!canCallStaticMethod(aClass, memberName, argumentList)) {
-        rejected.add(aClass);
-      }
-    }
-    return rejected;
-  }
-
-  /**
-   * @return true when the class has no static method with the name, or one of them can match the call. A class
-   * without such a method stays, because the user can create the method later.
-   */
-  private boolean canCallStaticMethod(@NotNull PsiClass psiClass, @NotNull String memberName, @NotNull PsiExpressionList argumentList) {
-    boolean methodFound = false;
-    for (PsiMethod method : psiClass.findMethodsByName(memberName, true)) {
-      if (!method.hasModifierProperty(PsiModifier.STATIC) || !isAccessible(method, myReferenceElement)) continue;
-      methodFound = true;
-      if (MethodCallSignature.canMatchCall(method, argumentList)) return true;
-    }
-    return !methodFound;
-  }
-
   private boolean hasMember(boolean needsStatic, @NotNull PsiClass psiClass, @NotNull String memberName) {
     PsiField field = psiClass.findFieldByName(memberName, true);
     if (field != null && (!needsStatic || field.hasModifierProperty(PsiModifier.STATIC)) && isAccessible(field, myReferenceElement)) {
@@ -396,13 +352,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   }
 
   protected @Nullable String getRequiredMemberName(@NotNull T referenceElement) {
-    return null;
-  }
-
-  /**
-   * @return the arguments of the call which uses the required member, or null when the member is not called
-   */
-  protected @Nullable PsiExpressionList getRequiredMemberCallArguments(@NotNull T referenceElement) {
     return null;
   }
 
@@ -487,27 +436,18 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
 
     if (allowPopup && canImportHere) {
-      PsiClass[] hintClasses = filterClassesForHint(classes);
-      if (hintClasses.length == 0) return Result.POPUP_NOT_SHOWN;
       String referenceName = getReferenceName(myReference);
       if (ImportHintDismissalTracker.isDismissed(editor, myReferenceElement, referenceName)) {
         return Result.POPUP_NOT_SHOWN;
       }
       if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
-        QuestionAction hintAction = hintClasses.length == classes.length ? action : createAddImportAction(hintClasses, project, editor);
-        String hintText = ShowAutoImportPass.getMessage(hintClasses.length > 1, IdeBundle.message("go.to.class.kind.text"),
-                                                        hintClasses[0].getQualifiedName());
+        String hintText = ShowAutoImportPass.getMessage(classes.length > 1, IdeBundle.message("go.to.class.kind.text"), classes[0].getQualifiedName());
         ImportHintDismissalTracker.showHint(editor, hintText, getStartOffset(myReferenceElement, myReference),
-                                            getEndOffset(myReferenceElement, myReference), hintAction, myReferenceElement, referenceName);
+                                            getEndOffset(myReferenceElement, myReference), action, myReferenceElement, referenceName);
       }
       return Result.POPUP_SHOWN;
     }
     return Result.POPUP_NOT_SHOWN;
-  }
-
-  private PsiClass @NotNull [] filterClassesForHint(PsiClass @NotNull [] classes) {
-    if (myClassesRejectedForHint.isEmpty()) return classes;
-    return ContainerUtil.filter(classes, aClass -> !myClassesRejectedForHint.contains(aClass)).toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private boolean isReferenceNameForbiddenForAutoImport() {

@@ -22,7 +22,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                        public static double distance() { return 0; }
                      }
                      """);
-    assertHintIsEmpty("""
+    assertNoHintButIntentionIsAvailable("""
                         class X {
                           void test(double a, double b) {
                             double d = dist<caret>ance(a, b);
@@ -54,7 +54,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                        public static void greet(String name) { }
                      }
                      """);
-    assertHintIsEmpty("""
+    assertNoHintButIntentionIsAvailable("""
                         class X {
                           void test() {
                             gre<caret>et(1);
@@ -118,13 +118,29 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                        public static int sum(int first, int second, int... rest) { return 0; }
                      }
                      """);
-    assertHintIsEmpty("""
+    assertNoHintButIntentionIsAvailable("""
                         class X {
                           void test() {
                             int s = s<caret>um(1);
                           }
                         }
                         """);
+  }
+
+  public void testTheHintShowsAVarargsMethodWithoutAVarargsArgument() {
+    addHelperClass("""
+                     package p;
+                     public final class Numbers {
+                       public static int sum(int first, int second, int... rest) { return 0; }
+                     }
+                     """);
+    assertHintShows("""
+                      class X {
+                        void test() {
+                          int s = s<caret>um(1, 2);
+                        }
+                      }
+                      """, "sum");
   }
 
   public void testTheHintShowsAGenericMethodWithAMatchingArgument() {
@@ -150,7 +166,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                        public static <T> T firstOf(java.util.List<T> list) { return null; }
                      }
                      """);
-    assertHintIsEmpty("""
+    assertNoHintButIntentionIsAvailable("""
                         class X {
                           String test(java.util.List<String> list) {
                             return firs<caret>tOf(list, 1);
@@ -166,7 +182,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                        public static <T> void put(String key, T value) { }
                      }
                      """);
-    assertHintIsEmpty("""
+    assertNoHintButIntentionIsAvailable("""
                         class X {
                           void test() {
                             p<caret>ut(1, "x");
@@ -214,7 +230,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
     myFixture.addClass(text);
   }
 
-  private void assertHintIsEmpty(@NotNull String text) {
+  private void assertNoHintButIntentionIsAvailable(@NotNull String text) {
     assertEmpty(createFix(text).getHintCandidates());
     assertIntentionIsAvailable();
   }

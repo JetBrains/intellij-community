@@ -18,8 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Matches the signature of a method against a call, without type inference. An import fix uses this check to keep
- * the editor hint away from a method the call cannot use.
+ * Matches the signature of a method against a call, without type inference. The static import fix uses this check
+ * to keep the editor hint away from a method the call cannot use.
  */
 final class MethodCallSignature {
   private MethodCallSignature() {
