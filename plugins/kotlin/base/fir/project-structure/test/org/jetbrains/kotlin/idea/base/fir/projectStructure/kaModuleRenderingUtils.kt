@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 internal fun getOneLineModuleDescriptionForRendering(module: KaModule): String? {
     val string = when (module) {
         is KaBuiltinsModule -> null
-        is KaDanglingFileModule -> module.file.name
+        is KaDanglingFileModule -> module.files.single().name
         is KaLibraryModule -> module.getModuleLibraryNameForRendering()
         is KaLibrarySourceModule -> "library sources of " + getOneLineModuleDescriptionForRendering(module.binaryLibrary)
         is KaLibraryFallbackDependenciesModule -> "fallback dependencies of " + getOneLineModuleDescriptionForRendering(module.dependentLibrary)

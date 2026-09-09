@@ -110,7 +110,7 @@ object KaModuleStructureMermaidRenderer {
 
     private fun KaModule.moduleTextForRendering(): String? = when (this) {
         is KaBuiltinsModule -> null
-        is KaDanglingFileModule -> file.name.inParenthesis()
+        is KaDanglingFileModule -> files.single().name.inParenthesis()
         is KaLibrarySourceModule -> "library sources of ${binaryLibrary.moduleTextForRendering()}"
         is KaLibraryModule -> buildString {
             append(getModuleLibraryNameForRendering().inParenthesis())
