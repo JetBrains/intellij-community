@@ -33,6 +33,7 @@ jvm_library(
         ["src/main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["@lib//:platform-jewel-int_ui-standalone-jna"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -44,7 +45,7 @@ jvm_library(
         "//libraries/compose-runtime-desktop",
         "//platform/jewel/foundation",
         "//libraries/jbr",
-        "//libraries/jna",
+        "@lib//:platform-jewel-int_ui-standalone-jna",
         "//platform/icons-api",
         "//platform/icons-impl",
     ],
@@ -60,6 +61,7 @@ jvm_library(
     kotlinc_opts = ":custom_jewel-intUi-standalone",
     module_name = "intellij.platform.jewel.intUi.standalone",
     visibility = ["//visibility:public"],
+    exports = ["@lib//:platform-jewel-int_ui-standalone-jna"],
     runtime_deps = [
         # do not sort,
         ":jewel-intUi-standalone",
@@ -71,7 +73,6 @@ jvm_library(
         "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
         "//platform/jewel/foundation:foundation_test_lib",
         "//libraries/jbr:jbr_test_lib",
-        "//libraries/jna:jna_test_lib",
         "//platform/icons-api:icons-api_test_lib",
         "//platform/icons-impl:icons-impl_test_lib",
     ],
