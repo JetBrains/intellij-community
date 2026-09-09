@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NotNull;
  */
 final class RestartButton extends InstallButton {
 
-  RestartButton(@NotNull PluginModelFacade pluginModelFacade) {
-    super(true);
-    addActionListener(e -> pluginModelFacade.getModel().runRestartButton(this));
+  RestartButton(@NotNull PluginModelFacade pluginModelFacade, boolean useSecondaryStyle) {
+    super(true, false, useSecondaryStyle);
+    addActionListener(ignored -> pluginModelFacade.getModel().runRestartButton(this));
   }
 
   @Override

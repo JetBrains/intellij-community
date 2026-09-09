@@ -136,6 +136,8 @@ class PluginDetailsPageComponent private constructor(
   private val isMarketplace: Boolean,
   private val customizationStrategy: PluginDetailsPageCustomizationStrategy,
   operationLauncherOverride: OperationLauncherOverride?,
+  internal val useSecondaryButtons: Boolean,
+  internal val useBadgeTags: Boolean,
 ) : MultiPanel() {
   @JvmOverloads
   constructor(
@@ -143,7 +145,7 @@ class PluginDetailsPageComponent private constructor(
     searchListener: LinkListener<Any>,
     isMarketplace: Boolean,
     customizationStrategy: PluginDetailsPageCustomizationStrategy = DefaultPluginDetailsPageCustomizationStrategy,
-  ) : this(pluginModel, searchListener, isMarketplace, customizationStrategy, null)
+  ) : this(pluginModel, searchListener, isMarketplace, customizationStrategy, null, false, false)
 
   internal constructor(
     pluginModel: PluginModelFacade,
@@ -152,12 +154,16 @@ class PluginDetailsPageComponent private constructor(
     customizationStrategy: PluginDetailsPageCustomizationStrategy,
     operationLauncher: PluginOperationLauncher,
     operationUiBridge: PluginOperationUiBridge? = null,
+    secondaryButtons: Boolean = false,
+    badgeTags: Boolean = false,
   ) : this(
     pluginModel,
     searchListener,
     isMarketplace,
     customizationStrategy,
     OperationLauncherOverride(operationLauncher, operationUiBridge),
+    secondaryButtons,
+    badgeTags,
   )
 
   @Suppress("OPT_IN_USAGE")
@@ -415,7 +421,7 @@ class PluginDetailsPageComponent private constructor(
     topPanel.border = createMainBorder()
     panel!!.add(topPanel, BorderLayout.NORTH)
 
-    topPanel.add(TagPanel(searchListener).also { tagPanel = it })
+    topPanel.add(TagPanel(searchListener, useBadgeTags).also { tagPanel = it })
     topPanel.add(nameComponent)
 
     val linkPanel = NonOpaquePanel(HorizontalLayout(JBUI.scale(12)))
@@ -556,9 +562,9 @@ class PluginDetailsPageComponent private constructor(
 
   private fun createButtons() {
     val nameAndButtons = nameAndButtons!!
-    nameAndButtons.addButtonComponent(RestartButton(pluginModel).also { restartButton = it })
+    nameAndButtons.addButtonComponent(RestartButton(pluginModel, useSecondaryButtons).also { restartButton = it })
 
-    nameAndButtons.addButtonComponent(UpdateButton().also { updateButton = it })
+    nameAndButtons.addButtonComponent(UpdateButton(useSecondaryButtons).also { updateButton = it })
     updateButton!!.addActionListener {
       updatePlugin()
     }
@@ -1757,7 +1763,7 @@ class PluginDetailsPageComponent private constructor(
   }
 
   private fun createInstallButton(): PluginInstallButton {
-    if (UiPluginManager.isCombinedPluginManagerEnabled()) {
+    if (requiresInstallOptionButton(useSecondaryButtons, UiPluginManager.isCombinedPluginManagerEnabled())) {
       val button = InstallOptionButton()
       setDefaultInstallAction(button)
       return button
@@ -1921,6 +1927,10 @@ class PluginDetailsPageComponent private constructor(
 
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
+}
+
+internal fun requiresInstallOptionButton(useSecondaryButtons: Boolean, combinedPluginManagerEnabled: Boolean): Boolean {
+  return useSecondaryButtons || combinedPluginManagerEnabled
 }
 
 @ApiStatus.Internal

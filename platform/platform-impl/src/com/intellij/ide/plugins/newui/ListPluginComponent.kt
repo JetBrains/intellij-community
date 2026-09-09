@@ -121,6 +121,8 @@ class ListPluginComponent internal constructor(
   private val myOperationLauncher: PluginOperationLauncher,
   operationUiBridge: PluginOperationUiBridge?,
   marketplace: Boolean,
+  private val myUseSecondaryButtons: Boolean = false,
+  private val myUseBadgeTags: Boolean = false,
 ) : JPanel() {
   constructor(
     pluginModelFacade: PluginModelFacade,
@@ -334,7 +336,7 @@ class ListPluginComponent internal constructor(
     }
     if (myMarketplace) {
       if (installationState.status == PluginStatus.INSTALLED_AND_REQUIRED_RESTART) {
-        myRestartButton = RestartButton(myModelFacade)
+        myRestartButton = RestartButton(myModelFacade, myUseSecondaryButtons)
         myLayout.addButtonComponent(myRestartButton!!)
       }
       else {
@@ -366,7 +368,7 @@ class ListPluginComponent internal constructor(
             myAfterUpdate = true
           }
           else {
-            myRestartButton = RestartButton(myModelFacade)
+            myRestartButton = RestartButton(myModelFacade, myUseSecondaryButtons)
             myLayout.addButtonComponent(myRestartButton!!)
 
             myModelFacade.addUninstalled(myInstalledDescriptorForMarketplace!!.pluginId)
@@ -389,7 +391,7 @@ class ListPluginComponent internal constructor(
           myAfterUpdate = true
         }
         else {
-          myRestartButton = RestartButton(myModelFacade)
+          myRestartButton = RestartButton(myModelFacade, myUseSecondaryButtons)
           myLayout.addButtonComponent(myRestartButton!!)
 
           myModelFacade.addUninstalled(myPlugin.pluginId)
@@ -398,7 +400,7 @@ class ListPluginComponent internal constructor(
       else {
         if (installationState.status == PluginStatus.INSTALLED_AND_REQUIRED_RESTART ||
             installationState.status == PluginStatus.UPDATED_WITH_RESTART) {
-          myRestartButton = RestartButton(myModelFacade)
+          myRestartButton = RestartButton(myModelFacade, myUseSecondaryButtons)
           myLayout.addButtonComponent(myRestartButton!!)
         }
         else if (installedModel == null && installationState.status == PluginStatus.INSTALLED_WITHOUT_RESTART) {
@@ -437,7 +439,7 @@ class ListPluginComponent internal constructor(
   }
 
   private fun createInstallButton(): InstallButton {
-    return InstallButton(false, myRenderKey.requiresUpgrade)
+    return InstallButton(false, myRenderKey.requiresUpgrade, myUseSecondaryButtons)
   }
 
   private fun createEnableDisableButton(modelFunction: Supplier<PluginUiModel>) {
@@ -493,11 +495,11 @@ class ListPluginComponent internal constructor(
 
   private fun createTag() {
     val tag: @NlsSafe String = myRenderKey.firstTag ?: return
-    val tagComponent = createTagComponent(tag)
+    val tagComponent = if (myUseBadgeTags) PluginTagBadge.create(tag, mySearchListener) else createTagComponent(tag)
     if (myIsNotFreeInFreeMode) {
       tagComponent.toolTipText = UnavailableWithoutSubscriptionComponent.getHelpTooltip()
     }
-    myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(tagComponent))
+    myLayout.setTagComponent(if (myUseBadgeTags) tagComponent else PluginManagerConfigurable.setTinyFont(tagComponent))
   }
 
   private fun createTagComponent(tag: @Nls String): TagComponent {
@@ -650,7 +652,7 @@ class ListPluginComponent internal constructor(
         )
       }
       if (myUpdateButton == null) {
-        myUpdateButton = UpdateButton()
+        myUpdateButton = UpdateButton(myUseSecondaryButtons)
         myLayout.addButtonComponent(myUpdateButton!!, 0)
         myUpdateButton!!.addActionListener { updatePlugin(descriptorForActions, updateDescriptor) }
       }
@@ -934,7 +936,7 @@ class ListPluginComponent internal constructor(
       myEnableDisableButton = null
     }
     if (myIsAvailable && showRestart && myRestartButton == null) {
-      myRestartButton = RestartButton(myModelFacade)
+      myRestartButton = RestartButton(myModelFacade, myUseSecondaryButtons)
       myLayout.addButtonComponent(myRestartButton!!, 0)
     }
     if (myAlignButton != null) {
@@ -1531,7 +1533,13 @@ class ListPluginComponent internal constructor(
 
         if (myTagComponent != null) {
           val size = myTagComponent!!.preferredSize
-          setBaselineBounds(nextX, baseline, myTagComponent!!, size)
+          if (myUseBadgeTags) {
+            val nameBounds = myNameComponent!!.bounds
+            myTagComponent!!.setBounds(nextX, nameBounds.y + (nameBounds.height - size.height) / 2, size.width, size.height)
+          }
+          else {
+            setBaselineBounds(nextX, baseline, myTagComponent!!, size)
+          }
           nextX += size.width
         }
 
