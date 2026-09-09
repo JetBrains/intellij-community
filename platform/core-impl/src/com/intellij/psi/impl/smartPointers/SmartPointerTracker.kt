@@ -109,7 +109,7 @@ class SmartPointerTracker(initialModCount: Long) {
     frozen: FrozenDocument,
     events: List<DocumentEvent>,
   ): Segment? {
-    return MarkerCache.getUpdatedRange(containingFile, segment, isSegmentGreedy, frozen, events)
+    return MarkerCache.getUpdatedRange(segment, isSegmentGreedy, frozen, events)
   }
 
   @JvmName("switchStubToAst")
