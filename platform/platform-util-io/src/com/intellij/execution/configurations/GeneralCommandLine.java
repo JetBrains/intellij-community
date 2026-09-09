@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -114,6 +115,8 @@ public class GeneralCommandLine implements UserDataHolder {
   private @Nullable File myInputFile;
   private Map<Object, Object> myUserData;
   /**
+   * Caches the target derived from the executable path and the working directory.
+   * Changing either value clears this cache.
    * `null` means that the ref is not initialized yet
    * `Ref(null)` means that Eel should **not** be used here
    * `Ref(not-null)` means that the Eel **should** be used
@@ -170,8 +173,17 @@ public class GeneralCommandLine implements UserDataHolder {
     return myExePath;
   }
 
+  /**
+   * Sets an executable path or a program name.
+   * For remote EEL execution, accepts an absolute global path, an absolute native path, or a name from the target's PATH.
+   * Executable strings without a remote global path are passed unchanged to EEL.
+   * For remote EEL execution, a native path or a program name requires a working directory that identifies the remote target.
+   * A native path can also be a valid local path when both systems use the same path syntax.
+   * Global executable and working directory paths must identify the same target.
+   */
   public @NotNull GeneralCommandLine withExePath(@NotNull String exePath) {
     myExePath = exePath.trim();
+    myEelDescriptor = null;
     return this;
   }
 
@@ -229,6 +241,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   public @NotNull GeneralCommandLine withWorkingDirectory(@Nullable Path workDirectory) {
     myWorkingDirectory = workDirectory;
+    myEelDescriptor = null;
     return this;
   }
 
@@ -494,15 +507,21 @@ public class GeneralCommandLine implements UserDataHolder {
       return null;
     }
 
-    final var exePath = Path.of(exe);
+    EelDescriptor executableDescriptor;
+    try {
+      executableDescriptor = getEelDescriptor(Path.of(exe));
+    }
+    catch (InvalidPathException ignored) {
+      executableDescriptor = LocalEelDescriptor.INSTANCE;
+    }
 
     // IJPL-177172: do not use eel for absolute Windows paths (e.g., C:\...).
     // Fallback to the legacy WSL behavior where a local exe is executed in a remote working directory.
     if (SystemInfo.isWindows && OSAgnosticPathUtil.isAbsoluteDosPath(exe)) {
       descriptor = null;
     }
-    else if (getEelDescriptor(exePath) != LocalEelDescriptor.INSTANCE) { // fast check
-      descriptor = getEelDescriptor(exePath);
+    else if (executableDescriptor != LocalEelDescriptor.INSTANCE) {
+      descriptor = executableDescriptor;
     }
     else if (workingDirectory != null && getEelDescriptor(workingDirectory) != LocalEelDescriptor.INSTANCE) {
       // also try to compute non-local descriptor from working dir
