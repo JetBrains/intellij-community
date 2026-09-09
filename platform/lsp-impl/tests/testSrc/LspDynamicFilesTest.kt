@@ -2,6 +2,9 @@ package com.intellij.platform.lsp
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -21,7 +24,7 @@ import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.features.documentation.LspDocumentationTargetProvider
-import com.intellij.platform.lsp.impl.features.navigation.LspLibraryFiles
+import com.intellij.platform.lsp.impl.features.navigation.LspDynamicFiles
 import com.intellij.platform.lsp.impl.getServerId
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.PsiManager
@@ -34,15 +37,19 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.eclipse.lsp4j.ExecuteCommandOptions
 import org.eclipse.lsp4j.Hover
 import org.eclipse.lsp4j.MarkupContent
 import org.eclipse.lsp4j.MarkupKind
+import org.eclipse.lsp4j.TextDocumentContentRefreshParams
+import org.eclipse.lsp4j.TextDocumentContentRegistrationOptions
+import org.eclipse.lsp4j.TextDocumentContentResult
+import org.eclipse.lsp4j.WorkspaceServerCapabilities
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -52,7 +59,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 @TestApplication
-internal class LspLibraryFilesTest {
+internal class LspDynamicFilesTest {
   companion object {
     private val tempDirFixture = tempPathFixture()
     private val projectFixture = projectFixture(tempDirFixture, openAfterCreation = true)
@@ -69,9 +76,10 @@ internal class LspLibraryFilesTest {
   private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
     configureServerCapabilities = {
       hoverProvider = Either.forLeft(true)
-      executeCommandProvider = ExecuteCommandOptions(listOf("decompile"))
+      workspace = WorkspaceServerCapabilities().apply {
+        textDocumentContent = TextDocumentContentRegistrationOptions(listOf("jar", "jrt"))
+      }
     },
-    isSupportedLibraryFile = { it.name == "Served.txt" },
   )
 
   @Test
@@ -82,22 +90,23 @@ internal class LspLibraryFilesTest {
     val client = manager.getRunningClients().single()
 
     val uri = "jar:///lib/foo.jar!/com/foo/Bar.class"
-    serverSession.expectRequest(serverSession.EXECUTE_COMMAND, { it.command == "decompile" }) {
-      mapOf("code" to "decompiled text", "language" to "TEXT")
+    serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
+      TextDocumentContentResult("decompiled text")
     }
     serverSession.expectNotification(serverSession.DID_OPEN) {
       it.textDocument.uri == uri && it.textDocument.text == "decompiled text" &&
-      it.textDocument.languageId == "TEXT" && it.textDocument.version == 0
+      it.textDocument.languageId == "class" && it.textDocument.version == 0
     }
-    val decompiled = client.libraryFiles.getOrDecompile(uri)
+    val decompiled = client.dynamicFiles.getOrRequestContent(uri)
     serverSession.awaitExpected()
 
     assertNotNull(decompiled)
     assertEquals("Bar.class", decompiled!!.name)
     assertEquals("decompiled text", VfsUtilCore.loadText(decompiled))
     assertFalse(decompiled.isWritable)
+    assertEquals(uri, client.descriptor.getFileUri(decompiled))
     assertEquals(uri, client.getDocumentIdentifier(decompiled).uri)
-    assertSame(decompiled, client.libraryFiles.getOrDecompile(uri))
+    assertSame(decompiled, client.dynamicFiles.getOrRequestContent(uri))
 
     val clients = readAction { manager.getClientsForFileRequests(decompiled) }
     assertEquals(listOf(client), clients.toList())
@@ -110,10 +119,10 @@ internal class LspLibraryFilesTest {
     val client = LspClientManagerImpl.getInstanceImpl(project).getRunningClients().single()
 
     val uri = "jar:///lib/foo.jar!/com/foo/Bar.class"
-    serverSession.expectRequest(serverSession.EXECUTE_COMMAND, { it.command == "decompile" }) {
-      mapOf("code" to "decompiled text")
+    serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
+      TextDocumentContentResult("decompiled text")
     }
-    val decompiled = client.libraryFiles.getOrDecompile(uri)
+    val decompiled = client.dynamicFiles.getOrRequestContent(uri)
     serverSession.awaitExpected()
     assertNotNull(decompiled)
 
@@ -137,10 +146,11 @@ internal class LspLibraryFilesTest {
     val manager = LspClientManagerImpl.getInstanceImpl(project)
     val client = manager.getRunningClients().single()
 
-    serverSession.expectRequest(serverSession.EXECUTE_COMMAND, { it.command == "decompile" }) {
-      mapOf("code" to "decompiled text")
+    val uri = "jrt://jdk/java.base/java/lang/String.class"
+    serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
+      TextDocumentContentResult("decompiled text")
     }
-    val decompiled = client.libraryFiles.getOrDecompile("jrt://jdk/java.base/java/lang/String.class")
+    val decompiled = client.dynamicFiles.getOrRequestContent(uri)
     serverSession.awaitExpected()
     assertNotNull(decompiled)
 
@@ -158,10 +168,10 @@ internal class LspLibraryFilesTest {
     val client = manager.getRunningClients().single()
 
     val uri = "jar:///lib/foo.jar!/com/foo/Bar.class"
-    serverSession.expectRequest(serverSession.EXECUTE_COMMAND, { it.command == "decompile" }) {
-      mapOf("code" to "decompiled text", "language" to "TEXT")
+    serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
+      TextDocumentContentResult("decompiled text")
     }
-    val decompiled = client.libraryFiles.getOrDecompile(uri)
+    val decompiled = client.dynamicFiles.getOrRequestContent(uri)
     serverSession.awaitExpected()
     assertNotNull(decompiled)
 
@@ -173,13 +183,13 @@ internal class LspLibraryFilesTest {
 
     restartedSession.expectNotification(restartedSession.DID_OPEN) {
       it.textDocument.uri == uri && it.textDocument.text == "decompiled text" &&
-      it.textDocument.languageId == "TEXT" && it.textDocument.version == 0
+      it.textDocument.languageId == "class" && it.textDocument.version == 0
     }
     val clients = readAction { manager.getClientsForFileRequests(decompiled!!) }
     restartedSession.awaitExpected()
 
     assertEquals(listOf(restarted), clients.toList())
-    assertSame(decompiled, restarted.libraryFiles.getOrDecompile(uri))
+    assertSame(decompiled, restarted.dynamicFiles.getOrRequestContent(uri))
   }
 
   @Test
@@ -190,10 +200,10 @@ internal class LspLibraryFilesTest {
     val client = manager.getRunningClients().single()
 
     val uri = "jar:///lib/foo.jar!/com/foo/Bar.class"
-    serverSession.expectRequest(serverSession.EXECUTE_COMMAND, { it.command == "decompile" }) {
-      mapOf("code" to "decompiled text", "language" to "TEXT")
+    serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
+      TextDocumentContentResult("decompiled text")
     }
-    val decompiled = client.libraryFiles.getOrDecompile(uri)
+    val decompiled = client.dynamicFiles.getOrRequestContent(uri)
     serverSession.awaitExpected()
     assertNotNull(decompiled)
 
@@ -206,7 +216,7 @@ internal class LspLibraryFilesTest {
     val restartedSession = currentServerSession(project)
     restartedSession.expectNotification(restartedSession.DID_OPEN) {
       it.textDocument.uri == uri && it.textDocument.text == "decompiled text" &&
-      it.textDocument.languageId == "TEXT" && it.textDocument.version == 0
+      it.textDocument.languageId == "class" && it.textDocument.version == 0
     }
     val clients = readAction { manager.getClientsForFileRequests(decompiled!!) }
     restartedSession.awaitExpected()
@@ -221,13 +231,14 @@ internal class LspLibraryFilesTest {
     val manager = LspClientManagerImpl.getInstanceImpl(project)
     val client = manager.getRunningClients().single()
 
-    serverSession.expectRequest(serverSession.EXECUTE_COMMAND, { it.command == "decompile" }) {
-      mapOf("code" to "decompiled text")
+    val uri = "jar:///lib/foo.jar!/com/foo/Bar.class"
+    serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
+      TextDocumentContentResult("decompiled text")
     }
-    val decompiled = client.libraryFiles.getOrDecompile("jar:///lib/foo.jar!/com/foo/Bar.class")
+    val decompiled = client.dynamicFiles.getOrRequestContent(uri)
     serverSession.awaitExpected()
     assertNotNull(decompiled)
-    decompiled!!.putUserData(LspLibraryFiles.DECOMPILED_BY_SERVER_ID, getServerId(AnotherLspProvider::class.java, client.descriptor))
+    decompiled!!.putUserData(LspDynamicFiles.CONTENT_BY_SERVER_ID, getServerId(AnotherLspProvider::class.java, client.descriptor))
 
     stopClientsAndWait(manager)
     manager.startClientsIfNeeded(FakeLspServerSupportProvider::class.java)
@@ -238,35 +249,44 @@ internal class LspLibraryFilesTest {
   }
 
   @Test
-  fun `requests inside a navigated jar file go to the producing client`() = timeoutRunBlocking {
+  fun `a jar target with server content is served by the server, not by the archive file system`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    configureServerSession(project, virtualFile)
-    val manager = LspClientManagerImpl.getInstanceImpl(project)
-    val client = manager.getRunningClients().single()
+    val serverSession = configureServerSession(project, virtualFile)
+    val client = LspClientManagerImpl.getInstanceImpl(project).getRunningClients().single()
 
-    val jarEntry = createJarEntry("lib.jar", "com/foo/Bar.txt")
+    val jarEntry = createJarEntry()
+    val uri = "jar://${jarEntry.path}"
+    serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
+      TextDocumentContentResult("served text")
+    }
+    val target = client.dynamicFiles.findTargetFile(uri)
+    serverSession.awaitExpected()
 
-    val before = readAction { manager.getClientsForFileRequests(jarEntry) }
-    assertTrue(before.isEmpty(), "The client does not declare library file support for the entry, so nothing routes there yet: $before")
-
-    val target = client.libraryFiles.findTargetFile(client.descriptor.getFileUri(jarEntry))
-    assertEquals(jarEntry, target)
-
-    val after = readAction { manager.getClientsForFileRequests(jarEntry) }
-    assertEquals(listOf(client), after.toList())
+    assertNotNull(target)
+    assertNotSame(jarEntry, target)
+    assertEquals("Bar.txt", target!!.name)
+    assertEquals("served text", VfsUtilCore.loadText(target))
   }
 
   @Test
-  fun `a jar file goes to a client that declares library file support`() = timeoutRunBlocking {
+  fun `a jar target without server content resolves through the descriptor only`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
     configureServerSession(project, virtualFile)
-    val manager = LspClientManagerImpl.getInstanceImpl(project)
-    val client = manager.getRunningClients().single()
+    val client = LspClientManagerImpl.getInstanceImpl(project).getRunningClients().single()
 
-    val jarEntry = createJarEntry("served.jar", "com/foo/Served.txt")
+    val warnings = Collections.synchronizedList(mutableListOf<String>())
+    val processor = object : LoggedErrorProcessor() {
+      override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
+        warnings.add(message)
+        return true
+      }
+    }
+    val target = LoggedErrorProcessor.executeWith(processor).use {
+      client.dynamicFiles.findTargetFile("zip:///lib/foo.zip!/com/foo/Bar.txt")
+    }
 
-    val clients = readAction { manager.getClientsForFileRequests(jarEntry) }
-    assertEquals(listOf(client), clients.toList())
+    assertNull(target)
+    assertTrue(warnings.any { it.contains("Unexpected URI scheme") }, "The descriptor rejects an undeclared scheme: $warnings")
   }
 
   @Test
@@ -275,8 +295,8 @@ internal class LspLibraryFilesTest {
     val serverSession = configureServerSession(project, virtualFile)
     val client = LspClientManagerImpl.getInstanceImpl(project).getRunningClients().single()
 
-    serverSession.expectRequest(serverSession.EXECUTE_COMMAND, { it.command == "decompile" }) {
-      mapOf("code" to "decompiled text")
+    serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri.startsWith("jrt:") }) {
+      TextDocumentContentResult("decompiled text")
     }
     val warnings = Collections.synchronizedList(mutableListOf<String>())
     val processor = object : LoggedErrorProcessor() {
@@ -286,7 +306,7 @@ internal class LspLibraryFilesTest {
       }
     }
     val target = LoggedErrorProcessor.executeWith(processor).use {
-      client.libraryFiles.findTargetFile("jrt://jdk/java.base/java/lang/String.class")
+      client.dynamicFiles.findTargetFile("jrt://jdk/java.base/java/lang/String.class")
     }
     serverSession.awaitExpected()
 
@@ -296,8 +316,61 @@ internal class LspLibraryFilesTest {
     assertTrue(uriWarnings.isEmpty(), "A jrt navigation must not warn about the URI: $uriWarnings")
   }
 
-  private fun createJarEntry(jarName: String, entryPath: String): VirtualFile {
-    val jarPath = tempDir.resolve(jarName)
+  @Test
+  fun `a content refresh replaces the text of the served file`(): Unit = timeoutRunBlocking {
+    val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+    val client = LspClientManagerImpl.getInstanceImpl(project).getRunningClients().single()
+
+    val uri = "jar:///lib/foo.jar!/com/foo/Bar.class"
+    serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
+      TextDocumentContentResult("old text")
+    }
+    val file = client.dynamicFiles.getOrRequestContent(uri)
+    serverSession.awaitExpected()
+    assertNotNull(file)
+    val document = readAction { FileDocumentManager.getInstance().getDocument(file!!) }
+    assertNotNull(document)
+    assertEquals("old text", readAction { document!!.text })
+
+    var replaced = CompletableDeferred<Unit>()
+    val disposable = Disposer.newDisposable("LspDynamicFilesTest.refresh")
+    try {
+      document!!.addDocumentListener(object : DocumentListener {
+        override fun documentChanged(event: DocumentEvent) {
+          replaced.complete(Unit)
+        }
+      }, disposable)
+      // the server keeps the document open since the didOpen, so each replaced text must reach it as a versioned change
+      for ((text, version) in listOf("new text" to 1, "newer text" to 2)) {
+        replaced = CompletableDeferred()
+        serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
+          TextDocumentContentResult(text)
+        }
+        serverSession.expectNotification(serverSession.DID_CHANGE) {
+          it.textDocument.uri == uri && it.textDocument.version == version &&
+          it.contentChanges.singleOrNull()?.let { change -> change.range == null && change.text == text } == true
+        }
+        serverSession.sendRequest(serverSession.TEXT_DOCUMENT_CONTENT_REFRESH) { TextDocumentContentRefreshParams(uri) }
+        replaced.await()
+        serverSession.awaitExpected()
+        assertEquals(text, readAction { document.text })
+      }
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+
+    assertEquals("newer text", VfsUtilCore.loadText(file!!))
+    assertFalse(file.isWritable, "The content file must stay read-only after a refresh")
+
+    // a refresh for a URI without a content file completes without an error
+    serverSession.sendRequest(serverSession.TEXT_DOCUMENT_CONTENT_REFRESH) { TextDocumentContentRefreshParams("jar:///nowhere.jar!/x/Y.class") }
+  }
+
+  private fun createJarEntry(): VirtualFile {
+    val entryPath = "com/foo/Bar.txt"
+    val jarPath = tempDir.resolve("lib.jar")
     ZipOutputStream(Files.newOutputStream(jarPath)).use { zip ->
       zip.putNextEntry(ZipEntry(entryPath))
       zip.write("class content".toByteArray())
@@ -314,7 +387,7 @@ internal class LspLibraryFilesTest {
 
   private suspend fun restartClientAndWait(manager: LspClientManagerImpl, client: LspClientImpl) {
     val running = CompletableDeferred<Unit>()
-    val disposable = Disposer.newDisposable("LspLibraryFilesTest")
+    val disposable = Disposer.newDisposable("LspDynamicFilesTest")
     try {
       manager.addListener(object : LspClientManagerListener {
         override fun serverStateChanged(lspClient: LspClient) {
@@ -331,7 +404,7 @@ internal class LspLibraryFilesTest {
 
   private suspend fun stopClientsAndWait(manager: LspClientManagerImpl) {
     val removed = CompletableDeferred<Unit>()
-    val disposable = Disposer.newDisposable("LspLibraryFilesTest")
+    val disposable = Disposer.newDisposable("LspDynamicFilesTest")
     try {
       manager.addListener(object : LspClientManagerListener {
         override fun clientRemoved(lspClient: LspClient) {

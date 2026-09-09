@@ -10,10 +10,10 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -114,21 +114,6 @@ abstract class LspClientDescriptor protected constructor(
   abstract fun isSupportedFile(file: VirtualFile): Boolean
 
   /**
-   * True if the LSP server can handle read-only requests, like hover or go-to-definition, for the given library file:
-   * a file inside an archive, for example a jar entry or a JDK class from the jrt file system.
-   * A library file normally goes to the client that navigated to it. When no running client did,
-   * the file goes to every client whose descriptor returns `true` here.
-   * Unlike [isSupportedFile], the given file is not in a local file system and not within project content roots.
-   * The same rules apply otherwise: the implementation must be idempotent, have no side effects,
-   * and the result must depend only on the given file.
-   *
-   * The default [getFileUri] produces a URI the JetBrains language servers understand only for a jar entry.
-   * A descriptor that accepts another archive file system must also override [getFileUri] and [findFileByUri].
-   */
-  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-  open fun isSupportedLibraryFile(file: VirtualFile): Boolean = false
-
-  /**
    * Starts the LSP server process.
    * Usually, plugins don't need to override this function, but only implement the [createCommandLine] function.
    *
@@ -209,23 +194,11 @@ abstract class LspClientDescriptor protected constructor(
    * Returns a [DocumentUri](https://microsoft.github.io/language-server-protocol/specification/#documentUri), which can be used in various
    * requests to the LSP server.
    * The default implementation simply calls [getFilePath] and converts it to `file://...` URI.
-   * For a file inside a jar, it produces a `jar:///path/to.jar!/path/inside.jar` URI, symmetric to [findFileByUri].
+   * For a dynamic file, an in-memory file the [LspClient] created from a `workspace/textDocumentContent` result,
+   * it returns the URI the content was requested with.
    */
-  open fun getFileUri(file: VirtualFile): String {
-    if (file.fileSystem is JarFileSystem) {
-      val path = file.path
-      val separatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR)
-      if (separatorIndex > 0) {
-        // route the jar's own path through getFilePath, so a WSL or Docker server receives a path it can read
-        val localJar = JarFileSystem.getInstance().getLocalByEntry(file)
-        val jarPath = localJar?.let { getFilePath(it) } ?: path.take(separatorIndex)
-        val jarUri = localFileUri(jarPath)
-        val escapedInJarPath = URLUtil.encodePath(path.substring(separatorIndex + URLUtil.JAR_SEPARATOR.length))
-        return URLUtil.JAR_PROTOCOL + jarUri.removePrefix(URLUtil.FILE_PROTOCOL) + URLUtil.JAR_SEPARATOR + escapedInJarPath
-      }
-    }
-    return localFileUri(getFilePath(file))
-  }
+  open fun getFileUri(file: VirtualFile): String =
+    file.getUserData(DYNAMIC_FILE_URI) ?: localFileUri(getFilePath(file))
 
   private fun localFileUri(path: String): String {
     val escapedPath = URLUtil.encodePath(path)
@@ -269,17 +242,15 @@ abstract class LspClientDescriptor protected constructor(
   }
 
   /**
-   * Extracts a file path from [fileUri] and calls [findLocalFileByPath] or [findFileInJar].
-   * Respects only `file://...` URIs and `jar:///path/to.jar!/path/inside.jar` URIs (the format the JetBrains language servers use for
-   * library sources).
+   * Extracts a file path from [fileUri] and calls [findLocalFileByPath].
+   * Respects only `file://...` URIs.
    * @param fileUri a [DocumentUri](https://microsoft.github.io/language-server-protocol/specification/#documentUri) received from the LSP
    *                server within some response or notification
    */
   open fun findFileByUri(fileUri: String): VirtualFile? {
     return try {
       val uri = URI(fileUri)
-      val scheme = uri.scheme
-      if (URLUtil.FILE_PROTOCOL != scheme && URLUtil.JAR_PROTOCOL != scheme) {
+      if (URLUtil.FILE_PROTOCOL != uri.scheme) {
         LOG.warn("Unexpected URI scheme: $fileUri")
         return null
       }
@@ -288,40 +259,12 @@ abstract class LspClientDescriptor protected constructor(
         LOG.warn("Unexpected URI (no path): $fileUri")
         return null
       }
-      if (URLUtil.JAR_PROTOCOL == scheme) {
-        if (!path.contains(URLUtil.JAR_SEPARATOR)) {
-          LOG.warn("Unexpected jar URI (no ${URLUtil.JAR_SEPARATOR} separator): $fileUri")
-          return null
-        }
-        // `URI.path` keeps a leading slash before a Windows drive; `JarFileSystem`, unlike `LocalFileSystem`, does not strip it
-        val jarPath = if (path.startsWith('/') && OSAgnosticPathUtil.startsWithWindowsDrive(path.substring(1))) path.substring(1) else path
-        return findFileInJar(jarPath)
-      }
       findLocalFileByPath(path)
     }
     catch (e: URISyntaxException) {
       LOG.warn("Malformed URI: " + fileUri + "; " + e.message)
       null
     }
-  }
-
-  /**
-   * @param path a [JarFileSystem]-style path: `/path/to.jar!/path/inside.jar`
-   * @see findFileByUri
-   */
-  protected open fun findFileInJar(path: String): VirtualFile? {
-    val separatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR)
-    if (separatorIndex > 0) {
-      // resolve the jar's own path through findLocalFileByPath, symmetric to the mapping in getFileUri
-      val localJar = findLocalFileByPath(path.take(separatorIndex))
-      val jarRoot = localJar?.let { JarFileSystem.getInstance().getJarRootForLocalFile(it) }
-      if (jarRoot != null) {
-        val inJarPath = path.substring(separatorIndex + URLUtil.JAR_SEPARATOR.length)
-        return if (inJarPath.isEmpty()) jarRoot else jarRoot.findFileByRelativePath(inJarPath)
-      }
-    }
-    val jarFileSystem = JarFileSystem.getInstance()
-    return jarFileSystem.findFileByPath(path) ?: jarFileSystem.refreshAndFindFileByPath(path)
   }
 
   /**
@@ -466,6 +409,10 @@ abstract class LspClientDescriptor protected constructor(
   companion object {
     @JvmField
     val LOG: Logger = Logger.getInstance(LspClientDescriptor::class.java)
+
+    /** The URI the [LspClient] requested the content of a dynamic file with, see [getFileUri]. */
+    @get:ApiStatus.Internal
+    val DYNAMIC_FILE_URI: Key<String> = Key.create("lsp.dynamic.file.uri")
 
     fun getLanguageId(file: VirtualFile): String {
       val nameLowercased = StringUtil.toLowerCase(file.name)

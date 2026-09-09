@@ -64,6 +64,7 @@ import org.eclipse.lsp4j.SymbolTag
 import org.eclipse.lsp4j.SymbolTagSupportCapabilities
 import org.eclipse.lsp4j.SynchronizationCapabilities
 import org.eclipse.lsp4j.TextDocumentClientCapabilities
+import org.eclipse.lsp4j.TextDocumentContentCapabilities
 import org.eclipse.lsp4j.TokenFormat
 import org.eclipse.lsp4j.TypeDefinitionCapabilities
 import org.eclipse.lsp4j.TypeHierarchyCapabilities
@@ -89,6 +90,8 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       relativePatternSupport = true
     }
     executeCommand = ExecuteCommandCapabilities(false)
+    // static only: the client reads `workspace.textDocumentContent.schemes` from the initialize result
+    textDocumentContent = TextDocumentContentCapabilities(false)
     semanticTokens = SemanticTokensWorkspaceCapabilities().apply {
       refreshSupport = true
     }

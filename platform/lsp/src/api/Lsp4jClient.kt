@@ -13,12 +13,14 @@ import org.eclipse.lsp4j.RegistrationParams
 import org.eclipse.lsp4j.ShowDocumentParams
 import org.eclipse.lsp4j.ShowDocumentResult
 import org.eclipse.lsp4j.ShowMessageRequestParams
+import org.eclipse.lsp4j.TextDocumentContentRefreshParams
 import org.eclipse.lsp4j.UnregistrationParams
 import org.eclipse.lsp4j.WorkDoneProgressCreateParams
 import org.eclipse.lsp4j.WorkspaceFolder
 import org.eclipse.lsp4j.services.LanguageClient
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletableFuture.completedFuture
 
 /**
  * Implementation of the [org.eclipse.lsp4j.services.LanguageClient] interface.
@@ -95,6 +97,9 @@ open class Lsp4jClient(private val serverNotificationsHandler: LspServerNotifica
 
   final override fun refreshDiagnostics(): CompletableFuture<Void> =
     serverNotificationsHandler.refreshDiagnostics()
+
+  final override fun refreshTextDocumentContent(params: TextDocumentContentRefreshParams): CompletableFuture<Void> =
+    serverNotificationsHandler.refreshTextDocumentContent(params)
 }
 
 
@@ -124,4 +129,6 @@ interface LspServerNotificationsHandler {
   fun refreshInlayHints(): CompletableFuture<Void>
   fun refreshInlineValues(): CompletableFuture<Void>
   fun refreshDiagnostics(): CompletableFuture<Void>
+
+  fun refreshTextDocumentContent(params: TextDocumentContentRefreshParams): CompletableFuture<Void> = completedFuture(null)
 }

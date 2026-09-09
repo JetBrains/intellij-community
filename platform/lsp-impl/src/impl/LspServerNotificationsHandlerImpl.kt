@@ -46,6 +46,7 @@ import org.eclipse.lsp4j.RegistrationParams
 import org.eclipse.lsp4j.ShowDocumentParams
 import org.eclipse.lsp4j.ShowDocumentResult
 import org.eclipse.lsp4j.ShowMessageRequestParams
+import org.eclipse.lsp4j.TextDocumentContentRefreshParams
 import org.eclipse.lsp4j.UnregistrationParams
 import org.eclipse.lsp4j.WorkDoneProgressBegin
 import org.eclipse.lsp4j.WorkDoneProgressCancelParams
@@ -350,6 +351,13 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
   override fun refreshDiagnostics(): CompletableFuture<Void> {
     if (!project.isDisposed) {
       lspClient.refreshDiagnostics()
+    }
+    return completedFuture(null)
+  }
+
+  override fun refreshTextDocumentContent(params: TextDocumentContentRefreshParams): CompletableFuture<Void> {
+    if (!project.isDisposed) {
+      lspClient.dynamicFiles.refreshContent(params.uri)
     }
     return completedFuture(null)
   }

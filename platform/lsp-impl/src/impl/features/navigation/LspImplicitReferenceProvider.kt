@@ -132,7 +132,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
     offset: Int,
   ): Boolean {
     val locationLink = locationLinks.singleOrNull() ?: return false
-    if (locationLink.targetUri != lspClient.getFileUriForRequests(file)) return false
+    if (locationLink.targetUri != lspClient.descriptor.getFileUri(file)) return false
     val targetSelectionRange = locationLink.targetSelectionRange ?: return false
     val originSelectionRange = locationLink.originSelectionRange
     if (originSelectionRange != null) return targetSelectionRange == originSelectionRange
@@ -145,7 +145,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
    * The reference-supporting clients come from the same [lspClients] list that answered the definition requests.
    * This list can be wider than the one the 'Find Usages' action uses
    * (see [LspSearchTargetsRule][com.intellij.platform.lsp.impl.features.usages.LspSearchTargetsRule]):
-   * it also covers a library file that never got the `didOpen` notification.
+   * it also covers a content file served by [LspDynamicFiles], which the opened-files registry does not track.
    */
   private fun createShowUsagesReference(
     psiFile: PsiFile,
@@ -198,7 +198,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
           return@mapNotNull null
         }
         rangeInFile = rangeInFile?.union(textRange) ?: textRange
-        val targetFile = clientAndLocationLinks.lspClient.libraryFiles.findTargetFile(locationLink.targetUri)
+        val targetFile = clientAndLocationLinks.lspClient.dynamicFiles.findTargetFile(locationLink.targetUri)
                          ?: return@mapNotNull null
         LspNavigatableSymbol(clientAndLocationLinks.lspClient.project, targetFile, locationLink.targetSelectionRange)
       }

@@ -35,8 +35,7 @@ import com.intellij.platform.lsp.impl.features.highlighting.LspSemanticToken
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspCachedHighlighting
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCacheRegistry
 import com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayApplier
-import com.intellij.platform.lsp.impl.features.navigation.LspLibraryFiles
-import com.intellij.platform.lsp.impl.features.navigation.getFileUriForRequests
+import com.intellij.platform.lsp.impl.features.navigation.LspDynamicFiles
 import com.intellij.platform.lsp.impl.fileEvents.LspWatchedFiles
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.Semaphore
@@ -102,7 +101,7 @@ class LspClientImpl internal constructor(
 
   internal val documentSyncManager = LspDocumentSyncManager(this)
   internal val watchedFiles = LspWatchedFiles(this)
-  internal val libraryFiles = LspLibraryFiles(this)
+  internal val dynamicFiles = LspDynamicFiles(this)
   private val unsupportedFilePaths: MutableSet<String> = Collections.synchronizedSet(HashSet())
   private val highlightingCacheRegistry = LspHighlightingCacheRegistry(this)
 
@@ -144,7 +143,7 @@ class LspClientImpl internal constructor(
     requestExecutor.sendRequestSync(timeoutMs, lsp4jSender)
 
   override fun getDocumentIdentifier(file: VirtualFile): TextDocumentIdentifier =
-    TextDocumentIdentifier(getFileUriForRequests(file))
+    TextDocumentIdentifier(descriptor.getFileUri(file))
 
   override fun getDocumentVersion(document: Document): Int {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return -1
@@ -451,6 +450,10 @@ class LspClientImpl internal constructor(
 
   internal fun supportsCommand(command: String): Boolean =
     serverCapabilities?.executeCommandProvider?.commands?.contains(command) == true
+
+  /** True when the server provides the text for [scheme] URIs, through the `workspace/textDocumentContent` request. */
+  internal fun providesTextDocumentContent(scheme: String?): Boolean =
+    scheme != null && serverCapabilities?.workspace?.textDocumentContent?.schemes?.contains(scheme) == true
 
   internal fun supportsFindReferences(file: VirtualFile): Boolean =
     serverCapabilities?.referencesProvider?.let { it.left ?: true }

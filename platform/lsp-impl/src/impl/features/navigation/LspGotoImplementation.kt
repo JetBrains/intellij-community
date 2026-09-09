@@ -164,7 +164,7 @@ internal class LspDefinitionsScopedSearcher : QueryExecutorBase<PsiElement, Defi
 
       val locationLinks = lspClient.requestExecutor.getImplementations(file, target.offsetInFile)
       for (locationLink in locationLinks) {
-        val targetFile = lspClient.libraryFiles.findTargetFile(locationLink.targetUri) ?: continue
+        val targetFile = lspClient.dynamicFiles.findTargetFile(locationLink.targetUri) ?: continue
         val targetPsiFile = psiManager.findFile(targetFile) ?: continue
         val range = locationLink.targetSelectionRange ?: locationLink.targetRange
         val targetElement = range

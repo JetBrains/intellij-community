@@ -21,7 +21,6 @@ internal fun TestFixture<Project>.fakeLspServerProviderFixture(
   configureServerCapabilities: (ServerCapabilities.() -> Unit)? = null,
   createLsp4jClient: ((LspServerNotificationsHandler) -> Lsp4jClient)? = null,
   isSupportedFile: ((VirtualFile) -> Boolean)? = null,
-  isSupportedLibraryFile: ((VirtualFile) -> Boolean)? = null,
 ): TestFixture<FakeLspServerHandle> = testFixture { _ ->
   val projectFixture = this@fakeLspServerProviderFixture
   val project = projectFixture.init()
@@ -35,7 +34,6 @@ internal fun TestFixture<Project>.fakeLspServerProviderFixture(
   project.putUserData(FAKE_LSP_SERVER_CAPABILITIES_KEY, configureServerCapabilities)
   project.putUserData(FAKE_LSP_CREATE_CLIENT_KEY, createLsp4jClient)
   project.putUserData(FAKE_LSP_IS_SUPPORTED_FILE_KEY, isSupportedFile)
-  project.putUserData(FAKE_LSP_IS_SUPPORTED_LIBRARY_FILE_KEY, isSupportedLibraryFile)
 
   initialized(FakeLspServerHandle()) {
     project.putUserData(FAKE_LSP_CUSTOMIZATION_KEY, null)
@@ -43,7 +41,6 @@ internal fun TestFixture<Project>.fakeLspServerProviderFixture(
     project.putUserData(FAKE_LSP_SERVER_CAPABILITIES_KEY, null)
     project.putUserData(FAKE_LSP_CREATE_CLIENT_KEY, null)
     project.putUserData(FAKE_LSP_IS_SUPPORTED_FILE_KEY, null)
-    project.putUserData(FAKE_LSP_IS_SUPPORTED_LIBRARY_FILE_KEY, null)
   }
 }
 
@@ -56,7 +53,6 @@ internal val FAKE_LSP_SERVER_CAPABILITIES_KEY = Key.create<ServerCapabilities.()
 internal val FAKE_LSP_CLIENT_CAPABILITIES_KEY = Key.create<ClientCapabilities.() -> Unit>("FAKE_LSP_CLIENT_CAPABILITIES_KEY")
 internal val FAKE_LSP_CREATE_CLIENT_KEY = Key.create<(LspServerNotificationsHandler) -> Lsp4jClient>("FAKE_LSP_CREATE_CLIENT_KEY")
 internal val FAKE_LSP_IS_SUPPORTED_FILE_KEY = Key.create<(VirtualFile) -> Boolean>("FAKE_LSP_IS_SUPPORTED_FILE_KEY")
-internal val FAKE_LSP_IS_SUPPORTED_LIBRARY_FILE_KEY = Key.create<(VirtualFile) -> Boolean>("FAKE_LSP_IS_SUPPORTED_LIBRARY_FILE_KEY")
 
 internal class FakeLspServerSupportProvider : LspServerSupportProvider {
   override fun fileOpened(project: Project, file: VirtualFile, serverStarter: LspServerSupportProvider.LspServerStarter) {
@@ -65,10 +61,9 @@ internal class FakeLspServerSupportProvider : LspServerSupportProvider {
     val configureClientCapabilities = project.getUserData(FAKE_LSP_CLIENT_CAPABILITIES_KEY)
     val createLsp4jClient = project.getUserData(FAKE_LSP_CREATE_CLIENT_KEY)
     val isSupportedFile = project.getUserData(FAKE_LSP_IS_SUPPORTED_FILE_KEY)
-    val isSupportedLibraryFile = project.getUserData(FAKE_LSP_IS_SUPPORTED_LIBRARY_FILE_KEY)
     serverStarter.ensureServerStarted(
       FakeLspServerDescriptor(project, customization, configureServerCapabilities, configureClientCapabilities, createLsp4jClient,
-                              isSupportedFile, isSupportedLibraryFile))
+                              isSupportedFile))
   }
 }
 
@@ -79,14 +74,11 @@ internal open class FakeLspServerDescriptor(
   private val configureClientCapabilities: (ClientCapabilities.() -> Unit)?,
   private val configureLsp4jClient: ((LspServerNotificationsHandler) -> Lsp4jClient)? = null,
   private val supportedFilePredicate: ((VirtualFile) -> Boolean)? = null,
-  private val supportedLibraryFilePredicate: ((VirtualFile) -> Boolean)? = null,
   presentableName: String = "FakeLspServer",
 ) : ProjectWideLspServerDescriptor(project, presentableName) {
   lateinit var server: FakeLspServer
 
   override fun isSupportedFile(file: VirtualFile) = supportedFilePredicate?.invoke(file) ?: true
-
-  override fun isSupportedLibraryFile(file: VirtualFile) = supportedLibraryFilePredicate?.invoke(file) ?: false
 
   override val clientCapabilities: ClientCapabilities
     get() = super.clientCapabilities.apply {

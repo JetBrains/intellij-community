@@ -18,7 +18,6 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.Lsp4jServerWrapper
@@ -31,7 +30,7 @@ import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.impl.documentSync.LspOpenedFilesService
-import com.intellij.platform.lsp.impl.features.navigation.LspLibraryFiles
+import com.intellij.platform.lsp.impl.features.navigation.LspDynamicFiles
 import com.intellij.platform.lsp.impl.serviceView.LspServiceViewSupport
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.util.EventDispatcher
@@ -103,27 +102,21 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
   /**
    * Clients that should handle requests like hover or go-to-definition for the given file.
-   * A library file goes to the client that produced it (see [LspLibraryFiles]): a decompiled in-memory file is requested
-   * with the URI it was produced from, and a file inside a jar goes back to the client that navigated to it.
-   * A decompiled file that lost its producing client, for example after a server restart, is adopted:
+   * A dynamic file goes to the client that produced it (see [LspDynamicFiles]): an in-memory content file is requested
+   * with the URI it was produced from.
+   * A content file that lost its producing client, for example after a server restart, is adopted:
    * the replacement of the producing client, found by the same server identity, registers the file
    * and reports it open again, so existing editor tabs keep working.
-   * An archive file that no client produced, a jar entry or a JDK class from the jrt file system,
-   * goes to every running client that opts in via [LspClientDescriptor.isSupportedLibraryFile]:
-   * such a file never gets the `didOpen` notification sent,
-   * but the LSP protocol allows requests for any URI the server can read.
    */
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal fun getClientsForFileRequests(file: VirtualFile): Collection<LspClientImpl> {
     val clientsWithFileOpen = getClientsWithThisFileOpen(file)
     if (clientsWithFileOpen.isNotEmpty()) return clientsWithFileOpen
-    val producingClients = getRunningClients().filter { it.libraryFiles.contains(file) }
+    val producingClients = getRunningClients().filter { it.dynamicFiles.contains(file) }
     if (producingClients.isNotEmpty()) return producingClients
-    val decompiledUri = LspLibraryFiles.getDecompiledFileUri(file)
-    if (decompiledUri != null) return getRunningClients().filter { it.libraryFiles.adopt(file, decompiledUri) }
-    if (file.fileSystem is ArchiveFileSystem) return getRunningClients().filter { it.descriptor.isSupportedLibraryFile(file) }
-    return emptyList()
+    val contentUri = LspDynamicFiles.getDynamicFileUri(file) ?: return emptyList()
+    return getRunningClients().filter { it.dynamicFiles.adopt(file, contentUri) }
   }
 
   internal fun getRunningClients(): Collection<LspClientImpl> = lspClients.filter { it.state == LspServerState.Running }
@@ -288,8 +281,8 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
   /**
    * Stops [lspClient] and starts a new client with the same descriptor.
-   * The restart must not depend on the open-editors scan of [startIfNeeded]: the scan skips library files,
-   * so it revives no server when only a library editor tab remains open.
+   * The restart must not depend on the open-editors scan of [startIfNeeded]: the scan skips files outside the local
+   * file system, so it revives no server when only a content file tab (see [LspDynamicFiles]) remains open.
    */
   internal fun restartClient(lspClient: LspClientImpl) {
     stopRunningServer(lspClient)
