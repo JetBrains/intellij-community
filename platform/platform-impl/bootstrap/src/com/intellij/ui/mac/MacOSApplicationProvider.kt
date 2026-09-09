@@ -11,7 +11,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.idea.IdeStarter.Companion.openFilesOnLoading
 import com.intellij.idea.IdeStarter.Companion.openUriOnLoading
-import com.intellij.jna.JnaLoader
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.Application
@@ -38,9 +37,9 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AppIcon
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
+import com.intellij.ui.mac.foundation.Selector
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
-import com.sun.jna.Callback
 import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +49,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Desktop
 import java.awt.event.MouseEvent
 import java.net.URLDecoder
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
@@ -134,7 +134,7 @@ fun initMacApplication(mainScope: CoroutineScope) {
     }
     desktop.requestForeground(true)
   }
-  if (JnaLoader.isLoaded()) {
+  if (Foundation.isAvailable()) {
     Foundation.executeOnMainThread(false, false, Runnable { installAutoUpdateMenu() })
     installProtocolHandler(desktop, mainScope)
   }
@@ -154,10 +154,11 @@ private fun installAutoUpdateMenu() {
   val menu = Foundation.invoke(app, Foundation.createSelector("menu"))
   val item = Foundation.invoke(menu, Foundation.createSelector("itemAtIndex:"), 0)
   val appMenu = Foundation.invoke(item, Foundation.createSelector("submenu"))
-  val checkForUpdateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSMenuItem"), "NSCheckForUpdates")
-  val impl = object : Callback {
+  val checkForUpdateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSMenuItem"),
+                                                             "NSCheckForUpdates_" + UUID.randomUUID().toString().replace("-", ""))
+  val impl = object {
     @Suppress("unused", "UNUSED_PARAMETER")
-    fun callback(self: ID?, selector: String?) {
+    fun callback(self: ID?, selector: Selector?) {
       SwingUtilities.invokeLater {
         val mouseEvent = MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false)
         val actionManager = ApplicationManager.getApplication()?.getServiceIfCreated(ActionManager::class.java) ?: return@invokeLater
@@ -167,9 +168,10 @@ private fun installAutoUpdateMenu() {
   }
   // prevents the callback from being collected
   UPDATE_CALLBACK_REF = impl
-  Foundation.addMethod(checkForUpdateClass, Foundation.createSelector("checkForUpdates"), impl, "v")
+  Foundation.addMethod(checkForUpdateClass, Foundation.createSelector("checkForUpdates"),
+                       Foundation.callback(impl, "callback", ID::class.java, Selector::class.java), "v@:")
   Foundation.registerObjcClassPair(checkForUpdateClass)
-  val checkForUpdates = Foundation.invoke("NSCheckForUpdates", "alloc")
+  val checkForUpdates = Foundation.invoke(checkForUpdateClass, "alloc")
   Foundation.invoke(checkForUpdates, Foundation.createSelector("initWithTitle:action:keyEquivalent:"),
                     Foundation.nsString("Check for Updates..."), Foundation.createSelector("checkForUpdates"), Foundation.nsString(""))
   Foundation.invoke(checkForUpdates, Foundation.createSelector("setTarget:"), checkForUpdates)

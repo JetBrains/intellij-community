@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf
 
-import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UiWithModelAccess
@@ -14,7 +13,6 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.util.system.WindowsRegistry
-import com.sun.jna.Callback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,7 +20,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
+import java.lang.foreign.MemorySegment
+import java.lang.invoke.MethodHandles
 import java.util.Locale
+import java.util.UUID
 import java.util.function.BiConsumer
 
 @ApiStatus.Internal
@@ -72,11 +73,11 @@ private abstract class AsyncDetector : SystemDarkThemeDetector() {
 
 private class MacOSDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>?) : AsyncDetector() {
   override val detectionSupported: Boolean
-    get() = SystemInfoRt.isMac && JnaLoader.isLoaded()
+    get() = SystemInfoRt.isMac && Foundation.isAvailable()
 
-  val themeChangedCallback = object : Callback {
+  val themeChangedCallback = object {
     @Suppress("unused")
-    fun callback() { // self: ID, selector: Pointer, id: ID
+    fun callback() {
       check(null)
     }
   }
@@ -87,16 +88,19 @@ private class MacOSDetector(override val syncFunction: BiConsumer<Boolean, Boole
       val selector = if (useAppearanceApi()) Foundation.createSelector("observeValueForKeyPath:ofObject:change:context:")
       else Foundation.createSelector("handleAppleThemeChanged:")
 
-      val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSColorChangesObserver")
+      val className = "NSColorChangesObserver_" + UUID.randomUUID().toString().replace("-", "")
+      val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), className)
+      val callback = MethodHandles.dropArguments(Foundation.callback(themeChangedCallback, "callback"), 0,
+                                                 List(if (useAppearanceApi()) 6 else 3) { MemorySegment::class.java })
 
       if (ID.NIL != delegateClass) {
-          if (!Foundation.addMethod(delegateClass, selector, themeChangedCallback, "v@")) {
-            throw RuntimeException("Cannot add observer method")
-          }
-          Foundation.registerObjcClassPair(delegateClass)
+        if (!Foundation.addMethod(delegateClass, selector, callback, if (useAppearanceApi()) "v@:@@@^v" else "v@:@")) {
+          throw RuntimeException("Cannot add observer method")
         }
+        Foundation.registerObjcClassPair(delegateClass)
+      }
 
-      val delegate = Foundation.invoke("NSColorChangesObserver", "new")
+      val delegate = Foundation.invoke(delegateClass, "new")
 
       if (useAppearanceApi()) {
         val app = Foundation.invoke("NSApplication", "sharedApplication")

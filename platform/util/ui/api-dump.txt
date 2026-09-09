@@ -3052,57 +3052,50 @@ com.intellij.ui.icons.UpdatableIcon
 - javax.swing.Icon
 - a:notifyPaint(java.awt.Component,I,I):V
 f:com.intellij.ui.mac.foundation.CoreGraphics
-- s:cgWindowListCreateImage(com.intellij.ui.mac.foundation.CoreGraphics$CGRect,I,com.intellij.ui.mac.foundation.ID,I):com.intellij.ui.mac.foundation.ID
+- s:cgWindowListCreateImage(com.intellij.ui.mac.foundation.CoreGraphics$CGRect,I,I,I):com.intellij.ui.mac.foundation.ID
 f:com.intellij.ui.mac.foundation.CoreGraphics$CGFloat
-- com.sun.jna.NativeMapped
+- java.lang.Number
 - <init>():V
 - <init>(D):V
-- fromNative(java.lang.Object,com.sun.jna.FromNativeContext):java.lang.Object
-- nativeType():java.lang.Class
-- toNative():java.lang.Object
+- doubleValue():D
+- floatValue():F
+- intValue():I
+- longValue():J
 f:com.intellij.ui.mac.foundation.CoreGraphics$CGPoint
-- com.sun.jna.Structure
-- com.sun.jna.Structure$ByValue
 - x:com.intellij.ui.mac.foundation.CoreGraphics$CGFloat
 - y:com.intellij.ui.mac.foundation.CoreGraphics$CGFloat
 - <init>():V
 - <init>(D,D):V
 f:com.intellij.ui.mac.foundation.CoreGraphics$CGRect
-- com.sun.jna.Structure
-- com.sun.jna.Structure$ByValue
 - origin:com.intellij.ui.mac.foundation.CoreGraphics$CGPoint
 - size:com.intellij.ui.mac.foundation.CoreGraphics$CGSize
 - <init>(D,D,D,D):V
 f:com.intellij.ui.mac.foundation.CoreGraphics$CGSize
-- com.sun.jna.Structure
-- com.sun.jna.Structure$ByValue
 - height:com.intellij.ui.mac.foundation.CoreGraphics$CGFloat
 - width:com.intellij.ui.mac.foundation.CoreGraphics$CGFloat
 - <init>():V
 - <init>(D,D):V
-com.intellij.ui.mac.foundation.CoreGraphicsLibrary
-- com.sun.jna.Library
-- a:CGWindowListCreateImage(com.intellij.ui.mac.foundation.CoreGraphics$CGRect,I,com.intellij.ui.mac.foundation.ID,I):com.intellij.ui.mac.foundation.ID
-- a:objc_getClass(java.lang.String):com.intellij.ui.mac.foundation.ID
-- a:sel_registerName(java.lang.String):com.sun.jna.Pointer
 f:com.intellij.ui.mac.foundation.Foundation
-- s:addMethod(com.intellij.ui.mac.foundation.ID,com.sun.jna.Pointer,com.sun.jna.Callback,java.lang.String):Z
-- s:addMethodByID(com.intellij.ui.mac.foundation.ID,com.sun.jna.Pointer,com.intellij.ui.mac.foundation.ID,java.lang.String):Z
+- s:addMethod(com.intellij.ui.mac.foundation.ID,com.intellij.ui.mac.foundation.Selector,java.lang.invoke.MethodHandle,java.lang.String):Z
+- s:addMethodByID(com.intellij.ui.mac.foundation.ID,com.intellij.ui.mac.foundation.Selector,com.intellij.ui.mac.foundation.ID,java.lang.String):Z
 - s:addProtocol(com.intellij.ui.mac.foundation.ID,com.intellij.ui.mac.foundation.ID):Z
 - s:allocateObjcClassPair(com.intellij.ui.mac.foundation.ID,java.lang.String):com.intellij.ui.mac.foundation.ID
 - s:autorelease(com.intellij.ui.mac.foundation.ID):com.intellij.ui.mac.foundation.ID
-- s:castPointerToNSError(com.sun.jna.PointerType):com.intellij.ui.mac.foundation.ID
+- s:callback(java.lang.Object,java.lang.String,java.lang.Class[]):java.lang.invoke.MethodHandle
+- s:castPointerToNSError(java.lang.foreign.MemorySegment):com.intellij.ui.mac.foundation.ID
 - s:cfRelease(com.intellij.ui.mac.foundation.ID[]):V
 - s:cfRetain(com.intellij.ui.mac.foundation.ID):V
-- s:class_replaceMethod(com.intellij.ui.mac.foundation.ID,com.sun.jna.Pointer,com.sun.jna.Callback,java.lang.String):com.intellij.ui.mac.foundation.ID
+- s:class_replaceMethod(com.intellij.ui.mac.foundation.ID,com.intellij.ui.mac.foundation.Selector,java.lang.invoke.MethodHandle,java.lang.String):com.intellij.ui.mac.foundation.ID
 - s:convertTypes(java.lang.Object[]):java.lang.Object[]
+- s:createArray(java.lang.Object[]):com.intellij.ui.mac.foundation.ID
 - s:createDict(java.lang.String[],java.lang.Object[]):com.intellij.ui.mac.foundation.ID
-- s:createPointerReference():com.sun.jna.PointerType
-- s:createSelector(java.lang.String):com.sun.jna.Pointer
+- s:createNativeCallback(java.lang.invoke.MethodHandle,java.lang.String,java.lang.foreign.Arena):java.lang.foreign.MemorySegment
+- s:createPointerReference(java.lang.foreign.Arena):java.lang.foreign.MemorySegment
+- s:createSelector(java.lang.String):com.intellij.ui.mac.foundation.Selector
 - s:executeOnMainThread(Z,Z,java.lang.Runnable):V
 - s:fillArray(java.lang.Object[]):com.intellij.ui.mac.foundation.ID
 - s:fullUserName():java.lang.String
-- s:getClass(com.sun.jna.Pointer):com.sun.jna.Pointer
+- s:getClass(java.lang.foreign.MemorySegment):java.lang.foreign.MemorySegment
 - s:getEncodingCode(java.lang.String):J
 - s:getEncodingName(J):java.lang.String
 - s:getMetaClass(java.lang.String):com.intellij.ui.mac.foundation.ID
@@ -3110,14 +3103,13 @@ f:com.intellij.ui.mac.foundation.Foundation
 - s:getObjcClass(java.lang.String):com.intellij.ui.mac.foundation.ID
 - s:getProtocol(java.lang.String):com.intellij.ui.mac.foundation.ID
 - s:init():V
-- s:invoke(com.intellij.ui.mac.foundation.ID,com.sun.jna.Pointer,java.lang.Object[]):com.intellij.ui.mac.foundation.ID
+- s:invoke(com.intellij.ui.mac.foundation.ID,com.intellij.ui.mac.foundation.Selector,java.lang.Object[]):com.intellij.ui.mac.foundation.ID
 - s:invoke(com.intellij.ui.mac.foundation.ID,java.lang.String,java.lang.Object[]):com.intellij.ui.mac.foundation.ID
 - s:invoke(java.lang.String,java.lang.String,java.lang.Object[]):com.intellij.ui.mac.foundation.ID
-- s:invokeVarArg(com.intellij.ui.mac.foundation.ID,com.sun.jna.Pointer,java.lang.Object[]):com.intellij.ui.mac.foundation.ID
-- s:invokeVarArg(java.lang.String,java.lang.String,java.lang.Object[]):com.intellij.ui.mac.foundation.ID
-- s:invoke_fpret(com.intellij.ui.mac.foundation.ID,com.sun.jna.Pointer,java.lang.Object[]):D
+- s:invoke_fpret(com.intellij.ui.mac.foundation.ID,com.intellij.ui.mac.foundation.Selector,java.lang.Object[]):D
 - s:invoke_fpret(com.intellij.ui.mac.foundation.ID,java.lang.String,java.lang.Object[]):D
-- s:isClassRespondsToSelector(com.intellij.ui.mac.foundation.ID,com.sun.jna.Pointer):Z
+- s:isAvailable():Z
+- s:isClassRespondsToSelector(com.intellij.ui.mac.foundation.ID,com.intellij.ui.mac.foundation.Selector):Z
 - s:isMainThread():Z
 - s:isMetaClass(com.intellij.ui.mac.foundation.ID):Z
 - s:isNil(com.intellij.ui.mac.foundation.ID):Z
@@ -3131,7 +3123,7 @@ f:com.intellij.ui.mac.foundation.Foundation
 - s:safeInvoke(com.intellij.ui.mac.foundation.ID,java.lang.String,java.lang.Object[]):com.intellij.ui.mac.foundation.ID
 - s:safeInvoke(java.lang.String,java.lang.String,java.lang.Object[]):com.intellij.ui.mac.foundation.ID
 - s:stringFromClass(com.intellij.ui.mac.foundation.ID):java.lang.String
-- s:stringFromSelector(com.sun.jna.Pointer):java.lang.String
+- s:stringFromSelector(com.intellij.ui.mac.foundation.Selector):java.lang.String
 - s:toStringViaUTF8(com.intellij.ui.mac.foundation.ID):java.lang.String
 f:com.intellij.ui.mac.foundation.Foundation$NSArray
 - <init>(com.intellij.ui.mac.foundation.ID):V
@@ -3155,27 +3147,20 @@ f:com.intellij.ui.mac.foundation.Foundation$NSDictionary
 - s:toStringDictionary(java.util.Map):com.intellij.ui.mac.foundation.ID
 - s:toStringMap(com.intellij.ui.mac.foundation.ID):java.util.Map
 f:com.intellij.ui.mac.foundation.Foundation$NSPoint
-- com.sun.jna.Structure
-- com.sun.jna.Structure$ByValue
 - x:com.intellij.ui.mac.foundation.CoreGraphics$CGFloat
 - y:com.intellij.ui.mac.foundation.CoreGraphics$CGFloat
 - <init>():V
 - <init>(D,D):V
 f:com.intellij.ui.mac.foundation.Foundation$NSRect
-- com.sun.jna.Structure
-- com.sun.jna.Structure$ByValue
 - origin:com.intellij.ui.mac.foundation.Foundation$NSPoint
 - size:com.intellij.ui.mac.foundation.Foundation$NSSize
 - <init>(D,D,D,D):V
 f:com.intellij.ui.mac.foundation.Foundation$NSSize
-- com.sun.jna.Structure
-- com.sun.jna.Structure$ByValue
 - height:com.intellij.ui.mac.foundation.CoreGraphics$CGFloat
 - width:com.intellij.ui.mac.foundation.CoreGraphics$CGFloat
 - <init>():V
 - <init>(D,D):V
 com.intellij.ui.mac.foundation.FoundationLibrary
-- com.sun.jna.Library
 - sf:NSBitmapImageFileTypeBMP:I
 - sf:NSBitmapImageFileTypeGIF:I
 - sf:NSBitmapImageFileTypeJPEG:I
@@ -3208,41 +3193,19 @@ com.intellij.ui.mac.foundation.FoundationLibrary
 - sf:kCGWindowListOptionOnScreenAboveWindow:I
 - sf:kCGWindowListOptionOnScreenBelowWindow:I
 - sf:kCGWindowListOptionOnScreenOnly:I
-- a:CFGetRetainCount(com.sun.jna.Pointer):I
-- a:CFRelease(com.intellij.ui.mac.foundation.ID):V
-- a:CFRetain(com.intellij.ui.mac.foundation.ID):V
-- a:CFStringConvertEncodingToIANACharSetName(J):com.intellij.ui.mac.foundation.ID
-- a:CFStringConvertEncodingToNSStringEncoding(J):J
-- a:CFStringConvertIANACharSetNameToEncoding(com.intellij.ui.mac.foundation.ID):J
-- a:CFStringConvertNSStringEncodingToEncoding(J):J
-- a:CFStringCreateWithBytes(com.sun.jna.Pointer,B[],I,I,B):com.intellij.ui.mac.foundation.ID
-- a:CFStringGetCString(com.intellij.ui.mac.foundation.ID,B[],I,I):B
-- a:CFStringGetLength(com.intellij.ui.mac.foundation.ID):I
-- a:NSFullUserName():com.intellij.ui.mac.foundation.ID
-- a:NSLog(com.sun.jna.Pointer,java.lang.Object):V
-- a:NSStringFromClass(com.intellij.ui.mac.foundation.ID):com.intellij.ui.mac.foundation.ID
-- a:NSStringFromSelector(com.sun.jna.Pointer):com.intellij.ui.mac.foundation.ID
-- a:class_addMethod(com.intellij.ui.mac.foundation.ID,com.sun.jna.Pointer,com.intellij.ui.mac.foundation.ID,java.lang.String):Z
-- a:class_addMethod(com.intellij.ui.mac.foundation.ID,com.sun.jna.Pointer,com.sun.jna.Callback,java.lang.String):Z
-- a:class_addProtocol(com.intellij.ui.mac.foundation.ID,com.intellij.ui.mac.foundation.ID):Z
-- a:class_createInstance(com.intellij.ui.mac.foundation.ID,I):com.intellij.ui.mac.foundation.ID
-- a:class_isMetaClass(com.intellij.ui.mac.foundation.ID):Z
-- a:class_replaceMethod(com.intellij.ui.mac.foundation.ID,com.sun.jna.Pointer,com.sun.jna.Callback,java.lang.String):com.intellij.ui.mac.foundation.ID
-- a:class_respondsToSelector(com.intellij.ui.mac.foundation.ID,com.sun.jna.Pointer):Z
-- a:objc_allocateClassPair(com.intellij.ui.mac.foundation.ID,java.lang.String,I):com.intellij.ui.mac.foundation.ID
-- a:objc_getClass(com.sun.jna.Pointer):com.sun.jna.Pointer
-- a:objc_getClass(java.lang.String):com.intellij.ui.mac.foundation.ID
-- a:objc_getMetaClass(java.lang.String):com.intellij.ui.mac.foundation.ID
-- a:objc_getProtocol(java.lang.String):com.intellij.ui.mac.foundation.ID
-- a:objc_msgSend(com.intellij.ui.mac.foundation.ID,com.sun.jna.Pointer,java.lang.Object,java.lang.Object[]):com.intellij.ui.mac.foundation.ID
-- a:objc_registerClassPair(com.intellij.ui.mac.foundation.ID):V
-- a:sel_registerName(java.lang.String):com.sun.jna.Pointer
 f:com.intellij.ui.mac.foundation.ID
-- com.sun.jna.NativeLong
+- java.lang.Number
 - sf:NIL:com.intellij.ui.mac.foundation.ID
 - <init>():V
 - <init>(J):V
+- asMemorySegment():java.lang.foreign.MemorySegment
 - booleanValue():Z
+- doubleValue():D
+- equals(java.lang.Object):Z
+- floatValue():F
+- hashCode():I
+- intValue():I
+- longValue():J
 f:com.intellij.ui.mac.foundation.MacUtil
 - s:adjustFocusTraversal(com.intellij.openapi.Disposable):V
 - s:findWindowForTitle(java.lang.String):com.intellij.ui.mac.foundation.ID
@@ -3274,11 +3237,14 @@ f:com.intellij.ui.mac.foundation.NSWorkspace
 - s:absolutePathForAppBundleWithIdentifier(java.lang.String):java.lang.String
 - s:getInstance():com.intellij.ui.mac.foundation.ID
 f:com.intellij.ui.mac.foundation.Selector
-- com.sun.jna.NativeLong
 - <init>():V
 - <init>(java.lang.String,J):V
+- asMemorySegment():java.lang.foreign.MemorySegment
+- equals(java.lang.Object):Z
 - getName():java.lang.String
+- hashCode():I
 - initName(java.lang.String):com.intellij.ui.mac.foundation.Selector
+- longValue():J
 f:com.intellij.ui.paint.LinePainter2D
 - <init>():V
 - s:align(java.awt.Graphics2D,java.util.EnumSet,D,D,D,Z,com.intellij.ui.paint.LinePainter2D$StrokeType,D):java.awt.geom.Line2D

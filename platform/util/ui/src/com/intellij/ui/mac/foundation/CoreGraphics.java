@@ -1,37 +1,32 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.foundation;
 
-import com.intellij.jna.JnaLoader;
-import com.sun.jna.FromNativeContext;
-import com.sun.jna.Native;
-import com.sun.jna.NativeMapped;
-import com.sun.jna.Structure;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Collections;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 /**
  * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>
  */
 public final @NonNls class CoreGraphics {
-  private static final CoreGraphicsLibrary myCoreGraphicsLibrary;
-
-  static {
-    assert JnaLoader.isLoaded() : "JNA library is not available";
-    myCoreGraphicsLibrary = Native.load("CoreGraphics", CoreGraphicsLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
-  }
+  private static final MemoryLayout RECT_LAYOUT = MemoryLayout.structLayout(JAVA_DOUBLE, JAVA_DOUBLE, JAVA_DOUBLE, JAVA_DOUBLE);
 
   private CoreGraphics() { }
 
-  public static ID cgWindowListCreateImage(CGRect screenBounds, int windowOption, ID windowID, int imageOption) {
-    return myCoreGraphicsLibrary.CGWindowListCreateImage(screenBounds,
-                                                         windowOption,
-                                                         windowID,
-                                                         imageOption);
+  public static ID cgWindowListCreateImage(CGRect screenBounds, int windowOption, int windowID, int imageOption) {
+    var image = (MemorySegment)FoundationNative.call("CGWindowListCreateImage",
+                                                     FunctionDescriptor.of(ADDRESS, RECT_LAYOUT, JAVA_INT, JAVA_INT, JAVA_INT),
+                                                     screenBounds, windowOption, windowID, imageOption);
+    return new ID(image.address());
   }
 
-  @Structure.FieldOrder({"origin", "size"})
-  public static final class CGRect extends Structure implements Structure.ByValue {
+  public static final class CGRect {
     public CGPoint origin;
     public CGSize size;
 
@@ -41,8 +36,7 @@ public final @NonNls class CoreGraphics {
     }
   }
 
-  @Structure.FieldOrder({"x", "y"})
-  public static final class CGPoint extends Structure implements Structure.ByValue {
+  public static final class CGPoint {
     public CGFloat x;
     public CGFloat y;
 
@@ -57,8 +51,7 @@ public final @NonNls class CoreGraphics {
     }
   }
 
-  @Structure.FieldOrder({"width", "height"})
-  public static final class CGSize extends Structure implements Structure.ByValue {
+  public static final class CGSize {
     public CGFloat width;
     public CGFloat height;
 
@@ -73,7 +66,7 @@ public final @NonNls class CoreGraphics {
     }
   }
 
-  public static final class CGFloat implements NativeMapped {
+  public static final class CGFloat extends Number {
     private final double value;
 
     @SuppressWarnings("UnusedDeclaration")
@@ -86,30 +79,23 @@ public final @NonNls class CoreGraphics {
     }
 
     @Override
-    public Object fromNative(Object o, FromNativeContext fromNativeContext) {
-      return switch (Native.LONG_SIZE) {
-        case 4 -> new CGFloat((Float)o);
-        case 8 -> new CGFloat((Double)o);
-        default -> throw new IllegalStateException();
-      };
+    public int intValue() {
+      return (int)value;
     }
 
     @Override
-    public Object toNative() {
-      return switch (Native.LONG_SIZE) {
-        case 4 -> (float)value;
-        case 8 -> value;
-        default -> throw new IllegalStateException();
-      };
+    public long longValue() {
+      return (long)value;
     }
 
     @Override
-    public Class<?> nativeType() {
-      return switch (Native.LONG_SIZE) {
-        case 4 -> Float.class;
-        case 8 -> Double.class;
-        default -> throw new IllegalStateException();
-      };
+    public float floatValue() {
+      return (float)value;
+    }
+
+    @Override
+    public double doubleValue() {
+      return value;
     }
   }
 }

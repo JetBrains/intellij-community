@@ -6,15 +6,16 @@ import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.mac.foundation.ID;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.Icon;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
+import javax.swing.Icon;
 
 @ApiStatus.Internal
 public class TBPanel implements NSTLibrary.ItemCreator {
@@ -90,13 +91,13 @@ public class TBPanel implements NSTLibrary.ItemCreator {
   }
 
   @Override
-  public ID createItem(@NotNull String uid) { // called from AppKit (when NSTouchBarDelegate create items)
+  public Pointer createItem(@NotNull String uid) {
     final long startNs = myStats != null ? System.nanoTime() : 0;
     final ID result = createItemImpl(uid);
     if (myStats != null) {
       myStats.incrementCounter(StatsCounters.itemsCreationDurationNs, System.nanoTime() - startNs);
     }
-    return result;
+    return result.equals(ID.NIL) ? null : new Pointer(result.longValue());
   }
 
   private ID createItemImpl(@NotNull String uid) {

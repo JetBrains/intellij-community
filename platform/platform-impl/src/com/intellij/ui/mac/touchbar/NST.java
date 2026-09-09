@@ -21,7 +21,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 import sun.awt.AWTAccessor;
 import sun.awt.image.WritableRasterNative;
 
-import javax.swing.Icon;
 import java.awt.AlphaComposite;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -41,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import javax.swing.Icon;
 
 @ApiStatus.Internal
 public final class NST {
@@ -64,8 +64,8 @@ public final class NST {
     if (nstLibrary != null) {
       // small check that loaded library works
       try {
-        final ID test = nstLibrary.createTouchBar("test", (uid) -> ID.NIL, null);
-        if (test == null || test.equals(ID.NIL)) {
+        final Pointer test = nstLibrary.createTouchBar("test", (uid) -> null, null);
+        if (test == null) {
           LOG.error("Failed to create native touchbar object, result is null");
           nstLibrary = null;
         }
@@ -96,11 +96,19 @@ public final class NST {
   }
 
   static ID createTouchBar(String name, NSTLibrary.ItemCreator creator, String escID) {
-    return nstLibrary.createTouchBar(name, creator, escID); // creates autorelease-pool internally
+    return id(nstLibrary.createTouchBar(name, creator, escID));
+  }
+
+  private static ID id(Pointer pointer) {
+    return pointer == null ? ID.NIL : new ID(Pointer.nativeValue(pointer));
+  }
+
+  private static Pointer pointer(ID id) {
+    return id == null || id.equals(ID.NIL) ? null : new Pointer(id.longValue());
   }
 
   static void releaseNativePeer(ID nativePeer) {
-    nstLibrary.releaseNativePeer(nativePeer);
+    nstLibrary.releaseNativePeer(pointer(nativePeer));
   }
 
   @VisibleForTesting
@@ -139,15 +147,15 @@ public final class NST {
         }
       }
     }
-    nstLibrary.setTouchBar(new ID(nsViewPtr), touchBarNativePeer);
+    nstLibrary.setTouchBar(new Pointer(nsViewPtr), pointer(touchBarNativePeer));
   }
 
   static void selectItemsToShow(ID tbObj, String[] ids, int count) {
-    nstLibrary.selectItemsToShow(tbObj, ids, count); // creates autorelease-pool internally
+    nstLibrary.selectItemsToShow(pointer(tbObj), ids, count);
   }
 
   static void setPrincipal(ID tbObj, String uid) {
-    nstLibrary.setPrincipal(tbObj, uid); // creates autorelease-pool internally
+    nstLibrary.setPrincipal(pointer(tbObj), uid);
   }
 
   static ID createButton(String uid,
@@ -157,14 +165,14 @@ public final class NST {
                          String hint, int isHintDisabled,
                          @Nullable Pair<Pointer, Dimension> raster,
                          NSTLibrary.Action action) {
-    return nstLibrary.createButton(
+    return id(nstLibrary.createButton(
       uid, buttWidth, buttFlags,
       text, hint,
       isHintDisabled,
       raster == null ? null : raster.getFirst(),
       raster == null ? 0 : raster.getSecond().width,
       raster == null ? 0 : raster.getSecond().height,
-      action); // called from AppKit, uses per-event autorelease-pool
+      action));
   }
 
   // NOTE: due to optimization, scrubber is created without an icon, icons must be updated async via updateScrubberItems
@@ -174,13 +182,13 @@ public final class NST {
     @NotNull List<TBItemScrubber.ItemData> items, int visibleItems, @Nullable TouchBarStats stats
   ) {
     final Pair<Pointer, Integer> mem = _packItems(items, visibleItems, false, true);
-    return nstLibrary.createScrubber(uid, itemWidth, delegate, updater, mem == null ? null : mem.getFirst(),
-                                     mem == null ? 0 : mem.getSecond()); // called from AppKit, uses per-event autorelease-pool
+    return id(nstLibrary.createScrubber(uid, itemWidth, delegate, updater, mem == null ? null : mem.getFirst(),
+                                        mem == null ? 0 : mem.getSecond()));
   }
 
   static ID createGroupItem(String uid, ID[] items) {
-    return nstLibrary.createGroupItem(uid, items == null || items.length == 0 ? null : items,
-                                      items == null ? 0 : items.length); // called from AppKit, uses per-event autorelease-pool
+    var pointers = items == null || items.length == 0 ? null : Arrays.stream(items).map(NST::pointer).toArray(Pointer[]::new);
+    return id(nstLibrary.createGroupItem(uid, pointers, items == null ? 0 : items.length));
   }
 
   static void updateButton(ID buttonObj,
@@ -192,7 +200,7 @@ public final class NST {
                            @Nullable Pair<Pointer, Dimension> raster,
                            NSTLibrary.Action action) {
     nstLibrary.updateButton(
-      buttonObj, updateOptions,
+      pointer(buttonObj), updateOptions,
       buttWidth, buttonFlags,
       text,
       hint, isHintDisabled,
@@ -207,7 +215,7 @@ public final class NST {
     final Pointer raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
-    nstLibrary.setArrowImage(buttObj, raster4ByteRGBA, w, h); // creates autorelease-pool internally
+    nstLibrary.setArrowImage(pointer(buttObj), raster4ByteRGBA, w, h);
   }
 
   private static Pointer _makeIndices(Collection<Integer> indices) {
@@ -235,7 +243,7 @@ public final class NST {
       if (scrubber.myNativePeer.equals(ID.NIL)) {
         return;
       }
-      nstLibrary.updateScrubberItems(scrubber.myNativePeer, mem == null ? null : mem.getFirst(), mem == null ? 0 : mem.getSecond(),
+      nstLibrary.updateScrubberItems(pointer(scrubber.myNativePeer), mem == null ? null : mem.getFirst(), mem == null ? 0 : mem.getSecond(),
                                      fromIndex);
     }
     if (withImages && scrubber.getStats() != null) {
@@ -249,7 +257,7 @@ public final class NST {
       return;
     }
     final Pointer mem = _makeIndices(indices);
-    nstLibrary.enableScrubberItems(scrubObj, mem, indices.size(), enabled);
+    nstLibrary.enableScrubberItems(pointer(scrubObj), mem, indices.size(), enabled);
   }
 
   @VisibleForTesting
@@ -258,7 +266,7 @@ public final class NST {
       return;
     }
     final Pointer mem = _makeIndices(indices);
-    nstLibrary.showScrubberItems(scrubObj, mem, indices == null ? 0 : indices.size(), show, inverseOthers);
+    nstLibrary.showScrubberItems(pointer(scrubObj), mem, indices == null ? 0 : indices.size(), show, inverseOthers);
   }
 
   private static @Nullable Pair<Pointer, Integer> _packItems(

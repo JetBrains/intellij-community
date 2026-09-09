@@ -37,7 +37,7 @@ internal class MacScrollbarPreferencesTest {
 
   @Test
   @EnabledOnOs(MAC)
-  fun `native preferences match JNA`() {
+  fun `native preferences match Foundation`() {
     withNativePool {
       val style = Foundation.invoke("NSScroller", "preferredScrollerStyle").toLong()
       val defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults")

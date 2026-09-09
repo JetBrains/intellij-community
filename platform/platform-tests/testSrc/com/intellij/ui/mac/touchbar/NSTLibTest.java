@@ -1,11 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.ui.mac.foundation.ID;
+import com.sun.jna.Pointer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -29,12 +28,11 @@ public class NSTLibTest {
 
     try {
       // small check that loaded library can create native objects
-      final ID test = lib.createTouchBar("test", (uid) -> ID.NIL, null);
+      final Pointer test = lib.createTouchBar("test", (uid) -> null, null);
       assertNotNull("Failed to create native touchbar object, result is null", test);
-      assertNotSame("Failed to create native touchbar object, result is ID.NIL", ID.NIL, test);
-      if (test != ID.NIL)
-        lib.releaseNativePeer(test);
-    } catch (RuntimeException e) {
+      lib.releaseNativePeer(test);
+    }
+    catch (RuntimeException e) {
       fail("nst library was loaded, but native object can't be created: " + e.getMessage());
     }
 

@@ -3,8 +3,8 @@ package org.jetbrains.jewel.bridge
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
-import com.sun.jna.Callback
-import com.sun.jna.Pointer
+import com.intellij.ui.mac.foundation.Selector
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.jewel.bridge.theme.default
@@ -27,7 +27,7 @@ internal interface ScrollbarHelper {
 
 private val scrollbarService by lazy { MacScrollbarHelperImpl() }
 
-private class MacScrollbarHelperImpl : Callback, ScrollbarHelper {
+private class MacScrollbarHelperImpl : ScrollbarHelper {
     private val logger = myLogger()
 
     private val _scrollbarVisibilityStyleFlow =
@@ -53,7 +53,7 @@ private class MacScrollbarHelperImpl : Callback, ScrollbarHelper {
             // Copied from MacScrollBarUI
             Foundation.invoke(
                 Foundation.invoke("NSDistributedNotificationCenter", "defaultCenter"),
-                "addObserver:selector:name:object:",
+                "addObserver:selector:name:object:suspensionBehavior:",
                 createDelegate(
                     "JewelScrollbarTrackClickBehaviorObserver",
                     Foundation.createSelector("handleBehaviorChanged:"),
@@ -86,7 +86,7 @@ private class MacScrollbarHelperImpl : Callback, ScrollbarHelper {
     }
 
     @Suppress("unused", "UNUSED_PARAMETER")
-    fun callback(self: ID?, selector: Pointer?, event: ID?) {
+    fun callback(self: ID?, selector: Selector?, event: ID?) {
         readTrackClickBehavior()
         readScrollbarVisibility()
     }
@@ -162,16 +162,18 @@ private class MacScrollbarHelperImpl : Callback, ScrollbarHelper {
     }
 
     // Copied from MacScrollBarUI
-    private fun createDelegate(name: String, pointer: Pointer, callback: Callback): ID {
-        val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), name)
+    private fun createDelegate(name: String, pointer: Selector, callback: MacScrollbarHelperImpl): ID {
+        val className = name + "_" + UUID.randomUUID().toString().replace("-", "")
+        val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), className)
         if (ID.NIL != delegateClass) {
-            if (!Foundation.addMethod(delegateClass, pointer, callback, "v@")) {
+            val handle = Foundation.callback(callback, "callback", ID::class.java, Selector::class.java, ID::class.java)
+            if (!Foundation.addMethod(delegateClass, pointer, handle, "v@:@")) {
                 @Suppress("detekt:TooGenericExceptionThrown") // Copied from IJP
                 throw RuntimeException("Cannot add observer method")
             }
             Foundation.registerObjcClassPair(delegateClass)
         }
-        return Foundation.invoke(name, "new")
+        return Foundation.invoke(delegateClass, "new")
     }
 }
 

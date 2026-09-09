@@ -13,21 +13,18 @@ import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
-import javax.swing.JLabel;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dialog;
 import java.awt.Event;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -40,7 +37,8 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
 import java.io.ByteArrayInputStream;
-import java.nio.ByteBuffer;
+import javax.imageio.ImageIO;
+import javax.swing.JLabel;
 
 @ApiStatus.Internal
 public final class MacColorPipette extends ColorPipetteBase {
@@ -194,25 +192,32 @@ public final class MacColorPipette extends ColorPipetteBase {
     try {
       ID windowId = belowWindow != null ? MacUtil.findWindowFromJavaWindow(belowWindow) : null;
       CoreGraphics.CGRect cgRect = new CoreGraphics.CGRect(rect.x, rect.y, rect.width, rect.height);
-      ID cgWindowId = windowId != null ? Foundation.invoke(windowId, "windowNumber") : ID.NIL;
-      int windowListOptions = cgWindowId != ID.NIL
+      int cgWindowId = windowId != null ? Foundation.invoke(windowId, "windowNumber").intValue() : 0;
+      int windowListOptions = cgWindowId != 0
                               ? FoundationLibrary.kCGWindowListOptionOnScreenBelowWindow
                               : FoundationLibrary.kCGWindowListOptionOnScreenOnly;
 
       int windowImageOptions = FoundationLibrary.kCGWindowImageNominalResolution;
       ID cgImageRef = CoreGraphics.cgWindowListCreateImage(cgRect, windowListOptions, cgWindowId, windowImageOptions);
-      ID bitmapRep = Foundation.invoke(Foundation.invoke("NSBitmapImageRep", "alloc"), "initWithCGImage:", cgImageRef);
-      ID nsImage = Foundation.invoke(Foundation.invoke("NSImage", "alloc"), "init");
-      Foundation.invoke(nsImage, "addRepresentation:", bitmapRep);
-      ID data = Foundation.invoke(nsImage, "TIFFRepresentation");
-      ID bytes = Foundation.invoke(data, "bytes");
-      ID length = Foundation.invoke(data, "length");
-      ByteBuffer byteBuffer = new Pointer(bytes.longValue()).getByteBuffer(0, length.longValue());
-      Foundation.invoke(nsImage, "release");
-      byte[] b = new byte[byteBuffer.remaining()];
-      byteBuffer.get(b);
+      if (Foundation.isNil(cgImageRef)) return null;
+      byte[] bytes;
+      ID bitmapRep = ID.NIL;
+      ID nsImage = ID.NIL;
+      try {
+        bitmapRep = Foundation.invoke(Foundation.invoke("NSBitmapImageRep", "alloc"), "initWithCGImage:", cgImageRef);
+        nsImage = Foundation.invoke(Foundation.invoke("NSImage", "alloc"), "init");
+        Foundation.invoke(nsImage, "addRepresentation:", bitmapRep);
+        ID data = Foundation.invoke(nsImage, "TIFFRepresentation");
+        if (Foundation.isNil(data)) return null;
+        bytes = new Foundation.NSData(data).bytes();
+      }
+      finally {
+        Foundation.invoke(nsImage, "release");
+        Foundation.invoke(bitmapRep, "release");
+        Foundation.cfRelease(cgImageRef);
+      }
 
-      BufferedImage result = ImageIO.read(new ByteArrayInputStream(b));
+      BufferedImage result = ImageIO.read(new ByteArrayInputStream(bytes));
       if (result != null) {
         ColorSpace ics = ColorSpace.getInstance(ColorSpace.CS_sRGB);
         ColorConvertOp cco = new ColorConvertOp(ics, null);
