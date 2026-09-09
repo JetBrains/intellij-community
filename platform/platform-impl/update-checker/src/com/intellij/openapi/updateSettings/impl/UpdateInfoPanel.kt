@@ -18,6 +18,8 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
@@ -44,6 +46,7 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
 import java.nio.file.Files
 import java.nio.file.Path
@@ -59,6 +62,12 @@ private val DEFAULT_PREF_SIZE = JBDimension(540, 460)
 private val PATCH_SIZE_RANGE: Regex = "from \\d+ to (\\d+)".toRegex()
 private const val INCOMPATIBLE_PLUGINS_LIMIT = 2
 
+/**
+ * The version of a build, for example `2026.1`, `2026.1.3` or `2026.2.0.1` (without EAP, RC, BETA, etc.).
+ * The first group holds the major version, `2026.1` from examples above.
+ */
+private val UPDATE_VERSION: Regex = "(\\d+\\.\\d+)(?:\\.\\d+)*".toRegex()
+
 private val REPORTING_LISTENER = object : BrowserHyperlinkListener() {
   override fun hyperlinkActivated(e: HyperlinkEvent) {
     UpdateInfoStatsCollector.click(e.description)
@@ -72,6 +81,39 @@ fun downloadUrl(newBuild: BuildInfo, updatedChannel: UpdateChannel): String =
     newBuild.downloadUrl ?: newBuild.blogPost ?: updatedChannel.url
     ?: ExternalProductResourceUrls.getInstance().downloadPageUrl?.toExternalForm() ?: ApplicationInfo.getInstance().companyURL
     ?: "https://www.jetbrains.com")
+
+/**
+ * The major version of [version], for example `2026.1` for `2026.1.3`.
+ * It is `null` when [version] is not a set of numbers, for example `2026.3 EAP`.
+ */
+@ApiStatus.Internal
+@VisibleForTesting
+fun getMajorVersion(version: String): String? {
+  return UPDATE_VERSION.matchEntire(version)?.groupValues?.get(1)
+}
+
+/**
+ * The build with the update info to show.
+ *
+ * A minor update has bug fixes only. A user who moves to a new major version must see what the major version brings,
+ * so the panel shows the info of the major build. [PlatformUpdates.Loaded.newBuild] is the fallback, because the update
+ * data does not always have the info of the major build.
+ */
+@ApiStatus.Internal
+@VisibleForTesting
+fun PlatformUpdates.Loaded.infoBuild(currentBuild: BuildNumber, customization: UpdateStrategyCustomization): BuildInfo {
+  if (customization.haveSameMajorVersion(currentBuild, newBuild.number)) {
+    return newBuild
+  }
+  val majorVersion = getMajorVersion(newBuild.version)
+  if (majorVersion == null || majorVersion == newBuild.version) {
+    return newBuild
+  }
+  return updatedChannel.builds.find {
+    it.version == majorVersion &&
+    it.message.isNotBlank()
+  } ?: newBuild
+}
 
 @ApiStatus.Internal
 fun createUpdateInfoPanel(
@@ -89,11 +131,12 @@ fun createUpdateInfoPanel(
   val updatedChannel = platformUpdate.updatedChannel
   val appInfo = ApplicationInfo.getInstance()
   val appNames = ApplicationNamesInfo.getInstance()
+  val infoBuild = platformUpdate.infoBuild(appInfo.build, UpdateStrategyCustomization.getInstance())
 
   val textPane = JEditorPane("text/html", "").apply {
     border = JBUI.Borders.emptyRight(12)
     isEditable = false
-    text = textPaneContent(newBuild, updatedChannel, appNames)
+    text = textPaneContent(infoBuild, newBuild, updatedChannel, appNames)
     caretPosition = 0 // set after text
     addHyperlinkListener(REPORTING_LISTENER)
     isOpaque = false
@@ -283,10 +326,15 @@ private fun getPluginsList(names: List<String>, version: String): @Nls String {
   return IdeBundle.message("updates.incompatible.plugins.found", names.size, version, pluginsText)
 }
 
-private fun textPaneContent(newBuild: BuildInfo, updatedChannel: UpdateChannel, appNames: ApplicationNamesInfo): @NlsSafe String {
+private fun textPaneContent(
+  infoBuild: BuildInfo,
+  newBuild: BuildInfo,
+  updatedChannel: UpdateChannel,
+  appNames: ApplicationNamesInfo,
+): @NlsSafe String {
   val style = UIUtil.getCssFontDeclaration(StartupUiUtil.labelFont)
 
-  val message = newBuild.message.trim()
+  val message = infoBuild.message.trim()
   val content = when {
     message.isNotBlank() -> {
       val prefix = "<p>"
