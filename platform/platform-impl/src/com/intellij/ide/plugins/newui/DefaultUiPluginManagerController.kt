@@ -41,6 +41,7 @@ import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.ResetPluginsStateResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.ide.plugins.marketplace.collectInstalledDependencyDescriptors
 import com.intellij.ide.plugins.newui.PluginInstallationCustomization.Companion.findPluginInstallationCustomization
 import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
 import com.intellij.openapi.application.ApplicationInfo
@@ -670,6 +671,12 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       }
       catch (e: Throwable) {
         LOG.error(e)
+      }
+      finally {
+        result.installedDependencyDescriptors = collectInstalledDependencyDescriptors(
+          request.pluginId,
+          operation.installedDependentPlugins.map { installedPlugin -> PluginUiModelAdapter(installedPlugin.pluginDescriptor) },
+        )
       }
 
       result.applyTerminalState(terminalState)
