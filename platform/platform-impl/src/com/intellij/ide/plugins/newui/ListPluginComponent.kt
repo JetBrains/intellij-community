@@ -112,6 +112,7 @@ internal data class PluginRowRenderKey(
   val restrictedByProduct: Boolean,
   val listCustomizerClassName: String,
   val pluginManagerCustomizerClassName: String?,
+  val preparedUpdate: PluginPreparedUpdateState?,
 )
 
 @ApiStatus.Internal
@@ -273,6 +274,7 @@ class ListPluginComponent private constructor(
   private var myErrorPanel: JPanel? = null
   private var myErrorComponent: ErrorComponent? = null
   private var myIndicator: ProgressIndicatorEx? = null
+  private var myIndicatorReadOnly = false
   private var myEventHandler: EventHandler? = null
   private var myCustomizer: PluginManagerCustomizer? = null
   private val myUiCoroutineScope: CoroutineScope = coroutineScope.childScope("Plugin row ${pluginUiModel.pluginId}")
@@ -916,14 +918,26 @@ class ListPluginComponent private constructor(
   }
 
   fun showProgress() {
-    showProgress(true)
+    showProgress(true, readOnly = false)
   }
 
-  private fun showProgress(repaint: Boolean) {
+  internal fun showReadOnlyProgress() {
+    showProgress(true, readOnly = true)
+  }
+
+  private fun showProgress(repaint: Boolean, readOnly: Boolean = false) {
     ThreadingAssertions.softAssertAwtOperationsThread()
 
     if (successfullyFinishedOnce) return
+    if (myIndicator != null) {
+      if (!readOnly && myIndicatorReadOnly) {
+        PluginModelFacade.addProgress(getDescriptorForActions(), myIndicator!!)
+        myIndicatorReadOnly = false
+      }
+      return
+    }
     myIndicator = AbstractProgressIndicatorExBase()
+    myIndicatorReadOnly = readOnly
     myLayout.setProgressComponent(object : AsyncProcessIcon("PluginListComponentIconProgress") {
       override fun getBaseline(width: Int, height: Int): Int {
         return (height * 0.85).toInt()
@@ -937,7 +951,9 @@ class ListPluginComponent private constructor(
       }
     })
 
-    PluginModelFacade.addProgress(getDescriptorForActions(), myIndicator!!)
+    if (!readOnly) {
+      PluginModelFacade.addProgress(getDescriptorForActions(), myIndicator!!)
+    }
 
     if (repaint) {
       fullRepaint()
@@ -947,6 +963,7 @@ class ListPluginComponent private constructor(
   fun hideProgress() {
     if (successfullyFinishedOnce) return
     myIndicator = null
+    myIndicatorReadOnly = false
     myLayout.removeProgressComponent()
   }
 
@@ -1018,6 +1035,7 @@ class ListPluginComponent private constructor(
 
   fun clearProgress() {
     myIndicator = null
+    myIndicatorReadOnly = false
   }
 
   fun enableRestart() {
@@ -1155,10 +1173,11 @@ class ListPluginComponent private constructor(
     if (myClosed) return
     myClosed = true
 
-    if (myIndicator != null) {
+    if (myIndicator != null && !myIndicatorReadOnly) {
       PluginModelFacade.removeProgress(getDescriptorForActions(), myIndicator!!)
-      myIndicator = null
     }
+    myIndicator = null
+    myIndicatorReadOnly = false
     myModelFacade.removeComponent(this)
     myOperationUi.detach()
     myUiCoroutineScope.cancel()
@@ -1964,6 +1983,7 @@ class ListPluginComponent private constructor(
       restrictedByProduct: Boolean,
       listCustomizerClassName: String,
       pluginManagerCustomizerClassName: String?,
+      preparedUpdate: PluginPreparedUpdateState? = null,
     ): PluginRowRenderKey {
       val compatible = !plugin.isIncompatibleWithCurrentPlatform
       val available = (compatible || installationState.fullyInstalled && pluginEnabled) && plugin.canBeEnabled
@@ -2003,6 +2023,7 @@ class ListPluginComponent private constructor(
         restrictedByProduct = restrictedByProduct,
         listCustomizerClassName = listCustomizerClassName,
         pluginManagerCustomizerClassName = pluginManagerCustomizerClassName,
+        preparedUpdate = preparedUpdate,
       )
     }
 
