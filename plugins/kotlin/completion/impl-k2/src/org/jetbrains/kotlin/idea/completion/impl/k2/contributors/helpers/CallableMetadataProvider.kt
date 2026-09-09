@@ -7,7 +7,6 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.asSignature
@@ -38,6 +37,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSupertypeOrSelf
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
@@ -184,7 +184,7 @@ internal object CallableMetadataProvider {
             (signature.returnType as? KaFunctionType)?.receiverType
         } else {
             // if extension has type parameters, `KtExtensionApplicabilityResult.substitutor` may contain captured types
-            signature.receiverType?.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = false)
+            signature.receiverType?.approximateToDenotableSupertypeOrSelf(allowLocalDenotableTypes = true)
         } ?: return null
 
         // If a symbol expects an extension receiver, then either
