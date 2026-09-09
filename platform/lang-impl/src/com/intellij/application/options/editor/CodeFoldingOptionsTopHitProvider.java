@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.options.ConfigurableBuilder;
+import com.intellij.openapi.options.CompositeConfigurableKt;
 import com.intellij.openapi.options.ConfigurableWithOptionDescriptors;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
@@ -54,7 +54,7 @@ final class CodeFoldingOptionsTopHitProvider implements OptionsSearchTopHitProvi
         return;
       }
 
-      String title = ConfigurableBuilder.getConfigurableTitle(configurable);
+      String title = CompositeConfigurableKt.getConfigurableTitle(configurable);
       String prefix = title == null ? byDefault + " " : StringUtil.trimEnd(byDefault, ':') + " in " + title + ": ";
       result.addAll(((ConfigurableWithOptionDescriptors)configurable).getOptionDescriptors(CodeFoldingConfigurable.ID, s -> prefix + s));
     });

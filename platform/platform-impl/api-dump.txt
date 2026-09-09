@@ -3491,6 +3491,7 @@ a:com.intellij.openapi.options.CompositeConfigurable
 - <init>():V
 - apply():V
 - getConfigurables():java.util.List
+- bf:getConfigurablesKotlin():java.util.List
 - isModified():Z
 - reset():V
 a:com.intellij.openapi.options.ConfigurableBuilder

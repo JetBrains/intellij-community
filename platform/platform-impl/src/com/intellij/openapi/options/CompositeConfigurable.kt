@@ -1,54 +1,59 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.options;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.options
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
+import com.intellij.openapi.util.ClearableLazyValue
+import org.jetbrains.annotations.ApiStatus
 
-import java.util.List;
+abstract class CompositeConfigurable<T : UnnamedConfigurable> : BaseConfigurable() {
 
-public abstract class CompositeConfigurable<T extends UnnamedConfigurable> extends BaseConfigurable {
-  private List<T> myConfigurables;
+  private val lazyConfigurables: ClearableLazyValue<List<T>> = ClearableLazyValue.create { createConfigurables() }
 
-  @Override
-  public void reset() {
-    for (T configurable : getConfigurables()) {
-      configurable.reset();
+  open val configurables: List<T>
+    get() = lazyConfigurables.value
+
+  /** Kotlin-only alias for [configurables]. It keeps the call form of the former Java method. */
+  @JvmSynthetic
+  @JvmName("getConfigurablesKotlin")
+  @Deprecated("Use configurables property instead", ReplaceWith("configurables"))
+  @ApiStatus.ScheduledForRemoval
+  fun getConfigurables(): List<T> = configurables
+
+  override fun reset() {
+    for (configurable in configurables) {
+      configurable.reset()
     }
   }
 
-  @Override
-  public void apply() throws ConfigurationException {
-    for (T configurable : getConfigurables()) {
-      configurable.apply();
+  @Throws(ConfigurationException::class)
+  override fun apply() {
+    for (configurable in configurables) {
+      configurable.apply()
     }
   }
 
-  @Override
-  public boolean isModified() {
-    for (T configurable : getConfigurables()) {
-      if (configurable.isModified()) {
-        return true;
+  override fun isModified(): Boolean {
+    return configurables.any { it.isModified }
+  }
+
+  override fun disposeUIResources() {
+    if (lazyConfigurables.isCached) {
+      for (configurable in configurables) {
+        configurable.disposeUIResources()
       }
-    }
-    return false;
-  }
-
-  @Override
-  public void disposeUIResources() {
-    if (myConfigurables != null) {
-      for (final T myConfigurable : myConfigurables) {
-        myConfigurable.disposeUIResources();
-      }
-      myConfigurables = null;
+      lazyConfigurables.drop()
     }
   }
 
-  protected abstract @Unmodifiable @NotNull List<T> createConfigurables();
+  protected abstract fun createConfigurables(): List<T>
+}
 
-  public @Unmodifiable @NotNull List<T> getConfigurables() {
-    if (myConfigurables == null) {
-      myConfigurables = createConfigurables();
-    }
-    return myConfigurables;
+@ApiStatus.Internal
+fun getConfigurableTitle(configurable: UnnamedConfigurable): String? {
+  if (configurable is BeanConfigurable<*>) {
+    return configurable.title
   }
+  if (configurable is BoundConfigurable) {
+    return configurable.displayName
+  }
+  return null
 }
