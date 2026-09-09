@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import fleet.rpc.client.RpcClientDisconnectedException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -74,9 +75,22 @@ internal class PluginOperationUiContext(
   fun getParentComponent(): JComponent? = parentComponent()
 }
 
-internal class PluginOperationLauncher(private val coroutineScope: CoroutineScope) {
-  fun launch(context: CoroutineContext, operation: suspend CoroutineScope.() -> Unit) {
-    coroutineScope.launch(context, block = operation)
+internal class PluginOperationLauncher(
+  private val coroutineScope: CoroutineScope,
+  private val onOperationSubmitted: () -> Unit = {},
+  private val onOperationCompleted: () -> Unit = {},
+) {
+  fun launch(context: CoroutineContext, operation: suspend CoroutineScope.() -> Unit): Job {
+    onOperationSubmitted()
+    val job = try {
+      coroutineScope.launch(context, block = operation)
+    }
+    catch (t: Throwable) {
+      onOperationCompleted()
+      throw t
+    }
+    job.invokeOnCompletion { onOperationCompleted() }
+    return job
   }
 }
 
@@ -174,8 +188,8 @@ internal object PluginModelAsyncOperationsExecutor {
     pluginManagerCustomizer: PluginManagerCustomizer?,
     operationUi: PluginOperationUiContext,
     pluginDescriptorForPluginUpdateSourceApplier: PluginUiModel,
-  ) {
-    operationLauncher.launch(Dispatchers.IO) {
+  ): Job {
+    return operationLauncher.launch(Dispatchers.IO) {
       val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(pluginDescriptorForPluginUpdateSourceApplier, modelFacade)
       pluginUpdateSourceApplier.runWithRevertOnException {
         val model = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(
