@@ -118,6 +118,22 @@ open class MyPluginModel @JvmOverloads constructor(
     this.myInstallSource = source
   }
 
+  internal fun operationStarted(context: PluginOperationContext) {
+    myEventPublisher.operationStarted(sessionId, context)
+  }
+
+  internal fun operationTargetFinished(
+    context: PluginOperationContext,
+    target: PluginSource,
+    result: PluginOperationTerminalResult,
+  ) {
+    myEventPublisher.operationTargetFinished(context, target, result)
+  }
+
+  internal fun operationFinished(context: PluginOperationContext) {
+    myEventPublisher.operationFinished(context)
+  }
+
   override fun isModified(): Boolean {
     return needRestart || myInstallingInfos.isNotEmpty() || super.isModified()
   }

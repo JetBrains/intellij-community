@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -58,11 +59,47 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     updateDescriptor: PluginUiModel?,
     modalityState: ModalityState,
     controller: UiPluginManagerController = UiPluginManager.getInstance().getController(),
+    operationContext: PluginOperationContext? = null,
   ): InstallPluginResult? {
-    val installTask = service<PluginManagerCoroutineScopeHolder>().coroutineScope.async(CoroutineName("Install plugin ${model.pluginId}")) {
-      pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, this, modalityState, controller)
+    val target = controller.getTarget()
+    val context = operationContext ?: PluginOperationContext.create(
+      displayPluginId = model.pluginId,
+      target = target,
+      kind = if (updateDescriptor == null) PluginOperationKind.INSTALL else PluginOperationKind.UPDATE,
+    )
+    val finishOperation = operationContext == null
+    pluginModel.operationStarted(context)
+    try {
+      val installTask = service<PluginManagerCoroutineScopeHolder>().coroutineScope.async(
+        CoroutineName("Install plugin ${model.pluginId}")
+      ) {
+        pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, this, modalityState, controller)
+      }
+      val result = withContext(NonCancellable) { installTask.await() }
+      pluginModel.operationTargetFinished(context, target, result.toTerminalResult())
+      return result
     }
-    return withContext(NonCancellable) { installTask.await() }
+    catch (e: CancellationException) {
+      pluginModel.operationTargetFinished(context, target, PluginOperationTerminalResult.CANCELLED)
+      throw e
+    }
+    catch (t: Throwable) {
+      pluginModel.operationTargetFinished(context, target, PluginOperationTerminalResult.FAILED)
+      throw t
+    }
+    finally {
+      if (finishOperation) {
+        pluginModel.operationFinished(context)
+      }
+    }
+  }
+
+  fun startOperation(context: PluginOperationContext) {
+    pluginModel.operationStarted(context)
+  }
+
+  fun finishOperation(context: PluginOperationContext) {
+    pluginModel.operationFinished(context)
   }
 
   fun addUninstalled(pluginId: PluginId) {
@@ -152,5 +189,13 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     fun removeProgress(model: PluginUiModel, indicator: ProgressIndicatorEx) {
       MyPluginModel.removeProgress(model.getDescriptor(), indicator)
     }
+  }
+}
+
+private fun InstallPluginResult?.toTerminalResult(): PluginOperationTerminalResult {
+  return when {
+    this == null || cancel -> PluginOperationTerminalResult.CANCELLED
+    success -> PluginOperationTerminalResult.SUCCEEDED
+    else -> PluginOperationTerminalResult.FAILED
   }
 }

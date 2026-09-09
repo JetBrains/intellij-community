@@ -32,4 +32,76 @@ internal class PluginModelEventPublisherTest {
       PluginModelEvent.InventoryInvalidated(PluginInventoryChangeReason.APPLY, emptySet())
     )
   }
+
+  @Test
+  fun `single target operation publishes one lifecycle`() {
+    val events = mutableListOf<PluginModelEvent>()
+    val publisher = PluginModelEventPublisher(events::add)
+    val pluginId = PluginId.getId("plugin.id")
+    val context = PluginOperationContext.create(pluginId, PluginSource.LOCAL, PluginOperationKind.INSTALL)
+
+    publisher.operationStarted("session", context)
+    publisher.operationTargetFinished(context, PluginSource.LOCAL, PluginOperationTerminalResult.SUCCEEDED)
+    publisher.operationFinished(context)
+
+    assertThat(events).containsExactly(
+      PluginModelEvent.OperationStarted(
+        "session", context.operationId, pluginId, PluginSource.LOCAL, PluginOperationKind.INSTALL
+      ),
+      PluginModelEvent.OperationFinished(
+        "session", context.operationId, pluginId, PluginSource.LOCAL, PluginOperationKind.INSTALL,
+        PluginOperationTerminalResult.SUCCEEDED,
+      ),
+    )
+  }
+
+  @Test
+  fun `two physical targets publish one logical lifecycle`() {
+    val events = mutableListOf<PluginModelEvent>()
+    val publisher = PluginModelEventPublisher(events::add)
+    val pluginId = PluginId.getId("plugin.id")
+    val context = PluginOperationContext.create(pluginId, PluginSource.BOTH, PluginOperationKind.INSTALL)
+
+    publisher.operationStarted("session", context)
+    publisher.operationTargetFinished(context, PluginSource.LOCAL, PluginOperationTerminalResult.SUCCEEDED)
+    publisher.operationStarted("session", context)
+    publisher.operationTargetFinished(context, PluginSource.REMOTE, PluginOperationTerminalResult.SUCCEEDED)
+    publisher.operationFinished(context)
+
+    assertThat(events.filterIsInstance<PluginModelEvent.OperationStarted>()).hasSize(1)
+    assertThat(events.filterIsInstance<PluginModelEvent.OperationFinished>().map { it.result })
+      .containsExactly(PluginOperationTerminalResult.SUCCEEDED)
+  }
+
+  @Test
+  fun `missing physical target completes as cancellation`() {
+    val events = mutableListOf<PluginModelEvent>()
+    val publisher = PluginModelEventPublisher(events::add)
+    val context = PluginOperationContext.create(
+      PluginId.getId("plugin.id"), PluginSource.BOTH, PluginOperationKind.UPDATE
+    )
+
+    publisher.operationStarted("session", context)
+    publisher.operationTargetFinished(context, PluginSource.LOCAL, PluginOperationTerminalResult.SUCCEEDED)
+    publisher.operationFinished(context)
+
+    assertThat(events.filterIsInstance<PluginModelEvent.OperationFinished>().map { it.result })
+      .containsExactly(PluginOperationTerminalResult.CANCELLED)
+  }
+
+  @Test
+  fun `physical failure takes precedence over a missing target`() {
+    val events = mutableListOf<PluginModelEvent>()
+    val publisher = PluginModelEventPublisher(events::add)
+    val context = PluginOperationContext.create(
+      PluginId.getId("plugin.id"), PluginSource.BOTH, PluginOperationKind.INSTALL
+    )
+
+    publisher.operationStarted("session", context)
+    publisher.operationTargetFinished(context, PluginSource.LOCAL, PluginOperationTerminalResult.FAILED)
+    publisher.operationFinished(context)
+
+    assertThat(events.filterIsInstance<PluginModelEvent.OperationFinished>().map { it.result })
+      .containsExactly(PluginOperationTerminalResult.FAILED)
+  }
 }
