@@ -18,6 +18,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiArrayType;
@@ -1534,9 +1535,20 @@ public final class ExpressionUtils {
       PsiElement parent = expression.getParent();
       if (parent instanceof PsiExpression e && !(parent instanceof PsiLambdaExpression)) {
         expression = e;
-      } else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpression e) {
-        expression = e;
-      } else {
+      }
+      else if (parent instanceof PsiExpressionList) {
+        PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof PsiExpression e) {
+          expression = e;
+        }
+        else if (grandParent instanceof PsiAnonymousClass c && c.getParent() instanceof PsiExpression e) {
+          expression = e;
+        }
+        else {
+          return expression;
+        }
+      }
+      else {
         return expression;
       }
     }
