@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -44,11 +44,9 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
   //Map from classes referenced by 'this' to sets of referenced members
   private Map<PsiClass, Set<PsiMember>> myThisClassesMap;
-
   private Map<PsiClass, EditorTextField> myOldClassParameterNameFields;
 
-  public MoveInstanceMethodDialog(final PsiMethod method,
-                                  final PsiVariable[] variables) {
+  public MoveInstanceMethodDialog(PsiMethod method, PsiVariable[] variables) {
     super(method, variables, MoveInstanceMethodHandler.getRefactoringName(), true);
     init();
   }
@@ -138,8 +136,8 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
       if (field.isEnabled()) {
         String parameterName = field.getText().trim();
         if (!PsiNameHelper.getInstance(myMethod.getProject()).isIdentifier(parameterName)) {
-          Messages
-            .showErrorDialog(getProject(), JavaRefactoringBundle.message("move.method.enter.a.valid.name.for.parameter"), myRefactoringName);
+          String message = JavaRefactoringBundle.message("move.method.enter.a.valid.name.for.parameter");
+          Messages.showErrorDialog(getProject(), message, myRefactoringName);
           return;
         }
         parameterNames.put(aClass, parameterName);

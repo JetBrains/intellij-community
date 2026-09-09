@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -42,11 +42,6 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   protected final PsiMethod myMethod;
   protected final Object[] myVariables;
 
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myList;
-  }
-
   protected JList<Object> myList;
   protected JavaVisibilityPanel myVisibilityPanel;
   protected final @NlsContexts.DialogTitle String myRefactoringName;
@@ -57,6 +52,11 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     myVariables = variables;
     myRefactoringName = refactoringName;
     setTitle(myRefactoringName);
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myList;
   }
 
   protected JPanel createListAndVisibilityPanels() {
@@ -112,18 +112,16 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     if (targetClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, targetClass)) {
       final Project project = getProject();
       if (ClassInheritorsSearch.search(targetClass, false).findFirst() == null) {
-        final String message = JavaRefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", DescriptiveNameUtil
-          .getDescriptiveName(targetClass));
-
+        final String message = JavaRefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", 
+                                                             DescriptiveNameUtil.getDescriptiveName(targetClass));
         Messages.showErrorDialog(project, message, myRefactoringName);
         return false;
       }
 
-      final String message = JavaRefactoringBundle.message("0.is.an.interface.method.implementation.will.be.added.to.all.directly.implementing.classes",
-                                                       DescriptiveNameUtil.getDescriptiveName(targetClass));
-
-      final int result = Messages.showYesNoDialog(project, message, myRefactoringName,
-                                                  Messages.getQuestionIcon());
+      final String message = 
+        JavaRefactoringBundle.message("0.is.an.interface.method.implementation.will.be.added.to.all.directly.implementing.classes",
+                                      DescriptiveNameUtil.getDescriptiveName(targetClass));
+      final int result = Messages.showYesNoDialog(project, message, myRefactoringName, Messages.getQuestionIcon());
       if (result != Messages.YES) return false;
     }
 
