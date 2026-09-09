@@ -223,7 +223,7 @@ public class CodeCompletionHandlerBase {
 
     long startingTime = System.currentTimeMillis();
     Runnable initCmd = () -> {
-      WriteAction.run(() -> EditorUtil.fillVirtualSpaceUntilCaret(editor));
+      EditorUtil.fillVirtualSpaceUntilCaret(editor);
       CompletionInitializationContextImpl context = withTimeout(calcSyncTimeOut(startingTime), () -> {
         return CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, effectiveInvocationCount, completionType);
       });
