@@ -1,6 +1,0 @@
-compilationSuccessful: true
-projectIsResolvable: true
-passed: 2
-	io.prestosql.plugin.hive.TestHiveConfig
-	io.prestosql.plugin.hive.metastore.TestSemiTransactionalHiveMetastore
-failed: 0
