@@ -51,6 +51,7 @@ interface PluginInstallerApi : RemoteApi<Unit> {
     allowInstallWithoutRestart: Boolean,
     customRepoPlugins: List<PluginDto>?,
   ): Flow<PluginInstallRpcEvent>
+
   suspend fun isRestartRequired(sessionId: String): Boolean
 
   companion object {

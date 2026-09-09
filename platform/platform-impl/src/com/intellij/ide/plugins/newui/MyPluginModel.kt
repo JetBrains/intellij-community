@@ -417,7 +417,9 @@ open class MyPluginModel @JvmOverloads constructor(
     if (result.disabledPlugins.isEmpty() && result.disabledDependants.isEmpty()) {
       return result
     }
-    val enableDependencies = withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) { PluginManagerMain.askToEnableDependencies(1, result.disabledPlugins, result.disabledDependants) }
+    val enableDependencies = withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) {
+      PluginManagerMain.askToEnableDependencies(1, result.disabledPlugins, result.disabledDependants)
+    }
     return controller.continueInstallation(
       sessionId,
       actionDescriptor.pluginId,

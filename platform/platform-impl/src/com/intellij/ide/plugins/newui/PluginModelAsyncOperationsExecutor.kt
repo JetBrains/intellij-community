@@ -119,7 +119,11 @@ internal object PluginModelAsyncOperationsExecutor {
             customAction()
             return@withContext
           }
-          val result = modelFacade.installOrUpdatePlugin(operationUi, descriptor, null)
+          val result = modelFacade.installOrUpdatePlugin(
+            operationUi,
+            descriptor,
+            null,
+          )
           pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
         }
       }

@@ -486,8 +486,8 @@ class PluginInstallOperation(
 
     try {
       val result = Ref(false)
-      val scheduledDependencies = ArrayList<PluginUiModel>()
 
+      val scheduledDependencies = ArrayList<PluginUiModel>()
       ApplicationManager.getApplication().invokeAndWait({
         synchronized(ourInstallLock) {
           val pluginsState = InstalledPluginsState.getInstance()

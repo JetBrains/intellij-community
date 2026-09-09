@@ -15,7 +15,6 @@ import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.CustomPluginRepository
-import com.intellij.ide.plugins.newui.PluginInventoryEntry
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.openapi.application.EDT

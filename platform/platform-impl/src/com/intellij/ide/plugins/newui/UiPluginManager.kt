@@ -332,7 +332,6 @@ internal suspend fun invokeResetSessionCallback(
   }
 }
 
-
 @Service
 @ApiStatus.Internal
 class FrontendRpcCoroutineContext(val coroutineScope: CoroutineScope)

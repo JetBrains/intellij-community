@@ -143,38 +143,6 @@ internal class PluginModelEventPublisherTest {
   }
 
   @Test
-  fun `missing physical target completes as cancellation`() {
-    val events = mutableListOf<PluginModelEvent>()
-    val publisher = PluginModelEventPublisher(events::add)
-    val context = PluginOperationContext.create(
-      PluginId.getId("plugin.id"), PluginSource.BOTH, PluginOperationKind.UPDATE
-    )
-
-    publisher.operationStarted("session", context, plugin(context.displayPluginId))
-    publisher.operationTargetFinished(context, PluginSource.LOCAL, PluginOperationTerminalResult.SUCCEEDED)
-    publisher.operationFinished(context)
-
-    assertThat(events.filterIsInstance<PluginModelEvent.OperationFinished>().map { it.result })
-      .containsExactly(PluginOperationTerminalResult.CANCELLED)
-  }
-
-  @Test
-  fun `physical failure takes precedence over a missing target`() {
-    val events = mutableListOf<PluginModelEvent>()
-    val publisher = PluginModelEventPublisher(events::add)
-    val context = PluginOperationContext.create(
-      PluginId.getId("plugin.id"), PluginSource.BOTH, PluginOperationKind.INSTALL
-    )
-
-    publisher.operationStarted("session", context, plugin(context.displayPluginId))
-    publisher.operationTargetFinished(context, PluginSource.LOCAL, PluginOperationTerminalResult.FAILED)
-    publisher.operationFinished(context)
-
-    assertThat(events.filterIsInstance<PluginModelEvent.OperationFinished>().map { it.result })
-      .containsExactly(PluginOperationTerminalResult.FAILED)
-  }
-
-  @Test
   fun `scheduled dependencies are published before completion and deduplicated`() {
     val events = mutableListOf<PluginModelEvent>()
     val publisher = PluginModelEventPublisher(events::add)
@@ -207,6 +175,38 @@ internal class PluginModelEventPublisherTest {
 
     assertThat(events.filterIsInstance<PluginModelEvent.OperationStarted>().map { it.presentationModel })
       .containsExactly(displayModel)
+  }
+
+  @Test
+  fun `missing physical target completes as cancellation`() {
+    val events = mutableListOf<PluginModelEvent>()
+    val publisher = PluginModelEventPublisher(events::add)
+    val context = PluginOperationContext.create(
+      PluginId.getId("plugin.id"), PluginSource.BOTH, PluginOperationKind.UPDATE
+    )
+
+    publisher.operationStarted("session", context, plugin(context.displayPluginId))
+    publisher.operationTargetFinished(context, PluginSource.LOCAL, PluginOperationTerminalResult.SUCCEEDED)
+    publisher.operationFinished(context)
+
+    assertThat(events.filterIsInstance<PluginModelEvent.OperationFinished>().map { it.result })
+      .containsExactly(PluginOperationTerminalResult.CANCELLED)
+  }
+
+  @Test
+  fun `physical failure takes precedence over a missing target`() {
+    val events = mutableListOf<PluginModelEvent>()
+    val publisher = PluginModelEventPublisher(events::add)
+    val context = PluginOperationContext.create(
+      PluginId.getId("plugin.id"), PluginSource.BOTH, PluginOperationKind.INSTALL
+    )
+
+    publisher.operationStarted("session", context, plugin(context.displayPluginId))
+    publisher.operationTargetFinished(context, PluginSource.LOCAL, PluginOperationTerminalResult.FAILED)
+    publisher.operationFinished(context)
+
+    assertThat(events.filterIsInstance<PluginModelEvent.OperationFinished>().map { it.result })
+      .containsExactly(PluginOperationTerminalResult.FAILED)
   }
 
   @Test

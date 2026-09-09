@@ -563,8 +563,7 @@ class ListPluginComponent private constructor(
         myRating = createRatingLabel(myMetricsPanel!!, rating, AllIcons.Plugins.Rating)
       }
       val version = myRenderKey.version
-      @Suppress("HardCodedStringLiteral")
-      val displayVersion: @NlsSafe String = version.orEmpty()
+      val displayVersion: @NlsSafe String = version ?: ""
       myVersion = createVersionLabel(myMetricsPanel!!, displayVersion, myRenderKey.versionIsBundledUpdate)
       myVersion!!.isVisible = version != null
     }
