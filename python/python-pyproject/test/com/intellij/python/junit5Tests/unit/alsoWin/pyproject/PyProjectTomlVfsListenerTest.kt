@@ -103,6 +103,23 @@ internal class PyProjectTomlVfsListenerTest {
   }
 
   @ParameterizedTest
+  @ValueSource(strings = [".hidden", "node_modules"])
+  fun testPrunedDirectoryRenamed(oldName: String): Unit = timeoutRunBlocking(TEST_TIMEOUT) {
+    root.resolve(oldName).resolve("nested").writeToml("nested")
+    refreshWithoutRecursion(root)
+    val directory = findInVfs(root.resolve(oldName))
+    writeAction { directory.rename(this, "visible") }
+    awaitPyModules("a directory with a visible name", "member", "nested")
+  }
+
+  @Test
+  fun testDirectoryRenamedToAPrunedName(): Unit = timeoutRunBlocking(TEST_TIMEOUT) {
+    val member = findInVfs(root.resolve("member"))
+    writeAction { member.rename(this, ".hidden") }
+    awaitPyModules("a directory with a pruned name")
+  }
+
+  @ParameterizedTest
   @ValueSource(booleans = [false, true])
   fun testRebuildAfterFailure(onStart: Boolean, @TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(TEST_TIMEOUT) {
     val service = projectFixture.get().service<PyProjectModelSyncService>()

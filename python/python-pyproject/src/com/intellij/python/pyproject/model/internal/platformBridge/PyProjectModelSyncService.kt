@@ -346,8 +346,8 @@ private val AWAIT_TIMEOUT: Duration = 5.minutes
 /**
  * A reason to rebuild the model.
  *
- * [directoriesToLoad] holds a directory whose content the VFS does not know yet: a new directory, or one
- * that stopped being excluded. The consumer loads such a subtree before it reads the filename index.
+ * [directoriesToLoad] holds new or renamed directories and directories that stopped being excluded.
+ * The consumer loads their subtrees before it reads the filename index.
  *
  * [reason] names the change that asked for the build. The log prints it, because a build can start another
  * build and only the reason tells the two apart.

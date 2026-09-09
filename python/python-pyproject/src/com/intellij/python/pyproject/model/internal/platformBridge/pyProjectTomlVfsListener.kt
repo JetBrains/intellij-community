@@ -62,8 +62,8 @@ internal fun subscribeToPyProjectTomlChanges(
       if (eventFilter.isIgnored(event)) continue
       val kept = when {
         event.isPyProjectToml() -> true.also { tomlChanged = true }
-        event.createsDirectory() -> true.also { newDirectoryEvents.add(event) }
-        event.removesDirectory() || event.renamesDirectory() -> true.also { tomlChanged = true }
+        event.requiresSubtreeLoad() -> true.also { newDirectoryEvents.add(event) }
+        event.removesDirectory() -> true.also { tomlChanged = true }
         else -> false
       }
       if (kept) {
@@ -77,7 +77,7 @@ internal fun subscribeToPyProjectTomlChanges(
     object : AsyncFileListener.ChangeApplier {
       override fun afterVfsChange() {
         // Only hand the work over. A subtree load must never run inside the write action.
-        val directories = newDirectoryEvents.mapNotNullTo(LinkedHashSet()) { it.createdDirectory() }
+        val directories = newDirectoryEvents.mapNotNullTo(LinkedHashSet()) { it.directoryToLoad() }
         onChange(RebuildRequest(directories, reason))
       }
     }
@@ -143,29 +143,23 @@ private fun VFileEvent.isPyProjectToml(): Boolean = when (this) {
   else -> file?.name == PY_PROJECT_TOML
 }
 
-/** A directory appears now, hence one whose content the VFS may not know. */
-private fun VFileEvent.createsDirectory(): Boolean = when (this) {
+/** A directory appears or takes a new name. Its content can be unknown to the VFS. */
+private fun VFileEvent.requiresSubtreeLoad(): Boolean = when (this) {
   is VFileCreateEvent -> isDirectory
   is VFileCopyEvent -> file.isDirectory
   is VFileMoveEvent -> file.isDirectory
+  is VFilePropertyChangeEvent -> propertyName == VirtualFile.PROP_NAME && file.isDirectory
   else -> false
 }
 
-/** The directory of [createsDirectory], resolved after the change. */
-private fun VFileEvent.createdDirectory(): VirtualFile? = when (this) {
+/** The directory of [requiresSubtreeLoad], resolved after the change. */
+private fun VFileEvent.directoryToLoad(): VirtualFile? = when (this) {
   is VFileCopyEvent -> findCreatedFile()
   else -> file
 }?.takeIf { it.isValid && it.isDirectory }
 
 /** A directory disappears now. Its `pyproject.toml` files must leave the model. */
 private fun VFileEvent.removesDirectory(): Boolean = this is VFileDeleteEvent && file.isDirectory
-
-/**
- * A directory takes a new name. Every `pyproject.toml` below it takes a new path, and a module root follows
- * the path. The VFS already knows the children, so this case needs no subtree load.
- */
-private fun VFileEvent.renamesDirectory(): Boolean =
-  this is VFilePropertyChangeEvent && propertyName == VirtualFile.PROP_NAME && file.isDirectory
 
 /**
  * Rejects a change that the model never reads.
@@ -202,7 +196,10 @@ private class EventFilter(knownRoots: Set<Path>) {
       is VFileCopyEvent -> event.newChildName
       else -> event.file?.name
     }
-    if (name != null && name.isPrunedName()) return true
+    if (name != null && name.isPrunedName()) {
+      if (event !is VFilePropertyChangeEvent || event.propertyName != VirtualFile.PROP_NAME ||
+          event.newValue.toString().isPrunedName()) return true
+    }
     // Give a new kind of event its own branch when the kind changes the parent of a file. The branch below
     // reads the parent of the file, which is the parent before the change.
     return when (event) {
