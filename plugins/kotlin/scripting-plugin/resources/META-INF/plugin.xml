@@ -26,6 +26,6 @@
     <module name="intellij.kotlin.buildToolsRuntime" loading="embedded"/>
     <!-- intellij.kotlin.buildToolsRuntime needs this wrapper on the BTA toolchain classpath. The Kotlin plugin
          declares the same public module. Only one of the two plugins can load, so the two copies never collide. -->
-    <module name="intellij.libraries.kotlin.tooling.core" loading="required"/>
+    <module name="intellij.libraries.kotlin.tooling.core" loading="embedded"/>
   </content>
 </idea-plugin>

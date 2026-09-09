@@ -223,6 +223,7 @@ dev_dist_plugin(
         "intellij.kotlin.uast.idea",
     ],
     prepacked_jars = {
+        "intellij.kotlin.buildToolsRuntime": "intellij.kotlin.buildToolsRuntime.jar",
         "intellij.kotlin.jsr223": "intellij.kotlin.jsr223.jar",
     },
 )

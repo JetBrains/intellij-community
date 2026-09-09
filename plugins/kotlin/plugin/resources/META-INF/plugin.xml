@@ -186,7 +186,6 @@
     <module name="intellij.kotlin.ide" required-if-available="intellij.platform.backend"/>
     <module name="intellij.kotlin.migration"/>
     <module name="intellij.kotlin.base.statistics" required-if-available="intellij.platform.backend"/>
-    <module name="intellij.libraries.kotlin.tooling.core" required-if-available="intellij.platform.backend"/>
     <module name="intellij.libraries.kotlin.gradle.plugin.idea" required-if-available="intellij.platform.backend"/>
     <module name="intellij.libraries.kotlin.gradle.plugin.idea.proto" required-if-available="intellij.platform.backend"/>
     <module name="intellij.kotlin.codeInsight.vcs"/>
@@ -216,6 +215,7 @@
     <!-- The Kotlin Scripting Support plugin declares the same public module. That plugin is incompatible with this one,
          so only one of the two copies can load. Any plugin can then depend on this module id, with or without Kotlin. -->
     <module name="intellij.kotlin.buildToolsRuntime" loading="embedded"/>
+    <module name="intellij.libraries.kotlin.tooling.core" loading="embedded"/>
 
     <!-- ultimate part -->
     <module name="intellij.kotlin.ultimate.common.native" loading="optional"/>
