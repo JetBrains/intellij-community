@@ -160,6 +160,8 @@ jvm_library(
         "//java/testFramework:testFramework_test_lib",
         "//java/java-impl:impl",
         "//java/java-impl:impl_test_lib",
+        "//java/java-todo:todo",
+        "//java/java-todo:todo_test_lib",
         "//java/java-impl-inspections:impl-inspections",
         "//java/java-impl-inspections:impl-inspections_test_lib",
         "//platform/platform-impl/concurrency",

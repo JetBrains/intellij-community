@@ -1,0 +1,106 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.java.todo` start
+content_module_jar(module = ":todo")
+### auto-generated section `dev intellij.java.todo` end
+
+### auto-generated section `build intellij.java.todo` start
+jvm_library(
+    name = "todo",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.todo",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//platform/todo/backend",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//java/openapi:java",
+        "//java/java-impl:impl",
+        "//java/java-psi-api:psi",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/indexing-api:indexing",
+        "//platform/lang-api:lang",
+        "//platform/lang-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectView/shared:projectView",
+        "//platform/projectView/backend",
+        "//platform/todo",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//platform/util-ex",
+    ],
+)
+
+jvm_library(
+    name = "todo_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.todo",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":todo",
+        "//java/openapi:java_test_lib",
+        "//java/java-impl:impl_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/projectView/shared:projectView_test_lib",
+        "//platform/projectView/backend:backend_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//platform/todo:todo_test_lib",
+        "//platform/todo/backend:backend_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.todo` end
+
+### auto-generated section `iml intellij.java.todo` start
+exports_files(
+    [
+        "intellij.java.todo.iml",
+        "resources/intellij.java.todo.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.todo` end

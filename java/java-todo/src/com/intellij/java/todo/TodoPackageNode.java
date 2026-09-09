@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.todo.nodes;
+package com.intellij.java.todo;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
@@ -9,6 +9,7 @@ import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
+import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.module.Module;
@@ -251,4 +252,3 @@ public final class TodoPackageNode extends PackageElementNode {
     return 3;
   }
 }
-

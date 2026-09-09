@@ -366,17 +366,6 @@
     <stacktrace.fold substring="at com.sun.proxy.$Proxy"/>
     <stacktrace.fold substring="at com.intellij.rt.execution."/>
 
-    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.PsiComment"
-                                 implementationClass="com.intellij.codeInsight.todo.TodoSymbolReferenceProvider"
-                                 targetClass="com.intellij.codeInsight.todo.TodoSymbol"
-                                 hostLanguage="JAVA"
-    />
-    <lang.symbolSearchTarget implementationClass="com.intellij.codeInsight.todo.TodoSymbolSearchTargetFactory"
-                             forClass="com.intellij.codeInsight.todo.TodoSymbol"/>
-    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
-              implementationClass="com.intellij.codeInsight.todo.TodoSearcher"/>
-
-
     <structureViewBuilder key="CLASS" factoryClass="com.intellij.ide.highlighter.JavaClsStructureViewBuilderProvider"/>
 
     <patterns.patternClass className="com.intellij.patterns.PsiJavaPatterns" alias="java"/>
@@ -467,9 +456,6 @@
                     overrides="true"/>
     <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
                     serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringFactoryImpl"
-                    overrides="true"/>
-    <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
-                    serviceImplementation="com.intellij.ide.todo.nodes.TodoJavaTreeHelper"
                     overrides="true"/>
 
     <jvm.logging implementation="com.intellij.lang.logging.ApacheCommonsLogger"/>

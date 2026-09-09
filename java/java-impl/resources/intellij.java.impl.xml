@@ -5,7 +5,6 @@
     <plugin id="com.intellij.modules.java-capable"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.externalSystem.impl"/>
-    <module name="intellij.platform.todo.backend"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java.frontback.impl"/>
     <module name="intellij.java"/>
@@ -76,7 +75,6 @@
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.testIntegration.ui"/>
     <module name="intellij.platform.threadDumpParser"/>
-    <module name="intellij.platform.todo"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
     <module name="intellij.platform.util.ex"/>
@@ -99,6 +97,8 @@
   <xi:include href="/META-INF/IntentionPowerPack.xml"/>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.java.javadocPreservedBlockProvider"
+                    interface="com.intellij.psi.impl.source.codeStyle.javadoc.JavaDocMultiLineTodoProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.annotationPackageSupport" interface="com.intellij.codeInsight.annoPackages.AnnotationPackageSupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.annotations.marker.suppressor"
                     interface="com.intellij.codeInsight.NonCodeAnnotationsMarkerSuppressor" dynamic="true"/>
