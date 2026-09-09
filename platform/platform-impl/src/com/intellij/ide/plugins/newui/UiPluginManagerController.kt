@@ -45,7 +45,7 @@ interface UiPluginManagerController {
   suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean
   suspend fun installOrUpdatePlugin(
     sessionId: String,
-    parentComponent: JComponent?,
+    parentComponent: () -> JComponent?,
     descriptor: PluginUiModel,
     updateDescriptor: PluginUiModel?,
     installSource: FUSEventSource?,
@@ -62,7 +62,7 @@ interface UiPluginManagerController {
     allowInstallWithoutRestart: Boolean,
     pluginEnabler: PluginEnabler?,
     modalityState: ModalityState?,
-    parentComponent: JComponent?,
+    parentComponent: () -> JComponent?,
     customRepoPlugins: List<PluginUiModel>?,
     progressSink: PluginInstallationProgressSink = PluginInstallationProgressSink.NONE,
   ): InstallPluginResult

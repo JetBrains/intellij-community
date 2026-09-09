@@ -297,16 +297,15 @@ open class MyPluginModel @JvmOverloads constructor(
   val sessionId: String
     get() = mySessionId.toString()
 
-  suspend fun installOrUpdatePlugin(
-    parentComponent: JComponent?,
+  internal suspend fun installOrUpdatePlugin(
+    operationUi: PluginOperationUiContext,
     descriptor: PluginUiModel,
     updateDescriptor: PluginUiModel?,
     installationScope: CoroutineScope,
-    modalityState: ModalityState,
     controller: UiPluginManagerController,
     progressSink: PluginInstallationProgressSink = PluginInstallationProgressSink.NONE,
   ): InstallPluginResult? {
-    return withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+    return withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) {
       val actionDescriptor: PluginUiModel = updateDescriptor ?: descriptor
       if (!PluginManagerMain.checkThirdPartyPluginsAllowed(listOf(actionDescriptor.getDescriptor()))) {
         return@withContext null
@@ -322,8 +321,7 @@ open class MyPluginModel @JvmOverloads constructor(
         descriptor,
         updateDescriptor,
         controller,
-        parentComponent,
-        modalityState,
+        operationUi,
         installationScope,
         actionDescriptor,
         info,
@@ -339,8 +337,7 @@ open class MyPluginModel @JvmOverloads constructor(
     descriptor: PluginUiModel,
     updateDescriptor: PluginUiModel?,
     controller: UiPluginManagerController,
-    parentComponent: JComponent?,
-    modalityState: ModalityState,
+    operationUi: PluginOperationUiContext,
     installationScope: CoroutineScope,
     actionDescriptor: PluginUiModel,
     installPluginInfo: InstallPluginInfo,
@@ -350,11 +347,10 @@ open class MyPluginModel @JvmOverloads constructor(
       return@withContext installOrUpdatePlugin(
         installPluginInfo,
         controller,
-        parentComponent,
+        operationUi,
         descriptor,
         updateDescriptor,
         installationScope,
-        modalityState,
         actionDescriptor,
         progressSink,
       )
@@ -365,11 +361,10 @@ open class MyPluginModel @JvmOverloads constructor(
           return@runBlockingCancellable installOrUpdatePlugin(
             installPluginInfo,
             controller,
-            parentComponent,
+            operationUi,
             descriptor,
             updateDescriptor,
             installationScope,
-            modalityState,
             actionDescriptor,
             progressSink,
           )
@@ -381,25 +376,24 @@ open class MyPluginModel @JvmOverloads constructor(
   private suspend fun installOrUpdatePlugin(
     installPluginInfo: InstallPluginInfo,
     controller: UiPluginManagerController,
-    parentComponent: JComponent?,
+    operationUi: PluginOperationUiContext,
     descriptor: PluginUiModel,
     updateDescriptor: PluginUiModel?,
     installationScope: CoroutineScope,
-    modalityState: ModalityState,
     actionDescriptor: PluginUiModel,
     progressSink: PluginInstallationProgressSink,
   ): InstallPluginResult {
-    withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+    withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) {
       prepareToInstall(installPluginInfo, installationScope)
     }
     val customPlugins = customRepoPlugins?.toList()
     val result = controller.installOrUpdatePlugin(
       sessionId,
-      parentComponent,
+      operationUi::getParentComponent,
       descriptor,
       updateDescriptor,
       myInstallSource,
-      modalityState,
+      operationUi.modalityState,
       null,
       customPlugins,
       progressSink,
@@ -407,15 +401,15 @@ open class MyPluginModel @JvmOverloads constructor(
     if (result.disabledPlugins.isEmpty() && result.disabledDependants.isEmpty()) {
       return result
     }
-    val enableDependencies = withContext(Dispatchers.EDT + modalityState.asContextElement()) { PluginManagerMain.askToEnableDependencies(1, result.disabledPlugins, result.disabledDependants) }
+    val enableDependencies = withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) { PluginManagerMain.askToEnableDependencies(1, result.disabledPlugins, result.disabledDependants) }
     return controller.continueInstallation(
       sessionId,
       actionDescriptor.pluginId,
       enableDependencies,
       result.allowInstallWithoutRestart,
       null,
-      modalityState,
-      parentComponent,
+      operationUi.modalityState,
+      operationUi::getParentComponent,
       customPlugins,
       progressSink,
     )

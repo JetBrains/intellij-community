@@ -78,7 +78,7 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
   ): Flow<PluginInstallRpcEvent> {
     return installPlugin(sessionId) { enabler, progressSink ->
       DefaultUiPluginManagerController.installOrUpdatePlugin(sessionId,
-                                                             null,
+                                                             { null },
                                                              descriptor,
                                                              updateDescriptor,
                                                              installSource,
@@ -103,7 +103,7 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
                                                             allowInstallWithoutRestart,
                                                             enabler,
                                                             null,
-                                                            null,
+                                                            { null },
                                                             customRepoPlugins,
                                                             progressSink)
     }

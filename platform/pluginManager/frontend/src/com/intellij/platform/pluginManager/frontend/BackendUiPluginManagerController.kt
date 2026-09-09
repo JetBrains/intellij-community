@@ -101,7 +101,7 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override suspend fun installOrUpdatePlugin(
     sessionId: String,
-    parentComponent: JComponent?,
+    parentComponent: () -> JComponent?,
     descriptor: PluginUiModel,
     updateDescriptor: PluginUiModel?,
     installSource: FUSEventSource?,
@@ -126,7 +126,7 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     allowInstallWithoutRestart: Boolean,
     pluginEnabler: PluginEnabler?,
     modalityState: ModalityState?,
-    parentComponent: JComponent?,
+    parentComponent: () -> JComponent?,
     customRepoPlugins: List<PluginUiModel>?,
     progressSink: PluginInstallationProgressSink,
   ): InstallPluginResult {

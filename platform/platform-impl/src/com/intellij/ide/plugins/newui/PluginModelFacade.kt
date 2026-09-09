@@ -61,6 +61,17 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     controller: UiPluginManagerController = UiPluginManager.getInstance().getController(),
     operationContext: PluginOperationContext? = null,
   ): InstallPluginResult? {
+    val operationUi = PluginOperationUiContext(modalityState) { component }
+    return installOrUpdatePlugin(operationUi, model, updateDescriptor, controller, operationContext)
+  }
+
+  internal suspend fun installOrUpdatePlugin(
+    operationUi: PluginOperationUiContext,
+    model: PluginUiModel,
+    updateDescriptor: PluginUiModel?,
+    controller: UiPluginManagerController = UiPluginManager.getInstance().getController(),
+    operationContext: PluginOperationContext? = null,
+  ): InstallPluginResult? {
     val target = controller.getTarget()
     val context = operationContext ?: PluginOperationContext.create(
       displayPluginId = model.pluginId,
@@ -74,7 +85,7 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
         CoroutineName("Install plugin ${model.pluginId}")
       ) {
         pluginModel.installOrUpdatePlugin(
-          component, model, updateDescriptor, this, modalityState, controller,
+          operationUi, model, updateDescriptor, this, controller,
           PluginInstallationProgressSink { dependencies ->
             pluginModel.operationDependenciesScheduled(context, dependencies)
           },

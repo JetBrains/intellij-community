@@ -343,11 +343,13 @@ class ListPluginComponent internal constructor(
         myLayout.addButtonComponent(myInstallButton!!)
 
         myInstallButton!!.addActionListener {
+          val modalityState = ModalityState.stateForComponent(myInstallButton!!)
+          val operationUi = PluginOperationUiContext(modalityState) { this }
           PluginModelAsyncOperationsExecutor.performAutoInstall(myOperationLauncher,
                                                                 myModelFacade,
                                                                 myPlugin,
                                                                 myCustomizer,
-                                                                this)
+                                                                operationUi)
         }
         myInstallButton!!.setEnabled(showInstall, IdeBundle.message("plugin.status.installed"))
 
@@ -793,14 +795,15 @@ class ListPluginComponent internal constructor(
   }
 
   private fun updatePlugin(descriptorForActions: PluginUiModel, updateDescriptor: PluginUiModel) {
+    val modalityState = ModalityState.stateForComponent(myUpdateButton!!)
+    val operationUi = PluginOperationUiContext(modalityState) { this }
     PluginModelAsyncOperationsExecutor.updatePlugin(
       myOperationLauncher,
       myModelFacade,
       descriptorForActions,
       updateDescriptor,
       myCustomizer,
-      ModalityState.stateForComponent(myUpdateButton!!),
-      this,
+      operationUi,
       updateDescriptor,
     )
   }

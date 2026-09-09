@@ -178,7 +178,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override suspend fun installOrUpdatePlugin(
     sessionId: String,
-    parentComponent: JComponent?,
+    parentComponent: () -> JComponent?,
     descriptor: PluginUiModel,
     updateDescriptor: PluginUiModel?,
     installSource: FUSEventSource?,
@@ -286,7 +286,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     allowInstallWithoutRestart: Boolean,
     pluginEnabler: PluginEnabler?,
     modalityState: ModalityState?,
-    parentComponent: JComponent?,
+    parentComponent: () -> JComponent?,
     customRepoPlugins: List<PluginUiModel>?,
     progressSink: PluginInstallationProgressSink,
   ): InstallPluginResult {
@@ -297,7 +297,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val updateDescriptor = session.updatesInProgress.remove(pluginId)
     val replacePendingUpdate = session.pendingUpdatesToReplace.remove(pluginId)
     val descriptor = installDescriptor ?: updateDescriptor ?: return InstallPluginResult.FAILED
-    val modalityState = modalityState ?: parentComponent?.let { ModalityState.stateForComponent(it) } ?: ModalityState.any()
+    val modalityState = modalityState ?: ModalityState.any()
 
     withContext(Dispatchers.EDT + modalityState.asContextElement()) {
       val pluginsToInstall = listOf(descriptor.getDescriptor())
@@ -628,7 +628,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   suspend fun performInstallOperation(
     request: InstallPluginRequest,
-    parentComponent: JComponent?,
+    parentComponent: () -> JComponent?,
     modalityState: ModalityState?,
     pluginEnabler: PluginEnabler,
     customRepoPlugins: List<PluginUiModel>,
@@ -683,7 +683,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       session.needRestart = session.needRestart || terminalState.restartRequired
     }
     return withContext(getContextElement(modalityState)) {
-      installDynamicPluginsSynchronously(request, pluginsToInstallSynchronously, session, parentComponent, result)
+      installDynamicPluginsSynchronously(request, pluginsToInstallSynchronously, session, parentComponent(), result)
     }
   }
 
@@ -985,10 +985,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   private fun getContextElement(modalityState: ModalityState?): CoroutineContext {
     return modalityState?.let { Dispatchers.EDT + it.asContextElement() } ?: Dispatchers.EDT
-  }
-
-  private fun getContextElement(component: JComponent?): CoroutineContext {
-    return component?.let { Dispatchers.EDT + ModalityState.stateForComponent(it).asContextElement() } ?: Dispatchers.EDT
   }
 
   private fun getErrors(session: PluginManagerSession, pluginId: PluginId): CheckErrorsResult {

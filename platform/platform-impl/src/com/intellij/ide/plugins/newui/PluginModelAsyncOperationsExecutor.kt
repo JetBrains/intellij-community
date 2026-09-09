@@ -24,6 +24,13 @@ import java.util.function.Function
 import javax.swing.JComponent
 import kotlin.coroutines.CoroutineContext
 
+internal class PluginOperationUiContext(
+  val modalityState: ModalityState,
+  private val parentComponent: () -> JComponent?,
+) {
+  fun getParentComponent(): JComponent? = parentComponent()
+}
+
 internal class PluginOperationLauncher(private val coroutineScope: CoroutineScope) {
   fun launch(context: CoroutineContext, operation: suspend CoroutineScope.() -> Unit) {
     coroutineScope.launch(context, block = operation)
@@ -36,20 +43,19 @@ internal object PluginModelAsyncOperationsExecutor {
     modelFacade: PluginModelFacade,
     descriptor: PluginUiModel,
     customizer: PluginManagerCustomizer?,
-    component: JComponent,
+    operationUi: PluginOperationUiContext,
   ) {
     operationLauncher.launch(Dispatchers.IO) {
       val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(descriptor, modelFacade)
       pluginUpdateSourceApplier.runWithRevertOnException {
-        val stateForComponent = ModalityState.stateForComponent(component)
-        val customizationModel = customizer?.getInstallButonCustomizationModel(modelFacade, descriptor, stateForComponent)
-        withContext(Dispatchers.EDT + stateForComponent.asContextElement()) {
+        val customizationModel = customizer?.getInstallButonCustomizationModel(modelFacade, descriptor, operationUi.modalityState)
+        withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) {
           val customAction = customizationModel?.mainAction
           if (customAction != null) {
             customAction()
             return@withContext
           }
-          val result = modelFacade.installOrUpdatePlugin(component, descriptor, null, stateForComponent)
+          val result = modelFacade.installOrUpdatePlugin(operationUi, descriptor, null)
           pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
         }
       }
@@ -123,20 +129,21 @@ internal object PluginModelAsyncOperationsExecutor {
     plugin: PluginUiModel,
     updateDescriptor: PluginUiModel?,
     pluginManagerCustomizer: PluginManagerCustomizer?,
-    modalityState: ModalityState,
-    component: JComponent?,
+    operationUi: PluginOperationUiContext,
     pluginDescriptorForPluginUpdateSourceApplier: PluginUiModel,
   ) {
     operationLauncher.launch(Dispatchers.IO) {
       val pluginUpdateSourceApplier = PluginUpdateSourceApplier.createApplier(pluginDescriptorForPluginUpdateSourceApplier, modelFacade)
       pluginUpdateSourceApplier.runWithRevertOnException {
-        val model = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(modelFacade, plugin, updateDescriptor, modalityState)
-        withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+        val model = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(
+          modelFacade, plugin, updateDescriptor, operationUi.modalityState
+        )
+        withContext(Dispatchers.EDT + operationUi.modalityState.asContextElement()) {
           if (model != null) {
             model.action()
           }
           else {
-            val result = modelFacade.installOrUpdatePlugin(component, plugin, updateDescriptor, modalityState)
+            val result = modelFacade.installOrUpdatePlugin(operationUi, plugin, updateDescriptor)
             pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
           }
         }
