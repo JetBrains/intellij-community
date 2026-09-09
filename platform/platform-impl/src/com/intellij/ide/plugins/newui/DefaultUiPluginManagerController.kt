@@ -215,7 +215,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       }
 
       var installWithoutRestart = true
-      var uninstallPlugin = false
+      var pendingDynamicUpdate: IdeaPluginDescriptor? = null
       if (isUpdate) {
         if (replacePendingUpdate || descriptor.isBundled) {
           installWithoutRestart = false
@@ -230,14 +230,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
           installWithoutRestart = uninstallDynamicPlugin(sessionId, descriptor.pluginId)
         }
         else {
-          uninstallPlugin = true
+          pendingDynamicUpdate = PluginManagerCore.findPlugin(descriptor.pluginId)?.getMainDescriptor()?.takeIf(PluginManagerCore::isLoaded)
         }
       }
 
       return@withContext withContext(Dispatchers.IO) {
-        if (uninstallPlugin) {
-          performUninstall(sessionId, descriptor.pluginId)
-        }
         val pluginUiModel = loadDetails(actionDescriptor) ?: return@withContext InstallPluginResult.FAILED
 
         val pluginsToInstall = listOf(pluginUiModel.getDescriptor())
@@ -274,6 +271,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
           installPluginRequest, parentComponent, modalityState, pluginEnabler, customPlugins,
           pluginUiModel.pluginId.takeIf { replacePendingUpdate },
           progressSink,
+          pendingDynamicUpdate = pendingDynamicUpdate,
         )
       }
     }
@@ -318,6 +316,12 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       installPluginRequest, parentComponent, modalityState, pluginEnabler, customPlugins,
       pluginId.takeIf { replacePendingUpdate },
       progressSink,
+      pendingDynamicUpdate = if (updateDescriptor != null && allowInstallWithoutRestart) {
+        PluginManagerCore.findPlugin(pluginId)?.getMainDescriptor()?.takeIf(PluginManagerCore::isLoaded)
+      }
+      else {
+        null
+      },
     )
   }
 
@@ -634,10 +638,12 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     customRepoPlugins: List<PluginUiModel>,
     pendingUpdateToReplace: PluginId? = null,
     progressSink: PluginInstallationProgressSink = PluginInstallationProgressSink.NONE,
+    pendingDynamicUpdate: IdeaPluginDescriptor? = null,
   ): InstallPluginResult {
     val session = findSession(request.sessionId) ?: return InstallPluginResult.FAILED
     val result = InstallPluginResult()
     val pluginsToInstallSynchronously: MutableList<PendingDynamicPluginInstall> = mutableListOf()
+    val dynamicInstallsToStageTogether: MutableList<PendingDynamicPluginInstall> = mutableListOf()
     coroutineToIndicator {
       val operation = PluginInstallOperation(request.pluginsToInstall, customRepoPlugins, it, pluginEnabler, progressSink)
       operation.setAllowInstallWithoutRestart(request.allowInstallWithoutRestart)
@@ -650,8 +656,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
             pluginsToInstallSynchronously.add(install)
             session.pluginsToRemoveOnCancel.add(install.pluginDescriptor)
           }
+          else if (pendingDynamicUpdate != null) {
+            dynamicInstallsToStageTogether.add(install)
+          }
           else {
-            session.dynamicPluginsToInstall.put(install.pluginDescriptor.getPluginId(), install)
+            session.dynamicPluginsToInstall[install.pluginDescriptor.getPluginId()] = install
           }
         }
 
@@ -682,9 +691,12 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       result.applyTerminalState(terminalState)
       session.needRestart = session.needRestart || terminalState.restartRequired
     }
-    return withContext(getContextElement(modalityState)) {
-      installDynamicPluginsSynchronously(request, pluginsToInstallSynchronously, session, parentComponent(), result)
+    val finalResult = withContext(getContextElement(modalityState)) {
+      installDynamicPluginsSynchronously(request, pluginsToInstallSynchronously, session, parentComponent(), result).also { finalResult ->
+        stagePreparedDynamicUpdate(session, pendingDynamicUpdate, dynamicInstallsToStageTogether, finalResult)
+      }
     }
+    return finalResult
   }
 
   override suspend fun updateDescriptorsForInstalledPlugins() {
@@ -1526,4 +1538,17 @@ internal fun InstallPluginResult.applyTerminalState(state: InstallPluginTerminal
   cancel = state.cancel
   showErrors = state.showErrors
   restartRequired = state.restartRequired
+}
+
+internal fun stagePreparedDynamicUpdate(
+  session: PluginManagerSession,
+  installedDescriptor: IdeaPluginDescriptor?,
+  pendingInstalls: List<PendingDynamicPluginInstall>,
+  result: InstallPluginResult,
+) {
+  if (installedDescriptor == null || !result.success || result.cancel || result.restartRequired) return
+  session.dynamicPluginsToUninstall.add(installedDescriptor)
+  pendingInstalls.forEach { install ->
+    session.dynamicPluginsToInstall[install.pluginDescriptor.getPluginId()] = install
+  }
 }
