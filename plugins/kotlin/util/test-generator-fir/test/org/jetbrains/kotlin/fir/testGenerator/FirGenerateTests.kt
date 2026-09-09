@@ -95,14 +95,13 @@ import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirMultilineParameter
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.projectView.AbstractK2ProjectViewTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractAdditionalKDocResolutionProviderTest
-import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirInLibraryResolveEverythingTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveInJavaTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompiledLibTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsInSourceTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsWithCompiledLibTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsWithCrossLibTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsWithLibTest
-import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsInSourceTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCrossLibTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithLibTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceToCompiledKotlinResolveInJavaTest
@@ -292,10 +291,6 @@ private fun assembleWorkspace(): TWorkspace = workspace() {
 
         testClass<AbstractFirReferenceToCompiledKotlinResolveInJavaTest> {
             model("resolve/referenceInJava/binaryAndSource", pattern = JAVA)
-        }
-
-        testClass<AbstractFirInLibraryResolveEverythingTest> {
-            model("resolve/compiled/sources")
         }
 
         testClass<AbstractFirLiteralTextToKotlinCopyPasteTest> {
