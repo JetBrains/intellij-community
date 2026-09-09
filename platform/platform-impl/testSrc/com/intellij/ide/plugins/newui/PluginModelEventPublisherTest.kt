@@ -195,6 +195,21 @@ internal class PluginModelEventPublisherTest {
   }
 
   @Test
+  fun `repeated split target start keeps the logical presentation model`() {
+    val events = mutableListOf<PluginModelEvent>()
+    val publisher = PluginModelEventPublisher(events::add)
+    val displayModel = plugin(PluginId.getId("display.plugin"))
+    val physicalModel = plugin(PluginId.getId("physical.plugin"))
+    val context = PluginOperationContext.create(displayModel.pluginId, PluginSource.BOTH, PluginOperationKind.INSTALL)
+
+    publisher.operationStarted("session", context, displayModel)
+    publisher.operationStarted("session", context, physicalModel)
+
+    assertThat(events.filterIsInstance<PluginModelEvent.OperationStarted>().map { it.presentationModel })
+      .containsExactly(displayModel)
+  }
+
+  @Test
   fun `operation rejects a presentation model with another display id`() {
     val publisher = PluginModelEventPublisher {}
     val context = PluginOperationContext.create(

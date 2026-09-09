@@ -113,12 +113,12 @@ internal class PluginModelEventPublisher(private val sink: PluginModelEventSink)
   }
 
   fun operationStarted(sessionId: String, context: PluginOperationContext, presentationModel: PluginUiModel) {
-    require(presentationModel.pluginId == context.displayPluginId) {
-      "Plugin operation display ID ${context.displayPluginId} does not match presentation model ${presentationModel.pluginId}"
-    }
     synchronized(operations) {
       if (operations.containsKey(context.operationId)) {
         return
+      }
+      require(presentationModel.pluginId == context.displayPluginId) {
+        "Plugin operation display ID ${context.displayPluginId} does not match presentation model ${presentationModel.pluginId}"
       }
       operations[context.operationId] = OperationState(sessionId)
       sink.onEvent(
