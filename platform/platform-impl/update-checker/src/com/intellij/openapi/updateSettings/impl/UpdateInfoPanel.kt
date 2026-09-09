@@ -170,6 +170,7 @@ fun createUpdateInfoPanel(
           val incompatiblePlugins = findIncompatiblePlugins(incompatiblePluginNames)
           if (incompatiblePlugins.isNotEmpty()) {
             addAction(IdeBundle.message("updates.incompatible.plugins.show.plugins")) {
+              UpdateInfoStatsCollector.SHOW_INCOMPATIBLE_PLUGINS_CLICKED.log()
               IncompatiblePluginsDialog(project, incompatiblePlugins, newBuild.displayVersion()).show()
             }
           }

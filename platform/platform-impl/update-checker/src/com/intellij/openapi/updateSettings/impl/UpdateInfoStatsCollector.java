@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
@@ -15,10 +16,14 @@ import java.net.URI;
 import java.util.List;
 
 final class UpdateInfoStatsCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ide.update.dialog", 2);
+  private static final EventLogGroup GROUP = new EventLogGroup("ide.update.dialog", 3);
 
   private static final EventId1<String> CLICK =
     GROUP.registerEvent("link.clicked", EventFields.StringValidatedByCustomRule("url", UrlValidationRule.class));
+
+  public static final EventId SHOW_INCOMPATIBLE_PLUGINS_CLICKED =
+    GROUP.registerEvent("show.incompatible.plugins.clicked");
+
 
   @Override
   public EventLogGroup getGroup() {

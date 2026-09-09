@@ -341,7 +341,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
           }
         }
         else {
-          // IDE cannot be restarted
+          IdeUpdateWidgetState.getInstance().onRestartReady(null);
           showPatchInstructions(command);
         }
       }

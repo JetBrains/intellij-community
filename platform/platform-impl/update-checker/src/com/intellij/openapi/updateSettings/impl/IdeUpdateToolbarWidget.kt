@@ -74,7 +74,7 @@ internal class IdeUpdateToolbarWidget :
 
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = e.place == ActionPlaces.MAIN_TOOLBAR && IdeUpdateWidgetState.isWidgetShown()
-    e.presentation.isEnabled = status != IdeUpdateWidgetState.Status.DOWNLOADING
+    e.presentation.isEnabled = IdeUpdateWidgetState.getInstance().isClickable()
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
@@ -87,8 +87,11 @@ internal class IdeUpdateToolbarWidget :
     when (status) {
       IdeUpdateWidgetState.Status.AVAILABLE -> showUpdatePopup(e)
       IdeUpdateWidgetState.Status.RESTART -> {
-        IdeUpdateUsageTriggerCollector.UPDATE_WIDGET_RESTART_CLICKED.log(e.project)
-        PlatformUpdateDialog.restartLaterAndRunCommand(IdeUpdateWidgetState.getInstance().restartCommand!!)
+        // restartCommand is available only when ApplicationManager.getApplication().isRestartCapable()
+        IdeUpdateWidgetState.getInstance().restartCommand?.let { command ->
+          IdeUpdateUsageTriggerCollector.UPDATE_WIDGET_RESTART_CLICKED.log(e.project)
+          PlatformUpdateDialog.restartLaterAndRunCommand(command)
+        }
       }
       else -> {}
     }
@@ -316,7 +319,7 @@ private class UpdateButtonWrapper(private val onClick: (JComponent) -> Unit) : J
 
   private fun applyStatus(status: IdeUpdateWidgetState.Status) {
     this.status = status
-    button.isEnabled = status != IdeUpdateWidgetState.Status.DOWNLOADING
+    button.isEnabled = IdeUpdateWidgetState.getInstance().isClickable()
     button.text = status.buttonText()
     button.toolTipText = status.buttonTooltip()
   }
