@@ -105,7 +105,7 @@ internal object SurroundWithNullCheckFixFactory {
 
         if (callableSymbol is KaVariableSymbol) {
             if (callableSymbol.isVal) {
-                if ((callableSymbol as? KaPropertySymbol)?.getter?.isDefault == false) {
+                if ((callableSymbol as? KaPropertySymbol)?.getter?.isNotDefault == true) {
                     return emptyList()
                 }
             } else if (callableSymbol.location != KaSymbolLocation.LOCAL) {
