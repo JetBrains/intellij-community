@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jediterm-core" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.jediterm:jediterm-core:3.74">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.jediterm:jediterm-core:3.76">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.74/jediterm-core-3.74.jar">
-              <sha256sum>da8a8fb51cabd252e00bd541712c3934e064c808e843f0fbc9032f2ed1f3c9dd</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.76/jediterm-core-3.76.jar">
+              <sha256sum>3808fff4fcaf53cb57c411726f52605ef8e3fcf26b40b2902752a722ee178a0b</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.74/jediterm-core-3.74.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.76/jediterm-core-3.76.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.74/jediterm-core-3.74-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.76/jediterm-core-3.76-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
