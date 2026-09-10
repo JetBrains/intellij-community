@@ -50,9 +50,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
-            serviceInterface="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.KotlinAddImportActionFactory"
-            serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.KotlinAddImportActionFactory$Classic"/>
-    <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.codeinsight.utils.KDocUnresolvedLinkQuickFixFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.KDocUnresolvedLinkQuickFixFactoryImpl"/>
 

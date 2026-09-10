@@ -13,9 +13,6 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionTypeAn
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
 import org.jetbrains.kotlin.name.Name
 
-/**
- * Note: Do not confuse with [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.KotlinAddImportActionFactory].
- */
 @Internal
 abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.IntentionBased<KaDiagnosticWithPsi<*>> {
 
