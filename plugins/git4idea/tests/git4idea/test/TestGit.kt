@@ -54,6 +54,13 @@ class TestGitImpl : GitImpl() {
   @Volatile
   var listWorktreesListener: ((repository: GitRepository) -> Unit)? = null
 
+  /**
+   * Environment variables which this implementation adds to every command.
+   * See [isolateGitConfig] for the main use case.
+   */
+  @Volatile
+  var customEnvironment: Map<String, String> = emptyMap()
+
   @Volatile
   private var rebaseShouldFail: (GitRepository) -> Boolean = { false }
   @Volatile
@@ -69,6 +76,7 @@ class TestGitImpl : GitImpl() {
                                 val plainTextEditor: ((String) -> String)?)
 
   override fun runCommand(handler: GitLineHandler): GitCommandResult {
+    applyCustomEnvironment(handler)
     val result = super.runCommand(handler)
     runCommandListener?.invoke(handler)
     return result
@@ -77,10 +85,19 @@ class TestGitImpl : GitImpl() {
   override fun runCommand(handlerConstructor: Computable<out GitLineHandler>): GitCommandResult {
     val handlers = mutableListOf<GitLineHandler>()
     val result = super.runCommand {
-      handlerConstructor.compute().also { handlers.add(it) }
+      handlerConstructor.compute().also {
+        applyCustomEnvironment(it)
+        handlers.add(it)
+      }
     }
     handlers.forEach { runCommandListener?.invoke(it) }
     return result
+  }
+
+  private fun applyCustomEnvironment(handler: GitLineHandler) {
+    for ((name, value) in customEnvironment) {
+      handler.addCustomEnvironmentVariable(name, value)
+    }
   }
 
   override fun push(repository: GitRepository,
@@ -203,6 +220,7 @@ class TestGitImpl : GitImpl() {
   }
 
   fun reset() {
+    customEnvironment = emptyMap()
     rebaseShouldFail = { false }
     pushHandler = { null }
     checkoutNewBranchHandler = { null }

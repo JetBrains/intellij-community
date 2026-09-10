@@ -146,6 +146,33 @@ private fun disableGitGc(project: Project) {
 }
 
 /**
+ * Makes Git ignore the system, the global and the environment configuration of the machine which runs the test.
+ * Git then reads the configuration of the repository only.
+ *
+ * Call it before the test creates a repository, because [gitInit] also reads the configuration.
+ * The test infrastructure restores the normal behaviour during tear down.
+ */
+internal fun GitPlatformTestContext.isolateGitConfig() {
+  // Git reads the global configuration from $HOME/.gitconfig and from $XDG_CONFIG_HOME/git/config.
+  // An empty directory for both makes the global configuration empty.
+  val configHome = Files.createDirectories(testNioRoot.resolve("gitConfigHome"))
+  val emptyConfigHome = configHome.toString()
+  // $GIT_CONFIG_GLOBAL overrides $HOME, so the test must set it too. The file does not exist, which makes the global
+  // configuration empty. It also keeps a `git config --global` call of the test away from the real home directory.
+  val absentGlobalConfig = configHome.resolve("absent-global-config").toString()
+  git.customEnvironment = mapOf(
+    "GIT_CONFIG_NOSYSTEM" to "1",
+    "HOME" to emptyConfigHome,
+    "XDG_CONFIG_HOME" to emptyConfigHome,
+    "GIT_CONFIG_GLOBAL" to absentGlobalConfig,
+    // $GIT_CONFIG_COUNT and $GIT_CONFIG_PARAMETERS hold the environment configuration. Git applies it after the
+    // configuration of the repository, and neither $GIT_CONFIG_NOSYSTEM nor $HOME hides it.
+    "GIT_CONFIG_COUNT" to "0",
+    "GIT_CONFIG_PARAMETERS" to "",
+  )
+}
+
+/**
  * Creates a Git repository in the given root directory;
  * registers it in the Settings;
  * return the [GitRepository] object for this newly created repository.

@@ -1,30 +1,40 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
-import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitUtil
-import git4idea.test.GitPlatformTest
+import git4idea.test.GitPlatformTestContext
 import git4idea.test.gitInit
+import git4idea.test.gitPlatformContextFixture
+import git4idea.test.isolateGitConfig
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 
-internal class GitConfigUtilTest : GitPlatformTest() {
+@TestApplication
+internal class GitConfigUtilTest {
+  private val fixture = gitPlatformContextFixture()
+  private val context: GitPlatformTestContext get() = fixture.get()
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp(): Unit = with(context) {
+    isolateGitConfig()
     createTestRepository()
     cd(projectPath)
   }
 
-  private fun createTestRepository() {
+  private fun GitPlatformTestContext.createTestRepository() {
     Files.createDirectories(projectNioRoot)
-    cd(projectNioRoot.toString())
+    cd(projectNioRoot)
     gitInit(project)
     LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectNioRoot.resolve(GitUtil.DOT_GIT))!!
   }
 
-  fun `test getValues reads all values for same key ans store them in insertion order`() {
+  @Test
+  fun `test getValues reads all values for same key ans store them in insertion order`(): Unit = with(context) {
     writeConfig("""
       [user]
         name = Alice
@@ -35,17 +45,16 @@ internal class GitConfigUtilTest : GitPlatformTest() {
         email = carl@example.com
       """.trimIndent())
 
-    val values = GitConfigUtil.getValues(myProject, projectNioRoot, null)
+    val values = GitConfigUtil.getValues(project, projectNioRoot, null)
     val resultUserName = values["user.name"]
-    assertNotNull(resultUserName)
-    assertContainsOrdered(resultUserName!!, "Alice", "Bob", "Carl")
+    assertThat(resultUserName).containsExactly("Alice", "Bob", "Carl")
 
     val resultUserEmail = values["user.email"]
-    assertNotNull(resultUserEmail)
-    assertContainsOrdered(resultUserEmail!!, "alice@example.com", "carl@example.com")
+    assertThat(resultUserEmail).containsExactly("alice@example.com", "carl@example.com")
   }
 
-  fun `test order of entries in git config values corresponds to the insertion order`() {
+  @Test
+  fun `test order of entries in git config values corresponds to the insertion order`(): Unit = with(context) {
     writeConfig("""
         [url "https://gitlab.com/group/"]
           insteadOf = test1:
@@ -55,22 +64,24 @@ internal class GitConfigUtilTest : GitPlatformTest() {
           pushInsteadOf = test3:
       """.trimIndent())
 
-    val values = GitConfigUtil.getValues(myProject, projectNioRoot, null)
-    val orderedListOfKeys = values.map { it.key }.toList()
+    val values = GitConfigUtil.getValues(project, projectNioRoot, null)
+    // `git init` writes `core.*` keys, and the IDE passes more keys on the command line.
+    val orderedListOfKeys = values.keys.filter { it.startsWith("url.") }
 
-    assertContainsOrdered(orderedListOfKeys,
-                          "url.https://gitlab.com/group/.insteadof",
-                          "url.ssh://git@gitlab.com/group/.pushinsteadof",
-                          "url.ssh://git@gitlab.com:group2/.pushinsteadof")
+    assertThat(orderedListOfKeys).containsExactly(
+      "url.https://gitlab.com/group/.insteadof",
+      "url.ssh://git@gitlab.com/group/.pushinsteadof",
+      "url.ssh://git@gitlab.com:group2/.pushinsteadof",
+    )
 
-    assertEquals(values["url.https://gitlab.com/group/.insteadof"], listOf("test1:"))
-    assertEquals(values["url.ssh://git@gitlab.com/group/.pushinsteadof"], listOf("test2:"))
-    assertEquals(values["url.ssh://git@gitlab.com:group2/.pushinsteadof"], listOf("test3:"))
+    assertThat(values["url.https://gitlab.com/group/.insteadof"]).containsExactly("test1:")
+    assertThat(values["url.ssh://git@gitlab.com/group/.pushinsteadof"]).containsExactly("test2:")
+    assertThat(values["url.ssh://git@gitlab.com:group2/.pushinsteadof"]).containsExactly("test3:")
   }
 
-  private fun writeConfig(content: String) {
+  private fun GitPlatformTestContext.writeConfig(content: String) {
     val file = projectNioRoot.resolve(".git").resolve("config")
     Files.writeString(file, content + "\n", StandardOpenOption.APPEND)
-    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file))
+    assertThat(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)).isNotNull()
   }
 }
