@@ -610,7 +610,7 @@ public class TableResultPanel extends UserDataHolderBase
         restored.add(column);
       }
     }
-    myColumnPinModel = myColumnPinModel.pinAll(restored);
+    setPinModel(myColumnPinModel.pinAll(restored));
   }
 
   private void rememberCurrentColumnNames() {
@@ -659,7 +659,7 @@ public class TableResultPanel extends UserDataHolderBase
    * in-session unpins are not overridden.
    */
   private void restoreInitialPinnedColumns() {
-    if (myUserChangedPinState || !ColumnPinning.isEnabled()) return;
+    if (myUserChangedPinState) return;
     GridModel<GridRow, GridColumn> model = getDataModel(DATA_WITH_MUTATIONS);
     List<ModelIndex<GridColumn>> restored = new ArrayList<>();
     for (ModelIndex<GridColumn> modelIndex : model.getColumnIndices().asIterable()) {
@@ -668,7 +668,20 @@ public class TableResultPanel extends UserDataHolderBase
         restored.add(modelIndex);
       }
     }
-    myColumnPinModel = myColumnPinModel.pinAll(restored);
+    setPinModel(myColumnPinModel.pinAll(restored));
+  }
+
+  /**
+   * Takes the new pin state, unless the feature is off. This is the only write of the model, so a session that
+   * starts with the flag off never gains a pin.
+   * <p>
+   * A session that pinned before the flag went off keeps those pins in the model. The policy is to suppress the
+   * rendering rather than to clear the state: {@link #updateFrozenColumns} passes no pinned column while the flag
+   * is off, and the pins render again if the flag comes back. Nothing rewrites the model meanwhile, so a column
+   * removed or moved while the flag is off leaves its pin stale until the next write.
+   */
+  private void setPinModel(@NotNull GridColumnPinModel updated) {
+    if (ColumnPinning.isEnabled()) myColumnPinModel = updated;
   }
 
   /** Syncs logical pin state into the current table view, which filters out hidden pinned columns. */
@@ -707,7 +720,7 @@ public class TableResultPanel extends UserDataHolderBase
 
   @Override
   public boolean canPinColumnsUpToHere(@NotNull ModelIndex<GridColumn> columnIdx) {
-    return ColumnPinning.isEnabled() && myColumnPinModel.canPinUpToHere(columnIdx, visibleColumnsInDisplayOrder());
+    return myColumnPinModel.canPinUpToHere(columnIdx, visibleColumnsInDisplayOrder());
   }
 
   @Override
@@ -747,13 +760,14 @@ public class TableResultPanel extends UserDataHolderBase
   }
 
   private void applyPinModel(@NotNull GridColumnPinModel updated) {
-    if (updated.equals(myColumnPinModel)) return;
+    // Stop the whole operation, not only the write: it also commits an editor and moves the scroll position.
+    if (!ColumnPinning.isEnabled() || updated.equals(myColumnPinModel)) return;
     myPinnedColumnNamesPendingRestore.clear();
     if (isEditing() && !stopEditing()) cancelEditing();
     myUserChangedPinState = true;
     List<ModelIndex<GridColumn>> unpinned = new ArrayList<>(myColumnPinModel.pinnedColumns());
     unpinned.removeAll(updated.pinnedColumns());
-    myColumnPinModel = updated;
+    setPinModel(updated);
     saveAndRestoreSelection(this, this::updateFrozenColumns);
     scrollUnpinnedColumnsIntoView(unpinned);
     myColumnModificationTracker.incModificationCount();
@@ -773,13 +787,12 @@ public class TableResultPanel extends UserDataHolderBase
 
   @Override
   public void restorePinnedColumnsAfterMoveInData(@NotNull UnaryOperator<ModelIndex<GridColumn>> newToOld) {
-    if (!ColumnPinning.isEnabled()) return;
     if (!myColumnPinModel.isEmpty()) {
       List<ModelIndex<GridColumn>> pinned = new ArrayList<>();
       for (ModelIndex<GridColumn> columnIdx : getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asIterable()) {
         if (myColumnPinModel.isPinned(newToOld.apply(columnIdx))) pinned.add(columnIdx);
       }
-      myColumnPinModel = new GridColumnPinModel().pinAll(pinned);
+      setPinModel(new GridColumnPinModel().pinAll(pinned));
     }
     updateFrozenColumns();
   }
@@ -788,7 +801,7 @@ public class TableResultPanel extends UserDataHolderBase
     GridColumnPinModel updated = myColumnPinModel.unpinAll(columns.asIterable());
     if (updated.equals(myColumnPinModel)) return;
     myUserChangedPinState = true;
-    myColumnPinModel = updated;
+    setPinModel(updated);
   }
 
   private void restoreColumnWidths() {

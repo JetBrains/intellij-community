@@ -315,7 +315,7 @@ internal class FrozenColumnsController(
 
     // The column model speaks in raw model indices, so unwrap once here instead of per column below.
     val pinned = pinnedColumns.mapTo(HashSet()) { it.value }
-    if (pinned.isEmpty() || primaryView.isTransposed || !ColumnPinning.isEnabled()) {
+    if (pinned.isEmpty() || primaryView.isTransposed) {
       removeFrozenView(parent)
       return
     }
