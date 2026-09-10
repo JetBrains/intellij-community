@@ -40,6 +40,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import com.intellij.openapi.util.Disposer
+import com.intellij.python.sdk.common.evolution.evoRpc
+import com.intellij.python.sdk.common.evolution.requestPackageManagerActionIds
 import com.intellij.ui.awt.RelativePoint
 import java.awt.Point
 
@@ -254,6 +256,9 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   @Volatile
   private var configuring: Boolean = false
 
+  @Volatile
+  private var packageManagerActionIds: List<String> = emptyList()
+
   init {
     scope.launch {
       requestEvoPyProjects(project.projectId()).collect { dtos ->
@@ -273,6 +278,10 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
         if (!inProgress) project.service<EvoConfiguringTracker>().nodeId = null   // stop attributing the fade to a tool
         update()
       }
+    }
+    
+    scope.launch {
+      packageManagerActionIds = requestPackageManagerActionIds()
     }
   }
 
@@ -513,8 +522,8 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     expandToolsOnce = false
     val factory = EvoPySdkSwitchPopupFactory(project, target.key, target.name, structure.workspaceRootName(target),
                                              cached.current, cached.nodes, cached.associated, cached.shortcuts, scope,
-                                             expandTools = ::expandTools)
-    val tree = reusable ?: factory.buildTree(context).also { popupTree = it; popupTreeKey = target.key }
+                                             expandTools = ::expandTools, packageManagerActionIds)
+    val tree = reusable ?: factory.buildTree().also { popupTree = it; popupTreeKey = target.key }
     // Written on every open, not only where it changes: the tree is reused, so a fold left over from the last popup
     // would decide this one. Every open the user starts is folded; only the reopen the "Show more…" row asks for is
     // not, and [expandToolsOnce] lasts exactly that long.

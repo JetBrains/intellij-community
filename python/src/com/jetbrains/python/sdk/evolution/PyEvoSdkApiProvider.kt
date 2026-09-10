@@ -15,6 +15,10 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Expiry
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -134,6 +138,9 @@ import org.jetbrains.annotations.Nls
 import com.intellij.python.sdk.backend.evolution.nodeIdForSdk
 
 private val LOG = logger<PyEvoSdkApiProvider>()
+
+/** The platform group holding every tool's package-manager actions (uv lock/sync, conda export/update, …). */
+private const val PACKAGE_MANAGER_ACTIONS_GROUP: String = "PythonPackageManagerActions"
 
 /**
  * The statistics identity of [nodeId], taken from the provider that owns it.
@@ -937,6 +944,13 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
 
   override suspend fun sdkConfigurationInProgress(projectId: ProjectId): Flow<Boolean> =
     projectId.findProjectOrNull()?.isSdkConfigurationInProgress ?: flowOf(false)
+
+  override suspend fun listPackageManagerActionIds(): List<String> {
+    val group = ActionUtil.getAction(PACKAGE_MANAGER_ACTIONS_GROUP) as? DefaultActionGroup ?: return emptyList()
+    val actionManager = ActionManager.getInstance()
+    
+    return group.getChildren(actionManager).filterNot { it is Separator }.mapNotNull { actionManager.getId(it) }
+  }
 
   /**
    * Fills each add-new section's flow from the owning [provider].

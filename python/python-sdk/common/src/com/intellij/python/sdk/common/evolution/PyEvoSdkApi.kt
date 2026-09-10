@@ -167,6 +167,11 @@ interface PyEvoSdkApi : RemoteApi<Unit> {
    * disables its popup while `true`, instead of the current interpreter and its actions.
    */
   suspend fun sdkConfigurationInProgress(projectId: ProjectId): Flow<Boolean>
+
+  /**
+   * Resolves a list of action ids registered in the `PythonPackageManagerActions` action group.
+   */
+  suspend fun listPackageManagerActionIds(): List<String>
 }
 
 @ApiStatus.Internal
@@ -273,6 +278,10 @@ suspend fun requestEvoShowToolProcessOutput(projectId: ProjectId, nodeId: String
 @ApiStatus.Internal
 suspend fun requestEvoSdkConfigurationInProgress(projectId: ProjectId): Flow<Boolean> =
   PyEvoSdkApi().sdkConfigurationInProgress(projectId)
+
+@ApiStatus.Internal
+suspend fun requestPackageManagerActionIds(): List<String> =
+  PyEvoSdkApi().listPackageManagerActionIds()
 
 /**
  * Frontend-safe, serializable projection of a `PyInterpreterItem` (an interpreter's display
