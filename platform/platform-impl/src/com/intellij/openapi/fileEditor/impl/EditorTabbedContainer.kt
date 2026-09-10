@@ -29,10 +29,12 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.FileDropManager
 import com.intellij.openapi.editor.containsFileDropTargets
@@ -112,6 +114,7 @@ import java.awt.datatransfer.Transferable
 import java.awt.event.AWTEventListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.concurrent.TimeUnit
 import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -119,6 +122,10 @@ import javax.swing.JTabbedPane
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 import javax.swing.TransferHandler
+
+private val LOG = logger<EditorTabbedContainer>()
+
+private val THROTTLED_LOGGER = ThrottledLogger(LOG, TimeUnit.HOURS.toMillis(1))
 
 class EditorTabbedContainer internal constructor(
   private val window: EditorWindow,
@@ -667,6 +674,12 @@ private class EditorTabs(
 
   override fun paintChildren(g: Graphics) {
     super.paintChildren(g)
+
+    ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(
+      "The Read/Write lock is disallowed during paint. Usage of the R/W lock can lead to UI freezes.",
+      { t -> THROTTLED_LOGGER.error(t) },
+      { super.paintChildren(g) })
+
     drawBorder(g)
   }
 
