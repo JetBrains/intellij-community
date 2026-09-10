@@ -28,7 +28,6 @@ import com.intellij.execution.testframework.sm.runner.states.TestIgnoredState;
 import com.intellij.execution.testframework.sm.runner.states.TestInProgressState;
 import com.intellij.execution.testframework.sm.runner.states.TestPassedState;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
-import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeViewProvider;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
@@ -516,8 +515,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   @Override
   public @Nullable Long getCustomizedDuration(@NotNull TestConsoleProperties testConsoleProperties) {
     if (testConsoleProperties instanceof SMTRunnerTestTreeViewProvider provider) {
-      SMTRunnerTestTreeView view = provider.createSMTRunnerTestTreeView();
-      if (view instanceof SMTRunnerTestTreeViewProvider.CustomizedDurationProvider customizedDurationProvider) {
+      SMTRunnerTestTreeViewProvider.CustomizedDurationProvider customizedDurationProvider = provider.getCustomizedDurationProvider();
+      if (customizedDurationProvider != null) {
         return customizedDurationProvider.getCustomizedDuration(this);
       }
     }

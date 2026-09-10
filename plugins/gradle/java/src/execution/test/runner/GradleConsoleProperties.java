@@ -97,6 +97,11 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties implemen
 
   @Override
   public @NotNull SMTRunnerTestTreeView createSMTRunnerTestTreeView() {
-    return Registry.is("java.test.enable.tree.live.time") ? new JavaSMTRunnerTestTreeView(this) : new SMTRunnerTestTreeView();
+    return Registry.is("java.test.enable.tree.live.time") ? new JavaSMTRunnerTestTreeView() : new SMTRunnerTestTreeView();
+  }
+
+  @Override
+  public SMTRunnerTestTreeViewProvider.@Nullable CustomizedDurationProvider getCustomizedDurationProvider() {
+    return Registry.is("java.test.enable.tree.live.time") ? JavaAwareTestConsoleProperties.createCustomizedDurationProvider(this) : null;
   }
 }
