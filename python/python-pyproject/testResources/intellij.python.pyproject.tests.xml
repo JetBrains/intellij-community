@@ -8,13 +8,13 @@
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.libraries.junit5.pioneer"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend.observation"/>
     <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.externalSystem"/>
-    <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
