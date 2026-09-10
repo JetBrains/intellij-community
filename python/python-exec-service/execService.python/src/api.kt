@@ -22,7 +22,6 @@ import com.jetbrains.python.errorProcessing.PyResult
  */
 typealias PythonBinaryOnEelOrTarget = BinaryToExec
 
-
 /**
  * Execute [helper] on [python]. For remote eels, [helper] is copied (but only one file!).
  * Returns `stdout`
@@ -40,7 +39,7 @@ suspend fun ExecService.executeHelper(
  * Ensures that this python is executable and returns its info. Error if python is broken.
  */
 @Deprecated("Currently used only for targets, for eel paths use PythonBinary.detectPythonEnvironment()", ReplaceWith(
-    "PythonBinary.detectPythonEnvironment().mapResult { it.getPythonInfo() }"
+  "PythonBinary.detectPythonEnvironment().mapResult { it.getPythonInfo() }"
 ))
 suspend fun PythonBinaryOnEelOrTarget.validatePythonAndGetInfo(): PyResult<PythonInfo> {
   return ExecService().validatePythonAndGetInfoImpl(ExecutablePython.vanillaExecutablePython(this))
@@ -49,8 +48,13 @@ suspend fun PythonBinaryOnEelOrTarget.validatePythonAndGetInfo(): PyResult<Pytho
 /**
  * Execute [pythonCode] on [ExecutablePython] and (if exitcode is 0) return stdout
  */
-suspend fun ExecutablePython.execGetStdout(pythonCode: @NlsSafe String, execService: ExecService = ExecService()): PyResult<String> = execService.execGetStdoutImpl(this, pythonCode, ZeroCodeStdoutTransformer)
-suspend fun PythonBinaryOnEelOrTarget.execGetStdout(pythonCode: @NlsSafe String, execService: ExecService = ExecService()): PyResult<String> = execService.execGetStdoutImpl(ExecutablePython.vanillaExecutablePython(this), pythonCode, ZeroCodeStdoutTransformer)
+suspend fun ExecutablePython.execGetStdout(pythonCode: @NlsSafe String, execService: ExecService = ExecService()): PyResult<String> =
+  execService.execGetStdoutImpl(this, pythonCode, ZeroCodeStdoutTransformer)
+
+suspend fun PythonBinaryOnEelOrTarget.execGetStdout(
+  pythonCode: @NlsSafe String,
+  execService: ExecService = ExecService(),
+): PyResult<String> = execService.execGetStdoutImpl(ExecutablePython.vanillaExecutablePython(this), pythonCode, ZeroCodeStdoutTransformer)
 
 /**
  * Execute [pythonCode] on [ExecutablePython] and (if exitcode is 0) return stdout converted to [Boolean]. Useful for things like:
@@ -61,8 +65,15 @@ suspend fun PythonBinaryOnEelOrTarget.execGetStdout(pythonCode: @NlsSafe String,
  *  }
  * ```
  */
-suspend fun ExecutablePython.execGetBoolFromStdout(pythonCode: @NlsSafe String, execService: ExecService = ExecService()): PyResult<Boolean> = execService.execGetStdoutBoolImpl(this, pythonCode)
-suspend fun PythonBinaryOnEelOrTarget.execGetBoolFromStdout(pythonCode: @NlsSafe String, execService: ExecService = ExecService()): PyResult<Boolean> = execService.execGetStdoutBoolImpl(ExecutablePython.vanillaExecutablePython(this), pythonCode)
+suspend fun ExecutablePython.execGetBoolFromStdout(
+  pythonCode: @NlsSafe String,
+  execService: ExecService = ExecService(),
+): PyResult<Boolean> = execService.execGetStdoutBoolImpl(this, pythonCode)
+
+suspend fun PythonBinaryOnEelOrTarget.execGetBoolFromStdout(
+  pythonCode: @NlsSafe String,
+  execService: ExecService = ExecService(),
+): PyResult<Boolean> = execService.execGetStdoutBoolImpl(ExecutablePython.vanillaExecutablePython(this), pythonCode)
 
 
 /**

@@ -31,7 +31,8 @@ import kotlin.time.Duration.Companion.minutes
 
 private const val SYS_MODULE = "sys"
 private const val IS_GIL_ENABLED_FUNCTION = "_is_gil_enabled"
-private const val GIL_CHECK_CMD = "from __future__ import print_function; import $SYS_MODULE; print($SYS_MODULE.$IS_GIL_ENABLED_FUNCTION()) if hasattr($SYS_MODULE, '$IS_GIL_ENABLED_FUNCTION') and callable(getattr($SYS_MODULE, '$IS_GIL_ENABLED_FUNCTION')) else print(True)"
+private const val GIL_CHECK_CMD =
+  "from __future__ import print_function; import $SYS_MODULE; print($SYS_MODULE.$IS_GIL_ENABLED_FUNCTION()) if hasattr($SYS_MODULE, '$IS_GIL_ENABLED_FUNCTION') and callable(getattr($SYS_MODULE, '$IS_GIL_ENABLED_FUNCTION')) else print(True)"
 
 @ApiStatus.Internal
 internal suspend fun ExecService.validatePythonAndGetInfoImpl(python: ExecutablePython): PyResult<PythonInfo> = withContext(Dispatchers.IO) {
@@ -55,10 +56,15 @@ internal suspend fun ExecService.validatePythonAndGetInfoImpl(python: Executable
 }
 
 @ApiStatus.Internal
-internal suspend fun ExecService.execGetStdoutBoolImpl(python: ExecutablePython, command: @NlsSafe String): PyResult<Boolean> = execGetStdoutImpl(python, command, ZeroCodeStdoutTransformerBool)
+internal suspend fun ExecService.execGetStdoutBoolImpl(python: ExecutablePython, command: @NlsSafe String): PyResult<Boolean> =
+  execGetStdoutImpl(python, command, ZeroCodeStdoutTransformerBool)
 
 @ApiStatus.Internal
-internal suspend fun <T : Any> ExecService.execGetStdoutImpl(python: ExecutablePython, command: @NlsSafe String, transformer: ZeroCodeStdoutTransformerTyped<T>): PyResult<T> = withContext(Dispatchers.IO) {
+internal suspend fun <T : Any> ExecService.execGetStdoutImpl(
+  python: ExecutablePython,
+  command: @NlsSafe String,
+  transformer: ZeroCodeStdoutTransformerTyped<T>,
+): PyResult<T> = withContext(Dispatchers.IO) {
   val options = ExecOptions(timeout = 1.minutes)
   val result = executePythonAdvanced(
     python,
