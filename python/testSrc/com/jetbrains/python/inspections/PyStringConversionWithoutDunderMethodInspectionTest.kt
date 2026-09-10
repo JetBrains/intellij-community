@@ -371,6 +371,15 @@ class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase
     str(IPv6Address("::1"))
     """.trimIndent())
 
+  @TestFor(issues = ["PY-89483"])
+  fun `test dunder new call is not a string conversion`() = doTestByText("""
+    class A(str):
+        def __new__(cls):
+            return super().__new__(cls)
+
+    str.__new__(A)
+    """.trimIndent())
+
   // A class declared in a .pyi stub usually omits __str__/__repr__/__format__ that the runtime .py defines.
   @TestFor(issues = ["PY-89004"])
   fun testStubMethodResolvedToImplementation() = doMultiFileTestByText("""
