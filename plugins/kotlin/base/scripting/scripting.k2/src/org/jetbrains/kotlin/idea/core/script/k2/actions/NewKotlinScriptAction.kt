@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.actions
+package org.jetbrains.kotlin.idea.core.script.k2.actions
 
 import com.intellij.ide.actions.CreateFileFromTemplateDialog
 import com.intellij.ide.actions.CreateTemplateInPackageAction
@@ -30,7 +30,10 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.Consumer
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.actions.AbstractNewKotlinFileAction
+import org.jetbrains.kotlin.idea.actions.KotlinScriptFileTemplate
+import org.jetbrains.kotlin.idea.actions.NewKotlinFileNameValidator
+import org.jetbrains.kotlin.idea.actions.addKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptTemplate
@@ -265,31 +268,6 @@ internal class NewKotlinScriptDialogBuilder(
     }
 }
 
-internal enum class KotlinScriptFileTemplate(
-    @NlsContexts.ListItem override val title: String,
-    override val icon: Icon,
-    override val fileName: String,
-    val description: @Nls String
-) : KotlinTemplate {
-    GradleKts(
-        ".gradle.kts",
-        KotlinIcons.GRADLE_SCRIPT,
-        "Kotlin Script Gradle",
-        KotlinBundle.message("action.new.script.description.gradle.kts")
-    ),
-    MainKts(
-        ".main.kts",
-        KotlinIcons.SCRIPT,
-        "Kotlin Script MainKts",
-        KotlinBundle.message("action.new.script.description.main.kts")
-    ),
-    Kts(
-        ".kts",
-        KotlinIcons.SCRIPT,
-        "Kotlin Script",
-        KotlinBundle.message("action.new.script.description.kts")
-    ),
-}
 
 fun isScriptLocationAccepted(
     definition: ScriptDefinition,

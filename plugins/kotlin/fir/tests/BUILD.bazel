@@ -286,8 +286,6 @@ jvm_library(
         "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
         "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl",
         "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl_test_lib",
-        "//plugins/kotlin/base/scripting/scripting.shared",
-        "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
         "//java/java-tests:tests",
         "//java/java-tests:tests_test_lib",
         "//xml/xml-parser:parser",

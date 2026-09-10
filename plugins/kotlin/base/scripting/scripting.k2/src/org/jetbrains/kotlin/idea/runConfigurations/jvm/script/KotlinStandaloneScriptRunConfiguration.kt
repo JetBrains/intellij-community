@@ -41,8 +41,8 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.core.script.shared.ScriptAfterRunCallbackProvider
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationProducer.Companion.pathFromPsiElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -197,7 +197,7 @@ private class ScriptCommandLineState(
 
         val classpath = buildSet {
             addAll(
-                ScriptDependencyAware.getInstance(environment.project).getScriptDependenciesClassFiles(virtualFile)
+                ScriptConfigurationsProviderImpl.getInstance(environment.project).getScriptDependenciesClassFiles(virtualFile)
                     .map { it.presentableUrl })
             val module = virtualFile.module(environment.project)
             if (module != null) {

@@ -8,8 +8,8 @@ import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.core.script.v1.KotlinScriptSearchScope
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 
 /**
  * @see KotlinScriptResolveScopeProvider
@@ -30,10 +30,12 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
         if (RootKindMatcher.matches(project, file, RootKindFilter.libraryFiles.copy(includeScriptDependencies = false)))
             return null
 
-        if (ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFiles().isEmpty()) return null
+        val scriptDependenciesProvider = ScriptConfigurationsProviderImpl.getInstance(project)
 
-        if (file !in ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope()
-            && file !in ScriptDependencyAware.getInstance(project).getAllScriptDependenciesSourcesScope()) {
+        if (scriptDependenciesProvider.getAllScriptsDependenciesClassFiles().isEmpty()) return null
+
+        if (file !in scriptDependenciesProvider.getAllScriptsDependenciesClassFilesScope()
+            && file !in scriptDependenciesProvider.getAllScriptDependenciesSourcesScope()) {
             return null
         }
 

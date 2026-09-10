@@ -10,8 +10,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.core.script.v1.KotlinScriptSearchScope
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsScriptsInSourceRoots
 import org.jetbrains.kotlin.idea.core.script.v1.isSupportedUnderSourceRoot
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
@@ -108,7 +108,7 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
     private fun KtFile.calculateScopeForStandaloneScript(file: VirtualFile, project: Project): KotlinScriptSearchScope {
         val vFile = virtualFile ?: viewProvider.virtualFile
         val dependenciesScope =
-            ScriptDependencyAware.getInstance(project).getScriptDependenciesClassFilesScope(vFile)
+            ScriptConfigurationsProviderImpl.getInstance(project).getScriptDependenciesClassFilesScope(vFile)
         debugLog { "=> standalone" }
         return KotlinScriptSearchScope(project, GlobalSearchScope.fileScope(project, file).uniteWith(dependenciesScope))
     }

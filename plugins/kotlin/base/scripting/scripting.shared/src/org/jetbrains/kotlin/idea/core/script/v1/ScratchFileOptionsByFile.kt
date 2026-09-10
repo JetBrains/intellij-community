@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.ObjectUtils
 import com.intellij.util.gist.storage.GistStorage
 import com.intellij.util.io.ByteSequenceDataExternalizer
-import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptionsByFile.Companion.set
+import com.intellij.util.io.IOUtil
 import java.io.ByteArrayOutputStream
 import java.io.DataInput
 import java.io.DataOutput
@@ -31,8 +31,8 @@ class ScratchFileOptionsByFile : Disposable {
             isMakeBeforeRun = readBoolean(),
             isInteractiveMode = readBoolean(),
             isExplainEnabled = readBoolean(),
-            selectedJdkHome = readNullable { readString() },
-            selectedModule = readNullable { readString() },
+            selectedJdkHome = readNullable { IOUtil.readUTF(this) },
+            selectedModule = readNullable { IOUtil.readUTF(this) },
         )
     }
     private val write: DataOutput.(ScratchFileOptions) -> Unit = { options ->
@@ -40,8 +40,18 @@ class ScratchFileOptionsByFile : Disposable {
         writeBoolean(options.isMakeBeforeRun)
         writeBoolean(options.isInteractiveMode)
         writeBoolean(options.isExplainEnabled)
-        writeNullable(options.selectedJdkHome) { writeString(it) }
-        writeNullable(options.selectedModule) { writeString(it) }
+        writeNullable(options.selectedJdkHome) { IOUtil.writeUTF(this, it) }
+        writeNullable(options.selectedModule) { IOUtil.writeUTF(this, it) }
+    }
+
+    private fun <T : Any> DataOutput.writeNullable(nullable: T?, writeT: DataOutput.(T) -> Unit) {
+        writeBoolean(nullable != null)
+        nullable?.let { writeT(it) }
+    }
+
+    fun <T : Any> DataInput.readNullable(readT: DataInput.() -> T): T? {
+        val hasValue = readBoolean()
+        return if (hasValue) readT() else null
     }
 
     companion object {

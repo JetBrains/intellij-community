@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
@@ -47,8 +46,7 @@ private data class ScriptDependencies(
     }
 }
 
-class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: CoroutineScope) : ScriptConfigurationsProvider(project),
-    ScriptDependencyAware {
+class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: CoroutineScope) : ScriptConfigurationsProvider(project) {
 
     private val allScriptsDependencies
         get() = ScriptDependenciesSingletonCache.getOrCompute(project) {
@@ -70,21 +68,21 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
             AllScriptsDependencies(classes, allClasses, allSources)
         }
 
-    override fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> = allScriptsDependencies.classes
+    fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> = allScriptsDependencies.classes
 
-    override fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope =
+    fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope =
         compose(allScriptsDependencies.allClasses)
 
-    override fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope =
+    fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope =
         compose(allScriptsDependencies.allSources)
 
-    override fun getScriptDependenciesClassFilesScope(virtualFile: VirtualFile): GlobalSearchScope {
+    fun getScriptDependenciesClassFilesScope(virtualFile: VirtualFile): GlobalSearchScope {
         val sdk = virtualFile.currentDependencies.sdk
         val sdkClasses = sdk?.roots?.filter { it.type == classesTypeId }?.mapNotNull { it.url.virtualFile } ?: emptyList()
         return compose(virtualFile.currentDependencies.classes + sdkClasses)
     }
 
-    override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> =
+    fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> =
         virtualFile.currentDependencies.classes
 
     private val VirtualFile.currentDependencies: ScriptDependencies

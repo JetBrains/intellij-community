@@ -27,15 +27,18 @@ import org.jetbrains.kotlin.idea.core.script.k2.getVirtualFile
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptTemplate
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
-import kotlin.script.experimental.api.SourceCode
+import java.io.File
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
+import javax.swing.Icon
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.defaultImports
+import kotlin.script.experimental.api.dependencies
 import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.api.implicitReceivers
 import kotlin.script.experimental.api.importScripts
@@ -46,10 +49,6 @@ import kotlin.script.experimental.host.configurationDependencies
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
-import java.io.File
-import java.nio.file.InvalidPathException
-import java.nio.file.Path
-import javax.swing.Icon
 
 internal fun createScriptFileRoot(file: KtFile, declarationsRoot: TreeElement): StructureViewTreeElement =
     KotlinScriptFileStructureViewElement(
@@ -142,7 +141,7 @@ private class KotlinScriptStructureViewContext(val file: KtFile) {
         if (DumbService.isDumb(project)) return null
 
         val qualifiedName = type.fromClass?.qualifiedName ?: type.typeName
-        val scope = ScriptDependencyAware.getInstance(project)
+        val scope = ScriptConfigurationsProviderImpl.getInstance(project)
             .getScriptDependenciesClassFilesScope(file.virtualFile)
             .uniteWith(GlobalSearchScope.allScope(project))
 

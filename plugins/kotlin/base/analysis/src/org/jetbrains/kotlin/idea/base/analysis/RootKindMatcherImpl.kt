@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_AND_RESOURCES_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.serialization.deserialization.DOT_METADATA_FILE_EXTENSION
@@ -131,34 +130,10 @@ class RootKindMatcherImpl(private val project: Project) : RootKindMatcher {
             if (fileIndex.isInLibraryClasses(virtualFile)) {
                 return true
             }
-
-          val classFileScope = when {
-            correctedFilter.includeScriptDependencies -> ScriptDependencyAware.getInstance(
-              project).getAllScriptsDependenciesClassFilesScope()
-            else -> null
-          }
-
-            if (classFileScope != null && classFileScope.contains(virtualFile)) {
-                return true
-            }
         }
 
         if (correctedFilter.includeLibrarySourceFiles && !isBinary) {
             if (fileIndex.isInLibrarySource(virtualFile)) {
-                return true
-            }
-
-            val sourceFileScope = when {
-                correctedFilter.includeScriptDependencies -> ScriptDependencyAware.getInstance(project)
-                    .getAllScriptDependenciesSourcesScope()
-
-                else -> null
-            }
-
-            if (sourceFileScope != null &&
-                sourceFileScope.contains(virtualFile) &&
-                !(virtualFile !is VirtualFileWindow && fileIndex.isUnderSourceRootOfType(virtualFile, KOTLIN_AWARE_SOURCE_ROOT_TYPES))
-            ) {
                 return true
             }
         }

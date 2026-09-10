@@ -1,8 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.fir.actions
+package org.jetbrains.kotlin.idea.core.script.k2.actions
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.jetbrains.kotlin.idea.actions.isScriptLocationAccepted
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import kotlin.script.experimental.api.ScriptAcceptedLocation
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
