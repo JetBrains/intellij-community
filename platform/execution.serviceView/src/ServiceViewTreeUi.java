@@ -177,7 +177,8 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     if (component == null) {
       component = myMessagePanel;
     }
-    if (component.getParent() != myContentComponentPanel) {
+    boolean componentPanelChanged = component.getParent() != myContentComponentPanel;
+    if (componentPanelChanged) {
       if (ServiceViewUIUtils.isNewServicesUIEnabled()) {
         boolean visible = ServiceViewActionProvider.isActionToolBarRequired(component);
         myServiceActionToolbarWrapper.setVisible(visible);
@@ -197,7 +198,7 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     }
     ActionToolbar serviceActionToolbar = myServiceActionToolbar;
     if (serviceActionToolbar != null) {
-      ((ActionToolbarImpl)serviceActionToolbar).reset();
+      if (componentPanelChanged) ((ActionToolbarImpl)serviceActionToolbar).reset();
       serviceActionToolbar.updateActionsImmediately();
     }
     ApplicationManager.getApplication().invokeLater(() -> {
