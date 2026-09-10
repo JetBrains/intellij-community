@@ -65,23 +65,11 @@ internal class FrozenColumnsController(
   private val columnHeaderPopupActions: ActionGroup,
   private val rowHeaderPopupActions: ActionGroup,
 ) : Disposable {
-  private var frozenView: TableResultView? = null
-  private var frozenRowHeader: GridRowHeader? = null
-  private var frozenModelSync: TableModelListener? = null
+  private var region: FrozenRegion? = null
   private var originalCorner: Component? = null
   private var originalLowerCorner: Component? = null
-  private var lowerCornerComponent: JComponent? = null
-  private var gutterWrappers: GutterWrappers? = null
-  private var frozenViewport: HorizontalViewport? = null
-  private var frozenViewportWrapper: JPanel? = null
-  private var frozenHeaderViewport: HorizontalViewport? = null
-  private var frozenScrollBar: JScrollBar? = null
-  private var installedScrollPane: TableScrollPane? = null
-  private var mainViewportListener: ComponentListener? = null
-  private var frozenViewportListener: ChangeListener? = null
-  private var frozenMouseWheelListener: MouseWheelListener? = null
-  private var frozenScrollLatching: LatchingScroll? = null
-  private var originalHorizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+  private var scrolling: FrozenScrolling? = null
+
   private var updatingFrozenViewport = false
   private var mirroringSelection = false
   private var resizingFrozenColumn = false
@@ -91,16 +79,13 @@ internal class FrozenColumnsController(
   private var dragAnchorRow = -1
   private var dragAnchorColumn = -1
   private val componentMouseListeners = mutableListOf<MouseListener>()
-  private var mainColumnMirror: ListSelectionListener? = null
-  private var frozenColumnMirror: ListSelectionListener? = null
-  private var frozenColumnOrderMirror: TableColumnModelListener? = null
-  private var frozenMoveColumnListener: MoveColumnListener? = null
   private var frozenColumnResizeHandle: MouseInputAdapter? = null
   private var showRowNumbers = false
 
   fun getPrimaryView(): TableResultView = primaryView
 
-  fun getFrozenView(): TableResultView? = frozenView
+  /** The strip, or null while nothing is pinned. */
+  val frozenView: TableResultView? get() = region?.view
 
   fun isCellComponent(component: Component?): Boolean = component === primaryView || component === frozenView
 
@@ -208,7 +193,7 @@ internal class FrozenColumnsController(
   private fun inFrozenResizeZone(x: Int): Boolean {
     if (frozenView == null || primaryView.isTransposed) return false
     // A clipped divider is a viewport edge, not a column edge that can be resized.
-    if (frozenScrollBar?.isVisible == true) return false
+    if (scrolling?.scrollBar?.isVisible == true) return false
     val resizeArea = JBUI.scale(3)
     return if (primaryView.componentOrientation.isLeftToRight) x in 0..resizeArea
     else x in primaryView.tableHeader.width - resizeArea..primaryView.tableHeader.width
@@ -237,8 +222,8 @@ internal class FrozenColumnsController(
       primaryView.columnModel.totalColumnWidth,
     )
     // If the result area was narrowed around an already oversized strip, resizing must not snap a user width down.
-    val maximumTotalWidth = if (frozenScrollBar?.isVisible == true)
-      maxOf(fittingWidth, frozenScrollBar?.maximum ?: 0)
+    val maximumTotalWidth = if (scrolling?.scrollBar?.isVisible == true)
+      maxOf(fittingWidth, scrolling?.scrollBar?.maximum ?: 0)
     else
       fittingWidth
     val otherColumnsWidth = frozenView?.let { frozenColumnsWidth(it, except = column) } ?: 0
@@ -358,7 +343,6 @@ internal class FrozenColumnsController(
     originalCorner = parent.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER)
     originalLowerCorner = parent.getCorner(ScrollPaneConstants.LOWER_LEADING_CORNER)
     val frozen = TableResultView(resultPanel, columnHeaderPopupActions, rowHeaderPopupActions, this)
-    frozenView = frozen
     frozen.autoResizeMode = TableResultView.AUTO_RESIZE_OFF
     frozen.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
     frozen.cellSelectionEnabled = true
@@ -372,27 +356,26 @@ internal class FrozenColumnsController(
     val mainColumns = primaryView.columnModel.selectionModel
     val frozenColumns = frozen.columnModel.selectionModel
     val mirror = ListSelectionListener { mirrorColumnSelection(mainColumns, frozenColumns, false) }
-    mainColumnMirror = mirror
     mainColumns.addListSelectionListener(mirror)
     val frozenMirror = ListSelectionListener { mirrorColumnSelection(frozenColumns, mainColumns, true) }
-    frozenColumnMirror = frozenMirror
     frozenColumns.addListSelectionListener(frozenMirror)
-    installFrozenColumnOrderMirror(frozen)
-    installFrozenMoveColumnListener(frozen)
+
+    val columnOrderMirror = createFrozenColumnOrderMirror(frozen)
+    val moveColumnListener = createFrozenMoveColumnListener(frozen)
     installFrozenScrolling(parent, frozen)
 
     // The frozen table has its own model instance, so forward granular updates without stacking listeners on rebuild.
     // Preserve the request place so Record View recognizes its own edits and keeps the caret.
+    // The strip can go away between the event and its removal, so read it through the region instead of capturing it.
     val modelSync = TableModelListener { event ->
-      val currentFrozen = frozenView ?: return@TableModelListener
-      val model = currentFrozen.model
+      val model = (frozenView ?: return@TableModelListener).model
       model.fireTableChanged(
         if (event is GridTableModel.RequestedTableModelEvent)
           GridTableModel.RequestedTableModelEvent(model, event.firstRow, event.lastRow, event.column, event.type, event.place)
         else TableModelEvent(model, event.firstRow, event.lastRow, event.column, event.type))
     }
-    frozenModelSync = modelSync
     primaryView.model.addTableModelListener(modelSync)
+    region = FrozenRegion(frozen, modelSync, mirror, frozenMirror, columnOrderMirror, moveColumnListener)
     return frozen
   }
 
@@ -407,31 +390,10 @@ internal class FrozenColumnsController(
   }
 
   private fun disposeFrozenView() {
-    val frozen = frozenView ?: return
+    val region = region ?: return
     uninstallFrozenScrolling()
-    primaryView.stopSharingFloatingToolbarWith(frozen)
-    frozenView = null
-    frozenModelSync?.let(primaryView.model::removeTableModelListener)
-    frozenModelSync = null
-    mainColumnMirror?.let(primaryView.columnModel.selectionModel::removeListSelectionListener)
-    mainColumnMirror = null
-    frozenColumnMirror?.let(frozen.columnModel.selectionModel::removeListSelectionListener)
-    frozenColumnMirror = null
-    frozenColumnOrderMirror?.let(frozen.columnModel::removeColumnModelListener)
-    frozenColumnOrderMirror = null
-    frozenMoveColumnListener?.let {
-      frozen.tableHeader.removeMouseListener(it)
-      frozen.columnModel.removeColumnModelListener(it)
-    }
-    frozenMoveColumnListener = null
-    componentMouseListeners.forEach(frozen::removeMouseListener)
-    frozenRowHeader = null
-    gutterWrappers = null
-    lowerCornerComponent = null
-    // JTable and TableExpandableItemsHandler both listen to the row selection model. Replacing the shared model lets
-    // each unregister from the primary view before the strip becomes otherwise unreachable.
-    frozen.selectionModel = DefaultListSelectionModel()
-    Disposer.dispose(frozen)
+    this.region = null
+    region.dispose(primaryView, componentMouseListeners)
   }
 
   override fun dispose() {
@@ -461,7 +423,7 @@ internal class FrozenColumnsController(
     }
   }
 
-  private fun installFrozenColumnOrderMirror(frozen: TableResultView) {
+  private fun createFrozenColumnOrderMirror(frozen: TableResultView): TableColumnModelListener {
     val listener = object : TableColumnModelListener {
       override fun columnMoved(event: TableColumnModelEvent) {
         if (event.fromIndex == event.toIndex) return
@@ -476,8 +438,8 @@ internal class FrozenColumnsController(
       override fun columnMarginChanged(event: ChangeEvent) = Unit
       override fun columnSelectionChanged(event: ListSelectionEvent) = Unit
     }
-    frozenColumnOrderMirror = listener
     frozen.columnModel.addColumnModelListener(listener)
+    return listener
   }
 
   /** Where the column moved to [stripIndex] goes in the main table: next to the strip neighbour it ended up with. */
@@ -492,13 +454,13 @@ internal class FrozenColumnsController(
     return if (moved > right) right else right - 1
   }
 
-  private fun installFrozenMoveColumnListener(frozen: TableResultView) {
+  private fun createFrozenMoveColumnListener(frozen: TableResultView): MoveColumnListener {
     // Mutable document grids update their source from MoveColumnListener on mouse release. The frozen strip mirrors
     // the Swing order into the primary table first, then this listener applies that primary order to the source.
     val listener = MoveColumnListener(resultPanel, primaryView)
-    frozenMoveColumnListener = listener
     frozen.tableHeader.addMouseListener(listener)
     frozen.columnModel.addColumnModelListener(listener)
+    return listener
   }
 
   private fun installFrozenRegion(parent: TableScrollPane) {
@@ -509,9 +471,10 @@ internal class FrozenColumnsController(
 
   private fun renderFrozenRegion(parent: TableScrollPane, frozen: TableResultView, gutter: GridRowHeader?) {
     val orientation = parent.componentOrientation
-    val viewport = frozenViewport ?: return
-    val headerViewport = frozenHeaderViewport ?: return
-    val viewportWrapper = frozenViewportWrapper ?: return
+    val scrolling = scrolling ?: return
+    val viewport = scrolling.viewport
+    val headerViewport = scrolling.headerViewport
+    val viewportWrapper = scrolling.viewportWrapper
     var rowHeader: JComponent = viewportWrapper
     var corner: JComponent = headerViewport
     if (gutter != null) {
@@ -528,14 +491,15 @@ internal class FrozenColumnsController(
     frozen.tableHeader.applyComponentOrientation(orientation)
     viewport.applyComponentOrientation(orientation)
     headerViewport.applyComponentOrientation(orientation)
-    frozenScrollBar?.applyComponentOrientation(orientation)
+    scrolling.scrollBar.applyComponentOrientation(orientation)
     // Reuse installed components to avoid relayout and flicker when pinning another column.
     if (parent.rowHeader?.view !== rowHeader) parent.setRowHeaderView(rowHeader)
     if (parent.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER) !== corner) {
       parent.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, corner)
     }
     // Match the grid background in the corner beside the horizontal scrollbar.
-    val lowerCorner = lowerCornerComponent ?: FrozenLowerCorner().also { lowerCornerComponent = it }
+    val region = region ?: error("The region renders here, so it must exist")
+    val lowerCorner = region.lowerCorner ?: FrozenLowerCorner().also { region.lowerCorner = it }
     configureLowerCorner(lowerCorner, gutter)
     if (parent.getCorner(ScrollPaneConstants.LOWER_LEADING_CORNER) !== lowerCorner) {
       parent.setCorner(ScrollPaneConstants.LOWER_LEADING_CORNER, lowerCorner)
@@ -558,9 +522,10 @@ internal class FrozenColumnsController(
                              frozen: TableResultView,
                              viewport: HorizontalViewport,
                              headerViewport: HorizontalViewport): GutterWrappers {
-    val wrappers = gutterWrappers?.takeIf {
+    val region = region ?: error("The gutter belongs to the strip, so the region must exist here")
+    val wrappers = region.gutterWrappers?.takeIf {
       it.gutter === gutter && it.frozen === frozen && it.frozenViewport === viewport
-    } ?: createGutterWrappers(gutter, frozen, viewport).also { gutterWrappers = it }
+    } ?: createGutterWrappers(gutter, frozen, viewport).also { region.gutterWrappers = it }
     // Without the gutter the strip and its header go into the scroll pane itself, which takes them out of these panels.
     pair(wrappers.rowHeader, gutter, viewport)
     pair(wrappers.corner, wrappers.gutterCorner, headerViewport)
@@ -611,7 +576,7 @@ internal class FrozenColumnsController(
       }
       lowerCorner.add(gutterFill, BorderLayout.LINE_START)
     }
-    frozenScrollBar?.let { lowerCorner.add(it, BorderLayout.CENTER) }
+    scrolling?.let { lowerCorner.add(it.scrollBar, BorderLayout.CENTER) }
     lowerCorner.applyComponentOrientation(primaryView.componentOrientation)
   }
 
@@ -621,11 +586,12 @@ internal class FrozenColumnsController(
    * The row header derives its width from the live gutter and strip sizes to avoid gaps after gutter resizing.
    */
   private fun updateFrozenViewport(parent: TableScrollPane, anchorNewOverflowAtTrailingEdge: Boolean = false) {
-    if (updatingFrozenViewport || parent !== installedScrollPane) return
+    val scrolling = scrolling ?: return
+    if (updatingFrozenViewport || parent !== scrolling.parent) return
     val frozen = frozenView ?: return
-    val viewport = frozenViewport ?: return
-    val headerViewport = frozenHeaderViewport ?: return
-    val scrollBar = frozenScrollBar ?: return
+    val viewport = scrolling.viewport
+    val headerViewport = scrolling.headerViewport
+    val scrollBar = scrolling.scrollBar
     val availableWidth = availableColumnsWidth(parent)
     if (availableWidth <= 0) return
 
@@ -648,7 +614,8 @@ internal class FrozenColumnsController(
         headerViewport.preferredWidth = visibleWidth
         layoutChanged = true
       }
-      val policy = if (overflow) ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS else originalHorizontalScrollBarPolicy
+      val policy = if (overflow) ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
+      else scrolling.originalHorizontalScrollBarPolicy
       if (parent.horizontalScrollBarPolicy != policy) {
         parent.horizontalScrollBarPolicy = policy
         layoutChanged = true
@@ -687,7 +654,7 @@ internal class FrozenColumnsController(
 
   private fun rowNumberGutterWidth(parent: TableScrollPane): Int {
     if (!showRowNumbers || primaryView.isTransposed) return 0
-    val frozenGutterWidth = frozenRowHeader?.preferredSize?.width
+    val frozenGutterWidth = region?.rowHeader?.preferredSize?.width
     if (frozenGutterWidth != null) return frozenGutterWidth
     val rowHeader = parent.rowHeader ?: return 0
     return rowHeader.extentSize.width.takeIf { it > 0 } ?: rowHeader.preferredSize.width
@@ -714,9 +681,10 @@ internal class FrozenColumnsController(
   private fun updateFrozenScrollRange(contentWidth: Int,
                                       visibleWidth: Int,
                                       anchorNewOverflowAtTrailingEdge: Boolean) {
-    val viewport = frozenViewport ?: return
-    val headerViewport = frozenHeaderViewport ?: return
-    val scrollBar = frozenScrollBar ?: return
+    val scrolling = scrolling ?: return
+    val viewport = scrolling.viewport
+    val headerViewport = scrolling.headerViewport
+    val scrollBar = scrolling.scrollBar
     val oldMaximum = maxOf(0, scrollBar.maximum - scrollBar.visibleAmount)
     val current = viewport.viewPosition.x
     val wasOverflowing = scrollBar.isVisible
@@ -778,56 +746,20 @@ internal class FrozenColumnsController(
     frozen.addMouseWheelListener(wheelListener)
     frozen.tableHeader.addMouseWheelListener(wheelListener)
 
-    installedScrollPane = parent
-    originalHorizontalScrollBarPolicy = parent.horizontalScrollBarPolicy
-    frozenViewport = viewport
-    frozenViewportWrapper = viewportWrapper
-    frozenHeaderViewport = headerViewport
-    frozenScrollBar = scrollBar
-    frozenViewportListener = viewportListener
-    frozenMouseWheelListener = wheelListener
-    frozenScrollLatching = LatchingScroll()
     val mainListener = object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
         updateFrozenViewport(parent)
       }
     }
-    mainViewportListener = mainListener
+    scrolling = FrozenScrolling(parent, viewport, viewportWrapper, headerViewport, scrollBar,
+                                parent.horizontalScrollBarPolicy, viewportListener, wheelListener, mainListener)
     parent.addComponentListener(mainListener)
     parent.viewport.addComponentListener(mainListener)
   }
 
   private fun uninstallFrozenScrolling() {
-    val parent = installedScrollPane
-    val mainListener = mainViewportListener
-    if (parent != null && mainListener != null) {
-      parent.removeComponentListener(mainListener)
-      parent.viewport.removeComponentListener(mainListener)
-    }
-    val viewport = frozenViewport
-    val viewportListener = frozenViewportListener
-    if (viewport != null && viewportListener != null) viewport.removeChangeListener(viewportListener)
-    val wheelListener = frozenMouseWheelListener
-    val frozen = frozenView
-    if (wheelListener != null && frozen != null) {
-      frozen.removeMouseWheelListener(wheelListener)
-      frozen.tableHeader.removeMouseWheelListener(wheelListener)
-      frozenRowHeader?.removeMouseWheelListener(wheelListener)
-    }
-    if (parent != null) {
-      parent.rowHeader?.setPreferredSize(null)
-      parent.setFrozenHorizontalScrollBarVisible(false)
-      parent.horizontalScrollBarPolicy = originalHorizontalScrollBarPolicy
-    }
-    mainViewportListener = null
-    frozenViewportListener = null
-    frozenMouseWheelListener = null
-    frozenScrollLatching = null
-    installedScrollPane = null
-    frozenViewport = null
-    frozenViewportWrapper = null
-    frozenHeaderViewport = null
-    frozenScrollBar = null
+    scrolling?.uninstall(frozenView, region?.rowHeader)
+    scrolling = null
     updatingFrozenViewport = false
   }
 
@@ -859,7 +791,8 @@ internal class FrozenColumnsController(
   /** Lets a predominantly horizontal trackpad gesture own the small vertical wheel events emitted with it. */
   private fun shouldIgnorePerpendicularWheelDrift(event: MouseWheelEvent): Boolean {
     if (!LatchingScroll.isEnabled()) return false
-    val pane = installedScrollPane ?: return false
+    val scrolling = scrolling ?: return false
+    val pane = scrolling.parent
     val paneEvent = MouseWheelEvent(
       pane,
       event.id,
@@ -876,7 +809,7 @@ internal class FrozenColumnsController(
       event.wheelRotation,
       event.preciseWheelRotation,
     )
-    return frozenScrollLatching?.shouldBeIgnored(paneEvent) == true
+    return scrolling.latching.shouldBeIgnored(paneEvent)
   }
 
   /**
@@ -885,8 +818,70 @@ internal class FrozenColumnsController(
   private fun forwardWheelToScrollPane(event: MouseWheelEvent) {
     if (event.isConsumed) return
     val source = event.component ?: return
-    val pane = installedScrollPane ?: return
+    val pane = scrolling?.parent ?: return
     pane.dispatchEvent(SwingUtilities.convertMouseEvent(source, event, pane))
+  }
+
+  /**
+   * The strip and the listeners that tie it to the primary table. All of it is created at once and disposed at once,
+   * so one field holds it. The three vars fill in lazily, and the two gutter ones only when row numbers show.
+   */
+  private class FrozenRegion(
+    val view: TableResultView,
+    val modelSync: TableModelListener,
+    val mainColumnMirror: ListSelectionListener,
+    val columnMirror: ListSelectionListener,
+    val columnOrderMirror: TableColumnModelListener,
+    val moveColumnListener: MoveColumnListener,
+  ) {
+    var rowHeader: GridRowHeader? = null
+    var gutterWrappers: GutterWrappers? = null
+    var lowerCorner: JComponent? = null
+
+    fun dispose(primary: TableResultView, sharedMouseListeners: List<MouseListener>) {
+      primary.stopSharingFloatingToolbarWith(view)
+      primary.model.removeTableModelListener(modelSync)
+      primary.columnModel.selectionModel.removeListSelectionListener(mainColumnMirror)
+      view.columnModel.selectionModel.removeListSelectionListener(columnMirror)
+      view.columnModel.removeColumnModelListener(columnOrderMirror)
+      view.tableHeader.removeMouseListener(moveColumnListener)
+      view.columnModel.removeColumnModelListener(moveColumnListener)
+      sharedMouseListeners.forEach(view::removeMouseListener)
+      // JTable and TableExpandableItemsHandler both listen to the row selection model. Replacing the shared model
+      // lets each unregister from the primary view before the strip becomes otherwise unreachable.
+      view.selectionModel = DefaultListSelectionModel()
+      Disposer.dispose(view)
+    }
+  }
+
+  /**
+   * The horizontal scrolling of the strip: two viewports, a scroll bar, and the listeners that keep them in step.
+   * All of it is installed at once and removed at once, so one field holds it and no caller can meet a half of it.
+   */
+  private class FrozenScrolling(
+    val parent: TableScrollPane,
+    val viewport: HorizontalViewport,
+    val viewportWrapper: JPanel,
+    val headerViewport: HorizontalViewport,
+    val scrollBar: JScrollBar,
+    val originalHorizontalScrollBarPolicy: Int,
+    val viewportListener: ChangeListener,
+    val wheelListener: MouseWheelListener,
+    val mainViewportListener: ComponentListener,
+  ) {
+    val latching = LatchingScroll()
+
+    fun uninstall(frozen: TableResultView?, gutter: GridRowHeader?) {
+      parent.removeComponentListener(mainViewportListener)
+      parent.viewport.removeComponentListener(mainViewportListener)
+      viewport.removeChangeListener(viewportListener)
+      frozen?.removeMouseWheelListener(wheelListener)
+      frozen?.tableHeader?.removeMouseWheelListener(wheelListener)
+      gutter?.removeMouseWheelListener(wheelListener)
+      parent.rowHeader?.setPreferredSize(null)
+      parent.setFrozenHorizontalScrollBarVisible(false)
+      parent.horizontalScrollBarPolicy = originalHorizontalScrollBarPolicy
+    }
   }
 
   /** A viewport whose width is controlled independently while its height continues to follow its view. */
@@ -904,9 +899,10 @@ internal class FrozenColumnsController(
   }
 
   private fun getFrozenRowHeader(): GridRowHeader {
-    val header = frozenRowHeader ?: primaryView.createSizedRowHeader().also {
-      frozenMouseWheelListener?.let(it::addMouseWheelListener)
-      frozenRowHeader = it
+    val region = region ?: error("The gutter belongs to the strip, so the region must exist here")
+    val header = region.rowHeader ?: primaryView.createSizedRowHeader().also {
+      scrolling?.let { s -> it.addMouseWheelListener(s.wheelListener) }
+      region.rowHeader = it
     }
     header.updatePreferredSize()
     return header
@@ -1024,7 +1020,8 @@ internal class FrozenColumnsController(
   /** The strip is only as wide as its viewport shows, so the columns it hides do not belong to the region either. */
   private fun isOverFrozenStrip(view: TableResultView, event: MouseEvent): Boolean {
     val frozen = frozenView ?: return false
-    val viewport = frozenViewport ?: return SwingUtilities.convertPoint(view, event.point, frozen).x < frozen.width
+    val viewport = scrolling?.viewport
+                   ?: return SwingUtilities.convertPoint(view, event.point, frozen).x < frozen.width
     return SwingUtilities.convertPoint(view, event.point, viewport).x < viewport.width
   }
 
@@ -1175,7 +1172,7 @@ internal class FrozenColumnsController(
   /** Reveals the pinned column reached by keyboard navigation in an overflowing strip. */
   private fun scrollFrozenColumnToVisible(primaryColumn: Int) {
     val frozen = frozenView ?: return
-    val scrollBar = frozenScrollBar?.takeIf { it.isVisible } ?: return
+    val scrollBar = scrolling?.scrollBar?.takeIf { it.isVisible } ?: return
     if (primaryColumn !in 0 until primaryView.columnModel.columnCount) return
     val frozenColumn = frozenViewColumnOf(frozen, primaryView.columnModel.getColumn(primaryColumn).modelIndex)
     if (frozenColumn < 0) return
