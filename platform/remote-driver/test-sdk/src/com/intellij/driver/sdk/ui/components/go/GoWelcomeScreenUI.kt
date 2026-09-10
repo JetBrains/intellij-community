@@ -18,7 +18,7 @@ fun Driver.goWelcomeScreen(action: GoWelcomeScreenUI.() -> Unit = {}): GoWelcome
 
 class GoWelcomeScreenUI(data: ComponentData) : WelcomeScreenUI(data) {
   val newButton: UiComponent
-    get() = x(xQuery { byVisibleText("New…") })
+    get() = x(xQuery { byVisibleText("New") })
 
   val cloneButton: UiComponent
     get() = x(xQuery { byAccessibleName("Clone Repository…") })
