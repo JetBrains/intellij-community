@@ -110,9 +110,12 @@ class TrafficLightTest : DaemonAnalyzerTestCase() {
 
     val severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project)
     val errorCount = trafficLightRenderer.errorCounts
+    val errorCountForFus = trafficLightRenderer.errorCountsForFus
     expectedSeverities.forEach { severity ->
       val severityIndex = severityRegistrar.getSeverityIdx(severity.severity)
       assertEquals(severity.value, errorCount[severityIndex])
+      // the test uses one code insight context, so the count of all contexts must be the same
+      assertEquals(severity.value, errorCountForFus[severityIndex])
     }
   }
 

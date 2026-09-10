@@ -291,6 +291,36 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
     assertEquals(2, notifications.get());
   }
 
+  public void testSeverityPositionInAllSeveritiesMatchesSeverityIndex() {
+    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(getTestRootDisposable());
+    SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(getProject());
+    assertPositionMatchesSeverityIndex(registrar);
+
+    HighlightSeverity customSeverity = new HighlightSeverity("INDEXED_CUSTOM", 305);
+    registrar.registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(
+      new TextAttributes(null, Color.ORANGE, null, null, Font.PLAIN),
+      new HighlightInfoType.HighlightInfoTypeImpl(customSeverity, TextAttributesKey.createTextAttributesKey("INDEXED_CUSTOM_KEY"))
+    ), null);
+    Disposer.register(getTestRootDisposable(), () -> registrar.unregisterSeverity(customSeverity));
+    assertPositionMatchesSeverityIndex(registrar);
+
+    Disposable disposable = registerProvider(new TestSeveritiesProvider(
+      infoType("INDEXED_DYNAMIC", 355, TextAttributesKey.createTextAttributesKey("INDEXED_DYNAMIC_KEY"))));
+    assertPositionMatchesSeverityIndex(registrar);
+
+    Disposer.dispose(disposable);
+    assertPositionMatchesSeverityIndex(registrar);
+  }
+
+  private static void assertPositionMatchesSeverityIndex(@NotNull SeverityRegistrar registrar) {
+    List<HighlightSeverity> severities = registrar.getAllSeverities();
+    assertNotEmpty(severities);
+    for (int position = 0; position < severities.size(); position++) {
+      HighlightSeverity severity = severities.get(position);
+      assertEquals(severity.getName(), position, registrar.getSeverityIdx(severity));
+    }
+  }
+
   private static HighlightInfoType.HighlightInfoTypeImpl infoType(@NotNull String name, int value, @NotNull TextAttributesKey key) {
     return new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(name, value), key);
   }

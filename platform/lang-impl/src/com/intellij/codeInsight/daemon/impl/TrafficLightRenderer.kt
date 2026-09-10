@@ -182,11 +182,11 @@ open class TrafficLightRenderer private constructor(
      */
     @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     get() {
+      // the position in the list is the severity index, so do not read the registrar again
       val severities = severityRegistrar.allSeverities
       val cachedErrors = IntArray(severities.size)
       val context = getContext()
-      for (severity in severities) {
-        val severityIndex = severityRegistrar.getSeverityIdx(severity)
+      for ((severityIndex, severity) in severities.withIndex()) {
         cachedErrors[severityIndex] = errorCount.getErrorCount(severity, context)
       }
       return cachedErrors
@@ -195,10 +195,10 @@ open class TrafficLightRenderer private constructor(
   val errorCountsForFus: IntArray
     @ApiStatus.Internal
     get() {
+      // the position in the list is the severity index, so do not read the registrar again
       val severities = severityRegistrar.allSeverities
       val cachedErrors = IntArray(severities.size)
-      for (severity in severities) {
-        val severityIndex = severityRegistrar.getSeverityIdx(severity)
+      for ((severityIndex, severity) in severities.withIndex()) {
         cachedErrors[severityIndex] = errorCount.getErrorCountsForAllContexts(severity)
       }
       return cachedErrors
