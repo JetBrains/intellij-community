@@ -57,12 +57,12 @@ internal class TerminalCommandCompletionStatisticsTest {
     }
 
     val data = events.single { it.event.id == "terminal.command.executed" }.event.data
-    assertEquals(10, data["total_command_inserted_length"])
-    assertEquals(7, data["popup_completion_length"])
-    assertEquals(3, data["inline_completion_length"])
-    assertEquals(1, data["typings_count"])
-    assertEquals(1, data["backspaces_count"])
-    assertTrue(data["command_typing_time"] is Long)
+    assertEquals(0.7, data["ratio_of_popup_completion"])
+    assertEquals(0.3, data["ratio_of_inline_completion"])
+    assertEquals(0.1, data["typing_ratio"])
+    assertEquals(0.1, data["backspaces_ratio"])
+    assertEquals(16, data["rounded_total_command_inserted_length"])
+    assertTrue(data["rounded_typing_time"] is Long)
   }
 
   @Test
@@ -86,9 +86,9 @@ internal class TerminalCommandCompletionStatisticsTest {
     }
 
     val data = events.single { it.event.id == "terminal.command.executed" }.event.data
-    assertEquals(3, data["total_command_inserted_length"])
-    assertEquals(3, data["typings_count"])
-    assertEquals(0, data["backspaces_count"])
+    assertEquals(1.0, data["typing_ratio"])
+    assertEquals(0.0, data["backspaces_ratio"])
+    assertEquals(4, data["rounded_total_command_inserted_length"])
   }
 
   @Test
@@ -117,9 +117,9 @@ internal class TerminalCommandCompletionStatisticsTest {
     }
 
     val data = events.single { it.event.id == "terminal.command.executed" }.event.data
-    assertEquals(3, data["total_command_inserted_length"])
-    assertEquals(3, data["typings_count"])
-    assertEquals(1, data["backspaces_count"])
+    assertEquals(1.0, data["typing_ratio"])
+    assertEquals(1.0 / 3, data["backspaces_ratio"])
+    assertEquals(4, data["rounded_total_command_inserted_length"])
   }
 
   @Test
@@ -153,9 +153,9 @@ internal class TerminalCommandCompletionStatisticsTest {
     }
 
     val data = events.single { it.event.id == "terminal.command.executed" }.event.data
-    assertEquals(28, data["total_command_inserted_length"])
-    assertEquals(10, data["popup_completion_length"])
-    assertEquals(17, data["inline_completion_length"])
+    assertEquals(10.0 / 28, data["ratio_of_popup_completion"])
+    assertEquals(17.0 / 28, data["ratio_of_inline_completion"])
+    assertEquals(32, data["rounded_total_command_inserted_length"])
   }
 
   @Test
@@ -177,7 +177,7 @@ internal class TerminalCommandCompletionStatisticsTest {
     }
 
     val data = events.single { it.event.id == "terminal.command.executed" }.event.data
-    assertEquals(5, data["total_command_inserted_length"])
+    assertEquals(8, data["rounded_total_command_inserted_length"])
   }
 
   @Test
@@ -199,7 +199,7 @@ internal class TerminalCommandCompletionStatisticsTest {
     }
 
     val data = events.single { it.event.id == "terminal.command.executed" }.event.data
-    assertEquals("git status".length, data["total_command_inserted_length"])
+    assertEquals(16, data["rounded_total_command_inserted_length"])
   }
 
   @Test
@@ -221,7 +221,7 @@ internal class TerminalCommandCompletionStatisticsTest {
     }
 
     val data = events.single { it.event.id == "terminal.command.executed" }.event.data
-    assertEquals(4, data["total_command_inserted_length"])
+    assertEquals(4, data["rounded_total_command_inserted_length"])
   }
 
   @Test
@@ -245,7 +245,7 @@ internal class TerminalCommandCompletionStatisticsTest {
     }
 
     val data = events.single { it.event.id == "terminal.command.executed" }.event.data
-    assertEquals(largerSuggestion.length, data["total_command_inserted_length"])
+    assertEquals(32, data["rounded_total_command_inserted_length"])
   }
 
   @Test
@@ -267,11 +267,11 @@ internal class TerminalCommandCompletionStatisticsTest {
     }
 
     val data = events.single { it.event.id == "terminal.command.executed" }.event.data
-    assertEquals(0, data["total_command_inserted_length"])
-    assertEquals(0, data["popup_completion_length"])
-    assertEquals(0, data["inline_completion_length"])
-    assertEquals(1, data["typings_count"])
-    assertEquals(0, data["backspaces_count"])
+    assertEquals(0.0, data["ratio_of_popup_completion"])
+    assertEquals(0.0, data["ratio_of_inline_completion"])
+    assertEquals(0.0, data["typing_ratio"])
+    assertEquals(0.0, data["backspaces_ratio"])
+    assertEquals(0, data["rounded_total_command_inserted_length"])
   }
 
   @Test
@@ -290,9 +290,9 @@ internal class TerminalCommandCompletionStatisticsTest {
     }
 
     val data = events.single { it.event.id == "terminal.command.executed" }.event.data
-    assertEquals(3, data["total_command_inserted_length"])
-    assertEquals(1, data["typings_count"])
-    assertEquals(1, data["backspaces_count"])
+    assertEquals(1.0 / 3, data["typing_ratio"])
+    assertEquals(1.0 / 3, data["backspaces_ratio"])
+    assertEquals(4, data["rounded_total_command_inserted_length"])
   }
 
   @Test
@@ -312,7 +312,7 @@ internal class TerminalCommandCompletionStatisticsTest {
     }
 
     val data = events.single { it.event.id == "terminal.command.executed" }.event.data
-    assertEquals(5, data["total_command_inserted_length"])
+    assertEquals(8, data["rounded_total_command_inserted_length"])
   }
 
   @Test
@@ -327,7 +327,7 @@ internal class TerminalCommandCompletionStatisticsTest {
     }
 
     val data = events.single { it.event.id == "terminal.command.executed" }.event.data
-    assertEquals(3, data["total_command_inserted_length"])
+    assertEquals(4, data["rounded_total_command_inserted_length"])
   }
 
   private fun doTest(disposable: Disposable, test: Fixture.() -> Unit): List<LogEvent> {
