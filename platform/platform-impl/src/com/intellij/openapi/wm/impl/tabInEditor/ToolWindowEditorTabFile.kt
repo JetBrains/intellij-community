@@ -14,6 +14,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.icons.decodeCachedImageIconFromByteArray
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
+import java.util.UUID
 
 /**
  * Virtual file that represents tool window content opened in an editor tab.
@@ -71,6 +72,14 @@ class ToolWindowEditorTabFile internal constructor(
   @Volatile
   internal var lastKnownIcon: Icon? = persistentPath?.icon?.let { decodeIcon(it) }
     private set
+
+  /**
+   * A stable identity for this tab.
+   *
+   * Path-based identifiers cannot be used because the path depends on the tab name and changes when the tab is renamed.
+   * This ID remains stable and can therefore be safely used as a map key by the split-mode backend mirror.
+   */
+  internal val stableId: String = "$toolWindowId/${persistentPath?.persistenceId ?: UUID.randomUUID()}"
 
   init {
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)

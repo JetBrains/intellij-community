@@ -58,15 +58,23 @@ class ToolWindowEditorTabSession(
   init {
     presentationFlow
       .onEach { newPresentation ->
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val presentationChanged = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           if (!file.isValid || project.isDisposed) {
-            return@withContext
+            return@withContext false
           }
 
           if (applyPresentation(newPresentation)) {
             FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file)
             project.messageBus.syncPublisher(RecentFileHistoryOrderListener.TOPIC).recentFileUpdated(file)
+            true
           }
+          else {
+            false
+          }
+        }
+
+        if (presentationChanged) {
+          syncToolWindowEditorTabWithBackendMirror(project, file)
         }
       }
       .launchIn(coroutineScope)
