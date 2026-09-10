@@ -37,8 +37,8 @@ internal class HeaderAnchorPathReferenceProvider: PathReferenceProviderBase() {
   private fun findFileReference(alreadyCreatedReferences: MutableList<in PsiReference>): PsiReference? {
     val references = alreadyCreatedReferences.asSequence()
     val reference = references.filterIsInstance<FileReference>().firstOrNull()
-    val actualReference = reference?.fileReferenceSet?.lastReference ?: return null
-    val resolvedReference = actualReference.takeIf { it.resolve() != null }
+    val actualReference = reference?.fileReferenceSet?.lastReference
+    val resolvedReference = actualReference?.takeIf { it.resolve() != null }
     if (resolvedReference != null) {
       return resolvedReference
     }

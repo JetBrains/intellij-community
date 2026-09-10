@@ -252,7 +252,6 @@ private fun normalizeGitUrl(url: String): String? {
 }
 
 @Internal
-@VisibleForTesting
 fun parseHostAndPath(url: String): Pair<String, String>? {
   val schemeMatch = SCHEME_HEAD.find(url)
   if (schemeMatch != null && schemeMatch.range.first == 0) {

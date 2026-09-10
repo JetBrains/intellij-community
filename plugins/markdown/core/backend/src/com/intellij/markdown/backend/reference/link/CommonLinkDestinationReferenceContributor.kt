@@ -1,5 +1,6 @@
 package com.intellij.markdown.backend.reference.link
 
+import com.intellij.markdown.backend.reference.GithubWikiLocalFileReferenceProvider
 import com.intellij.openapi.paths.PathReferenceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -16,6 +17,7 @@ internal class CommonLinkDestinationReferenceContributor: PsiReferenceContributo
 
   private class CommonLinkDestinationReferenceProvider: PsiReferenceProvider() {
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
+      if (GithubWikiLocalFileReferenceProvider.isDomainlessLink(element.text)) return emptyArray()
       return PathReferenceManager.getInstance().createReferences(element, false, false, true)
     }
   }
