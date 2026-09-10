@@ -17,6 +17,7 @@ import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.execService.impl.Arg
+import com.intellij.python.community.execService.impl.ArgsAndEnv
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.intellij.python.community.execService.impl.PyExecBundle.message
 import com.intellij.python.community.execService.impl.transformerToHandler
@@ -344,11 +345,32 @@ fun ExecGetProcessOptions(): ExecGetProcessOptions = defaultExecGetProcessOption
 
 data class TtySize(val rows: UShort, val cols: UShort)
 
+
 /**
- * See [Args.addLocalFile]
+ * When we uploaded a [Args.addLocalFile] to a remote machine, how should we report it to a process?
  */
-fun interface FileArgGenerator {
-  fun generateArg(remoteFile: String): String
+fun interface FileReporter {
+  /**
+   * File is available on a remote machine as [fileOnRemoteMatchine]
+   * Return a value (could be [fileOnRemoteMatchine]) and [HowToReportFile]
+   */
+  fun howToReportFile(fileOnRemoteMatchine: FullPathOnTarget): Pair<String, HowToReportFile>
+}
+
+/**
+ * Local file provided to [Args.addLocalFile] will magically be available on a remote side.
+ * How would you like to pass it to a binary?
+ */
+sealed interface HowToReportFile {
+  /**
+   * Just as a positional arugument e.g. `/tmp/foo`
+   * */
+  data object AsArgument : HowToReportFile
+
+  /**
+   * As a value of env variable [varName]
+   */
+  class EnvVar(internal val varName: String) : HowToReportFile
 }
 
 
@@ -360,7 +382,7 @@ fun interface FileArgGenerator {
  * ```
  */
 class Args(vararg initialArgs: String) {
-  private val _args = CopyOnWriteArrayList<Arg>(initialArgs.map { Arg.StringArg(it) })
+  private val _args: MutableList<Arg> = CopyOnWriteArrayList<Arg>(initialArgs.map { Arg.StringArg(it) })
   fun addArgs(vararg args: String): Args {
     _args.addAll(args.map { Arg.StringArg(it) })
     return this
@@ -369,11 +391,11 @@ class Args(vararg initialArgs: String) {
   fun addArgs(args: List<String>): Args = addArgs(*args.toTypedArray())
 
   /**
-   * This file will be copied to remote machine, and its remote name will be added to the list of arguments.
-   * Use [argGenerator] to modify name
+   * This file will be copied to remote machine, and its remote name will be added to the list of arguments or env.
+   * Use [fileReporter] to control it.
    */
-  fun addLocalFile(localFile: Path, argGenerator: FileArgGenerator = FileArgGenerator { it }): Args {
-    _args.add(Arg.FileArg(localFile, argGenerator))
+  fun addLocalFile(localFile: Path, fileReporter: FileReporter = FileReporter { Pair(it, HowToReportFile.AsArgument) }): Args {
+    _args.add(Arg.FileArg(localFile, fileReporter))
     return this
   }
 
@@ -390,13 +412,29 @@ class Args(vararg initialArgs: String) {
       }
     }
 
-  internal suspend fun getArgs(mapFileToRemote: suspend (local: Path) -> String): List<String> =
-    _args.map {
-      when (it) {
-        is Arg.StringArg -> it.arg
-        is Arg.FileArg -> it.generator.generateArg(mapFileToRemote(it.file))
+  internal suspend fun getArgs(mapFileToRemote: suspend (local: Path) -> String): ArgsAndEnv {
+    val args = mutableListOf<String>()
+    val env = mutableMapOf<String, String>()
+    for (arg in _args) {
+      when (arg) {
+        is Arg.FileArg -> {
+          val (value, howToReport) = arg.fileReporter.howToReportFile(mapFileToRemote(arg.file))
+          when (howToReport) {
+            HowToReportFile.AsArgument -> {
+              args.add(value)
+            }
+            is HowToReportFile.EnvVar -> {
+              env[howToReport.varName] = value
+            }
+          }
+        }
+        is Arg.StringArg -> {
+          args.add(arg.arg)
+        }
       }
     }
+    return ArgsAndEnv(args, env)
+  }
 }
 
 

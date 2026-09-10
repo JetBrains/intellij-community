@@ -107,11 +107,14 @@ internal suspend fun createProcessLauncherOnTarget(
     }
   }
 
-  val args = launchRequest.args.getArgs { localFile ->
+  val (args, env) = launchRequest.args.getArgs { localFile ->
     targetEnv.getTargetPaths(localFile.pathString).first()
   }
   val exePath: FullPathOnTarget
   val cmdLine = TargetedCommandLineBuilder(request).also { commandLineBuilder ->
+    for ((key, value) in env) {
+      commandLineBuilder.addEnvironmentVariable(key, value)
+    }
     binOnTarget.configureTargetCmdLine(commandLineBuilder)
     // exe path is always fixed (pre-presolved) promise. It can't be obtained directly because of Targets API limitation
     exePath = commandLineBuilder.exePath.localValue.blockingGet(1000) ?: error("Exe path not set: $binOnTarget is broken")
