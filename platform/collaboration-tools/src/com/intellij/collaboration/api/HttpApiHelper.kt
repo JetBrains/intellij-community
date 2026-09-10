@@ -168,7 +168,13 @@ private class HttpApiHelperImpl(
     bodyHandler: HttpResponse.BodyHandler<T>,
   ): HttpResponse<out T> {
     logger.debug(requestName)
-    return client.sendAsync(request, bodyHandler).awaitInterrupting()
+    try {
+      return client.sendAsync(request, bodyHandler).awaitInterrupting()
+    }
+    catch (e: IOException) {
+      logger.debug("$requestName : Connection error", e)
+      throw e
+    }
   }
 
   override suspend fun <R> handleStreamingResponse(
