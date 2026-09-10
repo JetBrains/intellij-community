@@ -8,7 +8,7 @@ import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.lsp.ui.ConfigurableLspIntegrationProvider
 import com.intellij.lsp.ui.LspUiBundle
 import com.intellij.lsp.ui.settings.LspServerConfiguration
-import com.intellij.lsp.ui.settings.LspServerSettings
+import com.intellij.lsp.ui.settings.LspIntegrationSettingsImpl
 import com.intellij.lsp.ui.settings.LspServersConfigurable
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -55,7 +55,7 @@ internal class ConfigureIntelliJFrankensteinMonsterAction : DumbAwareAction() {
 
     val lspClientManager = LspClientManager.getInstance(project)
     val previousRemoved = WriteAction.compute<Boolean, Throwable> {
-      LspServerSettings.getInstance(project).servers.removeAll { it.name == SERVER_NAME }
+      LspIntegrationSettingsImpl.getInstance(project).servers.removeAll { it.name == SERVER_NAME }
     }
     if (previousRemoved) {
       lspClientManager.stopClients(ConfigurableLspIntegrationProvider::class.java)
@@ -71,7 +71,7 @@ internal class ConfigureIntelliJFrankensteinMonsterAction : DumbAwareAction() {
     configuration.envVars.set(EnvironmentVariablesData.create(mapOf(JAVA_OPTIONS_ENV_NAME to JAVA_OPTIONS_ENV_VALUE), true))
 
     WriteAction.run<Throwable> {
-      LspServerSettings.getInstance(project).servers.add(configuration)
+      LspIntegrationSettingsImpl.getInstance(project).servers.add(configuration)
     }
 
     lspClientManager.stopAndRestartClientsIfNeeded(ConfigurableLspIntegrationProvider::class.java)

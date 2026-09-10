@@ -22,8 +22,8 @@ import com.intellij.openapi.ui.NamedConfigurable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspIntegrationProvider
-import com.intellij.platform.lsp.impl.LspPluginServerConfiguration
-import com.intellij.platform.lsp.impl.LspServerSettingsProvider
+import com.intellij.platform.lsp.api.LspPluginServerConfiguration
+import com.intellij.platform.lsp.api.LspIntegrationSettingsProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBScrollPane
@@ -36,7 +36,7 @@ import javax.swing.tree.TreeNode
 private const val LSP_PLUGIN_SEARCH_TAG = "/tag:\"Language Server\""
 
 internal class LspServersConfigurable(private val project: Project) : MasterDetailsComponent(), SearchableConfigurable, Disposable {
-  private val settings = LspServerSettings.getInstance(project)
+  private val settings = LspIntegrationSettingsImpl.getInstance(project)
   private val morePluginsLinkPanel = NonOpaquePanel(BorderLayout()).apply {
     border = JBUI.Borders.empty(8, 20, 8, 0)
     add(ActionLink(LspUiBundle.message("lsp.settings.more.plugins")) { showMorePlugins() }, BorderLayout.WEST)
@@ -121,7 +121,7 @@ internal class LspServersConfigurable(private val project: Project) : MasterDeta
     for (server in settings.servers) {
       addServerNode(server.copy())
     }
-    LspServerSettingsProvider.EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
+    LspIntegrationSettingsProvider.EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
       addPluginServerNode(provider, settings.getPluginConfiguration(provider), pluginDescriptor)
     }
   }
@@ -147,7 +147,7 @@ internal class LspServersConfigurable(private val project: Project) : MasterDeta
   }
 
   private fun addPluginServerNode(
-    provider: LspServerSettingsProvider,
+    provider: LspIntegrationSettingsProvider,
     configuration: LspPluginServerConfiguration,
     pluginDescriptor: PluginDescriptor,
   ): MyNode {

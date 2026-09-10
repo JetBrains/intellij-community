@@ -1,3 +1,4 @@
+f:com.intellij.platform.lsp.impl.LspInitializationOptionsKt
 f:com.intellij.platform.lsp.impl.logging.LanguageServiceLogger
 - f:logError(java.lang.CharSequence):V
 - f:logInbound(java.lang.CharSequence):V

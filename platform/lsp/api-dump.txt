@@ -101,6 +101,12 @@ f:com.intellij.platform.lsp.api.LspIntegrationProvider$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.platform.lsp.api.LspIntegrationProvider$LspClientStarter
 - a:ensureClientStarted(com.intellij.platform.lsp.api.LspClientDescriptor):V
+com.intellij.platform.lsp.api.LspIntegrationSettings
+- sf:Companion:com.intellij.platform.lsp.api.LspIntegrationSettings$Companion
+- s:getInstanceOrNull(com.intellij.openapi.project.Project):com.intellij.platform.lsp.api.LspIntegrationSettings
+- a:getPluginConfiguration(java.lang.String):com.intellij.platform.lsp.api.LspPluginServerConfiguration
+f:com.intellij.platform.lsp.api.LspIntegrationSettings$Companion
+- f:getInstanceOrNull(com.intellij.openapi.project.Project):com.intellij.platform.lsp.api.LspIntegrationSettings
 com.intellij.platform.lsp.api.LspServer
 - com.intellij.platform.lsp.api.LspClient
 - sf:Companion:com.intellij.platform.lsp.api.LspServer$Companion

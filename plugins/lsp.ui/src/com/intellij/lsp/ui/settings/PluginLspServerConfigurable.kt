@@ -2,6 +2,7 @@
 package com.intellij.lsp.ui.settings
 
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.json.JsonLanguage
@@ -18,8 +19,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.NamedConfigurable
 import com.intellij.platform.lsp.api.LspIntegrationProvider
-import com.intellij.platform.lsp.impl.LspPluginServerConfiguration
-import com.intellij.platform.lsp.impl.LspServerSettingsProvider
+import com.intellij.platform.lsp.api.LspPluginServerConfiguration
+import com.intellij.platform.lsp.api.LspIntegrationSettingsProvider
+import com.intellij.platform.lsp.api.LspServerEnvironmentData
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.ui.components.JBScrollPane
@@ -107,8 +109,17 @@ internal class PluginLspServerConfigurable(
         row(LspUiBundle.message("lsp.settings.server.environment.variables")) {
           cell(EnvironmentVariablesTextFieldWithBrowseButton(project))
             .bind(
-              componentGet = { component -> component.data },
-              componentSet = { component, data -> component.data = data },
+              componentGet = { component ->
+                component.data.let {
+                  LspServerEnvironmentData(
+                    variables = it.envs,
+                    passParentEnvironment = it.isPassParentEnvs,
+                  )
+                }
+              },
+              componentSet = { component, environment ->
+                component.data = EnvironmentVariablesData.create(environment.variables, environment.passParentEnvironment)
+              },
               MutableProperty(
                 getter = { configuration.environmentVariables },
                 setter = { configuration = configuration.copy(environmentVariables = it) },
@@ -165,7 +176,7 @@ internal class PluginLspServerConfigurable(
 
 internal class PluginLspServerNamedConfigurable(
   private val project: Project,
-  private val provider: LspServerSettingsProvider,
+  private val provider: LspIntegrationSettingsProvider,
   private val configuration: LspPluginServerConfiguration,
   private val pluginDescriptor: PluginDescriptor,
   private val updateTree: Runnable,
@@ -197,7 +208,7 @@ internal class PluginLspServerNamedConfigurable(
   @Throws(ConfigurationException::class)
   fun applyConfiguration(): Class<out LspIntegrationProvider>? {
     val edited = serverConfigurable?.configuration ?: return null
-    val settings = LspServerSettings.getInstance(project)
+    val settings = LspIntegrationSettingsImpl.getInstance(project)
     if (edited == settings.getPluginConfiguration(provider)) {
       return null
     }

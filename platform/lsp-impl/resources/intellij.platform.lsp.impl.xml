@@ -169,7 +169,7 @@
     <extensionPoint qualifiedName="com.intellij.platform.lsp.integrationProvider"
                     interface="com.intellij.platform.lsp.api.LspIntegrationProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.lsp.serverSettingsProvider"
-                    interface="com.intellij.platform.lsp.impl.LspServerSettingsProvider" dynamic="true"/>
+                    interface="com.intellij.platform.lsp.api.LspIntegrationSettingsProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.lsp.serverSupportProvider"
                     interface="com.intellij.platform.lsp.api.LspServerSupportProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.lsp.documentAdapter"

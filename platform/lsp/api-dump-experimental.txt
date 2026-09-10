@@ -1,3 +1,41 @@
+*:com.intellij.platform.lsp.api.LspIntegrationSettingsProvider
+- *sf:Companion:com.intellij.platform.lsp.api.LspIntegrationSettingsProvider$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getDefaultConfiguration():com.intellij.platform.lsp.api.LspPluginServerConfiguration
+- a:getIntegrationProviderClass():java.lang.Class
+- a:getServerId():java.lang.String
+*f:com.intellij.platform.lsp.api.LspIntegrationSettingsProvider$Companion
+*f:com.intellij.platform.lsp.api.LspPluginServerConfiguration
+- <init>(java.lang.String,java.util.List,java.util.List,java.lang.String,com.intellij.platform.lsp.api.LspServerEnvironmentData):V
+- b:<init>(java.lang.String,java.util.List,java.util.List,java.lang.String,com.intellij.platform.lsp.api.LspServerEnvironmentData,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.util.List
+- f:component3():java.util.List
+- f:component4():java.lang.String
+- f:component5():com.intellij.platform.lsp.api.LspServerEnvironmentData
+- f:copy(java.lang.String,java.util.List,java.util.List,java.lang.String,com.intellij.platform.lsp.api.LspServerEnvironmentData):com.intellij.platform.lsp.api.LspPluginServerConfiguration
+- bs:copy$default(com.intellij.platform.lsp.api.LspPluginServerConfiguration,java.lang.String,java.util.List,java.util.List,java.lang.String,com.intellij.platform.lsp.api.LspServerEnvironmentData,I,java.lang.Object):com.intellij.platform.lsp.api.LspPluginServerConfiguration
+- equals(java.lang.Object):Z
+- f:getArguments():java.util.List
+- f:getEnvironmentVariables():com.intellij.platform.lsp.api.LspServerEnvironmentData
+- f:getFilePatterns():java.util.List
+- f:getInitializationOptions():java.lang.String
+- f:getName():java.lang.String
+- hashCode():I
+- f:isSupportedFile(com.intellij.openapi.vfs.VirtualFile):Z
+*f:com.intellij.platform.lsp.api.LspServerEnvironmentData
+- <init>():V
+- <init>(java.util.Map,Z):V
+- b:<init>(java.util.Map,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.util.Map
+- f:component2():Z
+- f:configureCommandLine(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.configurations.GeneralCommandLine
+- f:copy(java.util.Map,Z):com.intellij.platform.lsp.api.LspServerEnvironmentData
+- bs:copy$default(com.intellij.platform.lsp.api.LspServerEnvironmentData,java.util.Map,Z,I,java.lang.Object):com.intellij.platform.lsp.api.LspServerEnvironmentData
+- equals(java.lang.Object):Z
+- f:getPassParentEnvironment():Z
+- f:getVariables():java.util.Map
+- hashCode():I
 c:com.intellij.platform.lsp.api.customization.LspCompletionSupport
 - com.intellij.platform.lsp.api.customization.LspCompletionCustomizer
 - *:getCompletionPrefix(com.intellij.codeInsight.completion.CompletionParameters,java.lang.String):java.lang.String
