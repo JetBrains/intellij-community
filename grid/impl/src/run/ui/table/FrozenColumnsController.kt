@@ -5,6 +5,7 @@ import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridColumn
 import com.intellij.database.datagrid.GridRow
 import com.intellij.database.datagrid.GridUtil
+import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.ModelIndexSet
 import com.intellij.database.datagrid.SelectionModelUtil
 import com.intellij.database.run.ui.TableResultPanel
@@ -305,15 +306,16 @@ internal class FrozenColumnsController(
   }
 
   /**
-   * Renders visible [pinnedModelIndices] in main-table order, retaining zero-width placeholders there.
+   * Renders the visible columns of [pinnedColumns] in main-table order, retaining zero-width placeholders there.
    * Hidden pins remain in the logical state but occupy no space.
    */
-  fun setFrozenColumns(pinnedModelIndices: Collection<Int>) {
+  fun setFrozenColumns(pinnedColumns: Collection<ModelIndex<GridColumn>>) {
     val parent = findScrollPane() ?: return
     if ((primaryView.isEditing || isEditingInFrozenView()) && !primaryView.stopEditing()) primaryView.cancelEditing()
     restorePreviouslyFrozenColumns()
 
-    val pinned = pinnedModelIndices.toSet()
+    // The column model speaks in raw model indices, so unwrap once here instead of per column below.
+    val pinned = pinnedColumns.mapTo(HashSet()) { it.value }
     if (pinned.isEmpty() || primaryView.isTransposed || !TableResultPanel.isColumnPinningEnabled()) {
       removeFrozenView(parent)
       return

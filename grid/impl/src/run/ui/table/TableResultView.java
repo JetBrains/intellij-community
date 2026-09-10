@@ -125,6 +125,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -515,12 +517,12 @@ public final class TableResultView extends JBTableWithResizableCells
   }
 
   /**
-   * Shows {@code pinnedModelIndices} in a frozen leading region that stays fixed while the rest scroll horizontally;
+   * Shows {@code pinnedColumns} in a frozen leading region that stays fixed while the rest scroll horizontally;
    * an empty set removes the region. The pinned columns keep their place in this view and are rendered at width 0
    * here, their real width living in the frozen view, so pinning never changes the column order.
    */
-  public void setFrozenColumns(@NotNull Collection<Integer> pinnedModelIndices) {
-    if (!myIsFrozenStrip) myFrozenColumnsController.setFrozenColumns(pinnedModelIndices);
+  public void setFrozenColumns(@NotNull Collection<ModelIndex<GridColumn>> pinnedColumns) {
+    if (!myIsFrozenStrip) myFrozenColumnsController.setFrozenColumns(pinnedColumns);
   }
 
   void syncAppearanceToFrozenView(@NotNull TableResultView frozenView) {
@@ -1413,20 +1415,22 @@ public final class TableResultView extends JBTableWithResizableCells
   }
 
   /**
-   * Whether pinning exactly {@code pinnedModelIndices} would leave the unpinned table usable. Widths are the ones the
+   * Whether pinning exactly {@code pinnedColumns} would leave the unpinned table usable. Widths are the ones the
    * strip would render, so the scroll position does not matter and a column hidden from the view counts for nothing,
    * just as the pin operation skips it.
    */
-  public boolean canFitPinnedColumns(@NotNull Set<Integer> pinnedModelIndices) {
+  public boolean canFitPinnedColumns(@NotNull Set<ModelIndex<GridColumn>> pinnedColumns) {
     int availableWidth = getAvailableColumnsWidth();
     if (availableWidth <= 0) return true;
+    IntSet pinned = new IntOpenHashSet(pinnedColumns.size());
+    for (ModelIndex<GridColumn> column : pinnedColumns) pinned.add(column.value);
     TableColumnModel columnModel = getColumnModel();
     int pinnedWidth = 0;
     int unpinnedWidth = 0;
     for (int viewColumn = 0; viewColumn < columnModel.getColumnCount(); viewColumn++) {
       if (!(renderedColumnAt(viewColumn) instanceof TableResultViewColumn column)) continue;
       int width = column.getFrozenStripWidth();
-      if (pinnedModelIndices.contains(columnModel.getColumn(viewColumn).getModelIndex())) pinnedWidth += width;
+      if (pinned.contains(columnModel.getColumn(viewColumn).getModelIndex())) pinnedWidth += width;
       else unpinnedWidth += width;
     }
     return PinnedColumnsFit.fits(pinnedWidth, unpinnedWidth, availableWidth);
