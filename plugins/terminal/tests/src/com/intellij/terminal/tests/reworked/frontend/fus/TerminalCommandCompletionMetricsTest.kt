@@ -55,11 +55,23 @@ internal class TerminalCommandCompletionMetricsTest {
   fun `counts typing and backspace events`() {
     val metrics = TerminalCommandCompletionMetrics()
 
+    metrics.recordCommandTextInserted(1)
     metrics.recordTyping(100)
     metrics.recordTyping(150)
     metrics.recordBackspace(200)
 
-    assertThat(metrics.takeAndReset(350)).isEqualTo(snapshot(typingsCount = 2, backspacesCount = 1, commandTypingTimeMillis = 250))
+    assertThat(metrics.takeAndReset(350)).isEqualTo(
+      snapshot(totalCommandInsertedLength = 1, typingsCount = 2, backspacesCount = 1, commandTypingTimeMillis = 250)
+    )
+  }
+
+  @Test
+  fun `does not count backspace for an empty command`() {
+    val metrics = TerminalCommandCompletionMetrics()
+
+    metrics.recordBackspace(100)
+
+    assertThat(metrics.takeAndReset(200)).isEqualTo(snapshot())
   }
 
   @Test

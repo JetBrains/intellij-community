@@ -31,6 +31,8 @@ class TerminalCommandCompletionMetrics {
   }
 
   fun recordBackspace(timeMillis: Long) {
+    if (totalCommandInsertedLength == 0) return
+
     backspacesCount++
     commandTypingStartedAt = commandTypingStartedAt ?: timeMillis
   }
