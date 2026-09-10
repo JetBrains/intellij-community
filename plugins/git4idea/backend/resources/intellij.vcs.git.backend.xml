@@ -403,6 +403,9 @@
       <action id="Git.AddCommitToRemoteBranch"
               class="git4idea.actions.addCommit.GitAddCommitToRemoteBranchAction"
               internal="true"/>
+      <action id="Git.PushSelectedCommits"
+              class="git4idea.actions.addCommit.GitPushSelectedCommitsAction"
+              internal="true"/>
       <separator/>
       <reference ref="Git.BranchOperationGroup"/>
       <action id="Git.CreateNewBranch.FromCommit"

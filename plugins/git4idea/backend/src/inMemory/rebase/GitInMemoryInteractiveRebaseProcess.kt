@@ -245,7 +245,7 @@ internal suspend fun performInMemoryRebase(
   return operationResult
 }
 
-private fun checkInMemoryRebaseSupport(repository: GitRepository): GitCommitEditingOperationResult.Incomplete.UnsupportedGitVersion? {
+internal fun checkInMemoryRebaseSupport(repository: GitRepository): GitCommitEditingOperationResult.Incomplete.UnsupportedGitVersion? {
   if (GitVersionSpecialty.MERGE_TREE_PASS_THREE_TREES_SUPPORTED.existsIn(repository)) return null
   return GitCommitEditingOperationResult.Incomplete.UnsupportedGitVersion(GitVersionSpecialty.MERGE_TREE_PASS_THREE_TREES_SUPPORTED.version)
 }

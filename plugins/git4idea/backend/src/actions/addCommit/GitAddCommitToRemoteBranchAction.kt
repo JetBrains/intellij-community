@@ -9,13 +9,18 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
+import git4idea.GitRemoteBranch
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.addCommit.showRemoteBranchSelectionPopup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-internal class GitAddCommitToRemoteBranchAction : VcsLogAction<GitRepository>() {
+internal open class GitAddCommitToRemoteBranchAction : VcsLogAction<GitRepository>() {
+
+  /** The base commit for the cherry-pick. See [GitAddCommitToRemoteBranchOperation.BaseMode]. */
+  protected open val baseMode: GitAddCommitToRemoteBranchOperation.BaseMode
+    get() = GitAddCommitToRemoteBranchOperation.BaseMode.FETCHED_REMOTE_TIP
 
   override fun isEnabled(grouped: MultiMap<GitRepository, Hash>): Boolean {
     // Single repository check - detailed validations in update()
@@ -31,12 +36,21 @@ internal class GitAddCommitToRemoteBranchAction : VcsLogAction<GitRepository>() 
     if (repository.remotes.isEmpty()) return
     if (commits.any { it.parents.size > 1 }) return
 
-    showRemoteBranchSelectionPopup(project, repository, commits) { remoteBranch ->
+    selectTargetBranch(project, repository, commits) { remoteBranch ->
       @Suppress("DEPRECATION")
       (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.Default) {
-        GitAddCommitToRemoteBranchOperation(project, repository, commits, remoteBranch, cs = this).execute()
+        GitAddCommitToRemoteBranchOperation(project, repository, commits, remoteBranch, cs = this, baseMode = baseMode).execute()
       }
     }
+  }
+
+  protected open fun selectTargetBranch(
+    project: Project,
+    repository: GitRepository,
+    commits: List<VcsFullCommitDetails>,
+    onSelected: (GitRemoteBranch) -> Unit,
+  ) {
+    showRemoteBranchSelectionPopup(project, repository, commits, onSelected)
   }
 
   override fun getRepositoryManager(project: Project): AbstractRepositoryManager<GitRepository> {
