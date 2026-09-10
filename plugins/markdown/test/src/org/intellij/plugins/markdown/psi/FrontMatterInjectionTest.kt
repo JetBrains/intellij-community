@@ -1,6 +1,5 @@
 package org.intellij.plugins.markdown.psi
 
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.lang.Language
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
@@ -49,19 +48,30 @@ class FrontMatterInjectionTest: LightPlatformCodeInsightTestCase() {
     doTest(content, TomlLanguage)
   }
 
+  /**
+   * Front matter adds no prefix to a line of the injected fragment, so `EnterBetweenBracesFinalHandler` must not indent the fragment.
+   * Enter keeps the default behaviour and does not move the closing brace.
+   */
   @Test
-  fun `test toml front matter keeps injected language formatting enabled`() {
+  fun `test enter between braces in toml front matter`() {
     configureFromFileText(
       "some.md",
       """
         +++
-        key = [<caret>]
+        key = {<caret>}
         +++
       """.trimIndent()
     )
 
-    val injectedFile = PsiUtilCore.getElementAtOffset(file, editor.caretModel.offset).containingFile
-    assertNull(EnterHandlerDelegate.EP_NAME.findFirstSafe { !it.shouldFormatInjectedFragment(injectedFile) })
+    type('\n')
+    checkResultByText(
+      """
+        +++
+        key = {
+        <caret>}
+        +++
+      """.trimIndent()
+    )
   }
 
   private fun doTest(content: String, expectedLanguage: Language) {

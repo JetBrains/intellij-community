@@ -1131,6 +1131,10 @@
                           id="afterUnmatchedBrace"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesFinalHandler"
                           id="EnterBetweenBracesHandler"/>
+    <enterHandlerDelegate
+      implementation="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesFinalHandler$InjectedIndentPostProcessor"
+      id="EnterBetweenBracesInjectedIndentPostProcessor"
+      order="last"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterJavadocTagHandler"/>
     <backspaceHandlerDelegate implementation="com.intellij.codeInsight.editorActions.SimpleIndentingBackspaceHandler"/>
     <backspaceHandlerDelegate implementation="com.intellij.codeInsight.editorActions.SmartIndentingBackspaceHandler"

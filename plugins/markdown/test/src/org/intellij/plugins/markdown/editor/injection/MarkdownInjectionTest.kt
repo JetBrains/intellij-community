@@ -1161,7 +1161,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
 
           ```yaml
           key: {
-            <caret>
+                 <caret>
           }
           ```
       """.trimIndent()
@@ -1202,8 +1202,8 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
   }
 
   /**
-   * Enter after an unmatched opening brace is handled by `EnterAfterUnmatchedBraceHandler`, which inserts the missing
-   * brace. In a top level code fence that works; the same content in an indented code fence currently fails.
+   * `EnterAfterUnmatchedBraceHandler` inserts the missing brace.
+   * A top-level fence does not need host indentation restoration.
    */
   fun testEnterAfterUnmatchedBraceInTopLevelCodeFence() {
     configureFromFileText(
@@ -1229,6 +1229,38 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
         ```
       """.trimIndent()
     )
+  }
+
+  fun testEnterBetweenBracesWithFourSpaceIndentInIndentedCodeFence() {
+    CodeStyle.doWithTemporarySettings(project, CodeStyle.getSettings(project)) { settings ->
+      val jsonLanguage = requireNotNull(Language.findLanguageByID("JSON"))
+      val indentOptions = requireNotNull(settings.getCommonSettings(jsonLanguage).indentOptions)
+      indentOptions.INDENT_SIZE = 4
+
+      configureFromFileText(
+        "test.md",
+        """
+          - Item with code:
+
+            ```json
+            {<caret>}
+            ```
+        """.trimIndent()
+      )
+
+      type('\n')
+      checkResultByText(
+        """
+          - Item with code:
+
+            ```json
+            {
+                <caret>
+            }
+            ```
+        """.trimIndent()
+      )
+    }
   }
 
   fun testEnterBetweenBracesWithTabIndentInIndentedCodeFence() {
