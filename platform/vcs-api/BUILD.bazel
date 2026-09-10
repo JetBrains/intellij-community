@@ -27,10 +27,10 @@ jvm_library(
         "//platform/vcs-api/vcs-api-core:vcs-core",
         "//platform/vcs-api/shared",
     ],
-    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
+        "//platform/backend",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-api:ide",
         "//platform/ide-core",
