@@ -655,15 +655,11 @@ class PyCallableParameterMappingTest : PyTestCase() {
 
     myFixture.configureByText(PythonFileType.INSTANCE, fileText)
 
-    val expected = myFixture.findElementByText("my_callable1",
-                                               if (expectedIsTypingCallable)
-                                                 PyTargetExpression::class.java
-                                               else PyFunction::class.java)
+    val expectedElementClass = if (expectedIsTypingCallable) PyTargetExpression::class.java else PyFunction::class.java
+    val expected = myFixture.findElementByText("my_callable1", expectedElementClass)
     assertNotNull(expected)
-    val actual = myFixture.findElementByText("my_callable2",
-                                             if (actualIsTypingCallable)
-                                               PyTargetExpression::class.java
-                                             else PyFunction::class.java)
+    val actualElementClass = if (actualIsTypingCallable) PyTargetExpression::class.java else PyFunction::class.java
+    val actual = myFixture.findElementByText("my_callable2", actualElementClass)
     assertNotNull(actual)
     val context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile())
     val expectedCallable = context.getType(expected) as? PyCallableType

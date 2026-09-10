@@ -709,13 +709,15 @@ fun getHtmlApiNamespace(namespace: String?, element: PsiElement?, symbolName: St
   }
 
 
-private fun loadDocumentation(namespace: MdnApiNamespace, segment: Char?): MdnDocumentation =
-  loadDocumentation(namespace, segment, when (namespace) {
+private fun loadDocumentation(namespace: MdnApiNamespace, segment: Char?): MdnDocumentation {
+  val clazz = when (namespace) {
     MdnApiNamespace.Css -> MdnCssDocumentation::class.java
     MdnApiNamespace.WebApi, MdnApiNamespace.GlobalObjects -> MdnJsDocumentation::class.java
     MdnApiNamespace.DomEvents -> MdnDomEventsDocumentation::class.java
     else -> MdnHtmlDocumentation::class.java
-  })
+  }
+  return loadDocumentation(namespace, segment, clazz)
+}
 
 private fun <T : MdnDocumentation> loadDocumentation(namespace: MdnApiNamespace, segment: Char?, clazz: Class<T>): T {
   val mainFile = MdnHtmlDocumentation::class.java.getResource("${namespace.name}${segment?.let { "-$it" } ?: ""}.json")
