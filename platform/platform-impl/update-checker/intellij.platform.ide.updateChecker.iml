@@ -54,6 +54,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="module" module-name="intellij.platform.runtime.product" />
+    <orderEntry type="module" module-name="intellij.platform.productMode" />
   </component>
 </module>

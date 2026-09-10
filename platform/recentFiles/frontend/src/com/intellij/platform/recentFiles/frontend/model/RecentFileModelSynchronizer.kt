@@ -44,8 +44,7 @@ internal class RecentFileModelSynchronizer : ProjectActivity {
     if (IdeProductMode.getInstance().currentMode != ProductMode.LIGHT) return
 
     // TODO IJPL-252054 watch the product mode of the applied plugin set instead of the connection, once the platform
-    //  publishes that mode as a flow. `PluginManagerCore.currentInitContextFlow` on the branch
-    //  `khbminus/light-2/monolith-product-mode` is that flow, and it also covers a mode change of any other origin.
+    //  publishes that mode as a flow.
     coroutineScope {
       val subscriptions = launch { synchronizeWithTheModel(frontendRecentFilesModel, project) }
       LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<FileSwitcherApi>())

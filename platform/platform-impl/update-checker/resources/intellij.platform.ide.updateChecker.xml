@@ -18,8 +18,8 @@
     <module name="intellij.platform.ide.core.plugins"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.initialConfigImport"/>
+    <module name="intellij.platform.productMode"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.runtime.product"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>

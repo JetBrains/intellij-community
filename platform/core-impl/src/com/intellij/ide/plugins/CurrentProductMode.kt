@@ -5,11 +5,10 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.PlatformUtils
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The product mode of the current process.
@@ -25,11 +24,9 @@ import org.jetbrains.annotations.VisibleForTesting
 @ApiStatus.Internal
 object CurrentProductMode {
   val value: ProductMode
-    get() = flow.value
+    get() = state.get()
 
-  /** Emits the current mode, and a new value on every completed [transitionTo]. */
-  val flow: StateFlow<ProductMode>
-    field = MutableStateFlow(computeInitialProductMode())
+  private val state = AtomicReference(computeInitialProductMode())
 
   /** The modes that [from] may move to in one step. */
   @VisibleForTesting
@@ -48,11 +45,11 @@ object CurrentProductMode {
   @VisibleForTesting
   fun transitionTo(target: ProductMode): Boolean {
     while (true) {
-      val current = flow.value
+      val current = state.get()
       if (target !in allowedTargets(current)) {
         return false
       }
-      if (flow.compareAndSet(current, target)) {
+      if (state.compareAndSet(current, target)) {
         logger<CurrentProductMode>().info("Product mode moved from '${current.id}' to '${target.id}'")
         return true
       }
@@ -61,13 +58,13 @@ object CurrentProductMode {
 
   @TestOnly
   fun <R> withProductMode(mode: ProductMode, body: () -> R): R {
-    val previous = flow.value
-    flow.value = mode
+    val previous = state.get()
+    state.set(mode)
     try {
       return body()
     }
     finally {
-      flow.value = previous
+      state.set(previous)
     }
   }
 

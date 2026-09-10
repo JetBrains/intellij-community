@@ -55,7 +55,7 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-api:ide",
-        "//platform/runtime/product",
+        "//platform/productMode",
     ],
 )
 
@@ -96,7 +96,7 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-api:ide_test_lib",
-        "//platform/runtime/product:product_test_lib",
+        "//platform/productMode:productMode_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.updateChecker` end
