@@ -40,6 +40,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScreenUtil;
@@ -228,7 +229,10 @@ final class LookupUi {
       public void valueChanged(ListSelectionEvent e) {
         if (!lookup.isLookupDisposed()) {
           hintAlarm.cancelAllRequests();
-          updateHint();
+          PsiVersioningService.freezePsiVersion(() -> {
+            updateHint();
+            return null;
+          });
         }
       }
     });
