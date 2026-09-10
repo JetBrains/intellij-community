@@ -71,18 +71,24 @@ object TeamCityClient {
   }
 
   /**
-   * Get all successful builds matching the specified criteria.
-   * @return List of <BuildId, BuildNumber> pairs, sorted from latest to oldest.
+   * Returns successful builds that match the specified filters.
+   *
+   * @param buildType the TeamCity build configuration ID.
+   * @param tag the optional build tag used to filter the builds.
+   * @param number the optional build number used to filter the builds.
+   * @param count the maximum number of builds to return.
+   * @param additionalRequestActions the action that modifies the TeamCity request before it is sent.
+   * @return pairs of build IDs and build numbers
    */
   fun getSuccessfulBuildsList(
     buildType: String,
     tag: String? = null,
-    buildNumber: String? = null,
+    number: String? = null,
     count: Int = 10,
     additionalRequestActions: (HttpRequest) -> HttpRequest = { it },
-  ): List<Pair<String, BuildNumber?>> {
+  ): List<Pair<String, String?>> {
     val tagFilter = if (!tag.isNullOrBlank()) "tag:$tag," else ""
-    val numberFilter = if (!buildNumber.isNullOrBlank()) "number:$buildNumber," else ""
+    val numberFilter = if (!number.isNullOrBlank()) "number:$number," else ""
     val fullUrl = guestAuthUri
       .resolve("builds?locator=buildType:$buildType,${tagFilter}${numberFilter}status:SUCCESS,state:(finished:true),count:$count,history:false")
 
@@ -91,29 +97,29 @@ object TeamCityClient {
       .map { buildInfo ->
         Pair(
           buildInfo.findValue("id")?.asText() ?: "",
-          BuildNumber.fromString(buildNumber ?: buildInfo.findValue("number")?.asText()),
+          number ?: buildInfo.findValue("number")?.asText(),
         )
       }
   }
 
   @Deprecated(
-    "Use getLastSuccessfulBuildInfo instead",
+    "Use getLastSuccessfulIdeBuildInfo instead",
     ReplaceWith(
-      "getLastSuccessfulBuildInfo(ideInfo)",
-      "com.intellij.ide.starter.ci.teamcity.TeamCityClient.getLastSuccessfulBuildInfo",
+      "getLastSuccessfulIdeBuildInfo(ideInfo)",
+      "com.intellij.ide.starter.ci.teamcity.TeamCityClient.getLastSuccessfulIdeBuildInfo",
     )
   )
-  fun getLastSuccessfulBuild(ideInfo: IdeInfo): Pair<String, String> = with(getLastSuccessfulBuildInfo(ideInfo)) {
+  fun getLastSuccessfulBuild(ideInfo: IdeInfo): Pair<String, String> = with(getLastSuccessfulIdeBuildInfo(ideInfo)) {
     first to (second?.toString() ?: "")
   }
 
   /** @return <BuildId, BuildNumber> */
-  fun getLastSuccessfulBuildInfo(ideInfo: IdeInfo): Pair<String, BuildNumber?> = getSuccessfulBuildsList(
+  fun getLastSuccessfulIdeBuildInfo(ideInfo: IdeInfo): Pair<String, BuildNumber?> = getSuccessfulBuildsList(
     buildType = ideInfo.buildType,
     tag = ideInfo.tag,
-    buildNumber = ideInfo.buildNumber.takeIf { it.isNotBlank() },
+    number = ideInfo.buildNumber.takeIf { it.isNotBlank() },
     count = 1,
-  ).single()
+  ).single().run { first to BuildNumber.fromString(second) }
 
   /**
    * @return the major version of the master branch by accessing the build number Teamcity configuration
@@ -121,7 +127,7 @@ object TeamCityClient {
   fun getMasterMajorVersion(): String = getSuccessfulBuildsList(
     buildType = "ijplatform_master_IdeaInstallersBuildNumber",
     count = 1,
-  ).singleOrNull()?.second?.baselineVersion?.toString() ?: error("Master version was not found")
+  ).singleOrNull()?.second?.let(BuildNumber::fromString)?.baselineVersion?.toString() ?: error("Master version was not found")
 
   fun downloadArtifact(buildId: String, artifactName: String, outPath: Path) {
     val artifactUrl = guestAuthUri.resolve("builds/id:$buildId/artifacts/content/$artifactName")
@@ -146,7 +152,7 @@ object TeamCityClient {
     val (buildId, _) = getSuccessfulBuildsList(
       buildType = patchBuildType,
       tag = tag,
-      buildNumber = targetBuildNumber,
+      number = targetBuildNumber,
       count = 1,
       additionalRequestActions = additionalRequestActions
     ).firstOrNull() ?: error("No build found for type $patchBuildType with number $targetBuildNumber")
