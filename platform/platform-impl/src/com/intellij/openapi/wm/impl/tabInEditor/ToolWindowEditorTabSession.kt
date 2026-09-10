@@ -64,8 +64,6 @@ class ToolWindowEditorTabSession(
           }
 
           if (applyPresentation(newPresentation)) {
-            FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file)
-            project.messageBus.syncPublisher(RecentFileHistoryOrderListener.TOPIC).recentFileUpdated(file)
             true
           }
           else {
@@ -74,6 +72,8 @@ class ToolWindowEditorTabSession(
         }
 
         if (presentationChanged) {
+          FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file)
+          project.messageBus.syncPublisher(RecentFileHistoryOrderListener.TOPIC).recentFileUpdated(file)
           syncToolWindowEditorTabWithBackendMirror(project, file)
         }
       }
