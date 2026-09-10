@@ -1491,7 +1491,6 @@ private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
 }
 
 private val COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST = setOf(
-  "intellij.vcs.git.backend.tests",
   "intellij.java.tests",
   // no tests
   "kotlin.jvm-debugger.testFramework",
