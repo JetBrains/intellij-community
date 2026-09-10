@@ -47,6 +47,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
@@ -522,33 +523,43 @@ private suspend fun startResolvedRunConfiguration(
   processCallbackDelegate: ProgramRunner.Callback?,
 ): StartedRunConfigurationExecution {
   val startedDeferred = CompletableDeferred<StartedRunConfigurationExecution>()
-
-  withContext(Dispatchers.EDT) {
-    val environment = createExecutionEnvironment(
-      project = project,
-      executor = executor,
-      runConfiguration = resolvedConfiguration.runConfiguration,
-      useOriginalSettings = resolvedConfiguration.useOriginalSettings,
-      runnerAndConfigurationSettings = resolvedConfiguration.settings,
-    )
-    val callback = createProcessCallback(
-      project = project,
-      executorId = executor.id,
-      sessionName = resolvedConfiguration.settings.name,
-      startedDeferred = startedDeferred,
-      processCallbackDelegate = processCallbackDelegate,
-    )
-    ProgramRunnerUtil.executeConfigurationAsync(environment, false, true, callback)
-  }
+  val buildListenerDisposable = Disposer.newDisposable()
+  var buildErrors: RunConfigurationBuildErrors? = null
 
   return try {
+    withContext(Dispatchers.EDT) {
+      val environment = createExecutionEnvironment(
+        project = project,
+        executor = executor,
+        runConfiguration = resolvedConfiguration.runConfiguration,
+        useOriginalSettings = resolvedConfiguration.useOriginalSettings,
+        runnerAndConfigurationSettings = resolvedConfiguration.settings,
+      )
+      val errors = RunConfigurationBuildErrors { environment.executionId }
+      buildErrors = errors
+      errors.listen(project, buildListenerDisposable)
+      val callback = createProcessCallback(
+        project = project,
+        executorId = executor.id,
+        sessionName = resolvedConfiguration.settings.name,
+        startedDeferred = startedDeferred,
+        processCallbackDelegate = processCallbackDelegate,
+      )
+      ProgramRunnerUtil.executeConfigurationAsync(environment, false, true, callback)
+    }
+
     logger.trace { "Waiting for process start..." }
     startedDeferred.await()
   }
   catch (e: Exception) {
     rethrowControlFlowException(e)
     logger.trace { "Execution failed: ${e.message}" }
-    mcpFail("Execution failed: ${e.message}")
+    val exceptionDetails = runConfigurationFailureText(e)
+    val details = listOfNotNull(buildErrors?.getErrorText(), exceptionDetails).joinToString("\n")
+    throw RunConfigurationExecutionException(McpServerBundle.message("run.configuration.execution.failed", details), e)
+  }
+  finally {
+    Disposer.dispose(buildListenerDisposable)
   }
 }
 
@@ -562,7 +573,7 @@ private fun createProcessCallback(
   override fun processNotStarted(error: Throwable?) {
     processCallbackDelegate?.processNotStarted(error)
     startedDeferred.completeExceptionally(
-      error ?: IllegalStateException("Process not started by some reasons. Probably build process failed."))
+      error ?: IllegalStateException(McpServerBundle.message("run.configuration.execution.no.failure.reason")))
   }
 
   override fun processStarted(descriptor: RunContentDescriptor?) {
