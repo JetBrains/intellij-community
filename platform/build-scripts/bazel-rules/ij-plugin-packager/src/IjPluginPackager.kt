@@ -12,10 +12,12 @@ import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.WorkRequestReaderWithoutDigest
 import org.jetbrains.bazel.jvm.processRequests
 import org.jetbrains.intellij.build.io.readEntryFromZip
+import java.io.IOException
 import java.io.Writer
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.pathString
 import kotlin.io.path.readText
 
 /**
@@ -75,7 +77,9 @@ object IjPluginPackager {
         "--content_module" -> {
           val module = parseModuleArgument(args[index + 1], baseDir)
           val oldValue = contentModuleArguments.put(module.name, module)
-          require(oldValue == null) { "Two --content_module arguments for the same module: ${module.name}" }
+          if (oldValue != null) {
+            throw IjPluginPackagingException("Two 'content_modules' arguments for the same module '${module.name}' in 'ij_plugin' rule")
+          }
         }
         "--packed_modules" -> {
           require(packedModulesPath == null) { "--packed_modules must be specified only once" }
@@ -109,7 +113,7 @@ object IjPluginPackager {
     val descriptorModuleArgument = requireNotNull(descriptorModule) { "--descriptor_module must be specified" }
     val descriptorJar = descriptorModuleArgument.jars.first()
     val originalPluginXmlContent = readEntryFromZip(descriptorJar, PLUGIN_DESCRIPTOR_ENTRY_NAME)
-    requireNotNull(originalPluginXmlContent) { "$PLUGIN_DESCRIPTOR_ENTRY_NAME is not found in $descriptorJar" }
+                                   ?: throw IjPluginPackagingException("$PLUGIN_DESCRIPTOR_ENTRY_NAME is not found in $descriptorJar")
     val contentModules = parseContentAndXIncludes(originalPluginXmlContent, descriptorJar.toString()).contentModules
     val packedModulesWriter = packedModulesPath?.let { PackedModulesWriter(it, outputDirectory) }
 
@@ -137,9 +141,10 @@ object IjPluginPackager {
         pluginVersion = computePluginVersion(pluginVersion, buildNumberFromFile),
         sinceBuild = substituteBuildNumber(sinceBuild, buildNumberFromFile),
         untilBuild = substituteBuildNumber(untilBuild, buildNumberFromFile),
-        contentModuleDescriptors = contentModuleDescriptors
+        contentModuleDescriptors = contentModuleDescriptors,
+        presentablePluginDescriptorLocation = descriptorJar.pathString,
       )
-      it.addFile(PLUGIN_DESCRIPTOR_ENTRY_NAME, patchedPluginXmlContent)
+      it.addFile(PLUGIN_DESCRIPTOR_ENTRY_NAME, patchedPluginXmlContent, presentableOrigin = descriptorJar.pathString)
       it.addEntriesFromJar(descriptorJar) { filePath, dataFetcher ->
         if (!isIncludedFromModuleOutput(filePath) || filePath == PLUGIN_DESCRIPTOR_ENTRY_NAME) {
           return@addEntriesFromJar null
@@ -160,7 +165,8 @@ object IjPluginPackager {
   ): Map<String, ByteArray> {
     val contentModuleDescriptors = HashMap<String, ByteArray>()
     for (contentModule in contentModules) {
-      val contentModuleArgument = requireNotNull(contentModuleArguments[contentModule.name]) { "No --content_module argument for '${contentModule.name}' registered in plugin.xml" }
+      val contentModuleArgument = contentModuleArguments.get(contentModule.name)
+                                  ?: throw IjPluginPackagingException("No 'content_module' argument is specified in 'ij_plugin' rule for '${contentModule.name}' registered in plugin.xml")
       val destinationDirectory = if (contentModule.loadingRule == ModuleLoadingRuleValue.EMBEDDED) libDirectory else libDirectory.resolve("modules")
       Files.createDirectories(destinationDirectory)
       val contentDescriptorName = "${contentModule.name}.xml"
@@ -235,7 +241,9 @@ object IjPluginPackager {
     }
     val outputPath = argument.substring(0, separatorIndex)
     val relativeOutputPath = Path.of(outputPath)
-    require(!relativeOutputPath.isAbsolute) { "Non-classpath data output path must be relative: $outputPath" }
+    if (relativeOutputPath.isAbsolute) {
+      throw IjPluginPackagingException("Non-classpath data output path must be relative: $outputPath")
+    }
     return NonClasspathDataArgument(
       relativeOutputPath = relativeOutputPath,
       source = baseDir.resolve(argument.substring(separatorIndex + 1)),
@@ -277,10 +285,15 @@ internal object IjPluginPackagerExecutor : WorkRequestExecutor {
       return 3
     }
 
-    // failures are reported by the worker framework, which also tears the worker down on `Error`
-    runInterruptible(Dispatchers.IO) {
-      val args = Files.readAllLines(baseDir.resolve(paramsFile.removePrefix(FLAG_FILE_PREFIX)))
-      IjPluginPackager.packPlugin(args = args, baseDir = baseDir)
+    try {
+      runInterruptible(Dispatchers.IO) {
+        val args = Files.readAllLines(baseDir.resolve(paramsFile.removePrefix(FLAG_FILE_PREFIX)))
+        IjPluginPackager.packPlugin(args = args, baseDir = baseDir)
+      }
+    }
+    catch (e: IjPluginPackagingException) {
+      writer.appendLine("ERROR: ${e.message}")
+      return 1
     }
     return 0
   }

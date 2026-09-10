@@ -24,8 +24,8 @@ internal fun copyNonClasspathData(nonClasspathData: List<NonClasspathDataArgumen
 private fun resolveRelativeOutputPath(outputDirectory: Path, relativeOutputPath: Path): Path {
   val normalizedOutputDirectory = outputDirectory.normalize()
   val outputPath = normalizedOutputDirectory.resolve(relativeOutputPath).normalize()
-  require(outputPath.startsWith(normalizedOutputDirectory)) {
-    "Non-classpath data output path must be inside the plugin distribution: $relativeOutputPath"
+  if (!outputPath.startsWith(normalizedOutputDirectory)) {
+    throw IjPluginPackagingException("Non-classpath data output path must be inside the plugin distribution: $relativeOutputPath")
   }
   return outputPath
 }
@@ -40,14 +40,14 @@ private fun copyNonClasspathData(source: Path, outputPath: Path) {
 
     override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
       val destination = outputPath.resolve(source.relativize(file))
-      check(!Files.exists(destination, LinkOption.NOFOLLOW_LINKS)) {
-        "Cannot copy $file to $destination because the output file already exists"
+      if (Files.exists(destination, LinkOption.NOFOLLOW_LINKS)) {
+        throw IjPluginPackagingException("Cannot copy $file to $destination because the output file already exists")
       }
       if (attrs.isSymbolicLink) {
         val linkTarget = Files.readSymbolicLink(file)
         val resolvedTarget = (if (linkTarget.isAbsolute) linkTarget else file.parent.resolve(linkTarget)).toRealPath()
-        check(resolvedTarget.startsWith(sourceRoot)) {
-          "Cannot copy symlink $file because its target $resolvedTarget is outside the source directory $sourceRoot"
+        if (!resolvedTarget.startsWith(sourceRoot)) {
+          throw IjPluginPackagingException("Cannot copy symlink $file because its target $resolvedTarget is outside the source directory $sourceRoot")
         }
         val correspondingTarget = outputPath.resolve(sourceRoot.relativize(resolvedTarget))
         Files.createSymbolicLink(destination, destination.parent.relativize(correspondingTarget))

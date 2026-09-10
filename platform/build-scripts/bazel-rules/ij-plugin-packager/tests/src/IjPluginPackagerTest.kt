@@ -247,7 +247,7 @@ internal class IjPluginPackagerTest {
     val externalTarget = Files.writeString(inputDirectory.resolve("external.txt"), "external")
     val link = Files.createSymbolicLink(dataDirectory.resolve("link.txt"), externalTarget)
 
-    val error = assertThrows(IllegalStateException::class.java) {
+    val error = assertThrows(IjPluginPackagingException::class.java) {
       IjPluginPackager.packPlugin(
         args = listOf(
           "output",
@@ -274,7 +274,7 @@ internal class IjPluginPackagerTest {
     Files.writeString(inputDirectory.resolve("data1.txt"), "data")
     Files.writeString(inputDirectory.resolve("data2.txt"), "data")
 
-    val error = assertThrows(IllegalStateException::class.java) {
+    val error = assertThrows(IjPluginPackagingException::class.java) {
       IjPluginPackager.packPlugin(
         args = listOf(
           "output",
