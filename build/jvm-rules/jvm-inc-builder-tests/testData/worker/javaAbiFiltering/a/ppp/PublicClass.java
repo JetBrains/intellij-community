@@ -15,6 +15,56 @@ public class PublicClass {
   public void publicMethod() {
   }
 
+  public Runnable anonymousClass() {
+    return new Runnable() {
+      public void run() {
+      }
+    };
+  }
+
+  public Object localClass() {
+    class LocalClass {
+    }
+    return new LocalClass();
+  }
+
+  private interface PrivateHolder {
+    final class PublicNested {
+      private int hidden;
+    }
+
+    private static void hidden() {
+    }
+  }
+
+  public enum SampleEnum {
+    PLAIN,
+    BODY {
+      void body() {
+      }
+    };
+
+    private int weight;
+  }
+
+  public static class Bridge extends PrivateBase {
+    private int hidden;
+  }
+
+  public static class Q implements PrivateHolder {
+    private int hidden;
+  }
+
+  static PrivateReturn leak() {
+    return null;
+  }
+
+  private static class PrivateBase {
+  }
+
+  private static class PrivateReturn {
+  }
+
 
   protected static class ProtectedClass {
     private int privateField;

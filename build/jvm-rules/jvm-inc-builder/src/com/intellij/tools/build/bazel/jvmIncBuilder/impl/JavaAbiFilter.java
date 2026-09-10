@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class JavaAbiFilter implements ZipOutputBuilder {
+  public static final JavaAbiClassFilter.Mode FILTERING_MODE = JavaAbiClassFilter.Mode.IJAR_COMPLIANT;
+
   private @NotNull final ZipOutputBuilder myDelegate;
 
   public JavaAbiFilter(@NotNull ZipOutputBuilder delegate) {
@@ -79,7 +81,7 @@ public class JavaAbiFilter implements ZipOutputBuilder {
       }
       return content; // no instrumentation, if the entry is not a class file, or the class finder is not specified
     }
-    return JavaAbiClassFilter.filter(content); // also strips debug-info and code data
+    return JavaAbiClassFilter.filter(FILTERING_MODE, content); // also strips debug-info and code data
   }
 
 }
