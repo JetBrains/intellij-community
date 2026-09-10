@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.core.script.v1.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.v1.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.core.script.v1.getPlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -40,10 +39,7 @@ abstract class KaScriptModuleBase(
     override val transitiveDependsOnDependencies: List<KaModule> get() = emptyList()
 
     override val baseContentScope: GlobalSearchScope
-        get() {
-            val basicScriptScope = GlobalSearchScope.fileScope(project, virtualFile)
-            return KotlinScriptSearchScope(project, basicScriptScope)
-        }
+        get() = GlobalSearchScope.fileScope(project, virtualFile)
 
     override val targetPlatform: TargetPlatform
         get() = getPlatform(project, virtualFile, scriptDefinition)

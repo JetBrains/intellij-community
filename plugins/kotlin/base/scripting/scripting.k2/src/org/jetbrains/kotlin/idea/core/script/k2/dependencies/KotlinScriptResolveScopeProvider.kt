@@ -11,7 +11,6 @@ import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
-import org.jetbrains.kotlin.idea.core.script.v1.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsScriptsInSourceRoots
 import org.jetbrains.kotlin.idea.core.script.v1.isSupportedUnderSourceRoot
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
@@ -61,7 +60,7 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         }
     }
 
-    private fun KtFile.getScopeForNonStandaloneScript(file: VirtualFile, project: Project): KotlinScriptSearchScope? {
+    private fun KtFile.getScopeForNonStandaloneScript(file: VirtualFile, project: Project): GlobalSearchScope? {
         val underSourceRoot = isUnderKotlinSourceRootTypes()
         debugLog { "under-source-root: $underSourceRoot" }
 
@@ -73,7 +72,7 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         }
     }
 
-    private fun KtFile.getScopeForStandaloneScript(file: VirtualFile, project: Project): KotlinScriptSearchScope? {
+    private fun KtFile.getScopeForStandaloneScript(file: VirtualFile, project: Project): GlobalSearchScope? {
         val underSourceRoot = isUnderKotlinSourceRootTypes()
         debugLog { "under-source-root: $underSourceRoot" }
 
@@ -84,7 +83,7 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         }
     }
 
-    private fun KtFile.getScopeForStandaloneScriptUnderSourceRoot(file: VirtualFile, project: Project): KotlinScriptSearchScope? {
+    private fun KtFile.getScopeForStandaloneScriptUnderSourceRoot(file: VirtualFile, project: Project): GlobalSearchScope? {
         val supportedUnderSourceRoot = file.isSupportedUnderSourceRoot()
         debugLog { "supported-under-source-root: $supportedUnderSourceRoot" }
 
@@ -105,12 +104,12 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         return isStandalone
     }
 
-    private fun KtFile.calculateScopeForStandaloneScript(file: VirtualFile, project: Project): KotlinScriptSearchScope {
+    private fun KtFile.calculateScopeForStandaloneScript(file: VirtualFile, project: Project): GlobalSearchScope {
         val vFile = virtualFile ?: viewProvider.virtualFile
         val dependenciesScope =
             ScriptConfigurationsProviderImpl.getInstance(project).getScriptDependenciesClassFilesScope(vFile)
         debugLog { "=> standalone" }
-        return KotlinScriptSearchScope(project, GlobalSearchScope.fileScope(project, file).uniteWith(dependenciesScope))
+        return GlobalSearchScope.fileScope(project, file).uniteWith(dependenciesScope)
     }
 
     private fun KtFile.debugLog(message: () -> String) {

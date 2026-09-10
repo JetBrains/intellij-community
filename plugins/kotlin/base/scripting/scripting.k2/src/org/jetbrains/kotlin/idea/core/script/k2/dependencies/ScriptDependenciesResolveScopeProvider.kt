@@ -9,7 +9,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
-import org.jetbrains.kotlin.idea.core.script.v1.KotlinScriptSearchScope
 
 /**
  * @see KotlinScriptResolveScopeProvider
@@ -39,6 +38,6 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
             return null
         }
 
-        return KotlinScriptSearchScope(project, GlobalSearchScope.fileScope(project, file))
+        return GlobalSearchScope.fileScope(project, file)
     }
 }
