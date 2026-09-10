@@ -94,7 +94,6 @@
     <module name="intellij.python.community.impl.pipenv.common"/>
     <module name="intellij.python.community.impl.poetry.backend"/>
     <module name="intellij.python.community.impl.poetry.common"/>
-    <module name="intellij.python.community.interpreters"/>
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.externalIndex"/>
     <module name="intellij.python.hatch"/>

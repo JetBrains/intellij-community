@@ -34,7 +34,6 @@ dev_dist_plugin(
         "intellij.python.community.impl.installer",
         "intellij.python.community.communityOnly",
         "intellij.python.ml.features",
-        "intellij.python.community.interpreters",
         "intellij.python.mcp",
         "intellij.python.community",
         "intellij.python.community.impl.pipenv.common",

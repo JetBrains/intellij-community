@@ -1995,7 +1995,6 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-poetry/common/intellij.python.community.impl.poetry.common.iml" filepath="$PROJECT_DIR$/python/python-poetry/common/intellij.python.community.impl.poetry.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-poetry/frontend/intellij.python.community.impl.poetry.frontend.iml" filepath="$PROJECT_DIR$/python/python-poetry/frontend/intellij.python.community.impl.poetry.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.impl.tests.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.impl.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/interpreters/intellij.python.community.interpreters.iml" filepath="$PROJECT_DIR$/python/interpreters/intellij.python.community.interpreters.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/junit5Tests-framework/intellij.python.community.junit5Tests.framework.iml" filepath="$PROJECT_DIR$/python/junit5Tests-framework/intellij.python.community.junit5Tests.framework.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginCore/intellij.python.community.plugin.iml" filepath="$PROJECT_DIR$/python/pluginCore/intellij.python.community.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginCore/frontend/intellij.python.community.plugin.frontend.iml" filepath="$PROJECT_DIR$/python/pluginCore/frontend/intellij.python.community.plugin.frontend.iml" />

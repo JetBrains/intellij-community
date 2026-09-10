@@ -180,7 +180,6 @@
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService.python" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community.interpreters" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.uv.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.common" scope="TEST" />
