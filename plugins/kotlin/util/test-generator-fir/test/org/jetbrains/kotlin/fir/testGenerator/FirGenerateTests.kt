@@ -598,15 +598,15 @@ private fun assembleWorkspace(): TWorkspace = workspace() {
         }
     }
 
-    testGroup("refactorings/rename.k2", testDataPath = "../../idea/tests/testData", category = RENAME_REFACTORING) {
+    testGroup("refactorings/rename.k2", category = RENAME_REFACTORING) {
         testClass<AbstractFirRenameTest> {
-            model("refactoring/rename", pattern = TEST, flatten = true)
+            model("rename", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2InplaceRenameTest> {
-            model("refactoring/rename/inplace", pattern = Patterns.KT_OR_JAVA, flatten = true)
+            model("rename/inplace", pattern = Patterns.KT_OR_JAVA, flatten = true)
         }
         testClass<AbstractFirMultiModuleRenameTest> {
-            model("refactoring/renameMultiModule", pattern = TEST, flatten = true)
+            model("renameMultiModule", pattern = TEST, flatten = true)
         }
     }
 

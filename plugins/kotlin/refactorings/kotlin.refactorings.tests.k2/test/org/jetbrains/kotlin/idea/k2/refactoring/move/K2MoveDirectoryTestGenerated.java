@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/moveDirectory")
+@TestMetadata("testData/moveDirectory")
 public class K2MoveDirectoryTestGenerated extends AbstractK2MoveDirectoryTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,21 +25,21 @@ public class K2MoveDirectoryTestGenerated extends AbstractK2MoveDirectoryTest {
 
     @TestMetadata("forLoop/forLoop.test")
     public void testForLoop_ForLoop() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveDirectory/forLoop/forLoop.test");
+        runTest("testData/moveDirectory/forLoop/forLoop.test");
     }
 
     @TestMetadata("mixedJavaKotlinWithQuotation/mixedJavaKotlinWithQuotation.test")
     public void testMixedJavaKotlinWithQuotation_MixedJavaKotlinWithQuotation() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveDirectory/mixedJavaKotlinWithQuotation/mixedJavaKotlinWithQuotation.test");
+        runTest("testData/moveDirectory/mixedJavaKotlinWithQuotation/mixedJavaKotlinWithQuotation.test");
     }
 
     @TestMetadata("mixedJavaKotlin/mixedJavaKotlin.test")
     public void testMixedJavaKotlin_MixedJavaKotlin() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveDirectory/mixedJavaKotlin/mixedJavaKotlin.test");
+        runTest("testData/moveDirectory/mixedJavaKotlin/mixedJavaKotlin.test");
     }
 
     @TestMetadata("withTypeAliases/withTypeAliases.test")
     public void testWithTypeAliases_WithTypeAliases() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveDirectory/withTypeAliases/withTypeAliases.test");
+        runTest("testData/moveDirectory/withTypeAliases/withTypeAliases.test");
     }
 }

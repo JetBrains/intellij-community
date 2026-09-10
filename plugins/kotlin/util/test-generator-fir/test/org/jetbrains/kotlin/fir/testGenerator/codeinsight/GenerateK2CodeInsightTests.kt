@@ -102,7 +102,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("../../../idea/tests/testData/navigationToolbar", isRecursive = false, pattern = KT_OR_KTS)
         }
         testClass<AbstractNameSuggestionProviderTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.KotlinNameSuggestionProviderTestGenerated") {
-            model("../../../idea/tests/testData/refactoring/nameSuggestionProvider")
+            model("refactoring/nameSuggestionProvider")
         }
         testClass<AbstractKotlinFirSurroundWithTest> {
             model("../../../idea/tests/testData/codeInsight/surroundWith/if", testMethodName = "doTestWithIfSurrounder")

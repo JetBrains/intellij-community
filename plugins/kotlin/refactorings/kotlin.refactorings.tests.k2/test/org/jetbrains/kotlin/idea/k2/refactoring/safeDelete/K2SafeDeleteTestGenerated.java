@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass")
+    @TestMetadata("testData/safeDelete/deleteClass/kotlinClass")
     public static class KotlinClass extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doClassTest, this, testDataFilePath);
@@ -27,87 +27,87 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("class1.kt")
         public void testClass1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/class1.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/class1.kt");
         }
 
         @TestMetadata("class2.kt")
         public void testClass2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/class2.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/class2.kt");
         }
 
         @TestMetadata("classInString.kt")
         public void testClassInString() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/classInString.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/classInString.kt");
         }
 
         @TestMetadata("classWithExternalConstructructorUsage.kt")
         public void testClassWithExternalConstructructorUsage() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/classWithExternalConstructructorUsage.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/classWithExternalConstructructorUsage.kt");
         }
 
         @TestMetadata("classWithInternalConstructructorUsage.kt")
         public void testClassWithInternalConstructructorUsage() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/classWithInternalConstructructorUsage.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/classWithInternalConstructructorUsage.kt");
         }
 
         @TestMetadata("enumEntry.kt")
         public void testEnumEntry() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/enumEntry.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/enumEntry.kt");
         }
 
         @TestMetadata("interface1.kt")
         public void testInterface1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/interface1.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/interface1.kt");
         }
 
         @TestMetadata("interface2.kt")
         public void testInterface2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/interface2.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/interface2.kt");
         }
 
         @TestMetadata("lastEnumEntry1.kt")
         public void testLastEnumEntry1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/lastEnumEntry1.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/lastEnumEntry1.kt");
         }
 
         @TestMetadata("lastEnumEntry2.kt")
         public void testLastEnumEntry2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/lastEnumEntry2.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/lastEnumEntry2.kt");
         }
 
         @TestMetadata("localClass1.kt")
         public void testLocalClass1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/localClass1.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/localClass1.kt");
         }
 
         @TestMetadata("localClass2.kt")
         public void testLocalClass2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/localClass2.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/localClass2.kt");
         }
 
         @TestMetadata("nestedClass1.kt")
         public void testNestedClass1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/nestedClass1.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/nestedClass1.kt");
         }
 
         @TestMetadata("nestedClass2.kt")
         public void testNestedClass2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/nestedClass2.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/nestedClass2.kt");
         }
 
         @TestMetadata("noUsages.kt")
         public void testNoUsages() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/noUsages.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/noUsages.kt");
         }
 
         @TestMetadata("unsafeImport.kt")
         public void testUnsafeImport() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClass/unsafeImport.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClass/unsafeImport.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClassWithJava")
+    @TestMetadata("testData/safeDelete/deleteClass/kotlinClassWithJava")
     public static class KotlinClassWithJava extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doClassTestWithJava, this, testDataFilePath);
@@ -115,12 +115,12 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("classWithDelegationCalls.kt")
         public void testClassWithDelegationCalls() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/kotlinClassWithJava/classWithDelegationCalls.kt");
+            runTest("testData/safeDelete/deleteClass/kotlinClassWithJava/classWithDelegationCalls.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin")
+    @TestMetadata("testData/safeDelete/deleteClass/javaClassWithKotlin")
     public static class JavaClassWithKotlin extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doJavaClassTest, this, testDataFilePath);
@@ -128,22 +128,22 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("ImportJavaClassToKotlin.java")
         public void testImportJavaClassToKotlin() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin/ImportJavaClassToKotlin.java");
+            runTest("testData/safeDelete/deleteClass/javaClassWithKotlin/ImportJavaClassToKotlin.java");
         }
 
         @TestMetadata("javaInterfaceInSuperTypeList.java")
         public void testJavaInterfaceInSuperTypeList() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin/javaInterfaceInSuperTypeList.java");
+            runTest("testData/safeDelete/deleteClass/javaClassWithKotlin/javaInterfaceInSuperTypeList.java");
         }
 
         @TestMetadata("javaInterfaceInSuperTypeListLast.java")
         public void testJavaInterfaceInSuperTypeListLast() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin/javaInterfaceInSuperTypeListLast.java");
+            runTest("testData/safeDelete/deleteClass/javaClassWithKotlin/javaInterfaceInSuperTypeListLast.java");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject")
+    @TestMetadata("testData/safeDelete/deleteObject/kotlinObject")
     public static class KotlinObject extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doObjectTest, this, testDataFilePath);
@@ -151,57 +151,57 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("anonymousObject.kt")
         public void testAnonymousObject() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject/anonymousObject.kt");
+            runTest("testData/safeDelete/deleteObject/kotlinObject/anonymousObject.kt");
         }
 
         @TestMetadata("companionObject.kt")
         public void testCompanionObject() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject/companionObject.kt");
+            runTest("testData/safeDelete/deleteObject/kotlinObject/companionObject.kt");
         }
 
         @TestMetadata("localObject1.kt")
         public void testLocalObject1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject/localObject1.kt");
+            runTest("testData/safeDelete/deleteObject/kotlinObject/localObject1.kt");
         }
 
         @TestMetadata("localObject2.kt")
         public void testLocalObject2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject/localObject2.kt");
+            runTest("testData/safeDelete/deleteObject/kotlinObject/localObject2.kt");
         }
 
         @TestMetadata("nestedObject1.kt")
         public void testNestedObject1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject/nestedObject1.kt");
+            runTest("testData/safeDelete/deleteObject/kotlinObject/nestedObject1.kt");
         }
 
         @TestMetadata("nestedObject2.kt")
         public void testNestedObject2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject/nestedObject2.kt");
+            runTest("testData/safeDelete/deleteObject/kotlinObject/nestedObject2.kt");
         }
 
         @TestMetadata("noUsages.kt")
         public void testNoUsages() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject/noUsages.kt");
+            runTest("testData/safeDelete/deleteObject/kotlinObject/noUsages.kt");
         }
 
         @TestMetadata("object1.kt")
         public void testObject1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject/object1.kt");
+            runTest("testData/safeDelete/deleteObject/kotlinObject/object1.kt");
         }
 
         @TestMetadata("object2.kt")
         public void testObject2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject/object2.kt");
+            runTest("testData/safeDelete/deleteObject/kotlinObject/object2.kt");
         }
 
         @TestMetadata("unsafeImport.kt")
         public void testUnsafeImport() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteObject/kotlinObject/unsafeImport.kt");
+            runTest("testData/safeDelete/deleteObject/kotlinObject/unsafeImport.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction")
+    @TestMetadata("testData/safeDelete/deleteFunction/kotlinFunction")
     public static class KotlinFunction extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doFunctionTest, this, testDataFilePath);
@@ -209,102 +209,102 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("fun1.kt")
         public void testFun1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/fun1.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/fun1.kt");
         }
 
         @TestMetadata("fun2.kt")
         public void testFun2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/fun2.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/fun2.kt");
         }
 
         @TestMetadata("funExt1.kt")
         public void testFunExt1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/funExt1.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/funExt1.kt");
         }
 
         @TestMetadata("funExt2.kt")
         public void testFunExt2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/funExt2.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/funExt2.kt");
         }
 
         @TestMetadata("implement1.kt")
         public void testImplement1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/implement1.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/implement1.kt");
         }
 
         @TestMetadata("implement2.kt")
         public void testImplement2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/implement2.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/implement2.kt");
         }
 
         @TestMetadata("localFun1.kt")
         public void testLocalFun1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/localFun1.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/localFun1.kt");
         }
 
         @TestMetadata("localFun2.kt")
         public void testLocalFun2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/localFun2.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/localFun2.kt");
         }
 
         @TestMetadata("localFunExt1.kt")
         public void testLocalFunExt1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/localFunExt1.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/localFunExt1.kt");
         }
 
         @TestMetadata("localFunExt2.kt")
         public void testLocalFunExt2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/localFunExt2.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/localFunExt2.kt");
         }
 
         @TestMetadata("noUsages.kt")
         public void testNoUsages() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/noUsages.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/noUsages.kt");
         }
 
         @TestMetadata("override1.kt")
         public void testOverride1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/override1.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/override1.kt");
         }
 
         @TestMetadata("override2.kt")
         public void testOverride2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/override2.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/override2.kt");
         }
 
         @TestMetadata("overrideAndImplement1.kt")
         public void testOverrideAndImplement1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/overrideAndImplement1.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/overrideAndImplement1.kt");
         }
 
         @TestMetadata("overrideAndImplement2.kt")
         public void testOverrideAndImplement2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/overrideAndImplement2.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/overrideAndImplement2.kt");
         }
 
         @TestMetadata("overrideAndImplement3.kt")
         public void testOverrideAndImplement3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/overrideAndImplement3.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/overrideAndImplement3.kt");
         }
 
         @TestMetadata("overrideWithUsages.kt")
         public void testOverrideWithUsages() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/overrideWithUsages.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/overrideWithUsages.kt");
         }
 
         @TestMetadata("unsafeWithImportUsage.kt")
         public void testUnsafeWithImportUsage() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/unsafeWithImportUsage.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/unsafeWithImportUsage.kt");
         }
 
         @TestMetadata("withDefinitelyNotNullType.kt")
         public void testWithDefinitelyNotNullType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunction/withDefinitelyNotNullType.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunction/withDefinitelyNotNullType.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava")
+    @TestMetadata("testData/safeDelete/deleteFunction/kotlinFunctionWithJava")
     public static class KotlinFunctionWithJava extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doFunctionTestWithJava, this, testDataFilePath);
@@ -312,57 +312,57 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("funExt.kt")
         public void testFunExt() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/funExt.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/funExt.kt");
         }
 
         @TestMetadata("implement1.kt")
         public void testImplement1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/implement1.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/implement1.kt");
         }
 
         @TestMetadata("implement2.kt")
         public void testImplement2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/implement2.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/implement2.kt");
         }
 
         @TestMetadata("implement3.kt")
         public void testImplement3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/implement3.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/implement3.kt");
         }
 
         @TestMetadata("override1.kt")
         public void testOverride1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/override1.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/override1.kt");
         }
 
         @TestMetadata("override2.kt")
         public void testOverride2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/override2.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/override2.kt");
         }
 
         @TestMetadata("override3.kt")
         public void testOverride3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/override3.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/override3.kt");
         }
 
         @TestMetadata("overrideAndImplement1.kt")
         public void testOverrideAndImplement1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/overrideAndImplement1.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/overrideAndImplement1.kt");
         }
 
         @TestMetadata("overrideAndImplement2.kt")
         public void testOverrideAndImplement2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/overrideAndImplement2.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/overrideAndImplement2.kt");
         }
 
         @TestMetadata("usageInOverrideToDelete.kt")
         public void testUsageInOverrideToDelete() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava/usageInOverrideToDelete.kt");
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/usageInOverrideToDelete.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin")
+    @TestMetadata("testData/safeDelete/deleteFunction/javaFunctionWithKotlin")
     public static class JavaFunctionWithKotlin extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doJavaMethodTest, this, testDataFilePath);
@@ -370,17 +370,17 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("mixedHierarchy1.kt")
         public void testMixedHierarchy1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin/mixedHierarchy1.kt");
+            runTest("testData/safeDelete/deleteFunction/javaFunctionWithKotlin/mixedHierarchy1.kt");
         }
 
         @TestMetadata("mixedHierarchy2.kt")
         public void testMixedHierarchy2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin/mixedHierarchy2.kt");
+            runTest("testData/safeDelete/deleteFunction/javaFunctionWithKotlin/mixedHierarchy2.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty")
+    @TestMetadata("testData/safeDelete/deleteProperty/kotlinProperty")
     public static class KotlinProperty extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doPropertyTest, this, testDataFilePath);
@@ -388,147 +388,147 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("implement1.kt")
         public void testImplement1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement1.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/implement1.kt");
         }
 
         @TestMetadata("implement10.kt")
         public void testImplement10() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement10.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/implement10.kt");
         }
 
         @TestMetadata("implement2.kt")
         public void testImplement2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement2.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/implement2.kt");
         }
 
         @TestMetadata("implement3.kt")
         public void testImplement3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement3.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/implement3.kt");
         }
 
         @TestMetadata("implement4.kt")
         public void testImplement4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement4.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/implement4.kt");
         }
 
         @TestMetadata("implement5.kt")
         public void testImplement5() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement5.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/implement5.kt");
         }
 
         @TestMetadata("implement6.kt")
         public void testImplement6() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement6.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/implement6.kt");
         }
 
         @TestMetadata("implement7.kt")
         public void testImplement7() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement7.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/implement7.kt");
         }
 
         @TestMetadata("implement8.kt")
         public void testImplement8() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement8.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/implement8.kt");
         }
 
         @TestMetadata("implement9.kt")
         public void testImplement9() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement9.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/implement9.kt");
         }
 
         @TestMetadata("localVar.kt")
         public void testLocalVar() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/localVar.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/localVar.kt");
         }
 
         @TestMetadata("noUsages.kt")
         public void testNoUsages() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/noUsages.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/noUsages.kt");
         }
 
         @TestMetadata("override1.kt")
         public void testOverride1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/override1.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/override1.kt");
         }
 
         @TestMetadata("override2.kt")
         public void testOverride2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/override2.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/override2.kt");
         }
 
         @TestMetadata("override3.kt")
         public void testOverride3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/override3.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/override3.kt");
         }
 
         @TestMetadata("override4.kt")
         public void testOverride4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/override4.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/override4.kt");
         }
 
         @TestMetadata("overrideAndImplement1.kt")
         public void testOverrideAndImplement1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/overrideAndImplement1.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/overrideAndImplement1.kt");
         }
 
         @TestMetadata("overrideAndImplement2.kt")
         public void testOverrideAndImplement2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/overrideAndImplement2.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/overrideAndImplement2.kt");
         }
 
         @TestMetadata("overrideAndImplement3.kt")
         public void testOverrideAndImplement3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/overrideAndImplement3.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/overrideAndImplement3.kt");
         }
 
         @TestMetadata("overrideAndImplement4.kt")
         public void testOverrideAndImplement4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/overrideAndImplement4.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/overrideAndImplement4.kt");
         }
 
         @TestMetadata("overrideWithUsages.kt")
         public void testOverrideWithUsages() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/overrideWithUsages.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/overrideWithUsages.kt");
         }
 
         @TestMetadata("property1.kt")
         public void testProperty1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/property1.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/property1.kt");
         }
 
         @TestMetadata("property2.kt")
         public void testProperty2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/property2.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/property2.kt");
         }
 
         @TestMetadata("propertyExt1.kt")
         public void testPropertyExt1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/propertyExt1.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/propertyExt1.kt");
         }
 
         @TestMetadata("propertyExt2.kt")
         public void testPropertyExt2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/propertyExt2.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/propertyExt2.kt");
         }
 
         @TestMetadata("propertyInLocalObject.kt")
         public void testPropertyInLocalObject() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/propertyInLocalObject.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/propertyInLocalObject.kt");
         }
 
         @TestMetadata("propertyInLocalObject2.kt")
         public void testPropertyInLocalObject2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/propertyInLocalObject2.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/propertyInLocalObject2.kt");
         }
 
         @TestMetadata("when.kt")
         public void testWhen() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/when.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinProperty/when.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava")
+    @TestMetadata("testData/safeDelete/deleteProperty/kotlinPropertyWithJava")
     public static class KotlinPropertyWithJava extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doPropertyTestWithJava, this, testDataFilePath);
@@ -536,67 +536,67 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("implement1.kt")
         public void testImplement1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava/implement1.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinPropertyWithJava/implement1.kt");
         }
 
         @TestMetadata("implement2.kt")
         public void testImplement2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava/implement2.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinPropertyWithJava/implement2.kt");
         }
 
         @TestMetadata("implement3.kt")
         public void testImplement3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava/implement3.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinPropertyWithJava/implement3.kt");
         }
 
         @TestMetadata("implement4.kt")
         public void testImplement4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava/implement4.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinPropertyWithJava/implement4.kt");
         }
 
         @TestMetadata("override1.kt")
         public void testOverride1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava/override1.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinPropertyWithJava/override1.kt");
         }
 
         @TestMetadata("override2.kt")
         public void testOverride2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava/override2.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinPropertyWithJava/override2.kt");
         }
 
         @TestMetadata("override3.kt")
         public void testOverride3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava/override3.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinPropertyWithJava/override3.kt");
         }
 
         @TestMetadata("override4.kt")
         public void testOverride4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava/override4.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinPropertyWithJava/override4.kt");
         }
 
         @TestMetadata("overrideAndImplement1.kt")
         public void testOverrideAndImplement1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava/overrideAndImplement1.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinPropertyWithJava/overrideAndImplement1.kt");
         }
 
         @TestMetadata("overrideAndImplement2.kt")
         public void testOverrideAndImplement2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava/overrideAndImplement2.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinPropertyWithJava/overrideAndImplement2.kt");
         }
 
         @TestMetadata("propertyExt.kt")
         public void testPropertyExt() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava/propertyExt.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinPropertyWithJava/propertyExt.kt");
         }
 
         @TestMetadata("usageInOverrideToDelete.kt")
         public void testUsageInOverrideToDelete() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava/usageInOverrideToDelete.kt");
+            runTest("testData/safeDelete/deleteProperty/kotlinPropertyWithJava/usageInOverrideToDelete.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin")
+    @TestMetadata("testData/safeDelete/deleteProperty/javaPropertyWithKotlin")
     public static class JavaPropertyWithKotlin extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doJavaPropertyTest, this, testDataFilePath);
@@ -604,37 +604,37 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("middleJava1.kt")
         public void testMiddleJava1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava1.kt");
+            runTest("testData/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava1.kt");
         }
 
         @TestMetadata("middleJava2.kt")
         public void testMiddleJava2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava2.kt");
+            runTest("testData/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava2.kt");
         }
 
         @TestMetadata("middleJava3.kt")
         public void testMiddleJava3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava3.kt");
+            runTest("testData/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava3.kt");
         }
 
         @TestMetadata("middleJava4.kt")
         public void testMiddleJava4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava4.kt");
+            runTest("testData/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava4.kt");
         }
 
         @TestMetadata("middleJava5.kt")
         public void testMiddleJava5() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava5.kt");
+            runTest("testData/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava5.kt");
         }
 
         @TestMetadata("middleJava6.kt")
         public void testMiddleJava6() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava6.kt");
+            runTest("testData/safeDelete/deleteProperty/javaPropertyWithKotlin/middleJava6.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteTypeAlias/kotlinTypeAlias")
+    @TestMetadata("testData/safeDelete/deleteTypeAlias/kotlinTypeAlias")
     public static class KotlinTypeAlias extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTypeAliasTest, this, testDataFilePath);
@@ -642,17 +642,17 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeAlias/kotlinTypeAlias/simple.kt");
+            runTest("testData/safeDelete/deleteTypeAlias/kotlinTypeAlias/simple.kt");
         }
 
         @TestMetadata("used.kt")
         public void testUsed() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeAlias/kotlinTypeAlias/used.kt");
+            runTest("testData/safeDelete/deleteTypeAlias/kotlinTypeAlias/used.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter")
+    @TestMetadata("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter")
     public static class KotlinTypeParameter extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTypeParameterTest, this, testDataFilePath);
@@ -660,87 +660,87 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("internalUsages1.kt")
         public void testInternalUsages1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/internalUsages1.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/internalUsages1.kt");
         }
 
         @TestMetadata("internalUsages2.kt")
         public void testInternalUsages2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/internalUsages2.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/internalUsages2.kt");
         }
 
         @TestMetadata("internalUsages3.kt")
         public void testInternalUsages3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/internalUsages3.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/internalUsages3.kt");
         }
 
         @TestMetadata("internalUsages4.kt")
         public void testInternalUsages4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/internalUsages4.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/internalUsages4.kt");
         }
 
         @TestMetadata("internalUsages5.kt")
         public void testInternalUsages5() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/internalUsages5.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/internalUsages5.kt");
         }
 
         @TestMetadata("safeUsagesWithConstraint1.kt")
         public void testSafeUsagesWithConstraint1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/safeUsagesWithConstraint1.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/safeUsagesWithConstraint1.kt");
         }
 
         @TestMetadata("safeUsagesWithConstraint2.kt")
         public void testSafeUsagesWithConstraint2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/safeUsagesWithConstraint2.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/safeUsagesWithConstraint2.kt");
         }
 
         @TestMetadata("subclass1.kt")
         public void testSubclass1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/subclass1.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/subclass1.kt");
         }
 
         @TestMetadata("subclass2.kt")
         public void testSubclass2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/subclass2.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/subclass2.kt");
         }
 
         @TestMetadata("subst1.kt")
         public void testSubst1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst1.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst1.kt");
         }
 
         @TestMetadata("subst2.kt")
         public void testSubst2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst2.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst2.kt");
         }
 
         @TestMetadata("subst3.kt")
         public void testSubst3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst3.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst3.kt");
         }
 
         @TestMetadata("subst4.kt")
         public void testSubst4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst4.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst4.kt");
         }
 
         @TestMetadata("subst5.kt")
         public void testSubst5() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst5.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst5.kt");
         }
 
         @TestMetadata("subst6.kt")
         public void testSubst6() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst6.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst6.kt");
         }
 
         @TestMetadata("subst7.kt")
         public void testSubst7() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst7.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameter/subst7.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava")
+    @TestMetadata("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava")
     public static class KotlinTypeParameterWithJava extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTypeParameterTestWithJava, this, testDataFilePath);
@@ -748,92 +748,92 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("internalUsages1.kt")
         public void testInternalUsages1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/internalUsages1.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/internalUsages1.kt");
         }
 
         @TestMetadata("internalUsages2.kt")
         public void testInternalUsages2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/internalUsages2.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/internalUsages2.kt");
         }
 
         @TestMetadata("internalUsages3.kt")
         public void testInternalUsages3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/internalUsages3.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/internalUsages3.kt");
         }
 
         @TestMetadata("internalUsages4.kt")
         public void testInternalUsages4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/internalUsages4.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/internalUsages4.kt");
         }
 
         @TestMetadata("internalUsages5.kt")
         public void testInternalUsages5() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/internalUsages5.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/internalUsages5.kt");
         }
 
         @TestMetadata("rawType.kt")
         public void testRawType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/rawType.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/rawType.kt");
         }
 
         @TestMetadata("safeUsagesWithConstraint1.kt")
         public void testSafeUsagesWithConstraint1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/safeUsagesWithConstraint1.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/safeUsagesWithConstraint1.kt");
         }
 
         @TestMetadata("safeUsagesWithConstraint2.kt")
         public void testSafeUsagesWithConstraint2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/safeUsagesWithConstraint2.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/safeUsagesWithConstraint2.kt");
         }
 
         @TestMetadata("subclass1.kt")
         public void testSubclass1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subclass1.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subclass1.kt");
         }
 
         @TestMetadata("subclass2.kt")
         public void testSubclass2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subclass2.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subclass2.kt");
         }
 
         @TestMetadata("subst1.kt")
         public void testSubst1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst1.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst1.kt");
         }
 
         @TestMetadata("subst2.kt")
         public void testSubst2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst2.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst2.kt");
         }
 
         @TestMetadata("subst3.kt")
         public void testSubst3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst3.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst3.kt");
         }
 
         @TestMetadata("subst4.kt")
         public void testSubst4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst4.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst4.kt");
         }
 
         @TestMetadata("subst5.kt")
         public void testSubst5() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst5.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst5.kt");
         }
 
         @TestMetadata("subst6.kt")
         public void testSubst6() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst6.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst6.kt");
         }
 
         @TestMetadata("subst7.kt")
         public void testSubst7() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst7.kt");
+            runTest("testData/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava/subst7.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter")
+    @TestMetadata("testData/safeDelete/deleteValueParameter/kotlinValueParameter")
     public static class KotlinValueParameter extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doValueParameterTest, this, testDataFilePath);
@@ -841,352 +841,352 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("dataClassComponent.kt")
         public void testDataClassComponent() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/dataClassComponent.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/dataClassComponent.kt");
         }
 
         @TestMetadata("defaultParam1.kt")
         public void testDefaultParam1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/defaultParam1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/defaultParam1.kt");
         }
 
         @TestMetadata("defaultParam2.kt")
         public void testDefaultParam2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/defaultParam2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/defaultParam2.kt");
         }
 
         @TestMetadata("defaultParamWithNextArgs.kt")
         public void testDefaultParamWithNextArgs() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/defaultParamWithNextArgs.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/defaultParamWithNextArgs.kt");
         }
 
         @TestMetadata("defaultParamWithNextVarArgs.kt")
         public void testDefaultParamWithNextVarArgs() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/defaultParamWithNextVarArgs.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/defaultParamWithNextVarArgs.kt");
         }
 
         @TestMetadata("defaultParamWithTrailingLambda.kt")
         public void testDefaultParamWithTrailingLambda() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/defaultParamWithTrailingLambda.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/defaultParamWithTrailingLambda.kt");
         }
 
         @TestMetadata("defaultVarargsParam.kt")
         public void testDefaultVarargsParam() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/defaultVarargsParam.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/defaultVarargsParam.kt");
         }
 
         @TestMetadata("enumConstructor.kt")
         public void testEnumConstructor() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/enumConstructor.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/enumConstructor.kt");
         }
 
         @TestMetadata("extNamedParam1.kt")
         public void testExtNamedParam1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/extNamedParam1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/extNamedParam1.kt");
         }
 
         @TestMetadata("extNamedParam2.kt")
         public void testExtNamedParam2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/extNamedParam2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/extNamedParam2.kt");
         }
 
         @TestMetadata("hierarchyWithSafeUsages1.kt")
         public void testHierarchyWithSafeUsages1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages1.kt");
         }
 
         @TestMetadata("hierarchyWithSafeUsages2.kt")
         public void testHierarchyWithSafeUsages2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages2.kt");
         }
 
         @TestMetadata("hierarchyWithSafeUsages3.kt")
         public void testHierarchyWithSafeUsages3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages3.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages3.kt");
         }
 
         @TestMetadata("hierarchyWithSafeUsages4.kt")
         public void testHierarchyWithSafeUsages4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages4.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages4.kt");
         }
 
         @TestMetadata("hierarchyWithSafeUsages5.kt")
         public void testHierarchyWithSafeUsages5() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages5.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithSafeUsages5.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages1.kt")
         public void testHierarchyWithUnsafeUsages1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages1.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages2.kt")
         public void testHierarchyWithUnsafeUsages2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages2.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages3.kt")
         public void testHierarchyWithUnsafeUsages3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages3.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages3.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages4.kt")
         public void testHierarchyWithUnsafeUsages4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages4.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages4.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages5.kt")
         public void testHierarchyWithUnsafeUsages5() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages5.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages5.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages6.kt")
         public void testHierarchyWithUnsafeUsages6() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages6.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages6.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages7.kt")
         public void testHierarchyWithUnsafeUsages7() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages7.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages7.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages8.kt")
         public void testHierarchyWithUnsafeUsages8() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages8.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyWithUnsafeUsages8.kt");
         }
 
         @TestMetadata("internalUsage1.kt")
         public void testInternalUsage1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/internalUsage1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/internalUsage1.kt");
         }
 
         @TestMetadata("internalUsage2.kt")
         public void testInternalUsage2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/internalUsage2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/internalUsage2.kt");
         }
 
         @TestMetadata("lambdaArg.kt")
         public void testLambdaArg() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/lambdaArg.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/lambdaArg.kt");
         }
 
         @TestMetadata("lambdaArgExt.kt")
         public void testLambdaArgExt() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/lambdaArgExt.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/lambdaArgExt.kt");
         }
 
         @TestMetadata("namedDefaultParam.kt")
         public void testNamedDefaultParam() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/namedDefaultParam.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/namedDefaultParam.kt");
         }
 
         @TestMetadata("namedParam1.kt")
         public void testNamedParam1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/namedParam1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/namedParam1.kt");
         }
 
         @TestMetadata("namedParam2.kt")
         public void testNamedParam2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/namedParam2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/namedParam2.kt");
         }
 
         @TestMetadata("primaryConstructorParameterInDelegationCall.kt")
         public void testPrimaryConstructorParameterInDelegationCall() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInDelegationCall.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInDelegationCall.kt");
         }
 
         @TestMetadata("primaryConstructorParameterInInstanceCreation.kt")
         public void testPrimaryConstructorParameterInInstanceCreation() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInInstanceCreation.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInInstanceCreation.kt");
         }
 
         @TestMetadata("primaryConstructorParameterInSuperTypeList.kt")
         public void testPrimaryConstructorParameterInSuperTypeList() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInSuperTypeList.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInSuperTypeList.kt");
         }
 
         @TestMetadata("primaryConstructorParameterInTheMiddle.kt")
         public void testPrimaryConstructorParameterInTheMiddle() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInTheMiddle.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInTheMiddle.kt");
         }
 
         @TestMetadata("primaryConstructorParameterWithNamedArgument.kt")
         public void testPrimaryConstructorParameterWithNamedArgument() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterWithNamedArgument.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterWithNamedArgument.kt");
         }
 
         @TestMetadata("propertyParam1.kt")
         public void testPropertyParam1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/propertyParam1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/propertyParam1.kt");
         }
 
         @TestMetadata("propertyParam2.kt")
         public void testPropertyParam2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/propertyParam2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/propertyParam2.kt");
         }
 
         @TestMetadata("recursiveComplexExpression.kt")
         public void testRecursiveComplexExpression() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/recursiveComplexExpression.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/recursiveComplexExpression.kt");
         }
 
         @TestMetadata("recursiveMixedUsage.kt")
         public void testRecursiveMixedUsage() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/recursiveMixedUsage.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/recursiveMixedUsage.kt");
         }
 
         @TestMetadata("recursivePassThrough.kt")
         public void testRecursivePassThrough() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/recursivePassThrough.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/recursivePassThrough.kt");
         }
 
         @TestMetadata("recursivePassThroughDifferentReceiver.kt")
         public void testRecursivePassThroughDifferentReceiver() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/recursivePassThroughDifferentReceiver.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/recursivePassThroughDifferentReceiver.kt");
         }
 
         @TestMetadata("recursivePassThroughNamed.kt")
         public void testRecursivePassThroughNamed() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/recursivePassThroughNamed.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/recursivePassThroughNamed.kt");
         }
 
         @TestMetadata("safeUsages1.kt")
         public void testSafeUsages1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/safeUsages1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/safeUsages1.kt");
         }
 
         @TestMetadata("safeUsages2.kt")
         public void testSafeUsages2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/safeUsages2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/safeUsages2.kt");
         }
 
         @TestMetadata("safeUsages3.kt")
         public void testSafeUsages3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/safeUsages3.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/safeUsages3.kt");
         }
 
         @TestMetadata("safeUsagesExt1.kt")
         public void testSafeUsagesExt1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/safeUsagesExt1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/safeUsagesExt1.kt");
         }
 
         @TestMetadata("safeUsagesExt2.kt")
         public void testSafeUsagesExt2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/safeUsagesExt2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/safeUsagesExt2.kt");
         }
 
         @TestMetadata("secondaryConstructorParameterInDelegationCall.kt")
         public void testSecondaryConstructorParameterInDelegationCall() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInDelegationCall.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInDelegationCall.kt");
         }
 
         @TestMetadata("secondaryConstructorParameterInInstanceCreation.kt")
         public void testSecondaryConstructorParameterInInstanceCreation() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInInstanceCreation.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInInstanceCreation.kt");
         }
 
         @TestMetadata("secondaryConstructorParameterInSuperTypeList.kt")
         public void testSecondaryConstructorParameterInSuperTypeList() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInSuperTypeList.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInSuperTypeList.kt");
         }
 
         @TestMetadata("secondaryConstructorParameterInTheMiddle.kt")
         public void testSecondaryConstructorParameterInTheMiddle() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInTheMiddle.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInTheMiddle.kt");
         }
 
         @TestMetadata("secondaryConstructorParameterWithNamedArgument.kt")
         public void testSecondaryConstructorParameterWithNamedArgument() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterWithNamedArgument.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterWithNamedArgument.kt");
         }
 
         @TestMetadata("setter.kt")
         public void testSetter() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/setter.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/setter.kt");
         }
 
         @TestMetadata("unusedContextParametersInFunction.kt")
         public void testUnusedContextParametersInFunction() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunction.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunction.kt");
         }
 
         @TestMetadata("unusedContextParametersInFunction1.kt")
         public void testUnusedContextParametersInFunction1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunction1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunction1.kt");
         }
 
         @TestMetadata("unusedContextParametersInFunctionChildInHierarchy.kt")
         public void testUnusedContextParametersInFunctionChildInHierarchy() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionChildInHierarchy.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionChildInHierarchy.kt");
         }
 
         @TestMetadata("unusedContextParametersInFunctionHierarchy.kt")
         public void testUnusedContextParametersInFunctionHierarchy() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionHierarchy.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionHierarchy.kt");
         }
 
         @TestMetadata("unusedContextParametersInFunctionMultipleParameters.kt")
         public void testUnusedContextParametersInFunctionMultipleParameters() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionMultipleParameters.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionMultipleParameters.kt");
         }
 
         @TestMetadata("unusedContextParametersInFunctionMultipleParameters1.kt")
         public void testUnusedContextParametersInFunctionMultipleParameters1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionMultipleParameters1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionMultipleParameters1.kt");
         }
 
         @TestMetadata("unusedContextParametersInProperty.kt")
         public void testUnusedContextParametersInProperty() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInProperty.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInProperty.kt");
         }
 
         @TestMetadata("unusedContextParametersInPropertyChildHierarchy.kt")
         public void testUnusedContextParametersInPropertyChildHierarchy() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInPropertyChildHierarchy.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInPropertyChildHierarchy.kt");
         }
 
         @TestMetadata("unusedContextParametersInPropertyHierarchy.kt")
         public void testUnusedContextParametersInPropertyHierarchy() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInPropertyHierarchy.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInPropertyHierarchy.kt");
         }
 
         @TestMetadata("usedContextParametersInFunction.kt")
         public void testUsedContextParametersInFunction() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunction.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunction.kt");
         }
 
         @TestMetadata("usedContextParametersInFunction1.kt")
         public void testUsedContextParametersInFunction1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunction1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunction1.kt");
         }
 
         @TestMetadata("usedContextParametersInFunction2.kt")
         public void testUsedContextParametersInFunction2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunction2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunction2.kt");
         }
 
         @TestMetadata("usedContextParametersInFunctionInvoke.kt")
         public void testUsedContextParametersInFunctionInvoke() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunctionInvoke.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunctionInvoke.kt");
         }
 
         @TestMetadata("usedContextParametersInImplicitInvoke.kt")
         public void testUsedContextParametersInImplicitInvoke() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInImplicitInvoke.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInImplicitInvoke.kt");
         }
 
         @TestMetadata("usedContextParametersInNestedFunction.kt")
         public void testUsedContextParametersInNestedFunction() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInNestedFunction.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInNestedFunction.kt");
         }
 
         @TestMetadata("usedContextParametersInProperty.kt")
         public void testUsedContextParametersInProperty() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInProperty.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInProperty.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava")
+    @TestMetadata("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava")
     public static class KotlinValueParameterWithJava extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doValueParameterTestWithJava, this, testDataFilePath);
@@ -1194,162 +1194,162 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("dataClassComponent.kt")
         public void testDataClassComponent() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/dataClassComponent.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/dataClassComponent.kt");
         }
 
         @TestMetadata("hierarchyWithSafeUsages1.kt")
         public void testHierarchyWithSafeUsages1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages1.kt");
         }
 
         @TestMetadata("hierarchyWithSafeUsages2.kt")
         public void testHierarchyWithSafeUsages2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages2.kt");
         }
 
         @TestMetadata("hierarchyWithSafeUsages3.kt")
         public void testHierarchyWithSafeUsages3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages3.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages3.kt");
         }
 
         @TestMetadata("hierarchyWithSafeUsages4.kt")
         public void testHierarchyWithSafeUsages4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages4.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages4.kt");
         }
 
         @TestMetadata("hierarchyWithSafeUsages5.kt")
         public void testHierarchyWithSafeUsages5() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages5.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithSafeUsages5.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages1.kt")
         public void testHierarchyWithUnsafeUsages1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages1.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages2.kt")
         public void testHierarchyWithUnsafeUsages2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages2.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages3.kt")
         public void testHierarchyWithUnsafeUsages3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages3.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages3.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages4.kt")
         public void testHierarchyWithUnsafeUsages4() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages4.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages4.kt");
         }
 
         @TestMetadata("hierarchyWithUnsafeUsages5.kt")
         public void testHierarchyWithUnsafeUsages5() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages5.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyWithUnsafeUsages5.kt");
         }
 
         @TestMetadata("internalUsage1.kt")
         public void testInternalUsage1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/internalUsage1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/internalUsage1.kt");
         }
 
         @TestMetadata("internalUsage2.kt")
         public void testInternalUsage2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/internalUsage2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/internalUsage2.kt");
         }
 
         @TestMetadata("lambdaArg.kt")
         public void testLambdaArg() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/lambdaArg.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/lambdaArg.kt");
         }
 
         @TestMetadata("lambdaArgExt.kt")
         public void testLambdaArgExt() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/lambdaArgExt.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/lambdaArgExt.kt");
         }
 
         @TestMetadata("mixedHierarchy1.kt")
         public void testMixedHierarchy1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchy1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchy1.kt");
         }
 
         @TestMetadata("mixedHierarchy2.kt")
         public void testMixedHierarchy2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchy2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchy2.kt");
         }
 
         @TestMetadata("mixedHierarchy3.kt")
         public void testMixedHierarchy3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchy3.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchy3.kt");
         }
 
         @TestMetadata("mixedHierarchyWithUnsafeUsages1.kt")
         public void testMixedHierarchyWithUnsafeUsages1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchyWithUnsafeUsages1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchyWithUnsafeUsages1.kt");
         }
 
         @TestMetadata("mixedHierarchyWithUnsafeUsages2.kt")
         public void testMixedHierarchyWithUnsafeUsages2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchyWithUnsafeUsages2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchyWithUnsafeUsages2.kt");
         }
 
         @TestMetadata("mixedHierarchyWithUnsafeUsages3.kt")
         public void testMixedHierarchyWithUnsafeUsages3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchyWithUnsafeUsages3.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchyWithUnsafeUsages3.kt");
         }
 
         @TestMetadata("primaryConstructorParameterInDelegationCall.kt")
         public void testPrimaryConstructorParameterInDelegationCall() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/primaryConstructorParameterInDelegationCall.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/primaryConstructorParameterInDelegationCall.kt");
         }
 
         @TestMetadata("propertyParam1.kt")
         public void testPropertyParam1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/propertyParam1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/propertyParam1.kt");
         }
 
         @TestMetadata("propertyParam2.kt")
         public void testPropertyParam2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/propertyParam2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/propertyParam2.kt");
         }
 
         @TestMetadata("propertyParam3.kt")
         public void testPropertyParam3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/propertyParam3.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/propertyParam3.kt");
         }
 
         @TestMetadata("safeUsages1.kt")
         public void testSafeUsages1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsages1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsages1.kt");
         }
 
         @TestMetadata("safeUsages2.kt")
         public void testSafeUsages2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsages2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsages2.kt");
         }
 
         @TestMetadata("safeUsages3.kt")
         public void testSafeUsages3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsages3.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsages3.kt");
         }
 
         @TestMetadata("safeUsagesExt1.kt")
         public void testSafeUsagesExt1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsagesExt1.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsagesExt1.kt");
         }
 
         @TestMetadata("safeUsagesExt2.kt")
         public void testSafeUsagesExt2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsagesExt2.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsagesExt2.kt");
         }
 
         @TestMetadata("secondaryConstructorParameterInDelegationCall.kt")
         public void testSecondaryConstructorParameterInDelegationCall() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/secondaryConstructorParameterInDelegationCall.kt");
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/secondaryConstructorParameterInDelegationCall.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin")
+    @TestMetadata("testData/safeDelete/deleteValueParameter/javaParameterWithKotlin")
     public static class JavaParameterWithKotlin extends AbstractK2SafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doJavaParameterTest, this, testDataFilePath);
@@ -1357,7 +1357,7 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
 
         @TestMetadata("hierarchyWithoutConflict.java")
         public void testHierarchyWithoutConflict() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin/hierarchyWithoutConflict.java");
+            runTest("testData/safeDelete/deleteValueParameter/javaParameterWithKotlin/hierarchyWithoutConflict.java");
         }
     }
 }

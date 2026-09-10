@@ -6,9 +6,9 @@ import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsExcepti
 import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
 import org.jetbrains.kotlin.psi.KtElement
@@ -24,9 +24,9 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
         isMultiModule = true
     }
 
-    override fun getTestRoot(): String = "/refactoring/changeSignatureMultiModule/"
+    override fun getTestRoot(): String = "/changeSignatureMultiModule/"
 
-    override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR
+    override fun getTestDataDirectory() = KotlinRoot.DIR.resolve("refactorings/kotlin.refactorings.tests.k2/testData")
 
     private fun doTest(filePath: String, configure: KotlinChangeInfo.() -> Unit) {
         doTestCommittingDocuments { rootDir, _ ->

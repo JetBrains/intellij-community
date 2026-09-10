@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/movePackage")
+@TestMetadata("testData/movePackage")
 public class K2MovePackageTestGenerated extends AbstractK2MovePackageTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,6 +25,6 @@ public class K2MovePackageTestGenerated extends AbstractK2MovePackageTest {
 
     @TestMetadata("mixedJavaKotlin/mixedJavaKotlin.test")
     public void testMixedJavaKotlin_MixedJavaKotlin() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/movePackage/mixedJavaKotlin/mixedJavaKotlin.test");
+        runTest("testData/movePackage/mixedJavaKotlin/mixedJavaKotlin.test");
     }
 }

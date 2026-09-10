@@ -17,10 +17,10 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/introduceConstant")
+@TestMetadata("testData/introduceConstant")
 public abstract class K2IntroduceConstantTestGenerated extends AbstractK2IntroduceConstantTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression")
+    @TestMetadata("testData/introduceConstant/binaryExpression")
     public static class BinaryExpression extends AbstractK2IntroduceConstantTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
@@ -28,122 +28,122 @@ public abstract class K2IntroduceConstantTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("integerCompareTo.kt")
         public void testIntegerCompareTo() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerCompareTo.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerCompareTo.kt");
         }
 
         @TestMetadata("integerDec.kt")
         public void testIntegerDec() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerDec.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerDec.kt");
         }
 
         @TestMetadata("integerDiv.kt")
         public void testIntegerDiv() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerDiv.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerDiv.kt");
         }
 
         @TestMetadata("integerEquals.kt")
         public void testIntegerEquals() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerEquals.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerEquals.kt");
         }
 
         @TestMetadata("integerInc.kt")
         public void testIntegerInc() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerInc.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerInc.kt");
         }
 
         @TestMetadata("integerMinus.kt")
         public void testIntegerMinus() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerMinus.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerMinus.kt");
         }
 
         @TestMetadata("integerPlus.kt")
         public void testIntegerPlus() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerPlus.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerPlus.kt");
         }
 
         @TestMetadata("integerPlusConstVal.kt")
         public void testIntegerPlusConstVal() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerPlusConstVal.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerPlusConstVal.kt");
         }
 
         @TestMetadata("integerPlusConstValTwice.kt")
         public void testIntegerPlusConstValTwice() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerPlusConstValTwice.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerPlusConstValTwice.kt");
         }
 
         @TestMetadata("integerPlusFun.kt")
         public void testIntegerPlusFun() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerPlusFun.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerPlusFun.kt");
         }
 
         @TestMetadata("integerPlusVal.kt")
         public void testIntegerPlusVal() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerPlusVal.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerPlusVal.kt");
         }
 
         @TestMetadata("integerPlusVar.kt")
         public void testIntegerPlusVar() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerPlusVar.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerPlusVar.kt");
         }
 
         @TestMetadata("integerRem.kt")
         public void testIntegerRem() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerRem.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerRem.kt");
         }
 
         @TestMetadata("integerTimes.kt")
         public void testIntegerTimes() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerTimes.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerTimes.kt");
         }
 
         @TestMetadata("integerUnaryMinus.kt")
         public void testIntegerUnaryMinus() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerUnaryMinus.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerUnaryMinus.kt");
         }
 
         @TestMetadata("integerUnaryPlus.kt")
         public void testIntegerUnaryPlus() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/integerUnaryPlus.kt");
+            runTest("testData/introduceConstant/binaryExpression/integerUnaryPlus.kt");
         }
 
         @TestMetadata("paranthesis.kt")
         public void testParanthesis() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/paranthesis.kt");
+            runTest("testData/introduceConstant/binaryExpression/paranthesis.kt");
         }
 
         @TestMetadata("paranthesisBroken.kt")
         public void testParanthesisBroken() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/paranthesisBroken.kt");
+            runTest("testData/introduceConstant/binaryExpression/paranthesisBroken.kt");
         }
 
         @TestMetadata("stringCompareTo.kt")
         public void testStringCompareTo() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/stringCompareTo.kt");
+            runTest("testData/introduceConstant/binaryExpression/stringCompareTo.kt");
         }
 
         @TestMetadata("stringCustomOperator.kt")
         public void testStringCustomOperator() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/stringCustomOperator.kt");
+            runTest("testData/introduceConstant/binaryExpression/stringCustomOperator.kt");
         }
 
         @TestMetadata("stringEquals.kt")
         public void testStringEquals() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/stringEquals.kt");
+            runTest("testData/introduceConstant/binaryExpression/stringEquals.kt");
         }
 
         @TestMetadata("stringPlus.kt")
         public void testStringPlus() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/stringPlus.kt");
+            runTest("testData/introduceConstant/binaryExpression/stringPlus.kt");
         }
 
         @TestMetadata("stringPlusPartNotConst.kt")
         public void testStringPlusPartNotConst() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/binaryExpression/stringPlusPartNotConst.kt");
+            runTest("testData/introduceConstant/binaryExpression/stringPlusPartNotConst.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceConstant/dotQualifiedExpression")
+    @TestMetadata("testData/introduceConstant/dotQualifiedExpression")
     public static class DotQualifiedExpression extends AbstractK2IntroduceConstantTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
@@ -151,57 +151,57 @@ public abstract class K2IntroduceConstantTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("and.kt")
         public void testAnd() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/dotQualifiedExpression/and.kt");
+            runTest("testData/introduceConstant/dotQualifiedExpression/and.kt");
         }
 
         @TestMetadata("inv.kt")
         public void testInv() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/dotQualifiedExpression/inv.kt");
+            runTest("testData/introduceConstant/dotQualifiedExpression/inv.kt");
         }
 
         @TestMetadata("or.kt")
         public void testOr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/dotQualifiedExpression/or.kt");
+            runTest("testData/introduceConstant/dotQualifiedExpression/or.kt");
         }
 
         @TestMetadata("plus.kt")
         public void testPlus() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/dotQualifiedExpression/plus.kt");
+            runTest("testData/introduceConstant/dotQualifiedExpression/plus.kt");
         }
 
         @TestMetadata("shl.kt")
         public void testShl() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/dotQualifiedExpression/shl.kt");
+            runTest("testData/introduceConstant/dotQualifiedExpression/shl.kt");
         }
 
         @TestMetadata("shr.kt")
         public void testShr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/dotQualifiedExpression/shr.kt");
+            runTest("testData/introduceConstant/dotQualifiedExpression/shr.kt");
         }
 
         @TestMetadata("toByte.kt")
         public void testToByte() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/dotQualifiedExpression/toByte.kt");
+            runTest("testData/introduceConstant/dotQualifiedExpression/toByte.kt");
         }
 
         @TestMetadata("toFloat.kt")
         public void testToFloat() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/dotQualifiedExpression/toFloat.kt");
+            runTest("testData/introduceConstant/dotQualifiedExpression/toFloat.kt");
         }
 
         @TestMetadata("ushr.kt")
         public void testUshr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/dotQualifiedExpression/ushr.kt");
+            runTest("testData/introduceConstant/dotQualifiedExpression/ushr.kt");
         }
 
         @TestMetadata("xor.kt")
         public void testXor() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/dotQualifiedExpression/xor.kt");
+            runTest("testData/introduceConstant/dotQualifiedExpression/xor.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceConstant/stringTemplates")
+    @TestMetadata("testData/introduceConstant/stringTemplates")
     public static class StringTemplates extends AbstractK2IntroduceConstantTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
@@ -209,57 +209,57 @@ public abstract class K2IntroduceConstantTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("brokenEntryWithBlockExpr.kt")
         public void testBrokenEntryWithBlockExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/stringTemplates/brokenEntryWithBlockExpr.kt");
+            runTest("testData/introduceConstant/stringTemplates/brokenEntryWithBlockExpr.kt");
         }
 
         @TestMetadata("brokenEntryWithExpr.kt")
         public void testBrokenEntryWithExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/stringTemplates/brokenEntryWithExpr.kt");
+            runTest("testData/introduceConstant/stringTemplates/brokenEntryWithExpr.kt");
         }
 
         @TestMetadata("brokenEscapeEntry.kt")
         public void testBrokenEscapeEntry() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/stringTemplates/brokenEscapeEntry.kt");
+            runTest("testData/introduceConstant/stringTemplates/brokenEscapeEntry.kt");
         }
 
         @TestMetadata("extractFalse.kt")
         public void testExtractFalse() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/stringTemplates/extractFalse.kt");
+            runTest("testData/introduceConstant/stringTemplates/extractFalse.kt");
         }
 
         @TestMetadata("extractIntegerLiteral.kt")
         public void testExtractIntegerLiteral() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/stringTemplates/extractIntegerLiteral.kt");
+            runTest("testData/introduceConstant/stringTemplates/extractIntegerLiteral.kt");
         }
 
         @TestMetadata("extractTrue.kt")
         public void testExtractTrue() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/stringTemplates/extractTrue.kt");
+            runTest("testData/introduceConstant/stringTemplates/extractTrue.kt");
         }
 
         @TestMetadata("partTemplate.kt")
         public void testPartTemplate() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/stringTemplates/partTemplate.kt");
+            runTest("testData/introduceConstant/stringTemplates/partTemplate.kt");
         }
 
         @TestMetadata("singleEntryPrefix.kt")
         public void testSingleEntryPrefix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/stringTemplates/singleEntryPrefix.kt");
+            runTest("testData/introduceConstant/stringTemplates/singleEntryPrefix.kt");
         }
 
         @TestMetadata("singleEntrySubstring.kt")
         public void testSingleEntrySubstring() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/stringTemplates/singleEntrySubstring.kt");
+            runTest("testData/introduceConstant/stringTemplates/singleEntrySubstring.kt");
         }
 
         @TestMetadata("singleEntrySuffix.kt")
         public void testSingleEntrySuffix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/stringTemplates/singleEntrySuffix.kt");
+            runTest("testData/introduceConstant/stringTemplates/singleEntrySuffix.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceConstant")
+    @TestMetadata("testData/introduceConstant")
     public static class Uncategorized extends AbstractK2IntroduceConstantTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
@@ -267,32 +267,32 @@ public abstract class K2IntroduceConstantTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("extractFromAnnotationArg.kt")
         public void testExtractFromAnnotationArg() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/extractFromAnnotationArg.kt");
+            runTest("testData/introduceConstant/extractFromAnnotationArg.kt");
         }
 
         @TestMetadata("extractInteger.kt")
         public void testExtractInteger() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/extractInteger.kt");
+            runTest("testData/introduceConstant/extractInteger.kt");
         }
 
         @TestMetadata("extractMultipleExpressions.kt")
         public void testExtractMultipleExpressions() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/extractMultipleExpressions.kt");
+            runTest("testData/introduceConstant/extractMultipleExpressions.kt");
         }
 
         @TestMetadata("extractPartNonConstVal.kt")
         public void testExtractPartNonConstVal() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/extractPartNonConstVal.kt");
+            runTest("testData/introduceConstant/extractPartNonConstVal.kt");
         }
 
         @TestMetadata("extractWithNameClash.kt")
         public void testExtractWithNameClash() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/extractWithNameClash.kt");
+            runTest("testData/introduceConstant/extractWithNameClash.kt");
         }
 
         @TestMetadata("onlyCurrentOccurrence.kt")
         public void testOnlyCurrentOccurrence() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceConstant/onlyCurrentOccurrence.kt");
+            runTest("testData/introduceConstant/onlyCurrentOccurrence.kt");
         }
     }
 }

@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 @TestDataPath($$"$CONTENT_ROOT")
 @RunWith(JUnit38ClassRunner::class)
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
-@TestMetadata("../../idea/tests/testData/refactoring/moveDescriptors")
+@TestMetadata("testData/refactoring/moveDescriptors")
 class K2CheckDescriptorMultiModuleMoveTest : AbstractK2CheckDescriptorMultiModuleMoveTest() {
 
     @TestMetadata("moveExpectProperty")

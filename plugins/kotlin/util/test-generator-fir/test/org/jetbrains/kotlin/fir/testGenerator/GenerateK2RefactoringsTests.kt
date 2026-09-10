@@ -46,153 +46,153 @@ import org.jetbrains.kotlin.testGenerator.model.testClass
 import org.jetbrains.kotlin.testGenerator.model.testGroup
 
 internal fun MutableTWorkspace.generateK2RefactoringsTests() {
-    testGroup("refactorings/kotlin.refactorings.tests.k2", category = REFACTORING, testDataPath = "../../idea/tests/testData") {
+    testGroup("refactorings/kotlin.refactorings.tests.k2", category = REFACTORING) {
         testClass<AbstractK2SafeDeleteTest> {
-            model("refactoring/safeDelete/deleteClass/kotlinClass", testMethodName = "doClassTest")
+            model("safeDelete/deleteClass/kotlinClass", testMethodName = "doClassTest")
             //todo secondary constructor
-            model("refactoring/safeDelete/deleteClass/kotlinClassWithJava", testMethodName = "doClassTestWithJava")
-            model("refactoring/safeDelete/deleteClass/javaClassWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaClassTest")
-            model("refactoring/safeDelete/deleteObject/kotlinObject", testMethodName = "doObjectTest")
-            model("refactoring/safeDelete/deleteFunction/kotlinFunction", testMethodName = "doFunctionTest")
+            model("safeDelete/deleteClass/kotlinClassWithJava", testMethodName = "doClassTestWithJava")
+            model("safeDelete/deleteClass/javaClassWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaClassTest")
+            model("safeDelete/deleteObject/kotlinObject", testMethodName = "doObjectTest")
+            model("safeDelete/deleteFunction/kotlinFunction", testMethodName = "doFunctionTest")
             model(
-                "refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava",
+                "safeDelete/deleteFunction/kotlinFunctionWithJava",
                 Patterns.forRegex("^(((?!secondary)(?!implement4).)+)\\.kt"), //todo secondary constructor, super method search from java override
                 testMethodName = "doFunctionTestWithJava"
             )
-            model("refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin", testMethodName = "doJavaMethodTest")
-            model("refactoring/safeDelete/deleteProperty/kotlinProperty", testMethodName = "doPropertyTest")
-            model("refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava", testMethodName = "doPropertyTestWithJava")//todo  super method search from java override
-            model("refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin", testMethodName = "doJavaPropertyTest")
-            model("refactoring/safeDelete/deleteTypeAlias/kotlinTypeAlias", testMethodName = "doTypeAliasTest")
-            model("refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter", testMethodName = "doTypeParameterTest")
-            model("refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava", testMethodName = "doTypeParameterTestWithJava")
-            model("refactoring/safeDelete/deleteValueParameter/kotlinValueParameter", testMethodName = "doValueParameterTest")
+            model("safeDelete/deleteFunction/javaFunctionWithKotlin", testMethodName = "doJavaMethodTest")
+            model("safeDelete/deleteProperty/kotlinProperty", testMethodName = "doPropertyTest")
+            model("safeDelete/deleteProperty/kotlinPropertyWithJava", testMethodName = "doPropertyTestWithJava")//todo  super method search from java override
+            model("safeDelete/deleteProperty/javaPropertyWithKotlin", testMethodName = "doJavaPropertyTest")
+            model("safeDelete/deleteTypeAlias/kotlinTypeAlias", testMethodName = "doTypeAliasTest")
+            model("safeDelete/deleteTypeParameter/kotlinTypeParameter", testMethodName = "doTypeParameterTest")
+            model("safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava", testMethodName = "doTypeParameterTestWithJava")
+            model("safeDelete/deleteValueParameter/kotlinValueParameter", testMethodName = "doValueParameterTest")
             model(
-                "refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava",
+                "safeDelete/deleteValueParameter/kotlinValueParameterWithJava",
                 testMethodName = "doValueParameterTestWithJava"
             )
             model(
-                "refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin",
+                "safeDelete/deleteValueParameter/javaParameterWithKotlin",
                 pattern = Patterns.JAVA,
                 testMethodName = "doJavaParameterTest"
             )
         }
 
         testClass<AbstractFirMultiModuleSafeDeleteTest> {
-            model("refactoring/safeDeleteMultiModule", pattern = TEST, flatten = true)
+            model("safeDeleteMultiModule", pattern = TEST, flatten = true)
         }
 
         testClass<AbstractK2BindToElementTest> {
-            model("refactoring/bindToFqn")
-            model("refactoring/bindToElement")
+            model("bindToFqn")
+            model("bindToElement")
         }
         testClass<AbstractK2BindToFqnTest> {
-            model("refactoring/bindToFqn")
+            model("bindToFqn")
         }
     }
-    testGroup("refactorings/kotlin.refactorings.tests.k2", category = INLINE_REFACTORING, testDataPath = "../../idea/tests/testData") {
+    testGroup("refactorings/kotlin.refactorings.tests.k2", category = INLINE_REFACTORING) {
         testClass<AbstractKotlinFirInlineTest> {
-            model("refactoring/inline", pattern = Patterns.KT_WITHOUT_DOTS, excludedDirectories = listOf("withFullJdk"))
+            model("inline", pattern = Patterns.KT_WITHOUT_DOTS, excludedDirectories = listOf("withFullJdk"))
         }
 
         testClass<AbstractInlineTestWithSomeDescriptors> {
-            model("refactoring/inline/withFullJdk", pattern = KT_WITHOUT_DOTS)
+            model("inline/withFullJdk", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractKotlinFirMultiplatformTest> {
-            model("refactoring/inlineMultiModule", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("inlineMultiModule", pattern = Patterns.KT_WITHOUT_DOTS)
         }
     }
-    testGroup("refactorings/kotlin.refactorings.tests.k2", category = EXTRACT_REFACTORING, testDataPath = "../../idea/tests/testData") {
+    testGroup("refactorings/kotlin.refactorings.tests.k2", category = EXTRACT_REFACTORING) {
         testClass<AbstractK2IntroduceFunctionTest> {
-            model("refactoring/extractFunction", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest")
+            model("extractFunction", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest")
         }
 
         testClass<AbstractK2IntroduceTypeAliasTest> {
-            model("refactoring/introduceTypeAlias", pattern = Patterns.KT_OR_KTS, testMethodName = "doIntroduceTypeAliasTest")
+            model("introduceTypeAlias", pattern = Patterns.KT_OR_KTS, testMethodName = "doIntroduceTypeAliasTest")
         }
 
         testClass<AbstractK2IntroduceFunctionWithExtractFunctionModifierTest> {
-            model("refactoring/extractFunctionModifier", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest")
+            model("extractFunctionModifier", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest")
         }
 
         testClass<AbstractK2InplaceIntroduceFunctionTest> {
-            model("refactoring/extractFunctionInplace")
+            model("extractFunctionInplace")
         }
 
         testClass<AbstractK2IntroduceParameterTest> {
-            model("refactoring/introduceParameter", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceParameterTest")
-            model("refactoring/introduceJavaParameter", pattern = Patterns.JAVA, testMethodName = "doIntroduceJavaParameterTest")
-            model("refactoring/introduceLambdaParameter", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceFunctionalParameterTest")
+            model("introduceParameter", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceParameterTest")
+            model("introduceJavaParameter", pattern = Patterns.JAVA, testMethodName = "doIntroduceJavaParameterTest")
+            model("introduceLambdaParameter", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceFunctionalParameterTest")
         }
 
         testClass<AbstractK2IntroducePropertyTest> {
-            model("refactoring/introduceProperty", pattern = Patterns.KT_OR_KTS, testMethodName = "doIntroducePropertyTest")
+            model("introduceProperty", pattern = Patterns.KT_OR_KTS, testMethodName = "doIntroducePropertyTest")
         }
 
         testClass<AbstractK2IntroduceConstantTest> {
-            model("refactoring/introduceConstant", pattern = Patterns.KT_OR_KTS, testMethodName = "doIntroduceConstantTest")
+            model("introduceConstant", pattern = Patterns.KT_OR_KTS, testMethodName = "doIntroduceConstantTest")
         }
     }
 
-    testGroup("refactorings/kotlin.refactorings.tests.k2", category = REFACTORING, testDataPath = "../../idea/tests/testData") {
+    testGroup("refactorings/kotlin.refactorings.tests.k2", category = REFACTORING) {
         testClass< AbstractK2CopyTest> {
-            model("refactoring/copy", pattern = TEST, flatten = true)
+            model("copy", pattern = TEST, flatten = true)
         }
 
         testClass<AbstractK2MultiModuleCopyTest> {
-            model("refactoring/copyMultiModule", pattern = TEST, flatten = true)
+            model("copyMultiModule", pattern = TEST, flatten = true)
         }
     }
 
-    testGroup("refactorings/kotlin.refactorings.tests.k2", category = MOVE_REFACTORING, testDataPath = "../../idea/tests/testData") {
+    testGroup("refactorings/kotlin.refactorings.tests.k2", category = MOVE_REFACTORING) {
         testClass<AbstractK2ChangePackageTest> {
-            model("refactoring/changePackage", pattern = TEST, flatten = true)
+            model("changePackage", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2MovePackageTest> {
-            model("refactoring/movePackage", pattern = TEST, flatten = true)
+            model("movePackage", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2MoveDirectoryTest> {
-            model("refactoring/moveDirectory", pattern = TEST, flatten = true)
+            model("moveDirectory", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2MoveFileOrDirectoriesTest> {
-            model("refactoring/moveFile", pattern = TEST, flatten = true)
+            model("moveFile", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2MoveTopLevelTest> {
-            model("refactoring/moveTopLevel", pattern = TEST, flatten = true)
+            model("moveTopLevel", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2MoveTopLevelToInnerTest> {
-            model("refactoring/moveTopLevelToInner", pattern = TEST, flatten = true)
+            model("moveTopLevelToInner", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2MoveNestedTest> {
-            model("refactoring/moveNested", pattern = TEST, flatten = true)
+            model("moveNested", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2MultiModuleMoveTest> {
-            model("refactoring/moveMultiModule", pattern = TEST, flatten = true)
+            model("moveMultiModule", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2MoveToClassWithConversionTest> {
-            model("refactoring/moveToClassWithConversion", pattern = TEST, flatten = true)
+            model("moveToClassWithConversion", pattern = TEST, flatten = true)
         }
     }
 
-    testGroup("refactorings/kotlin.refactorings.tests.k2", category = EXTRACT_REFACTORING, testDataPath = "../../idea/tests/testData") {
+    testGroup("refactorings/kotlin.refactorings.tests.k2", category = EXTRACT_REFACTORING) {
         testClass<AbstractK2IntroduceVariableTest> {
-            model("refactoring/introduceVariable", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceVariableTest")
+            model("introduceVariable", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceVariableTest")
         }
         testClass<AbstractK2PsiUnifierTest> {
-            model("unifier")
+            model("../../../idea/tests/testData/unifier")
         }
         testClass<AbstractK2PullUpTest> {
-            model("refactoring/pullUp/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
-            model("refactoring/pullUp/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
+            model("pullUp/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
+            model("pullUp/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
         }
         testClass<AbstractK2PushDownTest> {
-            model("refactoring/pushDown/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
-            model("refactoring/pushDown/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
+            model("pushDown/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
+            model("pushDown/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
         }
         testClass<AbstractK2ExtractionTest> {
-            model("refactoring/extractSuperclass", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractSuperclassTest")
-            model("refactoring/extractInterface", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractInterfaceTest")
+            model("extractSuperclass", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractSuperclassTest")
+            model("extractInterface", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractInterfaceTest")
         }
     }
 }

@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/extractFunctionModifier")
+@TestMetadata("testData/extractFunctionModifier")
 public class K2IntroduceFunctionWithExtractFunctionModifierTestGenerated extends AbstractK2IntroduceFunctionWithExtractFunctionModifierTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
@@ -25,11 +25,11 @@ public class K2IntroduceFunctionWithExtractFunctionModifierTestGenerated extends
 
     @TestMetadata("composableFunction.kt")
     public void testComposableFunction() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionModifier/composableFunction.kt");
+        runTest("testData/extractFunctionModifier/composableFunction.kt");
     }
 
     @TestMetadata("composableLambda.kt")
     public void testComposableLambda() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionModifier/composableLambda.kt");
+        runTest("testData/extractFunctionModifier/composableLambda.kt");
     }
 }

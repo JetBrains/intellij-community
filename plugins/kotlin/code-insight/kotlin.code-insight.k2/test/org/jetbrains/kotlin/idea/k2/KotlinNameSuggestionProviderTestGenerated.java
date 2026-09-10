@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.refactoring.AbstractNameSuggestionProviderTest;
 @TestRoot("code-insight/kotlin.code-insight.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/nameSuggestionProvider")
+@TestMetadata("testData/refactoring/nameSuggestionProvider")
 public class KotlinNameSuggestionProviderTestGenerated extends AbstractNameSuggestionProviderTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -26,11 +26,11 @@ public class KotlinNameSuggestionProviderTestGenerated extends AbstractNameSugge
 
     @TestMetadata("byReturnType.kt")
     public void testByReturnType() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/nameSuggestionProvider/byReturnType.kt");
+        runTest("testData/refactoring/nameSuggestionProvider/byReturnType.kt");
     }
 
     @TestMetadata("localVarAsCallArgument.kt")
     public void testLocalVarAsCallArgument() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/nameSuggestionProvider/localVarAsCallArgument.kt");
+        runTest("testData/refactoring/nameSuggestionProvider/localVarAsCallArgument.kt");
     }
 }

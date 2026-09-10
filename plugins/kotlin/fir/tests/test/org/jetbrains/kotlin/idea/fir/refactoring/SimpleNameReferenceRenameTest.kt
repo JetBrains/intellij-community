@@ -8,8 +8,8 @@ import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.test.TestMetadata
 
-@TestRoot("idea/tests")
-@TestMetadata("testData/refactoring/rename/simpleNameReference")
+@TestRoot("refactorings/rename.k2")
+@TestMetadata("testData/rename/simpleNameReference")
 class SimpleNameReferenceRenameTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testRenameLabel() {

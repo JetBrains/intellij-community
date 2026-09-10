@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/extractFunctionInplace")
+@TestMetadata("testData/extractFunctionInplace")
 public class K2InplaceIntroduceFunctionTestGenerated extends AbstractK2InplaceIntroduceFunctionTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,76 +25,76 @@ public class K2InplaceIntroduceFunctionTestGenerated extends AbstractK2InplaceIn
 
     @TestMetadata("ConflictDefaultName.kt")
     public void testConflictDefaultName() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/ConflictDefaultName.kt");
+        runTest("testData/extractFunctionInplace/ConflictDefaultName.kt");
     }
 
     @TestMetadata("ConflictNameNotAccepted.kt")
     public void testConflictNameNotAccepted() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/ConflictNameNotAccepted.kt");
+        runTest("testData/extractFunctionInplace/ConflictNameNotAccepted.kt");
     }
 
     @TestMetadata("ConsecutiveDuplicates.kt")
     public void testConsecutiveDuplicates() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/ConsecutiveDuplicates.kt");
+        runTest("testData/extractFunctionInplace/ConsecutiveDuplicates.kt");
     }
 
     @TestMetadata("DontSkipWhitespacesBefore.kt")
     public void testDontSkipWhitespacesBefore() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/DontSkipWhitespacesBefore.kt");
+        runTest("testData/extractFunctionInplace/DontSkipWhitespacesBefore.kt");
     }
 
     @TestMetadata("EmptySpaces.kt")
     public void testEmptySpaces() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/EmptySpaces.kt");
+        runTest("testData/extractFunctionInplace/EmptySpaces.kt");
     }
 
     @TestMetadata("ExposedAssignment.kt")
     public void testExposedAssignment() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/ExposedAssignment.kt");
+        runTest("testData/extractFunctionInplace/ExposedAssignment.kt");
     }
 
     @TestMetadata("ExtractLocal.kt")
     public void testExtractLocal() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/ExtractLocal.kt");
+        runTest("testData/extractFunctionInplace/ExtractLocal.kt");
     }
 
     @TestMetadata("ExtractLocalWithLambda.kt")
     public void testExtractLocalWithLambda() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/ExtractLocalWithLambda.kt");
+        runTest("testData/extractFunctionInplace/ExtractLocalWithLambda.kt");
     }
 
     @TestMetadata("ExtractNearCommentLocal.kt")
     public void testExtractNearCommentLocal() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/ExtractNearCommentLocal.kt");
+        runTest("testData/extractFunctionInplace/ExtractNearCommentLocal.kt");
     }
 
     @TestMetadata("MoveLambdaOutsideParenthesis.kt")
     public void testMoveLambdaOutsideParenthesis() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/MoveLambdaOutsideParenthesis.kt");
+        runTest("testData/extractFunctionInplace/MoveLambdaOutsideParenthesis.kt");
     }
 
     @TestMetadata("MoveLambdaOutsideParenthesis1.kt")
     public void testMoveLambdaOutsideParenthesis1() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/MoveLambdaOutsideParenthesis1.kt");
+        runTest("testData/extractFunctionInplace/MoveLambdaOutsideParenthesis1.kt");
     }
 
     @TestMetadata("SearchForCallAfter.kt")
     public void testSearchForCallAfter() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/SearchForCallAfter.kt");
+        runTest("testData/extractFunctionInplace/SearchForCallAfter.kt");
     }
 
     @TestMetadata("SkipCommentsBefore.kt")
     public void testSkipCommentsBefore() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/SkipCommentsBefore.kt");
+        runTest("testData/extractFunctionInplace/SkipCommentsBefore.kt");
     }
 
     @TestMetadata("StringTemplate.kt")
     public void testStringTemplate() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/StringTemplate.kt");
+        runTest("testData/extractFunctionInplace/StringTemplate.kt");
     }
 
     @TestMetadata("StringTemplateWithNameConflict.kt")
     public void testStringTemplateWithNameConflict() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/StringTemplateWithNameConflict.kt");
+        runTest("testData/extractFunctionInplace/StringTemplateWithNameConflict.kt");
     }
 }

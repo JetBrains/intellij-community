@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/copy")
+@TestMetadata("testData/copy")
 public class K2CopyTestGenerated extends AbstractK2CopyTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,226 +25,226 @@ public class K2CopyTestGenerated extends AbstractK2CopyTest {
 
     @TestMetadata("copyClassCaretInside/copyClassCaretInside.test")
     public void testCopyClassCaretInside_CopyClassCaretInside() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyClassCaretInside/copyClassCaretInside.test");
+        runTest("testData/copy/copyClassCaretInside/copyClassCaretInside.test");
     }
 
     @TestMetadata("copyClassToExistingFile/copyClassToExistingFile.test")
     public void testCopyClassToExistingFile_CopyClassToExistingFile() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyClassToExistingFile/copyClassToExistingFile.test");
+        runTest("testData/copy/copyClassToExistingFile/copyClassToExistingFile.test");
     }
 
     @TestMetadata("copyClassToNewFile/copyClassToNewFile.test")
     public void testCopyClassToNewFile_CopyClassToNewFile() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyClassToNewFile/copyClassToNewFile.test");
+        runTest("testData/copy/copyClassToNewFile/copyClassToNewFile.test");
     }
 
     @TestMetadata("copyClassToSamePackageWithRename/copyClassToSamePackageWithRename.test")
     public void testCopyClassToSamePackageWithRename_CopyClassToSamePackageWithRename() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyClassToSamePackageWithRename/copyClassToSamePackageWithRename.test");
+        runTest("testData/copy/copyClassToSamePackageWithRename/copyClassToSamePackageWithRename.test");
     }
 
     @TestMetadata("copyClassWithCompanionRefs/copyClassWithCompanionRefs.test")
     public void testCopyClassWithCompanionRefs_CopyClassWithCompanionRefs() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyClassWithCompanionRefs/copyClassWithCompanionRefs.test");
+        runTest("testData/copy/copyClassWithCompanionRefs/copyClassWithCompanionRefs.test");
     }
 
     @TestMetadata("copyClassWithRename/copyClassWithRename.test")
     public void testCopyClassWithRename_CopyClassWithRename() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyClassWithRename/copyClassWithRename.test");
+        runTest("testData/copy/copyClassWithRename/copyClassWithRename.test");
     }
 
     @TestMetadata("copyClassWithSmartCast/copyClassWithSmartCast.test")
     public void testCopyClassWithSmartCast_CopyClassWithSmartCast() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyClassWithSmartCast/copyClassWithSmartCast.test");
+        runTest("testData/copy/copyClassWithSmartCast/copyClassWithSmartCast.test");
     }
 
     @TestMetadata("copyEmptyKtFile/copyEmptyKtFile.test")
     public void testCopyEmptyKtFile_CopyEmptyKtFile() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyEmptyKtFile/copyEmptyKtFile.test");
+        runTest("testData/copy/copyEmptyKtFile/copyEmptyKtFile.test");
     }
 
     @TestMetadata("copyFIleFromDefaultPackage/copyFIleFromDefaultPackage.test")
     public void testCopyFIleFromDefaultPackage_CopyFIleFromDefaultPackage() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyFIleFromDefaultPackage/copyFIleFromDefaultPackage.test");
+        runTest("testData/copy/copyFIleFromDefaultPackage/copyFIleFromDefaultPackage.test");
     }
 
     @TestMetadata("copyFIleRetainContent/copyFIleRetainContent.test")
     public void testCopyFIleRetainContent_CopyFIleRetainContent() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyFIleRetainContent/copyFIleRetainContent.test");
+        runTest("testData/copy/copyFIleRetainContent/copyFIleRetainContent.test");
     }
 
     @TestMetadata("copyFIleToDefaultPackage/copyFIleToDefaultPackage.test")
     public void testCopyFIleToDefaultPackage_CopyFIleToDefaultPackage() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyFIleToDefaultPackage/copyFIleToDefaultPackage.test");
+        runTest("testData/copy/copyFIleToDefaultPackage/copyFIleToDefaultPackage.test");
     }
 
     @TestMetadata("copyFIleToSubpackage/copyFIleToSubpackage.test")
     public void testCopyFIleToSubpackage_CopyFIleToSubpackage() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyFIleToSubpackage/copyFIleToSubpackage.test");
+        runTest("testData/copy/copyFIleToSubpackage/copyFIleToSubpackage.test");
     }
 
     @TestMetadata("copyFIleWithPackageAndDirUnmatched/copyFIleWithPackageAndDirUnmatched.test")
     public void testCopyFIleWithPackageAndDirUnmatched_CopyFIleWithPackageAndDirUnmatched() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyFIleWithPackageAndDirUnmatched/copyFIleWithPackageAndDirUnmatched.test");
+        runTest("testData/copy/copyFIleWithPackageAndDirUnmatched/copyFIleWithPackageAndDirUnmatched.test");
     }
 
     @TestMetadata("copyFileFromDefaultPackageToDefaultPackage/copyFileFromDefaultPackageToDefaultPackage.test")
     public void testCopyFileFromDefaultPackageToDefaultPackage_CopyFileFromDefaultPackageToDefaultPackage() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyFileFromDefaultPackageToDefaultPackage/copyFileFromDefaultPackageToDefaultPackage.test");
+        runTest("testData/copy/copyFileFromDefaultPackageToDefaultPackage/copyFileFromDefaultPackageToDefaultPackage.test");
     }
 
     @TestMetadata("copyFileFromDefaultPackageWithImpicitPrefix/copyFileFromDefaultPackageWithImpicitPrefix.test")
     public void testCopyFileFromDefaultPackageWithImpicitPrefix_CopyFileFromDefaultPackageWithImpicitPrefix() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyFileFromDefaultPackageWithImpicitPrefix/copyFileFromDefaultPackageWithImpicitPrefix.test");
+        runTest("testData/copy/copyFileFromDefaultPackageWithImpicitPrefix/copyFileFromDefaultPackageWithImpicitPrefix.test");
     }
 
     @TestMetadata("copyFileToRoot/copyFileToRoot.test")
     public void testCopyFileToRoot_CopyFileToRoot() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyFileToRoot/copyFileToRoot.test");
+        runTest("testData/copy/copyFileToRoot/copyFileToRoot.test");
     }
 
     @TestMetadata("copyFunCallQualificationWithParentheses/copyFunCallQualificationWithParentheses.test")
     public void testCopyFunCallQualificationWithParentheses_CopyFunCallQualificationWithParentheses() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyFunCallQualificationWithParentheses/copyFunCallQualificationWithParentheses.test");
+        runTest("testData/copy/copyFunCallQualificationWithParentheses/copyFunCallQualificationWithParentheses.test");
     }
 
     @TestMetadata("copyKtFileToTextFile/copyKtFileToTextFile.test")
     public void testCopyKtFileToTextFile_CopyKtFileToTextFile() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyKtFileToTextFile/copyKtFileToTextFile.test");
+        runTest("testData/copy/copyKtFileToTextFile/copyKtFileToTextFile.test");
     }
 
     @TestMetadata("copyLocalClass/copyLocalClass.test")
     public void testCopyLocalClass_CopyLocalClass() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyLocalClass/copyLocalClass.test");
+        runTest("testData/copy/copyLocalClass/copyLocalClass.test");
     }
 
     @TestMetadata("copyLocalFunction/copyLocalFunction.test")
     public void testCopyLocalFunction_CopyLocalFunction() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyLocalFunction/copyLocalFunction.test");
+        runTest("testData/copy/copyLocalFunction/copyLocalFunction.test");
     }
 
     @TestMetadata("copyLocalVariable/copyLocalVariable.test")
     public void testCopyLocalVariable_CopyLocalVariable() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyLocalVariable/copyLocalVariable.test");
+        runTest("testData/copy/copyLocalVariable/copyLocalVariable.test");
     }
 
     @TestMetadata("copyMemberFunction/copyMemberFunction.test")
     public void testCopyMemberFunction_CopyMemberFunction() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyMemberFunction/copyMemberFunction.test");
+        runTest("testData/copy/copyMemberFunction/copyMemberFunction.test");
     }
 
     @TestMetadata("copyMemberProperty/copyMemberProperty.test")
     public void testCopyMemberProperty_CopyMemberProperty() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyMemberProperty/copyMemberProperty.test");
+        runTest("testData/copy/copyMemberProperty/copyMemberProperty.test");
     }
 
     @TestMetadata("copyMultiClassFile/copyMultiClassFile.test")
     public void testCopyMultiClassFile_CopyMultiClassFile() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyMultiClassFile/copyMultiClassFile.test");
+        runTest("testData/copy/copyMultiClassFile/copyMultiClassFile.test");
     }
 
     @TestMetadata("copyMultipleClassesToExistingFile/copyMultipleClassesToExistingFile.test")
     public void testCopyMultipleClassesToExistingFile_CopyMultipleClassesToExistingFile() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyMultipleClassesToExistingFile/copyMultipleClassesToExistingFile.test");
+        runTest("testData/copy/copyMultipleClassesToExistingFile/copyMultipleClassesToExistingFile.test");
     }
 
     @TestMetadata("copyMultipleClassesToNewFile/copyMultipleClassesToNewFile.test")
     public void testCopyMultipleClassesToNewFile_CopyMultipleClassesToNewFile() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyMultipleClassesToNewFile/copyMultipleClassesToNewFile.test");
+        runTest("testData/copy/copyMultipleClassesToNewFile/copyMultipleClassesToNewFile.test");
     }
 
     @TestMetadata("copyMultipleDeclarations/copyMultipleDeclarations.test")
     public void testCopyMultipleDeclarations_CopyMultipleDeclarations() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyMultipleDeclarations/copyMultipleDeclarations.test");
+        runTest("testData/copy/copyMultipleDeclarations/copyMultipleDeclarations.test");
     }
 
     @TestMetadata("copyMultipleFilesDifferentDirectoriesToNewDirectory/copyMultipleFilesDifferentDirectoriesToNewDirectory.test")
     public void testCopyMultipleFilesDifferentDirectoriesToNewDirectory_CopyMultipleFilesDifferentDirectoriesToNewDirectory() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyMultipleFilesDifferentDirectoriesToNewDirectory/copyMultipleFilesDifferentDirectoriesToNewDirectory.test");
+        runTest("testData/copy/copyMultipleFilesDifferentDirectoriesToNewDirectory/copyMultipleFilesDifferentDirectoriesToNewDirectory.test");
     }
 
     @TestMetadata("copyMultipleFilesDirectoriesToNewDirectoryAsClassOrObject/copyMultipleFilesDirectoriesToNewDirectoryAsClassOrObject.test")
     public void testCopyMultipleFilesDirectoriesToNewDirectoryAsClassOrObject_CopyMultipleFilesDirectoriesToNewDirectoryAsClassOrObject() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyMultipleFilesDirectoriesToNewDirectoryAsClassOrObject/copyMultipleFilesDirectoriesToNewDirectoryAsClassOrObject.test");
+        runTest("testData/copy/copyMultipleFilesDirectoriesToNewDirectoryAsClassOrObject/copyMultipleFilesDirectoriesToNewDirectoryAsClassOrObject.test");
     }
 
     @TestMetadata("copyMultipleFilesToNewDirectory/copyMultipleFilesToNewDirectory.test")
     public void testCopyMultipleFilesToNewDirectory_CopyMultipleFilesToNewDirectory() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyMultipleFilesToNewDirectory/copyMultipleFilesToNewDirectory.test");
+        runTest("testData/copy/copyMultipleFilesToNewDirectory/copyMultipleFilesToNewDirectory.test");
     }
 
     @TestMetadata("copyNestedClass/copyNestedClass.test")
     public void testCopyNestedClass_CopyNestedClass() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyNestedClass/copyNestedClass.test");
+        runTest("testData/copy/copyNestedClass/copyNestedClass.test");
     }
 
     @TestMetadata("copyObject/copyObject.test")
     public void testCopyObject_CopyObject() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyObject/copyObject.test");
+        runTest("testData/copy/copyObject/copyObject.test");
     }
 
     @TestMetadata("copySingleClassFile/copySingleClassFile.test")
     public void testCopySingleClassFile_CopySingleClassFile() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copySingleClassFile/copySingleClassFile.test");
+        runTest("testData/copy/copySingleClassFile/copySingleClassFile.test");
     }
 
     @TestMetadata("copySingleClassWithRename/copySingleClassWithRename.test")
     public void testCopySingleClassWithRename_CopySingleClassWithRename() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copySingleClassWithRename/copySingleClassWithRename.test");
+        runTest("testData/copy/copySingleClassWithRename/copySingleClassWithRename.test");
     }
 
     @TestMetadata("copySingleClass/copySingleClass.test")
     public void testCopySingleClass_CopySingleClass() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copySingleClass/copySingleClass.test");
+        runTest("testData/copy/copySingleClass/copySingleClass.test");
     }
 
     @TestMetadata("copyTopLevelFunctionWithRename/copyTopLevelFunctionWithRename.test")
     public void testCopyTopLevelFunctionWithRename_CopyTopLevelFunctionWithRename() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyTopLevelFunctionWithRename/copyTopLevelFunctionWithRename.test");
+        runTest("testData/copy/copyTopLevelFunctionWithRename/copyTopLevelFunctionWithRename.test");
     }
 
     @TestMetadata("copyTopLevelFunction/copyTopLevelFunction.test")
     public void testCopyTopLevelFunction_CopyTopLevelFunction() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyTopLevelFunction/copyTopLevelFunction.test");
+        runTest("testData/copy/copyTopLevelFunction/copyTopLevelFunction.test");
     }
 
     @TestMetadata("copyTopLevelPropertyWithRename/copyTopLevelPropertyWithRename.test")
     public void testCopyTopLevelPropertyWithRename_CopyTopLevelPropertyWithRename() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyTopLevelPropertyWithRename/copyTopLevelPropertyWithRename.test");
+        runTest("testData/copy/copyTopLevelPropertyWithRename/copyTopLevelPropertyWithRename.test");
     }
 
     @TestMetadata("copyTopLevelProperty/copyTopLevelProperty.test")
     public void testCopyTopLevelProperty_CopyTopLevelProperty() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyTopLevelProperty/copyTopLevelProperty.test");
+        runTest("testData/copy/copyTopLevelProperty/copyTopLevelProperty.test");
     }
 
     @TestMetadata("copyWithImportInsertion/copyWithImportInsertion.test")
     public void testCopyWithImportInsertion_CopyWithImportInsertion() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/copyWithImportInsertion/copyWithImportInsertion.test");
+        runTest("testData/copy/copyWithImportInsertion/copyWithImportInsertion.test");
     }
 
     @TestMetadata("kt18149/kt18149.test")
     public void testKt18149_Kt18149() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/kt18149/kt18149.test");
+        runTest("testData/copy/kt18149/kt18149.test");
     }
 
     @TestMetadata("operationReferenceToJavaDecl/operationReferenceToJavaDecl.test")
     public void testOperationReferenceToJavaDecl_OperationReferenceToJavaDecl() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/operationReferenceToJavaDecl/operationReferenceToJavaDecl.test");
+        runTest("testData/copy/operationReferenceToJavaDecl/operationReferenceToJavaDecl.test");
     }
 
     @TestMetadata("protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test")
     public void testProtectedConstructorRefInSuperListEntry_ProtectedConstructorRefInSuperListEntry() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test");
+        runTest("testData/copy/protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test");
     }
 
     @TestMetadata("refToImportJavaStaticField/refToImportJavaStaticField.test")
     public void testRefToImportJavaStaticField_RefToImportJavaStaticField() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/refToImportJavaStaticField/refToImportJavaStaticField.test");
+        runTest("testData/copy/refToImportJavaStaticField/refToImportJavaStaticField.test");
     }
 
     @TestMetadata("refToImportJavaStaticMethod/refToImportJavaStaticMethod.test")
     public void testRefToImportJavaStaticMethod_RefToImportJavaStaticMethod() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/copy/refToImportJavaStaticMethod/refToImportJavaStaticMethod.test");
+        runTest("testData/copy/refToImportJavaStaticMethod/refToImportJavaStaticMethod.test");
     }
 }

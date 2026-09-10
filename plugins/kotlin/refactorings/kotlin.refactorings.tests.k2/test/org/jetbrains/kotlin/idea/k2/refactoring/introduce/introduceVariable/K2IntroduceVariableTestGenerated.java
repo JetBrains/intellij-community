@@ -17,10 +17,10 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/introduceVariable")
+@TestMetadata("testData/introduceVariable")
 public abstract class K2IntroduceVariableTestGenerated extends AbstractK2IntroduceVariableTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects")
+    @TestMetadata("testData/introduceVariable/anonymousObjects")
     public static class AnonymousObjects extends AbstractK2IntroduceVariableTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
@@ -28,57 +28,57 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("ClassProperty.kt")
         public void testClassProperty() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/ClassProperty.kt");
+            runTest("testData/introduceVariable/anonymousObjects/ClassProperty.kt");
         }
 
         @TestMetadata("ClassPropertyAmbiguous.kt")
         public void testClassPropertyAmbiguous() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/ClassPropertyAmbiguous.kt");
+            runTest("testData/introduceVariable/anonymousObjects/ClassPropertyAmbiguous.kt");
         }
 
         @TestMetadata("DefaultParamLocal.kt")
         public void testDefaultParamLocal() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/DefaultParamLocal.kt");
+            runTest("testData/introduceVariable/anonymousObjects/DefaultParamLocal.kt");
         }
 
         @TestMetadata("DefaultParamNonLocal.kt")
         public void testDefaultParamNonLocal() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/DefaultParamNonLocal.kt");
+            runTest("testData/introduceVariable/anonymousObjects/DefaultParamNonLocal.kt");
         }
 
         @TestMetadata("DefaultParamNonLocalAmbiguous.kt")
         public void testDefaultParamNonLocalAmbiguous() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/DefaultParamNonLocalAmbiguous.kt");
+            runTest("testData/introduceVariable/anonymousObjects/DefaultParamNonLocalAmbiguous.kt");
         }
 
         @TestMetadata("DelegationLocal.kt")
         public void testDelegationLocal() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/DelegationLocal.kt");
+            runTest("testData/introduceVariable/anonymousObjects/DelegationLocal.kt");
         }
 
         @TestMetadata("DelegationNonLocal.kt")
         public void testDelegationNonLocal() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/DelegationNonLocal.kt");
+            runTest("testData/introduceVariable/anonymousObjects/DelegationNonLocal.kt");
         }
 
         @TestMetadata("NoContext.kt")
         public void testNoContext() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/NoContext.kt");
+            runTest("testData/introduceVariable/anonymousObjects/NoContext.kt");
         }
 
         @TestMetadata("NoSupertypes.kt")
         public void testNoSupertypes() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/NoSupertypes.kt");
+            runTest("testData/introduceVariable/anonymousObjects/NoSupertypes.kt");
         }
 
         @TestMetadata("Param.kt")
         public void testParam() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/Param.kt");
+            runTest("testData/introduceVariable/anonymousObjects/Param.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/collectionElement")
+    @TestMetadata("testData/introduceVariable/collectionElement")
     public static class CollectionElement extends AbstractK2IntroduceVariableTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
@@ -86,40 +86,40 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("errorType.kt")
         public void testErrorType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/collectionElement/errorType.kt");
+            runTest("testData/introduceVariable/collectionElement/errorType.kt");
         }
 
         @TestMetadata("flexibleType.kt")
         public void testFlexibleType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/collectionElement/flexibleType.kt");
+            runTest("testData/introduceVariable/collectionElement/flexibleType.kt");
         }
 
         @TestMetadata("flexibleType2.kt")
         public void testFlexibleType2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/collectionElement/flexibleType2.kt");
+            runTest("testData/introduceVariable/collectionElement/flexibleType2.kt");
         }
 
         @TestMetadata("typeParameterType.kt")
         public void testTypeParameterType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/collectionElement/typeParameterType.kt");
+            runTest("testData/introduceVariable/collectionElement/typeParameterType.kt");
         }
 
         @TestMetadata("typeParameterType2.kt")
         public void testTypeParameterType2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/collectionElement/typeParameterType2.kt");
+            runTest("testData/introduceVariable/collectionElement/typeParameterType2.kt");
         }
 
         @TestMetadata("typeParameterType3.kt")
         public void testTypeParameterType3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/collectionElement/typeParameterType3.kt");
+            runTest("testData/introduceVariable/collectionElement/typeParameterType3.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments")
+    @TestMetadata("testData/introduceVariable/explicateTypeArguments")
     public abstract static class ExplicateTypeArguments extends AbstractK2IntroduceVariableTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/smartCast")
+        @TestMetadata("testData/introduceVariable/explicateTypeArguments/smartCast")
         public static class SmartCast extends AbstractK2IntroduceVariableTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
@@ -127,17 +127,17 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
             @TestMetadata("smartCastSimple.kt")
             public void testSmartCastSimple() throws Exception {
-                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/smartCast/smartCastSimple.kt");
+                runTest("testData/introduceVariable/explicateTypeArguments/smartCast/smartCastSimple.kt");
             }
 
             @TestMetadata("smartCastWithIntersectionType.kt")
             public void testSmartCastWithIntersectionType() throws Exception {
-                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/smartCast/smartCastWithIntersectionType.kt");
+                runTest("testData/introduceVariable/explicateTypeArguments/smartCast/smartCastWithIntersectionType.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments")
+        @TestMetadata("testData/introduceVariable/explicateTypeArguments")
         public static class Uncategorized extends AbstractK2IntroduceVariableTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
@@ -145,38 +145,38 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
             @TestMetadata("DeeperNestedCall.kt")
             public void testDeeperNestedCall() throws Exception {
-                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/DeeperNestedCall.kt");
+                runTest("testData/introduceVariable/explicateTypeArguments/DeeperNestedCall.kt");
             }
 
             @TestMetadata("NestedCall.kt")
             public void testNestedCall() throws Exception {
-                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/NestedCall.kt");
+                runTest("testData/introduceVariable/explicateTypeArguments/NestedCall.kt");
             }
 
             @TestMetadata("Parenthesized.kt")
             public void testParenthesized() throws Exception {
-                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/Parenthesized.kt");
+                runTest("testData/introduceVariable/explicateTypeArguments/Parenthesized.kt");
             }
 
             @TestMetadata("Qualified.kt")
             public void testQualified() throws Exception {
-                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/Qualified.kt");
+                runTest("testData/introduceVariable/explicateTypeArguments/Qualified.kt");
             }
 
             @TestMetadata("Simple.kt")
             public void testSimple() throws Exception {
-                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/Simple.kt");
+                runTest("testData/introduceVariable/explicateTypeArguments/Simple.kt");
             }
 
             @TestMetadata("UnmatchedOccurrences.kt")
             public void testUnmatchedOccurrences() throws Exception {
-                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/UnmatchedOccurrences.kt");
+                runTest("testData/introduceVariable/explicateTypeArguments/UnmatchedOccurrences.kt");
             }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/explicitBackingFields")
+    @TestMetadata("testData/introduceVariable/explicitBackingFields")
     public static class ExplicitBackingFields extends AbstractK2IntroduceVariableTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
@@ -184,12 +184,12 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("backingField.kt")
         public void testBackingField() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicitBackingFields/backingField.kt");
+            runTest("testData/introduceVariable/explicitBackingFields/backingField.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/extractToScope")
+    @TestMetadata("testData/introduceVariable/extractToScope")
     public static class ExtractToScope extends AbstractK2IntroduceVariableTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
@@ -197,82 +197,82 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("implicitOuterThisInsideNestedLamba.kt")
         public void testImplicitOuterThisInsideNestedLamba() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/implicitOuterThisInsideNestedLamba.kt");
+            runTest("testData/introduceVariable/extractToScope/implicitOuterThisInsideNestedLamba.kt");
         }
 
         @TestMetadata("implicitThisInsideNestedLamba.kt")
         public void testImplicitThisInsideNestedLamba() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/implicitThisInsideNestedLamba.kt");
+            runTest("testData/introduceVariable/extractToScope/implicitThisInsideNestedLamba.kt");
         }
 
         @TestMetadata("insideFunExpression.kt")
         public void testInsideFunExpression() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideFunExpression.kt");
+            runTest("testData/introduceVariable/extractToScope/insideFunExpression.kt");
         }
 
         @TestMetadata("insideFunExpressionWithBlock.kt")
         public void testInsideFunExpressionWithBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideFunExpressionWithBlock.kt");
+            runTest("testData/introduceVariable/extractToScope/insideFunExpressionWithBlock.kt");
         }
 
         @TestMetadata("insideLamba.kt")
         public void testInsideLamba() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideLamba.kt");
+            runTest("testData/introduceVariable/extractToScope/insideLamba.kt");
         }
 
         @TestMetadata("insideNestedFunExpression.kt")
         public void testInsideNestedFunExpression() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideNestedFunExpression.kt");
+            runTest("testData/introduceVariable/extractToScope/insideNestedFunExpression.kt");
         }
 
         @TestMetadata("insideNestedFunExpressionInLambda.kt")
         public void testInsideNestedFunExpressionInLambda() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideNestedFunExpressionInLambda.kt");
+            runTest("testData/introduceVariable/extractToScope/insideNestedFunExpressionInLambda.kt");
         }
 
         @TestMetadata("insideNestedLamba.kt")
         public void testInsideNestedLamba() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideNestedLamba.kt");
+            runTest("testData/introduceVariable/extractToScope/insideNestedLamba.kt");
         }
 
         @TestMetadata("insideNestedLambdaAllOccurrences.kt")
         public void testInsideNestedLambdaAllOccurrences() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideNestedLambdaAllOccurrences.kt");
+            runTest("testData/introduceVariable/extractToScope/insideNestedLambdaAllOccurrences.kt");
         }
 
         @TestMetadata("insideNestedLambdaInFunExpression.kt")
         public void testInsideNestedLambdaInFunExpression() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideNestedLambdaInFunExpression.kt");
+            runTest("testData/introduceVariable/extractToScope/insideNestedLambdaInFunExpression.kt");
         }
 
         @TestMetadata("itInsideNestedLamba.kt")
         public void testItInsideNestedLamba() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/itInsideNestedLamba.kt");
+            runTest("testData/introduceVariable/extractToScope/itInsideNestedLamba.kt");
         }
 
         @TestMetadata("outerItInsideNestedLamba.kt")
         public void testOuterItInsideNestedLamba() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/outerItInsideNestedLamba.kt");
+            runTest("testData/introduceVariable/extractToScope/outerItInsideNestedLamba.kt");
         }
 
         @TestMetadata("parameterInsideNestedLamba.kt")
         public void testParameterInsideNestedLamba() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/parameterInsideNestedLamba.kt");
+            runTest("testData/introduceVariable/extractToScope/parameterInsideNestedLamba.kt");
         }
 
         @TestMetadata("unresolvedInsideNestedLamba.kt")
         public void testUnresolvedInsideNestedLamba() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/unresolvedInsideNestedLamba.kt");
+            runTest("testData/introduceVariable/extractToScope/unresolvedInsideNestedLamba.kt");
         }
 
         @TestMetadata("variableInsideNestedLambda.kt")
         public void testVariableInsideNestedLambda() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/variableInsideNestedLambda.kt");
+            runTest("testData/introduceVariable/extractToScope/variableInsideNestedLambda.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/multiDeclarations")
+    @TestMetadata("testData/introduceVariable/multiDeclarations")
     public static class MultiDeclarations extends AbstractK2IntroduceVariableTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
@@ -280,57 +280,57 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("array.kt")
         public void testArray() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDeclarations/array.kt");
+            runTest("testData/introduceVariable/multiDeclarations/array.kt");
         }
 
         @TestMetadata("complexCase.kt")
         public void testComplexCase() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDeclarations/complexCase.kt");
+            runTest("testData/introduceVariable/multiDeclarations/complexCase.kt");
         }
 
         @TestMetadata("intArray.kt")
         public void testIntArray() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDeclarations/intArray.kt");
+            runTest("testData/introduceVariable/multiDeclarations/intArray.kt");
         }
 
         @TestMetadata("list.kt")
         public void testList() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDeclarations/list.kt");
+            runTest("testData/introduceVariable/multiDeclarations/list.kt");
         }
 
         @TestMetadata("notOperators.kt")
         public void testNotOperators() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDeclarations/notOperators.kt");
+            runTest("testData/introduceVariable/multiDeclarations/notOperators.kt");
         }
 
         @TestMetadata("singleComponent.kt")
         public void testSingleComponent() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDeclarations/singleComponent.kt");
+            runTest("testData/introduceVariable/multiDeclarations/singleComponent.kt");
         }
 
         @TestMetadata("unresolvedComponent3.kt")
         public void testUnresolvedComponent3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDeclarations/unresolvedComponent3.kt");
+            runTest("testData/introduceVariable/multiDeclarations/unresolvedComponent3.kt");
         }
 
         @TestMetadata("unusedExpr.kt")
         public void testUnusedExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDeclarations/unusedExpr.kt");
+            runTest("testData/introduceVariable/multiDeclarations/unusedExpr.kt");
         }
 
         @TestMetadata("usedExpr.kt")
         public void testUsedExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDeclarations/usedExpr.kt");
+            runTest("testData/introduceVariable/multiDeclarations/usedExpr.kt");
         }
 
         @TestMetadata("userDataClass.kt")
         public void testUserDataClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDeclarations/userDataClass.kt");
+            runTest("testData/introduceVariable/multiDeclarations/userDataClass.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates")
+    @TestMetadata("testData/introduceVariable/multiDollarStringTemplates")
     public static class MultiDollarStringTemplates extends AbstractK2IntroduceVariableTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
@@ -338,157 +338,157 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("brokenEntryWithBlockExpr.kt")
         public void testBrokenEntryWithBlockExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/brokenEntryWithBlockExpr.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/brokenEntryWithBlockExpr.kt");
         }
 
         @TestMetadata("brokenEntryWithExpr.kt")
         public void testBrokenEntryWithExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/brokenEntryWithExpr.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/brokenEntryWithExpr.kt");
         }
 
         @TestMetadata("digitAfterSelection.kt")
         public void testDigitAfterSelection() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/digitAfterSelection.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/digitAfterSelection.kt");
         }
 
         @TestMetadata("duplicateOutsideTheBlock.kt")
         public void testDuplicateOutsideTheBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/duplicateOutsideTheBlock.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/duplicateOutsideTheBlock.kt");
         }
 
         @TestMetadata("extractFalse.kt")
         public void testExtractFalse() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/extractFalse.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/extractFalse.kt");
         }
 
         @TestMetadata("extractIntegerLiteral.kt")
         public void testExtractIntegerLiteral() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/extractIntegerLiteral.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/extractIntegerLiteral.kt");
         }
 
         @TestMetadata("extractTrue.kt")
         public void testExtractTrue() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/extractTrue.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/extractTrue.kt");
         }
 
         @TestMetadata("extractTrueWithSpaces.kt")
         public void testExtractTrueWithSpaces() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/extractTrueWithSpaces.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/extractTrueWithSpaces.kt");
         }
 
         @TestMetadata("fullContent.kt")
         public void testFullContent() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/fullContent.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/fullContent.kt");
         }
 
         @TestMetadata("fullEntryWithBlockExpr.kt")
         public void testFullEntryWithBlockExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/fullEntryWithBlockExpr.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/fullEntryWithBlockExpr.kt");
         }
 
         @TestMetadata("fullEntryWithSimpleName.kt")
         public void testFullEntryWithSimpleName() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/fullEntryWithSimpleName.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/fullEntryWithSimpleName.kt");
         }
 
         @TestMetadata("fullStringExtraction.kt")
         public void testFullStringExtraction() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/fullStringExtraction.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/fullStringExtraction.kt");
         }
 
         @TestMetadata("letters1.kt")
         public void testLetters1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/letters1.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/letters1.kt");
         }
 
         @TestMetadata("letters2.kt")
         public void testLetters2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/letters2.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/letters2.kt");
         }
 
         @TestMetadata("letters3.kt")
         public void testLetters3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/letters3.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/letters3.kt");
         }
 
         @TestMetadata("multiDollarKtij30272.kt")
         public void testMultiDollarKtij30272() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/multiDollarKtij30272.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/multiDollarKtij30272.kt");
         }
 
         @TestMetadata("multipleEntriesWithPrefix.kt")
         public void testMultipleEntriesWithPrefix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/multipleEntriesWithPrefix.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/multipleEntriesWithPrefix.kt");
         }
 
         @TestMetadata("multipleEntriesWithSubstring.kt")
         public void testMultipleEntriesWithSubstring() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/multipleEntriesWithSubstring.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/multipleEntriesWithSubstring.kt");
         }
 
         @TestMetadata("multipleEntriesWithSuffix.kt")
         public void testMultipleEntriesWithSuffix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/multipleEntriesWithSuffix.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/multipleEntriesWithSuffix.kt");
         }
 
         @TestMetadata("newBlock.kt")
         public void testNewBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/newBlock.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/newBlock.kt");
         }
 
         @TestMetadata("rawTemplateUnescapedDollar.kt")
         public void testRawTemplateUnescapedDollar() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/rawTemplateUnescapedDollar.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/rawTemplateUnescapedDollar.kt");
         }
 
         @TestMetadata("rawTemplateWithSubstring.kt")
         public void testRawTemplateWithSubstring() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/rawTemplateWithSubstring.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/rawTemplateWithSubstring.kt");
         }
 
         @TestMetadata("singleEntryPrefix.kt")
         public void testSingleEntryPrefix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/singleEntryPrefix.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/singleEntryPrefix.kt");
         }
 
         @TestMetadata("singleEntrySubstring.kt")
         public void testSingleEntrySubstring() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/singleEntrySubstring.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/singleEntrySubstring.kt");
         }
 
         @TestMetadata("singleEntrySuffix.kt")
         public void testSingleEntrySuffix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/singleEntrySuffix.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/singleEntrySuffix.kt");
         }
 
         @TestMetadata("singleOccurence.kt")
         public void testSingleOccurence() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/singleOccurence.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/singleOccurence.kt");
         }
 
         @TestMetadata("underscoreAfter.kt")
         public void testUnderscoreAfter() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/underscoreAfter.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/underscoreAfter.kt");
         }
 
         @TestMetadata("unescapedDollar.kt")
         public void testUnescapedDollar() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/unescapedDollar.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/unescapedDollar.kt");
         }
 
         @TestMetadata("unescapedDollarLetterSuffix.kt")
         public void testUnescapedDollarLetterSuffix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/unescapedDollarLetterSuffix.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/unescapedDollarLetterSuffix.kt");
         }
 
         @TestMetadata("unescapedDollarLongPrefix.kt")
         public void testUnescapedDollarLongPrefix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/unescapedDollarLongPrefix.kt");
+            runTest("testData/introduceVariable/multiDollarStringTemplates/unescapedDollarLongPrefix.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/qualifiers")
+    @TestMetadata("testData/introduceVariable/qualifiers")
     public static class Qualifiers extends AbstractK2IntroduceVariableTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
@@ -496,87 +496,87 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("callableReferenceReceiverClass1.kt")
         public void testCallableReferenceReceiverClass1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/callableReferenceReceiverClass1.kt");
+            runTest("testData/introduceVariable/qualifiers/callableReferenceReceiverClass1.kt");
         }
 
         @TestMetadata("callableReferenceReceiverClass1WithoutSelection.kt")
         public void testCallableReferenceReceiverClass1WithoutSelection() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/callableReferenceReceiverClass1WithoutSelection.kt");
+            runTest("testData/introduceVariable/qualifiers/callableReferenceReceiverClass1WithoutSelection.kt");
         }
 
         @TestMetadata("callableReferenceReceiverClass2.kt")
         public void testCallableReferenceReceiverClass2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/callableReferenceReceiverClass2.kt");
+            runTest("testData/introduceVariable/qualifiers/callableReferenceReceiverClass2.kt");
         }
 
         @TestMetadata("callableReferenceReceiverClass2WithoutSelection.kt")
         public void testCallableReferenceReceiverClass2WithoutSelection() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/callableReferenceReceiverClass2WithoutSelection.kt");
+            runTest("testData/introduceVariable/qualifiers/callableReferenceReceiverClass2WithoutSelection.kt");
         }
 
         @TestMetadata("callableReferenceReceiverClass3.kt")
         public void testCallableReferenceReceiverClass3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/callableReferenceReceiverClass3.kt");
+            runTest("testData/introduceVariable/qualifiers/callableReferenceReceiverClass3.kt");
         }
 
         @TestMetadata("callableReferenceReceiverClass3WithoutSelection.kt")
         public void testCallableReferenceReceiverClass3WithoutSelection() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/callableReferenceReceiverClass3WithoutSelection.kt");
+            runTest("testData/introduceVariable/qualifiers/callableReferenceReceiverClass3WithoutSelection.kt");
         }
 
         @TestMetadata("classLiteral1.kt")
         public void testClassLiteral1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/classLiteral1.kt");
+            runTest("testData/introduceVariable/qualifiers/classLiteral1.kt");
         }
 
         @TestMetadata("classLiteral1WithoutSelection.kt")
         public void testClassLiteral1WithoutSelection() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/classLiteral1WithoutSelection.kt");
+            runTest("testData/introduceVariable/qualifiers/classLiteral1WithoutSelection.kt");
         }
 
         @TestMetadata("classLiteral2.kt")
         public void testClassLiteral2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/classLiteral2.kt");
+            runTest("testData/introduceVariable/qualifiers/classLiteral2.kt");
         }
 
         @TestMetadata("classLiteral2WithoutSelection.kt")
         public void testClassLiteral2WithoutSelection() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/classLiteral2WithoutSelection.kt");
+            runTest("testData/introduceVariable/qualifiers/classLiteral2WithoutSelection.kt");
         }
 
         @TestMetadata("classLiteral3.kt")
         public void testClassLiteral3() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/classLiteral3.kt");
+            runTest("testData/introduceVariable/qualifiers/classLiteral3.kt");
         }
 
         @TestMetadata("classLiteral3WithoutSelection.kt")
         public void testClassLiteral3WithoutSelection() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/classLiteral3WithoutSelection.kt");
+            runTest("testData/introduceVariable/qualifiers/classLiteral3WithoutSelection.kt");
         }
 
         @TestMetadata("companionObject.kt")
         public void testCompanionObject() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/companionObject.kt");
+            runTest("testData/introduceVariable/qualifiers/companionObject.kt");
         }
 
         @TestMetadata("companionObjectWithoutSelection.kt")
         public void testCompanionObjectWithoutSelection() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/companionObjectWithoutSelection.kt");
+            runTest("testData/introduceVariable/qualifiers/companionObjectWithoutSelection.kt");
         }
 
         @TestMetadata("nestedObject.kt")
         public void testNestedObject() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/nestedObject.kt");
+            runTest("testData/introduceVariable/qualifiers/nestedObject.kt");
         }
 
         @TestMetadata("nestedObjectWithoutSelection.kt")
         public void testNestedObjectWithoutSelection() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/nestedObjectWithoutSelection.kt");
+            runTest("testData/introduceVariable/qualifiers/nestedObjectWithoutSelection.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/script")
+    @TestMetadata("testData/introduceVariable/script")
     public static class Script extends AbstractK2IntroduceVariableTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
@@ -584,22 +584,22 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("ExpressionPart.kts")
         public void testExpressionPart() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/script/ExpressionPart.kts");
+            runTest("testData/introduceVariable/script/ExpressionPart.kts");
         }
 
         @TestMetadata("NotExpression.kts")
         public void testNotExpression() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/script/NotExpression.kts");
+            runTest("testData/introduceVariable/script/NotExpression.kts");
         }
 
         @TestMetadata("TopLevelExpression.kts")
         public void testTopLevelExpression() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/script/TopLevelExpression.kts");
+            runTest("testData/introduceVariable/script/TopLevelExpression.kts");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates")
+    @TestMetadata("testData/introduceVariable/stringTemplates")
     public static class StringTemplates extends AbstractK2IntroduceVariableTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
@@ -607,107 +607,107 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("brokenEntryWithBlockExpr.kt")
         public void testBrokenEntryWithBlockExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/brokenEntryWithBlockExpr.kt");
+            runTest("testData/introduceVariable/stringTemplates/brokenEntryWithBlockExpr.kt");
         }
 
         @TestMetadata("brokenEntryWithExpr.kt")
         public void testBrokenEntryWithExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/brokenEntryWithExpr.kt");
+            runTest("testData/introduceVariable/stringTemplates/brokenEntryWithExpr.kt");
         }
 
         @TestMetadata("brokenEscapeEntry.kt")
         public void testBrokenEscapeEntry() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/brokenEscapeEntry.kt");
+            runTest("testData/introduceVariable/stringTemplates/brokenEscapeEntry.kt");
         }
 
         @TestMetadata("duplicateOutsideTheBlock.kt")
         public void testDuplicateOutsideTheBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/duplicateOutsideTheBlock.kt");
+            runTest("testData/introduceVariable/stringTemplates/duplicateOutsideTheBlock.kt");
         }
 
         @TestMetadata("extractFalse.kt")
         public void testExtractFalse() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/extractFalse.kt");
+            runTest("testData/introduceVariable/stringTemplates/extractFalse.kt");
         }
 
         @TestMetadata("extractIntegerLiteral.kt")
         public void testExtractIntegerLiteral() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/extractIntegerLiteral.kt");
+            runTest("testData/introduceVariable/stringTemplates/extractIntegerLiteral.kt");
         }
 
         @TestMetadata("extractTrue.kt")
         public void testExtractTrue() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/extractTrue.kt");
+            runTest("testData/introduceVariable/stringTemplates/extractTrue.kt");
         }
 
         @TestMetadata("extractTrueWithSpaces.kt")
         public void testExtractTrueWithSpaces() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/extractTrueWithSpaces.kt");
+            runTest("testData/introduceVariable/stringTemplates/extractTrueWithSpaces.kt");
         }
 
         @TestMetadata("fullContent.kt")
         public void testFullContent() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/fullContent.kt");
+            runTest("testData/introduceVariable/stringTemplates/fullContent.kt");
         }
 
         @TestMetadata("fullEntryWithBlockExpr.kt")
         public void testFullEntryWithBlockExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/fullEntryWithBlockExpr.kt");
+            runTest("testData/introduceVariable/stringTemplates/fullEntryWithBlockExpr.kt");
         }
 
         @TestMetadata("fullEntryWithSimpleName.kt")
         public void testFullEntryWithSimpleName() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/fullEntryWithSimpleName.kt");
+            runTest("testData/introduceVariable/stringTemplates/fullEntryWithSimpleName.kt");
         }
 
         @TestMetadata("multipleEntriesWithPrefix.kt")
         public void testMultipleEntriesWithPrefix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/multipleEntriesWithPrefix.kt");
+            runTest("testData/introduceVariable/stringTemplates/multipleEntriesWithPrefix.kt");
         }
 
         @TestMetadata("multipleEntriesWithSubstring.kt")
         public void testMultipleEntriesWithSubstring() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/multipleEntriesWithSubstring.kt");
+            runTest("testData/introduceVariable/stringTemplates/multipleEntriesWithSubstring.kt");
         }
 
         @TestMetadata("multipleEntriesWithSuffix.kt")
         public void testMultipleEntriesWithSuffix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/multipleEntriesWithSuffix.kt");
+            runTest("testData/introduceVariable/stringTemplates/multipleEntriesWithSuffix.kt");
         }
 
         @TestMetadata("newBlock.kt")
         public void testNewBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/newBlock.kt");
+            runTest("testData/introduceVariable/stringTemplates/newBlock.kt");
         }
 
         @TestMetadata("rawTemplateWithSubstring.kt")
         public void testRawTemplateWithSubstring() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/rawTemplateWithSubstring.kt");
+            runTest("testData/introduceVariable/stringTemplates/rawTemplateWithSubstring.kt");
         }
 
         @TestMetadata("singleEntryPrefix.kt")
         public void testSingleEntryPrefix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/singleEntryPrefix.kt");
+            runTest("testData/introduceVariable/stringTemplates/singleEntryPrefix.kt");
         }
 
         @TestMetadata("singleEntrySubstring.kt")
         public void testSingleEntrySubstring() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/singleEntrySubstring.kt");
+            runTest("testData/introduceVariable/stringTemplates/singleEntrySubstring.kt");
         }
 
         @TestMetadata("singleEntrySuffix.kt")
         public void testSingleEntrySuffix() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/singleEntrySuffix.kt");
+            runTest("testData/introduceVariable/stringTemplates/singleEntrySuffix.kt");
         }
 
         @TestMetadata("singleOccurence.kt")
         public void testSingleOccurence() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/singleOccurence.kt");
+            runTest("testData/introduceVariable/stringTemplates/singleOccurence.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable")
+    @TestMetadata("testData/introduceVariable")
     public static class Uncategorized extends AbstractK2IntroduceVariableTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
@@ -715,592 +715,592 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
         @TestMetadata("ArrayAccessExpr.kt")
         public void testArrayAccessExpr() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/ArrayAccessExpr.kt");
+            runTest("testData/introduceVariable/ArrayAccessExpr.kt");
         }
 
         @TestMetadata("arrayAssignment.kt")
         public void testArrayAssignment() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/arrayAssignment.kt");
+            runTest("testData/introduceVariable/arrayAssignment.kt");
         }
 
         @TestMetadata("callUnderSmartCast.kt")
         public void testCallUnderSmartCast() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/callUnderSmartCast.kt");
+            runTest("testData/introduceVariable/callUnderSmartCast.kt");
         }
 
         @TestMetadata("capturedType.kt")
         public void testCapturedType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/capturedType.kt");
+            runTest("testData/introduceVariable/capturedType.kt");
         }
 
         @TestMetadata("commentSkipping.kt")
         public void testCommentSkipping() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/commentSkipping.kt");
+            runTest("testData/introduceVariable/commentSkipping.kt");
         }
 
         @TestMetadata("ComplexCallee.kt")
         public void testComplexCallee() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/ComplexCallee.kt");
+            runTest("testData/introduceVariable/ComplexCallee.kt");
         }
 
         @TestMetadata("ConstructorDelegationCall.kt")
         public void testConstructorDelegationCall() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/ConstructorDelegationCall.kt");
+            runTest("testData/introduceVariable/ConstructorDelegationCall.kt");
         }
 
         @TestMetadata("DelegatorByExpressionInDelegate.kt")
         public void testDelegatorByExpressionInDelegate() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/DelegatorByExpressionInDelegate.kt");
+            runTest("testData/introduceVariable/DelegatorByExpressionInDelegate.kt");
         }
 
         @TestMetadata("DelegatorByExpressionInType.kt")
         public void testDelegatorByExpressionInType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/DelegatorByExpressionInType.kt");
+            runTest("testData/introduceVariable/DelegatorByExpressionInType.kt");
         }
 
         @TestMetadata("DelegatorToSuperCallInArgument.kt")
         public void testDelegatorToSuperCallInArgument() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/DelegatorToSuperCallInArgument.kt");
+            runTest("testData/introduceVariable/DelegatorToSuperCallInArgument.kt");
         }
 
         @TestMetadata("DelegatorToSuperCallInType.kt")
         public void testDelegatorToSuperCallInType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/DelegatorToSuperCallInType.kt");
+            runTest("testData/introduceVariable/DelegatorToSuperCallInType.kt");
         }
 
         @TestMetadata("DelegatorToSuperClass.kt")
         public void testDelegatorToSuperClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/DelegatorToSuperClass.kt");
+            runTest("testData/introduceVariable/DelegatorToSuperClass.kt");
         }
 
         @TestMetadata("DoWhileAddBlock.kt")
         public void testDoWhileAddBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/DoWhileAddBlock.kt");
+            runTest("testData/introduceVariable/DoWhileAddBlock.kt");
         }
 
         @TestMetadata("DoWhileAddBlockInner.kt")
         public void testDoWhileAddBlockInner() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/DoWhileAddBlockInner.kt");
+            runTest("testData/introduceVariable/DoWhileAddBlockInner.kt");
         }
 
         @TestMetadata("dynamicType.kt")
         public void testDynamicType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/dynamicType.kt");
+            runTest("testData/introduceVariable/dynamicType.kt");
         }
 
         @TestMetadata("enumEntry.kt")
         public void testEnumEntry() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/enumEntry.kt");
+            runTest("testData/introduceVariable/enumEntry.kt");
         }
 
         @TestMetadata("explicitContextArgument.kt")
         public void testExplicitContextArgument() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicitContextArgument.kt");
+            runTest("testData/introduceVariable/explicitContextArgument.kt");
         }
 
         @TestMetadata("explicitContextArgument2.kt")
         public void testExplicitContextArgument2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicitContextArgument2.kt");
+            runTest("testData/introduceVariable/explicitContextArgument2.kt");
         }
 
         @TestMetadata("expressionBodyErrorType.kt")
         public void testExpressionBodyErrorType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/expressionBodyErrorType.kt");
+            runTest("testData/introduceVariable/expressionBodyErrorType.kt");
         }
 
         @TestMetadata("FewOccurrences.kt")
         public void testFewOccurrences() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/FewOccurrences.kt");
+            runTest("testData/introduceVariable/FewOccurrences.kt");
         }
 
         @TestMetadata("FromLambda.kt")
         public void testFromLambda() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/FromLambda.kt");
+            runTest("testData/introduceVariable/FromLambda.kt");
         }
 
         @TestMetadata("FunctionAddBlock.kt")
         public void testFunctionAddBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/FunctionAddBlock.kt");
+            runTest("testData/introduceVariable/FunctionAddBlock.kt");
         }
 
         @TestMetadata("FunctionAddBlockInner.kt")
         public void testFunctionAddBlockInner() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/FunctionAddBlockInner.kt");
+            runTest("testData/introduceVariable/FunctionAddBlockInner.kt");
         }
 
         @TestMetadata("FunctionLiteral.kt")
         public void testFunctionLiteral() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/FunctionLiteral.kt");
+            runTest("testData/introduceVariable/FunctionLiteral.kt");
         }
 
         @TestMetadata("FunctionLiteralFromExpected.kt")
         public void testFunctionLiteralFromExpected() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/FunctionLiteralFromExpected.kt");
+            runTest("testData/introduceVariable/FunctionLiteralFromExpected.kt");
         }
 
         @TestMetadata("FunctionLiteralWithExtraArgs.kt")
         public void testFunctionLiteralWithExtraArgs() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/FunctionLiteralWithExtraArgs.kt");
+            runTest("testData/introduceVariable/FunctionLiteralWithExtraArgs.kt");
         }
 
         @TestMetadata("IfCondition.kt")
         public void testIfCondition() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IfCondition.kt");
+            runTest("testData/introduceVariable/IfCondition.kt");
         }
 
         @TestMetadata("IfElseAddBlock.kt")
         public void testIfElseAddBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IfElseAddBlock.kt");
+            runTest("testData/introduceVariable/IfElseAddBlock.kt");
         }
 
         @TestMetadata("IfElseAddBlockInner.kt")
         public void testIfElseAddBlockInner() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IfElseAddBlockInner.kt");
+            runTest("testData/introduceVariable/IfElseAddBlockInner.kt");
         }
 
         @TestMetadata("IfThenAddBlock.kt")
         public void testIfThenAddBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IfThenAddBlock.kt");
+            runTest("testData/introduceVariable/IfThenAddBlock.kt");
         }
 
         @TestMetadata("IfThenAddBlockInner.kt")
         public void testIfThenAddBlockInner() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IfThenAddBlockInner.kt");
+            runTest("testData/introduceVariable/IfThenAddBlockInner.kt");
         }
 
         @TestMetadata("IfThenValuedAddBlock.kt")
         public void testIfThenValuedAddBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IfThenValuedAddBlock.kt");
+            runTest("testData/introduceVariable/IfThenValuedAddBlock.kt");
         }
 
         @TestMetadata("InsideOfInitializerAnnotation.kt")
         public void testInsideOfInitializerAnnotation() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/InsideOfInitializerAnnotation.kt");
+            runTest("testData/introduceVariable/InsideOfInitializerAnnotation.kt");
         }
 
         @TestMetadata("IntroduceAndCreateBlock.kt")
         public void testIntroduceAndCreateBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceAndCreateBlock.kt");
+            runTest("testData/introduceVariable/IntroduceAndCreateBlock.kt");
         }
 
         @TestMetadata("IntroduceDestructuringDeclarationAndCreateBlock.kt")
         public void testIntroduceDestructuringDeclarationAndCreateBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceDestructuringDeclarationAndCreateBlock.kt");
+            runTest("testData/introduceVariable/IntroduceDestructuringDeclarationAndCreateBlock.kt");
         }
 
         @TestMetadata("IntroduceInsideClassAllOccurrencesExpression.kt")
         public void testIntroduceInsideClassAllOccurrencesExpression() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceInsideClassAllOccurrencesExpression.kt");
+            runTest("testData/introduceVariable/IntroduceInsideClassAllOccurrencesExpression.kt");
         }
 
         @TestMetadata("IntroduceInsideClassAllOccurrencesLiteral.kt")
         public void testIntroduceInsideClassAllOccurrencesLiteral() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceInsideClassAllOccurrencesLiteral.kt");
+            runTest("testData/introduceVariable/IntroduceInsideClassAllOccurrencesLiteral.kt");
         }
 
         @TestMetadata("IntroduceLambdaAndCreateBlock.kt")
         public void testIntroduceLambdaAndCreateBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock.kt");
+            runTest("testData/introduceVariable/IntroduceLambdaAndCreateBlock.kt");
         }
 
         @TestMetadata("IntroduceLambdaAndCreateBlock2.kt")
         public void testIntroduceLambdaAndCreateBlock2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock2.kt");
+            runTest("testData/introduceVariable/IntroduceLambdaAndCreateBlock2.kt");
         }
 
         @TestMetadata("IntroduceNameBasedDestructuringCommentSaver.kt")
         public void testIntroduceNameBasedDestructuringCommentSaver() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringCommentSaver.kt");
+            runTest("testData/introduceVariable/IntroduceNameBasedDestructuringCommentSaver.kt");
         }
 
         @TestMetadata("IntroduceNameBasedDestructuringDeclarationComplete.kt")
         public void testIntroduceNameBasedDestructuringDeclarationComplete() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationComplete.kt");
+            runTest("testData/introduceVariable/IntroduceNameBasedDestructuringDeclarationComplete.kt");
         }
 
         @TestMetadata("IntroduceNameBasedDestructuringDeclarationComplete2.kt")
         public void testIntroduceNameBasedDestructuringDeclarationComplete2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationComplete2.kt");
+            runTest("testData/introduceVariable/IntroduceNameBasedDestructuringDeclarationComplete2.kt");
         }
 
         @TestMetadata("IntroduceNameBasedDestructuringDeclarationCompleteValueClasses.kt")
         public void testIntroduceNameBasedDestructuringDeclarationCompleteValueClasses() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationCompleteValueClasses.kt");
+            runTest("testData/introduceVariable/IntroduceNameBasedDestructuringDeclarationCompleteValueClasses.kt");
         }
 
         @TestMetadata("IntroduceNameBasedDestructuringDeclarationNameMismatch.kt")
         public void testIntroduceNameBasedDestructuringDeclarationNameMismatch() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationNameMismatch.kt");
+            runTest("testData/introduceVariable/IntroduceNameBasedDestructuringDeclarationNameMismatch.kt");
         }
 
         @TestMetadata("IntroduceNameBasedDestructuringDeclarationNameMismatchValueClasses.kt")
         public void testIntroduceNameBasedDestructuringDeclarationNameMismatchValueClasses() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationNameMismatchValueClasses.kt");
+            runTest("testData/introduceVariable/IntroduceNameBasedDestructuringDeclarationNameMismatchValueClasses.kt");
         }
 
         @TestMetadata("IntroduceNameBasedDestructuringDeclarationOnlySyntax.kt")
         public void testIntroduceNameBasedDestructuringDeclarationOnlySyntax() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationOnlySyntax.kt");
+            runTest("testData/introduceVariable/IntroduceNameBasedDestructuringDeclarationOnlySyntax.kt");
         }
 
         @TestMetadata("IntroduceNameBasedDestructuringDeclarationOnlySyntax2.kt")
         public void testIntroduceNameBasedDestructuringDeclarationOnlySyntax2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceNameBasedDestructuringDeclarationOnlySyntax2.kt");
+            runTest("testData/introduceVariable/IntroduceNameBasedDestructuringDeclarationOnlySyntax2.kt");
         }
 
         @TestMetadata("IntroducePositionBasedDestructuringDeclarationAsArgument.kt")
         public void testIntroducePositionBasedDestructuringDeclarationAsArgument() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationAsArgument.kt");
+            runTest("testData/introduceVariable/IntroducePositionBasedDestructuringDeclarationAsArgument.kt");
         }
 
         @TestMetadata("IntroducePositionBasedDestructuringDeclarationComplete.kt")
         public void testIntroducePositionBasedDestructuringDeclarationComplete() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationComplete.kt");
+            runTest("testData/introduceVariable/IntroducePositionBasedDestructuringDeclarationComplete.kt");
         }
 
         @TestMetadata("IntroducePositionBasedDestructuringDeclarationComplete2.kt")
         public void testIntroducePositionBasedDestructuringDeclarationComplete2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationComplete2.kt");
+            runTest("testData/introduceVariable/IntroducePositionBasedDestructuringDeclarationComplete2.kt");
         }
 
         @TestMetadata("IntroducePositionBasedDestructuringDeclarationOnlySyntax.kt")
         public void testIntroducePositionBasedDestructuringDeclarationOnlySyntax() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroducePositionBasedDestructuringDeclarationOnlySyntax.kt");
+            runTest("testData/introduceVariable/IntroducePositionBasedDestructuringDeclarationOnlySyntax.kt");
         }
 
         @TestMetadata("IntroducePositionalBasedDestructuringDeclarationNameMismatch.kt")
         public void testIntroducePositionalBasedDestructuringDeclarationNameMismatch() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroducePositionalBasedDestructuringDeclarationNameMismatch.kt");
+            runTest("testData/introduceVariable/IntroducePositionalBasedDestructuringDeclarationNameMismatch.kt");
         }
 
         @TestMetadata("introduceToClass.kt")
         public void testIntroduceToClass() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/introduceToClass.kt");
+            runTest("testData/introduceVariable/introduceToClass.kt");
         }
 
         @TestMetadata("introduceToFile.kt")
         public void testIntroduceToFile() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/introduceToFile.kt");
+            runTest("testData/introduceVariable/introduceToFile.kt");
         }
 
         @TestMetadata("invalidInplaceName.kt")
         public void testInvalidInplaceName() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/invalidInplaceName.kt");
+            runTest("testData/introduceVariable/invalidInplaceName.kt");
         }
 
         @TestMetadata("It.kt")
         public void testIt() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/It.kt");
+            runTest("testData/introduceVariable/It.kt");
         }
 
         @TestMetadata("javaInnerClassQualifier.kt")
         public void testJavaInnerClassQualifier() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/javaInnerClassQualifier.kt");
+            runTest("testData/introduceVariable/javaInnerClassQualifier.kt");
         }
 
         @TestMetadata("kt10808.kt")
         public void testKt10808() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/kt10808.kt");
+            runTest("testData/introduceVariable/kt10808.kt");
         }
 
         @TestMetadata("kt21530_withConstructorParam.kt")
         public void testKt21530_withConstructorParam() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/kt21530_withConstructorParam.kt");
+            runTest("testData/introduceVariable/kt21530_withConstructorParam.kt");
         }
 
         @TestMetadata("kt21530_withGlobal.kt")
         public void testKt21530_withGlobal() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/kt21530_withGlobal.kt");
+            runTest("testData/introduceVariable/kt21530_withGlobal.kt");
         }
 
         @TestMetadata("kt21530_withParam.kt")
         public void testKt21530_withParam() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/kt21530_withParam.kt");
+            runTest("testData/introduceVariable/kt21530_withParam.kt");
         }
 
         @TestMetadata("kt38449_int.kt")
         public void testKt38449_int() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/kt38449_int.kt");
+            runTest("testData/introduceVariable/kt38449_int.kt");
         }
 
         @TestMetadata("kt38449_substring.kt")
         public void testKt38449_substring() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/kt38449_substring.kt");
+            runTest("testData/introduceVariable/kt38449_substring.kt");
         }
 
         @TestMetadata("kt38449_substrings.kt")
         public void testKt38449_substrings() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/kt38449_substrings.kt");
+            runTest("testData/introduceVariable/kt38449_substrings.kt");
         }
 
         @TestMetadata("kt38449_unit.kt")
         public void testKt38449_unit() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/kt38449_unit.kt");
+            runTest("testData/introduceVariable/kt38449_unit.kt");
         }
 
         @TestMetadata("ktij817.kt")
         public void testKtij817() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/ktij817.kt");
+            runTest("testData/introduceVariable/ktij817.kt");
         }
 
         @TestMetadata("LoopRange.kt")
         public void testLoopRange() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/LoopRange.kt");
+            runTest("testData/introduceVariable/LoopRange.kt");
         }
 
         @TestMetadata("ManyInnerOccurences.kt")
         public void testManyInnerOccurences() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/ManyInnerOccurences.kt");
+            runTest("testData/introduceVariable/ManyInnerOccurences.kt");
         }
 
         @TestMetadata("ManyOccurrences.kt")
         public void testManyOccurrences() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/ManyOccurrences.kt");
+            runTest("testData/introduceVariable/ManyOccurrences.kt");
         }
 
         @TestMetadata("ManyOccurrencesInSingleContainer.kt")
         public void testManyOccurrencesInSingleContainer() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/ManyOccurrencesInSingleContainer.kt");
+            runTest("testData/introduceVariable/ManyOccurrencesInSingleContainer.kt");
         }
 
         @TestMetadata("multilineBinaryExpression.kt")
         public void testMultilineBinaryExpression() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multilineBinaryExpression.kt");
+            runTest("testData/introduceVariable/multilineBinaryExpression.kt");
         }
 
         @TestMetadata("multilineBinaryExpressionWithComments.kt")
         public void testMultilineBinaryExpressionWithComments() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multilineBinaryExpressionWithComments.kt");
+            runTest("testData/introduceVariable/multilineBinaryExpressionWithComments.kt");
         }
 
         @TestMetadata("multilineNestedBinaryExpression1.kt")
         public void testMultilineNestedBinaryExpression1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multilineNestedBinaryExpression1.kt");
+            runTest("testData/introduceVariable/multilineNestedBinaryExpression1.kt");
         }
 
         @TestMetadata("multilineNestedBinaryExpression2.kt")
         public void testMultilineNestedBinaryExpression2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/multilineNestedBinaryExpression2.kt");
+            runTest("testData/introduceVariable/multilineNestedBinaryExpression2.kt");
         }
 
         @TestMetadata("NameSuggestionBug1.kt")
         public void testNameSuggestionBug1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/NameSuggestionBug1.kt");
+            runTest("testData/introduceVariable/NameSuggestionBug1.kt");
         }
 
         @TestMetadata("NameSuggestionBug2.kt")
         public void testNameSuggestionBug2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/NameSuggestionBug2.kt");
+            runTest("testData/introduceVariable/NameSuggestionBug2.kt");
         }
 
         @TestMetadata("NameSuggestionCheckVisibility.kt")
         public void testNameSuggestionCheckVisibility() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/NameSuggestionCheckVisibility.kt");
+            runTest("testData/introduceVariable/NameSuggestionCheckVisibility.kt");
         }
 
         @TestMetadata("noConflictWithInnerVariableK1.kt")
         public void testNoConflictWithInnerVariableK1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/noConflictWithInnerVariableK1.kt");
+            runTest("testData/introduceVariable/noConflictWithInnerVariableK1.kt");
         }
 
         @TestMetadata("noConflictWithInnerVariableK2.kt")
         public void testNoConflictWithInnerVariableK2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/noConflictWithInnerVariableK2.kt");
+            runTest("testData/introduceVariable/noConflictWithInnerVariableK2.kt");
         }
 
         @TestMetadata("NoExplicitReceivers.kt")
         public void testNoExplicitReceivers() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/NoExplicitReceivers.kt");
+            runTest("testData/introduceVariable/NoExplicitReceivers.kt");
         }
 
         @TestMetadata("NoExplicitReceiversUnresolved.kt")
         public void testNoExplicitReceiversUnresolved() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/NoExplicitReceiversUnresolved.kt");
+            runTest("testData/introduceVariable/NoExplicitReceiversUnresolved.kt");
         }
 
         @TestMetadata("NoNewLinesInBetween.kt")
         public void testNoNewLinesInBetween() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/NoNewLinesInBetween.kt");
+            runTest("testData/introduceVariable/NoNewLinesInBetween.kt");
         }
 
         @TestMetadata("NoNewLinesInBetweenNoBraces.kt")
         public void testNoNewLinesInBetweenNoBraces() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/NoNewLinesInBetweenNoBraces.kt");
+            runTest("testData/introduceVariable/NoNewLinesInBetweenNoBraces.kt");
         }
 
         @TestMetadata("nonEquivalentReceivers.kt")
         public void testNonEquivalentReceivers() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/nonEquivalentReceivers.kt");
+            runTest("testData/introduceVariable/nonEquivalentReceivers.kt");
         }
 
         @TestMetadata("notNullAssertion.kt")
         public void testNotNullAssertion() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/notNullAssertion.kt");
+            runTest("testData/introduceVariable/notNullAssertion.kt");
         }
 
         @TestMetadata("nullableIndexValue.kt")
         public void testNullableIndexValue() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/nullableIndexValue.kt");
+            runTest("testData/introduceVariable/nullableIndexValue.kt");
         }
 
         @TestMetadata("OccurrencesInStringTemplate.kt")
         public void testOccurrencesInStringTemplate() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/OccurrencesInStringTemplate.kt");
+            runTest("testData/introduceVariable/OccurrencesInStringTemplate.kt");
         }
 
         @TestMetadata("onAssignmentLHS.kt")
         public void testOnAssignmentLHS() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/onAssignmentLHS.kt");
+            runTest("testData/introduceVariable/onAssignmentLHS.kt");
         }
 
         @TestMetadata("OneExplicitReceiver.kt")
         public void testOneExplicitReceiver() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/OneExplicitReceiver.kt");
+            runTest("testData/introduceVariable/OneExplicitReceiver.kt");
         }
 
         @TestMetadata("parenthesizedInIfBranchWithoutBraces.kt")
         public void testParenthesizedInIfBranchWithoutBraces() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/parenthesizedInIfBranchWithoutBraces.kt");
+            runTest("testData/introduceVariable/parenthesizedInIfBranchWithoutBraces.kt");
         }
 
         @TestMetadata("parenthesizedInWhenBranch.kt")
         public void testParenthesizedInWhenBranch() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/parenthesizedInWhenBranch.kt");
+            runTest("testData/introduceVariable/parenthesizedInWhenBranch.kt");
         }
 
         @TestMetadata("PropertyAccessorAddBlock.kt")
         public void testPropertyAccessorAddBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/PropertyAccessorAddBlock.kt");
+            runTest("testData/introduceVariable/PropertyAccessorAddBlock.kt");
         }
 
         @TestMetadata("PropertyAccessorAddBlockInner.kt")
         public void testPropertyAccessorAddBlockInner() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/PropertyAccessorAddBlockInner.kt");
+            runTest("testData/introduceVariable/PropertyAccessorAddBlockInner.kt");
         }
 
         @TestMetadata("propertyBasedQualifier.kt")
         public void testPropertyBasedQualifier() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/propertyBasedQualifier.kt");
+            runTest("testData/introduceVariable/propertyBasedQualifier.kt");
         }
 
         @TestMetadata("qualifier.kt")
         public void testQualifier() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifier.kt");
+            runTest("testData/introduceVariable/qualifier.kt");
         }
 
         @TestMetadata("ReplaceOccurence.kt")
         public void testReplaceOccurence() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/ReplaceOccurence.kt");
+            runTest("testData/introduceVariable/ReplaceOccurence.kt");
         }
 
         @TestMetadata("selectorAssignment.kt")
         public void testSelectorAssignment() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/selectorAssignment.kt");
+            runTest("testData/introduceVariable/selectorAssignment.kt");
         }
 
         @TestMetadata("Simple.kt")
         public void testSimple() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/Simple.kt");
+            runTest("testData/introduceVariable/Simple.kt");
         }
 
         @TestMetadata("SimpleCreateValue.kt")
         public void testSimpleCreateValue() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/SimpleCreateValue.kt");
+            runTest("testData/introduceVariable/SimpleCreateValue.kt");
         }
 
         @TestMetadata("skipClassReference.kt")
         public void testSkipClassReference() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/skipClassReference.kt");
+            runTest("testData/introduceVariable/skipClassReference.kt");
         }
 
         @TestMetadata("skipUsageInAssignmentLHS.kt")
         public void testSkipUsageInAssignmentLHS() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/skipUsageInAssignmentLHS.kt");
+            runTest("testData/introduceVariable/skipUsageInAssignmentLHS.kt");
         }
 
         @TestMetadata("StringInjection.kt")
         public void testStringInjection() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/StringInjection.kt");
+            runTest("testData/introduceVariable/StringInjection.kt");
         }
 
         @TestMetadata("SuperReference.kt")
         public void testSuperReference() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/SuperReference.kt");
+            runTest("testData/introduceVariable/SuperReference.kt");
         }
 
         @TestMetadata("thisAsCallee.kt")
         public void testThisAsCallee() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/thisAsCallee.kt");
+            runTest("testData/introduceVariable/thisAsCallee.kt");
         }
 
         @TestMetadata("ThisReference.kt")
         public void testThisReference() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/ThisReference.kt");
+            runTest("testData/introduceVariable/ThisReference.kt");
         }
 
         @TestMetadata("TwoExplicitReceivers.kt")
         public void testTwoExplicitReceivers() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/TwoExplicitReceivers.kt");
+            runTest("testData/introduceVariable/TwoExplicitReceivers.kt");
         }
 
         @TestMetadata("TypeElement.kt")
         public void testTypeElement() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/TypeElement.kt");
+            runTest("testData/introduceVariable/TypeElement.kt");
         }
 
         @TestMetadata("UnresolvedOccurrences.kt")
         public void testUnresolvedOccurrences() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/UnresolvedOccurrences.kt");
+            runTest("testData/introduceVariable/UnresolvedOccurrences.kt");
         }
 
         @TestMetadata("UsedAndUnusedExpressions1.kt")
         public void testUsedAndUnusedExpressions1() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/UsedAndUnusedExpressions1.kt");
+            runTest("testData/introduceVariable/UsedAndUnusedExpressions1.kt");
         }
 
         @TestMetadata("UsedAndUnusedExpressions2.kt")
         public void testUsedAndUnusedExpressions2() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/UsedAndUnusedExpressions2.kt");
+            runTest("testData/introduceVariable/UsedAndUnusedExpressions2.kt");
         }
 
         @TestMetadata("WhenAddBlock.kt")
         public void testWhenAddBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/WhenAddBlock.kt");
+            runTest("testData/introduceVariable/WhenAddBlock.kt");
         }
 
         @TestMetadata("WhenAddBlockInner.kt")
         public void testWhenAddBlockInner() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/WhenAddBlockInner.kt");
+            runTest("testData/introduceVariable/WhenAddBlockInner.kt");
         }
 
         @TestMetadata("WhenEntryCondition.kt")
         public void testWhenEntryCondition() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/WhenEntryCondition.kt");
+            runTest("testData/introduceVariable/WhenEntryCondition.kt");
         }
 
         @TestMetadata("WhenParts.kt")
         public void testWhenParts() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/WhenParts.kt");
+            runTest("testData/introduceVariable/WhenParts.kt");
         }
 
         @TestMetadata("WhenValuedAddBlock.kt")
         public void testWhenValuedAddBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/WhenValuedAddBlock.kt");
+            runTest("testData/introduceVariable/WhenValuedAddBlock.kt");
         }
 
         @TestMetadata("WhileAddBlock.kt")
         public void testWhileAddBlock() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/WhileAddBlock.kt");
+            runTest("testData/introduceVariable/WhileAddBlock.kt");
         }
 
         @TestMetadata("WhileAddBlockInner.kt")
         public void testWhileAddBlockInner() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/WhileAddBlockInner.kt");
+            runTest("testData/introduceVariable/WhileAddBlockInner.kt");
         }
 
         @TestMetadata("WhileCondition.kt")
         public void testWhileCondition() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/WhileCondition.kt");
+            runTest("testData/introduceVariable/WhileCondition.kt");
         }
     }
 }

@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/inline/withFullJdk")
+@TestMetadata("testData/inline/withFullJdk")
 public class InlineTestWithSomeDescriptorsGenerated extends AbstractInlineTestWithSomeDescriptors {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,26 +25,26 @@ public class InlineTestWithSomeDescriptorsGenerated extends AbstractInlineTestWi
 
     @TestMetadata("functionFromJdkWithoutSources.kt")
     public void testFunctionFromJdkWithoutSources() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/inline/withFullJdk/functionFromJdkWithoutSources.kt");
+        runTest("testData/inline/withFullJdk/functionFromJdkWithoutSources.kt");
     }
 
     @TestMetadata("functionFromStdlib.kt")
     public void testFunctionFromStdlib() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/inline/withFullJdk/functionFromStdlib.kt");
+        runTest("testData/inline/withFullJdk/functionFromStdlib.kt");
     }
 
     @TestMetadata("functionFromStdlibWithoutSources.kt")
     public void testFunctionFromStdlibWithoutSources() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/inline/withFullJdk/functionFromStdlibWithoutSources.kt");
+        runTest("testData/inline/withFullJdk/functionFromStdlibWithoutSources.kt");
     }
 
     @TestMetadata("propertyFromStdlib.kt")
     public void testPropertyFromStdlib() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/inline/withFullJdk/propertyFromStdlib.kt");
+        runTest("testData/inline/withFullJdk/propertyFromStdlib.kt");
     }
 
     @TestMetadata("propertyFromStdlibWithoutSources.kt")
     public void testPropertyFromStdlibWithoutSources() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/inline/withFullJdk/propertyFromStdlibWithoutSources.kt");
+        runTest("testData/inline/withFullJdk/propertyFromStdlibWithoutSources.kt");
     }
 }

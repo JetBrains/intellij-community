@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/refactoring/inlineMultiModule")
+@TestMetadata("testData/inlineMultiModule")
 public class KotlinFirMultiplatformTestGenerated extends AbstractKotlinFirMultiplatformTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,16 +25,16 @@ public class KotlinFirMultiplatformTestGenerated extends AbstractKotlinFirMultip
 
     @TestMetadata("commonAnonymousFunction.kt")
     public void testCommonAnonymousFunction() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/inlineMultiModule/commonAnonymousFunction.kt");
+        runTest("testData/inlineMultiModule/commonAnonymousFunction.kt");
     }
 
     @TestMetadata("defaultValueFromAnotherModule.kt")
     public void testDefaultValueFromAnotherModule() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/inlineMultiModule/defaultValueFromAnotherModule.kt");
+        runTest("testData/inlineMultiModule/defaultValueFromAnotherModule.kt");
     }
 
     @TestMetadata("defaultValueFromExpect.kt")
     public void testDefaultValueFromExpect() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/inlineMultiModule/defaultValueFromExpect.kt");
+        runTest("testData/inlineMultiModule/defaultValueFromExpect.kt");
     }
 }
