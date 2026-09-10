@@ -8,14 +8,16 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
+import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.lang.foreign.ValueLayout.JAVA_LONG;
 
 /**
- * File system queries through libc downcalls. macOS only: the symbol is looked up on the first call.
+ * File system operations through libc downcalls. These operations require macOS. The symbols are looked up on the first call.
  */
 @ApiStatus.Internal
 public final class MacFileSystem {
@@ -45,6 +47,39 @@ public final class MacFileSystem {
     }
   }
 
+  /**
+   * Checks whether the path has the named attribute. Follows symbolic links.
+   *
+   * @return {@code true} if the attribute exists, even if it is empty; {@code false} if the native query fails
+   */
+  public static boolean hasExtendedAttribute(@NotNull String path, @NotNull String name) {
+    try (var arena = Arena.ofConfined()) {
+      var result = (long)AttributeHandles.GETXATTR.invokeExact(
+        arena.allocateFrom(path), arena.allocateFrom(name), MemorySegment.NULL, 0L, 0, 0);
+      return result >= 0;
+    }
+    catch (Throwable error) {
+      rethrowControlFlowException(error);
+      throw new IllegalStateException(error);
+    }
+  }
+
+  /**
+   * Removes the named attribute from the path. Follows symbolic links.
+   *
+   * @return {@code true} if the attribute was removed; {@code false} if the native call fails
+   */
+  public static boolean removeExtendedAttribute(@NotNull String path, @NotNull String name) {
+    try (var arena = Arena.ofConfined()) {
+      var result = (int)AttributeHandles.REMOVEXATTR.invokeExact(arena.allocateFrom(path), arena.allocateFrom(name), 0);
+      return result == 0;
+    }
+    catch (Throwable error) {
+      rethrowControlFlowException(error);
+      throw new IllegalStateException(error);
+    }
+  }
+
   private static final class Handles {
     private static final Linker LINKER = Linker.nativeLinker();
 
@@ -52,5 +87,17 @@ public final class MacFileSystem {
     static final MethodHandle PATHCONF = LINKER.downcallHandle(
       LINKER.defaultLookup().findOrThrow("pathconf"),
       FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_INT));
+  }
+
+  private static final class AttributeHandles {
+    private static final Linker LINKER = Linker.nativeLinker();
+
+    static final MethodHandle GETXATTR = LINKER.downcallHandle(
+      LINKER.defaultLookup().findOrThrow("getxattr"),
+      FunctionDescriptor.of(JAVA_LONG, ADDRESS, ADDRESS, ADDRESS, JAVA_LONG, JAVA_INT, JAVA_INT));
+
+    static final MethodHandle REMOVEXATTR = LINKER.downcallHandle(
+      LINKER.defaultLookup().findOrThrow("removexattr"),
+      FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, JAVA_INT));
   }
 }

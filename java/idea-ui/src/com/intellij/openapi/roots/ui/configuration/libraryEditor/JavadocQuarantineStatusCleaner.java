@@ -15,7 +15,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.sun.jna.platform.mac.XAttrUtil;
+import com.intellij.util.system.MacFileSystem;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -37,7 +37,7 @@ import java.util.stream.Stream;
  * This class allows to clear quarantine status from folder containing Javadoc, if confirmed by user.
  *
  * Implementation note: UserDefinedFileAttributeView is not supported on macOS (https://bugs.openjdk.org/browse/JDK-8030048),
- * so the class resorts to JNA.
+ * so the class uses {@link MacFileSystem}.
  */
 public final class JavadocQuarantineStatusCleaner {
   private static final Logger LOG = Logger.getInstance(JavadocQuarantineStatusCleaner.class);
@@ -48,7 +48,8 @@ public final class JavadocQuarantineStatusCleaner {
     if (docFolders.length > 0 && SystemInfo.isMac) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         List<@NlsSafe String> quarantined = Stream.of(docFolders)
-          .filter(f -> f.isInLocalFileSystem() && f.isDirectory() && XAttrUtil.getXAttr(f.getPath(), QUARANTINE_ATTRIBUTE) != null)
+          .filter(folder -> folder.isInLocalFileSystem() && folder.isDirectory()
+                            && MacFileSystem.hasExtendedAttribute(folder.getPath(), QUARANTINE_ATTRIBUTE))
           .map(VirtualFile::getPath)
           .collect(Collectors.toList());
         if (!quarantined.isEmpty()) {
@@ -74,7 +75,7 @@ public final class JavadocQuarantineStatusCleaner {
           try (Stream<Path> s = Files.walk(Paths.get(path))) {
             s.forEach(p -> {
               indicator.checkCanceled();
-              XAttrUtil.removeXAttr(p.toFile().getAbsolutePath(), QUARANTINE_ATTRIBUTE);
+              MacFileSystem.removeExtendedAttribute(p.toAbsolutePath().toString(), QUARANTINE_ATTRIBUTE);
             });
           }
           catch (IOException e) {
