@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
+
+context(string: String)
+fun fn(): Int = 1
+
+fun usage() {
+    val s = "str"
+    val ref: () -> Int = { context(s) { fn() } }
+}

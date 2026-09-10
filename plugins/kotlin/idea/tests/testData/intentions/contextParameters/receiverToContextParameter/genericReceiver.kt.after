@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
+
+context(ts: List<T>)
+fun <T> fn(x: Int): Int = x
+
+fun usage() {
+    val list = listOf("a", "b")
+    val ref: (Int) -> Int = { x -> context(list) { fn(x) } }
+}
