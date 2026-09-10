@@ -2,6 +2,7 @@
 package com.jetbrains.python.uv.sdk.configuration
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
@@ -22,6 +23,7 @@ import com.jetbrains.python.sdk.setAssociationToModule
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.uv.backend.UvPyTool
+import com.intellij.python.pyproject.model.internal.workspaceBridge.getToolWorkspaceLayout
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
@@ -95,6 +97,16 @@ private suspend fun uvEnvTarget(module: Module, venvsInModule: List<PythonBinary
   val venvs = if (workspaceModule == module) venvsInModule else workspaceModule.findPythonVirtualEnvironments()
   return UvEnvTarget(workspaceModule, venvs.firstOrNull { it.isUvEnv() })
 }
+
+/**
+ * Whether [module] takes part in a uv workspace, as its root or as a member.
+ *
+ * A uv workspace declares one environment, at its root. An environment another tool makes for a member sits beside
+ * it, and uv ignores it, so uv owns the setup of every module of a workspace. See
+ * `PyProjectSdkConfigurationExtension.isExclusiveFor`.
+ */
+internal suspend fun uvOwnsSetupOf(module: Module): Boolean =
+  readAction { module.getToolWorkspaceLayout(UV_TOOL_ID) } != null
 
 internal fun PythonBinary.isUvEnv(): Boolean {
   return detectPythonEnvironment().successOrNull?.let { it is VenvEnvironment && "uv" in it.config } == true

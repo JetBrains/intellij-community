@@ -17,6 +17,8 @@ internal class PyUvBaseSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override val potentialDependencyFiles: Set<String> = setOf(PY_PROJECT_TOML)
 
+  override suspend fun isExclusiveFor(module: Module): Boolean = uvOwnsSetupOf(module)
+
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
       { checkManageableUvEnvBase(module, venvsInModule) }

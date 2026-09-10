@@ -21,6 +21,8 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
   override val toolId: ToolId = UV_TOOL_ID
   override val potentialDependencyFiles: Set<String> = setOf(PY_PROJECT_TOML)
 
+  override suspend fun isExclusiveFor(module: Module): Boolean = uvOwnsSetupOf(module)
+
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
       { checkManageableUvEnvWithUvLock(module, venvsInModule, tomlCheckedByWorkspaceTools = false) }

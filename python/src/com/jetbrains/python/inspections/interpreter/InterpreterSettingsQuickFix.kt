@@ -176,16 +176,27 @@ private class ConfigureInterpreterFix : InterpreterFix {
   }
 }
 
-private class UseProvidedInterpreterFix(private val myCreateSdkInfo: CreateSdkInfoWithTool) : InterpreterFix {
+/**
+ * Creates the environment [myCreateSdkInfo] describes, for [myModule].
+ *
+ * [myModule] is the module the option was computed for, not the module of the file the banner is shown on. For a
+ * workspace member the two differ: `toQuickFix` walks to the workspace root, so the option belongs to the root, and
+ * running it against the member built a second environment in the member's own directory (PY-92193). The tool
+ * installation fix beside this one already binds its module the same way.
+ */
+private class UseProvidedInterpreterFix(
+  private val myModule: Module,
+  private val myCreateSdkInfo: CreateSdkInfoWithTool,
+) : InterpreterFix {
   override fun createActionLink(module: Module, project: Project, psiFile: PsiFile, executor: BusyGuardExecutor): ActionLink {
     return ActionLink(myCreateSdkInfo.createSdkInfo.intentionName) {
       executor.execute {
         PyProjectTomlCollector.sdkCreatedFromNotification(myCreateSdkInfo.toolId)
-        val lifetime = suppressTipAndInspectionsFor(module, myCreateSdkInfo.toolId.id)
+        val lifetime = suppressTipAndInspectionsFor(myModule, myCreateSdkInfo.toolId.id)
         withBackgroundProgress(project, myCreateSdkInfo.createSdkInfo.intentionName, false) {
-          lifetime.use { setSdkUsingCreateSdkInfo(module, myCreateSdkInfo) }
+          lifetime.use { setSdkUsingCreateSdkInfo(myModule, myCreateSdkInfo) }
         }
-        RefreshQueue.getInstance().refresh(recursive = false, files = ModuleRootManager.getInstance(module).contentRoots.toList())
+        RefreshQueue.getInstance().refresh(recursive = false, files = ModuleRootManager.getInstance(myModule).contentRoots.toList())
       }
     }
   }
@@ -252,7 +263,7 @@ private fun SdkConfigurationError<CreateSdkNotFilesResult>.toQuickFix(module: Mo
       when (val r = r.reason) {
         is CreateSdkNotFilesResult.NoFiles -> {
           logger.trace { "$this: Ask user as it is a heavy operation" }
-          UseProvidedInterpreterFix(CreateSdkInfoWithTool(r.createInfo.createSdkInfo, r.createInfo.toolId))
+          UseProvidedInterpreterFix(module, CreateSdkInfoWithTool(r.createInfo.createSdkInfo, r.createInfo.toolId))
         }
         // TODO: We've tried to configure SDK automatically, but faced an error, what should we do?
         is CreateSdkNotFilesResult.SdkCreationError -> null
