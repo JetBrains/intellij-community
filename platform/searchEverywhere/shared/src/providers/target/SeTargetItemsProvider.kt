@@ -123,6 +123,8 @@ class SeTargetItemsProvider<T> private constructor(
   private val typeFilterProvider: (Project) -> List<PersistentSearchEverywhereContributorFilter<T>>,
   private val extendedInfoCalculator: SeExtendedInfoCalculator,
   private val isFileProvider: Boolean,
+  private val acceptsBlankQuery: Boolean,
+  private val supportsScopes: Boolean,
 ) : Disposable {
   //region Search
 
@@ -202,17 +204,17 @@ class SeTargetItemsProvider<T> private constructor(
     val sentCount = stats.sentCount
     val startedAtNano = System.nanoTime()
     val pattern = normalizeQuery(params.inputQuery)
-    if (pattern.isBlank()) return@channelFlow
+    if (pattern.isBlank() && !acceptsBlankQuery) return@channelFlow
 
     // The first search of a session builds the scope list here, so this can dominate its latency.
     val (scopeDescriptor, hiddenTypes) = stats.measure(stats.scopeResolveNanos) {
       SeEverywhereFilterImpl.isEverywhere(params.filter)?.let { isEverywhere ->
-        scopes.getValue().byId[isEverywhere] to null
+        scopeOf(isEverywhere) to null
       } ?: run {
         val targetsFilter = SeTargetsFilter.from(params.filter)
 
         targetsFilter.selectedScopeId?.let {
-          scopes.getValue().byId[it]
+          scopeOf(it)
         } to targetsFilter.hiddenTypes
       }
     }
@@ -252,7 +254,7 @@ class SeTargetItemsProvider<T> private constructor(
         val context = psiContext?.element
         val provider = ChooseByNameModelEx.getItemProvider(model, context)
         val isEverywhere = scope.isSearchInLibraries
-        val viewModel = MyViewModel(project, model)
+        val viewModel = MyViewModel(project, model, acceptsBlankQuery)
         val defaultMatchers = createDefaultMatchers(pattern, model)
 
         LOG.debug {
@@ -369,12 +371,22 @@ class SeTargetItemsProvider<T> private constructor(
   private val scopes: SuspendLazyProperty<SeTargetScopes> = suspendLazy { createScopes() }
 
   /**
-   * The scope list that the scope chooser shows, or null when the model has no scope to offer.
+   * The scope list that the scope chooser shows.
+   *
+   * It is null when the provider turned the scopes off, and when the model offers no scope.
    *
    * A provider that exposes this must resolve the same scope ids back in [getItemsFlow]. Both sides
    * read one [SeTargetScopes], so the ids always agree.
    */
-  suspend fun getSearchScopesInfo(): SearchScopesInfo? = scopes.getValue().info
+  suspend fun getSearchScopesInfo(): SearchScopesInfo? = if (supportsScopes) scopes.getValue().info else null
+
+  /** The scope of the everywhere toggle, or null when this provider offers no scope. */
+  private suspend fun scopeOf(isEverywhere: Boolean): ScopeDescriptor? =
+    if (supportsScopes) scopes.getValue().byId[isEverywhere] else null
+
+  /** The scope of [scopeId], or null when this provider offers no scope. */
+  private suspend fun scopeOf(scopeId: String): ScopeDescriptor? =
+    if (supportsScopes) scopes.getValue().byId[scopeId] else null
 
   private suspend fun createScopes(): SeTargetScopes {
     val descriptors = readAction {
@@ -629,6 +641,15 @@ class SeTargetItemsProvider<T> private constructor(
       !isDirectory && ((presentableText == inputQuery) || // IJPL-55665
                        (isFile && inputQueryHasNoExtension && presentableText.startsWith("$inputQuery."))) // IJPL-55732, IJPL-156298
 
+    /**
+     * Builds a provider that drives [gotoModelProvider].
+     *
+     * [acceptsBlankQuery] lets a blank query run. A goto model finds nothing for one, so the default
+     * skips the search.
+     *
+     * [supportsScopes] builds the scope list of the scope chooser. Turn it off for a provider that
+     * offers no scope, because the first search of a session pays for the whole list.
+     */
     suspend fun <T> create(
       project: Project,
       dataContext: DataContext,
@@ -638,6 +659,8 @@ class SeTargetItemsProvider<T> private constructor(
       typeFilterProvider: (Project) -> List<PersistentSearchEverywhereContributorFilter<T>> = { emptyList() },
       extendedInfoCalculator: SeExtendedInfoCalculator = SePsiExtendedInfoCalculator(),
       isFileProvider: Boolean = false,
+      acceptsBlankQuery: Boolean = false,
+      supportsScopes: Boolean = true,
     ): SeTargetItemsProvider<T> {
       val psiContext = readAction {
         GotoActionBase.getPsiContext(dataContext)?.let { context ->
@@ -645,8 +668,8 @@ class SeTargetItemsProvider<T> private constructor(
         }
       }
 
-      return SeTargetItemsProvider(project, psiContext, operationDisposable, label, gotoModelProvider, typeFilterProvider,
-                                   extendedInfoCalculator, isFileProvider)
+      return SeTargetItemsProvider(project, psiContext, operationDisposable, label, gotoModelProvider,
+                                   typeFilterProvider, extendedInfoCalculator, isFileProvider, acceptsBlankQuery, supportsScopes)
     }
   }
 }
@@ -706,7 +729,11 @@ private class SeFetchStats(
     "blockedInSendMs=${blockedInSendNanos.get() / 1_000_000}"
 }
 
-private class MyViewModel(private val myProject: Project, private val myModel: ChooseByNameModel) : ChooseByNameViewModel {
+private class MyViewModel(
+  private val myProject: Project,
+  private val myModel: ChooseByNameModel,
+  private val myCanShowListForEmptyPattern: Boolean,
+) : ChooseByNameViewModel {
   override fun getProject(): Project = myProject
 
   override fun getModel(): ChooseByNameModel = myModel
@@ -715,7 +742,7 @@ private class MyViewModel(private val myProject: Project, private val myModel: C
 
   override fun transformPattern(pattern: String): String = ChooseByNamePopup.getTransformedPattern(pattern, myModel)
 
-  override fun canShowListForEmptyPattern(): Boolean = false
+  override fun canShowListForEmptyPattern(): Boolean = myCanShowListForEmptyPattern
 
   override fun getMaximumListSizeLimit(): Int = 0
 }
