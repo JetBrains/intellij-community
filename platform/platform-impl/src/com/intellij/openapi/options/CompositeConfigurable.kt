@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options
 
-import com.intellij.openapi.util.ClearableLazyValue
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.jetbrains.annotations.ApiStatus
 
 abstract class CompositeConfigurable<T : UnnamedConfigurable> : BaseConfigurable() {
 
-  private val lazyConfigurables: ClearableLazyValue<List<T>> = ClearableLazyValue.create { createConfigurables() }
+  private val lazyConfigurables = SynchronizedClearableLazy { createConfigurables() }
 
   open val configurables: List<T>
     get() = lazyConfigurables.value
@@ -36,7 +36,7 @@ abstract class CompositeConfigurable<T : UnnamedConfigurable> : BaseConfigurable
   }
 
   override fun disposeUIResources() {
-    if (lazyConfigurables.isCached) {
+    if (lazyConfigurables.isInitialized()) {
       for (configurable in configurables) {
         configurable.disposeUIResources()
       }
