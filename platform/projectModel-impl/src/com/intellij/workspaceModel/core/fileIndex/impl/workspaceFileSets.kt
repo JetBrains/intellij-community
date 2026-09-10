@@ -336,13 +336,35 @@ internal object WorkspaceFileKindMask {
   const val ALL = CONTENT or EXTERNAL or CUSTOM or CONTENT_NON_INDEXABLE or EXTERNAL_NON_INDEXABLE
 }
 
+/**
+ * Defines an exclusion rule registered at [root].
+ * A [WorkspaceFileSetImpl] defines an inclusion rule that adds files to the workspace.
+ * Exclusion rules restrict which files belong to these file sets.
+ *
+ * Inclusion rules can be registered below [root], inside the scope of an exclusion rule.
+ * The exclusion type determines whether it also applies to files covered by a nested inclusion rule:
+ *
+ * * [ByFileKind], [ByPattern], and [ByCondition] allow a nested inclusion rule to include excluded files again.
+ * * [ByUnscopedCondition] continues to exclude matching files even inside a nested inclusion rule.
+ *
+ * [WorkspaceFileIndexEx.getFileInfo] applies exclusion rules when `honorExclusion` is `true`.
+ */
 internal sealed interface ExcludedFileSet : StoredFileSet {
+  /**
+   * The file or directory where the rule is registered.
+   * The rule type determines whether the rule excludes this root itself.
+   */
   val root: VirtualFile
 
   override fun add(fileSet: StoredFileSet): StoredFileSetCollection {
     return MultipleStoredWorkspaceFileSets(CopyOnWriteArrayList(arrayOf(this, fileSet)))
   }
 
+  /**
+   * Excludes [root] and its descendants from the kinds selected by [mask].
+   * [mask] uses [WorkspaceFileKindMask] bits. [WorkspaceFileKindMask.ALL] excludes all kinds.
+   * A nested inclusion rule can include files again.
+   */
   class ByFileKind(override val root: VirtualFile, @MagicConstant(flagsFromClass = WorkspaceFileKindMask::class) val mask: Int,
                    override val entityPointer: EntityPointer<WorkspaceEntity>,
                    override val entityStorageKind: EntityStorageKind = EntityStorageKind.MAIN) : ExcludedFileSet {
@@ -372,6 +394,12 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
     }
   }
 
+  /**
+   * Excludes matching files and directories strictly below [root] from all kinds.
+   * The [patterns] match file names and support `*` and `?` wildcards.
+   * The rule also excludes the descendants of matching directories.
+   * A nested inclusion rule can include files again.
+   */
   class ByPattern(override val root: VirtualFile, patterns: List<String>,
                   override val entityPointer: EntityPointer<WorkspaceEntity>,
                   override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
@@ -420,6 +448,12 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
     }
   }
 
+  /**
+   * Excludes files and directories that satisfy [condition] from all kinds.
+   * The rule applies to [root] and its descendants.
+   * It also excludes the descendants of matching directories.
+   * A nested inclusion rule can include files again.
+   */
   class ByCondition(override val root: VirtualFile, val condition: WorkspaceFileSetExclusionCondition,
                     override val entityPointer: EntityPointer<WorkspaceEntity>,
                     override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
@@ -462,8 +496,8 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
   }
 
   /**
-   * A condition that a file set nested below [root] does not hide. [WorkspaceFileIndexDataImpl.getFileInfo] asks it about a file whose
-   * nearest root lies below [root].
+   * Uses the same condition check as [ByCondition].
+   * The exclusion continues to apply inside nested inclusion rules.
    */
   class ByUnscopedCondition(override val root: VirtualFile, val condition: WorkspaceFileSetExclusionCondition,
                             override val entityPointer: EntityPointer<WorkspaceEntity>,
