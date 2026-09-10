@@ -254,7 +254,7 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
       WelcomeUtils.addWelcomeProjectNewAction(initEvent, initEvent.project, result)
 
-      WelcomeUtils.getGotoWelcomeProjectAction(initEvent.project)?.let {
+      WelcomeUtils.getGotoWelcomeProjectAction()?.let {
         result.addSeparator()
         result.add(it)
       }

@@ -37,7 +37,7 @@ internal class WelcomeScreenProjectSupportImpl : WelcomeScreenProjectSupport {
     LOG.debug("Project: ", project)
 
     val recentProjectsManager = serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase
-    recentProjectsManager.setProjectHidden(project, extension.isHiddenInRecentProjectsForInternalUsage())
+    recentProjectsManager.setProjectHidden(project, true)
     TipAndTrickManager.DISABLE_TIPS_FOR_PROJECT.set(project, true)
 
     return project

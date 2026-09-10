@@ -84,7 +84,8 @@ internal class WelcomeChangeLanguageAction : ChangeLanguageAction() {
   }
 }
 
-internal class WelcomeFilesRootType : RootType("welcomeFiles", "") {
+@ApiStatus.Internal
+class WelcomeFilesRootType : RootType("HomeFiles", "") {
   object Util {
     val instance: WelcomeFilesRootType
       get() = findByClass(WelcomeFilesRootType::class.java)

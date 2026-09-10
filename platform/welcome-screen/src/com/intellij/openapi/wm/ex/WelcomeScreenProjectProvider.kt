@@ -218,9 +218,6 @@ abstract class WelcomeScreenProjectProvider {
   protected open fun getToolWindowIdsToExclusiveShowing(): Set<String> = emptySet()
 
   open fun addWelcomeProjectNewAction(): Boolean = true
-
-  @Internal
-  fun isHiddenInRecentProjectsForInternalUsage(): Boolean = doIsHiddenInRecentProjects()
 }
 
 @Suppress("DuplicatedCode")
