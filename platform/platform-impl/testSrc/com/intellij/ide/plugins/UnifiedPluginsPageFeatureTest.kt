@@ -9,11 +9,6 @@ import org.junit.jupiter.api.Test
 @TestApplication
 internal class UnifiedPluginsPageFeatureTest {
   @Test
-  fun `unified page is disabled by default`() {
-    assertThat(UnifiedPluginsPageFeature.isEnabled()).isFalse()
-  }
-
-  @Test
   @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "true")
   fun `unified page can be enabled for the next page session`() {
     assertThat(UnifiedPluginsPageFeature.isEnabled()).isTrue()

@@ -33,6 +33,7 @@ internal class PluginManagerConfigurableRoutingTest {
   }
 
   @Test
+  @RegistryKey(key = UnifiedPluginsPageFeature.REGISTRY_KEY, value = "false")
   fun `disabled flag creates legacy session`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val session = createPluginsPageSession(null, PluginManagerOpenSourceEnum.OTHER)
     try {
