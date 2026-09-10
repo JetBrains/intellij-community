@@ -3,6 +3,7 @@ package com.intellij.python.processOutput
 import com.intellij.python.processOutput.common.ExecutableDto
 import com.intellij.python.processOutput.common.LoggedProcessDto
 import com.intellij.python.processOutput.common.OutputLineDto
+import com.intellij.python.processOutput.common.ProcessId
 import com.intellij.python.processOutput.common.ProcessWeightDto
 import com.intellij.python.processOutput.common.TraceContextDto
 import com.intellij.python.processOutput.common.TraceContextKind
@@ -35,7 +36,7 @@ internal class ProcessTreeNodeTest {
     assertEquals(title, node.title)
     assertEquals(instant, node.timestamp)
     assertEquals(instant.formatTime(), node.formattedTimestamp)
-    assertEquals(ProcessTreeNode.Id.Context(contextUuid), node.id)
+    assertEquals(contextUuid, node.nodeId.traceContextUuid)
     assertEquals(contextUuid, node.uuid)
   }
 
@@ -57,7 +58,7 @@ internal class ProcessTreeNodeTest {
     assertEquals(node.loggedProcess.data.shortenedCommandString, node.title)
     assertEquals(instant, node.timestamp)
     assertEquals(instant.formatTime(), node.formattedTimestamp)
-    assertEquals(ProcessTreeNode.Id.Process(id), node.id)
+    assertEquals(id, node.nodeId.processId.value)
     assertEquals(weight, node.weight)
   }
 
@@ -141,7 +142,7 @@ internal class ProcessTreeNodeTest {
                   args = args,
                   env = emptyMap(),
                   target = "",
-                  id = processId,
+                  id = ProcessId(processId),
                 )
               override val lines: StateFlow<List<OutputLineDto>> = MutableStateFlow(emptyList())
               override val status = statusFlow

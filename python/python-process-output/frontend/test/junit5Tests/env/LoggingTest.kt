@@ -4,6 +4,7 @@ package com.intellij.python.junit5Tests.env
 import com.intellij.python.processOutput.common.ExecutableDto
 import com.intellij.python.processOutput.common.LoggedProcessDto
 import com.intellij.python.processOutput.common.OutputLineDto
+import com.intellij.python.processOutput.common.ProcessId
 import com.intellij.python.processOutput.frontend.LoggedProcess
 import com.intellij.python.processOutput.frontend.ProcessStatus
 import com.intellij.python.processOutput.frontend.ui.commandString
@@ -55,7 +56,7 @@ internal class LoggedProcessTest {
           args = command.drop(1),
           env = mapOf(),
           target = "Local",
-          id = nextId.getAndAdd(1),
+          id = ProcessId(nextId.getAndAdd(1)),
         )
         override val lines: StateFlow<List<OutputLineDto>> = MutableStateFlow(emptyList())
         override val status = MutableStateFlow(ProcessStatus.Running)

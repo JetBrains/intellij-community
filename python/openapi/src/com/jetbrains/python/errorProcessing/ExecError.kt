@@ -10,6 +10,7 @@ import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.python.processOutput.common.ProcessId
 import com.jetbrains.python.PyCommunityBundle
 import org.jetbrains.annotations.Nls
 import kotlin.io.path.Path
@@ -67,7 +68,7 @@ class ExecErrorImpl<T : ExecErrorReason>(
   /**
    * Optional association with a [com.intellij.python.community.execService.impl.LoggedProcess] by its id.
    */
-  val loggedProcessId: Int? = null,
+  val loggedProcessId: ProcessId? = null,
 ) : PyError(getExecErrorMessage(exe.toString(), args, additionalMessageToUser, errorReason)) {
   val asCommand: String get() = (arrayOf(exe.toString()) + args).joinToString(" ")
 }

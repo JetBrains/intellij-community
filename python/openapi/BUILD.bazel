@@ -29,6 +29,7 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//python/python-process-output/common",
         "//python/python-psi-api:psi",
         "//platform/analysis-api:analysis",
         "//platform/platform-util-io:ide-util-io",
@@ -70,6 +71,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":community",
+        "//python/python-process-output/common:common_test_lib",
         "//python/python-psi-api:psi_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",

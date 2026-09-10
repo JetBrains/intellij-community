@@ -1,8 +1,6 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
-
 package com.intellij.python.processOutput
 
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.python.junit5Tests.framework.applicationScope
 import com.intellij.python.processOutput.common.ExecErrorDto
 import com.intellij.python.processOutput.common.ExecErrorReasonDto
 import com.intellij.python.processOutput.common.ExecutableDto
@@ -12,31 +10,28 @@ import com.intellij.python.processOutput.common.OutputKindDto
 import com.intellij.python.processOutput.common.OutputLineDto
 import com.intellij.python.processOutput.common.ProcessBinaryFileName
 import com.intellij.python.processOutput.common.ProcessIcon
+import com.intellij.python.processOutput.common.ProcessId
 import com.intellij.python.processOutput.common.ProcessMatcher
 import com.intellij.python.processOutput.common.ProcessOutputEventDto
 import com.intellij.python.processOutput.common.TraceContextDto
 import com.intellij.python.processOutput.common.TraceContextKind
 import com.intellij.python.processOutput.common.TraceContextUuid
-import com.intellij.python.processOutput.frontend.CoroutineNames
 import com.intellij.python.processOutput.frontend.LoggedProcess
 import com.intellij.python.processOutput.frontend.OutputFilter
 import com.intellij.python.processOutput.frontend.ProcessOutputControllerImpl
-import com.intellij.python.processOutput.frontend.ProcessOutputControllerServiceLimits
+import com.intellij.python.processOutput.frontend.Limits
 import com.intellij.python.processOutput.frontend.ProcessOutputIconMappingData
 import com.intellij.python.processOutput.frontend.ProcessStatus
 import com.intellij.python.processOutput.frontend.ProcessTreeNode
 import com.intellij.python.processOutput.frontend.TreeFilter
+import com.intellij.python.processOutput.frontend.childrenOf
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.debug.DebugProbes
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -45,105 +40,103 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
+@TestApplication
 private class ProcessOutputControllerImplTest {
   @Test
   fun `process limit is maintained`() = runOutputControllerImplTest(10.minutes) {
     // adding MAX_PROCESSES amount of processes
-    repeat(limits.MAX_PROCESSES) {
-      addProcess(it)
+    repeat(Limits.MAX_PROCESSES) {
+      addProcessAndAwait(it)
     }
 
     // the size of logged processes should equal to MAX_PROCESSES
-    assertEquals(limits.MAX_PROCESSES, controller.loggedProcesses.value.size)
+    assertEquals(Limits.MAX_PROCESSES, loggedProcesses.size)
 
     // adding MAX_PROCESSES * 2 amount of processes
-    repeat(limits.MAX_PROCESSES * 2) {
-      addProcess(limits.MAX_PROCESSES + it)
+    repeat(Limits.MAX_PROCESSES * 2) {
+      addProcessAndAwait(Limits.MAX_PROCESSES + it)
     }
 
     // the size of logged processes should STILL equal to MAX_PROCESSES
-    assertEquals(limits.MAX_PROCESSES, controller.loggedProcesses.value.size)
+    assertEquals(Limits.MAX_PROCESSES, loggedProcesses.size)
+  }
+
+  @Test
+  fun `process limits for interactive and background processes are maintained separately`() = runOutputControllerImplTest(10.minutes) {
+    // enabling background process filter
+    controller.treeSectionState.filters[TreeFilter.Item.SHOW_BACKGROUND_PROCESSES] = true
+
+    // adding MAX_PROCESSES + 10 amount of interactive processes
+    repeat(Limits.MAX_PROCESSES + 10) {
+      addProcessAndAwait(it)
+    }
+
+    // the size of logged processes should equal to MAX_PROCESSES
+    assertEquals(Limits.MAX_PROCESSES, loggedProcesses.size)
+    assertEquals(Limits.MAX_PROCESSES + 9, loggedProcesses.last().data.id.value, "$loggedProcesses")
+    assertEquals(10, loggedProcesses[0].data.id.value)
+
+    // adding MAX_PROCESSES + 10 amount of background processes
+    repeat(Limits.MAX_PROCESSES + 10) {
+      addProcessAndAwait(it + 100_000, traceContext = nonInteractiveTraceContextDto)
+    }
+
+    // the size of logged processes should equal to MAX_PROCESSES * 2
+    assertEquals(Limits.MAX_PROCESSES * 2, loggedProcesses.size)
+    assertEquals(Limits.MAX_PROCESSES + 9 + 100_000, loggedProcesses.last().data.id.value)
+    assertEquals(Limits.MAX_PROCESSES + 9, loggedProcesses[Limits.MAX_PROCESSES - 1].data.id.value)
+    assertEquals(10, loggedProcesses[0].data.id.value)
+
+    // adding one interactive and one background process
+    addProcessAndAwait(200_000)
+    addProcessAndAwait(200_001, traceContext = nonInteractiveTraceContextDto)
+
+    // last two processes should be correct
+    assertEquals(200_001, loggedProcesses.last().data.id.value)
+    assertEquals(200_000, loggedProcesses.let { it[it.size - 2] }.data.id.value)
   }
 
   @Test
   fun `line limit is maintained`() = runOutputControllerImplTest(10.minutes) {
-    val process = addProcess(0)
+    val process = addProcessAndAwait(0)
 
     // adding MAX_LINES amount of OUT lines
-    repeat(limits.MAX_LINES) {
+    repeat(Limits.MAX_LINES) {
       process.addOutLine("out$it")
     }
 
     // should find last added line, and the size of all lines should equal to MAX_LINES
     waitUntil {
-      process.lastLine?.let { it.text == "out${limits.MAX_LINES - 1}" && it.kind == OutputKindDto.OUT } == true
+      process.lastLine?.let { it.text == "out${Limits.MAX_LINES - 1}" && it.kind == OutputKindDto.OUT } == true
     }
-    assertEquals(limits.MAX_LINES, process.lines.value.size)
+    assertEquals(Limits.MAX_LINES, process.lines.value.size)
 
     // adding MAX_LINES amount of ERR lines
-    repeat(limits.MAX_LINES) {
-      process.addErrLine("err${it + limits.MAX_LINES}")
+    repeat(Limits.MAX_LINES) {
+      process.addErrLine("err${it + Limits.MAX_LINES}")
     }
 
     // should find last added line, and the size of all lines should STILL equal to MAX_LINES
     waitUntil {
-      process.lastLine?.let { it.text == "err${limits.MAX_LINES * 2 - 1}" && it.kind == OutputKindDto.ERR } == true
+      process.lastLine?.let { it.text == "err${Limits.MAX_LINES * 2 - 1}" && it.kind == OutputKindDto.ERR } == true
     }
-    assertEquals(limits.MAX_LINES, process.lines.value.size)
+    assertEquals(Limits.MAX_LINES, process.lines.value.size)
 
     // adding MAX_LINES amount of OUT lines again
-    repeat(limits.MAX_LINES) {
-      process.addOutLine("out${it + limits.MAX_LINES * 2}")
+    repeat(Limits.MAX_LINES) {
+      process.addOutLine("out${it + Limits.MAX_LINES * 2}")
     }
 
     // should find last added line, and the size of all lines should STILL equal to MAX_LINES
     waitUntil {
-      process.lastLine?.let { it.text == "out${limits.MAX_LINES * 3 - 1}" && it.kind == OutputKindDto.OUT } == true
+      process.lastLine?.let { it.text == "out${Limits.MAX_LINES * 3 - 1}" && it.kind == OutputKindDto.OUT } == true
     }
-    assertEquals(limits.MAX_LINES, process.lines.value.size)
-  }
-
-  @Test
-  fun `exit info collector coroutines get properly cleaned up`() = runOutputControllerImplTest(10.minutes) {
-    // no coroutines should be active
-    assert(exitInfoCollectorCoroutinesCount() == 0)
-
-    // spawn 1024 processes, instantly terminate them
-    repeat(1024) {
-      val process = addProcess(it, traceContext = nonInteractiveTraceContextDto)
-      process.exit(0)
-    }
-
-    // no coroutines should be active
-    waitUntil { exitInfoCollectorCoroutinesCount() == 0 }
-
-    // spawn 100 processes
-    val processes = mutableListOf<LoggedProcess>()
-    repeat(100) {
-      processes += addProcess(it + 1024, traceContext = nonInteractiveTraceContextDto)
-    }
-
-    // 100 coroutines should be active
-    waitUntil(
-      { "actual: ${exitInfoCollectorCoroutinesCount()}" }
-    ) { exitInfoCollectorCoroutinesCount() == 100 }
-
-    // terminating all processes
-    for (process in processes) {
-      process.exit(0)
-    }
-
-    // updating the flow by adding and terminating one process
-    val process = addProcess(9999)
-    process.exit(0)
-
-    // no coroutines should be active
-    waitUntil { exitInfoCollectorCoroutinesCount() == 0 }
+    assertEquals(Limits.MAX_LINES, process.lines.value.size)
   }
 
   @Test
   fun `tag section and exit info copy buttons work correctly`() = runOutputControllerImplTest {
-    val process = addProcess(0)
+    val process = addProcessAndAwait(0)
 
     repeat(6) {
       process.addOutLine("out$it")
@@ -219,7 +212,7 @@ private class ProcessOutputControllerImplTest {
 
   @Test
   fun `toolbar copy includes tags depending on whether the filter is enabled`() = runOutputControllerImplTest {
-    val process = addProcess(0)
+    val process = addProcessAndAwait(0)
 
     repeat(6) {
       process.addOutLine("out$it")
@@ -284,7 +277,7 @@ private class ProcessOutputControllerImplTest {
     val nonAsciiText = "Привет, Мир"
     val asciiText = "Hello, world!"
 
-    val process = addProcess(0)
+    val process = addProcessAndAwait(0)
     process.addOutLine(nonAsciiText)
     process.addOutLine(asciiText)
 
@@ -299,10 +292,10 @@ private class ProcessOutputControllerImplTest {
     val parentContext = traceContextDto("parent context")
     val childContext = traceContextDto("child context", parentContext.uuid)
 
-    val process1 = addProcess(0)
-    val process2 = addProcess(1, traceContext = parentContext, traceHierarchy = listOf(parentContext))
-    val process3 = addProcess(2, traceContext = childContext, traceHierarchy = listOf(childContext, parentContext))
-    val process4 = addProcess(3, traceContext = parentContext, traceHierarchy = listOf(parentContext))
+    val process1 = addProcessAndAwait(0)
+    val process2 = addProcessAndAwait(1, traceContext = parentContext, traceHierarchy = listOf(parentContext))
+    val process3 = addProcessAndAwait(2, traceContext = childContext, traceHierarchy = listOf(childContext, parentContext))
+    val process4 = addProcessAndAwait(3, traceContext = parentContext, traceHierarchy = listOf(parentContext))
 
     // wait until root has two expected entries: Context(parentContext) and Process(process1)
     lateinit var rootLevel: List<ProcessTreeNode>
@@ -321,7 +314,7 @@ private class ProcessOutputControllerImplTest {
     Assertions.assertEquals(process1.data.id, process1Node.loggedProcess.data.id)
 
     // parentContext's children: process4, childContext, process2
-    val parentContextChildren = parentContextNode.children().toList().filterIsInstance<ProcessTreeNode>()
+    val parentContextChildren = parentContextNode.childrenOf<ProcessTreeNode>()
     Assertions.assertEquals(3, parentContextChildren.size)
     Assertions.assertEquals(process4.data.id, (parentContextChildren[0] as ProcessTreeNode.Process).loggedProcess.data.id)
     val childContextNode = parentContextChildren[1] as ProcessTreeNode.Context
@@ -329,16 +322,16 @@ private class ProcessOutputControllerImplTest {
     Assertions.assertEquals(process2.data.id, (parentContextChildren[2] as ProcessTreeNode.Process).loggedProcess.data.id)
 
     // childContext's children: process3
-    val childContextChildren = childContextNode.children().toList().filterIsInstance<ProcessTreeNode>()
+    val childContextChildren = childContextNode.childrenOf<ProcessTreeNode>()
     Assertions.assertEquals(1, childContextChildren.size)
     Assertions.assertEquals(process3.data.id, (childContextChildren[0] as ProcessTreeNode.Process).loggedProcess.data.id)
   }
 
   @Test
   fun `tree is rebuilt on search query change`() = runOutputControllerImplTest {
-    val pythonProcess = addProcess(0, exeParts = listOf("testpython.py"))
-    val nodeProcess = addProcess(1, exeParts = listOf("testnode.py"))
-    val cargoProcess = addProcess(2, exeParts = listOf("testcargo.py"))
+    val pythonProcess = addProcessAndAwait(0, exeParts = listOf("testpython.py"))
+    val nodeProcess = addProcessAndAwait(1, exeParts = listOf("testnode.py"))
+    val cargoProcess = addProcessAndAwait(2, exeParts = listOf("testcargo.py"))
 
     val processIdsInTree = {
       controller.treeSectionState.treeRoot.value
@@ -378,12 +371,12 @@ private class ProcessOutputControllerImplTest {
     val backgroundContext = nonInteractiveTraceContextDto
     val interactiveContext = traceContextDto("interactive context")
 
-    val backgroundProcess = addProcess(0, traceContext = backgroundContext)
-    addProcess(1, traceContext = interactiveContext)
+    addProcess(0, traceContext = backgroundContext)
+    addProcessAndAwait(1, traceContext = interactiveContext)
 
     val nodeIdsInTree = {
       controller.treeSectionState.treeRoot.value
-        .map { it.id }
+        .map { it.nodeId }
         .toSet()
     }
 
@@ -395,7 +388,7 @@ private class ProcessOutputControllerImplTest {
     // enabling the filter makes background processes visible
     controller.treeSectionState.filters[TreeFilter.Item.SHOW_BACKGROUND_PROCESSES] = true
     waitUntil {
-      nodeIdsInTree() == setOf(interactiveContext.treeId, backgroundProcess.treeId)
+      nodeIdsInTree() == setOf(interactiveContext.treeId, ProcessTreeNode.Id.Process(ProcessId(0)))
     }
 
     // disabling it again hides the background process
@@ -406,13 +399,7 @@ private class ProcessOutputControllerImplTest {
   }
 
   companion object {
-    val limits = ProcessOutputControllerServiceLimits
-
-    @JvmStatic
-    @BeforeAll
-    fun beforeAll() {
-      DebugProbes.install()
-    }
+    val testScope = applicationScope("ProcessOutputControllerImplTestScope")
 
     fun createProcessDto(
       id: Int,
@@ -423,7 +410,7 @@ private class ProcessOutputControllerImplTest {
         weight = null,
         traceContextUuid = traceContext,
         pid = null,
-        startedAt = Instant.fromEpochMilliseconds(0),
+        startedAt = Instant.fromEpochMilliseconds(id.toLong()),
         cwd = null,
         exe = ExecutableDto(
           path = exeParts.joinToString("/"),
@@ -432,39 +419,53 @@ private class ProcessOutputControllerImplTest {
         args = emptyList(),
         env = emptyMap(),
         target = "",
-        id = id,
+        id = ProcessId(id),
       )
 
     private class TestContext(
       val controller: ProcessOutputControllerImpl,
-      val eventsFlow: MutableSharedFlow<ProcessOutputEventDto>,
+      private val eventsFlow: MutableSharedFlow<ProcessOutputEventDto>,
       val clipboardStrings: List<String>,
     ) {
+      val LoggedProcess.lastLine
+        get() =
+          lines.value.lastOrNull()
+
       suspend fun addProcess(
         id: Int,
         exeParts: List<String> = listOf("bin", "exe"),
         traceContext: TraceContextDto? = null,
         traceHierarchy: List<TraceContextDto> = traceContext?.let { listOf(it) } ?: emptyList(),
-      ): LoggedProcess {
-        eventsFlow.emit(
+      ) {
+        emitFeEvent(
           ProcessOutputEventDto.NewProcess(
             loggedProcess = createProcessDto(id, exeParts = exeParts, traceContext = traceContext?.uuid),
             traceHierarchy = traceHierarchy
           )
         )
+      }
 
-        var loggedProcess: LoggedProcess? = null
+      suspend fun addProcessAndAwait(
+        id: Int,
+        exeParts: List<String> = listOf("bin", "exe"),
+        traceContext: TraceContextDto? = null,
+        traceHierarchy: List<TraceContextDto> = traceContext?.let { listOf(it) } ?: emptyList(),
+      ): LoggedProcess {
+        addProcess(id, exeParts, traceContext, traceHierarchy)
+
+        lateinit var loggedProcess: LoggedProcess
 
         waitUntil {
-          loggedProcess = controller.loggedProcesses.value.findLast { it.data.id == id }
-          loggedProcess != null
+          loggedProcess = loggedProcesses.findLast { it.data.id.value == id } ?: return@waitUntil false
+
+          true
         }
 
-        return loggedProcess!!
+        return loggedProcess
       }
 
       suspend fun LoggedProcess.addOutLine(text: String) {
-        eventsFlow.emit(
+        emitFeEvent(
           ProcessOutputEventDto.NewOutputLine(
             processId = data.id,
             outputLine =
@@ -477,7 +478,7 @@ private class ProcessOutputControllerImplTest {
       }
 
       suspend fun LoggedProcess.setAdditionalInfo(text: String) {
-        eventsFlow.emit(
+        emitFeEvent(
           ProcessOutputEventDto.ExecError(
             ExecErrorDto(
               message = "",
@@ -491,7 +492,7 @@ private class ProcessOutputControllerImplTest {
       }
 
       suspend fun LoggedProcess.addErrLine(text: String) {
-        eventsFlow.emit(
+        emitFeEvent(
           ProcessOutputEventDto.NewOutputLine(
             processId = data.id,
             outputLine =
@@ -504,7 +505,7 @@ private class ProcessOutputControllerImplTest {
       }
 
       suspend fun LoggedProcess.exit(exitCode: Int, exitedAt: Instant = Instant.fromEpochMilliseconds(0)) {
-        eventsFlow.emit(
+        emitFeEvent(
           ProcessOutputEventDto.ProcessExit(
             processId = data.id,
             exitedAt = exitedAt,
@@ -513,22 +514,48 @@ private class ProcessOutputControllerImplTest {
         )
       }
 
-      val LoggedProcess.lastLine
-        get() =
-          lines.value.lastOrNull()
+      private suspend fun emitFeEvent(event: ProcessOutputEventDto) {
+        testScope.get().async { eventsFlow.emit(event) }.await()
+      }
+
+      private fun List<ProcessTreeNode>.recurse(callback: (ProcessTreeNode) -> Unit) {
+        for (node in this) {
+          callback(node)
+          when (node) {
+            is ProcessTreeNode.Context -> {
+              node.childrenOf<ProcessTreeNode>().recurse(callback)
+            }
+            is ProcessTreeNode.Process -> {}
+          }
+        }
+      }
+
+      val loggedProcesses: List<LoggedProcess>
+        get() {
+          val processes = mutableListOf<LoggedProcess>()
+
+          controller.treeSectionState.treeRoot.value.recurse {
+            when (it) {
+              is ProcessTreeNode.Process -> {
+                processes += it.loggedProcess
+              }
+              is ProcessTreeNode.Context -> {}
+            }
+          }
+
+          return processes.reversed()
+        }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     private fun runOutputControllerImplTest(
       timeout: Duration = 10.seconds,
       testBody: suspend TestContext.() -> Unit,
     ) =
       timeoutRunBlocking(timeout) {
-        val scope = GlobalScope.childScope("Test")
         val eventsFlow = MutableSharedFlow<ProcessOutputEventDto>()
         val copiedStrings = mutableListOf<String>()
         val controller = ProcessOutputControllerImpl(
-          coroutineScope = scope,
+          coroutineScope = testScope.get(),
           frontendTopic =
             object : FrontendTopicListener {
               override val events: Flow<ProcessOutputEventDto> = eventsFlow
@@ -544,11 +571,6 @@ private class ProcessOutputControllerImplTest {
 
         TestContext(controller, eventsFlow, copiedStrings).testBody()
       }
-
-    private fun exitInfoCollectorCoroutinesCount(): Int =
-      DebugProbes.dumpCoroutinesInfo()
-        .filter { it.context[CoroutineName.Key]?.name == CoroutineNames.EXIT_INFO_COLLECTOR }
-        .size
 
     private fun traceContextDto(title: String, parentUuid: TraceContextUuid? = null) =
       TraceContextDto(

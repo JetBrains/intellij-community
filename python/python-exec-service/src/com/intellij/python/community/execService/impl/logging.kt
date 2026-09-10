@@ -10,6 +10,7 @@ import com.intellij.python.processOutput.common.ExecutableDto
 import com.intellij.python.processOutput.common.LoggedProcessDto
 import com.intellij.python.processOutput.common.OutputKindDto
 import com.intellij.python.processOutput.common.OutputLineDto
+import com.intellij.python.processOutput.common.ProcessId
 import com.intellij.python.processOutput.common.ProcessOutputTopicSender
 import com.intellij.python.processOutput.common.ProcessWeightDto
 import com.intellij.python.processOutput.common.TraceContextDto
@@ -83,7 +84,7 @@ class LoggingProcess(
       args = args,
       env = env,
       target = target,
-      id = nextId.getAndAdd(1),
+      id = ProcessId(nextId.getAndAdd(1)),
     )
 
   private val stdoutStream =
@@ -171,7 +172,7 @@ class LoggingProcess(
 }
 
 internal class LoggingInputStream(
-  private val processId: Int,
+  private val processId: ProcessId,
   internal val backingInputStream: InputStream,
   private val kind: OutputKindDto,
   private val topicSender: ProcessOutputTopicSender,

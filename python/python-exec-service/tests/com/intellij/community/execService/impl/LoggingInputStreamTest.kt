@@ -7,6 +7,7 @@ import com.intellij.python.processOutput.common.ExecErrorDto
 import com.intellij.python.processOutput.common.LoggedProcessDto
 import com.intellij.python.processOutput.common.OutputKindDto
 import com.intellij.python.processOutput.common.OutputLineDto
+import com.intellij.python.processOutput.common.ProcessId
 import com.intellij.python.processOutput.common.ProcessOutputTopicSender
 import com.intellij.python.processOutput.common.TraceContextDto
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -26,7 +27,7 @@ internal class LoggingInputStreamTest {
     assertEquals(1, outNewLineEvents.size)
     
     outNewLineEvents[0].let { event ->
-      assertEquals(outProcessId, event.processId)
+      assertEquals(outProcessId, event.processId.value)
       assertEquals(OutputKindDto.OUT, event.kind)
       assertEquals(outInput.trim(), event.text)
     }
@@ -40,7 +41,7 @@ internal class LoggingInputStreamTest {
     assertEquals(1, errNewLineEvents.size)
     
     errNewLineEvents[0].let { event ->
-      assertEquals(errProcessId, event.processId)
+      assertEquals(errProcessId, event.processId.value)
       assertEquals(OutputKindDto.ERR, event.kind)
       assertEquals(errInput.trim(), event.text)
     }
@@ -171,7 +172,7 @@ internal class LoggingInputStreamTest {
     assertEquals(1, newLineEvents.size)
   }
 
-  data class TestOutputLineDto(val processId: Int, val kind: OutputKindDto, val text: String)
+  data class TestOutputLineDto(val processId: ProcessId, val kind: OutputKindDto, val text: String)
 
   companion object {
     private fun createInputStream(
@@ -182,7 +183,7 @@ internal class LoggingInputStreamTest {
       val newLineEvents = mutableListOf<TestOutputLineDto>()
       val loggingInputStream =
         LoggingInputStream(
-          processId = processId,
+          processId = ProcessId(processId),
           backingInputStream = backingInput.byteInputStream(),
           kind = kind,
           topicSender = object : ProcessOutputTopicSender {
@@ -190,11 +191,11 @@ internal class LoggingInputStreamTest {
               unexpectedMethodCalledException()
             }
 
-            override fun sendNewOutputLineEvent(processId: Int, outputLine: OutputLineDto) {
+            override fun sendNewOutputLineEvent(processId: ProcessId, outputLine: OutputLineDto) {
               newLineEvents += TestOutputLineDto(processId, outputLine.kind, outputLine.text)
             }
 
-            override fun sendProcessExitEvent(processId: Int, exitedAt: Instant, exitValue: Int) {
+            override fun sendProcessExitEvent(processId: ProcessId, exitedAt: Instant, exitValue: Int) {
               unexpectedMethodCalledException()
             }
 

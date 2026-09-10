@@ -19,6 +19,7 @@ import com.intellij.python.community.execService.impl.processLaunchers.LaunchReq
 import com.intellij.python.community.execService.impl.processLaunchers.ProcessLauncher
 import com.intellij.python.community.execService.impl.processLaunchers.createProcessLauncherOnEel
 import com.intellij.python.community.execService.impl.processLaunchers.createProcessLauncherOnTarget
+import com.intellij.python.processOutput.common.ProcessId
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorImpl
@@ -142,7 +143,7 @@ internal class ExecServiceImpl private constructor(private val defaultScope: Cor
 private fun <T : ExecErrorReason> ProcessLauncher.createExecError(
   messageToUser: @Nls String,
   errorReason: T,
-  loggedProcessId: Int? = null,
+  loggedProcessId: ProcessId? = null,
 ): Result.Failure<ExecErrorImpl<T>> = ExecErrorImpl(
   exe = exeForError,
   args = args.toTypedArray(),

@@ -11,9 +11,11 @@ import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.processOutput.common.LoggedProcessDto
 import com.intellij.python.processOutput.common.OutputKindDto
+import com.intellij.python.processOutput.common.ProcessId
 import com.intellij.python.processOutput.frontend.LoggedProcess
 import com.intellij.python.processOutput.frontend.ProcessOutputControllerService
 import com.intellij.python.processOutput.frontend.ProcessTreeNode
+import com.intellij.python.processOutput.frontend.childrenOf
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -194,16 +196,16 @@ internal class ProcessOutputControllerServiceTest {
       return runBin(this, Args(filename), context)
     }
 
-    fun List<ProcessTreeNode>.findProcess(processId: Int): LoggedProcess? {
+    fun List<ProcessTreeNode>.findProcess(processId: ProcessId): LoggedProcess? {
       for (node in this) {
         when (node) {
           is ProcessTreeNode.Context -> {
-            node.children().toList().filterIsInstance<ProcessTreeNode>().findProcess(processId)?.also {
+            node.childrenOf<ProcessTreeNode>().findProcess(processId)?.also {
               return it
             }
           }
           is ProcessTreeNode.Process -> {
-            node.loggedProcess.takeIf { node.id == ProcessTreeNode.Id.Process(processId) }?.also {
+            node.loggedProcess.takeIf { node.nodeId.processId == processId }?.also {
               return it
             }
           }

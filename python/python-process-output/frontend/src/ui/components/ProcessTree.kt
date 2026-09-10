@@ -1,6 +1,7 @@
 package com.intellij.python.processOutput.frontend.ui.components
 
 import com.intellij.openapi.application.EDT
+import com.intellij.python.processOutput.common.ProcessId
 import com.intellij.python.processOutput.frontend.LoggedProcess
 import com.intellij.python.processOutput.frontend.ProcessOutputBundle.message
 import com.intellij.python.processOutput.frontend.ui.ProcessOutputUiContext
@@ -80,7 +81,7 @@ internal class ProcessTree(private val uiContext: ProcessOutputUiContext) {
           return@collect
         }
 
-        val nodes = mutableMapOf<Int, DefaultMutableTreeNode>()
+        val nodes = mutableMapOf<ProcessId, DefaultMutableTreeNode>()
 
         rootNode.children().iterate {
           when (it) {
@@ -130,13 +131,11 @@ internal class ProcessTree(private val uiContext: ProcessOutputUiContext) {
   }
 
   private fun synchronizeTree(newNodes: List<ProcessTreeNode>, scrollPane: JScrollPane) {
-    // What to select once the new nodes are in: what the tree shows as selected, or — while it shows nothing, as on the
-    // build that fills a tool window opened by a caller that already chose a process — the controller's own choice.
-    // Read from the controller, because that choice can be made before this tree exists to hold it.
-    val treeSelectedNodeId = (tree.selectionPath?.lastPathComponent as ProcessTreeNode?)?.id
-    val selectedNodeId = treeSelectedNodeId
-                         ?: uiContext.controller.selectedProcess.value?.let { ProcessTreeNode.Id.Process(it.data.id) }
-    val expandedNodeIds = tree.expandedPaths.mapNotNull { (it.lastPathComponent as? ProcessTreeNode)?.id }
+    val treeSelectedNodeId = (tree.selectionPath?.lastPathComponent as ProcessTreeNode?)?.nodeId
+    val selectedNodeId =
+      treeSelectedNodeId
+      ?: uiContext.controller.selectedProcess.value?.let { ProcessTreeNode.Id.Process(it.data.id) }
+    val expandedNodeIds = tree.expandedPaths.mapNotNull { (it.lastPathComponent as? ProcessTreeNode)?.nodeId }
     val scrollProgress = scrollPane.viewport.viewPosition.y
 
     val action = {
@@ -153,13 +152,13 @@ internal class ProcessTree(private val uiContext: ProcessOutputUiContext) {
       val newNodeIds = mutableSetOf<ProcessTreeNode.Id>()
 
       rootNode.children().iterate {
-        newNodeIds += it.id
+        newNodeIds += it.nodeId
 
-        if (it.id !in previouslyExistingNodeIds || it.id in expandedNodeIds) {
+        if (it.nodeId !in previouslyExistingNodeIds || it.nodeId in expandedNodeIds) {
           nodesToExpand += it
         }
 
-        if (it.id == selectedNodeId) {
+        if (it.nodeId == selectedNodeId) {
           nodeToSelect = it
         }
       }
@@ -170,9 +169,10 @@ internal class ProcessTree(private val uiContext: ProcessOutputUiContext) {
       if (nodeToSelect != null) {
         val path = TreePath(nodeToSelect.path)
         tree.selectionPath = path
-        // A selection this build took from the controller has never been scrolled to. The collector that normally does
-        // that finds the tree already showing the right row and returns, so the scrolling is done here instead.
-        if (treeSelectedNodeId == null) tree.scrollPathToVisible(path)
+
+        if (treeSelectedNodeId == null) {
+          tree.scrollPathToVisible(path)
+        }
       }
       else {
         uiContext.controller.selectProcess(null)
@@ -191,7 +191,7 @@ internal class ProcessTree(private val uiContext: ProcessOutputUiContext) {
     val topY = component.viewport.viewPosition.y
 
     val anchorPath = tree.getClosestPathForLocation(0, topY)
-    val anchorPathId = (anchorPath.lastPathComponent as? ProcessTreeNode)?.id
+    val anchorPathId = (anchorPath.lastPathComponent as? ProcessTreeNode)?.nodeId
     val anchorRowY = anchorPath?.let { tree.getPathBounds(it)?.y } ?: topY
     val anchorInnerOffset = topY - anchorRowY
 
@@ -200,7 +200,7 @@ internal class ProcessTree(private val uiContext: ProcessOutputUiContext) {
 
     var newAnchor: TreePath? = null
     rootNode.children().iterate {
-      if (it.id == anchorPathId) {
+      if (it.nodeId == anchorPathId) {
         newAnchor = TreePath(it.path)
       }
     }

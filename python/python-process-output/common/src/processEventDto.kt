@@ -29,7 +29,7 @@ enum class TraceContextKind {
 @ApiStatus.Internal
 @Serializable
 @JvmInline
-value class TraceContextUuid(val uuid: String)
+value class TraceContextUuid(val value: String)
 
 @ApiStatus.Internal
 @Serializable
@@ -56,6 +56,10 @@ enum class ProcessWeightDto {
   HEAVY
 }
 
+@JvmInline
+@Serializable
+value class ProcessId(val value: Int)
+
 @ApiStatus.Internal
 @Serializable
 data class LoggedProcessDto(
@@ -68,7 +72,7 @@ data class LoggedProcessDto(
   val args: List<String>,
   val env: Map<String, String>,
   val target: String,
-  val id: Int,
+  val id: ProcessId,
 )
 
 @ApiStatus.Internal
@@ -91,7 +95,7 @@ data class ExecErrorDto(
   val message: @NlsSafe String,
   val command: String,
   val reason: ExecErrorReasonDto,
-  val loggedProcessId: Int? = null,
+  val loggedProcessId: ProcessId? = null,
   val additionalMessageToUser: @NlsContexts.DialogTitle String? = null,
 )
 
@@ -115,10 +119,10 @@ sealed interface ProcessOutputEventDto {
   data class NewProcess(val loggedProcess: LoggedProcessDto, val traceHierarchy: List<TraceContextDto>) : ProcessOutputEventDto
 
   @Serializable
-  data class NewOutputLine(val processId: Int, val outputLine: OutputLineDto) : ProcessOutputEventDto
+  data class NewOutputLine(val processId: ProcessId, val outputLine: OutputLineDto) : ProcessOutputEventDto
 
   @Serializable
-  data class ProcessExit(val processId: Int, val exitedAt: Instant, val exitValue: Int) : ProcessOutputEventDto
+  data class ProcessExit(val processId: ProcessId, val exitedAt: Instant, val exitValue: Int) : ProcessOutputEventDto
 
   @Serializable
   data class ExecError(val execErrorDto: ExecErrorDto) : ProcessOutputEventDto
@@ -133,8 +137,8 @@ private val PROCESS_OUTPUT_TOPIC: ApplicationRemoteTopic<ProcessOutputEventDto> 
 @ApiStatus.Internal
 interface ProcessOutputTopicSender {
   fun sendNewProcessEvent(loggedProcessDto: LoggedProcessDto, traceHierarchy: List<TraceContextDto>)
-  fun sendNewOutputLineEvent(processId: Int, outputLine: OutputLineDto)
-  fun sendProcessExitEvent(processId: Int, exitedAt: Instant, exitValue: Int)
+  fun sendNewOutputLineEvent(processId: ProcessId, outputLine: OutputLineDto)
+  fun sendProcessExitEvent(processId: ProcessId, exitedAt: Instant, exitValue: Int)
   fun sendExecErrorEvent(execErrorDto: ExecErrorDto)
   fun sendOpenToolWindowByTraceUuidEvent(uuid: UUID, openIfNotFound: Boolean = false)
   fun sendOpenToolWindowByTraceUuidEvent(uuid: String, openIfNotFound: Boolean = false)
@@ -146,11 +150,11 @@ object ProcessOutputTopic : ProcessOutputTopicSender {
     PROCESS_OUTPUT_TOPIC.sendToClient(ProcessOutputEventDto.NewProcess(loggedProcessDto, traceHierarchy))
   }
 
-  override fun sendNewOutputLineEvent(processId: Int, outputLine: OutputLineDto) {
+  override fun sendNewOutputLineEvent(processId: ProcessId, outputLine: OutputLineDto) {
     PROCESS_OUTPUT_TOPIC.sendToClient(ProcessOutputEventDto.NewOutputLine(processId, outputLine))
   }
 
-  override fun sendProcessExitEvent(processId: Int, exitedAt: Instant, exitValue: Int) {
+  override fun sendProcessExitEvent(processId: ProcessId, exitedAt: Instant, exitValue: Int) {
     PROCESS_OUTPUT_TOPIC.sendToClient(ProcessOutputEventDto.ProcessExit(processId, exitedAt, exitValue))
   }
 

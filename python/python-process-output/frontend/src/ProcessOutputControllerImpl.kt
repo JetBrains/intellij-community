@@ -4,8 +4,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.python.processOutput.common.ExecErrorDto
 import com.intellij.python.processOutput.common.FrontendTopicListener
 import com.intellij.python.processOutput.common.FrontendTopicService
 import com.intellij.python.processOutput.common.LoggedProcessDto
@@ -13,218 +11,33 @@ import com.intellij.python.processOutput.common.OutputKindDto
 import com.intellij.python.processOutput.common.OutputLineDto
 import com.intellij.python.processOutput.common.ProcessBinaryFileName
 import com.intellij.python.processOutput.common.ProcessIcon
+import com.intellij.python.processOutput.common.ProcessId
 import com.intellij.python.processOutput.common.ProcessOutputEventDto
-import com.intellij.python.processOutput.common.ProcessWeightDto
 import com.intellij.python.processOutput.common.TraceContextDto
 import com.intellij.python.processOutput.common.TraceContextKind
 import com.intellij.python.processOutput.common.TraceContextUuid
-import com.intellij.python.processOutput.frontend.ProcessOutputBundle.message
 import com.intellij.python.processOutput.frontend.ui.shortenedCommandString
-import kotlinx.coroutines.CoroutineName
+import com.intellij.util.applyIf
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jetbrains.annotations.Nls
 import java.util.WeakHashMap
 import javax.swing.tree.DefaultMutableTreeNode
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
 
-internal object CoroutineNames {
-  const val EXIT_INFO_COLLECTOR: String = "Python.ProcessOutput.ExitInfoCollector"
-  const val EVENT_PROCESSOR: String = "Python.ProcessOutput.EventProcessor"
-}
-
-internal object ProcessOutputControllerServiceLimits {
+internal object Limits {
   const val MAX_PROCESSES = 512
   const val MAX_LINES = 1024
   val OPEN_TOOL_WINDOW_BY_TRACE_UUID_TIMEOUT = 5.seconds
 }
-
-internal sealed interface ProcessStatus {
-  data object Running : ProcessStatus
-  data class Done(
-    val exitedAt: Instant,
-    val exitCode: Int,
-    val additionalMessageToUser: @Nls String? = null,
-    val isCritical: Boolean = false,
-  ) : ProcessStatus
-}
-
-internal interface ProcessOutputController {
-  val selectedProcess: StateFlow<LoggedProcess?>
-
-  val treeSectionState: TreeSectionState
-  val outputSectionState: OutputSectionState
-  val uiEvents: Flow<UiEvent>
-
-
-  fun search(query: String)
-  fun selectProcess(process: LoggedProcess?)
-
-  fun onTreeFilterItemToggled(filterItem: TreeFilter.Item, enabled: Boolean)
-  fun onOutputFilterItemToggled(filterItem: OutputFilter.Item, enabled: Boolean)
-  fun toggleProcessInfo()
-  fun toggleProcessOutput()
-
-  fun copyOutputToClipboard(loggedProcess: LoggedProcess)
-  fun copyOutputTagAtIndexToClipboard(loggedProcess: LoggedProcess, fromIndex: Int)
-  fun copyOutputExitInfoToClipboard(loggedProcess: LoggedProcess)
-
-}
-
-internal sealed interface UiEvent {
-  data class StatusUpdate(val loggedProcess: LoggedProcess) : UiEvent
-  data class DisplayExecError(val execErrorDto: ExecErrorDto, val associatedProcess: LoggedProcess?) : UiEvent
-  data class DisplayToolWindow(val processToSelect: LoggedProcess?) : UiEvent
-}
-
-internal interface LoggedProcess {
-  val data: LoggedProcessDto
-  val lines: StateFlow<List<OutputLineDto>>
-  val status: StateFlow<ProcessStatus>
-}
-
-internal data class TreeSectionState(
-  val filters: FilterActionGroupState<TreeFilter, TreeFilter.Item>,
-  val searchQuery: StateFlow<String>,
-  val treeRoot: StateFlow<List<ProcessTreeNode>>,
-)
-
-internal class FilterActionGroupState<TFilter, TItem>(treeFilter: TFilter)
-  where TItem : Enum<TItem>,
-        TItem : FilterItem,
-        TFilter : Filter<TItem> {
-  internal val active: StateFlow<Set<TItem>>
-    field = MutableStateFlow(treeFilter.defaultActive)
-
-  operator fun set(filterItem: TItem, toggled: Boolean) {
-    val activeSnapshot = active.value
-
-    active.value =
-      if (toggled) {
-        activeSnapshot + filterItem
-      }
-      else {
-        activeSnapshot - filterItem
-      }
-  }
-
-  operator fun get(filterItem: TItem): Boolean =
-    filterItem in active.value
-}
-
-internal interface Filter<TItem>
-  where TItem : Enum<TItem>,
-        TItem : FilterItem {
-  val defaultActive: Set<TItem>
-}
-
-internal interface FilterItem {
-  val title: @Nls String
-}
-
-internal object TreeFilter : Filter<TreeFilter.Item> {
-  enum class Item(override val title: String) : FilterItem {
-    SHOW_TIME(message("process.output.filters.tree.time")),
-    SHOW_PROCESS_WEIGHT(message("process.output.filters.tree.processWeight")),
-    SHOW_BACKGROUND_PROCESSES(message("process.output.filters.tree.backgroundProcesses")),
-  }
-
-  override val defaultActive: Set<Item> = setOf(Item.SHOW_TIME, Item.SHOW_PROCESS_WEIGHT)
-}
-
-internal object OutputFilter : Filter<OutputFilter.Item> {
-  enum class Item(override val title: String) : FilterItem {
-    SHOW_TAGS(message("process.output.filters.output.tags")),
-    WRAP_CONTENT(message("process.output.filters.output.wrap"));
-  }
-
-  override val defaultActive: Set<Item> = setOf(Item.SHOW_TAGS, Item.WRAP_CONTENT)
-}
-
-internal sealed class ProcessTreeNode : DefaultMutableTreeNode() {
-  abstract val title: @NlsSafe String
-  abstract val timestamp: Instant
-
-  val formattedTimestamp: @Nls String
-    get() =
-      timestamp.formatTime()
-
-  val id: Id
-    get() =
-      when (this) {
-        is Context -> Id.Context(uuid)
-        is Process -> Id.Process(loggedProcess.data.id)
-      }
-
-  class Context(traceContext: TraceContextDto) : ProcessTreeNode() {
-    override val title: @NlsSafe String = traceContext.title
-    override val timestamp: Instant = Instant.fromEpochMilliseconds(traceContext.timestamp)
-    val uuid: TraceContextUuid = traceContext.uuid
-  }
-
-  class Process(
-    val loggedProcess: LoggedProcess,
-    val isBackground: Boolean,
-    val processIcon: ProcessIcon?,
-  ) : ProcessTreeNode() {
-    override val title: @NlsSafe String = loggedProcess.data.shortenedCommandString
-    override val timestamp: Instant = loggedProcess.data.startedAt
-    val weight: ProcessWeightDto? = loggedProcess.data.weight
-
-    private val status = loggedProcess.status
-
-    val isRunning: Boolean
-      get() =
-        when (status.value) {
-          is ProcessStatus.Done -> false
-          ProcessStatus.Running -> true
-        }
-
-    val isCriticalError: Boolean
-      get() =
-        when (val status = status.value) {
-          is ProcessStatus.Done ->
-            status.exitCode != 0 && status.isCritical
-          ProcessStatus.Running ->
-            false
-        }
-
-    val isError: Boolean
-      get() =
-        when (val status = status.value) {
-          is ProcessStatus.Done ->
-            status.exitCode != 0
-          ProcessStatus.Running ->
-            false
-        }
-  }
-
-  sealed interface Id {
-    data class Process(val id: Int) : Id
-    data class Context(val uuid: TraceContextUuid) : Id
-  }
-}
-
-internal data class OutputSectionState(
-  val filters: FilterActionGroupState<OutputFilter, OutputFilter.Item>,
-  val isInfoExpanded: StateFlow<Boolean>,
-  val isOutputExpanded: StateFlow<Boolean>,
-)
 
 @Service(Service.Level.PROJECT)
 internal class ProcessOutputControllerService(coroutineScope: CoroutineScope) {
@@ -249,8 +62,7 @@ internal class ProcessOutputControllerImpl(
   private val usageCollector: ProcessOutputUsageCollector,
   private val clipboardCopier: ClipboardCopier,
 ) : ProcessOutputController {
-  internal val loggedProcesses = MutableStateFlow<List<LoggedProcess>>(listOf())
-
+  private var processMap = LinkedHashMap<ProcessId, MutableLoggedProcess>()
   private val isInfoExpandedFlow = MutableStateFlow(false)
   private val isOutputExpandedFlow = MutableStateFlow(true)
   private val searchQuery = MutableStateFlow("")
@@ -274,9 +86,7 @@ internal class ProcessOutputControllerImpl(
     isOutputExpanded = isOutputExpandedFlow,
   )
 
-  private val traceContextCache = boundedLinkedHashMap<TraceContextUuid, TraceContextDto>(
-    ProcessOutputControllerServiceLimits.MAX_PROCESSES * 2,
-  )
+  private val traceContextCache = boundedLinkedHashMap<TraceContextUuid, TraceContextDto>(Limits.MAX_PROCESSES * 4)
 
   private val iconMapping = iconMappingData.mapping
   private val iconMatchers = iconMappingData.matchers
@@ -285,7 +95,7 @@ internal class ProcessOutputControllerImpl(
   init {
     collectTopicEvents()
     collectSearchStats()
-    collectProcessTree()
+    collectTreeState()
   }
 
   override fun search(query: String) {
@@ -424,12 +234,10 @@ internal class ProcessOutputControllerImpl(
   }
 
   private fun collectTopicEvents() {
-    val processMap = boundedLinkedHashMap<Int, MutableLoggedProcess>(
-      ProcessOutputControllerServiceLimits.MAX_PROCESSES,
-    )
-    var processList = listOf<MutableLoggedProcess>()
+    val interactiveProcesses = mutableListOf<MutableLoggedProcess>()
+    val backgroundProcesses = mutableListOf<MutableLoggedProcess>()
 
-    coroutineScope.launch(CoroutineName(CoroutineNames.EVENT_PROCESSOR)) {
+    coroutineScope.launch {
       frontendTopic.events.collect { event ->
         when (event) {
           is ProcessOutputEventDto.NewProcess -> {
@@ -439,23 +247,30 @@ internal class ProcessOutputControllerImpl(
               }
             }
 
+            val traceContext = traceContextCache[event.loggedProcess.traceContextUuid]
             val loggedProcess = MutableLoggedProcess(
               data = event.loggedProcess,
               lines = MutableStateFlow(emptyList()),
               status = MutableStateFlow(ProcessStatus.Running),
             )
 
-            processMap[event.loggedProcess.id] = loggedProcess
-            processList = processList + loggedProcess
+            val listToAppendTo =
+              when (traceContext?.kind) {
+                TraceContextKind.NON_INTERACTIVE -> backgroundProcesses
+                TraceContextKind.INTERACTIVE, null -> interactiveProcesses
+              }
 
-            if (processList.size > ProcessOutputControllerServiceLimits.MAX_PROCESSES) {
-              processList = processList.drop(
-                processList.size -
-                ProcessOutputControllerServiceLimits.MAX_PROCESSES,
-              )
+            listToAppendTo += loggedProcess
+
+            if (listToAppendTo.size > Limits.MAX_PROCESSES) {
+              listToAppendTo.subList(0, listToAppendTo.size - Limits.MAX_PROCESSES).clear()
             }
 
-            loggedProcesses.emit(processList)
+            val newLoggedProcesses = (interactiveProcesses + backgroundProcesses).sortedBy { it.data.startedAt }
+
+            processMap = newLoggedProcesses.associateByTo(LinkedHashMap()) { it.data.id }
+
+            updateProcessTree()
           }
           is ProcessOutputEventDto.NewOutputLine -> {
             val process = processMap[event.processId]
@@ -465,8 +280,8 @@ internal class ProcessOutputControllerImpl(
 
               newLines += event.outputLine
 
-              if (newLines.size > ProcessOutputControllerServiceLimits.MAX_LINES) {
-                newLines.subList(0, newLines.size - ProcessOutputControllerServiceLimits.MAX_LINES).clear()
+              if (newLines.size > Limits.MAX_LINES) {
+                newLines.subList(0, newLines.size - Limits.MAX_LINES).clear()
               }
 
               process.lines.value = newLines
@@ -476,11 +291,22 @@ internal class ProcessOutputControllerImpl(
             val process = processMap[event.processId]
 
             if (process != null) {
+              val kind = traceContextCache[process.data.traceContextUuid]?.kind
+              val isBackgroundError =
+                when (kind) {
+                  TraceContextKind.NON_INTERACTIVE -> event.exitValue != 0
+                  TraceContextKind.INTERACTIVE, null -> false
+                }
+
               process.status.value =
                 ProcessStatus.Done(
                   exitedAt = event.exitedAt,
                   exitCode = event.exitValue,
                 )
+
+              if (isBackgroundError) {
+                updateProcessTree()
+              }
 
               uiEvents.emit(UiEvent.StatusUpdate(process))
             }
@@ -511,14 +337,18 @@ internal class ProcessOutputControllerImpl(
           is ProcessOutputEventDto.OpenToolWindowByTraceUuid -> {
             coroutineScope.launch {
               val process =
-                withTimeoutOrNull(ProcessOutputControllerServiceLimits.OPEN_TOOL_WINDOW_BY_TRACE_UUID_TIMEOUT) {
-                  loggedProcesses
-                    .mapNotNull { list ->
-                      list.lastOrNull {
-                        it.data.traceContextUuid == event.uuid
-                      }
+                withTimeoutOrNull(Limits.OPEN_TOOL_WINDOW_BY_TRACE_UUID_TIMEOUT) {
+                  lateinit var process: LoggedProcess
+
+                  while (true) {
+                    processMap.values.lastOrNull { it.data.traceContextUuid == event.uuid }?.also {
+                      process = it
+                      break
                     }
-                    .first()
+                    delay(50.milliseconds)
+                  }
+
+                  process
                 }
 
               if (process != null || event.openIfNotFound) {
@@ -543,138 +373,92 @@ internal class ProcessOutputControllerImpl(
     }
   }
 
-  @OptIn(FlowPreview::class)
-  private fun collectProcessTree() {
-    val backgroundErrorProcesses = MutableStateFlow<Set<Int>>(setOf())
-    val backgroundObservingCoroutines = mutableListOf<Job>()
+  private fun updateProcessTree() {
+    val search = treeSectionState.searchQuery.value
+    val filters = treeSectionState.filters.active.value
 
-    coroutineScope.launch {
-      loggedProcesses
-        .debounce(100.milliseconds)
-        .collect { list ->
-          for (coroutine in backgroundObservingCoroutines) {
-            coroutine.cancelAndJoin()
-          }
-          backgroundObservingCoroutines.clear()
+    updateProcessTree(search, filters)
+  }
 
-          backgroundErrorProcesses.value = setOf()
+  private fun updateProcessTree(searchQuery: String, filters: Set<TreeFilter.Item>) {
+    val processList = processMap.values
 
-          list
-            .filter {
-              val kind =
-                it.data.traceContextUuid
-                  ?.let { uuid -> traceContextCache[uuid] }
-                  ?.kind
-
-              when (kind) {
-                TraceContextKind.NON_INTERACTIVE -> true
-                TraceContextKind.INTERACTIVE, null -> false
-              }
-            }
-            .forEach { process ->
-              val exitData = when (val status = process.status.value) {
-                ProcessStatus.Running -> null
-                is ProcessStatus.Done -> status
-              }
-
-              if (exitData != null) {
-                if (exitData.exitCode != 0) {
-                  backgroundErrorProcesses.value += process.data.id
-                }
-                return@forEach
-              }
-
-              backgroundObservingCoroutines +=
-                this@launch.launch(CoroutineName(CoroutineNames.EXIT_INFO_COLLECTOR)) {
-                  process.status.collect {
-                    when (it) {
-                      is ProcessStatus.Done if it.exitCode != 0 ->
-                        backgroundErrorProcesses.value += process.data.id
-                      else ->
-                        backgroundErrorProcesses.value -= process.data.id
-                    }
-                  }
-                }
-
-            }
+    val lowercaseSearch = searchQuery.trim().lowercase()
+    val filteredProcesses =
+      processList
+        .reversed()
+        .filter {
+          it.data.shortenedCommandString
+            .lowercase()
+            .contains(lowercaseSearch)
         }
+        .applyIf(!filters.contains(TreeFilter.Item.SHOW_BACKGROUND_PROCESSES)) {
+          filter {
+            val kind =
+              it.data.traceContextUuid
+                ?.let { uuid -> traceContextCache[uuid] }
+                ?.kind
+
+            when (kind) {
+              TraceContextKind.NON_INTERACTIVE ->
+                when (val status = it.status.value) {
+                  is ProcessStatus.Done -> status.exitCode != 0
+                  ProcessStatus.Running -> false
+                }
+              TraceContextKind.INTERACTIVE, null -> true
+            }
+          }
+        }
+
+    val root = DefaultMutableTreeNode()
+    val traceContextMap = mutableMapOf<TraceContextUuid, ProcessTreeNode>()
+
+    for (process in filteredProcesses) {
+      val traceContext = process.data.traceContextUuid?.let { traceContextCache[it] }
+
+      when (traceContext?.kind) {
+        TraceContextKind.NON_INTERACTIVE, null -> {
+          root.add(createProcessNode(process))
+        }
+        TraceContextKind.INTERACTIVE -> {
+          val hierarchy = traceContext.hierarchy()
+          var currentRoot = root
+
+          for (currentContext in hierarchy) {
+            val existingContext =
+              currentRoot
+                .childrenOf<ProcessTreeNode.Context>()
+                .firstOrNull { node -> node.uuid == currentContext.uuid }
+
+            currentRoot =
+              if (existingContext != null) {
+                traceContextMap[existingContext.uuid]!!
+              }
+              else {
+                val newContext = createContextNode(currentContext)
+
+                currentRoot.add(newContext)
+                traceContextMap[currentContext.uuid] = newContext
+
+                newContext
+              }
+          }
+
+          currentRoot.add(createProcessNode(process))
+        }
+      }
     }
 
-    combine(
-      backgroundErrorProcesses,
-      loggedProcesses.debounce(100.milliseconds),
-      treeSectionState.searchQuery,
-      treeSectionState.filters.active,
-    )
-    { backgroundErrorProcesses, processList, search, filters ->
-      val lowercaseSearch = search.trim().lowercase()
-      var filteredProcesses =
-        processList
-          .reversed()
-          .filter {
-            it.data.shortenedCommandString
-              .lowercase()
-              .contains(lowercaseSearch)
-          }
+    if (root.childCount == 0) {
+      selectProcess(null)
+    }
 
-      if (!filters.contains(TreeFilter.Item.SHOW_BACKGROUND_PROCESSES)) {
-        filteredProcesses = filteredProcesses.filter {
-          val kind = it.data.traceContextUuid
-            ?.let { uuid -> traceContextCache[uuid] }
-            ?.kind
+    treeRoot.value = root.children().toList().map { it as ProcessTreeNode }
+  }
 
-          kind != TraceContextKind.NON_INTERACTIVE ||
-          backgroundErrorProcesses.contains(it.data.id)
-        }
-      }
-
-      val root = DefaultMutableTreeNode()
-      val traceContextMap = mutableMapOf<TraceContextUuid, ProcessTreeNode>()
-
-      filteredProcesses.forEach { process ->
-        val traceContext =
-          process.data.traceContextUuid
-            ?.let { traceContextCache[it] }
-
-        when {
-          traceContext == null || traceContext.kind == TraceContextKind.NON_INTERACTIVE ->
-            root.add(createProcessNode(process))
-          else -> {
-            val hierarchy = traceContext.hierarchy()
-            var currentRoot = root
-
-            hierarchy.forEach { currentContext ->
-              val existingContext =
-                currentRoot
-                  .children()
-                  .toList()
-                  .filterIsInstance<ProcessTreeNode.Context>()
-                  .firstOrNull { node -> node.uuid == currentContext.uuid }
-
-              currentRoot =
-                if (existingContext != null) {
-                  traceContextMap[existingContext.uuid]!!
-                }
-                else {
-                  val newContext = createContextNode(currentContext)
-
-                  currentRoot.add(newContext)
-                  traceContextMap[currentContext.uuid] = newContext
-
-                  newContext
-                }
-            }
-
-            currentRoot.add(createProcessNode(process))
-          }
-        }
-      }
-
-      if (root.childCount == 0) {
-        selectProcess(null)
-      }
-
-      treeRoot.value = root.children().toList().map { it as ProcessTreeNode }
+  private fun collectTreeState() {
+    combine(treeSectionState.searchQuery, treeSectionState.filters.active) { searchQuery, filters ->
+      updateProcessTree(searchQuery, filters)
     }.launchIn(coroutineScope)
   }
 
@@ -742,6 +526,9 @@ private class MutableLoggedProcess(
   override val lines: MutableStateFlow<List<OutputLineDto>>,
   override val status: MutableStateFlow<ProcessStatus>,
 ) : LoggedProcess
+
+internal inline fun <reified T : ProcessTreeNode> DefaultMutableTreeNode.childrenOf(): List<T> =
+  children().toList().filterIsInstance<T>()
 
 private fun <K, V> boundedLinkedHashMap(maxSize: Int): LinkedHashMap<K, V> =
   object : LinkedHashMap<K, V>(maxSize) {

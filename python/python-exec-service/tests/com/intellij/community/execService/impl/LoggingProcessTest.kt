@@ -9,6 +9,7 @@ import com.intellij.python.processOutput.common.ExecutableDto
 import com.intellij.python.processOutput.common.LoggedProcessDto
 import com.intellij.python.processOutput.common.OutputKindDto
 import com.intellij.python.processOutput.common.OutputLineDto
+import com.intellij.python.processOutput.common.ProcessId
 import com.intellij.python.processOutput.common.ProcessOutputEventDto
 import com.intellij.python.processOutput.common.ProcessOutputTopicSender
 import com.intellij.python.processOutput.common.ProcessWeightDto
@@ -59,8 +60,8 @@ class LoggingProcessTest {
     val (_, _, process2) = createLoggingProcess()
     val (_, _, process3) = createLoggingProcess()
 
-    assert(process3.loggedProcess.id > process2.loggedProcess.id)
-    assert(process2.loggedProcess.id > process1.loggedProcess.id)
+    assert(process3.loggedProcess.id.value > process2.loggedProcess.id.value)
+    assert(process2.loggedProcess.id.value > process1.loggedProcess.id.value)
   }
 
   @Test
@@ -83,7 +84,7 @@ class LoggingProcessTest {
     val (_, _, processSet) = createLoggingProcess(traceContext = traceContext)
 
     assertEquals(null, processNull.loggedProcess.traceContextUuid)
-    assertEquals(traceContext.uuid.toString(), processSet.loggedProcess.traceContextUuid?.uuid)
+    assertEquals(traceContext.uuid.toString(), processSet.loggedProcess.traceContextUuid?.value)
   }
 
   @Test
@@ -142,7 +143,7 @@ class LoggingProcessTest {
     assertInstanceOf<ProcessOutputEventDto.NewProcess>(event)
     assertEquals(
       listOf(childContext.uuid.toString(), parentContext.uuid.toString(), grandParentContext.uuid.toString()),
-      event.traceHierarchy.map { it.uuid.uuid }
+      event.traceHierarchy.map { it.uuid.value }
     )
   }
 
@@ -281,11 +282,11 @@ class LoggingProcessTest {
               events += ProcessOutputEventDto.NewProcess(loggedProcessDto, traceHierarchy)
             }
 
-            override fun sendNewOutputLineEvent(processId: Int, outputLine: OutputLineDto) {
+            override fun sendNewOutputLineEvent(processId: ProcessId, outputLine: OutputLineDto) {
               events += ProcessOutputEventDto.NewOutputLine(processId, outputLine)
             }
 
-            override fun sendProcessExitEvent(processId: Int, exitedAt: Instant, exitValue: Int) {
+            override fun sendProcessExitEvent(processId: ProcessId, exitedAt: Instant, exitValue: Int) {
               events += ProcessOutputEventDto.ProcessExit(processId, exitedAt, exitValue)
             }
 
