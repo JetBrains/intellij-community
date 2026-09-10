@@ -19,9 +19,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 @Internal
-class SeRecentFilesProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(),
-                                                                                              SeItemsPreviewProvider,
-                                                                                              SeExtendedInfoProvider {
+class SeRecentFilesLegacyBasedProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(),
+                                                                                                         SeItemsPreviewProvider,
+                                                                                                         SeExtendedInfoProvider {
   override val id: String get() = SeProviderIdUtils.RECENT_FILES_ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName
