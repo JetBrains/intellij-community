@@ -125,7 +125,7 @@ private class JsonHttpApiHelperImpl(
       }
     }
     if (logger.isTraceEnabled) {
-      logger.trace("Request $httpMethod : Request body: " + String(jsonBytes, Charsets.UTF_8))
+      logger.trace("$requestName : Request body: " + String(jsonBytes, Charsets.UTF_8))
     }
     return HttpRequest.BodyPublishers.ofByteArray(jsonBytes)
   }
@@ -155,7 +155,7 @@ private class JsonHttpApiHelperImpl(
   override suspend fun <T : Any> loadOptionalJsonValueByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out T?> =
     request.sendAndRead { requestName, mimeType, charset ->
       if (mimeType == null || !HttpClientUtil.isJsonMimeType(mimeType)) {
-        logger.debug("Request $requestName : no content type - inferring no content")
+        logger.debug("$requestName : no content type - inferring no content")
         return@sendAndRead null
       }
       deserialize(requestName, charset) { stream, charset ->
@@ -176,7 +176,7 @@ private class JsonHttpApiHelperImpl(
   override suspend fun <T : Any> loadOptionalJsonListByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out List<T>?> =
     request.sendAndRead { requestName, mimeType, charset ->
       if (mimeType == null || !HttpClientUtil.isJsonMimeType(mimeType)) {
-        logger.debug("Request $requestName : no content type - inferring no content")
+        logger.debug("$requestName : no content type - inferring no content")
         return@sendAndRead null
       }
       deserialize(requestName, charset) { stream, charset ->

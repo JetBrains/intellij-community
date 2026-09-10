@@ -65,7 +65,7 @@ object HttpClientUtil {
   const val ETAG_HEADER: String = "ETag"
   const val IF_NONE_MATCH_HEADER: String = "If-None-Match"
 
-  fun getRequestName(httpMethod: String, uri: URI): String = "Request $httpMethod $uri}"
+  fun getRequestName(httpMethod: String, uri: URI): String = "Request $httpMethod $uri"
   fun getRequestName(request: HttpRequest): String = getRequestName(request.method(), request.uri())
 
   fun isJsonMimeType(mimeType: String): Boolean {
