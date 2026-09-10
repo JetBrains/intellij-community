@@ -2,7 +2,7 @@
 
 Rules for this directory and every directory below it. They override the root `AGENTS.md`.
 
-56 more `intellij.java.*` modules live outside this tree, under `../plugins/` and `../platform/`.
+More `intellij.java.*` modules live outside this tree, under `../plugins/` and `../platform/`.
 This file does not reach them.
 
 ## Language
