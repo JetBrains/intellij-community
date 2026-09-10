@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
+import org.jetbrains.kotlin.idea.base.psi.setPropertyTypeReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.psi.KtProperty
@@ -62,11 +64,11 @@ internal class SplitPropertyDeclarationIntention :
         parent.addAfter(psiFactory.createExpressionByPattern("$0 = $1", element.nameAsName!!, initializer), element)
         parent.addAfter(psiFactory.createNewLine(), element)
 
-        element.initializer = null
+        element.setPropertyInitializer(null)
 
         if (explicitTypeToSet != null) {
             val typeReference = KtPsiFactory(element.project).createType(explicitTypeToSet)
-            element.setTypeReference(typeReference)?.let { shortenReferences(it) }
+            element.setPropertyTypeReference(typeReference)?.let { shortenReferences(it) }
         }
     }
 }

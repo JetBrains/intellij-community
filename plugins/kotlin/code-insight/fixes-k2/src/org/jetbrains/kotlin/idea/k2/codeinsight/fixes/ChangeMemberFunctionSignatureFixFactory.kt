@@ -44,6 +44,10 @@ import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.setCallableReceiverTypeReference
+import org.jetbrains.kotlin.idea.base.psi.setFunctionTypeReference
+import org.jetbrains.kotlin.idea.base.psi.setModifierList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -59,8 +63,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeParameterList
-import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
-import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.types.Variance
 import java.util.BitSet
 
@@ -326,7 +328,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
             val patternFunction = KtPsiFactory(function.project).createFunction(signature.sourceCode)
 
             if (patternFunction.hasModifier(KtTokens.SUSPEND_KEYWORD)) {
-                function.addModifier(KtTokens.SUSPEND_KEYWORD)
+                function.addModifierKeyword(KtTokens.SUSPEND_KEYWORD)
             }
 
             val modifierList = function.modifierList
@@ -353,7 +355,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
                 modifierList?.contextParameterList?.delete()
             }
 
-            val newTypeRef = function.setTypeReference(patternFunction.typeReference)
+            val newTypeRef = function.setFunctionTypeReference(patternFunction.typeReference)
             if (newTypeRef != null) {
                 shortenReferences(newTypeRef)
             }
@@ -375,10 +377,10 @@ internal object ChangeMemberFunctionSignatureFixFactory {
             val patternFunctionReceiver = patternFunction.receiverTypeReference
             if (patternFunctionReceiver == null) {
                 if (function.receiverTypeReference != null) {
-                    function.setReceiverTypeReference(null)
+                    function.setCallableReceiverTypeReference(null)
                 }
             } else {
-                function.setReceiverTypeReference(patternFunction.receiverTypeReference)?.let {
+                function.setCallableReceiverTypeReference(patternFunction.receiverTypeReference)?.let {
                     shortenReferences(it)
                 }
             }

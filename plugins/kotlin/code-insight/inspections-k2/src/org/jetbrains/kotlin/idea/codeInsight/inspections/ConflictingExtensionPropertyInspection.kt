@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.deprecation
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasOrOverridesCallableId
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -190,7 +191,7 @@ class ConflictingExtensionPropertyInspection : KotlinApplicableInspectionBase<Kt
         private fun KtNamedDeclaration.addAnnotationWithLineBreak(annotationEntry: KtAnnotationEntry): KtAnnotationEntry {
             val newLine = KtPsiFactory(project).createNewLine()
             val ktModifierList = modifierList
-            val result = addAnnotationEntry(annotationEntry)
+            val result = addAnnotation(annotationEntry)
             if (ktModifierList != null) {
                 ktModifierList.addAfter(newLine, result)
             } else {

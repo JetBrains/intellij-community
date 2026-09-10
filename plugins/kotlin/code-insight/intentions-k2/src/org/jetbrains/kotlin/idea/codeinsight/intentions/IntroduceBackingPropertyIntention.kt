@@ -13,8 +13,11 @@ import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -127,11 +130,11 @@ class IntroduceBackingPropertyIntention :
     }
 
     private fun removeInitializer(project: Project, property: KtProperty, context: Context) {
-        property.removeModifier(KtTokens.LATEINIT_KEYWORD)
+        property.removeModifierKeyword(KtTokens.LATEINIT_KEYWORD)
         if (property.typeReference == null) {
             updateTypeForDeclarationInDummyFile(property, context.typeInfo, project)
         }
-        property.initializer = null
+        property.setPropertyInitializer(null)
     }
 
     private fun addAccessors(property: KtProperty) {
@@ -182,7 +185,7 @@ class IntroduceBackingPropertyIntention :
         }
 
         if (property.hasModifier(KtTokens.LATEINIT_KEYWORD)) {
-            backingProperty.addModifier(KtTokens.LATEINIT_KEYWORD)
+            backingProperty.addModifierKeyword(KtTokens.LATEINIT_KEYWORD)
         }
 
         property.parent.addBefore(backingProperty, property)

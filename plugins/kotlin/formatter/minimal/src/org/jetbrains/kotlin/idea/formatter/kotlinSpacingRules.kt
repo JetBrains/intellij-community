@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
 import org.jetbrains.kotlin.psi.psiUtil.textRangeWithoutComments
 
-val MODIFIERS_LIST_ENTRIES = TokenSet.orSet(TokenSet.create(KtNodeTypes.ANNOTATION_ENTRY, KtNodeTypes.ANNOTATION, KtNodeTypes.CONTEXT_RECEIVER_LIST),
+val MODIFIERS_LIST_ENTRIES = TokenSet.orSet(TokenSet.create(KtNodeTypes.ANNOTATION_ENTRY, KtNodeTypes.ANNOTATION, KtNodeTypes.CONTEXT_PARAMETER_LIST),
                                             KtTokens.MODIFIER_KEYWORDS)
 val EXTEND_COLON_ELEMENTS =
     TokenSet.create(KtNodeTypes.TYPE_CONSTRAINT, KtNodeTypes.CLASS, KtNodeTypes.OBJECT_DECLARATION, KtNodeTypes.TYPE_PARAMETER,

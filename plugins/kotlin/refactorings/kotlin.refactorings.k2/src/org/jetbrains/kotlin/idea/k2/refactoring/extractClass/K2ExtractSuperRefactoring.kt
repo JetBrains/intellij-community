@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplate
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.addSuperType
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
@@ -212,7 +214,7 @@ private fun createClass(
 
     val shouldBeAbstract = extractInfo.memberInfos.any { it.isToAbstract }
     if (!extractInfo.isInterface) {
-        newClass.addModifier(if (shouldBeAbstract) KtTokens.ABSTRACT_KEYWORD else KtTokens.OPEN_KEYWORD)
+        newClass.addModifierKeyword(if (shouldBeAbstract) KtTokens.ABSTRACT_KEYWORD else KtTokens.OPEN_KEYWORD)
     }
 
     if (typeParameters.isNotEmpty()) {
@@ -252,10 +254,10 @@ private fun createClass(
         } else {
             superClassEntry
         }
-        newClass.addSuperTypeListEntry(entryToAdd)
+        newClass.addSuperType(entryToAdd)
         shortenReferences(superClassEntry.replaced(newSuperTypeListEntry))
     } else {
-        shortenReferences(originalClass.addSuperTypeListEntry(newSuperTypeListEntry))
+        shortenReferences(originalClass.addSuperType(newSuperTypeListEntry))
     }
 
     shortenReferences(newClass)

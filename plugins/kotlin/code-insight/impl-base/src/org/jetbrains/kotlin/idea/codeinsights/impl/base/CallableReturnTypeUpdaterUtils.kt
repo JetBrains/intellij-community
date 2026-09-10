@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo.Companion.createByKtTypes
@@ -168,7 +169,7 @@ object CallableReturnTypeUpdaterUtils {
         } else {
             KtPsiFactory(project).createType(type.longTypeRepresentation)
         }
-        typeReference = newTypeRef
+        setCallableTypeReference(newTypeRef)
         return typeReference
     }
 

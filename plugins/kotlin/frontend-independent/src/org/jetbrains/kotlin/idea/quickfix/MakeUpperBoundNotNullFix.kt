@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.setTypeParameterExtendsBound
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -70,7 +71,7 @@ class MakeUpperBoundNotNullFix(
         updater: ModPsiUpdater
     ) {
         val typeReference = KtPsiFactory(element.project).createType(kind.renderedUpperBound)
-        val insertedTypeReference = element.setExtendsBound(typeReference) ?: return
+        val insertedTypeReference = element.setTypeParameterExtendsBound(typeReference) ?: return
         ShortenReferencesFacility.getInstance().shorten(insertedTypeReference)
     }
 }

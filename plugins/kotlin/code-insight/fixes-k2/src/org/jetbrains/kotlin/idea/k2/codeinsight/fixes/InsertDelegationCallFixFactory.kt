@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.isSuccessful
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.idea.base.psi.convertImplicitDelegationCallToExplicit
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -64,7 +65,7 @@ internal object InsertDelegationCallFixFactory {
             element: KtSecondaryConstructor,
             updater: ModPsiUpdater,
         ) {
-            val newDelegationCall = element.replaceImplicitDelegationCallWithExplicit(isThis)
+            val newDelegationCall = element.convertImplicitDelegationCallToExplicit(isThis)
 
             analyze(newDelegationCall) {
                 val resolutionAttempt = newDelegationCall.tryResolveCall()

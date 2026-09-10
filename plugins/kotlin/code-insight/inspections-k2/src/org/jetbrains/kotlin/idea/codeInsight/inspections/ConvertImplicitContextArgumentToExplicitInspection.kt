@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.isKotlinContextCall
@@ -208,7 +209,7 @@ private fun appendArgumentToExpression(
     )
     val argumentList = element.valueArgumentList
     if (argumentList != null) {
-        argumentList.addArgument(newArgument)
+        argumentList.appendValueArgument(newArgument)
     } else {
         element.addAfter(
             psiFactory.createCallArguments("(${paramName.asString()} = $replacement)"),

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.move.moveInner.MoveInnerClassUsagesHandler
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.idea.base.psi.insertValueArgumentAfter
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgumentList
@@ -23,6 +24,6 @@ class MoveJavaInnerClassKotlinUsagesHandler : MoveInnerClassUsagesHandler {
             val anchor = PsiTreeUtil.skipSiblingsBackward(lambdaArg, PsiWhiteSpace::class.java)
             innerCall.addAfter(psiFactory.createCallArguments("()"), anchor)
         } as KtValueArgumentList?) ?: return
-        argumentList.addArgumentAfter(argumentToAdd, null)
+        argumentList.insertValueArgumentAfter(argumentToAdd, null)
     }
 }

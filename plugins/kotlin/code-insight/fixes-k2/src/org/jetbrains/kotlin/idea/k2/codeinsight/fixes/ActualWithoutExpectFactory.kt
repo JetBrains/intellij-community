@@ -30,7 +30,10 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinPsiElementMemberChooserObject
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.isAlwaysActual
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -179,7 +182,7 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
         val target = project.executeWriteCommand(familyName, null) {
             val initial = (when {
                 targetExpectedClass != null && expectPrototype is KtPrimaryConstructor -> targetExpectedClass.add(expectPrototype)
-                targetExpectedClass != null -> targetExpectedClass.addDeclaration<KtDeclaration>(expectPrototype)
+                targetExpectedClass != null -> targetExpectedClass.addMemberDeclaration<KtDeclaration>(expectPrototype)
                 else -> expectedFile.add(expectPrototype)
             }) as KtElement
             val shortened = shortenReferences(initial)
@@ -404,7 +407,7 @@ internal class CreateExpectedClassFix(
                 if (original in selectedElements)
                     original.makeActualWithParents()
                 else {
-                    original.removeModifier(ACTUAL_KEYWORD)
+                    original.removeModifierKeyword(ACTUAL_KEYWORD)
                 }
             }
         }
@@ -458,7 +461,7 @@ internal class CreateExpectedClassFix(
 
 
     private tailrec fun KtDeclaration.makeActualWithParents() {
-        addModifier(ACTUAL_KEYWORD)
+        addModifierKeyword(ACTUAL_KEYWORD)
         containingClassOrObject?.takeUnless(KtDeclaration::hasActualModifier)?.makeActualWithParents()
     }
 

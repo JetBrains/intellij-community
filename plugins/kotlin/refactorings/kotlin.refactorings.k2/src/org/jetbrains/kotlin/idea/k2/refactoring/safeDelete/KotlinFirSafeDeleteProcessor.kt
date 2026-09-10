@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringsSettings
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinK2RefactoringsBundle
@@ -450,7 +451,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 element.ownerFunction?.let {
                     with(KotlinSafeDeleteSettings) {
                         if (it.dropActualModifier == true) {
-                            it.removeModifier(KtTokens.ACTUAL_KEYWORD)
+                            it.removeModifierKeyword(KtTokens.ACTUAL_KEYWORD)
                             it.dropActualModifier = null
                         }
                     }

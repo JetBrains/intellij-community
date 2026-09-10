@@ -7,6 +7,9 @@ import com.intellij.modcommand.Presentation
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
+import org.jetbrains.kotlin.idea.base.psi.insertValueArgumentBefore
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.createArgumentWithoutName
@@ -96,12 +99,12 @@ internal class RemoveAllArgumentNamesIntention :
         }
 
         val argumentList = element.valueArgumentList ?: return
-        oldArguments.forEach { argumentList.removeArgument(it) }
+        oldArguments.forEach { argumentList.deleteValueArgument(it) }
 
-        contextArguments.forEach { (arg, _) -> argumentList.removeArgument(arg) }
+        contextArguments.forEach { (arg, _) -> argumentList.deleteValueArgument(arg) }
 
         newArguments.asReversed().forEach {
-            argumentList.addArgumentBefore(it, argumentList.arguments.firstOrNull())
+            argumentList.insertValueArgumentBefore(it, argumentList.arguments.firstOrNull())
         }
         
         // Add context arguments at the end with their names
@@ -110,7 +113,7 @@ internal class RemoveAllArgumentNamesIntention :
             for ((arg, name) in contextArguments) {
                 val exprText = arg.getArgumentExpression()?.text ?: continue
                 val namedArg = psiFactory.createArgument(psiFactory.createExpression(exprText), name)
-                argumentList.addArgument(namedArg)
+                argumentList.appendValueArgument(namedArg)
             }
         }
     }

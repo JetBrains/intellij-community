@@ -5,6 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -29,7 +30,7 @@ internal object AddInlineToFunctionFixFactories {
             element: KtFunction,
             updater: ModPsiUpdater,
         ) {
-            element.addModifier(KtTokens.INLINE_KEYWORD)
+            element.addModifierKeyword(KtTokens.INLINE_KEYWORD)
         }
 
         override fun getActionPresentation(

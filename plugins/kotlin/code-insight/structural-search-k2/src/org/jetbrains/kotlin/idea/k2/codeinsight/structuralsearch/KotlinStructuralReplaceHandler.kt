@@ -23,8 +23,14 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsInElementForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.addSuperType
 import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
+import org.jetbrains.kotlin.idea.base.psi.setCallableReceiverTypeReference
+import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
+import org.jetbrains.kotlin.idea.base.psi.setParameterTypeReference
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -47,7 +53,6 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
-import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import java.util.concurrent.Callable
 
 internal class KotlinStructuralReplaceHandler(private val project: Project) : StructuralReplaceHandler() {
@@ -178,7 +183,7 @@ internal class KotlinStructuralReplaceHandler(private val project: Project) : St
             val matchPar = match.valueParameters.getOrElse(i) { return@forEachIndexed }
             if (par.typeReference == null && searchPar.typeReference == null) {
                 matchPar.typeReference?.let { mTr ->
-                    par.typeReference = mTr
+                    par.setParameterTypeReference(mTr)
                     par.typeReference?.let { pTr -> par.addSurroundingWhiteSpace(pTr, mTr) }
                 }
             }
@@ -199,7 +204,7 @@ internal class KotlinStructuralReplaceHandler(private val project: Project) : St
         searchTemplate: KtModifierListOwner, match: KtModifierListOwner, modifier: KtModifierKeywordToken
     ): KtModifierListOwner {
         if (!hasModifier(modifier) && match.hasModifier(modifier) && !searchTemplate.hasModifier(modifier)) {
-            addModifier(modifier)
+            addModifierKeyword(modifier)
             modifierList?.getModifier(modifier)?.let { mod ->
                 match.modifierList?.getModifier(modifier)?.let { mMod ->
                     modifierList?.addSurroundingWhiteSpace(mod, mMod)
@@ -231,14 +236,14 @@ internal class KotlinStructuralReplaceHandler(private val project: Project) : St
         match.annotationEntries.forEach { matchAnnotation ->
             val shortName = matchAnnotation.shortName
             if (!annotationNames.contains(shortName) && !searchNames.contains(shortName)) {
-                addAnnotationEntry(matchAnnotation)
+                addAnnotation(matchAnnotation)
             }
         }
 
         fun KtDeclaration.replaceVisibilityModifiers(searchTemplate: KtDeclaration, match: KtDeclaration): PsiElement {
             if (visibilityModifierType() == null && searchTemplate.visibilityModifierType() == null) {
                 match.visibilityModifierType()?.let {
-                    addModifier(it)
+                    addModifierKeyword(it)
                     visibilityModifier()?.let { vM ->
                         match.visibilityModifier()?.let { mVm ->
                             modifierList?.addSurroundingWhiteSpace(vM, mVm)
@@ -256,11 +261,11 @@ internal class KotlinStructuralReplaceHandler(private val project: Project) : St
         searchTemplate: KtCallableDeclaration, match: KtCallableDeclaration
     ): KtCallableDeclaration {
         if (receiverTypeReference == null && searchTemplate.receiverTypeReference == null) {
-            match.receiverTypeReference?.let(this::setReceiverTypeReference)
+            match.receiverTypeReference?.let { setCallableReceiverTypeReference(it) }
         }
         if (typeReference == null || searchTemplate.typeReference == null) {
             match.typeReference?.let { matchTr ->
-                typeReference = matchTr
+                setCallableTypeReference(matchTr)
                 typeReference?.let { addSurroundingWhiteSpace(it, matchTr) }
                 colon?.let { c -> match.colon?.let { mC -> addSurroundingWhiteSpace(c, mC) } }
             }
@@ -289,7 +294,7 @@ internal class KotlinStructuralReplaceHandler(private val project: Project) : St
 
         if (primaryConstructorModifierList == null && searchTemplate.primaryConstructorModifierList == null) {
             match.primaryConstructorModifierList?.let { matchModList ->
-                matchModList.visibilityModifierType()?.let { primaryConstructor?.addModifier(it) }
+                matchModList.visibilityModifierType()?.let { primaryConstructor?.addModifierKeyword(it) }
                 primaryConstructor?.let { pC -> match.primaryConstructor?.let { mPc -> addSurroundingWhiteSpace(pC, mPc) } }
 
             }
@@ -303,7 +308,7 @@ internal class KotlinStructuralReplaceHandler(private val project: Project) : St
 
         if (getSuperTypeList() == null && searchTemplate.getSuperTypeList() == null) { // replace all entries
             match.superTypeListEntries.forEach {
-                val superTypeEntry = addSuperTypeListEntry(it)
+                val superTypeEntry = addSuperType(it)
                 getSuperTypeList()?.addSurroundingWhiteSpace(superTypeEntry, it)
             }
 
@@ -382,7 +387,7 @@ internal class KotlinStructuralReplaceHandler(private val project: Project) : St
             }
             if (param.typeReference == null && searchParam?.typeReference == null) {
                 matchParam.typeReference?.let {
-                    param.typeReference = it
+                    param.setParameterTypeReference(it)
                     param.colon?.let { pColon -> matchParam.colon?.let { mColon -> param.addSurroundingWhiteSpace(pColon, mColon) } }
                 }
             }

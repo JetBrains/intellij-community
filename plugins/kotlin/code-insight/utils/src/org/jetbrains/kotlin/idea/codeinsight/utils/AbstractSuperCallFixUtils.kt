@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.addSuperType
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.name.FqName
@@ -27,7 +28,7 @@ object AbstractSuperCallFixUtils {
         val superTypeNames = setOf(superTypeShortName, superTypeFullName)
         val superTypeListEntry = superTypeListEntries.firstOrNull { it.text in superTypeNames }
         if (superTypeListEntry == null) {
-            val added = addSuperTypeListEntry(KtPsiFactory(this.project).createSuperTypeEntry(superTypeFullName))
+            val added = addSuperType(KtPsiFactory(this.project).createSuperTypeEntry(superTypeFullName))
             ShortenReferencesFacility.getInstance().shorten(added)
         } else if (superTypeListEntry.text == superTypeFullName) {
             ShortenReferencesFacility.getInstance().shorten(superTypeListEntry)

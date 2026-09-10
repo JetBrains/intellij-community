@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -27,7 +28,7 @@ class RemoveTypeVarianceFix(
             Variance.OUT_VARIANCE -> KtTokens.OUT_KEYWORD
             else -> null
         }?.let {
-            element.removeModifier(it)
+            element.removeModifierKeyword(it)
         }
     }
 }

@@ -20,6 +20,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.JBColor
 import com.intellij.ui.NonFocusableCheckBox
+import org.jetbrains.kotlin.idea.base.psi.appendParameter
+import org.jetbrains.kotlin.idea.base.psi.deleteParameter
+import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructorParameterList
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
@@ -32,7 +35,6 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.createPrimaryConstructorParameterListIfAbsent
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.getValueParameterList
@@ -217,16 +219,16 @@ abstract class KotlinInplaceParameterIntroducerBase<KotlinType, Descriptor>(
         return runWriteAction {
             with(descriptor) {
                 val parameterList = callable.getValueParameterList()
-                    ?: (callable as KtClass).createPrimaryConstructorParameterListIfAbsent()
+                    ?: (callable as KtClass).getOrCreatePrimaryConstructorParameterList()
                 val parameter = KtPsiFactory(myProject).createParameter("$newParameterName: $newParameterTypeText")
-                parameterList.addParameter(parameter)
+                parameterList.appendParameter(parameter)
             }
         }
     }
 
     override fun deleteTemplateField(psiField: KtParameter) {
         if (psiField.isValid) {
-            (psiField.parent as? KtParameterList)?.removeParameter(psiField)
+            (psiField.parent as? KtParameterList)?.deleteParameter(psiField)
         }
     }
 

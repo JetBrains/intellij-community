@@ -37,6 +37,8 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateFunctionLiteralParameterList
+import org.jetbrains.kotlin.idea.base.psi.insertParameterBefore
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.applyFromWithConversion
 import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.applyToWithConversion
@@ -74,7 +76,6 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
@@ -377,9 +378,9 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
                 val uniqueName = findUniqueParameterName(lambda)
                 // Create the parameter for an implicit case
                 replacements.createParameter = {
-                    val lambdaParameterList = functionLiteral?.getOrCreateParameterList()
+                    val lambdaParameterList = functionLiteral?.getOrCreateFunctionLiteralParameterList()
                     val parameterToAdd = createLambdaParameterList(uniqueName).parameters.first()
-                    lambdaParameterList?.addParameterBefore(parameterToAdd, lambdaParameterList.parameters.firstOrNull())
+                    lambdaParameterList?.insertParameterBefore(parameterToAdd, lambdaParameterList.parameters.firstOrNull())
                 }
                 uniqueName
             }

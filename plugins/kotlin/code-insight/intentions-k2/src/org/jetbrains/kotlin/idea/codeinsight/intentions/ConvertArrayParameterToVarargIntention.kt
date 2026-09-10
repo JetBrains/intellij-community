@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.types.arrayElementType
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -76,7 +77,7 @@ internal class ConvertArrayParameterToVarargIntention :
     ) {
         val typeReference = element.typeReference ?: return
         shortenReferences(typeReference.replace(elementContext) as KtTypeReference)
-        element.addModifier(KtTokens.VARARG_KEYWORD)
+        element.addModifierKeyword(KtTokens.VARARG_KEYWORD)
     }
 }
 

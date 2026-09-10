@@ -12,6 +12,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
+import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructor
+import org.jetbrains.kotlin.idea.base.psi.removeRedundantConstructorKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction.ParamCandidate
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableActionTextBuilder.renderCandidatesOfParameterTypes
@@ -21,7 +23,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
-import org.jetbrains.kotlin.psi.createPrimaryConstructorIfAbsent
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 private val EMPTY_THIS_DELEGATION_CALL: String = "${KtTokens.THIS_KEYWORD}()"
@@ -53,10 +54,10 @@ internal class AddConstructorFix(
         if (needPrimary) {
             val newPrimaryConstructor = psiFactory.createPrimaryConstructor(constructorText)
             val replacedConstructor = targetClass
-                .createPrimaryConstructorIfAbsent()
+                .getOrCreatePrimaryConstructor()
                 .replace(newPrimaryConstructor) as KtPrimaryConstructor
 
-            replacedConstructor.removeRedundantConstructorKeywordAndSpace()
+            replacedConstructor.removeRedundantConstructorKeyword()
         } else {
             val newSecondaryConstructor = psiFactory.createSecondaryConstructor(constructorText)
             CreateFromUsageUtil.placeDeclarationInContainer(

@@ -6,6 +6,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
@@ -36,8 +38,8 @@ class InlineClassDeprecatedFix(
         element: KtModifierListOwner,
         updater: ModPsiUpdater,
     ) {
-        element.removeModifier(KtTokens.INLINE_KEYWORD)
-        element.addModifier(KtTokens.VALUE_KEYWORD)
+        element.removeModifierKeyword(KtTokens.INLINE_KEYWORD)
+        element.addModifierKeyword(KtTokens.VALUE_KEYWORD)
         if (element.containingKtFile.hasJvmTarget()) {
             element.addAnnotation(ClassId.topLevel(StandardKotlinNames.Jvm.JvmInline))
         }

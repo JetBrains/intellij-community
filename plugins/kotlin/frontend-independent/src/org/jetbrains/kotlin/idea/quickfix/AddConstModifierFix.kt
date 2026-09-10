@@ -11,6 +11,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.getJvmAnnotations
@@ -41,7 +42,7 @@ class AddConstModifierFix(element: KtProperty) : AddModifierFix(element, KtToken
 
 private fun applyConstModifier(property: KtProperty) {
     val annotations = property.getJvmAnnotations()
-    property.addModifier(KtTokens.CONST_KEYWORD)
+    property.addModifierKeyword(KtTokens.CONST_KEYWORD)
     annotations.forEach(KtAnnotationEntry::delete)
 }
 

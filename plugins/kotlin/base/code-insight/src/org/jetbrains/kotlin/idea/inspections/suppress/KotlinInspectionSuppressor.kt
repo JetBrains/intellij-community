@@ -16,6 +16,7 @@ import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.base.psi.findSingleLiteralStringTemplateText
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.psi.KtAnnotated
@@ -95,7 +96,7 @@ private class RemoveRedundantSuppression(private val toolId: String) : LocalQuic
                 .withAttachment("arguments.txt", valueArgumentList.text)
                 .withAttachment("tool.txt", toolId)
 
-            valueArgumentList.removeArgument(argument)
+            valueArgumentList.deleteValueArgument(argument)
         }
     }
 }

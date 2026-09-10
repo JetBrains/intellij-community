@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -137,13 +138,13 @@ internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<K
             // @Throws(FooException::class, BarException::class)
             firstValueArgument?.getArgumentName() == null -> {
                 val newArgument = psiFactory.createArgument(argumentText)
-                throwsAnnotation.valueArgumentList?.addArgument(newArgument)
+                throwsAnnotation.valueArgumentList?.appendValueArgument(newArgument)
             }
 
             // @Throws(exceptionClasses = arrayOf(FooException::class))
             expression is KtCallExpression -> {
                 val newArgument = psiFactory.createArgument(argumentText)
-                expression.valueArgumentList?.addArgument(newArgument)
+                expression.valueArgumentList?.appendValueArgument(newArgument)
             }
 
             // @Throws(exceptionClasses = FooException::class)

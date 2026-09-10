@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.idea.base.psi.convertImplicitDelegationCallToExplicit
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
 import org.jetbrains.kotlin.psi.KtElement
@@ -26,7 +27,7 @@ internal class KotlinConstructorDelegationCallUsage(
         var elementToWorkWith = element
         if (changeInfo.newParameters.count { it.isNewParameter } > 0 && element.isImplicit) {
             val constructor = element.parent as KtSecondaryConstructor
-            elementToWorkWith = constructor.replaceImplicitDelegationCallWithExplicit(isThisCall)
+            elementToWorkWith = constructor.convertImplicitDelegationCallToExplicit(isThisCall)
         }
 
         delegate.processUsage(changeInfo, elementToWorkWith, allUsages)

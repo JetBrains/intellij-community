@@ -80,6 +80,7 @@ jvm_library(
         "//libraries/gson",
         "//platform/structure-view-impl:structureView",
         "//platform/statistics",
+        "//plugins/kotlin/base/psi",
     ],
 )
 
@@ -133,6 +134,7 @@ jvm_library(
         "//libraries/gson:gson_test_lib",
         "//platform/structure-view-impl:structureView_test_lib",
         "//platform/statistics:statistics_test_lib",
+        "//plugins/kotlin/base/psi:psi_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.ide` end

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
@@ -30,7 +31,7 @@ class RemoveWrongOptInAnnotationTargetFix(element: KtAnnotationEntry) :
             element.delete()
         } else {
             forbiddenArguments.forEach {
-                argumentList.removeArgument(it)
+                argumentList.deleteValueArgument(it)
             }
         }
     }

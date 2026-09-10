@@ -14,6 +14,9 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.psi.appendParameter
+import org.jetbrains.kotlin.idea.base.psi.setParameterTypeReference
+import org.jetbrains.kotlin.idea.base.psi.deleteParameter
 import org.jetbrains.kotlin.idea.refactoring.suggested.KotlinSignatureAdditionalData
 import org.jetbrains.kotlin.idea.refactoring.suggested.modifiers
 import org.jetbrains.kotlin.psi.KtFile
@@ -81,7 +84,7 @@ class KotlinSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringCh
     fun testAddParameter() {
         doTest(
             "fun foo(p1: Int) {}",
-            { it.valueParameterList!!.addParameter(createParameter("p2: Int")) },
+            { it.valueParameterList!!.appendParameter(createParameter("p2: Int")) },
             expectedOldSignature = "fun foo(p1: Int)",
             expectedNewSignature = "fun foo(p1: Int (initialIndex = 0), p2: Int (new))"
         )
@@ -90,7 +93,7 @@ class KotlinSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringCh
     fun testRemoveParameter() {
         doTest(
             "fun foo(p1: Int, p2: Int) {}",
-            { it.valueParameterList!!.removeParameter(0) },
+            { it.valueParameterList!!.deleteParameter(0) },
             expectedOldSignature = "fun foo(p1: Int, p2: Int)",
             expectedNewSignature = "fun foo(p2: Int (initialIndex = 1))"
         )
@@ -99,7 +102,7 @@ class KotlinSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringCh
     fun testChangeParameterType() {
         doTest(
             "fun foo(p1: Int, p2: Int) {}",
-            { it.valueParameters[1].typeReference = createType("Any?") },
+            { it.valueParameters[1].setParameterTypeReference(createType("Any?")) },
             expectedOldSignature = "fun foo(p1: Int, p2: Int)",
             expectedNewSignature = "fun foo(p1: Int (initialIndex = 0), p2: Any? (initialIndex = 1))"
         )
@@ -135,9 +138,9 @@ class KotlinSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringCh
             {
                 executeCommand {
                     runWriteAction {
-                        it.valueParameters[0].typeReference = createType("Any?")
-                        it.valueParameters[1].typeReference = createType("Long")
-                        it.valueParameters[2].typeReference = createType("Double")
+                        it.valueParameters[0].setParameterTypeReference(createType("Any?"))
+                        it.valueParameters[1].setParameterTypeReference(createType("Long"))
+                        it.valueParameters[2].setParameterTypeReference(createType("Double"))
                     }
                 }
             },

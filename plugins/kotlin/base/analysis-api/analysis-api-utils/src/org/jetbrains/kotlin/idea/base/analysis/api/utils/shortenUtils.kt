@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
+import org.jetbrains.kotlin.idea.base.psi.removeQualifier
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.util.ClassImportFilter
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
@@ -168,7 +169,7 @@ fun ShortenCommandForIde.invokeShortening(results: MutableList<SmartPsiElementPo
     for ((typePointer, shortenedRef) in listOfTypeToShortenInfo) {
         val type = typePointer.element ?: continue
 
-        type.deleteQualifier()
+        type.removeQualifier()
         if (shortenedRef != null) {
             type.referenceExpression?.replace(psiFactory.createExpression(shortenedRef))
         }

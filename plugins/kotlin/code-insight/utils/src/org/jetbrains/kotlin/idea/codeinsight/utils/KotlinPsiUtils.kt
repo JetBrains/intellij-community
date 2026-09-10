@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.setPropertyTypeReference
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.negate
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -152,7 +153,7 @@ fun removeRedundantGetter(getter: KtPropertyAccessor) {
     val property = getter.property
     val accessorTypeReference = getter.typeReference
     if (accessorTypeReference != null && property.typeReference == null && property.initializer == null) {
-        property.typeReference = accessorTypeReference
+        property.setPropertyTypeReference(accessorTypeReference)
     }
     if (getter.canBeCompletelyDeleted()) {
         getter.delete()

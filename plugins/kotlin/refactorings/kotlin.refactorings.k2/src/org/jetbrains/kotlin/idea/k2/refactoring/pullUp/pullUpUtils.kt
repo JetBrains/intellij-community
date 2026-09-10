@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
@@ -69,7 +70,7 @@ internal fun makeAbstract(
     targetClass: KtClass,
 ) {
     if (!targetClass.isInterface()) {
-        member.addModifier(KtTokens.ABSTRACT_KEYWORD)
+        member.addModifierKeyword(KtTokens.ABSTRACT_KEYWORD)
     }
 
     val deleteFrom = when (member) {

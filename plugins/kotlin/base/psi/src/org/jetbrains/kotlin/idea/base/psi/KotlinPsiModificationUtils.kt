@@ -426,9 +426,15 @@ fun KtModifierListOwner.replaceModifierList(modifierList: KtModifierList?): KtMo
 
 /**
  * Adds [modifier] to this declaration's modifier list.
+ *
+ * A primary constructor also gains the `constructor` keyword, because a modifier requires it.
  */
 fun KtModifierListOwner.addModifierKeyword(modifier: KtModifierKeywordToken) {
-    KtPsiMutationService.getInstance().addModifierKeyword(this, modifier)
+    if (this is KtPrimaryConstructor) {
+        KtPsiMutationService.getInstance().addModifierKeyword(this, modifier)
+    } else {
+        KtPsiMutationService.getInstance().addModifierKeyword(this, modifier)
+    }
 }
 
 /**
@@ -440,9 +446,15 @@ fun KtPrimaryConstructor.addModifierKeyword(modifier: KtModifierKeywordToken) {
 
 /**
  * Removes [modifier] from this declaration's modifier list.
+ *
+ * A primary constructor also loses the `constructor` keyword, because the keyword is redundant without a modifier.
  */
 fun KtModifierListOwner.removeModifierKeyword(modifier: KtModifierKeywordToken) {
-    KtPsiMutationService.getInstance().removeModifierKeyword(this, modifier)
+    if (this is KtPrimaryConstructor) {
+        KtPsiMutationService.getInstance().removeModifierKeyword(this, modifier)
+    } else {
+        KtPsiMutationService.getInstance().removeModifierKeyword(this, modifier)
+    }
 }
 
 /**
@@ -454,9 +466,15 @@ fun KtPrimaryConstructor.removeModifierKeyword(modifier: KtModifierKeywordToken)
 
 /**
  * Adds [annotationEntry] to this declaration's modifier list.
+ *
+ * A primary constructor also gains the `constructor` keyword, because an annotation requires it.
  */
 fun KtModifierListOwner.addAnnotation(annotationEntry: KtAnnotationEntry): KtAnnotationEntry {
-    return KtPsiMutationService.getInstance().addAnnotation(this, annotationEntry)
+    return if (this is KtPrimaryConstructor) {
+        KtPsiMutationService.getInstance().addAnnotation(this, annotationEntry)
+    } else {
+        KtPsiMutationService.getInstance().addAnnotation(this, annotationEntry)
+    }
 }
 
 /**
@@ -525,6 +543,21 @@ fun KtCallableDeclaration.setCallableTypeReference(
     typeRef: KtTypeReference?,
 ): KtTypeReference? {
     return KtPsiMutationService.getInstance().setCallableTypeReference(this, addAfter, typeRef)
+}
+
+/**
+ * Replaces this callable's explicit return type reference, adds it if missing, or removes it when [typeRef] is `null`.
+ *
+ * A missing type reference goes after the value parameter list of a function, and after the name of a property, a parameter or a
+ * destructuring entry. This function picks that position from the declaration kind, so use it when the kind is unknown. Call the
+ * declaration-specific function when the kind is known.
+ */
+fun KtCallableDeclaration.setCallableTypeReference(typeRef: KtTypeReference?): KtTypeReference? = when (this) {
+    is KtNamedFunction -> setFunctionTypeReference(typeRef)
+    is KtProperty -> setPropertyTypeReference(typeRef)
+    is KtParameter -> setParameterTypeReference(typeRef)
+    is KtDestructuringDeclarationEntry -> setDestructuringDeclarationEntryTypeReference(typeRef)
+    else -> setCallableTypeReference(addAfter = null, typeRef = typeRef)
 }
 
 /**

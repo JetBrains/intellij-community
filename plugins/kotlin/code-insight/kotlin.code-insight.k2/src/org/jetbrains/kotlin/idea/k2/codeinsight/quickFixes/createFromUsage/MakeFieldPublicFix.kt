@@ -8,6 +8,8 @@ import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -35,11 +37,11 @@ internal class MakeFieldPublicFix(
     ) {
         val currentVisibilityModifier = element.visibilityModifier()
         if (currentVisibilityModifier != null && currentVisibilityModifier.elementType != KtTokens.PUBLIC_KEYWORD) {
-            element.removeModifier(currentVisibilityModifier.elementType as KtModifierKeywordToken)
+            element.removeModifierKeyword(currentVisibilityModifier.elementType as KtModifierKeywordToken)
         }
         if (!KotlinPsiHeuristics.hasAnnotation(element, JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME.shortName())) {
             shortenReferences(
-                element.addAnnotationEntry(KtPsiFactory(context.project).createAnnotationEntry("@kotlin.jvm.JvmField"))
+                element.addAnnotation(KtPsiFactory(context.project).createAnnotationEntry("@kotlin.jvm.JvmField"))
             )
         }
     }

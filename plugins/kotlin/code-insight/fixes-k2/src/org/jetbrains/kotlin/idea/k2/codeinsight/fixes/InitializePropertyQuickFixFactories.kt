@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateBody
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -81,7 +82,7 @@ internal object InitializePropertyQuickFixFactories {
         ) {
             val expression = KtPsiFactory(actionContext.project)
                 .createExpression(elementContext.defaultInitializer)
-            val initializer = element.setInitializer(expression)!!
+            val initializer = element.setPropertyInitializer(expression)!!
             updater.select(TextRange(initializer.startOffset, initializer.endOffset))
             updater.moveCaretTo(initializer.endOffset)
         }
@@ -139,7 +140,7 @@ internal object InitializePropertyQuickFixFactories {
 
             val psiFactory = KtPsiFactory(project)
             when (constructor) {
-                is KtPrimaryConstructor -> property.setInitializer(psiFactory.createExpression(newParameterName))
+                is KtPrimaryConstructor -> property.setPropertyInitializer(psiFactory.createExpression(newParameterName))
                 is KtSecondaryConstructor -> {
                     val callToThis = constructor.getDelegationCall().takeIf { it.isCallToThis }
                     if (callToThis != null) {

@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.build
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.getFeatureMentionInCompilerArgsRegex
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -905,7 +906,7 @@ class KotlinBuildScriptManipulator(
         }
 
         // The feature is not mentioned yet — append a new string-literal argument.
-        argumentList.addArgument(psiFactory.createArgument("\"$featureArgumentString\""))
+        argumentList.appendValueArgument(psiFactory.createArgument("\"$featureArgumentString\""))
     }
 
     /**

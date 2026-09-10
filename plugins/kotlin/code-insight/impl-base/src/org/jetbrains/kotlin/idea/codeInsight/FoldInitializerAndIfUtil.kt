@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -146,7 +147,7 @@ fun joinLines(
 
     if (variableTypeString != null) {
         val typeReference = factory.createType(variableTypeString)
-        variableDeclaration.setTypeReference(typeReference)?.let { shortenReferences(it) }
+        variableDeclaration.setCallableTypeReference(typeReference)?.let { shortenReferences(it) }
     }
 
     commentSaver.restore(childRangeAfter)

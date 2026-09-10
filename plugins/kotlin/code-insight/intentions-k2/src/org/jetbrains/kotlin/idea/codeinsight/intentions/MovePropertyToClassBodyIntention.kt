@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isApplicableTargetSet
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclarationBefore
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.mustHaveOnlyPropertiesInPrimaryConstructor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -49,7 +51,7 @@ class MovePropertyToClassBodyIntention : KotlinApplicableModCommandAction<KtPara
             .createProperty("${element.valOrVarKeyword?.text} $parameterName = $parameterName")
 
         val firstProperty = parentClass.getProperties().firstOrNull()
-        parentClass.addDeclarationBefore(propertyDeclaration, firstProperty).apply {
+        parentClass.addMemberDeclarationBefore(propertyDeclaration, firstProperty).apply {
             val propertyModifierList = element.modifierList?.copy() as? KtModifierList
             propertyModifierList?.getModifier(KtTokens.VARARG_KEYWORD)?.delete()
             propertyModifierList?.let { modifierList?.replace(it) ?: addBefore(it, firstChild) }
@@ -78,7 +80,7 @@ class MovePropertyToClassBodyIntention : KotlinApplicableModCommandAction<KtPara
             element.modifierList?.delete()
         }
 
-        if (hasVararg) element.addModifier(KtTokens.VARARG_KEYWORD)
+        if (hasVararg) element.addModifierKeyword(KtTokens.VARARG_KEYWORD)
     }
 
     private fun KtAnnotationEntry.isAppliedToProperty(): Boolean {

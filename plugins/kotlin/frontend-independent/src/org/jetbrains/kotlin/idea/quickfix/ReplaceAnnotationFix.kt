@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.util.addAnnotation
@@ -59,7 +60,7 @@ abstract class ReplaceAnnotationFix(
         if (existingEntry != null) {
             if (annotationInnerText == null) return
             val psiFactory = KtPsiFactory(project)
-            existingEntry.valueArgumentList?.addArgument(psiFactory.createArgument(annotationInnerText))
+            existingEntry.valueArgumentList?.appendValueArgument(psiFactory.createArgument(annotationInnerText))
                 ?: existingEntry.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), existingEntry.lastChild)
             ShortenReferencesFacility.getInstance().shorten(existingEntry)
         } else {

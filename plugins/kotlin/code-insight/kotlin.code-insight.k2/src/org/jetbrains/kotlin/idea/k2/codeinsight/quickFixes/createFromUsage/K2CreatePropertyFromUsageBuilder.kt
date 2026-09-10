@@ -59,7 +59,9 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasApplicableAllowedTar
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isApplicableTargetSet
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateClassBody
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.psi.presentableClassId
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -94,7 +96,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeList
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
-import org.jetbrains.kotlin.psi.getOrCreateBody
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
@@ -386,7 +387,7 @@ object K2CreatePropertyFromUsageBuilder {
                 val psiFactory = KtPsiFactory(pointer.project)
                 val actualAnchor = when (adjustedContainer) {
                     is KtClassOrObject -> {
-                        val bodyBlock = adjustedContainer.getOrCreateBody()
+                        val bodyBlock = adjustedContainer.getOrCreateClassBody()
                         bodyBlock.declarations.firstOrNull()
                     }
                     is KtParameterList -> {
@@ -472,7 +473,7 @@ object K2CreatePropertyFromUsageBuilder {
 
         val psiFactory = KtPsiFactory(target.project)
         val annotationText = '@' + annotationUseSiteTargetPrefix + renderAnnotation(target, request, psiFactory)
-        return target.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
+        return target.addAnnotation(psiFactory.createAnnotationEntry(annotationText))
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)

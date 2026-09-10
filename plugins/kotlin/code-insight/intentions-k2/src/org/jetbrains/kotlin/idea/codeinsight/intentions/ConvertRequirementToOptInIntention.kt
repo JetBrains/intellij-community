@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.name.FqName
@@ -46,7 +47,7 @@ internal class ConvertRequirementToOptInIntention :
         element.delete()
         val argsList = optin.getOrCreateArguments()
 
-        val added = argsList.addArgument(psiFactory.createArgument(elementContext.fqName.asClassLiteral()))
+        val added = argsList.appendValueArgument(psiFactory.createArgument(elementContext.fqName.asClassLiteral()))
 
         shortenReferences(added)
     }

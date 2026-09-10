@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.KtNodeTypes.CLASS_BODY
 import org.jetbrains.kotlin.KtNodeTypes.COLLECTION_LITERAL_EXPRESSION
 import org.jetbrains.kotlin.KtNodeTypes.CONDITION
 import org.jetbrains.kotlin.KtNodeTypes.CONTEXT_PARAMETER_LIST
-import org.jetbrains.kotlin.KtNodeTypes.CONTEXT_RECEIVER_LIST
 import org.jetbrains.kotlin.KtNodeTypes.DESTRUCTURING_DECLARATION
 import org.jetbrains.kotlin.KtNodeTypes.DOT_QUALIFIED_EXPRESSION
 import org.jetbrains.kotlin.KtNodeTypes.DO_WHILE
@@ -1050,7 +1049,7 @@ private fun getWrapAfterAnnotation(childElement: ASTNode, wrapType: Int): Wrap? 
 }
 
 private fun getWrapAfterContextParameters(childElement: ASTNode, wrapType: Int): Wrap? {
-    return getWrapAfterElementInModifierList(childElement, wrapType) { it?.elementType == CONTEXT_RECEIVER_LIST }
+    return getWrapAfterElementInModifierList(childElement, wrapType) { it?.elementType == CONTEXT_PARAMETER_LIST }
 }
 
 private fun getWrapAfterElementInModifierList(childElement: ASTNode, wrapType: Int, acceptLastChildNode: (ASTNode?) -> Boolean): Wrap? {
@@ -1192,7 +1191,7 @@ private val INDENT_RULES = arrayOf(
 
     strategy("Indent for parts")
         .within(PROPERTY, FUN, DESTRUCTURING_DECLARATION, SECONDARY_CONSTRUCTOR)
-        .notForType(BLOCK, FUN_KEYWORD, VAL_KEYWORD, VAR_KEYWORD, CONSTRUCTOR_KEYWORD, RBRACKET, RPAR, EOL_COMMENT, CONTEXT_RECEIVER_LIST, MODIFIER_LIST)
+        .notForType(BLOCK, FUN_KEYWORD, VAL_KEYWORD, VAR_KEYWORD, CONSTRUCTOR_KEYWORD, RBRACKET, RPAR, EOL_COMMENT, CONTEXT_PARAMETER_LIST, MODIFIER_LIST)
         .set(Indent.getContinuationWithoutFirstIndent()),
 
     strategy("Chained calls")
@@ -1283,7 +1282,7 @@ private val INDENT_RULES = arrayOf(
         .set(Indent.getNormalIndent()),
 
     strategy("Context Parameters List")
-        .within(CONTEXT_RECEIVER_LIST)
+        .within(CONTEXT_PARAMETER_LIST)
         .forType(VALUE_PARAMETER)
         .set(Indent.getNormalIndent()),
 
@@ -1408,7 +1407,7 @@ private fun getWrappingStrategyForModifierList(annotationsWrapType: Int, context
         val prevType = getPrevWithoutWhitespace(childElement)?.elementType
         if (thisType in ANNOTATIONS || prevType in ANNOTATIONS && thisType != EOL_COMMENT && prevType != EOL_COMMENT)
             annotationWrap
-        else if (thisType == CONTEXT_RECEIVER_LIST || prevType == CONTEXT_RECEIVER_LIST && thisType != EOL_COMMENT && prevType != EOL_COMMENT)
+        else if (thisType == CONTEXT_PARAMETER_LIST || prevType == CONTEXT_PARAMETER_LIST && thisType != EOL_COMMENT && prevType != EOL_COMMENT)
             contextParametersWrap
         else
             null

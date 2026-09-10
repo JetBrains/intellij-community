@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addSuperType
 import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
 import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -13,7 +14,7 @@ class ParcelizeAddSupertypeQuickFix(clazz: KtClassOrObject) : AbstractParcelizeP
 
     override fun invoke(ktPsiFactory: KtPsiFactory, element: KtClassOrObject) {
         val supertypeName = ParcelizeNames.PARCELABLE_ID.asFqNameString()
-        shortenReferences(element.addSuperTypeListEntry(ktPsiFactory.createSuperTypeEntry(supertypeName)))
+        shortenReferences(element.addSuperType(ktPsiFactory.createSuperTypeEntry(supertypeName)))
     }
 
     companion object {

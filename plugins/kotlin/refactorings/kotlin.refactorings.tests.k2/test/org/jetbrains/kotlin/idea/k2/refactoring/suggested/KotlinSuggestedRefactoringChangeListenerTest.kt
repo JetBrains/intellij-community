@@ -8,6 +8,7 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringChangeListenerTest
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.psi.appendParameter
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -163,7 +164,7 @@ class KotlinSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringCha
         ) {
             executeCommand {
                 runWriteAction {
-                    function.valueParameterList!!.addParameter(KtPsiFactory(project).createParameter("p2: Int"))
+                    function.valueParameterList!!.appendParameter(KtPsiFactory(project).createParameter("p2: Int"))
                 }
             }
         }

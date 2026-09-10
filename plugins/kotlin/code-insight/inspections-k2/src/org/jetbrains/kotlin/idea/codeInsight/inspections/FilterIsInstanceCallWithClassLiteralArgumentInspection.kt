@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -88,7 +89,7 @@ internal class FilterIsInstanceCallWithClassLiteralArgumentInspection : KotlinAp
             val typeArguments = KtPsiFactory(project).createTypeArguments("<$typeName>")
             val newTypeArguments = element.addAfter(typeArguments, callee) as? KtElement ?: return
             ShortenReferencesFacility.getInstance().shorten(newTypeArguments)
-            element.valueArgumentList?.removeArgument(argument)
+            element.valueArgumentList?.deleteValueArgument(argument)
         }
     }
 

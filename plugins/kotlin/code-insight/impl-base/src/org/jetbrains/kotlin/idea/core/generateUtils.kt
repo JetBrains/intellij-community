@@ -13,6 +13,10 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.idea.base.psi.appendParameter
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateClassBody
+import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructorParameterList
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClass
@@ -25,8 +29,6 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.createPrimaryConstructorParameterListIfAbsent
-import org.jetbrains.kotlin.psi.getOrCreateBody
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -227,7 +229,7 @@ fun <T : KtDeclaration> insertMembersAfter(
 
         @Suppress("UNCHECKED_CAST")
         SmartPointerManager.createPointer(
-            classOrObject.createPrimaryConstructorParameterListIfAbsent().addParameter(it as KtParameter) as T
+            classOrObject.getOrCreatePrimaryConstructorParameterList().appendParameter(it as KtParameter) as T
         )
     }
 
@@ -245,7 +247,7 @@ fun <T : KtDeclaration> insertMembersAfter(
         val existedBody = classOrObject.body
         val body = existedBody?.takeIf { it.lBrace != null } ?: run {
             existedBody?.delete()
-            classOrObject.getOrCreateBody()
+            classOrObject.getOrCreateClassBody()
         }
         val lBrace = body.lBrace ?: throw KotlinExceptionWithAttachments("no lBrace").withPsiAttachment("classOrObject", classOrObject)
         tailComments.reversed().forEach { body.addAfter(it, lBrace) }
@@ -270,7 +272,7 @@ fun <T : KtDeclaration> insertMembersAfter(
                 }
             }
 
-            it.removeModifier(KtTokens.EXTERNAL_KEYWORD)
+            it.removeModifierKeyword(KtTokens.EXTERNAL_KEYWORD)
 
             @Suppress("UNCHECKED_CAST")
             SmartPointerManager.createPointer((body.addAfter(it, afterAnchor) as T).apply { afterAnchor = this })

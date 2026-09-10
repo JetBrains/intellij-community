@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -29,7 +30,7 @@ internal class ConvertVarargParameterToArrayIntention :
         val typeReference = element.getChildOfType<KtTypeReference>() ?: return
 
         typeReference.replace(KtPsiFactory(element.project).createType(elementContext.renderedParameterType))
-        element.removeModifier(KtTokens.VARARG_KEYWORD)
+        element.removeModifierKeyword(KtTokens.VARARG_KEYWORD)
     }
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.to.array.parameter")

@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -352,7 +353,7 @@ private class RemoveAnnotationArgumentOrEntireEntry : LocalQuickFix {
         if (annotationEntry.valueArguments.size == 1) {
             annotationEntry.delete()
         } else {
-            annotationEntry.valueArgumentList?.removeArgument(valueArgument)
+            annotationEntry.valueArgumentList?.deleteValueArgument(valueArgument)
         }
     }
 }

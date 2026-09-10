@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
@@ -95,12 +97,12 @@ fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken
             val explicitVisibilityRequired = languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED
                     && analyze(this) { explicitVisibilityRequired(symbol) }
             if (!explicitVisibilityRequired) {
-                visibilityModifierType()?.let { removeModifier(it) }
+                visibilityModifierType()?.let { removeModifierKeyword(it) }
                 return
             }
         }
     }
-    addModifier(visibilityModifier)
+    addModifierKeyword(visibilityModifier)
 }
 
 fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {

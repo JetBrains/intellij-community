@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructorParameterList
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -46,7 +48,6 @@ import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeParameter
-import org.jetbrains.kotlin.psi.createPrimaryConstructorParameterListIfAbsent
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
@@ -172,7 +173,7 @@ internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntentio
             .run(editor, holder.data) { extractionResult ->
                 val functionDeclaration = extractionResult.declaration as KtFunction
                 if (functionDeclaration.valueParameters.isNotEmpty()) {
-                    newClass.createPrimaryConstructorParameterListIfAbsent()
+                    newClass.getOrCreatePrimaryConstructorParameterList()
                         .replaced(functionDeclaration.valueParameterList!!)
                         .parameters
                         .forEach {
@@ -186,7 +187,7 @@ internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntentio
                     val usesOuterTypeParams = holder.ancestorTypeParameters.isNotEmpty()
                     val shouldBeInner = holder.hasMemberReference || usesOuterTypeParams
                     if (shouldBeInner && containingClass == (replaced.parent.parent as? KtClass)) {
-                        replaced.addModifier(KtTokens.INNER_KEYWORD)
+                        replaced.addModifierKeyword(KtTokens.INNER_KEYWORD)
                     }
                     replaced
                 }

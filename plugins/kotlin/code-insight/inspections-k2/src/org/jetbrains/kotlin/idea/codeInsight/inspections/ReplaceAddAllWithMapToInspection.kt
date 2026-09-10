@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateValueArgumentList
+import org.jetbrains.kotlin.idea.base.psi.insertValueArgumentBefore
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -217,7 +218,7 @@ internal class ReplaceAddAllWithMapToInspection : KotlinApplicableInspectionBase
             callee.replace(factory.createSimpleName(callee.text + "To"))
 
             val valueArgumentList = callExpression.getOrCreateValueArgumentList()
-            valueArgumentList.addArgumentBefore(factory.createArgument(receiver), valueArgumentList.arguments.firstOrNull())
+            valueArgumentList.insertValueArgumentBefore(factory.createArgument(receiver), valueArgumentList.arguments.firstOrNull())
 
             (element.parent as? KtDotQualifiedExpression ?: element).replace(operationCall)
         }

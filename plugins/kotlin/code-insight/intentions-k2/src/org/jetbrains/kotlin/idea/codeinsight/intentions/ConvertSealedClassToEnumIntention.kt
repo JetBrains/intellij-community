@@ -23,6 +23,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclarationBefore
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -221,17 +224,17 @@ internal class ConvertSealedClassToEnumIntention : KotlinApplicableModCommandAct
 
         movedDeclarations.forEach { it.delete() }
 
-        klass.removeModifier(KtTokens.SEALED_KEYWORD)
+        klass.removeModifierKeyword(KtTokens.SEALED_KEYWORD)
         if (klass.isInterface()) {
             klass.getClassOrInterfaceKeyword()?.replace(psiFactory.createClassKeyword())
         }
-        klass.addModifier(KtTokens.ENUM_KEYWORD)
+        klass.addModifierKeyword(KtTokens.ENUM_KEYWORD)
 
         if (entriesToAdd.isNotEmpty()) {
             val firstEntry = entriesToAdd
                 .reversed()
                 .asSequence()
-                .map { klass.addDeclarationBefore(it, null) }
+                .map { klass.addMemberDeclarationBefore(it, null) }
                 .last()
             // TODO: Add formatter rule
             firstEntry.parent.addBefore(psiFactory.createNewLine(), firstEntry)

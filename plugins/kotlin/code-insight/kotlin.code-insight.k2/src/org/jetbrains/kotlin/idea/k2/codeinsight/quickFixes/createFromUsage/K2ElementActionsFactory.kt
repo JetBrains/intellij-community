@@ -62,6 +62,9 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
+import org.jetbrains.kotlin.idea.base.psi.insertValueArgumentBefore
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.k2.codeinsight.K2OptimizeImportsFacility
@@ -503,14 +506,14 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
             val dummyArgument = dummyArgumentList.arguments[0]
             val oldAttribute = findAttribute(annotationEntry, request.name, attributeIndex)
             if (oldAttribute == null) {
-                argumentList.addArgument(dummyArgument)
+                argumentList.appendValueArgument(dummyArgument)
                 return
             }
 
-            argumentList.addArgumentBefore(dummyArgument, oldAttribute.value)
+            argumentList.insertValueArgumentBefore(dummyArgument, oldAttribute.value)
 
             if (isAttributeDuplicated(oldAttribute)) {
-                argumentList.removeArgument(oldAttribute.value)
+                argumentList.deleteValueArgument(oldAttribute.value)
             }
         }
 
@@ -519,7 +522,7 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
                 val anchorAfterVarargs: KtValueArgument? = removeVarargsAttribute(argumentList)
 
                 for (renderedArgument in dummyArgumentList.arguments) {
-                    argumentList.addArgumentBefore(renderedArgument, anchorAfterVarargs)
+                    argumentList.insertValueArgumentBefore(renderedArgument, anchorAfterVarargs)
                 }
 
                 return
@@ -528,17 +531,17 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
             val oldAttribute = findAttribute(annotationEntry, request.name, attributeIndex)
             if (oldAttribute != null) {
                 for (dummyArgument in dummyArgumentList.arguments) {
-                    argumentList.addArgumentBefore(dummyArgument, oldAttribute.value)
+                    argumentList.insertValueArgumentBefore(dummyArgument, oldAttribute.value)
                 }
 
                 if (isAttributeDuplicated(oldAttribute)) {
-                    argumentList.removeArgument(oldAttribute.value)
+                    argumentList.deleteValueArgument(oldAttribute.value)
                 }
                 return
             }
 
             for (dummyArgument in dummyArgumentList.arguments) {
-                argumentList.addArgument(dummyArgument)
+                argumentList.appendValueArgument(dummyArgument)
             }
         }
 
@@ -547,7 +550,7 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
                 val attributeName = attribute.getArgumentName()?.asName?.identifier
 
                 if (attributeName == null || attributeName == "value") {
-                    argumentList.removeArgument(attribute)
+                    argumentList.deleteValueArgument(attribute)
                     continue
                 }
 

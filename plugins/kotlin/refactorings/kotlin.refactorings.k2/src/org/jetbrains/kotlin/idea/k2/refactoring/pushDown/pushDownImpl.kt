@@ -14,6 +14,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.addSuperType
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.createSuperTypeEntryForAddition
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
@@ -115,12 +118,12 @@ private fun updateExistingCallableMember(
     makeAbstract: Boolean,
 ): KtCallableDeclaration = memberContext.member.apply {
     if (memberContext.modality != KaSymbolModality.ABSTRACT && makeAbstract) {
-        addModifier(KtTokens.OVERRIDE_KEYWORD)
+        addModifierKeyword(KtTokens.OVERRIDE_KEYWORD)
     } else {
         if (memberContext.doesNotOverride) {
-            removeModifier(KtTokens.OVERRIDE_KEYWORD)
+            removeModifierKeyword(KtTokens.OVERRIDE_KEYWORD)
         } else {
-            addModifier(KtTokens.OVERRIDE_KEYWORD)
+            addModifierKeyword(KtTokens.OVERRIDE_KEYWORD)
         }
     }
 }
@@ -136,12 +139,12 @@ private fun addCallableMember(
         targetClassKind != KaClassKind.INTERFACE &&
         memberContext.modality == KaSymbolModality.ABSTRACT
     ) {
-        addModifier(KtTokens.ABSTRACT_KEYWORD)
+        addModifierKeyword(KtTokens.ABSTRACT_KEYWORD)
     }
 
     if (memberContext.modality != KaSymbolModality.ABSTRACT && makeAbstract) {
-        KtTokens.VISIBILITY_MODIFIERS.types.forEach { removeModifier(it as KtModifierKeywordToken) }
-        addModifier(KtTokens.OVERRIDE_KEYWORD)
+        KtTokens.VISIBILITY_MODIFIERS.types.forEach { removeModifierKeyword(it as KtModifierKeywordToken) }
+        addModifierKeyword(KtTokens.OVERRIDE_KEYWORD)
     }
 } as KtCallableDeclaration
 
@@ -165,7 +168,7 @@ private fun createPushDownActionForClassLikeMember(
         ) ?: return null
 
         PushDownAction {
-            shortenReferences(targetClass.addSuperTypeListEntry(newSpecifier))
+            shortenReferences(targetClass.addSuperType(newSpecifier))
             null
         }
     } else {

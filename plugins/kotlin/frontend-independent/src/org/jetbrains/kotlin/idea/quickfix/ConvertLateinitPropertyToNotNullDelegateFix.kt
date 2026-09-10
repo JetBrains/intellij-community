@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.setPropertyTypeReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -24,12 +26,12 @@ class ConvertLateinitPropertyToNotNullDelegateFix(
     ) {
         val typeReference = element.typeReference ?: return
         val psiFactory = KtPsiFactory(context.project)
-        element.removeModifier(KtTokens.LATEINIT_KEYWORD)
+        element.removeModifierKeyword(KtTokens.LATEINIT_KEYWORD)
         val propertyDelegate = psiFactory.createPropertyDelegate(
             psiFactory.createExpression("kotlin.properties.Delegates.notNull<$type>()")
         )
         element.addAfter(propertyDelegate, typeReference)
-        element.typeReference = null
+        element.setPropertyTypeReference(null)
         ShortenReferencesFacility.getInstance().shorten(element)
     }
 }

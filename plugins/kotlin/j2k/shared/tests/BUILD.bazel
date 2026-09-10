@@ -33,6 +33,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/base/psi",
     ],
 )
 
@@ -114,6 +115,8 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//plugins/kotlin/j2k/k2:kotlin-j2k",
         "//plugins/kotlin/j2k/k2:kotlin-j2k_test_lib",
+        "//plugins/kotlin/base/psi",
+        "//plugins/kotlin/base/psi:psi_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.j2k.shared.tests` end

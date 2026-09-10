@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.psi.isRedundant
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
@@ -73,7 +74,7 @@ open class RemoveModifierFixBase(
             element: KtModifierListOwner,
             modifier: KtModifierKeywordToken,
         ) {
-            element.removeModifier(modifier)
+            element.removeModifierKeyword(modifier)
             if (element is KtPrimaryConstructor && element.isRedundant()) {
                 element.delete()
             }

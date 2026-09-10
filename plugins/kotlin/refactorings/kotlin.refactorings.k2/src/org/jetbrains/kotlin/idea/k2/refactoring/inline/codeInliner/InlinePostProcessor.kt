@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
+import org.jetbrains.kotlin.idea.base.psi.insertValueArgumentAfter
 import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUtils
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineAnonymousFunctionProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
@@ -114,13 +116,13 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         val list = parent as KtValueArgumentList
         val arguments = expr.valueArgumentList?.arguments.orEmpty()
         if (arguments.isEmpty()) {
-            list.removeArgument(this)
+            list.deleteValueArgument(this)
         } else {
             var anchor = this
             for (argument in arguments) {
-                anchor = list.addArgumentAfter(argument, anchor)
+                anchor = list.insertValueArgumentAfter(argument, anchor)
             }
-            list.removeArgument(this)
+            list.deleteValueArgument(this)
         }
     }
 
@@ -214,7 +216,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
 
         for (argument in argumentsToDrop) {
             val argumentList = argument.parent as KtValueArgumentList
-            argumentList.removeArgument(argument)
+            argumentList.deleteValueArgument(argument)
             if (argumentList.arguments.isEmpty()) {
                 val callExpression = argumentList.parent as KtCallElement
                 if (callExpression.lambdaArguments.isNotEmpty()) {

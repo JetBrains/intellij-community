@@ -5,6 +5,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiBasedModCommandAction
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.searching.inheritors.findHierarchyWithSiblings
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -29,9 +31,9 @@ internal class ChangeSuspendInHierarchyFix(
 
             writableFunctionsToProcess.forEach { function ->
                 if (addModifier) {
-                    function.addModifier(KtTokens.SUSPEND_KEYWORD)
+                    function.addModifierKeyword(KtTokens.SUSPEND_KEYWORD)
                 } else {
-                    function.removeModifier(KtTokens.SUSPEND_KEYWORD)
+                    function.removeModifierKeyword(KtTokens.SUSPEND_KEYWORD)
                 }
             }
         }

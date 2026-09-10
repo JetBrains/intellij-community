@@ -10,6 +10,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.RowIcon
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -93,7 +94,7 @@ class ActualCompletionLookupElementDecorator(
         val prototype = generateMember()
         prototype.modifierList!!.replace(modifierList)
         val insertedMember = dummyMember.replaced(prototype)
-        if (isSuspend) insertedMember.addModifier(KtTokens.SUSPEND_KEYWORD)
+        if (isSuspend) insertedMember.addModifierKeyword(KtTokens.SUSPEND_KEYWORD)
 
         val insertedMemberParent = insertedMember.parent
         headComments.forEach { insertedMemberParent.addBefore(it, insertedMember) }

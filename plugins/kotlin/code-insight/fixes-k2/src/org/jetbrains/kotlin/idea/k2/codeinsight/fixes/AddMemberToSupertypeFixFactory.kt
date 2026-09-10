@@ -42,6 +42,8 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateClassBody
 import org.jetbrains.kotlin.idea.base.psi.predictImplicitModality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -57,7 +59,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.getOrCreateBody
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifier
 import org.jetbrains.kotlin.types.Variance
 import javax.swing.Icon
@@ -228,7 +229,7 @@ private fun addMember(
   updater: ModPsiUpdater,
 ) {
   val memberElement: KtCallableDeclaration = KtPsiFactory(project).createDeclaration(memberData.sourceCode)
-  val classBody = updater.getWritable(memberData.targetClass).getOrCreateBody()
+  val classBody = updater.getWritable(memberData.targetClass).getOrCreateClassBody()
   element.removeDefaultParameterValues()
   memberElement.copyAnnotationEntriesFrom(element)
   val insertedMemberElement = classBody.addBefore(memberElement, classBody.rBrace) as KtCallableDeclaration
@@ -248,7 +249,7 @@ private fun KtCallableDeclaration.removeDefaultParameterValues() {
 }
 
 private fun KtCallableDeclaration.copyAnnotationEntriesFrom(member: KtCallableDeclaration?) {
-  member?.annotationEntries?.reversed()?.forEach { addAnnotationEntry(it) }
+  member?.annotationEntries?.reversed()?.forEach { addAnnotation(it) }
 }
 
 @Nls

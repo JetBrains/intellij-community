@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateActionBase
 import org.jetbrains.kotlin.idea.actions.generate.TestFrameworkListCellRenderer
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.findSuitableFrameworks
 import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
@@ -127,7 +128,7 @@ abstract class KotlinGenerateTestSupportActionBase(
                     }
 
                     if (needToOverride) {
-                        functionInPlace.addModifier(KtTokens.OVERRIDE_KEYWORD)
+                        functionInPlace.addModifierKeyword(KtTokens.OVERRIDE_KEYWORD)
                     }
                 }
 

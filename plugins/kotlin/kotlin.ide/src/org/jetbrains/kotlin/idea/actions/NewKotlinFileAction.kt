@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
 import org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector
@@ -296,7 +297,7 @@ fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiD
             val singleClass = psiFile.declarations.singleOrNull() as? KtClass
             if (singleClass != null && !singleClass.isEnum() && !singleClass.isInterface() && name.contains("Abstract")) {
                 runWriteAction {
-                    singleClass.addModifier(KtTokens.ABSTRACT_KEYWORD)
+                    singleClass.addModifierKeyword(KtTokens.ABSTRACT_KEYWORD)
                 }
             }
         }

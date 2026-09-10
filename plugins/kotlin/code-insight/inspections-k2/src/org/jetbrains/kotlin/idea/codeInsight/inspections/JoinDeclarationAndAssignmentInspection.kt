@@ -27,6 +27,9 @@ import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
+import org.jetbrains.kotlin.idea.base.psi.setPropertyTypeReference
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -184,8 +187,8 @@ internal class JoinDeclarationAndAssignmentInspection :
             val movePropertyToConstructorInfo = context.movePropertyToConstructorInfo?.toWritable(updater)
             val initializer = assignment.right ?: return
 
-            element.initializer = initializer
-            if (element.hasModifier(KtTokens.LATEINIT_KEYWORD)) element.removeModifier(KtTokens.LATEINIT_KEYWORD)
+            element.setPropertyInitializer(initializer)
+            if (element.hasModifier(KtTokens.LATEINIT_KEYWORD)) element.removeModifierKeyword(KtTokens.LATEINIT_KEYWORD)
 
             val grandParent = (assignment.parent as? KtBlockExpression)?.parent
             val initializerBlock = grandParent as? KtAnonymousInitializer
@@ -211,7 +214,7 @@ internal class JoinDeclarationAndAssignmentInspection :
             }
 
             if (context.canEraseDeclaredType) {
-                newProperty.typeReference = null
+                newProperty.setPropertyTypeReference(null)
                 updater.update(newProperty, false)
             } else {
                 updater.update(newProperty, context.canOmitDeclaredType)

@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.appendParameter
+import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructorParameterList
 import org.jetbrains.kotlin.idea.codeinsight.utils.hasExplicitBackingField
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -13,7 +15,6 @@ import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.createPrimaryConstructorParameterListIfAbsent
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
@@ -36,7 +37,7 @@ object MovePropertyToConstructorUtils {
                 val containingClass = property.getStrictParentOfType<KtClass>() ?: return
                 val parameterText =
                     property.buildAdditionalConstructorParameterText(info.parameterTypeText, info.propertyAnnotationsText)
-                containingClass.createPrimaryConstructorParameterListIfAbsent().addParameter(factory.createParameter(parameterText)).apply {
+                containingClass.getOrCreatePrimaryConstructorParameterList().appendParameter(factory.createParameter(parameterText)).apply {
                     ShortenReferencesFacility.getInstance().shorten(this)
                 }
             }

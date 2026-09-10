@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -14,10 +16,10 @@ object MakeOverriddenMemberOpenFixUtils {
 
     fun invoke(overriddenNonOverridableMembers: List<KtCallableDeclaration>) {
         for (overriddenMember in overriddenNonOverridableMembers) {
-            overriddenMember.addModifier(KtTokens.OPEN_KEYWORD) // as a side effect, this may remove an incompatible modifier such as 'final'
+            overriddenMember.addModifierKeyword(KtTokens.OPEN_KEYWORD) // as a side effect, this may remove an incompatible modifier such as 'final'
             if (overriddenMember.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
                 // 'open' modifier is redundant on 'override' members and can be omitted
-                overriddenMember.removeModifier(KtTokens.OPEN_KEYWORD)
+                overriddenMember.removeModifierKeyword(KtTokens.OPEN_KEYWORD)
             }
         }
     }

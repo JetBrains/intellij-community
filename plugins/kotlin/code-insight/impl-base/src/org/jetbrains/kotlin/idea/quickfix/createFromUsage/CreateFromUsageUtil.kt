@@ -8,6 +8,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateClassBody
+import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructor
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.ForwardDeclarationPolicyProvider
@@ -34,8 +36,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtScriptInitializer
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtTypeAlias
-import org.jetbrains.kotlin.psi.createPrimaryConstructorIfAbsent
-import org.jetbrains.kotlin.psi.getOrCreateBody
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -59,13 +59,13 @@ object CreateFromUsageUtil {
         val psiFactory = KtPsiFactory(container.project)
         val newLine = psiFactory.createNewLine()
 
-        val actualContainer = (container as? KtClassOrObject)?.getOrCreateBody()
+        val actualContainer = (container as? KtClassOrObject)?.getOrCreateClassBody()
             ?: (container as? KtFile)?.script?.blockExpression
             ?: container
 
         val declarationInPlace = when {
             declaration is KtPrimaryConstructor -> {
-                val primaryConstructor = (container as? KtClass)?.createPrimaryConstructorIfAbsent()
+                val primaryConstructor = (container as? KtClass)?.getOrCreatePrimaryConstructor()
                 (primaryConstructor?.replaced<KtPrimaryConstructor>(declaration) ?: declaration) as D
             }
 
@@ -249,7 +249,7 @@ object CreateFromUsageUtil {
       classOrObject: KtClassOrObject,
       declaration: KtNamedDeclaration
     ): KtNamedDeclaration {
-        val classBody = classOrObject.getOrCreateBody()
+        val classBody = classOrObject.getOrCreateClassBody()
         return if (declaration is KtNamedFunction) {
             val neighbor = PsiTreeUtil.skipSiblingsBackward(
               classBody.rBrace ?: classBody.lastChild!!,

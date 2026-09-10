@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.DefaultMemberFilters
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KotlinEqualsHashCodeGeneratorExtension
@@ -179,7 +180,7 @@ object GenerateEqualsAndHashCodeUtils {
                             declaration.name == function.name &&
                             declaration.valueParameters.size == function.valueParameters.size
                 }) {
-                function.addModifier(KtTokens.ACTUAL_KEYWORD)
+                function.addModifierKeyword(KtTokens.ACTUAL_KEYWORD)
             }
         }
     }

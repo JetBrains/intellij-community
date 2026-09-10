@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
 import org.jetbrains.kotlin.idea.base.psi.deleteSingle
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
@@ -35,7 +36,7 @@ interface KotlinDeclarationMover {
                     declarationContainer.add(originalElement) as KtNamedDeclaration
                 }
 
-                is KtClassOrObject -> targetContainer.addDeclaration(originalElement)
+                is KtClassOrObject -> targetContainer.addMemberDeclaration(originalElement)
                 else -> throw KotlinExceptionWithAttachments("Unexpected element")
                     .withAttachment("context", targetContainer.getElementTextWithContext())
             }.apply {

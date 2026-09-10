@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.addAnnotation
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.j2k.AccessorKind.GETTER
 import org.jetbrains.kotlin.j2k.AccessorKind.SETTER
@@ -138,7 +139,7 @@ class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
     }
 
     private fun KtNamedDeclaration.addAnnotation(fqName: String) {
-        val annotation = addAnnotationEntry(KtPsiFactory(project).createAnnotationEntry("@$fqName"))
+        val annotation = addAnnotation(KtPsiFactory(project).createAnnotationEntry("@$fqName"))
         ShortenReferencesFacility.getInstance().shorten(annotation)
     }
 

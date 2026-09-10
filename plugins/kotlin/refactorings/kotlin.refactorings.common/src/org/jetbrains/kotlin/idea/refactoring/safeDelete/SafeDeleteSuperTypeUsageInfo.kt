@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceUsageInfo
+import org.jetbrains.kotlin.idea.base.psi.removeSuperType
 import org.jetbrains.kotlin.psi.KtSuperTypeEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeList
 
@@ -16,6 +17,6 @@ class SafeDeleteSuperTypeUsageInfo(
 
     override fun deleteElement() {
         val entry = entry ?: return
-        (entry.parent as? KtSuperTypeList)?.removeEntry(entry)
+        (entry.parent as? KtSuperTypeList)?.removeSuperType(entry)
     }
 }

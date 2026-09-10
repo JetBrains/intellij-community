@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvents
 
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
+import org.jetbrains.kotlin.idea.base.psi.appendTypeArgument
 import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
@@ -9,7 +10,6 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.addTypeArgument
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 
 class KotlinCodeFragmentContextModificationEventTest : AbstractKotlinModuleModificationEventTest() {
@@ -78,7 +78,7 @@ class KotlinCodeFragmentContextModificationEventTest : AbstractKotlinModuleModif
             project.executeWriteCommand("Code fragment modification") {
                 val ktPsiFactory = KtPsiFactory(project, markGenerated = false)
                 val barCall = contextModuleSourceFile.findDescendantOfType<KtCallExpression> { it.text == "bar()" }!!
-                barCall.addTypeArgument(ktPsiFactory.createTypeArgument("Any"))
+                barCall.appendTypeArgument(ktPsiFactory.createTypeArgument("Any"))
             }
 
             contextModuleTracker.assertModified()

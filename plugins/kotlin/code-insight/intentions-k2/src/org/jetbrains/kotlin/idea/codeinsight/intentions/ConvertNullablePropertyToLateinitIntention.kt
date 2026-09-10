@@ -16,7 +16,9 @@ import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -58,8 +60,8 @@ internal class ConvertNullablePropertyToLateinitIntention : KotlinApplicableModC
 
         val newTypeReference = KtPsiFactory(element.project).createType(innerType.text)
         typeReference.replace(newTypeReference)
-        element.addModifier(KtTokens.LATEINIT_KEYWORD)
-        element.initializer = null
+        element.addModifierKeyword(KtTokens.LATEINIT_KEYWORD)
+        element.setPropertyInitializer(null)
     }
 
     context(session: KaSession)

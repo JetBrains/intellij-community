@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.addMemberDeclaration
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
@@ -193,7 +194,7 @@ private class ConvertSealedSubClassToObjectFix : LocalQuickFix {
     private fun KtClass.changeToObject(factory: KtPsiFactory) {
         ensureSuperClassCall(factory)
         secondaryConstructors.toList().forEach { constructor ->
-            constructor.toInitializer(factory)?.let(::addDeclaration)
+            constructor.toInitializer(factory)?.let { addMemberDeclaration(it) }
             constructor.delete()
         }
         primaryConstructor?.delete()
@@ -297,7 +298,7 @@ private class GenerateIdentityEqualsFix : LocalQuickFix {
                 blockBody("return this === other")
             }.asString()
         )
-        klass.addDeclaration(equalsFunction)
+        klass.addMemberDeclaration(equalsFunction)
 
         val hashCodeFunction = psiFactory.createFunction(
             KtPsiFactory.CallableBuilder(KtPsiFactory.CallableBuilder.Target.FUNCTION).apply {
@@ -308,7 +309,7 @@ private class GenerateIdentityEqualsFix : LocalQuickFix {
                 blockBody("return System.identityHashCode(this)")
             }.asString()
         )
-        klass.addDeclaration(hashCodeFunction)
+        klass.addMemberDeclaration(hashCodeFunction)
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("generate.identity.equals.fix.family.name")
