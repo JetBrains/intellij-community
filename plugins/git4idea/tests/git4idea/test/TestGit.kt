@@ -5,7 +5,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
+import git4idea.GitWorkingTree
 import git4idea.branch.GitRebaseParams
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitImpl
@@ -40,6 +42,17 @@ class TestGitImpl : GitImpl() {
   var pushListener: ((GitRepository) -> Unit)? = null
   @Volatile
   var runHookListener: ((repository: GitRepository, hookName: String, hookArgs: List<String>, stdinLines: List<String>) -> Unit)? = null
+  /**
+   * Called before `git worktree remove`. A test can block here to hold the deletion open, or can throw to interrupt it.
+   */
+  @Volatile
+  var deleteWorkingTreeListener: ((repository: GitRepository, tree: GitWorkingTree) -> Unit)? = null
+
+  /**
+   * Called before `git worktree list`. A test can block here to keep the working trees model stale.
+   */
+  @Volatile
+  var listWorktreesListener: ((repository: GitRepository) -> Unit)? = null
 
   @Volatile
   private var rebaseShouldFail: (GitRepository) -> Boolean = { false }
@@ -158,6 +171,17 @@ class TestGitImpl : GitImpl() {
     return super.runHook(repository, hookName, hookArgs, stdinLines)
   }
 
+  override fun deleteWorkingTree(repository: GitRepository, tree: GitWorkingTree): GitCommandResult {
+    deleteWorkingTreeListener?.invoke(repository, tree)
+    return super.deleteWorkingTree(repository, tree)
+  }
+
+  @Throws(VcsException::class)
+  override fun listWorktrees(repository: GitRepository): List<GitWorkingTree> {
+    listWorktreesListener?.invoke(repository)
+    return super.listWorktrees(repository)
+  }
+
   fun setShouldRebaseFail(shouldFail: (GitRepository) -> Boolean) {
     rebaseShouldFail = shouldFail
   }
@@ -189,6 +213,8 @@ class TestGitImpl : GitImpl() {
     stashListener = null
     mergeListener = null
     runHookListener = null
+    deleteWorkingTreeListener = null
+    listWorktreesListener = null
   }
 
   private fun failOrCallRebase(repository: GitRepository, delegate: () -> GitRebaseCommandResult): GitRebaseCommandResult {

@@ -5,42 +5,30 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.TestDisposable
-import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.vcs.test.refresh
 import git4idea.GitWorkingTree
-import git4idea.commands.Git
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.git
 import git4idea.test.gitSingleRepoContextFixture
 import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys
 import git4idea.workingTrees.ui.actions.OpenWorkingTreeAction
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.doAnswer
-import org.mockito.Mockito.spy
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.Path
 
 @TestApplication
 @RegistryKey("git.enable.working.trees.feature", "true")
 internal class OpenWorkingTreeActionTest {
   private val contextFixture = gitSingleRepoContextFixture()
   private val context: GitSingleRepoContext get() = contextFixture.get()
-
-  @TestDisposable
-  private lateinit var testDisposable: Disposable
 
   private fun GitSingleRepoContext.setUpWorktree() {
     git("worktree add -B feature ../treeRoot")
@@ -89,16 +77,15 @@ internal class OpenWorkingTreeActionTest {
   @Test
   fun `test action is disabled while the working tree is being deleted`(): Unit = with(context) {
     setUpWorktree()
+    val attempts = CopyOnWriteArrayList<GitWorkingTree>()
     val deletionStarted = CountDownLatch(1)
     val releaseDeletion = CountDownLatch(1)
-    val spiedGit = GitSpies.register(spy(Git.getInstance()))
     // Hold `git worktree remove` open, so the assertion below runs while the deletion is genuinely in flight.
-    doAnswer { invocation ->
+    git.deleteWorkingTreeListener = { _, tree ->
+      attempts.add(tree)
       deletionStarted.countDown()
       releaseDeletion.await(1, TimeUnit.MINUTES)
-      invocation.callRealMethod()
-    }.`when`(spiedGit).deleteWorkingTree(any(), any())
-    ApplicationManager.getApplication().replaceService(Git::class.java, spiedGit, testDisposable)
+    }
 
     val toDelete = linkedTree()
     val deletion = GitWorkingTreesService.getInstance(project).deleteWorkingTrees(project, listOf(toDelete), repo)
@@ -117,7 +104,13 @@ internal class OpenWorkingTreeActionTest {
       releaseDeletion.countDown()
     }
     timeoutRunBlocking { deletion.join() }
-    verify(spiedGit, times(1)).deleteWorkingTree(any(), any())
+
+    assertThat(attempts.map { it.path })
+      .describedAs("`git worktree remove` must run exactly once per working tree path")
+      .containsExactly(toDelete.path)
+    assertThat(Path(toDelete.path.path))
+      .describedAs("The deletion must remove the working tree from disk")
+      .doesNotExist()
   }
 
   private fun GitSingleRepoContext.actionEvent(selection: List<GitWorkingTree>): AnActionEvent {
@@ -129,14 +122,5 @@ internal class OpenWorkingTreeActionTest {
       }
     }
     return AnActionEvent.createEvent(OpenWorkingTreeAction(), ctx, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
-  }
-
-  companion object {
-    /** A spy records the calls of a whole class, so the recorded calls are cleared once the class ends. */
-    @AfterAll
-    @JvmStatic
-    fun clearRecordedSpyCalls() {
-      GitSpies.clearRecordedCalls()
-    }
   }
 }
