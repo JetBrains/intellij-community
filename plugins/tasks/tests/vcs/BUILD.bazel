@@ -152,6 +152,10 @@ jvm_library(
         "//plugins/git4idea:vcs-git-backend-tests_test_lib",
         "//plugins/hg4idea:vcs-hg-tests",
         "//plugins/hg4idea:vcs-hg-tests_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tasks.tests.vcs` end
