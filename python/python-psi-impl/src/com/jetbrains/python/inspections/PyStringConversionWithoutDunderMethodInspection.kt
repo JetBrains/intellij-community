@@ -80,6 +80,10 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
 
       val callee = node.callee as? PyReferenceExpression ?: return
 
+      // `str(x)` resolves to `builtins.str.__new__`, and so does an explicit `str.__new__(cls)` or a
+      // `super().__new__(cls)` in a `str` subclass. Only the first one converts a value to a string.
+      if (callee.name == PyNames.NEW) return
+
       // TODO: use `calleeType?.declarationElement?.qualifiedName` when overloads aren't union types PY-83781
       val resolvedCallee =
         PyResolveUtil.resolveDeclaration(callee.reference, PyResolveContext.defaultContext(myTypeEvalContext))
@@ -88,7 +92,7 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
       val qualifiedCalleeName = PyNames.FQN.unqualifyBuiltinName((resolvedCallee as? PyQualifiedNameOwner)?.qualifiedName)
 
       when (qualifiedCalleeName) {
-        "${PyNames.TYPE_STR}.__new__" -> node.arguments.firstOrNull()?.checkStringConversion(PyNames.DUNDER_STR)
+        "${PyNames.TYPE_STR}.${PyNames.NEW}" -> node.arguments.firstOrNull()?.checkStringConversion(PyNames.DUNDER_STR)
         "repr" -> node.arguments.firstOrNull()?.checkStringConversion(PyNames.DUNDER_REPR)
         "format" -> node.arguments.firstOrNull()?.checkStringConversion(PyNames.DUNDER_FORMAT)
         "print" -> {
