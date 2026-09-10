@@ -26,7 +26,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(defaultList), listOf(unversioned))
     updateModelAndSelect(view, model, changePath)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, changePath, expectChangeId = true)
     assertNull(selection.previousChange)
@@ -47,7 +47,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(defaultList), listOf(unversioned))
     updateModelAndSelect(view, model, changePath)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, changePath, expectChangeId = true)
     // Without scoping to the group the unversioned file is counted too.
@@ -66,7 +66,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(defaultList), emptyList())
     updateModelAndSelect(view, model, p2)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, p2, expectChangeId = true)
     assertTreePath(selection.previousChange!!, p1, expectChangeId = true)
@@ -91,7 +91,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(listA, listB), emptyList())
     updateModelAndSelect(view, model, b2)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, b2, expectChangeId = true)
     // Only the changes of "B" are counted, not the ones of "A" above it.
@@ -111,7 +111,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(defaultList), emptyList(), skipSingleDefaultChangeList = true)
     updateModelAndSelect(view, model, p2)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, p2, expectChangeId = true)
     // Without a changelist node there is no group, so the counter is scoped to the selection, as in monolith mode.
@@ -133,7 +133,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, paths[1])
     findNodesAndSelect(changes[1], changes[3])
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     // The previewed change must not switch
     assertTreePath(selection.selectedChange, changes[1])
@@ -153,7 +153,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, paths[1])
     findNodesAndSelect(changes[1], changes[3])
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, changes[1])
     // changes[0] and changes[2] are skipped: navigation walks the selected files only, as in monolith mode.
@@ -174,7 +174,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     findNodesAndSelect(changes[1], changes[3])
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    val before = helper.updateSelection()
+    val before = helper.updateSelectionOnEdt()
     checkNotNull(before)
     assertCounter(before, selectedIndex = 0, changesCount = 2)
 
@@ -204,7 +204,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     findNodesAndSelect(changes[0], changes[1])
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    checkNotNull(helper.updateSelection())
+    checkNotNull(helper.updateSelectionOnEdt())
 
     val path = checkNotNull(ChangesTreePath.create(changes[2]))
     assertFalse(helper.moveWithinSelection(path))
@@ -222,7 +222,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, p1)
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    val selection = checkNotNull(helper.updateSelection())
+    val selection = checkNotNull(helper.updateSelectionOnEdt())
 
     assertFalse(helper.moveWithinSelection(selection.nextChange!!))
   }
@@ -244,7 +244,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, b1)
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    val single = helper.updateSelection()
+    val single = helper.updateSelectionOnEdt()
     checkNotNull(single)
     // A single selection is scoped to its changelist, which holds two changes.
     assertCounter(single, selectedIndex = 0, changesCount = 2)
@@ -252,7 +252,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     // Ctrl-click a change from another changelist
     findNodesAndSelect(changeA1, changeB1)
 
-    val extended = helper.updateSelection()
+    val extended = helper.updateSelectionOnEdt()
     checkNotNull(extended)
     assertTreePath(extended.selectedChange, changeB1)
     // The explicit selection wins over the changelist: "2 of 2", in the tree display order.
@@ -271,7 +271,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, paths.first())
     findNodesAndSelect(defaultList)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     assertCounter(selection, selectedIndex = 0, changesCount = changesNumberExceedingLimit)
   }
@@ -290,7 +290,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, buildModel(view, listOf(defaultList), emptyList()), p1)
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    val before = helper.updateSelection()
+    val before = helper.updateSelectionOnEdt()
     checkNotNull(before)
     assertCounter(before, selectedIndex = 0, changesCount = 2)
 
@@ -317,7 +317,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(defaultList), emptyList(), ignored = listOf(path("i1.txt"), path("i2.txt")))
     updateModelAndSelect(view, model, changePath)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     // Even with scoping to the group disabled the ignored files are not diffable, so they are not counted.
     assertCounter(selection, selectedIndex = 0, changesCount = 1)
@@ -334,7 +334,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(defaultList), listOf(u1, u2))
     updateModelAndSelect(view, model, u1)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, u1, expectChangeId = false)
     assertTreePath(selection.previousChange!!, c1, expectChangeId = true)
@@ -351,7 +351,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, emptyList(), listOf(u1, u2, u3))
     updateModelAndSelect(view, model, u1)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, u1, expectChangeId = false)
     assertNull(selection.previousChange)
@@ -366,7 +366,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(defaultList), emptyList())
     updateModelAndSelect(view, model, c1)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, c1, expectChangeId = true)
     assertNull(selection.previousChange)
@@ -379,7 +379,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, emptyList(), listOf(u1))
     updateModelAndSelect(view, model, u1)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, u1, expectChangeId = false)
     assertNull(selection.previousChange)
@@ -398,12 +398,12 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, c1)
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    runInEdtAndWait { helper.tryUpdateSelection() }
+    runInEdtAndWait { helper.updateSelection() }
     assertNotNull(helper.diffableSelection.value)
 
     runInEdtAndWait {
       view.clearSelection()
-      helper.tryUpdateSelection()
+      helper.updateSelection()
     }
     assertNull(helper.diffableSelection.value)
   }
@@ -421,14 +421,14 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, paths[0])
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    val before = helper.updateSelection()
+    val before = helper.updateSelectionOnEdt()
     checkNotNull(before)
     assertTreePath(before.selectedChange, changes[0])
 
     // Ctrl-click a second file: the first one stays selected, so the update must not be skipped
     findNodesAndSelect(changes[0], changes[1])
 
-    val after = helper.updateSelection()
+    val after = helper.updateSelectionOnEdt()
     checkNotNull(after)
     // The previewed change must not switch
     assertTreePath(after.selectedChange, changes[0])
@@ -447,12 +447,12 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     findNodesAndSelect(changes[0], changes[1])
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    checkNotNull(helper.updateSelection())
+    checkNotNull(helper.updateSelectionOnEdt())
 
     // Back to a single selection
     findNodesAndSelect(changes[0])
 
-    val after = helper.updateSelection()
+    val after = helper.updateSelectionOnEdt()
     checkNotNull(after)
     assertTreePath(after.selectedChange, changes[0])
   }
@@ -469,13 +469,13 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, c1)
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    helper.updateSelection()
+    helper.updateSelectionOnEdt()
     val previous = helper.diffableSelection.value
     checkNotNull(previous)
 
     // Switch selection to the changelist node
     findNodeAndSelect(defaultList)
-    val updated = helper.updateSelection()
+    val updated = helper.updateSelectionOnEdt()
     checkNotNull(updated)
 
     // The changelist node selects all its changes, but the change shown in the diff preview must not switch.
@@ -492,13 +492,13 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, u1)
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    val previous = helper.updateSelection()
+    val previous = helper.updateSelectionOnEdt()
     checkNotNull(previous)
 
     // Switch selection to Unversioned root node
     findNodeAndSelect(ChangesBrowserNode.UNVERSIONED_FILES_TAG)
 
-    val updated = helper.updateSelection()
+    val updated = helper.updateSelectionOnEdt()
     checkNotNull(updated)
     assertEquals(previous.selectedChange, updated.selectedChange)
     assertEquals(previous.previousChange, updated.previousChange)
@@ -514,12 +514,12 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, c1)
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    val previous = helper.updateSelection()
+    val previous = helper.updateSelectionOnEdt()
     checkNotNull(previous)
     assertTreePath(previous.selectedChange, c1, true)
 
     findNodeAndSelect(u1)
-    val selection = helper.updateSelection()
+    val selection = helper.updateSelectionOnEdt()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, u1, false)
     assertTreePath(selection.previousChange!!, c1, expectChangeId = true)
@@ -537,7 +537,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(defaultList), emptyList(), editedCommit)
     updateModelAndSelect(view, model, filePath)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
 
     assertTreePath(selection.selectedChange, defaultList.changes.single())
@@ -556,7 +556,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, emptyList(), emptyList(), editedCommit)
     updateModelAndSelect(view, model, pathInTheMiddle)
 
-    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelectionOnEdt()
     checkNotNull(selection)
 
     assertTreePath(selection.selectedChange, c2)
@@ -577,7 +577,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, path("c2.txt"))
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    val single = helper.updateSelection()
+    val single = helper.updateSelectionOnEdt()
     checkNotNull(single)
     // The amend commit node is not a group, so the counter is scoped to the selection, which is a single file for now.
     assertCounter(single, selectedIndex = 0, changesCount = 1)
@@ -585,7 +585,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     // Ctrl-click the file above the selected one: the previewed change stays, but the counter now covers both files
     findNodesAndSelect(c1, c2)
 
-    val extended = helper.updateSelection()
+    val extended = helper.updateSelectionOnEdt()
     checkNotNull(extended)
     assertTreePath(extended.selectedChange, c2)
     // "2 of 2": the previewed change is the second one within the selection.
@@ -594,7 +594,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     // Ctrl-click the third file too
     findNodesAndSelect(c1, c2, c3)
 
-    val extendedFurther = helper.updateSelection()
+    val extendedFurther = helper.updateSelectionOnEdt()
     checkNotNull(extendedFurther)
     assertTreePath(extendedFurther.selectedChange, c2)
     assertCounter(extendedFurther, selectedIndex = 1, changesCount = 3)
@@ -610,14 +610,14 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, filePath)
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    val previous = helper.updateSelection()
+    val previous = helper.updateSelectionOnEdt()
     checkNotNull(previous)
     assertTreePath(previous.selectedChange, defaultList.changes.single())
 
     // Switch selection to the amend node for the same file
     findNodeAndSelect(changeInAmend)
 
-    val selection = helper.updateSelection()
+    val selection = helper.updateSelectionOnEdt()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, changeInAmend)
     assertTreePath(selection.previousChange!!, defaultList.changes.single())
@@ -626,8 +626,8 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     assertCounter(selection, selectedIndex = 0, changesCount = 1)
   }
 
-  private fun ChangesViewDiffableSelectionHelper.updateSelection(): ChangesViewDiffableSelection? {
-    runInEdtAndWait { tryUpdateSelection() }
+  private fun ChangesViewDiffableSelectionHelper.updateSelectionOnEdt(): ChangesViewDiffableSelection? {
+    runInEdtAndWait { updateSelection() }
     return diffableSelection.value
   }
 

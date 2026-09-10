@@ -27,7 +27,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
   val diffableSelection = _diffableSelection.asStateFlow()
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun tryUpdateSelection() {
+  fun updateSelection() {
     _diffableSelection.update { currentValue -> getDiffableSelection(currentValue?.selectedChange) }
   }
 
@@ -35,7 +35,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
    * Recomputes the selection even if the same change is still selected.
    *
    * The file counter values change when the tree model changes (files added or removed, changelist edited), so
-   * [tryUpdateSelection] would keep stale numbers.
+   * [updateSelection] would keep stale numbers.
    */
   @RequiresEdt
   fun updateSelectionAfterModelChange() {

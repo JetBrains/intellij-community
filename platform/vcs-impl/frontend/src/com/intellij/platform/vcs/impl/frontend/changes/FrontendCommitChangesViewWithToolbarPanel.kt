@@ -79,7 +79,7 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
         ChangesViewDiffApi.getInstance().notifySelectionUpdated(project.projectId(), it)
       }
     }
-    changesView.addSelectionListener({ diffableSelectionHelper.tryUpdateSelection() }, cs.asDisposable())
+    changesView.addSelectionListener({ diffableSelectionHelper.updateSelection() }, cs.asDisposable())
   }
 
   override fun getModelData(): ModelData {
@@ -133,7 +133,7 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
         }
         if (!selected) {
           withContext(Dispatchers.UiWithModelAccess) {
-            diffableSelectionHelper.tryUpdateSelection()
+            diffableSelectionHelper.updateSelection()
             val selection = diffableSelectionHelper.diffableSelection.value
             ChangesViewDiffApi.getInstance().notifySelectionUpdated(project.projectId(), selection)
           }
