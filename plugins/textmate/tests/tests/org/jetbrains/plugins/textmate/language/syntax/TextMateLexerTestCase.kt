@@ -59,6 +59,8 @@ abstract class TextMateLexerTestCase {
         }
       }.trim { it <= ' ' }
       UsefulTestCase.assertSameLinesWithFile(afterFile.path, output)
+
+      assertRestartMakesTheSameTokens(TextMateHighlightingLexer(syntaxTable.getLanguageDescriptor(rootScope), syntaxMatcher, -1), text)
     }
   }
 

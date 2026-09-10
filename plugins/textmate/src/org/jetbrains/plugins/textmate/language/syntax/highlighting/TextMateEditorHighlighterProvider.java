@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax.highlighting;
 
+import com.intellij.lexer.RestartableLexer;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.DataStorage;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
@@ -28,9 +29,14 @@ public class TextMateEditorHighlighterProvider implements EditorHighlighterProvi
       super(highlighter != null ? highlighter : new TextMateHighlighter(null), colors);
     }
 
+    /**
+     * {@link TextMateLexerDataStorage} needs a {@link RestartableLexer}, because it gives all its 16 state
+     * bits to the state. The factory returns a plain highlighter when no grammar matches the file name,
+     * and that one keeps the default storage.
+     */
     @Override
     protected @NotNull DataStorage createStorage() {
-      return new TextMateLexerDataStorage();
+      return getLexer() instanceof RestartableLexer ? new TextMateLexerDataStorage() : super.createStorage();
     }
   }
 }

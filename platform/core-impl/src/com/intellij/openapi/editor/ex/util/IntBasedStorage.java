@@ -6,55 +6,20 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.openapi.editor.ex.util.SegmentArray.INITIAL_SIZE;
-
 /**
  * SegmentArrayWithData storage based on the int array. It allows to store one int per segment.
  * It allows to pack {@link IElementType} index and state of the lexer for segment.
  */
 @ApiStatus.Internal
-public class IntBasedStorage implements DataStorage {
+public class IntBasedStorage extends IntArrayDataStorage {
 
   private static final Logger LOG = Logger.getInstance(IntBasedStorage.class);
 
-  int[] myData;
-
   public IntBasedStorage() {
-    myData = new int[INITIAL_SIZE];
   }
 
   private IntBasedStorage(int[] data) {
-    myData = data;
-  }
-
-  @Override
-  public void setData(int segmentIndex, int data) {
-    myData = SegmentArrayWithData.reallocateArray(myData, segmentIndex + 1);
-    myData[segmentIndex] = data;
-  }
-
-  @Override
-  public void remove(int startIndex, int endIndex, int mySegmentCount) {
-    if (endIndex < mySegmentCount) {
-      System.arraycopy(myData, endIndex, myData, startIndex, mySegmentCount - endIndex);
-    }
-  }
-
-  @Override
-  public void replace(@NotNull DataStorage storage, int startOffset, int len) {
-    assert storage instanceof IntBasedStorage;
-    System.arraycopy(((IntBasedStorage)storage).myData, 0, myData, startOffset, len);
-  }
-
-  @Override
-  public void insert(@NotNull DataStorage storageToInsert, int startIndex, int segmentCountToInsert, int segmentCount) {
-    assert storageToInsert instanceof IntBasedStorage;
-    myData = SegmentArray.insert(myData, ((IntBasedStorage)storageToInsert).myData, startIndex, segmentCountToInsert, segmentCount);
-  }
-
-  @Override
-  public int getData(int index) {
-    return myData[index];
+    super(data);
   }
 
   @Override
