@@ -753,6 +753,7 @@ f:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion
 - f:getInstanceUuid(androidx.compose.runtime.Composer,I):java.util.UUID
 - f:getName(androidx.compose.runtime.Composer,I):java.lang.String
 - f:isDark(androidx.compose.runtime.Composer,I):Z
+- f:isIslands(androidx.compose.runtime.Composer,I):Z
 - f:isSwingCompatMode(androidx.compose.runtime.Composer,I):Z
 f:org.jetbrains.jewel.foundation.theme.JewelThemeKt
 - sf:JewelTheme(org.jetbrains.jewel.foundation.theme.ThemeDefinition,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
@@ -817,6 +818,7 @@ f:org.jetbrains.jewel.foundation.theme.ThemeDefinition
 - f:getName():java.lang.String
 - hashCode():I
 - f:isDark():Z
+- f:isIslands():Z
 org.jetbrains.jewel.foundation.theme.ThemeDescriptor
 - a:getColors():org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 - a:getIconData():org.jetbrains.jewel.foundation.theme.ThemeIconData

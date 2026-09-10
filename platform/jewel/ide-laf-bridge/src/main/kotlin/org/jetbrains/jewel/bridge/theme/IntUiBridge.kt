@@ -4,6 +4,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.ui.IslandsState
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.DirProvider
 import javax.swing.UIManager
@@ -59,6 +60,7 @@ internal fun createBridgeThemeDefinition(
         colorPalette = ThemeColorPalette.readFromLaF(),
         iconData = ThemeIconData.readFromLaF(),
         disabledAppearanceValues = DisabledAppearanceValues.readFromLaF(),
+        isIslands = IslandsState.isEnabled(),
     )
 }
 

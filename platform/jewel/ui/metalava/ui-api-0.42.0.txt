@@ -3303,9 +3303,13 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToBottomLeft;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToBottomRight;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToButton;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToLeft;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToLeftBottom;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToLeftSideBySide;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToLeftTop;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToRight;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToRightBottom;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToRightSideBySide;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToRightTop;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToTopLeft;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MoveToTopRight;
@@ -3845,6 +3849,7 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowInfos;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey ShowWarning;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Show_to_implement;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SortBy;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SuccessDialog;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey SuccessLogin;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey TbHidden;
