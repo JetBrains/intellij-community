@@ -67,8 +67,8 @@ jvm_library(
         "//plugins/kotlin/gradle/scripting:kotlin-gradle-scripting-tests_test_lib",
         "//plugins/kotlin/gradle/gradle-java/tests.shared",
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+        "//plugins/kotlin/base/scripting/scripting",
+        "//plugins/kotlin/base/scripting/scripting:scripting_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.codeInsight.kotlin.backend.tests.integration` end

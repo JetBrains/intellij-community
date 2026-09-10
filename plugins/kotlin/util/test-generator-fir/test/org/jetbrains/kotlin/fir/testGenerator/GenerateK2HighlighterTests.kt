@@ -57,7 +57,7 @@ internal fun MutableTWorkspace.generateK2HighlighterTests() {
         }
     }
 
-    testGroup("base/scripting/scripting.k2", category = HIGHLIGHTING, testDataPath = "../../../idea/tests/testData") {
+    testGroup("base/scripting/scripting", category = HIGHLIGHTING, testDataPath = "../../../idea/tests/testData") {
         testClass<AbstractScriptHighlightingMetaInfoTest>(
             generatedPackagePostfix = "generated",
         ) {

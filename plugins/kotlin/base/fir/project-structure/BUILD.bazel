@@ -66,7 +66,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
         "//libraries/fastutil",
         "//java/openapi:java",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
+        "//plugins/kotlin/base/scripting/scripting",
     ],
 )
 
@@ -104,7 +104,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//java/openapi:java_test_lib",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+        "//plugins/kotlin/base/scripting/scripting:scripting_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.projectStructure` end
@@ -254,8 +254,8 @@ jvm_library(
         "//java/openapi:java_test_lib",
         "//java/java-psi-api:psi",
         "//java/java-psi-api:psi_test_lib",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
-        "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+        "//plugins/kotlin/base/scripting/scripting",
+        "//plugins/kotlin/base/scripting/scripting:scripting_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
