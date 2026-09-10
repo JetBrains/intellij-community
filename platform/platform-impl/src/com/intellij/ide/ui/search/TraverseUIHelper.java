@@ -13,9 +13,7 @@ import java.util.Set;
  *
  * <p>The {@code traverseUI} application starter opens each {@link SearchableConfigurable}, collects the labels of its
  * Swing components, and writes the result to the searchable options index. A helper extends this process. Use a helper
- * to prepare the environment that a configurable needs, or to add an option that the Swing traversal cannot see. The
- * Compose helper renders the Compose content of a configurable and reads the semantics tree. The Rider helper starts
- * the backend protocol and asks it for the keywords of a ReSharper page.
+ * to prepare the environment that a configurable needs, or to add an option that the Swing traversal cannot see.
  *
  * <p>A helper runs only in the headless {@code traverseUI} starter. It never runs in a normal IDE session.
  *
