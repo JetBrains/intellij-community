@@ -33,6 +33,13 @@ private val CUSTOM_PROJECT_DESCRIPTOR = object : LightProjectDescriptor() {
   }
 }
 
+/**
+ * A JUnit 3 base class that replaces the project [FileEditorManager] with a fresh [FileEditorManagerImpl].
+ */
+@Deprecated(
+  "Write a JUnit 5 test with `projectFixture().fileEditorManagerFixture()` from `com.intellij.testFramework.junit5.fixture`. " +
+  "The fixture gives the same manager replacement, the dock-container check, and the editor-history cleanup."
+)
 abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
   @JvmField
   protected var manager: FileEditorManagerImpl? = null
