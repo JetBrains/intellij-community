@@ -2,6 +2,9 @@
 <body>
 <p>Reports when a type that doesn't define <code>__str__</code>, <code>__repr__</code>, or <code>__format__</code>
   is converted to a string. The default string representation may not be useful for debugging or display purposes.</p>
+<p>The inspection does not report when a type comes from a type stub that has no runtime module. Such a stub usually
+  omits a <code>__str__</code> and a <code>__repr__</code> that only override the <code>object</code> ones, so the
+  IDE cannot know what the type defines.</p>
 <p><b>Example:</b></p>
 <pre><code>
 class A:

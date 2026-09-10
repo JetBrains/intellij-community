@@ -2,15 +2,29 @@
 package com.jetbrains.python.psi
 
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 object PyStringDunderUtil {
   /**
-   * these types don't have a `__str__` method, but they still get stringed by the interpreter
+   * A string conversion of one of these types is not useful. Either the type keeps the `__str__` and the `__repr__`
+   * of `object`, or its own `__repr__` prints only the name of the type and an address.
+   *
+   * A type stub cannot tell a type that overrides `__str__` from a type that does not, because the flake8-pyi rule
+   * Y029 removes a `__str__` or a `__repr__` that only overrides the `object` one. This set gives the answer for the
+   * types above, and lets an inspection report them when no runtime module and no skeleton is available.
    */
-  val TYPES_WITH_BUILTIN_STR: Set<String> = setOf(PyNames.FQN.INT, PyNames.FQN.BOOL)
+  val TYPES_WITHOUT_USEFUL_STRING_CONVERSION: Set<String> = setOf(
+    "builtins.zip",
+    "builtins.map",
+    "builtins.filter",
+    "builtins.enumerate",
+    "builtins.reversed",
+    PyTypingTypeProvider.GENERATOR,
+    PyTypingTypeProvider.ASYNC_GENERATOR,
+  )
 
   val KNOWN_INT_TYPES: Set<String> = setOf(PyNames.FQN.INT, "numpy.int8", "numpy.int16", "numpy.int32", "numpy.int64")
   val KNOWN_DECIMAL_TYPES: Set<String> = KNOWN_INT_TYPES + setOf(
