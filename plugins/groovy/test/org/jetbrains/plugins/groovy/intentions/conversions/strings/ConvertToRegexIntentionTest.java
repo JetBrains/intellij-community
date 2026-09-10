@@ -13,6 +13,7 @@ public class ConvertToRegexIntentionTest extends GrIntentionTestCase {
   }
 
   public void testEscapeSlashes() { doTest(true); }
+  public void testStringEndsWithBackslash() { doTest(true); }
 
   @Override
   public final String getBasePath() {
