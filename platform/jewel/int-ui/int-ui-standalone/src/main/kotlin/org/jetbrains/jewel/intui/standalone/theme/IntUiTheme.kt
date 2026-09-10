@@ -122,6 +122,7 @@ public fun JewelTheme.Companion.lightThemeDefinition(
         palette,
         iconData,
         disabledAppearanceValues,
+        isIslands = false,
     )
 
 /**
@@ -159,6 +160,7 @@ public fun JewelTheme.Companion.lightThemeDefinition(
         palette,
         iconData,
         DisabledAppearanceValues.light(),
+        isIslands = false,
     )
 
 /**
@@ -196,6 +198,7 @@ public fun JewelTheme.Companion.darkThemeDefinition(
         palette,
         iconData,
         DisabledAppearanceValues.dark(),
+        isIslands = false,
     )
 
 /**
@@ -234,6 +237,7 @@ public fun JewelTheme.Companion.darkThemeDefinition(
         palette,
         iconData,
         disabledAppearanceValues,
+        isIslands = false,
     )
 
 /**

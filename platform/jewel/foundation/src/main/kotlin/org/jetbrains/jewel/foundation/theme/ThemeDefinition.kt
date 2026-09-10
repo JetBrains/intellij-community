@@ -37,7 +37,55 @@ public class ThemeDefinition(
     public val iconData: ThemeIconData,
     /** The values controlling the appearance of disabled components. */
     public val disabledAppearanceValues: DisabledAppearanceValues,
+    /** Whether the Islands rendering mode is enabled */
+    public val isIslands: Boolean,
 ) {
+    @Deprecated(
+        "Use the constructor that takes an `isIslands` property.",
+        ReplaceWith(
+            "ThemeDefinition(" +
+                "name, " +
+                "isDark, " +
+                "globalColors, " +
+                "globalMetrics, " +
+                "defaultTextStyle, " +
+                "editorTextStyle, " +
+                "consoleTextStyle, " +
+                "contentColor, " +
+                "colorPalette, " +
+                "iconData, " +
+                "disabledAppearanceValues, " +
+                "isIslands" +
+                ")"
+        ),
+    )
+    public constructor(
+        name: String,
+        isDark: Boolean,
+        globalColors: GlobalColors,
+        globalMetrics: GlobalMetrics,
+        defaultTextStyle: TextStyle,
+        editorTextStyle: TextStyle,
+        consoleTextStyle: TextStyle,
+        contentColor: Color,
+        colorPalette: ThemeColorPalette,
+        iconData: ThemeIconData,
+        disabledAppearanceValues: DisabledAppearanceValues,
+    ) : this(
+        name,
+        isDark,
+        globalColors,
+        globalMetrics,
+        defaultTextStyle,
+        editorTextStyle,
+        consoleTextStyle,
+        contentColor,
+        colorPalette,
+        iconData,
+        disabledAppearanceValues,
+        false,
+    )
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -45,6 +93,7 @@ public class ThemeDefinition(
         other as ThemeDefinition
 
         if (isDark != other.isDark) return false
+        if (isIslands != other.isIslands) return false
         if (name != other.name) return false
         if (globalColors != other.globalColors) return false
         if (globalMetrics != other.globalMetrics) return false
@@ -61,6 +110,7 @@ public class ThemeDefinition(
 
     override fun hashCode(): Int {
         var result = isDark.hashCode()
+        result = 31 * result + isIslands.hashCode()
         result = 31 * result + name.hashCode()
         result = 31 * result + globalColors.hashCode()
         result = 31 * result + globalMetrics.hashCode()
@@ -86,7 +136,8 @@ public class ThemeDefinition(
             "contentColor=$contentColor, " +
             "colorPalette=$colorPalette, " +
             "iconData=$iconData, " +
-            "grayFilterValues=$disabledAppearanceValues" +
+            "grayFilterValues=$disabledAppearanceValues, " +
+            "isIslands=$isIslands" +
             ")"
     }
 }

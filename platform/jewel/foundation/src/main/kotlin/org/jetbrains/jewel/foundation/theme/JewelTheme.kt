@@ -58,6 +58,10 @@ public interface JewelTheme {
         /** Whether Swing compatibility mode is enabled, which disables hover and press state changes. */
         public val isSwingCompatMode: Boolean
             @Composable @ReadOnlyComposable get() = LocalSwingCompatMode.current
+
+        /** Whether the Islands rendering mode is enabled. Always `false` in standalone. */
+        public val isIslands: Boolean
+            @Composable @ReadOnlyComposable get() = LocalIsIslandsTheme.current
     }
 }
 
@@ -92,6 +96,7 @@ public fun JewelTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
         LocalGlobalColors provides theme.globalColors,
         LocalGlobalMetrics provides theme.globalMetrics,
         LocalDisabledAppearanceValues provides theme.disabledAppearanceValues,
+        LocalIsIslandsTheme provides theme.isIslands,
         content = content,
     )
 }
@@ -150,6 +155,9 @@ public val LocalEditorTextStyle: ProvidableCompositionLocal<TextStyle> = staticC
 public val LocalConsoleTextStyle: ProvidableCompositionLocal<TextStyle> = staticCompositionLocalOf {
     error("No ConsoleTextStyle provided. Have you forgotten the theme?")
 }
+
+/** Composition local providing whether the Islands rendering mode is enabled. */
+internal val LocalIsIslandsTheme: ProvidableCompositionLocal<Boolean> = staticCompositionLocalOf { false }
 
 /**
  * Overrides the [isDark] value for the [content]. It is used to inject a different dark mode style in a sub-tree.
