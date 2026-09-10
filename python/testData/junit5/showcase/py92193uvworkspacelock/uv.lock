@@ -1,0 +1,13 @@
+version = 1
+revision = 3
+requires-python = ">=3.10"
+
+[[package]]
+name = "core"
+version = "0.1.0"
+source = { editable = "packages/core" }
+
+[[package]]
+name = "workspace-root"
+version = "0.1.0"
+source = { virtual = "." }

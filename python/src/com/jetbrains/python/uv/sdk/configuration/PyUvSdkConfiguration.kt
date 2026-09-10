@@ -24,19 +24,19 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
       { checkManageableUvEnvWithUvLock(module, venvsInModule, tomlCheckedByWorkspaceTools = false) }
-    ) { envExists -> { createUvSdk(module, toolId, venvsInModule, envExists) } }
+    ) { envExists -> { createUvSdk(module, venvsInModule, envExists) } }
 
   override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
       { checkManageableUvEnvWithUvLock(module, venvsInModule, tomlCheckedByWorkspaceTools = true) }
-    ) { envExists -> { createUvSdk(module, toolId, venvsInModule, envExists) } }
+    ) { envExists -> { createUvSdk(module, venvsInModule, envExists) } }
 
   private suspend fun checkManageableUvEnvWithUvLock(
     module: Module,
     venvsInModule: List<PythonBinary>,
     tomlCheckedByWorkspaceTools: Boolean
   ): EnvCheckerResult {
-    val baseCheckResult = checkManageableUvEnvBase(module, toolId, venvsInModule)
+    val baseCheckResult = checkManageableUvEnvBase(module, venvsInModule)
     return when (baseCheckResult) {
       is EnvCheckerResult.EnvFound, is EnvCheckerResult.SuggestToolInstallation -> baseCheckResult
       is EnvCheckerResult.EnvNotFound -> if (tomlCheckedByWorkspaceTools || findUvLock(module) != null) baseCheckResult else EnvCheckerResult.CannotConfigure
