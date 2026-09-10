@@ -291,7 +291,7 @@ class ScanningCancellationMonitor(
       delay(graceMs().milliseconds)
       val stillHolding = tracker.activeReadActions().count { it.thread in threads }
       if (stillHolding > 0) {
-        THROTTLED_LOG.warn("$stillHolding scanning thread(s) still hold a read action after being re-canceled")
+        THROTTLED_LOG.error("$stillHolding scanning thread(s) still hold a read action after being re-canceled")
       }
     }
   }
