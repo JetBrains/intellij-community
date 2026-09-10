@@ -49,6 +49,7 @@
     "intellij.platform.completion.common",
     "intellij.platform.core",
     "intellij.platform.core.impl",
+    "intellij.platform.graph.impl",
     "intellij.color.scheme.solarized.datagrip",
     "intellij.database",
     "intellij.database.ai",
