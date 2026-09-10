@@ -14,6 +14,7 @@ BG_PIC="$2.png"
 CLEANUP_EXPLODED=${5:-"true"}
 CONTENT_SIGNED=${6:-"true"}
 CHECK_LAUNCHER_INTEGRITY=${7:-"true"}
+DMG_FORMAT=${DMG_FORMAT:-"ULFO"}
 
 function log() {
   echo "$(date '+[%H:%M:%S]') [$RESULT_DMG] $*"
@@ -135,8 +136,16 @@ function detach_disk() {
 
 retry "Detaching disk" 3 detach_disk
 
-log "Compressing r/w disk image to ${RESULT_DMG}..."
-hdiutil convert "$TEMP_DMG" -format ULFO -imagekey lzfse-level=9 -o "$RESULT_DMG"
+case "$DMG_FORMAT" in
+  ULFO) IMAGE_KEY="lzfse-level=9";;
+  ULMO) IMAGE_KEY="lzma-level=9";;
+  UDZO) IMAGE_KEY="zlib-level=9";;
+  UDBZ) IMAGE_KEY="bzip2-level=9";;
+  *) log "Unsupported DMG_FORMAT '$DMG_FORMAT'"; exit 1;;
+esac
+
+log "Compressing r/w disk image to ${RESULT_DMG} ($DMG_FORMAT)..."
+hdiutil convert "$TEMP_DMG" -format "$DMG_FORMAT" -imagekey "$IMAGE_KEY" -o "$RESULT_DMG"
 
 if hdiutil internet-enable -help >/dev/null 2>/dev/null; then
   hdiutil internet-enable -no "$RESULT_DMG"

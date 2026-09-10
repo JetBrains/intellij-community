@@ -61,6 +61,9 @@ import kotlin.io.path.writeText
 
 private const val NO_RUNTIME_SUFFIX = "-no-jdk"
 
+// keep in sync with the DMG_FORMAT case in makedmg.sh
+private val SUPPORTED_DMG_FORMATS = setOf("ULFO", "ULMO", "UDZO", "UDBZ")
+
 class MacDistributionBuilder(
   private val customizer: MacDistributionCustomizer,
   private val ideaProperties: CharSequence?,
@@ -708,6 +711,9 @@ class MacDistributionBuilder(
   }
 
   private fun prepareDmgBuildScripts(tempDir: Path, staple: Boolean, customizer: MacDistributionCustomizer, context: BuildContext): Path {
+    check(customizer.dmgImageFormat in SUPPORTED_DMG_FORMATS) {
+      "Unsupported dmgImageFormat '${customizer.dmgImageFormat}'. Supported formats: $SUPPORTED_DMG_FORMATS"
+    }
     NioFiles.deleteRecursively(tempDir)
     Files.createDirectories(tempDir)
     val dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
@@ -725,6 +731,7 @@ class MacDistributionBuilder(
         .resolveTemplateVar("appName", context.fullBuildNumber)
         .resolveTemplateVar("contentSigned", "${context.isMacCodeSignEnabled}")
         .resolveTemplateVar("buildDateInSeconds", "${context.options.buildDateInSeconds}")
+        .resolveTemplateVar("dmgFormat", customizer.dmgImageFormat)
     )
     NioFiles.setExecutable(entrypoint)
     return entrypoint
