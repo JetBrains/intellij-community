@@ -27,16 +27,17 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.icons.AllIcons.Actions.AiIntentionBulb
 import com.intellij.icons.AllIcons.Actions.IntentionBulbGrey
 import com.intellij.icons.AllIcons.Actions.Lightning
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.idea.AppMode
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.FoldRegion
@@ -106,6 +107,8 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
   ) {
     if (!AppMode.isRemoteDevHost() && AppMode.isHeadless() &&
         !(ApplicationManager.getApplication().isUnitTestMode() && Registry.`is`("ide.completion.command.force.enabled", false))) return
+    val project = parameters.editor.project ?: return
+    if (!TrustedProjects.isProjectTrusted(project)) return
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
     if (parameters.completionType != CompletionType.BASIC) return
     if (parameters.position is PsiComment && parameters.invocationCount == 0) return
@@ -366,14 +369,16 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     return elements
   }
 
-  private fun createElement(lookupString: String,
-                            lookupStrings: List<String>,
-                            tailText: String,
-                            command: CompletionCommand,
-                            commandCompletionFactory: CommandCompletionFactory,
-                            prefix: String,
-                            currentSynonyms: List<String>,
-                            otherSynonyms: List<String>): CommandCompletionLookupElement {
+  private fun createElement(
+    lookupString: String,
+    lookupStrings: List<String>,
+    tailText: String,
+    command: CompletionCommand,
+    commandCompletionFactory: CommandCompletionFactory,
+    prefix: String,
+    currentSynonyms: List<String>,
+    otherSynonyms: List<String>,
+  ): CommandCompletionLookupElement {
     return CommandCompletionLookupElement(lookupElement =
                                             LookupElementBuilder.create(lookupString)
                                               .withLookupStrings(lookupStrings)
@@ -734,7 +739,7 @@ internal fun findCommandCompletionType(
 internal class LimitedToleranceMatcher(
   prefix: String,
   private val currentTags: List<String>,
-  private val otherTags: List<String>
+  private val otherTags: List<String>,
 ) : CamelHumpMatcher(prefix, false, true) {
 
   override fun prefixMatches(element: LookupElement): Boolean {
