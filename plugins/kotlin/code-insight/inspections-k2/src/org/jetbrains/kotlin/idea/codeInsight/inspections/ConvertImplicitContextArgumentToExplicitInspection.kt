@@ -16,13 +16,16 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
@@ -39,11 +42,14 @@ import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParamete
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.callExpressionVisitor
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 
 /**
  * Inspection that detects implicit context arguments and offers to convert them to explicit
@@ -226,7 +232,13 @@ private fun createReplacementForContextArgument(
         is KaContextParameterSymbol -> {
             val name = symbol.name
             if (!name.isSpecial) {
-                name.asString()
+                val nameText = name.asString().quoteIfNeeded()
+                val paramPsi = symbol.psi
+                if (paramPsi == null || !callExpression.resolvesToSameSymbol(nameText, paramPsi)) {
+                    null
+                } else {
+                    nameText
+                }
             } else {
                 findExpressionInEnclosingContextBlock(callExpression, expectedType)
             }
@@ -236,6 +248,7 @@ private fun createReplacementForContextArgument(
     }
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(session: KaSession)
 private fun findExpressionInEnclosingContextBlock(
     callExpression: KtCallExpression,
@@ -251,12 +264,29 @@ private fun findExpressionInEnclosingContextBlock(
             for (valueArg in contextCall.valueArguments) {
                 val contextArgExpr = valueArg.getArgumentExpression() ?: continue
                 val contextArgType = contextArgExpr.expressionType ?: continue
-                if (contextArgType.isSubtypeOf(expectedType)) {
-                    return contextArgExpr.text
+                if (!contextArgType.isSubtypeOf(expectedType)) continue
+
+                if (contextArgExpr is KtSimpleNameExpression) {
+                    val referencedPsi = contextArgExpr.resolveSymbol()?.psi
+                    if (referencedPsi == null || !callExpression.resolvesToSameSymbol(contextArgExpr.text, referencedPsi)) continue
                 }
+
+                return contextArgExpr.text
             }
         }
         enclosingElement = contextCall
+    }
+}
+
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+private fun KtCallExpression.resolvesToSameSymbol(
+    identifier: String,
+    expectedPsi: PsiElement,
+): Boolean {
+    val fragment = KtPsiFactory(project).createExpressionCodeFragment(identifier.quoteIfNeeded(), this)
+    val expr = fragment.getContentElement() as? KtSimpleNameExpression ?: return false
+    return analyze(expr) {
+        expr.resolveSymbol()?.psi == expectedPsi
     }
 }
 

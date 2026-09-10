@@ -28617,6 +28617,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/multipleContextParameters.kt");
         }
 
+        @TestMetadata("notApplicable_namedContextParameterShadowed.kt")
+        public void testNotApplicable_namedContextParameterShadowed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/notApplicable_namedContextParameterShadowed.kt");
+        }
+
         @TestMetadata("notApplicable_noContextParameters.kt")
         public void testNotApplicable_noContextParameters() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/notApplicable_noContextParameters.kt");
@@ -28635,6 +28640,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("preservesTrailingComment.kt")
         public void testPreservesTrailingComment() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/preservesTrailingComment.kt");
+        }
+
+        @TestMetadata("reservedWordContextParameter.kt")
+        public void testReservedWordContextParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertImplicitContextArgumentToExplicit/reservedWordContextParameter.kt");
         }
 
         @TestMetadata("sharedContextBlock.kt")

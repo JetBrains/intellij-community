@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.isKotlinContextCall
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -85,6 +87,7 @@ internal class ConvertExplicitContextArgumentToImplicitInspection :
         return argumentList.parent is KtCallExpression
     }
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtValueArgument): Context? {
         val argumentExpression = element.getArgumentExpression() ?: return null
@@ -179,6 +182,7 @@ private fun KtCallExpression.buildCallTextWithoutArgument(selectedArgument: KtVa
     return "$callee$typeArgs($remainingArgs)$lambdaArgs"
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun KtCallExpression.resolvesToSameTargetWhenWrapped(
     selectedArgument: KtValueArgument,
     contextArgumentText: String,
@@ -218,6 +222,7 @@ private fun contextWrapNotNeeded(
     )
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(session: KaSession)
 private fun isValueInEnclosingContextBlock(
     callExpression: KtCallExpression,
@@ -244,6 +249,7 @@ private fun isValueInEnclosingContextBlock(
     }
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 private fun isResolvedImplicitlyToSameValue(
     callExpression: KtCallExpression,
     selectedArgument: KtValueArgument,
