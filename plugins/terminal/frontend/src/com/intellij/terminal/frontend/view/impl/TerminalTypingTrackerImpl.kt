@@ -288,7 +288,7 @@ class TerminalTypingTrackerImpl(
      * Max time we wait for confirmation of typing by the output model change.
      * If it exceeds, we report a mismatch.
      */
-    private val CONFIRMATION_AWAITING_TIME = 1.seconds
+    private val CONFIRMATION_AWAITING_TIME = 5.seconds
   }
 }
 
