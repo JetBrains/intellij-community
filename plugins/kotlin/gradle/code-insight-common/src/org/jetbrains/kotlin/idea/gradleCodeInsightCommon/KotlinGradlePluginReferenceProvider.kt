@@ -6,7 +6,6 @@ import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -61,14 +60,14 @@ class KotlinGradlePluginReferenceProvider : AbstractKotlinGradleReferenceProvide
         return GradlePluginReference(element, range, pluginCallableId.callableName.identifier)
     }
 
-    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     private fun getSingleFunctionCallableId(callExpression: KtCallExpression) = allowAnalysisOnEdt {
         analyze(callExpression) {
             callExpression.tryResolveCall()?.single?.function?.symbol?.callableId
         }
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     private fun getSingleVariableCallableId(nameReferenceExpression: KtNameReferenceExpression): CallableId? = allowAnalysisOnEdt {
         analyze(nameReferenceExpression) {
             nameReferenceExpression.tryResolveCall()?.single?.variable?.symbol?.callableId

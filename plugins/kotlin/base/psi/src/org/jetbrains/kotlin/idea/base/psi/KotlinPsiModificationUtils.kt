@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinPsiModificationUtils")
-@file:OptIn(org.jetbrains.kotlin.psi.KtNonPublicApi::class)
 @file:Suppress("unused")
 
 package org.jetbrains.kotlin.idea.base.psi
@@ -33,7 +32,6 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtDoubleColonExpression
 import org.jetbrains.kotlin.psi.KtEnumEntry
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFileAnnotationList
@@ -150,7 +148,6 @@ fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration {
     return appendDeclaration(KtPsiFactory(project).createCompanionObject())
 }
 
-@OptIn(KtExperimentalApi::class)
 // TODO: replace with an appropriate compiler API calls once available (KT-89032)
 fun KtClass.getOrCreateCompanionBlock(): KtCompanionBlock {
     companionBlocks.firstOrNull()?.let { return it }

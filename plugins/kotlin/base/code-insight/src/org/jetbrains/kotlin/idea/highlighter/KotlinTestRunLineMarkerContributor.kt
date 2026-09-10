@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.Icon
 
 class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
@@ -44,7 +43,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
          * As of now launching ignored tests (for Gradle) is impossible.
          */
         private fun KtNamedDeclaration.isIgnoredForGradleConfiguration(includeSlowProviders: Boolean): Boolean {
-            val ktNamedFunction = this.safeAs<KtNamedFunction>().takeIf {
+            val ktNamedFunction = (this as? KtNamedFunction)?.takeIf {
                 RunConfigurationUtils.isGradleRunConfiguration(this)
             } ?: return false
             val ktClassOrObject = ktNamedFunction.containingClassOrObject ?: return false

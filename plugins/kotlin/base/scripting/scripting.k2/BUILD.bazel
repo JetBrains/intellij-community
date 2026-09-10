@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.kotlin.base.scripting` start
@@ -7,6 +8,23 @@ content_module_jar(module = ":kotlin-base-scripting")
 ### auto-generated section `dev intellij.kotlin.base.scripting` end
 
 ### auto-generated section `build intellij.kotlin.base.scripting` start
+create_kotlinc_options(
+    name = "custom_kotlin-base-scripting",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
 jvm_library(
     name = "kotlin-base-scripting",
     srcs = glob(
@@ -19,6 +37,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_kotlin-base-scripting",
     module_name = "intellij.kotlin.base.scripting",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -104,6 +123,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_kotlin-base-scripting",
     module_name = "intellij.kotlin.base.scripting",
     visibility = ["//visibility:public"],
     runtime_deps = [

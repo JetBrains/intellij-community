@@ -90,7 +90,6 @@ import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.addToStdlib.popLast
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 data class KotlinReferencesSearchOptions(
     val acceptCallableOverrides: Boolean = false,
@@ -196,7 +195,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
     private class QueryProcessor(val queryParameters: ReferencesSearch.SearchParameters, val consumer: Processor<in PsiReference>) {
 
-        private val kotlinOptions = queryParameters.safeAs<KotlinAwareReferencesSearchParameters>()?.kotlinOptions ?: Empty
+        private val kotlinOptions = (queryParameters as? KotlinAwareReferencesSearchParameters)?.kotlinOptions ?: Empty
 
         private val longTasks = ContainerUtil.createConcurrentList<() -> Unit>()
 
@@ -266,7 +265,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 if (elementToSearchPointer.element is KtParameter && kotlinOptions.searchNamedArguments) {
                     longTasks.add {
                         DumbService.getInstance(queryParameters.project).runReadActionInSmartMode(Runnable {
-                            elementToSearchPointer.element.safeAs<KtParameter>()?.let(::searchNamedArguments)
+                            (elementToSearchPointer.element as? KtParameter)?.let(::searchNamedArguments)
                         })
                     }
                 }

@@ -50,7 +50,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 import org.jetbrains.kotlin.resolution.KtResolvable
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ImportAllMembersIntention :
     KotlinApplicableModCommandAction<KtElement, ImportAllMembersIntention.Context>(KtElement::class) {
@@ -201,7 +200,7 @@ private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression)
     return (referencedSymbol.containingDeclaration as? KaClassSymbol)?.classKind?.isObject ?: true
 }
 
-private fun KaDeclarationSymbol.isEnum(): Boolean = safeAs<KaClassSymbol>()?.classKind == KaClassKind.ENUM_CLASS
+private fun KaDeclarationSymbol.isEnum(): Boolean = (this as? KaClassSymbol)?.classKind == KaClassKind.ENUM_CLASS
 
 private fun KaCallableSymbol.isEnumSyntheticMethodCall(target: KaNamedClassSymbol): Boolean =
     target.isEnum() && origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED && callableId?.callableName in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES

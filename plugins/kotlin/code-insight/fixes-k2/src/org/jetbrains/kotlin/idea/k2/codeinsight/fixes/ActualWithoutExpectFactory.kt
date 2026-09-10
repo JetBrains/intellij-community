@@ -13,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -205,7 +204,6 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
         }
     }
 
-    @OptIn(KaNonPublicApi::class)
     protected fun isCorrectAndHaveAccessibleModifiers(
         declaration: KtNamedDeclaration,
         expectedFile: KtFile,

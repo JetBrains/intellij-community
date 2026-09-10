@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -61,7 +60,6 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.utils.SmartList
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
@@ -371,7 +369,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     searchInCommentsAndStrings: Boolean
   ): Collection<PsiReference> {
     val referenceSearchScope = if (element is KtParameter && element.isPrivate()) {
-      element.ownerFunction.safeAs<KtPrimaryConstructor>()?.codeUsageScope()?.union(searchScope) ?: searchScope
+        (element.ownerFunction as? KtPrimaryConstructor)?.codeUsageScope()?.union(searchScope) ?: searchScope
     }
     else {
       searchScope

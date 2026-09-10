@@ -125,7 +125,6 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
@@ -426,13 +425,11 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         }
     }
 
-    @OptIn(KtExperimentalApi::class)
     protected val KaNamedClassSymbol.hasImportantStaticMemberScope: Boolean
         get() = classKind == KaClassKind.ENUM_CLASS ||
                 origin.isJavaSourceOrLibrary() ||
                 (psi as? KtClassOrObject)?.companionBlocks?.isNotEmpty() == true
 
-    @OptIn(KtExperimentalApi::class)
     private val KaNamedClassSymbol.canBeUsedAsReceiver: Boolean
         get() = classKind.isObject || companionObject != null || (psi as? KtClassOrObject)?.companionBlocks?.isNotEmpty() == true
 

@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
 import org.jetbrains.kotlin.psi.KtContinueExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -172,6 +171,5 @@ private val isLocalLookupRegistryEnabled by lazy(LazyThreadSafetyMode.PUBLICATIO
 private fun KtSimpleNameExpression.lookupLocally(): PsiElement? {
     if (!isLocalLookupRegistryEnabled) return null
 
-    @OptIn(KtExperimentalApi::class)
     return lookupLocallyImpl()
 }

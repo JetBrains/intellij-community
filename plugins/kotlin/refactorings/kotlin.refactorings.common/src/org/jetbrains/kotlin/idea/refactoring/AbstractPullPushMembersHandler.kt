@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @ApiStatus.Internal
 abstract class AbstractPullPushMembersHandler(
@@ -64,7 +63,7 @@ abstract class AbstractPullPushMembersHandler(
         val target = (file.findElementAt(offset) ?: return).parentsWithSelf.firstOrNull {
             it is KtClassOrObject
                     || ((it is KtNamedFunction || it is KtProperty) && it.parent is KtClassBody)
-                    || it.safeAs<KtParameter>()?.isConstructorDeclaredProperty() == true
+                    || (it as? KtParameter)?.isConstructorDeclaredProperty() == true
         }
 
         if (target == null) {

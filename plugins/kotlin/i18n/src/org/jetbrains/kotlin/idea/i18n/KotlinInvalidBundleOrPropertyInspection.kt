@@ -11,7 +11,6 @@ import com.intellij.lang.properties.psi.Property
 import com.intellij.lang.properties.references.PropertyReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -43,7 +42,6 @@ class KotlinInvalidBundleOrPropertyInspection : AbstractKotlinInspection() {
                 }
             }
 
-            @OptIn(KaExperimentalApi::class)
             private fun processPropertyReference(ref: PropertyReference, template: KtStringTemplateExpression) {
                 if (ref.isSoft) return // don't highlight soft references, they are inserted in every string literal
 

@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.psi.KtTypeCodeFragment
 import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -115,7 +114,7 @@ abstract class KotlinBaseChangePropertySignatureDialog<P: KotlinModifiableParame
     protected abstract fun isDefaultVisibility(v: V): Boolean
 
     private fun calculateSignature(): String = buildString {
-        methodDescriptor.baseDeclaration.safeAs<KtValVarKeywordOwner>()?.valOrVarKeyword?.let { keyword ->
+        (methodDescriptor.baseDeclaration as?KtValVarKeywordOwner)?.valOrVarKeyword?.let { keyword ->
             val visibility = if (methodDescriptor.canChangeVisibility()) visibilityCombo.selectedItem as V else methodDescriptor.visibility
             if (visibility != null && !isDefaultVisibility(visibility)) {
                 append(visibility).append(" ")

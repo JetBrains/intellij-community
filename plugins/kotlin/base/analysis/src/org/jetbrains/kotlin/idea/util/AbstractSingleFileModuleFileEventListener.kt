@@ -6,7 +6,6 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
@@ -60,7 +59,6 @@ sealed class AbstractSingleFileModuleFileEventListener(private val project: Proj
         extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX ||
             isKotlinFileType() && !ProjectFileIndex.getInstance(project).isInSourceContent(this)
 
-    @OptIn(KaPlatformInterface::class)
     private fun VirtualFile.getSingleFileModule(): KaModule? =
         toPsiFile(project)
             ?.let { KotlinProjectStructureProvider.getModule(project, it, useSiteModule = null) }

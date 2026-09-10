@@ -1,6 +1,25 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build kotlin.util.project-model-updater` start
+create_kotlinc_options(
+    name = "custom_project-model-updater",
+    jvm_target = "21",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
 jvm_library(
     name = "project-model-updater",
     srcs = glob(
@@ -11,7 +30,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = "@community//:k21",
+    kotlinc_opts = ":custom_project-model-updater",
     module_name = "kotlin.util.project-model-updater",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -36,7 +55,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = "@community//:k21",
+    kotlinc_opts = ":custom_project-model-updater",
     module_name = "kotlin.util.project-model-updater",
     visibility = ["//visibility:public"],
     runtime_deps = [

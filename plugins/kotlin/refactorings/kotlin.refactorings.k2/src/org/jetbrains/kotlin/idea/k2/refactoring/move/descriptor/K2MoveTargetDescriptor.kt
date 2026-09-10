@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtCompanionBlock
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -150,7 +149,6 @@ sealed interface K2MoveTargetDescriptor {
         }
     }
 
-    @OptIn(KtExperimentalApi::class)
     class CompanionBlock(
         internal val containingClass: KtClass
     ) : Declaration<KtCompanionBlock> {

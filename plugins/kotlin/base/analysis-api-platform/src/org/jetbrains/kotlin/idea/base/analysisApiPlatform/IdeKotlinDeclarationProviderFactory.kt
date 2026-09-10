@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class IdeKotlinDeclarationProviderFactory(private val project: Project) : KotlinDeclarationProviderFactory {
     override fun createDeclarationProvider(scope: GlobalSearchScope, contextualModule: KaModule?): KotlinDeclarationProvider {
@@ -179,12 +178,12 @@ private class IdeKotlinDeclarationProvider(
             stubIndex.getContainingFilesIterator(KotlinTopLevelPropertyFqnNameIndex.indexKey, callableIdString, project, scope)
                 .forEach { file ->
                     //check canceled is done inside findFile
-                    psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
+                    (psiManager.findFile(file) as? KtFile)?.let { add(it) }
                 }
             stubIndex.getContainingFilesIterator(KotlinTopLevelFunctionFqnNameIndex.indexKey, callableIdString, project, scope)
                 .forEach { file ->
                     //check canceled is done inside findFile
-                    psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
+                    (psiManager.findFile(file) as? KtFile)?.let { add(it) }
                 }
         }
     }

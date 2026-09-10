@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class SimplifyCallChainFix(
     private val conversion: CallChainConversion,
@@ -86,7 +85,7 @@ class SimplifyCallChainFix(
             callExpression?.moveFunctionLiteralOutsideParentheses()
         }
         if (secondCallTrailingComma != null && !firstCallHasArguments) {
-            val call = result.safeAs<KtQualifiedExpression>()?.callExpression ?: result.safeAs<KtCallExpression>()
+            val call = (result as? KtQualifiedExpression)?.callExpression ?: result as? KtCallExpression
             call?.valueArgumentList?.arguments?.lastOrNull()?.add(psiFactory.createComma())
         }
         if (conversion.addNotNullAssertion) {

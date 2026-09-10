@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinInspectionSuppressor : InspectionSuppressor, RedundantSuppressionDetector {
     override fun getSuppressActions(element: PsiElement?, toolId: String): Array<SuppressQuickFix> {
@@ -87,7 +86,7 @@ private class RemoveRedundantSuppression(private val toolId: String) : LocalQuic
                 .withPsiAttachment("annotatedElement.txt", annotated)
 
         if (suppressAnnotationEntry.valueArguments.size == 1) {
-            annotated.safeAs<KtAnnotatedExpression>()?.baseExpression?.let { annotated.replace(it) } ?: suppressAnnotationEntry.delete()
+            (annotated as? KtAnnotatedExpression)?.baseExpression?.let { annotated.replace(it) } ?: suppressAnnotationEntry.delete()
         } else {
             val valueArgumentList = suppressAnnotationEntry.valueArgumentList ?: return
             val argument = valueArgumentList.arguments.find {

@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.simple
@@ -182,7 +181,6 @@ object IfThenTransformationUtils {
     }
 
 
-    @OptIn(KaUnstableDiagnosticApi::class)
     context(_: KaSession)
     private fun conditionIsSenseless(data: IfThenTransformationData): Boolean =
         data.condition

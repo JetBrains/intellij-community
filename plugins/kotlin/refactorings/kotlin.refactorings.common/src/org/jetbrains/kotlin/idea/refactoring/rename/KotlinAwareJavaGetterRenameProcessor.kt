@@ -15,13 +15,12 @@ import org.jetbrains.kotlin.asJava.syntheticGetter
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 
 private val RENAME_JAVA_GETTER_MARKER = Key.create<Boolean>("RenameJavaGetterMarker")
 internal fun isKotlinAwareJavaGetterRename(ref: KtReference) : Boolean = ref.element.getUserData(RENAME_JAVA_GETTER_MARKER) != null
 class KotlinAwareJavaGetterRenameProcessor : RenameJavaMethodProcessor() {
     override fun canProcessElement(element: PsiElement) =
-        super.canProcessElement(element) && element !is KtLightMethod && element.cast<PsiMethod>().canHaveSyntheticGetter
+        super.canProcessElement(element) && element !is KtLightMethod && (element as PsiMethod).canHaveSyntheticGetter
 
     override fun findReferences(
         element: PsiElement,

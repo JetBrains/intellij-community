@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object MergeIfsUtils {
 
@@ -49,7 +48,7 @@ object MergeIfsUtils {
 
         val psiFactory = KtPsiFactory(element.project)
 
-        val comments = element.allChildren.filter { it is PsiComment }.toList() + then.safeAs<KtBlockExpression>()
+        val comments = element.allChildren.filter { it is PsiComment }.toList() + (then as? KtBlockExpression)
             ?.allChildren
             ?.filter { it is PsiComment }
             ?.toList()

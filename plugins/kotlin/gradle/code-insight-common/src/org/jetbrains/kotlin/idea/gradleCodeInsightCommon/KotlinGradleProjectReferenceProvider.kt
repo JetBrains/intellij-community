@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -69,7 +68,7 @@ class KotlinGradleProjectReferenceProvider: AbstractKotlinGradleReferenceProvide
         return callableId.packageName == KGP_PACKAGE && callableId.className == KOTLIN_DEPENDENCY_HANDLER_CLASS
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     private fun getProjectAccessors(element: PsiElement): List<String>? {
         val dotQualifiedExpression = element.getParentOfType<KtDotQualifiedExpression>(true, KtDeclarationWithBody::class.java) ?: return null
         val (variableCallableId, functionCallableId) =

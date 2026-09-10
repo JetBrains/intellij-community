@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.siblings
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) : PsiBasedModCommandAction<KtExpression>(KtExpression::class.java) {
     enum class ScopeFunction(val functionName: String, val isParameterScope: Boolean) {
@@ -227,10 +226,10 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
                 if (name !== null) property to name else null
             }
             ScopeFunction.RUN, ScopeFunction.WITH -> {
-                val receiver = safeAs<KtDotQualifiedExpression>()?.getLeftMostReceiverExpression() as? KtNameReferenceExpression
+                val receiver = (this as? KtDotQualifiedExpression)?.getLeftMostReceiverExpression() as? KtNameReferenceExpression
                 val declaration = receiver?.mainReference?.resolve()?.takeUnless { it is PsiPackage } ?: return null
                 val selector = receiver.getQualifiedExpressionForReceiver()?.selectorExpression
-                    ?.let { it.safeAs<KtCallExpression>()?.calleeExpression ?: it } as? KtNameReferenceExpression
+                    ?.let { (it as? KtCallExpression)?.calleeExpression ?: it } as? KtNameReferenceExpression
                 if (selector?.mainReference?.resolve() is KtClassOrObject) return null
                 declaration to receiver.getReferencedNameElement().text
             }

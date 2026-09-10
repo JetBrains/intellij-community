@@ -31,7 +31,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -363,7 +362,6 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         @JvmStatic
         fun getInstance(project: Project): KotlinScriptService = project.service()
 
-        @OptIn(KaPlatformInterface::class)
         private fun dropKotlinScriptCaches(project: Project) {
             ThreadingAssertions.assertWriteAccess()
             ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()

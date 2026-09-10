@@ -11,7 +11,6 @@ import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.compilation.isClassFile
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -67,7 +66,6 @@ object KotlinBytecodeDecompiler {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun bytecodeMapForSourceFile(file: KtFile): Map<File, () -> ByteArray> {
         analyze(file) {
             with(KotlinBytecodeToolWindow.Companion) {

@@ -54,7 +54,6 @@ import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.isNull
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, KotlinType, CallableDescriptor>(
     private val callElement: TCallElement,
@@ -65,10 +64,10 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
     protected val psiFactory = KtPsiFactory(project)
 
     protected fun KtElement.callableReferenceExpressionForReference(): KtCallableReferenceExpression? =
-        parent.safeAs<KtCallableReferenceExpression>()?.takeIf { it.callableReference == callElement }
+        (parent as? KtCallableReferenceExpression)?.takeIf { it.callableReference == callElement }
 
     protected fun KtSimpleNameExpression.receiverExpression(): KtExpression? =
-        getReceiverExpression() ?: parent.safeAs<KtCallableReferenceExpression>()?.receiverExpression
+        getReceiverExpression() ?: (parent as? KtCallableReferenceExpression)?.receiverExpression
 
     protected fun KtExpression?.shouldKeepValue(usageCount: Int): Boolean {
         if (usageCount == 1) return false
@@ -120,7 +119,7 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
 
     protected fun MutableCodeToInline.convertToCallableReferenceIfNeeded(elementToBeReplaced: KtElement) {
         if (elementToBeReplaced !is KtCallableReferenceExpression) return
-        val qualified = mainExpression?.safeAs<KtQualifiedExpression>() ?: return
+        val qualified = (mainExpression as? KtQualifiedExpression) ?: return
         val reference = qualified.callExpression?.calleeExpression ?: qualified.selectorExpression ?: return
         val callableReference = if (elementToBeReplaced.receiverExpression == null) {
             psiFactory.createExpressionByPattern("::$0", reference)

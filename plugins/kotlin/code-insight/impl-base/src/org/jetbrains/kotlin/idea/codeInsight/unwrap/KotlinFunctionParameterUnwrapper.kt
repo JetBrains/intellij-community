@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.util.takeWhileIsInstance
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinFunctionParameterUnwrapper(val key: String) : KotlinUnwrapRemoveBase(key) {
 
@@ -76,15 +75,15 @@ class KotlinFunctionParameterUnwrapper(val key: String) : KotlinUnwrapRemoveBase
 
         val callExpression: KtCallExpression = when (element.elementType) {
             KtTokens.LPAR -> {
-                element.parent?.safeAs<KtValueArgumentList>()
-                    ?.parent?.safeAs<KtCallExpression>() ?: return null
+                (element.parent as? KtValueArgumentList)
+                    ?.parent as? KtCallExpression ?: return null
             }
             KtTokens.DOT, KtTokens.SAFE_ACCESS -> {
-                element.parent?.safeAs<KtQualifiedExpression>()
+                (element.parent as? KtQualifiedExpression)
                     ?.let { caretOnQualifier(it) } ?: return null
             }
             KtTokens.IDENTIFIER -> {
-                val referenceExpression = element.parent?.safeAs<KtReferenceExpression>()
+                val referenceExpression = element.parent as? KtReferenceExpression
                 when (val parent = referenceExpression?.parent) {
                     is KtCallExpression -> parent
                     is KtQualifiedExpression -> {

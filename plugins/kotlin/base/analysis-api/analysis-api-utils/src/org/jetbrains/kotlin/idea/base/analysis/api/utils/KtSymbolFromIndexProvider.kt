@@ -13,7 +13,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
@@ -616,7 +615,6 @@ private fun MutableSet<Name>.createNamesProcessor(
 /**
  * Returns whether the module can declare expect declarations that could be implemented by an implementing module.
  */
-@OptIn(KaPlatformInterface::class)
 private fun KaModule.canHaveExpectDeclarations(): Boolean {
     if (targetPlatform.isMultiPlatform()) return true
 

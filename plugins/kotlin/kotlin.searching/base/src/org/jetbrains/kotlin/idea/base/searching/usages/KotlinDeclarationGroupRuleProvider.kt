@@ -17,16 +17,15 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class KotlinDeclarationGroupingRule(val level: Int = 0) : SingleParentUsageGroupingRule() {
     override fun getParentGroupFor(usage: Usage, targets: Array<UsageTarget>): UsageGroup? {
-        var element = usage.safeAs<PsiElementUsage>()?.element ?: return null
+        var element = (usage as? PsiElementUsage)?.element ?: return null
 
         if (element.containingFile !is KtFile) return null
 
         if (element is KtFile) {
-            val offset = usage.safeAs<UsageInfo2UsageAdapter>()?.usageInfo?.navigationOffset
+            val offset = (usage as? UsageInfo2UsageAdapter)?.usageInfo?.navigationOffset
             if (offset != null) {
                 element = element.findElementAt(offset) ?: element
             }

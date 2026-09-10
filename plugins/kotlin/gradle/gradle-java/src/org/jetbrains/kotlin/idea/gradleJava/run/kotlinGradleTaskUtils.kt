@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
@@ -90,7 +89,6 @@ private fun isIdentifierInPropertyWithDelegate(leafElement: LeafPsiElement): Boo
         ?.parent.safeAs<KtProperty>()?.hasDelegateExpression()
         ?: false
 
-@OptIn(KaExperimentalApi::class)
 private fun findTaskNameInSurroundingCallExpression(element: PsiElement): String? {
     val callExpression = element.getParentOfType<KtCallExpression>(false, KtScriptInitializer::class.java) ?: return null
     if (!hasNameRelatedToTasks(callExpression)) return null
@@ -117,7 +115,6 @@ private fun hasNameRelatedToTasks(callExpression: KtCallExpression): Boolean {
     return methodName in taskContainerMethods || methodName == "task"
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun findTaskNameInSurroundingProperty(element: PsiElement): String? {
     val stopAt = arrayOf(KtScriptInitializer::class.java, KtLambdaExpression::class.java)
     // A property element could contain e.g., `val taskName by tasks.registering{}` or `val taskName by tasks.creating{}`
@@ -132,7 +129,6 @@ private fun findTaskNameInSurroundingProperty(element: PsiElement): String? {
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun doesCustomizeTask(functionCall: KaSimpleCall<*, *>): Boolean {
     val callableId = functionCall.symbol.callableId ?: return false
     val methodName = callableId.callableName.identifier
@@ -143,7 +139,6 @@ private fun doesCustomizeTask(functionCall: KaSimpleCall<*, *>): Boolean {
             || isMethodOfProject(methodName, classFqName)
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun getReceiverClassFqName(functionCall: KaSimpleCall<*, *>): FqName? {
     val type = functionCall.extensionReceiver?.type
         ?: functionCall.dispatchReceiver?.type

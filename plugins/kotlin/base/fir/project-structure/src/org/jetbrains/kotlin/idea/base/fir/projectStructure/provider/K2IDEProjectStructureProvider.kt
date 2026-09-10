@@ -34,6 +34,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.resolveExtensionFileModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
@@ -84,6 +85,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         return getKaNotUnderContentRootModule(project, null)
     }
 
+    @OptIn(KaImplementationDetail::class)
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule {
         ProgressManager.checkCanceled()
 

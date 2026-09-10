@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.psi.KtClassInitializer
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtCompanionBlock
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -167,7 +166,6 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
           else null
         }
 
-        @OptIn(KtExperimentalApi::class)
         inPosition(parent = KtNodeTypes.CLASS_BODY, left = KtTokens.LBRACE).customRule { parent, left, right ->
           if (right.requireNode().elementType == KtTokens.RBRACE) {
             return@customRule createSpacing(0)

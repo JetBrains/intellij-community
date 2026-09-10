@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.psi.stubs.KotlinPlaceHolderStub
 import org.jetbrains.kotlin.psi.stubs.KotlinPropertyAccessorStub
 import org.jetbrains.kotlin.psi.stubs.KotlinPropertyStub
 import org.jetbrains.kotlin.psi.stubs.KotlinTypeAliasStub
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal fun <TDeclaration : KtCallableDeclaration> indexTopLevelExtension(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
     KotlinTopLevelExtensionsByReceiverTypeIndex.indexExtension(stub, sink)
@@ -133,7 +132,7 @@ private val StubElement<*>.annotatedJvmNameElementName: String?
     get() = when (this) {
         is KotlinFileStub -> psi.name
         is NamedStub -> name ?: ""
-        is KotlinPropertyAccessorStub -> parentStub.safeAs<KotlinPropertyStub>()?.name ?: ""
+        is KotlinPropertyAccessorStub -> (parentStub as? KotlinPropertyStub)?.name ?: ""
         is KotlinPlaceHolderStub -> parentStub?.annotatedJvmNameElementName
         else -> null
     }

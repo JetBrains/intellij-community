@@ -54,7 +54,6 @@ import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -361,7 +360,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     /**
      * Checks whether [this] target is a member scope declaration that requires an instance to be called.
      */
-    @OptIn(KtExperimentalApi::class) // KtCompanionBlock
+    // KtCompanionBlock
     private fun PsiElement?.isMemberScopeElement(): Boolean = when (this) {
         is KtNamedFunction, is KtProperty -> {
             val container = this.containingClassOrObject

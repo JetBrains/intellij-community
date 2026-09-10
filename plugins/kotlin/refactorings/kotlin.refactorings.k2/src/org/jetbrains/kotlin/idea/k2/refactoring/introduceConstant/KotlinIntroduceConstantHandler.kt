@@ -54,7 +54,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.plainContent
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinIntroduceConstantHandler(
     val helper: ExtractionEngineHelper = InteractiveExtractionHelper
@@ -158,7 +157,7 @@ class KotlinIntroduceConstantHandler(
     }
 
     private fun getNameSuggestions(property: KtProperty): List<String> {
-        val initializerValue = property.initializer.safeAs<KtStringTemplateExpression>()?.plainContent
+        val initializerValue = (property.initializer as? KtStringTemplateExpression)?.plainContent
         val identifierValue = property.identifyingElement?.text
 
         return listOfNotNull(initializerValue, identifierValue).map { NameUtil.capitalizeAndUnderscore(it) }

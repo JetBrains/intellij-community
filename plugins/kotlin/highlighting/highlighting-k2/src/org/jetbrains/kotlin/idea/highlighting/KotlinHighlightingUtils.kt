@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
@@ -56,7 +55,6 @@ fun KtFile.shouldDefinitelyHighlight(): Boolean =
             SyntheticPsiFileSupport.isOutsiderFile(virtualFile) ||
             (this !is KtCodeFragment && virtualFile?.fileSystem is NonPhysicalFileSystem)
 
-@OptIn(KaPlatformInterface::class)
 private fun KtFile.calculateShouldHighlightFile(): Boolean =
     shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && getKaModule(
         project,

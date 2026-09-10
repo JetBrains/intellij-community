@@ -17,7 +17,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.IncompleteModelUtil.isIncompleteModel
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
@@ -84,7 +83,6 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
         fun KaModule.hasCompilerPluginExtension(filter: (FirExtensionRegistrarAdapter) -> Boolean): Boolean =
             findCompilerPluginExtensionOrNull(filter) != null
 
-        @OptIn(KaPlatformInterface::class)
         @ApiStatus.Internal
         fun KaModule.findCompilerPluginExtensionOrNull(filter: (FirExtensionRegistrarAdapter) -> Boolean): FirExtensionRegistrarAdapter? {
             val pluginsProvider =

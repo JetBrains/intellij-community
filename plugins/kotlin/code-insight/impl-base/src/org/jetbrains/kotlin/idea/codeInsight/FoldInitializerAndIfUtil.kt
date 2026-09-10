@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.components.diagnostics
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
@@ -48,7 +47,6 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 data class FoldInitializerAndIfExpressionData(
     val initializer: SmartPsiElementPointer<KtExpression>,
@@ -60,7 +58,6 @@ data class FoldInitializerAndIfExpressionData(
 )
 
 @ApiStatus.Internal
-@OptIn(KaUnstableDiagnosticApi::class)
 context(_: KaSession)
 fun prepareData(element: KtIfExpression, enforceNonNullableTypeIfPossible: Boolean = false): FoldInitializerAndIfExpressionData? {
     if (element.`else` != null) return null
@@ -170,7 +167,7 @@ private fun calculateType(
 
             val isUsedAsNotNullable = ReferencesSearch.search(declaration, LocalSearchScope(declaration.parent)).asIterable().any {
                 if (it.element.startOffset <= ifEndOffset) return@any false
-                !(it.element.safeAs<KtExpression>()?.expressionType?.isMarkedNullable ?: return@any false)
+                !((it.element as? KtExpression)?.expressionType?.isMarkedNullable ?: return@any false)
             }
 
             if (isUsedAsNotNullable) null else initializer.expressionType

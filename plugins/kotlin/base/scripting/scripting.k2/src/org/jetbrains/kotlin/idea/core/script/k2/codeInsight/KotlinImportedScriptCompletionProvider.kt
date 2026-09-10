@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.ProcessingContext
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -40,7 +39,6 @@ import org.jetbrains.kotlin.psi.KtScript
  * module structure (as friend dependencies) and offering their declarations directly.
  */
 internal class KotlinImportedScriptCompletionProvider : CompletionProvider<CompletionParameters>() {
-    @OptIn(KaExperimentalApi::class)
     override fun addCompletions(
         parameters: CompletionParameters,
         context: ProcessingContext,
@@ -66,7 +64,6 @@ internal class KotlinImportedScriptCompletionProvider : CompletionProvider<Compl
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun processDeclarations(
         declarations: List<KtDeclaration>,

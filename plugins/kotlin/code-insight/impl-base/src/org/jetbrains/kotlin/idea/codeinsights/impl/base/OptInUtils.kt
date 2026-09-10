@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * Checks whether there's an element lexically above in the tree, annotated with @[OptIn]`(X::class)`, or a declaration
@@ -53,10 +52,7 @@ private fun KtAnnotationEntry.getAnnotatedOptIns(): Set<ClassId> {
 
 context(_: KaSession)
 private fun ValueArgument.getAnnotationClassValue(): ClassId? =
-    getArgumentExpression()
-        ?.evaluateAsAnnotationValue()
-        ?.safeAs<KaAnnotationValue.ClassLiteralValue>()
-        ?.classId
+    (getArgumentExpression()?.evaluateAsAnnotationValue() as? KaAnnotationValue.ClassLiteralValue)?.classId
 
 context(_: KaSession)
 private fun PsiElement.isElementAnnotatedWithOptIn(annotationClassId: ClassId): Boolean =

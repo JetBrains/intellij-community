@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class AddJvmOverloadsIntention : KotlinPsiUpdateModCommandAction.ClassContextless<KtModifierListOwner>(KtModifierListOwner::class) {
 
@@ -54,7 +53,7 @@ internal class AddJvmOverloadsIntention : KotlinPsiUpdateModCommandAction.ClassC
                 KotlinBundle.message("text.secondary.constructor") to valueParameterList.parameters
             }
             is KtPrimaryConstructor -> {
-                if (element.parent.safeAs<KtClass>()?.isAnnotation() == true) return null
+                if ((element.parent as? KtClass)?.isAnnotation() == true) return null
                 val parameters = (element.valueParameterList ?: return null).parameters
 
                 // For primary constructors with all default values, a zero-arg constructor is generated anyway. If there's only one

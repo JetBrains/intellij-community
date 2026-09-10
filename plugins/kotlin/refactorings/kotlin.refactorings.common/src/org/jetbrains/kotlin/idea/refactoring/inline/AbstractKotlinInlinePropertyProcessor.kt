@@ -1,10 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.inline
 
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
@@ -35,7 +33,6 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class AbstractKotlinInlinePropertyProcessor(declaration: KtProperty,
                                                      reference: PsiReference?,
@@ -214,6 +211,6 @@ fun createReplacementStrategyForProperty(
 }
 
 private val PsiElement.writeOrReadWriteExpression: KtExpression?
-    get() = this.safeAs<KtExpression>()
+    get() = (this as? KtExpression)
         ?.getQualifiedExpressionForSelectorOrThis()
         ?.takeIf { it.readWriteAccess(useResolveForReadWrite = true) != ReferenceAccess.READ }

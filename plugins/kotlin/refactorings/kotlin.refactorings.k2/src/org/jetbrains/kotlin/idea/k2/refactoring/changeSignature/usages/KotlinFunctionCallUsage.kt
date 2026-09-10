@@ -92,7 +92,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 
 internal class KotlinFunctionCallUsage(
@@ -455,7 +454,7 @@ internal class KotlinFunctionCallUsage(
             (currentElement.parent as? KtQualifiedExpression)?.takeIf { it.selectorExpression == currentElement } ?: currentElement
         }?.let { newElement = it }
 
-        val newCallExpression = newElement.safeAs<KtExpression>()?.getPossiblyQualifiedCallExpression()
+        val newCallExpression = (newElement as? KtExpression)?.getPossiblyQualifiedCallExpression()
         if (newCallExpression != null && allowAnalysisFromWriteAction {
                 allowAnalysisOnEdt {
                     analyze(newCallExpression) {

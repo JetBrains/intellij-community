@@ -15,7 +15,6 @@ import com.intellij.modcommand.ModMoveFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.constructor
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -47,7 +46,6 @@ class MainKtsAnnotationUsageInPlainKtsInspection : KotlinApplicableInspectionBas
         return shortName in MAIN_KTS_ANNOTATION_SHORT_NAMES && !element.containingKtFile.isMainKtsScript()
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtAnnotationEntry): String? {
         val annotationShortName = element.shortName?.asString() ?: return null

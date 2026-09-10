@@ -30,7 +30,6 @@ import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.PrimitiveType
 import com.sun.jdi.Value
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -280,7 +279,6 @@ internal class K2DfaAssistProvider : DfaAssistProvider {
         return null
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun KtElement.getScope(): KtFunction? {
         var current = this
         while (true) {

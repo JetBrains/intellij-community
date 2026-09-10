@@ -17,7 +17,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.siblings
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
@@ -442,7 +441,6 @@ internal class SuppressedCancellationExceptionInspection :
      * If a catch clause is found handling a subtype of `CancellationException` (or itself),
      * we assume that the user handles `CancellationExceptions` correctly and return null.
      */
-    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun KtTryExpression.findClauseCatchingCancellation(): KtCatchClause? {
         val cancellationType = session.typeCreator.classType(CoroutinesIds.Stdlib.Cancellation.CancellationException.ID)
