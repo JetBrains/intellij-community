@@ -127,16 +127,12 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     when (event) {
       is BackendChangesViewEvent.InclusionChanged -> inclusionModel.applyBackendState(event.inclusionState)
       is BackendChangesViewEvent.RefreshRequested -> scheduleRefresh(event.withDelay, event.refreshCounter)
-      is BackendChangesViewEvent.SelectPath -> {
-        val selected = withContext(Dispatchers.UiWithModelAccess) {
-          selectPath(event.path)
-        }
+      is BackendChangesViewEvent.SelectPath -> withContext(Dispatchers.UiWithModelAccess) {
+        val selected = selectPath(event.path)
         if (!selected) {
-          withContext(Dispatchers.UiWithModelAccess) {
-            diffableSelectionHelper.updateSelection()
-            val selection = diffableSelectionHelper.diffableSelection.value
-            ChangesViewDiffApi.getInstance().notifySelectionUpdated(project.projectId(), selection)
-          }
+          diffableSelectionHelper.updateSelection()
+          val selection = diffableSelectionHelper.diffableSelection.value
+          ChangesViewDiffApi.getInstance().notifySelectionUpdated(project.projectId(), selection)
         }
       }
     }
