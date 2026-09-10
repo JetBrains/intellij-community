@@ -12,6 +12,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.platform.icons.IconDescriptor;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,6 +55,21 @@ public final class Presentation implements Cloneable {
   public static final @NonNls String PROP_MNEMONIC_INDEX = "mnemonicIndex";
   public static final @NonNls String PROP_DESCRIPTION = "description";
   public static final @NonNls String PROP_ICON = "icon";
+  /** value: {@link IconDescriptor} descriptor, see {@link #getIconDescriptor()} */
+  @ApiStatus.Experimental
+  public static final @NonNls String PROP_ICON_DESCRIPTOR = "iconDescriptor";
+
+  /**
+   * Returned by {@link #getIconDescriptor()} while the experimental icons pipeline is off ({@link ExperimentalIcons}).
+   * Means "must not be rendered": never pass it to the icons API, compare by identity.
+   */
+  @ApiStatus.Experimental
+  public static final IconDescriptor NO_ICON_DESCRIPTOR = new IconDescriptor() {
+    @Override
+    public String toString() {
+      return "NO_ICON_DESCRIPTOR";
+    }
+  };
   public static final @NonNls String PROP_DISABLED_ICON = "disabledIcon";
   public static final @NonNls String PROP_SELECTED_ICON = "selectedIcon";
   public static final @NonNls String PROP_HOVERED_ICON = "hoveredIcon";
@@ -81,6 +97,7 @@ public final class Presentation implements Cloneable {
   private @NotNull SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
 
   private @Nullable Supplier<? extends @Nullable Icon> icon;
+  private @Nullable Supplier<? extends @Nullable IconDescriptor> iconDescriptor;
   private Icon disabledIcon;
   private Icon hoveredIcon;
   private Icon selectedIcon;
@@ -288,10 +305,52 @@ public final class Presentation implements Cloneable {
     return icon;
   }
 
+  /**
+   * Icon descriptor for the experimental icons pipeline (see {@link ExperimentalIcons}).
+   *
+   * @return {@link #NO_ICON_DESCRIPTOR} when the pipeline is off, otherwise the descriptor or {@code null} when none is set
+   */
+  @ApiStatus.Experimental
+  public @Nullable IconDescriptor getIconDescriptor() {
+    if (!ExperimentalIcons.isEnabled()) {
+      return NO_ICON_DESCRIPTOR;
+    }
+    Supplier<? extends IconDescriptor> iconDescriptor = this.iconDescriptor;
+    return iconDescriptor == null ? null : iconDescriptor.get();
+  }
+
+  /** The raw supplier, not gated by {@link ExperimentalIcons}. */
+  @ApiStatus.Experimental
+  public @Nullable Supplier<? extends @Nullable IconDescriptor> getIconDescriptorSupplier() {
+    return iconDescriptor;
+  }
+
+  @ApiStatus.Experimental
+  public void setIconDescriptor(@Nullable IconDescriptor iconDescriptor) {
+    setIconDescriptorSupplier(iconDescriptor == null ? null : () -> iconDescriptor);
+  }
+
+  @ApiStatus.Experimental
+  public void setIconDescriptorSupplier(@Nullable Supplier<? extends @Nullable IconDescriptor> iconDescriptor) {
+    if (myListeners.isEmpty() || !ExperimentalIcons.isEnabled()) {
+      this.iconDescriptor = iconDescriptor;
+      return;
+    }
+
+    IconDescriptor oldValue = this.iconDescriptor == null ? null : this.iconDescriptor.get();
+    this.iconDescriptor = iconDescriptor;
+    IconDescriptor newValue = iconDescriptor == null ? null : iconDescriptor.get();
+    if (Objects.equals(oldValue, newValue)) return;
+    fireObjectPropertyChange(PROP_ICON_DESCRIPTOR, oldValue, newValue);
+  }
+
   @ApiStatus.Internal // do not expose
   public void copyUnsetTemplateProperties(@NotNull Presentation other) {
     if (icon == null) {
       icon = other.icon;
+    }
+    if (iconDescriptor == null) {
+      iconDescriptor = other.iconDescriptor;
     }
     if (Strings.isEmpty(getText()) && Strings.isNotEmpty(other.getText())) {
       textWithMnemonicSupplier = other.textWithMnemonicSupplier;
@@ -655,6 +714,7 @@ public final class Presentation implements Cloneable {
     setDescription(presentation.descriptionSupplier);
 
     setIconSupplier(presentation.icon);
+    setIconDescriptorSupplier(presentation.iconDescriptor);
 
     setSelectedIcon(presentation.getSelectedIcon());
     setDisabledIcon(presentation.getDisabledIcon());
