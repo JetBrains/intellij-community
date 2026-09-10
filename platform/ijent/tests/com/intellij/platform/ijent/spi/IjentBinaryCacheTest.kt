@@ -11,10 +11,13 @@ import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.testFramework.common.timeoutRunBlocking
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -36,6 +39,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readBytes
 import kotlin.io.path.writeBytes
 import kotlin.io.path.writeText
+import kotlin.time.Duration.Companion.seconds
 
 @Timeout(30)
 @EnabledOnOs(OS.LINUX, OS.MAC)
@@ -104,29 +108,120 @@ class IjentBinaryCacheTest {
   }
 
   @Test
-  fun `old cache entries are preserved and reused`(): Unit = timeoutRunBlocking {
+  fun `old cache entries are reused and marked as recently used`(): Unit = checkOldEntries(powerShell = false)
+
+  @Test
+  @EnabledIfSystemProperty(named = "ijent.test.powershell.path", matches = ".+")
+  fun `PowerShell marks old cache entries as recently used`(): Unit = checkOldEntries(powerShell = true)
+
+  private fun checkOldEntries(powerShell: Boolean): Unit = timeoutRunBlocking(30.seconds) {
     val oldBinary = binary(1)
     val currentBinary = binary(2)
-    deploy(oldBinary)
-    deploy(currentBinary)
-    val oldEntry = cached(oldBinary)
-    val currentEntry = cached(currentBinary)
-    val unrelated = cacheDirectory().resolve("keep-me").also { it.writeText("unrelated") }
-    val abandonedUpload = cacheDirectory().resolve(".upload-abandoned").also { it.writeText("incomplete") }
+    deploy(oldBinary, powerShell = powerShell)
+    deploy(currentBinary, powerShell = powerShell)
+    val oldEntry = cached(oldBinary, powerShell)
+    val currentEntry = cached(currentBinary, powerShell)
     val previousUse = FileTime.from(Instant.now().minus(365, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS))
-    for (entry in listOf(oldEntry, currentEntry, unrelated, abandonedUpload)) {
+    for (entry in listOf(oldEntry, currentEntry)) {
       Files.setLastModifiedTime(entry, previousUse)
     }
 
-    val reused = deploy(currentBinary)
+    val reused = deploy(currentBinary, powerShell = powerShell)
 
     (reused.bytesSent < currentBinary.readBytes().size) shouldBe true
     oldEntry.exists() shouldBe true
-    Files.getLastModifiedTime(currentEntry) shouldBe previousUse
-    unrelated.exists() shouldBe true
-    abandonedUpload.exists() shouldBe true
-    (deploy(oldBinary).bytesSent < oldBinary.readBytes().size) shouldBe true
     Files.getLastModifiedTime(oldEntry) shouldBe previousUse
+    (Files.getLastModifiedTime(currentEntry) > previousUse) shouldBe true
+    (deploy(oldBinary, powerShell = powerShell).bytesSent < oldBinary.readBytes().size) shouldBe true
+    (Files.getLastModifiedTime(oldEntry) > previousUse) shouldBe true
+  }
+
+  @Test
+  fun `an upload evicts the least recently used binary`(): Unit = checkEviction(powerShell = false)
+
+  @Test
+  @EnabledIfSystemProperty(named = "ijent.test.powershell.path", matches = ".+")
+  fun `a PowerShell upload evicts the least recently used binary`(): Unit = checkEviction(powerShell = true)
+
+  @Test
+  fun `cleanup ignores forced ls colors`(): Unit = checkEviction(
+    powerShell = false,
+    environment = mapOf("CLICOLOR" to "1", "CLICOLOR_FORCE" to "1", "TERM" to "xterm-256color"),
+  )
+
+  private fun checkEviction(powerShell: Boolean, environment: Map<String, String> = emptyMap()): Unit = timeoutRunBlocking(30.seconds) {
+    val binaries = (1..6).map { binary(it) }
+    deploy(binaries[1], powerShell = powerShell) { sessionCopy ->
+      binaries.take(5).forEachIndexed { index, binary ->
+        if (index != 1) deploy(binary, powerShell = powerShell)
+        Files.setLastModifiedTime(cached(binary, powerShell), FileTime.from(Instant.now().minus(10L - index, ChronoUnit.DAYS)))
+      }
+      val reused = deploy(binaries.first(), powerShell = powerShell)
+      (reused.bytesSent < binaries.first().readBytes().size) shouldBe true
+
+      val uploaded = deploy(binaries.last(), powerShell = powerShell, environment = environment)
+
+      uploaded.commandExchanges shouldBe reused.commandExchanges
+      binaries.forEachIndexed { index, binary -> cached(binary, powerShell).exists() shouldBe (index != 1) }
+      Files.list(cacheDirectory(powerShell)).use { it.count() } shouldBe 5L
+      sessionCopy.readBytes().toList() shouldBe binaries[1].readBytes().toList()
+    }
+  }
+
+  @Test
+  fun `cleanup preserves unrelated files directories and links`(): Unit = checkCleanupScope(powerShell = false)
+
+  @Test
+  @EnabledIfSystemProperty(named = "ijent.test.powershell.path", matches = ".+")
+  fun `PowerShell cleanup preserves unrelated files directories and links`(): Unit = checkCleanupScope(powerShell = true)
+
+  private fun checkCleanupScope(powerShell: Boolean): Unit = timeoutRunBlocking(30.seconds) {
+    val first = binary(1)
+    deploy(first, powerShell = powerShell)
+    val directory = cacheDirectory(powerShell)
+    val suffix = if (powerShell) ".exe" else ""
+    val unrelated = listOf("keep-me", ".upload-abandoned", "ijent-${"g".repeat(64)}$suffix", "ijent-${"a".repeat(65)}$suffix")
+      .map { name -> directory.resolve(name).also { it.writeText("unrelated") } }
+    val nested = directory.resolve("ijent-${"0".repeat(64)}$suffix").createDirectories().resolve("keep-me")
+    nested.writeText("nested")
+    val target = root.resolve("link-target").also { it.writeText("target") }
+    val link = directory.resolve("ijent-${"1".repeat(64)}$suffix")
+    Files.createSymbolicLink(link, target)
+    val previousUse = FileTime.from(Instant.now().minus(365, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS))
+    for (entry in unrelated + listOf(nested.parent, target, cached(first, powerShell))) {
+      Files.setLastModifiedTime(entry, previousUse)
+    }
+
+    for (seed in 2..6) {
+      deploy(binary(seed), powerShell = powerShell)
+    }
+
+    cached(first, powerShell).exists() shouldBe false
+    unrelated.forEach {
+      it.readBytes().toList() shouldBe "unrelated".toByteArray().toList()
+      Files.getLastModifiedTime(it) shouldBe previousUse
+    }
+    nested.readBytes().toList() shouldBe "nested".toByteArray().toList()
+    Files.isSymbolicLink(link) shouldBe true
+    target.readBytes().toList() shouldBe "target".toByteArray().toList()
+    Files.getLastModifiedTime(target) shouldBe previousUse
+  }
+
+  @Test
+  fun `LRU failures do not prevent reuse or publication`(): Unit = timeoutRunBlocking {
+    val first = binary(1)
+    deploy(first)
+    val reused = deploy(first, failingCacheCommand = "touch")
+    (reused.bytesSent < first.readBytes().size) shouldBe true
+    for (seed in 2..5) {
+      deploy(binary(seed))
+    }
+    val last = binary(6)
+
+    deploy(last, failingCacheCommand = "ls").content shouldBe last.readBytes().toList()
+
+    Files.list(cacheDirectory()).use { it.count() } shouldBe 6L
+    (deploy(last).bytesSent < last.readBytes().size) shouldBe true
   }
 
   @Test
@@ -141,7 +236,7 @@ class IjentBinaryCacheTest {
   fun `a cache publication failure still completes the upload`(): Unit = timeoutRunBlocking {
     val binary = binary(1)
 
-    deploy(binary, failCachePublication = true).content shouldBe binary.readBytes().toList()
+    deploy(binary, failingCacheCommand = "mv").content shouldBe binary.readBytes().toList()
     cached(binary).exists() shouldBe false
     Files.list(cacheDirectory()).use { it.count() } shouldBe 0L
   }
@@ -168,6 +263,35 @@ class IjentBinaryCacheTest {
     (deploy(binary).bytesSent < binary.readBytes().size) shouldBe true
   }
 
+  @Test
+  fun `concurrent eviction preserves session copies`(): Unit = checkConcurrentEviction(powerShell = false)
+
+  @Test
+  @EnabledIfSystemProperty(named = "ijent.test.powershell.path", matches = ".+")
+  fun `concurrent PowerShell eviction preserves session copies`(): Unit = checkConcurrentEviction(powerShell = true)
+
+  private fun checkConcurrentEviction(powerShell: Boolean): Unit = timeoutRunBlocking(30.seconds) {
+    val binaries = (1..8).map { binary(it) }
+    val ready = Channel<Unit>(binaries.size)
+    val pruned = CompletableDeferred<Unit>()
+    val deployments = binaries.map { binary ->
+      async {
+        deploy(binary, powerShell = powerShell) { sessionCopy ->
+          ready.send(Unit)
+          pruned.await()
+          sessionCopy.readBytes().toList() shouldBe binary.readBytes().toList()
+        }
+      }
+    }
+    repeat(binaries.size) { ready.receive() }
+    val last = binary(9)
+    deploy(last, powerShell = powerShell)
+    Files.list(cacheDirectory(powerShell)).use { (it.count() <= 5) shouldBe true }
+    (deploy(last, powerShell = powerShell).bytesSent < last.readBytes().size) shouldBe true
+    pruned.complete(Unit)
+    deployments.awaitAll()
+  }
+
   private fun binary(seed: Int): Path = root.resolve("local-$seed").also {
     it.writeBytes(ByteArray(256 * 1024) { offset -> (offset + seed).toByte() })
   }
@@ -184,16 +308,18 @@ class IjentBinaryCacheTest {
 
   private suspend fun CoroutineScope.deploy(
     binary: Path,
-    failCachePublication: Boolean = false,
+    failingCacheCommand: String? = null,
     powerShell: Boolean = false,
+    environment: Map<String, String> = emptyMap(),
+    afterUpload: suspend CoroutineScope.(Path) -> Unit = {},
   ): Deployment {
     val home = home()
     val temporaryDirectory = root.resolve("tmp").createDirectories()
-    val commandDirectory = if (failCachePublication) {
-      root.resolve("commands").createDirectories().also { directory ->
-        val mv = directory.resolve("mv")
-        mv.writeText("#!/bin/sh\necho 'Test cache publication failure' >&2\nexit 1\n")
-        Files.setPosixFilePermissions(mv, PosixFilePermissions.fromString("rwx------"))
+    val commandDirectory = if (failingCacheCommand != null) {
+      root.resolve("commands-$failingCacheCommand").createDirectories().also { directory ->
+        val command = directory.resolve(failingCacheCommand)
+        command.writeText("#!/bin/sh\necho 'Test cache command failure' >&2\nexit 1\n")
+        Files.setPosixFilePermissions(command, PosixFilePermissions.fromString("rwx------"))
       }
     }
     else null
@@ -220,6 +346,7 @@ class IjentBinaryCacheTest {
             if (powerShell) listOf(System.getProperty("ijent.test.powershell.path"), "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", "-")
             else listOf("/bin/sh")
           ProcessBuilder(command).apply {
+            environment().putAll(environment)
             environment()["HOME"] = home.toString()
             environment()["TMPDIR"] = temporaryDirectory.toString()
             if (powerShell) {
@@ -272,6 +399,7 @@ class IjentBinaryCacheTest {
     try {
       val path = strategy.upload()
       strategy.processesCreated shouldBe 1
+      coroutineScope { afterUpload(path) }
       return Deployment(path, path.readBytes().toList(), strategy.bytesSent, strategy.commandExchanges)
     }
     finally {

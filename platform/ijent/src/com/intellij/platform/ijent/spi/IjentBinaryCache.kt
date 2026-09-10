@@ -10,12 +10,14 @@ import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.HexFormat
 
-/** The cache stores exact copies of the selected binary. Each session runs its own temporary copy. */
+/** The cache keeps up to five recently used binaries on a best-effort basis. Each session runs its own temporary copy. */
 internal class IjentBinaryCache(val hash: String) {
   internal data class PosixCommands(
     val mkdir: String,
     val mv: String,
     val checksum: String,
+    val touch: String,
+    val ls: String,
   )
 
   fun posixRestore(context: DeployingContext): String = context.run {
@@ -29,6 +31,7 @@ internal class IjentBinaryCache(val hash: String) {
           CACHED_BINARY="$CACHE_DIR/ijent-$$hash";
           if [ -f "$CACHED_BINARY" ] && [ ! -L "$CACHED_BINARY" ] && $$cp "$CACHED_BINARY" "$BINARY" &&
              [ "$($$checksum "$BINARY" | $$cut -d ' ' -f1)" = '$$hash' ] && $$chmod 500 "$BINARY"; then
+            $$touch -cm "$CACHED_BINARY" 1>&2 || :;
             echo "$BINARY";
           else
             $$rm -f "$BINARY";
@@ -52,7 +55,31 @@ internal class IjentBinaryCache(val hash: String) {
           $$cp "$BINARY" "$CACHE_UPLOAD" &&
           [ "$($$checksum "$CACHE_UPLOAD" | $$cut -d ' ' -f1)" = '$$hash' ] &&
           $$chmod 500 "$CACHE_UPLOAD" &&
-          $$mv -f "$CACHE_UPLOAD" "$CACHED_BINARY"
+          $$mv -f "$CACHE_UPLOAD" "$CACHED_BINARY" &&
+          (
+            cd "$CACHE_DIR" || exit;
+            set --;
+            for CACHE_ENTRY in ijent-*; do
+              CACHE_HASH=${CACHE_ENTRY#ijent-};
+              case "$CACHE_HASH" in ''|*[!0123456789abcdef]*) continue;; esac;
+              if [ "${#CACHE_HASH}" -eq 64 ] && [ -f "$CACHE_ENTRY" ] && [ ! -L "$CACHE_ENTRY" ]; then
+                set -- "$@" "$CACHE_ENTRY";
+              fi;
+            done;
+            if [ "$#" -gt $$MAX_ENTRIES ]; then
+              CACHE_ENTRIES=$(unset CLICOLOR CLICOLOR_FORCE; LC_ALL=C $$ls -1td "$@") || exit;
+              CACHE_REMAINING=$${MAX_ENTRIES - 1};
+              printf '%s\n' "$CACHE_ENTRIES" | while IFS= read -r CACHE_ENTRY; do
+                if [ "$CACHE_ENTRY" = 'ijent-$$hash' ]; then
+                  continue;
+                elif [ "$CACHE_REMAINING" -gt 0 ]; then
+                  CACHE_REMAINING=$((CACHE_REMAINING - 1));
+                elif [ -f "$CACHE_ENTRY" ] && [ ! -L "$CACHE_ENTRY" ]; then
+                  $$rm -f "$CACHE_ENTRY" || :;
+                fi;
+              done;
+            fi;
+          )
         ) 1>&2 || :;
       fi
       """.trimIndent()
@@ -71,6 +98,7 @@ internal class IjentBinaryCache(val hash: String) {
           [IO.File]::Copy($ijentCachedBinary, $ijentBinary, $true);
           if ((Get-FileHash -LiteralPath $ijentBinary -Algorithm SHA256).Hash -eq '$$hash') {
             Write-Output $ijentBinary;
+            [IO.File]::SetLastWriteTimeUtc($ijentCachedBinary, [DateTime]::UtcNow);
           }
         }
       }
@@ -84,6 +112,13 @@ internal class IjentBinaryCache(val hash: String) {
         [IO.File]::Copy($ijentBinary, $ijentCacheUpload);
         if ((Get-FileHash -LiteralPath $ijentCacheUpload -Algorithm SHA256).Hash -eq '$$hash') {
           Move-Item -LiteralPath $ijentCacheUpload -Destination $ijentCachedBinary -Force;
+          [IO.File]::SetLastWriteTimeUtc($ijentCachedBinary, [DateTime]::UtcNow);
+          Get-ChildItem -LiteralPath $ijentCacheDir -File | Where-Object {
+            $_.Name -cmatch '\Aijent-[0-9a-f]{64}\.exe\z' -and $_.Name -cne 'ijent-$$hash.exe' -and
+            ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0
+          } | Sort-Object -Property LastWriteTimeUtc, Name -Descending | Select-Object -Skip $${MAX_ENTRIES - 1} | ForEach-Object {
+            try { [IO.File]::Delete($_.FullName) } catch { [Console]::Error.WriteLine($_.Exception.Message) }
+          };
         }
       } catch { [Console]::Error.WriteLine($_.Exception.Message) }
       finally { Remove-Item -LiteralPath $ijentCacheUpload -Force -ErrorAction SilentlyContinue }
@@ -91,6 +126,8 @@ internal class IjentBinaryCache(val hash: String) {
   """.trimIndent().replace('\n', ' ')
 
   companion object {
+    private const val MAX_ENTRIES = 5
+
     suspend fun forBinary(binary: Path): IjentBinaryCache {
       val hash = withContext(Dispatchers.IO) {
         val digest = MessageDigest.getInstance("SHA-256")

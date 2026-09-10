@@ -466,14 +466,23 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
 
     @Test
     fun `deployment does not require cache utilities`(): Unit = timeoutRunBlocking {
-      createDeployingContext { it - setOf("busybox", "mkdir", "mv", "sha256sum", "shasum") }
+      createDeployingContext { it - setOf("busybox", "mkdir", "mv", "sha256sum", "shasum", "touch", "ls") }
         .cacheCommands shouldBe null
+    }
+
+    @Test
+    fun `the cache requires LRU utilities`(): Unit = timeoutRunBlocking {
+      for (command in listOf("touch", "ls")) {
+        createDeployingContext { it - setOf("busybox", command) }.cacheCommands shouldBe null
+      }
     }
 
     private fun cacheCommands(prefix: String = ""): IjentBinaryCache.PosixCommands = IjentBinaryCache.PosixCommands(
       mkdir = "${prefix}mkdir",
       mv = "${prefix}mv",
       checksum = "${prefix}sha256sum",
+      touch = "${prefix}touch",
+      ls = "${prefix}ls",
     )
   }
 }

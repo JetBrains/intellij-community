@@ -640,6 +640,8 @@ internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend 
     "mv",
     "sha256sum",
     "shasum",
+    "touch",
+    "ls",
   )
 
   val outputOfWhich = mutableListOf<String>()
@@ -683,6 +685,8 @@ internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend 
         mkdir = getOptionalCommandPath("mkdir") ?: return@run null,
         mv = getOptionalCommandPath("mv") ?: return@run null,
         checksum = getOptionalCommandPath("sha256sum") ?: getOptionalCommandPath("shasum")?.let { "$it -a 256" } ?: return@run null,
+        touch = getOptionalCommandPath("touch") ?: return@run null,
+        ls = getOptionalCommandPath("ls") ?: return@run null,
       )
     },
   )
