@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.inspections.interpreter
+package com.jetbrains.python.sdk.inspections
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
@@ -18,8 +18,6 @@ import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.inspections.InterpreterFixExecutor
-import com.jetbrains.python.inspections.PyAsyncFileInspectionRunner
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.psi.PyFile

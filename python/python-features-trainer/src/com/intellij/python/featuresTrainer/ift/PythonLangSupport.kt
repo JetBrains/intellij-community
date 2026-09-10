@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.emit
-import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
+import com.jetbrains.python.sdk.inspections.InterpreterSettingsQuickFix
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.pythonSdk

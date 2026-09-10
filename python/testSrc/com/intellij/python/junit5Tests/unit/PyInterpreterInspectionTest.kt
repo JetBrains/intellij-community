@@ -15,7 +15,7 @@ import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
-import com.jetbrains.python.inspections.interpreter.PyInterpreterNotificationProvider
+import com.jetbrains.python.sdk.inspections.PyInterpreterNotificationProvider
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.pythonSdk
 import org.junit.jupiter.api.Assertions.assertNotNull

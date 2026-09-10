@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.inspections.interpreter
+package com.jetbrains.python.sdk.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -45,7 +45,6 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.impl.getRootModuleOrNull
-import com.jetbrains.python.inspections.InspectionRunnerResult
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
@@ -81,7 +80,7 @@ interface BusyGuardExecutor {
 /**
  * Provides an [ActionLink] for the "no Python interpreter" editor notification banner.
  *
- * Implementations are discovered asynchronously by [PyAsyncFileInspectionRunner][com.jetbrains.python.inspections.PyAsyncFileInspectionRunner]
+ * Implementations are discovered asynchronously by [PyAsyncFileInspectionRunner]
  * and rendered inside [PyInterpreterNotificationProvider].
  * Long-running work (SDK creation, tool installation) must be submitted through the supplied [BusyGuardExecutor]
  * so that all notification panels share the same busy state.
@@ -102,6 +101,7 @@ interface InterpreterFix {
   ): ActionLink
 }
 
+@ApiStatus.Internal
 class InterpreterSettingsQuickFix(private val myModule: Module?) : LocalQuickFix {
   override fun getFamilyName(): String = if (PlatformUtils.isPyCharm())
     PyBundle.message("python.sdk.interpreter.settings")

@@ -45,7 +45,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention;
-import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix;
+import com.jetbrains.python.sdk.inspections.InterpreterSettingsQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;

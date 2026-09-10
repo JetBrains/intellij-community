@@ -31,7 +31,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.jetbrains.python.configuration.observeSdkConfigurationInProgress
-import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
+import com.jetbrains.python.sdk.inspections.InterpreterSettingsQuickFix
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.codeCouldProbablyBeRunWithConfig
 import kotlinx.coroutines.Dispatchers
