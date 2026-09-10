@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -7,7 +6,6 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
@@ -15,7 +13,6 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -52,9 +49,6 @@ public final class ReplaceAbstractClassInstanceByMapIntention extends GrPsiUpdat
     final GrAnonymousClassDefinition anonymous = (GrAnonymousClassDefinition)ref.getParent();
     final GrNewExpression newExpr = (GrNewExpression)anonymous.getParent();
 
-    final PsiElement resolved = ref.resolve();
-    assert resolved instanceof PsiClass;// && ((PsiClass)resolved).isInterface();
-
     GrTypeDefinitionBody body = anonymous.getBody();
     assert body != null;
 
@@ -63,7 +57,6 @@ public final class ReplaceAbstractClassInstanceByMapIntention extends GrPsiUpdat
       methods.add(new Pair<>(method, method.getBlock()));
     }
 
-    final PsiClass iface = (PsiClass)resolved;
     final Collection<CandidateInfo> collection = OverrideImplementExploreUtil.getMethodsToOverrideImplement(anonymous, true);
     for (CandidateInfo info : collection) {
       methods.add(new Pair<>((PsiMethod)info.getElement(), null));
@@ -71,15 +64,14 @@ public final class ReplaceAbstractClassInstanceByMapIntention extends GrPsiUpdat
 
     StringBuilder buffer = new StringBuilder();
     if (methods.size() == 1) {
-      final Pair<PsiMethod, GrOpenBlock> pair = methods.get(0);
+      final Pair<PsiMethod, GrOpenBlock> pair = methods.getFirst();
       appendClosureTextByMethod(pair.getFirst(), buffer, pair.getSecond(), newExpr);
       if (!GroovyConfigUtils.getInstance().isVersionAtLeast(psiElement, GroovyConfigUtils.GROOVY2_2)) {
-        buffer.append(" as ").append(iface.getQualifiedName());
+        buffer.append(" as ").append(ref.getText());
       }
     }
     else {
-      buffer.append("[");
-      buffer.append("\n");
+      buffer.append("[\n");
       for (Pair<PsiMethod, GrOpenBlock> pair : methods) {
         final PsiMethod method = pair.getFirst();
         final GrOpenBlock block = pair.getSecond();
@@ -91,23 +83,20 @@ public final class ReplaceAbstractClassInstanceByMapIntention extends GrPsiUpdat
         buffer.delete(buffer.length() - 2, buffer.length());
         buffer.append('\n');
       }
-      buffer.append("]");
-      buffer.append(" as ").append(iface.getQualifiedName());
+      buffer.append("] as ").append(ref.getText());
     }
 
     createAndAdjustNewExpression(context.project(), newExpr, buffer);
   }
 
-  private static void createAndAdjustNewExpression(final Project project,
-                                                   final GrNewExpression newExpression,
-                                                   final StringBuilder buffer) throws IncorrectOperationException {
+  private static void createAndAdjustNewExpression(Project project, GrNewExpression newExpression, StringBuilder buffer) {
     final GrExpression expr = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer.toString());
     final GrExpression safeTypeExpr = newExpression.replaceWithExpression(expr, false);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(safeTypeExpr);
   }
 
-  private static void appendClosureTextByMethod(final PsiMethod method,
-                                                final StringBuilder buffer,
+  private static void appendClosureTextByMethod(PsiMethod method,
+                                                StringBuilder buffer,
                                                 @Nullable GrOpenBlock block,
                                                 GroovyPsiElement context) {
     final PsiParameterList list = method.getParameterList();
@@ -125,8 +114,7 @@ public final class ReplaceAbstractClassInstanceByMapIntention extends GrPsiUpdat
       final PsiParameter param = parameters[i];
       final PsiType type = param.getType();
       buffer.append(type.getCanonicalText()).append(" ");
-      String name = createName(generatedNames, param, type, context);
-      buffer.append(name);
+      buffer.append(createName(generatedNames, param, type, context));
     }
     if (parameters.length > 0) {
       buffer.append(" ->");
@@ -144,7 +132,7 @@ public final class ReplaceAbstractClassInstanceByMapIntention extends GrPsiUpdat
     buffer.append(" }");
   }
 
-  private static String createName(final Set<String> generatedNames, final PsiParameter param, final PsiType type, GroovyPsiElement context) {
+  private static String createName(Set<String> generatedNames, PsiParameter param, PsiType type, GroovyPsiElement context) {
     String name = param.getName();
     generatedNames.add(name);
     return name;
