@@ -184,8 +184,8 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
  * }
  *
  * // With module alias:
- * fun xml() = moduleSet("xml", alias = "com.intellij.modules.xml") {
- *   embeddedModule("intellij.xml.dom")
+ * fun xmlWithoutStructureView() = moduleSet("xml.without.structureView", alias = "com.intellij.modules.xml") {
+ *   module("intellij.xml.dom")
  *   // ...
  * }
  *

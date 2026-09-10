@@ -26,6 +26,7 @@ jvm_library(
         "//platform/lang-impl:lang-tests",
         "//platform/core-ui",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//xml/plugin",
     ],
 )
 
@@ -55,6 +56,7 @@ jvm_library(
         # do not sort,
         ":tests",
         "//platform/ide-core:ide-core_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

@@ -113,6 +113,7 @@ jvm_library(
         "//platform/todo/plugin",
         "//platform/testRunner/plugin",
         "//plugins/groovy-scripting",
+        "//xml/plugin",
     ],
 )
 
@@ -139,6 +140,7 @@ jvm_library(
         "//platform/todo/plugin:plugin_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
         "//plugins/groovy-scripting:groovy-scripting_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

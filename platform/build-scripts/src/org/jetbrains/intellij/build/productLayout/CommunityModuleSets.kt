@@ -216,39 +216,8 @@ object CommunityModuleSets {
   }
 
   /**
-   * XML support modules.
-   */
-  fun xml(): ModuleSet = moduleSet("xml", alias = "com.intellij.modules.xml") {
-    module("intellij.xml.dom")
-    module("intellij.xml.dom.impl")
-    module("intellij.xml.structureView")
-    module("intellij.xml.structureView.impl")
-    module("intellij.xml.psi")
-    module("intellij.xml.psi.impl")
-    module("intellij.xml.analysis")
-    module("intellij.xml.emmet")
-    module("intellij.xml.emmet.shared")
-    module("intellij.xml.emmet.backend")
-    module("intellij.xml.emmet.frontend")
-    module("intellij.xml.ui.common")
-    module("intellij.xml.parser")
-    module("intellij.xml.syntax")
-    module("intellij.relaxng")
-    // kept embedded (i.e. loaded by the core classloader): `AdvancedEnhancer.getDefaultClassLoader()` defines each
-    // generated DOM proxy in the `PluginClassLoader` of one of the proxied interfaces, so `net.sf.cglib.proxy.Factory`
-    // has to be resolvable from any plugin classloader - a set the layout cannot enumerate.
-    embeddedModule("intellij.libraries.cglib")
-    module("intellij.libraries.isorelax")
-    module("intellij.libraries.jing")
-    module("intellij.libraries.xerces")
-    module("intellij.xml.impl")
-    module("intellij.xml.analysis.impl")
-    module("intellij.xml.langInjection")
-    module("intellij.xml.langInjection.xpath")
-  }
-
-  /**
    * XML support modules without Structure View UI.
+   * The other products bundle the `intellij.xml.plugin` wrapper plugin instead.
    */
   fun xmlWithoutStructureView(): ModuleSet = moduleSet("xml.without.structureView", alias = "com.intellij.modules.xml") {
     module("intellij.xml.dom")
@@ -271,6 +240,7 @@ object CommunityModuleSets {
     module("intellij.libraries.isorelax")
     module("intellij.libraries.jing")
     module("intellij.libraries.xerces")
+    module("intellij.libraries.xml.resolver")
     module("intellij.xml.impl")
     module("intellij.xml.analysis.impl")
     module("intellij.xml.langInjection")
@@ -387,7 +357,7 @@ object CommunityModuleSets {
   }
 
   /**
-   * IDE common modules (includes essential, compose, vcs, xml, duplicates).
+   * IDE common modules (includes essential, compose, vcs, duplicates).
    */
   fun ideCommon(): ModuleSet = moduleSet("ide.common") {
     // Include essential first (which includes coreLang from CoreModuleSets)
@@ -436,7 +406,11 @@ object CommunityModuleSets {
     embeddedModule("intellij.platform.vcs")
     moduleSet(vcsShared())
     moduleSet(lsp())
-    moduleSet(xml())
+    // the other xml modules live in the `intellij.xml.plugin` wrapper plugin; cglib is kept embedded
+    // (i.e. loaded by the core classloader): `AdvancedEnhancer.getDefaultClassLoader()` defines each
+    // generated DOM proxy in the `PluginClassLoader` of one of the proxied interfaces, so `net.sf.cglib.proxy.Factory`
+    // has to be resolvable from any plugin classloader - a set the layout cannot enumerate.
+    embeddedModule("intellij.libraries.cglib")
     moduleSet(duplicates())
     embeddedModule("intellij.libraries.batik")
 

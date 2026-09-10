@@ -988,13 +988,13 @@
       Markdown.Export
       Markdown.ConfigurePandoc
     ToolsXmlGroup
+      ConvertSchemaAction
       ToolsXmlGroupEx
         ValidateXml
         GenerateDTD
         XSD2Document
         Document2XSD
         <separator>
-      ConvertSchemaAction
       AddAntBuildFile
     ExternalToolsGroup
     ShowPluginLoadingState
@@ -2239,10 +2239,10 @@
   DelegateMethods
   GenerateFromTestCreatorsGroup
   Markdown.InsertGroup
+  org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction
   GenerateCopyright
   HtmlAddTableColumnBefore
   HtmlAddTableColumnAfter
-  org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction
   JavaGenerateGroup2
   KotlinMavenGenerate
   GenerateExternalization
@@ -2601,9 +2601,9 @@
   NewWebDevelopment
   NewMicroservices
   NewFromTemplate
-  CreateEditorConfigFile
   DevkitNewActions
   CreateResourceBundle
+  CreateEditorConfigFile
   Markdown.NewFile
   NewXmlDescriptor
   DevkitObsoleteNewActions
@@ -2738,11 +2738,11 @@
   ExternalToolsGroup
   <separator>
   ProjectViewPopupMenuSettingsGroup
+  XmlGenerateToolsGroup
   UpdateCopyright
-  Images.SetBackgroundImage
   DissociateResourceBundleAction
   CombinePropertiesFilesAction
-  XmlGenerateToolsGroup
+  Images.SetBackgroundImage
   GitLab.Create.Snippet
   Github.Create.Gist
   Mermaid.ExportDiagram

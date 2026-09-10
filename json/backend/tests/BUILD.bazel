@@ -26,6 +26,7 @@ jvm_library(
         # do not sort,
         "//libraries/kotlinx/coroutines/core",
         "//platform/ide-core-impl",
+        "//xml/plugin",
     ],
 )
 
@@ -51,6 +52,7 @@ jvm_library(
         ":tests",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

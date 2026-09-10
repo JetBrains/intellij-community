@@ -186,6 +186,7 @@ jvm_library(
         "//platform/core-ui",
         "//platform/workspace/storage",
         "//platform/forms_rt:java-guiForms-rt",
+        "//xml/plugin",
     ],
 )
 
@@ -217,6 +218,7 @@ jvm_library(
         "//platform/observable:observable_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

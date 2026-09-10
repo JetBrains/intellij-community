@@ -144,6 +144,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.images.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -167,6 +168,7 @@ jvm_library(
         ":images-tests",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

@@ -71,7 +71,6 @@ exports_files(
         "generated/META-INF/intellij.moduleSets.vcs.shared.xml",
         "generated/META-INF/intellij.moduleSets.vcs.xml",
         "generated/META-INF/intellij.moduleSets.xml.without.structureView.xml",
-        "generated/META-INF/intellij.moduleSets.xml.xml",
         "src/DefaultColorSchemesManager.xml",
         "src/PageSizes.xml",
         "src/defaultFileTypes.xml",

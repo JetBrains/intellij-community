@@ -15837,6 +15837,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "xml-resolver/xml-resolver-1.2.jar_copy",
+    src = "@xml-resolver-xml-resolver-1_2_http//file",
+    out = "xml-resolver/xml-resolver-1.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-xml-resolver-xml-resolver",
+    jar = "@xml-resolver-xml-resolver-1_2_http//file",
+    source_jar = "@xml-resolver-xml-resolver-1_2-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.apache.ws.xmlrpc/xmlrpc-2.0.1.jar_copy",
     src = "@org_apache_ws_xmlrpc-xmlrpc-2_0_1_http//file",
     out = "org.apache.ws.xmlrpc/xmlrpc-2.0.1.jar",
@@ -21700,20 +21715,5 @@ java_library(
         ":com_squareup_okio-okio-jvm-3_9_0_http_import",
         ":com_apollographql_apollo-apollo-annotations-jvm-4_0_0_http_import",
     ],
-)
-
-copy_file(
-    name = "xml-resolver/xml-resolver-1.2.jar_copy",
-    src = "@xml-resolver-xml-resolver-1_2_http//file",
-    out = "xml-resolver/xml-resolver-1.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "xml-resolver",
-    jar = "@xml-resolver-xml-resolver-1_2_http//file",
-    source_jar = "@xml-resolver-xml-resolver-1_2-sources_http//file",
-    visibility = ["//visibility:public"],
 )
 ### auto-generated section `maven libs` end

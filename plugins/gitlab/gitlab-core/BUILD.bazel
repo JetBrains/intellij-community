@@ -227,7 +227,11 @@ jvm_library(
     ),
     module_name = "intellij.vcs.gitlab.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/lucene.common"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/lucene.common",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -261,6 +265,7 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/observable:observable_test_lib",
         "//libraries/lucene.common:lucene.common_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

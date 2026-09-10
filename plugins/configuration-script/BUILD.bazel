@@ -215,6 +215,7 @@ jvm_library(
     ),
     module_name = "intellij.configurationScript.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -237,6 +238,7 @@ jvm_library(
         # do not sort,
         ":configurationScript-tests",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

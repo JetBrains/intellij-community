@@ -121,6 +121,7 @@ jvm_library(
     ),
     module_name = "intellij.jsonpath.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -143,6 +144,7 @@ jvm_library(
         # do not sort,
         ":jsonpath-tests",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

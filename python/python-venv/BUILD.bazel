@@ -118,6 +118,7 @@ jvm_library(
     ),
     module_name = "intellij.python.venv.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -145,6 +146,7 @@ jvm_library(
         # do not sort,
         ":venv-tests",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

@@ -39,7 +39,7 @@
     <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.TrimZenCodingFilter"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <group id="Emmet">
       <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction"/>
       <action id="EmmetPreview" class="com.intellij.codeInsight.template.emmet.EmmetPreviewAction"/>

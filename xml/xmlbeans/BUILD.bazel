@@ -115,7 +115,11 @@ jvm_library(
     ),
     module_name = "intellij.xml.xmlbeans.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/lucene.common"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/lucene.common",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -139,6 +143,7 @@ jvm_library(
         ":xmlbeans-tests",
         "//platform/ide-core:ide-core_test_lib",
         "//libraries/lucene.common:lucene.common_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

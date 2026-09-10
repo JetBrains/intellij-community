@@ -308,6 +308,7 @@ jvm_library(
         "//images",
         "//RegExpSupport:regexp",
         "//xml/dom-impl",
+        "//xml/plugin",
     ],
 )
 
@@ -351,6 +352,7 @@ jvm_library(
         "//images:images_test_lib",
         "//RegExpSupport:regexp_test_lib",
         "//xml/dom-impl:dom-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

@@ -48,6 +48,7 @@ jvm_library(
         "//platform/bookmarks/plugin",
         "//platform/problemsView/plugin",
         "//platform/tasks-platform-impl/plugin",
+        "//xml/plugin",
     ],
 )
 
@@ -100,6 +101,7 @@ jvm_library(
         "//platform/bookmarks/plugin:plugin_test_lib",
         "//platform/problemsView/plugin:plugin_test_lib",
         "//platform/tasks-platform-impl/plugin:plugin_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.moduleSet.plugin.main` end

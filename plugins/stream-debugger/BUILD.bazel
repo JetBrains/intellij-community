@@ -92,7 +92,11 @@ jvm_library(
     ),
     module_name = "intellij.java.debugger.streams.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//java/debugger/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//java/debugger/backend",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -117,6 +121,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//java/debugger/backend:backend_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

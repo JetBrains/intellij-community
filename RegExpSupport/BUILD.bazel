@@ -113,6 +113,7 @@ jvm_library(
     ),
     module_name = "intellij.regexp.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -136,6 +137,7 @@ jvm_library(
         ":regexp-tests",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

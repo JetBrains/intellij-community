@@ -155,6 +155,7 @@ jvm_library(
     ),
     module_name = "intellij.python.processOutput.frontend.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//xml/plugin"],
 )
 
 jvm_library(
@@ -178,7 +179,11 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":python-processOutput-frontend-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":python-processOutput-frontend-tests",
+        "//xml/plugin:plugin_test_lib",
+    ],
     deps = [
         # do not sort,
         "//platform/platform-frontend:frontend",

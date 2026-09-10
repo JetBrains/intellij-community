@@ -9,11 +9,11 @@
   <!-- endregion -->
 
   <extensionPoints>
-    <extensionPoint name="xmlStructureViewBuilderProvider"
+    <extensionPoint qualifiedName="com.intellij.xmlStructureViewBuilderProvider"
                     interface="com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider"
                     dynamic="true"/>
 
-    <extensionPoint name="xmlStructureViewElementProvider"
+    <extensionPoint qualifiedName="com.intellij.xmlStructureViewElementProvider"
                     interface="com.intellij.ide.structureView.xml.XmlStructureViewElementProvider"
                     dynamic="true"/>
   </extensionPoints>

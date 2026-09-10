@@ -251,6 +251,7 @@ jvm_library(
         # do not sort,
         "//java/plugin",
         "//platform/external-system-impl:externalSystem-impl",
+        "//xml/plugin",
     ],
 )
 
@@ -292,6 +293,7 @@ jvm_library(
         "//java/plugin:plugin_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

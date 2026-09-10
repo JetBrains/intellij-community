@@ -674,6 +674,7 @@ libraries/winp
 libraries/workspace-model-codegen
 libraries/xerces
 libraries/xerial-snappy-java
+libraries/xml-resolver
 libraries/xml-rpc
 libraries/xmlbeans
 libraries/xmlunit-core
@@ -1955,6 +1956,7 @@ xml/emmet/shared
 xml/impl
 xml/langInjection
 xml/langInjection/xpath
+xml/plugin
 xml/relaxng
 xml/testFramework
 xml/tests

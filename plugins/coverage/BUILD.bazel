@@ -221,6 +221,7 @@ jvm_library(
         "//plugins/junit",
         "//platform/vcs/plugin",
         "//spellchecker",
+        "//xml/plugin",
     ],
 )
 
@@ -265,6 +266,7 @@ jvm_library(
         "//platform/platform-impl/concurrency:concurrency_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

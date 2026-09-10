@@ -42,6 +42,7 @@ jvm_library(
         "//platform/execution",
         "//libraries/junit5",
         "//python/python-pytools/backend",
+        "//xml/plugin",
     ],
 )
 
@@ -74,7 +75,11 @@ jvm_library(
         "//python/python-test-env/core",
         "//python/python-test-env/core:core_test_lib",
     ],
-    runtime_deps = [":junit5"],
+    runtime_deps = [
+        # do not sort,
+        ":junit5",
+        "//xml/plugin:plugin_test_lib",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",

@@ -7,6 +7,7 @@
     <module name="intellij.libraries.jackson3.databind"/>
     <module name="intellij.libraries.jackson3.module.kotlin"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.xml.resolver"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
@@ -36,18 +37,18 @@
   </projectListeners>
 
   <extensionPoints>
-    <extensionPoint name="xml.startTagEndToken" interface="com.intellij.psi.xml.StartTagEndTokenProvider" dynamic="true"/>
-    <extensionPoint name="xml.xmlExtension" interface="com.intellij.xml.XmlExtension" dynamic="true"/>
-    <extensionPoint name="xml.attributeDescriptorsProvider" interface="com.intellij.xml.XmlAttributeDescriptorsProvider" dynamic="true"/>
-    <extensionPoint name="xml.elementDescriptorProvider" interface="com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider" dynamic="true"/>
-    <extensionPoint name="xml.idContributor" interface="com.intellij.xml.util.XmlIdContributor" dynamic="true"/>
-    <extensionPoint name="xml.implicitNamespaceDescriptorProvider" interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider" dynamic="true"/>
-    <extensionPoint name="html.attributeValueProvider" interface="com.intellij.html.impl.providers.HtmlAttributeValueProvider" dynamic="true"/>
-    <extensionPoint name="xml.psiPolicy"
+    <extensionPoint qualifiedName="com.intellij.xml.startTagEndToken" interface="com.intellij.psi.xml.StartTagEndTokenProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.xmlExtension" interface="com.intellij.xml.XmlExtension" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.attributeDescriptorsProvider" interface="com.intellij.xml.XmlAttributeDescriptorsProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.elementDescriptorProvider" interface="com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.idContributor" interface="com.intellij.xml.util.XmlIdContributor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.implicitNamespaceDescriptorProvider" interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.html.attributeValueProvider" interface="com.intellij.html.impl.providers.HtmlAttributeValueProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.psiPolicy"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.impl.source.xml.XmlPsiPolicy"/>
     </extensionPoint>
-    <extensionPoint name="embeddedTokenHighlighter" interface="com.intellij.ide.highlighter.EmbeddedTokenHighlighter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.embeddedTokenHighlighter" interface="com.intellij.ide.highlighter.EmbeddedTokenHighlighter" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

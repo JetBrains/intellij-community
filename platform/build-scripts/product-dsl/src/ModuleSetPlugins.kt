@@ -18,6 +18,7 @@ private val HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES: Set<String> = setOf(
   "intellij.platform.testRunner.plugin",
   "intellij.platform.todo.plugin",
   "intellij.platform.vcs.plugin",
+  "intellij.xml.plugin",
 )
 
 fun isModuleSetPluginModuleName(moduleName: String): Boolean {

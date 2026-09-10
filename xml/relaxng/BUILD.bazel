@@ -144,7 +144,11 @@ jvm_library(
     ),
     module_name = "intellij.relaxng.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -169,6 +173,7 @@ jvm_library(
         "//platform/backend:backend_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

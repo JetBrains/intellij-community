@@ -132,6 +132,7 @@ jvm_library(
         "//platform/structuralsearch:structuralSearch",
         "//platform/structuralsearch/plugin",
         "//xml/impl",
+        "//xml/plugin",
     ],
 )
 
@@ -153,6 +154,7 @@ jvm_library(
         ":structuralSearch-tests",
         "//platform/platform-impl/internal:internal_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

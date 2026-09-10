@@ -766,6 +766,7 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//python:python-helpers",
         "//commandInterface",
+        "//xml/plugin",
     ],
 )
 
@@ -1040,6 +1041,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//python:python-community-impl",
         "//python:python-community-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl.tests` end
@@ -1182,6 +1184,7 @@ jvm_library(
         "//platform/structure-view-impl/plugin",
         "//platform/todo/plugin",
         "//platform/testRunner/plugin",
+        "//xml/plugin",
         "//libraries/guava",
         "//platform/editor-ui-ex:editor-ex",
         "//platform/util/progress",
@@ -1232,6 +1235,7 @@ jvm_library(
         "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//platform/todo/plugin:plugin_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
+        "//xml/plugin:plugin_test_lib",
         "//platform/observable:observable_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",
         "//python/pluginCore/impl:impl_test_lib",

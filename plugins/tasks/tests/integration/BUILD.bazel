@@ -28,6 +28,7 @@ jvm_library(
         "//platform/tasks-platform-impl/plugin",
         "//platform/vcs/plugin",
         "//platform/core-ui",
+        "//xml/plugin",
     ],
 )
 
@@ -56,6 +57,7 @@ jvm_library(
         "//spellchecker:spellchecker_test_lib",
         "//platform/tasks-platform-impl/plugin:plugin_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

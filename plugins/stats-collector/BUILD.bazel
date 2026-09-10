@@ -108,7 +108,11 @@ jvm_library(
     ),
     module_name = "intellij.statsCollector.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/core-ui"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/core-ui",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -128,6 +132,7 @@ jvm_library(
         # do not sort,
         ":statsCollector-tests",
         "//platform/ide-core:ide-core_test_lib",
+        "//xml/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
