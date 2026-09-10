@@ -18,6 +18,8 @@ import com.intellij.platform.lsp.api.LspCommunicationChannel
 import com.intellij.platform.lsp.api.LspCommunicationChannel.StdIO
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
+import com.intellij.platform.lsp.api.customization.LspInheritanceMarker
+import com.intellij.platform.lsp.api.customization.LspInheritanceMarkersSupport
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnector
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnectorSocket
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnectorStdio
@@ -238,6 +240,11 @@ class LspClientImpl internal constructor(
   internal fun getCodeLens(file: VirtualFile): List<LspCachedHighlighting<CodeLens>> =
     highlightingCacheRegistry.codeLensCache.getHighlightings(file)
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  internal fun getInheritanceMarkers(file: VirtualFile): List<LspCachedHighlighting<LspInheritanceMarker>> =
+    highlightingCacheRegistry.inheritanceMarkersCache.getHighlightings(file)
+
   internal fun notifyDocumentLinksReceived(file: VirtualFile) = eventBroadcaster.documentLinksReceived(this, file)
 
   internal fun notifyDiagnosticsReceived(file: VirtualFile) {
@@ -316,9 +323,13 @@ class LspClientImpl internal constructor(
       state = if (explicitStop) LspServerState.ShutdownNormally else LspServerState.ShutdownUnexpectedly
 
       if (!project.isDisposed) {
+        val inheritanceMarkersEnabled = descriptor.lspCustomization.inheritanceMarkersCustomizer is LspInheritanceMarkersSupport
         forEachOpenedFile { file ->
           LspHighlightingApplier.getInstance(project).scheduleHighlightingRefresh(file)
           LspInlayApplier.getInstance(project).scheduleRefresh(file)
+          if (inheritanceMarkersEnabled) {
+            LspFeaturesRefreshing.refreshLineMarkers(project, file)
+          }
         }
       }
       documentSyncManager.shutdown()

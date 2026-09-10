@@ -268,6 +268,7 @@ c:com.intellij.platform.lsp.api.customization.LspCustomization
 - getGoToImplementationCustomizer():com.intellij.platform.lsp.api.customization.LspGoToImplementationCustomizer
 - getGoToTypeDefinitionCustomizer():com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionCustomizer
 - getHoverCustomizer():com.intellij.platform.lsp.api.customization.LspHoverCustomizer
+- getInheritanceMarkersCustomizer():com.intellij.platform.lsp.api.customization.LspInheritanceMarkersCustomizer
 - getInlayHintCustomizer():com.intellij.platform.lsp.api.customization.LspInlayHintCustomizer
 - getOnTypeFormattingCustomizer():com.intellij.platform.lsp.api.customization.LspOnTypeFormattingCustomizer
 - getOptimizeImportsCustomizer():com.intellij.platform.lsp.api.customization.LspOptimizeImportsCustomizer
@@ -376,6 +377,31 @@ f:com.intellij.platform.lsp.api.customization.LspHoverDisabled
 c:com.intellij.platform.lsp.api.customization.LspHoverSupport
 - com.intellij.platform.lsp.api.customization.LspHoverCustomizer
 - <init>():V
+f:com.intellij.platform.lsp.api.customization.LspInheritanceMarker
+- <init>(com.intellij.platform.lsp.api.customization.LspInheritanceMarkerKind,java.lang.String,org.eclipse.lsp4j.SymbolKind,java.util.List):V
+- f:getKind():com.intellij.platform.lsp.api.customization.LspInheritanceMarkerKind
+- f:getSymbolKind():org.eclipse.lsp4j.SymbolKind
+- f:getSymbolName():java.lang.String
+- f:getTargets():java.util.List
+e:com.intellij.platform.lsp.api.customization.LspInheritanceMarkerKind
+- java.lang.Enum
+- sf:IMPLEMENTED_CLASS:com.intellij.platform.lsp.api.customization.LspInheritanceMarkerKind
+- sf:IMPLEMENTED_METHOD:com.intellij.platform.lsp.api.customization.LspInheritanceMarkerKind
+- sf:OVERRIDDEN_METHOD:com.intellij.platform.lsp.api.customization.LspInheritanceMarkerKind
+- sf:SUBCLASSED_CLASS:com.intellij.platform.lsp.api.customization.LspInheritanceMarkerKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.lsp.api.customization.LspInheritanceMarkerKind
+- s:values():com.intellij.platform.lsp.api.customization.LspInheritanceMarkerKind[]
+a:com.intellij.platform.lsp.api.customization.LspInheritanceMarkersCustomizer
+f:com.intellij.platform.lsp.api.customization.LspInheritanceMarkersDisabled
+- com.intellij.platform.lsp.api.customization.LspInheritanceMarkersCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspInheritanceMarkersDisabled
+c:com.intellij.platform.lsp.api.customization.LspInheritanceMarkersSupport
+- com.intellij.platform.lsp.api.customization.LspInheritanceMarkersCustomizer
+- <init>():V
+- isClassLikeSymbol(org.eclipse.lsp4j.SymbolKind):Z
+- isMethodLikeSymbol(org.eclipse.lsp4j.SymbolKind):Z
+- shouldAskServerForMarkers(com.intellij.openapi.vfs.VirtualFile):Z
 a:com.intellij.platform.lsp.api.customization.LspInlayHintCustomizer
 f:com.intellij.platform.lsp.api.customization.LspInlayHintDisabled
 - com.intellij.platform.lsp.api.customization.LspInlayHintCustomizer

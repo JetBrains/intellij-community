@@ -37,6 +37,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="100" description="LSP server connect timeout" key="lsp.server.connect.timeout"/>
     <registryKey defaultValue="5" description="Maximum log files count per LSP server" key="lsp.server.logging.maxLogFiles"/>
+    <registryKey defaultValue="200" description="Maximum symbol count per file for the LSP inheritance gutter markers"
+                 key="lsp.inheritance.markers.max.symbols"/>
+    <registryKey defaultValue="1000" description="How long the document must stay stable before an LSP inheritance markers pull, in milliseconds"
+                 key="lsp.inheritance.markers.quiescence.ms"/>
     <notificationGroup id="LSP window/showMessage"
                        displayType="BALLOON"
                        bundle="messages.LspBundle"
@@ -80,6 +84,8 @@
              order="after priority, before prefix"
              implementationClass="com.intellij.platform.lsp.impl.features.completion.LspCompletionWeigher"/>
     <codeInsight.codeVisionProvider implementation="com.intellij.platform.lsp.impl.features.codeLens.LspCodeVisionProvider"/>
+    <codeInsight.lineMarkerProvider language=""
+                                    implementationClass="com.intellij.platform.lsp.impl.features.lineMarkers.LspInheritanceLineMarkerProvider"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.platform.lsp.impl.features.codeLens.LspCodeVisionGroupSettingProvider"/>
     <codeInsight.inlayProviderFactory implementation="com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayHintsProviderFactory"/>
     <codeInsight.parameterInfo id="LspParameterInfoHandler" language=""

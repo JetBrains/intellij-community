@@ -9,7 +9,7 @@ import com.intellij.platform.lsp.impl.cache.LspSingleSlotCache
 import com.intellij.platform.lsp.impl.cache.getOrCompute
 import com.intellij.platform.lsp.impl.features.completion.createCompletionContext
 import com.intellij.platform.lsp.impl.features.completion.toCompletionList
-import com.intellij.platform.lsp.impl.features.documentSymbol.toDocumentSymbolTree
+import com.intellij.platform.lsp.impl.features.documentSymbol.toDocumentSymbols
 import com.intellij.platform.lsp.impl.features.documentation.HoverResultCache
 import com.intellij.platform.lsp.impl.features.documentation.TextRangeAndMarkupContent
 import com.intellij.platform.lsp.impl.features.highlighting.LspDocumentHighlightCache
@@ -164,13 +164,7 @@ class LspRequestExecutor(
       val perDocument = lspDocuments.map { lspDocument ->
         val params = DocumentSymbolParams(lspDocument.id)
         val results = sendRequestSync { it.textDocumentService.documentSymbol(params) } ?: return@map null
-        // lsp4j bug?
-        // VSCode type is DocumentSymbol[] | SymbolInformation[],
-        // but in lsp4j is (DocumentSymbol | SymbolInformation)[]
-        val documentSymbols: List<DocumentSymbol> =
-          if (results.firstOrNull()?.isLeft == true) toDocumentSymbolTree(results.mapNotNull { it.left })
-          else results.mapNotNull { it.right }
-        documentSymbols.map(lspDocument::mapDocumentSymbol)
+        results.toDocumentSymbols().map(lspDocument::mapDocumentSymbol)
       }
       perDocument.aggregatePerDocumentResults()
     }

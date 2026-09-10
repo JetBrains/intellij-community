@@ -14,6 +14,7 @@ import com.intellij.platform.lsp.impl.features.highlighting.LspPullDiagnosticsCa
 import com.intellij.platform.lsp.impl.features.highlighting.LspSemanticTokensCache
 import com.intellij.platform.lsp.impl.features.highlighting.copyDiagnosticWithRange
 import com.intellij.platform.lsp.impl.features.inlayHint.LspInlayHintsCache
+import com.intellij.platform.lsp.impl.features.lineMarkers.LspInheritanceMarkersCache
 import com.intellij.platform.lsp.impl.features.inlayHintColor.LspDocumentColorCache
 import com.intellij.platform.lsp.util.getLsp4jRange
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -31,6 +32,7 @@ internal class LspHighlightingCacheRegistry(private val lspClient: LspClientImpl
   internal val documentColorCache = register(LspDocumentColorCache(lspClient))
   internal val foldingRangeCache = register(LspFoldingRangeCache(lspClient))
   internal val codeLensCache = register(LspCodeLensCache(lspClient))
+  internal val inheritanceMarkersCache = register(LspInheritanceMarkersCache(lspClient))
 
   private fun <T : LspHighlightingCache<*>> register(cache: T): T {
     allCaches.add(cache)
