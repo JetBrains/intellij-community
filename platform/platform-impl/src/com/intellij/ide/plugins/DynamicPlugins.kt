@@ -14,6 +14,7 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.ObjectUtils
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -78,6 +79,11 @@ object DynamicPlugins {
    * @param addNewCustomPlugins newly installed/updated plugins that weren't in the context before
    * @param forceRemovePlugins plugins that should be excluded from the context completely (so it appears as they don't exist at all anymore)
    * @param extraStateValidator additional checks of the target state can be done there (e.g. that a certain plugin loads). See [expectPluginsState]
+   * @param targetProductMode when set, the process moves into this product mode as a part of this reconfiguration.
+   *   A mode change takes effect only through the module set that the mode implies, so the two never happen apart.
+   *   The mode moves first, because the recalculation and the descriptor parsing below both read the current mode.
+   *   Nothing happens and the result is `false` when the mode cannot move to [targetProductMode], which is also what
+   *   a second call with the same target does.
    */
   @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
@@ -86,8 +92,16 @@ object DynamicPlugins {
     addNewCustomPlugins: List<PluginMainDescriptor>,
     forceRemovePlugins: List<PluginMainDescriptor>,
     extraStateValidator: PluginStateValidator,
+    targetProductMode: ProductMode? = null,
   ): Boolean {
     LOG.trace("dynamic plugins reconfiguration attempt")
+    if (targetProductMode != null) {
+      val currentMode = CurrentProductMode.value
+      if (!CurrentProductMode.transitionTo(targetProductMode)) {
+        LOG.info("The product mode does not move to '${targetProductMode.id}' from '${currentMode.id}', so no plugin is reconfigured")
+        return false
+      }
+    }
     val title = when {
       forceRemovePlugins.isEmpty() -> when {
         addNewCustomPlugins.isEmpty() -> IdeBundle.message("modal.progress.title.reconfiguring.plugins")

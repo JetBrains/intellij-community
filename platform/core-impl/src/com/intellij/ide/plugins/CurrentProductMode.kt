@@ -24,34 +24,35 @@ import org.jetbrains.annotations.VisibleForTesting
  */
 @ApiStatus.Internal
 object CurrentProductMode {
-  private val state = MutableStateFlow(computeInitialProductMode())
-
   val value: ProductMode
-    get() = state.value
+    get() = flow.value
 
   /** Emits the current mode, and a new value on every completed [transitionTo]. */
   val flow: StateFlow<ProductMode>
-    get() = state
+    field = MutableStateFlow(computeInitialProductMode())
 
   /** The modes that [from] may move to in one step. */
   @VisibleForTesting
   fun allowedTargets(from: ProductMode): Set<ProductMode> = TRANSITIONS[from].orEmpty()
 
   /**
-   * Moves the process into [target].
+   * Moves the process into [target] and loads no plugin module.
    *
-   * Returns `false` when [TRANSITIONS] does not allow the move from the current mode. A second call
-   * with the same target therefore returns `false` and does nothing, because the first call already
-   * moved the mode. A caller that loads plugins for the new mode must treat `false` as "already
-   * done" and skip that work.
+   * Do not call this. A mode change takes effect only through the module set that the mode implies,
+   * so call `DynamicPlugins.reconfigure(targetProductMode = target)` instead. It performs this move
+   * and brings the plugin set with it.
+   *
+   * @return `false` when [TRANSITIONS] does not allow the move from the current mode. A second call
+   * with the same target therefore returns `false`, because the first call already moved the mode.
    */
+  @VisibleForTesting
   fun transitionTo(target: ProductMode): Boolean {
     while (true) {
-      val current = state.value
+      val current = flow.value
       if (target !in allowedTargets(current)) {
         return false
       }
-      if (state.compareAndSet(current, target)) {
+      if (flow.compareAndSet(current, target)) {
         logger<CurrentProductMode>().info("Product mode moved from '${current.id}' to '${target.id}'")
         return true
       }
@@ -60,13 +61,13 @@ object CurrentProductMode {
 
   @TestOnly
   fun <R> withProductMode(mode: ProductMode, body: () -> R): R {
-    val previous = state.value
-    state.value = mode
+    val previous = flow.value
+    flow.value = mode
     try {
       return body()
     }
     finally {
-      state.value = previous
+      flow.value = previous
     }
   }
 
