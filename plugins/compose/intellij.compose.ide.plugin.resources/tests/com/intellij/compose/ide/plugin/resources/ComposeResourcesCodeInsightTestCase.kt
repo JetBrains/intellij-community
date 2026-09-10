@@ -50,7 +50,7 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
   override fun tearDown() {
     runAll(
       { KotlinSdkType.removeKotlinSdkInTests() },
-      { removeAndroidSdks() },
+      { removeAndroidSdksInTests() },
       { super.tearDown() }
     )
   }
@@ -59,7 +59,7 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
    * The Gradle sync creates an Android SDK from the local Android SDK path, and the SDK leak tracker reports it.
    * The name prefix is `com.android.tools.idea.sdk.AndroidSdks.SDK_NAME_PREFIX`, which this module cannot depend on.
    */
-  private fun removeAndroidSdks() {
+  private fun removeAndroidSdksInTests() {
     invokeAndWaitIfNeeded {
       runWriteAction {
         val jdkTable = ProjectJdkTable.getInstance()
