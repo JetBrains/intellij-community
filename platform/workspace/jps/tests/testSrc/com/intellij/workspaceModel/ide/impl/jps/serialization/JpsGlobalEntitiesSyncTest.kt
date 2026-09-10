@@ -26,6 +26,8 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -34,6 +36,7 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 class JpsGlobalEntitiesSyncTest {
@@ -236,6 +239,37 @@ class JpsGlobalEntitiesSyncTest {
         assertSame(projectVfu, projectVirtualFileUrlManager.getOrCreateFromUrl(projectVfu.url))
         assertSame(globalVfu, globalVirtualFileUrlManager.getOrCreateFromUrl(globalVfu.url))
         assertNotSame(globalVfu, projectVfu)
+      }
+    }
+  }
+
+  @Test
+  fun `test project loading with a library of an unregistered custom table`() {
+    val level = "unregistered_level"
+    val libraryName = "orphan"
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(LocalEelMachine)
+    ApplicationManager.getApplication().invokeAndWait {
+      runWriteAction {
+        globalWorkspaceModel.updateModel("Add a library of an unregistered custom table") { builder ->
+          builder.addEntity(LibraryEntity(libraryName, LibraryTableId.GlobalLibraryTableId(level), emptyList(),
+                                          LegacyCustomLibraryEntitySource(level)))
+        }
+      }
+    }
+    try {
+      val project = loadProject()
+      val projectSnapshot = WorkspaceModel.getInstance(project).currentSnapshot
+      val projectLibrary = projectSnapshot.entities(LibraryEntity::class.java).single { it.name == libraryName }
+      assertNull(projectLibrary.findLibraryBridge(projectSnapshot))
+    }
+    finally {
+      ApplicationManager.getApplication().invokeAndWait {
+        (ProjectManager.getInstance() as ProjectManagerEx).closeAndDisposeAllProjects(false)
+        runWriteAction {
+          globalWorkspaceModel.updateModel("Remove the library of an unregistered custom table") { builder ->
+            builder.entities(LibraryEntity::class.java).filter { it.name == libraryName }.toList().forEach { builder.removeEntity(it) }
+          }
+        }
       }
     }
   }

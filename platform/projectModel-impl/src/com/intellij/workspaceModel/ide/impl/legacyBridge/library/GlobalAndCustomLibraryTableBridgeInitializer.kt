@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -11,6 +12,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 
 internal class GlobalAndCustomLibraryTableBridgeInitializer : BridgeInitializer {
@@ -28,25 +30,36 @@ internal class GlobalAndCustomLibraryTableBridgeInitializer : BridgeInitializer 
     val addChanges = libraryChanges.filterGlobalOrCustomLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
 
     for (addChange in addChanges) {
-      // Will initialize the bridge if missing
-      builder.mutableLibraryMap.getOrPutDataByEntity(addChange.newEntity) {
-        LibraryBridgeImpl(
-          libraryTable = getGlobalOrCustomLibraryTable(addChange.newEntity.symbolicId.tableId.level),
-          origin = LibraryOrigin.OfMachine(machine),
-          initialId = addChange.newEntity.symbolicId,
-          initialEntityStorage = entityStorage,
-          targetBuilder = builder
-        )
+      val libraryEntity = addChange.newEntity
+      // In most cases the bridge comes from the global storage together with the entity
+      if (builder.libraryMap.getDataByEntity(libraryEntity) != null) continue
+
+      val level = libraryEntity.tableId.level
+      val libraryTable = getGlobalOrCustomLibraryTable(level)
+      if (libraryTable == null) {
+        LOG.warn("Skip the bridge for the library '${libraryEntity.name}': the library table '$level' is not registered")
+        continue
       }
+      builder.mutableLibraryMap.addIfAbsent(libraryEntity, LibraryBridgeImpl(
+        libraryTable = libraryTable,
+        origin = LibraryOrigin.OfMachine(machine),
+        initialId = libraryEntity.symbolicId,
+        initialEntityStorage = entityStorage,
+        targetBuilder = builder,
+      ))
     }
   }
 
-  private fun getGlobalOrCustomLibraryTable(tableId: String): LibraryTable {
+  private fun getGlobalOrCustomLibraryTable(level: String): LibraryTable? {
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
-    return when (tableId) {
+    return when (level) {
       LibraryTablesRegistrar.APPLICATION_LEVEL -> libraryTablesRegistrar.libraryTable
-      else -> libraryTablesRegistrar.getCustomLibraryTableByLevel(tableId)!!
+      else -> libraryTablesRegistrar.getCustomLibraryTableByLevel(level)
     }
+  }
+
+  companion object {
+    private val LOG = logger<GlobalAndCustomLibraryTableBridgeInitializer>()
   }
 }
 
