@@ -2,15 +2,20 @@
 package git4idea.index
 
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vcs.Executor
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.test.refresh
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.index.vfs.GitIndexFileSystemRefresher
-import git4idea.test.GitSingleRepoTest
-import junit.framework.TestCase
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
 /**
  * Regression test for IJPL-249948 ("Stale content in editor diffs").
@@ -24,29 +29,34 @@ import junit.framework.TestCase
  * The fix makes the refresher reload the affected documents explicitly. These tests change the index out-of-band, run a
  * refresh, and assert the staged document reflects the current index — without discarding pending in-memory stage edits.
  */
-class GitStageContentStalenessTest : GitSingleRepoTest() {
-  private val refresher get() = project.service<GitIndexFileSystemRefresher>()
+@TestApplication
+class GitStageContentStalenessTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
+  private val refresher get() = context.project.service<GitIndexFileSystemRefresher>()
 
-  fun `test staged document reloads when the index changes`() {
-    val filePath = commitFile("original")
+  @Test
+  fun `test staged document reloads when the index changes`(): Unit = with(context) {
+    val filePath = commitFile()
     val indexFile = refresher.createFile(projectRoot, filePath)!!
-    val document = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile)!! }
-    TestCase.assertEquals("original", document.text)
+    val document = runReadActionBlocking { FileDocumentManager.getInstance().getDocument(indexFile)!! }
+    assertThat(document.text).isEqualTo("original")
 
     // Advance the index out-of-band (as a checkout would).
     Executor.overwrite("file.txt", "updated")
     git("add .")
 
     refresher.refresh { it.filePath == filePath }
-    waitForRefresh { runReadAction { document.text } == "updated" }
+    waitForRefresh { runReadActionBlocking { document.text } == "updated" }
 
-    TestCase.assertEquals("updated", runReadAction { document.text })
+    assertThat(runReadActionBlocking { document.text }).isEqualTo("updated")
   }
 
-  fun `test refresh does not discard pending in-memory stage edits`() {
-    val filePath = commitFile("original")
+  @Test
+  fun `test refresh does not discard pending in-memory stage edits`(): Unit = with(context) {
+    val filePath = commitFile()
     val indexFile = refresher.createFile(projectRoot, filePath)!!
-    val document = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile)!! }
+    val document = runReadActionBlocking { FileDocumentManager.getInstance().getDocument(indexFile)!! }
 
     // Pending, unsaved in-memory stage edit (as produced by staging a hunk).
     invokeAndWaitIfNeeded { runWriteAction { document.setText("mine") } }
@@ -59,11 +69,11 @@ class GitStageContentStalenessTest : GitSingleRepoTest() {
     // The metadata advances even when the reload is skipped, so this signals the refresh has been applied.
     waitForRefresh { indexFile.data?.hash.let { it != null && it != originalHash } }
 
-    TestCase.assertEquals("mine", runReadAction { document.text })
+    assertThat(runReadActionBlocking { document.text }).isEqualTo("mine")
   }
 
-  private fun commitFile(content: String) = run {
-    Executor.touch("file.txt", content)
+  private fun commitFile() = with(context) {
+    Executor.touch("file.txt", "original")
     git("add .")
     git("commit -m file")
     refresh()
@@ -73,7 +83,7 @@ class GitStageContentStalenessTest : GitSingleRepoTest() {
   private fun waitForRefresh(timeoutMs: Long = 30_000, condition: () -> Boolean) {
     val deadline = System.currentTimeMillis() + timeoutMs
     while (!condition()) {
-      if (System.currentTimeMillis() > deadline) TestCase.fail("Timed out waiting for the index refresh")
+      assertThat(System.currentTimeMillis()).describedAs("Timed out waiting for the index refresh").isLessThanOrEqualTo(deadline)
       Thread.sleep(20)
     }
   }
