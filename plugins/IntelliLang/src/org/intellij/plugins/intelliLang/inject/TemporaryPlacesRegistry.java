@@ -6,6 +6,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -50,6 +51,13 @@ public final class TemporaryPlacesRegistry {
 
     myPsiModificationCounter = modificationCount;
     final List<TempPlace> placesToRemove = ContainerUtil.findAll(myTempPlaces, place -> {
+      VirtualFile virtualFile = place.elementPointer.getVirtualFile();
+      if (virtualFile != null && !virtualFile.isValid()) {
+        // A smart pointer restores a file by the path. If the file is deleted, the pointer can find
+        // a different file with the same path. Do not move the temporary injection to that file.
+        return true;
+      }
+
       PsiLanguageInjectionHost element = place.elementPointer.getElement();
 
       if (element == null) {
