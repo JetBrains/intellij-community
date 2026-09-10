@@ -2,11 +2,14 @@
 package com.intellij.terminal.frontend.session.ghostty
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalUiSettingsManager
+import com.intellij.terminal.emulator.CursorShape
 import com.intellij.terminal.emulator.ScreenChange
 import com.intellij.terminal.emulator.TerminalCustomCommandListener
 import com.intellij.terminal.emulator.TerminalEmulator
@@ -17,6 +20,7 @@ import com.intellij.terminal.frontend.session.ObservableTtyConnector
 import com.intellij.terminal.frontend.session.TerminalShellIntegrationController
 import com.intellij.terminal.frontend.session.addWorkingDirectoryListener
 import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
@@ -38,6 +42,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.original
@@ -57,6 +62,7 @@ import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.beans.PropertyChangeListener
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
@@ -274,6 +280,11 @@ class GhosttyTerminalSession internal constructor(
       flushPendingEventsLocked(bypassSyncOutputDeferral = true)
     }
     emulator.customCommandListener = TerminalCustomCommandListener(shellIntegrationController::processCustomCommand)
+
+    // Applies the IDE's cursor-shape/blink-caret settings as the emulator's defaults, and keeps
+    // them in sync with those settings for the rest of the session. Must run before the read loop
+    // below starts, so the emulator never shows Ghostty's own hardcoded defaults even briefly.
+    installDefaultCursorStateUpdating(coroutineScope.childScope("Default cursor state updating"))
 
     // Read the PTY on a dedicated daemon thread rather than a coroutine in the session
     // scope (production uses a plain executor for the same reason): the blocking read()
@@ -648,6 +659,59 @@ class GhosttyTerminalSession internal constructor(
     syncWatchdogJob?.cancel()
     syncWatchdogJob = null
     syncOutputForcePaint = false
+  }
+
+  /**
+   * Subscribes to the terminal's "Cursor shape" setting ([TerminalOptionsProvider]) and the
+   * editor's "Blink caret" setting ([EditorSettingsExternalizable]), and pushes their current
+   * values into [emulator] as its default cursor shape/blink.
+   */
+  private fun installDefaultCursorStateUpdating(scope: CoroutineScope) {
+    val disposable = scope.asDisposable()
+    var lastCursorShape: TerminalUiSettingsManager.CursorShape? = null
+    var lastBlinkCaret: Boolean? = null
+
+    fun TerminalUiSettingsManager.CursorShape.toEmulatorCursorShape(): CursorShape = when (this) {
+      TerminalUiSettingsManager.CursorShape.BLOCK -> CursorShape.BLOCK
+      TerminalUiSettingsManager.CursorShape.UNDERLINE -> CursorShape.UNDERLINE
+      TerminalUiSettingsManager.CursorShape.VERTICAL -> CursorShape.BAR
+    }
+
+    fun updateCursorShapeIfChangedLocked() {
+      val current = TerminalOptionsProvider.instance.cursorShape
+      if (current != lastCursorShape) {
+        lastCursorShape = current
+        emulator.setDefaultCursorShape(current.toEmulatorCursorShape())
+        changedSinceLastProjection = true
+      }
+    }
+
+    fun updateCursorBlinkIfChangedLocked() {
+      val current = EditorSettingsExternalizable.getInstance().isBlinkCaret
+      if (current != lastBlinkCaret) {
+        lastBlinkCaret = current
+        emulator.setDefaultCursorBlinking(current)
+        changedSinceLastProjection = true
+      }
+    }
+
+    TerminalOptionsProvider.instance.addListener(disposable) {
+      lock.withLock {
+        if (!disposed) updateCursorShapeIfChangedLocked()
+      }
+    }
+    EditorSettingsExternalizable.getInstance().addPropertyChangeListener(PropertyChangeListener { event ->
+      if (event.propertyName == EditorSettingsExternalizable.PropNames.PROP_IS_CARET_BLINKING) {
+        lock.withLock {
+          if (!disposed) updateCursorBlinkIfChangedLocked()
+        }
+      }
+    }, disposable)
+
+    lock.withLock {
+      updateCursorShapeIfChangedLocked()
+      updateCursorBlinkIfChangedLocked()
+    }
   }
 }
 

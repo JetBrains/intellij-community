@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.frontend.session.ghostty
 
+import com.intellij.openapi.Disposable
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.tests.reworked.frontend.session.setDefault
 import com.intellij.terminal.tests.reworked.util.LoopbackTtyConnector
@@ -33,6 +34,9 @@ internal abstract class GhosttyTerminalSessionTestCase {
   @Rule
   @JvmField
   val ruleChain: RuleChain = RuleChain(projectRule, disposableRule)
+
+  /** Disposed at the end of each test; for registering per-test cleanup. */
+  protected val testDisposable: Disposable get() = disposableRule.disposable
 
   /**
    * Starts a loopback-backed Ghostty session with a persistent output collector, runs [test], and cancels the
