@@ -1,6 +1,7 @@
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_jvm//:jvm.bzl", _jvm_library = "jvm_library")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
+load("@rules_pkg//pkg:providers.bzl", "PackageFilegroupInfo", "PackageFilesInfo")
 
 PluginModuleInfo = provider(
     fields = {
@@ -10,48 +11,25 @@ PluginModuleInfo = provider(
     },
 )
 
-def _common_parent(files):
-    common_parent = files[0].short_path.split("/")[:-1]
-    for file in files[1:]:
-        components = file.short_path.split("/")[:-1]
-        common_length = len(common_parent)
-        if len(components) < common_length:
-            common_length = len(components)
-        for index in range(common_length):
-            if common_parent[index] != components[index]:
-                common_length = index
-                break
-        common_parent = common_parent[:common_length]
-    return "/".join(common_parent)
-
-def _join_path(parent, child):
-    if not parent or parent.endswith("/"):
-        return parent + child
-    return parent + "/" + child
-
 def _collect_non_classpath_data(non_classpath_data):
     result = []
-    for target, relative_path in non_classpath_data.items():
-        files = target[DefaultInfo].files.to_list()
-        if not files:
-            fail("non_classpath_data key %s provides no files or directories" % target.label)
-        if len(files) == 1:
-            file = files[0]
-            if relative_path.endswith("/"):
-                relative_path += file.basename
-            result.append(struct(file = file, relative_path = relative_path))
-            continue
-
-        if not relative_path.endswith("/"):
-            fail("non_classpath_data key %s provides multiple files or directories, but its output path '%s' does not end with '/'" % (target.label, relative_path))
-
-        common_parent = _common_parent(files)
-        prefix_length = len(common_parent) + 1 if common_parent else 0
-        for file in files:
-            result.append(struct(
-                file = file,
-                relative_path = _join_path(relative_path, file.short_path[prefix_length:]),
-            ))
+    for target in non_classpath_data:
+        if PackageFilegroupInfo in target:
+            group = target[PackageFilegroupInfo]
+            if group.pkg_dirs or group.pkg_symlinks:
+                fail("non_classpath_data target %s contains unsupported pkg_mkdirs or pkg_mklink mappings" % target.label)
+            files_infos = group.pkg_files
+        else:
+            files_infos = [(target[PackageFilesInfo], target.label)]
+        for files_info, origin in files_infos:
+            for attribute, value in files_info.attributes.items():
+                if attribute != "mode" or value != "0644":
+                    fail(
+                        "non_classpath_data target %s specifies unsupported attribute '%s' = %r" %
+                        (origin, attribute, value),
+                    )
+            for relative_path, file in files_info.dest_src_map.items():
+                result.append(struct(file = file, relative_path = relative_path or "."))
     return result
 
 def _ij_plugin_module_impl(ctx):
@@ -90,14 +68,12 @@ _ij_plugin_module = rule(
             mandatory = True,
             providers = [[JavaInfo, _KtJvmInfo]],
         ),
-        "non_classpath_data": attr.label_keyed_string_dict(
-            allow_files = True,
-            doc = """A map from a target to a relative output path in the plugin distribution.
-            If the path ends with `/`, the target files are copied to the directory with that path.
-            Otherwise, the target must produce a single file or directory that is copied to the specified path.
-            If the target produces multiple files, they are placed under the output path accordingly to their relative paths from the common
-            parent.
-            Data for content modules is put under `modules/<module.name>` directory in the plugin distribution.
+        "non_classpath_data": attr.label_list(
+            providers = [[PackageFilesInfo], [PackageFilegroupInfo]],
+            doc = """A list of `pkg_files` or `pkg_filegroup` targets from `@rules_pkg`.
+            The mappings specify relative output paths in the plugin distribution.
+            Data for content modules goes under the `modules/<module.name>` directory in the plugin distribution.
+            Groups must contain only file mappings; `pkg_mkdirs`, `pkg_mklink` and `attributes` in `pkg_files` are not supported.
             Symbolic links pointing to files under the same directory are copied as symbolic links inside the distribution.
             """,
         ),
@@ -111,7 +87,7 @@ _ij_plugin_module = rule(
 def ij_plugin_module(
         name,
         module_name,
-        non_classpath_data = {},
+        non_classpath_data = [],
         packed_deps = [],
         visibility = None,
         **kwargs):
@@ -122,7 +98,7 @@ def ij_plugin_module(
     Args:
         name: Target name
         module_name: Name of the content module or JPS module for the plugin descriptor module
-        non_classpath_data: Targets that outputs should be included in the distribution mapped to relative output paths.
+        non_classpath_data: `pkg_files` or `pkg_filegroup` targets that map files and directories to paths in the distribution.
         packed_deps: Dependencies that should be packed together with this module in the plugin distribution
         visibility: Target visibility
         **kwargs: Additional arguments passed to jvm_library macro

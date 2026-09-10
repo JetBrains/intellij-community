@@ -1,5 +1,6 @@
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 
 ### auto-generated section `build intellij.module` start
 ij_plugin_module(
@@ -10,9 +11,12 @@ ij_plugin_module(
     ),
     module_name = "intellij.module",
     # manually written attribute
-    non_classpath_data = {
-        ":file.txt": "file.txt",
-    },
+    non_classpath_data = [":data"],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.module` end
+
+pkg_files(
+    name = "data",
+    srcs = ["file.txt"],
+)

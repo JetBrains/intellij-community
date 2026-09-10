@@ -1,25 +1,70 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix")
 load("//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load(":build_settings_test.bzl", "ij_plugin_settings_test_target")
+load(":non_classpath_data_test.bzl", "non_classpath_data_attribute_tests")
 
 # A minimal plugin used to check that `ij_plugin` rule and the packager worker actually work.
 ij_plugin_module(
     name = "descriptor-module",
     module_name = "intellij.ijPluginPackagerSmoke",
-    non_classpath_data = {
-        ":descriptor-data-txt-files": "descriptor-data-txt-files/",
-        ":descriptor/data/third.bin": "third-renamed.txt",
-        ":descriptor/data/first.txt": "new-parent/",
-        ":descriptor/data": "descriptor-data-dir",
-    },
+    non_classpath_data = [
+        ":descriptor-data-dir",
+        ":descriptor-data-root",
+        ":descriptor-data",
+    ],
     resource_strip_prefix = "descriptor/resources",
     resources = glob(["descriptor/resources/**/*"]),
 )
 
-filegroup(
+pkg_files(
     name = "descriptor-data-txt-files",
     srcs = glob(["descriptor/data/**/*.txt"]),
+    prefix = "descriptor-data-txt-files",
+    strip_prefix = strip_prefix.from_pkg("descriptor/data"),
+)
+
+pkg_files(
+    name = "descriptor-renamed-data",
+    srcs = ["descriptor/data/third.bin"],
+    renames = {"descriptor/data/third.bin": "third-renamed.txt"},
+)
+
+pkg_files(
+    name = "descriptor-moved-data",
+    srcs = ["descriptor/data/first.txt"],
+    prefix = "new-parent",
+)
+
+pkg_files(
+    name = "descriptor-data-dir",
+    srcs = ["descriptor/data"],
+    renames = {"descriptor/data": "descriptor-data-dir"},
+)
+
+pkg_files(
+    name = "descriptor-data-root",
+    srcs = ["descriptor/data"],
+    renames = {"descriptor/data": ""},
+)
+
+pkg_filegroup(
+    name = "descriptor-single-files",
+    srcs = [
+        ":descriptor-moved-data",
+        ":descriptor-renamed-data",
+    ],
+    prefix = "files",
+)
+
+pkg_filegroup(
+    name = "descriptor-data",
+    srcs = [
+        ":descriptor-data-txt-files",
+        ":descriptor-single-files",
+    ],
+    prefix = "grouped-data",
 )
 
 jvm_library(
@@ -39,15 +84,18 @@ jvm_library(
 ij_plugin_module(
     name = "library-content-module",
     module_name = "intellij.ijPluginPackagerSmoke.library",
-    non_classpath_data = {
-        ":library/data/library-data.txt": "library-data.txt",
-    },
+    non_classpath_data = [":library-data"],
     packed_deps = [
         "@lib//:libraries-asm-tools-asm-tools",  # java_library
         "@lib//:libraries-assertj-core-assert_j",  # jvm_import
     ],
     resource_strip_prefix = "library/resources",
     resources = glob(["library/resources/**/*"]),
+)
+
+pkg_files(
+    name = "library-data",
+    srcs = ["library/data/library-data.txt"],
 )
 
 ij_plugin(
@@ -112,3 +160,5 @@ ij_plugin_settings_test_target(
     ide_stability_level = "release",
     plugin = ":smoke-plugin-with-restricted-compatibility-range",
 )
+
+non_classpath_data_attribute_tests(name = "non-classpath-data-attributes-tests")
