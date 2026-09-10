@@ -15,6 +15,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.util.containers.ContainerUtil;
@@ -89,6 +90,9 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     String className = aClass.getSimpleName();
     InspectionToolWrapper<?, ?> toolWrapper = getInspectionTool(InspectionProfileEntry.getShortName(className), myProject);
     if (toolWrapper == null) {
+      // A canceled context makes InspectionProfileImpl.initialize return silently with no tools.
+      // Propagate the cancellation instead of the "missing tool" error.
+      ProgressManager.checkCanceled();
       String allTools = getTools().stream().map(Tools::getShortName).collect(Collectors.joining("\n"));
       throw new RuntimeExceptionWithAttachments("Could not find inspection tool " + aClass.getName() + " in project " + myProject,
                                                 new Attachment("allTools.txt", allTools));
