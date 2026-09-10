@@ -184,7 +184,7 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
       relativeNames.lastOrNull() != "local.properties" &&
       relativeNames.none { it == "build" || it in GENERATED_TEST_DATA_ROOT_NAMES }
 
-    private val GENERATED_TEST_DATA_ROOT_NAMES = setOf(".gradle", ".idea", ".kotlin")
+    private val GENERATED_TEST_DATA_ROOT_NAMES = setOf(".gradle", ".idea", ".kotlin", "kotlin-js-store")
 
     private const val ANDROID_SDK_NAME_PREFIX = "Android "
   }
