@@ -1,5 +1,6 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification
 
+import com.intellij.ide.actions.WelcomeFilesRootType
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.application.ApplicationManager
@@ -109,6 +110,7 @@ abstract class WelcomeScreenOpenFileNotificationProvider : EditorNotificationPro
     if (file is LightVirtualFile ||
         file.path in closedNotificationFiles ||
         ScratchUtil.isScratch(file) ||
+        WelcomeFilesRootType.Util.isWelcomeFile(project, file) ||
         file.extension == "http"
     ) {
       return null

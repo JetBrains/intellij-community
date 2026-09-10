@@ -44,11 +44,8 @@ object WelcomeUtils {
     group.add(ActionManager.getInstance().getAction("NonModalWelcomeScreen.LeftTabActions.New"), Constraints.FIRST)
   }
 
-  fun getGotoWelcomeProjectAction(project: Project?): AnAction? {
+  fun getGotoWelcomeProjectAction(): AnAction? {
     if (!WelcomeAccessPoint.isAvailable()) {
-      return null
-    }
-    if (project != null && isWelcomeProject(project)) {
       return null
     }
 
