@@ -2,10 +2,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiLambdaExpressionType;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodReferenceType;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
@@ -48,8 +51,7 @@ final class MethodCallSignature {
 
   /**
    * Compares the argument types with the parameter types, without type inference. The check accepts an argument which
-   * it cannot decide: an argument with an unknown type, a lambda, a method reference, and a parameter which stays
-   * a type parameter.
+   * it cannot decide: an argument with an unknown type, a lambda, and a method reference.
    *
    * @return true when each argument the check can decide fits the parameter
    */
@@ -66,7 +68,7 @@ final class MethodCallSignature {
     }
     PsiUtil.ApplicabilityChecker checker = (parameterType, argumentType, _, argumentIndex) -> {
       if (argumentIndex >= 0 && argumentIndex < undecided.length && undecided[argumentIndex]) return true;
-      return isLooselyAssignable(parameterType, argumentType);
+      return isLooselyAssignable(parameterType, argumentType, argumentList);
     };
     PsiSubstitutor substitutor = inferSubstitutor(method, argumentList);
     int level = PsiUtil.getApplicabilityLevel(method, substitutor, argumentTypes, PsiUtil.getLanguageLevel(argumentList),
@@ -74,10 +76,18 @@ final class MethodCallSignature {
     return level != MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
   }
 
-  private static boolean isLooselyAssignable(@Nullable PsiType parameterType, @Nullable PsiType argumentType) {
+  private static boolean isLooselyAssignable(@Nullable PsiType parameterType,
+                                             @Nullable PsiType argumentType,
+                                             @NotNull PsiElement context) {
     if (parameterType == null || argumentType == null) return true;
-    // the inference did not resolve the type parameter, so the check cannot decide the argument
-    if (PsiUtil.resolveClassInClassTypeOnly(parameterType) instanceof PsiTypeParameter) return true;
+    if (PsiUtil.resolveClassInClassTypeOnly(parameterType) instanceof PsiTypeParameter) {
+      if (argumentType instanceof PsiPrimitiveType primitiveType) {
+        PsiClassType boxedType = primitiveType.getBoxedType(context);
+        if (boxedType == null) return true;
+        argumentType = boxedType;
+      }
+      return TypeConversionUtil.areTypesConvertible(argumentType, parameterType);
+    }
     PsiType parameterErasure = TypeConversionUtil.erasure(parameterType);
     PsiType argumentErasure = TypeConversionUtil.erasure(argumentType);
     if (parameterErasure == null || argumentErasure == null) return true;

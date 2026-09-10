@@ -207,10 +207,71 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                       """, "listOf");
   }
 
-  /**
-   * The check does no type inference, so it accepts an argument which breaks the bound of the type parameter.
-   */
-  public void testTheHintShowsAGenericMethodWithABrokenTypeBound() {
+  public void testTheHintSkipsAGenericMethodWithABrokenTypeBound() {
+    addHelperClass("""
+                     package p;
+                     public final class Numbers {
+                       public static <T extends Number> void round(T value) { }
+                     }
+                     """);
+    assertNoHintButIntentionIsAvailable("""
+                        class X {
+                          void test() {
+                            rou<caret>nd("text");
+                          }
+                        }
+                        """);
+  }
+
+  public void testTheHintShownBoxedTypeBound() {
+    addHelperClass("""
+                     package p;
+                     public final class Numbers {
+                       public static <T extends Number> void round(T value) { }
+                     }
+                     """);
+    assertHintShows("""
+                        class X {
+                          void test() {
+                            rou<caret>nd(1);
+                          }
+                        }
+                        """, "round");
+  }
+
+  public void testTheHintShowsAGenericMethodWithAMatchingTypeBound() {
+    addHelperClass("""
+                     package p;
+                     public final class Printer {
+                       public static <T extends CharSequence> void print(T value) { }
+                     }
+                     """);
+    assertHintShows("""
+                      class X {
+                        void test() {
+                          pri<caret>nt("text");
+                        }
+                      }
+                      """, "print");
+  }
+
+  public void testTheHintShowsAGenericMethodWithABoxedArgument() {
+    addHelperClass("""
+                     package p;
+                     public final class Numbers {
+                       public static <T extends Number> void round(T value, String unit) { }
+                     }
+                     """);
+    assertHintShows("""
+                      class X {
+                        void test() {
+                          rou<caret>nd(1, unknownUnit);
+                        }
+                      }
+                      """, "round");
+  }
+
+  public void testTheHintShowsAGenericMethodWithAnArgumentTheBoundCanCast() {
     addHelperClass("""
                      package p;
                      public final class Numbers {
@@ -219,8 +280,8 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                      """);
     assertHintShows("""
                       class X {
-                        void test() {
-                          rou<caret>nd("text");
+                        void test(Object value) {
+                          rou<caret>nd(value);
                         }
                       }
                       """, "round");
