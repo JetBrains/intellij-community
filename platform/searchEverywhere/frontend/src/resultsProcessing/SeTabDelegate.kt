@@ -142,7 +142,9 @@ class SeTabDelegate(
   fun shouldHaveScopesFilter(): Boolean =
     // The welcome-screen project has no source, so a scope filter has no meaning.
     // An empty list makes every tab drop its scope filter action.
-    project != null && !WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
+    project != null && !WelcomeScreenProjectProvider.isWelcomeScreenProject(project) &&
+    // we don't want scopes in ijLight to simplify UI: all the default scopes are equivalent to each other in ijLight
+    !IdeProductMode.isLight
 
   suspend fun getSearchScopesInfos(): List<SearchScopesInfo> {
     if (!shouldHaveScopesFilter()) return emptyList()
