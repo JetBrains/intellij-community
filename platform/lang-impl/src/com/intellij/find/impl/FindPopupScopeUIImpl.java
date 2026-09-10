@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.platform.project.module.ModulesStateService;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
@@ -64,15 +65,17 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
     myFindPopupPanel = panel;
     initComponents();
 
-    boolean fullVersion = !PlatformUtils.isDataGrip();
-    myComponents =
-      fullVersion
-      ? ContainerUtil.ar(new Pair<>(PROJECT, new JLabel()),
-                         new Pair<>(MODULE, shrink(myModuleComboBox)),
-                         new Pair<>(DIRECTORY, myDirectoryChooser),
-                         new Pair<>(SCOPE, shrink(getScopeChooser())))
-      : ContainerUtil.ar(new Pair<>(SCOPE, shrink(getScopeChooser())),
-                         new Pair<>(DIRECTORY, myDirectoryChooser));
+    if (IdeProductMode.isLight()) {
+      myComponents = ContainerUtil.ar(new Pair<>(DIRECTORY, myDirectoryChooser));
+    } else if (PlatformUtils.isDataGrip()) {
+      myComponents = ContainerUtil.ar(new Pair<>(SCOPE, shrink(getScopeChooser())),
+                                      new Pair<>(DIRECTORY, myDirectoryChooser));
+    } else {
+      myComponents = ContainerUtil.ar(new Pair<>(PROJECT, new JLabel()),
+                                      new Pair<>(MODULE, shrink(myModuleComboBox)),
+                                      new Pair<>(DIRECTORY, myDirectoryChooser),
+                                      new Pair<>(SCOPE, shrink(getScopeChooser())));
+    }
   }
 
   public void initComponents() {
