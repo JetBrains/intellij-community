@@ -17,7 +17,7 @@ import org.junit.Test
 import kotlin.test.assertEquals as kAssertEquals
 import kotlin.test.assertNotNull as kAssertNotNull
 
-class ComposeResourcesGradleImportTest : ComposeResourcesTestCase() {
+class ComposeResourcesGradleImportTest : ComposeResourcesGradleImportingTestCase() {
 
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test

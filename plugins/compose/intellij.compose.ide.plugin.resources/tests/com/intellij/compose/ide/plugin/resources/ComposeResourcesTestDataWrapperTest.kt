@@ -12,7 +12,7 @@ import kotlin.io.path.inputStream
  * `GradleImportingTestCase` runs with `DistributionType.DEFAULT_WRAPPED`, so the import reads the wrapper
  * of the project. `KotlinGradleImportingTestCase.configureByFiles` copies each test data file into the
  * project, and it writes this file over the wrapper that the test framework generates. A different version
- * here makes [com.intellij.compose.ide.plugin.resources.gradle.ComposeResourcesTestCase] download another Gradle distribution.
+ * here makes [com.intellij.compose.ide.plugin.resources.gradle.ComposeResourcesGradleImportingTestCase] download another Gradle distribution.
  */
 class ComposeResourcesTestDataWrapperTest {
 

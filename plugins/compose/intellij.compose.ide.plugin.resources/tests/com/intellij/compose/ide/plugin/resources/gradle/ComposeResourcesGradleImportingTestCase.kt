@@ -24,7 +24,7 @@ internal val SOURCE_SETS = setOf(COMMON_MAIN, ANDROID_MAIN, IOS_MAIN)
 
 @TestRoot("../../../community/$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH")
 @TestMetadata("")
-abstract class ComposeResourcesTestCase : KotlinGradleImportingTestCase() {
+abstract class ComposeResourcesGradleImportingTestCase : KotlinGradleImportingTestCase() {
   @Parameterized.Parameter(1)
   lateinit var sourceSetName: String
 

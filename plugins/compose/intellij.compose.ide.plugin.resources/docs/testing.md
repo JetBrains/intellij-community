@@ -9,18 +9,18 @@ Use `ComposeResourcesCodeInsightTestCase` for a new test. It is the JUnit 5 base
 completion, highlighting, folding, a gutter icon, a quick fix, a reference, a live template, or a PSI change.
 It opens the test project one time, and it gives you the Gradle fixture and the code insight fixture.
 
-Do not add a new test to `ComposeResourcesTestCase`. That class is the old JUnit 4 base class, and it extends
+Do not add a new test to `ComposeResourcesGradleImportingTestCase`. That class is the old JUnit 4 base class, and it extends
 `KotlinGradleImportingTestCase`. Only `ComposeResourcesGradleImportTest` still uses it, because that test asserts
 the result of the Gradle import itself. The class goes away when the last test moves to JUnit 5.
 
 Use `BasePlatformTestCase`, or a plain JUnit test, when the code under test needs no Gradle project. The SVG
 conversion tests and the XML comparison tests work this way, and they run in seconds.
 
-| Test subject                                          | Base class                              |
-|-------------------------------------------------------|-----------------------------------------|
-| A code insight feature in a Compose resources project | `ComposeResourcesCodeInsightTestCase`   |
-| The Gradle import and the project model               | `ComposeResourcesTestCase`              |
-| Pure logic with no project                            | `BasePlatformTestCase`, or a plain test |
+| Test subject                                          | Base class                                |
+|-------------------------------------------------------|-------------------------------------------|
+| A code insight feature in a Compose resources project | `ComposeResourcesCodeInsightTestCase`     |
+| The Gradle import and the project model               | `ComposeResourcesGradleImportingTestCase` |
+| Pure logic with no project                            | `BasePlatformTestCase`, or a plain test   |
 
 ## How to write a feature test
 
@@ -80,7 +80,7 @@ Use `COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH`, `composeResourcesTestDataRoot()
 path literal.
 
 The test project keeps a Gradle wrapper, and `testData/ComposeResources/gradle/wrapper/gradle-wrapper.properties`
-must declare `TARGET_GRADLE_VERSION`. `ComposeResourcesTestCase` runs with `DistributionType.DEFAULT_WRAPPED`,
+must declare `TARGET_GRADLE_VERSION`. `ComposeResourcesGradleImportingTestCase` runs with `DistributionType.DEFAULT_WRAPPED`,
 and `KotlinGradleImportingTestCase.configureByFiles` writes this file over the wrapper that the test framework
 generates. A stale version here makes the test download another Gradle distribution.
 `ComposeResourcesTestDataWrapperTest` guards the two values. Update both when you change the Gradle version.
