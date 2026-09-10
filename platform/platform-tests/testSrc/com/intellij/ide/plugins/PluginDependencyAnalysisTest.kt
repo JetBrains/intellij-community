@@ -49,7 +49,6 @@ class PluginDependencyAnalysisTest {
     return object : EmptyTestPluginInitContext() {
       override val productBuildNumber: BuildNumber = BuildNumber.fromString("241.0")!!
       override val essentialPlugins: Set<PluginId> = essentialPlugins
-      override val currentProductModeId: String = "test"
       override val environmentConfiguredModules: Map<PluginModuleId, PluginInitializationContext.EnvironmentConfiguredModuleData> = environmentConfiguredModules
       override fun provideCompatibilityDependencies(descriptor: IdeaPluginDescriptorImpl, pluginSet: UnambiguousPluginSet): Sequence<PluginDependencyAnalysis.DependencyRef> =
         defaultProductCompatibilityDependenciesProvider(descriptor, pluginSet)

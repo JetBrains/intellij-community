@@ -40,7 +40,7 @@ import javax.swing.JOptionPane
 @VisibleForTesting
 @ApiStatus.Internal
 class ProductPluginInitContext(
-  private val productMode: ProductMode = CurrentProductMode.value,
+  override val productMode: ProductMode = CurrentProductMode.value,
   private val buildNumberOverride: BuildNumber? = null,
   private val disabledPluginsOverride: Set<PluginId>? = null,
   private val expiredPluginsOverride: Set<PluginId>? = null,
@@ -106,9 +106,6 @@ class ProductPluginInitContext(
     }
     else null
   }
-
-  override val currentProductModeId: String
-    get() = productMode.id
 
   /** Read once, so the flag stays the same for the whole life of this context. */
   private val aiEnabled: Boolean by lazy { AiEnabledState.isEnabled() }

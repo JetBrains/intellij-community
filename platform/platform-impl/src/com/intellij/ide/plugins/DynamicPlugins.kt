@@ -96,7 +96,7 @@ object DynamicPlugins {
   ): Boolean {
     LOG.trace("dynamic plugins reconfiguration attempt")
     if (targetProductMode != null) {
-      val currentMode = CurrentProductMode.value
+      val currentMode = PluginManagerCore.getPluginSet().initContext.productMode
       if (!CurrentProductMode.transitionTo(targetProductMode)) {
         LOG.info("The product mode does not move to '${targetProductMode.id}' from '${currentMode.id}', so no plugin is reconfigured")
         return false

@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.ProductRulesImposedExclusion.ProductRulesImposed
 import com.intellij.idea.AppMode
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.productMode.ProductMode
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -49,9 +50,12 @@ interface PluginInitializationContext {
   val pluginsPerProjectConfig: PluginsPerProjectConfig?
 
   /**
-   * Returns ID of the current [com.intellij.platform.productMode.ProductMode]
+   * The product mode this context describes.
+   *
+   * This is a declared input of the context and not a read of a global. [environmentConfiguredModules]
+   * is derived from it.
    */
-  val currentProductModeId: String
+  val productMode: ProductMode
 
   /**
    * A map consisting of special modules that are configured by the environment (app mode, OS-specific modules, etc.).

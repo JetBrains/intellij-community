@@ -23,10 +23,8 @@ abstract class PseudoProductTestPluginInitContext : EmptyTestPluginInitContext()
   /** The AI flag that the test sets, without the backing file. */
   open val aiEnabled: Boolean get() = true
 
-  abstract val productMode: ProductMode
-
-  override val currentProductModeId: String
-    get() = productMode.id
+  /** Re-abstracted on purpose: this context derives its module map from the mode, so a subclass must state it. */
+  abstract override val productMode: ProductMode
 
   override val environmentConfiguredModules: Map<PluginModuleId, PluginInitializationContext.EnvironmentConfiguredModuleData> by lazy {
     buildMap {

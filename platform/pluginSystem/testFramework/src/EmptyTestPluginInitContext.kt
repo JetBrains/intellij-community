@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.PluginsPerProjectConfig
 import com.intellij.ide.plugins.ProductRulesImposedExclusion.ProductRulesImposedExclusionReason
 import com.intellij.ide.plugins.UnambiguousPluginSet
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.productMode.ProductMode
 
 
 abstract class EmptyTestPluginInitContext : PluginInitializationContext {
@@ -24,6 +25,7 @@ abstract class EmptyTestPluginInitContext : PluginInitializationContext {
   override val disablePluginLoadingCompletely: Boolean = false
   override val disableRequiredIfAvailable: Boolean = false
   override val pluginsPerProjectConfig: PluginsPerProjectConfig? = null
+  override val productMode: ProductMode = ProductMode.MONOLITH
   override val environmentConfiguredModules: Map<PluginModuleId, PluginInitializationContext.EnvironmentConfiguredModuleData> = emptyMap()
 
   override fun provideCompatibilityDependencies(
