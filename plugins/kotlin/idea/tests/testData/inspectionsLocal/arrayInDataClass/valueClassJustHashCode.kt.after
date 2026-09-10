@@ -1,7 +1,6 @@
 // WITH_STDLIB
-// COMPILER_ARGUMENTS: -XXLanguage:+CustomEqualsInValueClasses
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
 
-@JvmInline
 value class A(val a: IntArray) {
     override fun hashCode(): Int {
         return a.contentHashCode()

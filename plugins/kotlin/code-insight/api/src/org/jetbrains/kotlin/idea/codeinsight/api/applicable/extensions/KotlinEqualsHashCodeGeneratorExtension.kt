@@ -99,6 +99,8 @@ interface KotlinEqualsHashCodeGeneratorExtension {
      * i.e., it doesn't include the 'equals' or 'hashCode' suffix.
      */
     fun isExtensionTemplate(name: String): Boolean
+
+    fun isExtensionTemplateFieldsEditable(name: String): Boolean = false
 }
 
 /**

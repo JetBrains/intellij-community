@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.actions.generate.createMemberInfo
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
-import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.DefaultMemberFilters
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KotlinEqualsHashCodeGeneratorExtension
@@ -50,7 +49,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Inf
                 && !targetClass.isEnum()
                 && !targetClass.isAnnotation()
                 && !targetClass.isInterface()
-                && targetClass.canGenerateEqualsAndHashCode()
+                && !targetClass.isInline()
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -146,7 +145,4 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Inf
         }
     }
 
-    private fun KtClass.canGenerateEqualsAndHashCode(): Boolean {
-        return !isInlineOrValue() || isValue()
-    }
 }

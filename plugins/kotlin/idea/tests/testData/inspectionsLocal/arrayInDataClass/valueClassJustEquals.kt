@@ -1,9 +1,8 @@
 // WITH_STDLIB
-// COMPILER_ARGUMENTS: -XXLanguage:+CustomEqualsInValueClasses
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
 
-@JvmInline
 value class A(val <caret>a: IntArray) {
-    operator fun equals(other: A): Boolean {
+    fun equals(other: A): Boolean {
         if (!a.contentEquals(other.a)) return false
 
         return true

@@ -47,13 +47,6 @@ return true
     #end
 #end
 ##
-#macro(addEqualsPrologue)
-    #addInstanceOfToText()
-    #if ($superHasEquals)
-    if(!super.equals(${paramName})) return false
-    #end
-#end
-##
 #macro(addInstanceOfToText)
 #if ($checkParameterWithInstanceof)
 if ($paramName !is $classname##
