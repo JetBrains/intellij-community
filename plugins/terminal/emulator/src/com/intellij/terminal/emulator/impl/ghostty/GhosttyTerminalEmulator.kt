@@ -404,6 +404,38 @@ internal class GhosttyTerminalEmulator(
   override val cursorBlinking: Boolean
     get() = readCursorBlinking()
 
+  override fun setDefaultCursorShape(shape: CursorShape) {
+    ensureOpen()
+    try {
+      scratchOut.set(C_INT, 0L, shape.toGhosttyCursorVisualStyle().code)
+      val r = LibGhosttyVt.terminalSet(terminal, GhosttyTerminalOption.DEFAULT_CURSOR_STYLE.code, scratchOut)
+      if (r != GhosttyResult.SUCCESS) {
+        throw IllegalStateException("ghostty_terminal_set(DEFAULT_CURSOR_STYLE) returned $r")
+      }
+    } catch (t: Throwable) {
+      throw RuntimeException("ghostty_terminal_set(DEFAULT_CURSOR_STYLE) failed", t)
+    }
+  }
+
+  override fun setDefaultCursorBlinking(blinking: Boolean) {
+    ensureOpen()
+    try {
+      scratchOut.set(C_BYTE, 0L, if (blinking) 1 else 0)
+      val r = LibGhosttyVt.terminalSet(terminal, GhosttyTerminalOption.DEFAULT_CURSOR_BLINK.code, scratchOut)
+      if (r != GhosttyResult.SUCCESS) {
+        throw IllegalStateException("ghostty_terminal_set(DEFAULT_CURSOR_BLINK) returned $r")
+      }
+    } catch (t: Throwable) {
+      throw RuntimeException("ghostty_terminal_set(DEFAULT_CURSOR_BLINK) failed", t)
+    }
+  }
+
+  private fun CursorShape.toGhosttyCursorVisualStyle(): GhosttyCursorVisualStyle = when (this) {
+    CursorShape.BAR -> GhosttyCursorVisualStyle.BAR
+    CursorShape.BLOCK -> GhosttyCursorVisualStyle.BLOCK
+    CursorShape.UNDERLINE -> GhosttyCursorVisualStyle.UNDERLINE
+  }
+
   override val title: String
     get() = readTitle()
 
