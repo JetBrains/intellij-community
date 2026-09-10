@@ -1613,13 +1613,12 @@ public final class TableResultView extends JBTableWithResizableCells
       // Map to this view's own column index; the grid-level index would overrun the smaller frozen column model.
       var currentViewIdx = myRawIndexConverter.column2View().applyAsInt(columnIdx.value);
       if (currentViewIdx < 0 || currentViewIdx >= columnModel.getColumnCount()) return;
-      TableResultViewColumn tableColumn = ((MyTableColumnModel)columnModel).getColumn(currentViewIdx);
-      var offsetX = calculateClickedColumnX(TableResultView.this, currentViewIdx);
+      var headerRect = tableHeader.getHeaderRect(currentViewIdx);
 
-      MyHeaderCellComponent currentHeader = renderWithActualBounds(tableHeader, currentViewIdx, tableColumn);
+      MyHeaderCellComponent currentHeader = renderWithActualBounds(tableHeader, currentViewIdx);
 
       var point = e.getPoint();
-      var relativePoint = new Point(point.x - offsetX, point.y);
+      var relativePoint = new Point(point.x - headerRect.x, point.y);
       var filterLabel = currentHeader.filterLabel;
       var sortLabel = currentHeader.myIconLabels.isEmpty() ?
                       null :
@@ -2232,13 +2231,12 @@ public final class TableResultView extends JBTableWithResizableCells
       // Map to this view's own column index; the grid-level index would overrun the smaller frozen column model.
       var currentViewIdx = myRawIndexConverter.column2View().applyAsInt(columnIdx.value);
       if (currentViewIdx < 0 || currentViewIdx >= columnModel.getColumnCount()) return;
-      TableResultViewColumn tableColumn = ((MyTableColumnModel)columnModel).getColumn(currentViewIdx);
-      var offsetX = calculateClickedColumnX(this, currentViewIdx);
+      var headerRect = tableHeader.getHeaderRect(currentViewIdx);
 
-      MyHeaderCellComponent currentHeader = renderWithActualBounds(tableHeader, currentViewIdx, tableColumn);
+      MyHeaderCellComponent currentHeader = renderWithActualBounds(tableHeader, currentViewIdx);
 
       var point = e.getPoint();
-      var relativePoint = new Point(point.x - offsetX, point.y);
+      var relativePoint = new Point(point.x - headerRect.x, point.y);
       var filterLabel = currentHeader.filterLabel;
       var sortLabel = currentHeader.myIconLabels.isEmpty() ?
                       null :
@@ -2339,10 +2337,9 @@ public final class TableResultView extends JBTableWithResizableCells
       return OptionalInt.empty();
     }
 
-    int clickedColumnX = calculateClickedColumnX(this, viewIdx);
-    int columnWidth = getColumnModel().getColumn(viewIdx).getWidth();
+    Rectangle headerRect = getTableHeader().getHeaderRect(viewIdx);
 
-    return findIndexOfClickedHeaderLineWithNonEmptyLabel(e, customHeaderComponent, clickedColumnX, columnWidth);
+    return findIndexOfClickedHeaderLineWithNonEmptyLabel(e, customHeaderComponent, headerRect.x, headerRect.width);
   }
 
   private static Component getHeaderRenderer(@NotNull TableResultView table, int viewIdx) {
@@ -2353,25 +2350,20 @@ public final class TableResultView extends JBTableWithResizableCells
       .getTableCellRendererComponent(table, column.getHeaderValue(), false, false, -1, viewIdx);
   }
 
-  private MyHeaderCellComponent renderWithActualBounds(JTableHeader header, int columnViewIndex, TableResultViewColumn tableColumn) {
+  private MyHeaderCellComponent renderWithActualBounds(JTableHeader header, int columnViewIndex) {
 
     MyHeaderCellComponent currentHeaderCell = (MyHeaderCellComponent)getHeaderRenderer(this, columnViewIndex);
     var cellRendererPane = new CellRendererPane();
     cellRendererPane.add(currentHeaderCell);
     header.add(cellRendererPane);
-    currentHeaderCell.setBounds(0, 0, tableColumn.getColumnWidth(), tableHeader.getHeight());
+    // The same rectangle `BasicTableHeaderUI` gives the renderer when it paints. Another width moves the
+    // right-anchored sort and filter labels away from where the user sees them.
+    Rectangle headerRect = header.getHeaderRect(columnViewIndex);
+    currentHeaderCell.setBounds(0, 0, headerRect.width, headerRect.height);
     currentHeaderCell.validate();
     header.remove(cellRendererPane);
 
     return currentHeaderCell;
-  }
-
-  private static int calculateClickedColumnX(@NotNull TableResultView table, int viewIdx) {
-    int clickedColumnX = 0;
-    for (int i = 0; i < viewIdx; ++i) {
-      clickedColumnX += table.getColumnModel().getColumn(i).getWidth();
-    }
-    return clickedColumnX;
   }
 
   private OptionalInt findIndexOfClickedHeaderLineWithNonEmptyLabel(@NotNull MouseEvent e,
