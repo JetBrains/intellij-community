@@ -7,7 +7,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 /**
  * @author Bas Leijdekkers
  */
-public class ConvertToRegexIntentionTest extends GrIntentionTestCase {
+public final class ConvertToRegexIntentionTest extends GrIntentionTestCase {
   public ConvertToRegexIntentionTest() {
     super("Convert to slashy string");
   }
@@ -16,7 +16,7 @@ public class ConvertToRegexIntentionTest extends GrIntentionTestCase {
   public void testStringEndsWithBackslash() { doTest(true); }
 
   @Override
-  public final String getBasePath() {
+  public String getBasePath() {
     return TestUtils.getTestDataPath() + "intentions/convertToRegex/";
   }
 }
