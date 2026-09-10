@@ -2,8 +2,6 @@
 package com.intellij.compose.ide.plugin.resources.gradle
 
 import com.intellij.compose.ide.plugin.gradleTooling.rt.ComposeResourcesModel
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesTestCase
-import com.intellij.compose.ide.plugin.resources.SOURCE_SETS
 import com.intellij.compose.ide.plugin.resources.TARGET_GRADLE_VERSION
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil

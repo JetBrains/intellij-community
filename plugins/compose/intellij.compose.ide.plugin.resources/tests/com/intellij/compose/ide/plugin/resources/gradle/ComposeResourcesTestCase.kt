@@ -1,6 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compose.ide.plugin.resources
+package com.intellij.compose.ide.plugin.resources.gradle
 
+import com.intellij.compose.ide.plugin.resources.ANDROID_MAIN
+import com.intellij.compose.ide.plugin.resources.COMMON_MAIN
+import com.intellij.compose.ide.plugin.resources.COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH
+import com.intellij.compose.ide.plugin.resources.IOS_MAIN
+import com.intellij.compose.ide.plugin.resources.TARGET_GRADLE_VERSION
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.Computable
