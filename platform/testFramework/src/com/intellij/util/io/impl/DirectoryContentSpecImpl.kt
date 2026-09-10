@@ -293,6 +293,9 @@ private fun assertSpecsMatch(actual: DirectoryContentSpecImpl,
       assertDirectorySpecsMatch(extractZipSpec(originalFile), expected, relativePath, fileTextMatcher, errorReporter)
     }
     actual is ZipSpecBase && expected is FileSpec -> {
+      if (expected.content == null) {
+        return
+      }
       val originalFile = expected.originalFile
       if (originalFile == null) {
         errorReporter.reportError(relativePath,
