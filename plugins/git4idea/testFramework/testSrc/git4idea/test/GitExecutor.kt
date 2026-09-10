@@ -47,7 +47,7 @@ fun GitRepository.git(command: String, ignoreNonZeroExitCode: Boolean = false) =
 fun GitPlatformTest.git(command: String, ignoreNonZeroExitCode: Boolean = false) = git(project, command, ignoreNonZeroExitCode)
 
 @JvmOverloads
-internal fun git(project: Project?, command: String, ignoreNonZeroExitCode: Boolean = false): String {
+fun git(project: Project?, command: String, ignoreNonZeroExitCode: Boolean = false): String {
   val workingDir = ourCurrentDir()
   val split = splitCommandInParameters(command)
   val handler = GitLineHandler(project, workingDir, getGitCommandInstance(split[0]))
@@ -125,7 +125,7 @@ fun GitPlatformTestContext.tac(file: String, content: String = "content" + Math.
   touch(file, content)
   return addCommit(project, "Touched $file")
 }
-internal fun tac(project: Project, file: String, content: String): String {
+fun tac(project: Project, file: String, content: String): String {
   touch(file, content)
   return addCommit(project, "Touched $file")
 }
@@ -149,7 +149,7 @@ private fun appendAndCommit(project: Project, file: String, additionalContent: S
 fun GitRepository.modify(file: String): String = cd { modify(project, file) }
 fun GitPlatformTest.modify(file: String): String = modify(project, file)
 fun GitPlatformTestContext.modify(file: String): String = modify(project, file)
-internal fun modify(project: Project, file: String): String {
+fun modify(project: Project, file: String): String {
   overwrite(file, "content" + Math.random())
   return addCommit(project, "modified $file")
 }
@@ -157,7 +157,7 @@ internal fun modify(project: Project, file: String): String {
 fun GitRepository.last() = cd { last(project) }
 fun GitPlatformTest.last() = last(project)
 fun GitPlatformTestContext.last() = last(project)
-internal fun last(project: Project) = git(project, "log -1 --pretty=%H")
+fun last(project: Project) = git(project, "log -1 --pretty=%H")
 
 fun GitRepository.getHash(depth: Int) = cd { getHash(project, depth) }
 fun GitPlatformTest.getHash(depth: Int) = getHash(project, depth)
@@ -214,7 +214,7 @@ private fun GitRepository.cd(command: () -> String): String {
   return command()
 }
 
-internal fun GitRepository.file(fileName: String): TestFile {
+fun GitRepository.file(fileName: String): TestFile {
   val f = child(fileName)
   return TestFile(this, f)
 }

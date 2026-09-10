@@ -89,7 +89,7 @@ fun createFileStructure(rootDir: VirtualFile, vararg paths: String) {
   rootDir.refresh(false, true)
 }
 
-internal fun initRepo(project: Project?, repoRoot: Path, makeInitialCommit: Boolean, objectFormat: GitObjectFormat = GitObjectFormat.SHA1) {
+fun initRepo(project: Project?, repoRoot: Path, makeInitialCommit: Boolean, objectFormat: GitObjectFormat = GitObjectFormat.SHA1) {
   Files.createDirectories(repoRoot)
   cd(repoRoot.toString())
   gitInit(project, "--object-format=${objectFormat.value}")
@@ -102,7 +102,7 @@ internal fun initRepo(project: Project?, repoRoot: Path, makeInitialCommit: Bool
   }
 }
 
-internal fun setupLocalIgnore(repoRoot: Path) {
+fun setupLocalIgnore(repoRoot: Path) {
   repoRoot.resolve(".git/info/exclude").write(".shelf")
 }
 
@@ -110,7 +110,7 @@ fun GitPlatformTest.cloneRepo(source: String, destination: String, bare: Boolean
   cloneRepo(project, source, destination, bare)
 }
 
-internal fun cloneRepo(project: Project?, source: String, destination: String, bare: Boolean) {
+fun cloneRepo(project: Project?, source: String, destination: String, bare: Boolean) {
   cd(source)
   if (bare) {
     git(project, "clone --bare -- . $destination")
@@ -122,19 +122,19 @@ internal fun cloneRepo(project: Project?, source: String, destination: String, b
   setupDefaultUsername(project)
 }
 
-internal fun setupDefaultUsername(project: Project?) {
+fun setupDefaultUsername(project: Project?) {
   setupUsername(project, USER_NAME, USER_EMAIL)
 }
 
-internal fun GitPlatformTest.setupDefaultUsername() {
+fun GitPlatformTest.setupDefaultUsername() {
   setupDefaultUsername(project)
 }
 
-internal fun VcsPlatformTestContext.setupDefaultUsername() {
+fun VcsPlatformTestContext.setupDefaultUsername() {
   setupDefaultUsername(project)
 }
 
-internal fun setupUsername(project: Project?, name: String, email: String) {
+fun setupUsername(project: Project?, name: String, email: String) {
   assertFalse("Can not set empty user name ", name.isEmpty())
   assertFalse("Can not set empty user email ", email.isEmpty())
   git(project, "config user.name '$name'")
@@ -152,7 +152,7 @@ private fun disableGitGc(project: Project) {
  * Call it before the test creates a repository, because [gitInit] also reads the configuration.
  * The test infrastructure restores the normal behaviour during tear down.
  */
-internal fun GitPlatformTestContext.isolateGitConfig() {
+fun GitPlatformTestContext.isolateGitConfig() {
   // Git reads the global configuration from $HOME/.gitconfig and from $XDG_CONFIG_HOME/git/config.
   // An empty directory for both makes the global configuration empty.
   val configHome = Files.createDirectories(testNioRoot.resolve("gitConfigHome"))
@@ -180,19 +180,19 @@ internal fun GitPlatformTestContext.isolateGitConfig() {
 @JvmOverloads
 fun createRepository(project: Project, root: String, makeInitialCommit: Boolean = true) = createRepository(project, Paths.get(root), makeInitialCommit)
 
-internal fun createRepository(project: Project, root: Path, makeInitialCommit: Boolean, objectFormat: GitObjectFormat = GitObjectFormat.SHA1): GitRepository {
+fun createRepository(project: Project, root: Path, makeInitialCommit: Boolean, objectFormat: GitObjectFormat = GitObjectFormat.SHA1): GitRepository {
   initRepo(project, root, makeInitialCommit, objectFormat)
   LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.resolve(GitUtil.DOT_GIT))!!
   return registerRepo(project, root)
 }
 
-internal fun VcsPlatformTestContext.createRepository(project: Project, root: Path, makeInitialCommit: Boolean): GitRepository {
+fun VcsPlatformTestContext.createRepository(project: Project, root: Path, makeInitialCommit: Boolean): GitRepository {
   initRepo(project, root, makeInitialCommit)
   LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.resolve(GitUtil.DOT_GIT))!!
   return registerRepo(project, root)
 }
 
-internal fun GitRepository.createSubRepository(name: String, addToGitIgnore: Boolean = true): GitRepository {
+fun GitRepository.createSubRepository(name: String, addToGitIgnore: Boolean = true): GitRepository {
   val childRoot = File(this.root.path, name)
   HeavyPlatformTestCase.assertTrue(childRoot.mkdirs())
   val repo = createRepository(this.project, childRoot.path)
@@ -202,7 +202,7 @@ internal fun GitRepository.createSubRepository(name: String, addToGitIgnore: Boo
   return repo
 }
 
-internal fun registerRepo(project: Project, root: Path): GitRepository {
+fun registerRepo(project: Project, root: Path): GitRepository {
   val vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
   vcsManager.setDirectoryMapping(root.toString(), GitVcs.NAME)
   Files.createDirectories(root)
@@ -268,7 +268,7 @@ fun findGitLogProvider(project: Project): GitLogProvider {
   return providers[0] as GitLogProvider
 }
 
-internal fun makePushSpec(repository: GitRepository, from: String, to: String, canChangeUpstream: Boolean = false): PushSpec<GitPushSource, GitPushTarget> {
+fun makePushSpec(repository: GitRepository, from: String, to: String, canChangeUpstream: Boolean = false): PushSpec<GitPushSource, GitPushTarget> {
   val source = repository.branches.findLocalBranch(from)!!
   var target: GitRemoteBranch? = repository.branches.findBranchByName(to) as GitRemoteBranch?
   val newBranch: Boolean
@@ -288,16 +288,16 @@ internal fun makePushSpec(repository: GitRepository, from: String, to: String, c
   return PushSpec(GitPushSource.create(source), pushTarget)
 }
 
-internal fun GitRepository.resolveConflicts() {
+fun GitRepository.resolveConflicts() {
   cd(this)
   this.git("add -u .")
 }
 
-internal fun getPrettyFormatTagForFullCommitMessage(project: Project): String {
+fun getPrettyFormatTagForFullCommitMessage(project: Project): String {
   return if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(project)) "%B" else "%s%n%n%-b"
 }
 
-internal fun filterChangesByFileName(targetCommit: VcsFullCommitDetails, fileNames: Collection<String>): List<Change> {
+fun filterChangesByFileName(targetCommit: VcsFullCommitDetails, fileNames: Collection<String>): List<Change> {
   return targetCommit.changes.filter {
     val name = it.beforeRevision?.file?.name ?: it.afterRevision?.file?.name
     name in fileNames

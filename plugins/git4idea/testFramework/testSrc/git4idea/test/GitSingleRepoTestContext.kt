@@ -73,18 +73,18 @@ fun GitSingleRepoContext.assertUnversioned(file: VirtualFile) {
              changeListManager.isUnversioned(file))
 }
 
-internal fun GitSingleRepoContext.`do nothing on merge`() {
+fun GitSingleRepoContext.`do nothing on merge`() {
   vcsHelper.onMerge {}
 }
 
-internal fun GitSingleRepoContext.`mark as resolved on merge`() {
+fun GitSingleRepoContext.`mark as resolved on merge`() {
   vcsHelper.onMerge { git("add -u .") }
 }
 
-internal fun GitSingleRepoContext.`assert merge dialog was shown`() {
+fun GitSingleRepoContext.`assert merge dialog was shown`() {
   assertThat(vcsHelper.mergeDialogWasShown()).describedAs("Merge dialog was not shown").isTrue()
 }
 
-internal fun GitSingleRepoContext.`assert commit dialog was shown`() {
+fun GitSingleRepoContext.`assert commit dialog was shown`() {
   assertThat(vcsHelper.commitDialogWasShown()).describedAs("Commit dialog was not shown").isTrue()
 }

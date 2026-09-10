@@ -21,7 +21,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.isSubmodule
 import org.jetbrains.annotations.Nls
 
-internal class MockGitRepositoryModel(repo: GitRepository) : GitRepositoryModel {
+class MockGitRepositoryModel(repo: GitRepository) : GitRepositoryModel {
   override val repositoryId: RepositoryId = repo.repositoryId()
   override val shortName: String = VcsUtil.getShortVcsRootName(repo.project, repo.root)
   override val state: GitRepositoryState = MockGitRepositoryState(repo)

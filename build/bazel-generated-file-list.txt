@@ -1246,6 +1246,7 @@ plugins/git4idea/performanceTesting
 plugins/git4idea/rt
 plugins/git4idea/shared
 plugins/git4idea/terminal
+plugins/git4idea/testFramework
 plugins/github/github-core
 plugins/github/github-git
 plugins/github/github-json

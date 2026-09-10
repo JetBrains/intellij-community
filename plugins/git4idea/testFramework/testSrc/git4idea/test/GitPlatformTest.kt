@@ -295,7 +295,7 @@ data class ReposTrinity(val projectRepo: GitRepository, val parent: Path, val br
 /**
  * Writes an executable Git hook into `<gitDir>/hooks/<hookName>`.
  */
-internal fun installHook(gitDir: Path, hookName: String, hookContent: String) {
+fun installHook(gitDir: Path, hookName: String, hookContent: String) {
   val hookFile = gitDir.resolve("hooks/$hookName").toFile()
   hookFile.writeText(hookContent)
   hookFile.setExecutable(true, false)
@@ -304,7 +304,7 @@ internal fun installHook(gitDir: Path, hookName: String, hookContent: String) {
 /**
  * Clones the given source repository into a bare parent.git and adds the remote origin.
  */
-internal fun prepareRemoteRepo(
+fun prepareRemoteRepo(
   project: Project,
   testRoot: Path,
   source: GitRepository,
@@ -327,7 +327,7 @@ internal fun prepareRemoteRepo(
  * Parent and bro are created just inside the [testRoot].
  * The main clone is created at [repoRoot], which is assumed to be inside the project.
  */
-internal fun setupRepositories(
+fun setupRepositories(
   project: Project,
   testRoot: Path,
   repoRoot: String,
@@ -354,7 +354,7 @@ private fun createParentRepo(project: Project, testRoot: Path, parentName: Strin
   return testRoot.resolve("$parentName.git")
 }
 
-internal fun createBroRepo(project: Project, testRoot: Path, broName: String, parentRepo: Path): Path {
+fun createBroRepo(project: Project, testRoot: Path, broName: String, parentRepo: Path): Path {
   cd(testRoot)
   git(project, "clone ${parentRepo.fileName} $broName")
   cd(broName)
@@ -362,14 +362,14 @@ internal fun createBroRepo(project: Project, testRoot: Path, broName: String, pa
   return testRoot.resolve(broName)
 }
 
-internal fun VcsPlatformTestContext.prepareRemoteRepo(
+fun VcsPlatformTestContext.prepareRemoteRepo(
   source: GitRepository,
   target: Path = testNioRoot.resolve("parent.git"),
   remoteName: String = "origin",
 ): Path = prepareRemoteRepo(project, testNioRoot, source, target, remoteName)
 
-internal fun VcsPlatformTestContext.setupRepositories(repoRoot: String, parentName: String, broName: String): ReposTrinity =
+fun VcsPlatformTestContext.setupRepositories(repoRoot: String, parentName: String, broName: String): ReposTrinity =
   setupRepositories(project, testNioRoot, repoRoot, parentName, broName)
 
-internal fun VcsPlatformTestContext.createBroRepo(broName: String, parentRepo: Path): Path =
+fun VcsPlatformTestContext.createBroRepo(broName: String, parentRepo: Path): Path =
   createBroRepo(project, testNioRoot, broName, parentRepo)
