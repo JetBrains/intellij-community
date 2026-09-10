@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -29,7 +29,7 @@ public class IntroduceVariableHandler extends IntroduceVariableBase implements J
                                                                                PreviewableRefactoringActionHandler {
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiExpression expression) {
+  public void invoke(@NotNull Project project, Editor editor, PsiExpression expression) {
     invokeImpl(project, expression, editor);
   }
 
@@ -39,7 +39,7 @@ public class IntroduceVariableHandler extends IntroduceVariableBase implements J
                                                TypeSelectorManagerImpl typeSelectorManager,
                                                boolean declareFinalIfAll,
                                                boolean anyAssignmentLHS,
-                                               final InputValidator validator,
+                                               InputValidator validator,
                                                PsiElement anchor, JavaReplaceChoice replaceChoice) {
     if (replaceChoice != null) {
       return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS, validator,
@@ -54,10 +54,8 @@ public class IntroduceVariableHandler extends IntroduceVariableBase implements J
       }
     }
 
-    IntroduceVariableDialog dialog = new IntroduceVariableDialog(
-      project, expr, occurrences.length, anyAssignmentLHS, declareFinalIfAll,
-      typeSelectorManager,
-      validator);
+    IntroduceVariableDialog dialog =
+      new IntroduceVariableDialog(project, expr, occurrences.length, anyAssignmentLHS, declareFinalIfAll, typeSelectorManager, validator);
     if (!dialog.showAndGet()) {
       if (occurrences.length > 1) {
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
@@ -75,17 +73,17 @@ public class IntroduceVariableHandler extends IntroduceVariableBase implements J
   }
 
   @Override
-  protected void showErrorMessage(final @NotNull Project project, Editor editor, @NlsContexts.DialogMessage @NotNull String message) {
+  protected void showErrorMessage(@NotNull Project project, Editor editor, @NlsContexts.DialogMessage @NotNull String message) {
     CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INTRODUCE_VARIABLE);
   }
 
   @Override
-  protected boolean reportConflicts(final MultiMap<PsiElement,String> conflicts, final Project project, IntroduceVariableSettings dialog) {
+  protected boolean reportConflicts(MultiMap<PsiElement,String> conflicts, Project project, IntroduceVariableSettings dialog) {
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
     conflictsDialog.show();
     final boolean ok = conflictsDialog.isOK();
     if (!ok && conflictsDialog.isShowConflicts()) {
-      if (dialog instanceof DialogWrapper) ((DialogWrapper)dialog).close(DialogWrapper.CANCEL_EXIT_CODE);
+      if (dialog instanceof DialogWrapper wrapper) wrapper.close(DialogWrapper.CANCEL_EXIT_CODE);
     }
     return ok;
   }
