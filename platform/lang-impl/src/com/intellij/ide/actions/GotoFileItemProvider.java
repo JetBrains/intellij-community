@@ -18,7 +18,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -411,10 +410,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     // the line and column detection is the same for every model that is not a class or symbol model
     String path = FileUtil.toSystemIndependentName(ChooseByNamePopup.getTransformedPattern(pattern, null));
     if (Registry.is("search.everywhere.absolute.path.outside.project")) {
-      if (!SystemInfo.isWindows) {
-        // '~' is a shell convention, not a Windows one
-        path = OSAgnosticPathUtil.expandUserHome(path);
-      }
+      path = OSAgnosticPathUtil.expandUserHome(path);
       // the filesystem root is not a meaningful exact match, and being one it would outrank every real candidate
       if (OSAgnosticPathUtil.isAbsolute(path) && !isFileSystemRoot(path)) {
         // an absolute path is an explicit navigation request, so the file doesn't have to belong to the project
