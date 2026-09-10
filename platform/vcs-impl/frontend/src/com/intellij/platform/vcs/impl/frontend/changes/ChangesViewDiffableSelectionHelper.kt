@@ -58,7 +58,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
   private fun getDiffableSelection(currentChange: ChangesTreePath?): ChangesViewDiffableSelection? {
     val selectedDiffableNode = findSelectedDiffableNode(currentChange) ?: return null
     val selectedNodePath =
-      getPathOrLog(selectedDiffableNode) { LOG.warn("Could not create path for selected node: $it") } ?: return null
+      createPathOrLog(selectedDiffableNode) { LOG.warn("Could not create path for selected node: $it") } ?: return null
 
     val explicitSelection = selectedDiffableObjects().toList()
     val position =
@@ -67,8 +67,8 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
 
     return ChangesViewDiffableSelection(
       selectedChange = selectedNodePath,
-      previousChange = getPathOrLog(position.neighbours.previous) { LOG.warn("Could not create path for previous node: $it") },
-      nextChange = getPathOrLog(position.neighbours.next) { LOG.warn("Could not create path for next node: $it") },
+      previousChange = createPathOrLog(position.neighbours.previous) { LOG.warn("Could not create path for previous node: $it") },
+      nextChange = createPathOrLog(position.neighbours.next) { LOG.warn("Could not create path for next node: $it") },
       selectedIndex = position.counter.selectedIndex,
       changesCount = position.counter.changesCount)
   }
@@ -266,6 +266,6 @@ private fun ChangesTreePath.matches(userObject: Any): Boolean = when (userObject
   else -> false
 }
 
-private fun getPathOrLog(node: Any?, log: (Any) -> Unit): ChangesTreePath? = node?.let {
+private fun createPathOrLog(node: Any?, log: (Any) -> Unit): ChangesTreePath? = node?.let {
   ChangesTreePath.create(it).also { path -> if (path == null) log(it) }
 }
