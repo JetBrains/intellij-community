@@ -53,6 +53,7 @@ import com.intellij.database.run.ui.grid.GridMarkupModel;
 import com.intellij.database.run.ui.grid.GridMarkupModelImpl;
 import com.intellij.database.run.ui.grid.GridRowComparator;
 import com.intellij.database.run.ui.grid.GridRowHeader;
+import com.intellij.database.run.ui.table.ColumnPinning;
 import com.intellij.database.run.ui.table.FormatterConfigCache;
 import com.intellij.database.run.ui.table.GridColumnPinModel;
 import com.intellij.database.run.ui.table.LocalFilterState;
@@ -93,7 +94,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -134,7 +134,6 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -189,7 +188,9 @@ public class TableResultPanel extends UserDataHolderBase
   DataGrid,
   GridModel.Listener<GridRow, GridColumn>,
   DataGridAppearance,
-  ColumnModelModification
+  ColumnModelModification,
+  ColumnOrderRestorer,
+  GridColumnPinning
 {
   private static final ColorKey HOVER_BACKGROUND =
     ColorKey.createColorKey("Table.hoverBackground", JBUI.CurrentTheme.Table.Hover.background(true));
@@ -628,6 +629,7 @@ public class TableResultPanel extends UserDataHolderBase
     restoreColumnsOrder();
   }
 
+  @Override
   public void restoreColumnsOrder() {
     Map<Integer, ModelIndex<GridColumn>> expectedToModel = new LinkedHashMap<>();
     GridModel<GridRow, GridColumn> model = getDataModel(DATA_WITH_MUTATIONS);
@@ -657,7 +659,7 @@ public class TableResultPanel extends UserDataHolderBase
    * in-session unpins are not overridden.
    */
   private void restoreInitialPinnedColumns() {
-    if (myUserChangedPinState || !isColumnPinningEnabled()) return;
+    if (myUserChangedPinState || !ColumnPinning.isEnabled()) return;
     GridModel<GridRow, GridColumn> model = getDataModel(DATA_WITH_MUTATIONS);
     List<ModelIndex<GridColumn>> restored = new ArrayList<>();
     for (ModelIndex<GridColumn> modelIndex : model.getColumnIndices().asIterable()) {
@@ -671,49 +673,54 @@ public class TableResultPanel extends UserDataHolderBase
 
   /** Syncs logical pin state into the current table view, which filters out hidden pinned columns. */
   protected final void updateFrozenColumns() {
-    if (!(myResultView instanceof TableResultView view)) return;
-    view.setFrozenColumns(isColumnPinningEnabled() ? myColumnPinModel.pinnedColumns() : Set.of());
+    if (!(myResultView instanceof ResultViewWithFrozenColumns view)) return;
+    view.setFrozenColumns(ColumnPinning.isEnabled() ? myColumnPinModel.pinnedColumns() : Set.of());
   }
 
-  public static boolean isColumnPinningEnabled() {
-    return Registry.is("database.grid.column.pinning");
-  }
-
+  @Override
   public boolean isColumnPinned(@NotNull ModelIndex<GridColumn> columnIdx) {
     return myColumnPinModel.isPinned(columnIdx);
   }
 
+  @Override
   public boolean hasPinnedColumns() {
     return !myColumnPinModel.isEmpty();
   }
 
+  /** Applies the pin state as given, without the width check {@link #pinColumns} makes. Production only unpins here. */
+  @Override
   public void setColumnsPinned(@NotNull ModelIndexSet<GridColumn> columns, boolean pinned) {
     GridColumnPinModel updated =
       pinned ? myColumnPinModel.pinAll(columns.asIterable()) : myColumnPinModel.unpinAll(columns.asIterable());
     applyPinModel(updated);
   }
 
+  @Override
   public void unpinAllColumns() {
     applyPinModel(myColumnPinModel.unpinAll());
   }
 
+  @Override
   public void pinColumnsUpToHere(@NotNull ModelIndex<GridColumn> columnIdx) {
     pinIfItFits(myColumnPinModel.pinUpToHere(columnIdx, visibleColumnsInDisplayOrder()));
   }
 
+  @Override
   public boolean canPinColumnsUpToHere(@NotNull ModelIndex<GridColumn> columnIdx) {
-    return isColumnPinningEnabled() && myColumnPinModel.canPinUpToHere(columnIdx, visibleColumnsInDisplayOrder());
+    return ColumnPinning.isEnabled() && myColumnPinModel.canPinUpToHere(columnIdx, visibleColumnsInDisplayOrder());
   }
 
-  /** Pins {@code columns} unless the result would leave no usable width for the unpinned table. */
+  @Override
   public void pinColumns(@NotNull ModelIndexSet<GridColumn> columns) {
     pinIfItFits(myColumnPinModel.pinAll(columns.asIterable()));
   }
 
+  @Override
   public boolean pinnedColumnsUpToHereFit(@NotNull ModelIndex<GridColumn> columnIdx) {
     return columnsFit(myColumnPinModel.pinUpToHere(columnIdx, visibleColumnsInDisplayOrder()));
   }
 
+  @Override
   public boolean pinnedColumnsFit(@NotNull ModelIndexSet<GridColumn> columns) {
     return columnsFit(myColumnPinModel.pinAll(columns.asIterable()));
   }
@@ -722,7 +729,7 @@ public class TableResultPanel extends UserDataHolderBase
    * Checks width for pin actions. Restore paths preserve existing pins even when the strip needs scrolling.
    */
   private boolean columnsFit(@NotNull GridColumnPinModel pinned) {
-    return !(myResultView instanceof TableResultView view) || view.canFitPinnedColumns(pinned.pinnedColumns());
+    return !(myResultView instanceof ResultViewWithFrozenColumns view) || view.canFitPinnedColumns(pinned.pinnedColumns());
   }
 
   /** A presentation can go stale between update and invocation, so the width is checked here too. */
@@ -756,31 +763,17 @@ public class TableResultPanel extends UserDataHolderBase
    * Reveals newly unpinned columns after restoring the scroll position captured while they had zero width.
    */
   private void scrollUnpinnedColumnsIntoView(@NotNull List<ModelIndex<GridColumn>> unpinnedColumns) {
-    if (unpinnedColumns.isEmpty() || !(myResultView instanceof TableResultView view)) return;
+    if (unpinnedColumns.isEmpty() || !(myResultView instanceof ResultViewWithFrozenColumns view)) return;
     // saveAndRestoreSelection defers its scroll restore, so this has to run after it.
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myDisposed || myResultView != view) return;
-      IntUnaryOperator column2View = view.getRawIndexConverter().column2View();
-      int target = -1;
-      for (ModelIndex<GridColumn> column : unpinnedColumns) {
-        int viewColumn = column2View.applyAsInt(column.value);
-        if (viewColumn >= 0 && (target < 0 || viewColumn < target)) target = viewColumn;
-      }
-      if (target < 0 || view.isTransposed()) return;
-      Rectangle visible = view.getVisibleRect();
-      Rectangle cell = view.getCellRect(Math.max(0, view.getSelectionModel().getLeadSelectionIndex()), target, true);
-      cell.y = visible.y; // only the columns come back, the rows stay where they are
-      cell.height = visible.height;
-      view.scrollRectToVisible(cell);
+      view.scrollColumnsIntoView(unpinnedColumns);
     });
   }
 
-  /**
-   * Re-keys the pin state after a move in the data renumbered the columns and lays the pinned columns out again.
-   * {@code newToOld} maps a model column after the move to the one it was before.
-   */
+  @Override
   public void restorePinnedColumnsAfterMoveInData(@NotNull UnaryOperator<ModelIndex<GridColumn>> newToOld) {
-    if (!isColumnPinningEnabled()) return;
+    if (!ColumnPinning.isEnabled()) return;
     if (!myColumnPinModel.isEmpty()) {
       List<ModelIndex<GridColumn>> pinned = new ArrayList<>();
       for (ModelIndex<GridColumn> columnIdx : getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asIterable()) {
@@ -1160,8 +1153,7 @@ public class TableResultPanel extends UserDataHolderBase
 
   @Override
   public boolean isEditing() {
-    return myResultView.isEditing() ||
-           myResultView instanceof TableResultView table && table.isEditingInFrozenView();
+    return myResultView.isEditingAnywhere();
   }
 
   @Override

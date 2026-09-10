@@ -8,7 +8,6 @@ import com.intellij.database.datagrid.GridUtil
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.ModelIndexSet
 import com.intellij.database.datagrid.SelectionModelUtil
-import com.intellij.database.run.ui.TableResultPanel
 import com.intellij.database.run.ui.grid.GridRowHeader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -316,7 +315,7 @@ internal class FrozenColumnsController(
 
     // The column model speaks in raw model indices, so unwrap once here instead of per column below.
     val pinned = pinnedColumns.mapTo(HashSet()) { it.value }
-    if (pinned.isEmpty() || primaryView.isTransposed || !TableResultPanel.isColumnPinningEnabled()) {
+    if (pinned.isEmpty() || primaryView.isTransposed || !ColumnPinning.isEnabled()) {
       removeFrozenView(parent)
       return
     }

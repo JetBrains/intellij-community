@@ -7,7 +7,6 @@ import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.EditMaximizedView;
-import com.intellij.database.run.ui.table.TableResultView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -68,11 +67,7 @@ public final class DataGridUIUtil {
   }
 
   public static boolean inCell(@NotNull DataGrid grid, @NotNull AnActionEvent e) {
-    Component contextComponent = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    Component resultView = grid.getResultView().getComponent();
-    return resultView instanceof TableResultView table
-           ? table.isCellComponent(contextComponent)
-           : contextComponent == resultView;
+    return grid.getResultView().isCellComponent(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
   }
 
   public static @Nullable Object getLeadSelectionCellValue(@NotNull DataGrid grid, @NotNull AnActionEvent e, boolean single) {

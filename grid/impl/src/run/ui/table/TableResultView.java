@@ -36,11 +36,12 @@ import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.DataGridRequestPlace;
 import com.intellij.database.run.ui.EditMaximizedView;
 import com.intellij.database.run.ui.GridTableCellEditor;
+import com.intellij.database.run.ui.ColumnOrderRestorer;
 import com.intellij.database.run.ui.ResultViewWithCells;
 import com.intellij.database.run.ui.ResultViewWithColumns;
+import com.intellij.database.run.ui.ResultViewWithFrozenColumns;
 import com.intellij.database.run.ui.ResultViewWithRows;
 import com.intellij.database.run.ui.TableAggregatorWidgetHelper;
-import com.intellij.database.run.ui.TableResultPanel;
 import com.intellij.database.run.ui.ValueTabInfoProvider;
 import com.intellij.database.run.ui.grid.CellAttributes;
 import com.intellij.database.run.ui.grid.CellRenderingUtils;
@@ -228,8 +229,8 @@ import static java.awt.event.InputEvent.ALT_DOWN_MASK;
  * @author gregsh
  */
 public final class TableResultView extends JBTableWithResizableCells
-  implements ResultView, ResultViewWithCells, ResultViewWithColumns, ResultViewWithRows, EditorColorsListener, UISettingsListener,
-             UiDataProvider {
+  implements ResultView, ResultViewWithCells, ResultViewWithColumns, ResultViewWithRows, ResultViewWithFrozenColumns,
+             EditorColorsListener, UISettingsListener, UiDataProvider {
 
   private final DataGrid myResultPanel;
   private final MyTableColumnCache myColumnCache;
@@ -384,10 +385,7 @@ public final class TableResultView extends JBTableWithResizableCells
     });
   }
 
-  public boolean isSecondary() {
-    return myIsFrozenStrip;
-  }
-
+  @Override
   public boolean isCellComponent(@Nullable Component component) {
     return myIsFrozenStrip ? component == this : myFrozenColumnsController.isCellComponent(component);
   }
@@ -438,8 +436,13 @@ public final class TableResultView extends JBTableWithResizableCells
   static final int PIN_DIVIDER_WIDTH = 1;
 
   /** Whether a pinned cell is being edited in the frozen region, so the grid reports editing regardless of view. */
-  public boolean isEditingInFrozenView() {
+  private boolean isEditingInFrozenView() {
     return !myIsFrozenStrip && myFrozenColumnsController.isEditingInFrozenView();
+  }
+
+  @Override
+  public boolean isEditingAnywhere() {
+    return isEditing() || isEditingInFrozenView();
   }
 
   @Override
@@ -521,6 +524,7 @@ public final class TableResultView extends JBTableWithResizableCells
    * an empty set removes the region. The pinned columns keep their place in this view and are rendered at width 0
    * here, their real width living in the frozen view, so pinning never changes the column order.
    */
+  @Override
   public void setFrozenColumns(@NotNull Collection<ModelIndex<GridColumn>> pinnedColumns) {
     if (!myIsFrozenStrip) myFrozenColumnsController.setFrozenColumns(pinnedColumns);
   }
@@ -665,7 +669,7 @@ public final class TableResultView extends JBTableWithResizableCells
       doTranspose();
       createDefaultColumnsFromModel();
       if (!transposed) {
-        if (myResultPanel instanceof TableResultPanel resultPanel) resultPanel.restoreColumnsOrder();
+        if (myResultPanel instanceof ColumnOrderRestorer grid) grid.restoreColumnsOrder();
         restoreUntransposedColumnWidths();
       }
     });
@@ -1415,10 +1419,32 @@ public final class TableResultView extends JBTableWithResizableCells
   }
 
   /**
+   * Brings the leftmost of {@code columns} back into view. The rows stay where they are, because unpinning returns
+   * the columns and must not move the caller's place in the data.
+   */
+  @Override
+  public void scrollColumnsIntoView(@NotNull List<ModelIndex<GridColumn>> columns) {
+    if (isTransposed()) return;
+    IntUnaryOperator column2View = getRawIndexConverter().column2View();
+    int target = -1;
+    for (ModelIndex<GridColumn> column : columns) {
+      int viewColumn = column2View.applyAsInt(column.value);
+      if (viewColumn >= 0 && (target < 0 || viewColumn < target)) target = viewColumn;
+    }
+    if (target < 0) return;
+    Rectangle visible = getVisibleRect();
+    Rectangle cell = getCellRect(Math.max(0, getSelectionModel().getLeadSelectionIndex()), target, true);
+    cell.y = visible.y;
+    cell.height = visible.height;
+    scrollRectToVisible(cell);
+  }
+
+  /**
    * Whether pinning exactly {@code pinnedColumns} would leave the unpinned table usable. Widths are the ones the
    * strip would render, so the scroll position does not matter and a column hidden from the view counts for nothing,
    * just as the pin operation skips it.
    */
+  @Override
   public boolean canFitPinnedColumns(@NotNull Set<ModelIndex<GridColumn>> pinnedColumns) {
     int availableWidth = getAvailableColumnsWidth();
     if (availableWidth <= 0) return true;

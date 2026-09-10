@@ -4,7 +4,8 @@ import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridColumn
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.run.ui.DataAccessType
-import com.intellij.database.run.ui.TableResultPanel
+import com.intellij.database.run.ui.GridColumnPinning
+import java.util.function.UnaryOperator
 import kotlin.math.max
 import kotlin.math.min
 
@@ -51,7 +52,7 @@ class AdjustColumnsAfterMoveInData(
 
     // Re-key before changing visibility: every visibility update refreshes the strip, and the old model index already
     // identifies a different column after the move.
-    (grid as? TableResultPanel)?.restorePinnedColumnsAfterMoveInData { newIndex -> toOriginalIndex(newIndex) }
+    (grid as? GridColumnPinning)?.restorePinnedColumnsAfterMoveInData(UnaryOperator { toOriginalIndex(it) })
 
     // Show all columns for sorting
     for (columnIdx in columnIndices.asIterable()) {

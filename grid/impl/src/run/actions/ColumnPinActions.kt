@@ -5,7 +5,8 @@ import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridColumn
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.ModelIndexSet
-import com.intellij.database.run.ui.TableResultPanel
+import com.intellij.database.run.ui.GridColumnPinning
+import com.intellij.database.run.ui.table.ColumnPinning
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -15,14 +16,14 @@ import com.intellij.openapi.util.NlsActions.ActionDescription
 private const val TRANSPOSED = "action.Console.TableResult.PinColumns.transposed.description"
 private const val NO_SPACE = "action.Console.TableResult.PinColumns.insufficient.space.description"
 
-/** Returns the panel when column pinning is enabled. */
-private fun pinPanel(grid: DataGrid): TableResultPanel? =
-  (grid as? TableResultPanel)?.takeIf { TableResultPanel.isColumnPinningEnabled() }
+/** Returns the grid as a pinning one when column pinning is enabled. */
+private fun pinPanel(grid: DataGrid): GridColumnPinning? =
+  (grid as? GridColumnPinning)?.takeIf { ColumnPinning.isEnabled() }
 
 /** Rechecks availability at invocation because the presentation may be stale. */
-private fun actablePanel(grid: DataGrid): TableResultPanel? = pinPanel(grid)?.takeIf { !it.resultView.isTransposed }
+private fun actablePanel(grid: DataGrid): GridColumnPinning? = pinPanel(grid)?.takeIf { !grid.resultView.isTransposed }
 
-private fun allPinned(panel: TableResultPanel, columns: ModelIndexSet<GridColumn>, pinned: Boolean): Boolean =
+private fun allPinned(panel: GridColumnPinning, columns: ModelIndexSet<GridColumn>, pinned: Boolean): Boolean =
   columns.asIterable().all { panel.isColumnPinned(it) == pinned }
 
 /** Targets the whole selection when the right-clicked header is part of one. */
@@ -60,7 +61,7 @@ class PinColumnsAction : ColumnHeaderActionBase(true) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    if (panel.resultView.isTransposed) {
+    if (grid.resultView.isTransposed) {
       showReason(e, DataGridBundle.message(TRANSPOSED))
       return
     }
@@ -93,7 +94,7 @@ class UnpinColumnsAction : ColumnHeaderActionBase(true) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    showReason(e, if (panel.resultView.isTransposed) DataGridBundle.message(TRANSPOSED) else null)
+    showReason(e, if (grid.resultView.isTransposed) DataGridBundle.message(TRANSPOSED) else null)
   }
 
   override fun actionPerformed(e: AnActionEvent, grid: DataGrid, columnIdxs: ModelIndexSet<GridColumn>) {
@@ -112,7 +113,7 @@ class PinColumnsUpToHereAction : ColumnHeaderActionBase() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    if (panel.resultView.isTransposed) {
+    if (grid.resultView.isTransposed) {
       showReason(e, DataGridBundle.message(TRANSPOSED))
       return
     }
@@ -140,7 +141,7 @@ class UnpinAllColumnsAction : ColumnHeaderActionBase() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    showReason(e, if (panel.resultView.isTransposed) DataGridBundle.message(TRANSPOSED) else null)
+    showReason(e, if (grid.resultView.isTransposed) DataGridBundle.message(TRANSPOSED) else null)
   }
 
   override fun actionPerformed(e: AnActionEvent, grid: DataGrid, columnIdxs: ModelIndexSet<GridColumn>) {
