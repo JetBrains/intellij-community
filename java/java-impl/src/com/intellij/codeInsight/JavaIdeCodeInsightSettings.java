@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -27,18 +27,6 @@ public class JavaIdeCodeInsightSettings implements PersistentStateComponent<Java
 
   @XCollection(propertyElementName = "included-static-names", elementName = "name", valueAttributeName = "")
   public List<String> includedAutoStaticNames = new ArrayList<>();
-
-  /**
-   * Puts the overloads of one method in the completion list from the fewest parameters to the most. When false, the relevance of the
-   * item decides the order, as it does for every other item.
-   * <p>
-   * The setting also controls the item that fills in an argument, because a fixed priority for that item would break the order of
-   * the overloads. When true, the item takes its place among the overloads. When false, it comes first.
-   *
-   * @see com.intellij.codeInsight.completion.JavaCompletionSorting
-   * @see com.intellij.codeInsight.completion.ArgumentSuggester
-   */
-  public boolean sortOverloadsByParameterCount = false;
 
   public static JavaIdeCodeInsightSettings getInstance() {
     return ApplicationManager.getApplication().getService(JavaIdeCodeInsightSettings.class);

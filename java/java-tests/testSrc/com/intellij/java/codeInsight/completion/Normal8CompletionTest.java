@@ -1,15 +1,11 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.JavaIdeCodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.UsefulTestCase;
@@ -23,7 +19,6 @@ import java.util.List;
  * @author anna
  */
 public class Normal8CompletionTest extends NormalCompletionTestCase {
-
   @Override
   public final @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8;
@@ -522,30 +517,6 @@ public class Normal8CompletionTest extends NormalCompletionTestCase {
     assertEquals(List.of("getBytes(StandardCharsets.UTF_8)", "getBytes", "getBytes", "getBytes", "getBytes"), myFixture.getLookupElementStrings());
     myFixture.type("\n");
     myFixture.checkResult("class C { byte[] s = \"hello\".getBytes(java.nio.charset.StandardCharsets.UTF_8) }");
-  }
-
-  @NeedsIndex.ForStandardLibrary
-  public void testOverloadsAreSortedByParameterCount() {
-    setSortOverloadsByParameterCountOn();
-    myFixture.configureByText("a.java", """
-      class C {
-        void foo(int a, int b) {}
-        void foo() {}
-        void foo(int a) {}
-        void fooBar() {}
-        void test() { fo<caret> }
-      }""");
-    LookupElement[] elements = myFixture.completeBasic();
-    List<LookupElement> overloads = ContainerUtil.findAll(elements, it -> it.getLookupString().equals("foo"));
-    assertEquals(List.of(0, 1, 2),
-                 ContainerUtil.map(overloads, it -> ((PsiMethod)it.getObject()).getParameterList().getParametersCount()));
-  }
-
-  private void setSortOverloadsByParameterCountOn() {
-    JavaIdeCodeInsightSettings settings = JavaIdeCodeInsightSettings.getInstance();
-    boolean oldValue = settings.sortOverloadsByParameterCount;
-    settings.sortOverloadsByParameterCount = true;
-    Disposer.register(getTestRootDisposable(), () -> settings.sortOverloadsByParameterCount = oldValue);
   }
 
   @NeedsIndex.ForStandardLibrary

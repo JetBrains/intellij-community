@@ -1,9 +1,8 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
-import com.intellij.codeInsight.JavaIdeCodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.completion.impl.LiftShorterItemsClassifier;
 import com.intellij.codeInsight.lookup.Classifier;
@@ -57,24 +56,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public final class JavaCompletionSorting {
@@ -105,7 +97,6 @@ public final class JavaCompletionSorting {
     afterProximity.add(new PreferContainingSameWords(project, expectedTypes));
     afterProximity.add(new PreferShorter(project, expectedTypes));
     afterProximity.add(new DispreferTechnicalOverloads(position));
-    afterProximity.add(new DispreferSuggestedArgument());
 
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, matcher);
     if (!smart && afterNew) {
@@ -163,14 +154,6 @@ public final class JavaCompletionSorting {
 
     sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[0]));
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[0]));
-
-    // This call must stay the last one, because the classifier must be the first one of the chain. The id "overloadOrder" is not in
-    // the sorter yet, so withClassifier gets the index -1 and puts the classifier at the index 0. LiftShorterClasses above uses the
-    // same idiom. A later insertion would push the classifier from the index 0.
-    if (sorter instanceof CompletionSorterImpl completionSorter &&
-        JavaIdeCodeInsightSettings.getInstance().sortOverloadsByParameterCount) {
-      sorter = completionSorter.withClassifier("overloadOrder", true, new SortOverloadsByParameterCount());
-    }
     return sorter;
   }
 
@@ -801,23 +784,6 @@ public final class JavaCompletionSorting {
     }
   }
 
-  /**
-   * Keeps an item that fills in an argument below the overload it calls.
-   * For example, {@code toLowerCase(Locale.ROOT)} comes below {@code toLowerCase(Locale locale)}.
-   *
-   * @see ArgumentSuggester
-   */
-  private static class DispreferSuggestedArgument extends LookupElementWeigher {
-    DispreferSuggestedArgument() {
-      super("suggestedArgument");
-    }
-
-    @Override
-    public @NotNull Boolean weigh(@NotNull LookupElement element) {
-      return element.as(ArgumentSuggester.MethodWithArgument.class) != null;
-    }
-  }
-
   private static class LiftShorterClasses extends ClassifierFactory<LookupElement> {
     final ProjectFileIndex fileIndex;
 
@@ -844,90 +810,6 @@ public final class JavaCompletionSorting {
           return false;
         }
       }, true);
-    }
-  }
-
-  /**
-   * {@link JavaIdeCodeInsightSettings#sortOverloadsByParameterCount} switches this factory off.
-   *
-   * @see OverloadOrderClassifier
-   */
-  private static final class SortOverloadsByParameterCount extends ClassifierFactory<LookupElement> {
-    SortOverloadsByParameterCount() {
-      super("overloadOrder");
-    }
-
-    @Override
-    public @NotNull Classifier<LookupElement> createClassifier(@NotNull Classifier<LookupElement> next) {
-      return new OverloadOrderClassifier(next);
-    }
-  }
-
-  private static final class OverloadOrderClassifier extends Classifier<LookupElement> {
-    private OverloadOrderClassifier(@NotNull Classifier<LookupElement> next) {
-      super(next, "overloadOrder");
-    }
-
-    @Override
-    public @NotNull Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source,
-                                                     @NotNull ProcessingContext context) {
-      List<LookupElement> items = ContainerUtil.newArrayList(myNext == null ? source : myNext.classify(source, context));
-      if (items.size() < 2) return items;
-
-      // The positions that the overloads of one method hold. An item that is not a method belongs to no group.
-      Map<OverloadGroup, IntList> positions = new HashMap<>();
-      for (int i = 0; i < items.size(); i++) {
-        OverloadGroup group = getGroup(items.get(i));
-        if (group == null) continue;
-        IntList groupPositions = positions.get(group);
-        if (groupPositions == null) {
-          groupPositions = new IntArrayList(2);
-          positions.put(group, groupPositions);
-        }
-        groupPositions.add(i);
-      }
-
-      for (IntList groupPositions : positions.values()) {
-        int size = groupPositions.size();
-        if (size < 2) continue;
-        List<LookupElement> members = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-          members.add(items.get(groupPositions.getInt(i)));
-        }
-        // The sort is stable, so two overloads of the same parameter count keep the order that the weighers gave them.
-        members.sort(Comparator.comparingInt(item -> ((PsiMethod)item.getObject()).getParameterList().getParametersCount()));
-        // The group writes only the positions that it already holds, so every other item keeps its index.
-        for (int i = 0; i < size; i++) {
-          items.set(groupPositions.getInt(i), members.get(i));
-        }
-      }
-      return items;
-    }
-
-    @Override
-    public @Unmodifiable @NotNull List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items,
-                                                                                      @NotNull ProcessingContext context) {
-      return ContainerUtil.map(items, item -> new Pair<>(item, getParameterCount(item)));
-    }
-
-    /**
-     * @return the number of the parameters of the method of the item, or null if the item is not a method
-     */
-    private static @Nullable Integer getParameterCount(@NotNull LookupElement item) {
-      return item.getObject() instanceof PsiMethod method ? method.getParameterList().getParametersCount() : null;
-    }
-
-    private static @Nullable OverloadGroup getGroup(@NotNull LookupElement item) {
-      if (!(item.getObject() instanceof PsiMethod method)) return null;
-      PsiClass containingClass = method.getContainingClass();
-      return containingClass == null ? null : new OverloadGroup(method.getName(), containingClass);
-    }
-
-    /**
-     * Identifies the overloads of one method. The class is a part of the key, so a method of another class with the same name goes to
-     * another group.
-     */
-    private record OverloadGroup(@NotNull String name, @NotNull PsiClass containingClass) {
     }
   }
 }
