@@ -15,11 +15,11 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -175,9 +175,11 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
       protected void doImport(@NotNull T toImport) {
         R ref = myReferencePointer.getElement();
         if (ref == null) return;
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(ref)) return;
-        Project project = toImport.getProject();
-        WriteCommandAction.runWriteCommandAction(project, getBaseText(), null, () -> performImport(toImport, ref));
+        ActionContext context = ActionContext.from(editor, ref.getContainingFile());
+
+        ModCommandExecutor.executeInteractively(context, getBaseText(), editor, () -> ModCommand.psiUpdate(ref, (copyRef, _) -> {
+          performImport(toImport, copyRef);
+        }));
       }
     };
   }
@@ -210,9 +212,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
         || candidates.isEmpty()) {
       return;
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      createQuestionAction(candidates, project, editor).execute();
-    });
+    createQuestionAction(candidates, project, editor).execute();
   }
 
   @Override
