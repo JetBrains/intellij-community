@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionHolder;
 import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ExperimentalIcons;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -40,6 +41,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.platform.icons.AllIconDescriptors;
+import com.intellij.platform.icons.IconDescriptor;
+import com.intellij.platform.icons.scale.IconScale;
+import com.intellij.platform.icons.swing.SwingIconKt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.popup.ActionPopupOptions;
@@ -102,6 +107,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
   private Icon myDisabledIcon;
   private Icon myIcon;
+  // experimental icons pipeline: createSwingIcon is expensive, so cache the bridge per descriptor
+  private IconDescriptor myIconDescriptor;
+  private Icon myDescriptorSwingIcon;
+  private Icon myDescriptorDisabledSwingIcon;
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
@@ -450,7 +459,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   public Icon getIcon() {
     boolean enabled = isEnabled();
     int popState = getPopState();
-    Icon hoveredIcon = (popState == POPPED || popState == PUSHED) ? myPresentation.getHoveredIcon() : null;
+    Icon hoveredIcon = !ExperimentalIcons.isEnabled() && (popState == POPPED || popState == PUSHED) ? myPresentation.getHoveredIcon() : null;
     Icon icon = enabled ? (hoveredIcon == null ? myIcon : hoveredIcon) : myDisabledIcon;
     return icon == null ? getFallbackIcon(enabled) : icon;
   }
@@ -468,6 +477,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void updateIcon() {
+    if (ExperimentalIcons.isEnabled()) {
+      updateDescriptorIcons();
+      return;
+    }
     myIcon = myPresentation.getIcon();
     // set disabled icon if it is specified
     if (myPresentation.getDisabledIcon() != null) {
@@ -483,6 +496,18 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myDisabledIcon = null;
       Logger.getInstance(ActionButton.class).error("invalid icon (" + myIcon + ") for action " + myAction.getClass());
     }
+  }
+
+  private void updateDescriptorIcons() {
+    IconDescriptor descriptor = myPresentation.getIconDescriptor();
+    IconDescriptor effective = descriptor != null ? descriptor : AllIconDescriptors.Toolbar.getUnknown();
+    if (!Objects.equals(effective, myIconDescriptor) || myDescriptorSwingIcon == null) {
+      myIconDescriptor = effective;
+      myDescriptorSwingIcon = SwingIconKt.createSwingIcon(effective, IconScale.Default);
+      myDescriptorDisabledSwingIcon = myLook.getDisabledIcon(myDescriptorSwingIcon);
+    }
+    myIcon = myDescriptorSwingIcon;
+    myDisabledIcon = myDescriptorDisabledSwingIcon;
   }
 
   protected void updateToolTipText() {
@@ -648,12 +673,15 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (Presentation.PROP_TEXT.equals(propertyName) || Presentation.PROP_DESCRIPTION.equals(propertyName)) {
       updateToolTipText();
     }
-    else if (Presentation.PROP_ENABLED.equals(propertyName) || Presentation.PROP_ICON.equals(propertyName)) {
+    else if (Presentation.PROP_ENABLED.equals(propertyName) || Presentation.PROP_ICON.equals(propertyName)
+             || Presentation.PROP_ICON_DESCRIPTOR.equals(propertyName)) {
       updateIcon();
       repaint();
     }
     else if (Presentation.PROP_DISABLED_ICON.equals(propertyName)) {
-      myDisabledIcon = myPresentation.getDisabledIcon();
+      if (!ExperimentalIcons.isEnabled()) {
+        myDisabledIcon = myPresentation.getDisabledIcon();
+      }
       repaint();
     }
     else if ("selected".equals(propertyName)) {
