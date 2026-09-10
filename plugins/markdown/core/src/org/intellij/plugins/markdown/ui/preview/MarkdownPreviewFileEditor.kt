@@ -355,9 +355,14 @@ class MarkdownPreviewFileEditor(
             attachHtmlPanel()
           }
           else if (lastPanelProviderInfo == null ||
-                   MarkdownHtmlPanelProvider.createFromInfo(lastPanelProviderInfo!!) == retrievePanelProvider(settings)) {
+                   MarkdownHtmlPanelProvider.createFromInfo(lastPanelProviderInfo!!) != retrievePanelProvider(settings)) {
             detachHtmlPanel()
             attachHtmlPanel()
+          }
+          else {
+            val editor = mainEditor.firstOrNull() ?: return@launch
+            val offset = editor.caretModel.offset
+            panel?.reloadWithOffset(offset)
           }
         }
       }
