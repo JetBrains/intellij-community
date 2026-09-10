@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,7 @@ public interface ClientHintManager {
    * The remote implementation gets this call from the client, which owns the Escape key.
    */
   @ApiStatus.Internal
+  @RequiresEdt
   void dismissCurrentQuestionHint();
 
   boolean hasShownHintsThatWillHideByOtherHint(boolean willShowTooltip);
