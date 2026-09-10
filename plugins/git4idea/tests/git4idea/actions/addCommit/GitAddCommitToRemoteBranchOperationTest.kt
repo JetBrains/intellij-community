@@ -12,12 +12,15 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.TestFile
+import git4idea.test.commitDetails
 import git4idea.test.file
 import git4idea.test.git
 import git4idea.test.gitSingleRepoContextFixture
+import git4idea.test.last
 import git4idea.test.prepareRemoteRepo
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
@@ -158,6 +161,45 @@ class GitAddCommitToRemoteBranchOperationTest {
     assertThat(remoteCommitMessages).isEqualTo("""
       Third
       First
+      initial
+    """.trimIndent())
+  }
+
+  @Test
+  @Suppress("NonAsciiCharacters")
+  fun `test cherry-pick preserves non-UTF-8 commit message text`(): Unit = with(context) {
+    val remoteBranchBareName = "my-remote-branch"
+    val remoteBranchRemoteRef = "refs/heads/$remoteBranchBareName"
+
+    val remoteRepo = prepareRemoteRepo(repo)
+    git("push origin HEAD:$remoteBranchBareName")
+    repo.update()
+    val remoteBranch = repo.branches.remoteBranches
+      .filterIsInstance<GitStandardRemoteBranch>()
+      .first { it.nameForRemoteOperations == remoteBranchBareName }
+
+    git("config i18n.commitEncoding ISO-8859-1")
+    file("pre.txt").create("pre content\n").addCommit("pre-commit")
+
+    val messageFile = Files.createTempFile("commit-message", ".txt")
+    Files.write(messageFile, "Café".toByteArray(Charsets.ISO_8859_1))
+    file("feature.txt").create("feature content\n").add()
+    git("commit -F '$messageFile'")
+    val commit = commitDetails(repo.last())
+
+    dialogManager.onDialog(VcsPushDialog::class.java) {
+      it.performOKAction()
+      DialogWrapper.OK_EXIT_CODE
+    }
+
+    timeoutRunBlocking {
+      GitAddCommitToRemoteBranchOperation(project, repo, listOf(commit), remoteBranch, this).execute()
+    }
+
+    // The remote repository has no i18n settings, so `git log` re-encodes the message to UTF-8
+    val remoteCommitMessages = git("--git-dir '${remoteRepo}' log --pretty=format:%s $remoteBranchRemoteRef")
+    assertThat(remoteCommitMessages).isEqualTo("""
+      Café
       initial
     """.trimIndent())
   }
