@@ -468,6 +468,7 @@ class MacDistributionBuilder(
 
             zipOutStream.entry("${zipRoot}/${productInfoPathPrefix}${PRODUCT_INFO_FILE_NAME}", productJson.encodeToByteArray())
 
+            val excludedRuntimePaths = customizer.excludedRuntimePaths.mapTo(HashSet()) { "jbr/Contents/Home/$it" }
             val fileFilter: (Path, String) -> Boolean = { sourceFile, relativePath ->
               val isContentDir = !relativePath.contains('/')
               when {
@@ -476,6 +477,7 @@ class MacDistributionBuilder(
                   false
                 }
                 sourceFile.fileName.toString() == ".DS_Store" -> false
+                relativePath in excludedRuntimePaths -> false
                 isContentDir && context.isLanguageServer && sourceFile.extension == "sh" -> true
                 isContentDir && sourceFile.fileName.toString() != "Info.plist" -> {
                   error("Only the Info.plist file is allowed in ${zipRoot} directory but found ${zipRoot}/${relativePath}")
