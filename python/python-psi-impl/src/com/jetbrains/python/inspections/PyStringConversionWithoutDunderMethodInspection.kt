@@ -39,6 +39,7 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 
 /**
@@ -187,42 +188,41 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
       else registerProblem(this, message)
     }
 
-    private fun PyClassLikeType?.shouldIgnoreType(requiredMethod: String): Boolean {
-      val classQName = this?.classQName ?: return true
-      if (classQName in inspection.ignoredTypes) return true
-      // int and bool don't override __str__ in their stubs and have no runtime module to fall back to.
-      return requiredMethod == PyNames.DUNDER_STR && classQName in PyStringDunderUtil.TYPES_WITH_BUILTIN_STR
-    }
-
     private fun PyClassType.shouldWarnForType(requiredMethod: String): Boolean {
       if (classQName in inspection.ignoredTypes) return false
 
-      // Check if any ancestor is in ignored types (e.g., class A(int) should be ignored
-      // because int defines __str__ even though it's not in stubs)
-      val pyClass = pyClass
-      if (pyClass.getAncestorTypes(myTypeEvalContext).any { it.shouldIgnoreType(requiredMethod) }) {
+      // Check if any ancestor is in ignored types (e.g., class A(B) is ignored when B is ignored)
+      if (pyClass.getAncestorTypes(myTypeEvalContext).any { it?.classQName in inspection.ignoredTypes }) {
         return false
       }
 
       val hasSyntheticRepr = parseDataclassParameters(pyClass, myTypeEvalContext)?.repr == true
 
-      val hasRepr = hasSyntheticRepr || hasCustomStringMethod(PyNames.DUNDER_REPR)
-      val hasStr by lazy { hasCustomStringMethod(PyNames.DUNDER_STR) }
-      val hasFormat by lazy { hasCustomStringMethod(PyNames.DUNDER_FORMAT) }
+      val repr = if (hasSyntheticRepr) DunderMethodPresence.DEFINED else presenceOfDunderMethod(PyNames.DUNDER_REPR)
+      val str by lazy { presenceOfDunderMethod(PyNames.DUNDER_STR) }
+      val format by lazy { presenceOfDunderMethod(PyNames.DUNDER_FORMAT) }
 
+      // Report only when every method that the conversion can use is absent. An unknown answer never reports.
       return when (requiredMethod) {
-        PyNames.DUNDER_REPR -> !hasRepr
-        PyNames.DUNDER_STR -> !hasRepr && !hasStr
-        PyNames.DUNDER_FORMAT -> !hasRepr && !hasStr && !hasFormat
+        PyNames.DUNDER_REPR -> repr.isAbsent
+        PyNames.DUNDER_STR -> repr.isAbsent && str.isAbsent
+        PyNames.DUNDER_FORMAT -> repr.isAbsent && str.isAbsent && format.isAbsent
         else -> false
       }
     }
 
-    private fun PyClassType.hasCustomStringMethod(
-      methodName: String,
-    ): Boolean {
+    /**
+     * The classes of the MRO, without `object`. A method of `object` is never a custom string conversion.
+     * A `null` entry is an ancestor that does not resolve to a class.
+     */
+    private fun PyClassType.mroWithoutObject(): List<PyClass?> =
+      (listOf<PyClassLikeType?>(this) + pyClass.getAncestorTypes(myTypeEvalContext))
+        .filter { it?.classQName != PyNames.FQN.OBJECT }
+        .map { (it as? PyClassType)?.pyClass }
+
+    private fun PyClassType.presenceOfDunderMethod(methodName: String): DunderMethodPresence {
       // special case: no skeleton and no stubs
-      if (classQName in PyNames.FQN.NONES) return true
+      if (classQName in PyNames.FQN.NONES) return DunderMethodPresence.DEFINED
 
       val objectMethodQName = "${PyNames.FQN.OBJECT}.$methodName"
 
@@ -230,16 +230,58 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
         .firstOrNull()
         ?.element
       if (memberInStub != null && (memberInStub as? PyFunction)?.qualifiedName != objectMethodQName) {
-        return true
+        return DunderMethodPresence.DEFINED
       }
 
-      // Type stubs (.pyi) frequently omit __str__, __repr__, and __format__ even when the runtime
-      // .py module defines them, so fall back to the implementation class to avoid false positives.
-      val implementation = PyiUtil.getOriginalElementOrLeaveAsIs(pyClass, PyClass::class.java)
-      val implementationMethod = implementation.findMethodInImplementations(methodName, myTypeEvalContext) ?: return false
-      return implementationMethod.qualifiedName != objectMethodQName && implementationMethod.qualifiedName != "builtins.$objectMethodQName"
+      // A type stub keeps `__str__` and `__repr__` only when they change the signature of the `object` ones, so a
+      // stub alone never proves that a class has no custom string conversion. Ask the runtime class of every class
+      // of the MRO, and answer UNKNOWN when a stub has no runtime class and no known answer.
+      var unknown = false
+      var knownAbsent = false
+      for (mroClass in mroWithoutObject()) {
+        if (mroClass == null) {
+          if (!knownAbsent) unknown = true
+          continue
+        }
+        if (mroClass.findMethodByName(methodName, false, myTypeEvalContext) != null) return DunderMethodPresence.DEFINED
+
+        // A known type answers for itself and for every ancestor of it. The MRO puts those ancestors after it, so a
+        // stub among them adds nothing. A base of a subclass can also come later, and the walk must still see it.
+        if (mroClass.qualifiedName in PyStringDunderUtil.TYPES_WITHOUT_USEFUL_STRING_CONVERSION) {
+          knownAbsent = true
+          continue
+        }
+
+        val implementation = PyiUtil.getOriginalElement(mroClass) as? PyClass
+        if (implementation == null) {
+          if (!knownAbsent && mroClass.containingFile is PyiFile) unknown = true
+          continue
+        }
+        // A stub often hides a private base that the runtime module declares, so search the implementation ancestors.
+        val implementationMethod = implementation.findMethodInImplementations(methodName, myTypeEvalContext)
+        if (implementationMethod != null &&
+            implementationMethod.qualifiedName != objectMethodQName &&
+            implementationMethod.qualifiedName != "builtins.$objectMethodQName") {
+          return DunderMethodPresence.DEFINED
+        }
+      }
+      return if (unknown) DunderMethodPresence.UNKNOWN else DunderMethodPresence.NOT_DEFINED
     }
   }
+}
+
+/** What the IDE knows about a dunder method of a class. */
+private enum class DunderMethodPresence {
+  /** A class of the MRO, `object` apart, defines the method. */
+  DEFINED,
+
+  /** No class of the MRO defines the method, and every class of the MRO gives a reliable answer. */
+  NOT_DEFINED,
+
+  /** A class of the MRO comes from a type stub that has no runtime class, so the IDE cannot answer. */
+  UNKNOWN;
+
+  val isAbsent: Boolean get() = this == NOT_DEFINED
 }
 
 private class RemoveFromReportedTypesQuickFix(private val key: String, private val displayName: String) : LocalQuickFix {
