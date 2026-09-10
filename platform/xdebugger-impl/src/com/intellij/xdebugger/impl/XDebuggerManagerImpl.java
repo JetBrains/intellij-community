@@ -226,7 +226,10 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         session.showSessionTab();
       }
       ProcessHandler handler = session.getDebugProcess().getProcessHandler();
-      handler.startNotify();
+      // a debug process may notify the handler itself during its console setup
+      if (!handler.isStartNotified()) {
+        handler.startNotify();
+      }
       return new XSessionStartedResultImpl(session, session.getMockRunContentDescriptorIfInitialized());
     }
     else {
