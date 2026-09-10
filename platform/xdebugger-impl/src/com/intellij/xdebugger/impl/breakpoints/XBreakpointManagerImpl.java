@@ -566,10 +566,22 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     assert !myLock.isHeldByCurrentThread();
     // collect breakpoint states without locking
     var breakpointTypeToDefaultState = StreamEx.of(createDefaultBreakpoints()).toMap(XBreakpointBase::getType, XBreakpointBase::getState);
-    var breakpointStates = StreamEx.of(getAllBreakpoints()).mapToEntry(XBreakpointBase::getState).toCustomMap(LinkedHashMap::new);
 
-    withLockMaybeCancellable(myLock, () -> saveStateImpl(state, breakpointTypeToDefaultState, breakpointStates));
-    return state;
+    while (true) {
+      var breakpointStates = StreamEx.of(getAllBreakpoints()).mapToEntry(XBreakpointBase::getState).toCustomMap(LinkedHashMap::new);
+
+      boolean saved = withLockMaybeCancellable(myLock, () -> {
+        if (!myAllBreakpoints.equals(breakpointStates.keySet())) {
+          return false;
+        }
+        saveStateImpl(state, breakpointTypeToDefaultState, breakpointStates);
+        return true;
+      });
+
+      if (saved) {
+        return state;
+      }
+    }
   }
 
   private void saveStateImpl(@NotNull BreakpointManagerState state,
