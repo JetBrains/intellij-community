@@ -32,7 +32,7 @@
   <resource-bundle>messages.PyProjectTomlBundle</resource-bundle>
   <actions>
     <action id="AddPyProject" class="com.intellij.python.pyproject.model.internal.addPyProject.AddPyProjectAction">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewPythonPackage"/>
     </action>
     <action id="ConvertToPyProject" class="com.intellij.python.pyproject.model.internal.addPyProject.ConvertToPyProjectAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="RenameElement"/>

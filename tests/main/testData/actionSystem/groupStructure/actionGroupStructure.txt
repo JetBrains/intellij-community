@@ -2585,7 +2585,6 @@
   Groovy.NewClass
   Kotlin.NewFile
   AddNewPropertyFile
-  AddPyProject
   NewPythonFile
   NewFile
   WelcomeNewEmptyFile
@@ -2595,6 +2594,7 @@
   JavaFxCreateActions
   compose.newVectorAsset
   NewJavaSpecialFile
+  AddPyProject
   NewPythonPackage
   FileTemplateSeparatorGroup
   Kotlin.NewScript
