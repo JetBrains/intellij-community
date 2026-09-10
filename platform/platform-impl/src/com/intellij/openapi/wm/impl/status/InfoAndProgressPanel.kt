@@ -106,6 +106,7 @@ import javax.swing.JPanel
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 import javax.swing.event.HyperlinkListener
+import kotlin.concurrent.withLock
 import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -259,7 +260,9 @@ class InfoAndProgressPanel internal constructor(
   }
 
   private fun dispose() {
-    originalsLock.withLockCancellable {
+    // dispose() runs under the already-canceled scope job, where a cancellable lock throws CE,
+    // and dispose() must not throw CE
+    originalsLock.withLock {
       for (indicator in inlineToOriginal.keys) {
         Disposer.dispose(indicator)
       }
