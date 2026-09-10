@@ -42,6 +42,7 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.io.copyRecursively
 import com.intellij.util.io.delete
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
@@ -58,11 +59,15 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.writeText
 
+@OptIn(LowLevelLocalMachineAccess::class)
 class FileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
   private val LOG = logger<FileWatcherTest>()
@@ -75,6 +80,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private lateinit var alarm: Alarm
 
   private val watchedPaths = mutableListOf<String>()
+  private val watcherEventLatches = ConcurrentHashMap<String, CountDownLatch>()
   private val watcherEvents = Semaphore()
   private val resetHappened = AtomicBoolean()
 
@@ -94,6 +100,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertFalse(watcher.isOperational)
     watchedPaths += tempDir.rootPath.toString()
     startup(watcher) { path ->
+      watcherEventLatches[path]?.countDown()
       if (path === FileWatcher.RESET || path !== FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
         alarm.cancelAllRequests()
         alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
@@ -136,6 +143,96 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ files.forEach { it.writeText("new content") } }, files.associateWith { 'U' })
     assertEvents({ files.forEach { it.delete() } }, files.associateWith { 'D' })
     assertEvents({ files.forEach { it.writeText("re-creation") } }, files.associateWith { 'C' })
+  }
+
+  @Test fun testHardLinkedFileRoots() {
+    assumeTrue("Linux-only", OS.CURRENT == OS.Linux)
+
+    val (file, link) = createHardLinkedFileRoots()
+    refresh(file)
+    refresh(link)
+
+    watch(file, false)
+    watch(link, false)
+    assertEvents({ file.writeText("new content") }, mapOf(file to 'U', link to 'U'))
+  }
+
+  @Test fun testUnlinkedHardLinkedFileRoot() {
+    assumeTrue("Linux-only", OS.CURRENT == OS.Linux)
+
+    val (file, link) = createHardLinkedFileRoots()
+    refresh(file)
+    refresh(link)
+
+    watch(file, false)
+    watch(link, false)
+    assertEvents({ file.delete() }, mapOf(file to 'D'))
+    assertEvents({ link.writeText("survivor updated") }, mapOf(link to 'U'))
+    assertEvents({ file.writeText("recreated") }, mapOf(file to 'C'))
+    assertEvents({ file.writeText("recreated updated") }, mapOf(file to 'U'))
+  }
+
+  @Test fun testRenamedHardLinkedFileRoot() {
+    assumeTrue("Linux-only", OS.CURRENT == OS.Linux)
+
+    val (file, link) = createHardLinkedFileRoots()
+    refresh(file)
+    refresh(link)
+
+    watch(file, false)
+    watch(link, false)
+    assertEvents({ Files.move(file, file.resolveSibling("renamed.txt")) }, mapOf(file to 'D'))
+    assertEvents({ link.writeText("survivor updated") }, mapOf(link to 'U'))
+    assertEvents({ file.writeText("recreated") }, mapOf(file to 'C'))
+    assertEvents({ file.writeText("recreated updated") }, mapOf(file to 'U'))
+  }
+
+  @Test fun testDistinctFileRootsBecomeHardLinks() {
+    assumeTrue("Linux-only", OS.CURRENT == OS.Linux)
+
+    val (file, other) = createFileRootPaths()
+    file.writeText("old inode")
+    other.writeText("shared inode")
+    val oldInodeLink = Files.createLink(file.resolveSibling("old-inode.txt"), file)
+    val replacement = Files.createLink(file.resolveSibling("replacement.txt"), other)
+    refresh(file)
+    refresh(other)
+
+    watch(file, false)
+    watch(other, false)
+    assertEvents(
+      {
+        awaitRootReRegistration(file) {
+          Files.move(replacement, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        }
+      },
+      mapOf(file to 'U'),
+    )
+    assertEvents({ other.writeText("shared inode updated") }, mapOf(file to 'U', other to 'U'))
+    assertEvents({ oldInodeLink.writeText("old inode updated") }, emptyMap(), SHORT_PROCESS_DELAY)
+  }
+
+  @Test fun testHardLinkedFileRootBecomesUniqueFile() {
+    assumeTrue("Linux-only", OS.CURRENT == OS.Linux)
+
+    val (file, link) = createHardLinkedFileRoots()
+    val replacement = file.resolveSibling("replacement.txt")
+    replacement.writeText("unique replacement")
+    refresh(file)
+    refresh(link)
+
+    watch(file, false)
+    watch(link, false)
+    assertEvents(
+      {
+        awaitRootReRegistration(file) {
+          Files.move(replacement, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        }
+      },
+      mapOf(file to 'U'),
+    )
+    assertEvents({ file.writeText("unique replacement updated") }, mapOf(file to 'U'))
+    assertEvents({ link.writeText("surviving old inode updated") }, mapOf(link to 'U'))
   }
 
   @Test fun testFileRootRecursive() {
@@ -699,6 +796,35 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private fun unwatch(request: LocalFileSystem.WatchRequest) {
     unwatch(watcher, request)
     fs.refresh(false)
+  }
+
+  private fun createFileRootPaths(): Pair<Path, Path> {
+    val first = tempDir.newDirectoryPath("first")
+    val second = tempDir.newDirectoryPath("second")
+    val file = first.resolve("file.txt")
+    val link = second.resolve("link.txt")
+    return file to link
+  }
+
+  private fun createHardLinkedFileRoots(): Pair<Path, Path> {
+    val (file, link) = createFileRootPaths()
+    file.createFile()
+    Files.createLink(link, file)
+    return file to link
+  }
+
+  private fun awaitRootReRegistration(path: Path, action: () -> Unit) {
+    val pathString = path.toString()
+    // A missing root is reported as deleted, then re-registered with create and change notifications.
+    val latch = CountDownLatch(3)
+    check(watcherEventLatches.put(pathString, latch) == null)
+    try {
+      action()
+      assertTrue("root was not re-registered: $path", latch.await(NATIVE_PROCESS_DELAY, TimeUnit.MILLISECONDS))
+    }
+    finally {
+      watcherEventLatches.remove(pathString, latch)
+    }
   }
 
   private fun assertEvents(action: () -> Unit, expectedOps: Map<Path, Char>, timeout: Long = NATIVE_PROCESS_DELAY) {
