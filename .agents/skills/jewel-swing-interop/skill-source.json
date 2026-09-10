@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "skill": "jewel-swing-interop",
+  "attribution": "Author-maintained Jewel/Swing interop workflow informed by JetBrains Jewel sources.",
+  "sources": [
+    {
+      "fetchedAt": "2026-06-11",
+      "label": "Author-maintained Jewel Swing interop workflow",
+      "role": "original-content",
+      "type": "local-original-content",
+      "version": "2026-06-11",
+      "versionSource": "fetchDate",
+      "license": "project"
+    },
+    {
+      "fetchedAt": "2026-06-11",
+      "label": "IntelliJ Platform Jewel sources",
+      "role": "supporting-reference",
+      "type": "upstream-reference",
+      "url": "https://github.com/JetBrains/intellij-community/tree/master/platform/jewel",
+      "version": "20136cf9e123629140de64a0a6f635aefa1cd168",
+      "versionSource": "gitCommit",
+      "license": "Apache-2.0",
+      "check": {
+        "type": "github",
+        "repository": "JetBrains/intellij-community",
+        "path": "platform/jewel",
+        "trackingRef": "master",
+        "localCheckoutHint": "~/src/intellij-community/platform/jewel"
+      }
+    }
+  ]
+}

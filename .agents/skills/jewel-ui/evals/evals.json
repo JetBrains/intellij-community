@@ -1,0 +1,19 @@
+{
+  "skill_name": "jewel-ui",
+  "evals": [
+    {
+      "id": 0,
+      "name": "composition-avoids-ijpl-apis",
+      "prompt": "I am building a Jewel composable for an IntelliJ plugin. Is it okay for the composable to call Registry.get() and ProjectManager.getInstance() during composition if I wrap it in SwingBridgeTheme?",
+      "expected_output": "Guidance that Jewel/Compose composition should not directly or indirectly access IntelliJ Platform APIs; platform work belongs in a presenter/controller boundary or a tiny injected fakeable collaborator when unavoidable.",
+      "files": [],
+      "expectations": [
+        "Says not to access IntelliJ Platform APIs directly or indirectly inside composition.",
+        "Moves platform interaction to presenter/controller/view-model/service/action boundary.",
+        "Allows an injected fakeable collaborator only when access is unavoidable.",
+        "Mentions threading or Compose stability implications of platform APIs.",
+        "Does not imply SwingBridgeTheme makes platform API access in composition safe."
+      ]
+    }
+  ]
+}
