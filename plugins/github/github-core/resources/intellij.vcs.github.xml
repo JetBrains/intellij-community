@@ -88,6 +88,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <httpRequestHandler implementation="org.jetbrains.plugins.github.authentication.GHOAuthServicePkceImpl$GHOAuthCallbackHandler"/>
     <httpRequestHandler implementation="org.jetbrains.plugins.github.authentication.GHOAuthCallbackHandler"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
@@ -154,6 +155,7 @@
     <registryKey defaultValue="5000"
                  description="Milliseconds margin used when comparing known last seen date with last updated at date for PRs"
                  key="github.last.seen.state.margin.millis"/>
+    <registryKey defaultValue="true" description="Use PKCE to authenticate with GitHub" key="github.pkce.oauth"/>
 
     <vcs.github.gistContentsCollector
       implementation="org.jetbrains.plugins.github.DefaultGithubGistContentsCollector"

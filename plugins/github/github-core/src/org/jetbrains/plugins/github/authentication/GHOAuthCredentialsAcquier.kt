@@ -23,6 +23,6 @@ internal class GHOAuthCredentialsAcquirer(
 
   companion object {
     private val ACCESS_TOKEN_URL: Url
-      get() = GHOAuthService.SERVICE_URL.resolve("access_token")
+      get() = GHOAuthServiceOldImpl.SERVICE_URL.resolve("access_token")
   }
 }
