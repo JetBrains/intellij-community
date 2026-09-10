@@ -5,6 +5,7 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.net.PlatformHttpClient
 import java.net.ProxySelector
 import java.net.http.HttpClient
+import java.time.Duration
 
 open class HttpClientFactoryBase : HttpClientFactory {
 
@@ -15,6 +16,7 @@ open class HttpClientFactoryBase : HttpClientFactory {
     PlatformHttpClient.clientBuilder()
       .version(HttpClient.Version.HTTP_1_1)
       .followRedirects(HttpClient.Redirect.NORMAL)
+      .connectTimeout(Duration.ofMillis(connectionTimeoutMillis))
       .proxy(if (useProxy) ProxySelector.getDefault() else HttpClient.Builder.NO_PROXY)
       .build()
 }
