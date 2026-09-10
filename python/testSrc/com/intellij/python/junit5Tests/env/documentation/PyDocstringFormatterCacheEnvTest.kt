@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.documentation
 
+import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.asBinToExec
@@ -62,7 +63,7 @@ class PyDocstringFormatterCacheEnvTest {
     return ExecService().executeHelper(
       python.asBinToExec(),
       "docstring_formatter.py",
-      listOf("--format", "rest", "--input", inputFile.toString()),
+      Args("--format", "rest", "--input", inputFile.toString()),
       ExecOptions(env = mapOf("PYTHONPATH" to PythonHelpersLocator.getCommunityHelpersRoot().resolve("py3only").toString())),
     ).getOrThrow()
   }

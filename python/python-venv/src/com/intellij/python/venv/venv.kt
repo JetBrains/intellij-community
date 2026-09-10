@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
@@ -85,7 +86,7 @@ suspend fun createVenv(
                                                         version.toPythonVersion(),
                                                         MINIMUM_SUPPORTED_VENV_PYTHON_VERSION.toPythonVersion()))
   }
-  execService.executeHelper(python, VIRTUALENV_ZIPAPP_NAME, args, ExecOptions(timeout = 3.minutes))
+  execService.executeHelper(python, VIRTUALENV_ZIPAPP_NAME, Args().addArgs(args), ExecOptions(timeout = 3.minutes))
     .getOr(PyVenvBundle.message("py.venv.error.executing.script", VIRTUALENV_ZIPAPP_NAME)) { return it }
 
   return Result.success(Unit)

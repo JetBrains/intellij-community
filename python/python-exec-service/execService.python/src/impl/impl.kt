@@ -2,7 +2,7 @@
 package com.intellij.python.community.execService.python.impl
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
+import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.Args
@@ -10,9 +10,11 @@ import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.StdInConsumer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformerBool
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformerTyped
 import com.intellij.python.community.execService.impl.transformerToHandler
+import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executePythonAdvanced
 import com.intellij.python.community.execService.python.getLanguageLevelFromVersionStringSafe
@@ -26,6 +28,8 @@ import com.jetbrains.python.errorProcessing.getOr
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
+import java.nio.ByteBuffer
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 
@@ -35,25 +39,29 @@ private const val GIL_CHECK_CMD =
   "from __future__ import print_function; import $SYS_MODULE; print($SYS_MODULE.$IS_GIL_ENABLED_FUNCTION()) if hasattr($SYS_MODULE, '$IS_GIL_ENABLED_FUNCTION') and callable(getattr($SYS_MODULE, '$IS_GIL_ENABLED_FUNCTION')) else print(True)"
 
 @ApiStatus.Internal
-internal suspend fun ExecService.validatePythonAndGetInfoImpl(python: ExecutablePython): PyResult<PythonInfo> = withContext(Dispatchers.IO) {
-  val options = ExecOptions(timeout = 1.minutes)
-  val freeThreaded = !execGetStdoutBoolImpl(python, GIL_CHECK_CMD).getOr(message("python.check.threading.fail")) { return@withContext it }
+internal suspend fun ExecService.validatePythonAndGetInfoImpl(python: ExecutablePython): PyResult<PythonInfo> =
+  withContext(Dispatchers.IO) {
+    val options = ExecOptions(timeout = 1.minutes)
+    val freeThreaded = !execGetStdoutBoolImpl(python, GIL_CHECK_CMD).getOr(message("python.check.threading.fail")) { return@withContext it }
 
-  val versionOutput: EelProcessExecutionResult = executePythonAdvanced(python, options = options, args = Args(PYTHON_VERSION_ARG), processInteractiveHandler = transformerToHandler<EelProcessExecutionResult>(null) { r ->
-    if (r.exitCode == 0) Result.success(r) else Result.failure(message("python.get.version.error", python.userReadableName, r.exitCode))
-  }).getOr { return@withContext it }
-  // Python 2 might return version as stderr, see https://bugs.python.org/issue18338
-  val versionString = versionOutput.stdoutString.let { stdout ->
-    stdout.ifBlank { versionOutput.stderrString.lineSequence().lastOrNull { it.isNotBlank() } ?: "" }
-  }
-  val trimmedVersionString = versionString.trim()
-  val languageLevel = getLanguageLevelFromVersionStringSafe(trimmedVersionString)
-  if (languageLevel == null) {
-    return@withContext PyResult.localizedError(message("python.get.version.wrong.version", python.userReadableName, versionString))
-  }
+    val versionHandler = transformerToHandler { r ->
+      if (r.exitCode == 0) Result.success(r)
+      else Result.failure(message("python.get.version.error", python.userReadableName, r.exitCode))
+    }
+    val versionOutput = executePythonAdvanced(python, Args(PYTHON_VERSION_ARG), options, versionHandler)
+      .getOr { return@withContext it }
+    // Python 2 might return version as stderr, see https://bugs.python.org/issue18338
+    val versionString = versionOutput.stdoutString.let { stdout ->
+      stdout.ifBlank { versionOutput.stderrString.lineSequence().lastOrNull { it.isNotBlank() } ?: "" }
+    }
+    val trimmedVersionString = versionString.trim()
+    val languageLevel = getLanguageLevelFromVersionStringSafe(trimmedVersionString)
+    if (languageLevel == null) {
+      return@withContext PyResult.localizedError(message("python.get.version.wrong.version", python.userReadableName, versionString))
+    }
 
-  return@withContext Result.success(PythonInfo(languageLevel, freeThreaded, getVersionFromVersionStringSafe(trimmedVersionString)))
-}
+    return@withContext Result.success(PythonInfo(languageLevel, freeThreaded, getVersionFromVersionStringSafe(trimmedVersionString)))
+  }
 
 @ApiStatus.Internal
 internal suspend fun ExecService.execGetStdoutBoolImpl(python: ExecutablePython, command: @NlsSafe String): PyResult<Boolean> =
@@ -69,7 +77,7 @@ internal suspend fun <T : Any> ExecService.execGetStdoutImpl(
   val result = executePythonAdvanced(
     python,
     Args("-c", command),
-    processInteractiveHandler = transformerToHandler(null, transformer),
+    processInteractiveHandler = transformerToHandler(processOutputTransformer = transformer),
     options = options
   ).getOr(message("python.cannot.exec", python.userReadableName)) { return@withContext it }
   return@withContext Result.success(result)
@@ -81,3 +89,16 @@ private val ExecutablePython.userReadableName: @NlsSafe String
               is BinOnEel -> binary.path.pathString
               is BinOnTarget -> binary
             }) + args).joinToString(" ")
+
+
+internal fun StdInProvider.asChannelConsumer(): StdInConsumer = { stdin ->
+  try {
+    stdin.sendWholeBuffer(ByteBuffer.wrap(data))
+    // The process waits for `EOF` on `stdin`, so it never ends until the channel is closed.
+    stdin.close(null)
+  }
+  catch (e: IOException) {
+    // A broken channel needs no close. See EelSendChannelException.
+    onError(e)
+  }
+}

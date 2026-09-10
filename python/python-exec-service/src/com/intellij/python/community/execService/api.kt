@@ -25,6 +25,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
@@ -147,6 +148,7 @@ suspend fun ExecService.execGetStdoutInShell(
  *
  * @param[args] command line arguments
  * @param[options]  customizable process run options like timeout or environment variables to use
+ * @param[stdInConsumer] optional function that writes something into the process `stdin`
  * @return stdout or error. It is recommended to put this error into [com.jetbrains.python.errorProcessing.ErrorSink], but feel free to match and process it.
  */
 @CheckReturnValue
@@ -155,29 +157,38 @@ suspend fun <T> ExecService.execute(
   args: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
+  stdInConsumer: StdInConsumer? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
-): PyResult<T> {
-  return reportRawProgress { reporter ->
-    val ansiDecoder = AnsiEscapeDecoder()
-    val listener = procListener ?: PyProcessListener {
-      when (it) {
-        is ProcessEvent.ProcessStarted, is ProcessEvent.ProcessEnded -> Unit
-        is ProcessEvent.ProcessOutput -> {
-          val outType = when (it.stream) {
-            ProcessEvent.OutputType.STDOUT -> ProcessOutputTypes.STDOUT
-            ProcessEvent.OutputType.STDERR -> ProcessOutputTypes.STDERR
-          }
-          ansiDecoder.escapeText(it.line, outType) { text, _ ->
-            @Suppress("HardCodedStringLiteral")
-            reporter.text(text)
-          }
+): PyResult<T> = reportOutputAsProgress(procListener) { listener ->
+  executeAdvanced(binary, args, options, transformerToHandler(listener, stdInConsumer, processOutputTransformer))
+}
+
+/**
+ * Runs [code] and reports each output line of the process as progress.
+ * [code] gets [procListener]. If [procListener] is `null`, [code] gets a listener that writes to the progress bar.
+ */
+@ApiStatus.Internal
+suspend fun <T> reportOutputAsProgress(
+  procListener: PyProcessListener?,
+  code: suspend (PyProcessListener) -> PyResult<T>,
+): PyResult<T> = reportRawProgress { reporter ->
+  val ansiDecoder = AnsiEscapeDecoder()
+  val listener = procListener ?: PyProcessListener {
+    when (it) {
+      is ProcessEvent.ProcessStarted, is ProcessEvent.ProcessEnded -> Unit
+      is ProcessEvent.ProcessOutput -> {
+        val outType = when (it.stream) {
+          ProcessEvent.OutputType.STDOUT -> ProcessOutputTypes.STDOUT
+          ProcessEvent.OutputType.STDERR -> ProcessOutputTypes.STDERR
+        }
+        ansiDecoder.escapeText(it.line, outType) { text, _ ->
+          @Suppress("HardCodedStringLiteral")
+          reporter.text(text)
         }
       }
     }
-    executeAdvanced(binary, args, options, transformerToHandler(procListener
-                                                                ?: listener, processOutputTransformer))
   }
-
+  code(listener)
 }
 
 

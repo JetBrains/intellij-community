@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.executeHelper
@@ -16,6 +17,6 @@ import java.nio.file.Path
  * @return executable [Path]
  */
 internal suspend fun installExecutableViaPythonScript(pythonExecutable: BinaryToExec, vararg args: String): PyResult<Path> {
-  val output = ExecService().executeHelper(pythonExecutable, "pycharm_package_installer.py", args.toList()).getOr { return it }
+  val output = ExecService().executeHelper(pythonExecutable, "pycharm_package_installer.py", Args(*args)).getOr { return it }
   return Result.success(Path.of(output.split("\n").last()))
 }
