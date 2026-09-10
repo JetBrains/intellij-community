@@ -8,6 +8,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.vcs.test.vcsPlatformFixture
 import com.intellij.vcs.test.vcsTestProjectPathFixture
 import git4idea.config.GitSaveChangesPolicy
+import git4idea.repo.GitObjectFormat
 import java.nio.file.Path
 
 /**
@@ -36,7 +37,8 @@ fun gitSingleRepoContextFixture(
   saveChangesPolicy: GitSaveChangesPolicy = GitSaveChangesPolicy.SHELVE,
   hasRemoteGitOperation: Boolean = false,
   makeInitialCommit: Boolean = true,
+  objectFormat: GitObjectFormat = GitObjectFormat.SHA1,
   initCommitContext: CommitContext.() -> Unit = {},
 ): TestFixture<GitSingleRepoContext> =
   gitPlatformContextFixture(projectPathFixture, saveChangesPolicy, hasRemoteGitOperation, initCommitContext)
-    .gitSingleRepoFixture(makeInitialCommit)
+    .gitSingleRepoFixture(makeInitialCommit, objectFormat)

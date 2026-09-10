@@ -11,6 +11,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.test.updateChangeListManager
 import git4idea.GitUtil
+import git4idea.repo.GitObjectFormat
 import git4idea.repo.GitRepository
 import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Files
@@ -20,9 +21,12 @@ interface GitSingleRepoContext : GitPlatformTestContext {
   val repo: GitRepository
 }
 
-fun TestFixture<GitPlatformTestContext>.gitSingleRepoFixture(makeInitialCommit: Boolean): TestFixture<GitSingleRepoContext> = testFixture {
+fun TestFixture<GitPlatformTestContext>.gitSingleRepoFixture(
+  makeInitialCommit: Boolean,
+  objectFormat: GitObjectFormat = GitObjectFormat.SHA1,
+): TestFixture<GitSingleRepoContext> = testFixture {
   val gitPlatformContext = init()
-  val repo = createRepository(gitPlatformContext.project, gitPlatformContext.projectNioRoot, makeInitialCommit)
+  val repo = createRepository(gitPlatformContext.project, gitPlatformContext.projectNioRoot, makeInitialCommit, objectFormat)
   initialized(gitPlatformContext.withRepo(repo)) {}
 }
 
