@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import org.jetbrains.idea.devkit.inspections.ExtensionClassShouldNotBePublicProvider
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtModifierListOwner
@@ -41,6 +42,6 @@ private class ChangeModifierFix(private val elementName: String) : LocalQuickFix
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val modifierListOwner = descriptor.psiElement.getParentOfType<KtModifierListOwner>(true) ?: return
-    modifierListOwner.addModifier(KtTokens.INTERNAL_KEYWORD)
+    modifierListOwner.addModifierKeyword(KtTokens.INTERNAL_KEYWORD)
   }
 }

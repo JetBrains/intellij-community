@@ -51,6 +51,7 @@ jvm_library(
         "//platform/core-impl",
         "//plugins/devkit/devkit-core:core",
         "//plugins/kotlin/code-insight/intentions-k2:kotlin-codeInsight-intentions",
+        "//plugins/kotlin/base/psi",
     ],
 )
 
@@ -81,6 +82,7 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//plugins/devkit/devkit-core:core_test_lib",
         "//plugins/kotlin/code-insight/intentions-k2:kotlin-codeInsight-intentions_test_lib",
+        "//plugins/kotlin/base/psi:psi_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.devkit.k2` end

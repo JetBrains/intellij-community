@@ -45,6 +45,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.setPackageFqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -416,7 +418,7 @@ object CodeWriter {
       val topLevelCode = code.topLevelCode ?: ""
       val filename = "${code.target.name}$GENERATED_MODIFICATIONS_SUFFIX"
       val generatedModificationsFile = psiFactory.createFile(filename, generatedApiImports.findAndRemoveFqns(topLevelCode))
-      generatedModificationsFile.packageFqName = apiPackageFqName
+      generatedModificationsFile.setPackageFqName(apiPackageFqName)
 
       val declarations = generatedModificationsFile.declarations
       for (declaration in declarations) {
@@ -428,7 +430,7 @@ object CodeWriter {
 
       val visibility = apiClass.visibilityModifierType().takeIf { !apiClass.isPublic }
       if (visibility != null) {
-        generatedModificationsFile.declarations.forEach { it.addModifier(visibility) }
+        generatedModificationsFile.declarations.forEach { it.addModifierKeyword(visibility) }
       }
 
       val apiClassFileAnnotationsNoJvmName = apiClass.containingKtFile.annotationEntries.filter { it.shortName?.asString() != "JvmName" }

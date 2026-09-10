@@ -19,11 +19,11 @@ import org.jetbrains.idea.devkit.inspections.ExtensionUtil.isExtensionPointImple
 import org.jetbrains.idea.devkit.inspections.isServiceImplementationRegisteredInPluginXml
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtVisitorVoid
-import org.jetbrains.kotlin.psi.addRemoveModifier.addModifier
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
@@ -69,7 +69,7 @@ internal class PrivateExtensionClassInspection : LocalInspectionTool() {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val modifierListOwner = descriptor.psiElement.getParentOfType<KtModifierListOwner>(false)
                               ?: throw IllegalStateException("Can't find modifier list owner for modifier")
-      addModifier(modifierListOwner, KtTokens.INTERNAL_KEYWORD)
+      modifierListOwner.addModifierKeyword(KtTokens.INTERNAL_KEYWORD)
     }
   }
 }
