@@ -27,6 +27,7 @@ import com.intellij.platform.searchEverywhere.SeResultEndEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.SeResultSkippedEvent
+import com.intellij.platform.searchEverywhere.SeSearchRestartListener
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
@@ -53,6 +54,7 @@ import com.intellij.platform.searchEverywhere.withPresentation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -62,6 +64,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -70,6 +73,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -106,7 +110,10 @@ sealed interface SeTabVm {
   suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo?
 }
 
-@OptIn(ExperimentalCoroutinesApi::class, ExperimentalAtomicApi::class)
+/** A burst of [SeSearchRestartListener] events re-runs the query once, after the last event. */
+private const val SEARCH_RESTART_DEBOUNCE_MS = 300L
+
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalAtomicApi::class, FlowPreview::class)
 @ApiStatus.Internal
 class SeTabVmImpl(
   private val project: Project?,
@@ -161,11 +168,21 @@ class SeTabVmImpl(
       }
     }
 
+  private val searchRestartEpochFlow =
+    if (project == null) flowOf(0)
+    else {
+      MutableStateFlow(0).also { epochFlow ->
+        project.messageBus.connect(coroutineScope).subscribe(SeSearchRestartListener.TOPIC, SeSearchRestartListener {
+          epochFlow.update { it + 1 }
+        })
+      }.debounce { epoch -> if (epoch == 0) 0L else SEARCH_RESTART_DEBOUNCE_MS } // the initial value must not delay the first search
+    }
+
   override var lastNotFoundString: String? = null
 
   init {
     coroutineScope.launch {
-      isActiveFlow.combine(dumbModeStateFlow) { isActive, _ ->
+      combine(isActiveFlow, dumbModeStateFlow, searchRestartEpochFlow) { isActive, _, _ ->
         isActive
       }.collectLatest { isActive ->
         if (!isActive) {
