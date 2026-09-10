@@ -194,6 +194,18 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     }
   }
 
+  //TODO Same kostyl as checkAnyRestartBtnForPlugin: the plugin manager can show this btn in one of these places or in both.
+  // The details page can also show the state on the option button.
+  fun checkAnyInstalledBtnForPlugin(pluginName: String, timeout: Duration = 2.minutes) {
+    step("Wait for installed button to appear either in list or in details") {
+      waitFor(errorMessage = { "Installed button isn't present neither in plugins list nor in plugin description" }, timeout = timeout) {
+        getPluginFromList(pluginName).installedButton.present() ||
+        pluginDetailsPage().installedButton.present() ||
+        pluginDetailsPage().optionButton.let { it.present() && it.hasSubtext("Installed") }
+      }
+    }
+  }
+
   class ListPluginComponent(data: ComponentData) : UiComponent(
     data.copy(readableName = data.readableName ?: "Element in a list of plugins")) {
     private val listPluginComponent get() = driver.cast(component, ListPluginComponentRef::class)
