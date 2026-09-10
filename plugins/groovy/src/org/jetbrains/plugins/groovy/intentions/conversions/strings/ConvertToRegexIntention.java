@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.modcommand.ActionContext;
@@ -28,7 +28,7 @@ public final class ConvertToRegexIntention extends GrPsiUpdateIntention {
     buffer.append("/");
 
     if (GrStringUtil.isDollarSlashyString(((GrLiteral)element))) {
-      buffer.append(GrStringUtil.removeQuotes(element.getText()));
+      buffer.append(GrStringUtil.escapeSymbolsForSlashyStrings(GrStringUtil.removeQuotes(element.getText())));
     }
     else if (element instanceof GrLiteralImpl) {
       Object value = ((GrLiteralImpl)element).getValue();
