@@ -289,6 +289,20 @@ data class ExecOptions(
   override val downloadAfterExecution: DownloadConfig? = null,
 ) : ExecOptionsBase
 
+/**
+ * The default [ExecOptions].
+ * [ExecOptions] is immutable, so all call sites share one instance.
+ *
+ * Do not remove the `emptyMap()` argument. It selects the real constructor.
+ * Without it this initializer calls the function below and reads an uninitialized value.
+ */
+private val defaultExecOptions = ExecOptions(emptyMap())
+
+/**
+ * Returns the shared default [ExecOptions] instead of a new instance.
+ * Use the real constructor when you must set a property.
+ */
+fun ExecOptions(): ExecOptions = defaultExecOptions
 
 /**
  * Options for [ExecService.executeGetProcess]
@@ -301,6 +315,21 @@ data class ExecGetProcessOptions(
   override val uploadBeforeExecution: UploadConfig? = null,
   override val downloadAfterExecution: DownloadConfig? = null,
 ) : ExecOptionsBase
+
+/**
+ * The default [ExecGetProcessOptions].
+ * [ExecGetProcessOptions] is immutable, so all call sites share one instance.
+ *
+ * Do not remove the `emptyMap()` argument. It selects the real constructor.
+ * Without it this initializer calls the function below and reads an uninitialized value.
+ */
+private val defaultExecGetProcessOptions = ExecGetProcessOptions(emptyMap())
+
+/**
+ * Returns the shared default [ExecGetProcessOptions] instead of a new instance.
+ * Use the real constructor when you must set a property.
+ */
+fun ExecGetProcessOptions(): ExecGetProcessOptions = defaultExecGetProcessOptions
 
 data class TtySize(val rows: UShort, val cols: UShort)
 
