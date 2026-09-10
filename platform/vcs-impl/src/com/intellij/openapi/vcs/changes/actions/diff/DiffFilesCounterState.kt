@@ -13,8 +13,20 @@ import org.jetbrains.annotations.Nls
 data class DiffFilesCounterState(val changesCount: Int, val selectedIndex: Int) {
   constructor(changes: ListSelection<*>) : this(changes.list.size, changes.selectedIndex)
 
-  val hasMultipleFiles: Boolean get() = changesCount > 1
+  val hasFiles: Boolean = changesCount > 0
 
+  val hasMultipleFiles: Boolean = changesCount > 1
+
+  companion object {
+    /**
+     * State for a toolbar that shows no file, e.g. when the user selects a changelist with no files. It has no
+     * position, and its [text] is "No files".
+     *
+     * Built from [ListSelection.empty], which monolith mode reports in the same case, so that both modes show the same
+     * text.
+     */
+    val NO_FILES: DiffFilesCounterState = DiffFilesCounterState(ListSelection.empty<Any>())
+  }
 }
 
 @get:ApiStatus.Internal

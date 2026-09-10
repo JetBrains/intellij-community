@@ -25,6 +25,9 @@ import org.jetbrains.annotations.ApiStatus
  *
  * [selectedIndex] is `null` and [changesCount] is `0` when the position cannot be determined (e.g. for a hijacked
  * change, which has no corresponding tree node); the counter is then hidden.
+ *
+ * The whole value is `null` when no diffable file is selected, e.g. for a changelist with no files. The counter then
+ * shows "No files", as monolith mode does.
  */
 @ApiStatus.Internal
 @Serializable

@@ -164,7 +164,9 @@ internal class RemoteChangesViewDiffPreviewProcessor(
   override fun createGoToChangeAction(): AnAction = DiffFilesCounterAction(::getFilesCounterState)
 
   private fun getFilesCounterState(): DiffFilesCounterState? {
-    val selection = changesView.diffableSelection.value ?: return null
+    // No diffable file is selected, e.g. the user selected a changelist with no files. Monolith mode shows "No files".
+    val selection = changesView.diffableSelection.value ?: return DiffFilesCounterState.NO_FILES
+    // The position is unknown, so the counter is hidden.
     val selectedIndex = selection.selectedIndex ?: return null
     if (selection.changesCount <= 0) return null
     return DiffFilesCounterState(selection.changesCount, selectedIndex)
