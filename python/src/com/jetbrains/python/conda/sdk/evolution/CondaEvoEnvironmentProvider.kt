@@ -82,7 +82,7 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     // the modal dialog. addNewFolderPath carries the proposed name here.
     // Named after the project, and offered only while nothing carries that name: the row stands for the environment
     // this project would get, so where that one already exists it is in the list above and there is nothing to add.
-    val proposedName = pyProject.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME
+    val proposedName = pyProject.workspace.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME
     val addNewSection = proposedName
       .takeIf { name -> envs.none { it.name == name } }
       ?.let {
@@ -113,7 +113,7 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
         is PyCondaEnvIdentity.NamedEnv -> envDir.fileName?.toString() == identity.envName
       }
     } ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.env.not.found", envDir.toString()))
-    return env.createSdkFromThisEnv(null, PythonSdkUtil.getAllSdks(), context.pyProject.baseDir)
+    return env.createSdkFromThisEnv(null, PythonSdkUtil.getAllSdks(), context.pyProject.workspace.baseDir)
   }
 
   /**
@@ -132,7 +132,7 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
       .createCondaSdkAlongWithNewEnv(
         NewCondaEnvRequest.EmptyNamedEnv(languageLevel, envName),
         PythonSdkUtil.getAllSdks(),
-        context.pyProject.baseDir,
+        context.pyProject.workspace.baseDir,
       )
   }
 
@@ -203,7 +203,7 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override suspend fun addNewEnvSpec(context: EvoToolContext, section: EvoSectionDto): EvoAddNewDto? {
     val options = condaSupportedLanguages.map { EvoAddNewOptionDto(title = it.toPythonVersion(), token = it.toPythonVersion()) }
     if (options.isEmpty()) return null
-    val envName = section.addNewFolderPath ?: context.pyProject.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME
+    val envName = section.addNewFolderPath ?: context.pyProject.workspace.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME
     // The name is proposed and shown, never typed: every tool now names its own environment, so the widget offers one
     // choice per step — which Python — instead of a form.
     return EvoAddNewDto(name = envName, path = "", options = options)

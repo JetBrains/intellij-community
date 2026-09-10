@@ -61,7 +61,7 @@ internal class PipenvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override val sdkFlavor: Class<out PythonSdkFlavor<*>> get() = PyPipEnvSdkFlavor::class.java
 
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
-    val projectDir = pyProject.baseDir
+    val projectDir = pyProject.workspace.baseDir
     val envRoot = existingEnvRoot(projectDir, fileSystem)
                   // Nothing to adopt: offer to create the one environment pipenv allows. The section carries no label
                   // because only pipenv knows where the environment will go, and a guessed heading would be wrong as
@@ -105,7 +105,7 @@ internal class PipenvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
 
   /** Adopts the project's existing pipenv environment as a pipenv-typed SDK. */
   override suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<Sdk> =
-    createPipenvSdk(context.pyProject.baseDir, PathHolder.Eel(homePath), context.fileSystem)
+    createPipenvSdk(context.pyProject.workspace.baseDir, PathHolder.Eel(homePath), context.fileSystem)
 
   /**
    * Creates the project's pipenv environment from the base Python in `token`, then assigns its SDK.
@@ -116,7 +116,7 @@ internal class PipenvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<Sdk> {
     val pipenvExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
     return setupPipEnvSdkWithProgressReport(
-      moduleBasePath = context.pyProject.baseDir,
+      moduleBasePath = context.pyProject.workspace.baseDir,
       basePythonBinaryPath = PathHolder.Eel(Path.of(ref.token)),
       fileSystem = context.fileSystem,
       pipenvExecutable = pipenvExecutable,
@@ -134,9 +134,9 @@ internal class PipenvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    * `[requires] python_version` is a real input: `pipenv install` with no `--python` picks the interpreter from it.
    */
   override suspend fun addNewEnvSpec(context: EvoToolContext, section: EvoSectionDto): EvoAddNewDto? {
-    val options = context.systemPythonOptions(pipfileRequiresPython(context.pyProject.baseDir))
+    val options = context.systemPythonOptions(pipfileRequiresPython(context.pyProject.workspace.baseDir))
                     .takeIf { it.isNotEmpty() } ?: return null
-    val baseDir = context.pyProject.baseDir
+    val baseDir = context.pyProject.workspace.baseDir
     return EvoAddNewDto(
       name = baseDir.fileName?.toString() ?: label,
       path = "",

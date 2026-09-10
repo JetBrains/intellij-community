@@ -78,7 +78,7 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
       candidate.pythonVirtualEnvironment?.pythonHomePath?.path?.resolvePythonBinary()?.toString() == homePath.toString()
     } ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.env.not.found", homePath.toString()))
     // A missing working directory is not fatal: hatch is driven from the module's base dir in that case, as before.
-    val workingDir = resolveHatchWorkingDirectory(context.pyProject.project, module).getOrNull() ?: context.pyProject.baseDir
+    val workingDir = resolveHatchWorkingDirectory(context.pyProject.project, module).getOrNull() ?: context.pyProject.workspace.baseDir
     return env.createSdk(workingDir, context.fileSystem, null)
   }
 

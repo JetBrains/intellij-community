@@ -59,7 +59,7 @@ private val PY_PROJECT_ENTITIES: List<Class<out WorkspaceEntity>> =
  * Whether this change can alter anything [EvoPyProjectModel.computeSnapshot] reads: the entities a [PyProject] is
  * derived from, or the workspace membership the clusters are built from. The latter moves entirely on its own — a member
  * dropped from `[tool.uv.workspace]` and added back changes no module and no content root — so watching only the former
- * leaves a stale cluster behind.
+ * leaves a stale workspace behind.
  */
 private fun VersionedStorageChange.affectsPyProjects(): Boolean =
   PY_PROJECT_ENTITIES.any { getChanges(it).isNotEmpty() } || affectsWorkspaceLayout()
@@ -113,7 +113,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     fun forModule(module: Module): EvoPyProject? = byModule[module]?.takeUnless { it.module.isDisposed }
 
     /** Every `PyProject`'s own base dir — a workspace member's own, not its root's. Used to exclude sibling projects from env discovery. */
-    val baseDirs: Set<Path> get() = byKey.values.mapTo(mutableSetOf()) { it.moduleBaseDir }
+    val baseDirs: Set<Path> get() = byKey.values.mapTo(mutableSetOf()) { it.baseDir }
 
   }
 
@@ -184,10 +184,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    * Nothing where [file] resolves to no `PyProject`. That is the same nothing the interpreter widget shows, and the
    * two surfaces state one interpreter, so neither invents one the other does not have.
    */
-  suspend fun interpreterFor(file: VirtualFile?): Sdk? {
-    val target = targetFor(file) ?: return null
-    return readAction { target.sdk }
-  }
+  suspend fun interpreterFor(file: VirtualFile?): Sdk? = targetFor(file)?.sdk()
 
   /**
    * The interpreter for the file being edited, as [interpreterFor] resolves it, recomputed whenever the structure or
@@ -214,18 +211,32 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     // with another's interpreters.
     val interpreterRefs = readAction { pyProjects.associate { it.residesOnModule to it.residesOnModule.pythonSdk?.asInterpreterRef() } }
 
-    // Built once per cluster and shared by its members, so the whole workspace is one object rather than one per
+    /**
+     * The workspace root of [pyProject], or `null` when it is standalone.
+     *
+     * A null layout also covers a root-only workspace (a declared workspace with no members yet), which
+     * `getWorkspaceLayout` cannot tell from a plain project. A workspace whose root is not itself a Python module has
+     * no `PyProject` to resolve directories against, so its member is standalone here rather than dropped.
+     */
+    fun workspaceRootOf(pyProject: PyProject): PyProject? =
+      layouts[pyProject.residesOnModule]?.let { byModule[it.rootModule] }
+
+    // Built once per workspace and shared by its members, so the whole workspace is one object rather than one per
     // member — which is what makes "is this the same workspace" answerable by identity downstream.
     val workspacesByRoot = mutableMapOf<Module, EvoWorkspace>()
-    fun workspaceOf(pyProject: PyProject): EvoWorkspace? {
-      // Null layout also covers a root-only workspace (a declared workspace with no members yet), which
-      // getWorkspaceLayout cannot distinguish from a plain project — such a project stays standalone, as before.
-      val layout = layouts[pyProject.residesOnModule] ?: return null
-      // A workspace whose root is not itself a Python module has no PyProject to resolve directories against, so the
-      // member is treated as standalone rather than dropped.
-      val root = byModule[layout.rootModule] ?: return null
-      return workspacesByRoot.getOrPut(layout.rootModule) { EvoWorkspace(root, layout.tool, layout.allModules) }
+    fun workspaceOf(pyProject: PyProject): EvoWorkspace {
+      val layout = layouts[pyProject.residesOnModule]
+      val root = workspaceRootOf(pyProject)
+      // Standalone: a workspace of one, its own root.
+      if (layout == null || root == null) return EvoWorkspace(pyProject, listOf(pyProject))
+      // Every module of a layout is pyproject-based, so each one has a `PyProject` here.
+      return workspacesByRoot.getOrPut(layout.rootModule) { EvoWorkspace(root, layout.allModules.mapNotNull { byModule[it] }) }
     }
+
+    // Whether a *declared* workspace exists is the DTO's question alone, so it is answered here instead of being
+    // carried on [EvoWorkspace], which a standalone project has too.
+    val workspaceRootKeys: Map<Module, String> =
+      pyProjects.mapNotNull { p -> workspaceRootOf(p)?.let { p.residesOnModule to keyOf(it) } }.toMap()
 
     // Same spelling as the keys, so "is this the main one" is a comparison of like with like.
     val mainKey = project.basePath?.let { FileUtil.toSystemIndependentName(it) }
@@ -236,7 +247,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
         key = key,
         name = target.module.name,
         isMain = key == mainKey,
-        workspaceRootKey = target.workspace?.let { keyOf(it.root) },
+        workspaceRootKey = workspaceRootKeys[target.module],
         interpreterRef = interpreterRefs[target.module],
       )
     }

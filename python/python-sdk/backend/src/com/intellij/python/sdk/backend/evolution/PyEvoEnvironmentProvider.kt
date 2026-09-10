@@ -34,6 +34,7 @@ import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.pySdkAdditionalData
+import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -62,49 +63,70 @@ import kotlin.io.path.pathString
 private val LOG: Logger = fileLogger()
 
 /**
- * A tool workspace (uv/poetry) a module takes part in: the [root] project everything is resolved against, the [tool]
- * declaring it, and every [modules] belonging to it — the root and its members alike, since they all share one
- * environment.
+ * The modules that share one environment, and where that environment lives.
+ *
+ * A tool workspace (uv, poetry) declares one environment at its [root], and no member owns one. So every directory a
+ * tool works in is the root's ([baseDir]), every tool is driven from the root's [module], and an interpreter picked
+ * for any one member is written to all of [members].
+ *
+ * A standalone project is a workspace of one and is its own root. That is why a project always has one, and why
+ * nothing downstream has to ask whether a workspace exists before it can act.
+ *
+ * One instance is shared by every member, so "the same workspace" is answerable by identity.
  */
 @ApiStatus.Internal
-class EvoWorkspace(val root: PyProject, val tool: ToolId, val modules: List<Module>)
+class EvoWorkspace(
+  /** The project every directory and every tool is resolved against. */
+  val root: PyProject,
+  /** Every project of the workspace, the [root] included. A selected interpreter is written to all of them. */
+  val members: List<PyProject>,
+) {
+  /** The module every tool is driven from. */
+  val module: Module get() = root.residesOnModule
+
+  /** The directory every tool runs in. */
+  val baseDir: Directory get() = root.baseDir
+}
 
 /**
  * The [PyProject] the widget acts on, resolved against the workspace it belongs to.
  *
- * A tool workspace (a uv/poetry workspace) has a single environment, declared at its root: no member owns one, and the
- * tools are always driven from the root. So everything the widget does with a directory (scanning for envs, reading
- * `requires-python`, creating an env, running the tool) uses [baseDir] — the *workspace root's* base dir — and an
- * interpreter picked for any one module is applied to [getModulesCluster], the whole workspace. Only [module] itself,
- * whose interpreter the status bar reflects, stays the one the user is looking at.
+ * Two views of one project, and every member belongs to exactly one of them. [module], [baseDir] and [sdk] describe
+ * the project the user is looking at, which is what the status bar reflects. [workspace] describes what a tool acts on,
+ * which for a workspace member is the workspace root and not the member.
  */
 @ApiStatus.Internal
 class EvoPyProject(
   private val self: PyProject,
-  /** The workspace [self] takes part in (as its root or as a member); `null` when it is standalone. */
-  val workspace: EvoWorkspace? = null,
+  /** What a tool acts on. See [EvoWorkspace]. */
+  val workspace: EvoWorkspace,
 ) {
   val module: Module get() = self.residesOnModule
 
   val project: Project get() = self.project
 
-  /** The directory the widget works in: the workspace root's base dir when in a workspace, else the module's own. */
-  val baseDir: Directory get() = (workspace?.root ?: self).baseDir
-
-  /** The module's *own* base dir, whether or not it takes part in a workspace. */
-  val moduleBaseDir: Directory get() = self.baseDir
+  /** This project's own base dir. See [EvoWorkspace.baseDir] for the directory a tool runs in. */
+  val baseDir: Directory get() = self.baseDir
 
   /**
    * The interpreter this project uses.
    *
    * Every module of a workspace holds its own reference to the SDK, so [module] alone answers.
+   *
+   * Suspends, because it waits for the project model. Read without that wait, a configured SDK reads as `null` while
+   * the SDK table is still loading, and the widget then states that a project with an interpreter has none (PY-91871).
    */
+  suspend fun sdk(): Sdk? = module.findPythonSdk()
+
+  /**
+   * The same interpreter, read without waiting for the project model.
+   *
+   * Only for a caller that cannot suspend, such as reference resolution. It answers `null` for a project that does
+   * have an interpreter while the SDK table is still loading, and nothing tells the caller to ask again.
+   */
+  @Deprecated("Answers null before the project model is ready", ReplaceWith("sdk()"))
   val sdk: Sdk? get() = module.pythonSdk
 }
-
-/** Every module a selected interpreter must be written to: the whole workspace, or this module alone when standalone. */
-@ApiStatus.Internal
-fun EvoPyProject.getModulesCluster(): List<Module> = workspace?.modules ?: listOf(module)
 
 /** [EvoToolContext.cached] key under which the core-supplied system-Python list is memoized. */
 private const val SYSTEM_PYTHONS_KEY: String = "core.systemPythons"
@@ -523,8 +545,8 @@ fun EvoToolContext.resolveNewVenvDir(ref: PyInterpreterRef.CreateEnv): Path {
   val name = ref.name
   return when {
     !folder.isNullOrBlank() && !name.isNullOrBlank() -> Path.of(folder).resolve(name)
-    !folder.isNullOrBlank() -> pyProject.baseDir.resolve(folder)
-    else -> firstFreeVenvDir(pyProject.baseDir)
+    !folder.isNullOrBlank() -> pyProject.workspace.baseDir.resolve(folder)
+    else -> firstFreeVenvDir(pyProject.workspace.baseDir)
   }
 }
 
