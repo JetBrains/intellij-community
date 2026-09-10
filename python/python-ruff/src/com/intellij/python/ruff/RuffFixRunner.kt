@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.reportSequentialProgress
-import com.intellij.python.community.execService.Args
 import com.jetbrains.python.Result
 
 /**
@@ -23,6 +22,8 @@ import com.jetbrains.python.Result
  * which is faster, but the user cannot then undo the run.
  *
  * No rule is force-selected: Ruff fixes only what the project configures.
+ *
+ * A read-only file is skipped, and it is not a failure. A write to it would throw and stop the write for all the files.
  *
  * Returns one message for each file Ruff could not process, and an empty list when every file went through.
  */
@@ -40,12 +41,14 @@ internal suspend fun applyRuffFixes(
       reporter.itemStep(file.name)
       val path = file.ruffPath() ?: continue
       val snapshot = readAction {
+        if (!file.isValid || !file.isWritable) return@readAction null
         val document = FileDocumentManager.getInstance().getDocument(file) ?: return@readAction null
+        if (!document.isWritable) return@readAction null
         document to document.text
       } ?: continue
       val (document, originalText) = snapshot
 
-      val args = Args("check", "--fix-only", "--stdin-filename", path, "-")
+      val args = ruffStdinArgs(path, "check", "--fix-only")
       when (val result = ruff.runOnStdin(ruffScopeOf(project, file), args, originalText)) {
         is Result.Success -> if (result.result != originalText) fixes += RuffFix(document, originalText, result.result)
         is Result.Failure -> failures += "${file.name}: ${result.error.message}"
@@ -56,8 +59,8 @@ internal suspend fun applyRuffFixes(
   if (fixes.isNotEmpty()) {
     writeCommandAction(project, commandName) {
       for (fix in fixes) {
-        // Skip a document that changed while Ruff was running: its fix comes from text that is gone.
-        if (fix.document.text == fix.originalText) fix.document.setText(fix.fixedText)
+        // Skip a document that changed, or became read-only, while Ruff was running.
+        if (fix.document.isWritable && fix.document.text == fix.originalText) fix.document.setText(fix.fixedText)
       }
     }
   }

@@ -7,13 +7,11 @@ import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.pytools.backend.isEnabledOn
 import com.intellij.util.Processor
-import com.jetbrains.python.PythonFileType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -67,7 +65,7 @@ internal class RuffFixScopeAction : BaseAnalysisAction(
   }
 
   /**
-   * Collects the scope's Python files.
+   * Collects the scope's Python files and `.pyi` stubs.
    *
    * [AnalysisScope.accept] takes a read action itself wherever it needs one, so this must not hold one over the whole
    * walk. A single read action over the full content index restarts on every concurrent write action, and in an
@@ -75,11 +73,10 @@ internal class RuffFixScopeAction : BaseAnalysisAction(
    */
   private suspend fun collectPythonFiles(scope: AnalysisScope): List<VirtualFile> = withContext(Dispatchers.IO) {
     val context = currentCoroutineContext()
-    val fileTypes = FileTypeRegistry.getInstance()
     buildList {
       scope.accept(Processor { file ->
         context.ensureActive()
-        if (!file.isDirectory && fileTypes.isFileOfType(file, PythonFileType.INSTANCE)) add(file)
+        if (!file.isDirectory && isRuffFileType(file.fileType)) add(file)
         true
       })
     }

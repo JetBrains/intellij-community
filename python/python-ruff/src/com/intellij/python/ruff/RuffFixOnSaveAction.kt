@@ -11,15 +11,13 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.python.community.execService.Args
 import com.intellij.python.pytools.backend.isEnabledOn
-import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.Result
 
 private val LOG = logger<RuffFixOnSaveAction>()
 
 /**
- * Applies Ruff's safe lint fixes (`ruff check --fix-only`) to a Python file when the file is saved.
+ * Applies Ruff's safe lint fixes (`ruff check --fix-only`) to a Python file or a `.pyi` stub when the file is saved.
  *
  * Enabled for each project with the "Run code fixes on save" option ([RuffConfiguration.fixOnSave]). `--fix-only`
  * applies the project's configured fixable rules and writes the result to stdout, exiting 0 even when unfixable
@@ -36,7 +34,7 @@ internal class RuffFixOnSaveAction : DocumentUpdatingActionOnSave() {
   override suspend fun updateDocument(project: Project, document: Document) {
     val request = readAction {
       val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return@readAction null
-      if (virtualFile.fileType != PythonFileType.INSTANCE) return@readAction null
+      if (!isRuffFileType(virtualFile.fileType)) return@readAction null
       if (!ProjectFileIndex.getInstance(project).isInContent(virtualFile)) return@readAction null
 
       // Ruff runs on the interpreter's machine, so the path it is given must be the path there.
@@ -48,7 +46,7 @@ internal class RuffFixOnSaveAction : DocumentUpdatingActionOnSave() {
 
     val fixedText = when (val result = RuffPyTool.getInstance().runOnStdin(
       moduleOrProject,
-      Args("check", "--fix-only", "--stdin-filename", path, "-"),
+      ruffStdinArgs(path, "check", "--fix-only"),
       originalText,
     )) {
       is Result.Success -> result.result

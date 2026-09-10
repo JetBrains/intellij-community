@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiFile
-import com.intellij.python.community.execService.Args
 import com.intellij.python.pytools.backend.isEnabledOn
 import com.jetbrains.python.Result
 
@@ -55,7 +54,7 @@ class RuffImportOptimizer : SuspendableImportOptimizer {
 
     // `ruff check --fix-only` applies the fixes and writes the resulting source to stdout, exiting 0 even when
     // unfixable violations remain. `I` sorts imports and `F401` removes the unused ones.
-    val args = Args("check", "--fix-only", "--select", "I,F401", "--stdin-filename", path, "-")
+    val args = ruffStdinArgs(path, "check", "--fix-only", "--select", "I,F401")
     val scope = ruffScopeOf(file.project, virtualFile)
     val optimizedText = when (val result = RuffPyTool.getInstance().runOnStdin(scope, args, originalText)) {
       is Result.Success -> result.result

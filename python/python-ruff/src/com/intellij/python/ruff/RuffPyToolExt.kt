@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.ruff
 
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,8 +13,10 @@ import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.sdk.backend.executeToolInteractive
+import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.pyi.PyiFileType
 import com.jetbrains.python.sdk.ModuleOrProject
 import java.io.IOException
 
@@ -45,6 +48,20 @@ internal suspend fun RuffPyTool.runOnStdin(
     // cannot parse as a non-zero exit for `format`, and echoes it unchanged for `check`, so neither blanks a file.
     if (output.exitCode != 0) Result.failure(output.stderrString) else Result.success(output.stdoutString)
   }
+
+/**
+ * The arguments that run the Ruff [command] on stdin for the file at [path], which must come from [ruffPath].
+ *
+ * `--force-exclude` makes Ruff apply the project's `exclude` settings to [path]. Without it, Ruff treats a path on the
+ * command line as an explicit request, and it changes a file that the project excludes. For an excluded file, Ruff
+ * returns the input unchanged.
+ */
+internal fun ruffStdinArgs(path: String, vararg command: String): Args =
+  Args(*command, "--force-exclude", "--stdin-filename", path, "-")
+
+/** Whether Ruff checks and formats a file of [fileType]: a Python source file or a `.pyi` stub. */
+internal fun isRuffFileType(fileType: FileType): Boolean =
+  fileType == PythonFileType.INSTANCE || fileType == PyiFileType.INSTANCE
 
 /**
  * The path of this file as the Ruff process sees it, or `null` when the file has no path on that machine.

@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.checkin.committedVirtualFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.pytools.backend.isEnabledOn
-import com.jetbrains.python.PythonFileType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -34,7 +33,8 @@ internal class RuffFixOnCommitHandlerFactory : CheckinHandlerFactory() {
 }
 
 /**
- * Applies Ruff's safe lint fixes (`ruff check --fix-only`) to the committed Python files before the commit completes.
+ * Applies Ruff's safe lint fixes (`ruff check --fix-only`) to the committed Python files and `.pyi` stubs before the
+ * commit completes.
  *
  * Shown as the "Apply Ruff fixes" checkbox in the commit options ("Before Commit" group), the commit-time counterpart
  * of [RuffFixScopeAction] and [RuffFixOnSaveAction]. Like them it runs the Ruff executable directly, because Ruff is
@@ -58,7 +58,7 @@ internal class RuffFixOnCommitHandler(private val project: Project) : CheckinHan
     val pythonFiles = readAction {
       val index = ProjectFileIndex.getInstance(project)
       commitInfo.committedVirtualFiles.filter {
-        it.isValid && !it.isDirectory && it.fileType == PythonFileType.INSTANCE && index.isInContent(it)
+        it.isValid && !it.isDirectory && isRuffFileType(it.fileType) && index.isInContent(it)
       }
     }
     if (pythonFiles.isEmpty()) return null

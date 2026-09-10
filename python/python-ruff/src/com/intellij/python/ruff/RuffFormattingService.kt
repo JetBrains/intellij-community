@@ -11,11 +11,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.psi.PsiFile
-import com.intellij.python.community.execService.Args
 import com.intellij.python.pytools.backend.isEnabledOn
-import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.Result
-import com.jetbrains.python.pyi.PyiFileType
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -38,6 +36,8 @@ private const val NOTIFICATION_GROUP_ID: String = "Python LSP Tools"
  * cannot merge. The second pass instead reads the formatted text, exactly as `ruff format | ruff check --fix I` does in
  * a shell.
  *
+ * A failed pass goes to [AsyncFormattingRequest.onError], so the user sees a notification with Ruff's error.
+ *
  * The service declares no [FormattingService.Feature], so the platform sends only an explicit whole-file reformat here.
  * A fragment selection and on-typing formatting keep their existing route, where import sorting means nothing anyway.
  * The destructive removal of an unused import stays exclusive to `Optimize Imports`.
@@ -56,8 +56,7 @@ internal class RuffFormattingService : AsyncDocumentFormattingService() {
     val virtualFile = source.virtualFile ?: return false
     // An injected fragment or a non-local file has no path that Ruff can read its configuration from.
     if (!virtualFile.isInLocalFileSystem || virtualFile is VirtualFileWindow) return false
-    val fileType = virtualFile.fileType
-    if (fileType != PythonFileType.INSTANCE && fileType != PyiFileType.INSTANCE) return false
+    if (!isRuffFileType(virtualFile.fileType)) return false
 
     val project = source.project
     if (project.isDefault) return false
@@ -78,8 +77,13 @@ internal class RuffFormattingService : AsyncDocumentFormattingService() {
     return object : FormattingTask {
       override fun run() {
         try {
-          val newText = runBlockingCancellable { formatAndSortImports(moduleOrProject, path, originalText) }
-          formattingRequest.onTextReady(newText?.takeIf { it != originalText })
+          when (val result = runBlockingCancellable { formatAndSortImports(moduleOrProject, path, originalText) }) {
+            is Result.Success -> formattingRequest.onTextReady(result.result.takeIf { it != originalText })
+            is Result.Failure -> {
+              LOG.warn("Ruff formatting failed for $path: ${result.error.message}")
+              formattingRequest.onError(RuffBundle.message("ruff.formatting.failed.title"), result.error.message)
+            }
+          }
         }
         catch (e: CancellationException) {
           throw e
@@ -96,27 +100,12 @@ internal class RuffFormattingService : AsyncDocumentFormattingService() {
     }
   }
 
-  /** `ruff format` piped into `ruff check --fix-only --select I`, or `null` when either pass fails. */
-  private suspend fun formatAndSortImports(moduleOrProject: ModuleOrProject, path: String, originalText: String): String? {
+  /** `ruff format` piped into `ruff check --fix-only --select I`. When a pass fails, the result is its failure. */
+  private suspend fun formatAndSortImports(moduleOrProject: ModuleOrProject, path: String, originalText: String): PyResult<String> {
     val ruff = RuffPyTool.getInstance()
-
-    val formatArgs = Args("format", "--stdin-filename", path, "-")
-    val formatted = when (val result = ruff.runOnStdin(moduleOrProject, formatArgs, originalText)) {
-      is Result.Success -> result.result
-      is Result.Failure -> {
-        LOG.warn("Ruff format failed for $path: ${result.error.message}")
-        return null
-      }
-    }
+    val formatted = ruff.runOnStdin(moduleOrProject, ruffStdinArgs(path, "format"), originalText).getOr { return it }
 
     // `I` sorts imports. It is force-selected, so the option works whatever the project's rule set enables.
-    val sortArgs = Args("check", "--fix-only", "--select", "I", "--stdin-filename", path, "-")
-    return when (val result = ruff.runOnStdin(moduleOrProject, sortArgs, formatted)) {
-      is Result.Success -> result.result
-      is Result.Failure -> {
-        LOG.warn("Ruff import sort failed for $path: ${result.error.message}")
-        null
-      }
-    }
+    return ruff.runOnStdin(moduleOrProject, ruffStdinArgs(path, "check", "--fix-only", "--select", "I"), formatted)
   }
 }
