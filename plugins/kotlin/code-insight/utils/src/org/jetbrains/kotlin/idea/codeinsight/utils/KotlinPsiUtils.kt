@@ -380,7 +380,7 @@ fun PsiElement.getWrappingPrefixExpressionOrNull(): KtPrefixExpression? =
 fun createArgumentWithoutName(argument: KtValueArgument, isVararg: Boolean = false, isArrayOf: Boolean = false): List<KtValueArgument> {
     if (!argument.isNamed()) return listOf(argument.copied())
     val argumentExpr = argument.getArgumentExpression() ?: return emptyList()
-    val psiFactory = KtPsiFactory(argument)
+    val psiFactory = KtPsiFactory(argument.project)
     return when {
         isVararg && argumentExpr is KtCollectionLiteralExpression ->
             argumentExpr.getInnerExpressions().map { psiFactory.createArgument(it) }

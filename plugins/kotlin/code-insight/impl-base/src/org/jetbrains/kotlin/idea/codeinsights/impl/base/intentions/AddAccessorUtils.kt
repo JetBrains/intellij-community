@@ -19,7 +19,7 @@ object AddAccessorUtils {
 
     fun addAccessors(element: KtProperty, addGetter: Boolean, addSetter: Boolean, caretMover: ((Int) -> Unit)?) {
         val hasInitializer = element.hasInitializer()
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         if (addGetter) {
             val expression = if (hasInitializer) psiFactory.createExpression("field") else psiFactory.createBlock("TODO()")
             val getter = psiFactory.createPropertyGetter(expression)

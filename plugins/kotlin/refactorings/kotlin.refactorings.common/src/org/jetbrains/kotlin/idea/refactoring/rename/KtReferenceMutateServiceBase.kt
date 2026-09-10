@@ -242,7 +242,7 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
                 }
 
                 is KtUserType -> expression.replaced(
-                    KtPsiFactory(expression).createSimpleName(
+                    KtPsiFactory(expression.project).createSimpleName(
                         SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT.asString()
                     )
                 )

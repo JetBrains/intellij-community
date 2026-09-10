@@ -34,7 +34,7 @@ object NamedArgumentUtils {
             prevSibling.delete()
         }
 
-        val newArgument = KtPsiFactory(element).createArgument(argumentExpression, argumentName, element.getSpreadElement() != null)
+        val newArgument = KtPsiFactory(element.project).createArgument(argumentExpression, argumentName, element.getSpreadElement() != null)
         element.replace(newArgument)
     }
 
