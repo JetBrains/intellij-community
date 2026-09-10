@@ -10,6 +10,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.platform.icons.IconDescriptor;
 import com.intellij.ui.ClientProperty;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
@@ -137,6 +138,34 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
       presentation.setDescription(description);
     }
     presentation.setIconSupplier(icon);
+  }
+
+  /**
+   * Creates a new action with the given text, description and both icon flavors.
+   * {@code iconDescriptor} is rendered when the experimental icons pipeline is on
+   * ({@link ExperimentalIcons}), {@code icon} otherwise; pass both during the migration.
+   *
+   * @param text           serves as a tooltip when the presentation is a button,
+   *                       and the name of the menu item when the presentation is a menu item (with mnemonic)
+   * @param description    describes the current action,
+   *                       this description will appear on the status bar when the presentation has the focus
+   * @param iconDescriptor the action's icon for the experimental icons pipeline
+   * @param icon           the action's icon for the legacy pipeline
+   */
+  @ApiStatus.Experimental
+  public AnAction(@NotNull @ActionText Supplier<String> text,
+                  @Nullable @ActionDescription Supplier<String> description,
+                  @Nullable IconDescriptor iconDescriptor,
+                  @Nullable Icon icon) {
+    Presentation presentation = getTemplatePresentation();
+    presentation.setText(text);
+    if (description != null) {
+      presentation.setDescription(description);
+    }
+    presentation.setIconDescriptor(iconDescriptor);
+    if (icon != null) {
+      presentation.setIcon(icon);
+    }
   }
 
   @ApiStatus.Experimental
