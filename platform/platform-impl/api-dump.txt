@@ -2646,6 +2646,7 @@ f:com.intellij.openapi.editor.impl.DefaultRawTypedHandler
 f:com.intellij.openapi.editor.impl.EditorComponentImpl
 - javax.swing.text.JTextComponent
 - com.intellij.ide.ui.UISettingsListener
+- com.intellij.internal.inspector.UiInspectorContextProvider
 - com.intellij.internal.inspector.UiInspectorPreciseContextProvider
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.openapi.ui.Queryable
@@ -2656,6 +2657,7 @@ f:com.intellij.openapi.editor.impl.EditorComponentImpl
 - getBackground():java.awt.Color
 - getCaretPosition():I
 - getEditor():com.intellij.openapi.editor.impl.EditorImpl
+- getUiInspectorContext():java.util.List
 - paint(java.awt.Graphics):V
 - repaint(J,I,I,I,I):V
 f:com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl

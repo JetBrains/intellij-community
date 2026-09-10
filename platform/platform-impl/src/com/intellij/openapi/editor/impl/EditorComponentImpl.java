@@ -11,6 +11,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorContextProvider;
 import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
@@ -136,7 +137,8 @@ import java.util.concurrent.TimeUnit;
 
 @DirtyUI
 public final class EditorComponentImpl extends JTextComponent implements Scrollable, UiCompatibleDataProvider, Queryable, TypingTarget, Accessible,
-                                                                         UISettingsListener, UiInspectorPreciseContextProvider {
+                                                                         UISettingsListener, UiInspectorPreciseContextProvider,
+                                                                         UiInspectorContextProvider {
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
   private static final ThrottledLogger THROTTLED_LOGGER = new ThrottledLogger(LOG, TimeUnit.HOURS.toMillis(1));
   private static final ThreadLocal<PluginDescriptor> currentDescriptor = ThreadLocal.withInitial(() -> null);
@@ -1161,6 +1163,11 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       return new UiInspectorInfo("EditorInlay", result, null);
     }
     return null;
+  }
+
+  @Override
+  public @NotNull List<PropertyBean> getUiInspectorContext() {
+    return List.of(new PropertyBean("Creation/Disposal Trace", editor.getDisposalStackTrace(), editor.isDisposed()));
   }
 
   /**

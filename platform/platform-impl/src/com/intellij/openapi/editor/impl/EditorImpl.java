@@ -93,9 +93,9 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.elf.Elf;
 import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -122,14 +122,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
-import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
-import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
-import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines;
-import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineColors;
-import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowBorder;
-import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
-import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.caret.CaretAnimationConditions;
 import com.intellij.openapi.editor.impl.caret.CaretAnimationHost;
 import com.intellij.openapi.editor.impl.caret.CaretGeometry;
@@ -139,6 +131,14 @@ import com.intellij.openapi.editor.impl.caret.EditorCaretMutatorFactory;
 import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings;
 import com.intellij.openapi.editor.impl.caret.model.CaretPlacement;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
+import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
+import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines;
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineColors;
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowBorder;
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.CharacterGrid;
 import com.intellij.openapi.editor.impl.view.CharacterGridImpl;
 import com.intellij.openapi.editor.impl.view.EditorView;
@@ -1515,6 +1515,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Contract("_->fail")
   public void throwDisposalError(@NonNls @NotNull String msg) {
     myTraceableDisposable.throwDisposalError(msg);
+  }
+
+  @ApiStatus.Internal
+  public String getDisposalStackTrace() {
+    return myTraceableDisposable.getStackTrace();
   }
 
   private final Object NON_RELEASABLE_BLOCK_GUARD = ObjectUtils.sentinel("NON_RELEASABLE_BLOCK_GUARD");
