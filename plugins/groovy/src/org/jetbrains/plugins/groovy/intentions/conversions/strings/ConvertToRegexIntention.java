@@ -22,26 +22,23 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 public final class ConvertToRegexIntention extends GrPsiUpdateIntention {
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
-    if (!(element instanceof GrLiteral)) return;
+    if (!(element instanceof GrLiteral literal)) return;
 
-    StringBuilder buffer = new StringBuilder();
-    buffer.append("/");
-
-    if (GrStringUtil.isDollarSlashyString(((GrLiteral)element))) {
+    StringBuilder buffer = new StringBuilder("/");
+    if (GrStringUtil.isDollarSlashyString(literal)) {
       buffer.append(GrStringUtil.escapeSymbolsForSlashyStrings(GrStringUtil.removeQuotes(element.getText())));
     }
     else if (element instanceof GrLiteralImpl) {
-      Object value = ((GrLiteralImpl)element).getValue();
-      if (value instanceof String) {
-        GrStringUtil.escapeSymbolsForSlashyStrings(buffer, (String)value);
+      Object value = literal.getValue();
+      if (value instanceof String s) {
+        GrStringUtil.escapeSymbolsForSlashyStrings(buffer, s);
       }
       else {
-        String rawText = GrStringUtil.removeQuotes(element.getText());
-        unescapeAndAppend(buffer, rawText);
+        unescapeAndAppend(buffer, GrStringUtil.removeQuotes(element.getText()));
       }
     }
-    else if (element instanceof GrString) {
-      for (PsiElement part : ((GrString)element).getAllContentParts()) {
+    else if (element instanceof GrString string) {
+      for (PsiElement part : string.getAllContentParts()) {
         if (part instanceof GrStringContent) {
           unescapeAndAppend(buffer, part.getText());
         }
@@ -52,15 +49,13 @@ public final class ConvertToRegexIntention extends GrPsiUpdateIntention {
     }
 
     buffer.append("/");
-    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project());
-    GrExpression regex = factory.createExpressionFromText(buffer);
+    GrExpression regex = GroovyPsiElementFactory.getInstance(context.project()).createExpressionFromText(buffer);
 
     element.replace(regex); //don't use replaceWithExpression since it can revert regex to string if regex brakes syntax
   }
 
   private static void unescapeAndAppend(StringBuilder buffer, String rawText) {
-    String parsed = GrStringUtil.unescapeString(rawText);
-    GrStringUtil.escapeSymbolsForSlashyStrings(buffer, parsed);
+    GrStringUtil.escapeSymbolsForSlashyStrings(buffer, GrStringUtil.unescapeString(rawText));
   }
 
   @Override
@@ -68,10 +63,10 @@ public final class ConvertToRegexIntention extends GrPsiUpdateIntention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
-        return element instanceof GrLiteral &&
-               GrStringUtil.isStringLiteral((GrLiteral)element) &&
+        return element instanceof GrLiteral literal &&
+               GrStringUtil.isStringLiteral(literal) &&
                !GrStringUtil.removeQuotes(element.getText()).isEmpty() &&
-               !GrStringUtil.isSlashyString(((GrLiteral)element));
+               !GrStringUtil.isSlashyString(literal);
       }
     };
   }
