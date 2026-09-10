@@ -22,11 +22,10 @@ import kotlinx.coroutines.delay
 import java.awt.Color
 import java.awt.Graphics
 import javax.swing.JComponent
-import kotlin.time.Duration.Companion.milliseconds
 
 private const val ID = "EditorAnimationCacheStatistics"
 
-private const val WINDOW_SECONDS = STATISTICS_BUCKET_MS * STATISTICS_BUCKET_COUNT / 1000
+private val WINDOW_SECONDS = STATISTICS_BUCKET_DURATION * STATISTICS_BUCKET_COUNT
 
 internal class EditorAnimationCacheStatisticsWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = ID
@@ -62,7 +61,7 @@ private class EditorAnimationCacheStatisticsUi {
   private val updates: Job = bar.launchOnShow(ID) {
     while (true) {
       bar.updateState()
-      delay(STATISTICS_BUCKET_MS.milliseconds)
+      delay(STATISTICS_BUCKET_DURATION)
     }
   }
 
@@ -103,12 +102,12 @@ private class HitRateBar : TextPanel() {
       else -> UIBundle.message("status.bar.editor.animation.cache.widget.text", hitRate.hitPercent)
     }
     setToolTipText(HtmlChunk.text(when (hitRate) {
-      null -> UIBundle.message("status.bar.editor.animation.cache.widget.tooltip.idle", WINDOW_SECONDS)
+      null -> UIBundle.message("status.bar.editor.animation.cache.widget.tooltip.idle", WINDOW_SECONDS.inWholeSeconds)
       else -> UIBundle.message(
         "status.bar.editor.animation.cache.widget.tooltip",
         hitRate.hits,
         hitRate.misses,
-        WINDOW_SECONDS,
+        WINDOW_SECONDS.inWholeSeconds,
       )
     }))
     repaint()

@@ -18,8 +18,9 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.time.Duration.Companion.milliseconds
 
-private const val MIN_BLINK_PERIOD_MS: Long = 10L
+private val MIN_BLINK_PERIOD = 10.milliseconds
 
 @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun caretPlacements(editor: EditorImpl): List<CaretPlacement> = editor.caretModel.allCarets.map { caret ->
@@ -43,14 +44,14 @@ internal fun caretPlacements(editor: EditorImpl): List<CaretPlacement> = editor.
 }
 
 internal fun caretAnimationSettings(settings: EditorSettings, animationsDisabled: Boolean): CaretAnimationSettings = CaretAnimationSettings(
-  blinkPeriodMs = settings.caretBlinkPeriod.toLong().coerceAtLeast(MIN_BLINK_PERIOD_MS),
+  blinkPeriod = settings.caretBlinkPeriod.milliseconds.coerceAtLeast(MIN_BLINK_PERIOD),
   isBlinking = settings.isBlinkCaret,
   blinksSmoothly = !animationsDisabled && settings.isSmoothCaretBlinking,
   easing = when (settings.caretEasing) {
     EditorSettings.CaretEasing.SNAPPY -> CaretEasing.SNAPPY
     EditorSettings.CaretEasing.GLIDING -> CaretEasing.GLIDING
   },
-  moveDurationMs = Registry.intValue("editor.smooth.caret.duration").coerceAtLeast(1).toDouble(),
+  moveDuration = Registry.intValue("editor.smooth.caret.duration").coerceAtLeast(1).milliseconds,
 )
 @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun prefetchCaretFrames(editor: EditorImpl, key: Any, locations: List<CaretRectangle>) {

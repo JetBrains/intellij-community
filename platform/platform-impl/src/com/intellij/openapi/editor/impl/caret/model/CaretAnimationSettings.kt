@@ -2,23 +2,24 @@
 package com.intellij.openapi.editor.impl.caret.model
 
 import kotlin.math.ceil
+import kotlin.time.Duration
 
 private const val VISUAL_BLINK_PERIOD_FACTOR = 1.2
 
 internal data class CaretAnimationSettings(
-  val blinkPeriodMs: Long,
+  val blinkPeriod: Duration,
   val isBlinking: Boolean,
   val blinksSmoothly: Boolean,
   val easing: CaretEasing,
-  val moveDurationMs: Double,
+  val moveDuration: Duration,
 ) {
-  val quietPeriodMs: Long get() = blinkPeriodMs
+  val quietPeriod: Duration get() = blinkPeriod
 
-  val fadeDurationMs: Double = VISUAL_BLINK_PERIOD_FACTOR * blinkPeriodMs / 2.0
+  val fadeDuration: Duration = blinkPeriod * VISUAL_BLINK_PERIOD_FACTOR / 2
 
-  val holdDurationMs: Double get() = fadeDurationMs
+  val holdDuration: Duration get() = fadeDuration
 
-  val moveTimeConstantMs: Double = easing.timeConstantMs(moveDurationMs)
+  val moveTimeConstant: Duration = easing.timeConstant(moveDuration)
 
-  val easingFrameCount: Int = ceil(moveDurationMs / TICK_MS).toInt().coerceAtLeast(1)
+  val easingFrameCount: Int = ceil(moveDuration / CaretClock.TICK).toInt().coerceAtLeast(1)
 }

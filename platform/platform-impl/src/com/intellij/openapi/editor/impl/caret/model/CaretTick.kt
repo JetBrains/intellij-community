@@ -2,24 +2,24 @@
 package com.intellij.openapi.editor.impl.caret.model
 
 import kotlin.math.exp
-import kotlin.math.max
 import kotlin.math.pow
+import kotlin.time.Duration
 
 internal data class CaretTick(
-  val now: Long,
-  private val frameMs: Double,
+  val now: CaretTimeMark,
+  private val frameDuration: Duration,
   val settings: CaretAnimationSettings,
   val isCaretShown: Boolean,
-  private val quietMs: Long,
+  private val elapsedQuietTime: Duration,
 ) {
-  val isWithinQuietPeriod: Boolean get() = quietMs < settings.quietPeriodMs
+  val isWithinQuietPeriod: Boolean get() = elapsedQuietTime < settings.quietPeriod
 
-  val remainingQuietMs: Long get() = (settings.quietPeriodMs - quietMs).coerceAtLeast(TICK_MS.toLong())
+  val remainingQuietTime: Duration get() = (settings.quietPeriod - elapsedQuietTime).coerceAtLeast(CaretClock.TICK)
 
-  fun elapsedSince(startMs: Long): Double = max(0L, now - startMs).toDouble()
+  fun elapsedSince(startTime: CaretTimeMark): Duration = (now - startTime).coerceAtLeast(Duration.ZERO)
 
-  fun approachFactor(timeConstantMs: Double): Double =
-    (1.0 - exp(-frameMs / max(TICK_MS.toDouble(), timeConstantMs))).coerceIn(0.0, 1.0)
+  fun approachFactor(timeConstant: Duration): Double =
+    (1.0 - exp(-frameDuration / timeConstant.coerceAtLeast(CaretClock.TICK))).coerceIn(0.0, 1.0)
 
-  fun velocityDamping(): Double = 0.75.pow(frameMs / TICK_MS)
+  fun velocityDamping(): Double = 0.75.pow(frameDuration / CaretClock.TICK)
 }

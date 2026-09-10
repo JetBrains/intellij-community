@@ -5,7 +5,10 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.impl.caret.model.CaretAnimationSettings
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
+import com.intellij.openapi.editor.impl.caret.model.CaretTimeMark
 import java.awt.geom.Point2D
+import kotlin.time.Duration
+import kotlin.time.TimeSource
 
 private const val SETTLE_TICKS = 3
 private const val SETTLE_EPSILON = 0.25
@@ -44,7 +47,7 @@ internal sealed interface CaretMotionPhase {
 
   fun withTrajectories(trajectories: Map<Caret, CaretTrajectory>): CaretMotionPhase
 
-  fun advance(tick: CaretTick, timeConstantMs: Double): CaretMotionPhase
+  fun advance(tick: CaretTick, timeConstant: Duration): CaretMotionPhase
 
   fun framesTo(settings: CaretAnimationSettings): List<CaretRectangle>
 
@@ -56,7 +59,7 @@ internal sealed interface CaretMotionPhase {
    */
   data class Easing(
     override val trajectories: Map<Caret, CaretTrajectory>,
-    private val startTime: Long,
+    private val startTime: CaretTimeMark,
     override val settling: Settling = Settling.RESTLESS,
   ) : CaretMotionPhase {
     override val isEasing: Boolean get() = true
@@ -64,10 +67,10 @@ internal sealed interface CaretMotionPhase {
     override fun withTrajectories(trajectories: Map<Caret, CaretTrajectory>): CaretMotionPhase =
       Easing(trajectories, startTime, settling)
 
-    override fun advance(tick: CaretTick, timeConstantMs: Double): CaretMotionPhase {
+    override fun advance(tick: CaretTick, timeConstant: Duration): CaretMotionPhase {
       val settings = tick.settings
       val elapsed = tick.elapsedSince(startTime)
-      val finished = elapsed >= settings.moveDurationMs
+      val finished = elapsed >= settings.moveDuration
       val ease = settings.easing.apply(snappedEasingTime(elapsed, settings))
 
       val eased = trajectories.mapValues { (_, trajectory) -> trajectory.eased(ease) }
@@ -99,8 +102,8 @@ internal sealed interface CaretMotionPhase {
     override fun withTrajectories(trajectories: Map<Caret, CaretTrajectory>): CaretMotionPhase =
       Pursuit(trajectories, settling)
 
-    override fun advance(tick: CaretTick, timeConstantMs: Double): CaretMotionPhase {
-      val approachFactor = tick.approachFactor(timeConstantMs)
+    override fun advance(tick: CaretTick, timeConstant: Duration): CaretMotionPhase {
+      val approachFactor = tick.approachFactor(timeConstant)
       val damping = tick.velocityDamping()
 
       val pursued = trajectories.mapValues { (_, trajectory) -> trajectory.pursued(approachFactor, damping) }
@@ -113,13 +116,13 @@ internal sealed interface CaretMotionPhase {
   }
 
   companion object {
-    val DORMANT: CaretMotionPhase = Easing(emptyMap(), startTime = 0L, settling = Settling.COMPLETE)
+    val DORMANT: CaretMotionPhase = Easing(emptyMap(), startTime = TimeSource.Monotonic.markNow(), settling = Settling.COMPLETE)
   }
 }
 
-private fun snappedEasingTime(elapsedMs: Double, settings: CaretAnimationSettings): Double {
+private fun snappedEasingTime(elapsed: Duration, settings: CaretAnimationSettings): Double {
   val frameCount = settings.easingFrameCount
-  val t = (elapsedMs / settings.moveDurationMs).coerceIn(0.0, 1.0)
+  val t = (elapsed / settings.moveDuration).coerceIn(0.0, 1.0)
   return (t * frameCount).toInt() / frameCount.toDouble()
 }
 

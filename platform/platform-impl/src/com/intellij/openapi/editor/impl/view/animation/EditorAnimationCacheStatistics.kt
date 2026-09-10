@@ -2,8 +2,11 @@
 package com.intellij.openapi.editor.impl.view.animation
 
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
-internal const val STATISTICS_BUCKET_MS = 500L
+internal val STATISTICS_BUCKET_DURATION: Duration = 500.milliseconds
 internal const val STATISTICS_BUCKET_COUNT = 10
 
 internal data class CacheHitRate(val hits: Int, val misses: Int) {
@@ -11,31 +14,33 @@ internal data class CacheHitRate(val hits: Int, val misses: Int) {
 }
 
 internal object EditorAnimationCacheStatistics {
+  private val startedAt = TimeSource.Monotonic.markNow()
   private val hits = IntArray(STATISTICS_BUCKET_COUNT)
   private val misses = IntArray(STATISTICS_BUCKET_COUNT)
-  private val stamps = LongArray(STATISTICS_BUCKET_COUNT) { Long.MIN_VALUE }
+  private val stamps = arrayOfNulls<TimeSource.Monotonic.ValueTimeMark>(STATISTICS_BUCKET_COUNT)
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun recordHit(): Boolean {
-    hits[bucketAt(currentStamp())]++
+    hits[bucketAt()]++
     return true
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun recordMiss(): Boolean {
-    misses[bucketAt(currentStamp())]++
+    misses[bucketAt()]++
     return false
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun hitRate(): CacheHitRate? {
-    val newest = currentStamp()
-    val oldest = newest - STATISTICS_BUCKET_COUNT + 1
+    val newest = currentStamp(currentBucket())
+    val oldest = newest - STATISTICS_BUCKET_DURATION * (STATISTICS_BUCKET_COUNT - 1)
 
     var totalHits = 0
     var totalMisses = 0
     for (bucket in 0 until STATISTICS_BUCKET_COUNT) {
-      if (stamps[bucket] in oldest..newest) {
+      val stamp = stamps[bucket]
+      if (stamp != null && stamp in oldest..newest) {
         totalHits += hits[bucket]
         totalMisses += misses[bucket]
       }
@@ -47,10 +52,15 @@ internal object EditorAnimationCacheStatistics {
     }
   }
 
-  private fun currentStamp(): Long = System.nanoTime() / (STATISTICS_BUCKET_MS * 1_000_000)
+  private fun currentBucket(): Long = (startedAt.elapsedNow() / STATISTICS_BUCKET_DURATION).toLong()
 
-  private fun bucketAt(stamp: Long): Int {
-    val bucket = Math.floorMod(stamp, STATISTICS_BUCKET_COUNT.toLong()).toInt()
+  private fun currentStamp(elapsedBuckets: Long): TimeSource.Monotonic.ValueTimeMark =
+    startedAt + STATISTICS_BUCKET_DURATION * elapsedBuckets.toDouble()
+
+  private fun bucketAt(): Int {
+    val elapsedBuckets = currentBucket()
+    val bucket = (elapsedBuckets % STATISTICS_BUCKET_COUNT).toInt()
+    val stamp = currentStamp(elapsedBuckets)
     if (stamps[bucket] != stamp) {
       stamps[bucket] = stamp
       hits[bucket] = 0

@@ -5,6 +5,7 @@ import kotlin.math.cbrt
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.pow
+import kotlin.time.Duration
 
 private const val MATCHED_PROGRESS = 0.9
 
@@ -24,13 +25,13 @@ internal enum class CaretEasing {
 
   abstract fun apply(t: Double): Double
 
-  internal fun timeConstantMs(durationMs: Double): Double {
-    val steps = max(8, (durationMs / TICK_MS).toInt())
+  internal fun timeConstant(duration: Duration): Duration {
+    val steps = max(8, (duration / CaretClock.TICK).toInt())
     val matchedAt = (1..steps)
       .map { it.toDouble() / steps }
       .firstOrNull { apply(it) >= MATCHED_PROGRESS }
       ?: 1.0
 
-    return ((matchedAt * durationMs) / -ln(1.0 - MATCHED_PROGRESS)).coerceAtLeast(TICK_MS.toDouble())
+    return ((duration * matchedAt) / -ln(1.0 - MATCHED_PROGRESS)).coerceAtLeast(CaretClock.TICK)
   }
 }

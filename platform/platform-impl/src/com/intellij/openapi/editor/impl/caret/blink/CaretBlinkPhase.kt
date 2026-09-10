@@ -3,9 +3,8 @@ package com.intellij.openapi.editor.impl.caret.blink
 
 import com.intellij.openapi.editor.impl.caret.model.CaretClock
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
-import com.intellij.openapi.editor.impl.caret.model.TICK_MS
+import com.intellij.openapi.editor.impl.caret.model.CaretTimeMark
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 internal sealed interface CaretBlinkPhase {
   fun advance(tick: CaretTick): CaretBlinkPhase
@@ -30,14 +29,14 @@ internal sealed interface CaretBlinkPhase {
     override fun frame(tick: CaretTick, prefetching: Boolean): CaretBlinkFrame = CaretBlinkFrame(
       opacity = 1.0f,
       wantsPrefetch = false,
-      nextDelay = if (tick.settings.isBlinking) tick.remainingQuietMs.milliseconds else Duration.INFINITE,
+      nextDelay = if (tick.settings.isBlinking) tick.remainingQuietTime else Duration.INFINITE,
     )
   }
 
-  data class Fading(private val from: Double, private val to: Double, private val startedAt: Long) : CaretBlinkPhase {
+  data class Fading(private val from: Double, private val to: Double, private val startedAt: CaretTimeMark) : CaretBlinkPhase {
     override fun advance(tick: CaretTick): CaretBlinkPhase = when {
       tick.isInterrupted() -> Awake
-      tick.elapsedSince(startedAt) < tick.settings.fadeDurationMs -> this
+      tick.elapsedSince(startedAt) < tick.settings.fadeDuration -> this
       else -> Holding(level = to, startedAt = tick.now)
     }
 
@@ -45,44 +44,44 @@ internal sealed interface CaretBlinkPhase {
       CaretBlinkFrame(opacity = opacityAt(tick).toFloat(), wantsPrefetch = prefetching, nextDelay = CaretClock.TICK)
 
     private fun opacityAt(tick: CaretTick): Double {
-      val t = (tick.elapsedSince(startedAt) / tick.settings.fadeDurationMs).coerceIn(0.0, 1.0)
+      val t = (tick.elapsedSince(startedAt) / tick.settings.fadeDuration).coerceIn(0.0, 1.0)
       val progress = if (to < from) easeInOutCubic(t) else easeOutQuint(t)
       return from + (to - from) * progress
     }
   }
 
-  data class Holding(private val level: Double, private val startedAt: Long) : CaretBlinkPhase {
+  data class Holding(private val level: Double, private val startedAt: CaretTimeMark) : CaretBlinkPhase {
     override fun advance(tick: CaretTick): CaretBlinkPhase = when {
       tick.isInterrupted() -> Awake
-      tick.elapsedSince(startedAt) < tick.settings.holdDurationMs -> this
+      tick.elapsedSince(startedAt) < tick.settings.holdDuration -> this
       else -> Fading(from = level, to = 1.0 - level, startedAt = tick.now)
     }
 
     override fun frame(tick: CaretTick, prefetching: Boolean): CaretBlinkFrame = CaretBlinkFrame(
       opacity = level.toFloat(),
       wantsPrefetch = prefetching,
-      nextDelay = remainingMs(tick).milliseconds,
+      nextDelay = remainingDuration(tick),
     )
 
-    private fun remainingMs(tick: CaretTick): Long =
-      (tick.settings.holdDurationMs.toLong() - tick.elapsedSince(startedAt).toLong()).coerceAtLeast(TICK_MS.toLong())
+    private fun remainingDuration(tick: CaretTick): Duration =
+      (tick.settings.holdDuration - tick.elapsedSince(startedAt)).coerceAtLeast(CaretClock.TICK)
   }
 
-  data class Toggling(private val visible: Boolean, private val since: Long) : CaretBlinkPhase {
+  data class Toggling(private val visible: Boolean, private val since: CaretTimeMark) : CaretBlinkPhase {
     override fun advance(tick: CaretTick): CaretBlinkPhase = when {
       tick.isWithinQuietPeriod || !tick.settings.isBlinking || tick.settings.blinksSmoothly -> Awake
-      tick.elapsedSince(since) < tick.settings.blinkPeriodMs -> this
+      tick.elapsedSince(since) < tick.settings.blinkPeriod -> this
       else -> Toggling(!visible, tick.now)
     }
 
     override fun frame(tick: CaretTick, prefetching: Boolean): CaretBlinkFrame = CaretBlinkFrame(
       opacity = if (visible) 1.0f else 0.0f,
       wantsPrefetch = false,
-      nextDelay = remainingMs(tick).milliseconds,
+      nextDelay = remainingDuration(tick),
     )
 
-    private fun remainingMs(tick: CaretTick): Long =
-      (tick.settings.blinkPeriodMs - tick.elapsedSince(since).toLong()).coerceAtLeast(TICK_MS.toLong())
+    private fun remainingDuration(tick: CaretTick): Duration =
+      (tick.settings.blinkPeriod - tick.elapsedSince(since)).coerceAtLeast(CaretClock.TICK)
   }
 }
 

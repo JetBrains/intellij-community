@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.caret.blink.CaretBlinkMachine
 import com.intellij.openapi.editor.impl.caret.model.CaretClock
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
-import com.intellij.openapi.editor.impl.caret.model.TICK_MS
 import com.intellij.openapi.editor.impl.caret.motion.CaretMotionMachine
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -27,6 +26,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 @Service(Service.Level.APP)
 internal class EditorCaretMutatorFactory(private val scope: CoroutineScope) {
@@ -52,26 +53,26 @@ internal class EditorCaretMutator internal constructor(
   private val wakeUps = Channel<Unit>(Channel.CONFLATED)
 
   private var settings = host.conditions.settings()
-  private var lastFrameAt = CaretClock.monotonicMillis()
+  private var lastFrameAt = TimeSource.Monotonic.markNow()
   private var loop: Job? = null
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun caretMoved() {
-    val tick = tick(TICK_MS.toDouble())
+    val tick = tick(CaretClock.TICK)
     motion.retarget(host.geometry.placements(), tick)
     if (motion.isSettled) showNow(tick) else wakeUp()
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun caretMovedImmediately() {
-    val tick = tick(TICK_MS.toDouble())
+    val tick = tick(CaretClock.TICK)
     motion.snapTo(host.geometry.placements(), tick)
     showNow(tick)
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun bulkUpdateStarting() {
-    val tick = tick(TICK_MS.toDouble())
+    val tick = tick(CaretClock.TICK)
     motion.settle(tick)
     showNow(tick)
   }
@@ -115,11 +116,11 @@ internal class EditorCaretMutator internal constructor(
 
   private suspend fun run() {
     while (currentCoroutineContext().isActive) {
-      val now = CaretClock.monotonicMillis()
-      val frameMs = (now - lastFrameAt).coerceAtLeast(TICK_MS.toLong()).toDouble()
+      val now = TimeSource.Monotonic.markNow()
+      val frameDuration = (now - lastFrameAt).coerceAtLeast(CaretClock.TICK)
       lastFrameAt = now
 
-      val frame = nextFrame(tick(frameMs), prefetching = true)
+      val frame = nextFrame(tick(frameDuration), prefetching = true)
       frame.applyTo(host)
 
       if (frame.nextDelay == Duration.INFINITE) break
@@ -132,12 +133,12 @@ internal class EditorCaretMutator internal constructor(
     else -> CaretFrame(motion.advance(tick, prefetching), blink.advance(tick, prefetching))
   }
 
-  private fun tick(frameMs: Double): CaretTick = CaretTick(
-    now = CaretClock.monotonicMillis(),
-    frameMs = frameMs,
+  private fun tick(frameDuration: Duration): CaretTick = CaretTick(
+    now = TimeSource.Monotonic.markNow(),
+    frameDuration = frameDuration,
     settings = settings,
     isCaretShown = host.conditions.isCaretShown(),
-    quietMs = host.conditions.millisSinceActivity(),
+    elapsedQuietTime = host.conditions.millisSinceActivity().milliseconds,
   )
 
   private inline fun onEdt(crossinline block: () -> Unit) {

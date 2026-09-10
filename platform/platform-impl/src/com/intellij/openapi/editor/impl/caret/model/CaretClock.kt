@@ -3,11 +3,10 @@ package com.intellij.openapi.editor.impl.caret.model
 
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
-internal const val TICK_MS = 4
+internal typealias CaretTimeMark = TimeSource.Monotonic.ValueTimeMark
 
 internal object CaretClock {
-  val TICK: Duration = TICK_MS.milliseconds
-
-  fun monotonicMillis(): Long = System.nanoTime() / 1_000_000L
+  val TICK: Duration = 4.milliseconds
 }

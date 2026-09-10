@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.impl.caret.model.CaretClock
 import com.intellij.openapi.editor.impl.caret.model.CaretPlacement
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
-import com.intellij.openapi.editor.impl.caret.model.TICK_MS
 import kotlin.math.max
 import kotlin.time.Duration
 
@@ -46,9 +45,9 @@ internal class CaretMotionMachine {
   }
 
   fun advance(tick: CaretTick, prefetching: Boolean): CaretMotionFrame {
-    val timeConstantMs = max(TICK_MS.toDouble(), tick.settings.moveTimeConstantMs * urgency)
+    val timeConstant = (tick.settings.moveTimeConstant * urgency).coerceAtLeast(CaretClock.TICK)
     val wasMoving = !phase.settling.isComplete
-    val advancedPhase = if (wasMoving) phase.advance(tick, timeConstantMs) else phase
+    val advancedPhase = if (wasMoving) phase.advance(tick, timeConstant) else phase
     val drained = stale
     val moving = !advancedPhase.settling.isComplete
 
