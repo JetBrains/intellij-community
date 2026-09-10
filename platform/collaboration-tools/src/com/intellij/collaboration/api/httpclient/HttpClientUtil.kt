@@ -193,6 +193,8 @@ fun <T> HttpResponse<out InputStream>.readBodyWithLoggingBlocking(
     }
     else {
       reader(contentType?.first, contentType?.second)
+    }.also {
+      logger.debug("$requestName : Response extracted")
     }
   }
 }
