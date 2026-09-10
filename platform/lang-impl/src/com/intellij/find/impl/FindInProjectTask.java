@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.platform.workspace.storage.EntityStorage;
@@ -124,9 +125,10 @@ final class FindInProjectTask {
 
   private final PsiManager psiManager;
 
-  //3 fields below are all derived from the findModel -- cached in ctor because derivation is too tedious:
+  //4 fields below are all derived from the findModel -- cached in ctor because derivation is too tedious:
   private final @Nullable Module moduleToSearchIn;
   private final @Nullable VirtualFile directoryToSearchIn;
+  private final boolean withSubdirectories;
   private final Predicate<VirtualFile> fileMaskFilter;
 
 
@@ -160,7 +162,21 @@ final class FindInProjectTask {
     psiManager = PsiManager.getInstance(project);
     projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    directoryToSearchIn = FindInProjectUtil.getDirectory(findModel);
+    var directoryCandidate = FindInProjectUtil.getDirectory(findModel);
+    if (directoryCandidate == null && IdeProductMode.isLight()) {
+      // Make sure that in ijLight we always do a directory search. Directory search requests are easier to optimize by delegating
+      // iteration and pre-filtering to backend (ijent), thus minimizing amount of round trips over the network.
+      // What we configure here is a set of files which should be searched. It may contain more files than requested scope,
+      // but not less than requested. All the discovered files will be filtered by actually provided scope later.
+      // In ijLight we have a very primitive workspace model containing only one ProjectRootEntity, so all the scopes, including
+      // Project Scope and All Scope, are the same - this root directory.
+      directoryToSearchIn = ProjectUtil.guessProjectDir(project);
+      LOG.info("Using guessed " + directoryToSearchIn + " for search.");
+      withSubdirectories = true;
+    } else {
+      directoryToSearchIn = directoryCandidate;
+      withSubdirectories = findModel.isWithSubdirectories();
+    }
 
     String moduleName = findModel.getModuleName();
     moduleToSearchIn = moduleName == null ?
@@ -458,7 +474,7 @@ final class FindInProjectTask {
                            && ReadAction.computeBlocking(() -> globalCustomScope.isSearchInLibraries());
 
     boolean unfoldSubdirs = directoryToSearchIn != null
-                            && findModel.isWithSubdirectories();
+                            && withSubdirectories;
 
     boolean ignoreExcluded = directoryToSearchIn != null
                              && !Registry.is("find.search.in.excluded.dirs")
@@ -605,8 +621,7 @@ final class FindInProjectTask {
       //Directory could be anywhere outside the project, hence it is worth wrapping it into a cache-avoiding wrapper,
       // so walking through its children won't trash VFS cache with new entries from some rarely used file-tree:
       VirtualFile cacheAvoidingDirectory = NewVirtualFile.asCacheAvoiding(directoryToSearchIn);
-      boolean withSubdirs = findModel.isWithSubdirectories();
-      if (withSubdirs) {
+      if (withSubdirectories) {
         searchItems.add(cacheAvoidingDirectory);
       }
       else {
@@ -616,6 +631,8 @@ final class FindInProjectTask {
       //          request a search in a specific directory _only_?
     }
     else if (moduleToSearchIn != null) {
+      LOG.assertTrue(!IdeProductMode.isLight(), "Search in module should not happen in ijLight. Searched module: " + moduleToSearchIn);
+
       EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
       ModuleEntity moduleEntity = Objects.requireNonNull(storage.resolve(new ModuleId(moduleToSearchIn.getName())));
       //MAYBE RC: wrap files into a cache-avoiding wrappers?
@@ -623,6 +640,8 @@ final class FindInProjectTask {
       searchItems.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, project));
     }
     else {
+      LOG.assertTrue(!IdeProductMode.isLight(), "Search in project should not happen in ijLight. Please use search in directory instead.");
+
       FileBasedIndexEx indexes = (FileBasedIndexEx)FileBasedIndex.getInstance();
       //Don't wrap those files in cache-avoiding wrappers: indexable files are scanned, and hence (will be) cached in VFS anyway:
       searchItems.addAll(indexes.getIndexableFilesProviders(project));
