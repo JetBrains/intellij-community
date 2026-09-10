@@ -15,13 +15,14 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,23 +36,34 @@ public class XValueTextRendererImpl extends XValueTextRendererBase implements XC
 
   @Override
   public void renderValue(@NotNull String value) {
-    XValuePresentationUtil.renderValue(value, myText, SimpleTextAttributes.REGULAR_ATTRIBUTES, -1, null);
+    XValuePresentationUtil.renderValue(value, myText, SimpleTextAttributes.REGULAR_ATTRIBUTES, -1, null,
+                                       getAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE));
   }
 
   @Override
   protected void renderRawValue(@NotNull String value, @NotNull TextAttributesKey key) {
-    TextAttributes textAttributes = DebuggerUIUtil.getColorScheme().getAttributes(key);
+    TextAttributes textAttributes = getAttributes(key);
     SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
     myText.append(value, attributes);
   }
 
   @Override
   public void renderStringValue(@NotNull String value, @Nullable String additionalSpecialCharsToHighlight, int maxLength) {
-    TextAttributes textAttributes = DebuggerUIUtil.getColorScheme().getAttributes(DefaultLanguageHighlighterColors.STRING);
+    TextAttributes textAttributes = getAttributes(DefaultLanguageHighlighterColors.STRING);
     SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
     myText.append("\"", attributes);
-    XValuePresentationUtil.renderValue(value, myText, attributes, maxLength, additionalSpecialCharsToHighlight);
+    XValuePresentationUtil.renderValue(value, myText, attributes, maxLength, additionalSpecialCharsToHighlight,
+                                       getAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE));
     myText.append("\"", attributes);
+  }
+
+  private static @Nullable TextAttributes getAttributes(@NotNull TextAttributesKey key) {
+    var application = ApplicationManager.getApplication();
+    // ex. in DAP there is no EditorColorsManager
+    if (application == null || application.isHeadlessEnvironment()) {
+      return key.getDefaultAttributes();
+    }
+    return EditorColorsUtil.getGlobalOrDefaultColorScheme().getAttributes(key);
   }
 
   @Override
