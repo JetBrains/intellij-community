@@ -13,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
-import org.jetbrains.plugins.github.api.executeSuspend
 import java.time.Duration
 import java.time.temporal.ChronoUnit
 
@@ -43,7 +42,7 @@ class GHCachingAccountInformationProvider(serviceCs: CoroutineScope) {
   suspend fun loadInformation(executor: GithubApiRequestExecutor, account: GithubAccount): GithubAuthenticatedUser {
     val deferred = informationCache.get(account) {
       cs.async {
-        executor.executeSuspend(GithubApiRequests.CurrentUser.get(account.server))
+        executor.execute(GithubApiRequests.CurrentUser.get(account.server))
       }
     }
     try {

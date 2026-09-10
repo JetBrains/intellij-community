@@ -51,6 +51,14 @@ sealed class GithubApiRequestExecutor {
   @Throws(IOException::class, ProcessCanceledException::class)
   abstract fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T
 
+  suspend fun <T> execute(request: GithubApiRequest<T>): T =
+    withContext(Dispatchers.IO) {
+      coroutineToIndicator {
+        val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
+        execute(indicator, request)
+      }
+    }
+
   internal class WithTokenAuth(
     githubSettings: GithubSettings,
     private val tokenSupplier: (URL) -> String?,
@@ -333,10 +341,6 @@ sealed class GithubApiRequestExecutor {
   }
 }
 
-suspend fun <T> GithubApiRequestExecutor.executeSuspend(request: GithubApiRequest<T>): T =
-  withContext(Dispatchers.IO) {
-    coroutineToIndicator {
-      val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
-      execute(indicator, request)
-    }
-  }
+@Deprecated(message = "Suspending method is now a part of the interface",
+            replaceWith = ReplaceWith("GithubApiRequestExecutor.execute"))
+suspend fun <T> GithubApiRequestExecutor.executeSuspend(request: GithubApiRequest<T>): T = execute(request)

@@ -9,7 +9,6 @@ import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestChangedFile
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 private val LOG = logger<GHPRFilesServiceImpl>()
@@ -22,7 +21,7 @@ class GHPRFilesServiceImpl(
   override suspend fun loadFiles(pullRequestId: GHPRIdentifier): List<GHPullRequestChangedFile> =
     runCatching {
       ApiPageUtil.createGQLPagesFlow {
-        requestExecutor.executeSuspend(GHGQLRequests.PullRequest.files(repository, pullRequestId.number, it))
+        requestExecutor.execute(GHGQLRequests.PullRequest.files(repository, pullRequestId.number, it))
       }.fold(mutableListOf<GHPullRequestChangedFile>()) { acc, value ->
         acc.addAll(value.nodes)
         acc
@@ -39,7 +38,7 @@ class GHPRFilesServiceImpl(
       else {
         GHGQLRequests.PullRequest.unmarkFileAsViewed(repository.serverPath, pullRequestId.id, path)
       }
-      requestExecutor.executeSuspend(request)
+      requestExecutor.execute(request)
     }.processErrorAndGet {
       LOG.info("Error occurred while updating file viewed state", it)
     }

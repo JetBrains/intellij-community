@@ -6,7 +6,6 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GHReaction
 import org.jetbrains.plugins.github.api.data.GHReactionContent
-import org.jetbrains.plugins.github.api.executeSuspend
 
 internal interface GHReactionsService {
   suspend fun addReaction(subjectId: String, reaction: GHReactionContent): GHReaction
@@ -19,11 +18,11 @@ internal class GHReactionsServiceImpl(
 ) : GHReactionsService {
   override suspend fun addReaction(subjectId: String, reaction: GHReactionContent): GHReaction {
     val request = GHGQLRequests.Comment.addReaction(repository.serverPath, subjectId, reaction)
-    return requestExecutor.executeSuspend(request)
+    return requestExecutor.execute(request)
   }
 
   override suspend fun removeReaction(subjectId: String, reaction: GHReactionContent): GHReaction {
     val request = GHGQLRequests.Comment.removeReaction(repository.serverPath, subjectId, reaction)
-    return requestExecutor.executeSuspend(request)
+    return requestExecutor.execute(request)
   }
 }

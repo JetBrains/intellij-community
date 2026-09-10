@@ -23,7 +23,6 @@ import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRestIdOnly
 import org.jetbrains.plugins.github.api.data.pullrequest.toPRIdentifier
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
@@ -114,7 +113,7 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
     executor: GithubApiRequestExecutor,
     repository: GHRepositoryCoordinates,
   ) = try {
-    executor.executeSuspend(GHGQLRequests.Repo.find(repository))
+    executor.execute(GHGQLRequests.Repo.find(repository))
   }
   catch (ce: CancellationException) {
     throw ce
@@ -143,12 +142,12 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
     val remoteBranchName = branch.nameForRemoteOperations
 
     return try {
-      executor.executeSuspend(PullRequests.find(repository,
-                                                GithubIssueState.open,
-                                                baseRef = null,
-                                                headRef = repository.repositoryPath.owner + ":" + remoteBranchName,
+      executor.execute(PullRequests.find(repository,
+                                         GithubIssueState.open,
+                                         baseRef = null,
+                                         headRef = repository.repositoryPath.owner + ":" + remoteBranchName,
         // only the 0/1/>1 distinction matters, so two results are enough
-                                                pagination = GithubRequestPagination(pageSize = 2))
+                                         pagination = GithubRequestPagination(pageSize = 2))
       ).items
     }
     catch (ce: CancellationException) {

@@ -9,7 +9,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
-import org.jetbrains.plugins.github.api.executeSuspend
 import java.io.IOException
 import java.util.function.Predicate
 
@@ -48,7 +47,7 @@ object GithubApiPagesLoader {
   fun <T> batchesFlow(executor: GithubApiRequestExecutor, pagesRequest: Request<T>): Flow<List<T>> = flow {
     var request: GithubApiRequest<GithubResponsePage<T>>? = pagesRequest.initialRequest
     while (request != null) {
-      val page = executor.executeSuspend(request)
+      val page = executor.execute(request)
       emit(page.items)
       request = page.nextLink?.let(pagesRequest.urlRequestProvider)
     }

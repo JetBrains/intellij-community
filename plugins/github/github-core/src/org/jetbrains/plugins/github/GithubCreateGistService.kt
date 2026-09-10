@@ -17,7 +17,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor.Factory.Compani
 import org.jetbrains.plugins.github.api.GithubApiRequests.Gists.create
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog
@@ -116,7 +115,7 @@ class GithubCreateGistService(
     else contents
 
     return try {
-      executor.executeSuspend(create(server, contents, description, !isSecret)).htmlUrl
+      executor.execute(create(server, contents, description, !isSecret)).htmlUrl
     }
     catch (e: IOException) {
       GithubNotifications.showError(

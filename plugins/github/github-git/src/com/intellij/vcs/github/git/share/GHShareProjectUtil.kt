@@ -25,7 +25,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.data.request.Type
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginSource
@@ -98,7 +97,7 @@ object GHShareProjectUtil {
     val isPrivate: Boolean = shareDialogResult.isPrivate
     val account: GithubAccount = shareDialogResult.account!!
 
-    return requestExecutor.executeSuspend(GithubApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate))
+    return requestExecutor.execute(GithubApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate))
   }
 
   private fun showShareProjectDialog(
@@ -127,7 +126,7 @@ object GHShareProjectUtil {
           val token = serviceAsync<GHAccountManager>().findCredentials(account) ?: throw GithubMissingTokenException(account)
           val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
 
-          val user = requestExecutor.executeSuspend(GithubApiRequests.CurrentUser.get(account.server))
+          val user = requestExecutor.execute(GithubApiRequests.CurrentUser.get(account.server))
           val names = GithubApiPagesLoader.loadAll(requestExecutor, GithubApiRequests.CurrentUser.Repos.pages(account.server, type = Type.OWNER))
             .mapSmartSet { it.name }
 

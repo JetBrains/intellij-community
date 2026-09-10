@@ -12,7 +12,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestOperation
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHEnterpriseServerMeta
-import org.jetbrains.plugins.github.api.executeSuspend
 
 @Service
 internal class GHEnterpriseServerMetadataLoader(serviceCs: CoroutineScope) {
@@ -27,7 +26,7 @@ internal class GHEnterpriseServerMetadataLoader(serviceCs: CoroutineScope) {
     return cache.get(server) {
       val metaUrl = server.toApiUrl() + "/meta"
       cs.async {
-        apiRequestExecutor.executeSuspend(
+        apiRequestExecutor.execute(
           GithubApiRequest.Get.json<GHEnterpriseServerMeta>(metaUrl)
             .withOperation(GithubApiRequestOperation.RestGetServerMetadata)
             .withOperationName("get server metadata")

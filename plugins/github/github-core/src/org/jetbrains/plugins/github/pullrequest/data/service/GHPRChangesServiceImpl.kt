@@ -31,7 +31,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequests.Repos.Commits
 import org.jetbrains.plugins.github.api.GithubApiRequests.Repos.PullRequests
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.commit.GHCommitFile
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader.batchesFlow
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -80,7 +79,7 @@ class GHPRChangesServiceImpl(parentCs: CoroutineScope,
   override suspend fun loadCommitsFromApi(pullRequestId: GHPRIdentifier): List<GHCommit> =
     runCatching {
       ApiPageUtil.createGQLPagesFlow {
-        requestExecutor.executeSuspend(GHGQLRequests.PullRequest.commits(ghRepository, pullRequestId.number, it))
+        requestExecutor.execute(GHGQLRequests.PullRequest.commits(ghRepository, pullRequestId.number, it))
       }.fold(mutableListOf<GHCommit>()) { acc, value ->
         acc.addAll(value.nodes.map { it.commit })
         acc
@@ -99,14 +98,14 @@ class GHPRChangesServiceImpl(parentCs: CoroutineScope,
 
   private suspend fun loadDiff(ref1: String, ref2: String): String =
     runCatching {
-      requestExecutor.executeSuspend(Commits.getDiff(ghRepository, ref1, ref2))
+      requestExecutor.execute(Commits.getDiff(ghRepository, ref1, ref2))
     }.processErrorAndGet {
       LOG.info("Error occurred while loading diffs between $ref1 and $ref2", it)
     }
 
   override suspend fun loadMergeBaseOid(baseRefOid: String, headRefOid: String) =
     runCatching {
-      requestExecutor.executeSuspend(Commits.compare(ghRepository, baseRefOid, headRefOid)).mergeBaseCommit.sha
+      requestExecutor.execute(Commits.compare(ghRepository, baseRefOid, headRefOid)).mergeBaseCommit.sha
     }.processErrorAndGet {
       LOG.info("Error occurred while calculating merge base for $baseRefOid and $headRefOid", it)
     }

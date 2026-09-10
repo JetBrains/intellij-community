@@ -18,7 +18,6 @@ import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
@@ -37,12 +36,12 @@ internal class GHPRDetailsServiceImpl(
 
   override suspend fun findPRId(number: Long): GHPRIdentifier? =
     runCatching {
-      requestExecutor.executeSuspend(GHGQLRequests.PullRequest.findOneId(repository, number))
+      requestExecutor.execute(GHGQLRequests.PullRequest.findOneId(repository, number))
     }.getOrElse { null }
 
   override suspend fun loadDetails(pullRequestId: GHPRIdentifier): GHPullRequest =
     runCatching {
-      requestExecutor.executeSuspend(GHGQLRequests.PullRequest.findOne(repository, pullRequestId.number))
+      requestExecutor.execute(GHGQLRequests.PullRequest.findOne(repository, pullRequestId.number))
       ?: throw GHNotFoundException("Pull request ${pullRequestId.number} does not exist")
     }.processErrorAndGet { e ->
       LOG.info("Error occurred while loading PR details", e)
@@ -50,7 +49,7 @@ internal class GHPRDetailsServiceImpl(
 
   override suspend fun updateDetails(pullRequestId: GHPRIdentifier, title: String?, description: String?): GHPullRequest =
     runCatching {
-      requestExecutor.executeSuspend(GHGQLRequests.PullRequest.update(repository, pullRequestId.id, title, description))
+      requestExecutor.execute(GHGQLRequests.PullRequest.update(repository, pullRequestId.id, title, description))
     }.processErrorAndGet { e ->
       LOG.info("Error occurred while updating PR details", e)
     }
@@ -62,19 +61,19 @@ internal class GHPRDetailsServiceImpl(
           val removedItems = delta.removedItems
           if (removedItems.isNotEmpty()) {
             reporter.indeterminateStep(GithubBundle.message("pull.request.removing.reviewers")) {
-              requestExecutor.executeSuspend(GithubApiRequests.Repos.PullRequests.Reviewers
-                                               .remove(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number,
-                                                       removedItems.filterIsInstance<GHUser>().map { it.login },
-                                                       removedItems.filterIsInstance<GHTeam>().map { it.slug }))
+              requestExecutor.execute(GithubApiRequests.Repos.PullRequests.Reviewers
+                                        .remove(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number,
+                                                removedItems.filterIsInstance<GHUser>().map { it.login },
+                                                removedItems.filterIsInstance<GHTeam>().map { it.slug }))
             }
           }
           val newItems = delta.newItems
           if (newItems.isNotEmpty()) {
             reporter.indeterminateStep(GithubBundle.message("pull.request.adding.reviewers")) {
-              requestExecutor.executeSuspend(GithubApiRequests.Repos.PullRequests.Reviewers
-                                               .add(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number,
-                                                    newItems.filterIsInstance<GHUser>().map { it.login },
-                                                    newItems.filterIsInstance<GHTeam>().map { it.slug }))
+              requestExecutor.execute(GithubApiRequests.Repos.PullRequests.Reviewers
+                                        .add(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number,
+                                             newItems.filterIsInstance<GHUser>().map { it.login },
+                                             newItems.filterIsInstance<GHTeam>().map { it.slug }))
             }
           }
         }
@@ -87,10 +86,10 @@ internal class GHPRDetailsServiceImpl(
     runCatching {
       reportProgress { reporter ->
         reporter.indeterminateStep(GithubBundle.message("pull.request.details.adjusting.assignees")) {
-          requestExecutor.executeSuspend(GithubApiRequests.Repos.Issues
-                                           .updateAssignees(serverPath, repoPath.owner, repoPath.repository,
-                                                            pullRequestId.number.toString(),
-                                                            delta.newCollection.map { it.login }))
+          requestExecutor.execute(GithubApiRequests.Repos.Issues
+                                    .updateAssignees(serverPath, repoPath.owner, repoPath.repository,
+                                                     pullRequestId.number.toString(),
+                                                     delta.newCollection.map { it.login }))
         }
       }
     }.processErrorAndGet { e ->
@@ -102,9 +101,9 @@ internal class GHPRDetailsServiceImpl(
     runCatching {
       reportProgress { reporter ->
         reporter.indeterminateStep(GithubBundle.message("pull.request.details.adjusting.labels")) {
-          requestExecutor.executeSuspend(GithubApiRequests.Repos.Issues.Labels
-                                           .replace(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number.toString(),
-                                                    delta.newCollection.map { it.name }))
+          requestExecutor.execute(GithubApiRequests.Repos.Issues.Labels
+                                    .replace(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number.toString(),
+                                             delta.newCollection.map { it.name }))
         }
       }
     }.processErrorAndGet { e ->
@@ -114,7 +113,7 @@ internal class GHPRDetailsServiceImpl(
 
   override suspend fun loadMergeabilityState(pullRequestId: GHPRIdentifier): GHPRMergeabilityState =
     runCatching {
-      val mergeabilityData = requestExecutor.executeSuspend(GHGQLRequests.PullRequest.mergeabilityData(repository, pullRequestId.number))
+      val mergeabilityData = requestExecutor.execute(GHGQLRequests.PullRequest.mergeabilityData(repository, pullRequestId.number))
                              ?: error("Could not find pull request ${pullRequestId.number}")
       val currentUserIsAdmin = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.ADMIN)
       GHPRMergeabilityStateBuilder(mergeabilityData, currentUserIsAdmin).build()
@@ -125,7 +124,7 @@ internal class GHPRDetailsServiceImpl(
 
   override suspend fun close(pullRequestId: GHPRIdentifier) {
     runCatching {
-      requestExecutor.executeSuspend(
+      requestExecutor.execute(
         GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.owner, repoPath.repository,
                                                     pullRequestId.number,
                                                     state = GithubIssueState.closed))
@@ -136,7 +135,7 @@ internal class GHPRDetailsServiceImpl(
 
   override suspend fun reopen(pullRequestId: GHPRIdentifier) {
     runCatching {
-      requestExecutor.executeSuspend(
+      requestExecutor.execute(
         GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.owner, repoPath.repository,
                                                     pullRequestId.number,
                                                     state = GithubIssueState.open))
@@ -147,7 +146,7 @@ internal class GHPRDetailsServiceImpl(
 
   override suspend fun markReadyForReview(pullRequestId: GHPRIdentifier) {
     runCatching {
-      requestExecutor.executeSuspend(GHGQLRequests.PullRequest.markReadyForReview(repository, pullRequestId.id))
+      requestExecutor.execute(GHGQLRequests.PullRequest.markReadyForReview(repository, pullRequestId.id))
     }.processErrorAndGet { e ->
       LOG.info("Error occurred while marking PR ${pullRequestId.number} ready for review", e)
     }
@@ -155,7 +154,7 @@ internal class GHPRDetailsServiceImpl(
 
   override suspend fun merge(pullRequestId: GHPRIdentifier, commitMessage: Pair<String, String>, currentHeadRef: String) =
     runCatching {
-      requestExecutor.executeSuspend(
+      requestExecutor.execute(
         GithubApiRequests.Repos.PullRequests.merge(serverPath, repoPath, pullRequestId.number,
                                                    commitMessage.first, commitMessage.second,
                                                    currentHeadRef))
@@ -167,7 +166,7 @@ internal class GHPRDetailsServiceImpl(
 
   override suspend fun rebaseMerge(pullRequestId: GHPRIdentifier, currentHeadRef: String) {
     runCatching {
-      requestExecutor.executeSuspend(
+      requestExecutor.execute(
         GithubApiRequests.Repos.PullRequests.rebaseMerge(serverPath, repoPath, pullRequestId.number,
                                                          currentHeadRef))
       GHPRStatisticsCollector.logMergedEvent(project, GithubPullRequestMergeMethod.rebase)
@@ -178,7 +177,7 @@ internal class GHPRDetailsServiceImpl(
 
   override suspend fun squashMerge(pullRequestId: GHPRIdentifier, commitMessage: Pair<String, String>, currentHeadRef: String) {
     runCatching {
-      requestExecutor.executeSuspend(
+      requestExecutor.execute(
         GithubApiRequests.Repos.PullRequests.squashMerge(serverPath, repoPath, pullRequestId.number,
                                                          commitMessage.first, commitMessage.second,
                                                          currentHeadRef))
@@ -190,7 +189,7 @@ internal class GHPRDetailsServiceImpl(
 
   override suspend fun deleteMergedBranch(pullRequestId: GHPRIdentifier, refId: String) {
     runCatching {
-      requestExecutor.executeSuspend(
+      requestExecutor.execute(
         GHGQLRequests.Ref.delete(repository.serverPath, refId)
       )
     }.processErrorAndGet { e ->

@@ -9,7 +9,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHComment
 import org.jetbrains.plugins.github.api.data.GithubIssueCommentWithHtml
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 private val LOG = logger<GHPRCommentService>()
@@ -19,7 +18,7 @@ class GHPRCommentServiceImpl(private val requestExecutor: GithubApiRequestExecut
 
   override suspend fun addComment(pullRequestId: GHPRIdentifier, body: String): GithubIssueCommentWithHtml =
     runCatching {
-      val comment = requestExecutor.executeSuspend(
+      val comment = requestExecutor.execute(
         GithubApiRequests.Repos.Issues.Comments.create(repository, pullRequestId.number, body))
       comment
     }.processErrorAndGet {
@@ -28,14 +27,14 @@ class GHPRCommentServiceImpl(private val requestExecutor: GithubApiRequestExecut
 
   override suspend fun updateComment(commentId: String, text: String): GHComment =
     runCatching {
-      requestExecutor.executeSuspend(GHGQLRequests.Comment.updateComment(repository.serverPath, commentId, text))
+      requestExecutor.execute(GHGQLRequests.Comment.updateComment(repository.serverPath, commentId, text))
     }.processErrorAndGet {
       LOG.info("Error occurred while updating comment", it)
     }
 
   override suspend fun deleteComment(commentId: String) {
     runCatching {
-      requestExecutor.executeSuspend(GHGQLRequests.Comment.deleteComment(repository.serverPath, commentId))
+      requestExecutor.execute(GHGQLRequests.Comment.deleteComment(repository.serverPath, commentId))
     }.processErrorAndGet {
       LOG.info("Error occurred while deleting comment", it)
     }

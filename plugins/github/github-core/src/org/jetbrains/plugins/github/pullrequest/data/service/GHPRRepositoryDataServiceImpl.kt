@@ -28,7 +28,6 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.api.data.GithubUserWithPermissions
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader.batchesFlow
 
 class GHPRRepositoryDataServiceImpl internal constructor(
@@ -96,15 +95,15 @@ class GHPRRepositoryDataServiceImpl internal constructor(
 
   private val teamsLoader by lazy {
     val pagesFlow = ApiPageUtil.createGQLPagesFlow {
-      requestExecutor.executeSuspend(GHGQLRequests.Organization.Team.findAll(serverPath,
-                                                                             repoOwner.login,
-                                                                             it))
+      requestExecutor.execute(GHGQLRequests.Organization.Team.findAll(serverPath,
+                                                                      repoOwner.login,
+                                                                      it))
     }
     BatchesLoader(cs, pagesFlow.map { page -> page.nodes })
   }
 
   override fun mentionableUsersBatchesFlow(): Flow<List<GHUser>> = ApiPageUtil.createGQLPagesFlow {
-    requestExecutor.executeSuspend(GHGQLRequests.Repo.findMentionableUsers(repositoryCoordinates, serverPath, it))
+    requestExecutor.execute(GHGQLRequests.Repo.findMentionableUsers(repositoryCoordinates, serverPath, it))
   }.map { it.nodes }
 
   override fun loadBatchedTeams(): Flow<List<GHTeam>> {
@@ -113,7 +112,7 @@ class GHPRRepositoryDataServiceImpl internal constructor(
   }
 
   private val templatesRequest: Deferred<List<GHRepositoryPullRequestTemplate>> = cs.async(start = CoroutineStart.LAZY) {
-    requestExecutor.executeSuspend(GHGQLRequests.Repo.loadPullRequestTemplates(repositoryCoordinates)).orEmpty()
+    requestExecutor.execute(GHGQLRequests.Repo.loadPullRequestTemplates(repositoryCoordinates)).orEmpty()
   }
 
   override suspend fun loadTemplate(): String? {

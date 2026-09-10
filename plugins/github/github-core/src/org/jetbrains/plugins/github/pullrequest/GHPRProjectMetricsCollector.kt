@@ -15,7 +15,6 @@ import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHPullRequestMetrics
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -101,7 +100,7 @@ internal class GHPRMetricsLoader(private val project: Project) {
     val nonFork = withContext(Dispatchers.IO) {
       knownRepos.firstOrNull { repo ->
         val executor = getExecutor(repo.repository.serverPath) ?: return@firstOrNull false
-        runCatching { executor.executeSuspend(GHGQLRequests.Repo.find(repo.repository))?.isFork == false }
+        runCatching { executor.execute(GHGQLRequests.Repo.find(repo.repository))?.isFork == false }
           .getOrElse { false }
       }
     }
@@ -116,7 +115,7 @@ internal class GHPRMetricsLoader(private val project: Project) {
       val chosenRepoMapping = chooseRepo() ?: return null
 
       val executor = getExecutor(chosenRepoMapping.repository.serverPath) ?: return null
-      return executor.executeSuspend(GHGQLRequests.PullRequest.metrics(chosenRepoMapping.repository))
+      return executor.execute(GHGQLRequests.PullRequest.metrics(chosenRepoMapping.repository))
     }
     catch (e: Exception) {
       LOG.warn("Failed to load metrics", e)

@@ -12,7 +12,6 @@ import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 private val LOG = logger<GHPRTimelineServiceImpl>()
@@ -44,7 +43,7 @@ internal class GHPRTimelineServiceImpl(
                                                            repository.repositoryPath.repository,
                                                            id.number, pagination)
     return runCatching {
-      requestExecutor.executeSuspend(request)
+      requestExecutor.execute(request)
     }.processErrorAndGet { e ->
       LOG.info("Error occurred while loading PR $id timeline items page $pagination", e)
     }

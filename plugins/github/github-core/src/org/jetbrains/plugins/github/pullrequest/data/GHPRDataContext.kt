@@ -15,7 +15,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchType
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRMentionableUsersProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCreationService
@@ -46,7 +45,7 @@ class GHPRDataContext internal constructor(
     val repository = repositoryDataService.repositoryCoordinates
     val query = buildPRSearchQuery(repository.repositoryPath, searchQuery)
     return ComputableSequence.byPointer(GraphQLRequestPagination(pageSize = PR_PAGE_SIZE)) { pagination ->
-      val response = requestExecutor.executeSuspend(
+      val response = requestExecutor.execute(
         GHGQLRequests.PullRequest.search(repository.serverPath, query, pagination)
       )
       val nextPage = if (response.pageInfo.hasNextPage) {

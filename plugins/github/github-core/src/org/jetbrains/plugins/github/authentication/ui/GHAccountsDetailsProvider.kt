@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GHAPIExceptionUtil
@@ -45,7 +44,7 @@ class GHAccountsDetailsProvider(
     }
     if (executor == null) return Result.Error(CollaborationToolsBundle.message("account.token.missing"), true)
     val details = try {
-      executor.executeSuspend(GithubApiRequests.CurrentUser.get(account.server))
+      executor.execute(GithubApiRequests.CurrentUser.get(account.server))
     }
     catch (e: Throwable) {
       val errorMessage = StringUtil.removeHtmlTags(GHAPIExceptionUtil.getPresentableMessage(e))

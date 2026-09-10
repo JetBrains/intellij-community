@@ -12,7 +12,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHReactionContent
-import org.jetbrains.plugins.github.api.executeSuspend
 import java.awt.Image
 
 internal class GHReactionImageLoader(
@@ -23,7 +22,7 @@ internal class GHReactionImageLoader(
   private val cs = parentCs.childScope("GitHub Reactions Image Loader")
 
   private val emojisNameToUrl: Deferred<Map<String, String>> = cs.async(Dispatchers.IO) {
-    requestExecutor.executeSuspend(GithubApiRequests.Emojis.loadNameToUrlMap(serverPath))
+    requestExecutor.execute(GithubApiRequests.Emojis.loadNameToUrlMap(serverPath))
   }
 
   override suspend fun load(key: GHReactionContent): Image? {
@@ -32,7 +31,7 @@ internal class GHReactionImageLoader(
     return withContext(Dispatchers.IO) {
       // seems to be a bug in github asset manager - loading emoji images with auth sometimes leads to 404
       val exec = if (url.contains("githubassets")) GithubApiRequestExecutor.Factory.getInstance().create() else requestExecutor
-      return@withContext exec.executeSuspend(GithubApiRequests.Emojis.loadImage(url))
+      return@withContext exec.execute(GithubApiRequests.Emojis.loadImage(url))
     }
   }
 }

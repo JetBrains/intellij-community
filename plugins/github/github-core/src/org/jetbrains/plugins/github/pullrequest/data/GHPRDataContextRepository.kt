@@ -35,7 +35,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestOperation
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.authentication.accounts.GHCachingAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRMentionableUsersProviderImpl
@@ -105,7 +104,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     return async {
       val accountDetails = GHCachingAccountInformationProvider.getInstance().loadInformation(requestExecutor, account)
       val ghostUserDetails = runCatchingUser {
-        requestExecutor.executeSuspend(GHGQLRequests.User.find(account.server, "ghost"))!!
+        requestExecutor.execute(GHGQLRequests.User.find(account.server, "ghost"))!!
       }.fold(onSuccess = { it }) {
         if (it is HttpStatusErrorException)
 
@@ -116,8 +115,9 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       }
 
       val repositoryInfo =
-        requestExecutor.executeSuspend(
-          GHGQLRequests.Repo.find(GHRepositoryCoordinates(account.server, parsedRepositoryCoordinates.repositoryPath))
+        requestExecutor.execute(
+          GHGQLRequests.Repo.find(GHRepositoryCoordinates(account.server,
+                                                          parsedRepositoryCoordinates.repositoryPath))
         )
         ?: throw IllegalArgumentException(
           "Repository ${parsedRepositoryCoordinates.repositoryPath} does not exist at ${account.server} or you don't have access.")
@@ -132,7 +132,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
           val request = GithubApiRequests.getBytes(src)
             .withOperation(GithubApiRequestOperation.RestGetImage)
             .withOperationName("get image")
-          val bytes = requestExecutor.executeSuspend(request)
+          val bytes = requestExecutor.execute(request)
           JBImageToolkit.createImage(bytes)
         }
       }

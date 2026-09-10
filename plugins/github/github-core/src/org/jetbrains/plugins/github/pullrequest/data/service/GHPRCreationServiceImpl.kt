@@ -25,7 +25,6 @@ import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.toPRIdentifier
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 
@@ -46,17 +45,17 @@ internal class GHPRCreationServiceImpl(private val requestExecutor: GithubApiReq
     val actualTitle = title.takeIf(String::isNotBlank) ?: headBranch.nameForRemoteOperations
     val body = description.nullize(true)
 
-    return requestExecutor.executeSuspend(GHGQLRequests.PullRequest.create(baseRepo.repository, repositoryId,
-                                                                           baseBranch.nameForRemoteOperations,
-                                                                           headRepositoryPrefix + headBranch.nameForRemoteOperations,
-                                                                           actualTitle, body, draft
+    return requestExecutor.execute(GHGQLRequests.PullRequest.create(baseRepo.repository, repositoryId,
+                                                                    baseBranch.nameForRemoteOperations,
+                                                                    headRepositoryPrefix + headBranch.nameForRemoteOperations,
+                                                                    actualTitle, body, draft
     ))
   }
 
   override suspend fun findOpenPullRequest(baseBranch: GitRemoteBranch?,
                                            headRepo: GHRepositoryPath,
                                            headBranch: GitRemoteBranch): GHPRIdentifier? =
-    requestExecutor.executeSuspend(
+    requestExecutor.execute(
       GithubApiRequests.Repos.PullRequests.find(baseRepo.repository,
                                                 GithubIssueState.open,
                                                 baseBranch?.nameForRemoteOperations,

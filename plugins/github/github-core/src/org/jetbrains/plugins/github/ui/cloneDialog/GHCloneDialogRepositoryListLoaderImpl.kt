@@ -21,7 +21,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.data.request.Affiliation
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
-import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -72,7 +71,7 @@ internal class GHCloneDialogRepositoryListLoaderImpl(parentCs: CoroutineScope) :
     withContext(Dispatchers.IO) {
       val token = serviceAsync<GHAccountManager>().findCredentials(account) ?: throw GithubMissingTokenException(account)
       val executor = serviceAsync<GithubApiRequestExecutor.Factory>().create(account.server, token)
-      val details = executor.executeSuspend(GithubApiRequests.CurrentUser.get(account.server))
+      val details = executor.execute(GithubApiRequests.CurrentUser.get(account.server))
       val repoPagesRequest = GithubApiRequests.CurrentUser.Repos.pages(
         account.server,
         affiliations = setOf(Affiliation.OWNER, Affiliation.COLLABORATOR, Affiliation.ORG_MEMBER),
