@@ -4,9 +4,11 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspFormattingSupport
 import com.intellij.python.lsp.core.PyLspService
+import com.intellij.python.lsp.core.PyLspTool
 import com.intellij.python.lsp.core.PyLspToolCustomization
 import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
 import com.intellij.python.lsp.core.PyLspToolDescriptor
@@ -26,6 +28,8 @@ import org.jetbrains.annotations.Nls
 class RuffLspIntegrationProvider : PyLspToolIntegrationProvider() {
   override fun getDescriptor(module: Module): RuffLspClientDescriptor =
     RuffLspClientDescriptor(module)
+
+  override fun pyTool(project: Project): PyLspTool<*> = RuffPyTool.getInstance()
 }
 
 class RuffLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, RuffPyTool.getInstance()) {

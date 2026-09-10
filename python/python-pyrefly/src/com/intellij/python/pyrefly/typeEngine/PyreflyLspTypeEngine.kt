@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyType
 
-internal class PyreflyLspTypeEngine(override val module: Module, val lspClient: LspClient) : PyLspTypeEngine {
+internal class PyreflyLspTypeEngine(override val module: Module, override val lspClient: LspClient) : PyLspTypeEngine {
   override val name: String = PyTypeEngineType.PYREFLY.name
 
   override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean {

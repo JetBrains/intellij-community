@@ -6,12 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.ensureClientStarted
-import com.intellij.platform.lsp.api.getClients
-import com.intellij.python.lsp.core.PyLspToolDescriptor
+import com.intellij.python.lsp.core.findLspClientForModule
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.pyrefly.PyreflyPyTool
-import com.intellij.python.pyrefly.lsp.PyreflyLspClientDescriptor
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
+import com.intellij.python.pyrefly.lsp.pyreflyDescriptor
 import com.jetbrains.python.psi.types.engine.PyTypeEngine
 import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider
 
@@ -43,13 +42,12 @@ class PyreflyLspTypeEngineProvider : PyTypeEngineProvider {
       return null
     }
 
-    val lspServerManager = LspClientManager.getInstance(module.project)
-    lspServerManager.ensureClientStarted<PyreflyLspIntegrationProvider>(PyreflyLspClientDescriptor(module))
-    // Take the client serving *this* module: with several servers running, the first one would
-    // answer for another module's content roots and resolve everything to `Any`.
-    val server = lspServerManager.getClients<PyreflyLspIntegrationProvider>()
-                   .firstOrNull { (it.descriptor as? PyLspToolDescriptor)?.module == module }
-                 ?: return null
+    LspClientManager.getInstance(module.project)
+      .ensureClientStarted<PyreflyLspIntegrationProvider>(pyreflyDescriptor(module))
+    // Take the client that answers for *this* module. One server can answer for several modules,
+    // but a project can still hold more than one server, and the wrong one resolves everything to
+    // `Any` because it answers for another module's content roots.
+    val server = findLspClientForModule(module, PyreflyLspIntegrationProvider::class.java) ?: return null
 
     return PyreflyLspTypeEngine(module, server)
   }

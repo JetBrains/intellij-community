@@ -5,8 +5,10 @@ import com.intellij.idea.TestFor
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.python.lsp.core.fakePyToolClient
 import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.documentation.doctest.PyDoctestFile
@@ -33,13 +35,17 @@ import org.junit.jupiter.api.Test
 @TestFor(classes = [PyLspTypeEngine::class], issues = ["PY-91410"])
 class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
 
-  private class TestTypeEngine(override val module: Module) : PyLspTypeEngine {
+  private class TestTypeEngine(
+    override val module: Module,
+    override val lspClient: LspClient,
+  ) : PyLspTypeEngine {
     override val name: String get() = "test"
     override fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean, isUserInitiated: Boolean): Ref<PyType?>? = null
   }
 
-  /** An engine of the module of the fixture, so only the two guards can reject an element. */
-  private fun testTypeEngine(): TestTypeEngine = TestTypeEngine(myFixture.module)
+  /** An engine whose server serves the module of the fixture, so only the two guards can reject an element. */
+  private fun testTypeEngine(): TestTypeEngine =
+    TestTypeEngine(myFixture.module, fakePyToolClient(myFixture.module))
 
   @Test
   fun `element of a regular file is supported`() = runInEdtAndWait {

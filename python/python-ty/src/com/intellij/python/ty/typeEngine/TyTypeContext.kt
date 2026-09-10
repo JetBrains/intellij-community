@@ -2,30 +2,22 @@ package com.intellij.python.ty.typeEngine
 
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.findDocument
-import com.intellij.platform.lsp.api.LspClientManager
-import com.intellij.platform.lsp.api.LspIntegrationProvider
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.util.getLsp4jRange
 import com.intellij.psi.PsiFile
 import com.intellij.python.lsp.core.type.LspTypeEvalContext
 import com.intellij.python.lsp.core.type.PyStringTypeResolver
 import com.intellij.python.ty.TyLsp4jServer
-import com.intellij.python.ty.TyLspIntegrationProvider
 import com.intellij.python.ty.TyUsageCollector
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyType
 import org.jetbrains.annotations.Unmodifiable
 
 
-class TyTypeContext(psiFile: PsiFile) : LspTypeEvalContext(psiFile) {
+class TyTypeContext(psiFile: PsiFile, private val lspServer: LspClient) : LspTypeEvalContext(psiFile) {
   override fun requestTypes(
     pyTypedElements: @Unmodifiable Collection<PyTypedElement>,
   ): List<String?>? {
-    val project = psiFile.project
-    val lspServers = LspClientManager.getInstance(project)
-      .getClients(TyLspIntegrationProvider::class.java as Class<out LspIntegrationProvider>)
-
-    val lspServer = lspServers.firstOrNull() ?: return null
-
     val virtualFile = psiFile.virtualFile ?: return null
     val document = virtualFile.findDocument() ?: return null
     val args = mapOf(

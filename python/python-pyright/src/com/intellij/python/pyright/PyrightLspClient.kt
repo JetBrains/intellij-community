@@ -43,6 +43,8 @@ internal fun restartOrStopPyrightProvider(project: Project) {
 class PyrightLspIntegrationProvider : PyLspToolIntegrationProvider() {
   override fun getDescriptor(module: Module): PyLspToolDescriptor =
     PyrightLspClientDescriptor(module)
+
+  override fun pyTool(project: Project): PyLspTool<*> = activePyrightTool(project)
 }
 
 class PyrightLspClientDescriptor(module: Module) : PyLspToolDescriptor(

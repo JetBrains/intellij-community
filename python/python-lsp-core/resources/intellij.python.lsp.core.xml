@@ -42,7 +42,8 @@
 
     <registryKey key="pycharm.type.engine.multi.module"
                  defaultValue="false"
-                 description="Let a multi-module project use an external type engine"/>
+                 restartRequired="true"
+                 description="Offer the external type engine to a project with more than one module"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.python.lsp.core.typeEngine.PyTypeEngineUsageCollector"/>
     <projectSettings service="com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings"/>

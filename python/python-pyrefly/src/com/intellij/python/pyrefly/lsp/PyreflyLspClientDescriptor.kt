@@ -3,11 +3,15 @@ package com.intellij.python.pyrefly.lsp
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.Lsp4jServer
+import com.intellij.platform.lsp.api.LspClient
+import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.customization.LspFoldingRangeCustomizer
 import com.intellij.platform.lsp.api.customization.LspFoldingRangeDisabled
 import com.intellij.python.lsp.core.PyLspToolCustomization
@@ -21,11 +25,15 @@ import com.intellij.python.lsp.core.PyLspToolSettings
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.sdk.pythonSdk
 import org.eclipse.lsp4j.ConfigurationItem
+import org.eclipse.lsp4j.DidChangeConfigurationParams
 import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.InitializeResult
 
 @Suppress("UsagesOfObsoleteApi")
-class PyreflyLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, PyreflyPyTool.getInstance()) {
+class PyreflyLspClientDescriptor(
+  module: Module,
+  servedModules: List<Module> = listOf(module),
+) : PyLspToolDescriptor(module, PyreflyPyTool.getInstance(), servedModules) {
   override val toolConfig: PyLspToolSettings
     get() = project.service<PyreflyConfiguration>()
 
@@ -73,6 +81,10 @@ class PyreflyLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, P
 
   override fun createInitializationOptions(): Map<String, Any>? {
     val homePath = module.pythonSdk?.homePath ?: return null
+    // The platform builds these options on its connect pool thread, which holds no lock, so the
+    // excludes are read here. The `workspace/configuration` replies only reuse them, because they
+    // run on the LSP listener thread, see [projectExcludes].
+    runReadActionBlocking { refreshProjectExcludes() }
     return buildMap {
       put("pythonPath", homePath)
       put("pyrefly", buildPyreflyClientSettings())
@@ -109,15 +121,41 @@ class PyreflyLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, P
     // flag set, Pyrefly instead reports `MissingStubs` / `NotFound`, and the IDE
     // surfaces a regular diagnostic the user can act on (install <pkg>-stubs).
     put("disableBundledThirdPartyStubs", true)
+    // A module nested in a folder of this server, and not served by it, would be analysed here as
+    // well, with the interpreter of the outer folder. Pyrefly reads this key from 1.3.0-dev.1, and an
+    // older one ignores it. See [projectExcludes].
+    put("extraProjectExcludes", projectExcludes())
   }
 
   private fun buildPyreflyAnalysisSettings(): Map<String, Any> = mapOf("completeFunctionParens" to true)
 
-  override fun getWorkspaceConfiguration(item: ConfigurationItem): Map<String, Map<String, Any>> =
-    mapOf(
-      "pyrefly" to buildPyreflyClientSettings(),
-      "analysis" to buildPyreflyAnalysisSettings(),
-    )
+  /**
+   * Pyrefly keeps one workspace for each folder, and each workspace holds its own interpreter. It
+   * asks for the configuration of one folder at a time, so the reply holds the interpreter of that
+   * folder's module and every module gets its own. An item with no scope configures
+   * pyrefly's default workspace, which the primary module answers for.
+   *
+   * The reply carries `pythonPath` in every project, whether the server holds one module or all of
+   * them. Pyrefly resets a field the reply leaves out, see [buildPyreflyClientSettings], so a reply
+   * without it would drop the interpreter that [createInitializationOptions] sent.
+   */
+  override fun getWorkspaceConfiguration(item: ConfigurationItem): Map<String, Any> = buildMap {
+    val scopeModule = servedModuleForScope(item) ?: module.takeUnless { it.isDisposed }
+    scopeModule?.pythonSdk?.homePath?.let { put("pythonPath", it) }
+    put("pyrefly", buildPyreflyClientSettings())
+    put("analysis", buildPyreflyAnalysisSettings())
+  }
+
+  /**
+   * Computes the [projectExcludes] again, and tells pyrefly only when they changed. Pyrefly then asks
+   * for `workspace/configuration` again for each folder, and the replies carry the new excludes. It
+   * does not read the payload of the notification.
+   */
+  override suspend fun projectChangedAround(client: LspClient) {
+    if (!readAction { refreshProjectExcludes() }) return
+    if (client.state != LspServerState.Running) return
+    client.sendNotification { it.workspaceService.didChangeConfiguration(DidChangeConfigurationParams(emptyMap<String, Any>())) }
+  }
 
   override fun startServerProcess(): BaseProcessHandler<*> {
     // Pyrefly always runs against the module interpreter (discovery mode is no longer selectable).

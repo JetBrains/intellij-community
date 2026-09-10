@@ -64,9 +64,11 @@ internal class PyreflyLspTypeEngineFileCache(val project: Project) : Disposable.
   }
 
   /**
-   * The client is part of the key because a multi-module project runs one Pyrefly server per module.
-   * With the file alone as the key, the first module to resolve a file would bind its
-   * own client for every later requester, and the other modules would resolve to `Any`.
+   * The client is part of the key because a project can run more than one Pyrefly server. One server
+   * holds every served module, but a module that server cannot serve gets one of its own, and a
+   * server whose folder set went stale keeps running next to the new one until the restart completes.
+   * With the file alone as the key, the first module to resolve a file would bind its own client for
+   * every later requester, and the other modules would resolve to `Any`.
    */
   private data class ContextKey(val file: PsiFile, val lspClient: LspClient)
 

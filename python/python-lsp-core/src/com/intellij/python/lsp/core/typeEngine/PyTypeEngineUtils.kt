@@ -3,6 +3,7 @@ package com.intellij.python.lsp.core.typeEngine
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.isReadOnly
@@ -12,8 +13,12 @@ import com.jetbrains.python.statistics.executionType
 
 object PyTypeEngineUtils {
   /**
-   * The registry key that removes the single-module restriction on the external type engine. The key
-   * lets a multi-module project use the engine. It is off by default.
+   * The registry key that offers the external type engine to a project with more than one module. It
+   * is off by default.
+   *
+   * The key does not decide how many servers run. A tool whose server keeps one workspace for each
+   * folder always runs one server for the whole project, see
+   * [com.intellij.python.lsp.core.pyLspModulesToServeWith].
    */
   const val MULTI_MODULE_REGISTRY_KEY: String = "pycharm.type.engine.multi.module"
 
@@ -43,9 +48,16 @@ object PyTypeEngineUtils {
    * an external LSP tool against it. Unlike [isExternalTypeEngineSupported] this places no
    * single-module restriction, so the Pyrefly/ty tool can run per-module in multi-module projects.
    */
-  fun isLocalNonReadOnlySdk(module: Module): Boolean {
-    val pythonSdk = module.pythonSdk ?: return false
+  fun isLocalNonReadOnlySdk(module: Module): Boolean = localNonReadOnlySdk(module) != null
+
+  /**
+   * [module]'s interpreter when [isLocalNonReadOnlySdk] accepts it, else `null`. Use this instead of
+   * a separate [isLocalNonReadOnlySdk] call and SDK lookup when you need the SDK itself.
+   */
+  fun localNonReadOnlySdk(module: Module): Sdk? {
+    val pythonSdk = module.pythonSdk ?: return null
     @OptIn(PyInternalExecApi::class) // TODO: Do not use executionType, it is for the statistics only
-    return !pythonSdk.isReadOnly && pythonSdk.executionType == InterpreterTarget.LOCAL
+    val supported = !pythonSdk.isReadOnly && pythonSdk.executionType == InterpreterTarget.LOCAL
+    return pythonSdk.takeIf { supported }
   }
 }
