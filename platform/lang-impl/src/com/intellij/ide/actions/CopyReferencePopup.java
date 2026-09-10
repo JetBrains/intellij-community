@@ -31,6 +31,7 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
@@ -84,7 +85,7 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
             panel.add(myIconLabel, gbc.next());
             panel.add(myTextLabel, gbc.next());
             panel.add(myShortcutLabel, gbc.next());
-            panel.add(myInfoLabel, gbc.next().weightx(1));
+            panel.add(myInfoLabel, gbc.next().anchor(GridBagConstraints.EAST).weightx(1));
 
             return layoutComponent(panel);
           }
