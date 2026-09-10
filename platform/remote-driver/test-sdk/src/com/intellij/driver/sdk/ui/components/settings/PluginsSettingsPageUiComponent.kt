@@ -49,6 +49,7 @@ import javax.swing.JCheckBox
 import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JList
+import javax.swing.JPanel
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -244,6 +245,17 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     }
   }
 
+  fun waitForPluginInUnifiedSection(
+    sectionName: String,
+    pluginName: String,
+    timeout: Duration = 10.seconds,
+  ): ListPluginComponent {
+    check(isUnifiedPage) { "Unified sections are unavailable on the legacy Plugins page" }
+    return step("Wait for plugin '$pluginName' to appear in the '$sectionName' section") {
+      getPluginFromUnifiedSection(sectionName, pluginName).waitFound(timeout)
+    }
+  }
+
   fun getPluginsList(): List<ListPluginComponent> =
     pluginsList.list()
 
@@ -258,6 +270,18 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     x(UnifiedPluginsSectionUiComponent::class.java, readableName = "'$sectionName' plugins section") {
       and(byType(JLabel::class.java), byAccessibleName(sectionName))
     }
+
+  fun getPluginFromUnifiedSection(
+    sectionName: String,
+    pluginName: String,
+    action: ListPluginComponent.() -> Unit = {},
+  ): ListPluginComponent =
+    x(
+      xQuery { and(byType(JPanel::class.java), byAccessibleName(sectionName)) } +
+      xQuery { and(byType("com.intellij.ide.plugins.newui.ListPluginComponent"), byAccessibleName(pluginName)) },
+      ListPluginComponent::class.java,
+      readableName = "Plugin '$pluginName' in the '$sectionName' section",
+    ).apply(action)
 
   fun getPluginFromList(pluginName: String, action: ListPluginComponent.() -> Unit = {}): ListPluginComponent =
     x(ListPluginComponent::class.java, readableName = "Plugin '$pluginName' in a list") {
