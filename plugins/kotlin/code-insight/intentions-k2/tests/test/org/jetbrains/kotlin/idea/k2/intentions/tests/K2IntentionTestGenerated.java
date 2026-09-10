@@ -15390,6 +15390,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/abstractOverride3.kt");
             }
 
+            @TestMetadata("anonymousContextParameterAtDeclaration.kt")
+            public void testAnonymousContextParameterAtDeclaration() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousContextParameterAtDeclaration.kt");
+            }
+
+            @TestMetadata("anonymousContextParameterAtUsageSite.kt")
+            public void testAnonymousContextParameterAtUsageSite() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousContextParameterAtUsageSite.kt");
+            }
+
             @TestMetadata("anonymousLeafOverride.kt")
             public void testAnonymousLeafOverride() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousLeafOverride.kt");
@@ -15433,6 +15443,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("anonymousSingleWithRename.kt")
             public void testAnonymousSingleWithRename() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/anonymousSingleWithRename.kt");
+            }
+
+            @TestMetadata("boundMemberReferenceOutsideClassConflict.kt")
+            public void testBoundMemberReferenceOutsideClassConflict() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/boundMemberReferenceOutsideClassConflict.kt");
             }
 
             @TestMetadata("classHierarchy1.kt")
@@ -15525,6 +15540,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationWithUsage6.kt");
             }
 
+            @TestMetadata("contextOfFallbackInsideContextBlock.kt")
+            public void testContextOfFallbackInsideContextBlock() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextOfFallbackInsideContextBlock.kt");
+            }
+
+            @TestMetadata("genericFunction.kt")
+            public void testGenericFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/genericFunction.kt");
+            }
+
             @TestMetadata("inapplicableFeatureDisabled.kt")
             public void testInapplicableFeatureDisabled() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/inapplicableFeatureDisabled.kt");
@@ -15550,9 +15575,34 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/inheritedCalls.kt");
             }
 
+            @TestMetadata("kFunctionReferenceConflict.kt")
+            public void testKFunctionReferenceConflict() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/kFunctionReferenceConflict.kt");
+            }
+
             @TestMetadata("memberFunction1.kt")
             public void testMemberFunction1() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/memberFunction1.kt");
+            }
+
+            @TestMetadata("memberFunctionReference.kt")
+            public void testMemberFunctionReference() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/memberFunctionReference.kt");
+            }
+
+            @TestMetadata("multipleContextParameters.kt")
+            public void testMultipleContextParameters() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/multipleContextParameters.kt");
+            }
+
+            @TestMetadata("multipleReferencesInFile.kt")
+            public void testMultipleReferencesInFile() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/multipleReferencesInFile.kt");
+            }
+
+            @TestMetadata("multipleValueParameters.kt")
+            public void testMultipleValueParameters() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/multipleValueParameters.kt");
             }
 
             @TestMetadata("namedLeafOverride.kt")
@@ -15570,9 +15620,54 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/namedRootOfHierarchy.kt");
             }
 
+            @TestMetadata("onlyContextParameter.kt")
+            public void testOnlyContextParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/onlyContextParameter.kt");
+            }
+
             @TestMetadata("recursiveCalls.kt")
             public void testRecursiveCalls() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/recursiveCalls.kt");
+            }
+
+            @TestMetadata("referenceAsCallArgument.kt")
+            public void testReferenceAsCallArgument() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/referenceAsCallArgument.kt");
+            }
+
+            @TestMetadata("referenceWithoutExpectedTypeConflict.kt")
+            public void testReferenceWithoutExpectedTypeConflict() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/referenceWithoutExpectedTypeConflict.kt");
+            }
+
+            @TestMetadata("subtypeContextArgument.kt")
+            public void testSubtypeContextArgument() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/subtypeContextArgument.kt");
+            }
+
+            @TestMetadata("suspendFunction.kt")
+            public void testSuspendFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/suspendFunction.kt");
+            }
+
+            @TestMetadata("thisQualifiedReferenceConflict.kt")
+            public void testThisQualifiedReferenceConflict() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/thisQualifiedReferenceConflict.kt");
+            }
+
+            @TestMetadata("unqualifiedReferenceNeedsAdapter.kt")
+            public void testUnqualifiedReferenceNeedsAdapter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/unqualifiedReferenceNeedsAdapter.kt");
+            }
+
+            @TestMetadata("usageSiteParameterNotAffected.kt")
+            public void testUsageSiteParameterNotAffected() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/usageSiteParameterNotAffected.kt");
+            }
+
+            @TestMetadata("varargParameter.kt")
+            public void testVarargParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/varargParameter.kt");
             }
 
             @TestMetadata("withDefaultParameterUsage.kt")

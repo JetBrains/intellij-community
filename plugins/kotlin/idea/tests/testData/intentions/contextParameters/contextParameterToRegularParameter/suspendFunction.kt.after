@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
+class Ctx
+
+suspend fun fn(ctx: Ctx, x: Int): String = x.toString()
+
+context(c: Ctx)
+fun usage() {
+    val ref: suspend (Int) -> String = { x -> fn(c, x) }
+}

@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -52,6 +53,51 @@ internal sealed interface CallableReferenceFix {
 
     /** No safe rewrite; reported via the conflicts dialog, reference left untouched. */
     data class Conflict(val message: String) : CallableReferenceFix
+}
+
+private enum class ParamConversion {
+    VALUE_TO_CONTEXT,      // ConvertRegularParameterToContextParameterIntention
+    CONTEXT_TO_VALUE,      // ConvertContextParameterToRegularParameterIntention
+    CONTEXT_TO_RECEIVER,   // ConvertContextParameterToReceiverIntention
+    RECEIVER_TO_CONTEXT,   // ConvertReceiverParameterToContextParameterIntention
+    MIXED,                 // more than one of the above / other structural changes on top
+    NONE,                  // no param-kind change (rename, receiver retype/removal, ...)
+}
+
+private fun paramConversion(changeInfo: KotlinChangeInfoBase): ParamConversion {
+    val receiverInfo = changeInfo.receiverParameterInfo
+    val valueToContext = changeInfo.newParameters.any {
+        !it.isNewParameter && !it.wasContextParameter && it.isContextParameter
+    }
+    val contextToValue = changeInfo.newParameters.any {
+        !it.isNewParameter && it.wasContextParameter && !it.isContextParameter && it != receiverInfo
+    }
+    val contextToReceiver = changeInfo.oldReceiverInfo == null && receiverInfo?.wasContextParameter == true
+    val receiverToContext = changeInfo.oldReceiverInfo != null && receiverInfo == null &&
+            changeInfo.newParameters.any { it == changeInfo.oldReceiverInfo && it.isContextParameter }
+
+    val kinds = listOfNotNull(
+        ParamConversion.VALUE_TO_CONTEXT.takeIf { valueToContext },
+        ParamConversion.CONTEXT_TO_VALUE.takeIf { contextToValue },
+        ParamConversion.CONTEXT_TO_RECEIVER.takeIf { contextToReceiver },
+        ParamConversion.RECEIVER_TO_CONTEXT.takeIf { receiverToContext },
+    )
+    return when {
+        kinds.size > 1 -> ParamConversion.MIXED
+        kinds.size == 1 && hasOtherStructuralChanges(changeInfo, kinds.single()) -> ParamConversion.MIXED
+        kinds.size == 1 -> kinds.single()
+        else -> ParamConversion.NONE
+    }
+}
+
+/** New params or receiver changes not implied by the conversion itself. */
+private fun hasOtherStructuralChanges(changeInfo: KotlinChangeInfoBase, kind: ParamConversion): Boolean {
+    if (changeInfo.newParameters.any { it.isNewParameter }) return true
+    return when (kind) {
+        ParamConversion.VALUE_TO_CONTEXT, ParamConversion.CONTEXT_TO_VALUE ->
+            changeInfo.receiverParameterInfo != null || changeInfo.oldReceiverInfo != null
+        else -> false
+    }
 }
 
 internal class KotlinCallableReferenceUsage(expression: KtCallableReferenceExpression, internal val fix: CallableReferenceFix) :
@@ -90,64 +136,51 @@ private fun classify(
     expression: KtCallableReferenceExpression,
     changeInfo: KotlinChangeInfoBase,
 ): CallableReferenceFix {
-    val receiverInfo = changeInfo.receiverParameterInfo
-    val receiverAdded = receiverInfo != null && changeInfo.oldReceiverInfo == null
-    val receiverRemoved = receiverInfo == null && changeInfo.oldReceiverInfo != null
-    val receiverRetyped = changeInfo.isReceiverTypeChanged() && !receiverAdded && !receiverRemoved
     val qualified = expression.receiverExpression != null
     val isMember = isMemberCallable(changeInfo)
 
-    return when {
-        // Value param(s) became context param(s): a reference can't pass context arguments.
-        anyValueParamBecameContext(changeInfo) ->
-            if (!qualified && !isMember && isOnlyParamKindChange(changeInfo) && isUsedAsFunctionType(expression))
+    return when (paramConversion(changeInfo)) {
+        // Reference gains implicit context: old shape adapted by wrapping in context(...)
+        ParamConversion.VALUE_TO_CONTEXT ->
+            if (!qualified && !isMember && isUsedAsFunctionType(expression))
                 buildContextArgsLambda(expression, changeInfo)
-            else
-                conflictFix(expression, CONTEXT_PARAMS_CONFLICT)
+            else conflictFix(expression, CONTEXT_PARAMS_CONFLICT)
 
-        contextParameterBecameReceiver(changeInfo) -> when {
-            qualified ->
-                conflictFix(expression, if (isMember) MEMBER_EXTENSION_CONFLICT else CONTEXT_PARAMS_CONFLICT)
+        // Reference loses implicit context: adapter must pass it explicitly
+        ParamConversion.CONTEXT_TO_VALUE ->
+            if (!qualified && isUsedAsFunctionType(expression))
+                buildExplicitContextArgsLambda(expression, changeInfo)
+                    ?: conflictFix(expression, CONTEXT_PARAMS_CONFLICT)
+            else conflictFix(expression, CONTEXT_PARAMS_CONFLICT)
 
-            isMember ->
-                buildMemberExtensionLambda(expression, changeInfo)
-                    ?: conflictFix(expression, MEMBER_EXTENSION_CONFLICT)
-
-            else ->
-                CallableReferenceFix.SetQualifier(
-                    boundReceiverText(expression, changeInfo) ?: fullyQualifiedReceiverType(changeInfo)
-                )
+        // Reference type preserved by qualifying: c::fn / contextOf<T>()::fn
+        ParamConversion.CONTEXT_TO_RECEIVER -> when {
+            qualified -> conflictFix(expression, if (isMember) MEMBER_EXTENSION_CONFLICT else CONTEXT_PARAMS_CONFLICT)
+            isMember -> buildMemberExtensionLambda(expression, changeInfo)
+                ?: conflictFix(expression, MEMBER_EXTENSION_CONFLICT)
+            else -> CallableReferenceFix.SetQualifier(
+                boundReceiverText(expression, changeInfo) ?: fullyQualifiedReceiverType(changeInfo)
+            )
         }
 
-        // Any other receiver introduction: qualified references (`this::fn`, `foo::fn`),
-        // a brand-new receiver, a non-first value parameter - no safe rewrite yet.
-        receiverAdded ->
-            conflictFix(expression, if (isMember) MEMBER_EXTENSION_CONFLICT else CONTEXT_PARAMS_CONFLICT)
+        // Receiver absorbed into context: qualifier must be dropped, receiver moves into context(...)
+        ParamConversion.RECEIVER_TO_CONTEXT ->
+            TODO()//buildReceiverToContextLambda(expression, changeInfo)
+                //?: conflictFix(expression, if (isMember) MEMBER_EXTENSION_CONFLICT else CONTEXT_PARAMS_CONFLICT)
 
-        // Unbound Type::fn follows receiver retype (new type) or removal (empty prefix).
-        (receiverRetyped || receiverRemoved) && qualified && isUnboundTypeQualifier(expression) ->
-            CallableReferenceFix.SetQualifier(if (receiverInfo != null) fullyQualifiedReceiverType(changeInfo) else "")
+        ParamConversion.MIXED ->
+            conflictFix(expression, CONTEXT_PARAMS_CONFLICT)
 
-        else -> CallableReferenceFix.None
+        ParamConversion.NONE -> TODO()//classifyNonContextChange(expression, changeInfo) // receiverAdded / retype / removal / None
     }
+
 }
-
-private fun anyValueParamBecameContext(changeInfo: KotlinChangeInfoBase): Boolean =
-    changeInfo.newParameters.any { !it.isNewParameter && !it.wasContextParameter && it.isContextParameter }
-
-/** The change touches nothing but flipping value params to context params. */
-private fun isOnlyParamKindChange(changeInfo: KotlinChangeInfoBase): Boolean =
-    changeInfo.receiverParameterInfo == null && changeInfo.oldReceiverInfo == null &&
-            changeInfo.newParameters.none { it.isNewParameter || it.wasContextParameter }
 
 context(session: KaSession)
 private fun isUsedAsFunctionType(expression: KtCallableReferenceExpression): Boolean {
     val expectedType = expression.expectedType as? KaFunctionType ?: return false
     return !expectedType.isReflectType && expectedType.receiverType == null
 }
-
-private fun contextParameterBecameReceiver(changeInfo: KotlinChangeInfoBase): Boolean =
-    changeInfo.oldReceiverInfo == null && changeInfo.receiverParameterInfo?.wasContextParameter == true
 
 private fun isMemberCallable(changeInfo: KotlinChangeInfoBase): Boolean =
     (changeInfo.method.unwrapped as? KtCallableDeclaration)?.containingClassOrObject != null
@@ -157,16 +190,13 @@ private fun buildContextArgsLambda(
     expression: KtCallableReferenceExpression,
     changeInfo: KotlinChangeInfoBase,
 ): CallableReferenceFix.ConvertToLambda {
+    val varargOldName = changeInfo.methodDeclaration()?.varargName()
     // Lambda parameters = ALL old parameters in old order (the old function type shape).
-    val method = changeInfo.method.unwrapped as? KtCallableDeclaration
-    val varargOldName = method?.valueParameters?.firstOrNull { it.isVarArg }?.name
     val allParams = changeInfo.newParameters.sortedBy { it.oldIndex }
-    val contextArgs = allParams.filter { it.isContextParameter }.joinToString(", ") { it.name }
-    val valueArgs = allParams.filter { !it.isContextParameter }.joinToString(", ") { param ->
-        if (param.oldName == varargOldName) "*${param.name}" else param.name
-    }
-    val call = "${calleeName(expression, changeInfo)}($valueArgs)"
-    val body = if (contextArgs.isEmpty()) call else "context($contextArgs) { $call }"
+    val (contextParams, valueParams) = allParams.partition { it.isContextParameter }
+    val call = "${calleeName(expression, changeInfo)}(${valueParams.joinToString(", ") { renderArg(it, varargOldName) }})"
+    val body = if (contextParams.isEmpty()) call
+    else "context(${contextParams.joinToString(", ") { it.name }}) { $call }"
     return CallableReferenceFix.ConvertToLambda(lambdaText(allParams.map { it.name }, body))
 }
 
@@ -176,10 +206,8 @@ private fun buildMemberExtensionLambda(
     expression: KtCallableReferenceExpression,
     changeInfo: KotlinChangeInfoBase,
 ): CallableReferenceFix.ConvertToLambda? {
-    val method = changeInfo.method.unwrapped as? KtCallableDeclaration ?: return null
-    val containingClass = method.containingClassOrObject ?: return null
-    // Dispatch receiver is implicit this@Class, so the usage must be lexically inside the class.
-    if (!PsiTreeUtil.isAncestor(containingClass, expression, true)) return null
+    val method = changeInfo.methodDeclaration() ?: return null
+    if (method.containingClassOrObject == null || !usageInsideContainingClass(method, expression)) return null
     val receiverText = boundReceiverText(expression, changeInfo) ?: return null
 
     val valueParams = changeInfo.newParameters
@@ -190,6 +218,53 @@ private fun buildMemberExtensionLambda(
     return CallableReferenceFix.ConvertToLambda(lambdaText(valueParams, body))
 }
 
+/** context param -> value param: `::fn` used as `(X) -> R` becomes `{ x -> fn(<context>, x) }`. */
+context(session: KaSession)
+private fun buildExplicitContextArgsLambda(
+    expression: KtCallableReferenceExpression,
+    changeInfo: KotlinChangeInfoBase,
+): CallableReferenceFix.ConvertToLambda? {
+    if (!isResolvable(expression)) return null
+    val method = changeInfo.methodDeclaration() ?: return null
+    if (!usageInsideContainingClass(method, expression)) return null
+    val varargOldName = method.varargName()
+
+    // Lambda parameters = old VALUE parameters in old order (the old function type shape).
+    val lambdaParams = changeInfo.newParameters
+        .filter { !it.wasContextParameter }
+        .sortedBy { it.oldIndex }
+        .map { it.name }
+
+    // Call args in new-signature order; still-context params stay implicit,
+    // former context params are passed explicitly.
+    val args = changeInfo.newParameters
+        .filter { !it.isContextParameter }
+        .map { param ->
+            if (param.wasContextParameter) {
+                val contextType = method.contextParametersOrNull()
+                    ?.getOrNull(param.oldIndex)?.symbol?.returnType ?: return null
+                contextArgumentText(expression, contextType)
+            } else renderArg(param, varargOldName)
+        }
+    val body = "${calleeName(expression, changeInfo)}(${args.joinToString(", ")})"
+    return CallableReferenceFix.ConvertToLambda(lambdaText(lambdaParams, body))
+}
+private fun KotlinChangeInfoBase.methodDeclaration(): KtCallableDeclaration? =
+    method.unwrapped as? KtCallableDeclaration
+
+private fun KtCallableDeclaration.varargName(): String? =
+    valueParameters.firstOrNull { it.isVarArg }?.name
+
+/** `name`, or `*name` when the old param was a vararg (arrays in the function type are spread back). */
+private fun renderArg(param: KotlinParameterInfo, varargOldName: String?): String =
+    if (param.oldName == varargOldName) "*${param.name}" else param.name
+
+/** Unqualified member access needs the implicit dispatch receiver -> usage must be inside the class. */
+private fun usageInsideContainingClass(method: KtCallableDeclaration, expression: KtElement): Boolean {
+    val containingClass = method.containingClassOrObject ?: return true
+    return PsiTreeUtil.isAncestor(containingClass, expression, true)
+}
+
 /**
  * An expression yielding the context value that satisfied the removed context parameter at the
  * usage site. Only meaningful when the reference is resolved before the change: then a context
@@ -197,7 +272,6 @@ private fun buildMemberExtensionLambda(
  * directly, and `contextOf<T>()` covers the rest (anonymous parameters, `context(...)` blocks).
  * Null when the reference was already unresolvable.
  */
-@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun boundReceiverText(
     expression: KtCallableReferenceExpression,
@@ -210,16 +284,22 @@ private fun boundReceiverText(
     val receiverType: KaType = method.contextParametersOrNull()
         ?.getOrNull(receiverInfo.oldIndex)?.symbol?.returnType ?: return null
 
+    return contextArgumentText(expression, receiverType)
+}
+
+/** A named context parameter of a suitable subtype in scope, or `contextOf<T>()` as fallback. */
+@OptIn(KaExperimentalApi::class)
+context(session: KaSession)
+private fun contextArgumentText(expression: KtCallableReferenceExpression, contextType: KaType): String {
     val namedInScope = expression.parents
         .filterIsInstance<KtCallableDeclaration>()
         .flatMap { it.contextParametersOrNull().orEmpty() }
-        .firstOrNull { !isAnonymousParameter(it) && it.symbol.returnType.isSubtypeOf(receiverType, KaSubtypingErrorTypePolicy.STRICT) }
+        .firstOrNull { !isAnonymousParameter(it) && it.symbol.returnType.isSubtypeOf(contextType, KaSubtypingErrorTypePolicy.STRICT) }
     return namedInScope?.name
-        ?: "contextOf<${receiverType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.INVARIANT)}>()"
+        ?: "contextOf<${contextType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.INVARIANT)}>()"
 }
 
 /** True when the callable reference resolves without errors in the pre-change code. */
-
 @OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun isResolvable(expression: KtCallableReferenceExpression): Boolean =
