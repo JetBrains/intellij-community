@@ -15,10 +15,6 @@ import org.junit.runners.Parameterized.Parameters
 import kotlin.test.assertNotNull as kAssertNotNull
 
 
-internal const val TARGET_GRADLE_VERSION = "8.13"
-internal const val COMMON_MAIN = "commonMain"
-internal const val ANDROID_MAIN = "androidMain"
-internal const val IOS_MAIN = "iosMain"
 internal val SOURCE_SETS = setOf(COMMON_MAIN, ANDROID_MAIN, IOS_MAIN)
 
 @TestRoot("../../../community/$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH")

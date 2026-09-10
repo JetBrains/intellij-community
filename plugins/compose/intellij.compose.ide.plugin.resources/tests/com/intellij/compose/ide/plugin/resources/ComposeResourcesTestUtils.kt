@@ -4,6 +4,11 @@ package com.intellij.compose.ide.plugin.resources
 import com.intellij.openapi.application.ex.PathManagerEx
 import java.nio.file.Path
 
+internal const val TARGET_GRADLE_VERSION = "8.13"
+internal const val COMMON_MAIN = "commonMain"
+internal const val ANDROID_MAIN = "androidMain"
+internal const val IOS_MAIN = "iosMain"
+
 /**
  * The test data root of this module, relative to the community home.
  * It is a constant, because an annotation argument must be a compile-time constant.
