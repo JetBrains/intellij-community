@@ -198,7 +198,6 @@ private fun isPackedIntoRenamedJar(member: String, residue: PluginContentResidue
 fun deriveMemberJarPath(
   moduleName: String,
   loadingRule: String?,
-  packIntoPluginJar: Boolean,
   hasPackageAttribute: Boolean,
   mergesLibraries: Boolean,
   mainJarName: String,
@@ -214,12 +213,12 @@ fun deriveMemberJarPath(
   if (loadingRule == EMBEDDED_LOADING_RULE) {
     // The marker sends the member into the plugin's main jar. Every other embedded member gets `lib/<module>.jar`,
     // whatever libraries that jar merges.
-    return if (packIntoPluginJar) defaultJarName else "$moduleName.jar"
+    return "$moduleName.jar"
   }
   // The marker wins outright. Then a descriptor with no `package` attribute cannot be loaded from the plugin jar, and
   // a module declaring a module library is put in its own jar so that the library travels with it. A frontend member
   // of a plugin that is not frontend-compatible itself gets its own jar too.
-  if (!packIntoPluginJar && (!hasPackageAttribute || mergesLibraries || frontendSplit)) {
+  if (!hasPackageAttribute || mergesLibraries || frontendSplit) {
     return "modules/$moduleName.jar"
   }
   return defaultJarName
@@ -332,7 +331,6 @@ private fun readMemberJar(
   return deriveMemberJar(
     moduleName = member.name,
     loadingRule = loadingRule,
-    packIntoPluginJar = descriptor.packIntoPluginJar,
     hasPackageAttribute = descriptor.hasPackageAttribute,
     libraries = merged.names,
     isStated = merged.isStated,
@@ -355,7 +353,6 @@ private fun readMemberJar(
 fun deriveMemberJar(
   moduleName: String,
   loadingRule: String?,
-  packIntoPluginJar: Boolean,
   hasPackageAttribute: Boolean,
   libraries: Set<String>?,
   isStated: Boolean,
@@ -365,7 +362,6 @@ fun deriveMemberJar(
   val relativeOutputFile = deriveMemberJarPath(
     moduleName = moduleName,
     loadingRule = loadingRule,
-    packIntoPluginJar = packIntoPluginJar,
     hasPackageAttribute = hasPackageAttribute,
     mergesLibraries = libraries == null || libraries.isNotEmpty(),
     mainJarName = mainJarName,
@@ -402,7 +398,6 @@ const val EMBEDDED_LOADING_RULE: String = "embedded"
 /** The two facts the jar path reads out of a content module's own descriptor. */
 @ApiStatus.Internal
 class MemberDescriptorFacts(
-  @JvmField val packIntoPluginJar: Boolean,
   @JvmField val hasPackageAttribute: Boolean,
 )
 
@@ -414,18 +409,9 @@ fun memberDescriptor(module: JpsModule): MemberDescriptorFacts? {
   val file = descriptorFiles(module = module, loadPath = module.name + ".xml").firstOrNull() ?: return null
   val text = file.readText()
   return MemberDescriptorFacts(
-    packIntoPluginJar = PACK_CONTENT_INTO_PLUGIN_JAR_MARKER.containsMatchIn(text),
     hasPackageAttribute = JDOMUtil.load(text).getAttributeValue("package") != null,
   )
 }
-
-/**
- * The marker that sends an embedded content module into the plugin's main jar.
- *
- * The derivation owns this copy of the marker, so that the packaging gate compares two producers.
- */
-private val PACK_CONTENT_INTO_PLUGIN_JAR_MARKER =
-  Regex("""<!--\s+intellij-build:\s+pack-content-into-plugin-jar\s+-->""")
 
 /**
  * The distribution names of [module]'s production-scope module libraries, or `null` when one of them has no name.

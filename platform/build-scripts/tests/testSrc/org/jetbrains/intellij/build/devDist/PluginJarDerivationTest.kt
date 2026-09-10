@@ -281,28 +281,16 @@ class PluginJarDerivationTest {
   }
 
   @Test
-  fun `an embedded member with the marker goes into the plugin main jar`() {
-    val path = derivePath(loadingRule = EMBEDDED_LOADING_RULE, packIntoPluginJar = true, hasPackageAttribute = true)
-
-    assertThat(path).isEqualTo("demo.jar")
-  }
-
-  @Test
   fun `a member with no package attribute or with a library gets its own jar`() {
     // A member with a `package` attribute and no library is co-packed into the main jar.
     assertThat(derivePath(hasPackageAttribute = true)).isEqualTo("demo.jar")
     assertThat(derivePath(hasPackageAttribute = false)).isEqualTo("modules/$MEMBER.jar")
     assertThat(derivePath(hasPackageAttribute = true, mergesLibraries = true)).isEqualTo("modules/$MEMBER.jar")
-    // The marker wins outright.
-    assertThat(derivePath(packIntoPluginJar = true, hasPackageAttribute = false, mergesLibraries = true)).isEqualTo("demo.jar")
   }
 
   @Test
   fun `a frontend member of a plugin that is not frontend-compatible splits`() {
     assertThat(derivePath(hasPackageAttribute = true, frontendSplit = true)).isEqualTo("modules/$MEMBER.jar")
-    // The marker keeps the member in the main jar, and the main jar is renamed for the frontend.
-    assertThat(derivePath(packIntoPluginJar = true, hasPackageAttribute = true, frontendSplit = true)).isEqualTo("demo-frontend.jar")
-    assertThat(derivePath(loadingRule = EMBEDDED_LOADING_RULE, packIntoPluginJar = true, frontendSplit = true)).isEqualTo("demo-frontend.jar")
   }
 
   /** One demo plugin's jars, from the facts [composeDerivedPluginJars] takes and a fixed placement. */
@@ -333,7 +321,6 @@ class PluginJarDerivationTest {
   private fun deriveMemberJar(libraries: Set<String>?, loadingRule: String? = null): DerivedMemberJar = deriveMemberJar(
     moduleName = MEMBER,
     loadingRule = loadingRule,
-    packIntoPluginJar = false,
     hasPackageAttribute = true,
     libraries = libraries,
     isStated = false,
@@ -343,14 +330,12 @@ class PluginJarDerivationTest {
   /** [deriveMemberJarPath] for [MEMBER] under the demo plugin's `demo.jar`, with the convention's own defaults. */
   private fun derivePath(
     loadingRule: String? = null,
-    packIntoPluginJar: Boolean = false,
     hasPackageAttribute: Boolean = false,
     mergesLibraries: Boolean = false,
     frontendSplit: Boolean = false,
   ): String = deriveMemberJarPath(
     moduleName = MEMBER,
     loadingRule = loadingRule,
-    packIntoPluginJar = packIntoPluginJar,
     hasPackageAttribute = hasPackageAttribute,
     mergesLibraries = mergesLibraries,
     mainJarName = "demo.jar",

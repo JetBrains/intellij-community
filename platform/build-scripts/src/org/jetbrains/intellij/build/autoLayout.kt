@@ -175,17 +175,6 @@ private fun computeOutputJarPath(
     return computeEmbeddedOutputJarPath(
       moduleName = moduleName,
       modulesWithCustomPath = modulesWithCustomPath,
-      pluginLayout = pluginLayout,
-      frontendModuleFilter = frontendModuleFilter,
-      packIntoPluginJar = hasPackContentIntoPluginJarMarker(
-        findContentModuleDescriptorData(
-          moduleName = moduleName,
-          module = null,
-          context = context,
-          pluginCachedDescriptorContainer = pluginCachedDescriptorContainer,
-          descriptorCacheWriter = descriptorCacheWriter,
-        )
-      ),
     )
   }
 
@@ -244,9 +233,6 @@ private fun needsSeparateJar(
   frontendModuleFilter: FrontendModuleFilter,
   helper: JarPackagerDependencyHelper,
 ): Boolean {
-  if (hasPackContentIntoPluginJarMarker(descriptorData)) {
-    return false
-  }
   val descriptor = readXmlAsModel(descriptorData)
   return descriptor.getAttributeValue("package") == null ||
          helper.isPluginModulePackedIntoSeparateJar(module, pluginLayout, frontendModuleFilter)
@@ -255,19 +241,11 @@ private fun needsSeparateJar(
 private fun computeEmbeddedOutputJarPath(
   moduleName: String,
   modulesWithCustomPath: Set<String>,
-  pluginLayout: PluginLayout,
-  frontendModuleFilter: FrontendModuleFilter,
-  packIntoPluginJar: Boolean,
 ): String? {
   return when {
     modulesWithCustomPath.contains(moduleName) -> null
-    packIntoPluginJar -> getDefaultJarName(pluginLayout, moduleName, frontendModuleFilter)
     else -> "$moduleName.jar"
   }
-}
-
-private fun hasPackContentIntoPluginJarMarker(descriptorData: ByteArray?): Boolean {
-  return descriptorData != null && PACK_CONTENT_INTO_PLUGIN_JAR_MARKER_REGEX.containsMatchIn(descriptorData.decodeToString())
 }
 
 private fun findContentModuleDescriptorData(
@@ -316,4 +294,3 @@ private fun isIncludedIntoAnotherPlugin(
   }
 }
 
-private val PACK_CONTENT_INTO_PLUGIN_JAR_MARKER_REGEX = Regex("""<!--\s+intellij-build:\s+pack-content-into-plugin-jar\s+-->""")

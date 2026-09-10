@@ -281,7 +281,7 @@ private fun derivePluginContent(
 /**
  * `lib/<main module>.jar` when the plugin's own `<content>` names its main module as an `embedded` member, else `null`.
  *
- * Such a member gets its own jar unless its descriptor carries the `pack-content-into-plugin-jar` marker, and the main
+ * Such a member gets its own jar and the main
  * module is a member like any other there. See [DerivedPluginContent.mainModuleJar].
  */
 private fun selfEmbeddedMainModuleJar(module: JpsModule, closure: WalkedContentModules): String? {
@@ -289,8 +289,7 @@ private fun selfEmbeddedMainModuleJar(module: JpsModule, closure: WalkedContentM
   if (closure.loadingRules.get(mainModule) != EMBEDDED_LOADING_RULE) {
     return null
   }
-  val descriptor = memberDescriptor(module) ?: return null
-  return if (descriptor.packIntoPluginJar) null else "$mainModule.jar"
+  return "$mainModule.jar"
 }
 
 /**
