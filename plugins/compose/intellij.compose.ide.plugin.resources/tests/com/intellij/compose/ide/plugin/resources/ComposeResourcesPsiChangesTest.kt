@@ -24,6 +24,9 @@ import org.junit.jupiter.api.Test
 @ComposeResourcesCommonMainOnly
 class ComposeResourcesPsiChangesTest : ComposeResourcesCodeInsightTestCase() {
 
+  override val additionalSyntaxAndPatterns: Array<String>
+    get() = arrayOf("glob:**/composeApp/src/commonMain/root.png", "glob:**/composeApp/src/commonMain/test.png")
+
   @Test
   fun `test adding new resources inside composeResources inner directories`() = doTest { fileManager, values ->
     val composeResourcesDrawableDir = getCommonComposeResourcesDrawableDir()

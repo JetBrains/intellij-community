@@ -111,6 +111,34 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
     }
   }
 
+  /**
+   * If your test case adds extra files to the test data project, override with a matching glob in your test case
+   */
+  open val additionalSyntaxAndPatterns: Array<String>
+    get() = arrayOf()
+
+  private val COMPOSE_RESOURCES_PROJECT = GradleTestFixtureBuilder.create(COMPOSE_RESOURCES_PROJECT_NAME) {
+    excludeFilePatterns(
+      "glob:**/composeApp/src/commonMain/composeResources/drawable/*.png",
+      *additionalSyntaxAndPatterns
+    )
+    withFile(".gradle/testDataFingerprint", composeResourcesTestDataFingerprint())
+    withFiles { projectRoot ->
+      val testDataRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(
+        composeResourcesProjectRoot()
+      ) ?: error("Cannot find $COMPOSE_RESOURCES_PROJECT_NAME test data")
+      edtWriteAction {
+        VfsUtil.copyDirectory(this, testDataRoot, projectRoot) { file ->
+          val relativePath = requireNotNull(VfsUtil.getRelativePath(file, testDataRoot)) {
+            "$file is not under $testDataRoot"
+          }
+          isStableTestDataPath(relativePath.split('/'))
+        }
+      }
+      AndroidStudioTestUtils.specifyAndroidSdk(projectRoot.toNioPath())
+    }
+  }
+
   companion object {
     private var longRunningAndroidThreads: Disposable? = null
 
@@ -135,29 +163,6 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
     fun unregisterLongRunningAndroidThreads() {
       longRunningAndroidThreads?.let(Disposer::dispose)
       longRunningAndroidThreads = null
-    }
-
-    private val COMPOSE_RESOURCES_PROJECT = GradleTestFixtureBuilder.create(COMPOSE_RESOURCES_PROJECT_NAME) {
-      excludeFilePatterns(
-        "glob:**/composeApp/src/commonMain/root.png",
-        "glob:**/composeApp/src/commonMain/test.png",
-        "glob:**/composeApp/src/commonMain/composeResources/drawable/*.png",
-      )
-      withFile(".gradle/testDataFingerprint", composeResourcesTestDataFingerprint())
-      withFiles { projectRoot ->
-        val testDataRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(
-          composeResourcesProjectRoot()
-        ) ?: error("Cannot find $COMPOSE_RESOURCES_PROJECT_NAME test data")
-        edtWriteAction {
-          VfsUtil.copyDirectory(this, testDataRoot, projectRoot) { file ->
-            val relativePath = requireNotNull(VfsUtil.getRelativePath(file, testDataRoot)) {
-              "$file is not under $testDataRoot"
-            }
-            isStableTestDataPath(relativePath.split('/'))
-          }
-        }
-        AndroidStudioTestUtils.specifyAndroidSdk(projectRoot.toNioPath())
-      }
     }
 
     private fun composeResourcesTestDataFingerprint(): String {
