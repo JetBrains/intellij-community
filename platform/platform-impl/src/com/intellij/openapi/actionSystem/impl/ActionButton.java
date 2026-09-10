@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionHolder;
 import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ExperimentalIcons;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -40,12 +41,15 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.platform.icons.scale.IconScale;
+import com.intellij.platform.icons.swing.SwingIconKt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
@@ -102,6 +106,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
   private Icon myDisabledIcon;
   private Icon myIcon;
+  // experimental icons pipeline: toSwingIcon is expensive, so cache the bridge per descriptor
+  private com.intellij.platform.icons.Icon myIconDescriptor;
+  private Icon myDescriptorSwingIcon;
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
@@ -468,7 +475,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void updateIcon() {
-    myIcon = myPresentation.getIcon();
+    if (ExperimentalIcons.isEnabled()) {
+      com.intellij.platform.icons.Icon descriptor = myPresentation.getIconDescriptor();
+      if (descriptor != myIconDescriptor || myDescriptorSwingIcon == null) {
+        myIconDescriptor = descriptor;
+        myDescriptorSwingIcon = descriptor == null ? EmptyIcon.ICON_16 : SwingIconKt.toSwingIcon(descriptor, IconScale.Default);
+      }
+      myIcon = myDescriptorSwingIcon;
+    }
+    else {
+      myIcon = myPresentation.getIcon();
+    }
     // set disabled icon if it is specified
     if (myPresentation.getDisabledIcon() != null) {
       myDisabledIcon = myPresentation.getDisabledIcon();
@@ -648,7 +665,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (Presentation.PROP_TEXT.equals(propertyName) || Presentation.PROP_DESCRIPTION.equals(propertyName)) {
       updateToolTipText();
     }
-    else if (Presentation.PROP_ENABLED.equals(propertyName) || Presentation.PROP_ICON.equals(propertyName)) {
+    else if (Presentation.PROP_ENABLED.equals(propertyName) || Presentation.PROP_ICON.equals(propertyName)
+             || Presentation.PROP_ICON_DESCRIPTOR.equals(propertyName)) {
       updateIcon();
       repaint();
     }
