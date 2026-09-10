@@ -1,89 +1,98 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.ui
 
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
-import com.intellij.openapi.ui.panel.PanelGridBuilder;
-import com.intellij.openapi.ui.panel.ProgressPanelBuilder;
-import com.intellij.ui.scale.JBUIScale;
-
-import javax.swing.JComponent;
-import javax.swing.JProgressBar;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.openapi.ui.panel.PanelGridBuilder
+import com.intellij.openapi.ui.panel.ProgressPanelBuilder
+import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
+import javax.swing.JProgressBar
 
 /**
  * @author Konstantin Bulenkov
  */
-public final class UI {
-  public enum Anchor {
+@Deprecated("See details for every method/entity inside")
+@ApiStatus.ScheduledForRemoval
+object UI {
+
+  @Deprecated("See details in ComponentPanelBuilder")
+  @ApiStatus.ScheduledForRemoval
+  enum class Anchor {
     Top,
     Center,
     Bottom
   }
 
-  public static int scale(int i) {
-    return JBUIScale.scale(i);
-  }
-
   /**
-   * <p>Factory class for creating panels of components. There are two different types of panels.</p>
+   * Factory class for creating panels of components. There are two different types of panels.
    *
-   * <p>1) Component panel. It's essentially a <code>JComponent</code> that can be decorated with:
-   * <ul>
-   *   <li>&nbsp;a label that's located on the right of the component</li>
-   *   <li>&nbsp;a help context label that's located on the left or below of the component</li>
-   *   <li>&nbsp;an icon with a question mark that show a popup with more information which is show on the left</li>
-   * </ul>
-   * For more information see {@link ComponentPanelBuilder}</p>
+   * 1) Component panel. It's essentially a `JComponent` that can be decorated with:
    *
-   * <p>2) ProgressBar panel. A panel containing <code>JProgressBar</code> that has specific layout
+   *  * a label that's located on the right of the component
+   *  * a help context label that's located on the left or below of the component
+   *  * an icon with a question mark that show a popup with more information which is show on the left
+   *
+   * For more information see [ComponentPanelBuilder]
+   *
+   *
+   * 2) ProgressBar panel. A panel containing `JProgressBar` that has specific layout
    * which is different from an arbitrary component panel. A progress bar panel can contain following items:
-   * <ul>
-   *   <li>&nbsp;a label that' located above or on the left of the progress bar</li>
-   *   <li>&nbsp;a comment label that's located below the progress bar</li>
-   *   <li>&nbsp;Cancel, Play, Pause buttons with assignable actions</li>
-   * </ul>
-   * For more information see {@link ProgressPanelBuilder}</p>
    *
-   * <p>Either of the mentioned panels can be grouped together in a grid. I.e. it's possible to create a grid of
-   * panels see {@link #grid()}.
+   *  * a label that' located above or on the left of the progress bar
+   *  * a comment label that's located below the progress bar
+   *  * Cancel, Play, Pause buttons with assignable actions
+   *
+   * For more information see [ProgressPanelBuilder]
+   *
+   * Either of the mentioned panels can be grouped together in a grid. I.e. it's possible to create a grid of
+   * panels see [UI.PanelFactory.grid].
    * When using grid internal implementation makes sure all labels (if the are placed on the left) are located
    * in the leftmost column and components/progress bars are in the second column expanding horizontally.
-   * </p>
    *
-   * <p>For concrete examples look <code>ComponentPanelTestAction</code> test action and class.</p>
+   * For concrete examples look `ComponentPanelTestAction` test action and class.
    */
-  public static final class PanelFactory {
-
+  @Deprecated("See details for every method/entity inside")
+  @ApiStatus.ScheduledForRemoval
+  object PanelFactory {
     /**
-     * Creates a panel builder for arbitrary <code>JComponent</code>.
+     * Creates a panel builder for arbitrary `JComponent`.
      *
      * @param component is the central component
-     * @return a newly created instance of {@link ComponentPanelBuilder} for configuring the panel before
+     * @return a newly created instance of [ComponentPanelBuilder] for configuring the panel before
      * creation.
      */
-    @Deprecated
-    public static ComponentPanelBuilder panel(JComponent component) {
-      return new ComponentPanelBuilder(component);
+    @Deprecated("See details in ComponentPanelBuilder", ReplaceWith("ComponentPanelBuilder(component)"))
+    @JvmStatic
+    @ApiStatus.ScheduledForRemoval
+    fun panel(component: JComponent): ComponentPanelBuilder {
+      return ComponentPanelBuilder(component)
     }
 
     /**
-     * Creates a panel builder for arbitrary <code>JProgressBar</code>.
+     * Creates a panel builder for arbitrary `JProgressBar`.
      *
      * @param progressBar is the central progressBar
-     * @return a newly created instance of {@link ProgressPanelBuilder} for configuring the panel before
+     * @return a newly created instance of [ProgressPanelBuilder] for configuring the panel before
      * creation.
      */
-    public static ProgressPanelBuilder panel(JProgressBar progressBar) {
-      return new ProgressPanelBuilder(progressBar);
+    @Deprecated("Not needed", ReplaceWith("ProgressPanelBuilder(progressBar)"))
+    @ApiStatus.Internal
+    @JvmStatic
+    @ApiStatus.ScheduledForRemoval
+    fun panel(progressBar: JProgressBar): ProgressPanelBuilder {
+      return ProgressPanelBuilder(progressBar)
     }
 
     /**
      * Creates a panel grid. Each grid should contain panels of the same type.
      *
-     * @return a newly created {@link PanelGridBuilder}
+     * @return a newly created [PanelGridBuilder]
      */
-    @Deprecated(forRemoval = true)
-    public static PanelGridBuilder grid() {
-      return new PanelGridBuilder();
+    @Deprecated("See details in PanelGridBuilder")
+    @JvmStatic
+    @ApiStatus.ScheduledForRemoval
+    fun grid(): PanelGridBuilder {
+      return PanelGridBuilder()
     }
   }
 }

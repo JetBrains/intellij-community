@@ -11713,20 +11713,19 @@ c:com.intellij.util.ui.TimedDeadzone$Length
 - <init>(I):V
 - getLength():I
 f:com.intellij.util.ui.UI
-- <init>():V
-- s:scale(I):I
+- sf:INSTANCE:com.intellij.util.ui.UI
 e:com.intellij.util.ui.UI$Anchor
 - java.lang.Enum
 - sf:Bottom:com.intellij.util.ui.UI$Anchor
 - sf:Center:com.intellij.util.ui.UI$Anchor
 - sf:Top:com.intellij.util.ui.UI$Anchor
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.util.ui.UI$Anchor
 - s:values():com.intellij.util.ui.UI$Anchor[]
 f:com.intellij.util.ui.UI$PanelFactory
-- <init>():V
-- s:grid():com.intellij.openapi.ui.panel.PanelGridBuilder
-- s:panel(javax.swing.JComponent):com.intellij.openapi.ui.panel.ComponentPanelBuilder
-- s:panel(javax.swing.JProgressBar):com.intellij.openapi.ui.panel.ProgressPanelBuilder
+- sf:INSTANCE:com.intellij.util.ui.UI$PanelFactory
+- sf:grid():com.intellij.openapi.ui.panel.PanelGridBuilder
+- sf:panel(javax.swing.JComponent):com.intellij.openapi.ui.panel.ComponentPanelBuilder
 a:com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
 - javax.swing.event.ChangeListener
 - sf:Companion:com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener$Companion
