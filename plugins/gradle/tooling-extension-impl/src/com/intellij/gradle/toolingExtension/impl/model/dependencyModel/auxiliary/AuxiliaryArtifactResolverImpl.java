@@ -13,10 +13,10 @@ import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.DocsType;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.model.ObjectFactory;
-import org.gradle.internal.component.external.model.ModuleComponentArtifactIdentifier;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.util.Collections;
@@ -67,13 +67,15 @@ public class AuxiliaryArtifactResolverImpl implements AuxiliaryArtifactResolver 
     return new AuxiliaryConfigurationArtifacts(sources, javadocs);
   }
 
-  private static @NotNull Map<ComponentIdentifier, Set<File>> classify(@NotNull Set<ResolvedArtifactResult> artifacts) {
+  @VisibleForTesting
+  static @NotNull Map<ComponentIdentifier, Set<File>> classify(@NotNull Set<ResolvedArtifactResult> artifacts) {
     Map<ComponentIdentifier, Set<File>> result = new HashMap<>();
     for (ResolvedArtifactResult artifact : artifacts) {
       ComponentArtifactIdentifier identifier = artifact.getId();
-      if (identifier instanceof ModuleComponentArtifactIdentifier) {
+      ComponentIdentifier componentIdentifier = identifier.getComponentIdentifier();
+      if (componentIdentifier instanceof ModuleComponentIdentifier) {
         File file = artifact.getFile();
-        result.computeIfAbsent(identifier.getComponentIdentifier(), __ -> new HashSet<>())
+        result.computeIfAbsent(componentIdentifier, __ -> new HashSet<>())
           .add(file);
       }
     }
