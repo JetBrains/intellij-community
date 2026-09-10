@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.library;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
@@ -151,12 +152,20 @@ public final class JavaLibraryUtil {
     return Result.create(map, JavaLibraryModificationTracker.getInstance(project));
   }
 
-  @RequiresReadLock
   public static boolean hasLibraryJar(@Nullable Project project, @NotNull String mavenCoords) {
     if (project == null || project.isDisposed()) return false;
     if (project.isDefault()) return false; // EA-396106
 
-    return getProjectLibraries(project).contains(mavenCoords);
+    Libraries libraries;
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      libraries = getProjectLibraries(project);
+    } else {
+      libraries = getProjectLibrariesOrNull(project);
+      if (libraries == null) {
+        return false;
+      }
+    }
+    return libraries.contains(mavenCoords);
   }
 
   @RequiresReadLock
@@ -260,6 +269,10 @@ public final class JavaLibraryUtil {
 
   private static @NotNull Libraries getProjectLibraries(@NotNull Project project) {
     return JavaLibraryHolder.getInstance(project).getLibraries();
+  }
+
+  private static @Nullable Libraries getProjectLibrariesOrNull(@NotNull Project project) {
+    return JavaLibraryHolder.getInstance(project).getLibrariesOrNull();
   }
 
   private static @NotNull Libraries getModuleLibraries(@NotNull Module module) {
