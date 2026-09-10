@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
@@ -242,10 +243,22 @@ class ToolWindowEditorTabManager(
     sessionByFile.remove(file)?.close(releaseContent)
 
     // remove file from recent files
-    // TODO: fix: After restoring the file to the tool window, recent files does not update immediately
     EditorHistoryManager.getInstance(project).removeFile(file)
-
     file.invalidate()
+
+    // When the tab is moved from the editor to the tool window,
+    // ToolWindowEditorTabFileEditor.dispose() is called. It closes the file via
+    // FileEditorManager.closeFile(), which in turn publishes FileEditorManagerListener.fileClosed().
+    //
+    // RecentlySelectedEditorListener.fileClosed() calls applyFrontendChanges() only when
+    // isAllowedInRecentFilesModel() returns false. That result depends on the file's validity
+    // and on isIncludedInDocumentHistory().
+    //
+    // When we drag and drop, the file is still valid, and we don't have enough information to return
+    // the correct value from isIncludedInDocumentHistory(). Therefore, publish fileClosed() once
+    // more after the required state is available.
+    project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+      .fileClosed(FileEditorManager.getInstance(project), file)
   }
 
   companion object {
