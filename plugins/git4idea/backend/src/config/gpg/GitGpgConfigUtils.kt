@@ -11,6 +11,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.commands.GitImpl
 import git4idea.config.GitConfigUtil
+import git4idea.config.GitExecutableManager
+import git4idea.config.GitNotInstalledException
+import git4idea.config.GitVersionIdentificationException
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitProjectConfigurationCache
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -33,9 +37,24 @@ private fun readAvailableSecretKeys(project: Project): SecretKeys {
   val repository = GitRepositoryManager.getInstance(project).repositories.firstOrNull()
   if (repository == null) return SecretKeys(emptyList(), emptyMap())
 
+  try {
+    GitExecutableManager.getInstance().identifyVersion(project, GitExecutableManager.getInstance().getExecutable(project))
+  }
+  catch (e: GitNotInstalledException) {
+    throw VcsException(GitBundle.message("executable.error.git.not.installed"), e)
+  }
+  catch (e: GitVersionIdentificationException) {
+    throw VcsException(GitBundle.message("settings.configure.sign.gpg.error.cannot.run.text"), e)
+  }
+
   val gpgCommand = GitConfigUtil.getValue(project, repository.root, GitConfigUtil.GPG_PROGRAM) ?: "gpg"
-  val output = GitImpl.runBundledCommand(project, gpgCommand, "--list-secret-keys",
-                                         "--with-colons", "--fixed-list-mode", "--batch", "--no-tty")
+  val output = try {
+    GitImpl.runBundledCommand(project, gpgCommand, "--list-secret-keys",
+                              "--with-colons", "--fixed-list-mode", "--batch", "--no-tty")
+  }
+  catch (e: VcsException) {
+    throw VcsException(GitBundle.message("settings.configure.sign.gpg.error.cannot.run.text"), e)
+  }
   return parseSecretKeys(output)
 }
 
