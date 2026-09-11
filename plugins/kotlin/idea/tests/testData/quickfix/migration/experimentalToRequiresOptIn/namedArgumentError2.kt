@@ -8,4 +8,3 @@ import kotlin.Experimental.*
 @Experimental<caret>(Level.ERROR)
 annotation class Marker
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.migration.MigrateExperimentalToRequiresOptInFix

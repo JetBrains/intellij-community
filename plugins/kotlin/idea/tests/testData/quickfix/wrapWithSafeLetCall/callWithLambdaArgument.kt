@@ -13,4 +13,3 @@ fun test(foo: Foo) {
 
 fun bar(s: String) {}
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithSafeLetCallFix

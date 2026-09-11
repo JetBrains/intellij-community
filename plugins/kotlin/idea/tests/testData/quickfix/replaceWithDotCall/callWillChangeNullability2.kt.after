@@ -6,4 +6,3 @@ fun test(x: String) {
 }
 // IGNORE_K2
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix

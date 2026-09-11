@@ -9,4 +9,3 @@ fun g(x: Int, y: Int) {
     f(x, y);
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix

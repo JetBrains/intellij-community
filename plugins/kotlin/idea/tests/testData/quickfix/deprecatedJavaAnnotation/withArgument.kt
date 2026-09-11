@@ -5,4 +5,3 @@ import java.lang.annotation.Retention
 
 @Retention<caret>(RetentionPolicy.SOURCE)
 annotation class Foo
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.DeprecatedJavaAnnotationFix

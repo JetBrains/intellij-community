@@ -14,4 +14,3 @@ object Str2 {
 }
 
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithSafeLetCallFix

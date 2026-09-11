@@ -10,4 +10,3 @@ interface IFace {
 // IGNORE_K2
 // Support was dropped by K2, see KT-71481
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceJvmFieldWithConstFix

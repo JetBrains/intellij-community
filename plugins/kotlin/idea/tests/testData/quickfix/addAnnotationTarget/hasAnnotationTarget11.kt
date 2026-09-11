@@ -6,4 +6,3 @@ annotation class Foo
 class Test {
     fun foo(): <caret>@Foo String = ""
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix

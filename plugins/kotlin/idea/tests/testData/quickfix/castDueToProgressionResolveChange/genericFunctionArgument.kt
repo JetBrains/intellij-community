@@ -6,4 +6,3 @@ fun <T> append(xs: Collection<T>) {}
 fun invoke() {
     append(1.rangeTo(10)<caret>)
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OverloadResolutionChangeFix

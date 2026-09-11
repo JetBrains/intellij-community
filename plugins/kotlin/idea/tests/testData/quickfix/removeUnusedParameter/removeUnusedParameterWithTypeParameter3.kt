@@ -5,4 +5,3 @@ fun test() {
     foo(x = 1, y = 2)
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix

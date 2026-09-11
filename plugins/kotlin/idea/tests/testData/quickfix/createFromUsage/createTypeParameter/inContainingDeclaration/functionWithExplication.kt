@@ -9,4 +9,3 @@ fun test() {
     foo(A())
     foo(A<Int>())
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterFromUsageFix

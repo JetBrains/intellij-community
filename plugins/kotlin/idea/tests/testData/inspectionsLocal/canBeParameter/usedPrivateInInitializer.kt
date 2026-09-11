@@ -7,4 +7,3 @@ class UsedInInitializer(private <caret>val x: Int) {
     }
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections..CanBeParameterInspection$RemoveValVarFix

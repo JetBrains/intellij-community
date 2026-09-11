@@ -7,4 +7,3 @@ fun foo() {
     val (a, b, c: String) = Foo<caret><Int>()
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

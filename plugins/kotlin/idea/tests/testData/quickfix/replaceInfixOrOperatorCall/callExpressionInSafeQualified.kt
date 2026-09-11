@@ -10,4 +10,3 @@ fun test(foo: Foo?) {
     foo?.bar<caret>()
 }
 // IGNORE_K2
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix

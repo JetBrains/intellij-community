@@ -7,4 +7,3 @@ fun bar() {
 fun foo() {
     bar<<caret>String>()
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterFromUsageFix

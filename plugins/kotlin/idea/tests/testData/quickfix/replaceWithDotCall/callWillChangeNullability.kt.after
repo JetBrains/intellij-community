@@ -6,4 +6,3 @@ fun <T : Any> foo(x: T) {
 }
 // IGNORE_K2
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix

@@ -7,4 +7,3 @@ external class B
 inline fun B.baz(a: B) {
     asDynamic()(a)
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.migration.MigrateExternalExtensionFix
