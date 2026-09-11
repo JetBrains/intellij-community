@@ -32,6 +32,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.impl.light.LightCompactConstructorParameter
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor.LightRecordConstructorParameter
 import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -410,12 +412,21 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     private fun KaSymbol.asNavigatablePsiLoad(): InlayActionData? =
         psi?.asNavigatablePsiLoad()
 
-    private fun PsiElement.asNavigatablePsiLoad(): InlayActionData =
-        InlayActionData(
-            PsiPointerInlayActionPayload(createSmartPointer()),
+    private fun PsiElement.asNavigatablePsiLoad(): InlayActionData {
+        val target = pointerTarget()
+        return InlayActionData(
+            PsiPointerInlayActionPayload(target.createSmartPointer()),
             PsiPointerInlayActionNavigationHandler.HANDLER_ID
         )
+    }
 
+    private fun PsiElement.pointerTarget(): PsiElement =
+        // LSP-1717: PsiSerializablePointer does not support light PSI elements, so use their physical record components.
+        when (this) {
+            is LightRecordConstructorParameter -> recordComponent ?: this
+            is LightCompactConstructorParameter -> recordComponent
+            else -> this
+        }
 }
 
 private val CONTEXT_HINT_FORMAT = HintFormat.default
