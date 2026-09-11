@@ -387,7 +387,7 @@ private class ArrayVersionedPayloadMap(
 /**
  * Returns `true` if [laterVersion] is reachable from [earlierVersion].
  */
-private fun isReachable(earlierVersion: Long, laterVersion: Long): Boolean {
+internal fun isReachable(earlierVersion: Long, laterVersion: Long): Boolean {
   return laterVersion == earlierVersion || (laterVersion > earlierVersion && !earlierVersion.isForked())
 }
 

@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.PsiVersionRegistry;
 import com.intellij.psi.impl.source.tree.mvcc.VersionedPayloadMap;
+import com.intellij.psi.impl.source.tree.mvcc.VersionedPayloadMapKt;
 import com.intellij.psi.impl.source.tree.mvcc.VersionedPsiConsistencyException;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.ReadOnlyLightVirtualFile;
@@ -169,7 +170,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     }
     else {
       // this is directly stored field, so we can return it right away.
-      if (version >= creationVersion) {
+      if (VersionedPayloadMapKt.isReachable(creationVersion, version)) {
         return currentlyStoredValue;
       }
       else {
