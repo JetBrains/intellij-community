@@ -30,9 +30,6 @@ internal fun createDevModeProductRunner(context: BuildContextImpl, additionalPlu
   var newClassPath: Collection<Path>? = null
   return checkForNoDiskSpace(context) {
     val request = BuildRequest(
-      //isUnpackedDist = context.productProperties.platformPrefix != "Gateway",
-      // https://youtrack.jetbrains.com/issue/IJPL-156115/devModeProductRunner-use-packed-dist-as-a-workaround-for-incorrect-product-info.json-entries-links-to-compilation-output
-      isUnpackedDist = false,
       writeCoreClasspath = false,
       platformPrefix = context.productProperties.platformPrefix ?: "idea",
       baseIdePlatformPrefixForFrontend = context.productProperties.baseIdePlatformPrefixForFrontend,

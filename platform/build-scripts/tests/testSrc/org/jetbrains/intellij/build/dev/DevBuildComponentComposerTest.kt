@@ -339,7 +339,7 @@ internal class DevBuildComponentComposerTest {
   @Test
   fun `composer builds plugin-classpath from the prefix and every component's records`(@TempDir tempDir: Path) {
     val prefix = tempDir.resolve("prefix.bin")
-    Files.write(prefix, byteArrayOf(2, 1, 0, 0, 0, 0))
+    Files.write(prefix, byteArrayOf(3, 0, 0, 0, 0))
     val air = DevBuildComponent(
       root = component(tempDir, "air", "plugins/air-plugin/lib/air.jar"),
       manifest = manifest(kind = "plugins_air", pluginCount = 1),
@@ -356,7 +356,7 @@ internal class DevBuildComponentComposerTest {
 
     // prefix, then the summed plugin count as a big-endian short, then the records in component order
     assertThat(Files.readAllBytes(target.resolve("plugins/plugin-classpath.txt")))
-      .containsExactly(2, 1, 0, 0, 0, 0, 0, 3, 10, 20, 21)
+      .containsExactly(3, 0, 0, 0, 0, 0, 3, 10, 20, 21)
   }
 
   @Test

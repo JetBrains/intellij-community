@@ -277,8 +277,7 @@ data class PluginBuildDescriptor(
 )
 
 /**
- * Writes everything in `plugin-classpath.txt` that precedes the plugin count: the format version, the `jarOnly` flag
- * and the product descriptor.
+ * Writes everything in `plugin-classpath.txt` that precedes the plugin count: the format version and the product descriptor.
  *
  * The count is not written here because it is not always known to whoever knows the descriptor. A split dev assembly
  * has the platform fragment produce this prefix while each plugin fragment produces only its own records, so the count
@@ -287,15 +286,11 @@ data class PluginBuildDescriptor(
 @Suppress("BlockingMethodInNonBlockingContext")
 internal fun writePluginClassPathPrefix(
   out: DataOutputStream,
-  isJarOnly: Boolean,
   platformLayout: PlatformLayout,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
 ) {
-  // format version
-  out.write(2)
-  // jarOnly
-  out.write(if (isJarOnly) 1 else 0)
+  out.write(PLUGIN_CLASSPATH_FORMAT_VERSION)
 
   val mainPluginDescriptorContent = BufferExposingByteArrayOutputStream().use {
     JDOMUtil.write(createCachedProductDescriptor(platformLayout, descriptorCacheContainer.forPlatform(platformLayout), context), it)
@@ -305,6 +300,12 @@ internal fun writePluginClassPathPrefix(
   out.writeInt(mainPluginDescriptorContent.size())
   out.write(mainPluginDescriptorContent.internalBuffer, 0, mainPluginDescriptorContent.size())
 }
+
+/**
+ * The first byte of `plugin-classpath.txt`. The reader is `com.intellij.ide.plugins.PluginDescriptorLoader`, and it
+ * falls back to the plugin directory scan when the byte does not match.
+ */
+private const val PLUGIN_CLASSPATH_FORMAT_VERSION = 3
 
 /** Writes the bundled plugin count, which separates the prefix written by [writePluginClassPathPrefix] from the per-plugin records. */
 internal fun writePluginClassPathCount(out: DataOutputStream, pluginCount: Int) {
@@ -354,10 +355,9 @@ fun createCachedProductDescriptor(
  * immediately before the asset at index `n`. Two jars recorded at one ordinal keep the order the assembly recorded them
  * in.
  *
- * Two shapes would make the count lag: an asset that produces no entry at all, and two assets whose `effectiveFile`
- * is one file. No flag rules either out - a dev distribution is the unpacked one, so `buildJars` may point an asset at
- * its cache entry - and nothing here detects them. Both would move a handed-off jar later and never earlier, and the
- * whole-distribution comparison in `dev-dist.cmd snapshot diff` is what says neither happens.
+ * One shape would make the count lag: an asset that produces no entry at all. Nothing here detects it. It would move
+ * a handed-off jar later and never earlier, and the whole-distribution comparison in `dev-dist.cmd snapshot diff` is
+ * what says it does not happen.
  *
  * A jar in a subdirectory of `lib/` is never on the classpath. That is the same rule the `relativeOutputFile` test below
  * applies to an assembled entry.

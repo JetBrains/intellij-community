@@ -188,7 +188,7 @@ private class FileSourceCacheStrategy(source: FileSource) : BaseSourceAndCacheSt
   }
 }
 
-internal fun computeHashForModuleOutput(source: DirSource): Long {
+private fun computeHashForModuleOutput(source: DirSource): Long {
   val markFile = source.dir.resolve(UNMODIFIED_MARK_FILE_NAME)
   try {
     return Files.getLastModifiedTime(markFile).toMillis()

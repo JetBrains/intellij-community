@@ -142,7 +142,6 @@ data class BuildRequest(
    */
   @JvmField val generateRuntimeModuleRepository: Boolean = false,
 
-  @JvmField val isUnpackedDist: Boolean = System.getProperty("idea.dev.build.unpacked").toBoolean(),
   @JvmField val scrambleTool: ScrambleTool? = null,
 
   @JvmField val writeCoreClasspath: Boolean = true,
@@ -246,9 +245,7 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
     taskScope {
       val context = createBuildContext(buildDir, lifetime)
       contextToClose = context
-      // Must precede layout: dev mode uses cache payload paths directly on the classpath,
-      // so a concurrent cleanup can delete a payload after layout captures its path,
-      // crashing the JVM at the first class lookup into that jar.
+      // Prunes stale entries before the layout starts to use the cache.
       context.cleanupJarCache()
       configureTargetPlatform(context.options, request)
 
@@ -457,7 +454,6 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
               if (request.fragment.isComplete) {
                 writePluginClassPathPrefix(
                   out = out,
-                  isJarOnly = !request.isUnpackedDist,
                   platformLayout = requiredPlatformLayout,
                   descriptorCacheContainer = cachedDescriptorContainer,
                   context = context
@@ -488,7 +484,6 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
               DataOutputStream(byteOut).use { out ->
                 writePluginClassPathPrefix(
                   out = out,
-                  isJarOnly = !request.isUnpackedDist,
                   platformLayout = requiredPlatformLayout,
                   descriptorCacheContainer = requiredPlatformLayout.descriptorCacheContainer,
                   context = context,
@@ -728,7 +723,7 @@ private fun layOutNativeBinFiles(
 }
 
 // paths are written relative to the IDE home dir to keep the built IDE relocatable;
-// entries outside of the home dir (e.g., jar cache payload) stay absolute - a `..`-prefixed path would break relocation
+// an entry outside of the home dir stays absolute, because a `..`-prefixed path would break relocation
 internal fun formatCoreClasspath(classPath: Collection<Path>, runDir: Path): String {
   return classPath.joinToString(separator = "\n") {
     if (it.startsWith(runDir)) it.relativeTo(runDir).invariantSeparatorsPathString else it.invariantSeparatorsPathString
@@ -846,7 +841,6 @@ internal fun BuildOptions.copyWithDevBuildOverrides(
     outRootDir = buildDir,
     compilationLogEnabled = false,
     logDir = (request.scratchDir ?: buildDir).resolve("log"),
-    isUnpackedDist = request.isUnpackedDist,
   )
 }
 
@@ -857,10 +851,6 @@ internal fun configureDevModeBuildOptions(options: BuildOptions, request: BuildR
     BuildOptions.FUS_METADATA_BUNDLE_STEP,
     BuildOptions.PROVIDED_MODULES_LIST_STEP,
   )
-
-  if (request.isUnpackedDist && options.enableEmbeddedFrontend) {
-    options.enableEmbeddedFrontend = false
-  }
 
   options.generateRuntimeModuleRepository = options.generateRuntimeModuleRepository && request.generateRuntimeModuleRepository
   options.buildNumber = buildOptionsTemplate.buildNumber

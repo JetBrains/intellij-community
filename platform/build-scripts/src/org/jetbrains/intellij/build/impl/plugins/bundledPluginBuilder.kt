@@ -335,7 +335,6 @@ private fun writePluginInfo(
       val pluginCount = common.size + (additional?.size ?: 0) + (specificList?.size ?: 0)
       writePluginClassPathPrefix(
         out = out,
-        isJarOnly = true,
         platformLayout = platformLayout,
         descriptorCacheContainer = descriptorCacheContainer,
         context = context,

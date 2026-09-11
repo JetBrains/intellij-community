@@ -76,7 +76,7 @@ class LocalDiskJarCacheManager(
     nativeFiles: MutableMap<ZipSource, List<String>>?,
     span: Span,
     producer: SourceBuilder,
-  ): Path {
+  ) {
     val digestStartNano = System.nanoTime()
     val items = createSourceAndCacheStrategyList(sources = sources, classesOutputDirectory = classesOutputDirectory)
     val targetFileName = targetFile.fileName?.toString() ?: targetFile.toString()
@@ -97,7 +97,7 @@ class LocalDiskJarCacheManager(
     val key = "${longToString(leastSignificantBits)}-${longToString(hashValue128.mostSignificantBits)}"
     val paths = getCacheEntryPaths(entriesDir = entriesDir, key = key, targetFileName = targetFileName)
 
-    val optimisticCacheResult = tryUseCacheEntry(
+    val optimisticHit = tryUseCacheEntry(
       key = key,
       paths = paths,
       targetFile = targetFile,
@@ -111,13 +111,13 @@ class LocalDiskJarCacheManager(
       deleteInvalidEntry = false,
       failOnCacheIoErrors = false,
     )
-    if (optimisticCacheResult != null) {
+    if (optimisticHit) {
       span.setAttribute(JAR_CACHE_OUTCOME, "hit")
-      return optimisticCacheResult
+      return
     }
 
-    return withCacheEntryLock(lockHash = leastSignificantBits) {
-      tryUseCacheEntry(
+    withCacheEntryLock(lockHash = leastSignificantBits) {
+      val hitUnderLock = tryUseCacheEntry(
         key = key,
         paths = paths,
         targetFile = targetFile,
@@ -131,17 +131,22 @@ class LocalDiskJarCacheManager(
         deleteInvalidEntry = true,
         failOnCacheIoErrors = true,
       )
-        ?.also { span.setAttribute(JAR_CACHE_OUTCOME, "hitUnderLock") }
-      ?: produceAndCache(
-        paths = paths,
-        producer = producer,
-        targetFile = targetFile,
-        items = items,
-        nativeFiles = nativeFiles,
-        tempFilePrefix = tempFilePrefix,
-        metadataTouchTracker = metadataTouchTracker,
-        cleanupCandidateIndex = cleanupCandidateIndex,
-      ).also { span.setAttribute(JAR_CACHE_OUTCOME, "produced") }
+      if (hitUnderLock) {
+        span.setAttribute(JAR_CACHE_OUTCOME, "hitUnderLock")
+      }
+      else {
+        produceAndCache(
+          paths = paths,
+          producer = producer,
+          targetFile = targetFile,
+          items = items,
+          nativeFiles = nativeFiles,
+          tempFilePrefix = tempFilePrefix,
+          metadataTouchTracker = metadataTouchTracker,
+          cleanupCandidateIndex = cleanupCandidateIndex,
+        )
+        span.setAttribute(JAR_CACHE_OUTCOME, "produced")
+      }
     }
   }
 

@@ -39,7 +39,7 @@ internal object EmptyFrontendModuleFilter : FrontendModuleFilter {
  * The filter a product with an embedded frontend root module gets, over the JPS project alone.
  *
  * Public because a second caller needs the same answer outside an assembly: the dev-distribution descriptor plan
- * precomputes `separate-jar` per (plugin, content module), and a packed dev distribution keeps
+ * precomputes `separate-jar` per (plugin, content module), and a dev distribution keeps
  * [org.jetbrains.intellij.build.BuildOptions.enableEmbeddedFrontend] at its default, so it gets this filter and not
  * [EmptyFrontendModuleFilter].
  */

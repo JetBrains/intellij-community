@@ -29,7 +29,7 @@ internal class LocalDiskJarCacheCleanupTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 1.days)
 
-      val builder = TestSourceBuilder(produceCalls = AtomicInteger(), useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = AtomicInteger())
       val sources = createSources()
       manager.computeIfAbsent(
         sources = sources,
@@ -66,7 +66,7 @@ internal class LocalDiskJarCacheCleanupTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 1.days)
 
-      val builder = TestSourceBuilder(produceCalls = AtomicInteger(), useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = AtomicInteger())
       val sources = createSources()
       manager.computeIfAbsent(
         sources = sources,
@@ -92,7 +92,7 @@ internal class LocalDiskJarCacheCleanupTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 1.days)
 
-      val builder = TestSourceBuilder(produceCalls = AtomicInteger(), useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = AtomicInteger())
       val sources = createSources()
       manager.computeIfAbsent(
         sources = sources,
@@ -120,7 +120,7 @@ internal class LocalDiskJarCacheCleanupTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 1.days)
 
-      val builder = TestSourceBuilder(produceCalls = AtomicInteger(), useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = AtomicInteger())
       val sources = createSources()
       manager.computeIfAbsent(
         sources = sources,
@@ -159,7 +159,7 @@ internal class LocalDiskJarCacheCleanupTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 1.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -207,7 +207,7 @@ internal class LocalDiskJarCacheCleanupTest {
         metadataTouchInterval = 1.days,
       )
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = false)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -257,7 +257,7 @@ internal class LocalDiskJarCacheCleanupTest {
     runBlocking {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 1.days)
-      val builder = TestSourceBuilder(produceCalls = AtomicInteger(), useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = AtomicInteger())
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -291,7 +291,7 @@ internal class LocalDiskJarCacheCleanupTest {
         maxAccessTimeAge = 1.days,
         cleanupInterval = 1.hours,
       )
-      val builder = TestSourceBuilder(produceCalls = AtomicInteger(), useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = AtomicInteger())
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -328,7 +328,7 @@ internal class LocalDiskJarCacheCleanupTest {
     runBlocking {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 1.days)
-      val builder = TestSourceBuilder(produceCalls = AtomicInteger(), useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = AtomicInteger())
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -356,7 +356,7 @@ internal class LocalDiskJarCacheCleanupTest {
     runBlocking {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 1.days)
-      val builder = TestSourceBuilder(produceCalls = AtomicInteger(), useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = AtomicInteger())
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -1027,7 +1027,6 @@ internal class LocalDiskJarCacheCleanupTest {
 
   private class TestSourceBuilder(
     private val produceCalls: AtomicInteger,
-    override val useCacheAsTargetFile: Boolean,
     private val produceDelayMs: Long = 0,
   ) : SourceBuilder {
     override fun updateDigest(digest: HashStream64) {

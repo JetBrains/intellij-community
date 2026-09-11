@@ -91,7 +91,6 @@ computeIfAbsent
   +-- build key + entry paths
   |
   +-- optimistic hit (no file lock)
-  |     - allowed only if useCacheAsTargetFile == false
   |     - skipped if `<key>__<name>.jar.mark` exists
   |     - validate metadata + payload
   |     - materialize target (copy)

@@ -113,8 +113,6 @@ data class BuildOptions(
 
   @JvmField internal val validateModuleStructure: Boolean = getBooleanProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY),
 
-  @JvmField internal val isUnpackedDist: Boolean = false,
-
   /**
    * If `true`, the assembled distribution is a disposable dev build that is only ever launched - from a run
    * configuration, from a test lane, from a Bazel output - and never shipped.

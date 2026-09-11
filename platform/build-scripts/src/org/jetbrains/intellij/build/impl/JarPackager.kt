@@ -19,7 +19,6 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.DirSource
-import org.jetbrains.intellij.build.InMemoryContentSource
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.LazySource
 import org.jetbrains.intellij.build.MAVEN_REPO
@@ -32,7 +31,6 @@ import org.jetbrains.intellij.build.USER_HOME
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.checkForNoDiskSpace
-import org.jetbrains.intellij.build.computeHashForModuleOutput
 import org.jetbrains.intellij.build.computeModuleSourcesByContent
 import org.jetbrains.intellij.build.dev.AssembledPrepackedPluginContentJar
 import org.jetbrains.intellij.build.dev.DevDistRecipe
@@ -115,7 +113,6 @@ class JarPackager private constructor(
         assets = packager.assets.values,
         cache = if (context is BuildContextImpl) context.jarCacheManager else NonCachingJarCacheManager,
         isCodesignEnabled = false,
-        useCacheAsTargetFile = context.options.isUnpackedDist,
         dryRun = false,
         layout = null,
         helper = packager.helper,
@@ -185,7 +182,6 @@ class JarPackager private constructor(
         assets = assets,
         cache = cacheManager,
         isCodesignEnabled = isCodesignEnabled,
-        useCacheAsTargetFile = !dryRun && context.options.isUnpackedDist,
         dryRun = dryRun,
         layout = layout,
         helper = packager.helper,
@@ -367,28 +363,7 @@ class JarPackager private constructor(
     val extraExcludes = layout?.moduleExcludes?.get(moduleName) ?: emptyList()
     val filterCacheKey = if (extraExcludes.isEmpty()) emptyList() else extraExcludes.toSortedSet().toList()
 
-    val packToDir = context.options.isUnpackedDist &&
-                    !item.relativeOutputFile.contains('/') &&
-                    !item.isProductModule() &&
-                    // Over both patch channels. A produced plugin descriptor is a file patch, and this asks how many
-                    // paths the jar carries that the module output does not hold, which is the same question either way.
-                    (moduleOutputPatcher.patchCount(moduleName) == 0 ||
-                     (moduleOutputPatcher.patchCount(moduleName) == 1 &&
-                      moduleOutputPatcher.hasPatch(moduleName, PLUGIN_XML_RELATIVE_PATH))) &&
-                    extraExcludes.isEmpty() &&
-                    moduleOutputRoots.isNotEmpty()
-
-    val outFile = outDir.resolve(item.relativeOutputFile)
-    val asset = if (packToDir) {
-      assets.computeIfAbsent(moduleOutputRoots.single()) { file ->
-        AssetDescriptor(isDir = !file.toString().endsWith(".jar"), file = file, relativePath = "")
-      }
-    }
-    else {
-      assets.computeIfAbsent(outFile) { file ->
-        AssetDescriptor(isDir = false, file = file, relativePath = item.relativeOutputFile, useCacheAsTargetFile = !item.isProductModule())
-      }
-    }
+    val asset = getJarAsset(targetFile = outDir.resolve(item.relativeOutputFile), relativeOutputFile = item.relativeOutputFile)
 
     val moduleSources = asset.includedModules.computeIfAbsent(item) { mutableListOf() }
 
@@ -402,17 +377,8 @@ class JarPackager private constructor(
       moduleSources.add(source)
     }
 
-    val jarAsset = lazy(LazyThreadSafetyMode.NONE) {
-      if (packToDir) {
-        getJarAsset(targetFile = outFile, relativeOutputFile = item.relativeOutputFile)
-      }
-      else {
-        asset
-      }
-    }
-
     if (searchableOptionSet != null) {
-      addSearchableOptionSources(layout = layout, moduleName = moduleName, module = module, sources = jarAsset.value.sources, searchableOptionSet = searchableOptionSet)
+      addSearchableOptionSources(layout = layout, moduleName = moduleName, module = module, sources = asset.sources, searchableOptionSet = searchableOptionSet)
     }
 
     val excludes = if (extraExcludes.isEmpty()) {
@@ -434,15 +400,15 @@ class JarPackager private constructor(
     }
 
     if (layout is PluginLayout && layout.mainModule == moduleName) {
-      handleCustomAssets(layout, jarAsset)
+      handleCustomAssets(layout, asset)
     }
 
     if (layout != null && (layout !is PluginLayout || !layout.modulesWithExcludedModuleLibraries.contains(moduleName))) {
-      computeSourcesForModuleLibs(item = item, layout = layout, module = module, copiedFiles = copiedFiles, asset = jarAsset, withTests = useTestModuleOutput)
+      computeSourcesForModuleLibs(item = item, layout = layout, module = module, copiedFiles = copiedFiles, asset = asset, withTests = useTestModuleOutput)
     }
   }
 
-  private fun handleCustomAssets(layout: PluginLayout, jarAsset: Lazy<AssetDescriptor>) {
+  private fun handleCustomAssets(layout: PluginLayout, jarAsset: AssetDescriptor) {
     for (customAsset in layout.customAssets) {
       if (customAsset.platformSpecific != null) {
         continue
@@ -450,11 +416,11 @@ class JarPackager private constructor(
 
       val relativePath = customAsset.relativePath
       if (relativePath == null) {
-        customAsset.getSources(context)?.let { jarAsset.value.sources.addAll(it) }
+        customAsset.getSources(context)?.let { jarAsset.sources.addAll(it) }
       }
       else {
         val targetFile = outDir.resolveSibling(relativePath)
-        val assetDescriptor = AssetDescriptor(isDir = false, file = targetFile, relativePath = relativePath, useCacheAsTargetFile = false)
+        val assetDescriptor = AssetDescriptor(file = targetFile, relativePath = relativePath)
         customAsset.getSources(context)?.let { assetDescriptor.sources.addAll(it) }
         val existing = assets.putIfAbsent(targetFile, assetDescriptor)
         require(existing == null) {
@@ -497,7 +463,7 @@ class JarPackager private constructor(
     layout: BaseLayout,
     module: JpsModule,
     copiedFiles: LibraryFileCopyTracker,
-    asset: Lazy<AssetDescriptor>,
+    asset: AssetDescriptor,
     withTests: Boolean,
   ) {
     val moduleName = module.name
@@ -532,7 +498,7 @@ class JarPackager private constructor(
 
       if (item.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
         packLibFilesIntoModuleJar(
-          asset = asset.value,
+          asset = asset,
           item = item,
           files = getLibraryRoots(library, context.outputProvider),
           projectLibraryData = projectLibraryData,
@@ -578,7 +544,7 @@ class JarPackager private constructor(
             }
           }
 
-          packLibFilesIntoModuleJar(asset = asset.value, item = item, files = files, projectLibraryData = projectLibraryData, library = library)
+          packLibFilesIntoModuleJar(asset = asset, item = item, files = files, projectLibraryData = projectLibraryData, library = library)
         }
       }
     }
@@ -782,7 +748,7 @@ class JarPackager private constructor(
 
   private fun getJarAsset(targetFile: Path, relativeOutputFile: String): AssetDescriptor {
     return assets.computeIfAbsent(targetFile) {
-      AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile)
+      AssetDescriptor(file = targetFile, relativePath = relativeOutputFile)
     }
   }
 }
@@ -902,11 +868,8 @@ private fun toCanonicalReportPath(file: Path, buildPaths: BuildPaths): String {
 private val bazelMavenHome = USER_HOME.resolve(".m2/repository-do-not-use-maven-repository-with-bazel")
 
 private data class AssetDescriptor(
-  @JvmField val isDir: Boolean,
   @JvmField val file: Path,
   @JvmField val relativePath: String,
-  @JvmField var effectiveFile: Path = file,
-  @JvmField val useCacheAsTargetFile: Boolean = true,
 ) {
   // must be sorted - we use it as is for Jar Cache
   @JvmField
@@ -940,7 +903,6 @@ private fun buildJars(
   assets: Collection<AssetDescriptor>,
   cache: JarCacheManager,
   isCodesignEnabled: Boolean,
-  useCacheAsTargetFile: Boolean,
   dryRun: Boolean,
   layout: BaseLayout?,
   helper: JarPackagerDependencyHelper,
@@ -958,7 +920,6 @@ private fun buildJars(
       isCodesignEnabled = isCodesignEnabled,
       context = context,
       cache = cache,
-      useCacheAsTargetFile = useCacheAsTargetFile,
       layout = layout,
       helper = helper,
     )
@@ -1033,38 +994,10 @@ private fun buildAsset(
   isCodesignEnabled: Boolean,
   context: BuildContext,
   cache: JarCacheManager,
-  useCacheAsTargetFile: Boolean,
   layout: BaseLayout?,
   helper: JarPackagerDependencyHelper,
 ): BuildAssetResult {
   val includedModules = asset.includedModules
-  if (asset.isDir) {
-    DevDistRecipe.record(
-      outputFile = asset.file,
-      isDir = true,
-      sources = includedModules.values.flatten(),
-      includedModules = includedModules.keys,
-      layout = layout,
-    )
-    val sourceToMetadata = HashMap<Source, SizeAndHash>()
-    for (sources in includedModules.values) {
-      for (source in sources) {
-        when (source) {
-          is DirSource -> {
-            sourceToMetadata.computeIfAbsent(source) {
-              SizeAndHash(size = 0, hash = computeHashForModuleOutput(it as DirSource))
-            }
-          }
-          is InMemoryContentSource -> {
-            // ignore
-          }
-          else -> error("Unexpected source: $source")
-        }
-      }
-    }
-    return BuildAssetResult(sourceToNativeFiles = emptyMap(), sourceToMetadata = sourceToMetadata)
-  }
-
   val sources = if (includedModules.isEmpty()) {
     asset.sources
   }
@@ -1092,7 +1025,6 @@ private fun buildAsset(
   // no sources is a fact about the run too.
   DevDistRecipe.record(
     outputFile = asset.file,
-    isDir = false,
     sources = sources,
     includedModules = includedModules.keys,
     layout = layout,
@@ -1115,15 +1047,12 @@ private fun buildAsset(
       if (span.isRecording) {
         span.setAttribute(AttributeKey.stringArrayKey("sources"), sources.map(Source::toString))
       }
-      asset.effectiveFile = cache.computeIfAbsent(
+      cache.computeIfAbsent(
         sources = sources,
         targetFile = file,
         nativeFiles = nativeFileHandler?.sourceToNativeFiles,
         span = span,
         producer = object : SourceBuilder {
-          override val useCacheAsTargetFile: Boolean
-            get() = useCacheAsTargetFile && asset.useCacheAsTargetFile && !asset.relativePath.contains('/')
-
           override fun updateDigest(digest: HashStream64) {
             val isScramblingEnabled = !context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
             digest.putInt(if (isScramblingEnabled) 1 else 0)
@@ -1295,7 +1224,7 @@ private fun computeDistributionFileEntries(
     val hash = hasher.asLong
     list.add(
       ModuleOutputEntry(
-        path = asset.effectiveFile,
+        path = asset.file,
         owner = module,
         size = size,
         hash = hash,
@@ -1308,10 +1237,10 @@ private fun computeDistributionFileEntries(
 
   for (source in asset.sources) {
     if (source is ZipSource) {
-      source.distributionFileEntryProducer?.consume(size = 0, hash = 0, targetFile = asset.effectiveFile)?.let(list::add)
+      source.distributionFileEntryProducer?.consume(size = 0, hash = 0, targetFile = asset.file)?.let(list::add)
     }
     else if (source is LazySource) {
-      list.add(CustomAssetEntry(path = asset.effectiveFile, hash = 0, distributionPath = asset.file))
+      list.add(CustomAssetEntry(path = asset.file, hash = 0, distributionPath = asset.file))
     }
   }
 }

@@ -24,9 +24,7 @@ internal data class ContentReport(
 }
 
 sealed interface DistributionFileEntry {
-  /**
-   * Path used to access this entry. It may point to an immutable cache file which is linked into the distribution.
-   */
+  /** The file this entry was read from or written to. */
   val path: Path
 
   /** Logical path occupied by this entry in the IDE distribution. */

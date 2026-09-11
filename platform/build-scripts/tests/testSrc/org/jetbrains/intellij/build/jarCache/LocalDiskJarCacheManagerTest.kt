@@ -47,10 +47,10 @@ internal class LocalDiskJarCacheManagerTest {
       )
 
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
-      val firstResult = manager.computeIfAbsent(
+      manager.computeIfAbsent(
         sources = sources,
         targetFile = tempDir.resolve("out/first.jar"),
         nativeFiles = null,
@@ -64,16 +64,17 @@ internal class LocalDiskJarCacheManagerTest {
       Files.setLastModifiedTime(metadataFile, FileTime.fromMillis(staleAccessTime))
       delay(5)
 
-      val secondResult = manager.computeIfAbsent(
+      val secondTarget = tempDir.resolve("out2/first.jar")
+      manager.computeIfAbsent(
         sources = sources,
-        targetFile = tempDir.resolve("out2/first.jar"),
+        targetFile = secondTarget,
         nativeFiles = null,
         span = Span.getInvalid(),
         producer = builder,
       )
       val secondAccessTime = Files.getLastModifiedTime(metadataFile).toMillis()
 
-      assertThat(firstResult).isEqualTo(secondResult)
+      assertThat(Files.readString(secondTarget)).isEqualTo("payload")
       assertThat(produceCalls.get()).isEqualTo(1)
       assertThat(secondAccessTime).isGreaterThan(staleAccessTime)
     }
@@ -86,7 +87,7 @@ internal class LocalDiskJarCacheManagerTest {
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
 
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -127,7 +128,7 @@ internal class LocalDiskJarCacheManagerTest {
       )
 
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -217,15 +218,16 @@ internal class LocalDiskJarCacheManagerTest {
     runBlocking {
       val manager = createManager(cacheDir = tempDir.resolve("cache"), maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true, produceDelayMs = 50)
+      val builder = TestSourceBuilder(produceCalls = produceCalls, produceDelayMs = 50)
       val sources = createSources()
 
-      val results = coroutineScope {
-        List(8) { index ->
+      val targets = List(8) { index -> tempDir.resolve("out/$index/first.jar") }
+      coroutineScope {
+        targets.map { target ->
           async(Dispatchers.Default) {
             manager.computeIfAbsent(
               sources = sources,
-              targetFile = tempDir.resolve("out/$index/first.jar"),
+              targetFile = target,
               nativeFiles = null,
               span = Span.getInvalid(),
               producer = builder,
@@ -234,7 +236,7 @@ internal class LocalDiskJarCacheManagerTest {
         }.awaitAll()
       }
 
-      assertThat(results.distinct()).hasSize(1)
+      assertThat(targets).allSatisfy { assertThat(Files.readString(it)).isEqualTo("payload") }
       assertThat(produceCalls.get()).isEqualTo(1)
     }
   }
@@ -249,25 +251,26 @@ internal class LocalDiskJarCacheManagerTest {
         maxAccessTimeAge = 30.days,
       )
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
-      val firstResult = manager.computeIfAbsent(
+      manager.computeIfAbsent(
         sources = sources,
         targetFile = tempDir.resolve("out/first.jar"),
         nativeFiles = null,
         span = Span.getInvalid(),
         producer = builder,
       )
-      val secondResult = manager.computeIfAbsent(
+      val secondTarget = tempDir.resolve("out2/first.jar")
+      manager.computeIfAbsent(
         sources = sources,
-        targetFile = tempDir.resolve("out2/first.jar"),
+        targetFile = secondTarget,
         nativeFiles = null,
         span = Span.getInvalid(),
         producer = builder,
       )
 
-      assertThat(secondResult).isEqualTo(firstResult)
+      assertThat(Files.readString(secondTarget)).isEqualTo("payload")
       assertThat(produceCalls.get()).isEqualTo(1)
     }
   }
@@ -278,7 +281,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
 
       val moduleOutput = createModuleOutputDir()
       val firstSources = listOf(dirSource(moduleOutput, "a/**"))
@@ -310,28 +313,29 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
 
       val moduleOutput = createModuleOutputDir()
       val firstSources = listOf(dirSource(moduleOutput, "a/**"))
       val secondSources = listOf(dirSource(moduleOutput, "a/**"))
 
-      val firstResult = manager.computeIfAbsent(
+      manager.computeIfAbsent(
         sources = firstSources,
         targetFile = tempDir.resolve("out/first.jar"),
         nativeFiles = null,
         span = Span.getInvalid(),
         producer = builder,
       )
-      val secondResult = manager.computeIfAbsent(
+      val secondTarget = tempDir.resolve("out2/first.jar")
+      manager.computeIfAbsent(
         sources = secondSources,
-        targetFile = tempDir.resolve("out2/first.jar"),
+        targetFile = secondTarget,
         nativeFiles = null,
         span = Span.getInvalid(),
         producer = builder,
       )
 
-      assertThat(secondResult).isEqualTo(firstResult)
+      assertThat(Files.readString(secondTarget)).isEqualTo("payload")
       assertThat(produceCalls.get()).isEqualTo(1)
       assertThat(listEntryPaths(cacheDir)).hasSize(1)
     }
@@ -343,7 +347,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
 
       val moduleOutput = createModuleOutputJar()
       val firstSources = listOf(zipSource(moduleOutput, "a/**"))
@@ -375,28 +379,29 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
 
       val moduleOutput = createModuleOutputJar()
       val firstSources = listOf(zipSource(moduleOutput, "a/**"))
       val secondSources = listOf(zipSource(moduleOutput, "a/**"))
 
-      val firstResult = manager.computeIfAbsent(
+      manager.computeIfAbsent(
         sources = firstSources,
         targetFile = tempDir.resolve("out/first.jar"),
         nativeFiles = null,
         span = Span.getInvalid(),
         producer = builder,
       )
-      val secondResult = manager.computeIfAbsent(
+      val secondTarget = tempDir.resolve("out2/first.jar")
+      manager.computeIfAbsent(
         sources = secondSources,
-        targetFile = tempDir.resolve("out2/first.jar"),
+        targetFile = secondTarget,
         nativeFiles = null,
         span = Span.getInvalid(),
         producer = builder,
       )
 
-      assertThat(secondResult).isEqualTo(firstResult)
+      assertThat(Files.readString(secondTarget)).isEqualTo("payload")
       assertThat(produceCalls.get()).isEqualTo(1)
       assertThat(listEntryPaths(cacheDir)).hasSize(1)
     }
@@ -408,7 +413,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -440,10 +445,10 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val firstManager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
-      val firstResult = firstManager.computeIfAbsent(
+      firstManager.computeIfAbsent(
         sources = sources,
         targetFile = tempDir.resolve("out/first.jar"),
         nativeFiles = null,
@@ -452,15 +457,16 @@ internal class LocalDiskJarCacheManagerTest {
       )
 
       val secondManager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
-      val secondResult = secondManager.computeIfAbsent(
+      val secondTarget = tempDir.resolve("out2/first.jar")
+      secondManager.computeIfAbsent(
         sources = sources,
-        targetFile = tempDir.resolve("out2/first.jar"),
+        targetFile = secondTarget,
         nativeFiles = null,
         span = Span.getInvalid(),
         producer = builder,
       )
 
-      assertThat(secondResult).isEqualTo(firstResult)
+      assertThat(Files.readString(secondTarget)).isEqualTo("payload")
       assertThat(produceCalls.get()).isEqualTo(1)
     }
   }
@@ -471,7 +477,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -510,7 +516,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -544,7 +550,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -593,7 +599,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -634,7 +640,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -674,7 +680,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -712,7 +718,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -754,7 +760,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -795,7 +801,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -833,7 +839,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -866,7 +872,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -911,24 +917,24 @@ internal class LocalDiskJarCacheManagerTest {
   }
 
   @Test
-  fun `cache hit materializes payload into target when cache is not target`() {
+  fun `cache hit materializes payload into target`() {
     runBlocking {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = false)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       val firstTarget = tempDir.resolve("out/first.jar")
       val secondTarget = tempDir.resolve("out2/first.jar")
-      val firstResult = manager.computeIfAbsent(
+      manager.computeIfAbsent(
         sources = sources,
         targetFile = firstTarget,
         nativeFiles = null,
         span = Span.getInvalid(),
         producer = builder,
       )
-      val secondResult = manager.computeIfAbsent(
+      manager.computeIfAbsent(
         sources = sources,
         targetFile = secondTarget,
         nativeFiles = null,
@@ -937,8 +943,6 @@ internal class LocalDiskJarCacheManagerTest {
       )
 
       val payloadFile = findSingleEntryPaths(cacheDir).payloadFile
-      assertThat(firstResult).isEqualTo(firstTarget)
-      assertThat(secondResult).isEqualTo(secondTarget)
       assertThat(Files.readString(firstTarget)).isEqualTo("payload")
       assertThat(Files.readString(secondTarget)).isEqualTo("payload")
       assertThat(Files.readString(payloadFile)).isEqualTo("payload")
@@ -948,12 +952,12 @@ internal class LocalDiskJarCacheManagerTest {
   }
 
   @Test
-  fun `cache hit replaces existing target when cache is not target`() {
+  fun `cache hit replaces existing target`() {
     runBlocking {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = false)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -968,7 +972,7 @@ internal class LocalDiskJarCacheManagerTest {
       Files.createDirectories(existingTarget.parent)
       Files.writeString(existingTarget, "stale")
 
-      val result = manager.computeIfAbsent(
+      manager.computeIfAbsent(
         sources = sources,
         targetFile = existingTarget,
         nativeFiles = null,
@@ -977,7 +981,6 @@ internal class LocalDiskJarCacheManagerTest {
       )
 
       val payloadFile = findSingleEntryPaths(cacheDir).payloadFile
-      assertThat(result).isEqualTo(existingTarget)
       assertThat(Files.readString(existingTarget)).isEqualTo("payload")
       assertThat(Files.readString(payloadFile)).isEqualTo("payload")
       assertThat(produceCalls.get()).isEqualTo(1)
@@ -990,10 +993,10 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = false)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
 
       val target = tempDir.resolve("out/first.jar")
-      val result = manager.computeIfAbsent(
+      manager.computeIfAbsent(
         sources = createSources(),
         targetFile = target,
         nativeFiles = null,
@@ -1001,7 +1004,6 @@ internal class LocalDiskJarCacheManagerTest {
         producer = builder,
       )
 
-      assertThat(result).isEqualTo(target)
       assertThat(produceCalls.get()).isEqualTo(1)
       assertTargetOwnsItsBytes(target = target, payloadFile = findSingleEntryPaths(cacheDir).payloadFile)
     }
@@ -1013,7 +1015,7 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = false)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
       manager.computeIfAbsent(
@@ -1024,7 +1026,7 @@ internal class LocalDiskJarCacheManagerTest {
         producer = builder,
       )
       val hitTarget = tempDir.resolve("out2/first.jar")
-      val hitResult = manager.computeIfAbsent(
+      manager.computeIfAbsent(
         sources = sources,
         targetFile = hitTarget,
         nativeFiles = null,
@@ -1032,7 +1034,6 @@ internal class LocalDiskJarCacheManagerTest {
         producer = builder,
       )
 
-      assertThat(hitResult).isEqualTo(hitTarget)
       assertThat(produceCalls.get()).isEqualTo(1)
       assertTargetOwnsItsBytes(target = hitTarget, payloadFile = findSingleEntryPaths(cacheDir).payloadFile)
     }
@@ -1044,10 +1045,10 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
-      val payloadFile = manager.computeIfAbsent(
+      manager.computeIfAbsent(
         sources = sources,
         targetFile = tempDir.resolve("out/first.jar"),
         nativeFiles = null,
@@ -1055,6 +1056,7 @@ internal class LocalDiskJarCacheManagerTest {
         producer = builder,
       )
 
+      val payloadFile = findSingleEntryPaths(cacheDir).payloadFile
       assertThat(produceCalls.get()).isEqualTo(1)
       assertThat(payloadFile).exists()
       assertThat(payloadFile.fileName.toString()).contains("__first.jar")
@@ -1067,18 +1069,21 @@ internal class LocalDiskJarCacheManagerTest {
       val cacheDir = tempDir.resolve("cache")
       val manager = createManager(cacheDir = cacheDir, maxAccessTimeAge = 30.days)
       val produceCalls = AtomicInteger()
-      val builder = TestSourceBuilder(produceCalls = produceCalls, useCacheAsTargetFile = true)
+      val builder = TestSourceBuilder(produceCalls = produceCalls)
       val sources = createSources()
 
+      // the longest name a common filesystem accepts; with the key prefix the entry name would exceed the limit
+      val target = tempDir.resolve("out/${"a".repeat(251)}.jar")
       manager.computeIfAbsent(
         sources = sources,
-        targetFile = tempDir.resolve("out/${"a".repeat(2000)}.jar"),
+        targetFile = target,
         nativeFiles = null,
         span = Span.getInvalid(),
         producer = builder,
       )
 
       val entryPaths = findSingleEntryPaths(cacheDir)
+      assertThat(Files.readString(target)).isEqualTo("payload")
       assertThat(entryPaths.payloadFile.fileName.toString().length).isLessThanOrEqualTo(255)
       assertThat(entryPaths.metadataFile.fileName.toString().length).isLessThanOrEqualTo(255)
       assertThat(entryPaths.markFile.fileName.toString().length).isLessThanOrEqualTo(255)
@@ -1233,7 +1238,6 @@ internal class LocalDiskJarCacheManagerTest {
 
   private class TestSourceBuilder(
     private val produceCalls: AtomicInteger,
-    override val useCacheAsTargetFile: Boolean,
     private val produceDelayMs: Long = 0,
   ) : SourceBuilder {
     override fun updateDigest(digest: HashStream64) {

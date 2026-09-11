@@ -10,8 +10,6 @@ import org.jetbrains.intellij.build.ZipSource
 import java.nio.file.Path
 
 interface SourceBuilder {
-  val useCacheAsTargetFile: Boolean
-
   fun updateDigest(digest: HashStream64)
 
   fun produce(targetFile: Path)
@@ -20,13 +18,14 @@ interface SourceBuilder {
 }
 
 sealed interface JarCacheManager {
+  /** Writes the jar for [sources] into [targetFile], from the cache when it holds a matching entry. */
   fun computeIfAbsent(
     sources: Collection<Source>,
     targetFile: Path,
     nativeFiles: MutableMap<ZipSource, List<String>>?,
     span: Span,
     producer: SourceBuilder,
-  ): Path
+  )
 
   fun cleanup()
 }
@@ -38,9 +37,8 @@ internal data object NonCachingJarCacheManager : JarCacheManager {
     nativeFiles: MutableMap<ZipSource, List<String>>?,
     span: Span,
     producer: SourceBuilder,
-  ): Path {
+  ) {
     producer.produce(targetFile)
-    return targetFile
   }
 
   override fun cleanup() {
