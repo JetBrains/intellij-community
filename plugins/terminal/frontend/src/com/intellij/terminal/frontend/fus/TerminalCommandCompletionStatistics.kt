@@ -4,7 +4,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
@@ -46,8 +45,6 @@ class TerminalCommandCompletionStatistics private constructor(
 
   companion object {
     val KEY: Key<TerminalCommandCompletionStatistics> = Key.create("terminal.command.completion.statistics")
-    private val LOG = logger<TerminalCommandCompletionStatistics>()
-
     fun install(
       project: Project,
       shellIntegration: TerminalShellIntegration,
@@ -97,10 +94,6 @@ class TerminalCommandCompletionStatistics private constructor(
         previousCommandLength = 0
         previousCursorOffset = 0
         commandStartTime = timeMillis
-        val commandTypingTimeMillis = completionMetrics.commandTypingTimeMillis ?: run {
-          LOG.warn("Skipping command metrics because typing start time was not recorded")
-          return
-        }
         ReworkedTerminalUsageCollector.logCommandStarted(
           project,
           command,
@@ -109,7 +102,7 @@ class TerminalCommandCompletionStatistics private constructor(
           inlineCompletionLength = completionMetrics.inlineCompletionLength,
           typingsCount = completionMetrics.typingsCount,
           backspacesCount = completionMetrics.backspacesCount,
-          commandTypingTimeMillis = commandTypingTimeMillis,
+          commandTypingTimeMillis = completionMetrics.commandTypingTimeMillis,
         )
       }
 
@@ -172,20 +165,21 @@ class TerminalCommandCompletionStatistics private constructor(
     val cursorDelta = cursorOffset - previousCursorOffset
     val modelEndOffset = commandStartOffset.toAbsolute() + modelCommandLength
     val currentPendingSlice = pendingSlice
+    val timeMillis = System.currentTimeMillis()
 
     if (currentPendingSlice != null && modelDelta < 0) {
       pendingSlice = null
-      metrics.recordCommandTextInserted(cursorDelta.coerceAtLeast(0).toInt())
+      metrics.recordCommandTextInserted(cursorDelta.coerceAtLeast(0).toInt(), timeMillis)
     }
     else if (currentPendingSlice != null && modelDelta > 0) {
       val pendingLength = currentPendingSlice.endOffset - currentPendingSlice.startOffset
       if (modelDelta + pendingLength > cursorDelta) {
         pendingSlice = PendingSlice(cursorOffset, modelEndOffset)
-        metrics.recordCommandTextInserted(cursorDelta.coerceAtLeast(0).toInt())
+        metrics.recordCommandTextInserted(cursorDelta.coerceAtLeast(0).toInt(), timeMillis)
       }
       else {
         pendingSlice = null
-        metrics.recordCommandTextInserted(cursorDelta.coerceAtLeast(0).toInt())
+        metrics.recordCommandTextInserted(cursorDelta.coerceAtLeast(0).toInt(), timeMillis)
       }
     }
     else if (currentPendingSlice != null && modelDelta == 0 && cursorDelta > 0) {
@@ -197,7 +191,7 @@ class TerminalCommandCompletionStatistics private constructor(
         else {
           null
         }
-        metrics.recordCommandTextInserted(cursorDelta.coerceAtLeast(0).toInt())
+        metrics.recordCommandTextInserted(cursorDelta.coerceAtLeast(0).toInt(), timeMillis)
       }
     }
     else {
@@ -205,7 +199,7 @@ class TerminalCommandCompletionStatistics private constructor(
         pendingSlice = PendingSlice(cursorOffset, modelEndOffset)
       }
       val delta = minOf(modelDelta.toLong(), cursorDelta).coerceAtLeast(0).toInt()
-      metrics.recordCommandTextInserted(delta)
+      metrics.recordCommandTextInserted(delta, timeMillis)
     }
 
     previousCommandLength = commandLength
@@ -218,10 +212,10 @@ class TerminalCommandCompletionStatistics private constructor(
     val awtEvent = event.awtEvent
     when {
       awtEvent.id == KeyEvent.KEY_TYPED -> {
-        metrics.recordTyping(awtEvent.`when`)
+        metrics.recordTyping()
       }
       awtEvent.id == KeyEvent.KEY_PRESSED && awtEvent.keyCode == KeyEvent.VK_BACK_SPACE -> {
-        metrics.recordBackspace(awtEvent.`when`)
+        metrics.recordBackspace()
       }
     }
   }

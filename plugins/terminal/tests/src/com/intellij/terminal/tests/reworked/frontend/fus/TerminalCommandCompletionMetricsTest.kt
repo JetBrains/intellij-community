@@ -9,28 +9,28 @@ internal class TerminalCommandCompletionMetricsTest {
   fun `counts initial typed command`() {
     val metrics = TerminalCommandCompletionMetrics()
 
-    metrics.recordCommandTextInserted(4)
+    metrics.recordCommandTextInserted(4, 100)
 
-    assertThat(metrics.takeAndReset()).isEqualTo(snapshot(totalCommandInsertedLength = 4))
+    assertThat(metrics.takeAndReset(100)).isEqualTo(snapshot(totalCommandInsertedLength = 4))
   }
 
   @Test
   fun `counts typed characters appended to command`() {
     val metrics = TerminalCommandCompletionMetrics()
 
-    metrics.recordCommandTextInserted(8)
+    metrics.recordCommandTextInserted(8, 100)
 
-    assertThat(metrics.takeAndReset()).isEqualTo(snapshot(totalCommandInsertedLength = 8))
+    assertThat(metrics.takeAndReset(100)).isEqualTo(snapshot(totalCommandInsertedLength = 8))
   }
 
   @Test
   fun `does not subtract deleted text`() {
     val metrics = TerminalCommandCompletionMetrics()
 
-    metrics.recordCommandTextInserted(12)
-    metrics.recordCommandTextInserted(-6)
+    metrics.recordCommandTextInserted(12, 100)
+    metrics.recordCommandTextInserted(-6, 200)
 
-    assertThat(metrics.takeAndReset()).isEqualTo(snapshot(totalCommandInsertedLength = 12))
+    assertThat(metrics.takeAndReset(100)).isEqualTo(snapshot(totalCommandInsertedLength = 12))
   }
 
   @Test
@@ -55,10 +55,10 @@ internal class TerminalCommandCompletionMetricsTest {
   fun `counts typing and backspace events`() {
     val metrics = TerminalCommandCompletionMetrics()
 
-    metrics.recordCommandTextInserted(1)
-    metrics.recordTyping(100)
-    metrics.recordTyping(150)
-    metrics.recordBackspace(200)
+    metrics.recordCommandTextInserted(1, 100)
+    metrics.recordTyping()
+    metrics.recordTyping()
+    metrics.recordBackspace()
 
     assertThat(metrics.takeAndReset(350)).isEqualTo(
       snapshot(totalCommandInsertedLength = 1, typingsCount = 2, backspacesCount = 1, commandTypingTimeMillis = 250)
@@ -66,10 +66,21 @@ internal class TerminalCommandCompletionMetricsTest {
   }
 
   @Test
+  fun `measures typing time from first command text insertion`() {
+    val metrics = TerminalCommandCompletionMetrics()
+
+    metrics.recordCommandTextInserted(1, 100)
+
+    assertThat(metrics.takeAndReset(250)).isEqualTo(
+      snapshot(totalCommandInsertedLength = 1, typingsCount = 0, commandTypingTimeMillis = 150)
+    )
+  }
+
+  @Test
   fun `does not count backspace for an empty command`() {
     val metrics = TerminalCommandCompletionMetrics()
 
-    metrics.recordBackspace(100)
+    metrics.recordBackspace()
 
     assertThat(metrics.takeAndReset(200)).isEqualTo(snapshot())
   }
@@ -78,7 +89,7 @@ internal class TerminalCommandCompletionMetricsTest {
   fun `resets metrics for next command`() {
     val metrics = TerminalCommandCompletionMetrics()
 
-    metrics.recordCommandTextInserted(4)
+    metrics.recordCommandTextInserted(4, 100)
     metrics.recordPopupInserted(10)
     metrics.recordInlineInserted(3)
     metrics.takeAndReset()
@@ -92,7 +103,7 @@ internal class TerminalCommandCompletionMetricsTest {
     inlineCompletionLength: Int = 0,
     typingsCount: Int = 0,
     backspacesCount: Int = 0,
-    commandTypingTimeMillis: Long? = null,
+    commandTypingTimeMillis: Long = 0,
   ): TerminalCommandCompletionMetrics.CompletionLengthSnapshot {
     return TerminalCommandCompletionMetrics.CompletionLengthSnapshot(
       totalCommandInsertedLength = totalCommandInsertedLength,

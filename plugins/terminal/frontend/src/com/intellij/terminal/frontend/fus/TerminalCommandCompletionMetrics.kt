@@ -13,8 +13,12 @@ class TerminalCommandCompletionMetrics {
   private var commandTypingStartedAt: Long? = null
 
   /** Counts inserted command text; removals do not affect the metric. */
-  fun recordCommandTextInserted(length: Int) {
-    totalCommandInsertedLength += length.coerceAtLeast(0)
+  fun recordCommandTextInserted(length: Int, timeMillis: Long) {
+    val insertedLength = length.coerceAtLeast(0)
+    totalCommandInsertedLength += insertedLength
+    if (insertedLength > 0) {
+      commandTypingStartedAt = commandTypingStartedAt ?: timeMillis
+    }
   }
 
   fun recordPopupInserted(length: Int) {
@@ -25,16 +29,14 @@ class TerminalCommandCompletionMetrics {
     if (length > 0) inlineCompletionLength += length
   }
 
-  fun recordTyping(timeMillis: Long) {
+  fun recordTyping() {
     typingsCount++
-    commandTypingStartedAt = commandTypingStartedAt ?: timeMillis
   }
 
-  fun recordBackspace(timeMillis: Long) {
+  fun recordBackspace() {
     if (totalCommandInsertedLength == 0) return
 
     backspacesCount++
-    commandTypingStartedAt = commandTypingStartedAt ?: timeMillis
   }
 
   fun takeAndReset(timeMillis: Long = System.currentTimeMillis()): CompletionLengthSnapshot {
@@ -46,7 +48,7 @@ class TerminalCommandCompletionMetrics {
       backspacesCount = backspacesCount,
       commandTypingTimeMillis = commandTypingStartedAt?.let {
         (timeMillis - it).coerceAtLeast(0)
-      },
+      } ?: 0,
     ).also {
       reset()
     }
@@ -67,6 +69,6 @@ class TerminalCommandCompletionMetrics {
     val inlineCompletionLength: Int,
     val typingsCount: Int,
     val backspacesCount: Int,
-    val commandTypingTimeMillis: Long?,
+    val commandTypingTimeMillis: Long,
   )
 }
