@@ -11,19 +11,19 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
       <library name="kotlin-gradle-plugin-idea-browser-debug" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-browser-debug:2.5.0-dev-6142">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-browser-debug:2.5.0-dev-7359">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-dev-6142/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-6142.jar">
-              <sha256sum>2ad81e0842ad4815abbf08f1f2ade22231a4a0c79bc78a52bea7d2a6a5a31435</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-dev-7359/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-7359.jar">
+              <sha256sum>b2ad5dc29fd84798302148ec70ae85c8da7123fa13ea53bd6ca6163171b1cdfd</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-dev-6142/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-6142.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-dev-7359/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-7359.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-dev-6142/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-6142-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-dev-7359/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-7359-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
