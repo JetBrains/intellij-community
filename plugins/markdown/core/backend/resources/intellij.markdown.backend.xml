@@ -36,6 +36,7 @@
       <action id="CopyReference" class="com.intellij.markdown.backend.reference.headers.MarkdownHeaderCopyAction" overrides="true"/>
     </actions>
     <extensions defaultExtensionNs="com.intellij">
+      <applicationService serviceImplementation="com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService" client="all"/>
       <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewPassFactory"/>
       <platform.rpc.backend.remoteApiProvider
         implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewRemoteApiProvider"/>

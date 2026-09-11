@@ -12,6 +12,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.execution.ParametersListUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalTabState
@@ -57,7 +58,8 @@ internal fun createTerminalTab(
 /**
  * Checks for user settings and known restrictions and returns true if the Reworked Terminal should be used.
  */
-internal fun shouldUseReworkedTerminal(): Boolean {
+@ApiStatus.Internal
+fun shouldUseReworkedTerminal(): Boolean {
   val engine = TerminalOptionsProvider.instance.terminalEngine
   val frontendType = FrontendApplicationInfo.getFrontendType()
   val isCodeWithMe = frontendType is FrontendType.Remote && frontendType.isGuest()

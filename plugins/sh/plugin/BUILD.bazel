@@ -12,6 +12,7 @@ dev_dist_plugin(
         "intellij.sh.copyright",
         "intellij.sh.markdown",
         "intellij.sh.python",
+        "intellij.sh.terminal.frontend",
         "intellij.sh.terminal",
     ],
     prepacked_jars = {

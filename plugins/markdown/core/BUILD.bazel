@@ -50,6 +50,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//platform/statistics"],
     deps = [
         # do not sort,
         "//platform/kernel/rpc.lite",
@@ -122,6 +123,11 @@ jvm_library(
     ),
     module_name = "intellij.markdown",
     visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/statistics",
+        "//platform/statistics:statistics_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":markdown",

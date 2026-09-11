@@ -1705,6 +1705,7 @@ plugins/sh/markdown
 plugins/sh/plugin
 plugins/sh/python
 plugins/sh/terminal
+plugins/sh/terminal/frontend
 plugins/space/jps-plugin
 plugins/stats-collector
 plugins/stream-debugger

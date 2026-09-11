@@ -12,6 +12,7 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
@@ -25,6 +26,7 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.markdown.frontend.runner.MarkdownFrontendRunnerFlowService$StartupActivity"/>
     <editorFactoryListener implementation="com.intellij.markdown.frontend.editor.tables.ui.alignment.MarkdownTableAlignmentController$Listener"/>
     <editorFactoryListener implementation="com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewEditorListener"/>
     <fileEditorProvider id="markdown-preview-editor" implementation="com.intellij.markdown.frontend.preview.MarkdownSplitEditorProvider"/>

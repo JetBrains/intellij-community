@@ -21,6 +21,16 @@ interface MarkdownRunner {
 
   fun run(command: String, project: Project, workingDirectory: String?, executor: Executor): Boolean
 
+  fun run(
+    command: String,
+    project: Project,
+    executor: Executor,
+    context: MarkdownRunnerContext,
+  ): Boolean {
+    context.withWorkingDirectory(project) { workingDirectory -> run(command, project, workingDirectory, executor) }
+    return true
+  }
+
   @Nls
   fun title(): String
 }

@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.project" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
@@ -92,5 +93,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.sh.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.sh.plugin" scope="RUNTIME" />
   </component>
 </module>
