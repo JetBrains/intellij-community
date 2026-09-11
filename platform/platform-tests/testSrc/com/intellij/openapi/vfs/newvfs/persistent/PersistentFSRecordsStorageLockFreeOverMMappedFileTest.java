@@ -11,6 +11,7 @@ import org.junit.runners.Parameterized;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
@@ -77,6 +78,33 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
         expectedRecordOffsetInFile = (expectedRecordOffsetInFile / PAGE_SIZE + 1) * PAGE_SIZE;
       }
     }
+  }
+
+  /** Protects the persistent header and record formats from unintended layout changes. */
+  @Test
+  public void memoryLayoutsMatchPersistentFileFormat() {
+    var headerLayout = PersistentFSRecordsLockFreeOverMMappedFile.FileHeader.LAYOUT;
+    assertEquals("The header version offset must stay compatible", 0L, headerLayout.byteOffset(groupElement("version")));
+    assertEquals("The allocated records offset must stay compatible", 4L, headerLayout.byteOffset(groupElement("recordsAllocated")));
+    assertEquals("The global modification count offset must stay compatible", 8L, headerLayout.byteOffset(groupElement("globalModCount")));
+    assertEquals("The owner process offset must stay compatible", 12L, headerLayout.byteOffset(groupElement("ownerProcessId")));
+    assertEquals("The creation timestamp offset must stay compatible", 16L, headerLayout.byteOffset(groupElement("creationTimestamp")));
+    assertEquals("The ownership timestamp offset must stay compatible", 24L,
+                 headerLayout.byteOffset(groupElement("ownershipAcquiredTimestamp")));
+    assertEquals("The accumulated errors offset must stay compatible", 32L, headerLayout.byteOffset(groupElement("errorsAccumulated")));
+    assertEquals("The header flags offset must stay compatible", 36L, headerLayout.byteOffset(groupElement("flags")));
+    assertEquals("The header size must stay compatible", 40L, headerLayout.byteSize());
+
+    var recordLayout = PersistentFSRecordsLockFreeOverMMappedFile.RecordLayout.LAYOUT;
+    assertEquals("The parent reference offset must stay compatible", 0L, recordLayout.byteOffset(groupElement("parentRef")));
+    assertEquals("The name reference offset must stay compatible", 4L, recordLayout.byteOffset(groupElement("nameRef")));
+    assertEquals("The record flags offset must stay compatible", 8L, recordLayout.byteOffset(groupElement("flags")));
+    assertEquals("The attribute reference offset must stay compatible", 12L, recordLayout.byteOffset(groupElement("attributeRef")));
+    assertEquals("The content reference offset must stay compatible", 16L, recordLayout.byteOffset(groupElement("contentRef")));
+    assertEquals("The modification count offset must stay compatible", 20L, recordLayout.byteOffset(groupElement("modCount")));
+    assertEquals("The record timestamp offset must stay compatible", 24L, recordLayout.byteOffset(groupElement("timestamp")));
+    assertEquals("The record length offset must stay compatible", 32L, recordLayout.byteOffset(groupElement("length")));
+    assertEquals("The record size must stay compatible", 40L, recordLayout.byteSize());
   }
 
   @Test
