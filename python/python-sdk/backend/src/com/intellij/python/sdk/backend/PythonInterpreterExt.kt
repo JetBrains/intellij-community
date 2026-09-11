@@ -4,6 +4,7 @@ package com.intellij.python.sdk.backend
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -23,9 +24,12 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /** The tool's own executable name on [this] OS — Windows wants the `.exe`. */
 private fun EelOsFamily.executableName(binaryName: String): String = when (this) {
@@ -212,3 +216,12 @@ fun PythonInterpreter.venvLibDirectory(): VirtualFile? {
 
 private val PythonInterpreter.sdkClassRoots: Array<VirtualFile>
   get() = runReadActionBlocking { sdk.rootProvider.getFiles(OrderRootType.CLASSES) }
+
+/**
+ * The request that uploads the PyCharm helpers to the machine this interpreter runs on.
+ *
+ * A local interpreter answers too: the request then describes the local machine.
+ */
+@Internal
+fun PythonInterpreter.targetEnvironmentRequest(project: Project): HelpersAwareTargetEnvironmentRequest =
+  PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)

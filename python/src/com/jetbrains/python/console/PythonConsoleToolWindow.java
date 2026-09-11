@@ -89,8 +89,7 @@ public final class PythonConsoleToolWindow {
         if (lastChangeType == changeType || !affectedToolWindow.getId().equals(toolWindow.getId())) return;
         lastChangeType = changeType;
         if (lastChangeType == ToolWindowManagerEventType.ActivateToolWindow && affectedToolWindow.getContentManager().getContentCount() == 0) {
-          PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(myProject, null);
-          runner.run(true);
+          PythonConsoleStarter.launchPythonConsoleRunnerIfInterpreterExists(myProject, null, runner -> runner.run(true));
         }
       }
     });
@@ -176,16 +175,21 @@ public final class PythonConsoleToolWindow {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(true);
+      e.getPresentation().setEnabled(false);
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
+      boolean hasInterpreter = PythonConsoleStarter.hasPythonConsoleInterpreter(project, e.getData(PlatformCoreDataKeys.MODULE));
+      PythonConsoleStarter.setConsoleInterpreterState(
+        e.getPresentation(), hasInterpreter,
+        PyBundle.message("python.console.no.interpreter.project"), getTemplatePresentation().getDescription());
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project != null) {
-        PydevConsoleRunner runner =
-          PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, e.getData(PlatformCoreDataKeys.MODULE));
-        runner.run(true);
+        PythonConsoleStarter.launchPythonConsoleRunner(project, e.getData(PlatformCoreDataKeys.MODULE),
+                                                       runner -> runner.run(true));
       }
     }
 

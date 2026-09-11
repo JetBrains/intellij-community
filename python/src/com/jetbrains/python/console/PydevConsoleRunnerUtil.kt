@@ -10,13 +10,12 @@ import com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
 import com.intellij.execution.target.value.andThenJoinToString
 import com.intellij.execution.target.value.toLinkedSetFunction
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -32,6 +31,7 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
+import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus
@@ -114,71 +114,41 @@ private fun appendBasicMappings(project: Project, data: RemoteSdkProperties): Py
   return pathMapper
 }
 
-internal fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?, Module?> {
-  var sdk: Sdk? = null
-  var module: Module? = null
+/**
+ * The interpreter a console starts on, and the module it belongs to. Both `null` when the project offers neither.
+ *
+ * Two sources, in this order.
+ *
+ * 1. The Environment section of Settings | Build, Execution, Deployment | Console | Python Console. An interpreter
+ *    pinned there, or "Use module SDK" naming a module, is the user's choice for every console in the project, so
+ *    nothing below overrides it. The working directory beside it wins the same way, in `getWorkingDirFromSettings`.
+ * 2. The interpreter of the subproject the console runs in — the one [getModuleToStartConsole] names when the caller
+ *    named no module, which is the interpreter widget's own rule. One rule for both surfaces, so the console and the
+ *    status bar never disagree.
+ */
+internal suspend fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?, Module?> {
   val settings = PyConsoleOptions.getInstance(project).pythonConsoleSettings
-  val sdkHome = settings.sdkHome
-  if (sdkHome != null) {
-    sdk = PythonSdkUtil.findSdkByPath(sdkHome)
-    val moduleName = settings.moduleName
-    if (moduleName != null) {
-      module = ModuleManager.getInstance(project).findModuleByName(moduleName)
-    }
-    else {
-      module = contextModule
-      if (module == null && ModuleManager.getInstance(project).modules.isNotEmpty()) {
-        module = ModuleManager.getInstance(project).modules[0]
-      }
-    }
+  val namedModule = settings.moduleName?.let { ModuleManager.getInstance(project).findModuleByName(it) }
+  val module = when {
+    // A pinned interpreter carries no module of its own, so the module only decides the working directory and the
+    // tab title. The module named beside the pin is the user's word on both.
+    settings.sdkHome != null -> namedModule ?: contextModule ?: getModuleToStartConsole(project)
+    // "Use module SDK" says which module the interpreter comes from, and the caller's module outranks the named one:
+    // it is the subproject the user acted on.
+    settings.isUseModuleSdk -> contextModule ?: namedModule ?: getModuleToStartConsole(project)
+    else -> contextModule ?: getModuleToStartConsole(project)
   }
-  if (sdk == null && settings.isUseModuleSdk) {
-    if (contextModule != null) {
-      module = contextModule
-    }
-    else {
-      val moduleName = settings.moduleName
-      if (moduleName != null) {
-        module = ModuleManager.getInstance(project).findModuleByName(moduleName)
-      }
-    }
-    if (module != null) {
-      if (PythonSdkUtil.findPythonSdk(module) != null) {
-        sdk = PythonSdkUtil.findPythonSdk(module)
-      }
-    }
-  }
-  else if (contextModule != null) {
-    if (module == null) {
-      module = contextModule
-    }
-    if (sdk == null) {
-      sdk = PythonSdkUtil.findPythonSdk(module)
-    }
-  }
-  if (sdk == null) {
-    mainConsoleTarget(project)?.let { target ->
-      PythonSdkUtil.findPythonSdk(target.module)?.let {
-        sdk = it
-        module = target.module
-      }
-    }
-  }
-  if (sdk == null) {
-    for (m in ModuleManager.getInstance(project).modules) {
-      if (PythonSdkUtil.findPythonSdk(m) != null) {
-        sdk = PythonSdkUtil.findPythonSdk(m)
-        module = m
-        break
-      }
-    }
-  }
-  if (sdk == null) {
-    if (PythonSdkUtil.getAllSdks().size > 0) {
-      sdk = PythonSdkUtil.getAllSdks()[0] //take any python sdk
-    }
-  }
-  return Pair.create(sdk, module)
+  return Pair.create(findConsoleSdk(settings, module), module)
+}
+
+/**
+ * The interpreter a console runs on: the one [settings] pin, and [module]'s own when they pin none.
+ */
+@ApiStatus.Internal
+suspend fun findConsoleSdk(settings: PyConsoleSettings, module: Module?): Sdk? {
+  @Suppress("DEPRECATION")
+  settings.sdkHome?.let { PythonSdkUtil.findSdkByPath(it) }?.let { return it }
+  return module?.findPythonSdk()
 }
 
 @ApiStatus.Internal
@@ -278,25 +248,7 @@ internal fun getConsoleSdk(element: PsiElement): Sdk? {
 }
 
 @ApiStatus.Internal
-fun getModuleToStartConsole(project: Project, moduleManager: ModuleManager): Module {
-  val selectedFiles = FileEditorManager.getInstance(project).getSelectedFiles()
-  val moduleForOpenedFile = selectedFiles.firstNotNullOfOrNull {
-    val isLocalFs = it.isInLocalFileSystem
-    if (!isLocalFs)
-      return@firstNotNullOfOrNull null
-    ModuleUtilCore.findModuleForFile(it, project)
-  }
-  if (moduleForOpenedFile != null) {
-    return moduleForOpenedFile
-  }
-
-  val projectLocalModule = moduleManager.modules.firstOrNull { module ->
-    val roots = ModuleRootManager.getInstance(module).contentRoots
-    roots.all { it.isInLocalFileSystem }
-  }
-  if (projectLocalModule != null) {
-    return projectLocalModule
-  }
-
-  return moduleManager.modules.firstOrNull() ?: throw IllegalStateException("Module must not be null when running python console")
+suspend fun getModuleToStartConsole(project: Project): Module? {
+  val selectedFile = readAction { FileEditorManager.getInstance(project).selectedFiles.firstOrNull() }
+  return resolveConsoleTarget(project, selectedFile)?.module
 }

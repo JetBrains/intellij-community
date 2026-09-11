@@ -29,7 +29,7 @@ import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevConsoleRunnerImpl;
 import com.jetbrains.python.console.PythonConsoleExecuteActionHandler;
-import com.jetbrains.python.console.PythonConsoleRunnerFactory;
+import com.jetbrains.python.console.PythonConsoleStarter;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
@@ -215,7 +215,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     setProcessCanTerminate(false);
 
-    PydevConsoleRunner consoleRunner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(getProject(), myFixture.getModule());
+    PydevConsoleRunner consoleRunner = PythonConsoleStarter.createConsoleRunnerForTest(getProject(), myFixture.getModule());
 
     consoleRunner.setSdk(existingSdk);
 
