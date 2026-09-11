@@ -38,7 +38,7 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
     (if (path.isAbsolute) path else workDir?.resolve(binOnEel.path) ?: path.toAbsolutePath()).asEelPath()
   }
   val eel = exePath.descriptor.toEelApi()
-  val (args, env) = launchRequest.args.getArgs { file ->
+  val (args, env) = launchRequest.args.getArgsAndEnv { file ->
     EelPathUtils.transferLocalContentToRemote(
       source = file,
       target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
@@ -47,7 +47,12 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
   return ProcessLauncher(
     exeForError = Exe.OnEel(exePath),
     args = args,
-    processCommands = EelProcessCommands(launchRequest.scopeToBind, binOnEel, exePath, args, launchRequest.env + env, launchRequest.usePty)
+    processCommands = EelProcessCommands(launchRequest.scopeToBind,
+                                         binOnEel,
+                                         exePath,
+                                         args,
+                                         env = launchRequest.getEnvMergingWithPathVars(env, binOnEel.path.getEelDescriptor().osFamily),
+                                         tty = launchRequest.usePty)
   )
 }
 

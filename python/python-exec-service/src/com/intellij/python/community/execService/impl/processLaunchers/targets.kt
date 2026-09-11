@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.impl.base.ProcessFunctions
 import com.intellij.platform.eel.impl.base.bindProcessToScopeImpl
 import com.intellij.python.community.execService.BinOnTarget
@@ -107,14 +108,11 @@ internal suspend fun createProcessLauncherOnTarget(
     }
   }
 
-  val (args, env) = launchRequest.args.getArgs { localFile ->
+  val (args, env) = launchRequest.args.getArgsAndEnv { localFile ->
     targetEnv.getTargetPaths(localFile.pathString).first()
   }
   val exePath: FullPathOnTarget
   val cmdLine = TargetedCommandLineBuilder(request).also { commandLineBuilder ->
-    for ((key, value) in env) {
-      commandLineBuilder.addEnvironmentVariable(key, value)
-    }
     binOnTarget.configureTargetCmdLine(commandLineBuilder)
     // exe path is always fixed (pre-presolved) promise. It can't be obtained directly because of Targets API limitation
     exePath = commandLineBuilder.exePath.localValue.blockingGet(1000) ?: error("Exe path not set: $binOnTarget is broken")
@@ -134,7 +132,11 @@ internal suspend fun createProcessLauncherOnTarget(
     }
 
     commandLineBuilder.addParameters(args)
-    for ((k, v) in launchRequest.env) {
+    val osFamily = when (targetEnv.targetPlatform.platform) {
+      Platform.UNIX -> EelOsFamily.Posix
+      Platform.WINDOWS -> EelOsFamily.Windows
+    }
+    for ((k, v) in launchRequest.getEnvMergingWithPathVars(env, osFamily)) {
       commandLineBuilder.addEnvironmentVariable(k, v)
     }
   }.build()

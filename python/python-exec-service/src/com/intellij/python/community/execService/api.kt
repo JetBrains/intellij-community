@@ -412,7 +412,7 @@ class Args(vararg initialArgs: String) {
       }
     }
 
-  internal suspend fun getArgs(mapFileToRemote: suspend (local: Path) -> String): ArgsAndEnv {
+  internal suspend fun getArgsAndEnv(mapFileToRemote: suspend (local: Path) -> String): ArgsAndEnv {
     val args = mutableListOf<String>()
     val env = mutableMapOf<String, String>()
     for (arg in _args) {
