@@ -10,7 +10,7 @@ import java.awt.Color
 import java.awt.Insets
 import javax.swing.JComponent
 
-internal class IslandsInternalPainterProvider : IslandsPainterProvider() {
+internal class IslandsInternalPainterProvider : IslandsPainterProvider {
   override fun createCommonTabPainter(): TabPainterAdapter? {
     return InternalUICustomization.getInstance()?.commonTabPainterAdapter
   }

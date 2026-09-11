@@ -16,7 +16,6 @@ import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.ToolWindowButtonManager
-import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
 import com.intellij.ui.Graphics2DDelegate
 import com.intellij.ui.JBColor
 import com.intellij.ui.mac.WindowTabsComponent
@@ -98,17 +97,7 @@ open class InternalUICustomization {
 
   internal open fun configureToolWindowPane(toolWindowPaneParent: JComponent, buttonManager: ToolWindowButtonManager) {}
 
-  /**
-   * TODO
-   * in the case of singleStripe, it is necessary to remove or recycle all actions related to the statusbar.
-   * in the menu - appearance too
-   */
-  open fun isSingleStripe(): Boolean = false
-
-  internal val internalCustomizer: StripesUxCustomizer = if (isSingleStripe())
-    XNextStripesUxCustomizer()
-  else
-    StripesUxCustomizer()
+  internal val internalCustomizer: StripesUxCustomizer = StripesUxCustomizer()
 
   open fun configureMainFrame(frame: IdeFrameImpl) {}
 
@@ -123,8 +112,6 @@ open class InternalUICustomization {
   open fun getEditorToolbarButtonLook(): ActionButtonLook? = null
 
   open fun configureEditorsSplitters(component: EditorsSplitters) {}
-
-  open fun installBackgroundUpdater(component: JComponent) {}
 
   open fun installEditorBackground(component: JComponent) {}
 
@@ -188,7 +175,7 @@ open class InternalUICustomization {
 
   open fun getCustomMainBackgroundColor(): Color? = null
 
-  fun statusBarRequired(): Boolean = !isSingleStripe()
+  fun statusBarRequired(): Boolean = true
 
   open fun getProjectTabContentInsets(): Insets? = null
 

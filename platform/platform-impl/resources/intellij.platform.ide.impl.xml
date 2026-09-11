@@ -510,7 +510,6 @@
     <projectSettings service="com.intellij.openapi.fileEditor.impl.EditorHistoryManager"/>
     <applicationSettings service="com.intellij.toolWindow.ButtonsStateService"/>
     <applicationSettings service="com.intellij.toolWindow.ToolWindowDefaultLayoutManager"/>
-    <applicationSettings service="com.intellij.toolWindow.xNext.toolbar.data.XNextPinnedService"/>
     <applicationSettings service="com.intellij.notification.impl.RemindLaterManager"/>
     <applicationSettings service="com.intellij.ide.plugins.org.PluginManagerConfigurableForOrgConfig"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.GatewayNativeWslProjectOpener"
@@ -1862,11 +1861,8 @@
                         serviceImplementation="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentServiceImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.actions.ReaderModeDefaultsOverride" open="true"
                         serviceImplementation="com.intellij.codeInsight.actions.ReaderModeDefaultsOverrideImpl" />
-    <projectService serviceInterface="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManager"
-                        serviceImplementation="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.wm.ex.WelcomeScreenProjectSupport"
                         serviceImplementation="com.intellij.openapi.wm.ex.WelcomeScreenProjectSupportImpl"/>
-    <!--XNext-->
     <applicationService serviceInterface="com.intellij.openapi.application.impl.InternalUICustomization"
                         serviceImplementation="com.intellij.openapi.application.impl.islands.IslandsUICustomization"/>
     <applicationService serviceInterface="com.intellij.ui.tabs.impl.IslandsPainterProvider"

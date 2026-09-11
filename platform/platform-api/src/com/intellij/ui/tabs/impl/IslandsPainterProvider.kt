@@ -10,23 +10,19 @@ import java.awt.Color
 import java.awt.Insets
 import javax.swing.JComponent
 
-@ApiStatus.Experimental
 @ApiStatus.Internal
-open class IslandsPainterProvider {
+interface IslandsPainterProvider {
   companion object {
     @JvmStatic
     fun getInstance(): IslandsPainterProvider? = ApplicationManager.getApplication()?.serviceOrNull()
   }
 
-  open fun createCommonTabPainter(): TabPainterAdapter? = null
+  fun createCommonTabPainter(): TabPainterAdapter? = null
+  fun useMacScrollBar(): Boolean = false
+  fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? = null
+  fun isRoundedTabDuringDrag(): Boolean = false
 
-  open fun useMacScrollBar(): Boolean = false
-
-  open fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? = null
-
-  open fun isRoundedTabDuringDrag(): Boolean = false
-
-  open fun getEditorTabComposedBgColor(
+  fun getEditorTabComposedBgColor(
     component: JComponent,
     tabPainter: JBTabPainter,
     tabColor: Color?,
@@ -34,4 +30,10 @@ open class IslandsPainterProvider {
     hovered: Boolean,
     selected: Boolean,
   ): Color? = null
+}
+
+@ApiStatus.Internal
+interface UIThemeCustomization {
+  // todo merge IslandsPainterProvider and InternalUICustomization in this one interface, register only one service in platform-impl
+  // todo this is com.intellij.openapi.application.impl.islands.IslandsUICustomization implementing it
 }
