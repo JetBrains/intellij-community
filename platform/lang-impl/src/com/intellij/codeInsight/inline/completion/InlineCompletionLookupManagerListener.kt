@@ -21,20 +21,36 @@ private class InlineCompletionLookupManagerListener : LookupManagerListener {
       "new=${newLookup?.let { "${it.javaClass.simpleName}@${System.identityHashCode(it)}" }}"
     }
     newLookup?.addLookupListener(object : LookupListener {
+      /**
+       * The selection change that waits for [application] `invokeLater`, or `null`. Only the newest one runs.
+       * A queued change becomes obsolete as soon as the next one arrives, because the update renders the
+       * selected item and the newest selection wins.
+       */
       private var pendingChange: LookupEvent? = null
 
+      /**
+       * `LookupImpl` fires this inside `PsiVersioningService.freezePsiVersion`, which forbids a lock. The
+       * update can render a variant or call a provider that needs a write-intent lock.
+       *
+       * When the caller already holds read access, the nested acquisition is re-entrant and the update runs
+       * now. Otherwise it waits for `invokeLater`, which runs the runnable under a write-intent read action.
+       * A queued update is dropped when the lookup closed or was replaced, when the selection moved on, or
+       * when the session was replaced. The session identity check stops an old event from changing a new
+       * session.
+       */
       override fun currentItemChanged(event: LookupEvent) {
         pendingChange = null
         if (event.item == null) {
           LOG.trace { "[Inline Completion] currentItemChanged ignored: item is null (clientId=${ClientId.currentOrNull})" }
           return
         }
+        val lookupChanged = InlineCompletionEvent.LookupChange(event.lookup.editor, event)
         if (application.isReadAccessAllowed) {
-          processCurrentItemChanged(event)
+          processCurrentItemChanged(lookupChanged)
           return
         }
-        val editor = event.lookup.editor
-        val topLevelEditor = InlineCompletionEvent.LookupChange(editor, event).topLevelEditor
+        val editor = lookupChanged.editor
+        val topLevelEditor = lookupChanged.topLevelEditor
         val session = InlineCompletionSession.getOrNull(topLevelEditor)
         pendingChange = event
         application.invokeLater {
@@ -44,20 +60,18 @@ private class InlineCompletionLookupManagerListener : LookupManagerListener {
           if (editor.isDisposed || lookup.project.isDisposed || LookupManager.getActiveLookup(editor) !== lookup) return@invokeLater
           if (lookup.currentItem !== event.item) return@invokeLater
           if (InlineCompletionSession.getOrNull(topLevelEditor) !== session) return@invokeLater
-          processCurrentItemChanged(event)
+          processCurrentItemChanged(lookupChanged)
         }
       }
 
-      private fun processCurrentItemChanged(event: LookupEvent) {
-        val editor = event.lookup.editor
-        val lookupChanged = InlineCompletionEvent.LookupChange(editor, event)
+      private fun processCurrentItemChanged(lookupChanged: InlineCompletionEvent.LookupChange) {
         val handler = InlineCompletion.getHandlerOrNull(lookupChanged.topLevelEditor)
         LOG.trace {
           "[Inline Completion] currentItemChanged (clientId=${ClientId.currentOrNull}): " +
-          "item='${event.item?.lookupString}', handler=${if (handler != null) "present" else "null"}"
+          "item='${lookupChanged.event.item?.lookupString}', handler=${if (handler != null) "present" else "null"}"
         }
         if (handler == null) return
-        handler.invokeEvent(InlineCompletionEvent.LookupChange(editor, event))
+        handler.invokeEvent(lookupChanged)
       }
 
       override fun lookupCanceled(event: LookupEvent) {
