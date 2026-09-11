@@ -42,6 +42,8 @@ import com.intellij.python.processOutput.common.ProcessOutputTopic
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.pyproject.model.evolution.keyOf
+import com.intellij.python.sdk.backend.asInterpreterRef
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.performToolInstallation
 import com.intellij.python.sdk.backend.evolution.EvoWorkspace
@@ -132,6 +134,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -477,7 +480,27 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     get() = PyEvoRegistry.slowToolCacheSeconds.seconds
 
   override suspend fun pyProjects(projectId: ProjectId): Flow<List<EvoPyProjectDto>> =
-    projectId.findProjectOrNull()?.service<EvoPyProjectModel>()?.dtos() ?: flowOf(emptyList())
+    projectId.findProjectOrNull()?.service<EvoPyProjectModel>()?.snapshotFlow()?.map { it.toDtos() } ?: flowOf(emptyList())
+
+  /**
+   * The wire view of one generation, in project-model order.
+   *
+   * Built here, where it is pushed, and not held on the structure: everything a DTO states lives on the generation
+   * already, and only a connected frontend ever asks for one.
+   */
+  private fun EvoPyProjectModel.Snapshot.toDtos(): List<EvoPyProjectDto> =
+    byKey.map { (key, target) ->
+      EvoPyProjectDto(
+        key = key,
+        name = target.module.name,
+        isMain = target === main,
+        // Always the root, a standalone project's own self included: it is its own root, so the key it states is its
+        // own, which every reader already treats as "no workspace of its own".
+        workspaceRootKey = keyOf(target.workspace.root),
+        // A ref is the name of the SDK, so building one reads nothing.
+        interpreterRef = target.sdk?.asInterpreterRef(),
+      )
+    }
 
   override suspend fun getCurrentInterpreter(projectId: ProjectId, pyProjectKey: String): PyInterpreterDto? {
     val pyProject = resolvePyProject(projectId, pyProjectKey) ?: return null

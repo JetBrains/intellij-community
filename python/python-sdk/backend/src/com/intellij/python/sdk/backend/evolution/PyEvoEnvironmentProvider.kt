@@ -34,8 +34,6 @@ import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.pySdkAdditionalData
-import com.jetbrains.python.sdk.findPythonSdk
-import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.intellij.python.sdk.backend.PySdkBundle
@@ -100,6 +98,18 @@ class EvoPyProject(
   private val self: PyProject,
   /** What a tool acts on. See [EvoWorkspace]. */
   val workspace: EvoWorkspace,
+  /**
+   * The interpreter this project uses, as it stood when the snapshot was computed.
+   *
+   * Every module of a workspace holds its own reference to the SDK, so the module of this project alone answers it.
+   *
+   * A value rather than a question the caller asks: reading it used to wait for the project model on every call, and
+   * that wait is what a snapshot exists to pay one time. A generation that holds one interpreter never states another,
+   * and a caller that cannot suspend reads it like any other field. Without the wait a configured SDK reads as `null`
+   * while the SDK table is still loading, and a surface then states that a project with an interpreter has none
+   * (PY-91871); the snapshot waits instead, once.
+   */
+  val sdk: Sdk?,
 ) {
   val module: Module get() = self.residesOnModule
 
@@ -107,25 +117,6 @@ class EvoPyProject(
 
   /** This project's own base dir. See [EvoWorkspace.baseDir] for the directory a tool runs in. */
   val baseDir: Directory get() = self.baseDir
-
-  /**
-   * The interpreter this project uses.
-   *
-   * Every module of a workspace holds its own reference to the SDK, so [module] alone answers.
-   *
-   * Suspends, because it waits for the project model. Read without that wait, a configured SDK reads as `null` while
-   * the SDK table is still loading, and the widget then states that a project with an interpreter has none (PY-91871).
-   */
-  suspend fun sdk(): Sdk? = module.findPythonSdk()
-
-  /**
-   * The same interpreter, read without waiting for the project model.
-   *
-   * Only for a caller that cannot suspend, such as reference resolution. It answers `null` for a project that does
-   * have an interpreter while the SDK table is still loading, and nothing tells the caller to ask again.
-   */
-  @Deprecated("Answers null before the project model is ready", ReplaceWith("sdk()"))
-  val sdk: Sdk? get() = module.pythonSdk
 }
 
 /** [EvoToolContext.cached] key under which the core-supplied system-Python list is memoized. */

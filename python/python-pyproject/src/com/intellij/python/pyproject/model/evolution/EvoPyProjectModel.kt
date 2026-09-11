@@ -13,9 +13,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.project.Project
-import com.intellij.python.sdk.backend.asInterpreterRef
 import com.jetbrains.python.sdk.findPythonSdk
-import com.jetbrains.python.sdk.pythonSdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
@@ -85,14 +83,18 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    * rather than mutating this one, so a caller that resolved a target keeps working against the generation it read.
    */
   class Snapshot(
-    private val byKey: Map<String, EvoPyProject>,
+    /**
+     * Every `PyProject` of this generation, by its wire identity. See [keyOf].
+     *
+     * The whole content of a generation, for a caller that projects it — the RPC layer builds [EvoPyProjectDto] from
+     * it. A caller that wants one of them by key or by module asks [resolve] or [forModule] instead.
+     */
+    val byKey: Map<String, EvoPyProject>,
     /**
      * The `PyProject` rooted at the project's own base dir, i.e. the one that makes the *project* a Python project —
      * `null` when its root belongs to no Python module. See [EvoPyProjectDto.isMain].
      */
     val main: EvoPyProject?,
-    /** Wire projection of [byKey], in project-model order. */
-    val dtos: List<EvoPyProjectDto>,
   ) {
     /**
      * The target [key] addresses, or `null` when this generation has no such `PyProject` — a key the frontend held
@@ -115,6 +117,13 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     /** Every `PyProject`'s own base dir — a workspace member's own, not its root's. Used to exclude sibling projects from env discovery. */
     val baseDirs: Set<Path> get() = byKey.values.mapTo(mutableSetOf()) { it.baseDir }
 
+    /**
+     * Every interpreter a project of this generation uses.
+     *
+     * The answer to "does this project use that interpreter", for a caller that would otherwise walk every module to
+     * find out. Read from the same generation as everything else here, so a caller never mixes two answers.
+     */
+    val sdks: Set<Sdk> = byKey.values.mapNotNullTo(mutableSetOf()) { it.sdk }
   }
 
   private val state = MutableStateFlow<Snapshot?>(null)
@@ -154,7 +163,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
   }
 
   /** The current structure, awaiting the first computation when it has not landed yet. */
-  suspend fun snapshot(): Snapshot = state.filterNotNull().first()
+  suspend fun snapshot(): Snapshot = snapshotFlow().first()
 
   /**
    * The current structure, or `null` while the first computation is still running.
@@ -163,6 +172,18 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    * rather than "nothing there": the answer arrives shortly after the project opens.
    */
   fun snapshotOrNull(): Snapshot? = state.value
+
+  /**
+   * Every structure this model publishes, the current one first.
+   *
+   * The one source the other three read: [snapshot] takes its first element, [snapshotOrNull] the value behind it, and
+   * [dtos] its wire projection. Each states a different contract — await, peek, follow — over the same generations.
+   *
+   * For a caller that must follow the structure rather than ask for it: a change of the interpreter of a module
+   * arrives here, in order, after the model is recomputed. A workspace-model listener sees the change earlier, while
+   * this model still holds the generation before it, so a caller that needs this model must not use one.
+   */
+  fun snapshotFlow(): Flow<Snapshot> = state.filterNotNull()
 
   /** See [Snapshot.resolve]. */
   suspend fun resolve(key: String): EvoPyProject? = snapshot().resolve(key)
@@ -184,7 +205,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    * Nothing where [file] resolves to no `PyProject`. That is the same nothing the interpreter widget shows, and the
    * two surfaces state one interpreter, so neither invents one the other does not have.
    */
-  suspend fun interpreterFor(file: VirtualFile?): Sdk? = targetFor(file)?.sdk()
+  suspend fun interpreterFor(file: VirtualFile?): Sdk? = targetFor(file)?.sdk
 
   /**
    * The interpreter for the file being edited, as [interpreterFor] resolves it, recomputed whenever the structure or
@@ -198,18 +219,15 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
 
   private fun selectedFile(): VirtualFile? = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
 
-  /** The pushed structure, re-emitted on every recomputation — the backing flow of [com.intellij.python.sdk.common.evolution.PyEvoSdkApi.pyProjects]. */
-  fun dtos(): Flow<List<EvoPyProjectDto>> = state.filterNotNull().map { it.dtos }
-
   private suspend fun computeSnapshot(): Snapshot {
     val pyProjects = project.getPyProjects()
     val byModule = pyProjects.associateBy { it.residesOnModule }
     // One read action for the whole pass rather than one per module: each call reads the same workspace-model
     // snapshot, and taking it once also keeps the layouts consistent with each other.
     val layouts = readAction { pyProjects.associate { it.residesOnModule to it.residesOnModule.getWorkspaceLayout() } }
-    // Read with the layouts, from the same workspace-model snapshot, so a DTO never pairs one generation's structure
-    // with another's interpreters.
-    val interpreterRefs = readAction { pyProjects.associate { it.residesOnModule to it.residesOnModule.pythonSdk?.asInterpreterRef() } }
+    // Waits for the project model, once for the whole generation, so no reader of this snapshot waits again and none
+    // reads `null` for a configured interpreter while the SDK table is still loading (PY-91871).
+    val sdks = pyProjects.associate { it.residesOnModule to it.residesOnModule.findPythonSdk() }
 
     /**
      * The workspace root of [pyProject], or `null` when it is standalone.
@@ -233,25 +251,11 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
       return workspacesByRoot.getOrPut(layout.rootModule) { EvoWorkspace(root, layout.allModules.mapNotNull { byModule[it] }) }
     }
 
-    // Whether a *declared* workspace exists is the DTO's question alone, so it is answered here instead of being
-    // carried on [EvoWorkspace], which a standalone project has too.
-    val workspaceRootKeys: Map<Module, String> =
-      pyProjects.mapNotNull { p -> workspaceRootOf(p)?.let { p.residesOnModule to keyOf(it) } }.toMap()
-
     // Same spelling as the keys, so "is this the main one" is a comparison of like with like.
     val mainKey = project.basePath?.let { FileUtil.toSystemIndependentName(it) }
     // Keyed rather than listed, and the DTOs derived from the map, so the two can never disagree about what exists.
-    val byKey = pyProjects.associateBy({ keyOf(it) }, { EvoPyProject(it, workspaceOf(it)) })
-    val dtos = byKey.map { (key, target) ->
-      EvoPyProjectDto(
-        key = key,
-        name = target.module.name,
-        isMain = key == mainKey,
-        workspaceRootKey = workspaceRootKeys[target.module],
-        interpreterRef = interpreterRefs[target.module],
-      )
-    }
-    return Snapshot(byKey, mainKey?.let { byKey[it] }, dtos)
+    val byKey = pyProjects.associateBy({ keyOf(it) }, { EvoPyProject(it, workspaceOf(it), sdks[it.residesOnModule]) })
+    return Snapshot(byKey, mainKey?.let { byKey[it] })
   }
 }
 
@@ -262,7 +266,8 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
  * [com.intellij.openapi.vfs.VirtualFile.getPath], which is already in that form — so the comparison is plain string
  * equality on both sides, with no path parsing and no VFS lookup.
  */
-internal fun keyOf(pyProject: PyProject): String = FileUtil.toSystemIndependentName(pyProject.baseDir.toString())
+@ApiStatus.Internal
+fun keyOf(pyProject: PyProject): String = FileUtil.toSystemIndependentName(pyProject.baseDir.toString())
 
 /**
  * The interpreter of the module at the project root, for a file that belongs to no module, such as a scratch file.

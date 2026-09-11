@@ -348,9 +348,10 @@ data class EvoPyProjectDto(
    */
   val isMain: Boolean,
   /**
-   * [key] of the root of the tool workspace (uv/poetry) this takes part in, as its root or as a member; `null` when
-   * standalone. Every member of a workspace shares the one environment declared at its root, so the backend resolves
-   * every directory it works with against that root — this is what lets the popup name the workspace in its title.
+   * [key] of the root of the tool workspace (uv/poetry) this takes part in, as its root or as a member. A standalone
+   * project is its own root and states its own key. Every member of a workspace shares the one environment declared at
+   * its root, so the backend resolves every directory it works with against that root — this is what lets the popup
+   * name the workspace in its title, which it does only where the root is another project.
    */
   val workspaceRootKey: @NonNls String? = null,
   /**

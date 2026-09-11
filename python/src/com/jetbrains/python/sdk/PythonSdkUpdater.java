@@ -164,14 +164,23 @@ public final class PythonSdkUpdater {
     return true;
   }
 
-  private static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, @NotNull PyUpdateSdkRequestData requestData) {
+  /**
+   * @return whether the request was accepted. A background request for an interpreter that the project does not use is
+   * not accepted. A request that is accepted still does nothing in a unit test, unless a test enabled the update.
+   */
+  private static boolean scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, @NotNull PyUpdateSdkRequestData requestData) {
     if (project.isDisposed() || (sdk instanceof Disposable sdkDisposable && Disposer.isDisposed(sdkDisposable))) {
-      return;
+      return false;
+    }
+
+    if (requestData.background && !isSdkInUse(sdk, project)) {
+      LOG.info("Skipping the background update of '" + sdk.getName() + "': no module of '" + project.getName() + "' uses it");
+      return false;
     }
 
     if (!ourEnabledInTests && ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.info("Skipping background update for '" + sdk + "' in unit test mode");
-      return;
+      return true;
     }
     TrackingUtil.trackActivity(project, PythonActivityKey.INSTANCE, () -> {
       synchronized (ourLock) {
@@ -195,6 +204,30 @@ public final class PythonSdkUpdater {
       }
       ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, requestData));
     });
+    return true;
+  }
+
+  /**
+   * Schedules an update that a background process asked for, and not a user.
+   * <p>
+   * Such an update does nothing while no module of {@code project} uses {@code sdk}: the interpreter is registered, but
+   * the project does not use it, and skeleton generation and a package scan would start it for nothing. A user action
+   * and the creation of an interpreter call {@link #scheduleUpdate(Sdk, Project)} instead, because an interpreter that
+   * no module uses yet still has to be set up. See PY-88315.
+   *
+   * @return whether the project uses the interpreter, so the update was scheduled
+   */
+  @ApiStatus.Internal
+  public static boolean scheduleBackgroundUpdate(@NotNull Sdk sdk, @NotNull Project project) {
+    return scheduleUpdate(sdk, project, new PyUpdateSdkRequestData(true, true));
+  }
+
+  /**
+   * Whether a module of {@code project} uses {@code sdk}.
+   */
+  @ApiStatus.Internal
+  public static boolean isSdkInUse(@NotNull Sdk sdk, @NotNull Project project) {
+    return getPythonSdks(project).contains(sdk);
   }
 
   /**
@@ -223,21 +256,33 @@ public final class PythonSdkUpdater {
     final Instant myTimestamp;
     final Throwable myTraceback;
     final boolean withPackagesUpdate;
+    /** A background process asked for the update, and not a user. */
+    final boolean background;
 
     private PyUpdateSdkRequestData(boolean withPackagesUpdate) {
-      this(Instant.now(), new Throwable(), withPackagesUpdate);
+      this(withPackagesUpdate, false);
     }
 
-    private PyUpdateSdkRequestData(@NotNull Instant timestamp, @NotNull Throwable traceback, boolean withPackagesUpdate) {
+    private PyUpdateSdkRequestData(boolean withPackagesUpdate, boolean background) {
+      this(Instant.now(), new Throwable(), withPackagesUpdate, background);
+    }
+
+    private PyUpdateSdkRequestData(@NotNull Instant timestamp,
+                                   @NotNull Throwable traceback,
+                                   boolean withPackagesUpdate,
+                                   boolean background) {
       myTimestamp = timestamp;
       myTraceback = traceback;
       this.withPackagesUpdate = withPackagesUpdate;
+      this.background = background;
     }
 
     private static @NotNull PyUpdateSdkRequestData merge(@NotNull PyUpdateSdkRequestData oldRequest,
                                                          @NotNull PyUpdateSdkRequestData newRequest) {
+      // One request of a user makes the merged request one of a user
       return new PyUpdateSdkRequestData(oldRequest.myTimestamp, newRequest.myTraceback,
-                                        oldRequest.withPackagesUpdate || newRequest.withPackagesUpdate);
+                                        oldRequest.withPackagesUpdate || newRequest.withPackagesUpdate,
+                                        oldRequest.background && newRequest.background);
     }
   }
 
@@ -763,7 +808,8 @@ public final class PythonSdkUpdater {
   /**
    * Returns unique Python SDKs for the open modules of the project.
    */
-  static @NotNull Set<Sdk> getPythonSdks(@NotNull Project project) {
+  @ApiStatus.Internal
+  public static @NotNull Set<Sdk> getPythonSdks(@NotNull Project project) {
     final Set<Sdk> pythonSdks = new LinkedHashSet<>();
 
     ReadAction.run(
