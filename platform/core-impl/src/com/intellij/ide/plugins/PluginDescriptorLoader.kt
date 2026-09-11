@@ -1259,7 +1259,7 @@ internal fun testOrDeprecatedLoadDescriptorFromResource(
           }
         }
         else {
-          // support for unpacked plugins in classpath, e.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
+          // a third-party plugin distribution directory on the classpath, e.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
           basePath = file.parent?.takeIf { it.endsWith("lib") }?.parent ?: file
           dataLoader = loader
         }
