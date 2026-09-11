@@ -27,7 +27,6 @@ import kotlin.time.Duration
  * Use [BuildContext.createProductRunner] instead of calling this function directly.
  */
 internal fun createDevModeProductRunner(context: BuildContextImpl, additionalPluginModules: List<String> = emptyList()): IntellijProductRunner {
-  var newClassPath: Collection<Path>? = null
   return checkForNoDiskSpace(context) {
     val request = BuildRequest(
       writeCoreClasspath = false,
@@ -38,15 +37,12 @@ internal fun createDevModeProductRunner(context: BuildContextImpl, additionalPlu
       devRootDir = context.paths.tempDir.resolve("dev-run"),
       jarCacheDir = context.paths.projectHome.resolve("out/dev-run/jar-cache"),
       generateRuntimeModuleRepository = context.useModularLoader,
-      platformClassPathConsumer = { _: String, classPath: Set<Path>, _: Path ->
-        newClassPath = classPath
-      },
       isBootClassPathCorrect = true,
     )
-    val runDir = buildProduct(request) { buildDir, lifetime ->
+    val build = buildProduct(request) { buildDir, lifetime ->
       createBuildContextFromExistingContext(baseContext = context, request = request, buildDir = buildDir, lifetime = lifetime)
     }
-    DevModeProductRunner(context = context, homePath = runDir, classPath = newClassPath!!.map { it.toString() })
+    DevModeProductRunner(context = context, homePath = build.runDir, classPath = build.coreClassPath.map { it.toString() })
   }
 }
 

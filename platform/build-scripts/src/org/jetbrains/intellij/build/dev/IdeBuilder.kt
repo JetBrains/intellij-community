@@ -78,7 +78,6 @@ import kotlin.Int
 import kotlin.RuntimeException
 import kotlin.String
 import kotlin.Suppress
-import kotlin.Unit
 import kotlin.also
 import kotlin.checkNotNull
 import kotlin.io.path.createDirectories
@@ -117,6 +116,13 @@ sealed interface DevBuildOutput {
   }
 }
 
+/** What [buildProduct] assembled: the run directory, the IDE main class, and the classpath the launcher starts it with. */
+class DevBuildResult(
+  @JvmField val runDir: Path,
+  @JvmField val mainClass: String,
+  @JvmField val coreClassPath: Set<Path>,
+)
+
 data class BuildRequest(
   @JvmField val platformPrefix: String,
   @JvmField val additionalModules: List<String>,
@@ -132,7 +138,6 @@ data class BuildRequest(
    */
   @JvmField val jarCacheDir: Path? = devRootDir.resolve("jar-cache"),
   @JvmField val classesOutputDirectory: Path? = null,
-  @JvmField val platformClassPathConsumer: ((mainClass: String, classPath: Set<Path>, runDir: Path) -> Unit)? = null,
   /**
    * If `true`, the dev build will include a [runtime module repository](psi_element://com.intellij.platform.runtime.repository).
    * It is currently used only to run an instance of JetBrains Client from IDE's installation,
@@ -212,7 +217,7 @@ internal fun buildProductFromProject(
   request: BuildRequest,
   productConfiguration: ProductConfiguration,
   buildOptionsTemplate: BuildOptions,
-): Path {
+): DevBuildResult {
   return buildProduct(request = request) { buildDir, lifetime ->
     createBuildContextFromProject(
       productConfiguration = productConfiguration,
@@ -228,7 +233,7 @@ internal fun buildProductFromProject(
  * Assembles the distribution and blocks until it is complete. The steps are a group of forks, and the lifetime that
  * [createBuildContext] gets owns the caches of the context for the time of the assembly.
  */
-internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: Path, lifetime: BuildLifetime) -> BuildContext): Path {
+internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: Path, lifetime: BuildLifetime) -> BuildContext): DevBuildResult {
   check(request.fragment.isComplete || request.scrambleTool == null) {
     "Split dev distribution assembly does not support scrambling"
   }
@@ -239,7 +244,7 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
   val lifetime = BuildLifetime()
   var contextToClose: BuildContext? = null
   try {
-    taskScope {
+    return taskScope {
       val context = createBuildContext(buildDir, lifetime)
       contextToClose = context
       // Prunes stale entries before the layout starts to use the cache.
@@ -406,15 +411,12 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
         platformClasspath + coreClasspathFromPlugins
       }
 
-      // Write and publish the one classpath computation shared with the component manifest below.
-      fork("publish core classpath") {
-        val classPath = coreClassPathDeferred.await()
-        if (request.writeCoreClasspath && request.fragment.isComplete) {
-          val classPathString = formatCoreClasspath(classPath = classPath, runDir = runDir)
+      // The one classpath computation, shared with the component manifest below and with the result.
+      if (request.writeCoreClasspath && request.fragment.isComplete) {
+        fork("write core classpath") {
+          val classPathString = formatCoreClasspath(classPath = coreClassPathDeferred.await(), runDir = runDir)
           Files.writeString(runDir.resolve("core-classpath.txt"), classPathString)
         }
-
-        request.platformClassPathConsumer?.invoke(context.ideMainClassName, classPath, runDir)
       }
 
       val postProcessJob = fork("post-process distribution") {
@@ -564,6 +566,7 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
         }
       }
       join()
+      DevBuildResult(runDir = runDir, mainClass = context.ideMainClassName, coreClassPath = coreClassPathDeferred.await())
     }
   }
   finally {
@@ -572,7 +575,6 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
     // close debug logging to prevent locking of the output directory on Windows
     contextToClose?.messages?.close()
   }
-  return runDir
 }
 
 /**

@@ -165,8 +165,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
     outputDir.deleteRecursively()
   }
 
-  lateinit var mainClassName: String
-
   if (planFile != null) {
     DevDistRecipe.start(distRoot = outputDir, projectHome = projectDir, scratchDir = scratchDir)
   }
@@ -174,14 +172,11 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
     DevDistPatchedDescriptors.start()
   }
 
-  val runDir = buildProductInProcess(
+  val build = buildProductInProcess(
     BuildRequest(
       platformPrefix = platformPrefix,
       additionalModules = additionalModules,
       projectDir = projectDir,
-      platformClassPathConsumer = { actualMainClassName, _, _ ->
-        mainClassName = actualMainClassName
-      },
       os = os,
       arch = arch,
       // the IDE is started by `PreBuiltDevMain`, which resets the classloader itself, so the boot classpath is not the final one
@@ -195,6 +190,8 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
       prepackedPluginContent = prepackedPluginContent,
     )
   )
+  val runDir = build.runDir
+  val mainClassName = build.mainClass
 
   dropEmptyTempDir(runDir)
   // What the distribution is, not just where it is: a consumer that needs a different product or a plugin module

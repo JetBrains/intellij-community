@@ -89,7 +89,7 @@ object DevBuildServerRunnerImpl : DevBuildServerRunner {
               classesOutputDirectory = GlobalPaths.instance.compiledRootDirectory.resolve("classes"),
               devRunDirPrefix = if (targetOs != OsFamily.currentOs) "${targetOs.name.lowercase()}-" else "",
             )
-          )
+          ).runDir
         }
       }
 

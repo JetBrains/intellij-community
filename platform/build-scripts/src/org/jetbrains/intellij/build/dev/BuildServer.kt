@@ -150,8 +150,7 @@ fun readCustomCommand(runDir: Path, command: String): CustomCommandLaunchData? {
 fun CustomCommandLaunchData.resolveAdditionalJvmArguments(runDir: Path): List<String> =
   additionalJvmArguments.map { resolveIdeHomeMacro(it, runDir) }
 
-// returns IDE installation directory
-fun buildProductInProcess(request: BuildRequest): Path {
+fun buildProductInProcess(request: BuildRequest): DevBuildResult {
   request.tracer?.let {
     TraceManager.setTracer(it)
   }
