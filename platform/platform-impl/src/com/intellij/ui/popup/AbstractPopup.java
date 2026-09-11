@@ -927,7 +927,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
     // Set the accessible parent so that screen readers don't announce
     // a window context change -- the tooltip is "logically" hosted
     // inside the component (e.g., editor) it appears on top of.
-    AccessibleContextUtil.setParent(myComponent, editor.getContentComponent());
+    // Windows only, as in LookupImpl. macOS does not need the override. On Linux it makes Orca announce
+    // the editor context instead of the popup item (IJPL-242488, IJPL-242490).
+    if (SystemInfoRt.isWindows) {
+      AccessibleContextUtil.setParent(myComponent, editor.getContentComponent());
+    }
     show(getBestPositionFor(editor));
   }
 
