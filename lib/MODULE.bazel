@@ -9675,17 +9675,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_nativecerts-jvm-native-trusted-roots-1_1_7_http",
-    downloaded_file_path = "jvm-native-trusted-roots-1.1.7.jar",
-    sha256 = "8d715c487c8908a8b3b1d982f013f5ec39fb9033eb4272fdb251d648b5ede48c",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/nativecerts/jvm-native-trusted-roots/1.1.7/jvm-native-trusted-roots-1.1.7.jar",
+    name = "org_jetbrains_nativecerts-jvm-native-trusted-roots-2_0_8_http",
+    downloaded_file_path = "jvm-native-trusted-roots-2.0.8.jar",
+    sha256 = "75ea49c68c93351815a3858cc07c43edc44d64e97a2e1cbf9b4c015c1f8312cd",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/nativecerts/jvm-native-trusted-roots/2.0.8/jvm-native-trusted-roots-2.0.8.jar",
 )
 
 http_file(
-    name = "org_jetbrains_nativecerts-jvm-native-trusted-roots-1_1_7-sources_http",
-    downloaded_file_path = "jvm-native-trusted-roots-1.1.7-sources.jar",
-    sha256 = "1a549c91423cc9a57f99ce082ea3d59ba814e54ebea894c5eded99062d32e1f1",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/nativecerts/jvm-native-trusted-roots/1.1.7/jvm-native-trusted-roots-1.1.7-sources.jar",
+    name = "org_jetbrains_nativecerts-jvm-native-trusted-roots-2_0_8-sources_http",
+    downloaded_file_path = "jvm-native-trusted-roots-2.0.8-sources.jar",
+    sha256 = "f22b898ed85d201f42b2b47a0f3294558bd2274872490b45b485cabefc9658a8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/nativecerts/jvm-native-trusted-roots/2.0.8/jvm-native-trusted-roots-2.0.8-sources.jar",
 )
 
 http_file(

@@ -12079,17 +12079,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.nativecerts/jvm-native-trusted-roots-1.1.7.jar_copy",
-    src = "@org_jetbrains_nativecerts-jvm-native-trusted-roots-1_1_7_http//file",
-    out = "org.jetbrains.nativecerts/jvm-native-trusted-roots-1.1.7.jar",
+    name = "org.jetbrains.nativecerts/jvm-native-trusted-roots-2.0.8.jar_copy",
+    src = "@org_jetbrains_nativecerts-jvm-native-trusted-roots-2_0_8_http//file",
+    out = "org.jetbrains.nativecerts/jvm-native-trusted-roots-2.0.8.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-jvm-native-trusted-roots-jvm-native-trusted-roots",
-    jar = "@org_jetbrains_nativecerts-jvm-native-trusted-roots-1_1_7_http//file",
-    source_jar = "@org_jetbrains_nativecerts-jvm-native-trusted-roots-1_1_7-sources_http//file",
+    jar = "@org_jetbrains_nativecerts-jvm-native-trusted-roots-2_0_8_http//file",
+    source_jar = "@org_jetbrains_nativecerts-jvm-native-trusted-roots-2_0_8-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
