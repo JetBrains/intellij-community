@@ -42,6 +42,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.Base64
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.fileSize
 import kotlin.time.Duration
@@ -858,7 +859,6 @@ private class PowerShellSession(
 
     val binarySize = localBinary.fileSize()
     val cache = IjentBinaryCache.forBinary(localBinary)
-    val readyBoundary = randomBoundary()
     val pathMarker = randomBoundary()
     val directoryMarker = randomBoundary()
     val doneBoundary = randomBoundary()
@@ -878,27 +878,34 @@ private class PowerShellSession(
       return remoteBinaryPath
     }
 
+    val abortUpload =
+      $$"if ($null -ne $ijentOutput) { $ijentOutput.Dispose() }; " +
+      $$"Remove-Item -LiteralPath $ijentDir -Recurse -Force -ErrorAction SilentlyContinue; " +
+      $$"[Console]::Error.WriteLine($_.Exception.ToString()); exit 1"
     io.process.write(
-      "& { Write-Output '$readyBoundary'; " +
-      "\$ijentInput = [Console]::OpenStandardInput(); " +
-      "try { \$ijentOutput = [IO.File]::Open(\$ijentBinary, [IO.FileMode]::Create, [IO.FileAccess]::Write, [IO.FileShare]::None); " +
-      "try { \$ijentRemaining = [long]$binarySize; \$ijentBuffer = New-Object byte[] 65536; " +
-      "while (\$ijentRemaining -gt 0) { \$ijentToRead = [int][Math]::Min(\$ijentBuffer.Length, \$ijentRemaining); " +
-      "\$ijentRead = \$ijentInput.Read(\$ijentBuffer, 0, \$ijentToRead); " +
-      "if (\$ijentRead -eq 0) { throw 'Unexpected end of IJent binary stream' }; " +
-      "\$ijentOutput.Write(\$ijentBuffer, 0, \$ijentRead); \$ijentRemaining -= \$ijentRead } } " +
-      "finally { \$ijentOutput.Dispose() } } " +
-      "catch { Remove-Item -LiteralPath \$ijentDir -Recurse -Force -ErrorAction SilentlyContinue; throw }; " +
-      cache.powerShellPublish() + "; Write-Output '$doneBoundary' }"
+      $$"try { $ijentOutput = [IO.File]::Open($ijentBinary, [IO.FileMode]::Create, [IO.FileAccess]::Write, [IO.FileShare]::None) } " +
+      "catch { $abortUpload }"
     )
-
-    // Only raw bytes follow the ready marker. PowerShell has parsed the complete command and is already waiting in its binary reader.
-    io.dropOutputUntil(readyBoundary)
     withContext(Dispatchers.IO) {
-      Files.newByteChannel(localBinary, StandardOpenOption.READ).use { stream ->
-        io.process.copyDataFrom(stream)
+      Files.newInputStream(localBinary).use { stream ->
+        val buffer = ByteArray(48 * 1024)
+        val encoder = Base64.getEncoder()
+        while (true) {
+          val bytesRead = stream.read(buffer)
+          if (bytesRead < 0) break
+          val encoded = encoder.encodeToString(buffer.copyOf(bytesRead))
+          io.process.writeUnlogged(
+            $$"try { $ijentChunk = [Convert]::FromBase64String('$$encoded'); $ijentOutput.Write($ijentChunk, 0, $ijentChunk.Length) } " +
+            "catch { $abortUpload }"
+          )
+        }
       }
     }
+    io.process.write(
+      $$"try { $ijentOutput.Dispose(); " +
+      $$"if ((Get-Item -LiteralPath $ijentBinary).Length -ne $$binarySize) { throw 'Unexpected IJent binary size' }; " +
+      cache.powerShellPublish() + "; Write-Output '$doneBoundary' } catch { $abortUpload }"
+    )
     io.dropOutputUntil(doneBoundary)
     return remoteBinaryPath
   }
@@ -908,15 +915,17 @@ private class PowerShellSession(
     launchOptions: IjentLaunchOptions,
   ): IjentSessionProcessMediator {
     val launchCommand = launchOptions.command(remoteBinaryPath)
-    if (launchCommand.tlsCertificates != null) {
-      throw CommunicationFailure("Mutual TLS is not supported for PowerShell targets", null)
-    }
     val command = launchCommand.argv.joinToString(" ") { powerShellQuote(it) }
+    val tlsBootstrap = launchCommand.tlsCertificates?.let {
+      val encoded = Base64.getEncoder().encodeToString(it.serverBootstrapPem().toByteArray(StandardCharsets.UTF_8))
+      "[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$encoded')) | "
+    }.orEmpty()
     val cleanupCommand = uploadedBinaryDirectory?.let { "Remove-Item -LiteralPath ${powerShellQuote(it)} -Recurse -Force -ErrorAction SilentlyContinue; " }.orEmpty()
     io.startProcess(
-      "try { & $command; \$ijentExitCode = \$LASTEXITCODE } " +
-      "catch { \$ijentExitCode = 1; [Console]::Error.WriteLine(\$_.Exception.ToString()) } " +
-      "finally { $cleanupCommand" + "exit \$ijentExitCode }"
+      $$"try { $$tlsBootstrap& $$command; $ijentExitCode = $LASTEXITCODE } " +
+      $$"catch { $ijentExitCode = 1; [Console]::Error.WriteLine($_.Exception.ToString()) } " +
+      $$"finally { $${cleanupCommand}exit $ijentExitCode }",
+      sensitive = launchCommand.tlsCertificates != null,
     )
     return io.process.processForConnection()
   }

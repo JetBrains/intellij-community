@@ -20,6 +20,8 @@ import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
+import com.intellij.platform.ijent.tcp.MutualTlsCertificates
+import com.intellij.platform.ijent.tcp.TcpDeployInfo
 import com.intellij.testFramework.LoggedErrorProcessorEnabler
 import com.intellij.testFramework.common.timeoutRunBlocking
 import io.kotest.assertions.throwables.shouldThrow
@@ -51,12 +53,15 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
+import java.util.Base64
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.writeBytes
 import kotlin.time.Duration.Companion.seconds
 
 @Timeout(30)
@@ -323,6 +328,55 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
     strategy.shellProcess.destroyed.await()
   }
 
+  @Test
+  fun `Windows upload sends binary data as PowerShell commands`(@TempDir directory: Path): Unit = timeoutRunBlocking {
+    val content = ByteArray(128 * 1024 + 17) { it.toByte() }
+    val binary = directory.resolve("ijent.exe").also { it.writeBytes(content) }
+    val strategy = TestShellStrategy(this, usePowerShell = true)
+    try {
+      strategy.upload(binary) shouldBe TestShellProcessFacade.UPLOADED_BINARY
+
+      val chunks = strategy.shellProcess.receivedCommands.mapNotNull { command ->
+        Regex("FromBase64String\\('([^']+)'\\)").find(command)?.groupValues?.get(1)
+      }
+      (chunks.size > 1) shouldBe true
+      chunks.flatMap { Base64.getDecoder().decode(it).asIterable() } shouldBe content.toList()
+      strategy.shellProcess.receivedCommands.none { "OpenStandardInput" in it } shouldBe true
+    }
+    finally {
+      strategy.closeStrategy()
+      strategy.shellProcess.destroyed.await()
+    }
+  }
+
+  @Test
+  fun `Windows TCP launch sends the server TLS material through stdin`(): Unit = timeoutRunBlocking {
+    val remotePath = "C:\\temp\\Scarlet O'hara\\ijent.exe"
+    val certificates = MutualTlsCertificates(
+      authority = "localhost",
+      certificateAuthorityPem = "test CA certificate\n",
+      serverCertificatePem = "test server certificate\n",
+      serverPrivateKeyPem = "test server private key\n",
+      clientCertificatePem = "test client certificate\n",
+      clientPrivateKeyPem = "test client private key\n",
+    )
+    val strategy = TestShellStrategy(this, usePowerShell = true, pathMapper = { remotePath }, tlsCertificates = certificates)
+    val session = strategy.createIjentSession(strategy.successfulProvider(remotePath))
+    try {
+      val command = strategy.shellProcess.receivedCommands.single { "'grpc-server'" in it }
+      val encoded = Regex("FromBase64String\\('([^']+)'\\)").find(command)!!.groupValues[1]
+      String(Base64.getDecoder().decode(encoded), StandardCharsets.UTF_8) shouldBe
+        "test server certificate\ntest server private key\ntest CA certificate\n"
+      command should include(" | & 'C:\\temp\\Scarlet O''hara\\ijent.exe'")
+      command should include("'--use-tls'")
+      command should include("'--address=127.0.0.1'")
+    }
+    finally {
+      session.close()
+      strategy.shellProcess.destroyed.await()
+    }
+  }
+
   @Nested
   inner class `test createDeployingContext` {
     @Test
@@ -499,8 +553,11 @@ private class TestShellStrategy(
   private val pathMapper: suspend (Path) -> String? = { null },
   private val destroyFailure: Exception? = null,
   private val shellWriteFailure: IOException? = null,
+  private val tlsCertificates: MutualTlsCertificates? = null,
 ) : IjentDeployingOverShellProcessStrategy(ParentOfIjentScopes(parentScope), Dispatchers.Default) {
   override val ijentLabel: String = "test shell"
+  override val executionStrategy: ExecutionStrategy
+    get() = tlsCertificates?.let { ExecutionStrategy.Tcp(TcpDeployInfo.RandomPort("127.0.0.1"), it) } ?: ExecutionStrategy.Default
   val shellCreated = CompletableDeferred<Unit>()
   lateinit var shellProcess: TestShellProcessFacade
     private set
@@ -542,6 +599,11 @@ private class TestShellStrategy(
 
   fun closeStrategy() {
     close()
+  }
+
+  suspend fun upload(binary: Path): String {
+    getTargetPlatform()
+    return copyFile(binary)
   }
 }
 
@@ -600,6 +662,7 @@ private class TestShellProcessFacade(
     finish(42)
   }
 
+  @Suppress("checkedExceptions") // The fake shell can close while it sends a response.
   private suspend fun respondTo(command: String) {
     receivedCommands += command
     val powerShellCommand = "Write-Output" in command
@@ -624,6 +687,13 @@ private class TestShellProcessFacade(
           platformProbed.complete(Unit)
           stdoutPipe.sink.sendWholeText("AMD64$lineEnding")
         }
+        "[IO.Directory]::CreateDirectory" in command -> {
+          val markers = Regex("Write-Output \\('([a-z0-9]{32})' \\+ \\$(ijentDir|ijentBinary)\\)").findAll(command)
+          for (marker in markers) {
+            val path = if (marker.groupValues[2] == "ijentDir") UPLOADED_BINARY.substringBeforeLast('\\') else UPLOADED_BINARY
+            stdoutPipe.sink.sendWholeText("${marker.groupValues[1]}$path$lineEnding")
+          }
+        }
       }
       stdoutPipe.sink.sendWholeText("${commandBoundary}_END$lineEnding")
       return
@@ -634,6 +704,10 @@ private class TestShellProcessFacade(
       ?: Regex("^Write-Output '([a-z0-9]{32})';").find(command)
     )?.groupValues?.get(1)
     if (processBoundary != null) stdoutPipe.sink.sendWholeText("$processBoundary$lineEnding")
+    else if ($$"$ijentOutput.Dispose()" in command) {
+      val boundary = Regex("Write-Output '([a-z0-9]{32})'").find(command)?.groupValues?.get(1)
+      if (boundary != null) stdoutPipe.sink.sendWholeText("$boundary$lineEnding")
+    }
   }
 
   private suspend fun finish(exitCode: Int) {
@@ -646,6 +720,8 @@ private class TestShellProcessFacade(
   }
 
   companion object {
+    const val UPLOADED_BINARY: String = "C:\\temp\\test ijent\\ijent.exe"
+
     private val AVAILABLE_SHELL_COMMANDS = listOf(
       "busybox",
       "chmod",
