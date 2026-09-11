@@ -105,6 +105,11 @@ Fa:com.intellij.vcs.log.impl.VcsProjectLog
 - a:getFocusedComponent():javax.swing.JComponent
 - a:getText():java.lang.String
 - a:setText(java.lang.String):V
+*f:com.intellij.vcs.log.ui.frame.CommitChangesViewer
+- sf:INSTANCE:com.intellij.vcs.log.ui.frame.CommitChangesViewer
+- sf:showCommitChanges(com.intellij.openapi.project.Project,com.intellij.vcs.log.VcsFullCommitDetails):V
+- sf:showCommitChanges(com.intellij.openapi.project.Project,com.intellij.vcs.log.VcsFullCommitDetails,com.intellij.openapi.vcs.FilePath):V
+- bs:showCommitChanges$default(com.intellij.openapi.project.Project,com.intellij.vcs.log.VcsFullCommitDetails,com.intellij.openapi.vcs.FilePath,I,java.lang.Object):V
 *:com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider
 - *sf:Companion:com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider$Companion
 - a:createLoader(com.intellij.openapi.project.Project):com.intellij.vcs.log.data.util.VcsCommitsDataLoader
