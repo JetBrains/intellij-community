@@ -51,6 +51,7 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
   operationScope: CoroutineScope = service<PluginManagerCoroutineScopeHolder>().coroutineScope,
   unifiedDetailsPageLayout: Boolean = false,
   private val pluginIconScale: Float = 1.0f,
+  private val compactRows: Boolean = false,
 ) {
   private val detailsPageLayout = if (unifiedDetailsPageLayout) {
     PluginDetailsPageLayout.Unified
@@ -293,6 +294,8 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
       islandSelection = true,
       toggleForEnablement = true,
       pluginIconScale = pluginIconScale,
+      unifiedRowLayout = true,
+      compactUnifiedRowLayout = compactRows,
     ).also(rows::add)
   }
 
@@ -324,6 +327,8 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
       islandSelection = true,
       toggleForEnablement = true,
       pluginIconScale = pluginIconScale,
+      unifiedRowLayout = true,
+      compactUnifiedRowLayout = compactRows,
     ).also(rows::add)
   }
 

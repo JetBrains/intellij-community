@@ -4,6 +4,8 @@ package com.intellij.ide.plugins.unified
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.UnifiedPluginsSectionHeaderVariant
+import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Divider
@@ -26,6 +28,7 @@ import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.border.CustomLineBorder
+import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
@@ -36,6 +39,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
+import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.GradientPaint
@@ -48,15 +52,29 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
+import java.awt.event.KeyEvent
 import javax.accessibility.Accessible
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
+import javax.accessibility.AccessibleState
+import javax.accessibility.AccessibleStateSet
 import javax.swing.DefaultListModel
+import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
+import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 import javax.swing.Timer
+import javax.swing.JToggleButton
+import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
 import org.jetbrains.annotations.Nls
 
@@ -70,6 +88,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
   onSearchControl: (UnifiedPluginSearchControlIntent) -> Unit = {},
   private val onBundledCategoryAction: (BundledPluginCategoryGroupState) -> Unit = {},
   private val createBundledCategoryPromotion: (String) -> JComponent? = { null },
+  private val sectionHeaderVariant: UnifiedPluginsSectionHeaderVariant = UnifiedPluginsSectionHeaderVariant.FullHeader,
 ) : AutoCloseable {
   private val searchField = SearchTextField(SEARCH_HISTORY_PROPERTY)
   private val searchToolbar = UnifiedPluginsSearchToolbar(onSearchControl)
@@ -101,7 +120,11 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
   private var lastAnnouncedResults: ResultsAnnouncementSignature? = null
 
   val component: JComponent
-  val searchComponent: JComponent = SearchFieldWithExtension(searchToolbar.component, searchField).apply {
+  val searchComponent: JComponent = SearchFieldWithExtension(
+    searchToolbar.component,
+    searchField,
+    verticalContentInset = 0,
+  ).apply {
     val maximumWidth = JBUI.scale(SEARCH_COMPONENT_WIDTH)
     preferredSize = Dimension(maximumWidth, preferredSize.height)
     maximumSize = Dimension(maximumWidth, maximumSize.height)
@@ -195,6 +218,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
             onBundledCategoryAction = onBundledCategoryAction,
             createBundledCategoryPromotion = createBundledCategoryPromotion,
             realRows = rowFactory != null,
+            sectionHeaderVariant = sectionHeaderVariant,
           )
         }
         sectionView.render(section, state.query.revision, state.selectedOccurrences, viewportAnchor?.id)
@@ -474,6 +498,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     private val onBundledCategoryAction: (BundledPluginCategoryGroupState) -> Unit,
     private val createBundledCategoryPromotion: (String) -> JComponent?,
     private val realRows: Boolean,
+    private val sectionHeaderVariant: UnifiedPluginsSectionHeaderVariant,
   ) {
     private val model = DefaultListModel<PluginItemState>()
     private val titleLabel = JBLabel()
@@ -502,7 +527,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
       add(errorLabel)
     }
     private val list = JBList(model)
-    private val rowsPanel = JPanel(ListLayout.vertical()).apply {
+    private val rowsPanel = JPanel(ListLayout.vertical(ROW_GAP)).apply {
       background = PluginManagerConfigurable.MAIN_BG_COLOR
     }
     private val realRowComponents = LinkedHashMap<PluginOccurrenceId, JComponent>()
@@ -517,6 +542,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
       isOpaque = false
     }
     private val header: JComponent
+    private val fullHeaderButton: SectionHeaderButton?
     private var items: List<PluginItemState> = emptyList()
     private var categoryGroups: List<BundledPluginCategoryGroupState> = emptyList()
     private var categoryGroupsByPluginId: Map<PluginId, BundledPluginCategoryGroupState> = emptyMap()
@@ -526,9 +552,19 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     private var expanded = false
     private var fullTitle: @Nls String = ""
     private val expansionLink = ActionLink().apply {
-      addActionListener {
-        onExpansionChanged(id, !expanded)
-      }
+      addActionListener { onExpansionChanged(id, !expanded) }
+    }
+    private val expansionTextLabel = JBLabel().apply {
+      foreground = UIUtil.getContextHelpForeground()
+    }
+    private val expansionChevronLabel = JBLabel().apply {
+      horizontalAlignment = SwingConstants.CENTER
+      verticalAlignment = SwingConstants.CENTER
+    }
+    private val expansionControl = JPanel(HorizontalLayout(EXPANSION_CONTROL_GAP, SwingConstants.CENTER)).apply {
+      isOpaque = false
+      add(expansionTextLabel)
+      add(expansionChevronLabel)
     }
     private val dividerBorder = JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0)
 
@@ -559,16 +595,32 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
         titleLabel.labelFor = rowsPanel
       }
 
-      header = JPanel(BorderLayout()).apply {
-        isOpaque = false
-        border = JBUI.Borders.empty(
-          SECTION_HEADER_TOP_INSET,
-          SECTION_HEADER_LEFT_INSET,
-          SECTION_HEADER_BOTTOM_INSET,
-          SECTION_HEADER_RIGHT_INSET,
-        )
-        add(titleAndStatus, BorderLayout.CENTER)
-        add(expansionLink, BorderLayout.EAST)
+      val contentBorder = JBUI.Borders.empty(
+        SECTION_HEADER_TOP_INSET,
+        SECTION_HEADER_LEFT_INSET,
+        SECTION_HEADER_BOTTOM_INSET,
+        SECTION_HEADER_RIGHT_INSET,
+      )
+      if (sectionHeaderVariant == UnifiedPluginsSectionHeaderVariant.LinkOnly) {
+        fullHeaderButton = null
+        header = JPanel(BorderLayout()).apply {
+          isOpaque = false
+          border = contentBorder
+          add(titleAndStatus, BorderLayout.CENTER)
+          add(expansionLink, BorderLayout.EAST)
+        }
+      }
+      else {
+        val button = SectionHeaderButton { onExpansionChanged(id, !expanded) }.apply {
+          setContentBorder(contentBorder)
+          addContent(titleAndStatus, BorderLayout.CENTER)
+          addContent(expansionControl, BorderLayout.EAST)
+          forwardMouseEventsFromChildren()
+        }
+        fullHeaderButton = button
+        header = button
+      }
+      header.apply {
         val fixedHeight = JBUI.scale(SECTION_HEADER_HEIGHT)
         preferredSize = Dimension(0, fixedHeight)
         minimumSize = Dimension(0, fixedHeight)
@@ -644,11 +696,24 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
                                   hasSameRealizedPrefix(visibleItems)
       expanded = section.expanded
       renderedQueryRevision = queryRevision
-      expansionLink.apply {
-        isVisible = section.canExpand
-        val expanded = section.expanded
-        text = IdeBundle.message(if (expanded) "plugins.configurable.show.less" else "plugins.configurable.show.more")
-        setIcon(if (expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown, true)
+      fullHeaderButton?.setPresentation(section.canExpand, section.expanded, title)
+      val expansionText = IdeBundle.message(
+        if (section.expanded) "plugins.configurable.show.less" else "plugins.configurable.show.more",
+      )
+      if (sectionHeaderVariant == UnifiedPluginsSectionHeaderVariant.LinkOnly) {
+        expansionLink.apply {
+          isVisible = section.canExpand
+          text = expansionText
+          setIcon(if (section.expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown, true)
+        }
+      }
+      else {
+        expansionControl.isVisible = section.canExpand
+        expansionTextLabel.text = expansionText
+        expansionChevronLabel.apply {
+          isVisible = section.canExpand
+          icon = if (section.expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown
+        }
       }
 
       items = visibleItems
@@ -697,6 +762,121 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
       return true
     }
 
+    private class SectionHeaderButton(
+      private val onToggle: () -> Unit,
+    ) : SelectablePanel() {
+      private val toggleButton = object : JToggleButton() {
+        override fun getAccessibleContext(): AccessibleContext {
+          if (accessibleContext == null) {
+            accessibleContext = object : AccessibleJToggleButton() {
+              override fun getAccessibleRole(): AccessibleRole =
+                if (isEnabled) AccessibleRole.TOGGLE_BUTTON else AccessibleRole.PANEL
+
+              override fun getAccessibleStateSet(): AccessibleStateSet {
+                return super.getAccessibleStateSet().apply {
+                  if (isEnabled) add(if (isSelected) AccessibleState.EXPANDED else AccessibleState.COLLAPSED)
+                }
+              }
+            }
+          }
+          return accessibleContext
+        }
+      }
+
+      init {
+        layout = BorderLayout()
+        isOpaque = false
+        selectionArc = JBUI.scale(PLUGIN_CARD_SELECTION_ARC)
+        selectionInsets = JBUI.insets(
+          SECTION_HEADER_HOVER_TOP_INSET,
+          SECTION_HEADER_HOVER_HORIZONTAL_INSET,
+          SECTION_HEADER_HOVER_BOTTOM_INSET,
+          SECTION_HEADER_HOVER_HORIZONTAL_INSET,
+        )
+        accessibleContextProvider = toggleButton
+        toggleButton.apply {
+          layout = BorderLayout()
+          isOpaque = false
+          isContentAreaFilled = false
+          isBorderPainted = false
+          isFocusPainted = false
+          isRolloverEnabled = true
+          addActionListener { onToggle() }
+          getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), TOGGLE_ACTION_KEY)
+          actionMap.put(TOGGLE_ACTION_KEY, object : AbstractAction() {
+            override fun actionPerformed(event: java.awt.event.ActionEvent) = doClick()
+          })
+          model.addChangeListener { updateSelectionSurface() }
+          addFocusListener(object : FocusAdapter() {
+            override fun focusGained(event: FocusEvent) = updateSelectionSurface()
+            override fun focusLost(event: FocusEvent) = updateSelectionSurface()
+          })
+        }
+        add(toggleButton, BorderLayout.CENTER)
+      }
+
+      fun setContentBorder(border: javax.swing.border.Border) {
+        toggleButton.border = border
+      }
+
+      fun addContent(component: Component, constraints: String) {
+        toggleButton.add(component, constraints)
+      }
+
+      fun setPresentation(enabled: Boolean, selected: Boolean, accessibleName: @Nls String) {
+        toggleButton.isEnabled = enabled
+        toggleButton.isFocusable = enabled
+        toggleButton.isSelected = selected
+        val cursor = if (enabled) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
+        this.cursor = cursor
+        toggleButton.cursor = cursor
+        toggleButton.accessibleContext.accessibleName = accessibleName
+        updateSelectionSurface()
+      }
+
+      fun forwardMouseEventsFromChildren() {
+        toggleButton.components.forEach(::forwardMouseEvents)
+      }
+
+      private fun forwardMouseEvents(component: Component) {
+        component.addMouseListener(object : MouseAdapter() {
+          override fun mouseEntered(event: MouseEvent) {
+            toggleButton.model.isRollover = true
+          }
+
+          override fun mouseExited(event: MouseEvent) {
+            val point = SwingUtilities.convertPoint(component, event.point, toggleButton)
+            toggleButton.model.isRollover = toggleButton.contains(point)
+          }
+
+          override fun mousePressed(event: MouseEvent) = forward(event)
+
+          override fun mouseReleased(event: MouseEvent) = forward(event)
+
+          private fun forward(event: MouseEvent) {
+            toggleButton.dispatchEvent(SwingUtilities.convertMouseEvent(component, event, toggleButton))
+          }
+        })
+        component.addMouseMotionListener(object : MouseMotionAdapter() {
+          override fun mouseDragged(event: MouseEvent) {
+            toggleButton.dispatchEvent(SwingUtilities.convertMouseEvent(component, event, toggleButton))
+          }
+        })
+        if (component is Container) component.components.forEach(::forwardMouseEvents)
+      }
+
+      private fun updateSelectionSurface() {
+        val token = ListPluginComponent.HOVER_COLOR.takeIf {
+          toggleButton.isEnabled && toggleButton.model.isRollover
+        }
+        selectionColor = token?.let { ColorUtil.alphaBlending(it, PluginManagerConfigurable.MAIN_BG_COLOR) }
+      }
+
+      companion object {
+        private const val TOGGLE_ACTION_KEY = "toggle-section"
+      }
+    }
+
     fun realizeVisibleItems(relativeTo: JComponent, visibleRect: Rectangle): Boolean {
       if (realizedItemCount >= items.size || visibleRect.isEmpty) return false
 
@@ -743,9 +923,21 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     }
 
     private fun updateUnrealizedItemsSpacer() {
+      val unrealizedItemCount = items.size - realizedItemCount
       val unrealizedHeaderCount = categoryStartIndices.count { it >= realizedItemCount }
-      val unrealizedHeight = ((items.size - realizedItemCount).toLong() * estimatedRowHeight() +
-                              unrealizedHeaderCount.toLong() * JBUI.scale(SECTION_HEADER_HEIGHT))
+      val unrealizedComponentCount = unrealizedItemCount + unrealizedHeaderCount
+      val unrealizedGapCount = if (!realRows || unrealizedComponentCount == 0) {
+        0
+      }
+      else if (rowsPanel.componentCount == 0) {
+        unrealizedComponentCount - 1
+      }
+      else {
+        unrealizedComponentCount
+      }
+      val unrealizedHeight = (unrealizedItemCount.toLong() * estimatedRowHeight() +
+                              unrealizedHeaderCount.toLong() * JBUI.scale(SECTION_HEADER_HEIGHT) +
+                              unrealizedGapCount.toLong() * JBUI.scale(ROW_GAP))
         .coerceAtMost(Int.MAX_VALUE.toLong())
         .toInt()
       unrealizedItemsSpacer.preferredSize = Dimension(0, unrealizedHeight)
@@ -753,7 +945,11 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
 
     private fun estimatedItemsHeight(itemCount: Int, rowHeight: Int): Long {
       val headerCount = categoryStartIndices.count { it in 0 until itemCount }
-      return itemCount.toLong() * rowHeight + headerCount.toLong() * JBUI.scale(SECTION_HEADER_HEIGHT)
+      val componentCount = itemCount + headerCount
+      val gapCount = if (realRows) (componentCount - 1).coerceAtLeast(0) else 0
+      return itemCount.toLong() * rowHeight +
+             headerCount.toLong() * JBUI.scale(SECTION_HEADER_HEIGHT) +
+             gapCount.toLong() * JBUI.scale(ROW_GAP)
     }
 
     private fun updateCategoryIndexes() {
@@ -1112,10 +1308,16 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     const val SEARCH_COMPONENT_WIDTH: Int = 340
     const val SEARCH_HISTORY_PROPERTY: String = "UnifiedPluginsSearchHistory"
     const val SECTION_GAP: Int = 8
+    const val ROW_GAP: Int = 4
     const val SECTION_HEADER_BOTTOM_INSET: Int = 4
+    const val EXPANSION_CONTROL_GAP: Int = 2
     const val SECTION_HEADER_HEIGHT: Int = 40
     const val SECTION_HEADER_LEFT_INSET: Int = 16
     const val SECTION_HEADER_RIGHT_INSET: Int = 12
+    const val SECTION_HEADER_HOVER_HORIZONTAL_INSET: Int = 8
+    const val SECTION_HEADER_HOVER_TOP_INSET: Int = 7
+    const val SECTION_HEADER_HOVER_BOTTOM_INSET: Int = 3
+    const val PLUGIN_CARD_SELECTION_ARC: Int = 8
     const val SECTION_HEADER_TOP_INSET: Int = 8
     const val STATIC_ROW_HEIGHT: Int = 36
     const val STICKY_HEADER_GRADIENT_HEIGHT: Int = 8

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.RegistryManager
 internal object UnifiedPluginsPageFeature {
   const val REGISTRY_KEY: String = "plugin.manager.unified.page"
   const val DENSITY_REGISTRY_KEY: String = "plugin.manager.unified.page.density.options"
+  const val SECTION_HEADER_REGISTRY_KEY: String = "plugin.manager.unified.page.section.header.options"
 
   fun isEnabled(): Boolean = RegistryManager.getInstance().`is`(REGISTRY_KEY)
 
@@ -17,13 +18,29 @@ internal object UnifiedPluginsPageFeature {
       else -> UnifiedPluginsPageDensityVariant.Baseline
     }
   }
+
+  fun sectionHeaderVariant(): UnifiedPluginsSectionHeaderVariant {
+    val value = RegistryManager.getInstance().get(SECTION_HEADER_REGISTRY_KEY)
+    return if (value.isOptionEnabled("Link only")) {
+      UnifiedPluginsSectionHeaderVariant.LinkOnly
+    }
+    else {
+      UnifiedPluginsSectionHeaderVariant.FullHeader
+    }
+  }
+}
+
+internal enum class UnifiedPluginsSectionHeaderVariant {
+  LinkOnly,
+  FullHeader,
 }
 
 internal enum class UnifiedPluginsPageDensityVariant(
   val pluginIconScale: Float,
   val collapsedItemLimit: Int,
+  val compactRows: Boolean,
 ) {
-  Baseline(pluginIconScale = 1.0f, collapsedItemLimit = 3),
-  Icons32(pluginIconScale = 0.8f, collapsedItemLimit = 3),
-  TwoPreviewRows(pluginIconScale = 1.0f, collapsedItemLimit = 2),
+  Baseline(pluginIconScale = 1.0f, collapsedItemLimit = 3, compactRows = false),
+  Icons32(pluginIconScale = 0.8f, collapsedItemLimit = 3, compactRows = true),
+  TwoPreviewRows(pluginIconScale = 1.0f, collapsedItemLimit = 2, compactRows = false),
 }

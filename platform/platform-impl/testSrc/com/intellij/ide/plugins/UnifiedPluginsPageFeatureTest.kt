@@ -30,6 +30,7 @@ internal class UnifiedPluginsPageFeatureTest {
     assertThat(variant).isEqualTo(UnifiedPluginsPageDensityVariant.Icons32)
     assertThat(variant.pluginIconScale).isEqualTo(0.8f)
     assertThat(variant.collapsedItemLimit).isEqualTo(3)
+    assertThat(variant.compactRows).isTrue()
   }
 
   @Test
@@ -43,5 +44,22 @@ internal class UnifiedPluginsPageFeatureTest {
     assertThat(variant).isEqualTo(UnifiedPluginsPageDensityVariant.TwoPreviewRows)
     assertThat(variant.pluginIconScale).isEqualTo(1.0f)
     assertThat(variant.collapsedItemLimit).isEqualTo(2)
+    assertThat(variant.compactRows).isFalse()
+  }
+
+  @Test
+  fun `section header uses the full header by default`() {
+    assertThat(UnifiedPluginsPageFeature.sectionHeaderVariant())
+      .isEqualTo(UnifiedPluginsSectionHeaderVariant.FullHeader)
+  }
+
+  @Test
+  @RegistryKey(
+    key = UnifiedPluginsPageFeature.SECTION_HEADER_REGISTRY_KEY,
+    value = "[Link only*|Full header]",
+  )
+  fun `section header can use the link only variant`() {
+    assertThat(UnifiedPluginsPageFeature.sectionHeaderVariant())
+      .isEqualTo(UnifiedPluginsSectionHeaderVariant.LinkOnly)
   }
 }

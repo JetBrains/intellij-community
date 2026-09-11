@@ -75,6 +75,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.awt.Component
 import java.awt.Container
+import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.util.ArrayList
@@ -343,11 +344,15 @@ internal class UnifiedPluginsPageSessionTest {
         val searchConstraints = layout.getConstraints(searchComponent)
         val updateAllConstraints = layout.getConstraints(updateAllButton)
         val settingsConstraints = layout.getConstraints(settingsToolbar)
+        val searchContent = searchComponent.components.single() as JComponent
         header.setSize(header.preferredSize.width, header.preferredSize.height + 12)
 
         header.doLayout()
 
+        assertThat(searchContent.border.getBorderInsets(searchContent).top).isZero()
+        assertThat(searchContent.border.getBorderInsets(searchContent).bottom).isZero()
         assertThat(searchComponent.height).isEqualTo(searchComponent.preferredSize.height)
+        assertThat(updateAllButton.height).isEqualTo(updateAllButton.preferredSize.height)
         assertThat(searchComponent.y).isEqualTo((header.height - searchComponent.height) / 2)
         assertThat(updateAllButton.y).isEqualTo((header.height - updateAllButton.height) / 2)
         assertThat(searchConstraints.gridy).isEqualTo(settingsConstraints.gridy)
@@ -969,6 +974,33 @@ internal class UnifiedPluginsPageSessionTest {
     header.doLayout()
 
     assertThat(searchComponent.width).isLessThan(maximumWidth)
+    assertThat(settingsToolbar.bounds.x + settingsToolbar.width).isLessThanOrEqualTo(header.width)
+
+    val historyToolbar = JPanel().apply {
+      preferredSize = Dimension(JBUI.scale(88), header.preferredSize.height)
+      minimumSize = preferredSize
+    }
+    val settingsHeader = JPanel(GridBagLayout()).apply {
+      add(header, GridBagConstraints().apply {
+        gridx = 0
+        fill = GridBagConstraints.HORIZONTAL
+        weightx = 1.0
+      })
+      add(historyToolbar, GridBagConstraints().apply {
+        gridx = 1
+      })
+    }
+    val expectedNarrowSearchWidth = JBUI.scale(80)
+    settingsHeader.setSize(
+      header.minimumSize.width + expectedNarrowSearchWidth + historyToolbar.preferredSize.width,
+      header.preferredSize.height,
+    )
+    settingsHeader.doLayout()
+    header.doLayout()
+
+    assertThat(searchComponent.width).isEqualTo(expectedNarrowSearchWidth)
+    assertThat(updateAllButton.x - searchComponent.run { x + width }).isEqualTo(JBUI.scale(8))
+    assertThat(settingsToolbar.x - updateAllButton.run { x + width }).isEqualTo(JBUI.scale(8))
     assertThat(settingsToolbar.bounds.x + settingsToolbar.width).isLessThanOrEqualTo(header.width)
   }
 

@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.ListPluginModel
 import com.intellij.ide.plugins.PluginInfoProvider
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginsGroupType
 import com.intellij.ide.plugins.TagPanel
 import com.intellij.ide.plugins.newui.BaselinePanel
@@ -25,6 +26,7 @@ import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.ide.plugins.newui.TagComponent
 import com.intellij.ide.plugins.newui.Tags
 import com.intellij.ide.plugins.newui.UpdateButton
+import com.intellij.ide.plugins.newui.resetFirstTabScrollPosition
 import com.intellij.ide.plugins.newui.buttons.InstallOptionButton
 import com.intellij.ide.plugins.newui.buttons.OptionButton
 import com.intellij.ide.ui.LafManager
@@ -56,12 +58,16 @@ import org.junit.jupiter.api.Timeout
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
+import java.awt.Dimension
+import java.awt.Point
 import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.JTabbedPane
 import javax.swing.JProgressBar
+import javax.swing.JViewport
 import javax.swing.plaf.basic.BasicTabbedPaneUI
 import kotlin.math.abs
 
@@ -247,7 +253,8 @@ internal class LegacyPluginRowFactoryTest {
         assertThat(toggle.actionListeners).isNotEmpty()
         assertThat(toggle.isFocusable).isTrue()
         assertThat(toggle.isSelected).isTrue()
-        assertThat(verticalCenterTwice(toggle)).isEqualTo(verticalCenterTwice(title))
+        assertThat(title.y).isEqualTo(row.insets.top)
+        assertThat(verticalCenterTwice(toggle)).isEqualTo(2 * (row.insets.top + JBUI.scale(20)))
       }
     }
     finally {
@@ -280,13 +287,29 @@ internal class LegacyPluginRowFactoryTest {
 
         val legacyTabs = componentsOfType(legacyRoot, JBTabbedPane::class.java).single()
         val unifiedTabs = componentsOfType(unifiedRoot, JBTabbedPane::class.java).single()
+        assertThat(legacyTabs.tabLayoutPolicy).isEqualTo(JTabbedPane.WRAP_TAB_LAYOUT)
+        assertThat(unifiedTabs.tabLayoutPolicy).isEqualTo(JTabbedPane.SCROLL_TAB_LAYOUT)
+        assertThat(legacyTabs.getTabComponentAt(0)).isNotNull()
+        assertThat((0 until unifiedTabs.tabCount).map(unifiedTabs::getTabComponentAt)).containsOnlyNulls()
+        assertThat((0 until unifiedTabs.tabCount).map(unifiedTabs::getTitleAt)).allMatch(String::isNotBlank)
+        val unifiedOverflowButton = unifiedTabs.components
+          .filterIsInstance<JButton>()
+          .firstOrNull { it.toolTipText == IdeBundle.message("show.hidden.tabs") }
+          ?: JButton().also { button ->
+            button.toolTipText = IdeBundle.message("show.hidden.tabs")
+            unifiedTabs.add(button)
+            unifiedTabs.doLayout()
+          }
+        assertThat(unifiedOverflowButton.isOpaque).isFalse()
+        assertThat(unifiedOverflowButton.isContentAreaFilled).isFalse()
+        assertThat(unifiedOverflowButton.isBorderPainted).isFalse()
+        assertThat(unifiedOverflowButton.isFocusPainted).isFalse()
         legacyTabs.setUI(BasicTabbedPaneUI())
         unifiedTabs.setUI(BasicTabbedPaneUI())
         legacyTabs.setBounds(0, 0, JBUI.scale(800), JBUI.scale(600))
         unifiedTabs.setBounds(0, 0, JBUI.scale(800), JBUI.scale(600))
         legacyTabs.doLayout()
         unifiedTabs.doLayout()
-        assertThat(unifiedTabs.getBoundsAt(0).x - legacyTabs.getBoundsAt(0).x).isEqualTo(JBUI.scale(12))
 
         val legacyOverview = scrollTabContent(legacyTabs, 0)
         val unifiedOverview = scrollTabContent(unifiedTabs, 0)
@@ -315,6 +338,29 @@ internal class LegacyPluginRowFactoryTest {
         unifiedHost.dispose(closeSession = false)
       }
     }
+
+  @Test
+  fun `returning to the first details tab resets the horizontal scroll position`() {
+    val pane = JTabbedPane().apply {
+      addTab("Overview", JPanel())
+      addTab("Scrollable tab strip", JViewport().apply {
+        name = "TabbedPane.scrollableViewport"
+        view = JPanel().apply {
+          preferredSize = Dimension(JBUI.scale(500), JBUI.scale(40))
+          size = preferredSize
+        }
+        extentSize = Dimension(JBUI.scale(100), JBUI.scale(40))
+        viewPosition = Point(JBUI.scale(20), JBUI.scale(3))
+      })
+      selectedIndex = 0
+    }
+    val viewport = componentsOfType(pane, JViewport::class.java)
+      .single { it.name == "TabbedPane.scrollableViewport" }
+
+    resetFirstTabScrollPosition(pane)
+
+    assertThat(viewport.viewPosition).isEqualTo(Point(0, JBUI.scale(3)))
+  }
 
   @Test
   fun `unified host keeps the selected plugin icon scale after state changes`(): Unit =
@@ -352,6 +398,51 @@ internal class LegacyPluginRowFactoryTest {
       assertThat(baselineWidths.first).isEqualTo(baselineWidths.second)
       assertThat(compactWidths.first).isEqualTo(compactWidths.second)
       assertThat(compactWidths.first.toDouble() / baselineWidths.first).isCloseTo(0.8, within(0.05))
+    }
+
+  @Test
+  fun `compact unified rows scale the full row geometry to 52 pixels`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(
+        parentScope = this,
+        operationScope = this,
+        pluginIconScale = 0.8f,
+        compactRows = true,
+      )
+      try {
+        val pluginId = PluginId.getId("compact.row.plugin")
+        val model = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Compact Row Plugin")
+          .setDownloads("22.1M")
+          .setRating("4.44")
+          .setVendor("JetBrains")
+          .build()
+        val item = PluginItemState(pluginId, model.name, modelHandle = PluginItemModelHandle(model))
+        val section = PluginSectionState(PluginSectionId.Suggested, items = listOf(item))
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), LinkListener { _, _ -> }, onSelectionChanged = {})
+        val specification = factory.specification(section, item)
+
+        (factory.createRow(specification.occurrenceId, specification.item, specification.renderKey) as LegacyPluginRow).use { row ->
+          val component = row.component
+          component.setBounds(0, 0, JBUI.scale(500), component.preferredSize.height)
+          component.doLayout()
+          val button = checkNotNull(component.myInstallButton)
+          val title = componentsOfType(component, JBLabel::class.java).single { it.text == model.name }
+          val vendor = componentsOfType(component, JLabel::class.java).single { it.text == "JetBrains" }
+          val metadataPanel = vendor.parent
+
+          assertThat(component.preferredSize.height).isEqualTo(JBUI.scale(52))
+          assertThat(component.insets.top).isEqualTo(JBUI.scale(8))
+          assertThat(title.y).isEqualTo(component.insets.top)
+          assertThat(title.font.size2D).isEqualTo(JBLabel().font.size2D)
+          assertThat(vendor.font.size2D).isEqualTo(PluginManagerConfigurable.setTinyFont(JLabel()).font.size2D)
+          assertThat(metadataPanel.y - title.y - title.height).isEqualTo(JBUI.scale(4))
+          assertThat(abs(verticalCenterTwice(button) - 2 * (component.insets.top + JBUI.scale(16)))).isLessThanOrEqualTo(1)
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
     }
 
   @Test
@@ -459,14 +550,14 @@ internal class LegacyPluginRowFactoryTest {
     }
 
   @Test
-  fun `unified host uses badge tags in rows and details`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+  fun `unified host uses marketplace badge tags in rows and details`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
     try {
       val listener = LinkListener<Any> { _, _ -> }
       val pluginId = PluginId.getId("paid.plugin")
       val model = PluginNodeModelBuilderFactory.createBuilder(pluginId)
         .setName("Paid Plugin")
-        .setTags(listOf(Tags.Paid.name))
+        .setTags(listOf(Tags.EAP.name, Tags.Paid.name, Tags.Freemium.name))
         .build()
       val item = PluginItemState(pluginId, model.name, modelHandle = PluginItemModelHandle(model))
       val section = PluginSectionState(PluginSectionId.Suggested, items = listOf(item))
@@ -481,8 +572,8 @@ internal class LegacyPluginRowFactoryTest {
         val badgeLink = componentsOfType(row, LinkComponent::class.java).single { it.icon is Badge }
         val badge = badgeLink.icon as Badge
 
-        assertThat(badge.text).isEqualTo(Tags.Paid.name)
-        assertThat(badge.colorType).isEqualTo(Badge.ColorType.BLUE_SECONDARY)
+        assertThat(badge.text).isIn(Tags.Paid.name, Tags.Freemium.name)
+        assertThat(badge.colorType).isNotEqualTo(Badge.ColorType.GRAY_SECONDARY)
         assertThat(abs(verticalCenterTwice(title) - verticalCenterTwice(badgeLink))).isLessThanOrEqualTo(1)
 
         val details = host.createDetails(listener, marketplace = true)
@@ -493,6 +584,58 @@ internal class LegacyPluginRowFactoryTest {
       host.dispose(closeSession = false)
     }
   }
+
+  @Test
+  fun `unified rows hide gray tags`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val pluginId = PluginId.getId("gray.tag.plugin")
+        val model = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Gray Tag Plugin")
+          .setTags(listOf(Tags.EAP.name))
+          .build()
+        val item = PluginItemState(pluginId, model.name, modelHandle = PluginItemModelHandle(model))
+        val section = PluginSectionState(PluginSectionId.Installed, items = listOf(item))
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), LinkListener { _, _ -> }, onSelectionChanged = {})
+        val specification = factory.specification(section, item)
+
+        (factory.createRow(specification.occurrenceId, specification.item, specification.renderKey) as LegacyPluginRow).use { row ->
+          assertThat(componentsOfType(row.component, LinkComponent::class.java).filter { it.icon is Badge }).isEmpty()
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+
+  @Test
+  fun `unified installed rows keep the first colored tag`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val pluginId = PluginId.getId("colored.tag.plugin")
+        val model = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Colored Tag Plugin")
+          .setTags(listOf(Tags.EAP.name, Tags.Paid.name, Tags.Freemium.name))
+          .build()
+        val item = PluginItemState(pluginId, model.name, modelHandle = PluginItemModelHandle(model))
+        val section = PluginSectionState(PluginSectionId.Installed, items = listOf(item))
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), LinkListener { _, _ -> }, onSelectionChanged = {})
+        val specification = factory.specification(section, item)
+
+        (factory.createRow(specification.occurrenceId, specification.item, specification.renderKey) as LegacyPluginRow).use { row ->
+          val badges = componentsOfType(row.component, LinkComponent::class.java).filter { it.icon is Badge }
+          assertThat(badges).hasSize(1)
+          val badge = badges.single().icon as Badge
+          assertThat(badge.text).isIn(Tags.Paid.name, Tags.Freemium.name)
+          assertThat(badge.colorType).isNotEqualTo(Badge.ColorType.GRAY_SECONDARY)
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
 
   @Test
   fun `unified rows use stable island selection geometry`(): Unit =
@@ -531,6 +674,41 @@ internal class LegacyPluginRowFactoryTest {
           row.setSelection(EventHandler.SelectionType.NONE, false)
           assertThat(row.selectionColor).isNull()
           assertThat(row.preferredSize).isEqualTo(initialPreferredSize)
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+
+  @Test
+  fun `unified metadata stops before the Install button`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val pluginId = PluginId.getId("constrained.metadata.plugin")
+        val vendor = "A vendor name that does not fit in the available text column"
+        val model = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Constrained Metadata Plugin")
+          .setDownloads("22.1M")
+          .setRating("4.44")
+          .setVendor(vendor)
+          .build()
+        val item = PluginItemState(pluginId, model.name, modelHandle = PluginItemModelHandle(model))
+        val section = PluginSectionState(PluginSectionId.Suggested, items = listOf(item))
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), LinkListener { _, _ -> }, onSelectionChanged = {})
+        val specification = factory.specification(section, item)
+        (factory.createRow(specification.occurrenceId, specification.item, specification.renderKey) as LegacyPluginRow).use { row ->
+          val component = row.component
+          component.setBounds(0, 0, JBUI.scale(360), component.preferredSize.height)
+          component.doLayout()
+          val installButton = checkNotNull(component.myInstallButton)
+          val vendorLabel = componentsOfType(component, JLabel::class.java).single { it.text == vendor }
+          val metricsPanel = vendorLabel.parent
+          metricsPanel.doLayout()
+
+          assertThat(metricsPanel.x + metricsPanel.width).isLessThanOrEqualTo(installButton.x - JBUI.scale(8))
+          assertThat(vendorLabel.toolTipText).isEqualTo(vendor)
         }
       }
       finally {

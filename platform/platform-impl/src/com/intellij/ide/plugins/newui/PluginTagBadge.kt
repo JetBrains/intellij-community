@@ -37,6 +37,8 @@ internal object PluginTagBadge {
     }
   }
 
+  internal fun isColored(tag: String): Boolean = colorType(tag) != Badge.ColorType.GRAY_SECONDARY
+
   private fun tooltip(tag: String): HtmlChunk? {
     val text = when (tag) {
       Tags.EAP.name -> IdeBundle.message("tooltip.eap.plugin.version")

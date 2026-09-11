@@ -137,6 +137,8 @@ class ListPluginComponent private constructor(
   private val myUseIslandSelection: Boolean,
   private val myUseToggleForEnablement: Boolean,
   private val myPluginIconScale: Float,
+  private val myUseUnifiedRowLayout: Boolean,
+  private val myUseCompactUnifiedRowLayout: Boolean,
   @Suppress("UNUSED_PARAMETER") constructorMarker: Unit,
 ) : SelectablePanel() {
   internal constructor(
@@ -154,6 +156,8 @@ class ListPluginComponent private constructor(
     islandSelection: Boolean = false,
     toggleForEnablement: Boolean = false,
     pluginIconScale: Float = 1.0f,
+    unifiedRowLayout: Boolean = false,
+    compactUnifiedRowLayout: Boolean = false,
   ) : this(
     pluginModelFacade,
     pluginUiModel,
@@ -171,6 +175,8 @@ class ListPluginComponent private constructor(
     islandSelection,
     toggleForEnablement,
     pluginIconScale,
+    unifiedRowLayout,
+    compactUnifiedRowLayout,
     Unit,
   )
 
@@ -191,6 +197,8 @@ class ListPluginComponent private constructor(
     islandSelection: Boolean = false,
     toggleForEnablement: Boolean = false,
     pluginIconScale: Float = 1.0f,
+    unifiedRowLayout: Boolean = false,
+    compactUnifiedRowLayout: Boolean = false,
   ) : this(
     pluginModelFacade,
     pluginUiModel,
@@ -208,6 +216,8 @@ class ListPluginComponent private constructor(
     islandSelection,
     toggleForEnablement,
     pluginIconScale,
+    unifiedRowLayout,
+    compactUnifiedRowLayout,
     Unit,
   )
 
@@ -294,7 +304,12 @@ class ListPluginComponent private constructor(
     pluginModelFacade.addComponent(this, registerInstallingWithoutGroup)
     myCustomizer = if (UiPluginManager.isCombinedPluginManagerEnabled()) PluginManagerCustomizer.getInstance() else null
     isOpaque = true
-    border = if (myUseIslandSelection) JBUI.Borders.empty(12, 16) else JBUI.Borders.empty(10)
+    border = if (myUseIslandSelection) {
+      JBUI.Borders.empty(if (myUseCompactUnifiedRowLayout) 8 else 12, 16)
+    }
+    else {
+      JBUI.Borders.empty(10)
+    }
     if (myUseIslandSelection) {
       selectionArc = JBUI.scale(8)
       selectionInsets = JBUI.insets(0, 8)
@@ -558,7 +573,7 @@ class ListPluginComponent private constructor(
 
   private fun createMetricsPanel() {
     myMetricsPanel = NonOpaquePanel(TextHorizontalLayout(JBUIScale.scale(7)))
-    myMetricsPanel!!.border = JBUI.Borders.emptyTop(5)
+    myMetricsPanel!!.border = JBUI.Borders.emptyTop(if (myUseUnifiedRowLayout) 0 else 5)
     myLayout.addLineComponent(myMetricsPanel!!)
     if (myMarketplace) {
       val downloads = myRenderKey.downloads
@@ -586,10 +601,17 @@ class ListPluginComponent private constructor(
     if (vendor != null) {
       myVendor = createRatingLabel(myMetricsPanel!!, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true)
     }
+
   }
 
   private fun createTag() {
-    val tag: @NlsSafe String = myRenderKey.firstTag ?: return
+    val tag: @NlsSafe String = if (myUseBadgeTags) {
+      val candidates = if (myIsNotFreeInFreeMode) listOfNotNull(myRenderKey.firstTag) else myPlugin.calculateTags()
+      candidates.firstOrNull(PluginTagBadge::isColored) ?: return
+    }
+    else {
+      myRenderKey.firstTag ?: return
+    }
     val tagComponent = if (myUseBadgeTags) PluginTagBadge.create(tag, mySearchListener) else createTagComponent(tag)
     if (myIsNotFreeInFreeMode) {
       tagComponent.toolTipText = UnavailableWithoutSubscriptionComponent.getHelpTooltip()
@@ -639,7 +661,7 @@ class ListPluginComponent private constructor(
     setTagTooltip(licensePanel.getMessage())
 
     if (licensePanel.isNotification()) {
-      licensePanel.border = JBUI.Borders.emptyTop(3)
+      licensePanel.border = JBUI.Borders.emptyTop(if (myUseUnifiedRowLayout) 0 else 3)
       //licensePanel.setLink("Manage licenses", () -> { XXX }, false);
       myLayout.addLineComponent(licensePanel)
       myLicensePanel = licensePanel
@@ -730,7 +752,7 @@ class ListPluginComponent private constructor(
         if (myUpdateLicensePanel == null) {
           myUpdateLicensePanel = LicensePanel(true)
           myLayout.addLineComponent(myUpdateLicensePanel!!)
-          myUpdateLicensePanel!!.border = JBUI.Borders.emptyTop(3)
+          myUpdateLicensePanel!!.border = JBUI.Borders.emptyTop(if (myUseUnifiedRowLayout) 0 else 3)
           myUpdateLicensePanel!!.isVisible = myErrorPanel == null
           if (myEventHandler != null) {
             myEventHandler!!.addAll(myUpdateLicensePanel!!)
@@ -863,7 +885,7 @@ class ListPluginComponent private constructor(
 
       if (myErrorComponent == null) {
         myErrorComponent = ErrorComponent()
-        myErrorComponent!!.border = JBUI.Borders.emptyTop(5)
+        myErrorComponent!!.border = JBUI.Borders.emptyTop(if (myUseUnifiedRowLayout) 0 else 5)
         myErrorPanel!!.add(myErrorComponent, BorderLayout.CENTER)
       }
 
@@ -1583,9 +1605,12 @@ class ListPluginComponent private constructor(
   }
 
   private inner class BaselineLayout : AbstractLayoutManager() {
-    private val myHGap: JBValue = JBValue.Float(10f)
+    private val myHGap: JBValue = JBValue.Float(if (myUseUnifiedRowLayout) 8f else 10f)
     private val myHOffset: JBValue = JBValue.Float(8f)
     private val myButtonOffset: JBValue = JBValue.Float(6f)
+    private val myUnifiedLineGap: JBValue = JBValue.Float(if (myUseCompactUnifiedRowLayout) 4f else 8f)
+    private val myUnifiedControlSlotHeight: JBValue = JBValue.Float(if (myUseCompactUnifiedRowLayout) 32f else 40f)
+    private val myUnifiedRowCoreHeight: JBValue = JBValue.Float(if (myUseCompactUnifiedRowLayout) 36f else 40f)
 
     var myIconComponent: JComponent? = null
       private set
@@ -1645,13 +1670,20 @@ class ListPluginComponent private constructor(
         if (component.isVisible) {
           val size = component.preferredSize
           result.width = Math.max(result.width, size.width)
-          result.height += size.height
+          if (!myUseUnifiedRowLayout) {
+            result.height += size.height
+          }
         }
       }
 
       val iconSize = myIconComponent!!.preferredSize
       result.width += iconSize.width + myHGap.get()
-      result.height = Math.max(result.height, iconSize.height)
+      result.height = if (myUseUnifiedRowLayout) {
+        Math.max(myUnifiedRowCoreHeight.get(), Math.max(iconSize.height, Math.max(unifiedContentHeight(), unifiedControlHeight())))
+      }
+      else {
+        Math.max(result.height, iconSize.height)
+      }
 
       JBInsets.addTo(result, insets)
       return result
@@ -1664,14 +1696,22 @@ class ListPluginComponent private constructor(
 
       if (myProgressComponent == null && myCheckBoxComponent != null && myCheckBoxComponent!!.isVisible) {
         val size = myCheckBoxComponent!!.preferredSize
-        myCheckBoxComponent!!.setBounds(x, (parent.height - size.height) / 2, size.width, size.height)
+        val checkBoxY = if (myUseUnifiedRowLayout) {
+          insets.top + (Math.max(myUnifiedControlSlotHeight.get(), size.height) - size.height) / 2
+        }
+        else {
+          (parent.height - size.height) / 2
+        }
+        myCheckBoxComponent!!.setBounds(x, checkBoxY, size.width, size.height)
         x += size.width + myHGap.get()
       }
 
       val iconSize = myIconComponent!!.preferredSize
       myIconComponent!!.setBounds(x, y, iconSize.width, iconSize.height)
       x += iconSize.width + myHGap.get()
-      y += JBUIScale.scale(2)
+      if (!myUseUnifiedRowLayout) {
+        y += JBUIScale.scale(2)
+      }
 
       val width20 = JBUIScale.scale(20)
       val calcNameWidth = Math.max(width20, calculateNameWidth())
@@ -1709,7 +1749,7 @@ class ListPluginComponent private constructor(
             }
             val size = component.preferredSize
             lastX -= size.width
-            setBaselineBounds(lastX, baseline, component, size)
+            setActionBounds(lastX, baseline, component, size)
             lastX -= myButtonOffset.get()
           }
         }
@@ -1717,7 +1757,7 @@ class ListPluginComponent private constructor(
           for (component in myButtonComponents) {
             if (component.isVisible) {
               val size = component.preferredSize
-              setBaselineBounds(nextX, baseline, component, size)
+              setActionBounds(nextX, baseline, component, size)
               nextX += size.width + myButtonOffset.get()
             }
           }
@@ -1725,22 +1765,73 @@ class ListPluginComponent private constructor(
       }
       else {
         val size = myProgressComponent!!.preferredSize
-        setBaselineBounds(width - size.width - insets.right, baseline, myProgressComponent!!, size)
+        setActionBounds(width - size.width - insets.right, baseline, myProgressComponent!!, size)
       }
 
-      val lineWidth = width - x - insets.right
+      val lineWidth = if (myUseUnifiedRowLayout) {
+        Math.max(0, unifiedContentRight() - x)
+      }
+      else {
+        width - x - insets.right
+      }
+      if (myUseUnifiedRowLayout) {
+        y = insets.top + unifiedFirstLineHeight()
+      }
 
       for (component in myLineComponents) {
         if (component.isVisible) {
           val lineHeight = component.preferredSize.height
+          if (myUseUnifiedRowLayout) {
+            if (lineHeight <= 0) continue
+            y += myUnifiedLineGap.get()
+          }
           component.setBounds(x, y, lineWidth, lineHeight)
           y += lineHeight
         }
       }
     }
 
+    private fun unifiedFirstLineHeight(): Int {
+      val nameHeight = myNameComponent!!.preferredSize.height
+      val tagHeight = myTagComponent?.takeIf(Component::isVisible)?.preferredSize?.height ?: 0
+      return Math.max(nameHeight, tagHeight)
+    }
+
+    private fun unifiedContentHeight(): Int {
+      var result = unifiedFirstLineHeight()
+      for (component in myLineComponents) {
+        if (!component.isVisible) continue
+        val lineHeight = component.preferredSize.height
+        if (lineHeight <= 0) continue
+        result += myUnifiedLineGap.get() + lineHeight
+      }
+      return result
+    }
+
+    private fun unifiedControlHeight(): Int {
+      var result = 0
+      fun include(component: JComponent?) {
+        if (component != null && component.isVisible) {
+          result = Math.max(result, component.preferredSize.height)
+        }
+      }
+
+      include(myCheckBoxComponent)
+      include(myProgressComponent)
+      myButtonComponents.forEach(::include)
+      return if (result == 0) 0 else Math.max(result, myUnifiedControlSlotHeight.get())
+    }
+
     private fun calculateNameWidth(): Int {
       val insets = insets
+      if (myUseUnifiedRowLayout) {
+        var width = unifiedContentRight() - unifiedContentLeft()
+        if (myTagComponent != null) {
+          width -= myTagComponent!!.preferredSize.width + 2 * myHOffset.get()
+        }
+        return width
+      }
+
       var width = width - insets.left - insets.right - myIconComponent!!.preferredSize.width - myHGap.get()
 
       if (myProgressComponent != null) {
@@ -1770,6 +1861,34 @@ class ListPluginComponent private constructor(
       return width
     }
 
+    private fun unifiedContentLeft(): Int {
+      var left = insets.left
+      if (myProgressComponent == null && myCheckBoxComponent != null) {
+        left += myCheckBoxComponent!!.preferredSize.width + myHGap.get()
+      }
+      return left + myIconComponent!!.preferredSize.width + myHGap.get()
+    }
+
+    private fun unifiedContentRight(): Int {
+      val right = width - insets.right
+      if (myProgressComponent != null) {
+        return right - myProgressComponent!!.preferredSize.width - myHOffset.get()
+      }
+
+      var controlsWidth = 0
+      var visibleCount = 0
+      for (component in myButtonComponents) {
+        if (component.isVisible) {
+          controlsWidth += component.preferredSize.width
+          visibleCount++
+        }
+      }
+      if (visibleCount == 0) return right
+
+      controlsWidth += myButtonOffset.get() * (visibleCount - 1)
+      return right - controlsWidth - myHOffset.get()
+    }
+
     private fun setBaselineBounds(x: Int, y: Int, component: Component, size: Dimension) {
       when (component) {
         is ActionToolbar -> component.setBounds(x, insets.top - JBUI.scale(1), size.width, size.height)
@@ -1778,6 +1897,16 @@ class ListPluginComponent private constructor(
           component.setBounds(x, nameBounds.y + (nameBounds.height - size.height) / 2, size.width, size.height)
         }
         else -> component.setBounds(x, y - component.getBaseline(size.width, size.height), size.width, size.height)
+      }
+    }
+
+    private fun setActionBounds(x: Int, baseline: Int, component: JComponent, size: Dimension) {
+      if (myUseUnifiedRowLayout) {
+        val slotHeight = Math.max(myUnifiedControlSlotHeight.get(), size.height)
+        component.setBounds(x, insets.top + (slotHeight - size.height) / 2, size.width, size.height)
+      }
+      else {
+        setBaselineBounds(x, baseline, component, size)
       }
     }
 

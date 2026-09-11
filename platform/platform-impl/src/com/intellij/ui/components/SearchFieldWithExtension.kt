@@ -30,20 +30,34 @@ class SearchFieldWithExtension private constructor(
   searchTextField: JComponent,
   val textField: JTextField,
   private val fixedBackgroud: Boolean,
+  verticalContentInset: Int,
 ) : JPanel(BorderLayout()) {
 
   constructor(extensionComponent: JComponent, searchTextField: SearchTextField) : this(extensionComponent,
                                                                                        searchTextField,
-                                                                                       searchTextField.textEditor, true)
+                                                                                       searchTextField.textEditor, true, 1)
+
+  internal constructor(
+    extensionComponent: JComponent,
+    searchTextField: SearchTextField,
+    verticalContentInset: Int,
+  ) : this(
+    extensionComponent,
+    searchTextField,
+    searchTextField.textEditor,
+    true,
+    verticalContentInset,
+  )
 
   constructor(searchTextField: SearchTextField, bgColor: Color?) : this(JBLabel(),
-                                                                        searchTextField,
-                                                                        searchTextField.textEditor,
-                                                                        bgColor == null) {
+                                                                         searchTextField,
+                                                                         searchTextField.textEditor,
+                                                                         bgColor == null,
+                                                                         1) {
     background = bgColor
   }
 
-  constructor(textField: JBTextField, bgColor: Color?) : this(JBLabel(), textField, textField, bgColor == null) {
+  constructor(textField: JBTextField, bgColor: Color?) : this(JBLabel(), textField, textField, bgColor == null, 1) {
     background = bgColor
   }
 
@@ -60,8 +74,8 @@ class SearchFieldWithExtension private constructor(
       isOpaque = false
 
       addFocusListener(object : FocusListener {
-        override fun focusLost(e: FocusEvent?) = repaint()
-        override fun focusGained(e: FocusEvent?) = repaint()
+        override fun focusLost(e: FocusEvent?) = this@SearchFieldWithExtension.repaint()
+        override fun focusGained(e: FocusEvent?) = this@SearchFieldWithExtension.repaint()
       })
     }
 
@@ -69,7 +83,7 @@ class SearchFieldWithExtension private constructor(
       .addToCenter(searchTextField)
       .addToRight(extensionComponent)
       .andTransparent().apply {
-        border = JBUI.Borders.empty(1)
+        border = JBUI.Borders.empty(verticalContentInset, 1)
       }
     add(contentPanel, BorderLayout.CENTER)
   }

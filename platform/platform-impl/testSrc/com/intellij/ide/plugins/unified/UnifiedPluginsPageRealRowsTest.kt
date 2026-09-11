@@ -95,6 +95,27 @@ internal class UnifiedPluginsPageRealRowsTest {
   }
 
   @Test
+  fun `unified rows have a four pixel gap`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val factory = RecordingRowFactory()
+    val firstItem = item("first.plugin")
+    val secondItem = item("second.plugin")
+    val controller = UnifiedPluginsPageController(
+      listOf(section(PluginSectionId.Installed, firstItem, secondItem))
+    )
+    val view = createView(factory)
+
+    view.render(controller.state.value)
+    val firstRow = factory.row(PluginSectionId.Installed, firstItem).component
+    val secondRow = factory.row(PluginSectionId.Installed, secondItem).component
+    val rowsPanel = firstRow.parent as JComponent
+    rowsPanel.setSize(JBUI.scale(500), rowsPanel.preferredSize.height)
+    rowsPanel.doLayout()
+
+    assertThat(secondRow.y - firstRow.y - firstRow.height).isEqualTo(JBUI.scale(4))
+    view.close()
+  }
+
+  @Test
   fun `expanded sections grow and retain real row prefixes while scrolling`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val factory = RecordingRowFactory()
     val items = (1..250).map { item("plugin.$it") }
@@ -107,15 +128,18 @@ internal class UnifiedPluginsPageRealRowsTest {
 
     assertThat(factory.activeRows).hasSize(100)
     val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
+    val initialViewHeight = scrollPane.viewport.view.height
     val firstRow = factory.activeRows.values.first().component
     val rowsTop = SwingUtilities.convertPoint(firstRow.parent, Point(), scrollPane.viewport.view).y
     scrollPane.viewport.viewPosition = Point(0, rowsTop + 120 * ROW_HEIGHT)
 
     assertThat(factory.activeRows).hasSize(200)
+    assertThat(scrollPane.viewport.view.height).isEqualTo(initialViewHeight)
     assertThat(factory.row(PluginSectionId.Installed, item("plugin.121"))).isNotNull()
 
     scrollPane.viewport.viewPosition = Point(0, rowsTop + 220 * ROW_HEIGHT)
     assertThat(factory.activeRows).hasSize(250)
+    assertThat(scrollPane.viewport.view.height).isEqualTo(initialViewHeight)
     scrollPane.viewport.viewPosition = Point()
     assertThat(factory.activeRows).hasSize(250)
     assertThat(factory.activeRows.keys.map(PluginOccurrenceId::pluginId)).contains(items.last().pluginId)

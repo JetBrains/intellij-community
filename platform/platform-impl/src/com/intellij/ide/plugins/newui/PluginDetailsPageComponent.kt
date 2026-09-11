@@ -107,6 +107,7 @@ import java.awt.FlowLayout
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.Insets
+import java.awt.Point
 import java.awt.event.ActionEvent
 import java.util.Collections
 import java.util.function.Consumer
@@ -121,6 +122,8 @@ import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField
+import javax.swing.JTabbedPane
+import javax.swing.JViewport
 import javax.swing.ScrollPaneConstants
 import javax.swing.SwingConstants
 import javax.swing.UIManager
@@ -737,7 +740,10 @@ class PluginDetailsPageComponent private constructor(
   }
 
   private fun createTabs(parent: JPanel) {
-    val pane: JBTabbedPane = object : JBTabbedPane() {
+    val pane: JBTabbedPane = object : JBTabbedPane(
+      SwingConstants.TOP,
+      if (layout.singleRowTabs) JTabbedPane.SCROLL_TAB_LAYOUT else JTabbedPane.WRAP_TAB_LAYOUT,
+    ) {
       override fun setUI(ui: TabbedPaneUI) {
         putClientProperty("TabbedPane.hoverColor", ListPluginComponent.HOVER_COLOR)
 
@@ -772,11 +778,29 @@ class PluginDetailsPageComponent private constructor(
           }
         }
         setTabContainerBorder(this)
+        if (this@PluginDetailsPageComponent.layout.singleRowTabs) {
+          styleTabOverflowButton(this)
+        }
       }
 
       override fun setEnabledAt(index: Int, enabled: Boolean) {
         super.setEnabledAt(index, enabled)
-        getTabComponentAt(index).isEnabled = enabled
+        getTabComponentAt(index)?.isEnabled = enabled
+      }
+
+      override fun setSelectedIndex(index: Int) {
+        super.setSelectedIndex(index)
+        if (this@PluginDetailsPageComponent.layout.singleRowTabs) {
+          resetFirstTabScrollPosition(this)
+        }
+      }
+
+      override fun doLayout() {
+        super.doLayout()
+        if (this@PluginDetailsPageComponent.layout.singleRowTabs) {
+          styleTabOverflowButton(this)
+          resetFirstTabScrollPosition(this)
+        }
       }
     }
     pane.isOpaque = false
@@ -789,6 +813,11 @@ class PluginDetailsPageComponent private constructor(
     createChangeNotesTab(pane)
     createReviewTab(pane)
     createAdditionalInfoTab(pane)
+    if (layout.singleRowTabs) {
+      for (index in 0 until pane.tabCount) {
+        pane.setTabComponentAt(index, null)
+      }
+    }
 
     setTabContainerBorder(pane)
   }
@@ -2271,6 +2300,7 @@ internal data class PluginDetailsPageLayout(
   val tabContentHorizontalInset: Int?,
   val actionButtonLeadingVisualInset: Int,
   val useNaturalInstallButtonWidth: Boolean,
+  val singleRowTabs: Boolean,
 ) {
   companion object {
     val Legacy = PluginDetailsPageLayout(
@@ -2281,15 +2311,17 @@ internal data class PluginDetailsPageLayout(
       tabContentHorizontalInset = null,
       actionButtonLeadingVisualInset = 0,
       useNaturalInstallButtonWidth = false,
+      singleRowTabs = false,
     )
     val Unified = PluginDetailsPageLayout(
       contentHorizontalInset = 16,
-      tabStripLeftInset = 12,
+      tabStripLeftInset = 10,
       overviewRightInset = 16,
       overviewImagesRightInset = 0,
       tabContentHorizontalInset = 16,
       actionButtonLeadingVisualInset = 3,
       useNaturalInstallButtonWidth = true,
+      singleRowTabs = true,
     )
   }
 }
@@ -2349,6 +2381,31 @@ private fun setTabContainerBorder(pane: JComponent) {
   if (tabContainer is JComponent) {
     tabContainer.border = SideBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, SideBorder.BOTTOM)
   }
+}
+
+private fun styleTabOverflowButton(pane: JTabbedPane) {
+  pane.components
+    .filterIsInstance<JButton>()
+    .firstOrNull { it.toolTipText == IdeBundle.message("show.hidden.tabs") }
+    ?.apply {
+      isOpaque = false
+      isContentAreaFilled = false
+      isBorderPainted = false
+      isFocusPainted = false
+      isRolloverEnabled = true
+    }
+}
+
+internal fun resetFirstTabScrollPosition(pane: JTabbedPane) {
+  if (pane.selectedIndex != 0) return
+  UIUtil.findComponentsOfType(pane, JViewport::class.java)
+    .firstOrNull { it.name == "TabbedPane.scrollableViewport" }
+    ?.let { viewport ->
+      val viewPosition = viewport.viewPosition
+      if (viewPosition.x != 0) {
+        viewport.viewPosition = Point(0, viewPosition.y)
+      }
+    }
 }
 
 private fun createRequiredPluginsComponent(): JEditorPane {

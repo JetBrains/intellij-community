@@ -4,7 +4,9 @@ package com.intellij.ide.plugins.unified
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.UnifiedPluginsSectionHeaderVariant
 import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -15,6 +17,7 @@ import com.intellij.openapi.ui.Divider
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SearchTextField
@@ -25,6 +28,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.ui.border.CustomLineBorder
+import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
@@ -41,12 +45,20 @@ import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
+import java.awt.event.FocusEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
+import javax.accessibility.AccessibleRole
+import javax.accessibility.AccessibleState
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.RepaintManager
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
+import javax.swing.JToggleButton
+import javax.swing.KeyStroke
 
 @TestApplication
 @Timeout(30)
@@ -54,6 +66,7 @@ internal class UnifiedPluginsPageViewTest {
   companion object {
     private const val EXPECTED_ANCHOR_OFFSET: Int = -7
     private const val SEARCH_HISTORY_PROPERTY: String = "UnifiedPluginsSearchHistory"
+    private const val SECTION_EXPANSION_GAP: Int = 2
 
     @JvmStatic
     @BeforeAll
@@ -208,26 +221,145 @@ internal class UnifiedPluginsPageViewTest {
     view.render(controller.state.value)
 
     val installedList = sectionList(view, IdeBundle.message("plugin.manager.tab.installed"))
-    val expansionLink = componentsOfType(installedList.parent, ActionLink::class.java).single()
+    val headerButton = componentsOfType(installedList.parent, JToggleButton::class.java).single()
+    val expansionTextLabel = componentsOfType(headerButton, JBLabel::class.java)
+      .single { it.text == IdeBundle.message("plugins.configurable.show.more") }
+    val expansionChevronLabel = componentsOfType(headerButton, JBLabel::class.java)
+      .single { it.icon === AllIcons.General.ChevronDown }
+    val expansionControl = expansionTextLabel.parent as JComponent
+    val header = sectionHeader(view, IdeBundle.message("plugin.manager.tab.installed"))
+    header.setSize(JBUI.scale(320), JBUI.scale(40))
+    layoutRecursively(header)
     assertThat(installedList.model.size).isEqualTo(PluginSectionState.COLLAPSED_ITEM_LIMIT)
-    assertThat(expansionLink.text).isEqualTo(IdeBundle.message("plugins.configurable.show.more"))
-    assertThat(expansionLink.icon).isSameAs(AllIcons.General.ChevronDown)
-    assertThat(expansionLink.horizontalTextPosition).isEqualTo(SwingConstants.LEADING)
+    assertThat(expansionTextLabel.foreground).isEqualTo(com.intellij.util.ui.UIUtil.getContextHelpForeground())
+    assertThat(expansionChevronLabel.icon).isSameAs(AllIcons.General.ChevronDown)
+    assertThat(expansionChevronLabel.x - expansionTextLabel.run { x + width })
+      .isEqualTo(JBUI.scale(SECTION_EXPANSION_GAP))
+    assertThat(
+      expansionTextLabel.run { y * 2 + height } - expansionChevronLabel.run { y * 2 + height },
+    ).isBetween(-1, 1)
+    assertThat(expansionControl.isOpaque).isFalse()
 
-    expansionLink.doClick()
+    headerButton.doClick()
     assertThat(expansionChanges).containsExactly(PluginSectionId.Installed to true)
 
     controller.setSectionExpanded(PluginSectionId.Installed, true)
     view.render(controller.state.value)
     assertThat(installedList.model.size).isEqualTo(5)
-    assertThat(expansionLink.text).isEqualTo(IdeBundle.message("plugins.configurable.show.less"))
-    assertThat(expansionLink.icon).isSameAs(AllIcons.General.ChevronUp)
+    assertThat(expansionTextLabel.text).isEqualTo(IdeBundle.message("plugins.configurable.show.less"))
+    assertThat(expansionChevronLabel.icon).isSameAs(AllIcons.General.ChevronUp)
 
-    expansionLink.doClick()
+    headerButton.doClick()
     assertThat(expansionChanges).containsExactly(
       PluginSectionId.Installed to true,
       PluginSectionId.Installed to false,
     )
+  }
+
+  @Test
+  fun `link only section header expands only from its action link`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val expansionChanges = ArrayList<Pair<PluginSectionId, Boolean>>()
+    val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, itemCount = 5)))
+    val view = createView(
+      onExpansionChanged = { id, expanded -> expansionChanges.add(id to expanded) },
+      sectionHeaderVariant = UnifiedPluginsSectionHeaderVariant.LinkOnly,
+    )
+    view.render(controller.state.value)
+
+    val title = IdeBundle.message("plugin.manager.tab.installed")
+    val titleLabel = componentsOfType(view.component, JBLabel::class.java).single { it.text == title }
+    val header = checkNotNull(titleLabel.parent?.parent)
+    val expansionLink = componentsOfType(header, ActionLink::class.java)
+      .single { it.text == IdeBundle.message("plugins.configurable.show.more") }
+    assertThat(componentsOfType(header, JToggleButton::class.java)).isEmpty()
+    assertThat(expansionLink.icon).isSameAs(AllIcons.General.ChevronDown)
+
+    titleLabel.dispatchEvent(MouseEvent(
+      titleLabel,
+      MouseEvent.MOUSE_CLICKED,
+      0,
+      0,
+      1,
+      1,
+      1,
+      false,
+      MouseEvent.BUTTON1,
+    ))
+    assertThat(expansionChanges).isEmpty()
+
+    expansionLink.doClick()
+    assertThat(expansionChanges).containsExactly(PluginSectionId.Installed to true)
+    view.close()
+  }
+
+  @Test
+  fun `expandable section header is one mouse keyboard and hover target`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val expansionChanges = ArrayList<Pair<PluginSectionId, Boolean>>()
+    val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, itemCount = 5)))
+    val view = createView(onExpansionChanged = { id, expanded -> expansionChanges.add(id to expanded) })
+    view.render(controller.state.value)
+
+    val title = IdeBundle.message("plugin.manager.tab.installed")
+    val header = sectionHeader(view, title)
+    val headerButton = componentsOfType(header, JToggleButton::class.java).single()
+    val titleLabel = componentsOfType(headerButton, JBLabel::class.java).single { it.text == title }
+    header.setSize(JBUI.scale(320), JBUI.scale(40))
+    layoutRecursively(header)
+
+    assertThat(headerButton.isFocusable).isTrue()
+    assertThat(headerButton.isFocusPainted).isFalse()
+    assertThat(headerButton.accessibleContext.accessibleRole).isEqualTo(AccessibleRole.TOGGLE_BUTTON)
+    assertThat(headerButton.accessibleContext.accessibleStateSet.contains(AccessibleState.COLLAPSED)).isTrue()
+
+    headerButton.model.isRollover = true
+    val image = paintedImage(header)
+    val hoverX = header.width / 2
+    val hoverY = JBUI.scale(7 + 2)
+    val hoverColor = ColorUtil.alphaBlending(ListPluginComponent.HOVER_COLOR, PluginManagerConfigurable.MAIN_BG_COLOR)
+    assertThat((header as SelectablePanel).selectionColor).isEqualTo(hoverColor)
+    assertThat(Color(image.getRGB(hoverX, hoverY), true).rgb).isEqualTo(hoverColor.rgb)
+    assertThat(Color(image.getRGB(hoverX, JBUI.scale(7) - 1), true).rgb).isNotEqualTo(hoverColor.rgb)
+    assertThat(Color(image.getRGB(hoverX, header.height - JBUI.scale(3) + 1), true).rgb)
+      .isNotEqualTo(hoverColor.rgb)
+    assertThat(header.height - JBUI.scale(7) - JBUI.scale(3)).isEqualTo(JBUI.scale(30))
+    assertThat(Color(image.getRGB(0, header.height / 2), true).rgb).isNotEqualTo(hoverColor.rgb)
+
+    headerButton.model.isRollover = false
+    headerButton.isSelected = true
+    val selectedImage = paintedImage(header)
+    val selectionColor = ColorUtil.alphaBlending(ListPluginComponent.SELECTION_COLOR, PluginManagerConfigurable.MAIN_BG_COLOR)
+    assertThat((header as SelectablePanel).selectionColor).isNull()
+    assertThat(Color(selectedImage.getRGB(hoverX, hoverY), true).rgb).isNotEqualTo(selectionColor.rgb)
+
+    titleLabel.dispatchEvent(MouseEvent(
+      titleLabel,
+      MouseEvent.MOUSE_PRESSED,
+      0,
+      0,
+      1,
+      1,
+      1,
+      false,
+      MouseEvent.BUTTON1,
+    ))
+    titleLabel.dispatchEvent(MouseEvent(
+      titleLabel,
+      MouseEvent.MOUSE_RELEASED,
+      0,
+      0,
+      1,
+      1,
+      1,
+      false,
+      MouseEvent.BUTTON1,
+    ))
+    assertThat(expansionChanges).containsExactly(PluginSectionId.Installed to true)
+
+    val enterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
+    val enterActionKey = headerButton.getInputMap(JComponent.WHEN_FOCUSED).get(enterKey)
+    headerButton.actionMap.get(enterActionKey).actionPerformed(ActionEvent(headerButton, ActionEvent.ACTION_PERFORMED, null))
+    assertThat(expansionChanges.last()).isEqualTo(PluginSectionId.Installed to true)
+    view.close()
   }
 
   @Test
@@ -251,7 +383,9 @@ internal class UnifiedPluginsPageViewTest {
     val titleLabel = componentsOfType(view.component, JBLabel::class.java)
       .single { it.accessibleContext.accessibleName == fullTitle }
     val header = checkNotNull(titleLabel.parent?.parent)
-    val expansionLink = componentsOfType(header, ActionLink::class.java).single()
+    val expansionTextLabel = componentsOfType(header, JBLabel::class.java)
+      .single { it.text == IdeBundle.message("plugins.configurable.show.more") }
+    val expansionControl = expansionTextLabel.parent as JComponent
     val statusLabel = componentsOfType(header, JBLabel::class.java).single { it.text == "5" }
     val availableTitleWidth = titleLabel.parent.width - statusLabel.preferredSize.width
     val fullTitleWidth = titleLabel.getFontMetrics(titleLabel.font).stringWidth(fullTitle)
@@ -263,9 +397,9 @@ internal class UnifiedPluginsPageViewTest {
       .endsWith("...")
       .isNotEqualTo(fullTitle)
     assertThat(titleLabel.toolTipText).isEqualTo(fullTitle)
-    assertThat(expansionLink.x + expansionLink.width).isLessThanOrEqualTo(header.width)
+    assertThat(expansionControl.x + expansionControl.width).isLessThanOrEqualTo(header.width)
     val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
-    val actionRight = SwingUtilities.convertPoint(expansionLink, Point(expansionLink.width, 0), scrollPane.viewport).x
+    val actionRight = SwingUtilities.convertPoint(expansionControl, Point(expansionControl.width, 0), scrollPane.viewport).x
     assertThat(actionRight).isLessThanOrEqualTo(scrollPane.viewport.width)
 
     view.component.setSize(fullTitleWidth * 4, 320)
@@ -533,7 +667,8 @@ internal class UnifiedPluginsPageViewTest {
     prepareForScrolling(view)
 
     val installedTitle = IdeBundle.message("plugin.manager.tab.installed")
-    val installedHeader = sectionHeader(view, installedTitle) as JComponent
+    val installedHeader = sectionHeader(view, installedTitle)
+    val installedHeaderButton = componentsOfType(installedHeader, JToggleButton::class.java).single()
     val installedList = sectionList(view, installedTitle)
     val sectionsPanel = installedList.parent.parent as JComponent
     val expectedInsets = Insets(JBUI.scale(8), JBUI.scale(16), JBUI.scale(4), JBUI.scale(12))
@@ -541,7 +676,7 @@ internal class UnifiedPluginsPageViewTest {
     assertThat(installedHeader.preferredSize.height).isEqualTo(JBUI.scale(40))
     assertThat(installedHeader.minimumSize.height).isEqualTo(JBUI.scale(40))
     assertThat(installedHeader.maximumSize.height).isEqualTo(JBUI.scale(40))
-    assertThat(installedHeader.insets).isEqualTo(expectedInsets)
+    assertThat(installedHeaderButton.insets).isEqualTo(expectedInsets)
 
     val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
     scrollToRow(scrollPane, installedList, 2)
@@ -549,7 +684,7 @@ internal class UnifiedPluginsPageViewTest {
     assertThat(componentY(installedHeader, scrollPane.parent)).isEqualTo(0)
     assertThat(sectionHeader(view, installedTitle)).isSameAs(installedHeader)
     assertThat(installedHeader.height).isEqualTo(JBUI.scale(40))
-    assertThat(installedHeader.insets).isEqualTo(expectedInsets)
+    assertThat(installedHeaderButton.insets).isEqualTo(expectedInsets)
   }
 
   @Test
@@ -649,7 +784,7 @@ internal class UnifiedPluginsPageViewTest {
       val installedHeader = sectionHeader(view, installedTitle)
       val bundledHeader = sectionHeader(view, bundledTitle)
       val stickyHeaderHost = installedHeader.parent as JComponent
-      val installedExpansionLink = componentsOfType(installedHeader, ActionLink::class.java).single()
+      val installedHeaderButton = componentsOfType(installedHeader, JToggleButton::class.java).single()
       val installedList = sectionList(view, installedTitle)
       val initialScrollBarBounds = scrollPane.verticalScrollBar.bounds
       assertThat(initialScrollBarBounds.y).isEqualTo(JBUI.scale(40))
@@ -658,7 +793,8 @@ internal class UnifiedPluginsPageViewTest {
       assertThat(componentY(installedHeader, scrollPane.parent)).isEqualTo(0)
       assertThat(scrollPane.verticalScrollBar.bounds).isEqualTo(initialScrollBarBounds)
       assertThat(sectionHeader(view, installedTitle)).isSameAs(installedHeader)
-      assertThat(componentsOfType(installedHeader, ActionLink::class.java).single()).isSameAs(installedExpansionLink)
+      assertThat(componentsOfType(sectionHeader(view, installedTitle), JToggleButton::class.java).single())
+        .isSameAs(installedHeaderButton)
       assertThat(componentsOfType(view.component, JBLabel::class.java).count { it.text == installedTitle }).isEqualTo(1)
       assertThat(paintedPixel(stickyHeaderHost, stickyHeaderHost.width / 2, installedHeader.height - 1))
         .isEqualTo(PluginManagerConfigurable.MAIN_BG_COLOR.rgb)
@@ -693,7 +829,7 @@ internal class UnifiedPluginsPageViewTest {
       prepareForScrolling(view)
 
       val installedTitle = IdeBundle.message("plugin.manager.tab.installed")
-      val installedHeader = sectionHeader(view, installedTitle) as JComponent
+      val installedHeader = sectionHeader(view, installedTitle)
       val installedList = sectionList(view, installedTitle)
       val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
       val initialScrollBarBounds = scrollPane.verticalScrollBar.bounds
@@ -744,17 +880,20 @@ internal class UnifiedPluginsPageViewTest {
     val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
     scrollToRow(scrollPane, installedList, 5)
     val stickyHeader = sectionHeader(view, installedTitle)
-    val expansionLink = componentsOfType(stickyHeader, ActionLink::class.java).single()
+    val stickyHeaderButton = componentsOfType(stickyHeader, JToggleButton::class.java).single()
+    val expansionTextLabel = componentsOfType(stickyHeaderButton, JBLabel::class.java)
+      .single { it.text == IdeBundle.message("plugins.configurable.show.less") }
+    val expansionChevronLabel = componentsOfType(stickyHeaderButton, JBLabel::class.java)
+      .single { it.icon === AllIcons.General.ChevronUp }
 
     assertThat(componentY(stickyHeader, scrollPane.parent)).isEqualTo(0)
-    assertThat(expansionLink.text).isEqualTo(IdeBundle.message("plugins.configurable.show.less"))
-    assertThat(expansionLink.icon).isSameAs(AllIcons.General.ChevronUp)
+    assertThat(expansionChevronLabel.icon).isSameAs(AllIcons.General.ChevronUp)
 
-    expansionLink.doClick()
+    stickyHeaderButton.doClick()
 
     assertThat(installedList.model.size).isEqualTo(PluginSectionState.COLLAPSED_ITEM_LIMIT)
-    assertThat(expansionLink.text).isEqualTo(IdeBundle.message("plugins.configurable.show.more"))
-    assertThat(expansionLink.icon).isSameAs(AllIcons.General.ChevronDown)
+    assertThat(expansionTextLabel.text).isEqualTo(IdeBundle.message("plugins.configurable.show.more"))
+    assertThat(expansionChevronLabel.icon).isSameAs(AllIcons.General.ChevronDown)
   }
 
   @Test
@@ -919,6 +1058,28 @@ internal class UnifiedPluginsPageViewTest {
   }
 
   @Test
+  fun `search editor focus repaints the outer focus border`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val view = createView()
+    val searchComponent = view.searchComponent as SearchFieldWithExtension
+    val editor = componentsOfType(searchComponent, SearchTextField::class.java).single().textEditor
+    val previousRepaintManager = RepaintManager.currentManager(searchComponent)
+    val repaintManager = RecordingRepaintManager()
+    try {
+      RepaintManager.setCurrentManager(repaintManager)
+
+      editor.focusListeners.forEach { it.focusGained(FocusEvent(editor, FocusEvent.FOCUS_GAINED)) }
+      assertThat(repaintManager.dirtyComponents).contains(searchComponent)
+
+      repaintManager.dirtyComponents.clear()
+      editor.focusListeners.forEach { it.focusLost(FocusEvent(editor, FocusEvent.FOCUS_LOST)) }
+      assertThat(repaintManager.dirtyComponents).contains(searchComponent)
+    }
+    finally {
+      RepaintManager.setCurrentManager(previousRepaintManager)
+    }
+  }
+
+  @Test
   fun `search emits user edit delivered while sections render`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val queries = ArrayList<String>()
     val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, itemCount = 1)))
@@ -945,6 +1106,7 @@ internal class UnifiedPluginsPageViewTest {
     onRetryRequested: (PluginSectionId) -> Unit = {},
     rowFactory: PluginRowFactory? = null,
     detailsPresenter: PluginDetailsPresenter? = null,
+    sectionHeaderVariant: UnifiedPluginsSectionHeaderVariant = UnifiedPluginsSectionHeaderVariant.FullHeader,
   ): UnifiedPluginsPageView {
     return UnifiedPluginsPageView(
       onSearchChanged,
@@ -953,6 +1115,7 @@ internal class UnifiedPluginsPageViewTest {
       rowFactory,
       detailsPresenter,
       onSectionRetryRequested = onRetryRequested,
+      sectionHeaderVariant = sectionHeaderVariant,
     )
   }
 
@@ -1002,9 +1165,9 @@ internal class UnifiedPluginsPageViewTest {
     return sectionLists(view).single { it.accessibleContext.accessibleName == title }
   }
 
-  private fun sectionHeader(view: UnifiedPluginsPageView, title: String): Component {
+  private fun sectionHeader(view: UnifiedPluginsPageView, title: String): JComponent {
     val titleLabel = componentsOfType(view.component, JBLabel::class.java).single { it.text == title }
-    return checkNotNull(titleLabel.parent?.parent)
+    return checkNotNull(SwingUtilities.getAncestorOfClass(SelectablePanel::class.java, titleLabel) as? JComponent)
   }
 
   private fun prepareForScrolling(view: UnifiedPluginsPageView) {
@@ -1097,6 +1260,14 @@ internal class UnifiedPluginsPageViewTest {
 
     fun selectedOccurrences(): List<PluginOccurrenceId> {
       return rows.filterValues(RecordingPluginRow::selected).keys.toList()
+    }
+  }
+
+  private class RecordingRepaintManager : RepaintManager() {
+    val dirtyComponents = ArrayList<JComponent>()
+
+    override fun addDirtyRegion(component: JComponent, x: Int, y: Int, width: Int, height: Int) {
+      dirtyComponents.add(component)
     }
   }
 
