@@ -22,10 +22,17 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemoryLayout.PathElement;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.util.Objects.requireNonNull;
@@ -45,6 +52,9 @@ import static java.util.Objects.requireNonNull;
 @ApiStatus.Internal
 public final class CircularBytesBufferOverMMappedFile implements CircularBytesBuffer, Closeable, Flushable, Unmappable, CleanableStorage {
   private static final Logger LOG = Logger.getInstance(CircularBytesBufferOverMMappedFile.class);
+
+  private static final ValueLayout.OfInt INT32_VALUE_LAYOUT = ValueLayout.JAVA_INT.withOrder(nativeOrder());
+  private static final ValueLayout.OfLong INT64_UNALIGNED_VALUE_LAYOUT = ValueLayout.JAVA_LONG_UNALIGNED.withOrder(nativeOrder());
 
   ///=======================================================================================================================
   ///Implementation details:
@@ -134,17 +144,17 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
     boolean fileIsEmpty = (storage.actualFileSize() == 0);
     cachedPage = storage.pageByOffset(0);
 
-    ByteBuffer headerBuffer = pageBuffer();
+    MemorySegment headerSegment = pageSegment();
     if (fileIsEmpty) {
-      HeaderLayout.initHeaderFields(headerBuffer, pageSize);
+      HeaderLayout.initHeaderFields(headerSegment, pageSize);
     }
     else {
-      HeaderLayout.checkFileParamsCompatible(storage.storagePath(), headerBuffer, pageSize);
+      HeaderLayout.checkFileParamsCompatible(storage.storagePath(), headerSegment, pageSize);
     }
 
-    capacity = HeaderLayout.readCapacity(headerBuffer);
+    capacity = HeaderLayout.readCapacity(headerSegment);
 
-    wasClosedProperly = HeaderLayout.markStorageOpened(headerBuffer);
+    wasClosedProperly = HeaderLayout.markStorageOpened(headerSegment);
     flush(true);//ensure 'storage opened' flag just set -- is persisted
   }
 
@@ -169,8 +179,7 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
   public boolean hasUnprocessedRecords() throws IOException {
     synchronized (lock) {
       checkNotClosing();
-      ByteBuffer pageBuffer = pageBuffer();
-      return advanceTailOverConsumedRecords(pageBuffer);
+      return advanceTailOverConsumedRecords(pageSegment());
     }
   }
 
@@ -181,17 +190,17 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
 
     synchronized (lock) {
       checkNotClosing();
-      ByteBuffer pageBuffer = pageBuffer();
+      MemorySegment pageSegment = pageSegment();
 
-      advanceTailOverConsumedRecords(pageBuffer);
+      advanceTailOverConsumedRecords(pageSegment);
 
       int recordLength = RecordLayout.recordLength(payloadSize);
       if (recordLength > capacity) {
         throw new QueueFullException("recordLength(=" + recordLength + ") exceeds buffer.capacity(=" + capacity + ")");
       }
 
-      long head = HeaderLayout.readHeadCursor(pageBuffer);
-      long tail = HeaderLayout.readTailCursor(pageBuffer);
+      long head = HeaderLayout.readHeadCursor(pageSegment);
+      long tail = HeaderLayout.readTailCursor(pageSegment);
       int used = bytesUsed(head, tail);
       int free = capacity - used;
       int tailOffset = offsetInDataSection(tail);
@@ -209,15 +218,15 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
       }
 
       if (recordLength > remainingToEnd) {
-        RecordLayout.putPaddingRecord(pageBuffer, dataOffset(tailOffset), remainingToEnd);
+        RecordLayout.putPaddingRecord(pageSegment, dataOffset(tailOffset), remainingToEnd);
         tail += remainingToEnd;
         tailOffset = 0;
       }
 
-      RecordLayout.putDataRecord(pageBuffer, dataOffset(tailOffset), payloadSize, writer);
+      RecordLayout.putDataRecord(pageSegment, pageBuffer(), dataOffset(tailOffset), payloadSize, writer);
       tail += recordLength;
 
-      HeaderLayout.putTailCursor(pageBuffer, tail);
+      HeaderLayout.putTailCursor(pageSegment, tail);
     }
   }
 
@@ -228,9 +237,9 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
     synchronized (lock) {
       checkNotClosing();
       activeReadOperations++;
-      ByteBuffer pageBuffer = pageBuffer();
-      scanCursor = HeaderLayout.readHeadCursor(pageBuffer);
-      tailSnapshot = HeaderLayout.readTailCursor(pageBuffer);
+      MemorySegment pageSegment = pageSegment();
+      scanCursor = HeaderLayout.readHeadCursor(pageSegment);
+      tailSnapshot = HeaderLayout.readTailCursor(pageSegment);
     }
 
     try {
@@ -254,12 +263,12 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
         finally {
           synchronized (lock) {
             try {
-              ByteBuffer pageBuffer = pageBuffer();
+              MemorySegment pageSegment = pageSegment();
               if (readerCompletedSuccessfully && decision.shouldConsumeAfterProcess()) {
-                RecordLayout.markConsumed(pageBuffer, leasedRecord.recordOffset(), leasedRecord.header());
+                RecordLayout.markConsumed(pageSegment, leasedRecord.recordOffset(), leasedRecord.header());
                 consumedRecords++;
               }
-              advanceTailOverConsumedRecords(pageBuffer);
+              advanceTailOverConsumedRecords(pageSegment);
             }
             finally {
               leasedRecordCursors.remove(leasedRecord.cursor());
@@ -296,7 +305,7 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
       if (storage.isOpen()) {
         closing = true;
         waitForActiveReadOperationsToFinish();
-        HeaderLayout.markStorageClosed(pageBuffer());
+        HeaderLayout.markStorageClosed(pageSegment());
         flush();
         storage.close();
         cachedPage = null;
@@ -329,9 +338,9 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
         return "CircularBytesBufferOverMMappedFile[" + path + "]{capacity=" + capacity + ", closed}";
       }
 
-      ByteBuffer pageBuffer = page.rawPageBuffer();
-      long head = HeaderLayout.readHeadCursor(pageBuffer);
-      long tail = HeaderLayout.readTailCursor(pageBuffer);
+      MemorySegment pageSegment = page.rawPageSegment();
+      long head = HeaderLayout.readHeadCursor(pageSegment);
+      long tail = HeaderLayout.readTailCursor(pageSegment);
       return "CircularBytesBufferOverMMappedFile[" + path + "]{" +
              "capacity=" + capacity +
              ", head=" + head +
@@ -350,9 +359,9 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
    * @return true if (head != tail) at the end => some unprocessed records remain;
    * false if (head==tail) => no unprocessed records left => queue is empty.
    */
-  private boolean advanceTailOverConsumedRecords(@NotNull ByteBuffer pageBuffer) throws IOException {
-    long headCursor = HeaderLayout.readHeadCursor(pageBuffer);
-    long tailCursor = HeaderLayout.readTailCursor(pageBuffer);
+  private boolean advanceTailOverConsumedRecords(@NotNull MemorySegment pageSegment) throws IOException {
+    long headCursor = HeaderLayout.readHeadCursor(pageSegment);
+    long tailCursor = HeaderLayout.readTailCursor(pageSegment);
     int used = bytesUsed(headCursor, tailCursor);
 
     // Only a continuous prefix could be released. Consumed records after the first unconsumed one remain
@@ -360,7 +369,7 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
     while (used > 0) {
       int recordOffsetInDataSection = offsetInDataSection(headCursor);
       int recordOffsetInFile = dataOffset(recordOffsetInDataSection);
-      int recordHeader = RecordLayout.readHeader(pageBuffer, recordOffsetInFile);
+      int recordHeader = RecordLayout.readHeader(pageSegment, recordOffsetInFile);
       int recordLength = RecordLayout.recordLength(recordHeader, recordOffsetInDataSection, used, storage.storagePath());
       if (RecordLayout.isDataHeader(recordHeader) && !RecordLayout.isConsumed(recordHeader)) {
         break;
@@ -371,11 +380,11 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
     }
 
     if (used == 0) {
-      HeaderLayout.putHeadCursor(pageBuffer, tailCursor);
+      HeaderLayout.putHeadCursor(pageSegment, tailCursor);
       return false;
     }
     else {
-      HeaderLayout.putHeadCursor(pageBuffer, headCursor);
+      HeaderLayout.putHeadCursor(pageSegment, headCursor);
       return true;
     }
   }
@@ -386,6 +395,14 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
       throw new ClosedStorageException("Storage[" + storage.storagePath() + "] is already closed");
     }
     return page.rawPageBuffer();
+  }
+
+  private MemorySegment pageSegment() throws ClosedStorageException {
+    MMappedFileStorage.Page page = cachedPage;
+    if (page == null) {
+      throw new ClosedStorageException("Storage[" + storage.storagePath() + "] is already closed");
+    }
+    return page.rawPageSegment();
   }
 
   ///must be called under .lock
@@ -416,13 +433,14 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
   private @Nullable LeasedRecord fetchAndLeaseNextRecord(long fromCursor,
                                                          long tailSnapshot,
                                                          @NotNull OptionallyConsumingDataReader reader) throws IOException {
+    MemorySegment pageSegment = pageSegment();
     ByteBuffer pageBuffer = pageBuffer();
-    long cursor = Math.max(fromCursor, HeaderLayout.readHeadCursor(pageBuffer));
+    long cursor = Math.max(fromCursor, HeaderLayout.readHeadCursor(pageSegment));
     while (cursor < tailSnapshot) {
       int bytesLeft = bytesUsed(cursor, tailSnapshot);
       int offset = offsetInDataSection(cursor);
       int recordOffset = dataOffset(offset);
-      int header = RecordLayout.readHeader(pageBuffer, recordOffset);
+      int header = RecordLayout.readHeader(pageSegment, recordOffset);
       int recordLength = RecordLayout.recordLength(header, offset, bytesLeft, storage.storagePath());
 
       if (!RecordLayout.isDataHeader(header) || RecordLayout.isConsumed(header)) {
@@ -449,8 +467,9 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
         waitForRecordLeaseToRelease(cursor);
 
         //.lock is released during waiting, so re-get & re-check the crucial bits of state:
+        pageSegment = pageSegment();
         pageBuffer = pageBuffer();
-        long headCursor = HeaderLayout.readHeadCursor(pageBuffer);
+        long headCursor = HeaderLayout.readHeadCursor(pageSegment);
         if (cursor < headCursor) {
           cursor = headCursor;
           continue;
@@ -458,7 +477,7 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
 
         // Only 'consumed' bit can change during record lifetime, record type and length are immutable
         // (as long, as record is not overwritten -- which is checked above)
-        header = RecordLayout.readHeader(pageBuffer, recordOffset);
+        header = RecordLayout.readHeader(pageSegment, recordOffset);
         if (RecordLayout.isConsumed(header)) {
           cursor += recordLength;
           continue;
@@ -553,14 +572,15 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
 
       if (Files.exists(storagePath) && Files.size(storagePath) > 0) {
         //Avoid mmap at first: unmap could be tricky on JVM across the platforms, so better check the params first
-        // with non-mmapped buffer and only proceed if +/- sure params are correct:
-        ByteBuffer headerBuffer = ByteBuffer.allocateDirect(HeaderLayout.HEADER_SIZE).order(nativeOrder());
-        try (FileChannel channel = FileChannel.open(storagePath, READ)) {
-          int bytesRead = channel.read(headerBuffer);
+        // with a non-mmapped segment and only proceed if +/- sure params are correct:
+        try (var arena = Arena.ofConfined();
+             FileChannel channel = FileChannel.open(storagePath, READ)) {
+          MemorySegment headerSegment = arena.allocate(HeaderLayout.LAYOUT);
+          int bytesRead = channel.read(headerSegment.asByteBuffer());
           if (bytesRead != HeaderLayout.HEADER_SIZE) {
             throw new IOException("[" + storagePath + "]: file is not empty, but < HEADER_SIZE(=" + HeaderLayout.HEADER_SIZE + ")");
           }
-          HeaderLayout.checkFileParamsCompatible(storagePath, headerBuffer, pageSize);
+          HeaderLayout.checkFileParamsCompatible(storagePath, headerSegment, pageSize);
         }
         catch (IOException ex) {
           if (!cleanFileIfIncompatible) {
@@ -626,48 +646,59 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
 
   private static final class HeaderLayout {
 
-    /** First header int32, used to recognize this storage's file type. */
-    private static final int MAGIC_WORD = IOUtil.asciiToMagicWord("CBBQ");
+    private static final MemoryLayout LAYOUT = MemoryLayout.structLayout(
+      INT32_VALUE_LAYOUT.withName("magicWord"),
+      INT32_VALUE_LAYOUT.withName("implementationVersion"),
+      INT32_VALUE_LAYOUT.withName("pageSize"),
+      INT64_UNALIGNED_VALUE_LAYOUT.withName("headCursor"),
+      INT64_UNALIGNED_VALUE_LAYOUT.withName("tailCursor"),
+      INT32_VALUE_LAYOUT.withName("flags"),
+      MemoryLayout.paddingLayout(32)
+    ).withName("CircularBytesBuffer.HeaderLayout")
+     .withByteAlignment(Integer.BYTES);
+
+    /** First header int32. It identifies this storage file type. */
+    private static final PathElement MAGIC_WORD_FIELD = groupElement("magicWord");
+    private static final PathElement IMPLEMENTATION_VERSION_FIELD = groupElement("implementationVersion");
+    /**
+     * The data region wraps at {@code pageSize - HEADER_SIZE}.
+     * The page size is part of the binary layout and must match when the storage opens again.
+     */
+    private static final PathElement PAGE_SIZE_FIELD = groupElement("pageSize");
+    /** Logical position of the first occupied record. The physical offset is {@code headCursor % capacity}. */
+    private static final PathElement HEAD_CURSOR_FIELD = groupElement("headCursor");
+    /** Logical position after the last occupied record. The physical offset is {@code tailCursor % capacity}. */
+    private static final PathElement TAIL_CURSOR_FIELD = groupElement("tailCursor");
+    /** The flags field currently stores only the closed-properly flag. */
+    private static final PathElement FLAGS_FIELD = groupElement("flags");
+
+    private static VarHandle fieldHandle(PathElement fieldPath) {
+      return LAYOUT.varHandle(fieldPath).withInvokeExactBehavior();
+    }
+
+    private static final VarHandle MAGIC_WORD = fieldHandle(MAGIC_WORD_FIELD);
+    private static final VarHandle IMPLEMENTATION_VERSION = fieldHandle(IMPLEMENTATION_VERSION_FIELD);
+    private static final VarHandle PAGE_SIZE = fieldHandle(PAGE_SIZE_FIELD);
+    private static final VarHandle HEAD_CURSOR = fieldHandle(HEAD_CURSOR_FIELD);
+    private static final VarHandle TAIL_CURSOR = fieldHandle(TAIL_CURSOR_FIELD);
+    private static final VarHandle FLAGS = fieldHandle(FLAGS_FIELD);
+
+    private static final int FILE_MAGIC_WORD = IOUtil.asciiToMagicWord("CBBQ");
 
     private static final int CURRENT_IMPLEMENTATION_VERSION = 1;
 
     private static final int FLAG_CLOSED_PROPERLY_MASK = 0b1;
 
-    //========= Offsets:
-
-    private static final int MAGIC_WORD_OFFSET = 0;
-    private static final int IMPL_VERSION_OFFSET = MAGIC_WORD_OFFSET + Integer.BYTES;
-
     /**
-     * The data region wraps at capacity=pageSize-HEADER_SIZE.
-     * Since pageSize _defines_ that capacity, it is a part of the binary layout and must match on reopen.
+     * The 64-byte header leaves space for future flags and counters.
+     * The current fields use only half of this space.
      */
-    private static final int PAGE_SIZE_OFFSET = IMPL_VERSION_OFFSET + Integer.BYTES;
-    /** Logical position of the first occupied record. Physical offset is (headCursor % capacity). */
-    private static final int HEAD_CURSOR_OFFSET = PAGE_SIZE_OFFSET + Integer.BYTES;
-    /** Logical position right after the last occupied record. Physical offset is (tailCursor % capacity). */
-    private static final int TAIL_CURSOR_OFFSET = HEAD_CURSOR_OFFSET + Long.BYTES;
-    /** int32 flags: currently only 'closed properly' is stored here. */
-    private static final int FLAGS_OFFSET = TAIL_CURSOR_OFFSET + Long.BYTES;
-
-    /**
-     * Reserve 64 bytes for a header even though the current fields use less space: keeps the binary layout simple
-     * and leaves room for future flags/counters.
-     */
-    private static final int HEADER_SIZE = 64;
-
-    static {
-      assert (FLAGS_OFFSET + Integer.BYTES <= HEADER_SIZE)
-        : "Total fields size (" + (FLAGS_OFFSET + Integer.BYTES) + ") must fit into header size (" + HEADER_SIZE + ")";
-    }
+    private static final int HEADER_SIZE = Math.toIntExact(LAYOUT.byteSize());
 
     private HeaderLayout() { }
 
-    private static void initHeaderFields(@NotNull ByteBuffer headerBuffer,
+    private static void initHeaderFields(@NotNull MemorySegment headerSegment,
                                          int pageSize) {
-      if (headerBuffer.order() != nativeOrder()) {
-        throw new IllegalArgumentException("headerBuffer.order=" + headerBuffer.order() + "; must be native (= " + nativeOrder() + ")");
-      }
       int capacity = pageSize - HEADER_SIZE;
       if (capacity <= RecordLayout.HEADER_SIZE) {
         throw new IllegalArgumentException("pageSize(=" + pageSize + ") leaves too small capacity(=" + capacity + ")");
@@ -676,27 +707,27 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
         throw new IllegalArgumentException("capacity(=" + capacity + ") must be 32b-aligned");
       }
 
-      headerBuffer.putInt(MAGIC_WORD_OFFSET, MAGIC_WORD);
-      headerBuffer.putInt(IMPL_VERSION_OFFSET, CURRENT_IMPLEMENTATION_VERSION);
-      headerBuffer.putInt(PAGE_SIZE_OFFSET, pageSize);
-      headerBuffer.putLong(HEAD_CURSOR_OFFSET, 0);
-      headerBuffer.putLong(TAIL_CURSOR_OFFSET, 0);
-      headerBuffer.putInt(FLAGS_OFFSET, FLAG_CLOSED_PROPERLY_MASK);
+      MAGIC_WORD.set(headerSegment, 0L, FILE_MAGIC_WORD);
+      IMPLEMENTATION_VERSION.set(headerSegment, 0L, CURRENT_IMPLEMENTATION_VERSION);
+      PAGE_SIZE.set(headerSegment, 0L, pageSize);
+      HEAD_CURSOR.set(headerSegment, 0L, 0L);
+      TAIL_CURSOR.set(headerSegment, 0L, 0L);
+      FLAGS.set(headerSegment, 0L, FLAG_CLOSED_PROPERLY_MASK);
     }
 
     private static void checkFileParamsCompatible(@NotNull Path storagePath,
-                                                  @NotNull ByteBuffer headerBuffer,
+                                                  @NotNull MemorySegment headerSegment,
                                                   int pageSize) throws IOException {
-      int magicWord = headerBuffer.getInt(MAGIC_WORD_OFFSET);
-      if (magicWord != MAGIC_WORD) {
+      int magicWord = (int)MAGIC_WORD.get(headerSegment, 0L);
+      if (magicWord != FILE_MAGIC_WORD) {
         throw new IOException(
           "[" + storagePath + "] is of incorrect type: " +
           ".magicWord(=" + magicWord + ", '" + IOUtil.magicWordToASCII(magicWord) + "') " +
-          "!= expected(" + MAGIC_WORD + ", '" + IOUtil.magicWordToASCII(MAGIC_WORD) + "')"
+          "!= expected(" + FILE_MAGIC_WORD + ", '" + IOUtil.magicWordToASCII(FILE_MAGIC_WORD) + "')"
         );
       }
 
-      int implementationVersion = headerBuffer.getInt(IMPL_VERSION_OFFSET);
+      int implementationVersion = (int)IMPLEMENTATION_VERSION.get(headerSegment, 0L);
       if (implementationVersion != CURRENT_IMPLEMENTATION_VERSION) {
         throw new IOException(
           "[" + storagePath + "].implementationVersion(=" + implementationVersion + ") is not supported: " +
@@ -704,14 +735,14 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
         );
       }
 
-      int filePageSize = headerBuffer.getInt(PAGE_SIZE_OFFSET);
+      int filePageSize = (int)PAGE_SIZE.get(headerSegment, 0L);
       if (filePageSize != pageSize) {
         throw new IOException("[" + storagePath + "]: file created with pageSize=" + filePageSize + " but current pageSize=" + pageSize);
       }
 
-      int capacity = readCapacity(headerBuffer);
-      long head = readHeadCursor(headerBuffer);
-      long tail = readTailCursor(headerBuffer);
+      int capacity = readCapacity(headerSegment);
+      long head = readHeadCursor(headerSegment);
+      long tail = readTailCursor(headerSegment);
       if (head < 0 || tail < 0) {
         throw new CorruptedException("[" + storagePath + "] is corrupted: both head(=" + head + ") and tail(=" + tail + ")" +
                                      " must not be negative");
@@ -724,46 +755,51 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
       }
     }
 
-    private static int readPageSize(@NotNull ByteBuffer headerBuffer) {
-      return headerBuffer.getInt(PAGE_SIZE_OFFSET);
+    private static int readPageSize(@NotNull MemorySegment headerSegment) {
+      return (int)PAGE_SIZE.get(headerSegment, 0L);
     }
 
-    static int readCapacity(@NotNull ByteBuffer headerBuffer) {
-      return readPageSize(headerBuffer) - HEADER_SIZE;
+    static int readCapacity(@NotNull MemorySegment headerSegment) {
+      return readPageSize(headerSegment) - HEADER_SIZE;
     }
 
-    private static long readHeadCursor(@NotNull ByteBuffer headerBuffer) {
-      return headerBuffer.getLong(HEAD_CURSOR_OFFSET);
+    private static long readHeadCursor(@NotNull MemorySegment headerSegment) {
+      return (long)HEAD_CURSOR.get(headerSegment, 0L);
     }
 
-    private static void putHeadCursor(@NotNull ByteBuffer headerBuffer,
+    private static void putHeadCursor(@NotNull MemorySegment headerSegment,
                                       long cursor) {
-      headerBuffer.putLong(HEAD_CURSOR_OFFSET, cursor);
+      HEAD_CURSOR.set(headerSegment, 0L, cursor);
     }
 
-    private static long readTailCursor(@NotNull ByteBuffer headerBuffer) {
-      return headerBuffer.getLong(TAIL_CURSOR_OFFSET);
+    private static long readTailCursor(@NotNull MemorySegment headerSegment) {
+      return (long)TAIL_CURSOR.get(headerSegment, 0L);
     }
 
-    private static void putTailCursor(@NotNull ByteBuffer headerBuffer,
+    private static void putTailCursor(@NotNull MemorySegment headerSegment,
                                       long cursor) {
-      headerBuffer.putLong(TAIL_CURSOR_OFFSET, cursor);
+      TAIL_CURSOR.set(headerSegment, 0L, cursor);
     }
 
     /** @return was storage closed properly before? */
-    private static boolean markStorageOpened(@NotNull ByteBuffer headerBuffer) {
-      int flags = headerBuffer.getInt(FLAGS_OFFSET);
+    private static boolean markStorageOpened(@NotNull MemorySegment headerSegment) {
+      int flags = (int)FLAGS.get(headerSegment, 0L);
       boolean wasClosedProperly = (flags & FLAG_CLOSED_PROPERLY_MASK) != 0;
-      headerBuffer.putInt(FLAGS_OFFSET, flags & ~FLAG_CLOSED_PROPERLY_MASK);
+      FLAGS.set(headerSegment, 0L, flags & ~FLAG_CLOSED_PROPERLY_MASK);
       return wasClosedProperly;
     }
 
-    private static void markStorageClosed(@NotNull ByteBuffer headerBuffer) {
-      headerBuffer.putInt(FLAGS_OFFSET, headerBuffer.getInt(FLAGS_OFFSET) | FLAG_CLOSED_PROPERLY_MASK);
+    private static void markStorageClosed(@NotNull MemorySegment headerSegment) {
+      int flags = (int)FLAGS.get(headerSegment, 0L);
+      FLAGS.set(headerSegment, 0L, flags | FLAG_CLOSED_PROPERLY_MASK);
     }
   }
 
   private static final class RecordLayout {
+    private static final ValueLayout.OfInt LAYOUT = INT32_VALUE_LAYOUT;
+
+    private static final VarHandle HEADER = LAYOUT.varHandle().withInvokeExactBehavior();
+
     // Record = (int32 header) + (payload) + (implicit alignment padding)?
     // Header = 32 bit, at 32-bit-aligned offset:
     //          bit[31] (highest bit): record type, 0=data record, 1=padding record
@@ -774,7 +810,7 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
     // For padding record, the raw length is the whole record length, with alignment already included (padding-record
     // has no payload => no need to separate '(aligned) record length' from '(unaligned) payload length').
 
-    private static final int HEADER_SIZE = Integer.BYTES;
+    private static final int HEADER_SIZE = Math.toIntExact(LAYOUT.byteSize());
     private static final int PAYLOAD_OFFSET = HEADER_SIZE;
 
     //@formatter:off
@@ -793,13 +829,14 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
 
     private RecordLayout() { }
 
-    private static void putDataRecord(@NotNull ByteBuffer buffer,
+    private static void putDataRecord(@NotNull MemorySegment pageSegment,
+                                      @NotNull ByteBuffer pageBuffer,
                                       int recordOffset,
                                       int payloadSize,
                                       @NotNull ByteBufferWriter writer) throws IOException {
       // Write the payload first, _then_ publish the header. Header==0 means "no valid record here" for corruption checks,
       // so publishing it last avoids exposing a valid header with not-yet-written payload during normal append.
-      ByteBuffer payloadBuffer = buffer.slice(recordOffset + PAYLOAD_OFFSET, payloadSize).order(buffer.order());
+      ByteBuffer payloadBuffer = pageBuffer.slice(recordOffset + PAYLOAD_OFFSET, payloadSize).order(pageBuffer.order());
       writer.write(payloadBuffer);
       if (payloadBuffer.remaining() > 0) {
         throw new IllegalStateException(
@@ -807,10 +844,10 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
           "buffer[pos: " + payloadBuffer.position() + ", lim: " + payloadBuffer.limit() + "]"
         );
       }
-      buffer.putInt(recordOffset, dataRecordHeader(payloadSize));
+      HEADER.set(pageSegment, (long)recordOffset, dataRecordHeader(payloadSize));
     }
 
-    private static void putPaddingRecord(@NotNull ByteBuffer buffer,
+    private static void putPaddingRecord(@NotNull MemorySegment pageSegment,
                                          int recordOffset,
                                          int paddingLength) {
       if (paddingLength <= 0) {//TODO RC: check paddingLength <= RECORD_LENGTH_MASK too
@@ -820,12 +857,12 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
         throw new IllegalArgumentException("paddingLength(=" + paddingLength + ") must be 32b-aligned");
       }
       // Padding record is marked as 'consumed' right from the start: it exists only to skip over it.
-      buffer.putInt(recordOffset, RECORD_TYPE_PADDING | RECORD_CONSUMED_MASK | paddingLength);
+      HEADER.set(pageSegment, (long)recordOffset, RECORD_TYPE_PADDING | RECORD_CONSUMED_MASK | paddingLength);
     }
 
-    private static int readHeader(@NotNull ByteBuffer buffer,
+    private static int readHeader(@NotNull MemorySegment pageSegment,
                                   int recordOffset) {
-      return buffer.getInt(recordOffset);
+      return (int)HEADER.get(pageSegment, (long)recordOffset);
     }
 
     private static int rawRecordLength(int header) {
@@ -892,10 +929,10 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
       return (header & RECORD_CONSUMED_MASK) != 0;
     }
 
-    private static void markConsumed(@NotNull ByteBuffer buffer,
+    private static void markConsumed(@NotNull MemorySegment pageSegment,
                                      int recordOffset,
                                      int header) {
-      buffer.putInt(recordOffset, header | RECORD_CONSUMED_MASK);
+      HEADER.set(pageSegment, (long)recordOffset, header | RECORD_CONSUMED_MASK);
     }
 
     /** @return header (int32) for the data record (not 'consumed') with payloadSize */
