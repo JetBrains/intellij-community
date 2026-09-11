@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
@@ -26,7 +27,9 @@ class SeRecentFilesProviderFactory : SeWrappedLegacyContributorItemsProviderFact
       return getItemsProvider(project, legacyContributor)
     }
 
-    return SeRecentFilesProvider.create(project, dataContext)
+    return SeRecentFilesProvider.create(project,
+                                        dataContext,
+                                        shouldIncludeOpened = WelcomeScreenProjectProvider.isWelcomeScreenProject(project))
   }
 
   /** The fallback for a caller that has no [DataContext]. It always builds the legacy provider. */

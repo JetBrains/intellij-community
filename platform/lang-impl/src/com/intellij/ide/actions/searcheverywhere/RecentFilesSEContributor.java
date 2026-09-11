@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -65,6 +66,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
     List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(myProject).getFileList());
 
+    boolean shouldIncludeOpened = WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject(myProject);
     List<FoundItemDescriptor<Object>> res = new ArrayList<>();
     ProgressIndicatorUtils.yieldToPendingWriteActions();
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
@@ -76,7 +78,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
         }
 
         Comparator<FoundItemDescriptor<?>> comparator = Comparator.comparing(it -> it.getWeight());
-        stream.filter(vf -> !opened.contains(vf) && vf.isValid())
+        stream.filter(vf -> (shouldIncludeOpened || !opened.contains(vf)) && vf.isValid())
           .distinct()
           .map(vf -> {
             PsiFile f = psiManager.findFile(vf);

@@ -63,6 +63,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/analysis-api:analysis",
         "//platform/projectModel-api:projectModel",
+        "//platform/welcome-screen",
         "//fleet/rhizomedb",
     ],
 )
@@ -107,6 +108,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/welcome-screen:welcome-screen_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )

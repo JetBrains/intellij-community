@@ -21,6 +21,7 @@ internal class SeRecentFilesGotoItemProvider(
   private val project: Project,
   context: PsiElement?,
   model: GotoFileModel,
+  private val shouldIncludeOpened: Boolean
 ) : GotoFileItemProvider(project, context, model) {
 
   override fun filterElementsWithWeights(
@@ -43,7 +44,7 @@ internal class SeRecentFilesGotoItemProvider(
     for ((index, file) in history.withIndex()) {
       indicator.checkCanceled()
 
-      if (!seen.add(file) || file in opened || !file.isValid) continue
+      if (!seen.add(file) || (!shouldIncludeOpened && file in opened) || !file.isValid) continue
       if (pattern.isNotEmpty() && !matcher.matches(file.name)) continue
 
       val psiFile = psiManager.findFile(file) ?: continue

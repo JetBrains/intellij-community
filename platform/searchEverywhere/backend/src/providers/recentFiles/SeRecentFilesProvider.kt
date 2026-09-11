@@ -49,7 +49,7 @@ internal class SeRecentFilesProvider private constructor(
   }
 
   companion object {
-    suspend fun create(project: Project, dataContext: DataContext): SeRecentFilesProvider {
+    suspend fun create(project: Project, dataContext: DataContext, shouldIncludeOpened: Boolean): SeRecentFilesProvider {
       EditorHistoryManager.preloadHistory(project)
 
       val targetProvider = SeTargetItemsProvider.create<FileTypeRef>(
@@ -60,7 +60,7 @@ internal class SeRecentFilesProvider private constructor(
         gotoModelProvider = { modelProject, _, _ ->
           object : GotoFileModel(modelProject) {
             override fun getItemProvider(context: PsiElement?): ChooseByNameItemProvider {
-              return SeRecentFilesGotoItemProvider(project, context, this)
+              return SeRecentFilesGotoItemProvider(project, context, this, shouldIncludeOpened)
             }
           }
         },

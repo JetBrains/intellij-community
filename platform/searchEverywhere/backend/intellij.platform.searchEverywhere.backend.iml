@@ -60,6 +60,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.welcomeScreen" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
   </component>
 </module>
