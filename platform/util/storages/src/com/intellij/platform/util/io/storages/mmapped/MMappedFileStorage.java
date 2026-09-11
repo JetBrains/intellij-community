@@ -288,17 +288,11 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     }
     for (long offset = startOffsetInFile; offset <= endOffsetInFile; ) {
       Page page = pageByOffset(offset);
-      ByteBuffer pageBuffer = page.rawPageBuffer();
 
       int startOffsetInPage = toOffsetInPage(offset);
       int endOffsetInPage = endOffsetInFile > page.lastOffsetInFile() ?
                             pageSize - 1 : toOffsetInPage(endOffsetInFile);
-      //MAYBE RC: it could be done much faster -- with putLong(), or with preallocated array of zeroes,
-      //          or with Unsafe.setMemory() -- but does it worth it?
-      for (int pos = startOffsetInPage; pos <= endOffsetInPage; pos++) {
-        //TODO RC: make putLong() (but check both startOffsetInPage and endOffsetInPage are 64-aligned)
-        pageBuffer.put(pos, (byte)0);
-      }
+      page.pageSegment.asSlice(startOffsetInPage, endOffsetInPage - startOffsetInPage + 1L).fill((byte)0);
 
       offset += (endOffsetInPage - startOffsetInPage) + 1;
     }
