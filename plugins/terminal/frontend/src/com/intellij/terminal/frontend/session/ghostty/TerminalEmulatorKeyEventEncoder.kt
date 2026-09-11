@@ -69,6 +69,16 @@ internal class TerminalEmulatorKeyEventEncoder(
       return KeyEventProcessingResultDto.StringResult(Char(27) + base.toString(), false)
     }
 
+    if ((e.isAltGraphDown || (SystemInfoRt.isWindows && e.isControlDown && e.isAltDown)) &&
+        Character.isDefined(e.keyChar) && !Character.isISOControl(e.keyChar)) {
+      // Windows synthesizes AltGr as Ctrl+Alt(+AltGraph) down (never plain Alt alone), so this
+      // isn't a real Ctrl chord; its keyChar already holds the AltGr symbol, not a control code
+      // like a genuine Ctrl chord would carry. Leave it for KEY_TYPED to type normally. Elsewhere,
+      // real AltGr reports as isAltGraphDown alone (X11's level-3 shift carries no Ctrl+Alt
+      // synthesis), so a genuine Ctrl+Alt chord there is never mistaken for AltGr text.
+      return KeyEventProcessingResultDto.Unhandled
+    }
+
     // Ctrl chords arrive as KEY_PRESSED (AWT reduces their keyChar to a control
     // character, or to a plain space for Ctrl+Space). Hand the encoder the physical key
     // and its unmodified codepoint, so modes like the Kitty keyboard protocol can
