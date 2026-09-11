@@ -86,7 +86,7 @@ class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSystem, cach
   }
 
   override fun getFileName(): IjentNioPath? {
-    return createRelativePath(eelPath.fileName)
+    return if (nameCount == 0) null else createRelativePath(eelPath.fileName)
   }
 
   private fun EelPath.toNioPath(preserveAttributes: Boolean): IjentNioPath =
@@ -154,8 +154,8 @@ class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSystem, cach
     var firstDifferenceIndex = 0
     while (firstDifferenceIndex < nameCount.coerceAtMost(other.nameCount)) {
       val different = getName(firstDifferenceIndex) != other.getName(firstDifferenceIndex)
-      ++firstDifferenceIndex
       if (different) break
+      ++firstDifferenceIndex
     }
 
     val result = mutableListOf<String>()
@@ -167,7 +167,7 @@ class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSystem, cach
       result += otherEelPath.getName(index)
     }
 
-    return RelativeIjentNioPath(result, nioFs)
+    return if (result.isEmpty()) createRelativePath("") else RelativeIjentNioPath(result, nioFs)
   }
 
   override fun toUri(): URI {

@@ -121,6 +121,8 @@ jvm_library(
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
+        "//platform/core-nio-fs",
+        "//platform/core-nio-fs:core-nio-fs_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
         "//libraries/kotlinx/coroutines/core",

@@ -118,6 +118,7 @@ class IjentEphemeralRootAwarePath(
 
   override fun resolve(other: Path): Path {
     val other = other.unwrap()
+    if (other.isAbsolute) return other
     return IjentEphemeralRootAwarePath(fileSystem,
                                        rootPath,
                                        originalPath.resolve(if (other is IjentEphemeralRootAwarePath) other.originalPath else other))
@@ -131,6 +132,9 @@ class IjentEphemeralRootAwarePath(
   }
 
   override fun toUri(): URI {
+    if (isAbsolute && fileSystem.eelDescriptor.osFamily == EelOsFamily.Windows) {
+      return fileSystem.originalFs.getPath(toString()).toUri()
+    }
     return rootPath.resolve(originalPath.pathString.removePrefix("/")).toUri()
   }
 
@@ -209,7 +213,7 @@ class IjentEphemeralRootAwarePath(
 }
 
 private infix fun IjentEphemeralRootAwarePath.pathEqual(other: IjentEphemeralRootAwarePath): Boolean {
-  if (fileSystem != other.fileSystem) {
+  if (fileSystem != other.fileSystem || actualPath.root != other.actualPath.root) {
     return false
   }
 
