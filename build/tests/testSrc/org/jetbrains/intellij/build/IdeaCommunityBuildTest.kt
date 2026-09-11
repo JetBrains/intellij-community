@@ -50,7 +50,6 @@ class IdeaCommunityBuildTest {
             val options = createBuildOptionsForTest(
               productProperties = productProperties,
               homeDir = homePath,
-              skipDependencySetup = true,
               testInfo = testInfo,
             )
             createBuildContext(projectHome = homePath,

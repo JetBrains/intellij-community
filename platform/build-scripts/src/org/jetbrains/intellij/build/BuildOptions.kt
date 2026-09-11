@@ -33,8 +33,12 @@ data class BuildOptions(
   @JvmField val buildDateInSeconds: Long = computeBuildDateInSeconds(),
   @Internal @JvmField val printFreeSpace: Boolean = true,
   @Internal @JvmField val validateImplicitPlatformModule: Boolean = true,
-  @JvmField var skipDependencySetup: Boolean = false,
-  @JvmField var skipCheckOutputOfPluginModules: Boolean = false,
+  /**
+   * If `true`, the plugin builder checks that the `intellij.java.guiForms.rt` output holds no GUI designer runtime class.
+   * The IDE compile setting "Automatically copy form runtime classes" puts them there, so a dev build runs the check, and
+   * a production build does not.
+   */
+  @JvmField var checkOutputOfPluginModules: Boolean = false,
 
   /**
    * If `true`, the build is running in the 'Development mode', i.e., its artifacts aren't supposed to be used in production.

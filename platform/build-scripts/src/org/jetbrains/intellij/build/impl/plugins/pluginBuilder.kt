@@ -172,7 +172,7 @@ private fun buildPlugin(
   val moduleOutputPatcher = ModuleOutputPatcher()
 
   if (pluginLayout.mainModule != BUILT_IN_HELP_MODULE_NAME) {
-    if (context.options.skipCheckOutputOfPluginModules) {
+    if (context.options.checkOutputOfPluginModules) {
       fork("check output of plugin modules for ${pluginLayout.mainModule}") {
         checkOutputOfPluginModules(
           mainPluginModule = pluginLayout.mainModule,

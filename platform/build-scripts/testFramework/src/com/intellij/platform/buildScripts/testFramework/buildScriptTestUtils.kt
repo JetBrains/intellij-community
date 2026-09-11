@@ -46,16 +46,14 @@ import kotlin.io.path.name
 fun createBuildOptionsForTest(
   productProperties: ProductProperties,
   homeDir: Path,
-  skipDependencySetup: Boolean = false,
   testInfo: TestInfo? = null,
 ): BuildOptions {
-  return createBuildOptionsForTest(homeDir = homeDir, outDir = createTestBuildOutDir(productProperties), skipDependencySetup = skipDependencySetup, testInfo = testInfo)
+  return createBuildOptionsForTest(homeDir = homeDir, outDir = createTestBuildOutDir(productProperties), testInfo = testInfo)
 }
 
 fun createBuildOptionsForTest(
   homeDir: Path,
   outDir: Path,
-  skipDependencySetup: Boolean = false,
   testInfo: TestInfo? = null,
 ): BuildOptions {
   val options = BuildOptions(
@@ -66,7 +64,7 @@ fun createBuildOptionsForTest(
     jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
     buildDateInSeconds = getDevModeOrTestBuildDateInSeconds(),
   )
-  customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup, testInfo = testInfo)
+  customizeBuildOptionsForTest(options = options, outDir = outDir, testInfo = testInfo)
   return options
 }
 
@@ -74,8 +72,7 @@ fun createTestBuildOutDir(productProperties: ProductProperties): Path {
   return Files.createTempDirectory("test-build-${productProperties.baseFileName}")
 }
 
-fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDependencySetup: Boolean = false, testInfo: TestInfo?) {
-  options.skipDependencySetup = skipDependencySetup
+fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, testInfo: TestInfo?) {
   options.isTestBuild = true
   options.buildStepsToSkip += listOf(
     BuildOptions.LIBRARY_URL_CHECK_STEP,
