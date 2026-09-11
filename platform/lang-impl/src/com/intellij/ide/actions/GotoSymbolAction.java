@@ -18,6 +18,12 @@ import org.jetbrains.annotations.NotNull;
 public final class GotoSymbolAction extends SearchEverywhereBaseAction implements DumbAware {
 
   @Override
+  @ApiStatus.Internal
+  protected boolean isVisibleOnWelcomeScreen() {
+    return false;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     e = SearchFieldStatisticsCollector.wrapEventWithActionStartData(e);
     Project project = e.getProject();

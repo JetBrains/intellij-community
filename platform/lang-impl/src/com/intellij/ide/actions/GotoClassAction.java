@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Component;
@@ -34,6 +35,12 @@ public final class GotoClassAction extends SearchEverywhereBaseAction implements
     p.setText(IdeBundle.messagePointer("go.to.class.title.prefix", GotoClassPresentationUpdater.getActionTitle() + "..."));
     p.setDescription(IdeBundle.messagePointer("go.to.class.action.description", StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), "/")));
     addTextOverride(ActionPlaces.MAIN_MENU, () -> GotoClassPresentationUpdater.getActionTitle() + "...");
+  }
+
+  @Override
+  @ApiStatus.Internal
+  protected boolean isVisibleOnWelcomeScreen() {
+    return false;
   }
 
   @Override
