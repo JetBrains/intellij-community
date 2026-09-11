@@ -96,9 +96,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
@@ -191,6 +191,8 @@ open class EditorComposite internal constructor(
    */
   private val fileEditorWithProviders = MutableStateFlow<List<FileEditorWithProvider>>(INITIAL_EMPTY)
 
+  private val availableDeferred = CompletableDeferred<Unit>(coroutineScope.coroutineContext.job)
+
   private val dispatcher = EventDispatcher.create(EditorCompositeListener::class.java)
 
   internal var selfBorder: Boolean = false
@@ -261,7 +263,7 @@ open class EditorComposite internal constructor(
   }
 
   internal suspend fun waitForAvailableWithoutTriggeringInit() {
-    fileEditorWithProviders.firstOrNull { it !== INITIAL_EMPTY }
+    availableDeferred.await()
   }
 
   @Internal
@@ -592,6 +594,7 @@ open class EditorComposite internal constructor(
   private fun setFileEditors(fileEditors: List<FileEditorWithProvider>, selectedEditor: FileEditorWithProvider?) {
     fileEditorWithProviders.value = fileEditors
     _selectedEditorWithProvider.value = selectedEditor
+    availableDeferred.complete(Unit)
   }
 
   @get:Deprecated("use {@link #getAllEditorsWithProviders()}", ReplaceWith("allProviders"), level = DeprecationLevel.ERROR)
