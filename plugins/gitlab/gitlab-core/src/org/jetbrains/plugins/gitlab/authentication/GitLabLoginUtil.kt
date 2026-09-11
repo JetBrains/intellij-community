@@ -2,14 +2,13 @@
 package org.jetbrains.plugins.gitlab.authentication
 
 import com.intellij.collaboration.auth.ui.login.LoginModel.LoginState
-import com.intellij.collaboration.auth.ui.login.LoginModel.LoginState.Connected
 import com.intellij.collaboration.auth.ui.login.TokenLoginDialog
 import com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
@@ -34,6 +33,7 @@ import org.jetbrains.plugins.gitlab.authentication.ui.YesNoCancelWithOptionsDial
 import org.jetbrains.plugins.gitlab.ui.util.GitLabPluginProjectScopeProvider
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Component
+import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 
 object GitLabLoginUtil {
@@ -308,7 +308,7 @@ object GitLabLoginUtil {
 
     return when (outcome) {
       is GitLabOAuthLoginOutcome.Success -> with(outcome) {
-        createSuccessResult(Connected(username), serverPath, loginSource, credentials, accountId)
+        createSuccessResult(LoginState.Connected(username), serverPath, loginSource, credentials, accountId)
       }
       GitLabOAuthLoginOutcome.Cancelled -> LoginResult.Failure
       GitLabOAuthLoginOutcome.OtherMethod -> LoginResult.OtherMethod
@@ -326,18 +326,26 @@ object GitLabLoginUtil {
   ): LoginResult {
     return try {
       runWithModalProgressBlocking(project, title) {
-        val credentials = GitLabOAuthService.instance.authorizeToGitLabDotCom()
-        val username =
-          GitLabSecurityUtil.validateAndResolveUsername(requiredUsername,
-                                                        GitLabServerPath.DEFAULT_SERVER,
-                                                        credentials.accessToken,
-                                                        uniqueAccountPredicate)
-        createSuccessResult(LoginState.Connected(username), GitLabServerPath.DEFAULT_SERVER, loginSource, credentials, accountId)
+        try {
+          val credentials = GitLabOAuthService.instance.authorizeToGitLabDotCom()
+          val username = GitLabSecurityUtil.validateAndResolveUsername(requiredUsername,
+                                                                       GitLabServerPath.DEFAULT_SERVER,
+                                                                       credentials.accessToken,
+                                                                       uniqueAccountPredicate)
+          createSuccessResult(LoginState.Connected(username),
+                              GitLabServerPath.DEFAULT_SERVER,
+                              loginSource,
+                              credentials,
+                              accountId)
+        }
+        catch (e: Exception) {
+          rethrowControlFlowException(e)
+          LOG.warn("GitLab OAuth login failed", e)
+          LoginResult.Failure
+        }
       }
     }
-    catch (e: Exception) {
-      rethrowControlFlowException(e)
-      LOG.warn("GitLab OAuth login failed", e)
+    catch (_: CancellationException) {
       LoginResult.Failure
     }
   }
