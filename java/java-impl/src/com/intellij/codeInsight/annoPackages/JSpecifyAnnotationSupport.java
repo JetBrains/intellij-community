@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.annoPackages;
 
 import com.intellij.codeInsight.ContextNullabilityInfo;
@@ -9,6 +9,7 @@ import com.intellij.psi.PsiAnnotationOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiVariable;
@@ -82,6 +83,7 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
   }
 
   static boolean resolvesToTypeParameter(@NotNull PsiElement context) {
+    if (context instanceof PsiMethodReferenceExpression) return false;
     if (context instanceof PsiJavaCodeReferenceElement ref) {
       return ref.resolve() instanceof PsiTypeParameter;
     }
