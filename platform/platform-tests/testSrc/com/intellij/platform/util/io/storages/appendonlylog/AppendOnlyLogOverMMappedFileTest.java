@@ -173,6 +173,24 @@ public class AppendOnlyLogOverMMappedFileTest {
     checkRecordsReadBack_ViaForEach(recordsIds, stringsToWrite);
   }
 
+  @Test
+  public void userDefinedHeaderFields_AreRestoredAfterReopen() throws Exception {
+    int userFieldsCount = 6;
+    for (int fieldNo = 0; fieldNo < userFieldsCount; fieldNo++) {
+      appendOnlyLog.setUserDefinedHeaderField(fieldNo, fieldNo + 1);
+    }
+
+    Path storagePath = appendOnlyLog.storagePath();
+    appendOnlyLog.close();
+    appendOnlyLog = openLog(storagePath);
+
+    for (int fieldNo = 0; fieldNo < userFieldsCount; fieldNo++) {
+      assertEquals(fieldNo + 1, appendOnlyLog.getUserDefinedHeaderField(fieldNo));
+    }
+    assertThrows(IndexOutOfBoundsException.class, () -> appendOnlyLog.getUserDefinedHeaderField(-1));
+    assertThrows(IndexOutOfBoundsException.class, () -> appendOnlyLog.getUserDefinedHeaderField(userFieldsCount));
+  }
+
 
   @Test
   public void hugeRecordsWritten_CouldBeReadBackAsIs() throws Exception {

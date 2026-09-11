@@ -11,13 +11,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.foreign.Arena;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static com.intellij.util.io.IOUtil.MiB;
-import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.READ;
 
 /**
@@ -152,16 +151,14 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
       // while it is not mapped yet:
       long size = Files.exists(storagePath) ? Files.size(storagePath) : 0L;
       if (size > 0) {
-        ByteBuffer buffer = ByteBuffer.allocate(AppendOnlyLogOverMMappedFile.HeaderLayout.HEADER_SIZE)
-          .order(nativeOrder())
-          .clear();
-
-        try (FileChannel channel = FileChannel.open(storagePath, READ)) {
-          int actuallyRead = channel.read(buffer);
+        try (var arena = Arena.ofConfined();
+             FileChannel channel = FileChannel.open(storagePath, READ)) {
+          var headerSegment = arena.allocate(AppendOnlyLogOverMMappedFile.HeaderLayout.LAYOUT);
+          int actuallyRead = channel.read(headerSegment.asByteBuffer());
           if (actuallyRead != AppendOnlyLogOverMMappedFile.HeaderLayout.HEADER_SIZE) {
             throw new CorruptedException("[" + storagePath + "]: file is not empty, but < HEADER_SIZE(=" + AppendOnlyLogOverMMappedFile.HeaderLayout.HEADER_SIZE + ")");
           }
-          AppendOnlyLogOverMMappedFile.checkFileParamsCompatible(storagePath, buffer, pageSize, magicWord);
+          AppendOnlyLogOverMMappedFile.checkFileParamsCompatible(storagePath, headerSegment, pageSize, magicWord);
           //TODO RC: maybe .expectedDataVersion check also better be here?
         }
         catch (IOException ex) {
