@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.MathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,9 @@ public final class SelectionModelImpl implements SelectionModel {
 
   private TextAttributes myActiveSelection;
   private TextAttributes myInactiveSelection;
+  private @Nullable LogicalPosition myBlockSelectionStart;
+  private @Nullable LogicalPosition myBlockSelectionEnd;
+  private boolean mySettingBlockSelection;
 
   @ApiStatus.Internal
   public SelectionModelImpl(EditorImpl editor) {
@@ -64,6 +68,10 @@ public final class SelectionModelImpl implements SelectionModel {
   }
 
   void fireSelectionChanged(SelectionEvent event) {
+    if (!mySettingBlockSelection) {
+      myBlockSelectionStart = null;
+      myBlockSelectionEnd = null;
+    }
     TextRange[] oldRanges = event.getOldRanges();
     TextRange[] newRanges = event.getNewRanges();
     int count = Math.min(oldRanges.length, newRanges.length);
@@ -99,8 +107,35 @@ public final class SelectionModelImpl implements SelectionModel {
 
   @Override
   public void setBlockSelection(@NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
-    List<CaretState> caretStates = EditorModificationUtil.calcBlockSelectionState(myEditor, blockStart, blockEnd);
-    myEditor.getCaretModel().setCaretsAndSelections(caretStates);
+    setCaretsAndBlockSelection(blockStart, blockEnd, EditorModificationUtil.calcBlockSelectionState(myEditor, blockStart, blockEnd));
+  }
+
+  @ApiStatus.Internal
+  void setCaretsAndBlockSelection(@NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd, @NotNull List<CaretState> caretStates) {
+    myBlockSelectionStart = clampBlockSelectionPosition(blockStart);
+    myBlockSelectionEnd = clampBlockSelectionPosition(blockEnd);
+    mySettingBlockSelection = true;
+    try {
+      myEditor.getCaretModel().setCaretsAndSelections(caretStates);
+    }
+    finally {
+      mySettingBlockSelection = false;
+    }
+  }
+
+  @ApiStatus.Internal
+  public @Nullable LogicalPosition getBlockSelectionStart() {
+    return myBlockSelectionStart;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable LogicalPosition getBlockSelectionEnd() {
+    return myBlockSelectionEnd;
+  }
+
+  private @NotNull LogicalPosition clampBlockSelectionPosition(@NotNull LogicalPosition position) {
+    int line = MathUtil.clamp(position.line, 0, myEditor.getDocument().getLineCount() - 1);
+    return line == position.line ? position : new LogicalPosition(line, position.column);
   }
 
   @Override

@@ -1,9 +1,18 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
+import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 
 public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
   public void testUpDown() {
@@ -296,6 +305,122 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                           <caret>a
                         b <caret>bbb
                         cc<caret>ccccc""");
+  }
+
+  public void testCopyPreservesEmptyLinesInBlockSelection() {
+    init("""
+           # abcdef
+           #\s
+           # mnopqr""");
+    mouse().pressAt(0, 4).dragTo(2, 7).release();
+
+    copy();
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertNotNull(contents);
+    assertEquals("cde\n\nopq", CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
+    RawText rawText = RawText.fromTransferable(contents);
+    assertNotNull(rawText);
+    assertEquals("cde\n   \nopq", rawText.rawText);
+
+    home();
+    paste();
+    checkResultByText("""
+                        cde<caret># abcdef
+                           <caret>#\s
+                        opq<caret># mnopqr""");
+  }
+
+  public void testCopyPreservesEmptyLinesInBlockSelectionAfterLineEndWithoutColumnMode() {
+    init("""
+           # abcdef
+           #\s
+           # mnopqr""");
+    ((EditorEx)getEditor()).setColumnMode(false);
+    getEditor().getSelectionModel().setBlockSelection(new LogicalPosition(0, 4), new LogicalPosition(2, 7));
+    assertEquals(2, getEditor().getCaretModel().getCaretCount());
+
+    copy();
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertNotNull(contents);
+    assertEquals("cde\n\nopq", CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
+  }
+
+  public void testCopyPreservesOnlyDocumentLinesInBlockSelectionAfterLineEndWithoutColumnMode() {
+    init("""
+           # abcdef
+           #\s
+           # mnopqr""");
+    ((EditorEx)getEditor()).setColumnMode(false);
+    getEditor().getSelectionModel().setBlockSelection(new LogicalPosition(0, 4), new LogicalPosition(1000, 7));
+    assertEquals(2, getEditor().getCaretModel().getCaretCount());
+
+    copy();
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertNotNull(contents);
+    assertEquals("cde\n\nopq", CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
+  }
+
+  public void testMouseCopyPreservesEmptyLinesInBlockSelectionAfterLineEndWithoutColumnMode() {
+    init("""
+           # abcdef
+           #\s
+           # mnopqr""");
+    ((EditorEx)getEditor()).setColumnMode(false);
+    mouse().alt().pressAt(0, 4).dragTo(2, 7).release();
+    assertEquals(2, getEditor().getCaretModel().getCaretCount());
+
+    copy();
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertNotNull(contents);
+    assertEquals("cde\n\nopq", CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
+  }
+
+  public void testCopyHelperPreservesEmptyLinesInBlockSelection() throws Exception {
+    init("""
+           # abcdef
+           #\s
+           # mnopqr""");
+    mouse().pressAt(0, 4).dragTo(2, 7).release();
+
+    Transferable contents = EditorCopyPasteHelper.getInstance().getSelectionTransferable(getEditor(), EditorCopyPasteHelper.CopyPasteOptions.DEFAULT);
+
+    assertNotNull(contents);
+    assertEquals("cde\n\nopq", contents.getTransferData(DataFlavor.stringFlavor));
+    RawText rawText = RawText.fromTransferable(contents);
+    assertNotNull(rawText);
+    assertEquals("cde\n   \nopq", rawText.rawText);
+  }
+
+  public void testCopyPreprocessorPreservesEmptyLinesInBlockSelection() {
+    CopyPastePreProcessor.EP_NAME.getPoint().registerExtension(new CopyPastePreProcessor() {
+      @Override
+      public @Nullable String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
+        return text;
+      }
+
+      @Override
+      public @NotNull String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+        return text;
+      }
+    }, getTestRootDisposable());
+    init("""
+           # abcdef
+           #\s
+           # mnopqr""");
+    mouse().pressAt(0, 4).dragTo(2, 7).release();
+
+    copy();
+
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertNotNull(contents);
+    assertEquals("cde\n\nopq", CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
+    RawText rawText = RawText.fromTransferable(contents);
+    assertNotNull(rawText);
+    assertEquals("cde\n   \nopq", rawText.rawText);
   }
 
   public void testPasteOfBlockToASingleCaret() {
