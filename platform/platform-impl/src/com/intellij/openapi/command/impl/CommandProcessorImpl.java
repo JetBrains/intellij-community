@@ -17,30 +17,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
 @ApiStatus.Internal
 public final class CommandProcessorImpl extends CoreCommandProcessor implements Disposable {
-  private final Map<CommandToken, BooleanSupplier> commandActionsAcrossModals = new HashMap<>();
-
   @Override
   public void finishCommand(@NotNull CommandToken command, @Nullable Throwable throwable) {
     if (!isCommandTokenActive(command)) {
       return;
     }
+    CommandState state = Objects.requireNonNull(getCurrentCommandState());
     boolean isPCE = throwable instanceof ProcessCanceledException;
     boolean shouldCheckActions = throwable != null && command.getProject() != null && !isUndoTransparentActionInProgress();
-    BooleanSupplier hasActionsSupplier = () -> false;
-    BooleanSupplier modalActions;
     try {
       if (throwable != null && !isPCE) {
         ExceptionUtil.rethrowUnchecked(throwable);
         LOG.error(throwable);
       }
       if (shouldCheckActions) {
-        hasActionsSupplier = captureHasActions(command);
+        state.rememberActions(captureHasActions(command));
       }
     }
     finally {
@@ -53,13 +49,9 @@ public final class CommandProcessorImpl extends CoreCommandProcessor implements 
         }
         throw e;
       }
-      finally {
-        modalActions = commandActionsAcrossModals.remove(command);
-      }
     }
     if (throwable != null) {
-      boolean hasActions = shouldCheckActions &&
-                           (hasActionsSupplier.getAsBoolean() || modalActions != null && modalActions.getAsBoolean());
+      boolean hasActions = shouldCheckActions && state.hasActions();
       boolean showTooComplexDialog = !isPCE; // IJPL-1116 Cancellation causes "Too complex" message
       undoLastOperation(command, hasActions, showTooComplexDialog);
     }
@@ -67,35 +59,36 @@ public final class CommandProcessorImpl extends CoreCommandProcessor implements 
 
   /**
    * Modal windows reset an action collection.
-   * Starting counter-part during which the previous buffer is flushed
+   * Saves the completed segment's action check when a modal dialog interrupts the command.
    */
   @Override
   public void enterModal() {
-    CommandToken command = getCurrentCommandToken();
-    if (command == null || command.getProject() == null) {
+    CommandState state = getCurrentCommandState();
+    if (state == null || state.getToken().getProject() == null) {
       super.enterModal();
       return;
     }
-    BooleanSupplier actions = captureHasActions(command);
+    BooleanSupplier actions = captureHasActions(state.getToken());
     try {
       super.enterModal();
       boolean hasActions = actions.getAsBoolean();
       actions = () -> hasActions;
     }
     finally {
-      rememberCommandActions(command, actions);
+      state.rememberActions(actions);
     }
   }
 
   /**
-   * Closing counter-part, see {@link #enterModal}.
+   * Closing counter-part.
+   * Saves the resumed segment's action check, including later additions.
    */
   @Override
   public void leaveModal() {
     super.leaveModal();
-    CommandToken command = getCurrentCommandToken();
-    if (command != null && command.getProject() != null) {
-      rememberCommandActions(command, captureHasActions(command));
+    CommandState state = getCurrentCommandState();
+    if (state != null && state.getToken().getProject() != null) {
+      state.rememberActions(captureHasActions(state.getToken()));
     }
   }
 
@@ -109,7 +102,6 @@ public final class CommandProcessorImpl extends CoreCommandProcessor implements 
 
   @Override
   public void dispose() {
-    commandActionsAcrossModals.clear();
     // [analyzer] IJPL-199712: Dispose command processor between executions
   }
 
@@ -127,12 +119,6 @@ public final class CommandProcessorImpl extends CoreCommandProcessor implements 
     if (undoManagerImpl != null) {
       undoManagerImpl.addAffectedFiles(files);
     }
-  }
-
-  private void rememberCommandActions(@NotNull CommandToken command, @NotNull BooleanSupplier actions) {
-    BooleanSupplier previous = commandActionsAcrossModals.get(command);
-    BooleanSupplier merged = previous != null && previous.getAsBoolean() ? () -> true : actions;
-    commandActionsAcrossModals.put(command, merged);
   }
 
   private static @NotNull BooleanSupplier captureHasActions(@NotNull CommandToken command) {
