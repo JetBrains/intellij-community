@@ -276,7 +276,7 @@ class TerminalToolWindowTabsManagerImpl(
     return toolWindow
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun installTabsPersistence() {
     val toolWindow = getToolWindow()
     installTerminalTabsPersistence(
@@ -354,7 +354,7 @@ class TerminalToolWindowTabsManagerImpl(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun createDetachedTab(
     row: TerminalSessionPersistedTab,
   ): TerminalToolWindowTab {

@@ -139,7 +139,7 @@ class BackendLuxedRunDashboardContentManager(val project: Project, val scope: Co
     runDashboardManager.updateServiceRunContentDescriptor(staleDescriptorId, newDescriptorId)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun startLuxing(id: RunDashboardServiceId): ComponentDirectTransferId? {
     val registeredComponent = registeredComponents[id] ?: return null
     val luxDisposable = Disposer.newDisposable()

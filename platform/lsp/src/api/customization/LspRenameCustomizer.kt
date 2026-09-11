@@ -34,7 +34,7 @@ open class LspRenameSupport : LspRenameCustomizer() {
    *
    * Override [getRenameableRangeAtOffset] to provide language-specific logic for determining renameable identifiers.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   open fun getRenameableRangeAtOffset(document: Document, offset: Int): TextRange? {
     val text = document.charsSequence
     if (offset < 0 || offset > text.length) return null

@@ -240,7 +240,7 @@ internal class ToolWindowEditorTabDockContainer private constructor(
      * Registers the editor dock container for the given tool window.
      */
     @JvmStatic
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun install(project: Project, toolWindowId: String, decorator: InternalDecorator) {
         if (decorator.getClientProperty(INSTALLED_PROPERTY) == true) return
         decorator.putClientProperty(INSTALLED_PROPERTY, true)

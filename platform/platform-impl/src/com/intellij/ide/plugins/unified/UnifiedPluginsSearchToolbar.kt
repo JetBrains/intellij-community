@@ -45,7 +45,7 @@ internal class UnifiedPluginsSearchToolbar(
   }
 
   @Suppress("DialogTitleCapitalization")
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun render(state: UnifiedPluginsSearchControlsState) {
     if (rendered && this.state == state) return
     if (this.state.sortVisible && !state.sortVisible && sortButton.isFocusOwner) {

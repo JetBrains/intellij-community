@@ -35,7 +35,7 @@ private val LOG = fileLogger()
  * Watches the terminal tab changes in the [contentManager] and updates persisted tabs in [TerminalTabsStorage].
  */
 @OptIn(FlowPreview::class)
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun installTerminalTabsPersistence(
   project: Project,
   contentManager: ContentManager,
@@ -58,7 +58,7 @@ internal fun installTerminalTabsPersistence(
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun persistTerminalTabs(project: Project, contentManager: ContentManager) {
   try {
     // A tab that opted out of restoring is left out of the stored state entirely: restoring one means
@@ -73,7 +73,7 @@ private fun persistTerminalTabs(project: Project, contentManager: ContentManager
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun computePersistedTab(tab: TerminalToolWindowTab): TerminalSessionPersistedTab {
   val title = tab.view.title
   val requestedProcessOptions = tab.processOptions
@@ -97,7 +97,7 @@ internal fun computePersistedTab(tab: TerminalToolWindowTab): TerminalSessionPer
  * 2. TerminalView title changes
  * 3. TerminalView working directory changes
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun listenTerminalTabChangeEvents(
   contentManager: ContentManager,
   coroutineScope: CoroutineScope,

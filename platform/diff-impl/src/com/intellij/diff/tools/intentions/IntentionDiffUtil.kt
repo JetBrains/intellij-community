@@ -47,7 +47,7 @@ data class CreatedPreviewUI(
 @ApiStatus.Internal
 object IntentionDiffUtil {
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createPreviewUi(
     project: Project, diffDisposable: Disposable, fileNameDisplay: String, fileTypeIcon: Icon, contextName: String? = null,
   ): CreatedPreviewUI {
@@ -65,7 +65,7 @@ object IntentionDiffUtil {
     return CreatedPreviewUI(unifiedDocument, unifiedEditor, unifiedFoldingModel, unifiedPanel, fileNameDisplay, fileTypeIcon, contextName != null && contextName == fileNameDisplay)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   suspend fun applyDiffToUi(
     project: Project, diffDisposable: Disposable, content1: DocumentContent, content2: DocumentContent, ui: CreatedPreviewUI,
   ) {

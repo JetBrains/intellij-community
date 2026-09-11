@@ -86,8 +86,8 @@ abstract class FilterField(
     this.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun buildActions(): Collection<AnAction>
 
   @Nls

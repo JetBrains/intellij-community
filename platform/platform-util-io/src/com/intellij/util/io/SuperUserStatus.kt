@@ -49,7 +49,7 @@ object SuperUserStatus {
       return request.asCompletableFuture().get()
     }
 
-  fun whenKnown(@RequiresBackgroundThread action: suspend () -> Unit): Job {
+  fun whenKnown(@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */) action: suspend () -> Unit): Job {
     @OptIn(DelicateCoroutinesApi::class)
     return GlobalScope.launch(Dispatchers.IO) {
       request.join()

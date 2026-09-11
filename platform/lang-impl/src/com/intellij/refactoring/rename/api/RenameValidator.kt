@@ -18,7 +18,7 @@ interface RenameValidator {
    * @return the result of validation. The refactoring will be unable to complete if the [newName] is invalid.
    * The provided message will show up as a hint to the user.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun validate(newName: String): RenameValidationResult
 
   companion object {

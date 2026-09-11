@@ -19,7 +19,7 @@ internal class TerminalSearchController(private val project: Project) {
     listeners.add(listener)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun startOrActivateSearchSession(editor: Editor) {
     ThreadingAssertions.assertEventDispatchThread()
     val existingSession = searchSession
@@ -31,7 +31,7 @@ internal class TerminalSearchController(private val project: Project) {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun finishSearchSession() {
     ThreadingAssertions.assertEventDispatchThread()
     searchSession?.close()
@@ -57,13 +57,13 @@ internal class TerminalSearchController(private val project: Project) {
     searchSession = null
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun searchForward() {
     ThreadingAssertions.assertEventDispatchThread()
     searchSession?.searchForward()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun searchBackward() {
     ThreadingAssertions.assertEventDispatchThread()
     searchSession?.searchBackward()

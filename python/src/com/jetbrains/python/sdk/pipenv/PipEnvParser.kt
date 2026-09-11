@@ -57,7 +57,7 @@ internal object PipEnvParser {
       .let { mapOf(*it.toTypedArray()) }
   
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun toRequirements(packages: Map<String, PipFileLockPackage>): List<PyRequirement> =
     packages.mapNotNull { (name, pkg) ->
       val packageVersion = "$name${pkg.version ?: ""}"

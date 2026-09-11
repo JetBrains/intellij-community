@@ -184,7 +184,7 @@ fun KtNamedFunction.getConfigurationName(): String {
     return listOfNotNull(gradleSubprojectName, fileName, functionName).joinToString(".")
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 internal fun mainClassScriptParameter(function: KtFunction): String = "-DmainClass=${function.containingKtFile.javaFileFacadeFqName}"
 
 /**

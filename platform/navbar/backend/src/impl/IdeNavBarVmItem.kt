@@ -10,7 +10,7 @@ import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
-class IdeNavBarVmItem @RequiresReadLock constructor(
+class IdeNavBarVmItem @RequiresReadLock(generateAssertion = false /* IJPL-115548 */) constructor(
   item: NavBarItem,
 ) : NavBarVmItem {
 

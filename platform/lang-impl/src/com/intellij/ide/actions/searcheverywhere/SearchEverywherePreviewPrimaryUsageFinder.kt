@@ -27,7 +27,7 @@ interface SearchEverywherePreviewPrimaryUsageFinder {
   fun tryFindPrimaryUsageInfo(psiFile: PsiFile): Pair<UsageInfo, Disposable?>?
   fun tryFindPsiElementForUsageInfo(project: Project, psiElement: PsiElement): PsiElement?
   @ApiStatus.Internal
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun readRangeFromUsageInfo(info: UsageInfo): Pair<Int, Int>?
 }
 

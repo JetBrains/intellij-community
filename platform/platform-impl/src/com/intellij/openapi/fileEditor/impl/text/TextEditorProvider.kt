@@ -216,7 +216,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
 
   protected open fun createWrapperForEditor(editor: Editor): EditorWrapper = EditorWrapper(editor)
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   open fun getStateImpl(project: Project?, editor: Editor, level: FileEditorStateLevel): TextEditorState {
     val carets = editor.caretModel.caretsAndSelections.map { caretState ->
       val caretPosition = caretState.caretPosition
@@ -240,7 +240,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     return TextEditorState(carets, relativeCaretPosition)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   open fun setStateImpl(project: Project?, editor: Editor, state: TextEditorState, exactState: Boolean) {
     val carets = state.carets
     if (carets.isNotEmpty()) {

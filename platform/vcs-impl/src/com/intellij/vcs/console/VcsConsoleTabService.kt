@@ -39,7 +39,7 @@ interface VcsConsoleTabService {
   @CalledInAny
   fun addMessage(line: VcsConsoleLine?)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isConsoleVisible(): Boolean
 
   @CalledInAny
@@ -62,7 +62,7 @@ class MockVcsConsoleTabService : VcsConsoleTabService {
   override fun addMessage(line: VcsConsoleLine?) {
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun isConsoleVisible(): Boolean {
     return false
   }
@@ -122,7 +122,7 @@ internal class VcsConsoleTabServiceImpl(
     showConsoleSignal.tryEmit(ShowConsoleSignal(focusLatest = false))
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun isConsoleVisible(): Boolean {
     if (project.isDisposed || project.isDefault) return false
 
@@ -142,7 +142,7 @@ internal class VcsConsoleTabServiceImpl(
   @CalledInAny
   override fun hadMessages(): Boolean = pendingMessages.replayCache.isNotEmpty()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun showConsoleTab(selectContent: Boolean) {
     if (project.isDisposed || project.isDefault) return
 
@@ -162,7 +162,7 @@ internal class VcsConsoleTabServiceImpl(
     showConsoleSignal.tryEmit(ShowConsoleSignal(focusLatest = true))
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun createConsoleContentTab() {
     val consoleView = getOrCreateConsoleView()
 
@@ -186,7 +186,7 @@ internal class VcsConsoleTabServiceImpl(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun getOrCreateConsoleView(): VcsConsoleView {
     val view = VcsConsoleView(project) {
       pendingMessages.resetReplayCache()

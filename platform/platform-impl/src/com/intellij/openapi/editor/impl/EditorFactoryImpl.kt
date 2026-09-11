@@ -236,7 +236,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     return editor
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun releaseEditor(editor: Editor) {
     try {
       turnIntoZombiesAndBury(editor)

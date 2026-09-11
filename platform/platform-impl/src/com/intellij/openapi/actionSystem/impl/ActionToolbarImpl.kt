@@ -1012,7 +1012,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     updateActionsImmediately(false)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun updateActionsAsync(): Future<*> {
     updateActionsImmediately(false)
     val update = myLastUpdate
@@ -1020,7 +1020,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   }
 
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun updateActionsImmediately(includeInvisible: Boolean) {
     val isTestMode = ApplicationManager.getApplication().isUnitTestMode()
     if (parent == null && !isTestMode && !includeInvisible) {
@@ -1033,7 +1033,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     updateActionsWithoutLoadingIcon(includeInvisible)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun updateActionsWithoutLoadingIcon(includeInvisible: Boolean) {
     // null when called through updateUI from a superclass constructor
     myUpdater.updateActions(now = true, forced = false, includeInvisible = includeInvisible)

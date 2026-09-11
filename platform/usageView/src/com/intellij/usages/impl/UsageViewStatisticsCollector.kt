@@ -89,7 +89,7 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
   val IS_IN_INJECTED_FILE: BooleanEventField = EventFields.Boolean("is_in_injected_file")
 
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun calculateElementData(psiElement: PsiElement?): ObjectEventData? {
     if (psiElement == null || !psiElement.isValid) return null
     val psiFile = psiElement.containingFile

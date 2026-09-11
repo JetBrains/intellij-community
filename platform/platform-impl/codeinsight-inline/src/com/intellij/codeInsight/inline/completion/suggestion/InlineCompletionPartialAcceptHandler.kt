@@ -15,16 +15,16 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.NonExtendable
 interface InlineCompletionPartialAcceptHandler {
 
-  @RequiresEdt
-  @RequiresWriteLock
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun insertNextWord(
     editor: Editor,
     file: PsiFile,
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement>
 
-  @RequiresEdt
-  @RequiresWriteLock
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun insertNextLine(
     editor: Editor,
     file: PsiFile,

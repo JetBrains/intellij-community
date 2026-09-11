@@ -256,7 +256,7 @@ private fun toRelativePath(projectDir: Path, filePath: String): Path? {
   return nioPath
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun buildSnippet(
   project: Project,
   fileDocumentManager: FileDocumentManager,
@@ -276,7 +276,7 @@ private data class NavigationAnchor(
   @JvmField val offset: Int,
 )
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun resolveNavigationAnchor(element: PsiElement): NavigationAnchor? {
   val originalElement = EditSourceUtil.getNavigatableOriginalElement(element) ?: element
   val navigationElement = originalElement.navigationElement ?: originalElement

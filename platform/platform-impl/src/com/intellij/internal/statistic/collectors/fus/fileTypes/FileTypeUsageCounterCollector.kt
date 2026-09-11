@@ -80,7 +80,7 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
   private val CREATE_WITH_FILE_TEMPLATE: VarargEventId = registerFileTypeEvent("create_with_template",
                                                                                FILE_TEMPLATE_FIELD, EventFields.PluginInfo)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   fun triggerEdit(project: Project, file: VirtualFile) {
     if (ElfFeatureFlag.isEnabled()) {
@@ -102,7 +102,7 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
     })
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun triggerSelect(project: Project, file: VirtualFile?) {
     if (file != null) {
       log(SELECT, project, file, false)

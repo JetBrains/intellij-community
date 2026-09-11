@@ -279,7 +279,7 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @ICAssert
   suspend fun assertContextExists(): InlineCompletionContext = withContext(Dispatchers.EDT) {
     val contextOrNull = InlineCompletionContext.getOrNull(fixture.editor)
@@ -296,14 +296,14 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   }
 
   //TODO: also check for fixture.file.text
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun compareContents(expectedLine: String) {
     assertThat(fixture.editor.document.text.removeCaret()).describedAs {
       "Expected and actual contents are different."
     }.isEqualTo(expectedLine.removeCaret())
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun compareCaretPosition(expectedLine: String) {
     val actualLineWithCaret = StringBuilder(fixture.editor.document.text).insert(fixture.caretOffset, "<caret>").toString()
     assertThat(actualLineWithCaret).describedAs {

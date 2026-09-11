@@ -79,7 +79,7 @@ class VcsEditorTabFilesManager :
 
 @ApiStatus.Internal
 interface VcsEditorTabFilesListener {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun shouldOpenInNewWindowChanged(file: VirtualFile, shouldOpenInNewWindow: Boolean)
 
   companion object {

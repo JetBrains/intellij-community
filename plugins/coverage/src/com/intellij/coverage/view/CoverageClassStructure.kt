@@ -70,7 +70,7 @@ internal class CoverageClassStructure(val project: Project, val annotator: JavaC
     return if (info.isClass) getPsiClass(info.id, info.sourceFile, suite.getSearchScope(project)) else getPsiPackage(info.id)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun buildClassesTree() {
     val onlyModified = state.isShowOnlyModified
     val hideFullyCovered = state.isHideFullyCovered

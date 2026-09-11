@@ -32,7 +32,7 @@ interface SplitComponentProvider<T : Id> {
    *
    * @param scope that is going to be canceled when [CoroutineScope] passed to [SplitComponentFactory.createComponent] is canceled.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createComponent(project: Project, scope: CoroutineScope, modelId: T): JComponent?
 
   companion object {

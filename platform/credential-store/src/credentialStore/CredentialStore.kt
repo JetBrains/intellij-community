@@ -12,23 +12,23 @@ import org.jetbrains.concurrency.runAsync
  * Please see [Storing Sensitive Data](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html).
  */
 interface CredentialStore {
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   operator fun get(attributes: CredentialAttributes): Credentials?
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   operator fun set(attributes: CredentialAttributes, credentials: Credentials?)
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   fun getPassword(attributes: CredentialAttributes): String? {
     val credentials = get(attributes)
     return credentials?.getPasswordAsString()
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   fun setPassword(attributes: CredentialAttributes, password: String?) {
     set(attributes, password?.let { Credentials(attributes.userName, it) })
   }

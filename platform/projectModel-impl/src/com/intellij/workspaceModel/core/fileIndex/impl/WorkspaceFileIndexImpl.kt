@@ -521,7 +521,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     return fileSet.entityPointer.resolve(WorkspaceModel.getInstance(project).currentSnapshot)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
     getMainIndexData().visitFileSets(visitor)
   }

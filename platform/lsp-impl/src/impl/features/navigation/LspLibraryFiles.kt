@@ -46,7 +46,7 @@ internal class LspLibraryFiles(private val lspClient: LspClientImpl) {
     getDecompiledFileUri(file)?.let { decompiledFiles[it] == file } == true
 
   /** The navigation target for [targetUri]: a VFS file with a source text, or a decompiled in-memory file. */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun findTargetFile(targetUri: String): VirtualFile? {
     if (isDecompileOnlyUri(targetUri)) return getOrDecompile(targetUri)
     val file = lspClient.descriptor.findFileByUri(targetUri)
@@ -57,7 +57,7 @@ internal class LspLibraryFiles(private val lspClient: LspClientImpl) {
     return getOrDecompile(targetUri) ?: file
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getOrDecompile(uri: String): VirtualFile? {
     decompiledFiles[uri]?.let { return it }
 

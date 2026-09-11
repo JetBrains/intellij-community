@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class ChangesViewCommitTabTitleUpdater(private val project: Project, val tabName: String) {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun init(contentDisposable: Disposable) {
     val toolWindow = getToolWindow()
     if (toolWindow != null) {

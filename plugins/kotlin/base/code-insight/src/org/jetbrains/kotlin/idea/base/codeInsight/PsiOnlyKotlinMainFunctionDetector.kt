@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 
 @ApiStatus.Internal
 object PsiOnlyKotlinMainFunctionDetector : KotlinMainFunctionDetector {
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     override fun isMain(function: KtNamedFunction, configuration: KotlinMainFunctionDetector.Configuration): Boolean {
         if (function.isLocal || function.typeParameters.isNotEmpty()) {
             return false

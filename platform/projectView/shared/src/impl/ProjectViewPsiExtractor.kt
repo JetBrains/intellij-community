@@ -15,30 +15,30 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface ProjectViewPsiExtractor<T> {
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractPsiElements(nodes: List<BackendProjectViewNodeModel<T>>): List<PsiElement>
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractPsiDirectories(nodes: List<BackendProjectViewNodeModel<T>>): List<PsiDirectory>
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractProject(node: BackendProjectViewNodeModel<T>): Project?
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractSingleModule(node: BackendProjectViewNodeModel<T>): Module?
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractModules(nodes: List<BackendProjectViewNodeModel<T>>): List<Module>
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractUnloadedModules(nodes: List<BackendProjectViewNodeModel<T>>): List<UnloadedModuleDescription>
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractModuleGroups(nodes: List<BackendProjectViewNodeModel<T>>): List<ModuleGroup>
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractLibraryGroups(nodes: List<BackendProjectViewNodeModel<T>>): List<LibraryGroupElement>
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractNamedLibraryElements(nodes: List<BackendProjectViewNodeModel<T>>): List<NamedLibraryElement>
 }

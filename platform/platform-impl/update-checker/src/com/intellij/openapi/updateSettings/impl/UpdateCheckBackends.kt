@@ -214,7 +214,7 @@ internal class CustomPluginRepository(internal val host: String) : RemotePluginR
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun prepareDownloader(
   state: InstalledPluginsState,
   descriptor: PluginUiModel,

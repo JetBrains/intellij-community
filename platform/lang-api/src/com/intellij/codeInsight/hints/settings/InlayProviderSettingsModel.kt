@@ -53,7 +53,7 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    *
    * @return continuation which is run in EDT
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   open fun collectData(editor: Editor, file: PsiFile) : Runnable {
     return Runnable { collectAndApply(editor, file) }
   }

@@ -5,16 +5,16 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import javax.swing.JComponent
 
 internal interface PluginRowFactory {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun specification(section: PluginSectionState, item: PluginItemState): PluginRowSpecification<Any>
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createRow(occurrenceId: PluginOccurrenceId, item: PluginItemState, renderKey: Any): PluginRow
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun rowsRendered(bindings: List<PluginRowBinding<PluginRow>>)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createReconciler(
     beforeRelease: (PluginOccurrenceId, PluginRow) -> Unit,
   ): PluginRowReconciler<PluginRow, Any> {
@@ -25,9 +25,9 @@ internal interface PluginRowFactory {
 internal interface PluginRow : AutoCloseable {
   val component: JComponent
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun renderSelection(selected: Boolean)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun close()
 }

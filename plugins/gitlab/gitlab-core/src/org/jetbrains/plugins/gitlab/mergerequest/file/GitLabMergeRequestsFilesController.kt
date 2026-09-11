@@ -15,10 +15,10 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 
 interface GitLabMergeRequestsFilesController {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openTimeline(mrIid: String, focus: Boolean)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openDiff(mrIid: String, focus: Boolean)
 
   suspend fun closeAllFiles()

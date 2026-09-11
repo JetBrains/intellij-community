@@ -79,7 +79,7 @@ interface RecentProjectsManager {
 
   // Change of recent projects
   interface RecentProjectsChange {
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun change()
   }
 
@@ -92,7 +92,7 @@ interface RecentProjectsManager {
     /**
      * Called after reopening the last projects
      */
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun lastProjectsReopened(activeProject: Project)
   }
 }

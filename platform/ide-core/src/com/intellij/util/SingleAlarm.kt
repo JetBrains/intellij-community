@@ -282,7 +282,7 @@ class SingleAlarm internal constructor(
    * For EDT, consider using PlatformTestUtil.waitForSingleAlarm instead
    */
   @TestOnly
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun waitForAllExecuted(timeout: Long, timeUnit: TimeUnit) {
     require(ApplicationManager.getApplication().isUnitTestMode)
 

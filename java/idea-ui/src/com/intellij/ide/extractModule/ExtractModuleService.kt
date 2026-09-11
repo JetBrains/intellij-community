@@ -84,7 +84,7 @@ internal suspend fun compilerOutputPathForTests(module: Module): List<Path> = re
 }
 
 interface TargetModuleCreator {
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun createExtractedModule(originalModule: Module, directory: VirtualFile): ExtractedModuleData
 
   class ExtractedModuleData(val module: Module, val directoryToMoveClassesTo: VirtualFile?)
@@ -95,7 +95,7 @@ class ExtractModuleService(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun buildProjectAndExtractModule(
     directory: VirtualFile,
     module: Module,
@@ -286,14 +286,14 @@ class ExtractModuleService(
     return (packageDependency != null) to (stillDependsOnModule != null)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun collectDependentModules(module: Module): Set<Module> {
     val dependentModules = LinkedHashSet<Module>()
     ModuleUtil.collectModulesDependsOn(module, dependentModules)
     return dependentModules
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   private fun extractModule(
     directory: VirtualFile,
     module: Module,

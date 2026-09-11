@@ -25,7 +25,7 @@ import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.workingDirectory
 import kotlinx.coroutines.flow.takeWhile
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun PythonAddInterpreterModel<*>.createCondaCommand(): PyResult<PyCondaCommand> {
   val targetEnvironmentConfiguration = (fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration
   val executable = condaViewModel.condaExecutable.get() ?: return PyResult.localizedError(message("python.sdk.select.conda.path.title"))

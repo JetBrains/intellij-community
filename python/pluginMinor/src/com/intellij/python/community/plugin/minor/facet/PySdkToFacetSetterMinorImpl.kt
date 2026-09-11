@@ -11,7 +11,7 @@ import com.jetbrains.python.module.PySdkToFacetSetter
 @OptIn(PyInternalExecApi::class)
 internal class PySdkToFacetSetterMinorImpl : PySdkToFacetSetter {
   @PyInternalExecApi
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   override fun setPythonSdkToFacet(module: Module, sdk: Sdk?) {
     setSdkToFacet(sdk, module)
   }

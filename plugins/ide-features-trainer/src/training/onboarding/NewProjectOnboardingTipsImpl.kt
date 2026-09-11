@@ -73,7 +73,7 @@ internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
 private val onboardingTipsInstallationInfoKey = Key<OnboardingTipsInstallationInfo>("onboardingTipsInstallationInfo")
 
 internal class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun installTips(project: Project, info: OnboardingTipsInstallationInfo) {
     project.putUserData(onboardingTipsInstallationInfoKey, info)
   }

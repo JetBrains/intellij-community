@@ -63,7 +63,7 @@ class MinimapSceneBuilder(
     )
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun captureStructureMarkers(): List<MinimapStructureMarkerSnapshot> {
     val structureMarkers = if (model.isDocumentCommitted()) {
       model.getStructureMarkers().also { lastStructureMarkers = it }

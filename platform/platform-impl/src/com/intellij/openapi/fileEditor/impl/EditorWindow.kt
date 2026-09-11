@@ -195,7 +195,7 @@ class EditorWindow internal constructor(
   val fileList: List<VirtualFile>
     get() = files().toList()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun files(): Sequence<VirtualFile> = composites().map { it.file }
 
   private val _currentCompositeFlow: MutableStateFlow<EditorComposite?> = MutableStateFlow(null)
@@ -327,7 +327,7 @@ class EditorWindow internal constructor(
     )
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun addComposite(
     composite: EditorComposite,
     file: VirtualFile,
@@ -443,7 +443,7 @@ class EditorWindow internal constructor(
   }
 
   // we must select tab in the same EDT event (same command) - IdeDocumentHistoryImpl rely on that
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun setCurrentCompositeAndSelectTab(composite: EditorComposite) {
     tabbedPane.tabs.tabs.find { it.composite == composite }?.let {
       tabbedPane.editorTabs.select(info = it, requestFocus = false)
@@ -452,13 +452,13 @@ class EditorWindow internal constructor(
   }
 
   // we must select tab in the same EDT event (same command) - IdeDocumentHistoryImpl rely on that
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun setCurrentCompositeAndSelectTab(tab: TabInfo) {
     tabbedPane.editorTabs.select(info = tab, requestFocus = false)
     _currentCompositeFlow.value = tab.composite
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun selectTabOnStartup(tab: TabInfo, requestFocus: Boolean, windowAdded: suspend () -> Unit) {
     val composite = tab.composite
     tabbedPane.editorTabs.selectTabSilently(tab)
@@ -484,7 +484,7 @@ class EditorWindow internal constructor(
   }
 
   @JvmOverloads
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun split(
     orientation: Int,
     forceSplit: Boolean,
@@ -620,7 +620,7 @@ class EditorWindow internal constructor(
   @JvmName("getSiblings")
   internal fun getSiblings(): List<EditorWindow> = siblings().toList()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun siblings(): Sequence<EditorWindow> {
     checkConsistency()
     val splitter = (component.parent as? Splitter) ?: return emptySequence()
@@ -658,7 +658,7 @@ class EditorWindow internal constructor(
 
   internal fun hasClosedTabs(): Boolean = !removedTabs.isEmpty()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun restoreClosedTab() {
     val info = removedTabs.removeLastOrNull() ?: return
     val file = info.restoreFile() ?: return
@@ -680,7 +680,7 @@ class EditorWindow internal constructor(
     closeFile(file = file, composite = composite, disposeIfNeeded = disposeIfNeeded)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @Internal
   fun closeFile(file: VirtualFile, composite: EditorComposite, disposeIfNeeded: Boolean = true) {
     runBulkTabChange(owner) {

@@ -126,7 +126,7 @@ private val performShowInSeparateTask = System.getProperty("idea.toolwindow.show
  * about to be given — and take it visibly, only to lose it again. A claim that ends up with nothing to focus calls
  * [ToolWindowManagerImpl.focusToolWindowByDefault] itself, so standing down cannot leave the frame without a focus owner.
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun emptyEditorAreaClaimsClosedEditorFocus(project: Project): Boolean {
   val fileEditorManager = project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerImpl ?: return false
   // the init job is awaited because `splitters` reaches `mainSplitters`, which exists only once that job has completed
@@ -571,7 +571,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     EditorsSplitters.focusDefaultComponentInSplittersIfPresent(project)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   open fun activateToolWindow(id: String, runnable: Runnable?, autoFocusContents: Boolean, source: ToolWindowEventSource? = null) {
     val activity = UiActivity.Focus("toolWindow:$id")
     UiActivityMonitor.getInstance().addActivity(project, activity, ModalityState.nonModal())
@@ -1502,7 +1502,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   fun getToolWindowButton(toolWindowId: String): JComponent? = notifications.getToolWindowButton(toolWindowId)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun closeBalloons() {
     notifications.closeBalloons()
   }
@@ -1512,7 +1512,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   override val isEditorComponentActive: Boolean
     get() = state.isEditorComponentActive
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setToolWindowAnchor(id: String, anchor: ToolWindowAnchor) {
     setToolWindowAnchor(id = id, anchor = anchor, order = -1)
   }
@@ -1931,7 +1931,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    * Also called from the editor area itself, for a claim on the focus of an emptied area that could not be kept — see
    * [EditorsSplitters.requestEmptyStateFocusWhenPresented].
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun focusToolWindowByDefault() {
     var toFocus: ToolWindowEntry? = null
     for (each in activeStack.stack) {

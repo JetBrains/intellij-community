@@ -413,12 +413,12 @@ class ToolWindowPane private constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setDocumentComponent(component: JComponent?) {
     (if (isWideScreen) verticalSplitter else horizontalSplitter).innerComponent = component
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getDocumentComponent(): JComponent? {
     return (if (isWideScreen) verticalSplitter else horizontalSplitter).innerComponent
   }

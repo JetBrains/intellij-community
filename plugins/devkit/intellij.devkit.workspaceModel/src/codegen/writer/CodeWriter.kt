@@ -58,7 +58,7 @@ import java.util.jar.Manifest
 private val LOG = logger<CodeWriter>()
 
 object CodeWriter {
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   suspend fun generate(
     project: Project, module: Module, sourceFolder: VirtualFile,
     processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
@@ -192,7 +192,7 @@ object CodeWriter {
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private suspend fun PsiFile.awaitCodeStyleCalculation() {
     val latch = CompletableDeferred<Unit>()
     CodeStyle.getSettings(this) // trigger settings computation

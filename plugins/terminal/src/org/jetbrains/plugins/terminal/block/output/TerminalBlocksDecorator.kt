@@ -130,7 +130,7 @@ internal class TerminalBlocksDecorator(
     })
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun installDecoration(block: CommandBlock) {
     if (decorations[block] != null) {
       return

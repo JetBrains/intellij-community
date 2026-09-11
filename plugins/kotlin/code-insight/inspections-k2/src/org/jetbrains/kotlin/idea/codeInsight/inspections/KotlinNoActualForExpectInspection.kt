@@ -367,7 +367,7 @@ internal class CreateActualForExpectLocalQuickFix(
      * Get a directory in the [sourceSet] that would allow us to find or create the corresponding KtFile.
      * Create the source root in the IJ model if necessary.
      */
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     private fun findOrCreateActualDeclarationDirectory(project: Project, actualDeclaration: ActualDeclaration, expectRelativePackagePath: String): PsiDirectory? {
         val actualSourceRoot = actualDeclaration.sourceSet.findOrCreateMostSuitableKotlinSourceRoot() ?: return null
 
@@ -411,7 +411,7 @@ internal class CreateActualForExpectLocalQuickFix(
     }
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 private fun KotlinBuildSystemSourceSet.findOrCreateMostSuitableKotlinSourceRoot(): VirtualFile? {
     val sourceDirectoryPath = sourceDirectories
         /*

@@ -213,7 +213,7 @@ class ArtifactModifiableModelBridge(
     return (diff as MutableEntityStorageInstrumentation).hasChanges()
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   override fun commit() = commitMs.addMeasuredTime {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()

@@ -110,7 +110,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     showInlayRunToCursorIfNeeded(e.editor, e)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun reshowInlayRunToCursor(editor: Editor) {
     currentEditor.clear()
     currentLineNumber = -1
@@ -190,7 +190,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     return logicalPosition.line
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int) {
     currentJob?.cancel()
     if (editor !is EditorImpl) return
@@ -227,7 +227,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun scheduleInlayRunToCursorAsync(editor: Editor, lineNumber: Int) {
     val runToCursorService = project.service<RunToCursorService>()
     val firstNonSpacePos = getFirstNonSpacePos(editor, lineNumber) ?: return
@@ -285,7 +285,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     return false
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, actions: List<AnAction>, lineY: Int, hasVcsLineMarker: Boolean) {
     if (actions.isEmpty()) return
 

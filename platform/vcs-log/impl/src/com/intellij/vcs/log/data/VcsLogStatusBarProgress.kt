@@ -37,7 +37,7 @@ internal class VcsLogStatusBarProgress(project: Project, logProviders: Map<Virtu
     Disposer.register(this, disposableFlag)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun start() {
     alarm.value.addRequest(Runnable {
       if (progress == null) {
@@ -49,7 +49,7 @@ internal class VcsLogStatusBarProgress(project: Project, logProviders: Map<Virtu
     }, Registry.intValue("vcs.log.index.progress.delay.millis"))
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun stop() {
     if (alarm.isInitialized()) alarm.value.cancelAllRequests()
     progress?.let { p ->

@@ -105,7 +105,7 @@ internal class FrontendEditorLinesBreakpointsInfoManager(private val project: Pr
   /**
    * Returns cached breakpoint types for the line, or null if the data is not available yet.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun getBreakpointsInfoForLineFast(editor: Editor, line: Int): EditorLineBreakpointsInfo? {
     if (!shouldPreloadMap) {
       LOG.error("getBreakpointsInfoForLineInternal is unsafe to use in monolith mode, use getBreakpointsInfoForLine instead")
@@ -184,7 +184,7 @@ private class EditorBreakpointLinesInfoMap(
     cs.cancel()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun Editor.viewportIndicesInclusive(): Pair<Int, Int> {
     if (isDisposed) {
       throw CancellationException()

@@ -424,7 +424,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     private val processors = getAllProcessors()
 
     /** @return Presentable file path or `null` if the processing of this file should be skipped */
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun shouldProcessFile(file: VirtualFile): @NlsSafe String? {
       val psiFile = file.findPsiFileSafely()
 
@@ -551,7 +551,7 @@ abstract class AbstractLayoutCodeProcessor private constructor(
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun VirtualFile.findPsiFileSafely(): PsiFile? =
     if (!myProject.isDisposed && isValid) {
       PsiManager.getInstance(myProject).findFile(this)

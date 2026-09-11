@@ -87,14 +87,14 @@ fun setConsoleInterpreterState(
  * calls it has to declare [com.intellij.openapi.actionSystem.ActionUpdateThread.BGT].
  */
 @ApiStatus.Internal
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 @RequiresBlockingContext
 fun hasPythonConsoleInterpreter(project: Project, contextModule: Module?): Boolean =
   runBlockingCancellable { findPythonSdkAndModule(project, contextModule).first != null }
 
 @TestOnly
 @ApiStatus.Internal
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun createConsoleRunnerForTest(project: Project, contextModule: Module?): PydevConsoleRunner =
   @Suppress("SSBasedInspection") runBlocking {
     PyConsoleRunnerFactoryAsync.getInstance().createConsoleRunnerAsync(project, contextModule)

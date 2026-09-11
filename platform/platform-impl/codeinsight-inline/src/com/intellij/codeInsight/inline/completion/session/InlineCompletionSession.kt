@@ -48,7 +48,7 @@ class InlineCompletionSession private constructor(
    * An inline completion session is considered active if it has an associated
    * variants from [provider] and [context] in which it is running has not yet been disposed.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isActive(): Boolean {
     return variantsProvider != null && !context.isDisposed
   }
@@ -77,7 +77,7 @@ class InlineCompletionSession private constructor(
    * @return If a capture was successful, an instance of the [Snapshot] class containing a snapshot of completion variants is returned.
    *         However, if no variants are provided at the moment, the method will return `null`.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun capture(): Snapshot? {
     ThreadingAssertions.assertEventDispatchThread()
     val variants = variantsProvider?.captureVariants() ?: return null
@@ -92,7 +92,7 @@ class InlineCompletionSession private constructor(
    *
    * The method can select a variant as long as it contains at least one computed element. Otherwise, the variant is skipped.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun useNextVariant() {
     ThreadingAssertions.assertEventDispatchThread()
     variantsProvider?.useNextVariant()
@@ -106,7 +106,7 @@ class InlineCompletionSession private constructor(
    *
    * The method can select a variant as long as it contains at least one computed element. Otherwise, the variant is skipped.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun usePrevVariant() {
     ThreadingAssertions.assertEventDispatchThread()
     variantsProvider?.usePrevVariant()
@@ -114,7 +114,7 @@ class InlineCompletionSession private constructor(
 
   override fun dispose() = Unit
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun assignJob(job: InlineEditRequestJob) {
     ThreadingAssertions.assertEventDispatchThread()
     check(this.job == null) {
@@ -124,7 +124,7 @@ class InlineCompletionSession private constructor(
     Disposer.register(this, job)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun assignVariants(variantsProvider: InlineCompletionVariantsProvider) {
     ThreadingAssertions.assertEventDispatchThread()
     check(this.variantsProvider == null) {
@@ -134,7 +134,7 @@ class InlineCompletionSession private constructor(
     Disposer.register(this, variantsProvider)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun update(
     event: InlineCompletionEvent,
     updater: (InlineCompletionVariant.Snapshot) -> InlineCompletionSuggestionUpdateManager.UpdateResult
@@ -185,7 +185,7 @@ class InlineCompletionSession private constructor(
 
     fun getOrNull(editor: Editor): InlineCompletionSession? = editor.getUserData(INLINE_COMPLETION_SESSION)
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     internal fun init(
       editor: Editor,
       provider: InlineCompletionProvider,
@@ -200,7 +200,7 @@ class InlineCompletionSession private constructor(
       }
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     internal fun remove(editor: Editor) {
       getOrNull(editor)?.apply {
         if (!context.isDisposed) {

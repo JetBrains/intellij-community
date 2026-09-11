@@ -27,7 +27,7 @@ import com.intellij.util.net.HttpProxyConfigurable
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.JComponent
 
-internal class UnifiedPluginsPageActions @RequiresEdt constructor(
+internal class UnifiedPluginsPageActions @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   private val parentComponent: JComponent,
   private val pageScope: CoroutineScope,
   private val host: LegacyPluginUiHost,

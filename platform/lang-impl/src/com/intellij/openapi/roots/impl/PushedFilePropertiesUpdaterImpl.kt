@@ -328,7 +328,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun doApplyPushersToFile(fileOrDir: VirtualFile,
                                    pushers: List<FilePropertyPusher<*>>,
                                    moduleValues: Array<Any?>?) {

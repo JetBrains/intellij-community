@@ -79,7 +79,7 @@ internal fun TerminalView.getRunningProcessCommandLine(): String? {
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun ContentManager.getTerminalTabs(): List<TerminalToolWindowTab> {
   return contentsRecursively.mapNotNull { it.getTerminalTab() }
 }

@@ -44,8 +44,8 @@ interface RenameTarget {
    * and [presentable text][TargetPresentation.presentableText] are used)
    * @see com.intellij.find.usages.api.SearchTarget.presentation
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun presentation(): TargetPresentation
 
   /**

@@ -28,7 +28,7 @@ internal class ShellCommandHistoryManager(private val coroutineScope: CoroutineS
   private var historyLoadingJob: Job? = null
   private var commandHistory: ArrayDeque<String>? = null
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun loadHistoryFile(historyPath: String?, eelDescriptor: EelDescriptor?, shellName: ShellName?) {
     if (commandHistory != null || historyLoadingJob != null) return
 
@@ -82,7 +82,7 @@ internal class ShellCommandHistoryManager(private val coroutineScope: CoroutineS
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun addCommand(command: String) {
     val history = commandHistory ?: return
     val normalizedCommand = ShellHistoryParsingUtils.normalizeHistoryCommand(command) ?: return
@@ -92,7 +92,7 @@ internal class ShellCommandHistoryManager(private val coroutineScope: CoroutineS
     history.addLast(normalizedCommand)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getHistory(): List<String> = commandHistory.orEmpty()
 
   private fun createParser(shellName: ShellName): ShellCommandHistoryParser? {

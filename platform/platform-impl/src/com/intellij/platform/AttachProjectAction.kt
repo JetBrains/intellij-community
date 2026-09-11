@@ -90,7 +90,7 @@ open class AttachProjectAction : AnAction(), DumbAware {
     @JvmStatic
     val TO_SELECT_KEY: Key<Path> = Key.create("attach_to_select_key")
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun attachProject(virtualFile: VirtualFile, project: Project) {
       var baseDir: VirtualFile? = virtualFile
       if (!virtualFile.isDirectory) {

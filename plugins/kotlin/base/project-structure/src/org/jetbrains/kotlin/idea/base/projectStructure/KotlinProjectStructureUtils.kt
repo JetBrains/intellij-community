@@ -97,7 +97,7 @@ fun Module.getKotlinSourceRootType(): KotlinSourceRootType? =
         else -> null
     }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun GlobalSearchScope.hasKotlinJvmRuntime(project: Project): Boolean {
     return project.runWithAlternativeResolveEnabled {
         try {

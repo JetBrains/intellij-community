@@ -13,7 +13,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 @JvmOverloads
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 @RequiresBackgroundThread(generateAssertion = false)
 fun documentationTargets(file: PsiFile, offset: Int, findTargetFromLookup: Boolean = true): List<DocumentationTarget> {
   val targets = SmartList<DocumentationTarget>()

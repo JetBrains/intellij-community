@@ -8,7 +8,7 @@ interface DiffPreviewUpdateProcessor {
   /**
    * Notify currently shown diff that it's not needed now and cached values can be reset, a.e. before hiding preview panel
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun clear()
 
   /**
@@ -18,7 +18,7 @@ interface DiffPreviewUpdateProcessor {
    * @param fromModelRefresh Whether refresh was triggered without explicit change of selected item by user.
    * In this case, we might want not to close active viewer while it is in focus.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun refresh(fromModelRefresh: Boolean)
 
   val component: JComponent

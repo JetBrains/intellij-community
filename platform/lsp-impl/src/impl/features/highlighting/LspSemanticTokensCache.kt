@@ -25,7 +25,7 @@ import org.eclipse.lsp4j.SemanticTokensParams
  * [Semantic Tokens](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens)
  */
 internal class LspSemanticTokensCache(private val lspClient: LspClientImpl) : LspHighlightingCache<LspSemanticToken>(lspClient.project) {
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun isSupportedForFile(file: VirtualFile): Boolean {
     val semanticTokensSupport = lspClient.descriptor.lspCustomization.semanticTokensCustomizer as? LspSemanticTokensSupport ?: return false
     val psiFile = PsiManager.getInstance(lspClient.project).findFile(file) ?: return false
@@ -67,7 +67,7 @@ internal class LspSemanticTokensCache(private val lspClient: LspClientImpl) : Ls
     return perDocument.aggregateToPullResult()
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun decodeSemanticTokens(document: Document, data: List<Int>, legend: SemanticTokensLegend): List<Pair<Range, LspSemanticToken>> {
     if (data.size % 5 != 0) {
       thisLogger().warn("Unexpected semantic tokens data length from the server: ${data.size}")

@@ -54,11 +54,11 @@ internal abstract class LspHighlightingCache<T>(protected val project: Project) 
   /** Whether this cache requests data from the server. `false` for a cache fed by server notifications. */
   protected open val supportsPull: Boolean get() = true
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   abstract fun isSupportedForFile(file: VirtualFile): Boolean
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun getHighlightings(file: VirtualFile): List<LspCachedHighlighting<T>> {
     if (!isSupportedForFile(file)) return emptyList()
 

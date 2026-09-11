@@ -13,12 +13,12 @@ interface LoadingAccountsDetailsProvider<A : Account, out D : AccountDetails> : 
   val loadingState: StateFlow<Boolean>
   val loadingCompletionFlow: Flow<A>
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getDetails(account: A): D?
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getErrorText(account: A): @Nls String?
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun checkErrorRequiresReLogin(account: A): Boolean
 }

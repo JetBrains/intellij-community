@@ -15,7 +15,7 @@ interface ShelveSilentlyTitleProvider {
   companion object {
     val EP_NAME: ExtensionPointName<ShelveSilentlyTitleProvider> = ExtensionPointName("com.intellij.vcs.shelveSilentlyTitleProvider")
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     fun suggestTitle(project: Project, changes: Collection<Change>): String? = EP_NAME.computeSafeIfAny { t ->
       runBlockingCancellable {

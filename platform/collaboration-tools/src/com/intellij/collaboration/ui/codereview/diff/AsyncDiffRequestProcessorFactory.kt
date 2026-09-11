@@ -54,8 +54,8 @@ object AsyncDiffRequestProcessorFactory {
   fun <VM, C> createIn(
     cs: CoroutineScope, project: Project,
     diffVmFlow: Flow<VM?>,
-    @RequiresEdt createContext: (VM) -> List<KeyValuePair<*>>,
-    @RequiresEdt changePresenter: (C) -> PresentableChange,
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */) createContext: (VM) -> List<KeyValuePair<*>>,
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */) changePresenter: (C) -> PresentableChange,
   ): DiffRequestProcessor
     where VM : CodeReviewDiffProcessorViewModel<C>,
           C : AsyncDiffViewModel {
@@ -173,8 +173,8 @@ object AsyncDiffRequestProcessorFactory {
   fun <VM, C> createCombinedIn(
     cs: CoroutineScope, project: Project,
     reviewDiffVm: Flow<VM?>,
-    @RequiresEdt createContext: (VM) -> List<KeyValuePair<*>>,
-    @RequiresEdt changeVmPresenter: (C) -> PresentableChange,
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */) createContext: (VM) -> List<KeyValuePair<*>>,
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */) changeVmPresenter: (C) -> PresentableChange,
   ): CombinedDiffComponentProcessor
     where VM : CodeReviewDiffProcessorViewModel<C>,
           C : AsyncDiffViewModel {

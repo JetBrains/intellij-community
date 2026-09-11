@@ -21,12 +21,12 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 class KotlinMainMethodProvider : JavaMainMethodProvider {
   override fun isDumbAware(): Boolean = true
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun isApplicable(clazz: PsiClass): Boolean {
     return clazz is KtLightClass
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun hasMainMethod(clazz: PsiClass): Boolean {
     val mainFunctionDetector = KotlinMainFunctionDetector.getInstanceDumbAware(clazz.project)
 
@@ -40,7 +40,7 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun findMainInClass(clazz: PsiClass): PsiMethod? {
     return try {
       val mainFunctionDetector = KotlinMainFunctionDetector.getInstanceDumbAware(clazz.project)
@@ -62,7 +62,7 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
   }
 
   @Deprecated("Deprecated in Java")
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun getMainClassName(clazz: PsiClass): String? {
     return when (clazz) {
       is KtLightClassForFacade -> clazz.facadeClassFqName.asString()
@@ -74,7 +74,7 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun getMainClassQualifiedName(clazz: PsiClass): String? {
     return when (clazz) {
       is KtLightClassForFacade -> clazz.facadeClassFqName.asString()
@@ -87,7 +87,7 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
   }
 
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun isMain(psiElement: PsiElement): Boolean {
     val ktNamedFunction = psiElement.parentOfType<KtNamedFunction>() ?: return false
 

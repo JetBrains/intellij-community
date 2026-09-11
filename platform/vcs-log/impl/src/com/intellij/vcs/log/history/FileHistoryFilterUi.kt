@@ -50,7 +50,7 @@ class FileHistoryFilterUi(private val path: FilePath,
                                          branchFilterModel.rangeFilter)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun hasBranchFilter(): Boolean = branchFilterModel.getFilter()?.isEmpty == false
 
   fun isBranchFilterEnabled(): Boolean {
@@ -60,12 +60,12 @@ class FileHistoryFilterUi(private val path: FilePath,
     return BranchFilterModel.branchFilterKeys.any { supportedFilters.contains(it) }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun resetFiltersToDefault() {
     branchFilterModel.setFilter(initialFilters)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun clearFilters() {
     branchFilterModel.setFilter(null)
   }

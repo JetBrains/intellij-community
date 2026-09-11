@@ -37,8 +37,8 @@ interface SearchTarget {
    * or in the Usage View (only [icon][TargetPresentation.icon]
    * and [presentable text][TargetPresentation.presentableText] are used)
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun presentation(): TargetPresentation
 
   /**

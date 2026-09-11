@@ -245,7 +245,7 @@ object AppUIUtil {
    * [com.intellij.ide.gdpr.showConsentsAgreementIfNeeded] instead of a direct call.
    */
   @Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun showConsentsDialog(consents: ConsentsState): List<Consent>? {
     if (consents.allConsents.isEmpty()) {
       return null
@@ -310,7 +310,7 @@ object AppUIUtil {
    * A read of the consents is an IO operation, so a background thread is required.
    */
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun loadConsentsForEditing(): List<Consent> {
     val options = ConsentOptions.getInstance()
     var result = options.consents.first
@@ -353,7 +353,7 @@ object AppUIUtil {
    */
   @JvmStatic
   @Internal
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun loadLocalConsentsAsConsentsForEditing(): List<Consent> {
     val localConsents = LocalConsentOptions.getLocalConsents().first.toMutableList()
     if (TraceConsentManager.getInstance()?.canDisplayTraceConsent() != true) {
@@ -383,7 +383,7 @@ object AppUIUtil {
    * A write of the consents is an IO operation, so a background thread is required.
    */
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun saveConsents(consents: List<Consent>) {
     if (consents.isEmpty()) {
       return
@@ -421,7 +421,7 @@ object AppUIUtil {
    * A write of the local consents is an IO operation, so a background thread is required.
    */
   @Internal
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun saveConsentsAsLocalConsents(consents: List<Consent>) {
     LocalConsentOptions.setLocalConsents(consents)
   }

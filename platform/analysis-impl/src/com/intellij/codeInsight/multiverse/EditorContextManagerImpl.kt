@@ -40,14 +40,14 @@ internal class EditorContextManagerImpl(
     return currentContextCache[editor]
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getEditorContexts(editor: Editor): EditorSelectedContexts {
     return getCurrentContextStateWithPreferredDefault(editor)
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun getCurrentContextStateWithPreferredDefault(editor: Editor): EditorSelectedContexts {
     assert(editor.project?.equals(project)?:true) {
       "called with wrong project: $project. editor project: ${editor.project}"

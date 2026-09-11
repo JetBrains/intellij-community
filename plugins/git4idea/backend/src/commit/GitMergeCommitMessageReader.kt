@@ -15,7 +15,7 @@ import java.io.IOException
 
 @Service(Service.Level.PROJECT)
 class GitMergeCommitMessageReader(private val project: Project) {
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun read(repository: GitRepository): String? {
     val mergeMsgFile = repository.repositoryFiles.mergeMessageFile
     if (!mergeMsgFile.exists()) return null

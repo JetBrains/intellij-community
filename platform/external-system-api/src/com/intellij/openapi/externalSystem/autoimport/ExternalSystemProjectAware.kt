@@ -17,7 +17,7 @@ interface ExternalSystemProjectAware {
    * These property is read each time after [reloadProject] gets called, new file was added
    * or [ExternalSystemProjectListener.onSettingsFilesListChange] event happened.
    */
-  @get:RequiresBackgroundThread
+  @get:RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   val settingsFiles: Set<String>
 
   fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable)

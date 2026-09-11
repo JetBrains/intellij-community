@@ -38,7 +38,7 @@ internal class VcsLogTabsManager(
   private var toolWindowListenerInstalled = false
   private var isDisposed: Boolean = false
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createTabs() {
     val savedTabs = uiProperties.tabs
     if (savedTabs.isEmpty()) return
@@ -111,12 +111,12 @@ internal class VcsLogTabsManager(
     isDisposed = true
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun toolWindowShown(toolWindow: ToolWindow) {
     futureToolWindow.complete(toolWindow)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openAnotherLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi {
     require(!isDisposed) { "Already disposed" }
     val tabId = logManager.generateNewLogId()

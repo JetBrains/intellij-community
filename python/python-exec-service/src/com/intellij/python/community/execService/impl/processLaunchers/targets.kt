@@ -298,7 +298,7 @@ private fun ExecutionException.asCantStart(): Result.Failure<ExecErrorReason.Can
  */
 @ApiStatus.Internal
 @Throws(IOException::class)
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun TargetEnvironment.UploadableVolume.uploadMeasureTime(
   relativePath: String,
   targetProgressIndicator: TargetProgressIndicator,
@@ -318,8 +318,8 @@ fun TargetEnvironment.UploadableVolume.uploadMeasureTime(
  * Measures time for [upload] and reports it along with [genMessage] if `debug` enabled using [logger]
  */
 @ApiStatus.Internal
-@RequiresBackgroundThread
-fun measureUploadTime(@RequiresBackgroundThread upload: () -> Unit, genMessage: () -> @NlsSafe String) {
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+fun measureUploadTime(@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */) upload: () -> Unit, genMessage: () -> @NlsSafe String) {
   val duration = measureTime { upload() }
   logger.debug { "upload ${genMessage()} : $duration" }
 }

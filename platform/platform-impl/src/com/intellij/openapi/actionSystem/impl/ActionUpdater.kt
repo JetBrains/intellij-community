@@ -149,7 +149,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     checkRecursiveUpdateSession()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun applyPresentationChanges() {
     for ((action, copy) in updatedPresentations) {
       val orig = presentationFactory.getPresentation(action)
@@ -305,7 +305,7 @@ internal class ActionUpdater @JvmOverloads constructor(
   /**
    * Returns actions from the given and nested non-popup groups that are visible after updating
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   suspend fun expandActionGroup(group: ActionGroup): List<AnAction> {
     edtCallsCount = 0
     edtWaitNanos = 0

@@ -30,10 +30,10 @@ fun findGitExecutableProblemHandler(project: Project): GitExecutableProblemHandl
 
 interface GitExecutableProblemHandler {
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun showError(exception: Throwable, errorNotifier: ErrorNotifier) {
     showError(exception, errorNotifier) {}
   }
@@ -54,7 +54,7 @@ interface ErrorNotifier {
   @CalledInAny
   fun showError(@Nls(capitalization = Sentence) text: String)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun executeTask(@Nls(capitalization = Title) title: String, cancellable: Boolean, action: () -> Unit)
 
   @CalledInAny
@@ -66,7 +66,7 @@ interface ErrorNotifier {
   @CalledInAny
   fun hideProgress()
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun resetGitExecutable() {
     GitVcsApplicationSettings.getInstance().setPathToGit(null)
     val gitExecutableManager = GitExecutableManager.getInstance()
@@ -74,8 +74,8 @@ interface ErrorNotifier {
     gitExecutableManager.dropVersionCache()
   }
 
-  sealed class FixOption(@Nls(capitalization = Sentence) val text: String, @RequiresEdt val fix: () -> Unit) {
-    class Standard(@Nls(capitalization = Sentence) text: String, @RequiresEdt fix: () -> Unit) : FixOption(text, fix)
+  sealed class FixOption(@Nls(capitalization = Sentence) val text: String, @RequiresEdt(generateAssertion = false /* IJPL-115548 */) val fix: () -> Unit) {
+    class Standard(@Nls(capitalization = Sentence) text: String, @RequiresEdt(generateAssertion = false /* IJPL-115548 */) fix: () -> Unit) : FixOption(text, fix)
 
     // todo probably change to "Select on disk" instead of opening Preferences
     internal class Configure(val project: Project) : FixOption(CommonBundle.message("action.text.configure.ellipsis"), {

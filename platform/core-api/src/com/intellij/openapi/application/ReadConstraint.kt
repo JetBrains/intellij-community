@@ -12,7 +12,7 @@ interface ReadConstraint {
    * @return `true` if this constraint is satisfied in the current read action, otherwise `false`,
    * in which case [awaitConstraint] will be called
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun isSatisfied(): Boolean
 
   /**

@@ -213,7 +213,7 @@ abstract class AsyncChangesTree : ChangesTree {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun updateTreeModel(requestId: Int, treeModel: DefaultTreeModel, treeStateStrategy: TreeStateStrategy<*>?) {
     try {
       _pendingColors.resetReplayCache()
@@ -248,7 +248,7 @@ abstract class AsyncChangesTree : ChangesTree {
     return super.isEmptyTextVisible() && (_busy?.value != true)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun updatePaintBusy(isBusy: Boolean) {
     setPaintBusy(isBusy)
     repaint() // repaint empty text
@@ -279,7 +279,7 @@ interface AsyncChangesTreeModel {
  * [com.intellij.openapi.progress.ProgressIndicator]-friendly wrapper.
  */
 abstract class SimpleAsyncChangesTreeModel : AsyncChangesTreeModel {
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   abstract fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel
 
   final override suspend fun buildTreeModel(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
@@ -307,10 +307,10 @@ abstract class SimpleAsyncChangesTreeModel : AsyncChangesTreeModel {
 abstract class TwoStepAsyncChangesTreeModel<T>(val scope: CoroutineScope) : AsyncChangesTreeModel {
   private val deferredData: AtomicReference<Deferred<T>?> = AtomicReference()
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   abstract fun fetchData(): T
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   abstract fun buildTreeModelSync(data: T, grouping: ChangesGroupingPolicyFactory): DefaultTreeModel
 
   /**

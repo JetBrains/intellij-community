@@ -34,7 +34,7 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
     /**
      * @see [PsiUpdateModCommandAction.perform]
      */
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     final override fun perform(
         context: ActionContext,
         element: E,
@@ -58,7 +58,7 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
     /**
      * @see [PsiUpdateModCommandAction.invoke]
      */
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     abstract fun invoke(
         actionContext: ActionContext,
         element: E,
@@ -137,7 +137,7 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
             invoke(actionContext, element, updater)
         }
 
-        @RequiresBackgroundThread
+        @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
         abstract fun invoke(
             context: ActionContext,
             element: E,

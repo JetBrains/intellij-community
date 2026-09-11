@@ -436,7 +436,7 @@ class LspNodeRuntimeManager {
    * @param indicator reports the download progress, and cancels it
    * @return null if the download failed, or if Node.js has no distribution for this host
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun ensureRuntime(indicator: ProgressIndicator? = null): LspNodeRuntime? {
     getRuntime()?.let { return it }
 

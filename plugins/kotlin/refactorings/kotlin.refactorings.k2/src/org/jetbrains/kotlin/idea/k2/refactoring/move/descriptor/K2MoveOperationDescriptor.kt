@@ -88,7 +88,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
     }
 
     companion object {
-        @RequiresReadLock
+        @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
         fun Declarations(
             project: Project,
             declarations: Collection<KtNamedDeclaration>,

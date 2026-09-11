@@ -61,19 +61,19 @@ private val CONTEXT_RELOAD_MARKER_KEY = Key<Any>("polyContext.reloadMarker")
 private val reloadMonitor = Any()
 private val LOG = Logger.getInstance(PolyContext::class.java)
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 internal fun findPolyContext(kind: PolyContextKind, location: PsiElement): PolyContextName? =
   forPsiLocation(location) {
     findPolyContext(kind, it)
   }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 internal fun findPolyContext(kind: PolyContextKind, location: VirtualFile, project: Project): PolyContextName? =
   forVfsLocation(project, location) {
     findPolyContext(kind, it)
   }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 internal fun buildPolyContext(location: PsiElement): PolyContext =
   forPsiLocation(location) { locationInfo ->
     allKinds(locationInfo.rulesConfigInDir, locationInfo.fileConfigInDir)

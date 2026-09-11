@@ -37,7 +37,7 @@ internal class GradleServerProcessListener(
 
   private val connectionAddressReceived: AtomicBoolean = AtomicBoolean(false)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun waitForServerShutdown() {
     listenerJob?.get()
   }

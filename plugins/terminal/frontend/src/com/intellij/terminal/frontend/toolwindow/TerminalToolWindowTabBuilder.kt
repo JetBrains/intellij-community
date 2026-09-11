@@ -126,6 +126,6 @@ interface TerminalToolWindowTabBuilder {
    * Creates the new Reworked Terminal tab and adds it to the Terminal tool window.
    * Starts the shell process according to the [deferSessionStartUntilUiShown] option.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createTab(): TerminalToolWindowTab
 }

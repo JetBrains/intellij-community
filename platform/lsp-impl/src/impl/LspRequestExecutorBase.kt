@@ -31,7 +31,7 @@ abstract class LspRequestExecutorBase(private val lspClient: LspClientImpl) {
       ?.await()
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal fun <Lsp4jResponse> sendRequestSync(
     timeoutMs: Int = DEFAULT_REQUEST_TIMEOUT_MS,
     lsp4jSender: (Lsp4jServer) -> CompletableFuture<Lsp4jResponse>,
@@ -40,7 +40,7 @@ abstract class LspRequestExecutorBase(private val lspClient: LspClientImpl) {
       ?.awaitWithCheckCanceled(cancelOnPCE = true, lsp4jSender.javaClass.name, timeoutMs)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected fun <T> CompletableFuture<T?>.awaitSync(timeoutMs: Int = DEFAULT_REQUEST_TIMEOUT_MS): T? {
     return awaitWithCheckCanceled(cancelOnPCE = true, "awaitSync", timeoutMs)
   }
@@ -152,7 +152,7 @@ abstract class LspRequestExecutorBase(private val lspClient: LspClientImpl) {
    *  @param cancelOnPCE whether [future.cancel()][Future.cancel] should be called if [ProcessCanceledException] happens
    *                     while waiting for the server response
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun <T> Future<T?>.awaitWithCheckCanceled(cancelOnPCE: Boolean, debugName: String, timeoutMs: Int): T? {
     val future = this
     val t0 = System.currentTimeMillis()

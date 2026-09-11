@@ -127,7 +127,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     return DocumentLinksSafeState.Companion.isHttpScheme(protocol) && isLocalHost(uri.host)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun openExternalLink(project: Project?, uri: URI) {
     if (isSafeUri(project, uri)) {
       actuallyBrowseExternalLink(project, uri)
@@ -138,7 +138,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun showDialog(project: Project?, uri: URI): Boolean {
     val dialog = MessageDialogBuilder.Companion.yesNo(
       title = MarkdownBundle.message("markdown.browse.external.link.open.confirmation.dialog.title"),
@@ -147,7 +147,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     return dialog.ask(project)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun actuallyBrowseExternalLink(project: Project?, uri: URI) {
     try {
       BrowserUtil.browse(uri)

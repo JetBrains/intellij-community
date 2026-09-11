@@ -61,7 +61,7 @@ object GitRemoteBranchesUtil {
    */
   @Deprecated("Use the suspending alternative",
               replaceWith = ReplaceWith("testRemoteBranchCheckedOut(repository, remote, branchName)"))
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun isRemoteBranchCheckedOut(repository: GitRepository, remote: HostedGitRepositoryRemote, branchName: String): Boolean {
     val existingRemote = findRemote(repository, remote) ?: return false
     return isRemoteBranchCheckedOut(repository, GitStandardRemoteBranch(existingRemote, branchName))
@@ -77,7 +77,7 @@ object GitRemoteBranchesUtil {
 
   @Deprecated("Use the suspending alternative",
               replaceWith = ReplaceWith("testRemoteBranchCheckedOut(repository, branch)"))
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun isRemoteBranchCheckedOut(repository: GitRepository, branch: GitRemoteBranch): Boolean {
     return when (branch) {
       is GitSpecialRefRemoteBranch -> {
@@ -236,7 +236,7 @@ object GitRemoteBranchesUtil {
     return GitStandardRemoteBranch(headRemote, remoteBranch)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun checkoutRemoteBranch(repository: GitRepository,
                            branch: GitRemoteBranch,
                            newLocalBranchPrefix: String? = null,
@@ -259,14 +259,14 @@ object GitRemoteBranchesUtil {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   fun checkoutRemoteBranch(project: Project, repositories: List<GitRepository>, remoteBranchName: String) {
     val suggestedLocalName = repositories.firstNotNullOf { it.branches.findRemoteBranch(remoteBranchName)?.nameForRemoteOperations }
     checkoutRemoteBranch(project, repositories, remoteBranchName, suggestedLocalName, null)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun checkoutRemoteBranch(project: Project, repositories: List<GitRepository>, remoteBranchName: String, suggestedLocalName: String, callInAwtLater: Runnable?) {
     // can have remote conflict if git-svn is used - suggested local name will be equal to selected remote
     if (GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, suggestedLocalName)) {
@@ -284,7 +284,7 @@ object GitRemoteBranchesUtil {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun askNewBranchNameAndCheckout(
     project: Project, repositories: List<GitRepository>, remoteBranchName: String, suggestedLocalName: String, callInAwtLater: Runnable?,
   ) {
@@ -355,7 +355,7 @@ object GitRemoteBranchesUtil {
 
   @VisibleForTesting
   @ApiStatus.Internal
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun Git.findOrCreateRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? {
     val existingRemote = findRemote(repository, remote)
     if (existingRemote != null) return existingRemote

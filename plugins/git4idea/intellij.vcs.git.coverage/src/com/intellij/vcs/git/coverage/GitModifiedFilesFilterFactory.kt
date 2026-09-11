@@ -20,7 +20,7 @@ internal class GitModifiedFilesFilterFactory : ModifiedFilesFilterFactory {
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun createGitFilter(project: Project): ModifiedFilesFilter? {
   val repositories = GitUtil.getRepositories(project)
   val filters = repositories.mapNotNull { createFilterForRepository(it) }

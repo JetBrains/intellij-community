@@ -122,7 +122,7 @@ internal class TerminalCursorPainter private constructor(
     TerminalUtil.addItem(listeners, listener, parentDisposable)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun updateCursor(state: CursorState) {
     // Remove the active highlighter synchronously to avoid the situation when both old and new highlighters are painted.
     // Can't move highlighter disposing to the painter job, because its cancellation is asynchronous.
@@ -135,7 +135,7 @@ internal class TerminalCursorPainter private constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun paintCursor(state: CursorState) {
     if (!state.isCursorVisible) {
       return
@@ -211,7 +211,7 @@ internal class TerminalCursorPainter private constructor(
   )
 
   private sealed interface CursorRenderer {
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun installCursorHighlighter(offset: TerminalOffset): RangeHighlighter
   }
 
@@ -360,7 +360,7 @@ internal class TerminalCursorPainter private constructor(
   }
 
   companion object {
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun install(
       editor: EditorEx,
       outputModel: TerminalOutputModel,

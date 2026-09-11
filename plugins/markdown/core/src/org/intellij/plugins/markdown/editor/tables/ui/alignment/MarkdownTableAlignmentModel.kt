@@ -51,7 +51,7 @@ class MarkdownTableAlignmentModel(private val editor: Editor) : Disposable {
   // Ordered by marker offset for updateEditedCell's binary search.
   private val entries = ArrayList<TableEntry>()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun refreshVisible() {
     val visible = editor.calculateVisibleRange()
     val margin = visible.length
@@ -63,7 +63,7 @@ class MarkdownTableAlignmentModel(private val editor: Editor) : Disposable {
   }
 
   /** Refreshes tables intersecting [range] after the document is committed. */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun refresh(range: TextRange) {
     if (!isMarkdownTableVisualAlignmentEnabled(editor)) {
       disposeAllPads()
@@ -95,7 +95,7 @@ class MarkdownTableAlignmentModel(private val editor: Editor) : Disposable {
   }
 
   /** Re-pads the edited cell synchronously without shrinking its column. */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updateEditedCell(event: DocumentEvent): Boolean {
     if (!isMarkdownTableVisualAlignmentEnabled(editor)) {
       return false
@@ -139,7 +139,7 @@ class MarkdownTableAlignmentModel(private val editor: Editor) : Disposable {
     return true
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun disposeAllPads() {
     for (entry in entries) {
       entry.dispose()

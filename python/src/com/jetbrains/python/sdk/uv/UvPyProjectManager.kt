@@ -257,7 +257,7 @@ private data class DependencyInfo(val workspaceDeps: Set<ProjectName>, val pathD
 /** A `tool.uv.sources` TOML table together with the pyproject root that defines it; the root is the base for relative `path` sources. */
 private data class SourceTableWithOwner(val table: TomlTable, val ownerRoot: Path)
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun getWorkspaceMembers(toml: TomlTable): WorkspaceInfo? {
   // PY-91089: safeGet instead of getTable/getArrayOrEmpty, which throw TomlInvalidTypeException when
   // the key holds an unexpected type (e.g. the `[[tool.uv.workspace]]` array typo, or `members = "x"`).
@@ -275,7 +275,7 @@ private fun getWorkspaceMembers(toml: TomlTable): WorkspaceInfo? {
  * (project's own table first, then each parent workspace). The first match wins, so the project's own declarations override the parents'.
  * Each `path = "..."` entry is resolved against its owning root, matching uv's "relative to the defining pyproject.toml" semantics.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun getUvDependencies(
   pyProject: PyProjectTomlProject,
   sourcesTablesWithRoots: List<SourceTableWithOwner>,

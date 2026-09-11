@@ -113,7 +113,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return expression.containingKtFile.addImport(fqName)
     }
 
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     private fun bindToElement(
         docReference: KDocReference,
         targetElement: PsiElement,
@@ -179,7 +179,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     override fun bindToFqName(
         simpleNameReference: KtSimpleNameReference,
         fqName: FqName,

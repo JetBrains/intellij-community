@@ -24,7 +24,7 @@ internal class LspSingleSlotCache<K : Any, V : Any>(
   private var lastKey: K? = null
   private var lastResult: V? = null
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Synchronized
   fun getOrCompute(key: K, compute: () -> V?): V? {
     ProgressManager.checkCanceled()

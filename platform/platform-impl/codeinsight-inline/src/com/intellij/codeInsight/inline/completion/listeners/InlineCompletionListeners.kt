@@ -63,20 +63,20 @@ class InlineEditorMouseListener : EditorMouseListener {
 internal abstract class InlineSessionWiseCaretListener : CaretListener {
 
   protected abstract var completionOffset: Int
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     get
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     set
 
   protected abstract val mode: Mode
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     get
 
   protected abstract val isTypingSessionInProgress: Boolean
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     get
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun cancel()
 
   override fun caretAdded(event: CaretEvent) = cancel()

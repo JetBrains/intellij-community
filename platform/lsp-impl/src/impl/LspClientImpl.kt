@@ -129,7 +129,7 @@ class LspClientImpl internal constructor(
   override suspend fun <Lsp4jResponse> sendRequest(lsp4jSender: (Lsp4jServer) -> CompletableFuture<Lsp4jResponse>): Lsp4jResponse? =
     requestExecutor.sendRequest(lsp4jSender)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun <Lsp4jResponse> sendRequestSync(
     timeoutMs: Int,
     lsp4jSender: (Lsp4jServer) -> CompletableFuture<Lsp4jResponse>,
@@ -149,8 +149,8 @@ class LspClientImpl internal constructor(
     return documentSyncManager.nextDocumentVersion(file)
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal fun isSupportedFile(file: VirtualFile): Boolean {
     if (!file.isInLocalFileSystem) return false
     if (unsupportedFilePaths.contains(file.path)) return false
@@ -205,43 +205,43 @@ class LspClientImpl internal constructor(
     }
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun getSemanticTokens(file: VirtualFile): List<LspCachedHighlighting<LspSemanticToken>> =
     highlightingCacheRegistry.semanticTokensCache.getHighlightings(file)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @VisibleForTesting
   fun getDiagnosticsAndQuickFixes(file: VirtualFile): List<DiagnosticAndQuickFixes> =
     highlightingCacheRegistry.getDiagnosticsAndQuickFixes(file)
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun getColorInfos(file: VirtualFile): List<LspCachedHighlighting<Color>> =
     highlightingCacheRegistry.documentColorCache.getHighlightings(file)
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun getDocumentLinkInfos(file: VirtualFile): List<LspCachedHighlighting<LspDocumentLink>> =
     highlightingCacheRegistry.documentLinkCache.getHighlightings(file)
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun getFoldingRangeInfos(file: VirtualFile): List<LspCachedHighlighting<FoldingRange>> =
     highlightingCacheRegistry.foldingRangeCache.getHighlightings(file)
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun getInlayHints(file: VirtualFile): List<LspCachedHighlighting<InlayHint>> =
     highlightingCacheRegistry.inlayHintsCache.getHighlightings(file)
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun getCodeLens(file: VirtualFile): List<LspCachedHighlighting<CodeLens>> =
     highlightingCacheRegistry.codeLensCache.getHighlightings(file)
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun getInheritanceMarkers(file: VirtualFile): List<LspCachedHighlighting<LspInheritanceMarker>> =
     highlightingCacheRegistry.inheritanceMarkersCache.getHighlightings(file)
 

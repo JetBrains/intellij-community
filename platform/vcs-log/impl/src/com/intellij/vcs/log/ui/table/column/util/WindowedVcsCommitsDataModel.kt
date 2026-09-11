@@ -28,7 +28,7 @@ internal class WindowedVcsCommitsDataModel<T : Any>(
     Disposer.register(this, loader)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun requestData(commits: List<CommitId>) {
     if (isDisposed) return
     dataStore.keys.retainAll(commits.toSet())
@@ -51,7 +51,7 @@ internal class WindowedVcsCommitsDataModel<T : Any>(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getData(commit: CommitId): T? {
     return dataStore[commit]?.get()
   }

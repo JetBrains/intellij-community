@@ -18,7 +18,7 @@ internal abstract class BgtTreeWalker<N : Any>(
   val promise: AsyncPromise<TreePath> = AsyncPromise()
   private inner class Level(val path: TreePath?, val nodes: ArrayDeque<N>)
   private val stack = ArrayDeque<Level>()
-  @set:RequiresEdt
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private var state: State = InitialState
     set(value) {
       checkValidStateTransition(field, value)
@@ -32,7 +32,7 @@ internal abstract class BgtTreeWalker<N : Any>(
 
   override fun promise(): Promise<TreePath> = promise
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun start(node: N?) {
     if (node != null) {
       stack.addLast(Level(null, ArrayDeque(listOf(node))))
@@ -40,12 +40,12 @@ internal abstract class BgtTreeWalker<N : Any>(
     lookingForNextNode.enter()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun setChildren(children: Collection<N>) {
     requestingChildren.setChildren(children)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun setError(error: Throwable) {
     failure.enter(error)
   }

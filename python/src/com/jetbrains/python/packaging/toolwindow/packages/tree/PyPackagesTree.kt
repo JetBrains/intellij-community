@@ -83,7 +83,7 @@ internal class PyPackagesTree(
   private val rootNode = DefaultMutableTreeNode()
   private val myTreeModel = DefaultTreeModel(rootNode)
 
-  @set:RequiresEdt
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   var items: List<DisplayablePackage> = emptyList()
     set(value) {
       field = value
@@ -96,14 +96,14 @@ internal class PyPackagesTree(
    * Service-side seeded sorted match list (cross-repo merge + global priority sort). Tree's
    * [loadMore] paginates this list visually so the on-scroll order matches the install dialog.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun primeSortedMatches(sortedAll: List<DisplayablePackage>) {
     sortedAllMatches = sortedAll
   }
 
   /** How many more packages the repository can still produce for the current query. */
-  @get:RequiresEdt
-  @set:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   var pendingMore: Int = 0
 
   /**
@@ -501,7 +501,7 @@ internal class PyPackagesTree(
    * [primeSortedMatches]. No network round-trip, no re-sort — items appear in the exact order
    * the install dialog shows them.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun loadMore() {
     if (pendingMore <= 0) return
     val sorted = sortedAllMatches ?: return
@@ -571,7 +571,7 @@ internal class PyPackagesTree(
 
 internal fun interface PyPackagesTreeListener {
   /** Called on EDT when the visible tree row layout changes (items set, expanded, collapsed). */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onTreeStructureChanged()
 }
 

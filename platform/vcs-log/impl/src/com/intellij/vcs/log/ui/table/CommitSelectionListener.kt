@@ -70,33 +70,33 @@ abstract class CommitSelectionListener<T : VcsCommitMetadata?> protected constru
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun onLoadingScheduled() {
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun onLoadingStarted()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun onLoadingStopped()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun onError(error: Throwable)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun onDetailsLoaded(commitsIds: List<Int>, detailsList: List<T>) {
     onDetailsLoaded(detailsList)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.ScheduledForRemoval
   @Deprecated("onDetailsLoaded with additional parameter is preferred")
   protected open fun onDetailsLoaded(detailsList: List<T>) {}
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun onSelection(selection: IntArray): IntArray
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun onEmptySelection()
 
   companion object {

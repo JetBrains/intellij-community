@@ -15,7 +15,7 @@ interface TerminalPromptCustomEnterHandler {
    * Called when user is pressing Enter keystroke in the Terminal prompt.
    * @return whether enter action is consumed. If true is returned, all other handlers will be skipped, including the default one.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun handleEnter(model: TerminalPromptModel): Boolean
 
   companion object {

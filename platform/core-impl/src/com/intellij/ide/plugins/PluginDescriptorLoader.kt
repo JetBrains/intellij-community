@@ -1043,7 +1043,7 @@ internal fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String
 }
 
 @Throws(IOException::class)
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): PluginMainDescriptor? {
   val loadingContext = PluginDescriptorLoadingContext(
     getBuildNumberForDefaultDescriptorVersion = { buildNumber ?: PluginManagerCore.buildNumber },
@@ -1397,7 +1397,7 @@ internal fun forceUseCoreClassloader() = java.lang.Boolean.getBoolean("idea.forc
 
 /** Unlike [readBasicDescriptorDataFromArtifact], this method loads only basic data (plugin ID, name, etc.) */
 @Throws(IOException::class)
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun readBasicDescriptorDataFromArtifact(file: Path): PluginMainDescriptor? {
   val fileName = file.fileName.toString()
   if (fileName.endsWith(".jar", ignoreCase = true)) {

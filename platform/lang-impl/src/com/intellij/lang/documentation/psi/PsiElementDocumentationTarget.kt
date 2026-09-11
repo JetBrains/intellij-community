@@ -98,7 +98,7 @@ class PsiElementDocumentationTarget private constructor(
     return pointer.fetchExternal(targetElement, provider, urls, localDoc?.copy(links = localDoc.links.copy(linkUrls = urls)))
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun localDoc(provider: DocumentationProvider): DocumentationData? {
     val parts = localDocParts(provider)
                 ?: return null
@@ -113,7 +113,7 @@ class PsiElementDocumentationTarget private constructor(
     )
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun localDocParts(provider: DocumentationProvider): @Nls DocumentationParts? {
     val originalPsi = targetElement.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY)?.element
                       ?: sourceElement

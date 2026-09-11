@@ -172,7 +172,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
    * default new-project directory ([ProjectUtil.getBaseDir]) when that search fails to leave [systemTempDir],
    * e.g. when [project] itself is a scratch worktree opened from a temp directory (IJPL-252877).
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun computeInitialParentPath(project: Project, repository: GitRepository, systemTempDir: Path): String {
     val fromProject = project.guessProjectDir()?.parent
     var root: VirtualFile? = fromProject ?: repository.root.parent

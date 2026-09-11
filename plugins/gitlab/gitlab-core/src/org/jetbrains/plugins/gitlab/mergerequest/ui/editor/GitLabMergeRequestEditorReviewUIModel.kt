@@ -49,7 +49,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private val preferences: GitLabMergeRequestsPreferences,
   private val fileVm: GitLabMergeRequestEditorReviewFileViewModel,
   private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel(),
-  @RequiresEdt private val showEditor: (RefComparisonChange, Int) -> Unit,
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */) private val showEditor: (RefComparisonChange, Int) -> Unit,
 ) : CodeReviewEditorGutterChangesModel by changesModel,
     CodeReviewEditorGutterActionableChangesModel,
     CodeReviewEditorInlaysModel<GitLabMergeRequestEditorMappedComponentModel>,
@@ -185,7 +185,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     gotoComment(noteId)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun gotoComment(threadId: String) {
     val (change, unmappedLine) = fileVm.getThreadPosition(threadId) ?: return
 

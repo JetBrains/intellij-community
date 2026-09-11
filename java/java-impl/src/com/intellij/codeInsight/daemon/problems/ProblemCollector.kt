@@ -24,7 +24,7 @@ internal class ProblemCollector {
      */
     @JvmName("collect")
     @JvmStatic
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     internal fun collect(prevMember: ScopedMember?, curMember: PsiMember): Set<Problem>? {
       val containingFile = curMember.containingFile
 

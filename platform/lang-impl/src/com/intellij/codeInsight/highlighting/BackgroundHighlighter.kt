@@ -237,7 +237,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun updateHighlighted(project: Project, hostEditor: Editor, coroutineScope: CoroutineScope) {
     ThreadingAssertions.assertEventDispatchThread()
     val hostDocument = hostEditor.document
@@ -318,7 +318,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun isEditorUpToDate(
     hostEditor: Editor,
     offsetBefore: Int,
@@ -336,7 +336,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
            && hostEditor.getUserData(BACKGROUND_TASK_KEY) == job
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun applyBraceMatching(
     project: Project,
     newEditor: Editor,
@@ -376,8 +376,8 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       }
     }
 
-    @RequiresBackgroundThread
-    @RequiresReadLock
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun createPass(newPsiFile: PsiFile, hostEditor: Editor, newEditor: Editor): IdentifierHighlighterUpdater? {
       ThreadingAssertions.assertBackgroundThread()
       ThreadingAssertions.assertReadAccess()
@@ -399,7 +399,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     private val BACKGROUND_TASK_KEY: Key<Job> = Key.create("BACKGROUND_TASK")
 
     @TestOnly
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun waitForIdentifierHighlighting(editor: Editor) {
       ThreadingAssertions.assertEventDispatchThread()
       val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
@@ -422,7 +422,7 @@ private val LOG: Logger = Logger.getInstance(BackgroundHighlighter::class.java)
 @ApiStatus.Internal
 class BackgroundHighlighterPerProject(@JvmField val coroutineScope: CoroutineScope) : Disposable.Default
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun selectionRangeToFind(editor: Editor): TextRange? {
   ThreadingAssertions.assertEventDispatchThread()
   val document = editor.document
@@ -451,7 +451,7 @@ private fun selectionRangeToFind(editor: Editor): TextRange? {
   return caret.selectionRange
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun highlightSelection(project: Project, editor: Editor, executor: Executor): Boolean {
   ThreadingAssertions.assertEventDispatchThread()
   val document = editor.document
@@ -519,7 +519,7 @@ private fun highlightSelection(project: Project, editor: Editor, executor: Execu
   return true
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun removeSelectionHighlights(editor: Editor) {
   ThreadingAssertions.assertEventDispatchThread()
   val highlighters = (editor as UserDataHolderEx).getAndUpdateUserData(SELECTION_HIGHLIGHTS) { null }?.highlighters ?: return

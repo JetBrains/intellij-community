@@ -20,7 +20,7 @@ import com.intellij.platform.lsp.testFramework.waitUntilFileOpenedByLspServer as
   ),
 )
 @RequiresBlockingContext
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun waitUntilFileOpenedByLspServer(project: Project, file: VirtualFile): Unit =
   waitUntilFileOpenedByLspServerInTestFramework(project, file)
 
@@ -33,7 +33,7 @@ fun waitUntilFileOpenedByLspServer(project: Project, file: VirtualFile): Unit =
 )
 @RequiresBlockingContext
 @JvmOverloads
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun waitForDiagnosticsFromLspServer(project: Project, file: VirtualFile, timeout: Int = 30): Unit =
   waitForDiagnosticsFromLspServerInTestFramework(project, file, timeout)
 
@@ -45,7 +45,7 @@ fun waitForDiagnosticsFromLspServer(project: Project, file: VirtualFile, timeout
   ),
 )
 @RequiresBlockingContext
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun CodeInsightTestFixture.checkLspHighlighting(): Unit =
   checkLspHighlightingInTestFramework()
 
@@ -57,6 +57,6 @@ fun CodeInsightTestFixture.checkLspHighlighting(): Unit =
   ),
 )
 @RequiresBlockingContext
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun CodeInsightTestFixture.checkLspHighlightingForData(data: ExpectedHighlightingData): Unit =
   checkLspHighlightingForDataInTestFramework(data)

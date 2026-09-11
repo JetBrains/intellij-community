@@ -15,19 +15,19 @@ internal object EditorAnimationCacheStatistics {
   private val misses = IntArray(STATISTICS_BUCKET_COUNT)
   private val stamps = LongArray(STATISTICS_BUCKET_COUNT) { Long.MIN_VALUE }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun recordHit(): Boolean {
     hits[bucketAt(currentStamp())]++
     return true
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun recordMiss(): Boolean {
     misses[bucketAt(currentStamp())]++
     return false
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun hitRate(): CacheHitRate? {
     val newest = currentStamp()
     val oldest = newest - STATISTICS_BUCKET_COUNT + 1

@@ -21,7 +21,7 @@ interface TerminalToolWindowTabsManager {
    * List of the opened Reworked Terminal tabs in the Terminal Tool Window.
    * Order can be different from the UI.
    */
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val tabs: List<TerminalToolWindowTab>
 
   /**
@@ -35,14 +35,14 @@ interface TerminalToolWindowTabsManager {
    *
    * Supports both tool-window attached tabs and tabs created with `shouldAddToToolWindow(false)`.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun closeTab(tab: TerminalToolWindowTab)
 
   /**
    * Close the given tool window tab but leave the underlying terminal process running.
    * So, the [TerminalToolWindowTab] can be able to be used in the other context (for example, to be opened as the editor tab).
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun detachTab(tab: TerminalToolWindowTab)
 
   /**
@@ -52,7 +52,7 @@ interface TerminalToolWindowTabsManager {
    * Worth specifying when the terminal tool window is split to open the tab in the specific area.
    * If it is `null`, the tab will be opened in the top-left split area (or in the main area if there are no splits).
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun attachTab(
     tab: TerminalToolWindowTab,
     contentManager: ContentManager? = null,

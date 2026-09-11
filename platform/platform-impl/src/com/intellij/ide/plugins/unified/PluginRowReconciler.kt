@@ -4,14 +4,14 @@ package com.intellij.ide.plugins.unified
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 /** Owns realized plugin rows. Production callers use [com.intellij.ide.plugins.newui.PluginRowRenderKey] as [RenderKey]. */
-internal class PluginRowReconciler<Row : Any, RenderKey : Any> @RequiresEdt constructor(
+internal class PluginRowReconciler<Row : Any, RenderKey : Any> @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   private val createRow: (PluginOccurrenceId, PluginItemState, RenderKey) -> Row,
   private val beforeRelease: (PluginOccurrenceId, Row) -> Unit,
   private val releaseRow: (Row) -> Unit,
 ) : AutoCloseable {
   private var entries = LinkedHashMap<PluginOccurrenceId, Entry<Row, RenderKey>>()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun reconcile(specifications: List<PluginRowSpecification<RenderKey>>): List<PluginRowBinding<Row>> {
     validateSpecifications(specifications)
 
@@ -45,10 +45,10 @@ internal class PluginRowReconciler<Row : Any, RenderKey : Any> @RequiresEdt cons
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun row(occurrenceId: PluginOccurrenceId): Row? = entries[occurrenceId]?.row
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun close() {
     val removedEntries = entries
     entries = LinkedHashMap()

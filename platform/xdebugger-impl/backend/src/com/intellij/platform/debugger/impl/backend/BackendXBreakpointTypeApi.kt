@@ -368,7 +368,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun computeBreakpointsLineRawInfo(project: Project, position: XSourcePosition): BreakpointsLineRawInfo {
     val lineBreakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, selectTypeByPositionColumn = true)
     val variantsPromise = if (lineBreakpointTypes.isNotEmpty()) {

@@ -18,7 +18,7 @@ interface ProjectViewToolWindowService {
 
   val currentPaneDescriptor: ProjectViewPaneDescriptorImpl?
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setupToolWindow(toolWindow: ToolWindow)
 
   suspend fun manageToolWindow(toolWindow: ToolWindow)

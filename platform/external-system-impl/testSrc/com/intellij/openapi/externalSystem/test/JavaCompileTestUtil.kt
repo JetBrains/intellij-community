@@ -65,7 +65,7 @@ private fun compile(project: Project, scope: CompileScope) {
   }
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun collectModules(project: Project, vararg moduleNames: String): List<Module> {
   val moduleManager = ModuleManager.getInstance(project)
   val modules = ArrayList<Module>()
@@ -79,7 +79,7 @@ private fun collectModules(project: Project, vararg moduleNames: String): List<M
   return modules
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun collectArtifacts(project: Project, vararg artifactNames: String): List<Artifact> {
   val artifactManager = ArtifactManager.getInstance(project)
   val artifacts = ArrayList<Artifact>()

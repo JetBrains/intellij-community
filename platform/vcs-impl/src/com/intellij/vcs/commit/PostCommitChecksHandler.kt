@@ -80,7 +80,7 @@ class PostCommitChecksHandler(val project: Project) {
     lastJob?.cancel()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun startPostCommitChecksTask(commitInfo: StaticCommitInfo, commitChecks: List<CommitCheck>) {
     val previousJob = lastJob
     @OptIn(DelicateCoroutinesApi::class)
@@ -171,7 +171,7 @@ class PostCommitChecksHandler(val project: Project) {
     return problems
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun mergeCommitInfos(lastCommitInfos: List<StaticCommitInfo>, currentCommit: StaticCommitInfo): PostCommitInfo? {
     if (lastCommitInfos.isEmpty()) return null
 
@@ -200,7 +200,7 @@ class PostCommitChecksHandler(val project: Project) {
     return PostCommitInfo(currentCommit, zippedChanges)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun createPostCommitInfo(commitInfo: StaticCommitInfo): PostCommitInfo {
     val changeConverters = commitInfo.affectedVcses.mapNotNull { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter }
     if (changeConverters.isEmpty()) LOG.error("Post-commit change converters not found for ${commitInfo.affectedVcses}")
@@ -210,7 +210,7 @@ class PostCommitChecksHandler(val project: Project) {
     return PostCommitInfo(commitInfo, staticChanges ?: commitInfo.committedChanges)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun collectChangesFor(commitContext: CommitContext, changeConverters: List<PostCommitChangeConverter>): List<Change>? {
     try {
       val staticChanges = mutableListOf<Change>()

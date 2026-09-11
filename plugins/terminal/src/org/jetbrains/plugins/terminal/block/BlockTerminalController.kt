@@ -102,7 +102,7 @@ class BlockTerminalController(
     session.postResize(newSize)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun startCommandExecution(command: String) {
     if (command.isBlank()) {
       promptController.model.clearCommandAndResetChangesHistory()
@@ -145,7 +145,7 @@ class BlockTerminalController(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun startSearchSession() {
     val findModel = FindModel()
     findModel.copyFrom(FindManager.getInstance(project).findInFileModel)
@@ -161,7 +161,7 @@ class BlockTerminalController(
     session.component.requestFocusInTheSearchFieldAndSelectContent(project)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun activateSearchSession() {
     val session = searchSession ?: return
     val editor = outputController.outputModel.editor
@@ -171,7 +171,7 @@ class BlockTerminalController(
     session.findModel.isGlobal = false
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun finishSearchSession() {
     searchSession?.close()
   }

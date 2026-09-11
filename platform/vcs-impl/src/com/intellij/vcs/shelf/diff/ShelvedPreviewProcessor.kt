@@ -59,7 +59,7 @@ class ShelvedPreviewProcessor(
     return changesProvider.getAllChanges()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun clear() {
     setCurrentChange(null)
     dropCaches()

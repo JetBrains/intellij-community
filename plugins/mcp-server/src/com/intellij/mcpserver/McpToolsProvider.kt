@@ -22,7 +22,7 @@ interface McpToolsProvider {
    *
    * Building the tools is slow, so this must not be called on the EDT. Prefer [getToolsAsync].
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getTools(): List<McpTool>
 
   /**

@@ -348,7 +348,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             )
         }
 
-        @RequiresReadLock
+        @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
         private fun searchLightElements(element: PsiElement) {
             val project = element.project
             when (element) {
@@ -425,7 +425,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             }
         }
 
-        @RequiresReadLock
+        @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
         private fun searchPropertyAccessorMethods(origin: KtParameter) {
             val lightMethods = findAllRelatedActualsOrSelf(origin)
                 .filterIsInstance<KtParameter>()
@@ -445,7 +445,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
         /**
          * return self if [element] is not expect nor actual
          */
-        @RequiresReadLock
+        @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
         private fun findAllRelatedActualsOrSelf(element: KtDeclaration): Set<KtDeclaration> {
             val expectActualSupport = ExpectActualSupport.getInstance(element.project)
             return when {
@@ -461,7 +461,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             }
         }
 
-        @RequiresReadLock
+        @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
         private fun processKtClassOrObject(element: KtClassOrObject) {
             if (element.name == null) return
 
@@ -525,7 +525,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             })
         }
 
-        @RequiresReadLock
+        @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
         private fun searchDataClassComponentUsages(
             containingClass: KtLightClass,
             componentMethodName: String,
@@ -543,7 +543,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             }
         }
 
-        @RequiresReadLock
+        @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
         private fun processStaticsFromCompanionObject(element: KtDeclaration) {
             findStaticMethodsFromCompanionObject(element).forEach(::searchNamedElement)
         }
@@ -559,7 +559,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             return allMethods.filter { it is KtLightMethod && it.kotlinOrigin == declaration }
         }
 
-        @RequiresReadLock
+        @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
         private fun searchNamedElement(
             element: PsiNamedElement?,
             name: String? = null,

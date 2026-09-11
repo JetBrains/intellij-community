@@ -49,7 +49,7 @@ internal abstract class GitCommitEditingOperation(protected val repository: GitR
     private val initialHead = initialHead ?: repository.currentRevision!!
     var result: GitCommitEditingOperationResult = GitCommitEditingOperationResult.Incomplete.Unspecified
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     override fun notifySuccess() {
       repository.update()
       val newHead = repository.currentRevision!!

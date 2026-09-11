@@ -269,7 +269,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   override fun loadProject(path: Path): Project = loadProject(path = path, preloadServices = true)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun loadProject(path: Path, preloadServices: Boolean): Project {
     @Suppress("DEPRECATION")
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
@@ -602,7 +602,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   final override fun createProject(name: String?, path: String): Project {
     @Suppress("DEPRECATION")
     return runUnderModalProgressIfIsEdt {

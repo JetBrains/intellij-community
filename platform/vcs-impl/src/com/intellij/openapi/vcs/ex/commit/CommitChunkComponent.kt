@@ -423,7 +423,7 @@ private class ChunkCommitMessagePolicy(
 internal class CommitChunkService() {
   private val components = mutableMapOf<ChangelistsLocalLineStatusTracker, CommitChunkComponent>()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getComponent(tracker: ChangelistsLocalLineStatusTracker, range: LocalRange, popupDisposable: Disposable): CommitChunkComponent {
     return components.getOrPut(tracker) {
       createComponentForTracker(tracker)

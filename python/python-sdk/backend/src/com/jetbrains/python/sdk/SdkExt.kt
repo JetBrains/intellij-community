@@ -165,7 +165,7 @@ val Sdk.skeletonsPath: Path?
   get() = PythonSdkUtil.getSkeletonsPath(this)?.let { Path.of(it) }
 
 @Internal
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 @Throws(IOException::class)
 fun Sdk.createSkeletonsRootDirectory(): Path? {
   return skeletonsPath?.let { Files.createDirectories(it) }
@@ -184,7 +184,7 @@ suspend fun Sdk.activationEnvironment(): PyResult<Map<String, String>> {
  */
 @Deprecated("Blocking bridge for Java callers that cannot suspend; from Kotlin call the suspend activationEnvironment() instead")
 @Internal
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 @RequiresBlockingContext
 fun Sdk.activationEnvironmentBlocking(): PyResult<Map<String, String>> {
   val binaryPath = pythonBinaryPath().getOr { return it }

@@ -86,8 +86,8 @@ class CodeInsightContextManagerImpl(
     log.trace { "all contexts are invalidated" }
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getCodeInsightContexts(file: VirtualFile): List<CodeInsightContext> {
     if (!isSharedSourceSupportEnabled(project)) return listOf(defaultContext())
 
@@ -111,8 +111,8 @@ class CodeInsightContextManagerImpl(
 
   override val changeFlow: Flow<Unit> = _changeFlow.asSharedFlow()
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun getPreferredContext(file: VirtualFile): CodeInsightContext {
     if (!isSharedSourceSupportEnabled(project)) return defaultContext()
 
@@ -177,7 +177,7 @@ class CodeInsightContextManagerImpl(
     return setContext
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun trySetContext(
     fileViewProvider: FileViewProvider,
     context: CodeInsightContext,
@@ -200,7 +200,7 @@ class CodeInsightContextManagerImpl(
   override fun getCodeInsightContextRaw(fileViewProvider: FileViewProvider): CodeInsightContext =
     fileViewProvider.getUserData(codeInsightContextKey) ?: defaultContext()
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun setCodeInsightContext(fileViewProvider: FileViewProvider, context: CodeInsightContext) {
     log.trace { "set context of FileViewProvider ${fileViewProvider.virtualFile.path} to $context" }
 

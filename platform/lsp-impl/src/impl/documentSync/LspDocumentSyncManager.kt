@@ -83,7 +83,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
     documentVersions.clear()
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun open(file: VirtualFile) {
     if (client.state != LspServerState.Running) {
       val message = "Server is not in the Running state. Ignoring open($file)"
@@ -112,7 +112,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
     }
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun close(file: VirtualFile) {
     if (!openedFiles.remove(file) || shutdown.get()) {
       // Error should not be logged if the sync manager is disposed of, as the server state
@@ -172,8 +172,8 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
   /**
    * @return files that have been opened by this server (with `didOpen` request), but now they are neither opened in the editor nor unsaved
    */
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getFilesToClose(): Collection<VirtualFile> {
     val fileEditorManager = FileEditorManager.getInstance(client.project)
     val fileDocumentManager = FileDocumentManager.getInstance()
@@ -209,7 +209,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
    * Incremental `DidChangeTextDocumentParams` must be created *before* the document mutation, because the params
    * encode line numbers as they were before the change.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onBeforeDocumentChange(event: DocumentEvent, file: VirtualFile) {
     client.fileEdited(file, event)
 
@@ -223,7 +223,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
    *
    * Full `DidChangeTextDocumentParams` can only be calculated *after* the document mutation, because it needs the new text.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onDocumentChanged(event: DocumentEvent, file: VirtualFile) {
     if (client.textDocumentSyncKind == TextDocumentSyncKind.Full && isFileOpened(file)) {
       client.documentMapping.getAdapterForFile(file).sendDidChangeFull(client, file, event.document)

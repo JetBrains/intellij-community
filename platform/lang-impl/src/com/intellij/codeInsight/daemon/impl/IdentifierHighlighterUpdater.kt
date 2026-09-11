@@ -32,7 +32,7 @@ class IdentifierHighlighterUpdater(
   val context: CodeInsightContext,
   val hostPsiFile: PsiFile,
 ) {
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
   suspend fun doCollectInformation(project: Project, visibleRange: ProperTextRange): IdentifierHighlightingResult {
     ThreadingAssertions.assertBackgroundThread()
@@ -47,7 +47,7 @@ class IdentifierHighlighterUpdater(
    *
    * In brace matching case this is done from [com.intellij.codeInsight.highlighting.BraceHighlightingHandler.highlightBraces]
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
   fun doAdditionalCodeBlockHighlighting(result: IdentifierHighlightingResult) {
     val myCodeBlockMarkerRanges = getCodeBlockMarkerRanges(result)
@@ -105,7 +105,7 @@ class IdentifierHighlighterUpdater(
     return info
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
   @TestOnly
   fun doCollectInformationForTestsSynchronously(): IdentifierHighlightingResult {

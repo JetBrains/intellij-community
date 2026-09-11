@@ -55,21 +55,21 @@ internal class EditorCaretMutator internal constructor(
   private var lastFrameAt = CaretClock.monotonicMillis()
   private var loop: Job? = null
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun caretMoved() {
     val tick = tick(TICK_MS.toDouble())
     motion.retarget(host.geometry.placements(), tick)
     if (motion.isSettled) showNow(tick) else wakeUp()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun caretMovedImmediately() {
     val tick = tick(TICK_MS.toDouble())
     motion.snapTo(host.geometry.placements(), tick)
     showNow(tick)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun bulkUpdateStarting() {
     val tick = tick(TICK_MS.toDouble())
     motion.settle(tick)
@@ -91,7 +91,7 @@ internal class EditorCaretMutator internal constructor(
     coroutineScope.cancel()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun showNow(tick: CaretTick) {
     lastFrameAt = tick.now
     val frame = nextFrame(tick, prefetching = false)

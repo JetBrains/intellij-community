@@ -18,7 +18,7 @@ import git4idea.config.GitVcsSettings
  * An initial branch after git clone isn't stored as "checkout" entry in reflog,
  * [GitVcsSettings.getRecentBranchesByRepository] will be used instead.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun collectRecentCheckoutBranches(project: Project, root: VirtualFile, haveLocalBranch: (GitLocalBranch) -> Boolean): List<GitLocalBranch> {
   val recentBranchFromSettings = GitVcsSettings.getInstance(project).recentBranchesByRepository[root.path]?.let(::GitLocalBranch)
   val reflogEntriesCount = Registry.intValue("git.recent.checkout.branches.reflog.entries.count")

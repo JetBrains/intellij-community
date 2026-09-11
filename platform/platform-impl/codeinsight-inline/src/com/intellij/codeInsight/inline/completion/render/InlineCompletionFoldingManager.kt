@@ -37,7 +37,7 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
    * * It folds with `placeholder = ""`
    * * No expansion is possible
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun foldLineEnd(startOffset: Int, disposable: Disposable): TextRange? {
     ThreadingAssertions.assertEventDispatchThread()
 
@@ -95,7 +95,7 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
   /**
    * If this manager folded [offset], the line end offset is returned. Otherwise, [offset] is returned.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun firstNotFoldedOffset(offset: Int): Int {
     val foldRegion = getFoldingRegion(offset) ?: return offset
     return if (foldRegion.textRange.contains(offset)) foldRegion.endOffset else offset
@@ -109,7 +109,7 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
    * line ending was folded. When we start to render anything right after the folded range, we'd like to continue rendering at the
    * same multiline state. See IJPL-183620.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun offsetOfFoldStart(offset: Int): Int {
     val foldRegion = getFoldingRegion(offset) ?: return offset
     val range = foldRegion.textRange

@@ -15,7 +15,7 @@ interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi {
 
   fun deactivate()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun refreshDataBeforeCommit()
 
   fun addStateListener(listener: CommitWorkflowUiStateListener, parent: Disposable)

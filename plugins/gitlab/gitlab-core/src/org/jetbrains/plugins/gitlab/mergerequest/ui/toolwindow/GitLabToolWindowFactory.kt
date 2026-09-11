@@ -73,7 +73,7 @@ private class GitLabMergeRequestsToolWindowController(private val project: Proje
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun manageContent(toolWindow: ToolWindow) {
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
     toolWindow.dontHideOnEmptyContent()

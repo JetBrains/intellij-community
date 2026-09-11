@@ -28,7 +28,7 @@ internal class TerminalDropData(event: DnDEvent) {
   }
   else null
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getContentType(): TerminalInsertedContentType {
     return when {
       virtualFiles.size > 1 -> TerminalInsertedContentType.MULTIPLE_ITEMS

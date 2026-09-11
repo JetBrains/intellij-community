@@ -185,7 +185,7 @@ enum class PythonInterpreterSelectionMethod {
   CREATE_NEW, SELECT_EXISTING
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun installBaseSdk(installRequest: InstallablePythonSdk): Sdk? {
   val installed = installRequest.install(null) {
     PythonSdkUtil.getAllSdks()

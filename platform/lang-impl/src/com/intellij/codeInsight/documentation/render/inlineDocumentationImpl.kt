@@ -9,8 +9,8 @@ import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
-@RequiresReadLock
-@RequiresBackgroundThread
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun inlineDocumentationItems(file: PsiFile): List<InlineDocumentation> {
   val result = SmartList<InlineDocumentation>()
   for (provider in EP_NAME.extensionList) {
@@ -19,8 +19,8 @@ internal fun inlineDocumentationItems(file: PsiFile): List<InlineDocumentation> 
   return result
 }
 
-@RequiresReadLock
-@RequiresBackgroundThread
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun findInlineDocumentation(file: PsiFile, textRange: TextRange): InlineDocumentation? {
   return EP_NAME.extensionList.firstNotNullOfOrNull {
     it.findInlineDocumentation(file, textRange)

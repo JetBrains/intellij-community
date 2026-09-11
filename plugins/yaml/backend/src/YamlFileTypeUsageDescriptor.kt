@@ -48,7 +48,7 @@ internal enum class ImportantSchema {
   NONE
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 internal fun getSchema(project: Project, file: VirtualFile): ImportantSchema {
   val viewProvider = PsiManager.getInstance(project).findViewProvider(file)
   if (viewProvider == null) return ImportantSchema.NONE

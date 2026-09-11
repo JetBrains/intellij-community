@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
  * be run in such a context.
  */
 @ApiStatus.Internal
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun fetchWeightedElementsMixing(
   pattern: String,
   progressIndicator: ProgressIndicator,

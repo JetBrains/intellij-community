@@ -30,8 +30,8 @@ class PluginUpdateCheckService {
    * @param pluginId the plugin to check for updates.
    * @param indicator optional progress indicator forwarded to the underlying repository request.
    */
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   fun getPluginUpdate(pluginId: PluginId, indicator: ProgressIndicator? = null): PluginUpdateInfo {
     ThreadingAssertions.assertBackgroundThread()
     ThreadingAssertions.assertNoOwnReadAccess()

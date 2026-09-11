@@ -145,10 +145,10 @@ interface EndpointsUrlTargetProvider<G : Any, E : Any> : EndpointsProvider<G, E>
 }
 
 interface EndpointsDocumentationProvider<G : Any, E : Any, R : Any> : EndpointsProvider<G, E> {
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun prepareDocumentationRequest(group: G, endpoint: E): R?
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getEndpointDocumentation(request: R, parentDisposable: Disposable): JComponent?
 }

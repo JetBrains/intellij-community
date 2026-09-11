@@ -166,8 +166,8 @@ abstract class SearchPopupControllerBase(
     return false
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun getCompletionValues(attribute: String): List<String>
 
   private fun handleShowPopupForQuery() {

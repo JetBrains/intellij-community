@@ -8,7 +8,7 @@ import git4idea.repo.GitRepository
 
 interface GitRemoteOperationQueue {
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(ProcessCanceledException::class)
   fun <T> executeForRemote(repository: GitRepository, remote: GitRemote, operation: () -> T): T
 }

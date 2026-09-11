@@ -105,7 +105,7 @@ open class PyPackageRepository() {
   fun clearCredentials() = cachedPassword.set(null)
 
   @ApiStatus.Internal
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun findPackageSpecificationWithSpec(pyRequirement: PyRequirement): PythonRepositoryPackageSpecification? =
     if (hasPackage(pyRequirement))
       PythonRepositoryPackageSpecification(this, pyRequirement)
@@ -113,32 +113,32 @@ open class PyPackageRepository() {
       null
 
   @ApiStatus.Internal
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun findPackageSpecification(
     pyRequirement: PyRequirement,
   ): PythonRepositoryPackageSpecification? {
     return findPackageSpecificationWithSpec(pyRequirement)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   open fun search(needle: String, pageSize: Int = 100): PythonPackageSearchResult {
     val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return PythonPackageSearchResult(0, emptyList(), pageSize)
     return cache.search(needle, pageSize)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   open fun hasPackage(name: String): Boolean {
     val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return false
     return name in cache
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   open fun getSize(): Int {
     val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return 0
     return cache.size
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   open fun hasPackage(pyPackage: PyRequirement): Boolean = hasPackage(pyPackage.name)
 
   open fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {

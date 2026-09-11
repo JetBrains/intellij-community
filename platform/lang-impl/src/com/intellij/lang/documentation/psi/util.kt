@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 @JvmField
 internal val LOG: Logger = Logger.getInstance("#com.intellij.lang.documentation.psi")
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 @RequiresBackgroundThread(generateAssertion = false)
 fun psiDocumentationTargets(element: PsiElement, originalElement: PsiElement?): List<DocumentationTarget> {
   for (ext in PsiDocumentationTargetProvider.EP_NAME.extensionList) {

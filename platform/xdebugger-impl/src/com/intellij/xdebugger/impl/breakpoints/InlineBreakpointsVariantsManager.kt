@@ -90,7 +90,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun matchVariantsWithBreakpoints(
     variants: List<XLineBreakpointType<*>.XLineBreakpointVariant>,
     breakpoints: List<XLineBreakpointImpl<*>>,

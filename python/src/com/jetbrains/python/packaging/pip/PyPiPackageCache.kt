@@ -51,7 +51,7 @@ class PyPiPackageCache : PythonPackageCache {
   val filePath: Path = getCachePath()
 
   override val size: Int
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     get() =
       rwLock.read {
         set.size
@@ -67,7 +67,7 @@ class PyPiPackageCache : PythonPackageCache {
   private val reloadLock = Mutex()
   private var loadInProgress: Boolean = false
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override operator fun contains(name: String): Boolean =
     rwLock.read {
       containsCache.get(name) {
@@ -75,7 +75,7 @@ class PyPiPackageCache : PythonPackageCache {
       }
     }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun search(prefix: String, pageSize: Int): PythonPackageSearchResult =
     rwLock.read {
       val searchResult = searchCache.get(prefix) {
@@ -176,7 +176,7 @@ class PyPiPackageCache : PythonPackageCache {
     return expirationTime.isBefore(Instant.now())
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @CheckReturnValue
   private fun remap(storeBeforeLoading: List<String>? = null): Result<Unit, InvalidFormatError> {
     var fileToMap = filePath
@@ -249,7 +249,7 @@ class PyPiPackageCache : PythonPackageCache {
   @ApiStatus.Internal
   @Service
   class PyPiPackageLoader {
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     @CheckReturnValue
     fun loadPackages(): Result<List<String>, FailedToFetchPackages> =
       try {

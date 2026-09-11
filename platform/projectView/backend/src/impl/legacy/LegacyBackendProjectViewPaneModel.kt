@@ -269,7 +269,7 @@ private class LegacyBackendProjectViewPaneModel(
    * gives all the keys the copy/paste/delete handlers need, including the pane's own
    * [com.intellij.openapi.actionSystem.PlatformDataKeys.DELETE_ELEMENT_PROVIDER] choice.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun selectionDataContext(nodeIds: List<Long>): DataContext {
     return CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
       sink[CommonDataKeys.PROJECT] = project
@@ -619,10 +619,10 @@ private class AbstractProjectViewPaneStateManager(
     updateActionStates()
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun canNavigate(node: Any): Boolean = (TreeUtil.getUserObject(node) as? Navigatable?)?.canNavigate() == true
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun canNavigateToSource(node: Any): Boolean = (TreeUtil.getUserObject(node) as? Navigatable?)?.canNavigateToSource() == true
   
   private fun isIncludedInExpandAll(node: Any): Boolean = (TreeUtil.getUserObject(node) as? AbstractTreeNode<*>)?.isIncludedInExpandAll != false

@@ -129,7 +129,7 @@ class MinimapController(
     snapshotUpdates.tryEmit(request)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun buildSnapshotUpdate(request: SnapshotRequest, structureMarkers: List<MinimapStructureMarkerSnapshot>): SnapshotUpdate {
     val effectiveScaleMode = MinimapLayoutPolicy.getEffectiveScaleMode(editor, request.scaleMode)
     val scaleData = MinimapScaleUtil.computeScale(editor, request.panelHeight, request.fixedWidth, effectiveScaleMode)

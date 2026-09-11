@@ -139,8 +139,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     }
 
     @Deprecated("use #loadLastCompatiblePluginModels(Set<PluginId>, BuildNumber, Boolean)")
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     @JvmOverloads
     fun loadLastCompatiblePluginDescriptors(
@@ -151,8 +151,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       return loadLastCompatiblePluginModels(pluginIds, buildNumber, throwExceptions).mapNotNull { it.getDescriptor() as? PluginNode }
     }
 
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     @JvmOverloads
     fun loadLastCompatiblePluginModels(
@@ -224,8 +224,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
     }
 
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     @JvmOverloads
     fun getLastCompatiblePluginUpdate(
@@ -288,8 +288,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
     }
 
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     @JvmOverloads
     fun getNearestUpdate(
@@ -320,8 +320,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
     }
 
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     @JvmOverloads
     @Throws(IOException::class)
@@ -688,7 +688,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     return getFeatures(param)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   fun getMarketplacePlugins(indicator: ProgressIndicator? = null): Set<PluginId> {
     try {
@@ -854,8 +854,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   }
 
   @Deprecated("Compatibility method for external usages. Use loadPluginDetails(PluginUiModel, ProgressIndicator?)")
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   fun loadPluginDetails(
     pluginNode: PluginNode,
@@ -864,8 +864,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     return loadPluginDetails(PluginUiModelAdapter(pluginNode), indicator)?.getDescriptor() as? PluginNode
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   fun loadPluginDetails(
     pluginUiModel: PluginUiModel,
@@ -896,15 +896,15 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     }
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   internal fun loadPluginMetadata(pluginNode: PluginNode): IntellijPluginMetadata? {
     val externalPluginId = pluginNode.externalPluginId ?: return null
     return loadPluginMetadata(externalPluginId)
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   internal fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     try {
       return readOrUpdateFile(
@@ -921,8 +921,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   }
 
   @Deprecated("use #getLastCompatiblePluginUpdateModel(PluginId, BuildNumber, ProgressIndicator)")
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   fun getLastCompatiblePluginUpdate(
     pluginId: PluginId,
@@ -932,8 +932,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     return getLastCompatiblePluginUpdateModel(pluginId, buildNumber, indicator)?.getDescriptor() as? PluginNode
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   fun getLastCompatiblePluginUpdateModel(
     pluginId: PluginId,
@@ -976,7 +976,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
   private val jetbrainsPluginsIds: AtomicReference<Set<PluginId>?> = AtomicReference(null)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun loadJetBrainsMarketplacePlugins(indicator: ProgressIndicator? = null) {
     if (jetbrainsPluginsIds.get() != null) return
 
@@ -1105,8 +1105,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       .mapTo(HashSet()) { PluginId.getId(it) }
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
     try {
       return HttpRequests.request(MarketplaceUrls.getPluginReviewsUrl(pluginId, page))

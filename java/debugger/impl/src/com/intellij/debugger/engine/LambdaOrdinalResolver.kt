@@ -101,12 +101,12 @@ object LambdaOrdinalResolver {
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun countPsiAncestors(lambda: PsiLambdaExpression, lambdas: List<PsiLambdaExpression>): Int {
     return lambdas.count { other -> other !== lambda && PsiTreeUtil.isAncestor(other, lambda, false) }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun countPsiDescendants(lambda: PsiLambdaExpression, lambdas: List<PsiLambdaExpression>): Int {
     return lambdas.count { other -> other !== lambda && PsiTreeUtil.isAncestor(lambda, other, false) }
   }

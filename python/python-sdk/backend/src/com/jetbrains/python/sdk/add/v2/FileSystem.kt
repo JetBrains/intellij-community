@@ -43,7 +43,7 @@ interface FileSystem<P : PathHolder> {
   suspend fun validateExecutable(path: P): PyResult<Unit>
   suspend fun fileExists(path: P): Boolean
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun <T> configureFileBrowseEditor(
     fieldAccessor: TextComponentAccessor<ComboBox<T>>,
     comboBox: ComboBox<T>,

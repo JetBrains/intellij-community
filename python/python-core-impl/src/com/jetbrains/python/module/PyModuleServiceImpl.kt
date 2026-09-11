@@ -33,7 +33,7 @@ internal class PyModuleServiceImpl(val project: Project, coroutineScope: Corouti
 
 
   @PyInternalExecApi
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   override fun setPythonSdk(module: Module, sdk: Sdk?) {
     val facetSdkSetter = if (!module.isPyModuleType) {
       ApplicationManager.getApplication().serviceOrNull<PySdkToFacetSetter>().also {

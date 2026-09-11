@@ -63,7 +63,7 @@ internal class OpenLessonParameters(val projectWhereToStartLesson: Project,
 internal object OpenLessonActivities {
   private val LOG = logger<OpenLessonActivities>()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openLesson(params: OpenLessonParameters) {
     val projectWhereToStartLesson = params.projectWhereToStartLesson
     LOG.debug("${projectWhereToStartLesson.name}: start openLesson method")
@@ -325,7 +325,7 @@ internal object OpenLessonActivities {
     TextEditorWithPreview.openPreviewForFile(project, readme)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openOnboardingFromWelcomeScreen(onboarding: Lesson, selectedSdk: Sdk?) {
     StatisticBase.logLearnProjectOpenedForTheFirstTime(StatisticBase.LearnProjectOpeningWay.ONBOARDING_PROMOTER)
     initLearnProject(null, selectedSdk) { project ->
@@ -344,7 +344,7 @@ internal object OpenLessonActivities {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openLearnProjectFromWelcomeScreen(selectedSdk: Sdk?) {
     StatisticBase.logLearnProjectOpenedForTheFirstTime(StatisticBase.LearnProjectOpeningWay.LEARN_IDE)
     initLearnProject(null, selectedSdk) { project ->
@@ -377,7 +377,7 @@ internal object OpenLessonActivities {
     return true
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun openLessonWhenLearnProjectStart(params: OpenLessonParameters) {
     if (params.lesson.properties.canStartInDumbMode) {
       prepareAndOpenLesson(params, withCleanup = false)
@@ -460,7 +460,7 @@ internal object OpenLessonActivities {
     return vf
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun initLearnProject(projectToClose: Project?, selectedSdk: Sdk?, postInitCallback: (learnProject: Project) -> Unit) {
     val langSupport = LangManager.getInstance().getLangSupport() ?: throw Exception("Language for learning plugin is not defined")
     //if projectToClose is open

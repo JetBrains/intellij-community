@@ -39,7 +39,7 @@ import javax.swing.JComponent
 object GitLabLoginUtil {
   private val LOG = logger<GitLabLoginUtil>()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun logInViaOAuth(
     project: Project,
     requiredUsername: String? = null,
@@ -50,7 +50,7 @@ object GitLabLoginUtil {
     return performOAuthLogin(project, requiredUsername, uniqueAccountPredicate, dialogTitle, loginSource)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun logInViaOAuthToCustomServer(
     project: Project,
     parentComponent: JComponent?,
@@ -70,7 +70,7 @@ object GitLabLoginUtil {
   }
 
   @ApiStatus.Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun logInViaToken(
     project: Project, parentComponent: JComponent?,
     serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER,
@@ -78,7 +78,7 @@ object GitLabLoginUtil {
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean,
   ): LoginResult = logInViaToken(project, parentComponent, serverPath, null, loginSource, uniqueAccountPredicate)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun logInViaToken(
     project: Project, parentComponent: JComponent?,
     serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER, requiredUsername: String? = null,
@@ -141,7 +141,7 @@ object GitLabLoginUtil {
     return LoginResult.Success(account, credentials)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun reLogInViaToken(
     project: Project, parentComponent: JComponent?,
     account: GitLabAccount,
@@ -170,7 +170,7 @@ object GitLabLoginUtil {
     )
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun reLogInViaOAuth(
     project: Project,
     account: GitLabAccount,
@@ -187,7 +187,7 @@ object GitLabLoginUtil {
     return performOAuthLogin(project, requiredUsername, predicateWithoutCurrent, dialogTitle, loginSource, account.id)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun reLogInViaOAuthToCustomServer(
     project: Project,
     parentComponent: JComponent?,
@@ -213,7 +213,7 @@ object GitLabLoginUtil {
                                            accountId = account.id)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
   fun reLogIn(
     project: Project,
@@ -237,7 +237,7 @@ object GitLabLoginUtil {
   }
 
   @ApiStatus.Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun loginWithOAuthOrToken(
     project: Project,
     parentComponent: JComponent?,
@@ -259,7 +259,7 @@ object GitLabLoginUtil {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun showTokenLoginDialog(
     project: Project,
     parentComponent: JComponent?,
@@ -315,7 +315,7 @@ object GitLabLoginUtil {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun performOAuthLogin(
     project: Project,
     requiredUsername: String? = null,
@@ -386,7 +386,7 @@ object GitLabLoginUtil {
     OAUTH, OAUTH_CUSTOM_SERVER, TOKEN
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun chooseAccount(
     project: Project,
     parentComponent: Component?,

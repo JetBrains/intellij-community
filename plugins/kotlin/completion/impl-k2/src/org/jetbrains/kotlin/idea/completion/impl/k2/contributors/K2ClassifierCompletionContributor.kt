@@ -361,7 +361,7 @@ private class K2ClassifierLookupElementRenderer(
         }
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun collectPossibleReferenceShortenings(): ShortenCommandForIde? {
         val file = position.element?.copyContainingFile() ?: return null
 

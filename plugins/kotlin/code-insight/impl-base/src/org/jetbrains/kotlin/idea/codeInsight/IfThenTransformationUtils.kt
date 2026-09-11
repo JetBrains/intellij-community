@@ -101,7 +101,7 @@ enum class TransformIfThenReceiverMode {
 
 @ApiStatus.Internal
 object IfThenTransformationUtils {
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     fun transformBaseClause(data: IfThenTransformationData, strategy: IfThenTransformationStrategy): KtExpression {
         val factory = KtPsiFactory(data.baseClause.project)
 

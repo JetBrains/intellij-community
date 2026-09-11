@@ -88,7 +88,7 @@ class DaemonTooltipAction(
 }
 
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun extractMostPriorityFixFromHighlightInfo(highlightInfo: HighlightInfo, editor: Editor, psiFile: PsiFile): IntentionAction? {
   ThreadingAssertions.assertReadAccess()
 

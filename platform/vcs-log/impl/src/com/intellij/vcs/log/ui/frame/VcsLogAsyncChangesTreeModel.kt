@@ -82,7 +82,7 @@ class VcsLogAsyncChangesTreeModel(
 
   var isShowChangesFromParents: Boolean
     get() = _isShowChangesFromParents
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     set(value) {
       if (uiProperties[MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS] != value) {
         uiProperties[MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS] = value
@@ -99,7 +99,7 @@ class VcsLogAsyncChangesTreeModel(
     }
   var isShowOnlyAffectedChanges: Boolean
     get() = _isShowOnlyAffectedChanges
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     set(value) {
       if (uiProperties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] != value) {
         uiProperties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] = value
@@ -157,7 +157,7 @@ class VcsLogAsyncChangesTreeModel(
     listeners.multicaster.onStateChanged()
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
     val selectionState = unprocessedSelectionState.getAndSet(null)
     val state = if (selectionState != null) {

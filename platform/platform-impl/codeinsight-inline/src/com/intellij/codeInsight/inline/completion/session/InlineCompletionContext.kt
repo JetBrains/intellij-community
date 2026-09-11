@@ -22,27 +22,27 @@ class InlineCompletionContext internal constructor(
    */
   @Volatile
   var isDisposed: Boolean = false
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     get
     private set
 
   val state: InlineCompletionState
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     get() = assureNotDisposed { myState }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isCurrentlyDisplaying(): Boolean = state.elements.any { it.isVisible() }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun startOffset(): Int? = state.firstElement()?.startOffset()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun endOffset(): Int? = state.lastElement()?.endOffset()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun textToInsert(): String = state.elements.joinToString("") { it.element.text }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun clear() {
     assureNotDisposed { state.clear() }
   }
@@ -53,7 +53,7 @@ class InlineCompletionContext internal constructor(
    * * The only operation you can safely use is [isDisposed]. Always check it before accessing any elements.
    * * Disposing of a context guarantees that all elements were cleared.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun dispose() {
     clear()
     isDisposed = true
@@ -75,7 +75,7 @@ class InlineCompletionContext internal constructor(
 
   companion object {
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun getOrNull(editor: Editor): InlineCompletionContext? = InlineCompletionSession.getOrNull(editor)?.context
   }
 }

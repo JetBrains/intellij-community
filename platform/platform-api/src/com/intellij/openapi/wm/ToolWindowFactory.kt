@@ -29,7 +29,7 @@ interface ToolWindowFactory : PossiblyDumbAware {
   @Deprecated("Use isApplicableAsync")
   fun isApplicable(project: Project): Boolean = true
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createToolWindowContent(project: Project, toolWindow: ToolWindow)
 
   /**

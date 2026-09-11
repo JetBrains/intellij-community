@@ -102,7 +102,7 @@ import javax.swing.ScrollPaneConstants
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-class PluginManagerConfigurablePanel @RequiresEdt constructor(
+class PluginManagerConfigurablePanel @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   searchQuery: String?,
   openSource: PluginManagerOpenSourceEnum = PluginManagerOpenSourceEnum.OTHER,
 ) : PluginsPageSession {
@@ -176,7 +176,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun createCardPanel(selectionTab: Int): MultiPanel {
     val cardPanel = object : MultiPanel() {
       override fun create(key: Int?): JComponent {
@@ -555,7 +555,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
     updateSelectionTab(INSTALLED_TAB)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun onPluginInstalledFromDisk(callbackData: PluginInstallCallbackData) {
     PluginModelAsyncOperationsExecutor.updateErrors(
       coroutineScope,
@@ -676,7 +676,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(
       super.actionPerformed(e)
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     override fun onPluginInstalledFromDisk(callbackData: PluginInstallCallbackData, project: Project?) {
       if (pluginManagerCustomizer != null) {
         pluginManagerCustomizer.updateAfterModification {

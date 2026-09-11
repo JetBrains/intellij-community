@@ -36,7 +36,7 @@ import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
 
 @ApiStatus.Internal
-abstract class PluginsTab @RequiresEdt constructor(
+abstract class PluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   searchTextFieldQueryDebouncePeriodMs: Long
 ) {
   private val searchUpdateAlarm = createSingleEdtTaskScheduler()
@@ -49,7 +49,7 @@ abstract class PluginsTab @RequiresEdt constructor(
   protected abstract val detailsPage: PluginDetailsPageComponent
   protected abstract val searchPanel: SearchResultPanel
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createPanel(): JComponent {
     val listPanel = JPanel(BorderLayout())
     listPanel.setBorder(CustomLineBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, JBUI.insetsTop(1)))
@@ -71,7 +71,7 @@ abstract class PluginsTab @RequiresEdt constructor(
     return splitter
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun createPluginsPanel(): JComponent
 
   protected abstract fun updateMainSelection(selectionListener: Consumer<in PluginsGroupComponent?>)

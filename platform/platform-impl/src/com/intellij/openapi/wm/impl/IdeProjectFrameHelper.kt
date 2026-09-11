@@ -32,7 +32,7 @@ internal class IdeProjectFrameHelper(
   loadingState: FrameLoadingState,
   projectFrameTypeId: String?,
 ) : ProjectFrameHelper(frame, loadingState, projectFrameTypeId) {
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   lateinit var toolWindowPane: ToolWindowPane
     private set
 

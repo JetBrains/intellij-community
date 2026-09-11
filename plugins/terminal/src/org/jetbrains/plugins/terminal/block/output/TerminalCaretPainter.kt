@@ -60,7 +60,7 @@ internal class TerminalCaretPainter(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun repaint() {
     updateCaretHighlighter(caretModel.state)
   }

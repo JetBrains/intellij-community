@@ -70,7 +70,7 @@ internal class TerminalCaretModel(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun doUpdate() {
     try {
       val state = calculateState()
@@ -122,7 +122,7 @@ internal class TerminalCaretModel(
   data class CaretState(val position: LogicalPosition?, val isBlinking: Boolean = true)
 
   interface CaretListener {
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun caretStateChanged(state: CaretState) {}
   }
 }

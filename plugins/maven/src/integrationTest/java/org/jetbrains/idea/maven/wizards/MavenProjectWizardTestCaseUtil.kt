@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.project.MavenSyncListener
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.util.concurrent.atomic.AtomicBoolean
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal suspend fun <T, W : AbstractProjectWizard?> ProjectWizardTestCase<W>.waitForImportWithinTimeout(action: suspend () -> T): T {
   MavenLog.LOG.warn("waitForImportWithinTimeout started")
   val syncStarted = AtomicBoolean(false)

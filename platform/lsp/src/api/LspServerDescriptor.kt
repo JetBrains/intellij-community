@@ -35,7 +35,7 @@ abstract class LspServerDescriptor protected constructor(
   vararg roots: VirtualFile,
 ) : LspClientDescriptor(project, presentableName, *roots) {
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(ExecutionException::class)
   override fun startServerProcess(): OSProcessHandler {
     return super.startServerProcess() as OSProcessHandler

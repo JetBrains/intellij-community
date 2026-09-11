@@ -44,10 +44,10 @@ abstract class ChangeListManagerEx protected constructor() : ChangeListManager()
    * Blocks modal dialogs that we don't want to popup during some process, for example, above the commit dialog.
    * They will be shown when notifications are unblocked.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   abstract fun blockModalNotifications()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   abstract fun unblockModalNotifications()
 
   /**
@@ -68,7 +68,7 @@ abstract class ChangeListManagerEx protected constructor() : ChangeListManager()
    * @see ChangeListManager.invokeAfterUpdate
    */
   @RequiresBlockingContext(replaceWith = ReplaceWith("awaitUpdate()"))
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   abstract fun waitForUpdate()
 
   companion object {

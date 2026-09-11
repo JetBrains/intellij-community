@@ -48,7 +48,7 @@ object QuickDocHighlightingHelper {
    * Any special HTML characters, like `<` or `>` are escaped.
    */
   @JvmStatic
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getStyledCodeBlock(project: Project, language: Language?, code: @NlsSafe CharSequence): @NlsSafe String =
     StringBuilder().apply { appendStyledCodeBlock(project, language, code) }.toString()
 
@@ -61,7 +61,7 @@ object QuickDocHighlightingHelper {
    * Any special HTML characters, like `<` or `>` are escaped.
    */
   @JvmStatic
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun StringBuilder.appendStyledCodeBlock(project: Project, language: Language?, code: @NlsSafe CharSequence): @NlsSafe StringBuilder =
     append(CODE_BLOCK_PREFIX)
       .appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfCodeBlocksEnabled(), code,
@@ -78,7 +78,7 @@ object QuickDocHighlightingHelper {
    * Any special HTML characters, like `<` or `>` are escaped.
    */
   @JvmStatic
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getStyledInlineCode(project: Project, language: Language?, @NlsSafe code: String): @NlsSafe String =
     StringBuilder().apply { appendStyledInlineCode(project, language, code) }.toString()
 
@@ -92,7 +92,7 @@ object QuickDocHighlightingHelper {
    * Any special HTML characters, like `<` or `>` are escaped.
    */
   @JvmStatic
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun StringBuilder.appendStyledInlineCode(project: Project, language: Language?, @NlsSafe code: String): StringBuilder =
     append(INLINE_CODE_PREFIX)
       .appendHighlightedCode(
@@ -107,7 +107,7 @@ object QuickDocHighlightingHelper {
    * Should not be used when generating Quick Doc signature or [PsiElement] links.
    */
   @JvmStatic
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getStyledCodeFragment(project: Project, language: Language, @NlsSafe code: String): @NlsSafe String =
     StringBuilder().apply { appendStyledCodeFragment(project, language, code) }.toString()
 
@@ -118,7 +118,7 @@ object QuickDocHighlightingHelper {
    * Should not be used when generating Quick Doc signature or [PsiElement] links.
    */
   @JvmStatic
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun StringBuilder.appendStyledCodeFragment(project: Project, language: Language, @NlsSafe code: String): StringBuilder =
     appendHighlightedCode(project, language, true, code, isForRenderedDoc = false, trim = false)
 
@@ -176,7 +176,7 @@ object QuickDocHighlightingHelper {
    * if [DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled] is `true`.
    */
   @JvmStatic
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getStyledSignatureFragment(project: Project, language: Language?, code: String): @NlsSafe String =
     StringBuilder().apply { appendStyledSignatureFragment(project, language, code) }
       .toString()
@@ -189,7 +189,7 @@ object QuickDocHighlightingHelper {
    * if [DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled] is `true`.
    */
   @JvmStatic
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun StringBuilder.appendStyledSignatureFragment(project: Project, language: Language?, code: String): StringBuilder =
     appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(), code,
                           isForRenderedDoc = false, trim = false)

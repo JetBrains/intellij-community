@@ -79,8 +79,8 @@ class StickyLinesCollector(private val project: Project, private val document: D
     }
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun forceCollectPass() {
     ThreadingAssertions.assertReadAccess(); ThreadingAssertions.assertBackgroundThread()
 
@@ -93,8 +93,8 @@ class StickyLinesCollector(private val project: Project, private val document: D
     }
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun collectLines(vFile: VirtualFile, progress: ProgressIndicator): Collection<StickyLineInfo> {
     ThreadingAssertions.assertReadAccess(); ThreadingAssertions.assertBackgroundThread()
 
@@ -111,7 +111,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
     return infos
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun applyLines(psiFile: PsiFile, lines: Collection<StickyLineInfo>) {
     ThreadingAssertions.assertEventDispatchThread()
 

@@ -407,7 +407,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return IntentionPreviewUtils.getPreviewEditor() ?: getEditor(activeFile ?: return null)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun getSelectedTextEditorWithRemotes(): Array<Editor> {
     val result = ArrayList<Editor>()
     for (e in selectedEditorWithRemotes) {

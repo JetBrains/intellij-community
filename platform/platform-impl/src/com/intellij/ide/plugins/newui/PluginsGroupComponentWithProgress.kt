@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 
 @ApiStatus.Internal
-abstract class PluginsGroupComponentWithProgress @RequiresEdt constructor(eventHandler: EventHandler) : PluginsGroupComponent(eventHandler) {
+abstract class PluginsGroupComponentWithProgress @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(eventHandler: EventHandler) : PluginsGroupComponent(eventHandler) {
   private var myLoadingIcon: AsyncProcessIcon? = BigCentered(IdeBundle.message("progress.text.loading"))
   private var myOnBecomingVisibleCallback: Runnable? = null
 

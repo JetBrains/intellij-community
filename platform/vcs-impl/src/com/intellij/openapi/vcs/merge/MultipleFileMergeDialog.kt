@@ -243,7 +243,7 @@ open class MultipleFileMergeDialog(
    *
    * IJPL-251324 Merge Revisions viewer: cancelling overwrites the conflicted file and marks it resolved
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun revertAbandonedDocuments() {
     val fileDocumentManager = FileDocumentManager.getInstance()
     for (file in unresolvedFiles) {
@@ -273,7 +273,7 @@ open class MultipleFileMergeDialog(
 
   @Throws(ProcessCanceledException::class)
   @RequiresBlockingContext
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun resolveAutomatically(
     project: Project,
     iterativeDataHolder: MergeConflictIterativeDataHolder,
@@ -309,7 +309,7 @@ open class MultipleFileMergeDialog(
     updateTree(SetDefaultTreeStateStrategy())
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun acceptForResolution(resolution: MergeSession.Resolution, from: SideAppliedFrom) {
     assert(resolution.yoursOrTheirs())
     val files = table.selectedFiles
@@ -389,7 +389,7 @@ open class MultipleFileMergeDialog(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun acceptRevisionForIterativeResolution(
     filesWithModel: List<Pair<VirtualFile, MergeConflictModel>>,
     resolution: MergeSession.Resolution,
@@ -419,7 +419,7 @@ open class MultipleFileMergeDialog(
   }
 
   @RequiresBlockingContext
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun acceptRevisionForFileIterativeResolution(
     file: VirtualFile,
     mergeConflictModel: MergeConflictModel,
@@ -431,7 +431,7 @@ open class MultipleFileMergeDialog(
     checkMarkModifiedProject(project, file)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun resolveFileViaContent(file: VirtualFile, resolution: MergeSession.Resolution, data: MergeData) {
     if (!DiffUtil.makeWritable(project, file)) {
       throw IOException(UIBundle.message("file.is.read.only.message.text", file.presentableUrl))
@@ -451,7 +451,7 @@ open class MultipleFileMergeDialog(
 
   // Under the hood this is calling [com.intellij.dvcs.repo.VcsRepositoryManager.getRepositoryForRoot(com.intellij.openapi.vfs.VirtualFile)]
   // that needs to be done in a background thread
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun markFilesProcessed(files: List<VirtualFile>, resolution: MergeSession.Resolution) {
     unresolvedFiles.removeAll(files)
     if (mergeSession is MergeSessionEx) {
@@ -472,12 +472,12 @@ open class MultipleFileMergeDialog(
     if (project != null) VcsDirtyScopeManager.getInstance(project).filesDirty(files, emptyList())
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun markFileProcessed(file: VirtualFile, resolution: MergeSession.Resolution) {
     markFilesProcessed(listOf(file), resolution)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun updateModelFromFiles() {
     if (unresolvedFiles.isEmpty()) {
       doCancelAction()
@@ -519,7 +519,7 @@ open class MultipleFileMergeDialog(
   }
 
   @RequiresBlockingContext
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun showMergeDialog(from: FileOpenedFrom) {
     // Only the files the user explicitly selected count as "intentionally" opened;
     // the rest are auto-advanced to by the dialog.
@@ -542,7 +542,7 @@ open class MultipleFileMergeDialog(
   }
 
   @RequiresBlockingContext
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun showMergeDialogForFile(file: VirtualFile, from: FileOpenedFrom, howOpened: FileOpenedHow): MergeResult {
     var mergeResult: MergeResult? = null
     val request = runWithModalProgressBlocking(getModalTaskOwner(),
@@ -611,7 +611,7 @@ open class MultipleFileMergeDialog(
   private fun getUnresolvedFiles(): List<VirtualFile> = unresolvedFiles - getResolvedFiles()
   private fun getResolvedFiles(): Set<VirtualFile> = (iterativeDataHolder?.getResolvedFilesAndModels()?.keys ?: emptySet())
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun runWithErrorHandling(block: () -> Unit) {
     try {
       block()

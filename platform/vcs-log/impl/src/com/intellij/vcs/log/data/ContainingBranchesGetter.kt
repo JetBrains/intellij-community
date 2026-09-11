@@ -54,7 +54,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun cache(commitId: CommitId, branches: List<String>, branchesChecksum: Int) {
     if (branchesChecksum == currentBranchesChecksum) {
       cache.put(commitId, branches)
@@ -62,7 +62,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun clearCache() {
     cache.invalidateAll()
     taskExecutor.clear()
@@ -132,7 +132,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
   fun getContainedInCurrentBranchCondition(root: VirtualFile): Predicate<Int> =
     conditionsCache.getContainedInCurrentBranchCondition(root)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getContainingBranches(root: VirtualFile, hash: Hash): List<String> {
     val cached = cache.getIfPresent(CommitId(hash, root))
     if (cached != null) return cached

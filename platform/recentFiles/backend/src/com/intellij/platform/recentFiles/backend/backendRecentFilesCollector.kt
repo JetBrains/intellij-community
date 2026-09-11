@@ -32,7 +32,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.pathString
 import kotlin.math.max
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 internal fun getFilesToShow(project: Project, recentFileKind: RecentFileKind, filesFromFrontendEditorSelectionHistory: List<VirtualFile>): List<VirtualFile> {
   val filesData = ArrayList<VirtualFile>()
   val editors = ArrayList<VirtualFile>()
@@ -120,7 +120,7 @@ private fun getRecentFiles(project: Project): List<VirtualFile> {
 
 private val IDENTICAL_NAMES_CACHE_KEY = Key.create<Boolean>("IDENTICAL_NAMES_CACHE_KEY")
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun areThereFilesWithSameName(virtualFile: VirtualFile, project: Project): Boolean {
   if (DumbService.getInstance(project).isDumb) return false
 
@@ -154,7 +154,7 @@ private class StopOnTwoIdenticalNamesProcessor(private val searchedName: String)
   }
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 internal fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project): BackendRecentFilePresentation {
   ProgressManager.checkCanceled()
   val parentPath = virtualFile.parent?.path?.toNioPathOrNull()

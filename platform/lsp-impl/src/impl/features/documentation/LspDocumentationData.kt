@@ -60,7 +60,7 @@ data class LspDocumentationData(
   val descriptionMarkup: DescriptionMarkup = DescriptionMarkup.PLAIN,
 ) {
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun toQuickDocHtml(project: Project): DocumentationResult.Documentation {
     @NlsSafe
     val htmlDefinition = definitionCodeBlock

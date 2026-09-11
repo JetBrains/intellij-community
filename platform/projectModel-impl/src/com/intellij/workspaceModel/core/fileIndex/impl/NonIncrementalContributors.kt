@@ -227,7 +227,7 @@ internal class NonIncrementalContributors(private val project: Project) {
     return result
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun resetCache() {
     upToDate = false
   }

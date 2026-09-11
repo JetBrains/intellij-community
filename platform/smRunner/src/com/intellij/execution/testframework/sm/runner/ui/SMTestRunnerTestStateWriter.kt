@@ -17,7 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import java.util.Date
 
 internal object SMTestRunnerTestStateWriter {
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   fun writeState(project: Project, proxy: SMTestProxy, url: String, configuration: RunConfiguration?, consoleProperties: TestConsoleProperties) {
     val configurationName: String? = configuration?.getName()
@@ -85,7 +85,7 @@ internal object SMTestRunnerTestStateWriter {
                                                     info.errorMessage, info.topLocationLine))
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun getStackTraceParser(consoleProperties: TestConsoleProperties, proxy: SMTestProxy, url: String, project: Project): TestStackTraceParser {
     if (consoleProperties is SMStacktraceParser) {
       return (consoleProperties as SMStacktraceParser).getTestStackTraceParser(url, proxy, project)

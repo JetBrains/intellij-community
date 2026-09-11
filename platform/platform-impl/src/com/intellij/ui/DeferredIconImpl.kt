@@ -78,7 +78,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
   val isNeedReadAction: Boolean
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override var isDone: Boolean = false
     private set
 
@@ -205,7 +205,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   private fun needScheduleEvaluation(): Boolean = !isDone && !PowerSaveMode.isEnabled()
 
   @VisibleForTesting
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun scheduleEvaluation(component: Component?, x: Int, y: Int): Job? {
     // It is important to extract the repaint target here:
     // the component may be a temporary component used by some list or tree to paint elements

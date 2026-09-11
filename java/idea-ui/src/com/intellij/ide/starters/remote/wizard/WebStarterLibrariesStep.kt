@@ -175,7 +175,7 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
     return true
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected open fun validateWithServer(progressIndicator: ProgressIndicator): Boolean {
     return true
   }

@@ -43,7 +43,7 @@ internal class GitWorkingTreeHolderImpl(private val repository: GitRepository) :
   }
 
   //NB: it's the caller's responsibility to ensure a correct BGT dispatcher
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   suspend fun updateState() {
     ThreadingAssertions.assertBackgroundThread()
     // TODO: cancel the scheduled update to reduce wait times

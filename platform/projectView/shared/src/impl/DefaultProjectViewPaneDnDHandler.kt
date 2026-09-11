@@ -73,13 +73,13 @@ internal class DefaultProjectViewPaneDnDHandler<T>(
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun createSource(node: BackendProjectViewNodeModel<T>): Source<T>? {
     val psiElement = psi.extractPsiElements(listOf(node)).singleOrNull() ?: return null
     return Source(node, psiElement.createSmartPointer())
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun createTarget(node: BackendProjectViewNodeModel<T>): Target<T>? {
     val psiElement = psi.extractPsiElements(listOf(node)).singleOrNull() ?: return null
     val targetModule = if (pane.project.isInitialized) ModuleUtilCore.findModuleForPsiElement(psiElement) else null
@@ -92,13 +92,13 @@ internal class DefaultProjectViewPaneDnDHandler<T>(
   )
   
   private data class Source<T>(val node: BackendProjectViewNodeModel<T>, val psi: SmartPsiElementPointer<PsiElement>) {
-    @get:RequiresReadLock
+    @get:RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     val psiElement: PsiElement?
       get() = psi.dereference()
   }
 
   private data class Target<T>(val node: BackendProjectViewNodeModel<T>, val psi: SmartPsiElementPointer<PsiElement>, val module: Module?) {
-    @get:RequiresReadLock
+    @get:RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     val psiElement: PsiElement?
       get() = psi.dereference()
   }

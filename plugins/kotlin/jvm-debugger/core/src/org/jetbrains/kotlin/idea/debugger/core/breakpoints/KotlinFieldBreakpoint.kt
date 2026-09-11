@@ -65,7 +65,7 @@ class KotlinFieldBreakpoint(
         return super.isValid() && evaluationElement != null
     }
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     override fun reload() {
         super.reload()
 

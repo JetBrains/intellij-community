@@ -14,7 +14,7 @@ interface PythonPackageCache {
   /**
    * The total amount of packages tracked by the cache.
    */
-  @get:RequiresBackgroundThread
+  @get:RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   val size: Int
 
   /**
@@ -23,7 +23,7 @@ interface PythonPackageCache {
    * @param name the exact name of the package to check.
    * @return true if the package is contained, false otherwise.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   operator fun contains(name: String): Boolean
 
   /**
@@ -33,7 +33,7 @@ interface PythonPackageCache {
    * @param pageSize the size of the page returned.
    * @return the search result.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun search(prefix: String, pageSize: Int = 100): PythonPackageSearchResult
 }
 

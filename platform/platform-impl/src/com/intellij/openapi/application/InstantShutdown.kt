@@ -12,7 +12,7 @@ class InstantShutdown {
 
   private var allowed: Boolean = true
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun <T> computeWithDisabledInstantShutdown(supplier: () -> T): T {
     val prevValue = allowed
     return try {
@@ -25,7 +25,7 @@ class InstantShutdown {
   }
 
   companion object {
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     fun isAllowed(): Boolean {
       if (!Registry.`is`("ide.instant.shutdown", true)) return false

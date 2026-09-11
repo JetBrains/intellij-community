@@ -404,7 +404,7 @@ abstract class EditorBasedStatusBarPopup(
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun getWidgetState(file: VirtualFile?): WidgetState
 
   /**

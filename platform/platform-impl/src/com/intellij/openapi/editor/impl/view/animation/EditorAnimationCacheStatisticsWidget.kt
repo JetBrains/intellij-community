@@ -40,7 +40,7 @@ internal class EditorAnimationCacheStatisticsWidgetFactory : StatusBarWidgetFact
 private class EditorAnimationCacheStatisticsWidget : CustomStatusBarWidget {
   private val lazyUi = lazy(::EditorAnimationCacheStatisticsUi)
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private val ui: EditorAnimationCacheStatisticsUi
     get() = lazyUi.value
 

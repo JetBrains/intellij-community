@@ -390,7 +390,7 @@ class PolySymbolQueryExecutorImpl(
       result
     }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun <T, P : PolySymbolQueryParams> runQuery(
     path: List<PolySymbolQualifiedName>,
     params: P,

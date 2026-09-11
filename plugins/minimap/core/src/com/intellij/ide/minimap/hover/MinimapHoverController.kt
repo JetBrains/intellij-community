@@ -55,7 +55,7 @@ class MinimapHoverController(
     scope.cancel()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onSnapshot(snapshot: MinimapSnapshot) {
     hoverEnabled = settings.state.showHover && hoverPolicy.isHoverEnabled(panel.editor, snapshot)
     if (!hoverEnabled) {
@@ -77,13 +77,13 @@ class MinimapHoverController(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun paint(graphics: Graphics2D) {
     if (!hoverEnabled) return
     presenter.paint(graphics)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun hideBalloon() {
     cancelHoverComputation()
     hoverStateMachine.updateTarget(null)
@@ -91,12 +91,12 @@ class MinimapHoverController(
     presenter.hide()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onMouseEntered() {
     delayNextHover = true
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onMouseExited() {
     if (dragging) {
       lastMousePoint = null
@@ -106,7 +106,7 @@ class MinimapHoverController(
     updateHover(null)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onScroll(point: Point?) {
     point?.let {
       lastMousePoint = Point(it)
@@ -118,18 +118,18 @@ class MinimapHoverController(
     updateActiveTargetForPoint(snapshot, lastPoint)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun startDragging() {
     dragging = true
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun stopDragging(point: Point?) {
     dragging = false
     updateHover(point)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updateHover(point: Point?) {
     if (point == null) {
       cancelHoverComputation()
@@ -173,7 +173,7 @@ class MinimapHoverController(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun computeHoverTargetAsync(snapshot: MinimapSnapshot, point: Point, onResult: (MinimapHoverTarget?) -> Unit) {
     hoverComputationJob?.cancel()
     hoverComputationJob = scope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
@@ -187,8 +187,8 @@ class MinimapHoverController(
     }
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun computeHoverTarget(snapshot: MinimapSnapshot, point: Point): MinimapHoverTarget? {
     val hit = hitChecker.resolveHit(snapshot, point) ?: return null
     return MinimapHoverTarget(hit.entry, hit.rect, hit.text, hit.icon, hit.declarationWidth)

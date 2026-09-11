@@ -60,18 +60,18 @@ interface PythonRepositoryManager {
   @ApiStatus.Internal
   suspend fun awaitReady() {}
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun searchPackages(repository: PyPackageRepository, needle: String, pageSize: Int = 100): PythonPackageSearchResult {
     val normalizedNeedle = PyPackageName.normalizePackageName(needle)
     return repository.search(normalizedNeedle, pageSize)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun searchPackages(needle: String, pageSize: Int = 100): Map<PyPackageRepository, PythonPackageSearchResult> {
     return repositories.associateWith { searchPackages(it, needle, pageSize) }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun hasPackageSnapshot(packageName: String): Boolean {
     return repositories.any { it.hasPackage(packageName) }
   }
@@ -99,11 +99,11 @@ interface PythonRepositoryManager {
   class PythonRepositorySearchApi internal constructor(private val manager: PythonRepositoryManager) {
     val repositories: List<PyPackageRepository> get() = manager.repositories
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun searchPackages(query: String, pageSize: Int = 100): Map<PyPackageRepository, PythonPackageSearchResult> =
       manager.searchPackages(query, pageSize)
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun searchPackages(repository: PyPackageRepository, needle: String, pageSize: Int = 100): PythonPackageSearchResult =
       manager.searchPackages(repository, needle, pageSize)
   }

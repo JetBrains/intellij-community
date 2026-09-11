@@ -88,7 +88,7 @@ object MavenDomUtil {
     return isPomFileName(file.getName())
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   fun isProjectFileWithModel410(file: PsiFile?): Boolean {
     if (file !is XmlFile) return false
@@ -113,7 +113,7 @@ object MavenDomUtil {
     )
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @JvmStatic
   fun getXmlProjectModelVersion(file: PsiFile?): @NlsSafe String? {
     if (file !is XmlFile) return null
@@ -276,7 +276,7 @@ object MavenDomUtil {
     return manager.findContainingProject(file)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresBackgroundThread(generateAssertion = false)
   @JvmStatic
   fun getMavenDomProjectModel(project: Project, file: VirtualFile): MavenDomProjectModel? {
@@ -295,7 +295,7 @@ object MavenDomUtil {
     return getMavenDomModel<MavenDomProfiles>(project, file, MavenDomProfiles::class.java) // try an old-style model
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresBackgroundThread(generateAssertion = false)
   @JvmStatic
   fun <T : MavenDomElement?> getMavenDomModel(

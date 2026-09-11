@@ -153,7 +153,7 @@ class MutableLookupStorage(
   }
 
   /** Lazily computes application- and project-level user factors for [project] (once per session). */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun initUserFactors(project: Project) {
     if (_userFactors == null) {
       val userFactorValues = mutableMapOf<String, String>()

@@ -29,8 +29,8 @@ private const val MIN_ALLOWED_INLAY_HINT_LENGTH = 1
  *
  * Calling this also triggers a server request when the cache is stale (see [LspInlayHintsCache]).
  */
-@RequiresBackgroundThread
-@RequiresReadLock
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 internal fun collectInlayHintItems(project: Project, virtualFile: VirtualFile): List<LspInlayItem> {
   val clients = LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(virtualFile)
   return clients.flatMap { client ->

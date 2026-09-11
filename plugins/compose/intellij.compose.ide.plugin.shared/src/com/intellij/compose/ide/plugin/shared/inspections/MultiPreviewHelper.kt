@@ -53,17 +53,17 @@ import org.jetbrains.uast.tryResolve
  * - It eliminated the need to run [com.intellij.openapi.progress.runBlockingCancellable] inside;
  * - Removes unnecessary [com.intellij.openapi.application.readAction] calls;
  */
-@RequiresReadLock
-@RequiresBackgroundThread
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun KtAnnotationEntry.isMultiPreview(): Boolean = (toUElement() as? UAnnotation)?.hasPreviewNodes() == true
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun UAnnotation.hasPreviewNodes(): Boolean {
   getContainingComposableUMethod() ?: return false
   return findAllPreviewAnnotationsInGraph().isNotEmpty()
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun UAnnotation.getContainingComposableUMethod(): UMethod? {
   val uMethod = getParentOfType(UMethod::class.java)
                 ?: javaPsi?.parentOfType<PsiMethod>()?.toUElement(UMethod::class.java)
@@ -83,12 +83,12 @@ private fun UElement.findAllPreviewAnnotationsInGraph(): List<UElement> {
   )
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun UAnnotation.isPreviewAnnotation(): Boolean =
   MULTIPLATFORM_PREVIEW_FQ_NAME.asString() == qualifiedName ||
   JETPACK_PREVIEW_FQ_NAME.asString() == qualifiedName
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun UAnnotation.couldBeMultiPreviewAnnotation(): Boolean {
   return this.qualifiedName
     ?.let { fqcn ->
@@ -103,7 +103,7 @@ private fun UAnnotation.couldBeMultiPreviewAnnotation(): Boolean {
 
 private val NON_MULTIPREVIEW_PREFIXES = listOf("android.", "kotlin.", "kotlinx.", "java.")
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun traverseAnnotations(
   sourceElements: List<UElement>,
   annotationFilter: (UAnnotation) -> Boolean,
@@ -114,7 +114,7 @@ private fun traverseAnnotations(
 }
 
 /** Iterative DFS implementation, to avoid stack overflow-related problems for big graphs. */
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun iterativeDfs(
   rootElement: UElement,
   visitedAnnotationClasses: MutableMap<String, UElement>,
@@ -174,7 +174,7 @@ private fun iterativeDfs(
   return result
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun UElement.getUAnnotations(): List<UAnnotation> {
   val annotations = (this as? UMethod)?.uAnnotations ?: (this.tryResolve() as? PsiModifierListOwner)?.annotations?.mapNotNull {
     it.toUElementOfType() as? UAnnotation
@@ -184,7 +184,7 @@ private fun UElement.getUAnnotations(): List<UAnnotation> {
   }
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun UAnnotation.extractFromContainer(): List<UAnnotation> =
   findDeclaredAttributeValue(null)?.sourcePsi?.children?.mapNotNull {
     it.toUElement() as? UAnnotation

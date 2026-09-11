@@ -214,8 +214,8 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
    * Returns [TargetPresentation] used by [SearchTarget] and [RenameTarget].
    * Default implementations of [PolySymbolRenameTarget] and [PolySymbolSearchTarget] use the presentation property.
    */
-  @get:RequiresReadLock
-  @get:RequiresBackgroundThread
+  @get:RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @get:RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   val presentation: TargetPresentation
     get() {
       // TODO use kind description provider

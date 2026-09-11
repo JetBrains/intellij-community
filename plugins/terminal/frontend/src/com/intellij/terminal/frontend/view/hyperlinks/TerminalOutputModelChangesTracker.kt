@@ -48,7 +48,7 @@ class TerminalOutputModelChangesTracker(
   /**
    * Returns the first changed line index since the last call.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getFirstChangedLineAndReset(): TerminalLineIndex? {
     if (!contentChanged) return null
 
@@ -69,7 +69,7 @@ class TerminalOutputModelChangesTracker(
    * Returns `null` when the answer can't be correctly calculated: a change newer than [modificationStamp] has already been evicted
    * from the bounded history (too many changes happened while the result was being computed).
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getFirstChangedOffsetSinceStamp(modificationStamp: Long): TerminalOffset? {
     // Record a change that already happened but hasn't been saved into the history,
     // so a hyperlinks result processed between flushes sees the up-to-date changed region.

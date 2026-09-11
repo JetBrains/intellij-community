@@ -238,7 +238,7 @@ class GlobalWorkspaceModel internal constructor(
     globalWorkspaceModels.resetVirtualFileUrlManager()
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     ThreadingAssertions.assertWriteAccess()
 
@@ -276,7 +276,7 @@ class GlobalWorkspaceModel internal constructor(
     }
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   private fun onChanged(change: VersionedStorageChange) {
     ThreadingAssertions.assertWriteAccess()
 
@@ -294,7 +294,7 @@ class GlobalWorkspaceModel internal constructor(
     isFromGlobalWorkspaceModel = false
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun applyStateToProject(targetProject: Project): Unit = applyStateToProjectTimeMs.addMeasuredTime {
     ThreadingAssertions.assertWriteAccess()
 
@@ -320,7 +320,7 @@ class GlobalWorkspaceModel internal constructor(
     )
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun syncEntitiesWithProject(sourceProject: Project): Unit = syncEntitiesWithProjectTimeMs.addMeasuredTime {
     ThreadingAssertions.assertWriteAccess()
 

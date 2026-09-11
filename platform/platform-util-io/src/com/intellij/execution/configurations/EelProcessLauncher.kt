@@ -68,7 +68,7 @@ import java.nio.file.Path
  * or a global executable or argument path identifies another remote target.
  */
 @ThrowsChecked(EelExecApi.EnvironmentVariablesException::class)
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun startProcessBlockingUsingEel(
   descriptor: EelDescriptor,
   builder: ProcessBuilder,

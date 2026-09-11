@@ -16,11 +16,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object PyDependencyDeclarations {
   /** Returned [PsiElement]s are live; anchor them to outlive the read action. */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun forFile(file: PsiFile): DependencyMap = collect(file) { _, _ -> }
 
   // [onNonInjectedProvider] lets the inspection run its empty-file check without a second traversal.
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun collect(
     rootFile: PsiFile,
     onNonInjectedProvider: (PsiFile, DependenciesPsiProvider<*>) -> Unit,

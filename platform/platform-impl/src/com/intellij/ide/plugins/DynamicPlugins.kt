@@ -40,7 +40,7 @@ object DynamicPlugins {
    * @param pretendEnabled plugins that should be treated as not disabled
    * @param pretendDisabled plugins that should be treated as disabled
    */
-  @RequiresReadLockAbsence
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
   suspend fun checkCanReconfigureWithoutRestart(
     addNewCustomPlugins: List<PluginMainDescriptor>,
@@ -77,7 +77,7 @@ object DynamicPlugins {
    * @param forceRemovePlugins plugins that should be excluded from the context completely (so it appears as they don't exist at all anymore)
    * @param extraStateValidator additional checks of the target state can be done there (e.g. that a certain plugin loads). See [expectPluginsState]
    */
-  @RequiresReadLockAbsence
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
   suspend fun reconfigure(
     project: Project?,

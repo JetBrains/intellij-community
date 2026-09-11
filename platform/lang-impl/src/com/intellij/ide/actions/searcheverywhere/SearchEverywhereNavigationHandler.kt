@@ -135,7 +135,7 @@ open class SearchEverywhereNavigationHandler(val project: Project) {
    * Only file system items can be re-resolved this way; for anything else navigation may still go through
    * the cache-avoiding file, hence the warning.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun reResolveOnCacheableFile(element: PsiElement, file: VirtualFile): PsiElement {
     val reResolved = if (element is PsiFileSystemItem) PsiUtilCore.findFileSystemItem(project, file) else null
     if (reResolved == null) {

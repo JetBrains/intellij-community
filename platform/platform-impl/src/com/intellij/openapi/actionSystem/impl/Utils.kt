@@ -505,7 +505,7 @@ object Utils {
     return withProgressIcon(loadingIconPoint, component, place, task)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   suspend fun <T> withProgressIcon(
     loadingIconPoint: RelativePoint?,
     component: Component?,

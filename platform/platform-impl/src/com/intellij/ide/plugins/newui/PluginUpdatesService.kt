@@ -137,8 +137,8 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
    * Note: if an update snapshot is already available, the [callback] is also invoked once synchronously on the
    * calling thread of [subscribe] with that snapshot; all later invocations happen on [Dispatchers.UI].
    */
-  @RequiresEdt
-  fun subscribe(@RequiresEdt callback: PluginUpdateCallback): PluginUpdateSubscription {
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun subscribe(@RequiresEdt(generateAssertion = false /* IJPL-115548 */) callback: PluginUpdateCallback): PluginUpdateSubscription {
     myCallbacks.add(callback)
 
     val currentSnapshot = getLastUpdates()
@@ -175,7 +175,7 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
     return updateIdsFlow.filterNotNull().first().contains(pluginId)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun rerunCallbacks() {
     val currentUpdates = getLastUpdates()
     if (currentUpdates != null) {

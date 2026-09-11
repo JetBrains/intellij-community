@@ -85,7 +85,7 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
    * Nothing inside this repository calls it, so an override here no longer decides what a console runs on.
    */
   @Deprecated("Blocks. Override createConsoleParametersAsync.", ReplaceWith("createConsoleParametersAsync(project, contextModule)"))
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected open fun createConsoleParameters(project: Project, contextModule: Module?): ConsoleParameters =
     runBlockingMaybeCancellable { createConsoleParametersAsync(project, contextModule) }
 

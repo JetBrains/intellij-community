@@ -40,7 +40,7 @@ abstract class GeneratedSourcesFilter {
      *
      * @return the first `GeneratedSourcesFilter` that considered this file to be generated, `null` if none matches.
      */
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun findFirstMatchingFilter(file: VirtualFile, project: Project): GeneratedSourcesFilter? {
       if (project.isDisposed || !file.isValid) return null
 

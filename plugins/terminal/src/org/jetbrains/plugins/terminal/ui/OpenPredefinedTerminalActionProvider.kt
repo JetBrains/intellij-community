@@ -9,8 +9,8 @@ import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 
 interface OpenPredefinedTerminalActionProvider {
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   fun listOpenPredefinedTerminalActions(project: Project): List<AnAction>
 
   companion object {
@@ -18,8 +18,8 @@ interface OpenPredefinedTerminalActionProvider {
       "org.jetbrains.plugins.terminal.openPredefinedTerminalProvider")
 
     @JvmStatic
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     fun collectAll(project: Project): List<AnAction> = EP_NAME.extensionList.flatMap {
       it.listOpenPredefinedTerminalActions(project)
     }

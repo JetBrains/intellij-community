@@ -68,7 +68,7 @@ internal class GHPRDataProviderRepositoryImpl(
   private val cache = mutableMapOf<GHPRIdentifier, AcquirableScopedValueOwner<GHPRDataProvider>>()
   private val providerDetailsLoadedEventDispatcher = EventDispatcher.create(DetailsLoadedListener::class.java)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun getDataProvider(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRDataProvider =
     cache.getOrPut(id) {
       AcquirableScopedValueOwner(cs) {
@@ -76,7 +76,7 @@ internal class GHPRDataProviderRepositoryImpl(
       }
     }.acquireValue(hostCs)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider? = cache[id]?.value
 
   private fun CoroutineScope.createDataProvider(id: GHPRIdentifier): GHPRDataProvider {

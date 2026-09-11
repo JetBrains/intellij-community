@@ -227,7 +227,7 @@ class SourceFolderManagerImpl(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun batchUpdateModelsInEdt(
     project: Project,
     modules: Collection<Module>,
@@ -340,7 +340,7 @@ class SourceFolderManagerImpl(
   }
 
   @TestOnly
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun consumeBulkOperationsState(stateConsumer: (Future<*>) -> Unit) {
     assert(ApplicationManager.getApplication().isUnitTestMode)
     do {

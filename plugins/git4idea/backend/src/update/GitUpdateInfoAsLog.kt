@@ -61,7 +61,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private class CommitsAndFiles(val updatedFilesCount: Int, val receivedCommitsCount: Int)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun calculateDataAndCreateLogTab(): NotificationData? {
     val commitsAndFiles = calculateDataFromGit() ?: return null
     if (!VcsProjectLog.ensureLogCreated(project)) {
@@ -92,7 +92,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     return project.service<GitUpdateProjectInfoLogProperties>().getFilterValues(STRUCTURE_FILTER.name) != null
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun waitForLogRefreshAndCalculate(): Int? {
     val dataSupplier = CompletableFuture<Int>()
     runInEdt {
@@ -111,7 +111,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     return dataSupplier.get()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun createLogTabAndCalculateIfRangesAreReachable(
     dataPack: VcsLogGraphData,
     logManager: VcsLogManager,

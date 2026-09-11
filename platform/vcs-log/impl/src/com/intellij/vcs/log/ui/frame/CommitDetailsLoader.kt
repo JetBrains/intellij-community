@@ -35,7 +35,7 @@ class CommitDetailsLoader<D : VcsCommitMetadata> @JvmOverloads constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun loadDetails(commitIds: List<VcsLogCommitStorageIndex>) {
     lastRequest?.cancel()
     lastRequest = null

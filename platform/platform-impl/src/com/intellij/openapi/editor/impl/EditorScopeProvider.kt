@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 @Service(Service.Level.PROJECT)
 class EditorScopeProvider(private val cs: CoroutineScope) {
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getEditorScope(editor: Editor): CoroutineScope {
     val existingScope = editor.getUserData(EDITOR_SCOPE_KEY)
     if (existingScope != null) return existingScope

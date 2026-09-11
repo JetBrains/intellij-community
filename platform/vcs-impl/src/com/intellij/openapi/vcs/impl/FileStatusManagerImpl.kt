@@ -245,7 +245,7 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private suspend fun updateCachedFileStatuses() {
     var toRefresh: List<VirtualFile>
     synchronized(dirtyLock) {
@@ -309,7 +309,7 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
     return FileStatus.NOT_CHANGED
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun refreshFileStatusFromDocument(file: VirtualFile) {
     if (LOG.isDebugEnabled) {
       val document = FileDocumentManager.getInstance().getDocument(file)
@@ -321,7 +321,7 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
     updateQueue.queue(UpdateType.REFRESH_FROM_DOCUMENT)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun processModifiedDocuments() {
     var toRefresh: Object2BooleanMap<VirtualFile>
     synchronized(dirtyLock) {
@@ -331,7 +331,7 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
     toRefresh.forEach(::processModifiedDocument)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun processModifiedDocument(file: VirtualFile, isDocumentModified: Boolean) {
     if (LOG.isDebugEnabled) {
       val document = runReadActionBlocking { FileDocumentManager.getInstance().getDocument(file) }

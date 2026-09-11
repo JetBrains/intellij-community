@@ -32,7 +32,7 @@ data class SymbolInfo(
  * - extra lines will be added after the name if [extraLines] > 0
  * This logic allows grabbing the declaration with the name and the doc comment if it's present
  */
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun getElementSymbolInfo(psiElement: PsiElement, extraLines: Int = 0): SymbolInfo? {
   val navigationElement = psiElement.navigationElement ?: return null
   val document = navigationElement.containingFile?.fileDocument ?: return null

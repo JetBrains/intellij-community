@@ -228,7 +228,7 @@ fun hideSplash() {
   splashJob.get().cancel("hideSplash")
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun blockingLoadSplashImage(appInfo: ApplicationInfo): BufferedImage? {
   return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
     loadSplashImage(appInfo)

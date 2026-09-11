@@ -293,7 +293,7 @@ open class ProjectRootManagerComponent(
     addRootsToWatch()
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun collectWatchRoots(disposable: Disposable): Pair<Set<String>, Set<String>> {
     val recursivePaths = CollectionFactory.createFilePathSet()
     val flatPaths = CollectionFactory.createFilePathSet()

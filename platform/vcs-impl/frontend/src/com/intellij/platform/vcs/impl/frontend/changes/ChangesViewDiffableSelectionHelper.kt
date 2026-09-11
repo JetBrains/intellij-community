@@ -25,14 +25,14 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
   private val _diffableSelection = MutableStateFlow<ChangesViewDiffableSelection?>(null)
   val diffableSelection = _diffableSelection.asStateFlow()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun tryUpdateSelection() {
     _diffableSelection.update { currentValue ->
       if (shouldUpdateSelection(currentValue)) getDiffableSelection() else currentValue
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun shouldUpdateSelection(previousSelection: ChangesViewDiffableSelection?): Boolean {
     if (previousSelection == null) return true
 
@@ -48,7 +48,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
     return !currentValueIsSelected
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun getDiffableSelection(): ChangesViewDiffableSelection? {
     val selectedDiffableNode = changesView.selectedDiffableNode ?: return null
     val selectedNodePath =
@@ -67,7 +67,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
     ChangesTreePath.create(node).also { path -> if (path == null) log(node) }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun findPreviousAndNextDiffableNodes(selectedDiffableNode: Any): Pair<Any?, Any?> {
     var previousNode: Any? = null
     var nextNode: Any? = null

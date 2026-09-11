@@ -54,7 +54,7 @@ internal class MarkdownLivePreviewImageRenderer(
   }
 
   /** Asks the backend to resolve [destination] once per document state; see [resetRequestedImages]. */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun requestImage(destination: String) {
     val editorId = editorId ?: return
     if (!requestedDestinations.add(destination)) return
@@ -71,13 +71,13 @@ internal class MarkdownLivePreviewImageRenderer(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun resetRequestedImages() {
     requestedDestinations.clear()
   }
 
   /** Creates the fold region that paints [destination] over the lines of [range], or null if the folding model refuses it. */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createRegion(range: TextRange, destination: String, elementsHash: Int): CustomFoldRegion? {
     if (range.isEmpty) return null
     val foldingModel = editor.foldingModel
@@ -105,7 +105,7 @@ internal class MarkdownLivePreviewImageRenderer(
   }
 
   /** Re-renders the image of [region] when [elementsHash] changed, which is how a refreshed source bypasses the image cache. */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updateRegion(region: FoldRegion, elementsHash: Int) {
     val item = (region as? CustomFoldRegion)?.markdownImageRenderItem() ?: return
     if (item.updateImageUrl(imageUrl(item.destination, elementsHash))) {

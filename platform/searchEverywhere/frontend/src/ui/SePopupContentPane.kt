@@ -639,7 +639,7 @@ class SePopupContentPane(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun elementsSelected(indexes: IntArray, modifiers: Int) {
     ThreadingAssertions.assertEventDispatchThread()
     if (indexes.isEmpty() || indexes.max() >= resultListModel.size) return
@@ -879,7 +879,7 @@ class SePopupContentPane(
     })
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun onFocusLost(e: FocusEvent) {
     ThreadingAssertions.assertEventDispatchThread()
     if (isWaylandToolkit()) {

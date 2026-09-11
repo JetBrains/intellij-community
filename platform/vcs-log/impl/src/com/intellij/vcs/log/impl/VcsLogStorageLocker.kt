@@ -16,7 +16,7 @@ import java.util.concurrent.Semaphore
 internal class VcsLogStorageLocker {
   private val locks = ConcurrentHashMap<String, Semaphore>()
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun acquireLock(logId: String) {
     val mutex = locks.computeIfAbsent(logId) { _ ->
       Semaphore(1, true)

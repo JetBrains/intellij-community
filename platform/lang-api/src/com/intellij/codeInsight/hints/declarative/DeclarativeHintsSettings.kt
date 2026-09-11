@@ -31,7 +31,7 @@ class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<HintsState>
   /**
    * Note that it may return true even if the provider is enabled!
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun isOptionEnabled(optionId: String, providerId: String): Boolean? {
     val serializedId = getSerializedId(providerId, optionId)
     return state.enabledOptions[serializedId]
@@ -39,7 +39,7 @@ class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<HintsState>
 
   private fun getSerializedId(providerId: String, optionId: String) = "$providerId#$optionId"
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun setOptionEnabled(optionId: String, providerId: String, isEnabled: Boolean) {
     val serializedId = getSerializedId(providerId, optionId)
     val previousState = state.enabledOptions.put(serializedId, isEnabled)
@@ -48,12 +48,12 @@ class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<HintsState>
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun isProviderEnabled(providerId: String): Boolean? {
     return state.providerIdToEnabled[providerId]
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun setProviderEnabled(providerId: String, isEnabled: Boolean) {
     val previousState = state.providerIdToEnabled.put(providerId, isEnabled)
     if (previousState != isEnabled) {

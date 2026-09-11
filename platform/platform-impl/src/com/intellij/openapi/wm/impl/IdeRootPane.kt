@@ -101,14 +101,14 @@ class IdeRootPane internal constructor() : JRootPane() {
     return result
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun installToolbar(component: JComponent) {
     check(toolbar == null) { "Toolbar update is not supported" }
     layeredPane.add(component, (JLayeredPane.DEFAULT_LAYER - 3) as Any)
     toolbar = component
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun installCustomFrameTitle(component: JComponent) {
     check(customFrameTitle == null) { "Frame title update is not supported" }
     layeredPane.add(component, (JLayeredPane.DEFAULT_LAYER - 3) as Any)
@@ -202,7 +202,7 @@ class IdeRootPane internal constructor() : JRootPane() {
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun JRootPane.setProjectFrameTypeId(projectFrameTypeId: String?) {
   putClientProperty(PROJECT_FRAME_TYPE_ID_KEY, projectFrameTypeId)
 }

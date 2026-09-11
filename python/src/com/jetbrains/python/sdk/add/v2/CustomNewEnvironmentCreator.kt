@@ -128,7 +128,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
    * 6. Runs `(pythonExecutable -m) pip install <package_name> --user`.
    * 7. Reruns `detectExecutable`.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun createInstallFix(errorSink: ErrorSink): ActionLink {
     return ActionLink(message("sdk.create.custom.venv.install.fix.title", pyToolPresentableName)) {
       PythonSdkFlavor.clearExecutablesCache()
@@ -144,7 +144,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
    * extension (prefers `uv tool install`, falls back to a pip install into a system Python). On
    * success the resolved launcher is persisted.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun installExecutable(errorSink: ErrorSink) {
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", pyToolPresentableName)) {
       val eel = model.projectPathFlows.projectPath.first()?.getEelDescriptor()?.toEelApi() ?: localEel

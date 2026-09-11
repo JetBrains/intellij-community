@@ -23,7 +23,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 internal class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun isSilent(): Boolean = false
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getAuthData(project: Project, url: String, login: String): AuthData? {
     if (!matchHost(DEFAULT_SERVER.toURI(), url)) return null
 
@@ -32,7 +32,7 @@ internal class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun getAuthData(project: Project, url: String): AuthData? {
     if (!matchHost(DEFAULT_SERVER.toURI(), url)) return null
 

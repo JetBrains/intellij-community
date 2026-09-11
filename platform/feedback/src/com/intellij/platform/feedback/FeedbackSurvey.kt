@@ -33,7 +33,7 @@ abstract class FeedbackSurvey : PluginAware {
     return pluginDescriptor
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal fun isSuitableToShow(project: Project): Boolean {
     ThreadingAssertions.assertBackgroundThread()
     return feedbackSurveyType.isSuitableToShow(project)

@@ -319,7 +319,7 @@ internal class WorkspaceFileIndexDataImpl(
     nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix, nonExistingFilesRegistry)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
     ThreadingAssertions.assertReadAccess()
     val start = Nanoseconds.now()

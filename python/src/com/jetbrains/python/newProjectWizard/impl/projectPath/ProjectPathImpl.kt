@@ -33,7 +33,7 @@ class ProjectPathImpl(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun onProjectFileNameChanged(code: suspend (projectPathName: @NlsSafe String) -> Unit) {
     uiServices.runWhenComponentDisplayed(field) {
       projectPathFlows.projectName.collect(code)

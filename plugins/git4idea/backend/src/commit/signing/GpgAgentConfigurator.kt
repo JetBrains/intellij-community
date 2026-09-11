@@ -152,12 +152,12 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun canBeConfigured(): Boolean {
     return canBeConfiguredCalculation()
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun canBeConfiguredCalculation(): Boolean {
     val executable = GitExecutableManager.getInstance().getExecutable(project)
     // Additional condition extending isEnabled check.
@@ -173,7 +173,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     return !isPinentryConfigured(gpgAgentPaths, config)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun isConfigured(): Boolean {
     val executable = GitExecutableManager.getInstance().getExecutable(project)
     val gpgAgentPaths = resolveGpgAgentPaths(executable) ?: return false
@@ -365,7 +365,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
 }
 
 internal interface GpgAgentCommandExecutor {
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun execute(command: String, vararg params: String): List<String>
 }
 

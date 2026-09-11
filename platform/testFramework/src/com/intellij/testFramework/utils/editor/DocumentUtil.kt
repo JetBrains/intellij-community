@@ -13,12 +13,12 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 /**
  * @see com.intellij.openapi.fileEditor.FileDocumentManager.getFile
  */
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun Document.findVirtualFile(): VirtualFile? {
   return FileDocumentManager.getInstance().getFile(this)
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun Document.getVirtualFile(): VirtualFile {
   return checkNotNull(findVirtualFile()) {
     "Cannot find virtual file for $this"
@@ -28,7 +28,7 @@ fun Document.getVirtualFile(): VirtualFile {
 /**
  * @see com.intellij.psi.PsiDocumentManager.commitDocument
  */
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun Document.commitToPsi(project: Project) {
   PsiDocumentManager.getInstance(project).commitDocument(this)
 }
@@ -36,7 +36,7 @@ fun Document.commitToPsi(project: Project) {
 /**
  * @see com.intellij.openapi.fileEditor.FileDocumentManager.saveDocument
  */
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun Document.saveToDisk() {
   FileDocumentManager.getInstance().saveDocument(this)
 }
@@ -44,7 +44,7 @@ fun Document.saveToDisk() {
 /**
  * @see com.intellij.openapi.fileEditor.FileDocumentManager.reloadFromDisk
  */
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 fun Document.reloadFromDisk() {
   FileDocumentManager.getInstance().reloadFromDisk(this)
 }

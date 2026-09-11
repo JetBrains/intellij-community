@@ -163,7 +163,7 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState) // open
     return null
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun updateStatus() {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val status = ClientId.withClientId(session.clientId) { ReadAction.computeBlocking(ThrowableComputable { getCurrentStatus() }) }
@@ -181,8 +181,8 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState) // open
     }
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun getCurrentStatus(): Status {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val file = getCurrentFile() ?: return Status(ProblemsViewBundle.message("problems.view.highlighting.no.selected.file"))

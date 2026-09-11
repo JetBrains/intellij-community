@@ -23,8 +23,8 @@ import kotlin.math.ceil
 class MinimapHoverHitCheck(private val editor: Editor) {
   private val structureMarkerPolicy = MinimapInteractionPolicy.forEditor(editor)
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun resolveHit(snapshot: MinimapSnapshot, point: Point?): MinimapHoverHitCheckResult? {
     if (point == null) return null
     val entries = snapshot.structureEntries
@@ -69,7 +69,7 @@ class MinimapHoverHitCheck(private val editor: Editor) {
     return computeHoverRect(range, context)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun resolveRange(entry: MinimapRenderEntry): TextRange? {
     val element = entry.element ?: return null
     val value = element.value ?: return null

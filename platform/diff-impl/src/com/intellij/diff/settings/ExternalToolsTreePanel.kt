@@ -434,7 +434,7 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
       ExternalDiffToolUtil.testMergeTool(null, createExternalTool(), resetToolOutputConsole())
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     private fun resetToolOutputConsole(): ExternalDiffToolUtil.TestOutputConsole {
       toolOutputConsole?.let { Disposer.dispose(it) }
       toolOutputConsole = MyTestOutputConsole(toolOutputEditor)

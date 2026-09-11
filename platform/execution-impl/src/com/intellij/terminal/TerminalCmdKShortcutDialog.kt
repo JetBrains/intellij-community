@@ -47,7 +47,7 @@ object TerminalCmdKShortcutDialog {
 
   @JvmStatic
   @JvmOverloads
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun handleIfNeeded(
     project: Project?,
     component: Component,

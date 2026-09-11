@@ -13,7 +13,7 @@ interface MergeTool {
   /**
    * Creates viewer for the given request. Clients should call [.canShow] first.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createComponent(context: MergeContext, request: MergeRequest): MergeViewer
 
   fun canShow(context: MergeContext, request: MergeRequest): Boolean
@@ -46,10 +46,10 @@ interface MergeTool {
     /**
      * Should be called after adding [.getComponent] to the components hierarchy.
      */
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun init(): ToolbarComponents
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     override fun dispose()
   }
 

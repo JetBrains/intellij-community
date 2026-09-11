@@ -409,7 +409,7 @@ private val preview_installed_key = Key.create<Boolean>("preview.installed")
  * @return true if preview machinery was installed during this call
  */
 @ApiStatus.Internal
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun installLookupIntentionPreviewMachinery(lookup: LookupImpl): Boolean {
   if (!lookup.replace(preview_installed_key, null, true)) {
     return false

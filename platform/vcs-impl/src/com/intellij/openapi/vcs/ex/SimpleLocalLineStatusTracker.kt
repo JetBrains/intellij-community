@@ -31,7 +31,7 @@ class SimpleLocalLineStatusTracker(project: Project,
   override fun toRange(block: Block): Range = SimpleLocalRange(block.start, block.end, block.vcsStart, block.vcsEnd,
                                                                block.ourData.innerRanges, block.ourData.clientIds)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun setBaseRevision(vcsContent: CharSequence) {
     setBaseRevisionContent(vcsContent, null)
   }

@@ -98,7 +98,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     private val trackerListener = MyTrackerListener()
     private val disposable get() = this@PartiallyExcludedFilesStateHolder
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun install(project: Project) {
       with(LineStatusTrackerManager.getInstanceImpl(project)) {
         addTrackerListener(this@MyTrackerManagerListener, disposable)
@@ -106,7 +106,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
       }
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     override fun onTrackerAdded(tracker: LineStatusTracker<*>) {
       if (tracker !is PartialLocalLineStatusTracker) return
 
@@ -116,7 +116,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
       tracker.addListener(trackerListener, disposable)
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     override fun onTrackerRemoved(tracker: LineStatusTracker<*>) {
       if (tracker !is PartialLocalLineStatusTracker) return
 
@@ -167,7 +167,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updateExclusionStates() {
     val newTrackerStates = computeTrackerExclusionStates()
 
@@ -183,7 +183,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   /**
    * Must be called outside [lock] to prevent deadlocks through [LineStatusTrackerManager.LOCK]
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun computeTrackerExclusionStates(): Map<T, ExclusionState> {
     val result = CollectionFactory.createCustomHashingStrategyMap<T, ExclusionState>(hashingStrategy)
     trackers.forEach { (element, tracker) ->
@@ -193,7 +193,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     return result
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setIncludedElements(elements: Collection<T>) {
     val set: MutableSet<T> = createElementsSet(elements)
     trackers.forEach { (element, tracker) ->
@@ -213,7 +213,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     fireInclusionChanged()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun includeElements(elements: Collection<T>) {
     elements.forEach { findTrackerFor(it)?.setExcludedFromCommit(it, false) }
 
@@ -229,7 +229,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     fireInclusionChanged()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun excludeElements(elements: Collection<T>) {
     for (element in elements) {
       findTrackerFor(element)?.setExcludedFromCommit(element, true)
@@ -249,7 +249,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     fireInclusionChanged()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun retainElements(elements: Collection<T>) {
     val toRetain = createElementsSet(elements)
 

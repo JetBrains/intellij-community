@@ -42,7 +42,7 @@ class SeResultJBList<E : SeResultListRow>(model: ListModel<E>) : JBList<E>(model
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun autoSelectIndex(index: Int) {
     withProgrammaticSelectionChange { selectedIndex = index }
   }

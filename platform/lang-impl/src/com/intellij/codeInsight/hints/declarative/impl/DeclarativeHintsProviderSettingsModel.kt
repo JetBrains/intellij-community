@@ -128,7 +128,7 @@ class DeclarativeHintsProviderSettingsModel(
 
   override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language = language
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
     val previewEntries = file.getUserData(PREVIEW_ENTRIES)
     if (previewEntries == null) return EmptyRunnable.getInstance()

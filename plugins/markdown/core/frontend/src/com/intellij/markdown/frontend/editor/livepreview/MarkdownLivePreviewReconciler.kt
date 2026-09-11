@@ -99,7 +99,7 @@ class MarkdownLivePreviewReconciler private constructor(
    * Hands over the specs computed for one state of the document and brings the editor in line with them.
    * Called on the EDT once the highlighting pass has finished computing.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun publishSpecs(specSet: MarkdownLivePreviewSpecSet) {
     if (this.specSet?.documentVersion?.matchesDocument(specSet.documentVersion) != true) {
       imageRenderer.resetRequestedImages()
@@ -109,7 +109,7 @@ class MarkdownLivePreviewReconciler private constructor(
   }
 
   @TestOnly
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun hasCurrentSpecs(): Boolean = currentSpecSet() != null
 
   /**
@@ -117,7 +117,7 @@ class MarkdownLivePreviewReconciler private constructor(
    * only what actually differs. Does nothing while the specs describe an older state of the document; the
    * next highlighting pass supersedes them.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun reconcileNow() {
     if (updating || editor.isDisposed || editor.document.isInBulkUpdate) return
     if (!isLivePreviewEnabled()) {
@@ -136,7 +136,7 @@ class MarkdownLivePreviewReconciler private constructor(
    * Deletes the line break between an image and the caret instead of a character of the hidden image source.
    * Returns false when the caret is not next to an image, so the default handler runs.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun handleBackspace(): Boolean {
     if (editor.isDisposed || editor.selectionModel.hasSelection()) return false
     val document = editor.document
@@ -365,7 +365,7 @@ class MarkdownLivePreviewReconciler private constructor(
     private val KEY = Key.create<MarkdownLivePreviewReconciler>("markdown.live.preview.reconciler")
 
     /** The reconciler for [editor], attaching one on first use. Null in cases a reconciler can't be created. */
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun getOrCreate(editor: Editor): MarkdownLivePreviewReconciler? {
       if (editor !is EditorEx || editor.isDisposed) return null
       val project = editor.project ?: return null

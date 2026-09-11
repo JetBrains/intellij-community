@@ -78,7 +78,7 @@ internal class PyProjectTomlBrokenTomlTest {
 private const val PROJECT_SECTION_WITHOUT_NAME: String = "[project]\nversion = \"1.0\""
 
 /** Breaks the `pyproject.toml` of this directory by dropping `name` from its `[project]` section. */
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 private fun VirtualFile.breakPyprojectToml() {
   writePyprojectToml(PROJECT_SECTION_WITHOUT_NAME)
 }

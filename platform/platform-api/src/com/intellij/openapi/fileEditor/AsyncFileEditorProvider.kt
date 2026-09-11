@@ -19,7 +19,7 @@ interface AsyncFileEditorProvider : FileEditorProvider, DumbAware {
    * This method is intended to be called from a background thread. It should perform all time-consuming tasks required to build an editor
    * and return a builder instance that will be called in EDT to create UI for the editor.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @OverrideOnly
   fun createEditorAsync(project: Project, file: VirtualFile): Builder {
     throw IllegalStateException("Should not be called")

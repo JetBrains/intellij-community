@@ -26,7 +26,7 @@ internal object SelectionUtil {
    * @return *unsorted* collection of current carets and their selections.
    */
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun obtainCaretSnapshots(action: AnAction, event: AnActionEvent): Collection<CaretSnapshot>? {
     return event.updateSession.compute(action, "obtainCaretSnapshot", ActionUpdateThread.EDT) {
       val editor = event.getData(CommonDataKeys.EDITOR) ?: return@compute null
@@ -38,7 +38,7 @@ internal object SelectionUtil {
    * Same as [obtainCaretSnapshots] but only for the primary caret.
    */
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun obtainPrimaryCaretSnapshot(action: AnAction, event: AnActionEvent): CaretSnapshot? {
     return event.updateSession.compute(action, "obtainPrimaryCaretSnapshot", ActionUpdateThread.EDT) {
       val editor = event.getData(CommonDataKeys.EDITOR) ?: return@compute null

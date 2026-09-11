@@ -43,8 +43,8 @@ import org.jetbrains.plugins.terminal.original
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-@RequiresReadLockAbsence
-@RequiresBackgroundThread
+@RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun hasRunningCommandsBlocking(shellEelProcess: ShellEelProcess): Boolean {
   if (EDT.isCurrentThreadEdt()) {
     val project = guessContextProject()

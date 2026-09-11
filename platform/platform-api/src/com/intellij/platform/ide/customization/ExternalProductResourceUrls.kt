@@ -146,6 +146,6 @@ interface FeedbackReporter {
    * @return `true` if the custom form was shown, and `false` otherwise;
    * in the latter case, the default way with opening [feedbackFormUrl] in the browser will be used.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun showFeedbackForm(project: Project?, requestedForEvaluation: Boolean): Boolean = false
 }

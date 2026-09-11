@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 
 internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContributor {
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     override fun createRenderer(editor: Editor, file: PsiFile?): TrafficLightRenderer? {
         val ktFile = (file as? KtFile)?.takeIf { f ->
             ReadAction.nonBlocking(fun(): Boolean { return f.isScript() }).executeSynchronously()

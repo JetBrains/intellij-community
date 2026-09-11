@@ -238,8 +238,8 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     }
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun collectChangeAppliersInReadAction(
     session: RefreshSessionImpl,
     events: Collection<VFileEvent>,
@@ -263,7 +263,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     }
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   private fun doFireEvents(
     session: RefreshSessionImpl,
     evTimeInQueue: AtomicLong,

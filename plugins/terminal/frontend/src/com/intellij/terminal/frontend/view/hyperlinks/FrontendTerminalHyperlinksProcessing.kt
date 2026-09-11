@@ -203,7 +203,7 @@ private suspend fun trackOutputModelChanges(
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun getContentUpdate(
   outputModel: TerminalOutputModel,
   tracker: TerminalOutputModelChangesTracker,

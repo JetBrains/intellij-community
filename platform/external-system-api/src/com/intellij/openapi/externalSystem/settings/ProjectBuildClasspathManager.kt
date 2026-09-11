@@ -35,7 +35,7 @@ import java.util.Collections
 @Service(Service.Level.PROJECT)
 class ProjectBuildClasspathManager(val project: Project, val coroutineScope: CoroutineScope) {
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun setProjectBuildClasspathSync(value: Map<String, ExternalProjectBuildClasspathPojo>) {
     runBlockingCancellable {
       setProjectBuildClasspath(value)

@@ -101,7 +101,7 @@ internal class ScopeModel(options: Set<ScopeOption>) {
       )
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     private fun doProcessScopes(project: Project,
                                 dataContext: DataContext,
                                 predefinedScopes: List<SearchScope>,

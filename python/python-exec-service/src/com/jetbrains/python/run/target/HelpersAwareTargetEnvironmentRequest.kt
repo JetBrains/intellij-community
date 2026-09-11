@@ -34,7 +34,7 @@ interface HelpersAwareTargetEnvironmentRequest {
    * The value that could be resolved to the path to the root of PyCharm
    * helpers scripts.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
   fun preparePyCharmHelpers(): PythonHelpersMappings
 }

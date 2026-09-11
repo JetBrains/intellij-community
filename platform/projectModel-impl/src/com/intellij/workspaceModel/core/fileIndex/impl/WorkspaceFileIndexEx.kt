@@ -143,7 +143,7 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    * There may be thousands of file sets in index, so visiting them all is generally discouraged.
    */
   @ApiStatus.Internal
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun visitFileSets(visitor: WorkspaceFileSetVisitor)
   
   @ApiStatus.Internal
@@ -153,7 +153,7 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    * Use [isIndexable]
    */
   @ApiStatus.Internal
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun isUrlIndexableRecursiveFileSetRoot(url: String): Boolean
 }
 

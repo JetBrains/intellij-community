@@ -53,7 +53,7 @@ class GradleFileModificationTracker(coroutineScope: CoroutineScope) {
    * This function resolves the [Path] of each file. The resolution can touch the file system,
    * therefore call this function on a background thread.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun notifyConnectionAboutChangedPaths(connection: ProjectConnection) {
     val files = cacheRef.getAndSet(ConcurrentHashMap.newKeySet())
     val paths = files.mapNotNullTo(LinkedHashSet()) { file ->

@@ -52,7 +52,7 @@ var totalCreatedProjectsCount: Int = 0
 @TestOnly
 open class TestProjectManager : ProjectManagerImpl() {
   companion object {
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     suspend fun loadAndOpenProject(path: Path, parent: Disposable): Project {
       val project = getInstanceEx().openProjectAsync(path, OpenProjectTask {})!!
       Disposer.register(parent) {

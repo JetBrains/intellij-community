@@ -52,7 +52,7 @@ class GistAstMarker(private val fileType: FileType,
     ACCEPTS_NO
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun accepts(project: Project?, virtualFile: VirtualFile): Boolean {
     if (virtualFile.fileType != fileType) return false
 

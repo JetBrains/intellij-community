@@ -23,8 +23,8 @@ interface NavBarItem {
   /**
    * Creates a pointer to weakly store this item in UI components.
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun createPointer(): Pointer<out NavBarItem>
 
   /**
@@ -32,8 +32,8 @@ interface NavBarItem {
    *
    * @see NavBarItemPresentation
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun presentation(): NavBarItemPresentation
 
   /**
@@ -43,8 +43,8 @@ interface NavBarItem {
    * @see com.intellij.pom.Navigatable
    * @see com.intellij.navigation.NavigationRequests
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun navigationRequest(): NavigationRequest? = null
 
   /**

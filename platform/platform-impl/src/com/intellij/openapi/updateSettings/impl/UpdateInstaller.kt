@@ -71,13 +71,13 @@ object UpdateInstaller {
   }
 
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun downloadPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): List<PluginDownloader> {
     return downloadPluginUpdates(downloaders, indicator, PluginUpdateProgressSink.NONE)
   }
 
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun downloadPluginUpdates(
     downloaders: Collection<PluginDownloader>,
     indicator: ProgressIndicator,
@@ -112,7 +112,7 @@ object UpdateInstaller {
   }
 
   @JvmStatic
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
     val downloadedPluginUpdates = downloadPluginUpdates(downloaders, indicator)
     if (downloadedPluginUpdates.isEmpty()) {

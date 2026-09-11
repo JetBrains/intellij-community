@@ -11,7 +11,7 @@ import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlin.io.path.isExecutable
 
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonHomePath.resolvePythonBinary(): PythonBinary? {
   return VirtualEnvReader().findPythonInPythonRoot(this)
 }
@@ -26,7 +26,7 @@ fun PythonHomePath.resolvePythonBinary(): PythonBinary? {
  * Returns an error if the binary does not exist or is not executable, or if a provider owns the layout but the
  * layout is broken.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonBinary.detectPythonEnvironment(): PyResult<PythonEnvironment> {
   if (!isExecutable()) return PyResult.localizedError(message("python.sdk.detect.binary.not.executable", this))
 

@@ -66,7 +66,7 @@ private constructor(
     /**
      * [forNewProject] false means "convert existing project in [where]"
      */
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun create(where: VirtualFile, sdk: Sdk, forNewProject: Boolean): PyProjectPresenter? {
       // If provided path is a file
       val where = if (!where.isDirectory) {

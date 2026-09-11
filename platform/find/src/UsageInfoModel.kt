@@ -198,7 +198,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
 
   companion object {
     @JvmStatic
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun createUsageInfoModel(project: Project, model: FindInFilesResult, coroutineScope: CoroutineScope, initializationListener: Consumer<UsageInfoAdapter>): UsageInfoModel {
       return UsageInfoModel(project, model, coroutineScope, initializationListener)
     }

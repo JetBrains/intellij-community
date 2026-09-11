@@ -113,8 +113,8 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
    * such a file never gets the `didOpen` notification sent,
    * but the LSP protocol allows requests for any URI the server can read.
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal fun getClientsForFileRequests(file: VirtualFile): Collection<LspClientImpl> {
     val clientsWithFileOpen = getClientsWithThisFileOpen(file)
     if (clientsWithFileOpen.isNotEmpty()) return clientsWithFileOpen

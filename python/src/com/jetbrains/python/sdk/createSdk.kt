@@ -261,7 +261,7 @@ private suspend fun Sdk.adoptData(data: PythonSdkAdditionalData): Sdk = apply {
   }
 }
 
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 private fun makeSureNameIsUnique(sdk: Sdk) {
   val name = sdk.name
   var i = 1

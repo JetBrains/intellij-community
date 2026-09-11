@@ -34,7 +34,7 @@ open class LspCommandsSupport : LspCommandsCustomizer() {
    * Implementations that perform time-consuming tasks should switch to
    * a background thread, for example, using [Application.executeOnPooledThread]
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   open fun executeCommand(lspClient: LspClient, contextFile: VirtualFile, command: Command): Unit =
     @Suppress("DEPRECATION")
     executeCommand(lspClient as LspServer, contextFile, command)
@@ -43,7 +43,7 @@ open class LspCommandsSupport : LspCommandsCustomizer() {
     "Override or call executeCommand(lspClient, contextFile, command) — the LspClient overload",
     ReplaceWith("executeCommand(server as LspClient, contextFile, command)", "com.intellij.platform.lsp.api.LspClient"),
   )
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @Suppress("DEPRECATION")
   open fun executeCommand(server: LspServer, contextFile: VirtualFile, command: Command): Unit =
     server.sendNotification { it.workspaceService.executeCommand(ExecuteCommandParams(command.command, command.arguments)) }

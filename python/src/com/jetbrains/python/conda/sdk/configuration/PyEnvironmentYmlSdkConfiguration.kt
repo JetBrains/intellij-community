@@ -220,7 +220,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 @ApiStatus.Internal
 fun validateCondaPath(
   condaExecutable: @SystemDependent String?,

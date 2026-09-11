@@ -249,7 +249,7 @@ internal class ModifiableModuleModelBridgeImpl(
     newNameToModule.isNotEmpty() ||
     moduleGroupsAreModified
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   override fun commit() {
     val diff = collectChanges()
 
@@ -258,13 +258,13 @@ internal class ModifiableModuleModelBridgeImpl(
     }
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   override fun prepareForCommit() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     uncommittedModulesToDispose.forEach { module -> Disposer.dispose(module) }
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   override fun collectChanges(): MutableEntityStorage {
     prepareForCommit()
     return diff

@@ -164,7 +164,7 @@ class GrazieStatusBarWidget(private val project: Project) : CustomStatusBarWidge
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun adjustPopupDimensionsAndPosition() {
     val popup = popupState.popup ?: return
     popup.pack(true, true)

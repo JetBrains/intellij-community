@@ -64,7 +64,7 @@ import javax.swing.JLabel
 import kotlin.time.TimeSource
 
 @ApiStatus.Internal
-class InstalledPluginsTab @RequiresEdt constructor(
+class InstalledPluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   private val pluginModelFacade: PluginModelFacade,
   private val coroutineScope: CoroutineScope,
   private val searchInMarketplaceTabHandler: Consumer<String>?,
@@ -124,7 +124,7 @@ class InstalledPluginsTab @RequiresEdt constructor(
 
   fun getInstalledGroups(): List<UIPluginGroup> = getInstalledPanel().groups
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun createPluginsPanel(): JComponent {
     installedPanel.showLoadingIcon()
     computeAndApplyInstalledPanelModel()
@@ -186,7 +186,7 @@ class InstalledPluginsTab @RequiresEdt constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun applyInstalledPanelModel(model: CreateInstalledPanelModel) {
     try {
       pluginModelFacade.getModel().setDownloadedGroup(installedPanel, userInstalled, installing)

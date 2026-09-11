@@ -48,7 +48,7 @@ class ConsentsState(
  *
  * A read of the consents is an IO operation, so a background thread is required.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun loadAllConsentsForEditing(): ConsentsState {
   val consents = ArrayList<Consent>(loadConsentsForEditing())
   consents.addAll(loadLocalConsentsAsConsentsForEditing())
@@ -63,7 +63,7 @@ private fun loadAllConsentsForEditing(): ConsentsState {
  * It returns `true` if the user made a choice.
  */
 @ApiStatus.Internal
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 @RequiresBlockingContext
 fun showDataSharingOptionsDialog(): Boolean {
   val consentsState = runWithModalProgressBlocking(
@@ -106,7 +106,7 @@ suspend fun showConsentsAgreementIfNeeded(filter: Predicate<in Consent?>): Boole
   return true
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 @RequiresBlockingContext
 internal fun loadConsentsForConfigurable(): ConsentsState {
   return runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("consent.configurable.loading.progress.title")) {
@@ -114,7 +114,7 @@ internal fun loadConsentsForConfigurable(): ConsentsState {
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 @RequiresBlockingContext
 internal fun applyConsentsFromConfigurable(consentsState: ConsentsState) {
   val actualConsents = consentsState.actualConsents
@@ -130,7 +130,7 @@ internal fun applyConsentsFromConfigurable(consentsState: ConsentsState) {
  *
  * The user cannot cancel the progress. A cancel can write one part of the consents and lose the other part.
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 @RequiresBlockingContext
 private fun saveInModalProgress(save: suspend () -> Unit) {
   runWithModalProgressBlocking(
@@ -142,7 +142,7 @@ private fun saveInModalProgress(save: suspend () -> Unit) {
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun loadLocalConsentIds(): Set<String> {
   return LocalConsentOptions.getLocalConsents().first.mapTo(HashSet(), Consent::getId)
 }

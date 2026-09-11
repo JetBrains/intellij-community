@@ -32,6 +32,6 @@ interface PreviewAnnotationChecker {
 
   fun isPreview(annotation: KtAnnotationEntry): Boolean
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun isPreviewOrMultiPreview(annotation: KtAnnotationEntry): Boolean
 }

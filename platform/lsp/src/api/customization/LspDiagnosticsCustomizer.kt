@@ -42,8 +42,8 @@ open class LspDiagnosticsSupport : LspDiagnosticsCustomizer() {
    */
   open fun shouldAskServerForDiagnostics(file: VirtualFile): Boolean = true
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   open fun createAnnotation(holder: AnnotationHolder, diagnostic: Diagnostic, textRange: TextRange, quickFixes: List<IntentionAction>) {
     val severity = getHighlightSeverity(diagnostic) ?: return
     holder.newAnnotation(severity, getMessage(diagnostic))

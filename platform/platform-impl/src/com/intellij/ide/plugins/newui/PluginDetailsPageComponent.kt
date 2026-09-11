@@ -345,7 +345,7 @@ class PluginDetailsPageComponent private constructor(
   val descriptorForActions: PluginUiModel?
     get() = if (!isMarketplace || installedDescriptorForMarketplace == null) plugin else installedDescriptorForMarketplace
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun detach() {
     if (detached) return
     detached = true
@@ -2170,7 +2170,7 @@ internal data class PluginDetailsUpdateOperation(
   val operationUi: PluginOperationUiContext,
 )
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun capturePluginDetailsUpdateOperation(
   plugin: PluginUiModel?,
   updateDescriptor: PluginUiModel?,

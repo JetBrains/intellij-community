@@ -121,7 +121,7 @@ suspend fun <T> withModalProgress(
 }
 
 @RequiresBlockingContext
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun <T> runWithModalProgressBlocking(
   project: Project,
   title: @ModalProgressTitle String,
@@ -195,7 +195,7 @@ fun <T> runWithModalProgressBlocking(
  * or if the indicator was canceled by the user in the UI
  */
 @RequiresBlockingContext
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun <T> runWithModalProgressBlocking(
   owner: ModalTaskOwner,
   title: @ModalProgressTitle String,

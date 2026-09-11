@@ -105,19 +105,19 @@ internal class CodeReviewProgressRendererComponent(
     ClientProperty.put(this, ExpandableItemsHandler.RENDERER_DISABLED, true)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getReadCheckboxBounds(cellSize: Dimension): Rectangle? {
     bounds = Rectangle(0, 0, cellSize.width, cellSize.height)
     return checkbox.calculateBoundsWithin(this)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getJumpToSourceIconBounds(cellSize: Dimension): Rectangle? {
     bounds = Rectangle(0, 0, cellSize.width, cellSize.height)
     return jumpToSourceIconLabel.calculateBoundsWithin(this)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun prepareComponent(
     tree: JTree,
     value: Any,

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  * managers (pip/venv).
  */
 @ApiStatus.Internal
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 suspend fun PythonPackageManager.installedDependencyGraph(): List<PackageTreeNode> {
   val provider = treeProvider
                  ?: return listInstalledPackages().map { PackageTreeNode(PyPackageName.from(it.name), version = it.version) }

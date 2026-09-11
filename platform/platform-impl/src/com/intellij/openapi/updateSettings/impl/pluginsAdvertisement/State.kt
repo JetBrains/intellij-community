@@ -144,8 +144,8 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
   @TestOnly
   fun getLocalPlugin(extensionOrFileName: String): PluginData? = pluginCache[extensionOrFileName]
 
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
   suspend fun updateCache(extensionOrFileName: String): Boolean {
     if (cache.getIfPresent(extensionOrFileName) != null) {
       return false
@@ -349,8 +349,8 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
   }
 }
 
-@RequiresBackgroundThread
-@RequiresReadLockAbsence
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+@RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
 private fun requestCompatiblePlugins(
   extensionOrFileName: String,
   dataSet: Set<PluginData>,

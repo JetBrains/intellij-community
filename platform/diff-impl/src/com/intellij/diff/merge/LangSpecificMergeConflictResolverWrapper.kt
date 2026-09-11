@@ -75,7 +75,7 @@ class LangSpecificMergeConflictResolverWrapper(private val project: Project?, co
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updateHighlighting(fileList: List<PsiFile>, mergeChangeList: List<TextMergeChange>,
                          highlighters: Map<TextMergeChange, ThreesideMergeHighlighters>,
                          scheduleRediff: Runnable) {

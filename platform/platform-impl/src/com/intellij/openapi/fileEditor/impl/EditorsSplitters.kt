@@ -294,12 +294,12 @@ open class EditorsSplitters internal constructor(
    * editor area — project open activating the Project tool window — can leave it to the empty state instead.
    */
   @Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun emptyStateClaimsFocus(): Boolean = emptyStateComponentController.claimsFocus()
 
   /** The default focus component of an area with no editor in it; `null` unless a mounted empty state claims focus. */
   @Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun emptyStatePreferredFocusedComponent(): JComponent? = emptyStateComponentController.preferredFocusedComponent()
 
   /**
@@ -310,13 +310,13 @@ open class EditorsSplitters internal constructor(
    * own target after all; see [EditorEmptyStateComponentController.requestFocusWhenPresented].
    */
   @Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun requestEmptyStateFocusWhenPresented(onFocusUnclaimed: (() -> Unit)? = null) {
     emptyStateComponentController.requestFocusWhenPresented(onFocusUnclaimed)
   }
 
   /** The awaitable form used when a startup owner must not give another component focus before this claim's focus transfer finishes. */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun requestEmptyStateFocusWhenPresentedAsync(onFocusUnclaimed: (() -> Unit)? = null): Deferred<Unit> {
     return emptyStateComponentController.requestFocusWhenPresented(onFocusUnclaimed)
   }
@@ -326,7 +326,7 @@ open class EditorsSplitters internal constructor(
    * something on an empty editor area can leave it to the empty state — see [requestEmptyStateFocusWhenPresented].
    */
   @Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isEmptyStateFocusRequestPending(): Boolean = emptyStateComponentController.isFocusRequestPending()
 
   @TestOnly
@@ -344,7 +344,7 @@ open class EditorsSplitters internal constructor(
    * takes the write-intent lock. So this must be called from a context where that lock may be taken — the legacy `Dispatchers.EDT` or
    * `invokeLater`, not the strict `Dispatchers.UI`, which forbids taking it rather than merely not carrying it.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun beginStartupEmptyStatePresentationHold() {
     if (startupPresentationAbandoned) {
       return
@@ -363,7 +363,7 @@ open class EditorsSplitters internal constructor(
    *
    * Must be called where the write-intent lock may be taken; see [beginStartupEmptyStatePresentationHold].
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun endStartupEmptyStatePresentationHold() {
     if (startupPresentationHolds > 0) {
       startupPresentationHolds--
@@ -385,7 +385,7 @@ open class EditorsSplitters internal constructor(
    *
    * Must be called where the write-intent lock may be taken; see [beginStartupEmptyStatePresentationHold].
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun abandonStartupEmptyStatePresentationHold() {
     startupPresentationAbandoned = true
     startupPresentationHolds = 0
@@ -398,7 +398,7 @@ open class EditorsSplitters internal constructor(
    *
    * Whether it is also shown right away is decided separately, by [beginStartupEmptyStatePresentationHold] and its release.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun finishStartupEditorRestore() {
     emptyStatePresentationReady = true
     if (!coroutineScope.isActive) {
@@ -1084,7 +1084,7 @@ open class EditorsSplitters internal constructor(
 
   fun getAllComposites(): List<EditorComposite> = windows.flatMap { it.composites() }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getAllComposites(file: VirtualFile): List<EditorComposite> = windows().mapNotNull { it.getComposite(file) }.toList()
 
   private fun findWindows(file: VirtualFile): List<EditorWindow> = windows.filter { it.getComposite(file) != null }
@@ -1231,7 +1231,7 @@ open class EditorsSplitters internal constructor(
   }
 
   @JvmOverloads
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, forceFocus: Boolean = false): EditorWindow? =
     openInRightSplit(file, requestFocus, forceFocus, null)
 
@@ -1806,7 +1806,7 @@ private fun getSplitCount(component: JComponent): Int {
  * It stands down while a claim on the focus of the emptied area is pending, because that focus is the empty state's a creation delay
  * later. This is the other half of standing down — the claim found nothing to focus, so the focus goes where it would have gone.
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun focusToolWindowByDefaultOnEmptiedArea(manager: FileEditorManagerImpl) {
   val project = manager.project
   // `hasOpenFiles` is the condition the tool window manager stood down under, so this hands back exactly the focus it gave up: an area

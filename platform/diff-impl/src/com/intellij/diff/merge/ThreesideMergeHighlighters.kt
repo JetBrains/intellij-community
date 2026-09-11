@@ -27,7 +27,7 @@ class ThreesideMergeHighlighters(
     reinstallAll()
   }
 
-  @set:RequiresEdt
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   public override var innerFragments: MergeInnerDifferences? = null
     set(innerFragments) {
       if (field == null && innerFragments == null) return
@@ -39,7 +39,7 @@ class ThreesideMergeHighlighters(
       installInnerHighlighters()
     }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun reinstallAll() {
     destroyHighlighters()
     installHighlighters()

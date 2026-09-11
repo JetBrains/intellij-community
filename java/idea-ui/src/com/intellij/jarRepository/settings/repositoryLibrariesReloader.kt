@@ -15,7 +15,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 
 // called in EDT (RemoteRepositoriesConfigurable.apply)
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun reloadAllRepositoryLibraries(project: Project) {
   runUnderModalProgressIfIsEdt(project) {
     val libraries = collectLibraries(project) { (it as? LibraryEx)?.properties is RepositoryLibraryProperties }

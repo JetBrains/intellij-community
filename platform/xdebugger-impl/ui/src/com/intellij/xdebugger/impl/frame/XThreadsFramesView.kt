@@ -331,7 +331,7 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun start(sessionProxy: XDebugSessionProxy) {
     if (!(sessionProxy.hasSuspendContext())) return
     val disposable = nextDisposable()
@@ -344,7 +344,7 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
     myThreadsContainer.start(sessionProxy)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun XExecutionStack.setActive(sessionProxy: XDebugSessionProxy) {
     myFramesManager.setActive(this)
 
@@ -407,7 +407,7 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
       }
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun setActive(activeDisposable: Disposable) {
       startIfNeeded()
 
@@ -419,14 +419,14 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
       updateView()
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     private fun deactivate() {
       isActive = false
       myVisibleRectangle = myFramesList.visibleRect
       mySelectedValue = if (myFramesList.isSelectionEmpty) null else myFramesList.selectedValue
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     private fun updateView() {
       if (!isActive) return
 
@@ -519,14 +519,14 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
       }
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun setActive(stack: XExecutionStack) {
       val disposable = myActiveStackDisposables.next()
       myActiveStack = stack
       stack.getContainer().setActive(disposable)
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun tryGetCurrentFrame(stack: XExecutionStack): XStackFrame? {
       return stack.getContainer().currentFrame
     }

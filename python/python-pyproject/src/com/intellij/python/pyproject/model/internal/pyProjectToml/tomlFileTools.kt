@@ -75,7 +75,7 @@ suspend fun walkFileSystemNoTomlContent(
 }
 
 @Throws(IOException::class)
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun walkFileSystemNoTomlContent(
   root: Directory,
   rawTomlFiles: MutableList<Path>,
@@ -146,7 +146,7 @@ private fun processDependenciesWithRootIndex(dependencies: Sequence<Directory>, 
     }
   }.toSet()
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun collectAllDependencies(
   entry: PyProjectTomlProject, tomlDependencySpecifications: List<TomlDependencySpecification>,
 ): Sequence<Directory> = sequence {
@@ -154,7 +154,7 @@ private fun collectAllDependencies(
   yieldAll(getToolSpecificDependencies(entry.root, entry.pyProjectToml.toml, tomlDependencySpecifications))
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun getToolSpecificDependencies(
   root: Path, tomlTable: TomlTable, tomlDependencySpecifications: List<TomlDependencySpecification>,
 ): Sequence<Directory> {
@@ -193,13 +193,13 @@ private fun getToolSpecificDependencies(
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun getPep621Dependencies(root: Path, tomlTable: TomlTable, tomlKeyToDependencies: String): Set<Path> {
   val deps = tomlTable.safeGetArr<String>(tomlKeyToDependencies, unquotedDottedKey = true).successOrNull ?: return emptySet()
   return deps.asSequence().mapNotNull { parsePep621Dependency(root, it) }.toSet()
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: TomlTable): Set<Directory> {
   return tomlTable.keySet().asSequence().mapNotNull { depName ->
     // PY-91089: safeGet instead of getString, which throws when `<dep>.path` holds a non-string value.
@@ -216,7 +216,7 @@ private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: Toml
  * Path dependencies (`lib @ file:///...`) among every dependency this file declares: `project.dependencies`,
  * the `project.optional-dependencies` extras, and the PEP 735 `dependency-groups`.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun getDeclaredPathDependencies(root: Path, projectToml: PyProjectToml): Sequence<Directory> =
   projectToml.allDeclaredDeps.asSequence().mapNotNull { parsePep621Dependency(root, it) }
 

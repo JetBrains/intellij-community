@@ -59,7 +59,7 @@ internal class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrp
     get() = entityStorage.current
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   override fun update(updater: (MutableEntityStorage) -> Unit) {
     ThreadingAssertions.assertWriteAccess()
 

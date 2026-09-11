@@ -65,7 +65,7 @@ internal class McpServerStatusBarWidget(private val project: Project) : CustomSt
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updatePresentation() {
     ThreadingAssertions.softAssertAwtOperationsThread()
 

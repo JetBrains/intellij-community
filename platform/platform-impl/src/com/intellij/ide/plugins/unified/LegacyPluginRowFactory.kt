@@ -15,7 +15,7 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 
-internal class LegacyPluginRowFactory @RequiresEdt constructor(
+internal class LegacyPluginRowFactory @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   private val host: LegacyPluginUiHost,
   private val listModel: ListPluginModel,
   private val searchListener: LinkListener<Any>,
@@ -24,7 +24,7 @@ internal class LegacyPluginRowFactory @RequiresEdt constructor(
   private val sectionContexts = HashMap<PluginSectionId, SectionContext>()
   private val eventHandler = UnifiedPluginRowEventHandler(onSelectionChanged)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun specification(section: PluginSectionState, item: PluginItemState): PluginRowSpecification<Any> {
     val context = sectionContext(section)
     val model = requireNotNull(item.modelHandle) { "Plugin ${item.pluginId} has no model handle" }.model
@@ -38,7 +38,7 @@ internal class LegacyPluginRowFactory @RequiresEdt constructor(
     )
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun createRow(occurrenceId: PluginOccurrenceId, item: PluginItemState, renderKey: Any): PluginRow {
     val context = checkNotNull(sectionContexts[occurrenceId.sectionId]) {
       "Section ${occurrenceId.sectionId} must be prepared before creating rows"
@@ -63,7 +63,7 @@ internal class LegacyPluginRowFactory @RequiresEdt constructor(
     return LegacyPluginRow(component, eventHandler, host)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun rowsRendered(bindings: List<PluginRowBinding<PluginRow>>) {
     bindings.forEach { binding ->
       val row = binding.row as LegacyPluginRow

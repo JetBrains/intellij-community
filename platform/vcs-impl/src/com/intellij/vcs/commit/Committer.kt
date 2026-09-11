@@ -38,7 +38,7 @@ abstract class Committer(
     _exceptions.add(e.asVcsException())
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected fun runCommitTask(useCustomPostRefresh: Boolean, task: () -> Unit) {
     var canceled = false
     try {
@@ -97,22 +97,22 @@ abstract class Committer(
 }
 
 interface CommitterResultHandler : EventListener {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onSuccess() {
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onCancel() {
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onFailure() {
   }
 
   /**
    * 'onFinally' that might be delayed until VFS/CLM refreshes are done.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onAfterRefresh() {
   }
 }

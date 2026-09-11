@@ -105,7 +105,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-internal class UnifiedPluginsPageSession @RequiresEdt constructor(
+internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   searchQuery: String?,
   openSource: PluginManagerOpenSourceEnum,
   localDataProviderFactory: (LegacyPluginUiHost) -> UnifiedPluginLocalDataProvider = ::DefaultUnifiedPluginLocalDataProvider,
@@ -320,7 +320,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     pageSource.start()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun getCenterComponent(controller: Configurable.TopComponentController): JComponent {
     controller.showProgressIndicator(false)
     controller.showResetAction(false)
@@ -439,28 +439,28 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun enableSearch(option: String?): Runnable? = enableSearch(option, ignoreTagMarketplaceTab = false)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun enableSearch(option: String?, ignoreTagMarketplaceTab: Boolean): Runnable? {
     val query = option.orEmpty()
     if (query.isEmpty() && controller.state.value.query.rawQuery.isEmpty()) return null
     return Runnable { setQuery(query, requestFocus = true) }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun openMarketplaceTab(option: String) {
     val query = option.takeUnless { it.trim() == "/suggested" }.orEmpty()
     setQuery(query, requestFocus = true, scope = PluginsQueryScope.Marketplace)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun openInstalledTab(option: String) {
     setQuery(option, requestFocus = true, scope = PluginsQueryScope.Installed)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun dispose() {
     synchronized(callbackLock) {
       if (disposeStarted) return
@@ -644,7 +644,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     pageSource.refresh()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun handleUpdateAllIntent(intent: UnifiedPluginUpdateAllIntent) {
     when (intent) {
       UnifiedPluginUpdateAllIntent.Update -> updateAllController.requestUpdateAll()
@@ -660,7 +660,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun renderPageSourceState(state: UnifiedPluginsPageSourceState) {
     pendingSelectionSourcesSettled = state.sourcesSettled
     if (renderedRepositoryContentRevision != state.repositoryContentRevision) {

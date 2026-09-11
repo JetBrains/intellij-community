@@ -29,7 +29,7 @@ interface ProjectStorePathManager {
    *
    * @param projectRoot root directory of the project
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun testStoreDirectoryExistsForProjectRoot(projectRoot: Path): Boolean {
     return getStoreDescriptor(projectRoot).testStoreDirectoryExistsForProjectRoot()
   }

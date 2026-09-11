@@ -80,7 +80,7 @@ internal class GitRepositoryTagsHolderImpl(
   }
 
   @TestOnly
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun updateForTests() {
     _state.value = loadTagsFromGit()
   }

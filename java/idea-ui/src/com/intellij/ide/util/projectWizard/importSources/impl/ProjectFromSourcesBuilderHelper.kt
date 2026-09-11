@@ -52,7 +52,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
                                                private val commitModels: Boolean,
                                                private val myUpdaters: List<ProjectConfigurationUpdater>,
                                                private val selectedDescriptors: Collection<ProjectDescriptor>) {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun commit(): List<Module> {
     return runWithModalProgressBlocking(project, JavaUiBundle.message("modal.text.importing.module")) {
       doCommit()

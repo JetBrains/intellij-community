@@ -39,20 +39,20 @@ internal class EditorAnimationCache private constructor(private val editor: Edit
   private var pixelGrid: PixelGrid? = null
   private val entries = CacheEntryList()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun clear() {
     lastCacheKey = null
     pixelGrid = null
     entries.clear()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun dispose() {
     isDisposed = true
     clear()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun invalidate(clip: Rectangle?) {
     if (clip == null) {
       clear()
@@ -71,7 +71,7 @@ internal class EditorAnimationCache private constructor(private val editor: Edit
    * [paintFromCache] can ever be asked for. Caching the rectangles individually would leave the gaps between them
    * uncached, and no single zone would contain the clip, so every multi-caret repaint would miss.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun cacheAreasForRepaint(key: Any, rectangles: Supplier<List<Rectangle2D>>) {
     if (isDisposed || editor.isDumb || lastCacheKey == key) return
     if (!ensureOpaqueContent()) return
@@ -111,7 +111,7 @@ internal class EditorAnimationCache private constructor(private val editor: Edit
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun paintFromCache(graphics: Graphics2D, rect: Rectangle2D): Boolean {
     if (isDisposed || !ensureOpaqueContent()) return false
     val currentPixelGrid = PixelGrid.forGraphics(graphics)

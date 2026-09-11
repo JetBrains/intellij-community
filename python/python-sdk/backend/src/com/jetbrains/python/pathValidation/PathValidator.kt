@@ -60,7 +60,7 @@ class ValidationRequest(@NonNls internal val path: String?,
 /**
  * Ensure file is executable
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun validateExecutableFile(
   request: ValidationRequest
 ): ValidationInfo? = request.validate {
@@ -75,7 +75,7 @@ fun validateExecutableFile(
 /**
  * Ensure directory either doesn't exist or empty
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun validateEmptyDir(request: ValidationRequest,
                      @Nls notADirectory: String,
                      @Nls directoryNotEmpty: String

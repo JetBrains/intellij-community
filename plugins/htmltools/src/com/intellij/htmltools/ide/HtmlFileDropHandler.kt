@@ -131,7 +131,7 @@ private data class InsertTagData(val relativePath: String?,
                                  val existingPosition: LogicalPosition?,
                                  val tagText: String)
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun findExistingPosition(editor: Editor, tagTemplate: String, relativePath: String?, parent: PsiElement): LogicalPosition? {
   for (element in parent.children) {
     if (element is XmlTag) {

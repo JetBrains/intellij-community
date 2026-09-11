@@ -96,7 +96,7 @@ class TerminalOutputController(
     })
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun startCommandBlock(
     command: String?,
     prompt: TerminalPromptRenderingInfo?,
@@ -234,13 +234,13 @@ class TerminalOutputController(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun insertEmptyLine() {
     editor.document.insertString(editor.document.textLength, "\n")
     scrollToBottom()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun scrollToBottom() {
     editor.scrollToBottom()
   }
@@ -375,7 +375,7 @@ class TerminalOutputController(
   /**
    * Wait for all blocks to finish and then invoke the [callback].
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun doWhenNextBlockCanBeStarted(callback: () -> Unit) {
     if (!isCommandRunning()) {
       callback()

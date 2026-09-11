@@ -34,7 +34,7 @@ import javax.swing.JScrollBar
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-abstract class PluginsGroupComponent @RequiresEdt constructor(eventHandler: EventHandler) : JBPanelWithEmptyText(PluginListLayout()) {
+abstract class PluginsGroupComponent @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(eventHandler: EventHandler) : JBPanelWithEmptyText(PluginListLayout()) {
 
   private val myEventHandler: EventHandler = eventHandler
   private val myGroups: MutableList<UIPluginGroup> = ArrayList()

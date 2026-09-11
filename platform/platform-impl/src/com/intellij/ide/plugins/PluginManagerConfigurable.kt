@@ -58,13 +58,13 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
     return ID
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun getCenterComponent(controller: Configurable.TopComponentController): JComponent {
     val panel = createPanelIfNeeded()
     return panel.getCenterComponent(controller)
   }
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val topComponent: JComponent
     get() = getCenterComponent(Configurable.TopComponentController.EMPTY)
 
@@ -81,12 +81,12 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
     return panel.getComponent()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun createPanelIfNeeded(): PluginsPageSession {
     return createPanelIfNeeded(null)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun createPanelIfNeeded(searchQuery: String?): PluginsPageSession {
     if (myPanel == null) {
       myPanel = createPluginsPageSession(searchQuery, openSource ?: PluginManagerOpenSourceEnum.OTHER)
@@ -94,12 +94,12 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
     return myPanel!!
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setOpenSource(source: PluginManagerOpenSourceEnum) {
     openSource = source
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setOpenSourceFromSettings() {
     if (openSource == null) {
       openSource = PluginManagerOpenSourceEnum.SETTINGS
@@ -142,12 +142,12 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun enableSearch(option: String?): Runnable? {
     return createPanelIfNeeded(option).enableSearch(option)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun enableSearch(option: String?, ignoreTagMarketplaceTab: Boolean): Runnable? {
     return createPanelIfNeeded(option).enableSearch(option, ignoreTagMarketplaceTab)
   }
@@ -160,7 +160,7 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
     return myPanel != null && myPanel!!.isInstalledTabShowing()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openMarketplaceTab(option: String) {
     createPanelIfNeeded(option).openMarketplaceTab(option)
   }
@@ -169,22 +169,22 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
    * If the plugin settings must be opened with the Installed tab selected and search applied, consider
    * [PluginManagerConfigurableUtils.showInstalledTabWithSearch], see IJPL-254032 for details.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openInstalledTab(option: String) {
     createPanelIfNeeded(option).openInstalledTab(option)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun setInstallSource(source: FUSEventSource?) {
     createPanelIfNeeded().setInstallSource(source)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun selectAndEnable(descriptors: Set<IdeaPluginDescriptor>) {
     createPanelIfNeeded().selectAndEnable(descriptors)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun select(pluginIds: Collection<PluginId>) {
     createPanelIfNeeded().select(pluginIds)
   }

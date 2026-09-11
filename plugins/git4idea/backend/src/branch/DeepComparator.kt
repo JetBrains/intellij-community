@@ -47,7 +47,7 @@ internal class DeepComparator(
   var exception: VcsException? = null
     private set
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun compare(): ComparatorResult {
     try {
       repositoriesWithTargetBranches.forEach { (repo, targetBranch) ->

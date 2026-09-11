@@ -28,7 +28,7 @@ internal class GitLabAccountsPanelActionsController(
 ) : AccountsPanelActionsController<GitLabAccount> {
   override val isAddActionWithPopup: Boolean = true
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @Suppress("SplitModeApiUsage")
   override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
     val group = DefaultActionGroup().apply {
@@ -43,7 +43,7 @@ internal class GitLabAccountsPanelActionsController(
       .show(actualPoint)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun editAccount(parentComponent: JComponent, account: GitLabAccount) {
     GitLabLoginUtil.reLogIn(
       project,

@@ -625,7 +625,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
  * Returns null by default — this manager doesn't support dependency extraction.
  */
 @ApiStatus.Internal
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonPackageManager.listDeclaredPackagesAsync(): List<PythonPackage>? = runBlockingMaybeCancellable {
   listDeclaredPackagesCached()
 }?.getOrNull()
@@ -639,7 +639,7 @@ fun PythonPackageManager.listDeclaredPackagesAsync(): List<PythonPackage>? = run
  * "requirement is not satisfied" diagnostics right after PPTW package operations
  * (PY-89774).
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun PythonPackageManager.listInstalledPackagesAsync(): List<PythonPackage> = runBlockingMaybeCancellable {
   listInstalledPackages()
 }
@@ -653,7 +653,7 @@ value class PyWorkspaceMember(val name: String)
  */
 @ApiStatus.Internal
 interface DependenciesExporter {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun export(file: PsiFile)
 }
 

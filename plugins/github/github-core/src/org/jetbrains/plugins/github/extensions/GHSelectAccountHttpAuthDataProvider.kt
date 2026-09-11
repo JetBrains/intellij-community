@@ -21,7 +21,7 @@ internal class GHSelectAccountHttpAuthDataProvider(
   private val potentialAccounts: Map<GithubAccount, String?>
 ) : InteractiveGitHttpAuthDataProvider {
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun getAuthData(parentComponent: Component?): AuthData? {
     val (account, setDefault) = chooseAccount(parentComponent) ?: return null
     val token = potentialAccounts[account]

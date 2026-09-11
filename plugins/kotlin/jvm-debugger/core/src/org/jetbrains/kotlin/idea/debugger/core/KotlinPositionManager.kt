@@ -669,7 +669,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         throw NoDataException.INSTANCE
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun getCandidates(sourcePosition: SourcePosition): List<ClassNameProvider.ClassNameCandidateInfo> =
         ClassNameProvider().getCandidatesInfo(sourcePosition)
 
@@ -700,7 +700,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return futures.mapNotNull { it.get() }
     }
 
-    @RequiresReadLockAbsence
+    @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
     private fun findTargetClasses(candidates: List<ReferenceType>, sourcePosition: SourcePosition): List<ReferenceType> =
         wrapIncompatibleThreadStateException {
             val matchingCandidates = candidates
@@ -797,7 +797,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun getKotlinClassPrepareRequests(requestor: ClassPrepareRequestor, position: SourcePosition): List<PrepareRequest> {
         val refinedPosition = when (requestor) {
             is SourcePositionRefiner -> requestor.refineSourcePosition(position)

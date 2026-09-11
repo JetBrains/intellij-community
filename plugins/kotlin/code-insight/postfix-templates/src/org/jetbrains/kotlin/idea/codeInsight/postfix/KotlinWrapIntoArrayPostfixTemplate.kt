@@ -61,7 +61,7 @@ private val PRIMITIVES_TO_ARRAYS: Map<ClassId, String> = buildMap {
     register(StandardNames.FqNames.uLongFqName, StandardNames.FqNames.uLongArrayFqName)
 }
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 @OptIn(KaAllowAnalysisOnEdt::class)
 private fun getArrayFunctionName(element: PsiElement): String {
     if (element is KtExpression) {

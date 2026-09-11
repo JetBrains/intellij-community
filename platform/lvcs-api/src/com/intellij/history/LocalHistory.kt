@@ -136,7 +136,7 @@ abstract class LocalHistory {
    * @return the byte array representing the content of the file, or null if local history is not initialized,
    *         file is not tracked in the local history, no matching entry is found or content in the matching entry is not available
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   abstract fun getByteContent(file: VirtualFile, condition: FileRevisionTimestampComparator): ByteArray?
 
   /**

@@ -52,7 +52,7 @@ public interface WorkspaceModel {
    * on synchronous data modification executed under WA. For all other proposes and for the newly written code, use [update]
    */
   @Obsolete
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   public fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**

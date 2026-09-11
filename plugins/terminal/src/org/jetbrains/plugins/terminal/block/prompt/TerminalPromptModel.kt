@@ -17,34 +17,34 @@ interface TerminalPromptModel : Disposable {
   val editor: EditorEx
 
   /** Values used to build the prompt string */
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val promptState: TerminalPromptState?
 
   /** Text and highlightings of the prompt string. Command text is not included there. */
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val renderingInfo: TerminalPromptRenderingInfo
 
   /**
    * Offset where the command is starting in the [editor]'s document.
    * Command occupies the range [commandStartOffset, document.textLength).
    */
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val commandStartOffset: Int
 
   /**
    * Returns the typed command test. Also allows updating it, leaving the prompt string untouched.
    */
-  @get:RequiresEdt
-  @set:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   var commandText: String
 
   /**
    * Clears the document modifications history, so it is no more possible to Undo/Redo the changes made before this call.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun resetChangesHistory()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setErrorDescription(errorDescription: TerminalPromptErrorDescription?)
 
   fun addErrorStateListener(listener: TerminalPromptErrorStateListener, parentDisposable: Disposable)

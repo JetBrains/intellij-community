@@ -54,7 +54,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun isDetectWhitespaceChangedLines(): Boolean = false
 
   /**
@@ -72,7 +72,7 @@ abstract class LineStatusTrackerBase<R : Range>(
     return blockOperations.getRanges()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun setBaseRevisionContent(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
     ThreadingAssertions.assertEventDispatchThread()
     if (isReleased) return
@@ -93,7 +93,7 @@ abstract class LineStatusTrackerBase<R : Range>(
     if (isValid()) listeners.multicaster.onBecomingValid()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun dropBaseRevision() {
     ThreadingAssertions.assertEventDispatchThread()
     if (isReleased || !isInitialized) return
@@ -127,18 +127,18 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun updateDocument(side: Side, task: (Document) -> Unit): Boolean {
     return updateDocument(side, null, task)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun updateDocument(side: Side, commandName: @NlsContexts.Command String?, task: (Document) -> Unit): Boolean {
     val affectedDocument = if (side.isLeft) vcsDocument else document
     return updateDocument(project, affectedDocument, commandName, task)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun doFrozen(task: Runnable) {
     documentTracker.doFrozen { task.run() }
   }
@@ -193,7 +193,7 @@ abstract class LineStatusTrackerBase<R : Range>(
       }
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun resetInnerRanges() {
       LOCK.write {
         if (isDetectWhitespaceChangedLines()) {
@@ -241,7 +241,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   override fun transferLineToVcs(line: Int, approximate: Boolean): Int = blockOperations.transferLineToVcs(line, approximate)
 
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun rollbackChanges(range: Range) {
     val newRange = blockOperations.findBlock(range)
     if (newRange != null) {
@@ -249,12 +249,12 @@ abstract class LineStatusTrackerBase<R : Range>(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun rollbackChanges(lines: BitSet) {
     runBulkRollback { if (it.isSelectedByLine(lines)) RangeExclusionState.Included else RangeExclusionState.Excluded }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun runBulkRollback(condition: (Block) -> RangeExclusionState) {
     if (!isValid()) return
 
@@ -297,7 +297,7 @@ abstract class LineStatusTrackerBase<R : Range>(
       return result
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun updateDocument(project: Project?,
                        document: Document,
                        commandName: @NlsContexts.Command String?,

@@ -5,7 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 object RuntimeChooserUtil {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun showRuntimeChooserPopup() {
     val model = RuntimeChooserModel()
 

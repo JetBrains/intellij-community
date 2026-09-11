@@ -24,7 +24,7 @@ interface ToolWindowEditorTabPersistenceProvider {
   /**
    * Whether [serialize] can produce state this provider is able to restore [content] from.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun canSerialize(content: Content): Boolean
 
   /**
@@ -32,12 +32,12 @@ interface ToolWindowEditorTabPersistenceProvider {
    *
    * Contract: Only called for a [content] that [canSerialize] accepted.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun serialize(content: Content): Element
 
   /**
    * Recreates the content described by [element], or returns `null` when it cannot be restored.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun deserialize(project: Project, element: Element): Content?
 }

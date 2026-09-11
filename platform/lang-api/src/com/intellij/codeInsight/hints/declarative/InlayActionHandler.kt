@@ -24,7 +24,7 @@ interface InlayActionHandler {
   /**
    * Handles click on the corresponding inlay entry. Payload is provided by the entry.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @Deprecated(message = "Please override handleClick(EditorMouseEvent, InlayActionPayload) instead")
   fun handleClick(editor: Editor, payload: InlayActionPayload) {
     throw UnsupportedOperationException()
@@ -33,7 +33,7 @@ interface InlayActionHandler {
   /**
    * Handles click on the corresponding inlay entry. Payload is provided by the entry.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun handleClick(e: EditorMouseEvent, payload: InlayActionPayload) {
     handleClick(e.editor, payload)
   }

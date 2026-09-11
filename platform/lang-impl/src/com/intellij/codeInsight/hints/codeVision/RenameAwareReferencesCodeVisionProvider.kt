@@ -68,7 +68,7 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun recomputeLenses(editor: Editor, project: Project, stamp: Long?, cacheService: CodeVisionCacheService): CodeVisionState {
     if (DumbService.isDumb(project)) return CodeVisionState.READY_EMPTY
 

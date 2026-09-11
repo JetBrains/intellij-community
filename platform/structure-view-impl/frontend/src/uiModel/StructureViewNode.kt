@@ -63,7 +63,7 @@ internal class StructureViewNode : StructureUiTreeElement, PathElementIdProvider
   override val filterResults: List<Boolean>
     get() = dto?.filterResults ?: emptyList()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun update(dto: StructureViewTreeElementDto) {
     this.dto = dto
     myPresentation = dto.presentation.toPresentation()

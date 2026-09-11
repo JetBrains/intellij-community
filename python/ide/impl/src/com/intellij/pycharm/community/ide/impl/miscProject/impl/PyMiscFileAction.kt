@@ -20,7 +20,7 @@ open class PyMiscFileAction(private val miscFileType: MiscFileType) : AnAction(
 ) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun actionPerformed(e: AnActionEvent) {
     MiscProjectUsageCollector.projectCreated(miscFileType)
     PyMiscService.getInstance().createMiscProject(

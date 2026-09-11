@@ -37,7 +37,7 @@ sealed interface K2MoveTargetDescriptor {
     /**
      * Gets or creates the target
      */
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): PsiElement
 
     open class Directory(

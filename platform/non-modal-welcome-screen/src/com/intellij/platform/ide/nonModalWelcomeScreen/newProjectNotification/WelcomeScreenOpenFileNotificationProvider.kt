@@ -183,7 +183,7 @@ abstract class WelcomeScreenOpenFileNotificationProvider : EditorNotificationPro
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun selectProjectRoot(virtualFile: VirtualFile): ProjectRootInfo {
     val directParent = virtualFile.parent
                        ?: return ProjectRootInfo(ProjectRootResult.SUPPRESS_NOTIFICATION, null)

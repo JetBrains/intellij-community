@@ -16,7 +16,7 @@ import com.jetbrains.jsonSchema.impl.JsonValidationError.FixableIssueKind
 import com.jetbrains.jsonSchema.impl.JsonValidationError.MissingMultiplePropsIssueData
 import com.jetbrains.jsonSchema.impl.JsonValidationError.MissingPropertyIssueData
 
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun collectMissingPropertiesFromSchema(objectNodePointer: SmartPsiElementPointer<out PsiElement>,
                                        project: Project): JsonSchemaPropertiesInfo? {
   val objectNode = objectNodePointer.dereference() ?: return null

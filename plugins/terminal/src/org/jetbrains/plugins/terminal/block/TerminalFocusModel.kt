@@ -62,12 +62,12 @@ class TerminalFocusModel(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun focusOutput() {
     requestFocus(terminalView.outputView.preferredFocusableComponent)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun focusPrompt() {
     requestFocus(terminalView.promptView.preferredFocusableComponent)
   }

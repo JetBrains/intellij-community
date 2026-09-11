@@ -742,19 +742,19 @@ open class MyPluginModel @JvmOverloads constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun addDetailPanel(detailPanel: PluginDetailsPageComponent) {
     ThreadingAssertions.assertEventDispatchThread()
     myDetailPanels.add(detailPanel)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun removeDetailPanel(detailPanel: PluginDetailsPageComponent) {
     ThreadingAssertions.assertEventDispatchThread()
     myDetailPanels.remove(detailPanel)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun forEachDetailPanel(action: (PluginDetailsPageComponent) -> Unit) {
     ThreadingAssertions.assertEventDispatchThread()
     for (panel in myDetailPanels.toList()) {
@@ -762,7 +762,7 @@ open class MyPluginModel @JvmOverloads constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun forEachDetailPanelSuspending(action: suspend (PluginDetailsPageComponent) -> Unit) {
     ThreadingAssertions.assertEventDispatchThread()
     for (panel in myDetailPanels.toList()) {

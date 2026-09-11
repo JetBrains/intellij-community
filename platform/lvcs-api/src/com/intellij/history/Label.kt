@@ -17,11 +17,11 @@ interface Label {
    * @param file file or directory that should be reverted
    */
   @ApiStatus.Obsolete
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(LocalHistoryException::class)
   fun revert(project: Project, file: VirtualFile)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getByteContent(path: String): ByteContent?
 
   companion object {

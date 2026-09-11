@@ -79,7 +79,7 @@ internal class PyInterpreterHeaderTitleRenderer(
   private var currentPath: String? = null
   private var lastRendered: String? = null
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun update(path: String?) {
     currentPath = path?.takeIf { it.isNotEmpty() }
     // Always expose the full path via tooltip so the user can inspect the venv name / directory
@@ -91,7 +91,7 @@ internal class PyInterpreterHeaderTitleRenderer(
     refit()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun refit() {
     val path = currentPath
     if (path == null) {

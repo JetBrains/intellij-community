@@ -110,7 +110,7 @@ private suspend fun getChunkFileSpec(
  * @param fileName the name of the file to write the content to
  * @param content the content to be written into the specified file
  */
-@RequiresWriteLock
+@RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
 private suspend fun writeAccessors(moduleDir: String, fileName: String, content: String): Unit = edtWriteAction {
   val path = Path.of(moduleDir, fileName)
   if (!path.exists()) path.createFile()

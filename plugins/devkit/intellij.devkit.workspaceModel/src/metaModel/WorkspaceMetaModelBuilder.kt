@@ -56,7 +56,7 @@ internal class WorkspaceMetaModelBuilder(
   private val javaPsiFacade = JavaPsiFacade.getInstance(project)
   private val allProjectScope = GlobalSearchScope.allScope(project)
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getObjModule(
     packageName: String,
     kaModule: KaModule,
@@ -143,7 +143,7 @@ internal class WorkspaceMetaModelBuilder(
     val moduleAbstractTypes: List<KaClassSymbol>,
     val kaModule: KaModule,
   ) /* : KaLifetimeOwner */ {
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     fun registerContent(kaSession: KaSession, extProperties: List<Pair<KaPropertySymbol, KaClassSymbol>>): CompiledObjModule =
       with(kaSession) {
         var extPropertyId = 0

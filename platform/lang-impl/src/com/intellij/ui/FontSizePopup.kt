@@ -103,7 +103,7 @@ interface FontSizeModel<T> {
  * - changing the slider value will emit a new value;
  * - changing the value will update the slider presentation.
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun <T> showFontSizePopup(model: FontSizeModel<T>, anchor: JComponent) {
   EDT.assertIsEdt()
   val popup = createFontSizePopup(model)

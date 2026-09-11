@@ -151,7 +151,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
   /**
    * @throws TimeoutException when stopped due to provided [timeout]
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   suspend fun waitAnalysisToFinish(timeout: Duration = 5.minutes, throws: Boolean = false, logsError: Boolean = true) {
     if (EDT.isCurrentThreadEdt()) {
       throw AssertionError("waitAnalysisToFinish should not be called from EDT otherwise there will be freezes")
@@ -290,7 +290,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
 
     companion object {
-      @RequiresReadLock
+      @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
       fun create(editor: TextEditor, project: Project, isCancelled: Boolean, isFinishedInDumbMode: Boolean): HighlightedEditor {
         if (!UIUtil.isShowing(editor.getComponent())) {
           LOG.info("Creating invisible editor ${editor.description}")

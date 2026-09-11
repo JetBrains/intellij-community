@@ -26,7 +26,7 @@ object LspDidChangeUtil {
   * which effectively means that this function must be called from [com.intellij.openapi.editor.event.DocumentListener.beforeDocumentChange].
   * This is needed to calculate line numbers in the document as they were *before* the change.
   */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createIncrementalDidChangeParamsBeforeDocumentChange(
     lspClient: LspClient,
     documentEvent: DocumentEvent,
@@ -44,7 +44,7 @@ object LspDidChangeUtil {
     return DidChangeTextDocumentParams(versionedIdentifier, listOf(changeEvent))
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun createFullDidChangeParams(
     lspClient: LspClient,
     document: Document,

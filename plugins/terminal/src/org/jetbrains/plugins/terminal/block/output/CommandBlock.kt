@@ -20,8 +20,8 @@ sealed interface CommandBlock {
    * This property should contain the count of trimmed starting lines in the command output.
    * @see TerminalOutputModel.trimOutput
    */
-  @get:RequiresEdt
-  @set:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   var trimmedLinesCount: Int
 
   /** If block is finalized it means that its length won't be expanded if some text is added before or after it */

@@ -193,7 +193,7 @@ internal object PyWelcome {
     }
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun prepareFile(project: Project, baseDir: VirtualFile): PsiFile {
     val file = kotlin.runCatching { baseDir.createChildData(this, "main.py") }
       .onFailure { PyWelcomeCollector.logWelcomeScript(project, ScriptResult.NO_VFILE) }
@@ -211,7 +211,7 @@ internal object PyWelcome {
   }
 
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   internal fun writeText(psiFile: PsiFile): Int? {
     val project = psiFile.project
     val document = PsiDocumentManager.getInstance(project).getDocument(psiFile)

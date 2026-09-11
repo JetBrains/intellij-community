@@ -25,8 +25,8 @@ interface LspServerSupportProvider : LspIntegrationProvider {
     fun ensureServerStarted(descriptor: LspServerDescriptor)
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun fileOpened(project: Project, file: VirtualFile, serverStarter: LspServerStarter)
 
   /**

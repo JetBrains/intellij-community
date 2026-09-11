@@ -30,9 +30,9 @@ interface TransferredWriteActionService {
    * It is used for invocation of EDT-dependent code synchronously from a background write action.
    * Its use should be limited to background write action only.
    */
-  @RequiresWriteLock
-  @RequiresBackgroundThread
-  fun runOnEdtWithTransferredWriteActionAndWait(@RequiresEdt @RequiresWriteLock action: Runnable)
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  fun runOnEdtWithTransferredWriteActionAndWait(@RequiresEdt(generateAssertion = false /* IJPL-115548 */) @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */) action: Runnable)
 
   /**
    * Executes [action] synchronously on a background thread under write action.
@@ -43,7 +43,7 @@ interface TransferredWriteActionService {
    * This is useful for invocation of backgroundable listeners (such as [com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable])
    * from EDT write actions.
    */
-  @RequiresWriteLock
-  @RequiresEdt
-  fun runOnBackgroundThreadWithTransferredWriteActionAndWait(@RequiresBackgroundThread @RequiresWriteLock action: Runnable)
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun runOnBackgroundThreadWithTransferredWriteActionAndWait(@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */) @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */) action: Runnable)
 }

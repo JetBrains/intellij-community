@@ -27,13 +27,13 @@ object InlineCompletionTooltip {
   private val tooltipHintKey = Key<LightweightHint>("intellij.platform.inline.completion.tooltip.hint")
   private val sessionDisposerRegisteredKey = Key<Unit>("intellij.platform.inline.completion.tooltip.disposer.registered")
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isShown(session: InlineCompletionSession): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
     return tooltipHintKey.isIn(session.dataHolder)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun show(session: InlineCompletionSession) {
     ThreadingAssertions.assertEventDispatchThread()
     if (isShown(session)) {
@@ -85,7 +85,7 @@ object InlineCompletionTooltip {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun hide(session: InlineCompletionSession) {
     ThreadingAssertions.assertEventDispatchThread()
     // The user data is removed in the `onPopupCancel`

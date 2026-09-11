@@ -13,7 +13,7 @@ open class LightEditFileEditorManagerBase(
   coroutineScope: CoroutineScope
 ) : FileEditorManagerImpl(project, coroutineScope) {
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   suspend fun internalInit() {
     super.init()
   }

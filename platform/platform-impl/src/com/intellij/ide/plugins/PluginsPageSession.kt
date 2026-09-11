@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import javax.swing.JComponent
 
 internal interface PluginsPageSession : Disposable {
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getCenterComponent(controller: Configurable.TopComponentController): JComponent
 
   fun getComponent(): JComponent
@@ -37,20 +37,20 @@ internal interface PluginsPageSession : Disposable {
 
   fun select(pluginIds: Collection<PluginId>)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun enableSearch(option: String?): Runnable?
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun enableSearch(option: String?, ignoreTagMarketplaceTab: Boolean): Runnable?
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openMarketplaceTab(option: String)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun openInstalledTab(option: String)
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun createPluginsPageSession(
   searchQuery: String?,
   openSource: PluginManagerOpenSourceEnum,

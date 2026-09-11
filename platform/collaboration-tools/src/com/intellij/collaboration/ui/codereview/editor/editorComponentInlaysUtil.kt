@@ -202,7 +202,7 @@ private suspend fun EditorEx.renderComponent(renderer: ComponentInlayRenderer<JC
 /**
  * @param priority impacts the visual order in which inlays are displayed. Components with higher priority will be shown higher
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun EditorEx.insertComponentAfter(
   lineIndex: Int,
   component: JComponent,
@@ -216,7 +216,7 @@ fun EditorEx.insertComponentAfter(
   return insertComponent(offset, renderer, priority)
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun EditorEx.insertComponent(offset: Int, renderer: ComponentInlayRenderer<JComponent>, priority: Int = 0): Inlay<*>? {
   val props = InlayProperties().priority(priority).relatesToPrecedingText(true)
   return addComponentInlay(offset, props, renderer)

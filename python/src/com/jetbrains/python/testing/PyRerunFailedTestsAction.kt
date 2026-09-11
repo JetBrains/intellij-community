@@ -108,7 +108,7 @@ class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : Abstrac
         getTestSpecImpl(request)
       })
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun getTestSpecImpl(): List<String> {
       val failedTests = getFailedTests(project)
       val failedTestLocations = getTestLocations(failedTests)
@@ -126,7 +126,7 @@ class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : Abstrac
       return result
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun getTestSpecImpl(request: TargetEnvironmentRequest): List<TargetEnvironmentFunction<String>> {
       val failedTests = getFailedTests(project)
       val failedTestLocations = getTestLocations(failedTests)

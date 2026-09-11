@@ -68,7 +68,7 @@ internal abstract class LspWorkspaceSymbolContributor : ChooseByNameContributorE
 
   protected abstract fun shouldAcceptSymbolKind(symbolKind: SymbolKind): Boolean
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun getWorkspaceSymbols(client: LspClientImpl, scope: GlobalSearchScope, query: String = ""): List<NavigationItem> {
     val result = client.requestExecutor.getWorkspaceSymbolsCaching(query)
                  ?: return emptyList()

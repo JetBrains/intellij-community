@@ -20,11 +20,11 @@ interface DumbModeListenerBackgroundable {
       Topic("dumb mode backgroundable", DumbModeListenerBackgroundable::class.java, Topic.BroadcastDirection.NONE)
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun enteredDumbMode() {
   }
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun exitDumbMode() {
   }
 }

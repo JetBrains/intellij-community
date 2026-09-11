@@ -599,21 +599,21 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   }
 
   @ApiStatus.Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun scheduleShowTrafficLightPopup(anchor: RelativeRectangle) {
     ThreadingAssertions.assertEventDispatchThread()
     trafficLightPopup.scheduleShow(anchor, analyzerStatus)
   }
 
   @ApiStatus.Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun scheduleHideTrafficLightPopup() {
     ThreadingAssertions.assertEventDispatchThread()
     trafficLightPopup.scheduleHide()
   }
 
   @ApiStatus.Internal
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun hideTrafficLightPopup() {
     ThreadingAssertions.assertEventDispatchThread()
     trafficLightPopup.hidePopup()
@@ -914,7 +914,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
   // startOffset == -1 || endOffset == -1 means whole document
   @JvmOverloads
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun repaint(startOffset: Int = -1, endOffset: Int = -1) {
     val range = offsetsToYPositions(startOffset, endOffset)
     markDirtied(range)

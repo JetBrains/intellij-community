@@ -65,7 +65,7 @@ internal class PsiElementBackgroundPresentationComputer(list: JList<*>) {
     myPresentationMap.clear()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun computePresentationAsync(renderer: PsiElementListCellRenderer<*>, element: PsiElement): Deferred<TargetPresentation> {
     return myPresentationMap.computeIfAbsent(RendererAndElement(renderer, element), ::doComputePresentationAsync)
   }

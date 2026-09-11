@@ -128,7 +128,7 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
   }
 
   @VisibleForTesting
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun selectPath(path: ChangesTreePath) {
     if (path.changeId == null) {
       changesView.selectFile(path.filePath.filePath)

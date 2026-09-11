@@ -43,7 +43,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
   private val filteringModel = FilteringListModel(CollectionListModel(commits))
   private val modalityState = ModalityState.stateForComponent(window)
   private val fullCommitDetailsListPanel = object : FullCommitDetailsListPanel(project, disposable, modalityState) {
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     @Throws(VcsException::class)
     override fun loadChanges(commits: List<VcsCommitMetadata>): List<Change> = this@MultipleCommitInfoDialog.loadChanges(commits)
   }
@@ -93,7 +93,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
 
   override fun getPreferredFocusedComponent() = commitsList
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(VcsException::class)
   protected abstract fun loadChanges(commits: List<VcsCommitMetadata>): List<Change>
 
@@ -126,7 +126,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
    * is preserved and the first commit is selected; on failure the error is shown in the list's empty text.
    * A previously started load, if any, is cancelled. Intended for dialogs constructed with an empty list.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun loadCommitsInBackground(loader: ThrowableComputable<List<VcsCommitMetadata>, VcsException>) {
     commitsLoadingPanel.loadChangesInBackground(loader) { commits ->
       setCommits(commits ?: emptyList())

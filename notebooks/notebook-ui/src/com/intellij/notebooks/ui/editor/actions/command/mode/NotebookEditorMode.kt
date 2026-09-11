@@ -48,7 +48,7 @@ private fun Editor.getEditor(): Editor {
   return editor
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun Editor.setMode(mode: NotebookEditorMode) {
   // Although LAB-50 is marked as closed, the checks still aren't added to classes written in Kotlin.
   ThreadingAssertions.assertEventDispatchThread()

@@ -38,27 +38,27 @@ class MergeConflictIterativeDataHolder(
     Disposer.register(parentDisposable, this)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getMergeConflictModel(file: VirtualFile): MergeConflictModel? = mergeConflictModels[file]
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isFileResolved(file: VirtualFile): Boolean {
     val mergeConflictModel = mergeConflictModels[file] ?: return false
     return mergeConflictModel.getAllChanges().all { change -> change.isResolved }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun isFileReviewed(file: VirtualFile): Boolean {
     val mergeConflictModel = mergeConflictModels[file] ?: return false
     return mergeConflictModel.wasReviewed
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getResolvedFilesAndModels(): Map<VirtualFile, MergeConflictModel> {
     return mergeConflictModels.filter { it.value.getUnresolvedChanges().isEmpty() }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun removeFiles(files: List<VirtualFile>) {
     val removedModels = files.mapNotNull { mergeConflictModels.remove(it) }
     runWriteAction {
@@ -108,7 +108,7 @@ class MergeConflictIterativeDataHolder(
       model
     }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getAiFileSnapshot(file: VirtualFile): MergeConflictAiFileSnapshot? {
     val model = mergeConflictModels[file] ?: return null
     val changes = model.getAllChanges()
@@ -119,7 +119,7 @@ class MergeConflictIterativeDataHolder(
     )
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun resolveAutoResolvableConflicts(file: VirtualFile): Boolean {
     val model = mergeConflictModels[file] ?: return false
     if (model.getAutoResolvableChanges().isEmpty()) return false
@@ -130,7 +130,7 @@ class MergeConflictIterativeDataHolder(
     return true
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun dispose() {
     mergeConflictModels.values.forEach {
       Disposer.dispose(it)

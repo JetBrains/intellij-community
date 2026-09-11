@@ -133,7 +133,7 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
     filterSystemLabelsFlow.value = filtered
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setSelection(selection: ActivitySelection?) {
     selectionFlow.value = selection
     eventDispatcher.multicaster.onSelectionChanged(selection)

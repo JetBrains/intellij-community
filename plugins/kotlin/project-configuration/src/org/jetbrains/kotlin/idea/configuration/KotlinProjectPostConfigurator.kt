@@ -13,7 +13,7 @@ interface KotlinProjectPostConfigurator {
 
     fun isApplicable(module: Module): Boolean
 
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
     fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder)
 
     companion object {

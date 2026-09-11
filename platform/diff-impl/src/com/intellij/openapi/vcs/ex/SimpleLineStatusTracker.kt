@@ -40,7 +40,7 @@ class SimpleLineStatusTracker(project: Project?, document: Document) : LineStatu
   override val Block.ourData: DocumentTracker.BlockData
     get() = DocumentTracker.BlockData.Empty
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setBaseRevision(vcsContent: CharSequence) {
     setBaseRevisionContent(vcsContent, null)
   }

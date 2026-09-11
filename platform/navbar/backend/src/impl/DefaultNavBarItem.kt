@@ -55,8 +55,8 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
 
   override fun createPointer(): Pointer<out NavBarItem> = hardPointer(this)
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun presentation(): NavBarItemPresentation {
 
     val icon: Icon? = fromOldExtensions { ext -> ext.getIcon(data) } ?: getIcon()

@@ -222,7 +222,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun doUpdateNotifications(file: VirtualFile, fileEditorManager: FileEditorManager) {
     var editors = getEditors(file, fileEditorManager)
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
@@ -334,7 +334,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
     job.start()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun updateNotification(fileEditor: FileEditor, provider: EditorNotificationProvider, component: JComponent?) {
     val panels = fileEditor.getUserData(EDITOR_NOTIFICATION_PROVIDER)
     val providerClass = provider.javaClass
@@ -388,7 +388,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun doUpdateAllNotifications(fileEditorManager: FileEditorManager) {
     for (file in fileEditorManager.openFilesWithRemotes) {
       doUpdateNotifications(file, fileEditorManager)

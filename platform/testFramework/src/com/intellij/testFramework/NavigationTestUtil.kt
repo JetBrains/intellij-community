@@ -22,7 +22,7 @@ private val DEFAULT_AWAIT_TIMEOUT: Duration = 2.minutes
  * while waiting (e.g., post-navigation caret adjustments) are awaited as well.
  */
 @TestOnly
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 @JvmOverloads
 fun awaitPendingNavigation(project: Project, timeoutMillis: Long = DEFAULT_AWAIT_TIMEOUT.inWholeMilliseconds) {
   EDT.assertIsEdt()
@@ -76,7 +76,7 @@ suspend fun Project.awaitPendingNavigation(timeout: Duration = DEFAULT_AWAIT_TIM
  * of going through a fixture.
  */
 @TestOnly
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun awaitPendingNavigationIfEnabled(project: Project) {
   val application = ApplicationManager.getApplication()
   if (application.isWriteAccessAllowed || project.isDisposed) {

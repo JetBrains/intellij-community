@@ -21,7 +21,7 @@ abstract class ProgressVisibilityManager : Disposable {
   var disposed: Boolean = false
     private set
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun run(task: Task.Backgroundable): ProgressIndicator {
     val indicator = EmptyProgressIndicator(getModalityState())
     indicators.add(indicator)

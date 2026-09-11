@@ -84,7 +84,7 @@ class ToolWindowEditorTabManager(
    * @param content the tool window content being moved to the editor
    * @return the file representing [content] in the editor
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun createEditorTabFileForContent(
     toolWindowId: String,
     content: Content,
@@ -129,7 +129,7 @@ class ToolWindowEditorTabManager(
    * @param state the persisted editor-tab state containing the serialized tool window content
    * @return `true` if the content was successfully restored and attached; `false` otherwise
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun restoreEditorTabFileContent(
     file: ToolWindowEditorTabFile,
     state: ToolWindowEditorTabState,
@@ -154,7 +154,7 @@ class ToolWindowEditorTabManager(
    *
    * The newly created session is registered in [sessionByFile].
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun attachContentToFile(
     file: ToolWindowEditorTabFile,
     content: Content,
@@ -172,7 +172,7 @@ class ToolWindowEditorTabManager(
   /**
    * Attaches [content] to [file] with its presentation driven by [presentationFlow].
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun attachContentToFile(
     file: ToolWindowEditorTabFile,
     content: Content,
@@ -212,7 +212,7 @@ class ToolWindowEditorTabManager(
    * while its tool window has no support registered.
    */
   @TestOnly
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun createTransientEditorTabFileForTest(
     toolWindowId: String,
     content: Content,
@@ -233,7 +233,7 @@ class ToolWindowEditorTabManager(
    * @param releaseContent whether the session's content should also be released;
    * false when ownership of the content is transferred elsewhere
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun closeEditorTabFile(file: ToolWindowEditorTabFile, releaseContent: Boolean) {
     if (file.getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN) == true) {
       return

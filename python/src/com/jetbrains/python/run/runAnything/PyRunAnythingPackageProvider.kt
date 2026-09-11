@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
   private var cacheInitialized = AtomicBoolean(false)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun suggestCompletionVariants(
     dataContext: DataContext,
     commandLine: CommandLine,

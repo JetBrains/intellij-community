@@ -67,7 +67,7 @@ internal class LspCompletionObject(
 
   override fun computePresentation(): TargetPresentation = TargetPresentation.builder(completionItem.label).presentation()
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   override fun computeDocumentation(): DocumentationResult? {
     resolvedCompletionItem?.documentation?.let { return lsp4jDocsToDocumentation(it) }
     initialCompletionItem.documentation?.let { return lsp4jDocsToDocumentation(it) }
@@ -82,7 +82,7 @@ internal class LspCompletionObject(
     }
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun lsp4jDocsToDocumentation(lsp4jDocs: Either<String, MarkupContent>): DocumentationResult.Documentation? {
     val markupContent = when {
       lsp4jDocs.isLeft && lsp4jDocs.left!!.isNotEmpty() -> MarkupContent(MarkupKind.PLAINTEXT, lsp4jDocs.left!!)

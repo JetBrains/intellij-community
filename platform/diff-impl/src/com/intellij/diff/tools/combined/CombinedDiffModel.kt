@@ -105,7 +105,7 @@ class CombinedDiffModel(val project: Project) {
   fun addListener(listener: CombinedDiffModelListener, disposable: Disposable) =
     modelListeners.addListener(listener, disposable)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun loadRequests(indicator: ProgressIndicator, blockIds: Collection<CombinedBlockId>) {
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(ourDisposable, {
       for (blockId in blockIds) {
@@ -122,7 +122,7 @@ class CombinedDiffModel(val project: Project) {
     }, indicator)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun loadRequest(indicator: ProgressIndicator, blockId: CombinedBlockId, producer: DiffRequestProducer): DiffRequest {
     val request = producer.process(context, indicator)
     request.putUserData(DiffUserDataKeysEx.EDITORS_HIDE_TITLE, true)
@@ -175,9 +175,9 @@ private class CombinedDiffContext(private val project: Project) : DiffContext() 
 interface CombinedDiffModelListener : EventListener {
   fun onModelReset()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onRequestsLoaded(blockId: CombinedBlockId, request: DiffRequest)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onRequestContentsUnloaded(requests: Map<CombinedBlockId, DiffRequest>)
 }

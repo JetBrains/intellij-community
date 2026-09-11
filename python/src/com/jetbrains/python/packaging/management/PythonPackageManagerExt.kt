@@ -76,7 +76,7 @@ fun PythonPackageManager.hasInstalledPackageSnapshot(packageName: String, versio
 
 
 @ApiStatus.Internal
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonPackageManager.isNotInstalledAndCanBeInstalled(packageName: String, version: String? = null): Boolean =
   !hasInstalledPackageSnapshot(packageName, version) && repositoryManager.hasPackageSnapshot(packageName)
 

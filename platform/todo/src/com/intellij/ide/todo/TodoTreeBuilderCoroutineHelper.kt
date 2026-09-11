@@ -135,8 +135,8 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
   }
 }
 
-@RequiresBackgroundThread
-@RequiresReadLock
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun TodoTreeBuilder.collectFiles() {
   ProgressManager.checkCanceled()
   clearCache()
@@ -152,8 +152,8 @@ private fun TodoTreeBuilder.collectFiles() {
   validateCacheAndUpdateTree()
 }
 
-@RequiresBackgroundThread
-@RequiresReadLock
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun TodoTreeBuilder.validateCacheAndUpdateTree() {
   ProgressManager.checkCanceled()
 
@@ -161,8 +161,8 @@ private fun TodoTreeBuilder.validateCacheAndUpdateTree() {
   updateVisibleTree()
 }
 
-@RequiresBackgroundThread
-@RequiresReadLock
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 private fun TodoTreeBuilder.updateVisibleTree() {
   if (isUpdatable) {
     if (hasDirtyFiles()) { // suppress redundant cache validations

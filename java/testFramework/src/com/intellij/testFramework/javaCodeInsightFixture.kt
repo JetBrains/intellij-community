@@ -34,7 +34,7 @@ fun javaCodeInsightFixture(
  * @param level version of the JDK to be set
  */
 @TestOnly
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun setUpJdk(level: LanguageLevel, project: Project, module: Module, disposable: Disposable) {
   val jdk = IdeaTestUtil.getMockJdk(level)
   WriteAction.runAndWait<Exception> {

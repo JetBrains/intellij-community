@@ -83,7 +83,7 @@ private constructor(private val libraryName: @NlsSafe String?,
       return rootsToIterate
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     fun createIterator(library: Library,
                        roots: Collection<VirtualFile>? = null,

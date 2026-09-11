@@ -58,7 +58,7 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
             calculateAutoConfigSettingsReadAction(module)
         }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     protected abstract fun calculateAutoConfigSettingsReadAction(module: Module): AutoConfigurationSettings?
 
     override suspend fun runAutoConfig(settings: AutoConfigurationSettings) {
@@ -108,7 +108,7 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
         configureAndGetConfiguredModules(project, excludeModules)
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     override fun configureAndGetConfiguredModules(project: Project, excludeModules: Collection<Module>): Set<Module> {
         val dialog = ConfigureDialogWithModulesAndVersion(
             project,

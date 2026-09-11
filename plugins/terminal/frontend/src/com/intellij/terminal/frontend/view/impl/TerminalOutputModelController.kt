@@ -15,16 +15,16 @@ import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 interface TerminalOutputModelController {
   val model: MutableTerminalOutputModel
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updateContent(event: TerminalContentUpdatedEvent)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun updateCursorPosition(event: TerminalCursorPositionChangedEvent)
 
   /**
    * Forces the controller to apply all pending updates if they were delayed.
    * After this method returns, it is guaranteed that all previous updates are applied to the model.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun applyPendingUpdates()
 }

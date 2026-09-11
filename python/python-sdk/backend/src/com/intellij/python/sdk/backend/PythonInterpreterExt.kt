@@ -115,7 +115,7 @@ suspend fun Iterable<Sdk>.pyInterpreterItems(): List<PyInterpreterItem> =
  *
  * From Kotlin call [getPythonInfo] instead, which also says why it cannot be used.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 @RequiresBlockingContext
 fun Sdk.isInterpreterUsable(): Boolean =
   runBlockingMaybeCancellable { pythonInterpreterAsync().getPythonInfo() } is Result.Success
@@ -146,7 +146,7 @@ fun Sdk.asInterpreterRef(): PyInterpreterRef = PyInterpreterRef.ExistingSdk(name
  * [venvLibDirectory]. Every other environment, and an unknown one, answers with the interpreter's
  * standard library directory, through [stdlibLibDirectory].
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun PythonInterpreter.libDirectory(): VirtualFile? =
   if (pythonEnvironment?.libRoot != null) venvLibDirectory() else stdlibLibDirectory()
 
@@ -159,7 +159,7 @@ private fun PythonInterpreter.libDirectory(): VirtualFile? =
  * Some system Python distributions (notably on Linux) ship without a `site-packages` directory at
  * all, in which case this returns `null`.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonInterpreter.sitePackagesDirectory(): VirtualFile? = libDirectory()?.findChild(PyNames.SITE_PACKAGES)
 
 /**
@@ -171,7 +171,7 @@ fun PythonInterpreter.sitePackagesDirectory(): VirtualFile? = libDirectory()?.fi
  * environment kind: for a virtual environment this still returns the *base* interpreter's
  * stdlib (which is included in the venv's class roots), not the venv's own (mostly empty) lib.
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonInterpreter.stdlibLibDirectory(): VirtualFile? {
   for (file in sdkClassRoots) {
     if (!file.isValid) continue
@@ -196,7 +196,7 @@ fun PythonInterpreter.stdlibLibDirectory(): VirtualFile? {
  * `lib/pythonX.Y` itself to `sys.path`), with a [LocalFileSystem] fallback when the SDK has no
  * class roots yet (e.g. a fresh empty SDK created for package management).
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonInterpreter.venvLibDirectory(): VirtualFile? {
   val libRoot = pythonEnvironment?.libRoot ?: return null
   val classRoots = sdkClassRoots

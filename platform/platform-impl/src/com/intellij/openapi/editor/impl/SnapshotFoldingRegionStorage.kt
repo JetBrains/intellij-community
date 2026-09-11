@@ -274,12 +274,12 @@ internal open class SnapshotFoldRegion(
 
   override fun isExpanded(): Boolean = expanded
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun setExpanded(expanded: Boolean) {
     setExpanded(expanded, true)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun setExpanded(expanded: Boolean, notify: Boolean) {
     val foldingModel = storage.model
     val group = group

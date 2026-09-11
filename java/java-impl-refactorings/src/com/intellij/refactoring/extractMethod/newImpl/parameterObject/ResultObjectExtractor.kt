@@ -111,7 +111,7 @@ object ResultObjectExtractor {
     return ParameterObjectUtils.findAffectedReferences(variables, scope)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun extractNonInteractively(variables: List<PsiVariable>, scope: List<PsiElement>): TextRange {
     val affectedReferences = findAffectedReferences(variables, scope)
     val file = scope.first().containingFile

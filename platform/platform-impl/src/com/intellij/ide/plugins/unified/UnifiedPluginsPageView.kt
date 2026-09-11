@@ -60,7 +60,7 @@ import javax.swing.Timer
 import javax.swing.event.DocumentEvent
 import org.jetbrains.annotations.Nls
 
-internal class UnifiedPluginsPageView @RequiresEdt constructor(
+internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   private val onSearchChanged: (String) -> Unit,
   private val onSelectionChanged: (List<PluginOccurrenceId>) -> Unit,
   private val onSectionExpansionChanged: (PluginSectionId, Boolean) -> Unit,
@@ -162,7 +162,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun render(state: UnifiedPluginsPageState) {
     val viewportAnchor = captureViewportAnchor()
     renderedState = state
@@ -214,12 +214,12 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     scheduleResultsAnnouncement()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun requestSearchFocus() {
     IdeFocusManager.getGlobalInstance().requestFocus(searchField, true)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setSearchQuery(query: String) {
     updateSearchField(query)
   }
@@ -241,7 +241,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     searchToolbar.render(state)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun close() {
     resultsAnnouncementTimer.stop()
     setStickySection(null)

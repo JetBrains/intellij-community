@@ -60,7 +60,7 @@ class InlayHintsPassFactoryInternal : TextEditorHighlightingPassFactory, TextEdi
      * NOTE: Consider running [com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.restart]
      * in the same EDT transaction as the one that calls this method to avoid race conditions in modification stamp setting
      */
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun forceHintsUpdateOnNextPass() {
       for (editor in EditorFactory.getInstance().allEditors) {
         clearModificationStamp(editor)
@@ -73,7 +73,7 @@ class InlayHintsPassFactoryInternal : TextEditorHighlightingPassFactory, TextEdi
       DaemonCodeAnalyzerEx.getInstanceEx(project).restart("InlayHintsPassFactoryInternal.restartDaemonUpdatingHints")
     }
     @ApiStatus.Internal
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun restartDaemonUpdatingHints(project: Project, reason: String) {
       forceHintsUpdateOnNextPass()
       DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason)

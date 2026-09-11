@@ -510,7 +510,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
                         convertShortcut = KeymapImpl::convertMouseShortcut)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun <T> getActionIds(shortcut: T,
                                shortcutToActionIds: (keymap: KeymapImpl) -> Map<T, MutableList<String>>,
                                convertShortcut: (keymap: KeymapImpl, shortcut: T) -> T): List<String> {

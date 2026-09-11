@@ -24,7 +24,7 @@ interface WorkspaceFileIndexData {
                   includeExternalNonIndexableSets: Boolean,
                   includeCustomKindSets: Boolean): WorkspaceFileInternalInfo
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun visitFileSets(visitor: WorkspaceFileSetVisitor)
 
   /**
@@ -47,7 +47,7 @@ interface WorkspaceFileIndexData {
   /**
    * Analyzes changes in VFS and determines how the index must be updated.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier?
 
   /**

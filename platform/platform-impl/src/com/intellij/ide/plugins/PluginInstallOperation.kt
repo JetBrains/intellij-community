@@ -112,7 +112,7 @@ class PluginInstallOperation(
   val isRestartRequired: Boolean
     get() = myRestartRequired
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun run() {
     updateUrls()
     mySuccess = prepareToInstall(myPluginsToInstall, MutablePluginInstallationModel())
@@ -164,7 +164,7 @@ class PluginInstallOperation(
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun prepareToInstall(pluginsToInstall: List<PluginUiModel>, installModel: MutablePluginInstallationModel): Boolean {
     for (plugin in pluginsToInstall) {
       installModel.assumeInstalled(plugin)
@@ -187,7 +187,7 @@ class PluginInstallOperation(
     return result
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(IOException::class)
   private fun prepareToInstallWithCallback(
     pluginNode: PluginUiModel,
@@ -220,7 +220,7 @@ class PluginInstallOperation(
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(IOException::class)
   private fun prepareToInstall(
     pluginNode: PluginUiModel,
@@ -471,7 +471,7 @@ class PluginInstallOperation(
     return true
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun prepareDependencies(
     pluginNode: IdeaPluginDescriptor,
     dependencies: MutableList<PluginUiModel>,

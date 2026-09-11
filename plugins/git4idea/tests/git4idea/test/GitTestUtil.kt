@@ -55,7 +55,7 @@ const val USER_EMAIL = "John.Doe@example.com"
  * In production these code paths always run under an indicator; the helper makes tests behave
  * the same way
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun <T> runUnderProgress(action: (ProgressIndicator) -> T): T =
   runBlocking { coroutineToIndicator { indicator -> action(indicator) } }
 

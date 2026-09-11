@@ -124,7 +124,7 @@ private class DiffEditorModel(
   private val diffVm: GHPRDiffReviewViewModel,
   private val locationToLine: (DiffLineLocation) -> Int?,
   private val lineToLocation: (Int) -> DiffLineLocation?,
-  @RequiresEdt private val lineToUnified: (Int) -> UnifiedCodeReviewItemPosition,
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */) private val lineToUnified: (Int) -> UnifiedCodeReviewItemPosition,
 ) : GHPRReviewDiffEditorModel {
   private val threads = diffVm.threads.mapStatefulToStateful { MappedThread(this, it) }.stateInNow(cs, emptyList())
   private val newComments = diffVm.newComments.mapStatefulToStateful { MappedNewComment(this, it) }.stateInNow(cs, emptyList())
@@ -222,37 +222,37 @@ private class DiffEditorModel(
 
   override val canNavigate: Boolean get() = diffVm.canNavigate
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun canGotoNextComment(threadId: String): Boolean = reviewVm.nextComment(threadId) != null
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun canGotoNextComment(line: Int): Boolean = reviewVm.nextComment(lineToUnified(line)) != null
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun canGotoPreviousComment(threadId: String): Boolean = reviewVm.previousComment(threadId) != null
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun canGotoPreviousComment(line: Int): Boolean = reviewVm.previousComment(lineToUnified(line)) != null
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun gotoNextComment(threadId: String) {
     val commentId = reviewVm.nextComment(threadId) ?: return
     reviewVm.showDiffAtComment(commentId)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun gotoNextComment(line: Int) {
     val commentId = reviewVm.nextComment(lineToUnified(line)) ?: return
     reviewVm.showDiffAtComment(commentId)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun gotoPreviousComment(threadId: String) {
     val commentId = reviewVm.previousComment(threadId) ?: return
     reviewVm.showDiffAtComment(commentId)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun gotoPreviousComment(line: Int) {
     val commentId = reviewVm.previousComment(lineToUnified(line)) ?: return
     reviewVm.showDiffAtComment(commentId)

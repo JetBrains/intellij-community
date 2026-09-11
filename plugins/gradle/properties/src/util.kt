@@ -19,7 +19,7 @@ import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import java.nio.file.Path
 
 @ApiStatus.Internal
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> {
   val module = findModuleForPsiElement(place)
   val projectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module) ?: return emptySequence()
@@ -37,7 +37,7 @@ fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> {
  * are executed on every highlighting pass.
  */
 @ApiStatus.Internal
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun findGradleProperty(file: PsiFile, name: String): String? {
   val properties = CachedValuesManager.getCachedValue(file) {
     val propertyByName = ConcurrentFactoryMap.createMap<String, String?> { propertyName ->

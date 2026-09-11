@@ -37,8 +37,8 @@ import org.jetbrains.annotations.ApiStatus
  * @see WorkspaceFileIndexEx.isIndexable
  */
 @ApiStatus.Internal
-@RequiresBackgroundThread
-@RequiresReadLock
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun WorkspaceFileIndexEx.nonIndexableRootsAsCacheAvoiding(fileSetFilter: (WorkspaceFileSet) -> Boolean = { true }): Set<VirtualFile> {
   val roots = mutableSetOf<VirtualFile>()
   visitFileSets { fileSet, _ ->
@@ -86,7 +86,7 @@ fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean {
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(
   roots: Set<VirtualFile>,
   filter: VirtualFileFilter,
@@ -128,8 +128,8 @@ interface FilesDeque {
     @ApiStatus.Internal
     @JvmStatic
     @JvmOverloads
-    @RequiresReadLock
-    @RequiresBackgroundThread
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     fun nonIndexableDequeue(
       project: Project,
       searchInLibraries: Boolean = true,

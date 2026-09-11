@@ -23,12 +23,12 @@ abstract class DiffViewerHighlighters(
   private val _innerHighlighters: MutableList<RangeHighlighter> = mutableListOf()
   private val _operations: MutableList<DiffGutterOperation> = mutableListOf()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun addOperation(operation: DiffGutterOperation?) {
     operation?.let { _operations.add(it) }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun installHighlighters() {
     assert(_highlighters.isEmpty())
 
@@ -37,7 +37,7 @@ abstract class DiffViewerHighlighters(
     if (change.isChange(Side.RIGHT)) createHighlighter(ThreeSide.RIGHT)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun installInnerHighlighters() {
     assert(_innerHighlighters.isEmpty())
 
@@ -46,22 +46,22 @@ abstract class DiffViewerHighlighters(
     if (change.isChange(Side.RIGHT)) createInnerHighlighter(ThreeSide.RIGHT)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   abstract fun installOperations()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun destroy() {
     destroyHighlighters()
     destroyInnerHighlighters()
     destroyOperations()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun destroyHighlighters() {
     disposeAndClear(_highlighters, RangeHighlighter::dispose)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun destroyInnerHighlighters() {
     disposeAndClear(_innerHighlighters, RangeHighlighter::dispose)
   }
@@ -76,12 +76,12 @@ abstract class DiffViewerHighlighters(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun destroyOperations() {
     disposeAndClear(_operations, DiffGutterOperation::dispose)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   open fun reinstallAll() {
     destroyHighlighters()
     installHighlighters()

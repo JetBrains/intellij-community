@@ -56,7 +56,7 @@ class TerminalShellIntegrationImpl(
 
   private val shellHistoryManager = ShellCommandHistoryManager(coroutineScope.childScope("ShellCommandHistoryManager"))
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun commandHistory(): List<String> {
     return shellHistoryManager.getHistory()
   }
@@ -104,7 +104,7 @@ class TerminalShellIntegrationImpl(
     commandAliases = aliases.toMap()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onCommandHistoryFilePathReceived(path: String?) {
     shellHistoryManager.loadHistoryFile(path, eelDescriptor, shellName)
   }

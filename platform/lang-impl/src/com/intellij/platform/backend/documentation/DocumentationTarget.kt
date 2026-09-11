@@ -25,21 +25,21 @@ interface DocumentationTarget {
    * This function must be used to access the entity between different read actions.
    * See [Pointer] docs for an example.
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun createPointer(): Pointer<out DocumentationTarget>
 
   /**
    * Returned presentation is used to render the tab name and icon in the tool window,
    * and to render location info under the documentation in the popup.
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun computePresentation(): TargetPresentation
 
   val navigatable: Navigatable?
-    @RequiresReadLock
-    @RequiresBackgroundThread
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     get() = null
 
   /**
@@ -49,8 +49,8 @@ interface DocumentationTarget {
    * @return an HTML string to show in the editor hint when this target is highlighted by ctrl+mouse hover,
    * or `null` if this target doesn't need a hint
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun computeDocumentationHint(): @HintText String? = null
 
   /**
@@ -64,7 +64,7 @@ interface DocumentationTarget {
    * For example, the implementation may compute a URL by underlying `PsiElement`,
    * and then return a computable which will download the data outside the current read action.
    */
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun computeDocumentation(): DocumentationResult? = null
 }

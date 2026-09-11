@@ -614,7 +614,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertFalse(projectWithMavenNotificationExists)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected suspend fun scheduleProjectImportAndWait() {
     assertAutoReloadIsEnabled()
 

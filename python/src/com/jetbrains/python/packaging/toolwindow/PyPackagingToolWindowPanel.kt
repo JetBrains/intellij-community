@@ -279,7 +279,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
     packageListController.startSdkInit()
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun setInterpreterPath(path: String?) {
     headerTitleRenderer?.update(path)
   }
@@ -288,7 +288,7 @@ internal class PyPackagingToolWindowPanel(private val project: Project) : Simple
     packageListController.setLoadingState(visible)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun syncSdkControllerSelection(sdk: Sdk?) {
     moduleController.refreshAndSyncSelection(sdk)
   }

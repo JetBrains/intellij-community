@@ -30,7 +30,7 @@ class DeferredIconRepaintScheduler {
   private var job: Job? = null
   private val queue = ObjectLinkedOpenHashSet<RepaintSchedulerRequest>()
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun createRepaintRequest(component: Component?, x: Int, y: Int): RepaintRequest {
     val target = getTarget(component)
     val paintingParent = SwingUtilities.getAncestorOfClass(PaintingParent::class.java, component)
@@ -43,7 +43,7 @@ class DeferredIconRepaintScheduler {
                           paintingParentRec = paintingParentRec)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun scheduleRepaint(request: RepaintRequest, iconWidth: Int, iconHeight: Int, alwaysSchedule: Boolean) {
     val actualTarget = request.getActualTarget() ?: return
     val component = request.component

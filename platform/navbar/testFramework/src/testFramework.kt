@@ -34,7 +34,7 @@ suspend fun dumpContextModel(ctx: DataContext, project: Project): List<String> {
 }
 
 @TestOnly
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun contextNavBarPathStrings(ctx: DataContext): List<String> {
   val contextItem = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
                       ?.dereference()
@@ -50,7 +50,7 @@ fun contextNavBarPathStrings(ctx: DataContext): List<String> {
  */
 @Obsolete
 @TestOnly
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun compatibilityNavBarItemPresentation(o: Any): NavBarItemPresentation? {
   val item = compatibilityNavBarItem(o, null)
   return item?.presentation()
@@ -62,7 +62,7 @@ fun compatibilityNavBarItemPresentation(o: Any): NavBarItemPresentation? {
  */
 @Obsolete
 @TestOnly
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun compatibilityNavBarPathObjects(o: Any): List<Any> {
   val item = compatibilityNavBarItem(o, null)
              ?: return emptyList()
@@ -82,7 +82,7 @@ fun compatibilityNavBarPathObjects(o: Any): List<Any> {
  */
 @Obsolete
 @TestOnly
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun compatibilityNavBarChildObjects(o: Any): List<Any> {
   val item = compatibilityNavBarItem(o, null)
              ?: return emptyList()
@@ -102,7 +102,7 @@ fun compatibilityNavBarChildObjects(o: Any): List<Any> {
  */
 @Obsolete
 @TestOnly
-@RequiresReadLock
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 @Suppress("UNCHECKED_CAST")
 fun <T> compatibilitySelectionData(project: Project, o: Any, key: DataKey<T>): T? {
   val item = compatibilityNavBarItem(o, null) ?: return null

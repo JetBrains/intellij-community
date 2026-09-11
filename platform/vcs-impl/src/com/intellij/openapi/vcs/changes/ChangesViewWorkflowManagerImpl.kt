@@ -37,7 +37,7 @@ internal class ChangesViewWorkflowManagerImpl(
     ApplicationManager.getApplication().invokeLater({ updateCommitWorkflowHandler() }, ModalityState.nonModal(), project.disposed)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun updateCommitWorkflowHandler() {
     isInitialized = true
 

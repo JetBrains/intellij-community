@@ -52,7 +52,7 @@ internal class GitStageContentVisibilityPredicate : Predicate<Project> {
   override fun test(project: Project) = isStagingAreaAvailable(project)
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 fun showStagingArea(project: Project, commitMessage: String) {
   showStagingArea(project) {
     it.commitMessage.setCommitMessage(commitMessage)

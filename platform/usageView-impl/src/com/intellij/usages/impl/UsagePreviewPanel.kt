@@ -305,7 +305,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   public override fun updateLayoutLater(infos: List<UsageInfo>, usageView: UsageView) {
     disposeAndRemoveSimilarUsagesToolbar()
     val usageViewImpl = usageView as? UsageViewImpl
@@ -371,7 +371,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
    * Show loading state in the preview panel. Intended to be called when lazy preview is enabled
    * and usages are being calculated asynchronously.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @Internal
   fun showLoading() {
     ThreadingAssertions.assertEventDispatchThread()
@@ -645,7 +645,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     val PREVIEW_EDITOR_FLAG = Key.create<UsagePreviewPanel>("PREVIEW_EDITOR_FLAG")
 
     @Internal
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     @Contract("null -> !null")
     open fun cannotPreviewMessage(infos: List<UsageInfo>?, severalFilesSelected: Boolean): @NlsContexts.StatusText String? {
       if (infos == null) {
@@ -672,8 +672,8 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       return null
     }
 
-    @RequiresReadLock
-    @RequiresBackgroundThread
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     fun isOneAndOnlyOnePsiFileInUsages(infos: List<UsageInfo>?): Boolean = cannotPreviewMessage(infos, false) == null
 

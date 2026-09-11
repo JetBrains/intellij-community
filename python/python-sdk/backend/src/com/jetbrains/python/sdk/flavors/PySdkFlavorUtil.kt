@@ -16,11 +16,11 @@ import org.jetbrains.annotations.NonNls
 /**
  * Checks if file is executable. If no -- returns error
  */
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 internal fun getFileExecutionError(@NonNls fullPath: String, targetEnvConfig: TargetEnvironmentConfiguration?): @Nls String? =
   validateExecutableFile(ValidationRequest(fullPath, platformAndRoot = targetEnvConfig.getPlatformAndRoot()))?.message
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun getFileExecutionErrorOnEdt(@NonNls fullPath: String, targetEnvConfig: TargetEnvironmentConfiguration?): @Nls String? =
   runWithModalProgressBlocking(ModalTaskOwner.guess(), "...") {
     withContext(Dispatchers.IO) {

@@ -119,7 +119,7 @@ private fun testReadExceptions(): Nothing {
   throw jce
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun waitForPendingWrite(): Semaphore {
   val finishWrite = Semaphore(1)
   val pendingWrite = Semaphore(1)

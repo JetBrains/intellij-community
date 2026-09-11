@@ -125,7 +125,7 @@ internal class GHPRCumulativeChangeListViewModelImpl(
       }
     }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean) {
     cs.launchNow {
       val paths = changes.map { relativePath(repository.root, it.filePath) }

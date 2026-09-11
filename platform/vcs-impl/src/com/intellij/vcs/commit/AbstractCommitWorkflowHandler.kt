@@ -154,7 +154,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun beforeCommitChecksStarted(sessionInfo: CommitSessionInfo) = ui.startBeforeCommitChecks()
   override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) = ui.endBeforeCommitChecks(result)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private suspend fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
     val proceed = coroutineToIndicator {
       checkCommit(sessionInfo) &&
@@ -188,7 +188,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   /**
    * Check that commit can be performed with given parameters.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected open fun checkCommit(sessionInfo: CommitSessionInfo): Boolean {
     return workflow.canExecute(sessionInfo, getIncludedChanges())
   }
@@ -280,7 +280,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       return true
     }
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     suspend fun addUnversionedFiles(project: Project,
                                     unversionedFilePaths: Iterable<FilePath>,
                                     changeList: LocalChangeList,

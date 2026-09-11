@@ -56,7 +56,7 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
   override val isProcessing: Boolean
     get() = processingCounter.get() != 0
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private suspend fun updateTreeAndFireChanges(change: VersionedStorageChange) {
     val oldPossibleRoots = hashSetOf<VirtualFile>()
     val newPossibleRoots = hashSetOf<VirtualFile>()

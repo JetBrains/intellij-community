@@ -24,8 +24,8 @@ interface NavigationRequest {
      * @return a request for the navigation to a specified [offset] in a [file],
      * or `null` if the navigation is not possible for any reason
      */
-    @RequiresReadLock
-    @RequiresBackgroundThread
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     fun sourceNavigationRequest(project: Project, file: VirtualFile, offset: Int): NavigationRequest? {
       return NavigationRequests.getInstance().sourceNavigationRequest(project = project, file = file, offset = offset, elementRange = null)
@@ -37,8 +37,8 @@ interface NavigationRequest {
      * @return a request for the navigation to the [start offset][TextRange.getStartOffset] of [elementRange],
      * or `null` if the navigation is not possible for any reason
      */
-    @RequiresReadLock
-    @RequiresBackgroundThread
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     fun sourceNavigationRequest(file: PsiFile, elementRange: TextRange): NavigationRequest? {
       val virtualFile = file.virtualFile ?: return null
@@ -54,8 +54,8 @@ interface NavigationRequest {
      * @return a request for the navigation to a specified [directory],
      * or `null` if the navigation is not possible for any reason
      */
-    @RequiresReadLock
-    @RequiresBackgroundThread
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     @JvmStatic
     fun directoryNavigationRequest(directory: PsiDirectory): NavigationRequest? {
       return NavigationRequests.getInstance().directoryNavigationRequest(directory)

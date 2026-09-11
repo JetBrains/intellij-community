@@ -250,7 +250,7 @@ object TerminalUiUtils {
     return ensureTermMinimumSize(TerminalGridSize(width.toInt(), height.toInt()))
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getComponentSizeInitializedFuture(component: Component): CompletableFuture<*> {
     val size = component.size
     if (size.width > 0 || size.height > 0) {
@@ -599,7 +599,7 @@ internal inline fun <reified T> Document.executeInBulk(crossinline block: () -> 
 /**
  * Scroll to bottom if we were at the bottom before executing the [action]
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal inline fun <T> Editor.doWithScrollingAware(action: () -> T): T {
   val wasAtBottom = scrollingModel.visibleArea.let { it.y + it.height } == contentComponent.height
   try {
@@ -613,7 +613,7 @@ internal inline fun <T> Editor.doWithScrollingAware(action: () -> T): T {
 }
 
 @ApiStatus.Internal
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 inline fun <T> Editor.doWithoutScrollingAnimation(action: () -> T): T {
   scrollingModel.disableAnimation()
   return try {
@@ -624,7 +624,7 @@ inline fun <T> Editor.doWithoutScrollingAnimation(action: () -> T): T {
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun Editor.scrollToBottom() {
   // disable animation to perform scrolling atomically
   doWithoutScrollingAnimation {

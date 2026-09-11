@@ -13,7 +13,7 @@ import kotlinx.coroutines.runBlocking
 /**
  * Runs [code] in background under the modal dialog
  */
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 @RequiresBlockingContext
 internal fun <T> pyModalBlocking(modalTaskOwner: ModalTaskOwner = ModalTaskOwner.guess(), code: suspend () -> T): T =
   runWithModalProgressBlocking(modalTaskOwner, PySdkBundle.message("python.sdk.run.wait"), TaskCancellation.nonCancellable()) {

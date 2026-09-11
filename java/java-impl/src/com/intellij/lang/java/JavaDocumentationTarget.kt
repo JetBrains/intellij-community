@@ -23,8 +23,8 @@ import org.jetbrains.annotations.Nls
  * @param showAllCandidates true if we must show all candidates for the element. If false, candidates will only be shown when the method call is ambiguous.
  */
 public class JavaDocumentationTarget(public val element: PsiElement, private val originalElement: PsiElement?, public val showAllCandidates: Boolean = false) : DocumentationTarget {
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun createPointer(): Pointer<out DocumentationTarget> {
     val elementPtr = element.createSmartPointer()
     val originalElementPtr = originalElement?.createSmartPointer()
@@ -34,8 +34,8 @@ public class JavaDocumentationTarget(public val element: PsiElement, private val
     }
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun computeDocumentation(): DocumentationResult {
     return DocumentationResult.asyncDocumentation {
       val generated = readAction { generateDoc(element, originalElement) }
@@ -56,21 +56,21 @@ public class JavaDocumentationTarget(public val element: PsiElement, private val
     }
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun computeDocumentationHint(): @NlsContexts.HintText String? {
       val target = resolveCallTarget(element) ?: element
       return JavaDocumentationProvider().getQuickNavigateInfo(target, originalElement)
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   override fun computePresentation(): TargetPresentation {
     return targetPresentation(element)
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun generateDoc(element: PsiElement, originalElement: PsiElement?): GeneratedDoc {
     when (element) {
       is PsiMethodCallExpression -> {

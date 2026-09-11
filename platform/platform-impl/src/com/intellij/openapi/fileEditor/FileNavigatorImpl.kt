@@ -112,7 +112,7 @@ class FileNavigatorImpl : FileNavigator {
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun navigateInEditorIfShowsFile(
     descriptor: OpenFileDescriptor,
     editor: Editor,
@@ -131,7 +131,7 @@ class FileNavigatorImpl : FileNavigator {
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun navigateInEditorAndMaybeFocus(descriptor: OpenFileDescriptor, editor: Editor, requestFocus: Boolean) {
   OpenFileDescriptor.navigateInEditor(descriptor, editor)
   if (requestFocus) {
@@ -139,7 +139,7 @@ private fun navigateInEditorAndMaybeFocus(descriptor: OpenFileDescriptor, editor
   }
 }
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 private fun navigateInAnyFileEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Boolean {
   val fileEditorManager = FileEditorManager.getInstance(descriptor.project)
   if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(descriptor.file) &&

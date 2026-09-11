@@ -57,7 +57,7 @@ interface XDebuggerWatchesManager {
    * [index] is the insertion index used by the views; `-1` appends the watch. When [navigateToWatchNode] is `true`, the receiving
    * view should reveal the created node.
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun addInlineWatchExpression(expression: XExpression, index: Int, position: XSourcePosition, navigateToWatchNode: Boolean)
 
   /**

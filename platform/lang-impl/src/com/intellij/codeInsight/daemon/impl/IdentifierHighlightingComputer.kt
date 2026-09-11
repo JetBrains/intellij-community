@@ -57,8 +57,8 @@ class IdentifierHighlightingComputer(
     myEnabled = !highlightSelectionOccurrences || !model.getPrimaryCaret().hasSelection()
   }
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @ApiStatus.Internal
   fun computeRanges(): IdentifierHighlightingResult {
     ThreadingAssertions.assertBackgroundThread()

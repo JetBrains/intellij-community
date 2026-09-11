@@ -101,7 +101,7 @@ abstract class InspectionResultsExportActionProvider(
   /**
    * Performs the actual inspection results export.
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   abstract fun writeResults(
     tree: InspectionTree,
     profile: InspectionProfileImpl,
@@ -110,7 +110,7 @@ abstract class InspectionResultsExportActionProvider(
     outputPath: Path,
   )
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   open fun onExportSuccessful(data: UserDataHolderEx) {}
 
   /**

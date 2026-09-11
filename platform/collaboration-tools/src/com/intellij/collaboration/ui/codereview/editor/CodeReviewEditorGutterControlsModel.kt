@@ -12,21 +12,21 @@ import kotlinx.coroutines.flow.StateFlow
 interface CodeReviewEditorGutterControlsModel : CodeReviewCommentableEditorModel {
   val gutterControlsState: StateFlow<ControlsState?>
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun canCreateComment(lineIdx: Int): Boolean = gutterControlsState.value?.isLineCommentable(lineIdx) == true
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun toggleComments(lineIdx: Int)
 
   interface ControlsState {
-    @get:RequiresEdt
+    @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     val linesWithComments: Set<Int>
 
-    @get:RequiresEdt
+    @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     val linesWithNewComments: Set<Int>
       get() = setOf()
 
-    @RequiresEdt
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
     fun isLineCommentable(lineIdx: Int): Boolean
   }
 }

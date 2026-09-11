@@ -44,7 +44,7 @@ internal class PyRequirementVisitor(
     node.importElements.mapNotNull { it.importReferenceExpression }.forEach { checkPackageNameInRequirements(it) }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun checkPackageNameInRequirements(importedExpression: PyQualifiedExpression) {
     if (PyInspectionExtension.EP_NAME.extensionList.any { it.ignorePackageNameInRequirements(importedExpression) }) {
       return
@@ -88,7 +88,7 @@ internal class PyRequirementVisitor(
     checkPackagesHaveBeenInstalled(node, module)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun checkPackagesHaveBeenInstalled(file: PsiElement, module: Module) {
     if (module.project.isSdkConfigurationInProgress.value)
       return

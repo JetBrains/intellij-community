@@ -71,7 +71,7 @@ class ToolWindowEditorTabSession(
       .launchIn(coroutineScope)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun applyPresentation(newPresentation: ToolWindowEditorTabPresentation): Boolean {
     if (presentation == newPresentation) {
       return false

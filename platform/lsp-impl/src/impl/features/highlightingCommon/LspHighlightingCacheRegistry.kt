@@ -52,7 +52,7 @@ internal class LspHighlightingCacheRegistry(private val lspClient: LspClientImpl
    * [LspIntentionAction][com.intellij.platform.lsp.api.customization.LspIntentionAction] object at this moment,
    * but clients shouldn't care about that. For curious: see [LspQuickFixSet][com.intellij.platform.lsp.impl.features.quickFix.LspQuickFixSet].
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal fun getDiagnosticsAndQuickFixes(file: VirtualFile): List<DiagnosticAndQuickFixes> {
     val pushedCachedHighlightings = publishDiagnosticsCache.getHighlightings(file)
     val pushedDiagnostics = pushedCachedHighlightings.map { it.highlightingInfo.diagnostic }

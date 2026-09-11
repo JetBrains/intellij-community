@@ -45,7 +45,7 @@ internal class Gen1TerminalHyperlinkHighlighter(project: Project,
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun highlightHyperlinks(block: CommandBlock) {
     val filter = filterWrapper.getFilter() ?: return // if null, `rehighlightAll` will follow
     lastUpdatedBlockInfo?.let {

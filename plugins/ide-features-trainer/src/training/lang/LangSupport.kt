@@ -78,13 +78,13 @@ interface LangSupport {
    * @throws NoSdkException in the case no valid SDK is available, yet it's required for the given project
    */
   @Throws(NoSdkException::class)
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk?
 
   /**
    * [sdk] is from [getSdkForProject]
    */
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun applyProjectSdk(sdk: Sdk, project: Project)
 
   fun applyToProjectAfterConfigure(): (Project) -> Unit
@@ -107,7 +107,7 @@ interface LangSupport {
   /** true means block source code modification in demo learning projects (scratches can be modified anyway)*/
   fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean = false
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun cleanupBeforeLessons(project: Project) = Unit
 
   fun startFromWelcomeFrame(startCallback: (Sdk?) -> Unit) {
@@ -128,6 +128,6 @@ interface LangSupport {
    *
    * For example: `.venv` in Python shouldn't be deleted as it has SDK.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getProtectedDirs(project: Project): Set<Path> = emptySet()
 }

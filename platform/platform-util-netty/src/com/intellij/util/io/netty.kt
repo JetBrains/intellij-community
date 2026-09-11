@@ -92,7 +92,7 @@ fun Channel.closeAndShutdownEventLoop() {
  * Synchronously connects to remote address.
  */
 @JvmOverloads
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun Bootstrap.connectRetrying(remoteAddress: InetSocketAddress,
                               maxAttemptCount: Int = NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT,
                               stopCondition: Condition<Void>? = null): ConnectToChannelResult {

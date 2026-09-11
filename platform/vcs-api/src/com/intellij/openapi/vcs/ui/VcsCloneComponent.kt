@@ -30,7 +30,7 @@ interface VcsCloneComponent : Disposable {
 
   fun getPreferredFocusedComponent(): JComponent?
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {
   }
 

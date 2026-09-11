@@ -78,7 +78,7 @@ class XmlTagNameSynchronizer(private val project: Project, val cs: CoroutineScop
   }
 
   @TestOnly
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun waitForSynchronizersCreation() {
     if (writeLock.availablePermits > 0) return
     // Cannot use dispatchAllInvocationEvents() if write access is allowed.

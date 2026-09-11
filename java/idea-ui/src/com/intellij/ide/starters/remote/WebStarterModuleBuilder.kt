@@ -184,10 +184,10 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
 
   protected open fun getCustomizedMessages(): CustomizedMessages? = null
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getServerOptions(serverUrl: String): WebStarterServerOptions = loadServerOptions(serverUrl)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected abstract fun loadServerOptions(serverUrl: String): WebStarterServerOptions
 
   internal fun getDependencyStateInternal(frameworkVersion: WebStarterFrameworkVersion, dependency: WebStarterDependency): DependencyState {
@@ -368,7 +368,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected fun loadJsonData(url: String, accept: String? = null): JsonNode {
     return HttpRequests.request(url)
       .userAgent(getUserAgent())
@@ -394,7 +394,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
       })
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   internal fun downloadResultInternal(progressIndicator: ProgressIndicator): DownloadResult {
     val tempFile = FileUtil.createTempFile(builderId, ".tmp", true)
     return downloadResult(progressIndicator, tempFile)
@@ -410,7 +410,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
   @ApiStatus.Internal
   fun validateAndDownloadProject(
     project: Project?,
-    @RequiresBackgroundThread validateWithServer: (ProgressIndicator) -> Boolean = { true }
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */) validateWithServer: (ProgressIndicator) -> Boolean = { true }
   ) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
       {
@@ -442,7 +442,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
       }, JavaStartersBundle.message("message.state.preparing.template"), true, project)
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   protected open fun downloadResult(progressIndicator: ProgressIndicator, tempFile: File): DownloadResult {
     val url = getGeneratorUrlInternal(starterContext.serverUrl, starterContext).toExternalForm()
     thisLogger().info("Loading project from ${url}")

@@ -21,7 +21,7 @@ import kotlin.math.min
 
 private const val MIN_BLINK_PERIOD_MS: Long = 10L
 
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun caretPlacements(editor: EditorImpl): List<CaretPlacement> = editor.caretModel.allCarets.map { caret ->
   val isRtl = caret.isAtRtlLocation
   val visualPosition = caret.visualPosition
@@ -52,7 +52,7 @@ internal fun caretAnimationSettings(settings: EditorSettings, animationsDisabled
   },
   moveDurationMs = Registry.intValue("editor.smooth.caret.duration").coerceAtLeast(1).toDouble(),
 )
-@RequiresEdt
+@RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun prefetchCaretFrames(editor: EditorImpl, key: Any, locations: List<CaretRectangle>) {
   editor.view.cacheAreasForRepaint(key) {
     editor.view.caretRectanglesForLocations(locations.toTypedArray(), CARET_CACHE_RECTANGLE_MARGIN)

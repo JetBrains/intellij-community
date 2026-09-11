@@ -231,14 +231,14 @@ object BranchesDashboardTreeComponent {
 
 @ApiStatus.Internal
 interface BranchesDashboardTreeSelectionHandler {
-  @get:RequiresEdt
-  @set:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   var selectionAction: SelectionAction?
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun filterBy(branches: List<String>, repositories: Set<GitRepository> = emptySet())
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun navigateTo(navigatable: VcsLogNavigatable, focus: Boolean)
 
   /**

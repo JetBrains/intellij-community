@@ -13,16 +13,16 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  */
 interface CodeReviewEditorGutterActionableChangesModel : CodeReviewEditorGutterChangesModel {
 
-  @get:RequiresEdt
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   var shouldHighlightDiffRanges: Boolean
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun getBaseContent(lines: LineRange): String?
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun showDiff(lineIdx: Int?)
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun addDiffHighlightListener(disposable: Disposable, listener: () -> Unit)
 
   companion object {

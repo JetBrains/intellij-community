@@ -72,7 +72,7 @@ abstract class SilentHostedGitHttpAuthDataProviderBase<A : ServerAccount, C : An
 
   final override fun isSilent(): Boolean = true
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   final override fun getAuthData(project: Project, url: String): AuthData? = runBlockingMaybeCancellable {
     doGetAuthData(project, url)
   }
@@ -89,7 +89,7 @@ abstract class SilentHostedGitHttpAuthDataProviderBase<A : ServerAccount, C : An
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   final override fun getAuthData(project: Project, url: String, login: String): AuthData? = runBlockingMaybeCancellable {
     doGetAuthData(project, url, login)
   }

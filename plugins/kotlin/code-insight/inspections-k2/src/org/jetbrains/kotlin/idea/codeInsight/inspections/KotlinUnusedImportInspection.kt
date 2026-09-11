@@ -82,7 +82,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         return KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)
     }
 
-    @RequiresBackgroundThread
+    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
     private fun scheduleOptimizeImportsOnTheFly(file: KtFile, data: KotlinOptimizeImportsFacility.ImportData) {
         if (!KotlinCodeInsightWorkspaceSettings.getInstance(file.project).optimizeImportsOnTheFly) return
         val optimizedImports = KotlinOptimizeImportsFacility.getInstance().prepareOptimizedImports(file, data) ?: return // return if already optimized

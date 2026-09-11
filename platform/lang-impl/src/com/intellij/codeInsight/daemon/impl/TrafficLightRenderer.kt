@@ -157,13 +157,13 @@ open class TrafficLightRenderer private constructor(
     @JvmField val shouldHighlight: Boolean,
   )
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun getPsiFile(): PsiFile? {
     val context = getContext()
     return PsiDocumentManager.getInstance(project).getPsiFile(document, context)
   }
 
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   private fun getContext(): CodeInsightContext {
     return if (editor != null) {
       EditorContextManager.getEditorContext(editor, project)
@@ -180,7 +180,7 @@ open class TrafficLightRenderer private constructor(
      * `errorCount[index]` equals to a number of highlighters of severity with index `idx` in this markup model.
      * Severity index can be obtained via [SeverityRegistrar.getSeverityIdx].
      */
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     get() {
       val severities = severityRegistrar.allSeverities
       val cachedErrors = IntArray(severities.size)
@@ -278,8 +278,8 @@ open class TrafficLightRenderer private constructor(
       return getDaemonCodeAnalyzerStatus(this.severityRegistrar)
     }
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   protected open fun getDaemonCodeAnalyzerStatus(severityRegistrar: SeverityRegistrar): DaemonCodeAnalyzerStatus {
     // this method is rather expensive and PSI-related, need to execute in BGT and cache the result to show in EDT later
     ThreadingAssertions.assertBackgroundThread()
@@ -679,7 +679,7 @@ open class TrafficLightRenderer private constructor(
       }
     }
 
-    @RequiresReadLock
+    @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun doComputeTrafficLightRendererInfo(
       psiFile: PsiFile,
       project: Project,

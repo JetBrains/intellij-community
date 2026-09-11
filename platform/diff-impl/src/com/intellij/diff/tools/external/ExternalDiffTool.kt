@@ -103,7 +103,7 @@ object ExternalDiffTool {
   }
 
   @JvmStatic
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun showIfNeeded(project: Project?,
                    chain: DiffRequestChain,
                    hints: DiffDialogHints): Boolean {

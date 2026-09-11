@@ -14,7 +14,7 @@ import java.util.IdentityHashMap
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class LegacyPluginDetailsPresenter @RequiresEdt constructor(
+internal class LegacyPluginDetailsPresenter @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   private val host: LegacyPluginUiHost,
   private val searchListener: LinkListener<Any>,
 ) : PluginDetailsPresenter {
@@ -33,7 +33,7 @@ internal class LegacyPluginDetailsPresenter @RequiresEdt constructor(
     layout.show(root, activeMode.name)
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun render(mode: PluginDetailsMode, selection: List<PluginDetailsSelection>) {
     check(!closed) { "Plugin details presenter is closed" }
     val selectedRows = selection.map {
@@ -63,7 +63,7 @@ internal class LegacyPluginDetailsPresenter @RequiresEdt constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun beforeRowRelease(occurrenceId: PluginOccurrenceId, row: PluginRow) {
     if (closed) return
     require(row is LegacyPluginRow) { "Legacy details require a legacy plugin row" }
@@ -79,7 +79,7 @@ internal class LegacyPluginDetailsPresenter @RequiresEdt constructor(
     }
   }
 
-  @RequiresEdt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun close() {
     if (closed) return
     closed = true

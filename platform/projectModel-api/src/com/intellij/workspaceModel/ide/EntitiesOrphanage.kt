@@ -34,7 +34,7 @@ import org.jetbrains.annotations.ApiStatus
 interface EntitiesOrphanage {
   val currentSnapshot: ImmutableEntityStorage
 
-  @RequiresWriteLock
+  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
   fun update(updater: (MutableEntityStorage) -> Unit)
 
   companion object {

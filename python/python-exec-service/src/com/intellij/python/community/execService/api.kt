@@ -74,7 +74,7 @@ data class BinOnTarget(
     workingDir: Path? = null,
   ) : this({ it.setExePath(exePath) }, target, workingDir)
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getLocalExePath(): Lazy<FullPathOnTarget> = lazy {
     val targetedCommandLineBuilder = TargetedCommandLineBuilder(target.createEnvironmentRequest(null))
     configureTargetCmdLine.invoke(targetedCommandLineBuilder)
