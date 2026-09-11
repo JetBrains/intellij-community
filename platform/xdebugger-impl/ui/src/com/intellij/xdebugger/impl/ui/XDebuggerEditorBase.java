@@ -718,14 +718,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     ReadAction.nonBlocking(() -> {
         // if a user typed something while createDocument, this read action will be canceled
         // and re-run. We must make sure that the next attempt picks up the expression with the user changes
-        String text = dummyDocument.getText();
-        XExpression expression = text.equals(initialExpression.getExpression())
-                                 ? initialExpression
-                                 // we expect that only text can change between (re)scheduled runs:
-                                 // pseudo-imports cannot be added to dummyDocument as there's no PSI yet,
-                                 // and new imports in the relevant real file will be accounted in myContext
-                                 : XExpressionImpl.changeText(initialExpression, text);
-        return createDocument(expression);
+        return createDocument(getOrCreateExpressionWithLatestText(dummyDocument, initialExpression));
       })
       .inSmartMode(getProject())
       .finishOnUiThread(ModalityState.any(), document -> {
@@ -740,5 +733,28 @@ public abstract class XDebuggerEditorBase implements Expandable {
       })
       .coalesceBy(this)
       .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  /**
+   * Get the {@link XExpression} with the latest user changes, or initialExpression
+   * if the expression is not changed since its creation.
+   * See {@link #DUMMY_DOCUMENT} for further details.
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  protected XExpression getOrCreateExpressionWithLatestText(@NotNull Document document,
+                                                            @NotNull XExpression initialExpression) {
+    if (Boolean.TRUE.equals(document.getUserData(DUMMY_DOCUMENT))) {
+      String text = document.getText();
+      return text.equals(initialExpression.getExpression())
+             ? initialExpression
+             // we expect that only text can change between (re)scheduled runs:
+             // pseudo-imports cannot be added to dummyDocument as there's no PSI yet,
+             // and new imports in the relevant real file will be accounted in myContext
+             : XExpressionImpl.changeText(initialExpression, text);
+    }
+
+    return getEditorsProvider().createExpression(
+      getProject(), document, initialExpression.getLanguage(), initialExpression.getMode());
   }
 }

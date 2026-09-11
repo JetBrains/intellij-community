@@ -269,8 +269,8 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     @Override
     public XExpression getItem() {
       Object item = myDelegate.getItem();
-      if (item instanceof Document document && !Boolean.TRUE.equals(document.getUserData(DUMMY_DOCUMENT))) { // sometimes null on Mac
-        return getEditorsProvider().createExpression(getProject(), document, myExpression.getLanguage(), myExpression.getMode());
+      if (item instanceof Document document) { // sometimes null on Mac
+        return getOrCreateExpressionWithLatestText(document, myExpression);
       }
       return null;
     }

@@ -124,7 +124,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
 
   @Override
   public XExpression getExpression() {
-    return getEditorsProvider().createExpression(getProject(), myEditorTextField.getDocument(), myExpression.getLanguage(), myExpression.getMode());
+    return getOrCreateExpressionWithLatestText(myEditorTextField.getDocument(), myExpression);
   }
 
   @Override
