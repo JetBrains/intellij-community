@@ -24,6 +24,7 @@ import org.toml.lang.psi.TomlKey
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable
+import org.toml.lang.psi.TomlTableHeader
 import org.toml.lang.psi.TomlValue
 
 object TomlJsonPsiWalker : JsonLikePsiWalker {
@@ -50,11 +51,14 @@ object TomlJsonPsiWalker : JsonLikePsiWalker {
                 current is TomlKeySegment && parent is TomlKey -> {
                     // forceLastTransition as true is used in inspections, whether as false is used in completion
                     // to skip the last segment as it may not have been typed completely yet
-                    if (current != element || forceLastTransition) {
-                        position.addPrecedingStep(current.name)
-                    }
-                    for (segment in parent.segments.takeWhile { it != current }.asReversed()) {
-                        position.addPrecedingStep(segment.name)
+                    val segments = parent.segments.takeWhile { it != current } +
+                        if (current != element || forceLastTransition) listOf(current) else emptyList()
+                    if (parent.parent is TomlTableHeader) {
+                        segments.mapTo(tableHeaderSegments) { it.name }
+                    } else {
+                        for (segment in segments.asReversed()) {
+                            position.addPrecedingStep(segment.name)
+                        }
                     }
                 }
                 current is TomlKeyValue && parent is TomlHeaderOwner -> {
