@@ -489,6 +489,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <directorySearchEngine implementation="com.intellij.find.impl.DefaultDirectorySearchEngine"/>
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager" open="true"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager" open="true"
