@@ -810,7 +810,7 @@ class PluginDetailsPageComponent private constructor(
       setFirstTabOffset(JBUI.scale(layout.tabStripLeftInset))
       setPaintFocus(true)
       setUiDecorator(object : UiDecorator {
-        override fun getDecoration() = UiDecorator.UiDecoration(labelInsets = JBUI.insets(8))
+        override fun getDecoration() = UiDecorator.UiDecoration(labelInsets = JBUI.insets(8, 8, 12, 8))
       })
       showBorder = true
     }
