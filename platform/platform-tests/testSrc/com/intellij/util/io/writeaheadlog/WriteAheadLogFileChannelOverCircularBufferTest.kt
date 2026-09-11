@@ -27,6 +27,7 @@ import org.junit.jupiter.api.RepetitionInfo
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.channels.Channels.newInputStream
 import java.nio.channels.FileChannel
 import java.nio.channels.FileChannel.open
@@ -769,6 +770,41 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
   }
 
   @Test
+  fun `reopen after circular buffer implementation version change resets WAL`(@TempDir tempDir: Path) {
+    val caseDir = tempDir.resolve("wal")
+    Files.createDirectories(caseDir)
+
+    val initialContent = byteArrayOf(1, 2, 3, 4)
+    val storageFile = caseDir.resolve("storage.bin")
+    Files.write(storageFile, initialContent)
+    val storagePath = storageFile.toRealPath()
+
+    open(storagePath, READ, WRITE).use { channel ->
+      val channelsAccessor = channelsAccessor(storagePath, channel)
+
+      openWriteAheadLogWithoutAutoFlushOnClose(caseDir, channelsAccessor).useWithoutFlushing { writeAheadLog ->
+        writeAheadLog.openFor(storagePath).write(1, byteArrayOf(9, 8), 0, 2)
+      }
+
+      writeCircularBufferImplementationVersion(walBufferPath(caseDir), 1)
+
+      openPersistentWriteAheadLog(caseDir, channelsAccessor).use { reopenedWriteAheadLog ->
+        assertFalse(reopenedWriteAheadLog.hasUnfinished(), "A new WAL must not contain records from an incompatible buffer")
+        assertEquals(0, reopenedWriteAheadLog.flush(), "A new WAL must have no records to apply")
+      }
+    }
+
+    assertArrayEquals(initialContent, readAllBytes(storagePath), "The incompatible WAL record must not change the target file")
+    openPathsEnumerator(caseDir).use { pathsEnumerator ->
+      assertEquals(
+        DataEnumerator.NULL_ID,
+        pathsEnumerator.tryEnumerate(storagePath),
+        "A new path enumerator must not contain paths from an incompatible WAL",
+      )
+    }
+  }
+
+  @Test
   fun `reopen with unfinished records and missing paths enumerator fails as corrupted`(@TempDir tempDir: Path) {
     val caseDir = tempDir.resolve("wal")
     Files.createDirectories(caseDir)
@@ -820,6 +856,19 @@ class WriteAheadLogFileChannelOverCircularBufferTest {
       Thread.sleep(10)
     }
     assertTrue(condition(), "Async flusher must apply pending WAL records")
+  }
+
+  private fun writeCircularBufferImplementationVersion(storagePath: Path, implementationVersion: Int) {
+    val versionBytes = ByteBuffer.allocate(Int.SIZE_BYTES)
+      .order(ByteOrder.nativeOrder())
+      .putInt(implementationVersion)
+      .flip()
+    open(storagePath, WRITE).use { channel ->
+      channel.position(Int.SIZE_BYTES.toLong())
+      while (versionBytes.hasRemaining()) {
+        channel.write(versionBytes)
+      }
+    }
   }
 
 

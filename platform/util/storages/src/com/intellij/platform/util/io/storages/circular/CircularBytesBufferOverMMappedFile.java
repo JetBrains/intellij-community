@@ -54,7 +54,7 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
   private static final Logger LOG = Logger.getInstance(CircularBytesBufferOverMMappedFile.class);
 
   private static final ValueLayout.OfInt INT32_VALUE_LAYOUT = ValueLayout.JAVA_INT.withOrder(nativeOrder());
-  private static final ValueLayout.OfLong INT64_UNALIGNED_VALUE_LAYOUT = ValueLayout.JAVA_LONG_UNALIGNED.withOrder(nativeOrder());
+  private static final ValueLayout.OfLong INT64_VALUE_LAYOUT = ValueLayout.JAVA_LONG.withOrder(nativeOrder());
 
   ///=======================================================================================================================
   ///Implementation details:
@@ -647,15 +647,14 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
   private static final class HeaderLayout {
 
     private static final MemoryLayout LAYOUT = MemoryLayout.structLayout(
-      INT32_VALUE_LAYOUT.withName("magicWord"),
-      INT32_VALUE_LAYOUT.withName("implementationVersion"),
-      INT32_VALUE_LAYOUT.withName("pageSize"),
-      INT64_UNALIGNED_VALUE_LAYOUT.withName("headCursor"),
-      INT64_UNALIGNED_VALUE_LAYOUT.withName("tailCursor"),
-      INT32_VALUE_LAYOUT.withName("flags"),
-      MemoryLayout.paddingLayout(32)
-    ).withName("CircularBytesBuffer.HeaderLayout")
-     .withByteAlignment(Integer.BYTES);
+        INT32_VALUE_LAYOUT.withName("magicWord"),
+        INT32_VALUE_LAYOUT.withName("implementationVersion"),
+        INT32_VALUE_LAYOUT.withName("pageSize"),
+        INT32_VALUE_LAYOUT.withName("flags"),
+        INT64_VALUE_LAYOUT.withName("headCursor"),
+        INT64_VALUE_LAYOUT.withName("tailCursor"),
+        MemoryLayout.paddingLayout(32)
+    ).withName("CircularBytesBuffer.HeaderLayout");
 
     /** First header int32. It identifies this storage file type. */
     private static final PathElement MAGIC_WORD_FIELD = groupElement("magicWord");
@@ -665,12 +664,12 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
      * The page size is part of the binary layout and must match when the storage opens again.
      */
     private static final PathElement PAGE_SIZE_FIELD = groupElement("pageSize");
+    /** The flags field currently stores only the closed-properly flag. */
+    private static final PathElement FLAGS_FIELD = groupElement("flags");
     /** Logical position of the first occupied record. The physical offset is {@code headCursor % capacity}. */
     private static final PathElement HEAD_CURSOR_FIELD = groupElement("headCursor");
     /** Logical position after the last occupied record. The physical offset is {@code tailCursor % capacity}. */
     private static final PathElement TAIL_CURSOR_FIELD = groupElement("tailCursor");
-    /** The flags field currently stores only the closed-properly flag. */
-    private static final PathElement FLAGS_FIELD = groupElement("flags");
 
     private static VarHandle fieldHandle(PathElement fieldPath) {
       return LAYOUT.varHandle(fieldPath).withInvokeExactBehavior();
@@ -679,13 +678,14 @@ public final class CircularBytesBufferOverMMappedFile implements CircularBytesBu
     private static final VarHandle MAGIC_WORD = fieldHandle(MAGIC_WORD_FIELD);
     private static final VarHandle IMPLEMENTATION_VERSION = fieldHandle(IMPLEMENTATION_VERSION_FIELD);
     private static final VarHandle PAGE_SIZE = fieldHandle(PAGE_SIZE_FIELD);
+    private static final VarHandle FLAGS = fieldHandle(FLAGS_FIELD);
     private static final VarHandle HEAD_CURSOR = fieldHandle(HEAD_CURSOR_FIELD);
     private static final VarHandle TAIL_CURSOR = fieldHandle(TAIL_CURSOR_FIELD);
-    private static final VarHandle FLAGS = fieldHandle(FLAGS_FIELD);
 
     private static final int FILE_MAGIC_WORD = IOUtil.asciiToMagicWord("CBBQ");
 
-    private static final int CURRENT_IMPLEMENTATION_VERSION = 1;
+    /// [1->2]: change in header fields order
+    private static final int CURRENT_IMPLEMENTATION_VERSION = 2;
 
     private static final int FLAG_CLOSED_PROPERLY_MASK = 0b1;
 
