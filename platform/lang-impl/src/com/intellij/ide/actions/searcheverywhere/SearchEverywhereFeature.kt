@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -12,7 +13,8 @@ object SearchEverywhereFeature {
 
   var isSplit: Boolean
     get() =
-      !ApplicationManager.getApplication().isInternal || Registry.`is`(PLATFORM_KEY, false)
+      // Consider the registry key value only for internal mode users and UI tests
+      !ApplicationManager.getApplication().isInternal && !ApplicationManagerEx.isInIntegrationTest() || Registry.`is`(PLATFORM_KEY, false)
 
     set(value) {
       Registry.get(PLATFORM_KEY).setValue(value)
