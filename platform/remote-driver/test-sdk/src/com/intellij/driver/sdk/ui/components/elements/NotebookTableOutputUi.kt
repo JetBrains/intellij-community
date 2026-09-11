@@ -37,7 +37,7 @@ class NotebookTableOutputUi(data: ComponentData) : UiComponent(data) {
     get() = x(xQuery { byClass("MyTableHeader") })
 
   val tableView: JTableUiComponent
-    get() = x("//div[@class='TableResultView']", JTableUiComponent::class.java)
+    get() = x("//div[@class='TableResultView' or @class='PrimaryTableResultView']", JTableUiComponent::class.java)
 
   fun goTopLevel(): Unit = tableBreadcrumbs.getAllTexts().first().click()
 

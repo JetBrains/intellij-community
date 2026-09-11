@@ -131,9 +131,9 @@ internal class FrozenColumnsController(
    * Prevents header drags from moving ahead of leading pinned placeholders.
    * Placeholders elsewhere remain crossable; programmatic moves are unrestricted.
    */
-  fun adjustColumnMoveTarget(view: TableResultView, targetIndex: Int): Int {
-    if (view !== primaryView || frozenView == null || view.tableHeader.draggedColumn == null) return targetIndex
-    val columns = view.columnModel
+  fun adjustColumnMoveTarget(targetIndex: Int): Int {
+    if (frozenView == null || primaryView.tableHeader.draggedColumn == null) return targetIndex
+    val columns = primaryView.columnModel
     var firstUnpinned = 0
     while (isPinnedPlaceholder(columns, firstUnpinned)) firstUnpinned++
     return maxOf(targetIndex, firstUnpinned)
@@ -342,7 +342,7 @@ internal class FrozenColumnsController(
   private fun createFrozenView(parent: TableScrollPane): TableResultView {
     originalCorner = parent.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER)
     originalLowerCorner = parent.getCorner(ScrollPaneConstants.LOWER_LEADING_CORNER)
-    val frozen = TableResultView(resultPanel, columnHeaderPopupActions, rowHeaderPopupActions, this)
+    val frozen = FrozenStripTableResultView(resultPanel, columnHeaderPopupActions, rowHeaderPopupActions, this)
     frozen.autoResizeMode = TableResultView.AUTO_RESIZE_OFF
     frozen.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
     frozen.cellSelectionEnabled = true

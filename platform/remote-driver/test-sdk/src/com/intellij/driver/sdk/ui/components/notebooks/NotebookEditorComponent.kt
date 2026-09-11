@@ -90,7 +90,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   val notebookCellExecutionInfos: List<JLabelUiComponent>
     get() = xx("//div[@accessiblename='ExecutionLabel']", JLabelUiComponent::class.java).list()
   val notebookTables: List<NotebookTableOutputUi>
-    get() = xx("//div[@class='LoadingDecoratorLayeredPaneImpl']/div[@class='JPanel'][descendant::div[@class='TableResultView']][descendant::div[@class='TwoSideComponent']]",
+    get() = xx("//div[@class='LoadingDecoratorLayeredPaneImpl']/div[@class='JPanel'][descendant::div[@class='TableResultView' or @class='PrimaryTableResultView']][descendant::div[@class='TwoSideComponent']]",
                NotebookTableOutputUi::class.java).list()
   val notebookPlots: List<LetsPlotComponent>
     get() = xx("//div[@class='LetsPlotComponent']", LetsPlotComponent::class.java).list()
