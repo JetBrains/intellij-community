@@ -880,8 +880,16 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .apache("https://github.com/JetBrains-Research/kinference/blob/master/LICENSE.txt")
     .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-  LibraryLicense("Kodein-DI", libraryName = "kodein-di-jvm", url = "https://github.com/kosi-libs/Kodein")
-    .mit("https://github.com/kosi-libs/Kodein/blob/master/LICENSE.txt"),
+  LibraryLicense("KMermaid", libraryName = "kmermaid", url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/kmermaid/")
+      .apache("https://www.apache.org/licenses/LICENSE-2.0")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+
+    LibraryLicense("KMermaid Merman", libraryName = "kmermaid-merman", url = "https://github.com/latias94/merman")
+      .apache("https://www.apache.org/licenses/LICENSE-2.0")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+
+    LibraryLicense("Kodein-DI", libraryName = "kodein-di-jvm", url = "https://github.com/kosi-libs/Kodein")
+      .mit("https://github.com/kosi-libs/Kodein/blob/master/LICENSE.txt"),
 
   LibraryLicense("kotlin-metadata", libraryName = "kotlin-metadata", url = "https://github.com/JetBrains/kotlin")
     .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
@@ -998,6 +1006,10 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
   LibraryLicense("Ktor Client Core", libraryName = "ktor-client-core", url = "https://github.com/ktorio/ktor/tree/main/ktor-client/ktor-client-core")
     .apache("https://github.com/ktorio/ktor/blob/main/LICENSE")
     .suppliedByOrganizations(Suppliers.JETBRAINS),
+
+    LibraryLicense("KUSVG", libraryName = "kusvg", url = "https://github.com/linebender/resvg")
+      .apache("https://www.apache.org/licenses/LICENSE-2.0")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
 
   LibraryLicense("kXML2", libraryName = "kxml2", url = "https://github.com/kobjects/kxml2/")
     .simplifiedBsd("https://github.com/kobjects/kxml2/blob/master/license.txt"),
