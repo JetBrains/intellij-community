@@ -8,7 +8,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -178,7 +178,7 @@ sealed class GitExecutable {
    * Ideally, can represent any git executable, either local or remote. Actual instantiation depends on the feature flags enabled.
    */
   data class Eel(val exeEelPath: EelPath, val eel: EelApi) : GitExecutable() {
-    override val exePath: String = exeEelPath.toString()
+    override val exePath: String = exeEelPath.asNioPath().pathString
     private val delegate = Local(exePath)
 
     override val id: @NonNls String = eel.descriptor.toString()
@@ -208,7 +208,7 @@ sealed class GitExecutable {
     override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, executableContext: GitExecutableContext) {
       if (executableContext.isWithLowPriority) setupLowPriorityExecution(commandLine, eel.platform is EelPlatform.Windows, nicePath = {
         GitConfigurationCache.getInstance().computeCachedValue(NiceKey(eel.descriptor)) {
-          runBlockingCancellable {
+          runBlockingMaybeCancellable {
             listOf("nice", "/usr/bin/nice").map {
               async { eel.exec.findExeFilesInPath(it) }
             }.awaitAll().flatten().firstOrNull()
@@ -217,7 +217,7 @@ sealed class GitExecutable {
       })
       if (isLocal && executableContext.isWithNoTty) setupNoTtyExecution(commandLine, wait = false, setSidPath = {
         GitConfigurationCache.getInstance().computeCachedValue(SetSidKey(eel.descriptor)) {
-          runBlockingCancellable {
+          runBlockingMaybeCancellable {
             listOf("setsid", "/usr/bin/setsid").map {
               async { eel.exec.findExeFilesInPath(it) }
             }.awaitAll().flatten().firstOrNull()
@@ -235,7 +235,7 @@ sealed class GitExecutable {
       if (userLocale != null) return userLocale
 
       val envMap = GitConfigurationCache.getInstance().computeCachedValue(EelSupportedLocaleKey(eel.descriptor)) {
-        runBlockingCancellable {
+        runBlockingMaybeCancellable {
           computeEelSupportedLocaleKey(eel)
         }
       }

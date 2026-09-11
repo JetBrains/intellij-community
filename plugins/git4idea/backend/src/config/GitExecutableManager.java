@@ -58,7 +58,9 @@ public class GitExecutableManager {
     if (project != null && (project.isDefault() || TrustedProjects.isProjectTrusted(project))) {
       path = GitVcsSettings.getInstance(project).getPathToGit();
     }
-    if (path == null) path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
+    if (path == null && !GitEelExecutableDetectionHelper.isNonLocalEelEnvironment(project, gitDirectory)) {
+      path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
+    }
     if (path == null) {
       path = myExecutableDetector.getExecutable(project, gitDirectory, detectIfNeeded);
     }
