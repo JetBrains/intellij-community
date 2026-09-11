@@ -259,10 +259,11 @@ class PopupRendererParitySpectreTest {
     }
 
     private suspend fun measure(custom: Boolean, case: Case): String {
+        val previousRenderer = JewelFlags.useCustomPopupRenderer
         JewelFlags.useCustomPopupRenderer = custom
         val app = MatrixApp(case.content)
-        app.start()
         try {
+            app.start()
             val driver = RobotDriver.synthetic(app.awaitWindow())
             val automator = ComposeAutomator.inProcess(driver)
             case.open(automator, driver)
@@ -279,6 +280,7 @@ class PopupRendererParitySpectreTest {
         } finally {
             app.stop()
             delay(500.milliseconds)
+            JewelFlags.useCustomPopupRenderer = previousRenderer
         }
     }
 
@@ -383,7 +385,7 @@ private class MatrixApp(private val content: @Composable () -> Unit) {
     }
 
     suspend fun awaitWindow(): ComposeWindow {
-        repeat(100) {
+        repeat(300) {
             window.get()?.let {
                 return it
             }
