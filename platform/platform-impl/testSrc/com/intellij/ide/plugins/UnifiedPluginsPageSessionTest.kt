@@ -999,8 +999,8 @@ internal class UnifiedPluginsPageSessionTest {
     header.doLayout()
 
     assertThat(searchComponent.width).isEqualTo(expectedNarrowSearchWidth)
-    assertThat(updateAllButton.x - searchComponent.run { x + width }).isEqualTo(JBUI.scale(8))
-    assertThat(settingsToolbar.x - updateAllButton.run { x + width }).isEqualTo(JBUI.scale(8))
+    assertThat(updateAllButton.x - searchComponent.run { x + width }).isEqualTo(JBUI.scale(4))
+    assertThat(settingsToolbar.x - updateAllButton.run { x + width }).isEqualTo(JBUI.scale(4))
     assertThat(settingsToolbar.bounds.x + settingsToolbar.width).isLessThanOrEqualTo(header.width)
   }
 

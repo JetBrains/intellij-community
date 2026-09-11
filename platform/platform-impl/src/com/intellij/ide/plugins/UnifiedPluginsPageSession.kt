@@ -537,7 +537,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
           gridy = 0
           fill = GridBagConstraints.HORIZONTAL
           anchor = GridBagConstraints.CENTER
-          insets = JBUI.insetsRight(8)
+          insets = JBUI.insetsRight(4)
         })
         add(
           updateAllButton.component,
@@ -546,7 +546,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
             gridy = 0
             fill = GridBagConstraints.NONE
             anchor = GridBagConstraints.CENTER
-            insets = JBUI.insetsRight(8)
+            insets = JBUI.insetsRight(4)
           },
         )
         add(
