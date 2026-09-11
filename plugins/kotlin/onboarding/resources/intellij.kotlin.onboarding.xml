@@ -34,14 +34,14 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.KotlinNewUserTracker"/>
-    <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.OnboardingFeedbackSurvey"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.KotlinDeveloperSurvey"/>
 
     <applicationSettings service="org.jetbrains.kotlin.onboarding.KotlinNewUserTracker"/>
   </extensions>
   <actions resource-bundle="messages.FeedbackBundle">
     <group id="OnboardingKotlin" internal="true">
-      <action id="org.jetbrains.kotlin.onboarding.ShowKotlinOnboardingFeedbackDialogAction"
-              class="org.jetbrains.kotlin.onboarding.ShowKotlinOnboardingFeedbackDialogAction" internal="true"/>
+      <action id="org.jetbrains.kotlin.onboarding.ShowKotlinDeveloperSurveyNotificationAction"
+              class="org.jetbrains.kotlin.onboarding.ShowKotlinDeveloperSurveyNotificationAction" internal="true"/>
       <add-to-group group-id="FeedbackDialogGroup" anchor="last"/>
     </group>
   </actions>
