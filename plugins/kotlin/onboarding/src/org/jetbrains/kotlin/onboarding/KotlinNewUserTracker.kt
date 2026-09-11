@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.ZoneOffset
 
 class KotlinNewUserTrackerState : BaseState() {
@@ -31,10 +30,6 @@ class KotlinNewUserTrackerState : BaseState() {
 @State(name = "KotlinNewUserTracker", storages = [Storage(value = "kotlin-onboarding.xml", roamingType = RoamingType.DISABLED)])
 class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState> {
     companion object {
-        // Offer survey after one week of using Kotlin
-        internal val NEW_USER_SURVEY_DELAY = Duration.ofDays(7)
-        internal val NEW_IDEA_USER_DURATION = Duration.ofDays(30)
-
         // How long we will classify a user as new
         internal val NEW_USER_DURATION = Duration.ofDays(30)
 
@@ -75,20 +70,6 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
         return LocalDate.of(year + 2000, month, day)
     }
 
-    /**
-     * This is needed temporarily so that the survey is only shown to users who are entirely new to IDEA.
-     * We will change it to also show it to old users who are new to Kotlin with an upcoming release.
-     */
-    internal fun isNewIdeaUser(): Boolean {
-        val installationDate = getInstallationDate()
-        if (installationDate == null) {
-            LOG.debug("Could not get InstallationId for IDEA installation")
-            return false
-        }
-        LOG.debug("Got user installation date: $installationDate")
-        return Duration.between(installationDate.atStartOfDay(ZoneId.systemDefault()).toInstant(), Instant.now()) <= NEW_IDEA_USER_DURATION
-    }
-
     override fun getState(): KotlinNewUserTrackerState = currentState
 
     override fun loadState(state: KotlinNewUserTrackerState) {
@@ -113,19 +94,10 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
         return Duration.between(newUserStart, Instant.now()) <= NEW_USER_DURATION
     }
 
-    internal fun shouldShowNewUserDialog(): Boolean {
-        if (currentState.firstKtFileOpened == 0L) return false
-        if (!isNewKtUser()) {
-            LOG.debug("Not showing new user dialog because the user is not a new Kotlin user")
-            return false
-        }
-
-        val newKtUserInstant = Instant.ofEpochSecond(currentState.newKtUserSince)
-        val durationSinceNewKtUser = Duration.between(newKtUserInstant, Instant.now())
-
-        LOG.debug("Duration since user became a new Kotlin user: ${durationSinceNewKtUser.toDays()} day(s)")
-        return durationSinceNewKtUser > NEW_USER_SURVEY_DELAY
-    }
+    /**
+     * Returns true when the user opened a Kotlin file at least once in this installation.
+     */
+    internal fun hasUsedKotlin(): Boolean = currentState.firstKtFileOpened != 0L
 
     private fun checkForNewKtUser() {
         if (isNewKtUser()) {
