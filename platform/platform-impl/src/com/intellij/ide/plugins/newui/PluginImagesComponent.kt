@@ -43,6 +43,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.GraphicsDevice
 import java.awt.Image
+import java.awt.Insets
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.RenderingHints
@@ -258,7 +259,7 @@ class PluginImagesComponent : JPanel {
       val parent = getParent()
       val myParent = myParent
       if (parent != null && myParent != null) {
-        return myParent.getWidth() - parent.insets.left
+        return calculatePluginImagesFullWidth(myParent.width, parent.insets)
       }
       return getWidth()
     }
@@ -581,6 +582,10 @@ class PluginImagesComponent : JPanel {
     private const val PREV_IMAGE = -3
     private const val FULL_SCREEN = -4
   }
+}
+
+internal fun calculatePluginImagesFullWidth(viewportWidth: Int, parentInsets: Insets): Int {
+  return (viewportWidth - parentInsets.left - parentInsets.right).coerceAtLeast(0)
 }
 
 private class ReferencedImages(private val images: List<ReferencedImage>) {
