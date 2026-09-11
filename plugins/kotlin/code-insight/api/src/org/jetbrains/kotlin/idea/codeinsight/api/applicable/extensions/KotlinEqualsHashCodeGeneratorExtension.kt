@@ -100,6 +100,11 @@ interface KotlinEqualsHashCodeGeneratorExtension {
      */
     fun isExtensionTemplate(name: String): Boolean
 
+    /**
+     * Checks if the user can edit the member tables for the selected template.
+     *
+     * [name] is the template base name.
+     */
     fun isExtensionTemplateFieldsEditable(name: String): Boolean = false
 }
 
