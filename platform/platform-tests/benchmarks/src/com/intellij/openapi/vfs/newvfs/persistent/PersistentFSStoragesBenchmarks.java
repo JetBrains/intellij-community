@@ -33,7 +33,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE;
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE;
 import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.CREATE;
@@ -214,13 +214,13 @@ public class PersistentFSStoragesBenchmarks {
   @State(Scope.Benchmark)
   public static class FSRecordsOverMMappedFileState {
 
-    private PersistentFSRecordsLockFreeOverMMappedFile storage;
+    private PersistentFSRecordsOverMMappedFile storage;
 
     @Setup
     public void setup(FileState fileState) throws IOException {
       storage = MMappedFileStorageFactory.withDefaults()
         .pageSize(DEFAULT_MAPPED_CHUNK_SIZE)
-        .wrapStorageSafely(fileState.file, PersistentFSRecordsLockFreeOverMMappedFile::new);
+        .wrapStorageSafely(fileState.file, PersistentFSRecordsOverMMappedFile::new);
       for (int i = 0; i < RECORDS_COUNT; i++) {
         storage.allocateRecord();
       }

@@ -16,14 +16,14 @@ abstract class PersistentFSRecordsStorageFactory(val id: Int) : StorageFactory<P
 
 
   /** Currently the default impl */
-  data class OverMMappedFile(val pageSize: Int = PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE,
+  data class OverMMappedFile(val pageSize: Int = PersistentFSRecordsOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE,
                              val acquireStorageOwnership: Boolean = true)
     : PersistentFSRecordsStorageFactory(id = 0) {
 
-    override fun open(storagePath: Path): PersistentFSRecordsLockFreeOverMMappedFile = MMappedFileStorageFactory.withDefaults()
+    override fun open(storagePath: Path): PersistentFSRecordsOverMMappedFile = MMappedFileStorageFactory.withDefaults()
       .pageSize(pageSize)
-      .wrapStorageSafely<PersistentFSRecordsLockFreeOverMMappedFile, IOException>(storagePath) { mappedFileStorage ->
-        val recordsStorage = PersistentFSRecordsLockFreeOverMMappedFile(mappedFileStorage)
+      .wrapStorageSafely<PersistentFSRecordsOverMMappedFile, IOException>(storagePath) { mappedFileStorage ->
+        val recordsStorage = PersistentFSRecordsOverMMappedFile(mappedFileStorage)
 
         if (acquireStorageOwnership) {
           try {

@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 
 @ApiStatus.Internal
 public final class PersistentFSHeaders {
+  //TODO RC: move this header offsets to PersistentFSRecordsInMemoryStorage
   //@formatter:off
   static final int HEADER_VERSION_OFFSET                  =  0;  // int32
   static final int HEADER_RESERVED_OFFSET_1               =  4;  // int32

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.OwnershipInfo;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsOverMMappedFile.OwnershipInfo;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -15,12 +15,12 @@ import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
-public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
-  extends PersistentFSRecordsStorageTestBase<PersistentFSRecordsLockFreeOverMMappedFile> {
+public class PersistentFSRecordsStorageOverMMappedFileTest
+  extends PersistentFSRecordsStorageTestBase<PersistentFSRecordsOverMMappedFile> {
 
   private static final int MAX_RECORDS_TO_INSERT = 1 << 22;
 
-  private static final int PAGE_SIZE = PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE;
+  private static final int PAGE_SIZE = PersistentFSRecordsOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE;
 
   @Parameterized.Parameters(name = "{index}: {0}")
   public static UpdateAPIMethod[] METHODS_TO_TEST() {
@@ -32,26 +32,26 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
 
 
 
-  public PersistentFSRecordsStorageLockFreeOverMMappedFileTest(UpdateAPIMethod updateMethodToTest) {
+  public PersistentFSRecordsStorageOverMMappedFileTest(UpdateAPIMethod updateMethodToTest) {
     super(MAX_RECORDS_TO_INSERT, updateMethodToTest);
   }
 
 
   @NotNull
   @Override
-  protected PersistentFSRecordsLockFreeOverMMappedFile openStorage(@NotNull Path storagePath) throws IOException {
+  protected PersistentFSRecordsOverMMappedFile openStorage(@NotNull Path storagePath) throws IOException {
     return MMappedFileStorageFactory.withDefaults()
-      .pageSize(PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE)
-      .wrapStorageSafely(storagePath, PersistentFSRecordsLockFreeOverMMappedFile::new);
+      .pageSize(PersistentFSRecordsOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE)
+      .wrapStorageSafely(storagePath, PersistentFSRecordsOverMMappedFile::new);
   }
 
   @Test
   public void recordAreAlwaysAlignedFullyOnSinglePage() {
-    int enoughRecords = (PAGE_SIZE / PersistentFSRecordsLockFreeOverMMappedFile.RecordLayout.RECORD_SIZE_IN_BYTES) * 16;
+    int enoughRecords = (PAGE_SIZE / PersistentFSRecordsOverMMappedFile.RecordLayout.RECORD_SIZE_IN_BYTES) * 16;
 
     for (int recordId = 0; recordId < enoughRecords; recordId++) {
       long recordOffsetInFile = storage.recordOffsetInFileUnchecked(recordId);
-      long recordEndOffsetInFile = recordOffsetInFile + PersistentFSRecordsLockFreeOverMMappedFile.RecordLayout.RECORD_SIZE_IN_BYTES - 1;
+      long recordEndOffsetInFile = recordOffsetInFile + PersistentFSRecordsOverMMappedFile.RecordLayout.RECORD_SIZE_IN_BYTES - 1;
       assertEquals(
         "Record(#" + recordId + ", offset: " + recordOffsetInFile + ") must start and end on a same page",
         recordOffsetInFile / PAGE_SIZE,
@@ -62,9 +62,9 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
 
   @Test
   public void recordOffsetCalculatedByStorageIsConsistentWithPlainCalculation() {
-    int enoughRecords = (PAGE_SIZE / PersistentFSRecordsLockFreeOverMMappedFile.RecordLayout.RECORD_SIZE_IN_BYTES) * 16;
+    int enoughRecords = (PAGE_SIZE / PersistentFSRecordsOverMMappedFile.RecordLayout.RECORD_SIZE_IN_BYTES) * 16;
 
-    long expectedRecordOffsetInFile = PersistentFSRecordsLockFreeOverMMappedFile.FileHeader.HEADER_SIZE;
+    long expectedRecordOffsetInFile = PersistentFSRecordsOverMMappedFile.FileHeader.HEADER_SIZE;
     for (int recordId = PersistentFSRecordsStorage.NULL_ID + 1; recordId < enoughRecords; recordId++) {
 
       long recordOffsetInFile = storage.recordOffsetInFileUnchecked(recordId);
@@ -73,8 +73,8 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
                    recordOffsetInFile
       );
 
-      expectedRecordOffsetInFile += PersistentFSRecordsLockFreeOverMMappedFile.RecordLayout.RECORD_SIZE_IN_BYTES;
-      if (PAGE_SIZE - (expectedRecordOffsetInFile % PAGE_SIZE) < PersistentFSRecordsLockFreeOverMMappedFile.RecordLayout.RECORD_SIZE_IN_BYTES) {
+      expectedRecordOffsetInFile += PersistentFSRecordsOverMMappedFile.RecordLayout.RECORD_SIZE_IN_BYTES;
+      if (PAGE_SIZE - (expectedRecordOffsetInFile % PAGE_SIZE) < PersistentFSRecordsOverMMappedFile.RecordLayout.RECORD_SIZE_IN_BYTES) {
         expectedRecordOffsetInFile = (expectedRecordOffsetInFile / PAGE_SIZE + 1) * PAGE_SIZE;
       }
     }
@@ -83,7 +83,7 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
   /** Protects the persistent header and record formats from unintended layout changes. */
   @Test
   public void memoryLayoutsMatchPersistentFileFormat() {
-    var headerLayout = PersistentFSRecordsLockFreeOverMMappedFile.FileHeader.LAYOUT;
+    var headerLayout = PersistentFSRecordsOverMMappedFile.FileHeader.LAYOUT;
     assertEquals("The header version offset must stay compatible", 0L, headerLayout.byteOffset(groupElement("version")));
     assertEquals("The allocated records offset must stay compatible", 4L, headerLayout.byteOffset(groupElement("recordsAllocated")));
     assertEquals("The global modification count offset must stay compatible", 8L, headerLayout.byteOffset(groupElement("globalModCount")));
@@ -95,7 +95,7 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
     assertEquals("The header flags offset must stay compatible", 36L, headerLayout.byteOffset(groupElement("flags")));
     assertEquals("The header size must stay compatible", 40L, headerLayout.byteSize());
 
-    var recordLayout = PersistentFSRecordsLockFreeOverMMappedFile.RecordLayout.LAYOUT;
+    var recordLayout = PersistentFSRecordsOverMMappedFile.RecordLayout.LAYOUT;
     assertEquals("The parent reference offset must stay compatible", 0L, recordLayout.byteOffset(groupElement("parentRef")));
     assertEquals("The name reference offset must stay compatible", 4L, recordLayout.byteOffset(groupElement("nameRef")));
     assertEquals("The record flags offset must stay compatible", 8L, recordLayout.byteOffset(groupElement("flags")));

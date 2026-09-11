@@ -25,11 +25,10 @@ import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.nio.ByteOrder.nativeOrder;
 
 /** Implementation uses memory-mapped file (real one, not our emulation of it via {@link com.intellij.util.io.FilePageCache}) */
-//TODO RC: rename to shorter PersistentFSRecordsOverMMappedFile
 @ApiStatus.Internal
-public final class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSRecordsStorage,
-                                                                         IPersistentFSRecordsStorage,
-                                                                         Unmappable {
+public final class PersistentFSRecordsOverMMappedFile implements PersistentFSRecordsStorage,
+                                                                 IPersistentFSRecordsStorage,
+                                                                 Unmappable {
   /**
    * How many un-allocated records (i.e. after {@link #maxAllocatedID()}) to check to be empty (all-zero)
    * by default, if wasClosedProperly=true.
@@ -104,7 +103,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     //@formatter:on
   }
 
-  public static final int NULL_OWNER_PID = 0;
+
 
   @VisibleForTesting
   @ApiStatus.Internal
@@ -152,6 +151,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   public static final int DEFAULT_MAPPED_CHUNK_SIZE = getIntProperty("vfs.records-storage.memory-mapped.mapped-chunk-size", 1 << 26);//64Mb
+
+  public static final int NULL_OWNER_PID = 0;
 
   private final @NotNull MMappedFileStorage storage;
   /** Cached page(0) for faster access */
@@ -206,7 +207,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   private volatile int owningProcessId = 0;
 
-  public PersistentFSRecordsLockFreeOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
+  public PersistentFSRecordsOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
     int pageSize = storage.pageSize();
     if (pageSize < FileHeader.HEADER_SIZE) {
       throw new IllegalArgumentException("pageSize(=" + pageSize + ") must fit header(=" + FileHeader.HEADER_SIZE + " b)");
@@ -297,12 +298,12 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     private final int recordId;
     private final long recordOffsetInPage;
     private final transient MemorySegment pageSegment;
-    private final @NotNull PersistentFSRecordsLockFreeOverMMappedFile records;
+    private final @NotNull PersistentFSRecordsOverMMappedFile records;
 
     private RecordAccessor(int recordId,
                            int recordOffsetInPage,
                            Page recordPage,
-                           @NotNull PersistentFSRecordsLockFreeOverMMappedFile records) {
+                           @NotNull PersistentFSRecordsOverMMappedFile records) {
       this.recordId = recordId;
       this.recordOffsetInPage = recordOffsetInPage;
       pageSegment = recordPage.rawPageSegment();
@@ -351,6 +352,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
     @Override
     public @PersistentFS.Attributes int getFlags() {
+      //noinspection MagicConstant
       return getIntField(RecordLayout.FLAGS);
     }
 
@@ -429,9 +431,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   private static final class HeaderAccessor implements HeaderForUpdate {
-    private final @NotNull PersistentFSRecordsLockFreeOverMMappedFile records;
+    private final @NotNull PersistentFSRecordsOverMMappedFile records;
 
-    private HeaderAccessor(@NotNull PersistentFSRecordsLockFreeOverMMappedFile records) { this.records = records; }
+    private HeaderAccessor(@NotNull PersistentFSRecordsOverMMappedFile records) { this.records = records; }
 
     @Override
     public long getTimestamp() {
@@ -439,7 +441,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     }
 
     @Override
-    public int getVersion() throws IOException {
+    public int getVersion() {
       return records.getVersion();
     }
 
@@ -523,6 +525,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   @Override
   public @PersistentFS.Attributes int getFlags(int recordId) throws IOException {
+    //noinspection MagicConstant
     return getIntField(recordId, RecordLayout.FLAGS);
   }
 
