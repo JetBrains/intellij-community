@@ -36,6 +36,15 @@ data class XStackFrameDto(
   val captionInfo: XStackFrameCaptionInfo = XStackFrameCaptionInfo.noInfo,
   val backgroundColor: XStackFrameBackgroundColor? = null,
   val canDrop: ThreeState,
+  /**
+   * Tells a client to hide this frame when the client handles frame filtering.
+   *
+   * `XDebuggerDataViewSettings.isShowLibraryStackFrames` must be `true` to include frames marked for hiding in the response.
+   * [ComputeFramesConfig.includeLibraryFrames] updates this setting before the backend computes the frames.
+   *
+   * Debug adapter maps `true` to the `subtle` presentation hint which clients (ex. VS Code) use to collapse hidden frames.
+   */
+  val shouldHide: Boolean = false,
 )
 
 @ApiStatus.Internal
