@@ -15,8 +15,8 @@ internal class UnifiedPluginsPageFeatureTest {
   }
 
   @Test
-  fun `density variant uses the baseline by default`() {
-    assertThat(UnifiedPluginsPageFeature.densityVariant()).isEqualTo(UnifiedPluginsPageDensityVariant.Baseline)
+  fun `density variant uses 32 pixel icons by default`() {
+    assertThat(UnifiedPluginsPageFeature.densityVariant()).isEqualTo(UnifiedPluginsPageDensityVariant.Icons32)
   }
 
   @Test
