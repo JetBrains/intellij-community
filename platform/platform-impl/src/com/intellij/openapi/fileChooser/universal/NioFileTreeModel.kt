@@ -270,7 +270,7 @@ class NioFileTreeModel(
       if (attrs != null) {
         var icon: Icon? =
           if (isDirectory) PlatformIcons.FOLDER_ICON
-          else FileTypeRegistry.getInstance().getFileTypeByFileName(p.toString()).icon
+          else FileTypeRegistry.getInstance().getFileTypeByFileName(p.fileName?.toString() ?: p.toString()).icon
         val isSymlink = attrs.isSymbolicLink
         if (isSymlink && icon != null) {
           icon = PredefinedIconOverlayService.getInstance().createSymlinkIcon(icon)
@@ -289,7 +289,7 @@ class NioFileTreeModel(
       else {
         var icon: Icon? =
           if (isDirectory) PlatformIcons.FOLDER_ICON
-          else FileTypeRegistry.getInstance().getFileTypeByFileName(p.toString()).icon
+          else FileTypeRegistry.getInstance().getFileTypeByFileName(p.fileName?.toString() ?: p.toString()).icon
         val isSymlink = Files.isSymbolicLink(p)
         if (isSymlink && icon != null) {
           icon = PredefinedIconOverlayService.getInstance().createSymlinkIcon(icon)
