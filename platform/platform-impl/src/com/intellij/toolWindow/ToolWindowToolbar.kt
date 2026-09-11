@@ -137,7 +137,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
   }
 
   internal open fun getStripeFor(screenPoint: Point): StripeV2? {
-    if (!isShowing) {
+    if (rootPane?.isShowing != true) {
       return null
     }
     if (topStripe.containsPoint(screenPoint)) {
