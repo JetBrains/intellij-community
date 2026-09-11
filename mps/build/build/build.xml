@@ -159,7 +159,8 @@
       <arg value="--transform=s,^dist.all/,,"/>
       <arg value="--transform=s,^temp/,lib/,"/>
       <arg value="--transform=s,^dist\.\([^/]*\)/,__overlay__/\1/,"/>
-
+      <arg value="--exclude=plugin-classpath.txt"/>
+      
       <!--Begin files and directories-->
       <arg value="--"/>
 
