@@ -84,7 +84,6 @@ class RootKindMatcherImpl(private val project: Project) : RootKindMatcher {
                 includeProjectSourceFiles = filter.includeProjectSourceFiles && includeProjectSourceFilesForScripts,
                 includeLibrarySourceFiles = filter.includeLibrarySourceFiles && includeLibrariesForScripts,
                 includeLibraryClassFiles = filter.includeLibraryClassFiles && includeLibrariesForScripts,
-                includeScriptDependencies = filter.includeScriptDependencies && includeLibrariesForScripts,
                 includeScriptsOutsideSourceRoots = filter.includeScriptsOutsideSourceRoots && includeEverything
             )
         } else {

@@ -26,8 +26,7 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
         - multiple editors can be opened (selected is only one of them)
         */
 
-        if (RootKindMatcher.matches(project, file, RootKindFilter.libraryFiles.copy(includeScriptDependencies = false)))
-            return null
+        if (RootKindMatcher.matches(project, file, RootKindFilter.libraryFiles)) return null
 
         val scriptDependenciesProvider = ScriptConfigurationsProviderImpl.getInstance(project)
 

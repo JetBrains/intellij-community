@@ -144,7 +144,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
             override fun isSearchInLibraries() = true
             override fun contains(file: VirtualFile) = !FileTypeRegistry.getInstance().isFileOfType(file, KotlinBuiltInFileType)
         }
-        return KotlinSourceFilterScope.projectSourcesAndLibraryClasses(scope, project).intersectWith(noBuiltInsScope)
+        return KotlinSourceFilterScope.projectFiles(scope, project).intersectWith(noBuiltInsScope)
     }
     //endregion
 
