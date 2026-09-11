@@ -18,9 +18,12 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
@@ -134,26 +137,31 @@ internal class LspServerConfigurable(
         configuration.socketPort = parseSocketPortArgument(configuration.arguments) ?: 0
       }
 
-      group(LspUiBundle.message("lsp.settings.server.files.association.group")) {
-        row {
-          val patternsPanel = LspPatternsPanel().also { it.setPatterns(configuration.filePatterns) }
-          cell(patternsPanel)
-            .align(AlignX.FILL)
-            .resizableColumn()
-            .bind(
-              componentGet = { it.getPatterns() },
-              componentSet = { component, value -> component.setPatterns(value) },
-              MutableProperty(getter = { configuration.filePatterns }, setter = { configuration.filePatterns = it })
-            )
-          panel {}
-        }.topGap(TopGap.MEDIUM)
-      }
+      row {
+        label(LspUiBundle.message("lsp.settings.server.file.patterns"))
+      }.topGap(TopGap.MEDIUM)
+
+      row {
+        val patternsPanel = LspPatternsPanel().also { it.setPatterns(configuration.filePatterns) }
+        cell(patternsPanel)
+          .align(AlignX.FILL)
+          .resizableColumn()
+          .bind(
+            componentGet = { it.getPatterns() },
+            componentSet = { component, value -> component.setPatterns(value) },
+            MutableProperty(getter = { configuration.filePatterns }, setter = { configuration.filePatterns = it })
+          )
+        panel {}
+      }.bottomGap(BottomGap.SMALL)
 
       row {
         label(LspUiBundle.message("lsp.settings.server.init"))
       }
       row {
         cell(initializationOptionsEditor.component)
+          .applyToComponent {
+            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.NONE)
+          }
           .align(AlignX.FILL)
           .resizableColumn()
           .comment(LspUiBundle.message("lsp.settings.server.init.comment"))

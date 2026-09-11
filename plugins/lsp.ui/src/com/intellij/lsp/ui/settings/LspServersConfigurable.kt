@@ -31,6 +31,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import javax.swing.JComponent
 import javax.swing.tree.TreeNode
 
 private const val LSP_PLUGIN_SEARCH_TAG = "/tag:\"Language Server\""
@@ -262,7 +263,12 @@ internal class LspServersConfigurable(private val project: Project) : MasterDeta
 
     override fun getBannerSlogan(): String = serverConfiguration.name
 
-    override fun createOptionsPanel() = JBScrollPane(getServerConfigurable().createComponent())
+    override fun createOptionsPanel(): JComponent {
+      val content = getServerConfigurable().createComponent().apply {
+        border = JBUI.Borders.emptyLeft(10)
+      }
+      return JBScrollPane(content)
+    }
 
     override fun getDisplayName(): String = serverConfiguration.name.ifEmpty { LspUiBundle.message("lsp.settings.default.name") }
 

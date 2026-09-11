@@ -5,7 +5,6 @@ import com.intellij.lsp.ui.LspUiBundle
 import com.intellij.openapi.fileTypes.FileNameMatcher
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.ListUtil
 import com.intellij.ui.ToolbarDecorator
@@ -43,11 +42,6 @@ class LspPatternsPanel : JPanel(BorderLayout()) {
     scrollPane.border = JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1)
     add(scrollPane, BorderLayout.CENTER)
 
-    border = IdeBorderFactory.createTitledBorder(
-      LspUiBundle.message("lsp.settings.server.file.patterns"),
-      false,
-      JBUI.insetsTop(8)
-    ).setShowLine(false)
   }
 
   fun getPatterns(): String {

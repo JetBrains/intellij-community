@@ -27,12 +27,17 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
+import javax.swing.JComponent
 
 internal class PluginLspServerConfigurable(
   private val project: Project,
@@ -131,29 +136,34 @@ internal class PluginLspServerConfigurable(
         }
       }
 
-      group(LspUiBundle.message("lsp.settings.server.files.association.group")) {
-        row {
-          val patternsPanel = LspPatternsPanel().also { it.setPatterns(configuration.filePatterns.joinToString(";")) }
-          cell(patternsPanel)
-            .align(AlignX.FILL)
-            .resizableColumn()
-            .bind(
-              componentGet = { it.getPatterns().split(";").filter(String::isNotBlank) },
-              componentSet = { component, value -> component.setPatterns(value.joinToString(";")) },
-              MutableProperty(
-                getter = { configuration.filePatterns },
-                setter = { configuration = configuration.copy(filePatterns = it) },
-              )
+      row {
+        label(LspUiBundle.message("lsp.settings.server.file.patterns"))
+      }.topGap(TopGap.MEDIUM)
+
+      row {
+        val patternsPanel = LspPatternsPanel().also { it.setPatterns(configuration.filePatterns.joinToString(";")) }
+        cell(patternsPanel)
+          .align(AlignX.FILL)
+          .resizableColumn()
+          .bind(
+            componentGet = { it.getPatterns().split(";").filter(String::isNotBlank) },
+            componentSet = { component, value -> component.setPatterns(value.joinToString(";")) },
+            MutableProperty(
+              getter = { configuration.filePatterns },
+              setter = { configuration = configuration.copy(filePatterns = it) },
             )
-          panel {}
-        }.topGap(TopGap.MEDIUM)
-      }
+          )
+        panel {}
+      }.bottomGap(BottomGap.SMALL)
 
       row {
         label(LspUiBundle.message("lsp.settings.server.init"))
       }
       row {
         cell(initializationOptionsEditor.component)
+          .applyToComponent {
+            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.NONE)
+          }
           .align(Align.FILL)
           .resizableColumn()
           .comment(LspUiBundle.message("lsp.settings.server.init.comment"))
@@ -190,7 +200,12 @@ internal class PluginLspServerNamedConfigurable(
 
   override fun getBannerSlogan(): String = configuration.name
 
-  override fun createOptionsPanel() = JBScrollPane(getServerConfigurable().createComponent())
+  override fun createOptionsPanel(): JComponent {
+    val content = getServerConfigurable().createComponent().apply {
+      border = JBUI.Borders.emptyLeft(10)
+    }
+    return JBScrollPane(content)
+  }
 
   override fun getDisplayName(): String = configuration.name
 
