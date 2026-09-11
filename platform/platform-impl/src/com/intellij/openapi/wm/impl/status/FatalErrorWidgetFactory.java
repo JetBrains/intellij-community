@@ -10,11 +10,10 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.UIBundle;
-import org.jetbrains.annotations.ApiStatus;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public final class FatalErrorWidgetFactory implements StatusBarWidgetFactory, LightEditCompatible {
+final class FatalErrorWidgetFactory implements StatusBarWidgetFactory, LightEditCompatible {
   @Override
   public @NotNull String getId() {
     return IdeMessagePanel.FATAL_ERROR;
@@ -26,8 +25,8 @@ public final class FatalErrorWidgetFactory implements StatusBarWidgetFactory, Li
   }
 
   @Override
-  public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
-    return new IdeMessagePanel(WindowManager.getInstance().getIdeFrame(project), MessagePool.getInstance());
+  public @NotNull StatusBarWidget createWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
+    return new IdeMessagePanel(WindowManager.getInstance().getIdeFrame(project), MessagePool.getInstance(), scope);
   }
 
   @Override

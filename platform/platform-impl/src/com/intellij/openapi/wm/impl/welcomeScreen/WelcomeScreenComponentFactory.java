@@ -31,6 +31,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder;
 import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.ClickListener;
@@ -310,7 +311,8 @@ public final class WelcomeScreenComponentFactory {
   }
 
   public static JComponent createErrorsLink(@NotNull Disposable parent) {
-    IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance());
+    var scope = ApplicationManager.getApplication().getService(CoreUiCoroutineScopeHolder.class).coroutineScope;
+    IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance(), scope);
     panel.getComponent().setBorder(JBUI.Borders.emptyRight(13));
     Disposer.register(parent, panel);
     return panel.getComponent();
@@ -397,7 +399,8 @@ public final class WelcomeScreenComponentFactory {
   public static @NotNull JComponent createNotificationToolbar(@NotNull Disposable parentDisposable) {
     var horizontalGap = 4;
 
-    IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance());
+    var scope = ApplicationManager.getApplication().getService(CoreUiCoroutineScopeHolder.class).coroutineScope;
+    IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance(), scope);
     Disposer.register(parentDisposable, panel);
 
     DefaultActionGroup group = new DefaultActionGroup(panel.getAction(), new NotificationEventAction(parentDisposable));

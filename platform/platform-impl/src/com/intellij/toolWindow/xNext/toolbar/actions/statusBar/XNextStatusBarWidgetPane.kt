@@ -4,7 +4,9 @@ package com.intellij.toolWindow.xNext.toolbar.actions.statusBar
 import com.intellij.diagnostic.IdeMessagePanel
 import com.intellij.diagnostic.MessagePool
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.launchOnShow
@@ -30,8 +32,8 @@ internal class XNextStatusBarWidgetPane {
       weightx = 0.0
       fill = GridBagConstraints.NONE
     }
-
-    val messagePanel = IdeMessagePanel(null, MessagePool.getInstance())
+    val scope = service<CoreUiCoroutineScopeHolder>().coroutineScope
+    val messagePanel = IdeMessagePanel(null, MessagePool.getInstance(), scope)
     widgetPanel.add(messagePanel.component, constraints)
     val showInEditor = ProgressPlaceChecker.getInstance().showInEditor
 
