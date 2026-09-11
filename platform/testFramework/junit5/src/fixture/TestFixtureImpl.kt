@@ -32,6 +32,10 @@ class TestFixtureImpl<T>(
 
   private val explicitDependencies = LinkedHashSet<TestFixture<*>>()
 
+  fun isInitialized(): Boolean {
+    return (_state as? Deferred<*>)?.isCompleted == true
+  }
+
   override fun get(): T {
     try {
       @Suppress("UNCHECKED_CAST", "TestOnlyProblems")
