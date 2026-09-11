@@ -6,4 +6,3 @@ class Foo {
         <caret>@get:Deprecated("", level = DeprecationLevel.ERROR) get
 }
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUseSiteTargetFix
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUseSiteTargetFix

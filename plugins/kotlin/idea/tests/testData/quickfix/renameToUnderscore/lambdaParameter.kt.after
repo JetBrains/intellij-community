@@ -10,5 +10,4 @@ fun bar() {
     }
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RenameToUnderscoreFix
 // FUS_K2_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix

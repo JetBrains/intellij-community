@@ -5,5 +5,4 @@ fun test() {
     var list = listOf(1)
     list +=<caret> 2
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix

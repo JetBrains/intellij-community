@@ -14,5 +14,4 @@ fun place() {
     val transactions = listOf(Transaction(Item(10.0, EUR), Item(10.0, EUR)))
     return BookKee<caret>per(transactions)
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

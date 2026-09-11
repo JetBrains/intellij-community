@@ -12,5 +12,4 @@ fun test(foo: Foo?) {
     val f = foo?.bar::f<caret>
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

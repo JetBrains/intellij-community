@@ -14,5 +14,4 @@ suspend fun main() {
     v = null;
 }
 
-// FUS_QUICKFIX_NAME: com.intellij.codeInspection.actions.CleanupInspectionIntention
 // FUS_K2_QUICKFIX_NAME: com.intellij.codeInspection.actions.CleanupInspectionIntention

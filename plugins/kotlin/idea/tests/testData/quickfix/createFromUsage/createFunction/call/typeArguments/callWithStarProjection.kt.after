@@ -1,5 +1,4 @@
 // "Create function 'foo'" "true"
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 // K2_AFTER_ERROR: PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT
 // K2_AFTER_ERROR: WRONG_NUMBER_OF_TYPE_ARGUMENTS

@@ -13,5 +13,4 @@ class B<TElement>(t: TElement) : A<caret><TElement>(t)
 fun b() {
     A<Int>(42)
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageInWholeProjectFix

@@ -15,5 +15,4 @@ class KTest {
         var urlPattern = urlMapping<caret>.substring(123)
         urlPattern = abc
         urlPattern = abc(urlPattern, 1)
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveRedundantInitializerFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.VariableInitializerIsRedundantInspection$createQuickFix$1

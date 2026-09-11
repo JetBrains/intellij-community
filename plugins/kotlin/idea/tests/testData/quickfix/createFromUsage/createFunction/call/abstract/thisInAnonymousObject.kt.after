@@ -1,5 +1,4 @@
 // "Create abstract function 'A.bar'" "true"
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 // ERROR: Object is not abstract and does not implement abstract member public abstract fun bar(): Unit defined in A
 // K2_AFTER_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED

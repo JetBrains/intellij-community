@@ -3,5 +3,4 @@
 // K2_ERROR: INAPPLICABLE_JVM_FIELD
 const val three = 3
 <caret>@JvmField private val text = "${2 + three}"
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceJvmFieldWithConstFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceJvmFieldWithConstFix
