@@ -1,16 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
-import java.lang.invoke.MethodHandles;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemoryLayout.PathElement;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
@@ -36,63 +37,91 @@ import static java.nio.file.StandardOpenOption.WRITE;
 @TestOnly
 public final class PersistentFSRecordsOverInMemoryStorage implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
 
-  //MAYBE RC: convert it to FFM API (MemorySegments/MemoryLayout) -- doesn't have a lot of value, since the class is just for
-  //          testing, but may still worth it just for unification
+  private static final ValueLayout.OfInt  INT32_VALUE_LAYOUT = ValueLayout.JAVA_INT.withOrder(nativeOrder());
+  private static final ValueLayout.OfLong INT64_VALUE_LAYOUT = ValueLayout.JAVA_LONG.withOrder(nativeOrder());
 
-  /* ================ HEADER FIELDS LAYOUT ======================================================== */
+  private static final class HeaderLayout {
+    static final MemoryLayout LAYOUT = MemoryLayout.structLayout(
+      INT32_VALUE_LAYOUT.withName("version"),
+      INT32_VALUE_LAYOUT.withName("globalModCount"),
+      INT64_VALUE_LAYOUT.withName("timestamp"),
+      INT32_VALUE_LAYOUT.withName("errorsAccumulated"),
+      INT32_VALUE_LAYOUT.withName("flags")
+    ).withName("PersistentFSRecords.InMemoryHeaderLayout")
+     .withByteAlignment(8);//The header size keeps records aligned to int64.
 
-  public static final class HeaderLayout {
     //@formatter:off
-    static final int HEADER_VERSION_OFFSET                  =  0;  // int32
-    static final int HEADER_GLOBAL_MOD_COUNT_OFFSET         =  4;  // int32
+    static final PathElement VERSION_FIELD            = groupElement("version");
+    static final PathElement GLOBAL_MOD_COUNT_FIELD   = groupElement("globalModCount");
+    static final PathElement TIMESTAMP_FIELD          = groupElement("timestamp");
+    static final PathElement ERRORS_ACCUMULATED_FIELD = groupElement("errorsAccumulated");
+    static final PathElement FLAGS_FIELD              = groupElement("flags");
+    //@formatter:on
 
-    static final int HEADER_TIMESTAMP_OFFSET                =  8;  // int64
-    static final int HEADER_ERRORS_ACCUMULATED_OFFSET       = 16;  // int32
-    static final int HEADER_FLAGS_OFFSET                    = 20;  // int32
+    private static VarHandle fieldHandle(PathElement fieldPath) {
+      return LAYOUT.varHandle(fieldPath).withInvokeExactBehavior();
+    }
 
-    //reserve a few bytes of header for the generations to come
-    //Header size must be int64-aligned, so records start on int64-aligned offset
-    static final int HEADER_SIZE                            = 40;
+    //@formatter:off
+    static final VarHandle VERSION                    = fieldHandle(VERSION_FIELD);
+    static final VarHandle GLOBAL_MOD_COUNT           = fieldHandle(GLOBAL_MOD_COUNT_FIELD);
+    static final VarHandle TIMESTAMP                  = fieldHandle(TIMESTAMP_FIELD);
+    static final VarHandle ERRORS_ACCUMULATED         = fieldHandle(ERRORS_ACCUMULATED_FIELD);
+    static final VarHandle FLAGS                      = fieldHandle(FLAGS_FIELD);
 
 
-    @MagicConstant(flagsFromClass = PersistentFSHeaders.class)
-    @Target(ElementType.TYPE_USE)
-    public @interface HeaderOffset {}
-
+    //The header size keeps records aligned to int64
+    static final int HEADER_SIZE                      = Math.toIntExact(LAYOUT.byteSize());
     //@formatter:on
   }
 
-  /* ================ RECORD FIELDS LAYOUT ======================================================== */
+  private static final class RecordLayout {
+    static final MemoryLayout LAYOUT = MemoryLayout.structLayout(
+      INT32_VALUE_LAYOUT.withName("parentRef"),
+      INT32_VALUE_LAYOUT.withName("nameRef"),
+      INT32_VALUE_LAYOUT.withName("flags"),
+      INT32_VALUE_LAYOUT.withName("attributeRef"),
+      INT32_VALUE_LAYOUT.withName("contentRef"),
+      INT32_VALUE_LAYOUT.withName("modCount"),
+      INT64_VALUE_LAYOUT.withName("timestamp"),
+      INT64_VALUE_LAYOUT.withName("length")
+    ).withName("PersistentFSRecords.InMemoryRecordLayout");
 
-  @VisibleForTesting
-  @ApiStatus.Internal
-  public static final class RecordLayout {
     //@formatter:off
-    static final int PARENT_REF_OFFSET        = 0;   //int32
-    static final int NAME_REF_OFFSET          = 4;   //int32
-    static final int FLAGS_OFFSET             = 8;   //int32
-    static final int ATTR_REF_OFFSET          = 12;  //int32
-    static final int CONTENT_REF_OFFSET       = 16;  //int32
-    static final int MOD_COUNT_OFFSET         = 20;  //int32
+    static final PathElement PARENT_REF_FIELD     = groupElement("parentRef");
+    static final PathElement NAME_REF_FIELD       = groupElement("nameRef");
+    static final PathElement FLAGS_FIELD          = groupElement("flags");
+    static final PathElement ATTR_REF_FIELD       = groupElement("attributeRef");
+    static final PathElement CONTENT_REF_FIELD    = groupElement("contentRef");
+    static final PathElement MOD_COUNT_FIELD      = groupElement("modCount");
+    /** The timestamp and length fields follow all int32 fields to keep the int64 fields aligned. */
+    static final PathElement TIMESTAMP_FIELD      = groupElement("timestamp");
+    static final PathElement LENGTH_FIELD         = groupElement("length");
+    //@formatter:on
 
-    //RC: moved TIMESTAMP 1 field down so both LONG fields are 8-byte aligned (for atomic accesses alignment is important)
-    static final int TIMESTAMP_OFFSET         = 24;  //int64
-    static final int LENGTH_OFFSET            = 32;  //int64
+    private static VarHandle fieldHandle(PathElement fieldPath) {
+      return LAYOUT.varHandle(fieldPath).withInvokeExactBehavior();
+    }
 
-    public static final int RECORD_SIZE_IN_BYTES     = 40;
+    //@formatter:off
+    static final VarHandle PARENT_REF             = fieldHandle(PARENT_REF_FIELD);
+    static final VarHandle NAME_REF               = fieldHandle(NAME_REF_FIELD);
+    static final VarHandle FLAGS                  = fieldHandle(FLAGS_FIELD);
+    static final VarHandle ATTR_REF               = fieldHandle(ATTR_REF_FIELD);
+    static final VarHandle CONTENT_REF            = fieldHandle(CONTENT_REF_FIELD);
+    static final VarHandle MOD_COUNT              = fieldHandle(MOD_COUNT_FIELD);
+    static final VarHandle TIMESTAMP              = fieldHandle(TIMESTAMP_FIELD);
+    static final VarHandle LENGTH                 = fieldHandle(LENGTH_FIELD);
+
+    static final int RECORD_SIZE_IN_BYTES         = Math.toIntExact(LAYOUT.byteSize());
     //@formatter:on
   }
-
-
-  /* ================ RECORD FIELDS LAYOUT end             ======================================== */
-
-  private static final VarHandle INT_HANDLE = MethodHandles.byteBufferViewVarHandle(int[].class, nativeOrder());
-  private static final VarHandle LONG_HANDLE = MethodHandles.byteBufferViewVarHandle(long[].class, nativeOrder());
 
 
   private final int maxRecords;
 
-  private final ByteBuffer records;
+  private final Arena recordsArena;
+  private final MemorySegment recordsMemorySegment;
   private final AtomicInteger allocatedRecordsCount = new AtomicInteger(0);
   //TODO RC: it would be better to directly access PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET position in a bytebuffer,
   //         but issue is with incrementAndGet(): VarHandle doesn't have this method. It could be emulated with CAS, but this is
@@ -106,44 +135,55 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   private final Path storagePath;
 
 
-  public PersistentFSRecordsOverInMemoryStorage(Path path,
+  public PersistentFSRecordsOverInMemoryStorage(@NotNull Path path,
                                                 int maxRecords) throws IOException {
     storagePath = Objects.requireNonNull(path, "path");
     if (maxRecords <= 0) {
       throw new IllegalArgumentException("maxRecords(=" + maxRecords + ") should be >0");
     }
     this.maxRecords = maxRecords;
-    //this.records = new UnsafeBuffer(maxRecords * RECORD_SIZE_IN_BYTES+ HEADER_SIZE);
-    this.records = ByteBuffer.allocateDirect(maxRecords * RecordLayout.RECORD_SIZE_IN_BYTES + HeaderLayout.HEADER_SIZE)
-      .order(nativeOrder());
+    var arena = Arena.ofShared();
+    try {
+      long recordsSize = Math.multiplyExact((long)maxRecords, RecordLayout.RECORD_SIZE_IN_BYTES);
+      long storageSize = Math.addExact(HeaderLayout.HEADER_SIZE, recordsSize);
+      MemorySegment records = arena.allocate(storageSize, RecordLayout.LAYOUT.byteAlignment());
 
-    if (Files.exists(path)) {
-      long fileSize = Files.size(path);
-      if (fileSize > records.capacity()) {
-        long recordsInFile = (fileSize - HeaderLayout.HEADER_SIZE) / RecordLayout.RECORD_SIZE_IN_BYTES;
-        throw new IllegalArgumentException(
-          "[" + path + "](=" + fileSize + "b) contains " + recordsInFile + " records > maxRecords(=" + maxRecords + ") " +
-          "=> can't load all the records from file!");
-      }
-
-      try (ByteChannel channel = Files.newByteChannel(path)) {
-        int actualBytesRead = channel.read(records);
-        if (actualBytesRead <= 0) {
-          allocatedRecordsCount.set(0);
+      if (Files.exists(path)) {
+        long fileSize = Files.size(path);
+        if (fileSize > records.byteSize()) {
+          long recordsInFile = (fileSize - HeaderLayout.HEADER_SIZE) / RecordLayout.RECORD_SIZE_IN_BYTES;
+          throw new IllegalArgumentException(
+            "[" + path + "](=" + fileSize + "b) contains " + recordsInFile + " records > maxRecords(=" + maxRecords + ") " +
+            "=> can't load all the records from file!");
         }
-        else {
-          int recordsRead = (actualBytesRead - HeaderLayout.HEADER_SIZE) / RecordLayout.RECORD_SIZE_IN_BYTES;
-          int recordExcess = (actualBytesRead - HeaderLayout.HEADER_SIZE) % RecordLayout.RECORD_SIZE_IN_BYTES;
-          if (recordExcess > 0) {
-            throw new IOException(
-              "[" + path + "] likely truncated: (" + actualBytesRead + "b) " +
-              " = (" + recordsRead + " whole records) + " + recordExcess + "b excess");
+
+        ByteBuffer recordsBuffer = records.asByteBuffer().order(nativeOrder());
+        try (ByteChannel channel = Files.newByteChannel(path)) {
+          int actualBytesRead = channel.read(recordsBuffer);
+          if (actualBytesRead <= 0) {
+            allocatedRecordsCount.set(0);
           }
-          allocatedRecordsCount.set(recordsRead);
+          else {
+            int recordsRead = (actualBytesRead - HeaderLayout.HEADER_SIZE) / RecordLayout.RECORD_SIZE_IN_BYTES;
+            int recordExcess = (actualBytesRead - HeaderLayout.HEADER_SIZE) % RecordLayout.RECORD_SIZE_IN_BYTES;
+            if (recordExcess > 0) {
+              throw new IOException(
+                "[" + path + "] likely truncated: (" + actualBytesRead + "b) " +
+                " = (" + recordsRead + " whole records) + " + recordExcess + "b excess");
+            }
+            allocatedRecordsCount.set(recordsRead);
+          }
         }
       }
+
+      globalModCount.set((int)HeaderLayout.GLOBAL_MOD_COUNT.getVolatile(records, 0L));
+      recordsArena = arena;
+      this.recordsMemorySegment = records;
     }
-    globalModCount.set(getIntHeaderField(HeaderLayout.HEADER_GLOBAL_MOD_COUNT_OFFSET));
+    catch (IOException | RuntimeException | Error e) {
+      arena.close();
+      throw e;
+    }
   }
 
   @Override
@@ -161,122 +201,116 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   public void setAttributeRecordId(int recordId,
                                    int recordRef) {
     checkValidIdField(recordId, recordRef, "attributeRecordId");
-    setIntField(recordId, RecordLayout.ATTR_REF_OFFSET, recordRef);
+    setIntField(recordId, RecordLayout.ATTR_REF, recordRef);
   }
 
   @Override
   public int getAttributeRecordId(int recordId) throws IOException {
-    return getIntField(recordId, RecordLayout.ATTR_REF_OFFSET);
+    return getIntField(recordId, RecordLayout.ATTR_REF);
   }
 
   @Override
   public int getParent(int recordId) throws IOException {
-    return getIntField(recordId, RecordLayout.PARENT_REF_OFFSET);
+    return getIntField(recordId, RecordLayout.PARENT_REF);
   }
 
   @Override
   public void setParent(int recordId,
                         int parentId) throws IOException {
     checkParentIdIsValid(parentId);
-    setIntField(recordId, RecordLayout.PARENT_REF_OFFSET, parentId);
+    setIntField(recordId, RecordLayout.PARENT_REF, parentId);
   }
 
   @Override
   public int getNameId(int recordId) throws IOException {
-    return getIntField(recordId, RecordLayout.NAME_REF_OFFSET);
+    return getIntField(recordId, RecordLayout.NAME_REF);
   }
 
   @Override
   public int updateNameId(int recordId,
                           int nameId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(nameId);
-    return setIntField(recordId, RecordLayout.NAME_REF_OFFSET, nameId);
+    return setIntField(recordId, RecordLayout.NAME_REF, nameId);
   }
 
 
   @Override
   public boolean setFlags(int recordId,
                           @PersistentFS.Attributes int newFlags) throws IOException {
-    int oldFlags = getIntField(recordId, RecordLayout.FLAGS_OFFSET);
+    int oldFlags = getIntField(recordId, RecordLayout.FLAGS);
     boolean reallyChanged = (oldFlags != newFlags);
     if (reallyChanged) {
-      setIntField(recordId, RecordLayout.FLAGS_OFFSET, newFlags);
+      setIntField(recordId, RecordLayout.FLAGS, newFlags);
     }
     return reallyChanged;
   }
 
   @Override
-  @SuppressWarnings("MagicConstant")
   public @PersistentFS.Attributes int getFlags(int recordId) throws IOException {
-    return getIntField(recordId, RecordLayout.FLAGS_OFFSET);
+    //noinspection MagicConstant
+    return getIntField(recordId, RecordLayout.FLAGS);
   }
 
   @Override
   public long getLength(int recordId) throws IOException {
-    return getLongField(recordId, RecordLayout.LENGTH_OFFSET);
+    return getLongField(recordId, RecordLayout.LENGTH);
   }
 
   @Override
   public boolean setLength(int recordId,
                            long newLength) throws IOException {
-    boolean reallyChanged = getLongField(recordId, RecordLayout.LENGTH_OFFSET) != newLength;
+    boolean reallyChanged = getLongField(recordId, RecordLayout.LENGTH) != newLength;
     if (reallyChanged) {
-      setLongField(recordId, RecordLayout.LENGTH_OFFSET, newLength);
+      setLongField(recordId, RecordLayout.LENGTH, newLength);
     }
     return reallyChanged;
   }
 
   @Override
   public long getTimestamp(int recordId) throws IOException {
-    return getLongField(recordId, RecordLayout.TIMESTAMP_OFFSET);
+    return getLongField(recordId, RecordLayout.TIMESTAMP);
   }
 
   @Override
   public boolean setTimestamp(int recordId,
                               long newTimestamp) throws IOException {
-    boolean reallyChanged = getLongField(recordId, RecordLayout.TIMESTAMP_OFFSET) != newTimestamp;
+    boolean reallyChanged = getLongField(recordId, RecordLayout.TIMESTAMP) != newTimestamp;
     if (reallyChanged) {
-      setLongField(recordId, RecordLayout.TIMESTAMP_OFFSET, newTimestamp);
+      setLongField(recordId, RecordLayout.TIMESTAMP, newTimestamp);
     }
     return reallyChanged;
   }
 
   @Override
   public int getModCount(int recordId) throws IOException {
-    return getIntField(recordId, RecordLayout.MOD_COUNT_OFFSET);
+    return getIntField(recordId, RecordLayout.MOD_COUNT);
   }
 
   @Override
   public void markRecordAsModified(int recordId) {
-    setIntField(recordId, RecordLayout.MOD_COUNT_OFFSET, globalModCount.incrementAndGet());
+    setIntField(recordId, RecordLayout.MOD_COUNT, globalModCount.incrementAndGet());
   }
 
   @Override
   public int getContentRecordId(int recordId) throws IOException {
-    return getIntField(recordId, RecordLayout.CONTENT_REF_OFFSET);
+    return getIntField(recordId, RecordLayout.CONTENT_REF);
   }
 
   @Override
   public boolean setContentRecordId(int recordId,
                                     int contentRef) {
     checkValidIdField(recordId, contentRef, "contentRecordId");
-    boolean reallyChanged = getIntField(recordId, RecordLayout.CONTENT_REF_OFFSET) != contentRef;
+    boolean reallyChanged = getIntField(recordId, RecordLayout.CONTENT_REF) != contentRef;
     if (reallyChanged) {
-      setIntField(recordId, RecordLayout.CONTENT_REF_OFFSET, contentRef);
+      setIntField(recordId, RecordLayout.CONTENT_REF, contentRef);
     }
     return reallyChanged;
   }
 
   @Override
   public void cleanRecord(int recordId) {
-    checkRecordId(recordId);
-    //fill record with zeros, by 4 bytes at once:
-    int recordStartAtBytes = recordOffsetInBytes(recordId, 0);
-    int recordSizeInInts = RecordLayout.RECORD_SIZE_IN_BYTES / Integer.BYTES;
-    for (int wordNo = 0; wordNo < recordSizeInInts; wordNo++) {
-      int offset = recordStartAtBytes + wordNo * Integer.BYTES;
-      INT_HANDLE.setVolatile(records, offset, 0);
-    }
+    long recordStartAtBytes = recordOffsetInBytes(recordId);
+    recordsMemorySegment.asSlice(recordStartAtBytes, RecordLayout.LAYOUT.byteSize()).fill((byte)0);
     markDirty();
   }
 
@@ -323,7 +357,7 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
 
   @Override
   public long getTimestamp() throws IOException {
-    return getLongHeaderField(HeaderLayout.HEADER_TIMESTAMP_OFFSET);
+    return getLongHeaderField(HeaderLayout.TIMESTAMP);
   }
 
   @Override
@@ -333,43 +367,43 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
 
   @Override
   public int getErrorsAccumulated() {
-    return getIntHeaderField(HeaderLayout.HEADER_ERRORS_ACCUMULATED_OFFSET);
+    return getIntHeaderField(HeaderLayout.ERRORS_ACCUMULATED);
   }
 
   @Override
   public void setErrorsAccumulated(int errors) {
-    setIntHeaderField(HeaderLayout.HEADER_ERRORS_ACCUMULATED_OFFSET, errors);
+    setIntHeaderField(HeaderLayout.ERRORS_ACCUMULATED, errors);
     globalModCount.incrementAndGet();
     dirty.compareAndSet(false, true);
   }
 
   @Override
   public void setVersion(int version) throws IOException {
-    setIntHeaderField(HeaderLayout.HEADER_VERSION_OFFSET, version);
-    setLongHeaderField(HeaderLayout.HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
+    setIntHeaderField(HeaderLayout.VERSION, version);
+    setLongHeaderField(HeaderLayout.TIMESTAMP, System.currentTimeMillis());
     globalModCount.incrementAndGet();
     dirty.compareAndSet(false, true);
   }
 
   @Override
   public int getVersion() throws IOException {
-    return getIntHeaderField(HeaderLayout.HEADER_VERSION_OFFSET);
+    return getIntHeaderField(HeaderLayout.VERSION);
   }
 
   @Override
   public int getFlags() throws IOException {
-    return getIntHeaderField(HeaderLayout.HEADER_FLAGS_OFFSET);
+    return getIntHeaderField(HeaderLayout.FLAGS);
   }
 
   @Override
   public boolean updateFlags(int flagsToAdd, int flagsToRemove) {
-    int currentFlags = (int)INT_HANDLE.getVolatile(records, HeaderLayout.HEADER_FLAGS_OFFSET);
+    int currentFlags = (int)HeaderLayout.FLAGS.getVolatile(recordsMemorySegment, 0L);
     int newFlags = (currentFlags & ~flagsToRemove) | flagsToAdd;
     if (newFlags == currentFlags) {
       return false;
     }
     //MAYBE RC: use CAS to make an update atomic?
-    INT_HANDLE.setVolatile(records, HeaderLayout.HEADER_FLAGS_OFFSET, newFlags);
+    HeaderLayout.FLAGS.setVolatile(recordsMemorySegment, 0L, newFlags);
     markDirty();
     return true;
   }
@@ -421,13 +455,10 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   @Override
   public void force() throws IOException {
     if (dirty.get()) {
-      setIntHeaderField(HeaderLayout.HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
+      setIntHeaderField(HeaderLayout.GLOBAL_MOD_COUNT, globalModCount.get());
 
       long actualDataLength = actualDataLength();
-      ByteBuffer actualRecordsToStore = records.duplicate();
-      actualRecordsToStore.position(0)
-        .limit((int)actualDataLength)
-        .order(records.order());
+      ByteBuffer actualRecordsToStore = recordsMemorySegment.asSlice(0, actualDataLength).asByteBuffer().order(nativeOrder());
       try (SeekableByteChannel channel = Files.newByteChannel(storagePath, WRITE, CREATE)) {
         channel.write(actualRecordsToStore);
       }
@@ -437,7 +468,17 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
 
   @Override
   public void close() throws IOException {
-    force();
+    if (!recordsArena.scope().isAlive()) {
+      return;
+    }
+    try {
+      force();
+    }
+    finally {
+      if (recordsArena.scope().isAlive()) {
+        recordsArena.close();
+      }
+    }
   }
 
   @Override
@@ -501,7 +542,6 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
 
     @Override
     public @PersistentFS.Attributes int getFlags() throws IOException {
-      //noinspection MagicConstant
       return records.getFlags(recordId);
     }
 
@@ -568,10 +608,6 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
     }
   }
 
-
-  //TODO RC: current implementation uses VarHandle as 'official' way. Unsafe could be (?) better way to do it, if performance proves itself
-  //         to be less than expected
-
   private void checkParentIdIsValid(int parentId) throws IndexOutOfBoundsException {
     if (parentId == NULL_ID) {
       //parentId could be NULL (for root records) -- this is the difference with checkRecordIdIsValid()
@@ -592,38 +628,37 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   }
 
   private void setLongField(int recordId,
-                            int fieldRelativeOffset,
+                            VarHandle fieldHandle,
                             long fieldValue) {
-    int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
-    LONG_HANDLE.setVolatile(records, offset, fieldValue);
+    long recordOffset = recordOffsetInBytes(recordId);
+    fieldHandle.setVolatile(recordsMemorySegment, recordOffset, fieldValue);
     markDirty();
   }
 
   private long getLongField(int recordId,
-                            int fieldRelativeOffset) {
-    int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
-    return (long)LONG_HANDLE.getVolatile(records, offset);
+                            VarHandle fieldHandle) {
+    long recordOffset = recordOffsetInBytes(recordId);
+    return (long)fieldHandle.getVolatile(recordsMemorySegment, recordOffset);
   }
 
   private int setIntField(int recordId,
-                          int fieldRelativeOffset,
+                          VarHandle fieldHandle,
                           int fieldValue) {
-    int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
-    int previousValue = (int)INT_HANDLE.getAndSet(records, offset, fieldValue);
+    long recordOffset = recordOffsetInBytes(recordId);
+    int previousValue = (int)fieldHandle.getAndSet(recordsMemorySegment, recordOffset, fieldValue);
     markDirty();
     return previousValue;
   }
 
   private int getIntField(int recordId,
-                          int fieldRelativeOffset) {
-    int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
-    return (int)INT_HANDLE.getVolatile(records, offset);
+                          VarHandle fieldHandle) {
+    long recordOffset = recordOffsetInBytes(recordId);
+    return (int)fieldHandle.getVolatile(recordsMemorySegment, recordOffset);
   }
 
-  private int recordOffsetInBytes(int recordId,
-                                  int fieldRelativeOffset) throws IndexOutOfBoundsException {
+  private long recordOffsetInBytes(int recordId) throws IndexOutOfBoundsException {
     checkRecordId(recordId);
-    return (RecordLayout.RECORD_SIZE_IN_BYTES * (recordId - 1) + fieldRelativeOffset) + HeaderLayout.HEADER_SIZE;
+    return (RecordLayout.RECORD_SIZE_IN_BYTES * (long)(recordId - 1)) + HeaderLayout.HEADER_SIZE;
   }
 
   private void checkRecordId(int recordId) throws IndexOutOfBoundsException {
@@ -634,36 +669,25 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
     }
   }
 
-  private void setLongHeaderField(@HeaderLayout.HeaderOffset int headerRelativeOffsetBytes,
+  private void setLongHeaderField(VarHandle fieldHandle,
                                   long headerValue) {
-    checkHeaderOffset(headerRelativeOffsetBytes);
-    LONG_HANDLE.setVolatile(records, headerRelativeOffsetBytes, headerValue);
+    fieldHandle.setVolatile(recordsMemorySegment, 0L, headerValue);
     markDirty();
   }
 
-  private long getLongHeaderField(@HeaderLayout.HeaderOffset int headerRelativeOffsetBytes) {
-    checkHeaderOffset(headerRelativeOffsetBytes);
-    return (long)LONG_HANDLE.getVolatile(records, headerRelativeOffsetBytes);
+  private long getLongHeaderField(VarHandle fieldHandle) {
+    return (long)fieldHandle.getVolatile(recordsMemorySegment, 0L);
   }
 
-  private void setIntHeaderField(@HeaderLayout.HeaderOffset int headerRelativeOffsetBytes,
+  private void setIntHeaderField(VarHandle fieldHandle,
                                  int headerValue) {
-    checkHeaderOffset(headerRelativeOffsetBytes);
-    INT_HANDLE.setVolatile(records, headerRelativeOffsetBytes, headerValue);
+    fieldHandle.setVolatile(recordsMemorySegment, 0L, headerValue);
     markDirty();
   }
 
 
-  private int getIntHeaderField(@HeaderLayout.HeaderOffset int headerRelativeOffsetBytes) {
-    checkHeaderOffset(headerRelativeOffsetBytes);
-    return (int)INT_HANDLE.getVolatile(records, headerRelativeOffsetBytes);
-  }
-
-  private static void checkHeaderOffset(int headerRelativeOffset) {
-    if (!(0 <= headerRelativeOffset && headerRelativeOffset < HeaderLayout.HEADER_SIZE)) {
-      throw new IndexOutOfBoundsException(
-        "headerFieldOffset(=" + headerRelativeOffset + ") is outside of header [0, " + HeaderLayout.HEADER_SIZE + ") ");
-    }
+  private int getIntHeaderField(VarHandle fieldHandle) {
+    return (int)fieldHandle.getVolatile(recordsMemorySegment, 0L);
   }
 
   private void markDirty() {
