@@ -48,6 +48,24 @@ class WindowsPathUtilsTest {
     assertEquals(rootPath.resolve(expected.replace("\\", File.separator)), result)
   }
 
+  @Suppress("NonAsciiCharacters")
+  @ParameterizedTest
+  @CsvSource(
+    textBlock = """
+      /mount,             /, C:\,                        /mount/@/C
+      /mount/,            /, D:\Program Files\проект,    /mount/@/D/Program Files/проект
+      /mount,             /, \\server\share,             /mount/server/share
+      /mount,             /, \\server\share\dir,         /mount/server/share/dir
+      \\virtual.ij\mount, \, C:\,                        \\virtual.ij\mount\@\C
+      \\virtual.ij\mount\,\, D:\Program Files\проект,    \\virtual.ij\mount\@\D\Program Files\проект
+      \\virtual.ij\mount, \, \\server\share,             \\virtual.ij\mount\server\share
+      \\virtual.ij\mount, \, \\server\share\dir,         \\virtual.ij\mount\server\share\dir"""
+  )
+  fun `Windows path formatting does not create NIO paths`(mount: String, separator: String, path: String, expected: String) {
+    val eelPath = EelPath.parse(path, TestEelDescriptor(EelOsFamily.Windows))
+    assertEquals(expected, WindowsPathUtils.getNioPathString(mount, eelPath, separator))
+  }
+
   @ParameterizedTest
   @CsvSource(
     textBlock = """

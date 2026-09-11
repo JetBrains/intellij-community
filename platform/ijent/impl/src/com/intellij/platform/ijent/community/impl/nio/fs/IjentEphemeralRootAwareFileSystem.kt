@@ -197,7 +197,7 @@ class IjentEphemeralRootAwarePath(
           rootPath.resolve(other).pathString
         }
         EelOsFamily.Windows -> {
-          WindowsPathUtils.resolveEelPathOntoRoot(rootPath, (originalPath as AbsoluteIjentNioPath).eelPath).pathString
+          WindowsPathUtils.getNioPathString(rootPath.toString(), (originalPath as AbsoluteIjentNioPath).eelPath, fileSystem.separator)
         }
       }
 

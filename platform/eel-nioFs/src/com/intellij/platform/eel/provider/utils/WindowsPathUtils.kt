@@ -83,6 +83,11 @@ object WindowsPathUtils {
    * `\\server.share\dir\` -> `\\some.ij\mount\server.share\dir\`
    */
   fun resolveEelPathOntoRoot(root: Path, eelPath: EelPath): Path {
+    return root.fileSystem.getPath(getNioPathString(root.toString(), eelPath, root.fileSystem.separator))
+  }
+
+  /** Returns the encoded Windows path under [root] without creating a NIO path. */
+  fun getNioPathString(root: String, eelPath: EelPath, separator: String): String {
     val rootParts = if (WINDOWS_DRIVE_PREFIX_REGEX.containsMatchIn(eelPath.root.toString())) {
       listOf(DRIVE_PATH_PREPEND, eelPath.root.toString().take(1))
     }
@@ -91,7 +96,7 @@ object WindowsPathUtils {
     } else {
       error("Unsupported root: ${eelPath.root}")
     }
-    return (rootParts + eelPath.parts).fold(root, Path::resolve)
+    return (rootParts + eelPath.parts).joinToString(separator, prefix = root.removeSuffix(separator) + separator)
   }
 
   /**
