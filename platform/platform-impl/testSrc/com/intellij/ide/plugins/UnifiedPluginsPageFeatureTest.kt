@@ -46,20 +46,4 @@ internal class UnifiedPluginsPageFeatureTest {
     assertThat(variant.collapsedItemLimit).isEqualTo(2)
     assertThat(variant.compactRows).isFalse()
   }
-
-  @Test
-  fun `section header uses the full header by default`() {
-    assertThat(UnifiedPluginsPageFeature.sectionHeaderVariant())
-      .isEqualTo(UnifiedPluginsSectionHeaderVariant.FullHeader)
-  }
-
-  @Test
-  @RegistryKey(
-    key = UnifiedPluginsPageFeature.SECTION_HEADER_REGISTRY_KEY,
-    value = "[Link only*|Full header]",
-  )
-  fun `section header can use the link only variant`() {
-    assertThat(UnifiedPluginsPageFeature.sectionHeaderVariant())
-      .isEqualTo(UnifiedPluginsSectionHeaderVariant.LinkOnly)
-  }
 }

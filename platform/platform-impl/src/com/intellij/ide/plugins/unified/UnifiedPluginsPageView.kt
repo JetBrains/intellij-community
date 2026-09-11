@@ -4,7 +4,6 @@ package com.intellij.ide.plugins.unified
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
-import com.intellij.ide.plugins.UnifiedPluginsSectionHeaderVariant
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.extensions.PluginId
@@ -88,7 +87,6 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
   onSearchControl: (UnifiedPluginSearchControlIntent) -> Unit = {},
   private val onBundledCategoryAction: (BundledPluginCategoryGroupState) -> Unit = {},
   private val createBundledCategoryPromotion: (String) -> JComponent? = { null },
-  private val sectionHeaderVariant: UnifiedPluginsSectionHeaderVariant = UnifiedPluginsSectionHeaderVariant.FullHeader,
 ) : AutoCloseable {
   private val searchField = SearchTextField(SEARCH_HISTORY_PROPERTY)
   private val searchToolbar = UnifiedPluginsSearchToolbar(onSearchControl)
@@ -218,7 +216,6 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
             onBundledCategoryAction = onBundledCategoryAction,
             createBundledCategoryPromotion = createBundledCategoryPromotion,
             realRows = rowFactory != null,
-            sectionHeaderVariant = sectionHeaderVariant,
           )
         }
         sectionView.render(section, state.query.revision, state.selectedOccurrences, viewportAnchor?.id)
@@ -498,7 +495,6 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     private val onBundledCategoryAction: (BundledPluginCategoryGroupState) -> Unit,
     private val createBundledCategoryPromotion: (String) -> JComponent?,
     private val realRows: Boolean,
-    private val sectionHeaderVariant: UnifiedPluginsSectionHeaderVariant,
   ) {
     private val model = DefaultListModel<PluginItemState>()
     private val titleLabel = JBLabel()
@@ -542,7 +538,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
       isOpaque = false
     }
     private val header: JComponent
-    private val fullHeaderButton: SectionHeaderButton?
+    private val fullHeaderButton: SectionHeaderButton
     private var items: List<PluginItemState> = emptyList()
     private var categoryGroups: List<BundledPluginCategoryGroupState> = emptyList()
     private var categoryGroupsByPluginId: Map<PluginId, BundledPluginCategoryGroupState> = emptyMap()
@@ -551,9 +547,6 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     private var renderedQueryRevision: Long? = null
     private var expanded = false
     private var fullTitle: @Nls String = ""
-    private val expansionLink = ActionLink().apply {
-      addActionListener { onExpansionChanged(id, !expanded) }
-    }
     private val expansionTextLabel = JBLabel().apply {
       foreground = UIUtil.getContextHelpForeground()
     }
@@ -601,25 +594,13 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
         SECTION_HEADER_BOTTOM_INSET,
         SECTION_HEADER_RIGHT_INSET,
       )
-      if (sectionHeaderVariant == UnifiedPluginsSectionHeaderVariant.LinkOnly) {
-        fullHeaderButton = null
-        header = JPanel(BorderLayout()).apply {
-          isOpaque = false
-          border = contentBorder
-          add(titleAndStatus, BorderLayout.CENTER)
-          add(expansionLink, BorderLayout.EAST)
-        }
+      fullHeaderButton = SectionHeaderButton { onExpansionChanged(id, !expanded) }.apply {
+        setContentBorder(contentBorder)
+        addContent(titleAndStatus, BorderLayout.CENTER)
+        addContent(expansionControl, BorderLayout.EAST)
+        forwardMouseEventsFromChildren()
       }
-      else {
-        val button = SectionHeaderButton { onExpansionChanged(id, !expanded) }.apply {
-          setContentBorder(contentBorder)
-          addContent(titleAndStatus, BorderLayout.CENTER)
-          addContent(expansionControl, BorderLayout.EAST)
-          forwardMouseEventsFromChildren()
-        }
-        fullHeaderButton = button
-        header = button
-      }
+      header = fullHeaderButton
       header.apply {
         val fixedHeight = JBUI.scale(SECTION_HEADER_HEIGHT)
         preferredSize = Dimension(0, fixedHeight)
@@ -696,24 +677,15 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
                                   hasSameRealizedPrefix(visibleItems)
       expanded = section.expanded
       renderedQueryRevision = queryRevision
-      fullHeaderButton?.setPresentation(section.canExpand, section.expanded, title)
+      fullHeaderButton.setPresentation(section.canExpand, section.expanded, title)
       val expansionText = IdeBundle.message(
         if (section.expanded) "plugins.configurable.show.less" else "plugins.configurable.show.more",
       )
-      if (sectionHeaderVariant == UnifiedPluginsSectionHeaderVariant.LinkOnly) {
-        expansionLink.apply {
-          isVisible = section.canExpand
-          text = expansionText
-          setIcon(if (section.expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown, true)
-        }
-      }
-      else {
-        expansionControl.isVisible = section.canExpand
-        expansionTextLabel.text = expansionText
-        expansionChevronLabel.apply {
-          isVisible = section.canExpand
-          icon = if (section.expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown
-        }
+      expansionControl.isVisible = section.canExpand
+      expansionTextLabel.text = expansionText
+      expansionChevronLabel.apply {
+        isVisible = section.canExpand
+        icon = if (section.expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown
       }
 
       items = visibleItems

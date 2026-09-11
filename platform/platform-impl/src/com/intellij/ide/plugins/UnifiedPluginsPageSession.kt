@@ -134,7 +134,6 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
   private val categoryPromotionProvidersByCategory =
     categoryPromotionProviders.associateBy(PluginCategoryPromotionProvider::getCategoryName)
   private val densityVariant = UnifiedPluginsPageFeature.densityVariant()
-  private val sectionHeaderVariant = UnifiedPluginsPageFeature.sectionHeaderVariant()
   private val applicationScope = application.getService(PluginManagerCoroutineScopeHolder::class.java).coroutineScope
   private val pageScope: CoroutineScope = applicationScope.childScope(javaClass.name, Dispatchers.IO, true)
   private val host = LegacyPluginUiHost(
@@ -258,7 +257,6 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
       },
       rowFactory = rowFactory,
       detailsPresenter = detailsPresenter,
-      sectionHeaderVariant = sectionHeaderVariant,
     )
     view.component.minimumSize = JBDimension(580, 380)
     view.component.preferredSize = JBDimension(800, 600)

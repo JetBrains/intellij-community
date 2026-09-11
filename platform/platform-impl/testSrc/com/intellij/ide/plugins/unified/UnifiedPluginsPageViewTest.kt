@@ -4,7 +4,6 @@ package com.intellij.ide.plugins.unified
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
-import com.intellij.ide.plugins.UnifiedPluginsSectionHeaderVariant
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.ui.LafManager
@@ -254,42 +253,6 @@ internal class UnifiedPluginsPageViewTest {
       PluginSectionId.Installed to true,
       PluginSectionId.Installed to false,
     )
-  }
-
-  @Test
-  fun `link only section header expands only from its action link`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
-    val expansionChanges = ArrayList<Pair<PluginSectionId, Boolean>>()
-    val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, itemCount = 5)))
-    val view = createView(
-      onExpansionChanged = { id, expanded -> expansionChanges.add(id to expanded) },
-      sectionHeaderVariant = UnifiedPluginsSectionHeaderVariant.LinkOnly,
-    )
-    view.render(controller.state.value)
-
-    val title = IdeBundle.message("plugin.manager.tab.installed")
-    val titleLabel = componentsOfType(view.component, JBLabel::class.java).single { it.text == title }
-    val header = checkNotNull(titleLabel.parent?.parent)
-    val expansionLink = componentsOfType(header, ActionLink::class.java)
-      .single { it.text == IdeBundle.message("plugins.configurable.show.more") }
-    assertThat(componentsOfType(header, JToggleButton::class.java)).isEmpty()
-    assertThat(expansionLink.icon).isSameAs(AllIcons.General.ChevronDown)
-
-    titleLabel.dispatchEvent(MouseEvent(
-      titleLabel,
-      MouseEvent.MOUSE_CLICKED,
-      0,
-      0,
-      1,
-      1,
-      1,
-      false,
-      MouseEvent.BUTTON1,
-    ))
-    assertThat(expansionChanges).isEmpty()
-
-    expansionLink.doClick()
-    assertThat(expansionChanges).containsExactly(PluginSectionId.Installed to true)
-    view.close()
   }
 
   @Test
@@ -1106,7 +1069,6 @@ internal class UnifiedPluginsPageViewTest {
     onRetryRequested: (PluginSectionId) -> Unit = {},
     rowFactory: PluginRowFactory? = null,
     detailsPresenter: PluginDetailsPresenter? = null,
-    sectionHeaderVariant: UnifiedPluginsSectionHeaderVariant = UnifiedPluginsSectionHeaderVariant.FullHeader,
   ): UnifiedPluginsPageView {
     return UnifiedPluginsPageView(
       onSearchChanged,
@@ -1115,7 +1077,6 @@ internal class UnifiedPluginsPageViewTest {
       rowFactory,
       detailsPresenter,
       onSectionRetryRequested = onRetryRequested,
-      sectionHeaderVariant = sectionHeaderVariant,
     )
   }
 
