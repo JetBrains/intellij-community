@@ -7,7 +7,8 @@ import com.intellij.ide.scratch.RootType
 import com.intellij.ide.scratch.ScratchFileActions
 import com.intellij.ide.scratch.ScratchFileActions.ChangeLanguageAction
 import com.intellij.ide.scratch.ScratchFileCreationHelper
-import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.ide.util.DeleteHandler
 import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.idea.ActionsBundle
@@ -296,10 +297,7 @@ private fun doSaveFilesOnExit(project: Project, files: List<VirtualFile>): Boole
   val dialog = FileChooserFactory.getInstance().createPathChooser(FileChooserDescriptorFactory.singleDir(), project, null)
   dialog.choose(VfsUtil.getUserHomeDir(), Consumer { targetDirRef = it.firstOrNull() })
 
-  val targetDir = targetDirRef
-  if (targetDir == null) {
-    return false
-  }
+  val targetDir = targetDirRef ?: return false
 
   ApplicationManager.getApplication().runWriteAction(Runnable {
     val manager = FileDocumentManager.getInstance()
@@ -326,8 +324,11 @@ private fun writeFile(manager: FileDocumentManager, file: VirtualFile, targetFil
     targetFile.refresh(false, false)
     target.setText(source.charsSequence)
     manager.saveDocument(target)
+
     NonProjectFileWritingAccessProvider.allowWriting(listOf(targetFile))
-    TrustedFiles.markExternallyOpened(targetFile)
+
+    val locatedProject = TrustedProjectsLocator.locateProject(targetFile.fileSystem.getNioPath(targetFile) ?: return, null)
+    TrustedProjects.setProjectTrusted(locatedProject, true)
   }
 }
 
