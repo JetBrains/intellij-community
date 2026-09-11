@@ -3,20 +3,27 @@ package com.intellij.ide.plugins.advertiser
 
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.getSuggestionData
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import kotlinx.coroutines.runBlocking
 import org.junit.BeforeClass
 import org.junit.ClassRule
+import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import javax.swing.Icon
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class PluginsAdvertiserTest {
   companion object {
@@ -34,6 +41,10 @@ class PluginsAdvertiserTest {
     }
   }
 
+  @JvmField
+  @Rule
+  val disposableRule: DisposableRule = DisposableRule()
+
   @Test
   fun suggestedIde() = runBlocking {
     preparePluginCache("*.js" to PluginData("JavaScript"))
@@ -42,6 +53,29 @@ class PluginsAdvertiserTest {
                                        fileName = "foo.js",
                                        fileType = PlainTextFileType.INSTANCE)
     assertEquals(listOf("IntelliJ IDEA"), suggestion!!.suggestedIdes.map { it.name })
+  }
+
+  /**
+   * `PlainTextFileType` stands in for the TextMate file type, which the platform tests do not load.
+   * Both are plain text like, which is the property the advertiser reads.
+   */
+  @Test
+  fun ideSuggestionForExtensionMappedToPlainTextLikeFileType() = runBlocking {
+    preparePluginCache("*.js" to PluginData("JavaScript"))
+    withJsMappedToPlainText {
+      val suggestion = getSuggestionData(projectRule.project, "IC", "foo.js", PlainTextFileType.INSTANCE)
+      assertTrue(suggestion!!.hasSuggestedIde)
+    }
+  }
+
+  @Test
+  fun noIdeSuggestionForMappedExtensionWhenTheProductTurnsItOff() = runBlocking {
+    preparePluginCache("*.js" to PluginData("JavaScript"))
+    Registry.get("ide.plugin.advertiser.suggest.ide.for.textmate.files").setValue(false, disposableRule.disposable)
+    withJsMappedToPlainText {
+      val suggestion = getSuggestionData(projectRule.project, "IC", "foo.js", PlainTextFileType.INSTANCE)
+      assertFalse(suggestion!!.hasSuggestedIde)
+    }
   }
 
   @Test
@@ -101,6 +135,17 @@ class PluginsAdvertiserTest {
 
     assertNotNull(suggestion)
     assertEquals(listOf("Lua"), suggestion.thirdParty.map { it.pluginIdString })
+  }
+
+  private fun withJsMappedToPlainText(body: () -> Unit) {
+    val fileTypeManager = FileTypeManager.getInstance()
+    WriteAction.runAndWait<Throwable> { fileTypeManager.associateExtension(PlainTextFileType.INSTANCE, "js") }
+    try {
+      body()
+    }
+    finally {
+      WriteAction.runAndWait<Throwable> { fileTypeManager.removeAssociatedExtension(PlainTextFileType.INSTANCE, "js") }
+    }
   }
 
   private suspend fun preparePluginCache(vararg ext: Pair<String, PluginData?>) {
