@@ -25,7 +25,7 @@ public interface PsiCompiledElement extends PsiElement {
    * There are no guarantees about the lifecycle of this cached element, and this method could return null any time, whenever it feels like.
    * It's guaranteed however that this method doesn't call {@link com.intellij.openapi.fileTypes.BinaryFileDecompiler}.
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Nullable
   default PsiElement getCachedMirror() {
     return null;

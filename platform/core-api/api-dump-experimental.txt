@@ -389,6 +389,9 @@ com.intellij.pom.Navigatable
 - s:registerParse(com.intellij.lang.PsiBuilder,com.intellij.lang.Language,J):V
 *:com.intellij.psi.ParsingDiagnostics$ParserDiagnosticsHandler
 - a:registerParse(com.intellij.lang.PsiBuilder,com.intellij.lang.Language,J):V
+com.intellij.psi.PsiCompiledElement
+- com.intellij.psi.PsiElement
+- *:getCachedMirror():com.intellij.psi.PsiElement
 com.intellij.psi.PsiDirectory
 - com.intellij.psi.PsiFileSystemItem
 - *:findFile(java.lang.String,com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.PsiFile
