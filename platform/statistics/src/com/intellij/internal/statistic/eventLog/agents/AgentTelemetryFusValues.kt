@@ -36,7 +36,7 @@ object AgentTelemetryFusValues {
 
   private val modelStartPattern = """
     (?:
-      ai21|amazon|anthropic|arcee-ai|auto|big-pickle|claude|clip|code|codex|composer|corethink|default|devstral|fable|free
+      ai21|amazon|anthropic|arcee-ai|astra|auto|big-pickle|claude|clip|code|codex|composer|corethink|default|devstral|fable|free
       |gemini|gemma|glm|google|gpt|grok|haiku|kilo|kimi|lite|local|luna|lyria|mimo|minimax|nano|nemotron|nvidia
       |openai|opencode|openrouter|opus|preview|qwen|sol|sonnet|step|stepfun|terra|trinity|x-ai|xiaomi|xiaomimimo
       |azure|bedrock|codellama|codestral|cohere|command|deepcoder|deepseek|ernie|exaone|fireworks|granite|groq
