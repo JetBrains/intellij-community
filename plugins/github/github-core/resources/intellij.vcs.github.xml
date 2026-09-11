@@ -143,6 +143,8 @@
     <typedHandler implementation="org.jetbrains.plugins.github.ui.GithubMarkdownTypedHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.github.ui.GithubMarkdownBackspaceHandler"/>
 
+    <registryKey key="github.jdk11.api.client" defaultValue="true" restartRequired="true"
+                 description="Use a newer JDK11 HTTP client to access GitHub API"/>
     <registryKey defaultValue="true" description="Applying suggested changes" key="github.suggested.changes.apply"/>
 
     <registryKey defaultValue="14" description="Clear 'last seen state' after this many days" key="github.clear.last.seen.state.days"/>

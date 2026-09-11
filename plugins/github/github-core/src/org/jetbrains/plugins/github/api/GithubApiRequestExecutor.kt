@@ -5,18 +5,19 @@ import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.io.RequestBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
@@ -38,18 +39,15 @@ import java.util.zip.GZIPInputStream
 /**
  * Executes API requests taking care of authentication, headers, proxies, timeouts, etc.
  */
+@ApiStatus.NonExtendable
 sealed class GithubApiRequestExecutor {
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBlockingContext(replaceWith = ReplaceWith("GithubApiRequestExecutor.execute"))
   @Throws(IOException::class, ProcessCanceledException::class)
   abstract fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T
 
-  suspend fun <T> execute(request: GithubApiRequest<T>): T =
-    withContext(Dispatchers.IO) {
-      coroutineToIndicator {
-        val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
-        execute(indicator, request)
-      }
-    }
+  @Throws(IOException::class)
+  abstract suspend fun <T> execute(request: GithubApiRequest<T>): T
 
   internal class WithTokenAuth(
     githubSettings: GithubSettings,
@@ -89,7 +87,16 @@ sealed class GithubApiRequestExecutor {
     }
   }
 
+  @Deprecated("Was never intended to be public")
   abstract class Base(private val githubSettings: GithubSettings) : GithubApiRequestExecutor() {
+    final override suspend fun <T> execute(request: GithubApiRequest<T>): T {
+      return withContext(Dispatchers.IO) {
+        coroutineToIndicator {
+          execute(it, request)
+        }
+      }
+    }
+
     protected fun <T> RequestBuilder.execute(request: GithubApiRequest<T>, indicator: ProgressIndicator): T {
       indicator.checkCanceled()
       try {
@@ -107,8 +114,8 @@ sealed class GithubApiRequestExecutor {
 
           GHPRStatisticsCollector.logApiResponseReceived(
             activity = activity,
-            remaining = connection.getHeaderFieldInt("x-ratelimit-remaining", -1),
-            resourceName = connection.getHeaderField("x-ratelimit-resource") ?: "unknown",
+            remaining = connection.getHeaderFieldInt(RATE_LIMIT_REMAINING_HEADER, -1),
+            resourceName = connection.getHeaderField(RATE_LIMIT_RESOURCE_HEADER) ?: "unknown",
             statusCode = connection.responseCode,
           )
 
@@ -168,34 +175,10 @@ sealed class GithubApiRequestExecutor {
     @Throws(IOException::class)
     private fun checkResponseCode(connection: HttpURLConnection) {
       if (connection.responseCode < 400) return
-      val statusLine = "${connection.responseCode} ${connection.responseMessage}"
+      val requestName = "Request: ${connection.requestMethod} ${connection.url}"
       val errorText = getErrorText(connection)
-      LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Error ${statusLine} body:\n${errorText}")
-
-      val jsonError = errorText?.let { getJsonError(connection, it) }
-      jsonError ?: LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Unable to parse JSON error")
-
-      throw when (connection.responseCode) {
-        HttpURLConnection.HTTP_UNAUTHORIZED,
-        HttpURLConnection.HTTP_PAYMENT_REQUIRED,
-        HttpURLConnection.HTTP_FORBIDDEN,
-          -> {
-          if (jsonError?.containsReasonMessage("API rate limit exceeded") == true) {
-            GithubRateLimitExceededException(jsonError.presentableError)
-          }
-          else GithubAuthenticationException(
-            GithubBundle.message("request.response.0", jsonError?.presentableError ?: errorText ?: statusLine))
-        }
-
-        else -> {
-          if (jsonError != null) {
-            GithubStatusCodeException("$statusLine - ${jsonError.presentableError}", jsonError, connection.responseCode)
-          }
-          else {
-            GithubStatusCodeException("$statusLine - ${errorText}", connection.responseCode)
-          }
-        }
-      }
+      LOG.debug("$requestName : Error ${connection.responseCode} body:\n$errorText")
+      throw createApiException(requestName, connection.responseCode, errorText, connection.contentType)
     }
 
     private fun checkServerVersion(connection: HttpURLConnection) {
@@ -210,17 +193,6 @@ sealed class GithubApiRequestExecutor {
       val errorStream = connection.errorStream ?: return null
       val stream = if (connection.contentEncoding == "gzip") GZIPInputStream(errorStream) else errorStream
       return InputStreamReader(stream, Charsets.UTF_8).use { it.readText() }
-    }
-
-    private fun getJsonError(connection: HttpURLConnection, errorText: String): GithubErrorMessage? {
-      val contentType = connection.contentType
-      if (contentType == null || !contentType.startsWith(GithubApiContentHelper.JSON_MIME_TYPE)) return null
-      return try {
-        return GithubApiContentHelper.fromJson(errorText)
-      }
-      catch (jse: GithubJsonException) {
-        null
-      }
     }
 
     private fun createResponse(request: HttpRequests.Request, indicator: ProgressIndicator): GithubApiResponse {
@@ -243,29 +215,49 @@ sealed class GithubApiRequestExecutor {
 
     fun create(serverPath: GithubServerPath, token: String): GithubApiRequestExecutor = create(true, serverPath, token)
 
-    internal fun create(tokenSupplier: MutableTokenSupplier): GithubApiRequestExecutor = create(true, tokenSupplier)
+    internal fun create(tokenSupplier: MutableTokenSupplier): GithubApiRequestExecutor =
+      create(true, tokenSupplier.serverPath) { tokenSupplier.token }
 
     fun create(useProxy: Boolean = true, serverPath: GithubServerPath, token: String): GithubApiRequestExecutor =
-      create(useProxy) {
-        if (isAuthorizedUrl(serverPath, it)) token else null
+      create(useProxy, serverPath) { token }
+
+    private fun create(useProxy: Boolean = true, serverPath: GithubServerPath, tokenSupplier: () -> String?): GithubApiRequestExecutor {
+      val guardedSupplier = { url: URL ->
+        if (isAuthorizedUrl(serverPath, url)) tokenSupplier() else null
       }
+      return if (Registry.`is`(JDK11_CLIENT_REGISTRY_KEY)) {
+        GithubApiHelperRequestExecutor(useProxy, guardedSupplier)
+      }
+      else {
+        WithTokenAuth(GithubSettings.getInstance(), guardedSupplier, useProxy)
+      }
+    }
 
-    private fun create(useProxy: Boolean = true, tokenSupplier: (URL) -> String?): GithubApiRequestExecutor =
-      WithTokenAuth(GithubSettings.getInstance(), tokenSupplier, useProxy)
-
-    fun create(): GithubApiRequestExecutor = NoAuth(GithubSettings.getInstance())
+    fun create(): GithubApiRequestExecutor {
+      return if (Registry.`is`(JDK11_CLIENT_REGISTRY_KEY)) {
+        GithubApiHelperRequestExecutor(true, { null })
+      }
+      else {
+        NoAuth(GithubSettings.getInstance())
+      }
+    }
 
     companion object {
       @JvmStatic
       fun getInstance(): Factory = service()
+
+      @VisibleForTesting
+      internal const val JDK11_CLIENT_REGISTRY_KEY = "github.jdk11.api.client"
     }
   }
 
   companion object {
-    private const val PLUGIN_USER_AGENT_NAME = "IntelliJ-GitHub-Plugin"
-    private val LOG = logger<GithubApiRequestExecutor>()
+    internal const val PLUGIN_USER_AGENT_NAME = "IntelliJ-GitHub-Plugin"
+    internal val LOG = logger<GithubApiRequestExecutor>()
 
-    @VisibleForTesting
+    internal const val RATE_LIMIT_REMAINING_HEADER : String = "X-RateLimit-Remaining"
+    internal const val RATE_LIMIT_RESOURCE_HEADER : String = "X-RateLimit-Resource"
+
     internal fun isAuthorizedUrl(serverPath: GithubServerPath, url: URL): Boolean {
       val targetHost = url.host
       val apiHost = serverPath.apiHost
@@ -306,11 +298,57 @@ sealed class GithubApiRequestExecutor {
       }
       return true
     }
+
+    internal fun createApiException(
+      requestName: String,
+      responseCode: Int,
+      responseText: String?,
+      responseContentType: String?,
+    ): IOException {
+      val jsonError = if (responseText != null && responseContentType != null) {
+        getJsonError(requestName, responseText, responseContentType)
+      }
+      else {
+        null
+      }
+
+      val exception = when (responseCode) {
+        HttpURLConnection.HTTP_UNAUTHORIZED,
+        HttpURLConnection.HTTP_PAYMENT_REQUIRED,
+        HttpURLConnection.HTTP_FORBIDDEN,
+          -> {
+          if (jsonError?.containsReasonMessage("API rate limit exceeded") == true) {
+            GithubRateLimitExceededException(jsonError.presentableError)
+          }
+          else GithubAuthenticationException(
+            GithubBundle.message("request.response.0", jsonError?.presentableError ?: responseText ?: responseCode))
+        }
+
+        else -> {
+          if (jsonError != null) {
+            GithubStatusCodeException("$responseCode - ${jsonError.presentableError}", jsonError, responseCode)
+          }
+          else {
+            GithubStatusCodeException("$responseCode - ${responseText}", responseCode)
+          }
+        }
+      }
+      return exception
+    }
+
+    internal fun getJsonError(requestName: String, errorText: String, contentType: String): GithubErrorMessage? {
+      if (!contentType.startsWith(GithubApiContentHelper.JSON_MIME_TYPE)) return null
+      return try {
+        return GithubApiContentHelper.fromJson(errorText)
+      }
+      catch (jse: GithubJsonException) {
+        LOG.debug("$requestName : Unable to parse JSON error from text \n$errorText", jse)
+        null
+      }
+    }
   }
 
-  internal class MutableTokenSupplier(private val serverPath: GithubServerPath, @Volatile var token: String) : (URL) -> String? {
-    override fun invoke(url: URL): String? = if (isAuthorizedUrl(serverPath, url)) token else null
-  }
+  internal class MutableTokenSupplier(val serverPath: GithubServerPath, @Volatile var token: String)
 }
 
 @Deprecated(message = "Suspending method is now a part of the interface",

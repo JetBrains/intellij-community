@@ -116,6 +116,7 @@ f:com.intellij.collaboration.api.httpclient.HttpClientUtil
 - sf:ACCEPT_HEADER:java.lang.String
 - sf:CONTENT_ENCODING_GZIP:java.lang.String
 - sf:CONTENT_ENCODING_HEADER:java.lang.String
+- sf:CONTENT_LENGTH_HEADER:java.lang.String
 - sf:CONTENT_TYPE_HEADER:java.lang.String
 - sf:ETAG_HEADER:java.lang.String
 - sf:IF_NONE_MATCH_HEADER:java.lang.String

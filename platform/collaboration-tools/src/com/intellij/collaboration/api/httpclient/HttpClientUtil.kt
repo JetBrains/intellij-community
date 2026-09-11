@@ -45,6 +45,7 @@ private val LOG = Logger.getInstance(HttpClientUtil::class.java)
 
 object HttpClientUtil {
 
+  const val CONTENT_LENGTH_HEADER: String = "Content-Length"
   const val ACCEPT_ENCODING_HEADER: String = "Accept-Encoding"
   const val CONTENT_ENCODING_HEADER: String = "Content-Encoding"
   const val CONTENT_ENCODING_GZIP: String = "gzip"

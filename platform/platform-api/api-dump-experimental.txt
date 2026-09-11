@@ -979,6 +979,7 @@ com.intellij.util.net.JdkProxyCustomizer
 - s:client():java.net.http.HttpClient
 - s:clientBuilder():java.net.http.HttpClient$Builder
 - s:gzipStringBodyHandler():java.net.http.HttpResponse$BodyHandler
+- s:isAuthenticationFilterError(java.io.IOException):Z
 - s:request(java.net.URI):java.net.http.HttpRequest
 - s:requestBuilder(java.net.URI):java.net.http.HttpRequest$Builder
 - s:response(java.net.http.HttpClient,java.net.http.HttpRequest,java.net.http.HttpResponse$BodyHandler):java.net.http.HttpResponse
