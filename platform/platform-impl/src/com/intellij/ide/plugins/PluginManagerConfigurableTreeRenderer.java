@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AncestorListenerAdapter;
+import com.intellij.ui.components.Badge;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.SimpleTree;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.event.AncestorEvent;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -27,7 +29,8 @@ import java.util.function.Consumer;
  */
 @ApiStatus.Internal
 public final class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapter implements ConfigurableTreeRenderer, Consumer<PluginUpdatesEvent> {
-  private final CountComponent myCountLabel = new CountComponent();
+  private final Badge myCountBadge = new Badge("0", Badge.ColorType.GRAY_SECONDARY);
+  private final JLabel myCountLabel = new JLabel(myCountBadge);
 
   private PluginUpdateSubscription myUpdateSubscription;
   private SimpleTree myTree;
@@ -50,8 +53,9 @@ public final class PluginManagerConfigurableTreeRenderer extends AncestorListene
       return null;
     }
 
-    myCountLabel.setText(StringUtil.defaultIfEmpty(myCountValue, "0")); // for correct calculate baseline
-    myCountLabel.setSelected(selected);
+    String count = StringUtil.defaultIfEmpty(myCountValue, "0");
+    myCountBadge.setText(count);
+    myCountLabel.getAccessibleContext().setAccessibleName(count);
 
     return Pair.create(
       myCountLabel, (renderer, bounds, text, right, textBaseline) -> {
@@ -61,7 +65,7 @@ public final class PluginManagerConfigurableTreeRenderer extends AncestorListene
 
         renderer.setBounds(
           right.x + (right.width - preferredWidth) / 2 - JBUIScale.scale(20),
-          bounds.y + textBaseline - myCountLabel.getBaseline(preferredWidth, preferredHeight),
+          bounds.y + (bounds.height - preferredHeight) / 2,
           preferredWidth,
           preferredHeight
         );
