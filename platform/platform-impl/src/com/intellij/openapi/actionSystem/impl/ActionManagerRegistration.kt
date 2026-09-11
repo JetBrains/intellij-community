@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.Ligh
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler
 import com.intellij.openapi.project.ProjectType
@@ -646,7 +647,13 @@ internal fun registerOrReplaceActionInner(
         return@withLock false
       }
     }
-    onActionLoadedFromXml(actionId = id, plugin = plugin)
+    try {
+      onActionLoadedFromXml(actionId = id, plugin = plugin)
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      actionManagerImplLog.error("Failed to process onActionLoadedFromXml $id", e)
+    }
     true
   }
 }

@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.impl.RemoveShortcutOperation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
@@ -684,7 +685,13 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
       actionIdToShortcuts.put(id, java.util.List.copyOf(shortcuts))
     }
 
-    ActionsCollectorImpl.onActionsLoadedFromKeymapXml(this, actionIds)
+    try {
+      ActionsCollectorImpl.onActionsLoadedFromKeymapXml(this, actionIds)
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      logger<KeymapImpl>().error("Failed to process onActionsLoadedFromKeymapXml $name", e)
+    }
     cleanShortcutsCache()
   }
 
