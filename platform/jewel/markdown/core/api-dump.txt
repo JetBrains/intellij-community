@@ -7,3 +7,4 @@ f:org.jetbrains.jewel.markdown.processing.ProcessingUtilKt
 f:org.jetbrains.jewel.markdown.rendering.ImageSourceResolverKt
 f:org.jetbrains.jewel.markdown.rendering.InlineMarkdownRendererKt
 f:org.jetbrains.jewel.markdown.scrolling.AutoScrollingUtilKt
+f:org.jetbrains.jewel.markdown.scrolling.SyncScrollingKt
