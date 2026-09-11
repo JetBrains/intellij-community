@@ -112,6 +112,7 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         badgeStyle = readBadgeStyle(theme.isDark),
         gotItTooltipStyle = readGotItTooltipStyle(),
         gotItButtonStyle = readGotItButtonStyle(),
+        searchTextFieldStyle = readSearchTextFieldStyle(),
     )
 }
 

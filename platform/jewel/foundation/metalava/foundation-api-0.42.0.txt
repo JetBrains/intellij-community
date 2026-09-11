@@ -860,6 +860,7 @@ package org.jetbrains.jewel.foundation.search {
   }
 
   public final class SpeedSearchMatcherKt {
+    method public static org.jetbrains.jewel.foundation.search.SpeedSearchMatcher cached(org.jetbrains.jewel.foundation.search.SpeedSearchMatcher);
     method public static <T extends java.lang.CharSequence> java.util.List<T> filter(Iterable<? extends T>, org.jetbrains.jewel.foundation.search.SpeedSearchMatcher matcher);
     method public static <T> java.util.List<T> filter(Iterable<? extends T>, org.jetbrains.jewel.foundation.search.SpeedSearchMatcher matcher, kotlin.jvm.functions.Function1<? super T,? extends java.lang.CharSequence> textRepresentationProvider);
     method public static boolean matches(CharSequence, org.jetbrains.jewel.foundation.search.SpeedSearchMatcher matcher);
