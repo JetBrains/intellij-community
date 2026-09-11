@@ -191,44 +191,6 @@ public fun SelectableLazyColumn(
     )
 }
 
-@Composable
-@Deprecated(
-    message =
-        "Migrate to SingleSelectionLazyColumn or MultiSelectionLazyColumn and use the matching " +
-            "rememberSingleSelectionLazyListState(...) or rememberMultiSelectionLazyListState(...).",
-    level = DeprecationLevel.HIDDEN,
-)
-public fun SelectableLazyColumn(
-    modifier: Modifier = Modifier,
-    selectionMode: SelectionMode = SelectionMode.Multiple,
-    state: SelectableLazyListState = rememberSelectableLazyListState(selectionMode = selectionMode),
-    contentPadding: PaddingValues = PaddingValues(0.dp),
-    reverseLayout: Boolean = false,
-    onSelectedIndexesChange: (List<Int>) -> Unit = {},
-    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
-    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
-    flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
-    keyActions: KeyActions = DefaultSelectableLazyColumnKeyActions,
-    pointerEventActions: PointerEventActions = DefaultSelectableLazyColumnEventAction(),
-    content: SelectableLazyListScope.() -> Unit,
-) {
-    SelectableLazyColumn(
-        modifier = modifier,
-        selectionMode = selectionMode,
-        state = state,
-        contentPadding = contentPadding,
-        reverseLayout = reverseLayout,
-        onSelectedIndexesChange = onSelectedIndexesChange,
-        verticalArrangement = verticalArrangement,
-        horizontalAlignment = horizontalAlignment,
-        flingBehavior = flingBehavior,
-        keyActions = keyActions,
-        pointerEventActions = pointerEventActions,
-        interactionSource = null,
-        content = content,
-    )
-}
-
 /**
  * A composable function that implements a lazy column with selection capabilities. This method allows multiple or
  * single item selection based on the specified selection mode and offers advanced configuration like content alignment,
