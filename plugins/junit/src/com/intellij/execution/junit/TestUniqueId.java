@@ -48,7 +48,7 @@ public class TestUniqueId extends TestObject {
 
   /**
    * Return nodeId for the cases where containing method or class do not represent tests (IDEA fails to detect them as tests),
-   * or if parent node provides the same location, the case of parameterized/dynamic tests
+   * or if the node or one of its ancestors provides the same location as its parent, the case of parameterized/dynamic tests
    */
   public static String getEffectiveNodeId(AbstractTestProxy testInfo, Project project, GlobalSearchScope searchScope) {
     String nodeId = testInfo.getUserData(SMTestProxy.NODE_ID);
@@ -73,12 +73,17 @@ public class TestUniqueId extends TestObject {
         }
       }
 
+      PsiElement childElement = psiElement;
       AbstractTestProxy parent = testInfo.getParent();
-      if (parent != null) {
+      while (parent != null) {
         Location parentLocation = parent.getLocation(project, searchScope);
-        if (parentLocation != null && parentLocation.getPsiElement() == psiElement) {
+        if (parentLocation == null) break;
+        PsiElement parentElement = parentLocation.getPsiElement();
+        if (parentElement == childElement) {
           return nodeId;
         }
+        childElement = parentElement;
+        parent = parent.getParent();
       }
     }
     return null;

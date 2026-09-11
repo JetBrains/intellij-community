@@ -65,6 +65,42 @@ public class JUnitUniqueIdTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals("MyTest.m.nodeId", fromContext.getConfiguration().getName());
   }
 
+  /**
+   * A plain {@code @Test} method under one invocation of a {@code @ParameterizedClass}.
+   * The method node points at the method, and its parent invocation node points at the class.
+   * Only the invocation's own repetition of the class location distinguishes this from a plain {@code Class,method} run.
+   */
+  public void testMethodUnderParameterizedClassInvocation() {
+    myFixture.addClass("class MyTest {@org.junit.jupiter.api.Test void m() {}}");
+
+    SMTestProxy classNode = withLocator(new SMTestProxy("MyTest", true, "java:suite://MyTest"));
+    SMTestProxy invocation = withLocator(new SMTestProxy("[1] a", true, "java:suite://MyTest"));
+    SMTestProxy method = withLocator(new SMTestProxy("m()", false, "java:test://MyTest/m"));
+    classNode.addChild(invocation);
+    invocation.addChild(method);
+    String nodeId = "[engine:junit-jupiter]/[class-template:MyTest]/[class-template-invocation:#1]/[method:m()]";
+    method.putUserData(SMTestProxy.NODE_ID, nodeId);
+
+    assertEquals(nodeId, TestUniqueId.getEffectiveNodeId(method, getProject(), GlobalSearchScope.projectScope(getProject())));
+  }
+
+  /** The same method without the invocation node above it is still rerun as {@code Class,method}. */
+  public void testPlainMethodHasNoEffectiveNodeId() {
+    myFixture.addClass("class MyTest {@org.junit.jupiter.api.Test void m() {}}");
+
+    SMTestProxy classNode = withLocator(new SMTestProxy("MyTest", true, "java:suite://MyTest"));
+    SMTestProxy method = withLocator(new SMTestProxy("m()", false, "java:test://MyTest/m"));
+    classNode.addChild(method);
+    method.putUserData(SMTestProxy.NODE_ID, "[engine:junit-jupiter]/[class:MyTest]/[method:m()]");
+
+    assertNull(TestUniqueId.getEffectiveNodeId(method, getProject(), GlobalSearchScope.projectScope(getProject())));
+  }
+
+  private static SMTestProxy withLocator(SMTestProxy proxy) {
+    proxy.setLocator(JavaTestLocator.INSTANCE);
+    return proxy;
+  }
+
   public void testCustomEngineId() {
     PsiClass psiClass = myFixture.addClass("""
                                              /** @noinspection ALL*/ @org.junit.platform.commons.annotation.Testable
