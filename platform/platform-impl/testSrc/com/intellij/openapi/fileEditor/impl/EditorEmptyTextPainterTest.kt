@@ -791,6 +791,27 @@ internal class EditorEmptyTextPainterTest {
   }
 
   @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun restoringSplitStateRemovesTheHalfThatRestoresNoTab() {
+    val splitters = manager.mainSplitters
+    manager.closeAllFiles()
+
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    try {
+      // the restore itself removes the empty half, so a caller sees one window and one tab once it returns
+      val restoreJob = scope.launch { splitters.createEditors(EditorSplitterState(splitStateElementWithEmptySecondHalf())) }
+      PlatformTestUtil.waitWhileBusy { !restoreJob.isCompleted }
+
+      assertThat(splitters.windows().count()).isEqualTo(1)
+      assertThat(splitters.getAllComposites()).hasSize(1)
+    }
+    finally {
+      scope.cancel()
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    }
+  }
+
+  @Test
   fun openFilesAsyncWithoutSavedStateEnablesRichEmptyStateComponents(@TestDisposable disposable: Disposable) {
     val providerCalls = AtomicInteger()
     ExtensionTestUtil.maskExtensions(EditorEmptyStateComponentProvider.EP_NAME, listOf(object : EditorEmptyStateComponentProvider {
@@ -1367,14 +1388,23 @@ internal class EditorEmptyTextPainterTest {
     return Element("state").addContent(Element("leaf"))
   }
 
-  private fun splitterStateElementWithFile(): Element {
+  private fun splitterStateElementWithFile(): Element = Element("state").addContent(leafElementWithFile())
+
+  /** A split whose first half holds one file and whose second half holds no file. */
+  private fun splitStateElementWithEmptySecondHalf(): Element {
+    return Element("state").addContent(
+      Element("splitter")
+        .addContent(Element("split-first").addContent(leafElementWithFile()))
+        .addContent(Element("split-second").addContent(Element("leaf"))),
+    )
+  }
+
+  private fun leafElementWithFile(): Element {
     val file = Files.createTempFile(tempPath, "empty-state", ".txt")
     val virtualFile = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file))
-    return Element("state").addContent(
-      Element("leaf").addContent(
-        Element("file").addContent(
-          Element(HistoryEntry.TAG).setAttribute(HistoryEntry.FILE_ATTRIBUTE, virtualFile.url),
-        ),
+    return Element("leaf").addContent(
+      Element("file").addContent(
+        Element(HistoryEntry.TAG).setAttribute(HistoryEntry.FILE_ATTRIBUTE, virtualFile.url),
       ),
     )
   }

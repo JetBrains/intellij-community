@@ -8,7 +8,6 @@ import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.diagnostic.dumpCoroutines
-import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectMetaInfo
@@ -617,17 +616,6 @@ private suspend fun restoreEditors(
     }
 
     span("editor reopening post-processing", Dispatchers.UI) {
-      for (window in editorComponent.windows().toList()) {
-        // clear empty splitters
-        if (window.tabCount == 0) {
-          withContext(Dispatchers.EDT) {
-            // write-intent lock is required for now because we update actions synchronously here
-            window.removeFromSplitter()
-          }
-          window.logEmptyStateIfMainSplitter(cause = EmptyStateCause.PROJECT_OPENED)
-        }
-      }
-
       focusSelectedEditor(editorComponent)
     }
 

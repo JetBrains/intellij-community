@@ -711,11 +711,7 @@ class EditorWindow internal constructor(
           fileEditorManager.disposeComposite(composite)
         }
 
-        if (disposeIfNeeded && tabCount == 0) {
-          removeFromSplitter()
-          logEmptyStateIfMainSplitter(cause = EmptyStateCause.ALL_TABS_CLOSED)
-        }
-        else {
+        if (!(disposeIfNeeded && removeIfEmpty(cause = EmptyStateCause.ALL_TABS_CLOSED))) {
           component.revalidate()
         }
 
@@ -760,7 +756,24 @@ class EditorWindow internal constructor(
     return if (indexToSelect >= 0 && indexToSelect < editorTabs.tabCount) editorTabs.getTabAt(indexToSelect) else null
   }
 
-  internal fun logEmptyStateIfMainSplitter(cause: EmptyStateCause) {
+  /**
+   * Removes this window from its splitter when it holds no tab, and reports the empty state.
+   *
+   * The check and the removal run in one EDT call, so no other event can add a tab in between.
+   *
+   * @return whether the window was empty
+   */
+  @RequiresEdt
+  internal fun removeIfEmpty(cause: EmptyStateCause): Boolean {
+    if (tabCount != 0) {
+      return false
+    }
+    removeFromSplitter()
+    logEmptyStateIfMainSplitter(cause)
+    return true
+  }
+
+  private fun logEmptyStateIfMainSplitter(cause: EmptyStateCause) {
     require(tabCount == 0) { "Tab count expected to be zero" }
     if (EditorEmptyTextPainter.isEnabled() && component.parent === manager.mainSplitters) {
       FileEditorCollector.logEditorEmptyState(manager.project, cause)

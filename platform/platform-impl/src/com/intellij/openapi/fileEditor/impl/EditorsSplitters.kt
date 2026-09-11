@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.readAction
@@ -618,11 +619,7 @@ open class EditorsSplitters internal constructor(
 
         for (window in windows) {
           // clear empty splitters
-          if (window.tabCount == 0) {
-            window.removeFromSplitter()
-            window.logEmptyStateIfMainSplitter(cause = EmptyStateCause.CONTEXT_RESTORED)
-          }
-          else {
+          if (!window.removeIfEmpty(cause = EmptyStateCause.CONTEXT_RESTORED)) {
             window.tabbedPane.editorTabs.revalidateAndRepaint()
           }
         }
@@ -666,6 +663,14 @@ open class EditorsSplitters internal constructor(
             InternalUICustomization.getInstance()?.installEditorBackground(it)
           },
         )
+
+      // One EDT block for the count check and the removal: another coroutine can open a tab into an empty window while a dispatcher
+      // switch is pending. No write-intent lock: re-adding the sibling component updates a toolbar synchronously, which takes a read action.
+      withContext(Dispatchers.UiWithModelAccess) {
+        for (window in windows) {
+          window.removeIfEmpty(cause = EmptyStateCause.PROJECT_OPENED)
+        }
+      }
     }
     finally {
       withContext(NonCancellable + Dispatchers.EDT) {
