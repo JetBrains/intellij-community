@@ -102,6 +102,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -1184,13 +1185,28 @@ public abstract class DiffRequestProcessor
   //
 
   @ApiStatus.Internal
-  public class MyPanel extends JBPanelWithEmptyText implements UiDataProvider {
+  public class MyPanel extends JBPanelWithEmptyText implements UiDataProvider, QuickActionProvider {
     MyPanel() {
       super(new BorderLayout());
     }
 
     public @NotNull DiffRequestProcessor getProcessor() {
       return DiffRequestProcessor.this;
+    }
+
+    @Override
+    public @NotNull List<AnAction> getActions(boolean originalProvider) {
+      return List.of(myToolbarGroup, myRightToolbarGroup, myPopupActionGroup);
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return this;
+    }
+
+    @Override
+    public @Nullable String getName() {
+      return null;
     }
 
     @Override
@@ -1202,6 +1218,7 @@ public abstract class DiffRequestProcessor
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(QuickActionProvider.KEY, this);
       sink.set(DiffDataKeys.NAVIGATION_CALLBACK, createAfterNavigateCallback());
 
       DataSink.uiDataSnapshot(sink, myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER));
