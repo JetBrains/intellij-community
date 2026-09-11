@@ -23,12 +23,13 @@ private val POSSIBLE_COLUMN_NAMES = listOf("Element", "Class, %", "Method, %", "
 
 @ApiStatus.Internal
 object CoverageLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("coverage", 10)
+  private val GROUP = EventLogGroup("coverage", 11)
 
   private val runners = listOf("idea", "jacoco", "PhpCoverage", "utPlSqlCoverageRunner", "JestJavaScriptTestRunnerCoverage",
                                "rcov", "DartCoverageRunner", "WipCoverageRunner", "VitestJavaScriptTestRunnerCoverage",
                                "jacoco_xml_report", "MochaJavaScriptTestRunnerCoverage", "GoCoverage",
-                               "KarmaJavaScriptTestRunnerCoverage", "coverage.py")
+                               "KarmaJavaScriptTestRunnerCoverage", "coverage.py", "RsCoverageRunner", "BazelCoverageRunner",
+                               "gcov/llvm", "llvm-cov", "gcov")
   private val RUNNER_NAME = EventFields.String("runner", runners)
   private val RUNNERS = EventFields.StringList("runners", runners)
   private val COLUMN_NAME = EventFields.String("column_name", POSSIBLE_COLUMN_NAMES)
