@@ -289,6 +289,23 @@ public class AppendOnlyLogOverMMappedFileTest {
     );
   }
 
+  @Test
+  public void customMagicWord_MakesLogReusableInsideAnotherFileFormat() throws IOException {
+    int customMagicWord = IOUtil.asciiToMagicWord("TEST");
+    Path storagePath = temporaryFolder.newFile("customFormat").toPath();
+
+    AppendOnlyLogOverMMappedFile customLog = openLog(storagePath, customMagicWord);
+    customLog.append("data".getBytes(UTF_8));
+    customLog.close();
+
+    openLog(storagePath, customMagicWord);
+    assertThrows(
+      "The default marker must not accept a file owned by another format",
+      IOException.class,
+      () -> openLog(storagePath)
+    );
+  }
+
   //Special/edge cases, regressions:
 
 
@@ -455,6 +472,21 @@ public class AppendOnlyLogOverMMappedFileTest {
     AppendOnlyLogOverMMappedFile appendOnlyLog = AppendOnlyLogFactory
       .withDefaults()
       .pageSize(PAGE_SIZE)
+      .ignoreDataFormatVersion()
+      .open(storageFile);
+
+    openedLogs.add(appendOnlyLog);
+
+    return appendOnlyLog;
+  }
+
+  /** Opens a log with a marker that belongs to its containing file format. */
+  private static @NotNull AppendOnlyLogOverMMappedFile openLog(@NotNull Path storageFile,
+                                                               int magicWord) throws IOException {
+    AppendOnlyLogOverMMappedFile appendOnlyLog = AppendOnlyLogFactory
+      .withDefaults()
+      .pageSize(PAGE_SIZE)
+      .magicWord(magicWord)
       .ignoreDataFormatVersion()
       .open(storageFile);
 

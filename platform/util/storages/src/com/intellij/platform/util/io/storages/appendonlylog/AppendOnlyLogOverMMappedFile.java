@@ -61,8 +61,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   private static final int UNSET_VALUE = 0;
 
 
-  /** First header int32, used to recognize this storage's file type */
-  public static final int MAGIC_WORD = IOUtil.asciiToMagicWord("AOLM");
+  /** Default first header int32, used to recognize this storage's file type */
+  public static final int DEFAULT_MAGIC_WORD = IOUtil.asciiToMagicWord("AOLM");
 
   // version bump (1->2): recordId assignment changed
   public static final int CURRENT_IMPLEMENTATION_VERSION = 2;
@@ -381,7 +381,14 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   private final boolean wasClosedProperly;
 
 
+  /** Creates a log with the default file marker for standalone use. */
   public AppendOnlyLogOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
+    this(storage, DEFAULT_MAGIC_WORD);
+  }
+
+  /** Creates a log with a caller-owned file marker for use inside another file format. */
+  public AppendOnlyLogOverMMappedFile(@NotNull MMappedFileStorage storage,
+                                      int magicWord) throws IOException {
     this.storage = storage;
     boolean fileIsEmpty = (storage.actualFileSize() == 0);
 
@@ -394,12 +401,12 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
     ByteBuffer headerPageBuffer = headerPageBuffer();
     if (fileIsEmpty) {
-      HeaderLayout.putMagicWord(headerPageBuffer, MAGIC_WORD);
+      HeaderLayout.putMagicWord(headerPageBuffer, magicWord);
       HeaderLayout.putImplementationVersion(headerPageBuffer, CURRENT_IMPLEMENTATION_VERSION);
       HeaderLayout.putPageSize(headerPageBuffer, pageSize);
     }
     else {
-      checkFileParamsCompatible(storage.storagePath(), headerPageBuffer, pageSize);
+      checkFileParamsCompatible(storage.storagePath(), headerPageBuffer, pageSize, magicWord);
     }
 
 
@@ -739,12 +746,13 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
    */
   public static void checkFileParamsCompatible(@NotNull Path storagePath,
                                                @NotNull ByteBuffer headerPageBuffer,
-                                               int pageSize) throws IOException {
+                                               int pageSize,
+                                               int expectedMagicWord) throws IOException {
     int magicWord = HeaderLayout.readMagicWord(headerPageBuffer);
-    if (magicWord != MAGIC_WORD) {
+    if (magicWord != expectedMagicWord) {
       throw new IOException(
         "[" + storagePath + "] is of incorrect type: " +
-        ".magicWord(=" + magicWord + ", '" + magicWordToASCII(magicWord) + "') != " + MAGIC_WORD + " expected");
+        ".magicWord(=" + magicWord + ", '" + magicWordToASCII(magicWord) + "') != " + expectedMagicWord + " expected");
     }
 
     int implementationVersion = HeaderLayout.readImplementationVersion(headerPageBuffer);

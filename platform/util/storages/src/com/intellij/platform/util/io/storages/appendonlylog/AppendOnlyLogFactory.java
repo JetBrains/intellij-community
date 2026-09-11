@@ -31,6 +31,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   public static final int DEFAULT_PAGE_SIZE = 4 * MiB;
 
 
+  private final int magicWord;
   private final int pageSize;
 
   private final int expectedDataVersion;
@@ -49,13 +50,15 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   private final boolean cleanFileIfIncompatible;
 
 
-  private AppendOnlyLogFactory(int pageSize,
+  private AppendOnlyLogFactory(int magicWord,
+                               int pageSize,
                                boolean ensureDataVersion,
                                int expectedDataVersion,
                                boolean failInsteadOfRecovery,
                                boolean eagerlyCheckFileCompatibility,
                                boolean cleanFileIfIncompatible) {
     this.pageSize = pageSize;
+    this.magicWord = magicWord;
     this.expectedDataVersion = expectedDataVersion;
     this.ensureDataVersion = ensureDataVersion;
     this.eagerlyCheckFileCompatibility = eagerlyCheckFileCompatibility;
@@ -65,7 +68,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   public static AppendOnlyLogFactory withDefaults() {
     return new AppendOnlyLogFactory(
-      DEFAULT_PAGE_SIZE,
+      AppendOnlyLogOverMMappedFile.DEFAULT_MAGIC_WORD, DEFAULT_PAGE_SIZE,
       /* ensureDataVersion:         */ false, 0,
       /* failInsteadOfRecovery:     */ false,
       /* eagerlyCheckCompatibility: */ true,
@@ -75,7 +78,16 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   public AppendOnlyLogFactory pageSize(int pageSize) {
     return new AppendOnlyLogFactory(
-      pageSize,
+      magicWord, pageSize,
+      ensureDataVersion, expectedDataVersion,
+      failInsteadOfRecovery, eagerlyCheckFileCompatibility, cleanFileIfIncompatible
+    );
+  }
+
+  /** Uses a caller-owned file marker so the log can be part of another file format. */
+  public AppendOnlyLogFactory magicWord(int magicWord) {
+    return new AppendOnlyLogFactory(
+      magicWord, pageSize,
       ensureDataVersion, expectedDataVersion,
       failInsteadOfRecovery, eagerlyCheckFileCompatibility, cleanFileIfIncompatible
     );
@@ -83,7 +95,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   public AppendOnlyLogFactory failIfDataFormatVersionNotMatch(int expectedDataVersion) {
     return new AppendOnlyLogFactory(
-      pageSize,
+      magicWord, pageSize,
       /*ensureDataVersion: */ true, expectedDataVersion,
       failInsteadOfRecovery, eagerlyCheckFileCompatibility, cleanFileIfIncompatible
     );
@@ -91,7 +103,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   public AppendOnlyLogFactory ignoreDataFormatVersion() {
     return new AppendOnlyLogFactory(
-      pageSize,
+      magicWord, pageSize,
       /*ensureDataVersion: */ false, /*expectedDataVersion: */ 0,
       failInsteadOfRecovery, eagerlyCheckFileCompatibility, cleanFileIfIncompatible
     );
@@ -100,7 +112,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   /** Fail if recovery was needed */
   public AppendOnlyLogFactory dontRecoverFailInstead() {
     return new AppendOnlyLogFactory(
-      pageSize, ensureDataVersion, expectedDataVersion,
+      magicWord, pageSize, ensureDataVersion, expectedDataVersion,
       /* dontRecoverFailInstead: */ true,
       eagerlyCheckFileCompatibility,
       cleanFileIfIncompatible
@@ -109,14 +121,14 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   public AppendOnlyLogFactory checkIfFileCompatibleEagerly(boolean eagerlyCheckCompatibility) {
     return new AppendOnlyLogFactory(
-      pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery, eagerlyCheckCompatibility,
+      magicWord, pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery, eagerlyCheckCompatibility,
       cleanFileIfIncompatible
     );
   }
 
   public AppendOnlyLogFactory cleanIfFileIncompatible() {
     return new AppendOnlyLogFactory(
-      pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery,
+      magicWord, pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery,
       /* eagerlyCheckFileCompatibility: */ true,
       /* cleanFileIfIncompatible:       */ true
     );
@@ -124,7 +136,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
 
   public AppendOnlyLogFactory failIfFileIncompatible() {
     return new AppendOnlyLogFactory(
-      pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery,
+      magicWord, pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery,
       /* eagerlyCheckFileCompatibility: */ true,
       /* cleanFileIfIncompatible:       */ false
     );
@@ -149,7 +161,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
           if (actuallyRead != AppendOnlyLogOverMMappedFile.HeaderLayout.HEADER_SIZE) {
             throw new CorruptedException("[" + storagePath + "]: file is not empty, but < HEADER_SIZE(=" + AppendOnlyLogOverMMappedFile.HeaderLayout.HEADER_SIZE + ")");
           }
-          AppendOnlyLogOverMMappedFile.checkFileParamsCompatible(storagePath, buffer, pageSize);
+          AppendOnlyLogOverMMappedFile.checkFileParamsCompatible(storagePath, buffer, pageSize, magicWord);
           //TODO RC: maybe .expectedDataVersion check also better be here?
         }
         catch (IOException ex) {
@@ -172,7 +184,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
     return mappedFileStorageFactory.wrapStorageSafely(
       storagePath,
       storage -> {
-        AppendOnlyLogOverMMappedFile appendOnlyLog = new AppendOnlyLogOverMMappedFile(storage);
+        AppendOnlyLogOverMMappedFile appendOnlyLog = new AppendOnlyLogOverMMappedFile(storage, magicWord);
 
         if (failInsteadOfRecovery) {
           if (appendOnlyLog.wasRecoveryNeeded()) {
@@ -199,7 +211,8 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
   @Override
   public String toString() {
     return "AppendOnlyLogFactory{" +
-           "pageSize=" + pageSize +
+           "magicWord=" + magicWord +
+           ", pageSize=" + pageSize +
            (ensureDataVersion ? ", ensure data version: " + expectedDataVersion : "") +
            ", failInsteadOfRecovery=" + failInsteadOfRecovery +
            ", eagerlyCheckFileCompatibility=" + eagerlyCheckFileCompatibility +
