@@ -134,7 +134,8 @@ interface SimpleColoredText {
   fun getAttributes(): List<SimpleTextAttributes>
 }
 
-@Remote("com.intellij.xdebugger.impl.inline.InlineDebugRenderer")
+@Remote("com.intellij.xdebugger.impl.inline.InlineDebugRenderer",
+        plugin = "com.intellij/intellij.platform.debugger.impl.ui")
 interface InlineDebugRenderer {
   fun getPresentation(): SimpleColoredText?
 }
