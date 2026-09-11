@@ -456,7 +456,11 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     }
 
     Disposer.register(popup) {
-      getStateService().putSize(POPUP_LOCATION_SETTINGS_KEY, panel.popupExtendedSize)
+      // In the expanded mode AbstractPopup already stored the live content size under the same key.
+      // In the compact mode it stored the collapsed height, which must not come back on the next opening.
+      if (panel.isCompactViewMode) {
+        getStateService().putSize(POPUP_LOCATION_SETTINGS_KEY, panel.popupExtendedSize)
+      }
       Disposer.dispose(panel)
     }
 
