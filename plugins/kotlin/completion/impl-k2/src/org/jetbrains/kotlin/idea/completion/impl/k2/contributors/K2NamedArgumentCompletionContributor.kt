@@ -5,13 +5,11 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.psi.util.findParentOfType
+import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.classId
@@ -25,6 +23,7 @@ import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeighs
@@ -33,7 +32,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
@@ -62,90 +60,75 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
         if (valueArgument.getArgumentName() != null) return
         val completionType = context.completionContext.parameters.completionType
 
-        // with `analyze` invoked on `fakeKtFile`:
-        // - use-site is `fakeKtFile`;
-        // - `collectCallCandidates` collects functions from `originalKtFile`.
-        // if a function has `private` modifier then collected call candidate hav INVISIBLE_REFERENCE diagnostic, which leads to KTIJ-29748;
-        // TODO: when KT-68929 is implemented, rewrite `KotlinFirCompletionProvider` so that it uses `analyzeCopy` with `IGNORE_ORIGIN`
-        // as a temporary workaround, use `analyzeCopy` while collecting call candidate for named argument completion
-        analyzeCopy(callElement, resolutionMode = KaDanglingFileResolutionMode.PREFER_SELF) {
-            val candidates = collectCallCandidates(callElement)
-                .mapNotNull { it.candidate as? KaFunctionCall<*> }
-                .filter { it.symbol.hasStableParameterNames }
-                .filter {
-                    val constructorPsi = it.symbol.psi as? KtPrimaryConstructor ?: return@filter true
-                    if (!constructorPsi.isPrivate()) return@filter true
-                    val constructorClass = constructorPsi.containingClass() ?: return@filter false
-                    constructorClass.isParentClassForELement(callElement)
-                }
-
-            val namedArgumentInfos = buildList {
-                val (candidatesWithTypeMismatches, candidatesWithNoTypeMismatches) = candidates.partition {
-                    CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(callElement, it.valueArgumentMapping, currentArgumentIndex)
-                }
-
-                val argumentsBeforeCurrent = valueArgumentList.arguments.take(currentArgumentIndex)
-                addAll(collectNamedArgumentInfos(callElement, argumentsBeforeCurrent, candidatesWithNoTypeMismatches))
-                // if no candidates without type mismatches have any candidate parameters, try searching among remaining candidates
-                if (isEmpty()) {
-                    addAll(collectNamedArgumentInfos(callElement, argumentsBeforeCurrent, candidatesWithTypeMismatches))
+        val candidates = collectCallCandidates(callElement)
+            .mapNotNull { it.candidate as? KaFunctionCall<*> }
+            .filter { it.symbol.hasStableParameterNames }
+            .filter {
+                val constructorPsi = it.symbol.psi as? KtPrimaryConstructor ?: return@filter true
+                if (!constructorPsi.isPrivate()) return@filter true
+                val constructorClass = constructorPsi.containingClass() ?: return@filter false
+                callElement.parentsOfType<KtClass>().any { parentClass ->
+                    getOriginalDeclarationOrSelf(parentClass, context.completionContext.originalFile) == constructorClass
                 }
             }
 
-            // Local variables with the same name as any of the currently edited arguments
-            val potentiallyRelevantLocalVariables by lazy(LazyThreadSafetyMode.NONE) {
-                val scopeContext = context.completionContext.originalFile.scopeContext(callElement)
-                val namesAtCurrentIndex = namedArgumentInfos
-                    .filter { namedArgument -> namedArgument.missingParameters.any { it.isFirstUnpassedParameter } }
-                    .mapTo(mutableSetOf()) { it.name }
-                getNonImportedAvailableVariables(namesAtCurrentIndex, scopeContext)
+        val namedArgumentInfos = buildList {
+            val (candidatesWithTypeMismatches, candidatesWithNoTypeMismatches) = candidates.partition {
+                CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(callElement, it.valueArgumentMapping, currentArgumentIndex)
             }
 
-            buildList {
-                for ((name, missingParameters) in namedArgumentInfos) {
-                    with(KotlinFirLookupElementFactory) {
-                        if (completionType != CompletionType.SMART) {
-                            // For smart completion, we do not want to show incomplete named argument items
-                            add(createNamedArgumentLookupElement(name, missingParameters))
-                        }
+            val argumentsBeforeCurrent = valueArgumentList.arguments.take(currentArgumentIndex)
+            addAll(collectNamedArgumentInfos(callElement, argumentsBeforeCurrent, candidatesWithNoTypeMismatches))
+            // if no candidates without type mismatches have any candidate parameters, try searching among remaining candidates
+            if (isEmpty()) {
+                addAll(collectNamedArgumentInfos(callElement, argumentsBeforeCurrent, candidatesWithTypeMismatches))
+            }
+        }
 
-                        // suggest default values only for types from parameters with matching positions to not clutter completion
-                        val typesAtCurrentPosition = missingParameters.filter { it.isFirstUnpassedParameter }
+        // Local variables with the same name as any of the currently edited arguments
+        val potentiallyRelevantLocalVariables by lazy(LazyThreadSafetyMode.NONE) {
+            val scopeContext = context.completionContext.originalFile.scopeContext(callElement)
+            val namesAtCurrentIndex = namedArgumentInfos
+                .filter { namedArgument -> namedArgument.missingParameters.any { it.isFirstUnpassedParameter } }
+                .mapTo(mutableSetOf()) { it.name }
+            getNonImportedAvailableVariables(namesAtCurrentIndex, scopeContext)
+        }
 
-                        val booleanPosition = typesAtCurrentPosition.firstOrNull { it.type.classId == KaStandardTypeClassIds.BOOLEAN }
-                        if (booleanPosition != null) {
-                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value, booleanPosition.index))
-                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value, booleanPosition.index))
-                        }
+        buildList {
+            for ((name, missingParameters) in namedArgumentInfos) {
+                with(KotlinFirLookupElementFactory) {
+                    if (completionType != CompletionType.SMART) {
+                        // For smart completion, we do not want to show incomplete named argument items
+                        add(createNamedArgumentLookupElement(name, missingParameters))
+                    }
 
-                        val nullablePosition = typesAtCurrentPosition.firstOrNull { it.type.isMarkedNullable }
-                        if (nullablePosition != null) {
-                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value, nullablePosition.index))
-                        }
+                    // suggest default values only for types from parameters with matching positions to not clutter completion
+                    val typesAtCurrentPosition = missingParameters.filter { it.isFirstUnpassedParameter }
 
-                        // We only check matching names and types if there is only a single type at the current position.
-                        val singleTypeAtPosition = typesAtCurrentPosition.singleOrNull()
-                        if (singleTypeAtPosition != null) {
-                            // Try and find a _local_ variable with the same name and matching type to prefill it
-                            val variableTypeWithSameName = potentiallyRelevantLocalVariables[name]?.returnType
-                            if (variableTypeWithSameName?.isPossiblySubTypeOf(singleTypeAtPosition.type) == true) {
-                                add(createNamedArgumentWithValueLookupElement(name, name.asString(), singleTypeAtPosition.index))
-                            }
+                    val booleanPosition = typesAtCurrentPosition.firstOrNull { it.type.classId == KaStandardTypeClassIds.BOOLEAN }
+                    if (booleanPosition != null) {
+                        add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value, booleanPosition.index))
+                        add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value, booleanPosition.index))
+                    }
+
+                    val nullablePosition = typesAtCurrentPosition.firstOrNull { it.type.isMarkedNullable }
+                    if (nullablePosition != null) {
+                        add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value, nullablePosition.index))
+                    }
+
+                    // We only check matching names and types if there is only a single type at the current position.
+                    val singleTypeAtPosition = typesAtCurrentPosition.singleOrNull()
+                    if (singleTypeAtPosition != null) {
+                        // Try and find a _local_ variable with the same name and matching type to prefill it
+                        val variableTypeWithSameName = potentiallyRelevantLocalVariables[name]?.returnType
+                        if (variableTypeWithSameName?.isPossiblySubTypeOf(singleTypeAtPosition.type) == true) {
+                            add(createNamedArgumentWithValueLookupElement(name, name.asString(), singleTypeAtPosition.index))
                         }
                     }
                 }
             }
         }.map { it.applyWeighs() }
             .forEach { addElement(it) }
-    }
-
-    private fun KtClass.isParentClassForELement(expression: KtElement): Boolean {
-        val parentClass: KtClass? = expression.findParentOfType<KtClass>()
-        when (parentClass) {
-            null -> return false
-            this -> return true
-            else -> return isParentClassForELement(parentClass)
-        }
     }
 
     internal data class NamedParameterInfo(
