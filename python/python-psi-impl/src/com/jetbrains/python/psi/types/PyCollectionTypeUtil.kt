@@ -39,7 +39,7 @@ object PyCollectionTypeUtil {
 
   internal fun getListOrSetSubstitutionsFallback(expression: PySequenceExpression, cls: PyClass, context: TypeEvalContext) : GenericSubstitutions {
     val genericType = PyTypeChecker.findGenericDefinitionType(cls, context)
-    val typeVar = genericType?.typeArguments?.firstOrNull() as PyTypeParameterType
+    val typeVar = genericType?.typeArguments?.firstOrNull() as? PyTypeParameterType ?: return GenericSubstitutions()
     val typeArgument = getListOrSetIteratedValueType(expression, context)
     return GenericSubstitutions(mapOf(typeVar to typeArgument))
   }
