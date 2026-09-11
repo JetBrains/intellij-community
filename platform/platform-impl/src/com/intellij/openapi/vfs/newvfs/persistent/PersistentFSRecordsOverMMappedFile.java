@@ -72,7 +72,7 @@ public final class PersistentFSRecordsOverMMappedFile implements PersistentFSRec
     static final PathElement RECORDS_ALLOCATED_FIELD            = groupElement("recordsAllocated");
     static final PathElement GLOBAL_MOD_COUNT_FIELD             = groupElement("globalModCount");
     /** Keeps owner process pid */
-    static final PathElement OWNER_PROCESS_ID_FIELD             = groupElement("ownerProcessId");
+    public static final PathElement OWNER_PROCESS_ID_FIELD      = groupElement("ownerProcessId");
 
     //int64 fields must be int64-aligned, so int64 fields are grouped together:
     static final PathElement CREATION_TIMESTAMP_FIELD           = groupElement("creationTimestamp");

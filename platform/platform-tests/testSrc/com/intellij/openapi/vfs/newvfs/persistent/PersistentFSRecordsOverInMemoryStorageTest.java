@@ -8,13 +8,13 @@ import org.junit.Ignore;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class PersistentFSRecordsInMemoryStorageTest
-  extends PersistentFSRecordsStorageTestBase<PersistentFSRecordsOverInMemoryStorage> /*extends BareTestFixtureTestCase*/ {
+public class PersistentFSRecordsOverInMemoryStorageTest
+  extends PersistentFSRecordsStorageTestBase<PersistentFSRecordsOverInMemoryStorage> {
 
 
   public static final int MAX_RECORDS_TO_INSERT = 1 << 22;
 
-  public PersistentFSRecordsInMemoryStorageTest(){
+  public PersistentFSRecordsOverInMemoryStorageTest(){
     super(MAX_RECORDS_TO_INSERT);
   }
 
