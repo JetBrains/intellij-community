@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
@@ -177,8 +178,12 @@ sealed class GitExecutable {
   /**
    * Ideally, can represent any git executable, either local or remote. Actual instantiation depends on the feature flags enabled.
    */
-  data class Eel(val exeEelPath: EelPath, val eel: EelApi) : GitExecutable() {
-    override val exePath: String = exeEelPath.asNioPath().pathString
+  @ConsistentCopyVisibility
+  data class Eel private constructor(val eel: EelApi, val exeEelPath: EelPath?, private val unresolvedExeName: String?) : GitExecutable() {
+    constructor(eel: EelApi, exeEelPath: EelPath) : this(eel, exeEelPath, null)
+    constructor(eel: EelApi, unresolvedExeName: String) : this(eel, null, unresolvedExeName)
+
+    override val exePath: String = exeEelPath?.asNioPath()?.pathString ?: unresolvedExeName!!
     private val delegate = Local(exePath)
 
     override val id: @NonNls String = eel.descriptor.toString()
@@ -189,13 +194,19 @@ sealed class GitExecutable {
     }
 
     override fun getModificationTime(): Long  {
-      val dependencies = GitExecutableDetector.getDependencyPaths(exeEelPath.toString(), eel.platform is EelPlatform.Darwin).map { eel.fs.getPath(it) }
+      val path = exeEelPath ?: throw NoSuchFileException(exePath)
+      val dependencies = GitExecutableDetector.getDependencyPaths(path.toString(), eel.platform is EelPlatform.Darwin).map { eel.fs.getPath(it) }
 
-      return (listOf(exeEelPath) + dependencies).mapNotNull { path ->
+      var modificationTime = Files.getLastModifiedTime(path.asNioPath()).toMillis()
+
+      for (dependencyPath in dependencies) {
         runCatching {
-          Files.getLastModifiedTime(path.asNioPath()).toMillis()
-        }.getOrNull()
-      }.maxOrNull() ?: 0
+          val depTime = Files.getLastModifiedTime(dependencyPath.asNioPath()).toMillis()
+          modificationTime = modificationTime.coerceAtLeast(depTime)
+        }
+      }
+
+      return modificationTime
     }
 
     override fun convertFilePathBack(path: String, workingDir: Path): Path {
