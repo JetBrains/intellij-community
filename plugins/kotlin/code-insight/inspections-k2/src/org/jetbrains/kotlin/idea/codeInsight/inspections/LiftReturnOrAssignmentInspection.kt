@@ -2,14 +2,14 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.modcommand.ModCommandQuickFix
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.k2.refactoring.util.BranchedFoldingUtils
 import org.jetbrains.kotlin.idea.k2.refactoring.util.BranchedFoldingUtils.getFoldableAssignmentsFromBranches
 import org.jetbrains.kotlin.idea.k2.refactoring.util.BranchedFoldingUtils.getFoldableReturnsFromBranches
@@ -133,7 +133,7 @@ internal class LiftReturnOrAssignmentInspection @JvmOverloads constructor(privat
                 expression: KtExpression,
                 keyword: PsiElement,
                 isSerious: Boolean,
-                fix: LocalQuickFix,
+                fix: ModCommandQuickFix,
                 @InspectionMessage message: String,
                 highlightElement: PsiElement = keyword,
                 highlightType: ProblemHighlightType = if (isSerious) GENERIC_ERROR_OR_WARNING else INFORMATION,
@@ -145,21 +145,19 @@ internal class LiftReturnOrAssignmentInspection @JvmOverloads constructor(privat
 
         }
 
-    private class LiftReturnOutFix(private val keyword: String) : LocalQuickFix {
+    private class LiftReturnOutFix(private val keyword: String) : KotlinModCommandQuickFix<KtExpression>() {
         override fun getFamilyName(): String = KotlinBundle.message("lift.return.out.fix.text.0", keyword)
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val element = descriptor.psiElement as? KtExpression ?: return
+        override fun applyFix(project: Project, element: KtExpression, updater: ModPsiUpdater) {
             val replaced = BranchedFoldingUtils.foldToReturn(element)
-            replaced.findExistingEditor()?.caretModel?.moveToOffset(replaced.startOffset)
+            updater.moveCaretTo(replaced)
         }
     }
 
-    private class LiftAssignmentOutFix(private val keyword: String) : LocalQuickFix {
+    private class LiftAssignmentOutFix(private val keyword: String) : KotlinModCommandQuickFix<KtExpression>() {
         override fun getFamilyName(): String = KotlinBundle.message("lift.assignment.out.fix.text.0", keyword)
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val element = descriptor.psiElement as? KtExpression ?: return
+        override fun applyFix(project: Project, element: KtExpression, updater: ModPsiUpdater) {
             BranchedFoldingUtils.tryFoldToAssignment(element)
         }
     }
