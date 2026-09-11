@@ -10,10 +10,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -22,6 +24,7 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.unit.dp
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -52,6 +55,13 @@ class SpeedSearchableComboBoxTest {
 
     private fun ComposeContentTestRule.onComboBoxItem(text: String) =
         onNode(hasAnyAncestor(hasTestTag("Jewel.ComboBox.List")) and hasText(text))
+
+    private fun SemanticsNodeInteraction.hover() = performMouseInput {
+        // The first move only makes the pointer enter the item; onMove needs a second one to see it.
+        moveTo(center)
+        advanceEventTime()
+        moveBy(Offset(1f, 0f))
+    }
 
     @BeforeTest
     fun setUp() {
@@ -110,6 +120,31 @@ class SpeedSearchableComboBoxTest {
         comboBox.performKeyPress("Item 2", rule = this)
         onComboBoxItem("Item 2").assertIsDisplayed().assertIsSelected()
     }
+
+    @Test
+    fun `on type while an item is hovered, select the match instead of the hovered item`() = runComposeTest {
+        comboBox.performClick()
+
+        onComboBoxItem("Item 3").assertIsDisplayed().hover().assertIsSelected()
+
+        comboBox.performKeyPress("Item 5", rule = this)
+
+        onComboBoxItem("Item 5").assertIsDisplayed().assertIsSelected()
+        onComboBoxItem("Item 3").assertIsNotSelected()
+    }
+
+    @Test
+    fun `on type matching the selected item while another is hovered, keep the selection highlighted`() =
+        runComposeTest(entries = listOf("one", "two", "three"), initialSelectedIndex = 2) {
+            comboBox.performClick()
+
+            onComboBoxItem("two").assertIsDisplayed().hover().assertIsSelected()
+
+            comboBox.performKeyPress("three", rule = this)
+
+            onComboBoxItem("three").assertIsDisplayed().assertIsSelected()
+            onComboBoxItem("two").assertIsNotSelected()
+        }
 
     @Test
     fun `on type continue typing, continue selecting first occurrence`() = runComposeTest {
@@ -205,13 +240,14 @@ class SpeedSearchableComboBoxTest {
 
     private fun runComposeTest(
         entries: List<String> = List(500) { "Item ${it + 1}" },
+        initialSelectedIndex: Int = 0,
         block: ComposeContentTestRule.() -> Unit,
     ) {
         rule.setContent {
             val focusRequester = remember { FocusRequester() }
 
             IntUiTheme {
-                var selectedIndex by remember { mutableIntStateOf(0) }
+                var selectedIndex by remember { mutableIntStateOf(initialSelectedIndex) }
                 SpeedSearchArea(
                     modifier = Modifier.widthIn(max = 200.dp).focusRequester(focusRequester).testTag("SpeedSearchArea")
                 ) {
