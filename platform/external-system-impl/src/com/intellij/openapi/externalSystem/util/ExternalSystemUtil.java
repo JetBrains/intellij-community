@@ -811,6 +811,10 @@ public final class ExternalSystemUtil {
     var runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
     assert runnerAndConfigurationSettings != null;
     runnerAndConfigurationSettings.setActivateToolWindowBeforeRun(spec.getActivateToolWindowBeforeRun());
+    @Nullable java.util.function.Consumer<@NotNull RunnerAndConfigurationSettings> runConfigConsumer = spec.getRunConfigConsumer();
+    if (runConfigConsumer != null) {
+      runConfigConsumer.accept(runnerAndConfigurationSettings);
+    }
 
     UserDataHolderBase userData = spec.getUserData();
     if (userData != null) {

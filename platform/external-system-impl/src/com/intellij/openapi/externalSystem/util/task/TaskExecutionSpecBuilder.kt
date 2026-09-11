@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util.task
 
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 
 /**
  * Builder for [com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec].
@@ -44,6 +46,9 @@ interface TaskExecutionSpecBuilder {
 
   @CheckReturnValue
   fun withCallback(future: CompletableFuture<Boolean>): TaskExecutionSpecBuilder
+
+  @CheckReturnValue
+  fun withRunConfigurationConsumer(consumer: Consumer<RunnerAndConfigurationSettings>): TaskExecutionSpecBuilder
 
   @CheckReturnValue
   fun withListener(listener: ExternalSystemTaskNotificationListener?): TaskExecutionSpecBuilder

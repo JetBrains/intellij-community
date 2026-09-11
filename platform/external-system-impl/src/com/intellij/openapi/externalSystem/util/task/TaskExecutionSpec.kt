@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util.task
 
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -10,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus;
+import java.util.function.Consumer
 
 /**
  * Spec for external system task execution.
@@ -18,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.NonExtendable
 interface TaskExecutionSpec {
 
-  /**
+   /**
    * The project to associate the task with.
    * The project lifecycle specifies the lifecycle of the task.
    * Project disposal leads to the task cancellation.
@@ -55,6 +57,13 @@ interface TaskExecutionSpec {
    * If operation return code is equal to 0, [TaskCallback.onSuccess] will be called, [TaskCallback.onFailure] otherwise.
    */
   val callback: TaskCallback?
+
+  /**
+   * Consumer for IDEA run configuration.
+   * IDEA will create a run configuration to execute this task. This allows interested consumer to use it.
+   * The consumer runs on the caller thread, before the run configuration is submitted for execution.
+   */
+  val runConfigConsumer: Consumer<RunnerAndConfigurationSettings>?
 
   /**
    * Task execution listener with a full task lifecycle.
