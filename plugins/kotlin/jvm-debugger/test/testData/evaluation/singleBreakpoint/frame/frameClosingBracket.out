@@ -4,8 +4,8 @@ Connected to the target VM
 frameClosingBracket.kt:6
 Compile bytecode for a
 KotlinStackFrame (frameClosingBracket.kt:6)
-    JavaValue[local] args: java.lang.String[] = [...] (frameClosingBracket.kt:3)
     JavaValue[local] a: int = 1 (frameClosingBracket.kt:4)
+    JavaValue[local] args: java.lang.String[] = [...] (frameClosingBracket.kt:3)
 Disconnected from the target VM
 
 Process finished with exit code 0

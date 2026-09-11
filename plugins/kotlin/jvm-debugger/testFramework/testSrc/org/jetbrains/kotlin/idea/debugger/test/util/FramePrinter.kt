@@ -50,7 +50,7 @@ internal class FramePrinter(private val suspendContext: SuspendContextImpl) {
     fun printTopVariables(frame: XStackFrame): String {
         return buildString {
             append(frame, 0)
-            for (child in frame) {
+            for (child in frame.sorted()) {
                 append(child, 1)
             }
         }
@@ -58,7 +58,7 @@ internal class FramePrinter(private val suspendContext: SuspendContextImpl) {
 
     private fun Appendable.appendRecursively(container: XValueContainer, indent: Int = 0) {
         append(container, indent)
-        for (child in container) {
+        for (child in container.sorted()) {
             appendRecursively(child, indent + 1)
         }
     }
@@ -112,6 +112,9 @@ internal class FramePrinter(private val suspendContext: SuspendContextImpl) {
             }
         }
     }
+
+    private fun XValueContainer.sorted() =
+        ValueContainerIteratorImpl(this).asSequence().sortedBy { it.getName() }
 
     private fun XValueContainer.getName() =
         when (this) {
