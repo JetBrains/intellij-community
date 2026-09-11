@@ -31,6 +31,7 @@ import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.icons.AllIcons.Actions.AiIntentionBulb
 import com.intellij.icons.AllIcons.Actions.IntentionBulbGrey
 import com.intellij.icons.AllIcons.Actions.Lightning
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.idea.AppMode
 import com.intellij.injected.editor.DocumentWindow
@@ -66,6 +67,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.FORCE_INJ
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.FORCE_INJECTED_EDITOR_KEY
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
 import kotlinx.serialization.Serializable
@@ -109,6 +111,8 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
         !(ApplicationManager.getApplication().isUnitTestMode() && Registry.`is`("ide.completion.command.force.enabled", false))) return
     val project = parameters.editor.project ?: return
     if (!TrustedProjects.isProjectTrusted(project)) return
+    val virtualFile = parameters.originalFile.originalFile.virtualFile
+    if (virtualFile != null && virtualFile !is LightVirtualFileBase && !TrustedFiles.isTrusted(virtualFile, project)) return
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
     if (parameters.completionType != CompletionType.BASIC) return
     if (parameters.position is PsiComment && parameters.invocationCount == 0) return
