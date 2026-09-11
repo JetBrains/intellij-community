@@ -12,12 +12,20 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.addJSpecifyNullMarked;
+import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.setupTypeUseAnnotations;
 
 public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTestCase {
   public void testPrimitive() {
@@ -431,5 +439,55 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       }
       """);
     myFixture.checkHighlighting();
+  }
+
+  private void setupJSpecifyAnnotations() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    myFixture.addClass("""
+                         package org.jspecify.annotations;
+                         import java.lang.annotation.*;
+
+                         @Target(ElementType.TYPE_USE) public @interface NullnessUnspecified { }""");
+  }
+
+  public void testCaptureInMethodReference() {
+    setupJSpecifyAnnotations();
+    PsiFile file = myFixture.configureByText("Test.java", """
+      import org.jspecify.annotations.NullMarked;
+
+      @NullMarked
+      class Test {
+        interface Sup<T> {
+          T get();
+        }
+
+        interface Box<V> {}
+
+        static class Src<T> {
+          void to(Object target) {}
+        }
+
+        static class Mapper {
+          <T> Src<T> from(T value) { return new Src<>(); }
+
+          <T> Src<T> from(Sup<? extends T> supplier) { return new Src<>(); }
+        }
+
+        static class Props {
+          Box<?> getKeySerializer() { return null; }
+        }
+
+        void test(Mapper map, Props props) {
+          map.from(props::getKeySerializer).to("x");
+        }
+      }
+      """);
+    List<PsiMethodCallExpression> calls = new ArrayList<>(PsiTreeUtil.findChildrenOfType(file, PsiMethodCallExpression.class));
+    PsiMethodCallExpression outerCall = calls.getFirst();
+    assertEquals("to", outerCall.getMethodExpression().getReferenceName());
+    PsiMethod resolved = outerCall.resolveMethod();
+    assertNotNull(resolved);
+    assertEquals("to", resolved.getName());
   }
 }
