@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
-
 package org.jetbrains.intellij.build.jarCache
 
 import com.dynatrace.hash4j.hashing.HashStream64

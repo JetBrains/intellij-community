@@ -1,6 +1,4 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package org.jetbrains.intellij.build.jarCache
 
 import com.dynatrace.hash4j.hashing.Hashing
@@ -101,15 +99,13 @@ class LocalDiskJarCacheManager(
       key = key,
       paths = paths,
       targetFile = targetFile,
-      sources = sources,
       items = items,
       nativeFiles = nativeFiles,
       span = span,
       producer = producer,
       metadataTouchTracker = metadataTouchTracker,
       cleanupCandidateIndex = cleanupCandidateIndex,
-      deleteInvalidEntry = false,
-      failOnCacheIoErrors = false,
+      underLock = false,
     )
     if (optimisticHit) {
       span.setAttribute(JAR_CACHE_OUTCOME, "hit")
@@ -121,15 +117,13 @@ class LocalDiskJarCacheManager(
         key = key,
         paths = paths,
         targetFile = targetFile,
-        sources = sources,
         items = items,
         nativeFiles = nativeFiles,
         span = span,
         producer = producer,
         metadataTouchTracker = metadataTouchTracker,
         cleanupCandidateIndex = cleanupCandidateIndex,
-        deleteInvalidEntry = true,
-        failOnCacheIoErrors = true,
+        underLock = true,
       )
       if (hitUnderLock) {
         span.setAttribute(JAR_CACHE_OUTCOME, "hitUnderLock")

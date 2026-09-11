@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
 
@@ -177,7 +177,7 @@ class JarPackager private constructor(
         packager.assets.values.filter { assetFilter.accept(it.relativePath) }
       }
 
-      val cacheManager = if (dryRun || context !is BuildContextImpl) NonCachingJarCacheManager else context.jarCacheManager
+      val cacheManager = if (context is BuildContextImpl) context.jarCacheManager else NonCachingJarCacheManager
       val buildAssetResult = buildJars(
         assets = assets,
         cache = cacheManager,
@@ -561,35 +561,32 @@ class JarPackager private constructor(
     val mavenPaths = library.getPaths(JpsOrderRootType.COMPILED).map { toCanonicalReportPath(it, context.paths) }
     for (file in files) {
       val canonicalPath = getCanonicalPath(mavenPaths, file)
-      @Suppress("NAME_SHADOWING")
       asset.sources.add(
         ZipSource(
           file = file,
-          distributionFileEntryProducer = { size, hash, targetFile ->
+          distributionFileEntryProducer = {
             if (projectLibraryData == null) {
               ModuleLibraryFileEntry(
-                path = targetFile,
+                path = asset.file,
                 moduleName = item.moduleName,
                 libraryName = libraryName,
                 libraryFile = file,
                 canonicalLibraryPath = canonicalPath,
-                size = size,
-                hash = hash,
+                size = 0,
+                hash = 0,
                 relativeOutputFile = item.relativeOutputFile,
                 owner = item,
-                distributionPath = asset.file,
               )
             }
             else {
               ProjectLibraryEntry(
-                path = targetFile,
+                path = asset.file,
                 data = projectLibraryData,
                 libraryFile = file,
                 canonicalLibraryPath = canonicalPath,
-                hash = hash,
-                size = size,
+                hash = 0,
+                size = 0,
                 relativeOutputFile = item.relativeOutputFile,
-                distributionPath = asset.file,
               )
             }
           },
@@ -710,32 +707,30 @@ class JarPackager private constructor(
           file = file,
           isPreSignedAndExtractedCandidate = isRootDir && isJarPreSigned(file, context),
           optimizeConfigId = libraryName.takeIf { isRootDir && libraryName == "jsvg" },
-          distributionFileEntryProducer = { size, hash, targetFile ->
+          distributionFileEntryProducer = {
             if (moduleName == null) {
               val data = projectLibraryData ?: throw IllegalStateException("Metadata not specified for $libraryName")
               ProjectLibraryEntry(
-                path = targetFile,
+                path = asset.file,
                 data = data,
                 libraryFile = file,
                 canonicalLibraryPath = canonicalPath,
-                hash = hash,
-                size = size,
+                hash = 0,
+                size = 0,
                 relativeOutputFile = relativeOutputFile,
-                distributionPath = asset.file,
               )
             }
             else {
               ModuleLibraryFileEntry(
-                path = targetFile,
+                path = asset.file,
                 moduleName = moduleName,
                 libraryName = getLibraryFileName(library),
                 libraryFile = file,
                 canonicalLibraryPath = canonicalPath,
-                size = size,
-                hash = hash,
+                size = 0,
+                hash = 0,
                 relativeOutputFile = relativeOutputFile,
-                owner = ModuleItem(moduleName, relativeOutputFile = targetFile.fileName.toString(), reason = null),
-                distributionPath = asset.file,
+                owner = ModuleItem(moduleName, relativeOutputFile = asset.file.fileName.toString(), reason = null),
               )
             }
           },
@@ -867,7 +862,8 @@ private fun toCanonicalReportPath(file: Path, buildPaths: BuildPaths): String {
 
 private val bazelMavenHome = USER_HOME.resolve(".m2/repository-do-not-use-maven-repository-with-bazel")
 
-private data class AssetDescriptor(
+/** One jar the packer writes. Identity is the [file]; `assets` is keyed by it, so the class needs no equality of its own. */
+private class AssetDescriptor(
   @JvmField val file: Path,
   @JvmField val relativePath: String,
 ) {
@@ -878,6 +874,8 @@ private data class AssetDescriptor(
   // must be sorted - we use it as is for Jar Cache
   @JvmField
   val includedModules = Reference2ObjectLinkedOpenHashMap<ModuleItem, MutableList<Source>>()
+
+  override fun toString(): String = "AssetDescriptor(file=$file, relativePath=$relativePath, sources=${sources.size}, modules=${includedModules.size})"
 }
 
 internal val commonModuleExcludes: List<PathMatcher> = FileSystems.getDefault().let { fs ->
@@ -1160,11 +1158,7 @@ private class NativeFileHandlerImpl(private val context: BuildContext) : NativeF
   }
 }
 
-fun buildJar(targetFile: Path, moduleNames: List<String>, context: CompilationContext, dryRun: Boolean = false, forTests: Boolean = false) {
-  if (dryRun) {
-    return
-  }
-
+fun buildJar(targetFile: Path, moduleNames: List<String>, context: CompilationContext, forTests: Boolean = false) {
   checkForNoDiskSpace(context) {
     buildJar(
       targetFile = targetFile,
@@ -1230,17 +1224,16 @@ private fun computeDistributionFileEntries(
         hash = hash,
         relativeOutputFile = module.relativeOutputFile,
         reason = module.reason,
-        distributionPath = asset.file,
       )
     )
   }
 
   for (source in asset.sources) {
     if (source is ZipSource) {
-      source.distributionFileEntryProducer?.consume(size = 0, hash = 0, targetFile = asset.file)?.let(list::add)
+      source.distributionFileEntryProducer?.produce()?.let(list::add)
     }
     else if (source is LazySource) {
-      list.add(CustomAssetEntry(path = asset.file, hash = 0, distributionPath = asset.file))
+      list.add(CustomAssetEntry(path = asset.file, hash = 0))
     }
   }
 }

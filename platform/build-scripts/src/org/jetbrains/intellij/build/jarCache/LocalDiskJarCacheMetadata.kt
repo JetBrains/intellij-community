@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.jarCache
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.SourceAndCacheStrategy
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.io.W_OVERWRITE
@@ -27,7 +26,6 @@ private const val maxNativeFilesBlobSizeBytes = 8 * 1024 * 1024
 
 internal fun readValidCacheMetadata(
   paths: CacheEntryPaths,
-  sources: Collection<Source>,
   items: List<SourceAndCacheStrategy>,
   decodeNativeFiles: Boolean,
   span: Span,
@@ -47,7 +45,7 @@ internal fun readValidCacheMetadata(
     span.addEvent(
       "cannot decode metadata",
       Attributes.of(
-        AttributeKey.stringArrayKey("sources"), sources.map { it.toString() },
+        AttributeKey.stringArrayKey("sources"), items.map { it.source.toString() },
         AttributeKey.stringKey("error"), e.toString(),
       ),
     )
@@ -56,7 +54,7 @@ internal fun readValidCacheMetadata(
   }
 
   if (!checkSavedAndActualSources(savedSources = savedSources, items = items)) {
-    span.addEvent("metadata not equal to $sources")
+    span.addEvent("metadata not equal to ${items.map { it.source }}")
     onInvalidEntry?.invoke()
     return null
   }

@@ -229,7 +229,7 @@ private fun cleanupEntries(
     }
 
     // Cleanup sees only persisted entry names. Recover the lsb from stored key prefix
-    // ("<lsb>-<msb>") and feed it into StripedMutex.getLockByHash.
+    // ("<lsb>-<msb>") and feed it into StripedLock.withLockByHash.
     val lockHash = parseLeastSignificantBitsFromKey(key)
     if (lockHash == null) {
       // Entries with malformed key prefix are unreachable by computeIfAbsent, so remove

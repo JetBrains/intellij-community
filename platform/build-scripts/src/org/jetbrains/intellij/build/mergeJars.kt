@@ -24,8 +24,9 @@ import java.util.zip.Deflater
 
 private const val listOfEntitiesFileName = "META-INF/listOfEntities.txt"
 
+/** Describes the distribution entry of a library jar once the asset that holds it is packed. */
 fun interface DistributionFileEntryProducer {
-  fun consume(size: Int, hash: Long, targetFile: Path): DistributionFileEntry
+  fun produce(): DistributionFileEntry
 }
 
 internal interface NativeFileHandler {

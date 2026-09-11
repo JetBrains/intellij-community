@@ -46,14 +46,15 @@ import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrSelf
 
-fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFileEntry>, skipNioFs: Boolean, includeProductModule: (String) -> Boolean = { false }): Set<Path> {
+/**
+ * [includeProductModules] keeps the jars that hold a product content module. The module system loads them, so a
+ * launch leaves them out; a scramble classpath takes every jar of the platform.
+ */
+fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFileEntry>, skipNioFs: Boolean, includeProductModules: Boolean = false): Set<Path> {
   val classPath = LinkedHashSet<Path>()
   for (entry in entries) {
-    if (entry is ModuleOwnedFileEntry) {
-      val owner = entry.owner
-      if (owner != null && owner.reason == ModuleIncludeReasons.PRODUCT_MODULES && !includeProductModule(owner.moduleName)) {
-        continue
-      }
+    if (!includeProductModules && entry is ModuleOwnedFileEntry && entry.owner?.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
+      continue
     }
 
     // exclude files like ext/platform-main.jar - if a file in lib, take only direct children in an account
