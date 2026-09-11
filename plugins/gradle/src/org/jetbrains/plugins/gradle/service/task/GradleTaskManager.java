@@ -306,7 +306,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     @NotNull GradleTaskExecutionContext context
   ) {
     GradleTaskManagerExtension.EP_NAME.forEachExtensionSafe(it -> {
-      it.configureTasks(context.getProjectPath(), context.getTaskId(), settings, context.getExecutionContext().getGradleVersion());
+      it.configureTasks(settings, context);
     });
 
     final String initScript = settings.getUserData(INIT_SCRIPT_KEY);

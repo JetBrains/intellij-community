@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState;
@@ -21,7 +20,6 @@ import com.intellij.util.Consumer;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -163,7 +161,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   }
 
   /**
-   * @deprecated use {@link GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)} instead
+   * @deprecated use {@link GradleTaskManagerExtension#configureTasks} instead
    */
   @Deprecated
   default void enhanceTaskProcessing(
@@ -173,56 +171,56 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   ) { }
 
   /**
-   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @see GradleTaskManagerExtension#configureTasks
    * @deprecated use {@link ExternalSystemExecutionSettings#getJvmParameters} instead
    */
   @Deprecated
   String JVM_PARAMETERS_SETUP_KEY = "JVM_PARAMETERS_SETUP";
 
   /**
-   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @see GradleTaskManagerExtension#configureTasks
    * @deprecated use {@link GradleExecutionSettings#isRunAsTest} instead
    */
   @Deprecated
   String IS_RUN_AS_TEST_KEY = "IS_RUN_AS_TEST";
 
   /**
-   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @see GradleTaskManagerExtension#configureTasks
    * @deprecated use {@link GradleExecutionSettings#isBuiltInTestEventsUsed} instead
    */
   @Deprecated
   String IS_BUILT_IN_TEST_EVENTS_USED_KEY = "IS_BUILT_IN_TEST_EVENTS_USED";
 
   /**
-   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @see GradleTaskManagerExtension#configureTasks
    * @deprecated use {@link ExternalSystemRunnableState#DEBUGGER_DISPATCH_PORT_KEY} instead
    */
   @Deprecated
   String DEBUG_DISPATCH_PORT_KEY = "DEBUG_DISPATCH_PORT";
 
   /**
-   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @see GradleTaskManagerExtension#configureTasks
    * @deprecated use {@link ExternalSystemRunnableState#DEBUGGER_DISPATCH_ADDR_KEY} instead
    */
   @Deprecated
   String DEBUG_DISPATCH_ADDR_KEY = "DEBUG_DISPATCH_ADDR";
 
   /**
-   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @see GradleTaskManagerExtension#configureTasks
    * @deprecated use {@link ExternalSystemRunnableState#DEBUGGER_PARAMETERS_KEY} instead
    */
   @Deprecated
   String DEBUG_OPTIONS_KEY = "DEBUG_OPTIONS";
 
   /**
-   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @see GradleTaskManagerExtension#configureTasks
    * @deprecated use GradleVersion argument instead
    */
   @Deprecated
   String GRADLE_VERSION = "GRADLE_VERSION";
 
   /**
-   * @deprecated use {@link GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)} instead
+   * @deprecated use {@link GradleTaskManagerExtension#configureTasks} instead
    */
   @Deprecated
   @ApiStatus.Experimental
