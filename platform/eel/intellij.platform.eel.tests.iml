@@ -29,9 +29,11 @@
     <orderEntry type="module" module-name="intellij.platform.eel.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.pioneer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />

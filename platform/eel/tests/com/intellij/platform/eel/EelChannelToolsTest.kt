@@ -1,12 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EelSendApi::class)
 
-package com.intellij.execution.eel
+package com.intellij.platform.eel
 
-import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.ReadResult.NOT_EOF
-import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelReceiveChannelException
@@ -33,11 +31,6 @@ import com.intellij.platform.eel.provider.utils.sendWholeBuffer
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
-import io.ktor.util.decodeString
-import io.ktor.util.moveToByteArray
-import io.mockk.coEvery
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -45,14 +38,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import org.easymock.EasyMock.anyInt
-import org.easymock.EasyMock.anyObject
-import org.easymock.EasyMock.expect
-import org.easymock.EasyMock.mock
-import org.easymock.EasyMock.replay
-import org.easymock.EasyMock.verify
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.containsInAnyOrder
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -145,7 +130,7 @@ class EelChannelToolsTest {
       if (b == -1) break
       list.put(b.toByte())
     }
-    assertEquals(TEXT, list.flip().decodeString())
+    assertEquals(TEXT, Charsets.UTF_8.decode(list.flip()).toString())
   }
 
   @CartesianTest
@@ -251,10 +236,10 @@ class EelChannelToolsTest {
       var error = false
 
       @Suppress("OPT_IN_OVERRIDE")
-      override suspend fun send(dst: ByteBuffer) {
+      override suspend fun send(src: ByteBuffer) {
         error = !error
         if (error && dstError) throw SocketTimeoutException("wait")
-        result.add(dst.get())
+        result.add(src.get())
       }
 
       override suspend fun close(err: Throwable?) = Unit
@@ -317,12 +302,24 @@ class EelChannelToolsTest {
 
   @Test
   fun flushChannelTest(): Unit = timeoutRunBlocking {
-    val inputStream = mock<OutputStream>(OutputStream::class.java)
-    expect(inputStream.write(anyObject(), anyInt(), anyInt()))
-    expect(inputStream.flush())
-    replay(inputStream)
-    inputStream.asEelChannel().send(allocate(42))
-    verify(inputStream)
+    var written = false
+    var flushed = false
+    val outputStream = object : OutputStream() {
+      override fun write(b: Int) {
+        written = true
+      }
+
+      override fun write(b: ByteArray, off: Int, len: Int) {
+        written = true
+      }
+
+      override fun flush() {
+        flushed = true
+      }
+    }
+    outputStream.asEelChannel().send(allocate(42))
+    assertTrue(written, "Stream should be written to")
+    assertTrue(flushed, "Stream should be flushed")
   }
 
   @Test
@@ -419,7 +416,7 @@ class EelChannelToolsTest {
       result.put(buffer.flip())
     }
 
-    assertEquals(TEXT.repeat(3), result.flip().decodeString())
+    assertEquals(TEXT.repeat(3), Charsets.UTF_8.decode(result.flip()).toString())
   }
 
 
@@ -440,7 +437,7 @@ class EelChannelToolsTest {
     val buffer = allocate(data.size)
     while (buffer.hasRemaining() && eelChannel.receive(buffer) != EOF) {
     }
-    val textFromChannel = buffer.rewind().decodeString()
+    val textFromChannel = Charsets.UTF_8.decode(buffer.rewind()).toString()
     assertEquals(TEXT, textFromChannel)
   }
 
@@ -489,7 +486,7 @@ class EelChannelToolsTest {
               break
             }
             readBuffer.flip()
-            val readLine = readBuffer.moveToByteArray().toString(Charsets.UTF_8).removeSuffix("\n").toInt()
+            val readLine = ByteArray(readBuffer.remaining()).also(readBuffer::get).decodeToString().removeSuffix("\n").toInt()
             assertEquals(i, readLine)
             assertTrue((readLine - producerProgress.get()).absoluteValue <= 1)
             i += 1
@@ -544,7 +541,7 @@ class EelChannelToolsTest {
             break
           }
           readBuffer.flip()
-          val readLine = readBuffer.moveToByteArray().toString(Charsets.UTF_8)
+          val readLine = ByteArray(readBuffer.remaining()).also(readBuffer::get).decodeToString()
           assertEquals(expectedRead, readLine)
           readBuffer.clear()
         }
@@ -657,7 +654,7 @@ class EelChannelToolsTest {
     pipe.sink.close(null)
     assertTrue(pipe.sink.isClosed)
     val text = readJob.await()
-    assertThat("Some litters missing", text.toCharArray().toList(), containsInAnyOrder(*lettersSent.toTypedArray()))
+    assertEquals(lettersSent.sorted(), text.toList().sorted(), "Some letters missing")
 
   }
 
@@ -677,12 +674,22 @@ class EelChannelToolsTest {
   }
 
   @Test
-  fun testKotlinChannelWithError(
-  ): Unit = timeoutRunBlocking {
-    val brokenChannel = mockk<EelReceiveChannel>()
+  fun testKotlinChannelWithError(): Unit = timeoutRunBlocking {
     val error = IOException("go away me busy")
-    coEvery { brokenChannel.receive(any()) } answers { throw error }
-    every { brokenChannel.prefersDirectBuffers } returns false
+    val brokenChannel = object : EelReceiveChannel {
+      override suspend fun receive(dst: ByteBuffer): ReadResult {
+        throw error
+      }
+
+      override val prefersDirectBuffers: Boolean = false
+
+      override suspend fun closeForReceive() = Unit
+
+      @Throws(EelReceiveChannelException::class)
+      @ThrowsChecked(EelReceiveChannelException::class)
+      @EelDelicateApi
+      override fun available(): Int = 0
+    }
     try {
       consumeReceiveChannelAsKotlin(brokenChannel).receive()
     }
@@ -763,25 +770,38 @@ class EelChannelToolsTest {
   inner class ReversibleAdapters {
     @Test
     fun `InputStream to EelReceiveChannel to InputStream`() {
-      val source = mockk<InputStream>()
+      val source = ByteArrayInputStream(ByteArray(0))
       assertSame(source, source.consumeAsEelChannel().consumeAsInputStream())
     }
 
     @Test
     fun `OutputStream to EelSendChannel to OutputStream`() {
-      val sink = mockk<OutputStream>()
+      val sink = ByteArrayOutputStream()
       assertSame(sink, sink.asEelChannel().asOutputStream())
     }
 
     @Test
     fun `EelReceiveChannel to InputStream to EelReceiveChannel`() {
-      val source = mockk<EelReceiveChannel>()
+      val source = object : EelReceiveChannel {
+        override suspend fun receive(dst: ByteBuffer): ReadResult = EOF
+        override val prefersDirectBuffers: Boolean = false
+        override suspend fun closeForReceive() = Unit
+        @Throws(EelReceiveChannelException::class)
+        @ThrowsChecked(EelReceiveChannelException::class)
+        @EelDelicateApi
+        override fun available(): Int = 0
+      }
       assertSame(source, source.consumeAsInputStream().consumeAsEelChannel())
     }
 
     @Test
     fun `EelSendChannel to OutputStream to EelSendChannel`() {
-      val sink = mockk<EelSendChannel>()
+      val sink = object : EelSendChannel {
+        override suspend fun send(src: ByteBuffer) = Unit
+        override val prefersDirectBuffers: Boolean = false
+        override val isClosed: Boolean = false
+        override suspend fun close(err: Throwable?) = Unit
+      }
       assertSame(sink, sink.asOutputStream().asEelChannel())
     }
   }
