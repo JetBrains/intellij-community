@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
 
@@ -110,7 +111,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     }
   }
 
-  private static <T> @NotNull T getPublisher(@NotNull Topic<T> topic) {
+  private static @NotNull PropertyChangeListener getPublisher(@NotNull Topic<? extends PropertyChangeListener> topic) {
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(topic);
   }
 
