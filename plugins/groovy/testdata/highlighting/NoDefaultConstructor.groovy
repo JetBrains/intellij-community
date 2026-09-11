@@ -1,10 +1,11 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 class X {
     X(int a) {}
 }
 
 class Y extends X {
 
-    <error descr="There is no default constructor available in class 'X'">Y()</error> {
+    <error descr="No no-arg constructor found in class 'X'">Y()</error> {
 
     }
 }
