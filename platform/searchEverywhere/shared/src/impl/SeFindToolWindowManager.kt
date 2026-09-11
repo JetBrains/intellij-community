@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.backend.impl
+package com.intellij.platform.searchEverywhere.impl
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.find.impl.SearchEverywhereItem

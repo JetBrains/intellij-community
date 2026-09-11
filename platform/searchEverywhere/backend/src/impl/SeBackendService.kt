@@ -26,6 +26,7 @@ import com.intellij.platform.searchEverywhere.SeTransferEvent
 import com.intellij.platform.searchEverywhere.SeTransferItem
 import com.intellij.platform.searchEverywhere.asRef
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
+import com.intellij.platform.searchEverywhere.impl.SeFindToolWindowManager
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLegacyContributorsRegistry
 import com.intellij.platform.searchEverywhere.providers.SeLog

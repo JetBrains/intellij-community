@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.project.projectId
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
@@ -31,6 +32,7 @@ import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecke
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvidersFacade
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
+import com.intellij.platform.searchEverywhere.impl.SeFindToolWindowManager
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.isWildcard
 import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
@@ -38,6 +40,7 @@ import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
+import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.areCommandsSupported
 import com.intellij.platform.searchEverywhere.providers.isExtendedInfoEnabled
 import com.intellij.platform.searchEverywhere.providers.isPreviewEnabled
@@ -167,9 +170,6 @@ class SeTabDelegate(
    * Defines if results can be shown in <i>Find</i> toolwindow.
    */
   suspend fun canBeShownInFindResults(): Boolean {
-    // The Find tool window is populated by the backend (SeRemoteApi.openInFindToolWindow):
-    // in IJ Light the action cannot work, so it is not offered (IJPL-252054)
-    if (SeRemoteApi.tryGetInstance() == null && IdeProductMode.isLight) return false
     return providers.getValue().canBeShownInFindResults()
   }
 
@@ -185,14 +185,21 @@ class SeTabDelegate(
   ): Boolean {
     if (project == null) return false
 
-    // tryGetInstance: awaiting the connection would suspend a click forever in IJ Light (IJPL-252054)
-    val remoteApi = SeRemoteApi.tryGetInstance() ?: return false
-    return remoteApi.openInFindToolWindow(project.projectId(),
-                                          session,
-                                          dataContextId,
-                                          providers.getValue().getProviderIds(disabledProviders ?: emptyList()),
-                                          params,
-                                          isAllTab)
+    val providers = providers.getValue()
+    val providerIds = providers.getProviderIds(disabledProviders ?: emptyList())
+    if (IdeProductMode.getInstance().currentMode == ProductMode.LIGHT) {
+      val providersHolder = providers.localProvidersHolder ?: return false
+      val exportableProviderIds = providerIds.filter { providersHolder.get(it, isAllTab)?.canBeShownInFindResults() == true }
+      SeFindToolWindowManager(project).openInFindToolWindow(exportableProviderIds, params, isAllTab, providersHolder, project.projectId())
+      return true
+    }
+
+    return SeRemoteApi.getInstance().openInFindToolWindow(project.projectId(),
+                                                        session,
+                                                        dataContextId,
+                                                        providerIds,
+                                                        params,
+                                                        isAllTab)
   }
 
   /**
@@ -229,6 +236,7 @@ class SeTabDelegate(
     private val localProviders: Map<SeProviderId, SeLocalItemDataProvider>,
     private val frontendProvidersFacade: SeFrontendItemDataProvidersFacade?,
     val essentialProviderIds: Set<SeProviderId>,
+    val localProvidersHolder: SeProvidersHolder?,
   ) {
     fun getProvidersIdToName(): Map<SeProviderId, @Nls String> = localProviders.mapValues { it.value.displayName } +
                                                                  (frontendProvidersFacade?.idsWithDisplayNames ?: emptyMap())
@@ -391,7 +399,7 @@ class SeTabDelegate(
       val localProvidersHolder = SeFrontendService.getInstance(project).localProvidersHolder
                                  ?: run {
                                    SeLog.error("Local providers holder is not initialized")
-                                   return@coroutineScope Providers(emptyMap(), null, emptySet())
+                                   return@coroutineScope Providers(emptyMap(), null, emptySet(), null)
                                  }
 
       val localFactories = SeItemsProviderFactory.EP_NAME.extensionList.associateBy { SeProviderId(it.id) }
@@ -456,7 +464,7 @@ class SeTabDelegate(
                           (frontendProvidersFacade?.essentialProviderIds ?: emptySet())
 
       SeLog.log(SeLog.THROTTLING) { "Essential contributors for $logLabel tab : " + allEssentials.joinToString(", ") { it.value } }
-      Providers(localProviders, frontendProvidersFacade, allEssentials)
+      Providers(localProviders, frontendProvidersFacade, allEssentials, localProvidersHolder)
     }
   }
 }

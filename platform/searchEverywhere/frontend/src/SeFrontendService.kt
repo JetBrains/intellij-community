@@ -78,7 +78,7 @@ import java.awt.KeyboardFocusManager
 import java.awt.Point
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -133,6 +133,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     }
 
     val popupClosedCompletable = CompletableDeferred<Unit>()
+    val exportVm = AtomicReference<SePopupVm?>()
     val searchStatePublisher = SeSearchStatePublisher()
     val popupScope = coroutineScope.childScope("SearchEverywhereFrontendService popup scope")
     val (popup, popupContentPane) = createAndShowIdlePopup(popupScope, initialTabs, tabId, searchText, selectSearchText, searchStatePublisher) {
@@ -147,95 +148,102 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val popupFuture = CompletableFuture<SePopupInstance>()
     popupInstanceFuture = popupFuture
 
-    // The Find tool window takes the session over, so it deletes the session itself.
-    val removeSession = AtomicBoolean(true)
-
     coroutineScope.launch {
       val session = SeSessionEntity.createSession()
+      var sessionProvidersHolder: SeProvidersHolder? = null
 
       try {
-        popupSemaphore.withPermit {
-          val mlService = SeMlService.getInstanceIfEnabled()
-          mlService?.onSessionStarted(project, tabId)
+        try {
+          popupSemaphore.withPermit {
+            val mlService = SeMlService.getInstanceIfEnabled()
+            mlService?.onSessionStarted(project, tabId)
 
-          try {
-            val dataContextWithRpcId = readAction {
-              val dataContext = initEvent.dataContext
-              val dataContextId = dataContext.rpcId()
-              DataContextWithRpcId(dataContext, dataContextId)
-            }
-
-            val initEvent = initEvent.withDataContext(dataContextWithRpcId)
-            val providersHolder = SeProvidersHolder.initialize(initEvent, project, session, "Frontend", false)
-            localProvidersHolder = providersHolder
-            project?.let { Disposer.tryRegister(it, providersHolder) }
-            initializeVmAndSetToPopup(popupFuture,
-                                      popup,
-                                      popupContentPane,
-                                      searchStatePublisher,
-                                      tabFactories,
-                                      initialTabs,
-                                      tabId,
-                                      searchText,
-                                      initEvent,
-                                      popupScope,
-                                      session,
-                                      providersHolder,
-                                      removeSession)
-
-            val showPopupEndTime = System.currentTimeMillis()
-            SeLog.log { "Search Everywhere popup opened in ${showPopupEndTime - showPopupStartTime} ms" }
-
-            popupClosedCompletable.await()
-          }
-          finally {
-            withContext(NonCancellable) {
-              // Keep ML session callbacks within the same permit window to avoid finishing
-              // a session while tab flows may still emit state updates.
-              popupScope.coroutineContext[Job]?.cancelAndJoin()
-              mlService?.onSessionFinished()
-            }
-          }
-        }
-      }
-      catch (e: Throwable) {
-        if (e.isControlFlowException) throw e
-
-        if (!popupFuture.isDone) {
-          // The popup view model hasn't reached the popup panel because of an exception. Try to reopen once.
-          withContext(Dispatchers.EDT) {
-            popup.cancel()
-
-            if (isRetry) {
-              SeLog.log(LIFE_CYCLE) { "Exception while opening the popup. Closing the popup. Exception: ${e.message}\n${e.stackTraceToString()}" }
-            }
-            else {
-              SeLog.log(LIFE_CYCLE) { "Exception while opening the popup. Will try to reopen once. Exception: ${e.message}\n${e.stackTraceToString()}" }
-              show(tabId, searchText, initEvent, true)
-            }
-          }
-        }
-      }
-      finally {
-        popupInstanceFuture = null
-        localProvidersHolder?.let { Disposer.dispose(it) }
-        localProvidersHolder = null
-
-        withContext(NonCancellable) {
-          if (!popupFuture.isDone) {
-            withContext(Dispatchers.EDT) {
-              if (!popup.isDisposed) {
-                SeLog.log(LIFE_CYCLE) { "The viewModel hasn't reached the popup without an exception. Closing the popup." }
-                popup.cancel()
+            try {
+              val dataContextWithRpcId = readAction {
+                val dataContext = initEvent.dataContext
+                val dataContextId = dataContext.rpcId()
+                DataContextWithRpcId(dataContext, dataContextId)
               }
+
+              val initEvent = initEvent.withDataContext(dataContextWithRpcId)
+              val providersHolder = SeProvidersHolder.initialize(initEvent, project, session, "Frontend", false)
+              sessionProvidersHolder = providersHolder
+              localProvidersHolder = providersHolder
+              project?.let { Disposer.tryRegister(it, providersHolder) }
+              initializeVmAndSetToPopup(popupFuture,
+                                        popup,
+                                        popupContentPane,
+                                        searchStatePublisher,
+                                        tabFactories,
+                                        initialTabs,
+                                        tabId,
+                                        searchText,
+                                        initEvent,
+                                        popupScope,
+                                        session,
+                                        providersHolder,
+                                        onShowFindToolWindow = { exportVm.set(it) })
+
+              val showPopupEndTime = System.currentTimeMillis()
+              SeLog.log { "Search Everywhere popup opened in ${showPopupEndTime - showPopupStartTime} ms" }
+
+              popupClosedCompletable.await()
+            }
+            finally {
+              try {
+                withContext(NonCancellable) {
+                  // Keep ML session callbacks within the same permit window to avoid finishing
+                  // a session while tab flows may still emit state updates.
+                  popupScope.coroutineContext[Job]?.cancelAndJoin()
+                  mlService?.onSessionFinished()
+                }
+              }
+              finally {
+                localProvidersHolder = null
+              }
+            }
+          }
+        }
+        catch (e: Throwable) {
+          if (e.isControlFlowException) throw e
+
+          if (!popupFuture.isDone) {
+            // The popup view model hasn't reached the popup panel because of an exception. Try to reopen once.
+            withContext(Dispatchers.EDT) {
+              popup.cancel()
+
+              if (isRetry) {
+                SeLog.log(LIFE_CYCLE) { "Exception while opening the popup. Closing the popup. Exception: ${e.message}\n${e.stackTraceToString()}" }
+              }
+              else {
+                SeLog.log(LIFE_CYCLE) { "Exception while opening the popup. Will try to reopen once. Exception: ${e.message}\n${e.stackTraceToString()}" }
+                show(tabId, searchText, initEvent, true)
+              }
+            }
+          }
+        }
+        finally {
+          withContext(NonCancellable + Dispatchers.EDT) {
+            if (popupInstanceFuture === popupFuture) {
+              popupInstanceFuture = null
+            }
+            if (!popupFuture.isDone && !popup.isDisposed) {
+              SeLog.log(LIFE_CYCLE) { "The viewModel hasn't reached the popup without an exception. Closing the popup." }
+              popup.cancel()
             }
           }
           popupScope.cancel()
-          if (removeSession.get()) {
-            change {
-              shared {
-                session.asRef().derefOrNull()?.delete()
-              }
+        }
+
+        // Export after releasing the popup permit. Keep the session and its providers alive until export completes.
+        exportVm.get()?.openInFindWindow(session)
+      }
+      finally {
+        sessionProvidersHolder?.let { Disposer.dispose(it) }
+        withContext(NonCancellable) {
+          change {
+            shared {
+              session.asRef().derefOrNull()?.delete()
             }
           }
         }
@@ -256,7 +264,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     popupScope: CoroutineScope,
     session: SeSession,
     providersHolder: SeProvidersHolder,
-    removeSession: AtomicBoolean,
+    onShowFindToolWindow: (SePopupVm) -> Unit,
   ) {
     val tabInitializationTimeoutMillis: Long = 50
     val orderedTabFactoryIds = tabFactories.map { it.id }
@@ -316,24 +324,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       tabId,
       historyList,
       providersHolder.legacyContributors,
-      onShowFindToolWindow = {
-        popupScope.launch(NonCancellable) {
-          removeSession.set(false)
-          try {
-            it.openInFindWindow(session)
-          }
-          finally {
-            change {
-              shared {
-                session.asRef().derefOrNull()?.delete()
-              }
-            }
-          }
-        }
-        popupScope.cancel()
-      }, closePopupHandler = {
-      popup.cancel()
-    })
+      onShowFindToolWindow = onShowFindToolWindow,
+      closePopupHandler = {
+        popup.cancel()
+      })
     popupVm.showTab(tabId)
 
     popupContentPane.setVm(popupVm)
