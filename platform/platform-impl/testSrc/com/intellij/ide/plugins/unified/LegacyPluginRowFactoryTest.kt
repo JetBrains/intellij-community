@@ -290,7 +290,7 @@ internal class LegacyPluginRowFactoryTest {
         assertThat(legacyTabs.getTabComponentAt(0)).isNotNull()
         assertThat(unifiedTabs.tabs.map { it.text }).allMatch(String::isNotBlank)
         assertThat(unifiedTabs.presentation.showBorder).isTrue()
-        assertThat(unifiedTabs.getDecoration().labelInsets).isEqualTo(JBUI.insets(8, 8, 12, 8))
+        assertThat(unifiedTabs.getDecoration().labelInsets).isEqualTo(JBUI.insets(10, 8))
         legacyTabs.setBounds(0, 0, JBUI.scale(800), JBUI.scale(600))
         unifiedTabs.setBounds(0, 0, JBUI.scale(800), JBUI.scale(600))
         legacyTabs.doLayout()
