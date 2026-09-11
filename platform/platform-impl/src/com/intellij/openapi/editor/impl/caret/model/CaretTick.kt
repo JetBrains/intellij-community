@@ -14,12 +14,36 @@ internal data class CaretTick(
 ) {
   val isWithinQuietPeriod: Boolean get() = elapsedQuietTime < settings.quietPeriod
 
-  val remainingQuietTime: Duration get() = (settings.quietPeriod - elapsedQuietTime).coerceAtLeast(CaretClock.MOVEMENT_FRAME)
+  val remainingQuietTime: Duration
+    get() {
+      val remaining = settings.quietPeriod - elapsedQuietTime
+      return remaining.coerceAtLeast(CaretFrameInterval.MOVEMENT)
+    }
 
-  fun elapsedSince(startTime: AnimationTimeMark): Duration = (now - startTime).coerceAtLeast(Duration.ZERO)
+  fun elapsedSince(startTime: AnimationTimeMark): Duration {
+    val elapsed = now - startTime
+    return elapsed.coerceAtLeast(Duration.ZERO)
+  }
 
-  fun approachFactor(timeConstant: Duration): Double =
-    (1.0 - exp(-frameDuration / timeConstant.coerceAtLeast(CaretClock.MOVEMENT_FRAME))).coerceIn(0.0, 1.0)
+  /**
+   * Fraction of the remaining distance to close during this tick, for an exponential approach with [timeConstant].
+   */
+  fun approachFactor(timeConstant: Duration): Double {
+    val effectiveTimeConstant = timeConstant.coerceAtLeast(CaretFrameInterval.MOVEMENT)
+    val elapsedTimeConstants = frameDuration / effectiveTimeConstant
+    val closedFraction = 1.0 - exp(-elapsedTimeConstants)
+    return closedFraction.coerceIn(0.0, 1.0)
+  }
 
-  fun velocityDamping(): Double = 0.75.pow(frameDuration / CaretClock.MOVEMENT_FRAME)
+  fun velocityDamping(): Double {
+    val elapsedFrames = frameDuration / CaretFrameInterval.MOVEMENT
+    return VELOCITY_DAMPING_PER_FRAME.pow(elapsedFrames)
+  }
+
+  companion object {
+    /**
+     * Fraction of the inherited velocity that survives one [CaretFrameInterval.MOVEMENT].
+     */
+    private const val VELOCITY_DAMPING_PER_FRAME = 0.75
+  }
 }

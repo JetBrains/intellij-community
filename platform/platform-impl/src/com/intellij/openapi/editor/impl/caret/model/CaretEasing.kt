@@ -7,31 +7,57 @@ import kotlin.math.max
 import kotlin.math.pow
 import kotlin.time.Duration
 
-private const val MATCHED_PROGRESS = 0.9
-
 internal enum class CaretEasing {
   SNAPPY {
-    override fun apply(t: Double): Double {
-      val u = cbrt(t)
-      return 3 * u - 3 * u.pow(2) + t
+    override fun apply(progress: Double): Double {
+      val root = cbrt(progress)
+      return 3 * root - 3 * root.pow(2) + progress
     }
   },
 
   GLIDING {
-    override fun apply(t: Double): Double =
+    override fun apply(progress: Double): Double {
       // Horner form of rounded Hermite + α, β approx of cubic-bezier(0.25,0.1,0.25,1.0); monotone on [0,1], max dev ≈ 0.0176.
-      t * ((((-5.4 * t + 17.6) * t - 20.6) * t + 9.0) * t + 0.4)
+      return progress * ((((-5.4 * progress + 17.6) * progress - 20.6) * progress + 9.0) * progress + 0.4)
+    }
   };
 
-  abstract fun apply(t: Double): Double
+  /**
+   * Maps linear [progress] in `[0, 1]` to eased progress in `[0, 1]`.
+   */
+  abstract fun apply(progress: Double): Double
 
+  /**
+   * Time constant of the exponential approach that reaches [MATCHED_PROGRESS] at the same moment this curve does.
+   */
   internal fun timeConstant(duration: Duration): Duration {
-    val steps = max(8, (duration / CaretClock.MOVEMENT_FRAME).toInt())
-    val matchedAt = (1..steps)
-      .map { it.toDouble() / steps }
-      .firstOrNull { apply(it) >= MATCHED_PROGRESS }
-      ?: 1.0
+    val matchedAt = progressWhereMatched(duration)
+    val matchedDuration = duration * matchedAt
+    val timeConstant = matchedDuration / TIME_CONSTANTS_TO_MATCH
+    return timeConstant.coerceAtLeast(CaretFrameInterval.MOVEMENT)
+  }
 
-    return ((duration * matchedAt) / -ln(1.0 - MATCHED_PROGRESS)).coerceAtLeast(CaretClock.MOVEMENT_FRAME)
+  /**
+   * Progress at which this curve first reaches [MATCHED_PROGRESS], sampled once per animation frame.
+   */
+  private fun progressWhereMatched(duration: Duration): Double {
+    val durationInFrames = (duration / CaretFrameInterval.MOVEMENT).toInt()
+    val steps = max(MIN_TIME_CONSTANT_STEPS, durationInFrames)
+    val sampledProgress = (1..steps).map { step -> step.toDouble() / steps }
+    return sampledProgress.firstOrNull { progress -> apply(progress) >= MATCHED_PROGRESS } ?: 1.0
+  }
+
+  companion object {
+    /**
+     * Progress at which an exponential approach is considered to have matched the easing curve.
+     */
+    private const val MATCHED_PROGRESS = 0.9
+
+    /**
+     * How many time constants an exponential approach needs to reach [MATCHED_PROGRESS].
+     */
+    private val TIME_CONSTANTS_TO_MATCH = -ln(1.0 - MATCHED_PROGRESS)
+
+    private const val MIN_TIME_CONSTANT_STEPS = 8
   }
 }

@@ -19,13 +19,10 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Graphics
 import javax.swing.JComponent
-
-private const val ID = "EditorAnimationCacheStatistics"
-
-private val WINDOW_SECONDS = STATISTICS_BUCKET_DURATION * STATISTICS_BUCKET_COUNT
 
 internal class EditorAnimationCacheStatisticsWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = ID
@@ -91,25 +88,16 @@ private class HitRateBar : TextPanel() {
     get() = " " + UIBundle.message("status.bar.editor.animation.cache.widget.text", 100)
 
   fun updateState() {
-    if (!isShowing) return
-
-    val hitRate = EditorAnimationCacheStatistics.hitRate()
-    if (hitRate == rate && text != null) return
-
-    rate = hitRate
-    text = when (hitRate) {
-      null -> UIBundle.message("status.bar.editor.animation.cache.widget.idle")
-      else -> UIBundle.message("status.bar.editor.animation.cache.widget.text", hitRate.hitPercent)
+    if (!isShowing) {
+      return
     }
-    setToolTipText(HtmlChunk.text(when (hitRate) {
-      null -> UIBundle.message("status.bar.editor.animation.cache.widget.tooltip.idle", WINDOW_SECONDS.inWholeSeconds)
-      else -> UIBundle.message(
-        "status.bar.editor.animation.cache.widget.tooltip",
-        hitRate.hits,
-        hitRate.misses,
-        WINDOW_SECONDS.inWholeSeconds,
-      )
-    }))
+    val hitRate = EditorAnimationCacheStatistics.hitRate()
+    if (hitRate == rate && text != null) {
+      return
+    }
+    rate = hitRate
+    text = labelFor(hitRate)
+    setToolTipText(HtmlChunk.text(tooltipFor(hitRate)))
     repaint()
   }
 
@@ -135,4 +123,28 @@ private class HitRateBar : TextPanel() {
 
     super.paintComponent(g)
   }
+
+  private fun labelFor(hitRate: CacheHitRate?): @Nls String = when (hitRate) {
+    null -> UIBundle.message("status.bar.editor.animation.cache.widget.idle")
+    else -> UIBundle.message("status.bar.editor.animation.cache.widget.text", hitRate.hitPercent)
+  }
+
+  private fun tooltipFor(hitRate: CacheHitRate?): @Nls String = when (hitRate) {
+    null -> UIBundle.message("status.bar.editor.animation.cache.widget.tooltip.idle", WINDOW_SECONDS.inWholeSeconds)
+    else -> UIBundle.message(
+      "status.bar.editor.animation.cache.widget.tooltip",
+      hitRate.hits,
+      hitRate.misses,
+      WINDOW_SECONDS.inWholeSeconds,
+    )
+  }
 }
+
+/// MARK: constants
+
+private const val ID = "EditorAnimationCacheStatistics"
+
+/**
+ * The window the reported hit rate covers, which is however much history the statistics keep.
+ */
+private val WINDOW_SECONDS = STATISTICS_BUCKET_DURATION * STATISTICS_BUCKET_COUNT

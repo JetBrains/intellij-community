@@ -4,20 +4,24 @@ package com.intellij.openapi.editor.impl.view.animation
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.TimeSource
 
 internal val STATISTICS_BUCKET_DURATION: Duration = 500.milliseconds
 internal const val STATISTICS_BUCKET_COUNT = 10
 
 internal data class CacheHitRate(val hits: Int, val misses: Int) {
-  val hitPercent: Int get() = ((hits.toLong() * 100 + (hits + misses) / 2) / (hits + misses)).toInt()
+  val hitPercent: Int
+    get() {
+      val total = hits + misses
+      val rounding = total / 2
+      return ((hits.toLong() * 100 + rounding) / total).toInt()
+    }
 }
 
 internal object EditorAnimationCacheStatistics {
   private val startedAt = AnimationClock.markAnimationNow()
   private val hits = IntArray(STATISTICS_BUCKET_COUNT)
   private val misses = IntArray(STATISTICS_BUCKET_COUNT)
-  private val stamps = arrayOfNulls<TimeSource.Monotonic.ValueTimeMark>(STATISTICS_BUCKET_COUNT)
+  private val stamps = arrayOfNulls<AnimationTimeMark>(STATISTICS_BUCKET_COUNT)
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun recordHit(): Boolean {
@@ -35,7 +39,6 @@ internal object EditorAnimationCacheStatistics {
   fun hitRate(): CacheHitRate? {
     val newest = currentStamp(currentBucket())
     val oldest = newest - STATISTICS_BUCKET_DURATION * (STATISTICS_BUCKET_COUNT - 1)
-
     var totalHits = 0
     var totalMisses = 0
     for (bucket in 0 until STATISTICS_BUCKET_COUNT) {
@@ -45,18 +48,25 @@ internal object EditorAnimationCacheStatistics {
         totalMisses += misses[bucket]
       }
     }
-
     return when (totalHits + totalMisses) {
       0 -> null
       else -> CacheHitRate(totalHits, totalMisses)
     }
   }
 
-  private fun currentBucket(): Long = (startedAt.elapsedNow() / STATISTICS_BUCKET_DURATION).toLong()
+  private fun currentBucket(): Long {
+    val elapsed = startedAt.elapsedNow()
+    return (elapsed / STATISTICS_BUCKET_DURATION).toLong()
+  }
 
-  private fun currentStamp(elapsedBuckets: Long): TimeSource.Monotonic.ValueTimeMark =
-    startedAt + STATISTICS_BUCKET_DURATION * elapsedBuckets.toDouble()
+  private fun currentStamp(elapsedBuckets: Long): AnimationTimeMark {
+    val elapsed = STATISTICS_BUCKET_DURATION * elapsedBuckets.toDouble()
+    return startedAt + elapsed
+  }
 
+  /**
+   * The bucket the current moment falls in, reset first if it still holds counts from an older window.
+   */
   private fun bucketAt(): Int {
     val elapsedBuckets = currentBucket()
     val bucket = (elapsedBuckets % STATISTICS_BUCKET_COUNT).toInt()

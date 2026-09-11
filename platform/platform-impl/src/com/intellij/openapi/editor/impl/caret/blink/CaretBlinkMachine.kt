@@ -8,12 +8,20 @@ internal class CaretBlinkMachine private constructor(private val phase: CaretBli
 
   fun stop(): CaretBlinkMachine = CaretBlinkMachine(CaretBlinkPhase.Dormant)
 
-  fun restart(): CaretBlinkMachine =
-    CaretBlinkMachine(if (phase == CaretBlinkPhase.Dormant) phase else CaretBlinkPhase.Awake)
+  /**
+   * Restarts the blink from a fully opaque caret, unless blinking is stopped altogether.
+   */
+  fun restart(): CaretBlinkMachine {
+    val isStopped = phase == CaretBlinkPhase.Dormant
+    val restartedPhase = if (isStopped) phase else CaretBlinkPhase.Awake
+    return CaretBlinkMachine(restartedPhase)
+  }
 
   fun advance(tick: CaretTick, prefetching: Boolean): Pair<CaretBlinkMachine, CaretBlinkStep> {
     val advancedPhase = phase.advance(tick)
-    return CaretBlinkMachine(advancedPhase) to advancedPhase.step(tick, prefetching)
+    val next = CaretBlinkMachine(advancedPhase)
+    val step = advancedPhase.step(tick, prefetching)
+    return next to step
   }
 
   companion object {

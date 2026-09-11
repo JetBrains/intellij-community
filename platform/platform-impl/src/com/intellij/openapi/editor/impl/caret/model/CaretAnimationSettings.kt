@@ -4,8 +4,6 @@ package com.intellij.openapi.editor.impl.caret.model
 import kotlin.math.ceil
 import kotlin.time.Duration
 
-private const val VISUAL_BLINK_PERIOD_FACTOR = 1.2
-
 internal data class CaretAnimationSettings(
   val blinkPeriod: Duration,
   val isBlinking: Boolean,
@@ -21,5 +19,21 @@ internal data class CaretAnimationSettings(
 
   val moveTimeConstant: Duration = easing.timeConstant(moveDuration)
 
-  val easingFrameCount: Int = ceil(moveDuration / CaretClock.MOVEMENT_FRAME).toInt().coerceAtLeast(1)
+  /**
+   * How many frames a whole move takes, and therefore how many frames it is worth prefetching.
+   */
+  val easingFrameCount: Int = frameCountOf(moveDuration)
+
+  companion object {
+    /**
+     * A fade reads as slower than a hard toggle of the same length, so the visual half period is stretched by this.
+     */
+    private const val VISUAL_BLINK_PERIOD_FACTOR = 1.2
+
+    private fun frameCountOf(duration: Duration): Int {
+      val exactFrames = duration / CaretFrameInterval.MOVEMENT
+      val wholeFrames = ceil(exactFrames).toInt()
+      return wholeFrames.coerceAtLeast(1)
+    }
+  }
 }

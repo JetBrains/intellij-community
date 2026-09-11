@@ -3563,10 +3563,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   void updateCaretCursor() {
     myUpdateCursor = true;
     if (caretMutator.snapshot().isShown) {
-      caretMutator.setStartTime();
+      caretMutator.recordActivity();
     }
     else {
-      caretMutator.setFullOpacity();
+      caretMutator.showFullyOpaque();
       repaintCaretCursorSnapshot();
     }
   }
@@ -3693,7 +3693,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @ApiStatus.Internal
   public boolean isCaretShown(@NotNull CaretCursorSnapshot snapshot) {
-    return snapshot.isEnabled && snapshot.isShown && !isRendererMode() && isEditorInputFocusOwner();
+    return snapshot.getWantsToBeShown() && !isRendererMode() && isEditorInputFocusOwner();
   }
 
   private final class ScrollingTimer {

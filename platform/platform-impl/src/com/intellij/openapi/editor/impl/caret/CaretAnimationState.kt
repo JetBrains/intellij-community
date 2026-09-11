@@ -2,25 +2,42 @@
 package com.intellij.openapi.editor.impl.caret
 
 import com.intellij.openapi.editor.impl.caret.blink.CaretBlinkMachine
+import com.intellij.openapi.editor.impl.caret.blink.CaretBlinkStep
 import com.intellij.openapi.editor.impl.caret.model.CaretCursorSnapshot
+import com.intellij.openapi.editor.impl.caret.model.CaretFrameInterval
 import com.intellij.openapi.editor.impl.caret.model.CaretPlacement
+import com.intellij.openapi.editor.impl.caret.model.CaretRectangle
 import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
 import com.intellij.openapi.editor.impl.caret.motion.CaretMotionMachine
+import com.intellij.openapi.editor.impl.caret.motion.CaretMotionStep
 import com.intellij.openapi.editor.impl.view.animation.AnimationClock
 import com.intellij.openapi.editor.impl.view.animation.AnimationTimeMark
-import kotlin.time.TimeSource
+import kotlin.time.Duration
 
+/**
+ * The whole animation state of one editor: where the carets are heading, how they blink, and the snapshot the painter
+ * reads. Every transition returns a new instance with a higher [version], so a concurrent writer is always detectable.
+ */
 internal class CaretAnimationState private constructor(
   private val motion: CaretMotionMachine,
   private val blink: CaretBlinkMachine,
   private val repaintMetrics: CaretRepaintMetrics,
   val snapshot: CaretCursorSnapshot,
-  val lastFrameAt: AnimationTimeMark,
+  private val lastFrameAt: AnimationTimeMark,
   val isRunning: Boolean,
   val version: Long,
 ) {
   val isMotionSettled: Boolean get() = motion.isSettled
+
+  /**
+   * How long the previous frame actually took, floored at one frame interval so that a long pause does not make the
+   * next frame jump.
+   */
+  fun frameDurationAt(now: AnimationTimeMark): Duration {
+    val sinceLastFrame = now - lastFrameAt
+    return sinceLastFrame.coerceAtLeast(CaretFrameInterval.MOVEMENT)
+  }
 
   /// MARK: motion transitions
 
@@ -29,10 +46,19 @@ internal class CaretAnimationState private constructor(
     tick: CaretTick,
     isCaretShown: Boolean,
     repaintMetrics: CaretRepaintMetrics,
-  ): CaretAnimationState = next(motion = motion.retarget(placements, tick, isCaretShown), repaintMetrics = repaintMetrics)
+  ): CaretAnimationState {
+    val nextMotion = motion.retarget(placements, tick, isCaretShown)
+    return next(motion = nextMotion, repaintMetrics = repaintMetrics)
+  }
 
-  fun snapTo(placements: List<CaretPlacement>, tick: CaretTick, repaintMetrics: CaretRepaintMetrics): CaretAnimationState =
-    next(motion = motion.snapTo(placements, tick), repaintMetrics = repaintMetrics)
+  fun snapTo(
+    placements: List<CaretPlacement>,
+    tick: CaretTick,
+    repaintMetrics: CaretRepaintMetrics,
+  ): CaretAnimationState {
+    val nextMotion = motion.snapTo(placements, tick)
+    return next(motion = nextMotion, repaintMetrics = repaintMetrics)
+  }
 
   fun settle(tick: CaretTick): CaretAnimationState = next(motion = motion.settle(tick))
 
@@ -51,42 +77,82 @@ internal class CaretAnimationState private constructor(
     return if (nextSnapshot === snapshot) this else next(snapshot = nextSnapshot)
   }
 
-  fun withShown(shown: Boolean, now: AnimationTimeMark): CaretAnimationState = next(
-    blink = if (shown) blink.start() else blink.stop(),
-    snapshot = snapshot.withShown(shown, now),
-  )
+  fun withShown(shown: Boolean, now: AnimationTimeMark): CaretAnimationState {
+    val nextBlink = if (shown) blink.start() else blink.stop()
+    val nextSnapshot = snapshot.withShown(shown, now)
+    return next(blink = nextBlink, snapshot = nextSnapshot)
+  }
 
-  fun setFullOpacity(): CaretAnimationState = next(snapshot = snapshot.makeFullyOpaque())
+  fun showFullyOpaque(): CaretAnimationState = next(snapshot = snapshot.shownFullyOpaque())
 
-  fun withStartTime(startTime: AnimationTimeMark): CaretAnimationState = next(snapshot = snapshot.withStartTime(startTime))
+  fun withActivityAt(activityAt: AnimationTimeMark): CaretAnimationState =
+    next(snapshot = snapshot.withActivityAt(activityAt))
 
   /// MARK: frame updates
 
-  fun withRunning(running: Boolean): CaretAnimationState =
-    if (running == isRunning) this else next(isRunning = running)
+  fun withRunning(running: Boolean): CaretAnimationState {
+    return when (running) {
+      isRunning -> this
+      else -> next(isRunning = running)
+    }
+  }
 
-  fun freeze(now: AnimationTimeMark): Pair<CaretAnimationState, CaretStep> = next(lastFrameAt = now) to CaretStep.IDLE
+  /**
+   * Holds the animation where it is, for example while a bulk document update runs.
+   */
+  fun freeze(now: AnimationTimeMark): Pair<CaretAnimationState, CaretStep> {
+    val frozen = next(lastFrameAt = now)
+    return frozen to CaretStep.IDLE
+  }
 
   fun advance(tick: CaretTick, prefetching: Boolean): Pair<CaretAnimationState, CaretStep> {
     val (nextMotion, motionStep) = motion.advance(tick, prefetching)
     val (nextBlink, blinkStep) = blink.advance(tick, prefetching)
-
-    val locations = if (motionStep.moved) nextMotion.locations else null
-    val nextSnapshot = snapshot.withFrame(locations, blinkStep.opacity, tick.now, repaintMetrics)
-    val nextState = next(motion = nextMotion, blink = nextBlink, snapshot = nextSnapshot, lastFrameAt = tick.now)
-    val prefetch = run {
-      if (motionStep.prefetch != null) return@run motionStep.prefetch
-
-      nextSnapshot.locations.asList().takeIf { blinkStep.wantsPrefetch && it.isNotEmpty() }
-    }
-    val step = CaretStep(
-      moved = motionStep.moved,
-      opacityChanged = nextSnapshot.blinkOpacity.level != snapshot.blinkOpacity.level,
-      prefetch = prefetch,
-      nextDelay = minOf(motionStep.nextDelay, blinkStep.nextDelay),
-      nextState.version
+    val movedLocations = if (motionStep.moved) nextMotion.locations else null
+    val nextSnapshot = snapshot.withStep(movedLocations, blinkStep.opacity, tick.now, repaintMetrics)
+    val nextState = next(
+      motion = nextMotion,
+      blink = nextBlink,
+      snapshot = nextSnapshot,
+      lastFrameAt = tick.now,
     )
+    val step = stepFor(motionStep, blinkStep, nextSnapshot, nextState.version)
     return nextState to step
+  }
+
+  private fun stepFor(
+    motionStep: CaretMotionStep,
+    blinkStep: CaretBlinkStep,
+    nextSnapshot: CaretCursorSnapshot,
+    version: Long,
+  ): CaretStep {
+    val opacityChanged = nextSnapshot.opacityDiffersFrom(snapshot)
+    return CaretStep(
+      moved = motionStep.moved,
+      opacityChanged = opacityChanged,
+      prefetch = prefetchFor(motionStep, blinkStep, nextSnapshot),
+      nextDelay = minOf(motionStep.nextDelay, blinkStep.nextDelay),
+      version = version,
+    )
+  }
+
+  /**
+   * A move prefetches every frame it is going to paint; a blink can only prefetch where the caret already is.
+   */
+  private fun prefetchFor(
+    motionStep: CaretMotionStep,
+    blinkStep: CaretBlinkStep,
+    nextSnapshot: CaretCursorSnapshot,
+  ): List<CaretRectangle>? {
+    val motionPrefetch = motionStep.prefetch
+    if (motionPrefetch != null) {
+      return motionPrefetch
+    }
+    val canPrefetchBlink = blinkStep.wantsPrefetch && nextSnapshot.locations.isNotEmpty()
+    return when {
+      canPrefetchBlink -> nextSnapshot.locations.asList()
+      else -> null
+    }
   }
 
   /// MARK: creation
@@ -98,7 +164,9 @@ internal class CaretAnimationState private constructor(
     snapshot: CaretCursorSnapshot = this.snapshot,
     lastFrameAt: AnimationTimeMark = this.lastFrameAt,
     isRunning: Boolean = this.isRunning,
-  ): CaretAnimationState = CaretAnimationState(motion, blink, repaintMetrics, snapshot, lastFrameAt, isRunning, version + 1)
+  ): CaretAnimationState {
+    return CaretAnimationState(motion, blink, repaintMetrics, snapshot, lastFrameAt, isRunning, version + 1)
+  }
 
   companion object {
     fun initial(): CaretAnimationState = CaretAnimationState(
@@ -112,7 +180,3 @@ internal class CaretAnimationState private constructor(
     )
   }
 }
-
-private const val OPACITY_LEVELS = 255f
-
-private val Float.level: Int get() = (this * OPACITY_LEVELS).toInt()

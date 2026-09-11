@@ -6,8 +6,7 @@ import java.awt.geom.Rectangle2D
 internal class CacheEntryList {
   private val entries = ArrayList<CacheEntry>()
 
-  var totalArea: Double = 0.0
-    private set
+  private var totalArea: Double = 0.0
 
   fun clear() {
     entries.clear()
@@ -16,6 +15,13 @@ internal class CacheEntryList {
 
   fun findContaining(rectangle: Rectangle2D): CacheEntry? = entries.firstOrNull { it.contains(rectangle) }
 
+  /**
+   * Whether holding [rectangle] as well would take the cache over [budget].
+   */
+  fun wouldExceed(budget: Double, rectangle: Rectangle2D): Boolean {
+    return totalArea + rectangle.area > budget
+  }
+
   fun add(entry: CacheEntry) {
     entries.add(entry)
     totalArea += entry.area
@@ -23,8 +29,9 @@ internal class CacheEntryList {
 
   fun removeIntersecting(rectangle: Rectangle2D): Boolean {
     val removed = entries.removeAll { it.intersects(rectangle) }
-    if (removed) totalArea = entries.sumOf { it.area }
-
+    if (removed) {
+      totalArea = entries.sumOf { it.area }
+    }
     return removed
   }
 

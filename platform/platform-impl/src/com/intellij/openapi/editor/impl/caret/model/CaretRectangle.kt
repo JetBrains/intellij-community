@@ -8,8 +8,6 @@ import kotlin.math.max
 internal const val CARET_REPAINT_RECTANGLE_MARGIN = 1
 internal const val CARET_CACHE_RECTANGLE_MARGIN = CARET_REPAINT_RECTANGLE_MARGIN + 1
 
-private const val MIN_WIDTH = 2f
-
 internal class CaretRectangle private constructor(
   val x: Double,
   val y: Double,
@@ -19,6 +17,18 @@ internal class CaretRectangle private constructor(
 ) {
   val width: Float = max(rawWidth, MIN_WIDTH)
 
+  /**
+   * Identifies the pixels this rectangle covers. Two rectangles with the same content hash paint the same, so the
+   * animation cache can reuse the content it already holds for one of them.
+   */
+  val contentHash: Int
+    get() {
+      var hash = x.hashCode()
+      hash = hash * HASH_FACTOR + y.hashCode()
+      hash = hash * HASH_FACTOR + width.hashCode()
+      return hash
+    }
+
   override fun toString(): String = "CaretRectangle(x=$x, y=$y, width=$width, caret=$caret, isRtl=$isRtl)"
 
   companion object {
@@ -27,5 +37,12 @@ internal class CaretRectangle private constructor(
 
     internal fun at(position: Point2D, width: Float, caret: Caret?, isRtl: Boolean): CaretRectangle =
       CaretRectangle(position.x, position.y, width, caret, isRtl)
+
+    /**
+     * Narrower carets are hard to hit with the eye, so a thin one is padded out to this width.
+     */
+    private const val MIN_WIDTH = 2f
+
+    private const val HASH_FACTOR = 31
   }
 }
