@@ -10,11 +10,18 @@ import java.util.Objects;
 public final class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootProperties> {
   private String myPackagePrefix;
   private boolean myForGeneratedSources;
+  private boolean myPackageMatchesDirectory;
 
   @ApiStatus.Internal
   public JavaSourceRootProperties(@NotNull String packagePrefix, boolean forGeneratedSources) {
+    this(packagePrefix, forGeneratedSources, true);
+  }
+
+  @ApiStatus.Internal
+  public JavaSourceRootProperties(@NotNull String packagePrefix, boolean forGeneratedSources, boolean packageMatchesDirectory) {
     myPackagePrefix = packagePrefix;
     myForGeneratedSources = forGeneratedSources;
+    myPackageMatchesDirectory = packageMatchesDirectory;
   }
 
   public @NotNull String getPackagePrefix() {
@@ -23,7 +30,7 @@ public final class JavaSourceRootProperties extends JpsElementBase<JavaSourceRoo
 
   @Override
   public @NotNull JavaSourceRootProperties createCopy() {
-    return new JavaSourceRootProperties(myPackagePrefix, myForGeneratedSources);
+    return new JavaSourceRootProperties(myPackagePrefix, myForGeneratedSources, myPackageMatchesDirectory);
   }
 
   /**
@@ -44,6 +51,26 @@ public final class JavaSourceRootProperties extends JpsElementBase<JavaSourceRoo
   public void setForGeneratedSources(boolean forGeneratedSources) {
     if (myForGeneratedSources != forGeneratedSources) {
       myForGeneratedSources = forGeneratedSources;
+    }
+  }
+
+  /**
+   * Returns {@code true} if a directory under the source root corresponds to a JVM package, so the relative path of the directory defines
+   * the package name. Returns {@code false} if the source root holds files with unrelated package statements in the same directory.
+   * A build system like Bazel allows this layout.
+   */
+  @ApiStatus.Experimental
+  public boolean isPackageMatchesDirectory() {
+    return myPackageMatchesDirectory;
+  }
+
+  /**
+   * @see #isPackageMatchesDirectory()
+   */
+  @ApiStatus.Experimental
+  public void setPackageMatchesDirectory(boolean packageMatchesDirectory) {
+    if (myPackageMatchesDirectory != packageMatchesDirectory) {
+      myPackageMatchesDirectory = packageMatchesDirectory;
     }
   }
 }

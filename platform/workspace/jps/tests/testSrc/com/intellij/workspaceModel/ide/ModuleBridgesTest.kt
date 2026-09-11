@@ -99,6 +99,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
@@ -722,6 +724,69 @@ class ModuleBridgesTest {
               <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root4" type="custom-source-root-type" />
             </content>
       """.trimIndent(), JDOMUtil.write(rootManagerComponent.getChild("content")!!))
+  }
+
+  @Test
+  fun `test packageMatchesDirectory saving`() = runBlocking {
+    val tempDir = temporaryDirectoryRule.newDirectoryPath().toFile()
+    val moduleImlFile = File(tempDir, "my.iml")
+    Files.createDirectories(moduleImlFile.parentFile.toPath())
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      val moduleManager = ModuleManager.getInstance(project)
+
+      val module = moduleManager.newModule(moduleImlFile.path, JAVA_MODULE_ENTITY_TYPE_ID_NAME)
+      ModuleRootModificationUtil.updateModel(module) { model ->
+        val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(tempDir.path))
+        val contentEntry = model.addContentEntry(url)
+        contentEntry.addSourceFolder("$url/root1", JavaSourceRootType.SOURCE)
+        contentEntry.addSourceFolder("$url/root2", JavaSourceRootType.SOURCE, JavaSourceRootProperties("", false, true))
+        contentEntry.addSourceFolder("$url/root3", JavaSourceRootType.SOURCE, JavaSourceRootProperties("", false, false))
+      }
+    }
+
+    project.stateStore.save()
+
+    // The default value 'true' must stay out of the file. Only 'false' is written.
+    val rootManagerComponent = JDomSerializationUtil.findComponent(JDOMUtil.load(moduleImlFile), "NewModuleRootManager")!!
+    assertEquals("""
+            <content url="file://${'$'}MODULE_DIR${'$'}">
+              <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root1" isTestSource="false" />
+              <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root2" isTestSource="false" />
+              <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root3" isTestSource="false" packageMatchesDirectory="false" />
+            </content>
+      """.trimIndent(), JDOMUtil.write(rootManagerComponent.getChild("content")!!))
+  }
+
+  @Test
+  fun `test packageMatchesDirectory loading`() {
+    val tempDir = temporaryDirectoryRule.newDirectoryPath()
+    val moduleImlFile = tempDir.resolve("my.iml")
+    Files.createDirectories(moduleImlFile.parent)
+    moduleImlFile.write("""
+      <module type="JAVA_MODULE" version="4">
+        <component name="NewModuleRootManager">
+          <content url="file://${'$'}MODULE_DIR${'$'}">
+            <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root1" isTestSource="false" />
+            <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root2" isTestSource="false" packageMatchesDirectory="true" />
+            <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root3" isTestSource="false" packageMatchesDirectory="false" />
+          </content>
+        </component>
+      </module>
+    """.trimIndent())
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      val module = ModuleManager.getInstance(project).loadModule(moduleImlFile)
+      val contentEntry = ModuleRootManager.getInstance(module).contentEntries.single()
+
+      val properties = contentEntry.sourceFolders.map { it.jpsElement.properties as JavaSourceRootProperties }
+      assertEquals(listOf(true, true, false), properties.map { it.isPackageMatchesDirectory })
+
+      val entities = WorkspaceModel.getInstance(project).currentSnapshot.entities(JavaSourceRootPropertiesEntity::class.java)
+        .toList()
+        .sortedBy { it.sourceRoot.url.url }
+      assertEquals(listOf(true, true, false), entities.map { it.packageMatchesDirectory })
+    }
   }
 
   @Test

@@ -23,6 +23,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -77,6 +78,32 @@ class PackageIndexTest {
     assertPackage("prefix.pack", sourcePackDir)
 
     setPackagePrefix("")
+    assertPackage("", sourceRootDir)
+    assertPackage("pack", sourcePackDir)
+  }
+
+  @Test
+  fun `package does not match directory`() {
+    PsiTestUtil.addSourceRoot(module, sourceRootDir)
+    fun setPackageMatchesDirectory(value: Boolean) {
+      ModuleRootModificationUtil.modifyModel(module) { model ->
+        val sourceFolder = model.contentEntries.single().sourceFolders.single()
+        val properties = sourceFolder.jpsElement.getProperties(JavaModuleSourceRootTypes.SOURCES)!!
+        properties.isPackageMatchesDirectory = value
+        true
+      }
+    }
+
+    assertPackage("", sourceRootDir)
+    assertPackage("pack", sourcePackDir)
+
+    setPackageMatchesDirectory(false)
+    runReadAction {
+      assertEquals(null, packageIndex.getPackageNameByDirectory(sourceRootDir))
+      assertEquals(null, packageIndex.getPackageNameByDirectory(sourcePackDir))
+    }
+
+    setPackageMatchesDirectory(true)
     assertPackage("", sourceRootDir)
     assertPackage("pack", sourcePackDir)
   }

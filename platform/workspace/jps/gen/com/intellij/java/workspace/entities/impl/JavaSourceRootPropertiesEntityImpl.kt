@@ -47,6 +47,7 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
       readField("packagePrefix")
       return dataSource.packagePrefix
     }
+  override var packageMatchesDirectory: Boolean = dataSource.packageMatchesDirectory
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -92,6 +93,8 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.generated != dataSource.generated) this.generated = dataSource.generated
       if (this.packagePrefix != dataSource.packagePrefix) this.packagePrefix = dataSource.packagePrefix
+      if (this.packageMatchesDirectory != dataSource.packageMatchesDirectory) this.packageMatchesDirectory =
+        dataSource.packageMatchesDirectory
       updateChildToParentReferences(parents)
     }
 
@@ -123,6 +126,13 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
         getEntityData(true).packagePrefix = value
         changedProperty.add("packagePrefix")
       }
+    override var packageMatchesDirectory: Boolean
+      get() = getEntityData().packageMatchesDirectory
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).packageMatchesDirectory = value
+        changedProperty.add("packageMatchesDirectory")
+      }
 
     override fun getEntityClass(): Class<JavaSourceRootPropertiesEntity> = JavaSourceRootPropertiesEntity::class.java
   }
@@ -132,6 +142,7 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
 internal class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSourceRootPropertiesEntity>() {
   var generated: Boolean = false
   lateinit var packagePrefix: String
+  var packageMatchesDirectory: Boolean = true
   internal fun isPackagePrefixInitialized(): Boolean = ::packagePrefix.isInitialized
   override fun newInstance(): JavaSourceRootPropertiesEntity = JavaSourceRootPropertiesEntityImpl(this)
   override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<JavaSourceRootPropertiesEntity, *> =
@@ -147,6 +158,7 @@ internal class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSour
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return JavaSourceRootPropertiesEntity(generated, packagePrefix, entitySource) {
+      this.packageMatchesDirectory = this@JavaSourceRootPropertiesEntityData.packageMatchesDirectory
       parents.filterIsInstance<SourceRootEntityBuilder>().singleOrNull()?.let { this.sourceRoot = it }
     }
   }
@@ -164,6 +176,7 @@ internal class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSour
     if (this.entitySource != other.entitySource) return false
     if (this.generated != other.generated) return false
     if (this.packagePrefix != other.packagePrefix) return false
+    if (this.packageMatchesDirectory != other.packageMatchesDirectory) return false
     return true
   }
 
@@ -173,6 +186,7 @@ internal class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSour
     other as JavaSourceRootPropertiesEntityData
     if (this.generated != other.generated) return false
     if (this.packagePrefix != other.packagePrefix) return false
+    if (this.packageMatchesDirectory != other.packageMatchesDirectory) return false
     return true
   }
 
@@ -180,6 +194,7 @@ internal class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSour
     var result = entitySource.hashCode()
     result = 31 * result + generated.hashCode()
     result = 31 * result + packagePrefix.hashCode()
+    result = 31 * result + packageMatchesDirectory.hashCode()
     return result
   }
 
@@ -187,6 +202,7 @@ internal class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSour
     var result = javaClass.hashCode()
     result = 31 * result + generated.hashCode()
     result = 31 * result + packagePrefix.hashCode()
+    result = 31 * result + packageMatchesDirectory.hashCode()
     return result
   }
 }

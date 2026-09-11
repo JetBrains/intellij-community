@@ -67,6 +67,7 @@ object SourceRootPropertiesHelper {
     if (javaSourceEntity != null) {
       return properties is JavaSourceRootProperties && javaSourceEntity.generated == properties.isForGeneratedSources
              && javaSourceEntity.packagePrefix == properties.packagePrefix
+             && javaSourceEntity.packageMatchesDirectory == properties.isPackageMatchesDirectory
     }
     val javaResourceEntity = entity.asJavaResourceRoot()
     if (javaResourceEntity != null) {
@@ -102,6 +103,7 @@ object SourceRootPropertiesHelper {
       diff.modifyJavaSourceRootPropertiesEntity(javaSourceEntity) {
         generated = properties.isForGeneratedSources
         packagePrefix = properties.packagePrefix
+        packageMatchesDirectory = properties.isPackageMatchesDirectory
       }
     }
     else if (javaResourceEntity != null && properties is JavaResourceRootProperties) {
@@ -130,7 +132,9 @@ object SourceRootPropertiesHelper {
         sourceRootEntity.javaSourceRoots += JavaSourceRootPropertiesEntity(
           generated = (properties as JavaSourceRootProperties).isForGeneratedSources,
           packagePrefix = properties.packagePrefix,
-          entitySource = sourceRootEntity.entitySource)
+          entitySource = sourceRootEntity.entitySource) {
+          packageMatchesDirectory = properties.isPackageMatchesDirectory
+        }
       }
 
       JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> {
@@ -158,7 +162,7 @@ object SourceRootPropertiesHelper {
       JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> {
         val javaSourceRoot = entity.asJavaSourceRoot()
         javaExtensionService.createSourceRootProperties(
-          javaSourceRoot?.packagePrefix ?: "", javaSourceRoot?.generated ?: false)
+          javaSourceRoot?.packagePrefix ?: "", javaSourceRoot?.generated ?: false, javaSourceRoot?.packageMatchesDirectory ?: true)
       }
 
       JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> {

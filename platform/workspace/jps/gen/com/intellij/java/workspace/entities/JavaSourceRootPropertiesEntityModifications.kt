@@ -18,6 +18,7 @@ interface JavaSourceRootPropertiesEntityBuilder : WorkspaceEntityBuilder<JavaSou
   var sourceRoot: SourceRootEntityBuilder
   var generated: Boolean
   var packagePrefix: String
+  var packageMatchesDirectory: Boolean
 }
 
 internal object JavaSourceRootPropertiesEntityType : EntityType<JavaSourceRootPropertiesEntity, JavaSourceRootPropertiesEntityBuilder>() {

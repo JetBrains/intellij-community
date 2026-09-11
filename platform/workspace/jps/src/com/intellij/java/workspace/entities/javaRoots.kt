@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.annotations.Parent
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,6 +23,16 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
 
   val generated: Boolean
   val packagePrefix: @NlsSafe String
+
+  /**
+   * `true` if a directory under the source root corresponds to a JVM package, so the relative path of the directory defines the package
+   * name. `false` if the source root holds files with unrelated package statements in the same directory. A build system like Bazel allows
+   * this layout.
+   *
+   * @see com.intellij.openapi.roots.PackageIndex.getPackageNameByDirectory
+   */
+  val packageMatchesDirectory: Boolean
+    @ApiStatus.Experimental @Default get() = true
 
   //region generated code
   @Deprecated(message = "Use JavaSourceRootPropertiesEntityBuilder instead")

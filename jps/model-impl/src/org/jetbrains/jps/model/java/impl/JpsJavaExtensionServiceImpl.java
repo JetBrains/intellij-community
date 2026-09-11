@@ -230,6 +230,12 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   }
 
   @Override
+  public @NotNull JavaSourceRootProperties createSourceRootProperties(@NotNull String packagePrefix, boolean isGenerated,
+                                                                      boolean packageMatchesDirectory) {
+    return new JavaSourceRootProperties(packagePrefix, isGenerated, packageMatchesDirectory);
+  }
+
+  @Override
   public @NotNull JavaSourceRootProperties createSourceRootProperties(@NotNull String packagePrefix) {
     return createSourceRootProperties(packagePrefix, false);
   }

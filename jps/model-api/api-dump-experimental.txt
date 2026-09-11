@@ -1,0 +1,6 @@
+f:org.jetbrains.jps.model.java.JavaSourceRootProperties
+- org.jetbrains.jps.model.ex.JpsElementBase
+- *:isPackageMatchesDirectory():Z
+- *:setPackageMatchesDirectory(Z):V
+a:org.jetbrains.jps.model.java.JpsJavaExtensionService
+- *a:createSourceRootProperties(java.lang.String,Z,Z):org.jetbrains.jps.model.java.JavaSourceRootProperties

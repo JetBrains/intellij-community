@@ -657,12 +657,16 @@ internal class WorkspaceFileIndexDataImpl(
     )
     val fileSet = when (info) {
       is WorkspaceFileSetWithCustomData<*> -> info.takeIf { it.data is JvmPackageRootDataInternal }
-      is MultipleWorkspaceFileSets -> info.find(JvmPackageRootDataInternal::class.java)
+      // A directory can belong to several file sets. Prefer a file set which defines the package name of the directory.
+      is MultipleWorkspaceFileSets -> info.findFileSet { (it.data as? JvmPackageRootDataInternal)?.packageMatchesDirectory == true }
+                                      ?: info.find(JvmPackageRootDataInternal::class.java)
       else -> null
     } ?: return@addMeasuredTime null
 
-    val packagePrefix = (fileSet.data as JvmPackageRootDataInternal).packagePrefix
+    val rootData = fileSet.data as JvmPackageRootDataInternal
+    val packagePrefix = rootData.packagePrefix
     if (!fileSet.root.isDirectory) return@addMeasuredTime packagePrefix
+    if (!rootData.packageMatchesDirectory) return@addMeasuredTime null
     val dir = if (dirOrFile.isDirectory) dirOrFile else dirOrFile.parent
     if (!dir.isDirectory) return@addMeasuredTime null
     val packageName = VfsUtilCore.getRelativePath(dir, correctRoot(fileSet.root, dir), '.')

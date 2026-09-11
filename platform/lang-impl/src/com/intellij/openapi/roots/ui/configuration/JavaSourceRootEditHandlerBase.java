@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -77,6 +78,10 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
   private static final class SourceRootPropertiesDialog extends DialogWrapper {
     private final JTextField myPackagePrefixField;
     private final JCheckBox myIsGeneratedCheckBox;
+    /**
+     * The package-matches-directory flag is experimental. Only the internal mode shows the check box for it.
+     */
+    private final @Nullable JCheckBox myPackageMatchesDirectoryCheckBox;
     private final JPanel myMainPanel;
     private final @NotNull JavaSourceRootProperties myProperties;
 
@@ -86,10 +91,17 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
       setTitle(ProjectBundle.message("module.paths.edit.properties.title"));
       myPackagePrefixField = new JTextField();
       myIsGeneratedCheckBox = new JCheckBox(ProjectBundle.message("checkbox.for.generated.sources"));
-      myMainPanel = FormBuilder.createFormBuilder()
+      myPackageMatchesDirectoryCheckBox = ApplicationManager.getApplication().isInternal()
+                                          ? new JCheckBox(ProjectBundle.message("checkbox.package.matches.directory"))
+                                          : null;
+      FormBuilder formBuilder = FormBuilder.createFormBuilder()
         .addLabeledComponent(ProjectBundle.message("label.package.prefix"), myPackagePrefixField)
-        .addComponent(myIsGeneratedCheckBox)
-        .getPanel();
+        .addComponent(myIsGeneratedCheckBox);
+      if (myPackageMatchesDirectoryCheckBox != null) {
+        formBuilder.addComponent(myPackageMatchesDirectoryCheckBox);
+        myPackageMatchesDirectoryCheckBox.setSelected(myProperties.isPackageMatchesDirectory());
+      }
+      myMainPanel = formBuilder.getPanel();
       myPackagePrefixField.setText(myProperties.getPackagePrefix());
       myPackagePrefixField.setColumns(25);
       myIsGeneratedCheckBox.setSelected(myProperties.isForGeneratedSources());
@@ -105,6 +117,9 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     protected void doOKAction() {
       myProperties.setPackagePrefix(myPackagePrefixField.getText().trim());
       myProperties.setForGeneratedSources(myIsGeneratedCheckBox.isSelected());
+      if (myPackageMatchesDirectoryCheckBox != null) {
+        myProperties.setPackageMatchesDirectory(myPackageMatchesDirectoryCheckBox.isSelected());
+      }
       super.doOKAction();
     }
 

@@ -618,10 +618,12 @@ com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntityBuilder
 - com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
 - a:getGenerated():Z
+- a:getPackageMatchesDirectory():Z
 - a:getPackagePrefix():java.lang.String
 - a:getSourceRoot():com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
 - a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
 - a:setGenerated(Z):V
+- a:setPackageMatchesDirectory(Z):V
 - a:setPackagePrefix(java.lang.String):V
 - a:setSourceRoot(com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder):V
 f:com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntityModifications

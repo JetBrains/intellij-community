@@ -60,6 +60,7 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
         customContentRoot = contentRoot,
         rootTypeId = entity.rootTypeId,
         packagePrefix = packagePrefix,
+        packageMatchesDirectory = javaProperties?.packageMatchesDirectory ?: true,
         forGeneratedSources = forGeneratedSources,
         languageLevelId = languageLevel,
       )
@@ -111,6 +112,8 @@ interface ModuleOrLibrarySourceRootData: WorkspaceFileSetData
 @ApiStatus.Internal
 interface JvmPackageRootDataInternal: WorkspaceFileSetData {
   val packagePrefix: String
+  val packageMatchesDirectory: Boolean
+    get() = true
 }
 
 internal data class ModuleContentRootData(override val module: Module, override val customContentRoot: VirtualFile?) :
@@ -121,6 +124,7 @@ internal data class ModuleSourceRootData(
   override val customContentRoot: VirtualFile?,
   val rootTypeId: SourceRootTypeId,
   override val packagePrefix: String,
+  override val packageMatchesDirectory: Boolean,
   val forGeneratedSources: Boolean,
   // This property is required for correct equals when computing the diff in the WorkspaceFileIndex
   val languageLevelId: String?,

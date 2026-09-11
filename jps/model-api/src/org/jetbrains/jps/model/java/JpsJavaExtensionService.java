@@ -125,6 +125,10 @@ public abstract class JpsJavaExtensionService {
 
   public abstract @NotNull JavaSourceRootProperties createSourceRootProperties(@NotNull String packagePrefix, boolean isGenerated);
 
+  @ApiStatus.Experimental
+  public abstract @NotNull JavaSourceRootProperties createSourceRootProperties(@NotNull String packagePrefix, boolean isGenerated,
+                                                                              boolean packageMatchesDirectory);
+
   public abstract @NotNull JavaSourceRootProperties createSourceRootProperties(@NotNull String packagePrefix);
 
   public abstract @NotNull JavaResourceRootProperties createResourceRootProperties(@NotNull String relativeOutputPath, boolean forGeneratedResource);

@@ -1752,7 +1752,13 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           isOpen = false,
                                                                           name = "packagePrefix",
                                                                           valueType = primitiveTypeStringNotNullable,
-                                                                          withDefault = false)),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "packageMatchesDirectory",
+                                                                          valueType = primitiveTypeBooleanNotNullable,
+                                                                          withDefault = true)),
                                   extProperties = listOf(ExtPropertyMetadata(isComputable = false,
                                                                              isOpen = false,
                                                                              name = "javaSourceRoots",
@@ -3657,7 +3663,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.JavaModuleSettingsEntity", metadataHash = -387269374)
     addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.JavaProjectSettingsEntity", metadataHash = -473898305)
     addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity", metadataHash = 675809464)
-    addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity", metadataHash = -810123694)
+    addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity", metadataHash = 565514161)
     addMetadataHash(typeFqn = "com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity", metadataHash = 928873079)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryId", metadataHash = 1783065412)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryTableId", metadataHash = 1939585583)

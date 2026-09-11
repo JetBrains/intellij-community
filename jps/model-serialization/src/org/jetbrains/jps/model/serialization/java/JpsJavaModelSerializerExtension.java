@@ -78,6 +78,7 @@ public final class JpsJavaModelSerializerExtension extends JpsModelSerializerExt
   public static final String ROOT_TAG = "root";
   public static final String RELATIVE_OUTPUT_PATH_ATTRIBUTE = "relativeOutputPath";
   public static final String IS_GENERATED_ATTRIBUTE = "generated";
+  public static final String PACKAGE_MATCHES_DIRECTORY_ATTRIBUTE = "packageMatchesDirectory";
   public static final JavaSourceRootPropertiesSerializer JAVA_SOURCE_ROOT_PROPERTIES_SERIALIZER =
     new JavaSourceRootPropertiesSerializer(JavaSourceRootType.SOURCE, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID);
   public static final String JAVA_RESOURCE_ROOT_ID = "java-resource";
@@ -283,7 +284,9 @@ public final class JpsJavaModelSerializerExtension extends JpsModelSerializerExt
     public JavaSourceRootProperties loadProperties(@NotNull Element sourceRootTag) {
       String packagePrefix = sourceRootTag.getAttributeValue(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE, "");
       boolean isGenerated = Boolean.parseBoolean(sourceRootTag.getAttributeValue(IS_GENERATED_ATTRIBUTE));
-      return getService().createSourceRootProperties(packagePrefix, isGenerated);
+      boolean packageMatchesDirectory =
+        Boolean.parseBoolean(sourceRootTag.getAttributeValue(PACKAGE_MATCHES_DIRECTORY_ATTRIBUTE, Boolean.TRUE.toString()));
+      return getService().createSourceRootProperties(packagePrefix, isGenerated, packageMatchesDirectory);
     }
 
     @Override
@@ -296,6 +299,9 @@ public final class JpsJavaModelSerializerExtension extends JpsModelSerializerExt
       }
       if (properties.isForGeneratedSources()) {
         sourceRootTag.setAttribute(IS_GENERATED_ATTRIBUTE, Boolean.TRUE.toString());
+      }
+      if (!properties.isPackageMatchesDirectory()) {
+        sourceRootTag.setAttribute(PACKAGE_MATCHES_DIRECTORY_ATTRIBUTE, Boolean.FALSE.toString());
       }
     }
   }

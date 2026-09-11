@@ -1,2 +1,5 @@
+com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- *:getPackageMatchesDirectory():Z
 *:com.intellij.platform.workspace.jps.serialization.CustomImlComponentNameContributor
 - a:getComponentName():java.lang.String
