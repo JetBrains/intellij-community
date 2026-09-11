@@ -771,7 +771,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     ///
     /// The method reads through the file system, because the VFS content cache still holds the old content at this point.
     ///
-    /// @return the number of bytes it read. Useful for keeping budged
+    /// @return the number of bytes it read. Useful for keeping the budget
     private long prefetchContent(@NotNull Map<? super VirtualFile, ? super PrefetchedContent> prefetchedContents,
                                  @NotNull VFileContentChangeEvent event,
                                  @NotNull List<? extends VirtualFile> toRecompute,
@@ -798,7 +798,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         // a decompiler loads its own text; we shall decompile asynchronously later
         return 0;
       }
-      // the event carries UNDEFINED_TIMESTAMP_OR_LENGTH when it knows no new length
+      // the event carries UNDEFINED_TIMESTAMP_OR_LENGTH when it doesn't know the new length
       long newLength = event.getNewLength();
       boolean newLengthKnown = newLength != VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH;
       long expectedLength = newLengthKnown ? newLength : file.getLength();

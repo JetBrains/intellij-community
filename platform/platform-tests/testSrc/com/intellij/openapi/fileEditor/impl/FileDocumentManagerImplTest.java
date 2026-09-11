@@ -383,7 +383,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   public void testContentChanged_keepsTheBomOfTheChangedFile() throws Exception {
     VirtualFile file = createFile("bom.txt", "");
-    writeBytesToDisk(file, bytesWithUtf8Bom("first"));
+    changeOnDisk(file, bytesWithUtf8Bom("first"));
     file.refresh(false, false);
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
@@ -392,7 +392,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertEquals("first", document.getText());
     Assert.assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
-    writeBytesToDisk(file, bytesWithUtf8Bom("second"));
+    changeOnDisk(file, bytesWithUtf8Bom("second"));
     file.refresh(false, false);
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
@@ -405,16 +405,15 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   private static void changeOnDisk(@NotNull VirtualFile file, @NotNull String content) throws IOException {
-    writeBytesToDisk(file, content.getBytes(StandardCharsets.UTF_8));
-    file.refresh(false, false);
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    changeOnDisk(file, content.getBytes(StandardCharsets.UTF_8));
   }
 
-  private static void writeBytesToDisk(@NotNull VirtualFile file, byte @NotNull [] content) throws IOException {
+  private static void changeOnDisk(@NotNull VirtualFile file, byte @NotNull [] content) throws IOException {
     File ioFile = new File(file.getPath());
     long oldTimestamp = ioFile.lastModified();
     FileUtil.writeToFile(ioFile, content);
     assertTrue("cannot move the timestamp of " + ioFile, ioFile.setLastModified(oldTimestamp + 2000));
+    file.refresh(false, false);
   }
 
   public void testContentChanged_noDocument() throws Exception {
