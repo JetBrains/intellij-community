@@ -1,123 +1,66 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.project;
+package org.jetbrains.idea.maven.project
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.openapi.options.BackedByPersistentState;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.options.BackedByPersistentState
+import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
+import org.jetbrains.annotations.ApiStatus
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+class MavenImportingConfigurable(private val myProject: Project) :
+  BoundCompositeSearchableConfigurable<UnnamedConfigurable>(MavenProjectBundle.message("maven.tab.importing"), SETTINGS_ID),
+  BackedByPersistentState {
 
-public class MavenImportingConfigurable implements SearchableConfigurable, BackedByPersistentState {
-  public static final String SETTINGS_ID = "reference.settings.project.maven.importing";
-
-  private final MavenImportingSettings myImportingSettings;
-  private final MavenImportingSettingsForm mySettingsForm;
-  private final List<UnnamedConfigurable> myAdditionalConfigurables;
-
-  private final @NotNull Disposable myDisposable;
-
-  private final Project myProject;
+  private var mySettingsForm: MavenImportingSettingsForm? = null
 
   @ApiStatus.Internal
-  @Override
-  public @NotNull Collection<PersistentStateComponent<?>> getBackingComponents() {
-    return List.of(MavenWorkspaceSettingsComponent.getInstance(myProject));
+  override fun getBackingComponents(): Collection<PersistentStateComponent<*>> {
+    return listOf(MavenWorkspaceSettingsComponent.getInstance(myProject))
   }
 
-  public MavenImportingConfigurable(@NotNull Project project) {
-    myProject = project;
-    final MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
-    myImportingSettings = mavenProjectsManager.getImportingSettings();
-    myDisposable = Disposer.newDisposable(mavenProjectsManager, "Maven importing configurable disposable");
-
-    myAdditionalConfigurables = new ArrayList<>();
-    for (final AdditionalMavenImportingSettings additionalSettings : AdditionalMavenImportingSettings.EP_NAME.getExtensions()) {
-      myAdditionalConfigurables.add(additionalSettings.createConfigurable(project));
+  override fun createConfigurables(): List<UnnamedConfigurable> {
+    return AdditionalMavenImportingSettings.EP_NAME.extensionList.mapNotNull {
+      it.createConfigurable(myProject)
     }
-    mySettingsForm = new MavenImportingSettingsForm(myProject, myDisposable);
   }
 
-  @Override
-  public JComponent createComponent() {
-    final JPanel panel = mySettingsForm.getAdditionalSettingsPanel();
-    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-
-    panel.add(Box.createVerticalStrut(5));
-
-    for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
-      panel.add(Box.createVerticalStrut(3));
-      panel.add(additionalConfigurable.createComponent());
-    }
-    return mySettingsForm.createComponent();
-  }
-
-  @Override
-  public void disposeUIResources() {
-    for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
-      additionalConfigurable.disposeUIResources();
-    }
-    Disposer.dispose(myDisposable);
-  }
-
-  @Override
-  public boolean isModified() {
-    for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
-      if (additionalConfigurable.isModified()) {
-        return true;
+  override fun createPanel(): DialogPanel {
+    val ui = MavenImportingSettingsUi {
+      for (additionalConfigurable in configurables) {
+        appendDslConfigurable(additionalConfigurable)
       }
     }
+    mySettingsForm = MavenImportingSettingsForm(myProject, disposable!!, ui)
 
-    return mySettingsForm.isModified(myImportingSettings);
+    return mySettingsForm!!.createComponent()
   }
 
-  @Override
-  public void apply() throws ConfigurationException {
-    mySettingsForm.getData(myImportingSettings);
-    ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true);
-
-    for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
-      additionalConfigurable.apply();
-    }
+  override fun isModified(): Boolean {
+    return super.isModified() || mySettingsForm?.isModified() == true
   }
 
-  @Override
-  public void reset() {
-    mySettingsForm.setData(myImportingSettings);
-
-    for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
-      additionalConfigurable.reset();
-    }
+  @Throws(ConfigurationException::class)
+  override fun apply() {
+    super.apply()
+    mySettingsForm?.apply()
+    ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true)
   }
 
-
-  @Override
-  public @Nls String getDisplayName() {
-    return MavenProjectBundle.message("maven.tab.importing");
+  override fun reset() {
+    super.reset()
+    mySettingsForm?.reset()
   }
 
-  @Override
-  public @NotNull @NonNls String getHelpTopic() {
-    return SETTINGS_ID;
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    mySettingsForm = null
   }
 
-  @Override
-  public @NotNull String getId() {
-    return getHelpTopic();
+  companion object {
+    const val SETTINGS_ID: String = "reference.settings.project.maven.importing"
   }
 }

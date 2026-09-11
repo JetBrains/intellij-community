@@ -6,24 +6,27 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.ui.ComponentValidator;
+import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.ValidationInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MavenImportingSettingsForm {
 
-  private final MavenImportingSettingsUi ui = new MavenImportingSettingsUi();
+  private final MavenImportingSettings settings;
+  private final MavenImportingSettingsUi ui;
 
   private final ComponentValidator myImporterJdkValidator;
   private volatile boolean myMuteJdkValidation = false;
 
-  public MavenImportingSettingsForm(Project project, @NotNull Disposable disposable) {
+  public MavenImportingSettingsForm(Project project, @NotNull Disposable disposable, @NotNull MavenImportingSettingsUi ui) {
+    settings = MavenProjectsManager.getInstance(project).getImportingSettings();
+    this.ui = ui;
+
     ui.jdkForImporterComboBox.setProject(project);
     ui.searchRecursivelyCheckBox.setVisible(project.isDefault());
     ui.jdkForImporterComboBox.setHighlightInternalJdk(false);
@@ -64,7 +67,7 @@ public class MavenImportingSettingsForm {
     validateImporterJDK();
   }
 
-  public JComponent createComponent() {
+  public DialogPanel createComponent() {
     return ui.panel;
   }
 
@@ -90,25 +93,29 @@ public class MavenImportingSettingsForm {
     data.setDependencyTypes(ui.dependencyTypes.getText());
   }
 
-  public void setData(MavenImportingSettings data) {
+  public void apply() {
+    getData(settings);
+  }
+
+  public void reset() {
     ui.searchRecursivelyCheckBox.setSelected(LookForNestedToggleAction.isSelected());
 
-    ui.excludeTargetFolderCheckBox.setSelected(data.isExcludeTargetFolder());
-    ui.useMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
+    ui.excludeTargetFolderCheckBox.setSelected(settings.isExcludeTargetFolder());
+    ui.useMavenOutputCheckBox.setSelected(settings.isUseMavenOutput());
 
-    ui.updateFoldersOnImportPhaseComboBox.setSelectedItem(data.getUpdateFoldersOnImportPhase());
-    ui.generatedSourcesComboBox.setSelectedItem(data.getGeneratedSourcesFolder());
+    ui.updateFoldersOnImportPhaseComboBox.setSelectedItem(settings.getUpdateFoldersOnImportPhase());
+    ui.generatedSourcesComboBox.setSelectedItem(settings.getGeneratedSourcesFolder());
 
-    ui.downloadSourcesCheckBox.setSelected(data.isDownloadSourcesAutomatically());
-    ui.downloadDocsCheckBox.setSelected(data.isDownloadDocsAutomatically());
-    ui.downloadAnnotationsCheckBox.setSelected(data.isDownloadAnnotationsAutomatically());
-    ui.autoDetectCompilerCheckBox.setSelected(data.isAutoDetectCompiler());
-    ui.runPluginsCompat.setSelected(data.isRunPluginsCompatibilityOnSyncAndBuild());
+    ui.downloadSourcesCheckBox.setSelected(settings.isDownloadSourcesAutomatically());
+    ui.downloadDocsCheckBox.setSelected(settings.isDownloadDocsAutomatically());
+    ui.downloadAnnotationsCheckBox.setSelected(settings.isDownloadAnnotationsAutomatically());
+    ui.autoDetectCompilerCheckBox.setSelected(settings.isAutoDetectCompiler());
+    ui.runPluginsCompat.setSelected(settings.isRunPluginsCompatibilityOnSyncAndBuild());
 
-    ui.dependencyTypes.setText(data.getDependencyTypes());
+    ui.dependencyTypes.setText(settings.getDependencyTypes());
 
-    ui.vmOptionsForImporter.setText(data.getVmOptionsForImporter());
-    skipValidationDuring(() -> ui.jdkForImporterComboBox.refreshData(data.getJdkForImporter()));
+    ui.vmOptionsForImporter.setText(settings.getVmOptionsForImporter());
+    skipValidationDuring(() -> ui.jdkForImporterComboBox.refreshData(settings.getJdkForImporter()));
 
     updateModuleDirControls();
   }
@@ -125,14 +132,10 @@ public class MavenImportingSettingsForm {
     }
   }
 
-  public boolean isModified(@NotNull MavenImportingSettings settings) {
+  public boolean isModified() {
     MavenImportingSettings formData = new MavenImportingSettings();
     getData(formData);
     return !formData.equals(settings);
-  }
-
-  public JPanel getAdditionalSettingsPanel() {
-    return ui.additionalSettingsPanel;
   }
 
   private void validateImporterJDK() {

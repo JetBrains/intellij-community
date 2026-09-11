@@ -6,15 +6,15 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import javax.swing.JCheckBox
 import javax.swing.JEditorPane
-import javax.swing.JPanel
 
-internal class MavenImportingSettingsUi {
+internal class MavenImportingSettingsUi(additionalSettings: Panel.() -> Unit) {
 
   lateinit var searchRecursivelyCheckBox: JCheckBox
   lateinit var autoDetectCompilerCheckBox: JCheckBox
@@ -30,7 +30,6 @@ internal class MavenImportingSettingsUi {
   lateinit var vmOptionsForImporter: JBTextField
   lateinit var jdkForImporterComboBox: ExternalSystemJdkComboBox
   lateinit var importerJdkWarning: JEditorPane
-  lateinit var additionalSettingsPanel: JPanel
 
   @JvmField
   val panel = panel {
@@ -107,10 +106,6 @@ internal class MavenImportingSettingsUi {
       importerJdkWarning = jdkCell.comment!!
     }
 
-    row {
-      additionalSettingsPanel = cell(JPanel())
-        .align(AlignX.FILL)
-        .component
-    }.topGap(TopGap.MEDIUM)
+    additionalSettings()
   }
 }

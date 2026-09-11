@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.configurationStore.deserializeState
 import com.intellij.configurationStore.jdomSerializer
+import com.intellij.maven.testFramework.fixtures.mavenFixture
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
@@ -15,7 +16,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.replaceService
 import org.jdom.output.XMLOutputter
-import com.intellij.maven.testFramework.fixtures.mavenFixture
 import org.jetbrains.idea.maven.utils.MavenSettings
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -59,8 +59,13 @@ class MavenSettingsTest {
 
     assertEquals(MavenImportingSettings(), MavenImportingSettings())
     val importingConfigurable = MavenImportingConfigurable(maven.project)
-    importingConfigurable.reset()
-    assertFalse(importingConfigurable.isModified())
+    try {
+      importingConfigurable.reset()
+      assertFalse(importingConfigurable.isModified)
+    }
+    finally {
+      importingConfigurable.disposeUIResources()
+    }
   }
 
   @Test
