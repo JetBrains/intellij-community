@@ -578,30 +578,41 @@ class ListPluginComponent private constructor(
     if (myMarketplace) {
       val downloads = myRenderKey.downloads
       if (downloads != null) {
-        myDownloads = createRatingLabel(myMetricsPanel!!, downloads, AllIcons.Plugins.Downloads)
+        myDownloads = createMetadataLabel(myMetricsPanel!!, null, downloads, AllIcons.Plugins.Downloads)
       }
 
       val rating = myRenderKey.rating
       if (rating != null) {
-        myRating = createRatingLabel(myMetricsPanel!!, rating, AllIcons.Plugins.Rating)
+        myRating = createMetadataLabel(myMetricsPanel!!, null, rating, AllIcons.Plugins.Rating)
       }
       val version = myRenderKey.version
       val displayVersion: @NlsSafe String = version ?: ""
-      myVersion = createVersionLabel(myMetricsPanel!!, displayVersion, myRenderKey.versionIsBundledUpdate)
+      myVersion = createMetadataVersionLabel(myMetricsPanel!!, displayVersion, myRenderKey.versionIsBundledUpdate)
       myVersion!!.isVisible = version != null
     }
     else {
       val version = myRenderKey.version
       if (version != null) {
-        myVersion = createVersionLabel(myMetricsPanel!!, version, myRenderKey.versionIsBundledUpdate)
+        myVersion = createMetadataVersionLabel(myMetricsPanel!!, version, myRenderKey.versionIsBundledUpdate)
       }
     }
 
     val vendor = myRenderKey.vendor
     if (vendor != null) {
-      myVendor = createRatingLabel(myMetricsPanel!!, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true)
+      myVendor = createMetadataLabel(myMetricsPanel!!, TextHorizontalLayout.FIX_LABEL, vendor, null)
     }
 
+  }
+
+  private fun createMetadataLabel(panel: JPanel, constraints: Any?, text: @Nls String?, icon: Icon?): JLabel {
+    val label = createRatingLabel(panel, constraints, text, icon, null, false)
+    return if (myUseUnifiedRowLayout) RelativeFont.SMALL.install(label) else PluginManagerConfigurable.setTinyFont(label)
+  }
+
+  private fun createMetadataVersionLabel(panel: JPanel, text: @Nls String?, isBundledUpdate: Boolean): JLabel {
+    return createMetadataLabel(panel, null, null, null).also {
+      setVersionLabelState(it, text, isBundledUpdate)
+    }
   }
 
   private fun createTag() {
@@ -1605,9 +1616,12 @@ class ListPluginComponent private constructor(
   }
 
   private inner class BaselineLayout : AbstractLayoutManager() {
-    private val myHGap: JBValue = JBValue.Float(if (myUseUnifiedRowLayout) 8f else 10f)
+    private val myHGap: JBValue = JBValue.Float(
+      if (myUseCompactUnifiedRowLayout) 12f else if (myUseUnifiedRowLayout) 8f else 10f,
+    )
     private val myHOffset: JBValue = JBValue.Float(8f)
-    private val myButtonOffset: JBValue = JBValue.Float(6f)
+    private val myButtonOffset: JBValue = JBValue.Float(if (myUseUnifiedRowLayout) 2f else 6f)
+    private val myUnifiedControlTrailingOffset: JBValue = JBValue.Float(4f)
     private val myUnifiedLineGap: JBValue = JBValue.Float(if (myUseCompactUnifiedRowLayout) 4f else 8f)
     private val myUnifiedControlSlotHeight: JBValue = JBValue.Float(if (myUseCompactUnifiedRowLayout) 32f else 40f)
     private val myUnifiedRowCoreHeight: JBValue = JBValue.Float(if (myUseCompactUnifiedRowLayout) 36f else 40f)
@@ -1740,7 +1754,7 @@ class ListPluginComponent private constructor(
           nextX += size.width
         }
 
-        var lastX = width - insets.right
+        var lastX = unifiedControlRight()
 
         if (calcNameWidth > width20) {
           for (component in myButtonComponents.asReversed()) {
@@ -1765,7 +1779,7 @@ class ListPluginComponent private constructor(
       }
       else {
         val size = myProgressComponent!!.preferredSize
-        setActionBounds(width - size.width - insets.right, baseline, myProgressComponent!!, size)
+        setActionBounds(unifiedControlRight() - size.width, baseline, myProgressComponent!!, size)
       }
 
       val lineWidth = if (myUseUnifiedRowLayout) {
@@ -1872,7 +1886,7 @@ class ListPluginComponent private constructor(
     private fun unifiedContentRight(): Int {
       val right = width - insets.right
       if (myProgressComponent != null) {
-        return right - myProgressComponent!!.preferredSize.width - myHOffset.get()
+        return unifiedControlRight() - myProgressComponent!!.preferredSize.width - myHOffset.get()
       }
 
       var controlsWidth = 0
@@ -1886,7 +1900,11 @@ class ListPluginComponent private constructor(
       if (visibleCount == 0) return right
 
       controlsWidth += myButtonOffset.get() * (visibleCount - 1)
-      return right - controlsWidth - myHOffset.get()
+      return unifiedControlRight() - controlsWidth - myHOffset.get()
+    }
+
+    private fun unifiedControlRight(): Int {
+      return width - insets.right + if (myUseUnifiedRowLayout) myUnifiedControlTrailingOffset.get() else 0
     }
 
     private fun setBaselineBounds(x: Int, y: Int, component: Component, size: Dimension) {

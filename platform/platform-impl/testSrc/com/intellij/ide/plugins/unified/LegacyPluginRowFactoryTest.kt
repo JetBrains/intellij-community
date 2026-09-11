@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.ListPluginModel
 import com.intellij.ide.plugins.PluginInfoProvider
-import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginsGroupType
 import com.intellij.ide.plugins.TagPanel
 import com.intellij.ide.plugins.newui.BaselinePanel
@@ -40,6 +39,7 @@ import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
+import com.intellij.ui.RelativeFont
 import com.intellij.ui.components.Badge
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -219,6 +219,7 @@ internal class LegacyPluginRowFactoryTest {
     try {
       val pluginId = PluginId.getId("toggle.plugin")
       val plugin = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName("Toggle Plugin").build()
+      val update = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName("Toggle Plugin Update").build()
       val listModel = ListPluginModel().apply {
         setPluginInstallationState(pluginId, PluginInstallationState(true))
       }
@@ -230,7 +231,7 @@ internal class LegacyPluginRowFactoryTest {
           installedPlugin = plugin,
           installationState = PluginInstallationState(true),
           errors = emptyList(),
-          updateDescriptor = null,
+          updateDescriptor = update,
           enabled = true,
           restrictedByProduct = false,
         ),
@@ -239,11 +240,13 @@ internal class LegacyPluginRowFactoryTest {
       val factory = LegacyPluginRowFactory(host, listModel, { _, _ -> }, onSelectionChanged = {})
       factory.createReconciler { _, _ -> }.use { reconciler ->
         val binding = reconciler.reconcile(listOf(factory.specification(section, item))).single()
+        JPanel().add((binding.row as LegacyPluginRow).component)
         factory.rowsRendered(listOf(binding))
         val row = (binding.row as LegacyPluginRow).component
         row.size = row.preferredSize
         row.doLayout()
         val toggle = componentsOfType(row, OnOffButton::class.java).single()
+        val updateButton = checkNotNull(row.myUpdateButton)
         val title = componentsOfType(row, JBLabel::class.java).single { it.text == plugin.name }
 
         assertThat(toggle.accessibleContext.accessibleName).isNotBlank()
@@ -251,7 +254,9 @@ internal class LegacyPluginRowFactoryTest {
         assertThat(toggle.isFocusable).isTrue()
         assertThat(toggle.isSelected).isTrue()
         assertThat(title.y).isEqualTo(row.insets.top)
-        assertThat(verticalCenterTwice(toggle)).isEqualTo(2 * (row.insets.top + JBUI.scale(20)))
+        assertThat(abs(verticalCenterTwice(toggle) - 2 * (row.insets.top + JBUI.scale(20)))).isLessThanOrEqualTo(1)
+        assertThat(row.width - row.insets.right + JBUI.scale(4)).isEqualTo(toggle.x + toggle.width)
+        assertThat(toggle.x - updateButton.x - updateButton.width).isEqualTo(JBUI.scale(2))
       }
     }
     finally {
@@ -400,14 +405,16 @@ internal class LegacyPluginRowFactoryTest {
           component.doLayout()
           val button = checkNotNull(component.myInstallButton)
           val title = componentsOfType(component, JBLabel::class.java).single { it.text == model.name }
+          val icon = component.components.filterIsInstance<JLabel>().single { it.icon != null }
           val vendor = componentsOfType(component, JLabel::class.java).single { it.text == "JetBrains" }
           val metadataPanel = vendor.parent
 
           assertThat(component.preferredSize.height).isEqualTo(JBUI.scale(52))
           assertThat(component.insets.top).isEqualTo(JBUI.scale(8))
           assertThat(title.y).isEqualTo(component.insets.top)
+          assertThat(title.x - icon.x - icon.width).isEqualTo(JBUI.scale(12))
           assertThat(title.font.size2D).isEqualTo(JBLabel().font.size2D)
-          assertThat(vendor.font.size2D).isEqualTo(PluginManagerConfigurable.setTinyFont(JLabel()).font.size2D)
+          assertThat(vendor.font.size2D).isEqualTo(RelativeFont.SMALL.install(JLabel()).font.size2D)
           assertThat(metadataPanel.y - title.y - title.height).isEqualTo(JBUI.scale(4))
           assertThat(abs(verticalCenterTwice(button) - 2 * (component.insets.top + JBUI.scale(16)))).isLessThanOrEqualTo(1)
         }
