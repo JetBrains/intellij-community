@@ -7,8 +7,12 @@ import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import java.nio.file.Path
 
-abstract class TcpEelDescriptor(override val osFamily: EelOsFamily) : EelDescriptorWithoutNativeFileChooserSupport, EelPathBoundDescriptor,
-                                                                      EelDescriptorWithIsolatedWorkspace {
+abstract class TcpEelDescriptor(
+  override val osFamily: EelOsFamily,
+  internal val internalName: String,
+) : EelDescriptorWithoutNativeFileChooserSupport,
+    EelPathBoundDescriptor,
+    EelDescriptorWithIsolatedWorkspace {
   abstract val rootPathString: String
   override val rootPath: Path
     get() = Path.of(rootPathString)

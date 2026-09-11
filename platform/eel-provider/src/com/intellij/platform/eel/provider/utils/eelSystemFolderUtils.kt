@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EnvironmentVariablesOptionsBuilder
+import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
@@ -32,7 +33,11 @@ object EelSystemFolderUtils {
 
     // Compose the path in the host's own form: `getDefaultCommonDataPathFor` may return a raw environment value
     // (XDG_DATA_HOME, APPDATA), which is a host-native string that `Path.of` would misroute to the local file system.
-    val options = EnvironmentVariablesOptionsBuilder().loginInteractiveViaShell().build()
+    val optionsBuilder = EnvironmentVariablesOptionsBuilder()
+    if (eel.platform.isPosix) {
+      optionsBuilder.loginInteractiveViaShell()
+    }
+    val options = optionsBuilder.build()
     val envs = withContext(Dispatchers.IO) { eel.exec.environmentVariables(options).await() }
     val remotePath = PathManager.getDefaultCommonDataPathFor(
       eel.platform.toOs(),
