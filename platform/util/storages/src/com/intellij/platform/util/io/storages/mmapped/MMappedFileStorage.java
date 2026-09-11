@@ -258,7 +258,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     if (offsetInFile < 0) {
       throw new IllegalArgumentException("offsetInFile(=" + offsetInFile + ") must be >=0");
     }
-    return (int)(offsetInFile >> pageSizeBits);
+    return Math.toIntExact(offsetInFile >> pageSizeBits);
   }
 
   public int toOffsetInPage(long offsetInFile) {
