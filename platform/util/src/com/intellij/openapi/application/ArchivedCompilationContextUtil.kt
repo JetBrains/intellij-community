@@ -14,6 +14,16 @@ import java.nio.file.Paths
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.relativeTo
 
+/**
+ * Mirrors [BazelRunfiles.isRunningFromBazel] without loading [BazelRunfiles].
+ * JPS uses this utility in the IDE distribution, which excludes the Bazel runfiles module.
+ * Keep the two checks in sync.
+ */
+private const val JAVA_RUNFILES_ENV_NAME = "JAVA_RUNFILES"
+private val isRunningFromBazel: Boolean by lazy {
+  System.getenv(JAVA_RUNFILES_ENV_NAME) != null
+}
+
 @Internal
 object ArchivedCompilationContextUtil {
   @JvmStatic
@@ -94,7 +104,7 @@ object ArchivedCompilationContextUtil {
       }
     }
 
-    if (BazelRunfiles.isRunningFromBazel) {
+    if (isRunningFromBazel) {
       // relative path, resolve against JAVA_RUNFILES or RUNFILES_MANIFEST_FILE
       val location = configuredLocation
                      ?: error("Missing property $BAZEL_TARGETS_JSON_FILE_PROPERTY, it's required when running under Bazel")
@@ -123,7 +133,7 @@ object ArchivedCompilationContextUtil {
 private fun getArchivedCompiledClassesLocationIfIsRunningFromBazelOut(): String? {
   val utilJar = PathManager.getJarPathForClass(PathManager::class.java)
     ?.let {
-      if (BazelRunfiles.isRunningFromBazel) {
+      if (isRunningFromBazel) {
         // return the same value for normal case under bazel
         // or in case of //platform/testFramework/monorepo:monorepo-tests_test
         // .../a9dd60d319c66bc49e47c96653e93701/execroot/_main/bazel-out/darwin_arm64-fastbuild/bin/platform/testFramework/monorepo/monorepo-tests_test.runfiles/_main/platform/util/util.jar
