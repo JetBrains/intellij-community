@@ -112,6 +112,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.jetbrains.python.PyEnvConstKt.PYTHONPATH;
 import static com.jetbrains.python.actions.PyExecuteInConsole.requestFocus;
 
 
@@ -137,7 +138,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   protected static final @NonNls String USE_LOW_IMPACT_MONITORING = "USE_LOW_IMPACT_MONITORING";
   protected static final @NonNls String HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME = "HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME";
 
-  private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
 
   private static final @NonNls String PYTHON_DONT_WRITE_PYC_FLAG = "-B";
 
@@ -846,7 +846,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     PydevConsoleRunnerFactory.putDebugConsoleIPythonEnvFlag(project, environmentController);
 
     if (addCythonExtensionsToPythonPath) {
-      environmentController.appendTargetPathToPathsValue(PYTHONPATH_ENV_NAME, CYTHON_EXTENSIONS_DIR);
+      environmentController.appendTargetPathToPathsValue(PYTHONPATH, CYTHON_EXTENSIONS_DIR);
     }
 
     PyDebugAsyncioCustomizer.Companion.getInstance().enableAsyncioMode(environmentController);
@@ -873,7 +873,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       }
 
       addSdkRootsToEnv(environmentController, runConfiguration);
-      environmentController.appendTargetPathToPathsValue(PYTHONPATH_ENV_NAME, runConfiguration.getWorkingDirectorySafe());
+      environmentController.appendTargetPathToPathsValue(PYTHONPATH, runConfiguration.getWorkingDirectorySafe());
     }
 
     applyRegistryFlags(environmentController);

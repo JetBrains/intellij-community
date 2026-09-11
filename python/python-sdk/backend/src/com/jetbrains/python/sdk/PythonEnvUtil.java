@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
+import com.jetbrains.python.PyEnvConstKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+
 /**
  * Leave this class alone, use {@link com.intellij.python.community.execService.ExecService} or {@link com.intellij.platform.eel.EelExecApi}
  * or {@link com.intellij.python.pytools.backend.PyTool}
@@ -36,7 +38,7 @@ import java.util.Set;
 @ApiStatus.Obsolete
 @ApiStatus.Internal
 public final class PythonEnvUtil {
-  @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONPATH = "PYTHONPATH";
+  @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONPATH = PyEnvConstKt.PYTHONPATH;
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONIOENCODING = "PYTHONIOENCODING";
   @SuppressWarnings("SpellCheckingInspection") public static final String IPYTHONENABLE = "IPYTHONENABLE";
@@ -79,13 +81,14 @@ public final class PythonEnvUtil {
         return value + File.pathSeparator + source;
       }
       else {
-      return source + File.pathSeparator + value;
+        return source + File.pathSeparator + value;
       }
     }
     else {
       return source;
     }
   }
+
   /**
    * @deprecated it doesn't support eel, do ot use it.
    */
@@ -110,6 +113,7 @@ public final class PythonEnvUtil {
       }
     }
   }
+
   /**
    * @deprecated it doesn't support eel, do ot use it.
    */
@@ -117,6 +121,7 @@ public final class PythonEnvUtil {
   public static void addToPythonPath(@NotNull Map<String, String> env, @NotNull Collection<String> values) {
     addPathsToEnv(env, PYTHONPATH, values);
   }
+
   /**
    * @deprecated it doesn't support eel, do ot use it.
    */
@@ -128,6 +133,7 @@ public final class PythonEnvUtil {
   public static void setPythonDontWriteBytecode(@NotNull Map<String, String> env) {
     env.put(PYTHONDONTWRITEBYTECODE, "1");
   }
+
   /**
    * @deprecated it doesn't support eel, do ot use it.
    */
@@ -135,6 +141,7 @@ public final class PythonEnvUtil {
   private static Collection<String> appendSystemPythonPath(@NotNull Collection<String> pythonPath) {
     return appendSystemEnvPaths(pythonPath, PYTHONPATH);
   }
+
   /**
    * @deprecated it doesn't support eel, do ot use it.
    */
@@ -146,6 +153,7 @@ public final class PythonEnvUtil {
     }
     return pythonPath;
   }
+
   /**
    * @deprecated it doesn't support eel, do ot use it.
    */

@@ -12,6 +12,7 @@ import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.io.write
+import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.documentation.PyDocstringFormatterCache
 import com.jetbrains.python.documentation.PyRuntimeDocstringFormatter
@@ -64,7 +65,7 @@ class PyDocstringFormatterCacheEnvTest {
       python.asBinToExec(),
       "docstring_formatter.py",
       Args("--format", "rest", "--input", inputFile.toString()),
-      ExecOptions(env = mapOf("PYTHONPATH" to PythonHelpersLocator.getCommunityHelpersRoot().resolve("py3only").toString())),
+      ExecOptions(env = mapOf(PYTHONPATH to PythonHelpersLocator.getCommunityHelpersRoot().resolve("py3only").toString())),
     ).getOrThrow()
   }
 

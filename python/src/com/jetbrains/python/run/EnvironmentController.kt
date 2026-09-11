@@ -6,6 +6,7 @@ import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.execution.target.value.joinToStringFunction
 import com.intellij.execution.target.value.targetPath
+import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -96,7 +97,7 @@ class PlainEnvironmentController(private val envs: MutableMap<String, String>) :
 
   override fun addHelperEntriesToPythonPath(pythonPathEntries: List<String>) {
     val helperPackagePath = pythonPathEntries.joinToString(separator = File.pathSeparator)
-    envs.merge("PYTHONPATH", helperPackagePath) { originalValue, additionalPath ->
+    envs.merge(PYTHONPATH, helperPackagePath) { originalValue, additionalPath ->
       listOf(originalValue, additionalPath).joinToString(separator = File.pathSeparator)
     }
   }

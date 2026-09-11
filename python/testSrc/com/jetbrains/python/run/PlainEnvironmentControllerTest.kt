@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run
 
+import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 import org.assertj.core.api.AutoCloseableSoftAssertions
@@ -63,7 +64,7 @@ class PlainEnvironmentControllerTest {
     val envs = hashMapOf<String, String>()
     val controller = PlainEnvironmentController(envs)
     AutoCloseableSoftAssertions().use { softAssertions ->
-      val envName = "PYTHONPATH"
+      val envName = PYTHONPATH
 
       val firstPath = "/first/path"
       controller.appendTargetPathToPathsValue(envName, firstPath)

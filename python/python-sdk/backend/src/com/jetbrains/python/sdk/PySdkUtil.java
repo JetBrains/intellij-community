@@ -33,6 +33,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.jetbrains.python.PyEnvConstKt.PYTHONPATH;
+
 /**
  * <strong>DO NOT USE THIS CLASS</strong>. Use {@link com.intellij.python.community.execService.ExecService}
  * A more flexible cousin of SdkVersionUtil.
@@ -183,7 +185,7 @@ public final class PySdkUtil {
     final Map<String, String> result = new HashMap<>(environment);
     for (Map.Entry<String, String> entry : extraEnvironment.entrySet()) {
       final String name = entry.getKey();
-      if (PATH_ENV_VARIABLE.equals(name) || PythonEnvUtil.PYTHONPATH.equals(name)) {
+      if (PATH_ENV_VARIABLE.equals(name) || PYTHONPATH.equals(name)) {
         PythonEnvUtil.addPathToEnv(result, name, entry.getValue());
       }
       else {

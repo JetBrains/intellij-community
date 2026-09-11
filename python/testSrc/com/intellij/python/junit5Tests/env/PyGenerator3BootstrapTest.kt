@@ -4,6 +4,7 @@ package com.intellij.python.junit5Tests.env
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
+import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.PythonBinary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -42,7 +43,7 @@ class PyGenerator3BootstrapTest {
     val process = withContext(Dispatchers.IO) {
       ProcessBuilder(python.toString(), mainScript.toString(), "--help")
         .directory(foreignCwd.toFile())
-        .apply { environment().remove("PYTHONPATH") } // reproduce a wrapper interpreter that dropped/reset PYTHONPATH
+        .apply { environment().remove(PYTHONPATH) } // reproduce a wrapper interpreter that dropped/reset PYTHONPATH
         .start()
     }
     // `--help` output is tiny, so reading sequentially after the imports/argparse run cannot deadlock the process.
