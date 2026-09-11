@@ -12,25 +12,16 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
   init {
     // We should wrap after space, cause otherwise formatting will eat space once AutoWrapHandler made wrap
-    addRule(Rule(' ', WrapCondition.AFTER))
-    addRule(Rule('\t', WrapCondition.AFTER))
+    WRAP_AFTER_CHARS.forEach { addRule(Rule(it, WrapCondition.AFTER)) }
+  }
 
-    // Punctuation.
-    addRule(Rule(',', WrapCondition.AFTER))
-    addRule(Rule('.', WrapCondition.AFTER))
-    addRule(Rule('!', WrapCondition.AFTER))
-    addRule(Rule('?', WrapCondition.AFTER))
-    addRule(Rule(';', WrapCondition.AFTER))
-
-    // Brackets to wrap after.
-    addRule(Rule(')', WrapCondition.AFTER))
-    addRule(Rule(']', WrapCondition.AFTER))
-    addRule(Rule('}', WrapCondition.AFTER))
-
-    // Brackets to wrap before
-    addRule(Rule('(', WrapCondition.BEFORE))
-    addRule(Rule('[', WrapCondition.BEFORE))
-    addRule(Rule('{', WrapCondition.BEFORE))
+  /**
+   * Allows wrapping only after a space or tab, including virtual wraps.
+   */
+  override fun canUseOffset(document: Document, offset: Int, virtual: Boolean): Boolean {
+    // Keep this check in sync with WRAP_AFTER_CHARS, which defines the rules above.
+    val character = document.charsSequence[offset]
+    return character == ' ' || character == '\t'
   }
 
   override fun calculateWrapPosition(editor: Editor, startOffset: Int, endOffset: Int,
@@ -120,6 +111,8 @@ class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
     return false
   }
 }
+
+private val WRAP_AFTER_CHARS = charArrayOf(' ', '\t')
 
 private const val NEVER_WRAP = -1
 private const val NOT_FOUND = -1

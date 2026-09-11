@@ -102,6 +102,14 @@ public class MarkdownWrapTest extends BasePlatformTestCase {
     doTest("a");
   }
 
+  /**
+   * The fixture places the address at the right margin after typing one character.
+   * The trailing space stays before the newline because the rule wraps after a space.
+   */
+  public void testWrapDoesNotBreakIpv4() {
+    doTest("a");
+  }
+
   public void testWrapDoesNotBreakLinkWhenTypingInsideLink() {
     doTest("X");
   }
