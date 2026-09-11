@@ -14,6 +14,7 @@ import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.getTargetPaths
 import com.intellij.execution.target.local.LocalTargetPtyOptions
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -28,12 +29,12 @@ import com.intellij.python.community.execService.ExecuteGetProcessError
 import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.TargetEnvironmentRequestHandler
-import com.intellij.remoteServer.util.ServerRuntimeException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import com.jetbrains.python.errorProcessing.MessageError
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -58,8 +59,13 @@ internal suspend fun createProcessLauncherOnTarget(
     try {
       target.createEnvironmentRequest(projectMan.openProjects.firstOrNull() ?: projectMan.defaultProject)
     }
-    catch (e: ServerRuntimeException) {
-      return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError(e.localizedMessage)))
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      // A target implementation reports a failure with its own exception type. This module must not depend on that type.
+      if (e is ControlFlowException) throw e
+      return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError(e.localizedMessage ?: e.toString())))
     }
   }
 
