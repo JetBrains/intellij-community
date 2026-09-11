@@ -1863,10 +1863,6 @@
                         serviceImplementation="com.intellij.codeInsight.actions.ReaderModeDefaultsOverrideImpl" />
     <applicationService serviceInterface="com.intellij.openapi.wm.ex.WelcomeScreenProjectSupport"
                         serviceImplementation="com.intellij.openapi.wm.ex.WelcomeScreenProjectSupportImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.application.impl.InternalUICustomization"
-                        serviceImplementation="com.intellij.openapi.application.impl.islands.IslandsUICustomization"/>
-    <applicationService serviceInterface="com.intellij.ui.tabs.impl.IslandsPainterProvider"
-                        serviceImplementation="com.intellij.openapi.application.impl.islands.IslandsInternalPainterProvider"/>
     <applicationSettings service="com.intellij.ide.ui.laf.LafManagerImpl"/>
     <projectSettings service="com.intellij.openapi.wm.impl.ToolWindowManagerStateImpl"/>
     <applicationSettings service="com.intellij.openapi.wm.impl.WindowManagerImpl"/>

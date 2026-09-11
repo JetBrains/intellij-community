@@ -81,7 +81,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var hideToolStripes: Boolean
-    get() = state.hideToolStripes || notRoamableOptions.experimentalSingleStripe || notRoamableOptions.xNextStripe
+    get() = state.hideToolStripes || notRoamableOptions.experimentalSingleStripe
     set(value) {
       state.hideToolStripes = value
       if (!value) notRoamableOptions.experimentalSingleStripe = false
@@ -226,7 +226,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var showStatusBar: Boolean
-    get() = state.showStatusBar && !notRoamableOptions.xNextStripe
+    get() = state.showStatusBar
     set(value) {
       state.showStatusBar = value
     }
@@ -557,14 +557,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.showBreakpointsOverLineNumbers
     set(value) {
       state.showBreakpointsOverLineNumbers = value
-    }
-
-  @get:Internal
-  @set:Internal
-  var showProgressesInEditor: Boolean
-    get() = state.showProgressesInEditor && notRoamableOptions.xNextStripe
-    set(value) {
-      state.showProgressesInEditor = value
     }
 
   var currentIdeScale: Float

@@ -54,6 +54,7 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.islands.IslandsUICustomization
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -75,6 +76,7 @@ import com.intellij.platform.ide.ideFingerprint
 import com.intellij.platform.settings.SettingsController
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.tabs.impl.UIThemeCustomization
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
@@ -421,6 +423,9 @@ private suspend fun initLafManagerAndCss(app: ApplicationImpl, asyncScope: Corou
       if (lafManager is LafManagerImpl) {
         lafManager.applyInitState()
       }
+      // depends on LafManager
+      val uiCustomization = IslandsUICustomization()
+      UIThemeCustomization.activate(uiCustomization)
     }
 
     if (app.isHeadlessEnvironment) {

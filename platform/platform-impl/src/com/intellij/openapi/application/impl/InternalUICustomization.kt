@@ -2,7 +2,6 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
-import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.fileEditor.impl.EditorTabPainterAdapter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
@@ -14,7 +13,6 @@ import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
-import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.ui.Graphics2DDelegate
 import com.intellij.ui.JBColor
@@ -24,6 +22,7 @@ import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
+import com.intellij.ui.tabs.impl.UIThemeCustomization
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -39,23 +38,10 @@ import javax.swing.JPanel
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-open class InternalUICustomization {
+abstract class InternalUICustomization : UIThemeCustomization {
   companion object {
-
-    // Caching the service instance improves performance due to frequent usage during painting.
-    // Service replacement is not possible in runtime.
-    // However, storing a mutable static instance is generally discouraged.
-    // Don't do that.
-    private var instance: InternalUICustomization? = null
-
     @JvmStatic
-    fun getInstance(): InternalUICustomization? {
-      instance?.let { return it }
-
-      val result = serviceOrNull<InternalUICustomization>()
-      instance = result
-      return result
-    }
+    fun getInstance(): InternalUICustomization? = UIThemeCustomization.getInstance() as? InternalUICustomization?
 
     @JvmStatic
     fun runGlobalCGTransformWithInactiveFrameSupport(component: JComponent, graphics: Graphics): Graphics {
@@ -76,7 +62,7 @@ open class InternalUICustomization {
 
   open val editorTabPainterAdapter: TabPainterAdapter = EditorTabPainterAdapter()
 
-  open val commonTabPainterAdapter: TabPainterAdapter? = null
+  override val commonTabPainterAdapter: TabPainterAdapter? = null
 
   open val debuggerTabPainterAdapter: TabPainterAdapter? = null
 
@@ -93,11 +79,9 @@ open class InternalUICustomization {
 
   open val isMainMenuBottomBorder: Boolean = true
 
-  open val isRoundedTabDuringDrag: Boolean = false
+  override val isRoundedTabDuringDrag: Boolean = false
 
   internal open fun configureToolWindowPane(toolWindowPaneParent: JComponent, buttonManager: ToolWindowButtonManager) {}
-
-  internal val internalCustomizer: StripesUxCustomizer = StripesUxCustomizer()
 
   open fun configureMainFrame(frame: IdeFrameImpl) {}
 
@@ -149,15 +133,11 @@ open class InternalUICustomization {
 
   open val isCustomPaintersAllowed: Boolean = false
 
-  open val isMacScrollBar: Boolean = false
+  override val isMacScrollBar: Boolean = false
 
   open fun attachIdeFrameBackgroundPainter(frame: IdeFrame, glassPane: IdeGlassPane): Unit = Unit
 
   open fun updateBackgroundPainter() {}
-
-  open fun attachIdeFallbackBackgroundPainter(glassPane: IdeGlassPane): Unit = Unit
-
-  open fun attachDialogFallbackBackgroundPainter(glassPane: IdeGlassPane): Unit = Unit
 
   open fun getToolWindowsPaneThreeSplitterBackground(): Color = JBColor.GRAY
 
@@ -198,7 +178,16 @@ open class InternalUICustomization {
 
   open fun getTabLayoutStart(layout: ContentLayout): Int = 0
 
-  open fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? = null
+  override fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? = null
+
+  override fun getEditorTabComposedBgColor(
+    component: JComponent,
+    tabPainter: JBTabPainter,
+    tabColor: Color?,
+    active: Boolean,
+    hovered: Boolean,
+    selected: Boolean,
+  ): Color? = null
 
   open fun calculateTabWidth(widthWithInsets: Int, insetsWidth: Int): Int = widthWithInsets
 

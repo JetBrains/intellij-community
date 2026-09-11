@@ -124,10 +124,6 @@ class ToolWindowPane private constructor(
     }
 
     private fun createButtonManager(paneId: String): ToolWindowButtonManager {
-      InternalUICustomization.getInstance()?.internalCustomizer?.createCustomButtonManager(paneId)?.let {
-        return it
-      }
-
       val buttonManager: ToolWindowButtonManager
       if (ExperimentalUI.isNewUI()) {
         buttonManager = ToolWindowPaneNewButtonManager(paneId)

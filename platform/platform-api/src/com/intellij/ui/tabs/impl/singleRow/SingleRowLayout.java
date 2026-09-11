@@ -4,7 +4,7 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
-import com.intellij.ui.tabs.impl.IslandsPainterProvider;
+import com.intellij.ui.tabs.impl.UIThemeCustomization;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.ShapeTransform;
@@ -160,7 +160,7 @@ public abstract class SingleRowLayout extends TabLayout {
       data.insets.left += tabs.getFirstTabOffset();
     }
 
-    IslandsPainterProvider provider = IslandsPainterProvider.getInstance();
+    UIThemeCustomization provider = UIThemeCustomization.getInstance();
     var additionalInsets = provider == null ? null : provider.getSingleRowTabInsets(tabs.getTabsPosition());
     if (additionalInsets != null) {
       data.insets = JBInsets.addInsets(data.insets, additionalInsets);
