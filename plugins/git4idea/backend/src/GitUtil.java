@@ -552,13 +552,13 @@ public final class GitUtil {
 
   /**
    * @throws VcsException if the path is invalid
-   * @see VcsFileUtil#unescapeGitPath(String, String)
+   * @see VcsFileUtil#unescapeGitPath(String)
    */
   public static @NotNull String unescapePath(@NotNull @NonNls String path) throws VcsException {
     try {
       return VcsFileUtil.unescapeGitPath(path);
     }
-    catch (IllegalStateException e) {
+    catch (IllegalArgumentException e) {
       throw new VcsException(e);
     }
   }
