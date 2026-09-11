@@ -14,7 +14,6 @@ import io.opentelemetry.api.trace.Tracer
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -133,7 +132,6 @@ data class BuildRequest(
    */
   @JvmField val jarCacheDir: Path? = devRootDir.resolve("jar-cache"),
   @JvmField val classesOutputDirectory: Path? = null,
-  @JvmField val httpSession: BuildHttpSession? = null,
   @JvmField val platformClassPathConsumer: ((mainClass: String, classPath: Set<Path>, runDir: Path) -> Unit)? = null,
   /**
    * If `true`, the dev build will include a [runtime module repository](psi_element://com.intellij.platform.runtime.repository).
@@ -197,7 +195,6 @@ data class BuildRequest(
       if (classesOutputDirectory != null) {
         append("classesOutputDirectory=$classesOutputDirectory, ")
       }
-      append("borrowedHttpSession=${httpSession != null}, ")
       append("generateRuntimeModuleRepository=$generateRuntimeModuleRepository")
     }
   }
@@ -239,7 +236,7 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
   request.scratchDir?.let { prepareScratchDir(it) }
 
   val runDir = buildDir
-  val lifetime = BuildLifetime(request.httpSession)
+  val lifetime = BuildLifetime()
   var contextToClose: BuildContext? = null
   try {
     taskScope {
@@ -548,7 +545,6 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
             platformDistributionEntriesDeferred = platformLayoutResultDeferred,
             pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
             runDir = runDir,
-            projectDir = request.projectDir,
           )
         }
         else {
@@ -722,11 +718,11 @@ private fun layOutNativeBinFiles(
   return copied
 }
 
-// paths are written relative to the IDE home dir to keep the built IDE relocatable;
-// an entry outside of the home dir stays absolute, because a `..`-prefixed path would break relocation
+/** Paths are written relative to the IDE home dir, so that the built IDE stays relocatable. */
 internal fun formatCoreClasspath(classPath: Collection<Path>, runDir: Path): String {
   return classPath.joinToString(separator = "\n") {
-    if (it.startsWith(runDir)) it.relativeTo(runDir).invariantSeparatorsPathString else it.invariantSeparatorsPathString
+    check(it.startsWith(runDir)) { "Core classpath entry $it is outside of the run directory $runDir" }
+    it.relativeTo(runDir).invariantSeparatorsPathString
   }
 }
 
@@ -734,11 +730,10 @@ private fun computeIdeFingerprint(
   platformDistributionEntriesDeferred: Awaitable<PlatformLayoutResult>,
   pluginDistributionEntriesDeferred: Awaitable<PluginsLayoutResult>,
   runDir: Path,
-  projectDir: Path,
 ) {
   val entries = platformDistributionEntriesDeferred.await().distributionEntries.asSequence() +
                 pluginDistributionEntriesDeferred.await().pluginEntries.asSequence().flatMap { it.distribution.asSequence() }
-  writeIdeFingerprint(entries = entries, runDir = runDir, projectDir = projectDir)
+  writeIdeFingerprint(entries = entries, runDir = runDir)
 }
 
 private fun getSearchableOptionSet(context: CompilationContext): SearchableOptionSetDescriptor? {
@@ -845,7 +840,6 @@ internal fun BuildOptions.copyWithDevBuildOverrides(
 }
 
 internal fun configureDevModeBuildOptions(options: BuildOptions, request: BuildRequest, buildOptionsTemplate: BuildOptions) {
-  options.setTargetOsAndArchToCurrent()
   options.buildStepsToSkip += listOf(
     BuildOptions.PREBUILD_SHARED_INDEXES,
     BuildOptions.FUS_METADATA_BUNDLE_STEP,

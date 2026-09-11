@@ -47,14 +47,6 @@ fun buildDevMain(rawArgs: Array<String>): java.util.AbstractMap.SimpleImmutableE
     systemProperties.setProperty(name, value)
   }
 
-  // obsolete, safe to delete in 263
-  systemProperties.computeIfAbsent(PathManager.PROPERTY_PLUGINS_PATH) {
-    systemProperties[PathManager.PROPERTY_CONFIG_PATH]?.let { "${it}/plugins" }
-  }
-  systemProperties.computeIfAbsent(PathManager.PROPERTY_LOG_PATH) {
-    systemProperties[PathManager.PROPERTY_SYSTEM_PATH]?.let { "${it}/log" }
-  }
-
   return java.util.AbstractMap.SimpleImmutableEntry(info.mainClassName, info.classPath)
 }
 

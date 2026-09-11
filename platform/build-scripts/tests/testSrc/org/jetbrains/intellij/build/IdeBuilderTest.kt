@@ -35,7 +35,6 @@ import org.mockito.Mockito.mock
 import java.lang.reflect.Method
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.invariantSeparatorsPathString
 
 class IdeBuilderTest {
   @TempDir
@@ -618,24 +617,25 @@ class IdeBuilderTest {
   }
 
   @Test
-  fun formatCoreClasspathKeepsEntriesOutsideRunDirAbsolute() {
+  fun formatCoreClasspathRejectsAnEntryOutsideRunDir() {
     val runDir = tempDir.resolve("run")
-    val jarCacheEntry = tempDir.resolve("jar-cache").resolve("payload.jar")
+    val outsideEntry = tempDir.resolve("jar-cache").resolve("payload.jar")
 
-    assertThat(formatCoreClasspath(listOf(jarCacheEntry), runDir)).isEqualTo(jarCacheEntry.invariantSeparatorsPathString)
+    assertThatThrownBy { formatCoreClasspath(listOf(outsideEntry), runDir) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("outside of the run directory")
   }
 
   @Test
   fun formatCoreClasspathJoinsEntriesByNewlineInInputOrder() {
     val runDir = tempDir.resolve("run")
-    val outsideEntry = tempDir.resolve("jar-cache").resolve("payload.jar")
 
     val classPathString = formatCoreClasspath(
-      listOf(runDir.resolve("lib").resolve("app.jar"), outsideEntry, runDir.resolve("lib").resolve("util.jar")),
+      listOf(runDir.resolve("lib").resolve("app.jar"), runDir.resolve("lib").resolve("modules").resolve("core.jar"), runDir.resolve("lib").resolve("util.jar")),
       runDir,
     )
 
-    assertThat(classPathString).isEqualTo("lib/app.jar\n${outsideEntry.invariantSeparatorsPathString}\nlib/util.jar")
+    assertThat(classPathString).isEqualTo("lib/app.jar\nlib/modules/core.jar\nlib/util.jar")
   }
 
   @Test
@@ -646,31 +646,28 @@ class IdeBuilderTest {
   @Test
   fun ideFingerprintIncludesPathTypeAndContentButNotInputOrder() {
     val runDir = tempDir.resolve("run")
-    val projectDir = tempDir.resolve("project")
     val first = CustomAssetEntry(path = runDir.resolve("lib/first.jar"), hash = 1)
     val second = CustomAssetEntry(path = runDir.resolve("plugins/sample/lib/second.jar"), hash = 2)
 
-    val fingerprint = computeIdeFingerprint(sequenceOf(first, second), runDir, projectDir)
+    val fingerprint = computeIdeFingerprint(sequenceOf(first, second), runDir)
 
     assertThat(fingerprint).startsWith("v5:")
-    assertThat(computeIdeFingerprint(sequenceOf(second, first), runDir, projectDir)).isEqualTo(fingerprint)
-    assertThat(computeIdeFingerprint(sequenceOf(first.copy(hash = 3), second), runDir, projectDir)).isNotEqualTo(fingerprint)
+    assertThat(computeIdeFingerprint(sequenceOf(second, first), runDir)).isEqualTo(fingerprint)
+    assertThat(computeIdeFingerprint(sequenceOf(first.copy(hash = 3), second), runDir)).isNotEqualTo(fingerprint)
     assertThat(
       computeIdeFingerprint(
         sequenceOf(first.copy(path = runDir.resolve("lib/renamed.jar"), distributionPath = runDir.resolve("lib/renamed.jar")), second),
         runDir,
-        projectDir,
       )
     )
       .isNotEqualTo(fingerprint)
-    assertThat(computeIdeFingerprint(sequenceOf(first.copy(relativeOutputFile = "lib/moved.jar"), second), runDir, projectDir))
+    assertThat(computeIdeFingerprint(sequenceOf(first.copy(relativeOutputFile = "lib/moved.jar"), second), runDir))
       .isEqualTo(fingerprint)
   }
 
   @Test
   fun ideFingerprintNormalizesPathsAndIncludesEveryDuplicateContribution() {
     val runDir = tempDir.resolve("run")
-    val projectDir = tempDir.resolve("project")
     val first = CustomAssetEntry(path = runDir.resolve("lib/shared.jar"), hash = 1)
     val second = CustomAssetEntry(
       path = runDir.resolve("ignored.jar"),
@@ -678,17 +675,16 @@ class IdeBuilderTest {
       distributionPath = runDir.resolve("lib/../lib/shared.jar"),
     )
 
-    val fingerprint = computeIdeFingerprint(sequenceOf(first, second), runDir, projectDir)
+    val fingerprint = computeIdeFingerprint(sequenceOf(first, second), runDir)
 
-    assertThat(computeIdeFingerprint(sequenceOf(second, first), runDir, projectDir)).isEqualTo(fingerprint)
-    assertThat(computeIdeFingerprint(sequenceOf(first, second.copy(hash = 3)), runDir, projectDir)).isNotEqualTo(fingerprint)
-    assertThat(computeIdeFingerprint(sequenceOf(first), runDir, projectDir)).isNotEqualTo(fingerprint)
-    assertThat(computeIdeFingerprint(sequenceOf(second), runDir, projectDir))
+    assertThat(computeIdeFingerprint(sequenceOf(second, first), runDir)).isEqualTo(fingerprint)
+    assertThat(computeIdeFingerprint(sequenceOf(first, second.copy(hash = 3)), runDir)).isNotEqualTo(fingerprint)
+    assertThat(computeIdeFingerprint(sequenceOf(first), runDir)).isNotEqualTo(fingerprint)
+    assertThat(computeIdeFingerprint(sequenceOf(second), runDir))
       .isEqualTo(
         computeIdeFingerprint(
           sequenceOf(second.copy(distributionPath = runDir.resolve("lib/shared.jar"))),
           runDir,
-          projectDir,
         )
       )
   }
@@ -696,7 +692,6 @@ class IdeBuilderTest {
   @Test
   fun ideFingerprintUsesDistributionPathForExternalCacheAsset() {
     val runDir = tempDir.resolve("run")
-    val projectDir = tempDir.resolve("project")
     val distributionPath = runDir.resolve("plugins/rider-plugins-renderdoc")
     val entry = CustomAssetEntry(
       path = tempDir.resolve("maven/renderdoc-runtime-linux-aarch64.jar"),
@@ -704,15 +699,14 @@ class IdeBuilderTest {
       distributionPath = distributionPath,
     )
 
-    val fingerprint = computeIdeFingerprint(sequenceOf(entry), runDir, projectDir)
+    val fingerprint = computeIdeFingerprint(sequenceOf(entry), runDir)
 
-    assertThat(computeIdeFingerprint(sequenceOf(entry.copy(path = tempDir.resolve("other-cache/renderdoc.jar"))), runDir, projectDir))
+    assertThat(computeIdeFingerprint(sequenceOf(entry.copy(path = tempDir.resolve("other-cache/renderdoc.jar"))), runDir))
       .isEqualTo(fingerprint)
     assertThat(
       computeIdeFingerprint(
         sequenceOf(entry.copy(distributionPath = runDir.resolve("plugins/renamed-renderdoc"))),
         runDir,
-        projectDir,
       )
     ).isNotEqualTo(fingerprint)
   }
@@ -749,9 +743,9 @@ class IdeBuilderTest {
   fun ideFingerprintRejectsAnEntryOutsideKnownRoots() {
     val entry = CustomAssetEntry(path = tempDir.resolve("external/asset.zip"), hash = 1)
 
-    assertThatThrownBy { computeIdeFingerprint(sequenceOf(entry), tempDir.resolve("run"), tempDir.resolve("project")) }
+    assertThatThrownBy { computeIdeFingerprint(sequenceOf(entry), tempDir.resolve("run")) }
       .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("outside the distribution and project roots")
+      .hasMessageContaining("outside the distribution root")
   }
 
   private fun createBuildRequest(
