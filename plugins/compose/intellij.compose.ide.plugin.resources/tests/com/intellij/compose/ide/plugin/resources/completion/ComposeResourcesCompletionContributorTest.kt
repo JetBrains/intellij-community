@@ -25,9 +25,8 @@ class ComposeResourcesCompletionContributorTest : ComposeResourcesCodeInsightTes
     timeoutRunBlocking(context = Dispatchers.EDT) {
       openTestDataFile()
 
-      codeInsightFixture.editor.caretModel.moveToOffset(
-        codeInsightFixture.file.text.indexOf(DRAWABLE_RESOURCE_PREFIX) + DRAWABLE_RESOURCE_PREFIX.length
-      )
+      appendCompletionExpression(DRAWABLE_COMPLETION_EXPRESSION)
+
       val results = codeInsightFixture.completeBasic() ?: emptyArray()
       val lookupStrings = codeInsightFixture.lookupElementStrings ?: emptyList()
 
@@ -53,9 +52,8 @@ class ComposeResourcesCompletionContributorTest : ComposeResourcesCodeInsightTes
     timeoutRunBlocking(context = Dispatchers.EDT) {
       openTestDataFile()
 
-      codeInsightFixture.editor.caretModel.moveToOffset(
-        codeInsightFixture.file.text.indexOf(STRING_RESOURCE_PREFIX) + STRING_RESOURCE_PREFIX.length
-      )
+      appendCompletionExpression(STRING_COMPLETION_EXPRESSION)
+
       val results = codeInsightFixture.completeBasic() ?: emptyArray()
       val lookupStrings = codeInsightFixture.lookupElementStrings ?: emptyList()
 
@@ -68,14 +66,22 @@ class ComposeResourcesCompletionContributorTest : ComposeResourcesCodeInsightTes
     }
   }
 
+  private fun appendCompletionExpression(expression: String) {
+    with(codeInsightFixture.editor) {
+      caretModel.moveToOffset(document.textLength)
+    }
+
+    codeInsightFixture.type("\n$expression")
+  }
+
   private fun openTestDataFile() {
     codeInsightFixture.configureFromExistingVirtualFile(
-      canonicalProjectFile("composeApp/src/$sourceSetName/kotlin/org/example/project/completion.$sourceSetName.kt")
+      canonicalProjectFile("composeApp/src/$sourceSetName/kotlin/org/example/project/test.$sourceSetName.kt")
     )
   }
 
   private companion object {
-    private const val STRING_RESOURCE_PREFIX = "Res.string."
-    private const val DRAWABLE_RESOURCE_PREFIX = "Res.drawable."
+    private const val STRING_COMPLETION_EXPRESSION = "val stringCompletionTest = Res.string."
+    private const val DRAWABLE_COMPLETION_EXPRESSION = "val drawableCompletionTest = Res.drawable."
   }
 }
