@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -588,11 +588,19 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       throw new IncorrectOperationException("Member has no containing class");
     }
     final PsiFile file = getContainingFile();
-    if (file instanceof GroovyFile) {
-      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
-      String text = "import static " + containingClass.getQualifiedName() + "." + member.getName();
-      final GrImportStatement statement = factory.createImportStatementFromText(text);
-      ((GroovyFile)file).addImport(statement);
+    if (file instanceof GroovyFile groovyFile) {
+      String name = member.getName();
+      assert name != null;
+      String qualifiedName = containingClass.getQualifiedName() + '.' + name;
+      for (GrImportStatement statement : groovyFile.getImportStatements()) {
+        if (statement.isStatic() && name.equals(statement.getImportedName()) && qualifiedName.equals(statement.getImportFqn())) {
+          return this;
+        }
+      }
+
+      String text = "import static " + qualifiedName;
+      final GrImportStatement statement = GroovyPsiElementFactory.getInstance(getProject()).createImportStatementFromText(text);
+      groovyFile.addImport(statement);
     }
     return this;
   }
