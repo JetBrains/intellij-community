@@ -27,7 +27,6 @@ internal class GitRecentPushTargetsTest {
 
     val entries = recentTargets("master")
     assertThat(entries).hasSize(1)
-    assertThat(entries[0].repositoryRootPath).isEqualTo(repository.root.path)
     assertThat(entries[0].sourceBranch).isEqualTo("master")
     assertThat(entries[0].targetRemote).isEqualTo("origin")
     assertThat(entries[0].targetBranch).isEqualTo("feature")
@@ -76,7 +75,7 @@ internal class GitRecentPushTargetsTest {
   }
 
   @Test
-  fun `history keeps at most 10 targets in total`(): Unit = with(context) {
+  fun `history keeps at most 10 targets per repository`(): Unit = with(context) {
     val root = repository.root.path
     for (i in 1..11) {
       settings.addRecentPushTarget(root, "master", "origin", "review-$i")
@@ -87,12 +86,18 @@ internal class GitRecentPushTargetsTest {
     assertThat(names.first()).isEqualTo("review-11")
     assertThat(names).doesNotContain("review-1")
 
-    // The cap is global: a target of another branch evicts the oldest entry.
+    // The cap covers the whole repository: a target of another branch evicts the oldest entry.
     settings.addRecentPushTarget(root, "feature", "origin", "review-f")
     assertThat(settings.getRecentPushTargets(root, "feature")).hasSize(1)
     val remaining = settings.getRecentPushTargets(root, "master").map { it.targetBranch }
     assertThat(remaining).hasSize(9)
     assertThat(remaining).doesNotContain("review-2")
+
+    // Each repository keeps its own budget, so another repository does not drain this one.
+    val otherRoot = "/other/root"
+    settings.addRecentPushTarget(otherRoot, "master", "origin", "review-x")
+    assertThat(settings.getRecentPushTargets(otherRoot, "master").map { it.targetBranch }).containsExactly("review-x")
+    assertThat(settings.getRecentPushTargets(root, "master")).hasSize(9)
   }
 
   @Test

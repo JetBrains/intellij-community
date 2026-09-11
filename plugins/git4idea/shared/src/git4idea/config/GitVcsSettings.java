@@ -43,9 +43,10 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   public static final String SETTINGS_KEY = "Git.Settings";
 
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
-  private static final int RECENT_PUSH_TARGETS_LIMIT = 10; // Limit for recent push targets, in total
+  private static final int RECENT_PUSH_TARGETS_LIMIT = 10; // Limit for recent push targets, per repository
 
   private final Project project;
+  private final Object recentPushTargetsLock = new Object();
 
   public GitVcsSettings(Project project) {
     super(new GitVcsOptions());
@@ -170,41 +171,41 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
    */
   @ApiStatus.Internal
   public @NotNull List<GitPushTargetHistoryEntry> getRecentPushTargets(@NotNull String repositoryRootPath, @NotNull String sourceBranch) {
-    List<GitPushTargetHistoryEntry> result = new ArrayList<>();
-    for (GitPushTargetHistoryEntry entry : getState().getRecentPushTargets()) {
-      if (matchesPushTargetKey(entry, repositoryRootPath, sourceBranch)) {
-        result.add(entry);
+    // The read runs on the completion thread and the write runs on the push thread, so guard the shared list.
+    synchronized (recentPushTargetsLock) {
+      List<GitPushTargetHistoryEntry> repositoryTargets = getState().getRecentPushTargets().get(repositoryRootPath);
+      if (repositoryTargets == null) return List.of();
+
+      List<GitPushTargetHistoryEntry> result = new ArrayList<>();
+      for (GitPushTargetHistoryEntry entry : repositoryTargets) {
+        if (Objects.equals(entry.getSourceBranch(), sourceBranch)) {
+          result.add(entry);
+        }
       }
+      return result;
     }
-    return result;
   }
 
   @ApiStatus.Internal
   public void addRecentPushTarget(@NotNull String repositoryRootPath, @NotNull String sourceBranch,
                                   @NotNull String targetRemote, @NotNull String targetBranch) {
-    GitPushTargetHistoryEntry entry = createPushTargetEntry(repositoryRootPath, sourceBranch, targetRemote, targetBranch);
-    List<GitPushTargetHistoryEntry> entries = getState().getRecentPushTargets();
-    entries.remove(entry);
-    while (entries.size() >= RECENT_PUSH_TARGETS_LIMIT) {
-      entries.removeLast();
+    GitPushTargetHistoryEntry entry = new GitPushTargetHistoryEntry(sourceBranch, targetRemote, targetBranch);
+    // The read runs on the completion thread and the write runs on the push thread, so guard the shared list.
+    synchronized (recentPushTargetsLock) {
+      Map<String, List<GitPushTargetHistoryEntry>> targetsByRepository = getState().getRecentPushTargets();
+      List<GitPushTargetHistoryEntry> repositoryTargets = targetsByRepository.get(repositoryRootPath);
+      if (repositoryTargets == null) {
+        repositoryTargets = new ArrayList<>();
+        targetsByRepository.put(repositoryRootPath, repositoryTargets);
+      }
+      repositoryTargets.remove(entry); // drop the previous identical target, then move it to the front
+      repositoryTargets.addFirst(entry);
+      while (repositoryTargets.size() > RECENT_PUSH_TARGETS_LIMIT) {
+        repositoryTargets.removeLast();
+      }
+      // The map does not track a change inside its value list, so bump the count to save the new state.
+      getState().intIncrementModificationCount();
     }
-    entries.addFirst(entry);
-  }
-
-  private static @NotNull GitPushTargetHistoryEntry createPushTargetEntry(@NotNull String repositoryRootPath, @NotNull String sourceBranch,
-                                                                          @NotNull String targetRemote, @NotNull String targetBranch) {
-    GitPushTargetHistoryEntry entry = new GitPushTargetHistoryEntry();
-    entry.setRepositoryRootPath(repositoryRootPath);
-    entry.setSourceBranch(sourceBranch);
-    entry.setTargetRemote(targetRemote);
-    entry.setTargetBranch(targetBranch);
-    return entry;
-  }
-
-  private static boolean matchesPushTargetKey(@NotNull GitPushTargetHistoryEntry entry,
-                                              @NotNull String repositoryRootPath, @NotNull String sourceBranch) {
-    return Objects.equals(entry.getRepositoryRootPath(), repositoryRootPath) &&
-           Objects.equals(entry.getSourceBranch(), sourceBranch);
   }
 
   public boolean showTags() {

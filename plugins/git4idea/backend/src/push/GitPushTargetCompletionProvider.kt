@@ -86,18 +86,18 @@ internal class GitPushTargetCompletionProvider(
       currentRemote: String?,
       remoteBranchNames: List<String>,
     ): List<GitPushTargetVariant> {
-      val variants = ArrayList<GitPushTargetVariant>()
+      // Collect the names in the popup order: the recent targets of the current remote first, then the other remote branches.
+      val recentNames = LinkedHashSet<String>()
       for (entry in recentEntries) {
-        if (entry.targetRemote == null || entry.targetRemote != currentRemote) continue
-        val branchName = entry.targetBranch ?: continue
-        variants.add(GitPushTargetVariant(branchName, true, variants.size))
+        if (entry.targetRemote != currentRemote) continue
+        entry.targetBranch?.let { recentNames.add(it) }
       }
-      val recentNames = variants.mapTo(HashSet()) { it.branchName }
+      val orderedNames = ArrayList(recentNames)
       for (name in remoteBranchNames) {
-        if (name in recentNames) continue
-        variants.add(GitPushTargetVariant(name, false, variants.size))
+        if (name !in recentNames) orderedNames.add(name)
       }
-      return variants
+      // The order is the popup position, so the sorter keeps this order.
+      return orderedNames.mapIndexed { order, name -> GitPushTargetVariant(name, name in recentNames, order) }
     }
   }
 }

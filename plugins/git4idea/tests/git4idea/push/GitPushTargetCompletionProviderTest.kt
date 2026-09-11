@@ -33,15 +33,6 @@ internal class GitPushTargetCompletionProviderTest {
   }
 
   private fun entry(branch: String, remote: String = "origin"): GitPushTargetHistoryEntry {
-    return GitPushTargetHistoryEntry().apply {
-      repositoryRootPath = ROOT
-      sourceBranch = "master"
-      targetRemote = remote
-      targetBranch = branch
-    }
-  }
-
-  companion object {
-    private const val ROOT = "/project/repo"
+    return GitPushTargetHistoryEntry(sourceBranch = "master", targetRemote = remote, targetBranch = branch)
   }
 }
