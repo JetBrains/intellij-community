@@ -57,7 +57,9 @@ internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, v
     try {
       GraphicsUtil.setupAAPainting(g2)
 
-      tabs.setFirstTabOffset(IslandsTabPainter.firstTabOffset)
+      if (tabs.getFirstTabOffset() == 0) {
+        tabs.setFirstTabOffset(IslandsTabPainter.firstTabOffset)
+      }
       (tabPainter as IslandsTabPainter).paintTab(g2, tabs.tabsPosition, rect, info.tabColor, active, hovered, selected)
     }
     finally {
