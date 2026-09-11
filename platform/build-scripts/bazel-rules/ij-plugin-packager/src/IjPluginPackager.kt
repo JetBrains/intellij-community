@@ -250,6 +250,9 @@ object IjPluginPackager {
 
 private const val BUILD_NUMBER_FROM_FILE_MARKER = $$"$build_number_from_file"
 
+/**
+ * Update together with `SNAPSHOT_VERSION_SEGMENT` in community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/SnapshotBuildNumber.kt
+ */
 private fun computePluginVersion(string: String?, buildNumberFromFile: Lazy<String>): String? {
   return if (string == BUILD_NUMBER_FROM_FILE_MARKER) {
     //transform `263.SNAPSHOT` text to `263.99999999.0` to follow SemVer format
