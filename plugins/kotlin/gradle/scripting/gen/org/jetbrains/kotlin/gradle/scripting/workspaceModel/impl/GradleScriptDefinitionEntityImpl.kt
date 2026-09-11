@@ -18,9 +18,9 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.kotlin.gradle.scripting.workspaceModel.GradleScriptDefinitionEntity
 import org.jetbrains.kotlin.gradle.scripting.workspaceModel.GradleScriptDefinitionEntityBuilder
 import org.jetbrains.kotlin.gradle.scripting.workspaceModel.GradleScriptDefinitionEntityId
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationData
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurationEntity
+import org.jetbrains.kotlin.idea.core.script.modules.ScriptCompilationConfigurationData
+import org.jetbrains.kotlin.idea.core.script.modules.ScriptEvaluationConfigurationEntity
+import org.jetbrains.kotlin.idea.core.script.modules.ScriptingHostConfigurationEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)

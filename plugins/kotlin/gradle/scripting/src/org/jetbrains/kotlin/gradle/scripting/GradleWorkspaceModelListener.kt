@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import org.jetbrains.kotlin.gradle.scripting.workspaceModel.GradleScriptDefinitionEntity
-import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
-import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl
+import org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsModificationTracker
 
 /**
  * Mark the definitions cache of [ScriptDefinitionProviderImpl] dirty when a Gradle sync changes the [GradleScriptDefinitionEntity] set.

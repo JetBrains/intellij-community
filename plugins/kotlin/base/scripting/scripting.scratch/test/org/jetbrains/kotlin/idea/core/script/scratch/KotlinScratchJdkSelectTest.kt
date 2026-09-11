@@ -2,18 +2,14 @@
 package org.jetbrains.kotlin.idea.core.script.scratch
 
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.defaultJavaHome
-import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptionsByFile
+import org.jetbrains.kotlin.idea.core.script.configurations.defaultJavaHome
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 class KotlinScratchJdkSelectTest : LightJavaCodeInsightFixtureTestCase() {

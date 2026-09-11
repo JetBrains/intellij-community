@@ -61,11 +61,11 @@
   <!-- endregion -->
   <applicationListeners>
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
-              class="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptEditorListener"/>
+              class="org.jetbrains.kotlin.idea.core.script.highlighting.KotlinScriptEditorListener"/>
   </applicationListeners>
 
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.core.script.k2.inspections.KotlinScriptTemplateNotRegisteredInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.core.script.inspections.KotlinScriptTemplateNotRegisteredInspection"
                      language="kotlin"
                      groupPath="Kotlin"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
@@ -73,7 +73,7 @@
                      level="WARNING"
                      bundle="messages.KotlinBaseScriptingBundle" key="inspection.script.definition.not.registered.name"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.core.script.k2.inspections.MainKtsAnnotationUsageInPlainKtsInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.core.script.inspections.MainKtsAnnotationUsageInPlainKtsInspection"
                      language="kotlin"
                      groupPath="Kotlin"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
@@ -86,70 +86,67 @@
                        bundle="messages.KotlinBaseScriptingBundle"
                        key="notification.group.kotlin.script"/>
 
-    <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.ScriptProblemHighlightFilter"/>
+    <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.core.script.highlighting.ScriptProblemHighlightFilter"/>
 
-    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.core.script.k2.statistics.KotlinScriptingUsageCollector"/>
-    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.core.script.k2.statistics.KotlinScriptingLifecycleCollector"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.core.script.statistics.KotlinScriptingUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.core.script.statistics.KotlinScriptingLifecycleCollector"/>
 
-    <highlightVisitor implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptHighlightingVisitor"/>
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.core.script.highlighting.KotlinScriptHighlightingVisitor"/>
 
     <completion.contributor language="kotlin"
                             id="KotlinImportedScriptCompletionContributor"
                             order="first, before KotlinCompletionContributor"
-                            implementationClass="org.jetbrains.kotlin.idea.core.script.k2.codeInsight.KotlinImportedScriptCompletionContributor"/>
+                            implementationClass="org.jetbrains.kotlin.idea.core.script.codeInsight.KotlinImportedScriptCompletionContributor"/>
     <completion.confidence language="kotlin"
                            id="KotlinImportedScriptCompletionConfidence"
                            order="first, before kotlinSkipAutopopupInStrings"
-                           implementationClass="org.jetbrains.kotlin.idea.core.script.k2.codeInsight.KotlinImportedScriptCompletionConfidence"/>
+                           implementationClass="org.jetbrains.kotlin.idea.core.script.codeInsight.KotlinImportedScriptCompletionConfidence"/>
     <psi.clsCustomNavigationPolicy
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.modules.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
 
-    <useScopeEnlarger implementation="org.jetbrains.kotlin.idea.core.script.k2.navigation.KotlinScriptUseScopeEnlarger"/>
+    <useScopeEnlarger implementation="org.jetbrains.kotlin.idea.core.script.navigation.KotlinScriptUseScopeEnlarger"/>
 
-    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.KotlinScriptResolveScopeProvider"/>
-    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.ScriptDependenciesResolveScopeProvider"/>
+    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
+    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
-    <codeInsight.daemonBoundCodeVisionProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptDefinitionCodeVisionProvider"/>
-    <config.codeVisionGroupSettingProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptingGroupSettingProvider"/>
+    <codeInsight.daemonBoundCodeVisionProvider implementation="org.jetbrains.kotlin.idea.core.script.definitions.KotlinScriptDefinitionCodeVisionProvider"/>
+    <config.codeVisionGroupSettingProvider implementation="org.jetbrains.kotlin.idea.core.script.definitions.KotlinScriptingGroupSettingProvider"/>
 
     <projectConfigurable groupId="language"
                          bundle="messages.KotlinBundle"
                          key="kotlin.scripting.configurable"
                          id="preferences.language.Kotlin.scripting"
-                         instance="org.jetbrains.kotlin.idea.core.script.k2.settings.KotlinScriptingSettingsConfigurable"
+                         instance="org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettingsConfigurable"
                          parentId="preferences.language.Kotlin"/>
 
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.notifications.ScriptingSupportChecker"/>
-
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsStateComponent"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.notifications.ScriptingSupportChecker"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl"/>
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionProviderImpl"/>
 
-    <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptWorkspaceFileIndexContributor"/>
-    <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptExternalLibrariesNodesProvider"/>
+    <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptWorkspaceFileIndexContributor"/>
+    <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptExternalLibrariesNodesProvider"/>
 
-    <vfs.asyncListener implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptFileListener"/>
+    <vfs.asyncListener implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptFileListener"/>
 
-    <configurationType implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationType"/>
+    <configurationType implementation="org.jetbrains.kotlin.idea.core.script.script.KotlinStandaloneScriptRunConfigurationType"/>
 
     <runConfigurationProducer
-            implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationProducer"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.script.KotlinStandaloneScriptRunConfigurationProducer"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl"/>
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.configurations.ScriptConfigurationsProviderImpl"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.notifications.KotlinScriptingReportsSink"/>
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.notifications.KotlinScriptingReportsSink"/>
 
     <trafficLightRendererContributor
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.highlighting.ScriptTrafficLightRendererContributor"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.highlighting.ScriptTrafficLightRendererContributor"/>
 
     <editorFloatingToolbarProvider
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationFloatingToolbarProvider"
+            implementation="org.jetbrains.kotlin.idea.core.script.ScriptConfigurationFloatingToolbarProvider"
             id="ScriptConfigurationFloatingToolbarProvider"/>
-    <projectSettings service="org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsStateComponent"/>
+    <projectSettings service="org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings"/>
     <registryKey
             key="kotlin.scripting.index.dependencies.sources"
             description="Index script dependencies sources eagerly (not deferred)"
@@ -157,19 +154,19 @@
             restartRequired="false"/>
 
     <fileType name="script-definition-marker" fieldName="INSTANCE"
-              implementationClass="org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType"/>
+              implementationClass="org.jetbrains.kotlin.idea.core.script.definition.ScriptDefinitionMarkerFileType"/>
   </extensions>
 
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.kotlinScriptFilter"
-            interface="org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptProcessingFilter"
+            interface="org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptProcessingFilter"
             area="IDEA_PROJECT"
             dynamic="true"/>
 
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptEntityProvider"
-            interface="org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider"
+            interface="org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntityProvider"
             area="IDEA_PROJECT"
             dynamic="true"/>
     <extensionPoint
@@ -180,7 +177,7 @@
 
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptAfterRunCallbackProvider"
-            interface="org.jetbrains.kotlin.idea.core.script.shared.ScriptAfterRunCallbackProvider"
+            interface="org.jetbrains.kotlin.idea.core.script.ScriptAfterRunCallbackProvider"
             area="IDEA_PROJECT"
             dynamic="true"/>
 
@@ -191,35 +188,35 @@
 
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptDiagnosticFixProvider"
-            interface="org.jetbrains.kotlin.idea.core.script.shared.ScriptDiagnosticFixProvider"
+            interface="org.jetbrains.kotlin.idea.core.script.ScriptDiagnosticFixProvider"
             dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <structureViewExtension
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.structureView.KotlinScriptStructureViewFactoryExtension"
+            implementation="org.jetbrains.kotlin.idea.core.script.structureView.KotlinScriptStructureViewFactoryExtension"
             order="first"/>
 
     <scriptDefinitionsProvider
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.MainKtsScriptDefinitionsProvider"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.definitions.MainKtsScriptDefinitionsProvider"/>
 
     <scriptAfterRunCallbackProvider
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsAfterRunCallbackProvider"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.MainKtsAfterRunCallbackProvider"/>
 
-    <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesProvider"/>
+    <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.idea.core.script.definitions.DefinitionFromDependenciesProvider"/>
     <idea.base.platforms.targetPlatformDetector
-            implementation="org.jetbrains.kotlin.idea.core.script.v1.ScriptingTargetPlatformDetector"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.ScriptingTargetPlatformDetector"/>
   </extensions>
 
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService$KotlinScriptWorkspaceModelListener"
+    <listener class="org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService$KotlinScriptWorkspaceModelListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">
     <group id="KotlinScripts.ReloadConfigurationActionGroup"/>
     <action id="ReloadScriptConfiguration"
-            class="org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfigurationAction"
+            class="org.jetbrains.kotlin.idea.core.script.ReloadScriptConfigurationAction"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift R"/>
       <add-to-group group-id="RunContextGroup"/>
@@ -227,7 +224,7 @@
     </action>
   </actions>
   <actions resource-bundle="messages.KotlinBundle">
-    <action id="Kotlin.NewScript" class="org.jetbrains.kotlin.idea.core.script.k2.actions.NewKotlinScriptAction"
+    <action id="Kotlin.NewScript" class="org.jetbrains.kotlin.idea.core.script.actions.NewKotlinScriptAction"
             icon="icons.KotlinBaseResourcesIcons.Kotlin_script">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewWebDevelopment"/>
     </action>

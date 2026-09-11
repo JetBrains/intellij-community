@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.gradle.scripting.definition
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.KotlinGradleScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.shared.definition.loadDefinitionsFromTemplates
-import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
+import org.jetbrains.kotlin.idea.core.script.definition.loadDefinitionsFromTemplates
+import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import java.io.File
 import java.nio.file.DirectoryStream

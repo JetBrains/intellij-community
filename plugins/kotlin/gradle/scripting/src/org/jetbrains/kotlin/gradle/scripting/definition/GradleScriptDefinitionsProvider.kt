@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.gradle.scripting.definition
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import org.jetbrains.kotlin.gradle.scripting.workspaceModel.GradleScriptDefinitionEntity
-import org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptDefinitionsProviderId
-import org.jetbrains.kotlin.idea.core.script.k2.deserialize
+import org.jetbrains.kotlin.idea.core.script.definitions.KotlinScriptDefinitionsProviderId
+import org.jetbrains.kotlin.idea.core.script.deserialize
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.host.ScriptDefinition
 import kotlin.script.experimental.host.ScriptingHostConfiguration

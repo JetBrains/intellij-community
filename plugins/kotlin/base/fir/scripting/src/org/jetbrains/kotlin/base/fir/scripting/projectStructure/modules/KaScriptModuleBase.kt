@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.core.script.v1.getLanguageVersionSettings
-import org.jetbrains.kotlin.idea.core.script.v1.getPlatform
+import org.jetbrains.kotlin.idea.core.script.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.core.script.getPlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition

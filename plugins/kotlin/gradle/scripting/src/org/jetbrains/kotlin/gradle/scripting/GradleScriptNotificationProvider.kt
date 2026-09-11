@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.gradle.scripting.GradleScriptRootResolver.NotificationKind.DONT_CARE
 import org.jetbrains.kotlin.gradle.scripting.GradleScriptRootResolver.NotificationKind.OUTSIDE_ANYTHING
 import org.jetbrains.kotlin.gradle.scripting.GradleScriptRootResolver.NotificationKind.WAS_NOT_IMPORTED_AFTER_CREATION
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
+import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File

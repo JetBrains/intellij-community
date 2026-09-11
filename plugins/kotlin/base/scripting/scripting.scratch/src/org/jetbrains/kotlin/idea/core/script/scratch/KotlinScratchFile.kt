@@ -23,10 +23,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.base.util.sdk
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.defaultJavaHome
-import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptions
-import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptionsByFile
+import org.jetbrains.kotlin.idea.core.script.ScratchFileOptions
+import org.jetbrains.kotlin.idea.core.script.ScratchFileOptionsByFile
+import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
+import org.jetbrains.kotlin.idea.core.script.configurations.defaultJavaHome
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtImportDirective

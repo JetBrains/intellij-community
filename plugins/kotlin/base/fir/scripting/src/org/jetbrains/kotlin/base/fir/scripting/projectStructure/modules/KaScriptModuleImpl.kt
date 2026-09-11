@@ -13,9 +13,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ideProjectStructureProvid
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModules
-import org.jetbrains.kotlin.idea.core.script.k2.asCompilationConfiguration
-import org.jetbrains.kotlin.idea.core.script.k2.getVirtualFile
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.asCompilationConfiguration
+import org.jetbrains.kotlin.idea.core.script.getVirtualFile
+import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.resolve.resolvedImportScripts
 import org.jetbrains.kotlin.utils.addIfNotNull

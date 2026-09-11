@@ -35,15 +35,15 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <psi.implicitReferenceProvider
-        implementation="org.jetbrains.kotlin.idea.core.script.k2.mainkts.codeInsight.MainKtsReferenceProvider"/>
+        implementation="org.jetbrains.kotlin.idea.core.script.mainkts.codeInsight.MainKtsReferenceProvider"/>
 
     <completion.contributor language="kotlin"
                             id="MainKtsDependsOnCompletionContributor"
-                            implementationClass="org.jetbrains.kotlin.idea.core.script.k2.mainkts.codeInsight.MainKtsDependsOnCompletionContributor"/>
+                            implementationClass="org.jetbrains.kotlin.idea.core.script.mainkts.codeInsight.MainKtsDependsOnCompletionContributor"/>
 
     <completion.confidence language="kotlin"
                            id="MainKtsDependsOnCompletionConfidence"
                            order="before kotlinSkipAutopopupInStrings"
-                           implementationClass="org.jetbrains.kotlin.idea.core.script.k2.mainkts.codeInsight.MainKtsDependsOnCompletionConfidence"/>
+                           implementationClass="org.jetbrains.kotlin.idea.core.script.mainkts.codeInsight.MainKtsDependsOnCompletionConfidence"/>
   </extensions>
 </idea-plugin>

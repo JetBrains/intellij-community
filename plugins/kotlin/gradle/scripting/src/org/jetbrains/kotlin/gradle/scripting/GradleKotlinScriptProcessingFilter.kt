@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import org.jetbrains.kotlin.gradle.scripting.workspaceModel.GradleScriptDefinitionEntity
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptProcessingFilter
+import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptProcessingFilter
 
 private const val GRADLE_KTS = ".gradle.kts"
 

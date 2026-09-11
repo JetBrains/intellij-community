@@ -10,9 +10,9 @@ import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImp
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.kotlin.gradle.scripting.importing.GradleKotlinDslScriptEntitySource
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.toVirtualFileUrl
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
+import org.jetbrains.kotlin.idea.core.script.configurations.toVirtualFileUrl
+import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptLibraryEntityId
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse

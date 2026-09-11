@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.gradle.scripting.definition.BaseScriptDefinition
 import org.jetbrains.kotlin.gradle.scripting.definition.ErrorGradleScriptDefinition
 import org.jetbrains.kotlin.gradle.scripting.definition.GradleScriptDefinition
 import org.jetbrains.kotlin.gradle.scripting.definition.getGradleTemplatesNames
-import org.jetbrains.kotlin.idea.core.script.shared.definition.loadDefinitionsFromTemplates
+import org.jetbrains.kotlin.idea.core.script.definition.loadDefinitionsFromTemplates
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase

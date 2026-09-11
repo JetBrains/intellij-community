@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.gradle.scripting.definition
 
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.script.shared.definition.canBeSwitchedOff
-import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptDefinitionInlayHint
-import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptTemplate
-import org.jetbrains.kotlin.idea.core.script.shared.definition.reloadable
+import org.jetbrains.kotlin.idea.core.script.definition.canBeSwitchedOff
+import org.jetbrains.kotlin.idea.core.script.definition.kotlinScriptDefinitionInlayHint
+import org.jetbrains.kotlin.idea.core.script.definition.kotlinScriptTemplate
+import org.jetbrains.kotlin.idea.core.script.definition.reloadable
 import kotlin.script.experimental.api.ide
 
 

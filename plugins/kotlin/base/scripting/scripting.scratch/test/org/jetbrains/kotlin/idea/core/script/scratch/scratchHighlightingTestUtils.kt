@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.core.script.scratch
 
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
+import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.highlighter.ALLOW_ERRORS
 import org.jetbrains.kotlin.idea.highlighter.CHECK_SYMBOL_NAMES
 import org.jetbrains.kotlin.idea.highlighter.checkHighlighting
