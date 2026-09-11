@@ -17,7 +17,7 @@ internal class IntelliJExtensionSupport : ExtensionSupport {
   private val languageExtensionCache = ConcurrentHashMap<ExtensionPointKey<*>, LanguageExtension<*>>()
 
   override fun <T : Any> getExtensions(extensionPoint: ExtensionPointKey<T>): Sequence<T> {
-    return ExtensionPointName<T>(extensionPoint.name).extensionList.asSequence()
+    return ExtensionPointName<T>(extensionPoint.name).extensionsIfPointIsRegistered.asSequence()
   }
 
   override fun <T : Any> getLanguageExtensions(extensionPoint: ExtensionPointKey<T>, language: SyntaxLanguage): Sequence<T> {
