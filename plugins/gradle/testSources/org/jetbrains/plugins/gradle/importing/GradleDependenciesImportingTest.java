@@ -36,7 +36,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -554,7 +553,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     libDep = moduleLibDeps.getFirst();
     assertFalse("Dependency must be project level: " + libDep.toString(), libDep.isModuleLevel());
     assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
-    ((LibraryBridgeImpl)libDep.getLibrary()).getLibrarySnapshot$intellij_platform_projectModel_impl().getLibraryEntity().getEntitySource();
 
     // Try another import attempt and make sure it doesn't throw anything
     importProject();
