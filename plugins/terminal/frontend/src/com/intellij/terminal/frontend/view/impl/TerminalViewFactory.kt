@@ -39,7 +39,7 @@ internal fun createTerminalView(
     settings = JBTerminalSystemSettingsProvider(),
     startupFusInfo = options.startupFusInfo,
     coroutineScope = coroutineScope,
-    sourceNavigationProjectPath = options.sourceNavigationProjectPath,
+    sourceNavigationProjectResolver = options.sourceNavigationProjectResolver,
   )
   scheduleSessionStart(project, terminalView, options)
   return terminalView

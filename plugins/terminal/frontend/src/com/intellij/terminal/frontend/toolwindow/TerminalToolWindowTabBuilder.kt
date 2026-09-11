@@ -6,6 +6,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationProjectResolver
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 
 /**
@@ -113,11 +114,14 @@ interface TerminalToolWindowTabBuilder {
   fun shouldAddToToolWindow(addToToolWindow: Boolean): TerminalToolWindowTabBuilder
 
   /**
-   * Specifies an alternate project path to use when opening file hyperlinks from this terminal tab.
-   * If not specified, hyperlinks navigate in the current terminal project as usual.
+   * Specifies who answers the project a file hyperlink of this terminal tab navigates in.
+   *
+   * The terminal asks [resolver] at click time. It keeps its own project when no resolver is specified, and when
+   * the resolver answers `null` or the terminal's own project. The resolver owns the project itself, so the
+   * terminal opens no project.
    */
   @ApiStatus.Internal
-  fun sourceNavigationProjectPath(projectPath: String?): TerminalToolWindowTabBuilder
+  fun sourceNavigationProjectResolver(resolver: TerminalSourceNavigationProjectResolver?): TerminalToolWindowTabBuilder
 
   @ApiStatus.Internal
   fun startupFusInfo(startupFusInfo: TerminalStartupFusInfo?): TerminalToolWindowTabBuilder

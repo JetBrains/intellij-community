@@ -5,10 +5,6 @@ import com.intellij.execution.filters.FileHyperlinkInfo
 import com.intellij.execution.filters.FileHyperlinkInfoBase
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.navigateFileHyperlink
-import com.intellij.ide.RecentProjectsManager
-import com.intellij.ide.RecentProjectsManagerBase
-import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtilService
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.readAction
@@ -17,33 +13,41 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Key
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.nio.file.Path
-import kotlin.io.path.invariantSeparatorsPathString
+
+/**
+ * Answers the project a file hyperlink of one terminal navigates in.
+ *
+ * A tab that shows the output of another project's work declares a resolver, and the terminal then asks it at
+ * click time. The resolver owns the project itself. The terminal opens no project.
+ */
+@Internal
+fun interface TerminalSourceNavigationProjectResolver {
+  /** The project a file hyperlink of this terminal navigates in, or `null` to keep the terminal's own project. */
+  suspend fun resolveProject(terminalProject: Project): Project?
+}
 
 @Internal
 object TerminalSourceNavigationInfo {
-  private val SOURCE_NAVIGATION_PROJECT_PATH_KEY = Key.create<String>("terminal.source.navigation.project.path")
+  private val SOURCE_NAVIGATION_PROJECT_RESOLVER_KEY =
+    Key.create<TerminalSourceNavigationProjectResolver>("terminal.source.navigation.project.resolver")
 
-  fun setProjectPath(editor: Editor, projectPath: String?) {
-    editor.putUserData(SOURCE_NAVIGATION_PROJECT_PATH_KEY, projectPath)
+  fun setResolver(editor: Editor, resolver: TerminalSourceNavigationProjectResolver?) {
+    editor.putUserData(SOURCE_NAVIGATION_PROJECT_RESOLVER_KEY, resolver)
   }
 
-  fun getProjectPath(mouseEvent: EditorMouseEvent?): String? {
-    return mouseEvent?.editor?.getUserData(SOURCE_NAVIGATION_PROJECT_PATH_KEY)?.takeIf { it.isNotBlank() }
+  fun getResolver(mouseEvent: EditorMouseEvent?): TerminalSourceNavigationProjectResolver? {
+    return mouseEvent?.editor?.getUserData(SOURCE_NAVIGATION_PROJECT_RESOLVER_KEY)
   }
 }
 
 @Internal
 class TerminalCrossProjectFileHyperlinkNavigator(
-  private val sourceNavigationProjectPath: (EditorMouseEvent?) -> String? = TerminalSourceNavigationInfo::getProjectPath,
-  private val openProject: suspend (String) -> Project? = ::openOrReuseProjectByPath,
+  private val sourceNavigationProjectResolver: (EditorMouseEvent?) -> TerminalSourceNavigationProjectResolver? =
+    TerminalSourceNavigationInfo::getResolver,
   private val focusProjectWindow: suspend (Project) -> Unit = ::focusProjectWindowForNavigation,
   private val navigate: suspend (Project, OpenFileDescriptor, Boolean) -> Boolean = ::navigateDescriptorInProject,
 ) {
@@ -51,7 +55,7 @@ class TerminalCrossProjectFileHyperlinkNavigator(
     if (project.isDisposed) {
       return false
     }
-    val sourceProjectPath = sourceNavigationProjectPath(mouseEvent)?.takeIf { it.isNotBlank() } ?: return false
+    val resolver = sourceNavigationProjectResolver(mouseEvent) ?: return false
     val fileHyperlinkInfo = hyperlinkInfo as? FileHyperlinkInfo ?: return false
     val useBrowser = (fileHyperlinkInfo as? FileHyperlinkInfoBase)?.isUseBrowserForNavigation ?: true
     val descriptor = readAction { fileHyperlinkInfo.descriptor } ?: return false
@@ -59,8 +63,9 @@ class TerminalCrossProjectFileHyperlinkNavigator(
       return false
     }
 
-    val targetProject = openProject(sourceProjectPath) ?: return false
-    if (targetProject.isDisposed) {
+    val targetProject = resolver.resolveProject(project) ?: return false
+    // The terminal's own project needs no reroute: the default navigation already opens the target there.
+    if (targetProject === project || targetProject.isDisposed) {
       return false
     }
     val targetDescriptor = buildTargetDescriptor(targetProject, descriptor) ?: return false
@@ -79,96 +84,6 @@ private fun buildTargetDescriptor(targetProject: Project, sourceDescriptor: Open
   targetDescriptor.setUseCurrentWindow(sourceDescriptor.isUseCurrentWindow)
   targetDescriptor.setUsePreviewTab(sourceDescriptor.isUsePreviewTab)
   return targetDescriptor
-}
-
-@Internal
-class SourceNavigationProjectRouter<P>(
-  private val parsePath: (String) -> Path?,
-  private val normalizePath: (String) -> String,
-  private val resolveManagedPath: (Path) -> String?,
-  private val openProjectsProvider: () -> List<P>,
-  private val projectIdentityPath: (P) -> String?,
-  private val isPathEquivalent: (P, Path) -> Boolean,
-  private val openProjectByPath: suspend (Path, OpenProjectTask) -> P?,
-) {
-  suspend fun openOrReuseProject(
-    path: String,
-    options: OpenProjectTask = OpenProjectTask(),
-  ): P? {
-    val target = resolveTarget(path) ?: return null
-    return findOpenProject(target) ?: openProjectByPath(target.managedPath, options)
-  }
-
-  private fun findOpenProject(target: ResolvedSourceNavigationProjectPath): P? {
-    val openProjects = openProjectsProvider()
-    val directMatch = openProjects.firstOrNull { project ->
-      projectIdentityPath(project)?.let(normalizePath) == target.managedNormalizedPath
-    }
-    if (directMatch != null) {
-      return directMatch
-    }
-
-    return openProjects.firstOrNull { project ->
-      isPathEquivalent(project, target.requestedPath)
-    }
-  }
-
-  private fun resolveTarget(path: String): ResolvedSourceNavigationProjectPath? {
-    val requestedNormalizedPath = normalizePath(path)
-    val requestedPath = parsePath(requestedNormalizedPath) ?: return null
-    val managedNormalizedPath = resolveManagedPath(requestedPath)?.let(normalizePath) ?: requestedNormalizedPath
-    val managedPath = parsePath(managedNormalizedPath) ?: requestedPath
-    return ResolvedSourceNavigationProjectPath(
-      requestedPath = requestedPath,
-      managedNormalizedPath = managedNormalizedPath,
-      managedPath = managedPath,
-    )
-  }
-}
-
-private data class ResolvedSourceNavigationProjectPath(
-  @JvmField val requestedPath: Path,
-  @JvmField val managedNormalizedPath: String,
-  @JvmField val managedPath: Path,
-)
-
-private fun normalizeSourceNavigationProjectPath(path: String): String {
-  return runCatching {
-    Path.of(path).normalize().invariantSeparatorsPathString
-  }.getOrDefault(path)
-}
-
-private fun parseSourceNavigationProjectPathOrNull(path: String): Path? {
-  return runCatching {
-    Path.of(path)
-  }.getOrNull()
-}
-
-private suspend fun openOrReuseProjectByPath(projectPath: String): Project? {
-  val recentProjectsManager = serviceAsync<RecentProjectsManager>() as? RecentProjectsManagerBase ?: return null
-  val router = SourceNavigationProjectRouter(
-    parsePath = ::parseSourceNavigationProjectPathOrNull,
-    normalizePath = ::normalizeSourceNavigationProjectPath,
-    resolveManagedPath = { path -> recentProjectsManager.getProjectPath(path) },
-    openProjectsProvider = { ProjectManager.getInstance().openProjects.toList() },
-    projectIdentityPath = { project -> recentProjectsManager.getProjectPath(project)?.invariantSeparatorsPathString },
-    isPathEquivalent = { project, path ->
-      runCatching {
-        isSameProject(projectFile = path, project = project)
-      }.getOrDefault(false)
-    },
-    openProjectByPath = { path, options -> recentProjectsManager.openProject(path, options) },
-  )
-  val project = router.openOrReuseProject(projectPath) ?: return null
-  if (project.isDisposed) {
-    return null
-  }
-  val future = CompletableDeferred<Project>()
-  StartupManager.getInstance(project).runAfterOpened {
-    future.complete(project)
-  }
-  future.join()
-  return project.takeUnless { it.isDisposed }
 }
 
 private suspend fun navigateDescriptorInProject(project: Project, descriptor: OpenFileDescriptor, useBrowser: Boolean): Boolean {

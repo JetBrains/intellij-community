@@ -92,6 +92,7 @@ import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationInfo
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationProjectResolver
 import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
@@ -131,7 +132,7 @@ class TerminalViewImpl(
   settings: JBTerminalSystemSettingsProviderBase,
   startupFusInfo: TerminalStartupFusInfo?,
   override val coroutineScope: CoroutineScope,
-  sourceNavigationProjectPath: String? = null,
+  sourceNavigationProjectResolver: TerminalSourceNavigationProjectResolver? = null,
 ) : TerminalView {
   override val sessionDeferred: CompletableDeferred<TerminalSession> = CompletableDeferred(coroutineScope.coroutineContext.job)
 
@@ -241,7 +242,7 @@ class TerminalViewImpl(
       settings,
       coroutineScope.childScope("TerminalAlternateBufferEditor")
     )
-    TerminalSourceNavigationInfo.setProjectPath(alternateBufferEditor, sourceNavigationProjectPath)
+    TerminalSourceNavigationInfo.setResolver(alternateBufferEditor, sourceNavigationProjectResolver)
     val alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
     val alternateBufferModelController = TerminalOutputModelControllerImpl(alternateBufferModel)
     val alternateBufferKeyEventsHandler = TerminalKeyEventsHandlerImpl(
@@ -280,7 +281,7 @@ class TerminalViewImpl(
     )
 
     outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, coroutineScope.childScope("TerminalOutputEditor"))
-    TerminalSourceNavigationInfo.setProjectPath(outputEditor, sourceNavigationProjectPath)
+    TerminalSourceNavigationInfo.setResolver(outputEditor, sourceNavigationProjectResolver)
     outputEditor.putUserData(TerminalInput.KEY, terminalInput)
     val outputModel = MutableTerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
 
