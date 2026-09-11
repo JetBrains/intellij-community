@@ -30,6 +30,8 @@ internal class IjPluginPackagerTest {
         <content>
           <module name="embedded.module" loading="embedded"/>
           <module name="optional.module"/>
+          <module name="module.with.package"/>
+          <module name="module.with.package.and.library"/>
         </content>
       </idea-plugin>
     """.trimIndent()
@@ -41,6 +43,8 @@ internal class IjPluginPackagerTest {
         </actions>
       </idea-plugin>
     """.trimIndent()
+    val moduleWithPackageXml = """<idea-plugin package="my.plugin.content"/>"""
+    val moduleWithPackageAndLibraryXml = """<idea-plugin package="my.plugin.library"/>"""
     directoryContent {
       zip("descriptor.jar") {
         file("icon-robots.txt", "")
@@ -56,6 +60,29 @@ internal class IjPluginPackagerTest {
       }
       zip("optional-module.jar") {
         file("optional.module.xml", optionalModuleXml)
+      }
+      zip("module-with-package.jar") {
+        file("module.with.package.xml", moduleWithPackageXml)
+        dir("my") {
+          dir("plugin") {
+            dir("content") {
+              file("Foo.class", "module with package")
+            }
+          }
+        }
+      }
+      zip("module-with-package-and-library.jar") {
+        file("module.with.package.and.library.xml", moduleWithPackageAndLibraryXml)
+        dir("my") {
+          dir("plugin") {
+            dir("library") {
+              file("Bar.class", "module with package and library")
+            }
+          }
+        }
+      }
+      zip("library.jar") {
+        file("Library.class", "library")
       }
       file("LICENSE.txt", "license")
       dir("additional-data") {
@@ -79,6 +106,10 @@ internal class IjPluginPackagerTest {
         "embedded.module:input/embedded-module.jar",
         "--content_module",
         "optional.module:input/optional-module.jar",
+        "--content_module",
+        "module.with.package:input/module-with-package.jar",
+        "--content_module",
+        "module.with.package.and.library:input/module-with-package-and-library.jar,input/library.jar",
         "--non_classpath_data",
         "LICENSE.txt:input/LICENSE.txt",
         "--non_classpath_data",
@@ -98,6 +129,8 @@ internal class IjPluginPackagerTest {
           <action id="foo" class="Foo" />
         </actions>
       </idea-plugin>]]></module>
+          <module name="module.with.package"><![CDATA[<idea-plugin package="my.plugin.content" />]]></module>
+          <module name="module.with.package.and.library"><![CDATA[<idea-plugin package="my.plugin.library" separate-jar="true" />]]></module>
         </content>
       </idea-plugin>
     """.trimIndent()
@@ -106,9 +139,13 @@ internal class IjPluginPackagerTest {
         - name: lib/descriptor.jar
           modules:
           - name: descriptor
+          - name: module.with.package
         - name: lib/embedded.module.jar
           contentModules:
           - name: embedded.module
+        - name: lib/modules/module.with.package.and.library.jar
+          contentModules:
+          - name: module.with.package.and.library
         - name: lib/modules/optional.module.jar
           contentModules:
           - name: optional.module
@@ -126,12 +163,32 @@ internal class IjPluginPackagerTest {
           dir("META-INF") {
             file("plugin.xml", expectedPluginXml)
           }
+          file("module.with.package.xml", moduleWithPackageXml)
+          dir("my") {
+            dir("plugin") {
+              dir("content") {
+                file("Foo.class", "module with package")
+              }
+            }
+          }
         }
         zip("embedded.module.jar") {
           file("__index__")
           file("embedded.module.xml", "<idea-plugin></idea-plugin>")
         }
         dir("modules") {
+          zip("module.with.package.and.library.jar") {
+            file("__index__")
+            file("module.with.package.and.library.xml", moduleWithPackageAndLibraryXml)
+            dir("my") {
+              dir("plugin") {
+                dir("library") {
+                  file("Bar.class", "module with package and library")
+                }
+              }
+            }
+            file("Library.class", "library")
+          }
           zip("optional.module.jar") {
             file("__index__")
             file("optional.module.xml", optionalModuleXml)

@@ -1,20 +1,19 @@
 package com.intellij.tools.build.bazel.ijPluginPackager
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.pluginSystem.parser.impl.elements.ContentModuleElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
-import com.intellij.util.io.toByteArray
 import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
+import org.jdom.Element
 import org.jetbrains.bazel.jvm.WorkRequest
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.WorkRequestReaderWithoutDigest
 import org.jetbrains.bazel.jvm.processRequests
 import org.jetbrains.intellij.build.io.readEntryFromZip
-import java.io.IOException
 import java.io.Writer
-import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -114,12 +113,13 @@ object IjPluginPackager {
     val descriptorJar = descriptorModuleArgument.jars.first()
     val originalPluginXmlContent = readEntryFromZip(descriptorJar, PLUGIN_DESCRIPTOR_ENTRY_NAME)
                                    ?: throw IjPluginPackagingException("$PLUGIN_DESCRIPTOR_ENTRY_NAME is not found in $descriptorJar")
-    val contentModules = parseContentAndXIncludes(originalPluginXmlContent, descriptorJar.toString()).contentModules
+    val contentModuleElements = parseContentAndXIncludes(originalPluginXmlContent, descriptorJar.toString()).contentModules
     val packedModulesWriter = packedModulesPath?.let { PackedModulesWriter(it, outputDirectory) }
 
-    val contentModuleDescriptors = packContentModulesAndReturnTheirDescriptors(
-      contentModules = contentModules,
-      contentModuleArguments = contentModuleArguments,
+    val contentModules = readContentModuleDescriptors(contentModuleElements, contentModuleArguments)
+    val (contentModulesToMergeWithMainJar, contentModulesToPackSeparately) = contentModules.partition { it.shouldBeMergedToMainJar }
+    packContentModuleJars(
+      contentModules = contentModulesToPackSeparately,
       libDirectory = libDirectory,
       packedModulesWriter = packedModulesWriter,
     )
@@ -135,45 +135,76 @@ object IjPluginPackager {
     }
 
     val descriptorOutputJar = libDirectory.resolve(generateNameForPluginDescriptorJar(descriptorModuleArgument.name))
-    PluginJarPackager(descriptorOutputJar).use {
+    PluginJarPackager(descriptorOutputJar).use { packager ->
       val patchedPluginXmlContent = patchPluginDescriptor(
         originalContent = originalPluginXmlContent,
         pluginVersion = computePluginVersion(pluginVersion, buildNumberFromFile),
         sinceBuild = substituteBuildNumber(sinceBuild, buildNumberFromFile),
         untilBuild = substituteBuildNumber(untilBuild, buildNumberFromFile),
-        contentModuleDescriptors = contentModuleDescriptors,
+        contentModules = contentModules.associateBy { it.moduleElement.name },
         presentablePluginDescriptorLocation = descriptorJar.pathString,
       )
-      it.addFile(PLUGIN_DESCRIPTOR_ENTRY_NAME, patchedPluginXmlContent, presentableOrigin = descriptorJar.pathString)
-      it.addEntriesFromJar(descriptorJar) { filePath, dataFetcher ->
+      packager.addFile(PLUGIN_DESCRIPTOR_ENTRY_NAME, patchedPluginXmlContent, presentableOrigin = descriptorJar.pathString)
+      packager.addEntriesFromJar(descriptorJar) { filePath, dataFetcher ->
         if (!isIncludedFromModuleOutput(filePath) || filePath == PLUGIN_DESCRIPTOR_ENTRY_NAME) {
           return@addEntriesFromJar null
         }
         dataFetcher()
       }
+      contentModulesToMergeWithMainJar.forEach { contentModule ->
+        val jar = contentModule.jars.singleOrNull()
+                  ?: error("Content module packed with the main JAR must have exactly one jar, but '${contentModule.moduleElement.name}' has ${contentModule.jars}")
+        packager.addEntriesFromJar(jar) { filePath, dataFetcher ->
+          if (!isIncludedFromModuleOutput(filePath)) {
+            return@addEntriesFromJar null
+          }
+          dataFetcher()
+        }
+      }
     }
     packedModulesWriter?.addModule(descriptorOutputJar, descriptorModuleArgument.name)
+    contentModulesToMergeWithMainJar.forEach {
+      packedModulesWriter?.addModule(descriptorOutputJar, it.moduleElement.name)
+    }
     copyNonClasspathData(nonClasspathData, outputDirectory)
     packedModulesWriter?.write()
   }
 
-  private fun packContentModulesAndReturnTheirDescriptors(
-    contentModules: List<ContentModuleElement>,
-    contentModuleArguments: HashMap<String, ModuleArgument>,
+  private fun readContentModuleDescriptors(
+    contentModuleElements: List<ContentModuleElement>,
+    contentModuleArguments: Map<String, ModuleArgument>,
+  ): List<ContentModuleData> {
+    return contentModuleElements.map { contentModuleElement ->
+      val contentModuleArgument = contentModuleArguments.get(contentModuleElement.name)
+                                  ?: throw IjPluginPackagingException("No 'content_module' argument is specified in 'ij_plugin' rule for '${contentModuleElement.name}' registered in plugin.xml")
+      val contentModuleDescriptorJar = contentModuleArgument.jars.first()
+      val contentDescriptorName = "${contentModuleElement.name}.xml"
+      val descriptorContent = readEntryFromZip(contentModuleDescriptorJar, contentDescriptorName)
+      if (descriptorContent == null) {
+        throw IjPluginPackagingException("Module descriptor '${contentDescriptorName}' is not found in '${contentModuleDescriptorJar.pathString}'")
+      }
+      val contentDescriptorRoot = try {
+        JDOMUtil.load(descriptorContent)
+      } catch (e: Exception) {
+        throw IjPluginPackagingException("Failed to parse module descriptor '${contentDescriptorName}' in '${contentModuleDescriptorJar.pathString}': ${e.message}")
+      }
+      ContentModuleData(contentModuleElement, contentDescriptorRoot, contentModuleArgument.jars)
+    }
+  }
+
+  private fun packContentModuleJars(
+    contentModules: List<ContentModuleData>,
     libDirectory: Path,
     packedModulesWriter: PackedModulesWriter?,
-  ): Map<String, ByteArray> {
-    val contentModuleDescriptors = HashMap<String, ByteArray>()
+  ) {
     for (contentModule in contentModules) {
-      val contentModuleArgument = contentModuleArguments.get(contentModule.name)
-                                  ?: throw IjPluginPackagingException("No 'content_module' argument is specified in 'ij_plugin' rule for '${contentModule.name}' registered in plugin.xml")
-      val destinationDirectory = if (contentModule.loadingRule == ModuleLoadingRuleValue.EMBEDDED) libDirectory else libDirectory.resolve("modules")
+      val contentModuleElement = contentModule.moduleElement
+      val destinationDirectory = if (contentModuleElement.loadingRule == ModuleLoadingRuleValue.EMBEDDED) libDirectory else libDirectory.resolve("modules")
       Files.createDirectories(destinationDirectory)
-      val contentDescriptorName = "${contentModule.name}.xml"
-      val outputJar = destinationDirectory.resolve("${contentModule.name}.jar")
+      val outputJar = destinationDirectory.resolve("${contentModuleElement.name}.jar")
       PluginJarPackager(outputJar).use {
-        val containMultipleLibraries = contentModuleArgument.jars.size > 2
-        for ((index, jar) in contentModuleArgument.jars.withIndex()) {
+        val containMultipleLibraries = contentModule.jars.size > 2
+        for ((index, jar) in contentModule.jars.withIndex()) {
           val first = index == 0
           it.addEntriesFromJar(jar) { filePath, dataFetcher ->
             if (!isIncludedFromModuleOutput(filePath)) {
@@ -182,21 +213,12 @@ object IjPluginPackager {
             if (!first && (containMultipleLibraries && isSkippedWhileMergingLibraries(filePath) || isSkippedFromLibraries(filePath))) {
               return@addEntriesFromJar null
             }
-            val data = dataFetcher()
-            if (first && filePath == contentDescriptorName) {
-              val dataBytes = data.toByteArray()
-              contentModuleDescriptors[contentModule.name] = dataBytes
-              ByteBuffer.wrap(dataBytes)
-            }
-            else {
-              data
-            }
+            dataFetcher()
           }
         }
       }
-      packedModulesWriter?.addContentModule(outputJar, contentModule.name)
+      packedModulesWriter?.addContentModule(outputJar, contentModuleElement.name)
     }
-    return contentModuleDescriptors
   }
 
   private fun isIncludedFromModuleOutput(filePath: String): Boolean {
@@ -254,6 +276,16 @@ object IjPluginPackager {
     @JvmField val name: String,
     @JvmField val jars: List<Path>,
   )
+}
+
+internal class ContentModuleData(
+  val moduleElement: ContentModuleElement,
+  val moduleDescriptorRoot: Element,
+  val jars: List<Path>,
+) {
+  val shouldBeMergedToMainJar: Boolean
+    // `package` attribute is deprecated but still used in many plugins in the monorepo (IJPL-216355)
+    get() = moduleElement.loadingRule != ModuleLoadingRuleValue.EMBEDDED && moduleDescriptorRoot.getAttributeValue("package") != null && jars.size == 1
 }
 
 private const val BUILD_NUMBER_FROM_FILE_MARKER = $$"$build_number_from_file"

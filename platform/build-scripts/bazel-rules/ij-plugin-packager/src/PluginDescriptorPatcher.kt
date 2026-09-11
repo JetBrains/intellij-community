@@ -7,34 +7,38 @@ import org.jdom.Element
 /**
  * Computes the patched version of `plugin.xml` descriptor where `version` tag, `since-build` and `until-build` attributes are replaced by the provided values,
  * and bodies of content module descriptors are inlined in the corresponding 'module' tags wrapped into CDATA.
- * @param contentModuleDescriptors maps from a name of a content module to the text of its descriptor
+ * @param contentModules maps from a name of a content module to the text of its descriptor
  */
 internal fun patchPluginDescriptor(
   originalContent: ByteArray,
   pluginVersion: String?,
   sinceBuild: String?,
   untilBuild: String?,
-  contentModuleDescriptors: Map<String, ByteArray>,
+  contentModules: Map<String, ContentModuleData>,
   presentablePluginDescriptorLocation: String,
 ): ByteArray {
   val pluginDescriptorRoot = JDOMUtil.load(originalContent)
   insertVersionAndCompatibilityRange(pluginDescriptorRoot, pluginVersion = pluginVersion, sinceBuild = sinceBuild, untilBuild = untilBuild)
-  embedContentModules(pluginDescriptorRoot, contentModuleDescriptors, presentablePluginDescriptorLocation)
+  embedContentModules(pluginDescriptorRoot, contentModules, presentablePluginDescriptorLocation)
   val patchedData = JDOMUtil.write(pluginDescriptorRoot)
   return patchedData.toByteArray()
 }
 
-private fun embedContentModules(pluginDescriptorRoot: Element, contentModuleDescriptors: Map<String, ByteArray>, presentablePluginDescriptorLocation: String) {
+private fun embedContentModules(pluginDescriptorRoot: Element, contentModules: Map<String, ContentModuleData>, presentablePluginDescriptorLocation: String) {
   inlineXIncludes(pluginDescriptorRoot, presentablePluginDescriptorLocation)
   for (contentElement in pluginDescriptorRoot.getChildren("content")) {
     for (moduleElement in contentElement.getChildren("module")) {
       val moduleName = moduleElement.getAttributeValue("name")
                        ?: throw IjPluginPackagingException("Required 'name' attribute for 'module' tag in 'content' tag is missing in $presentablePluginDescriptorLocation")
-      val contentDescriptor = contentModuleDescriptors.get(moduleName)
-                              ?: throw IjPluginPackagingException("Descriptor for content module '$moduleName' is not found for plugin descriptor from $presentablePluginDescriptorLocation")
-      val contentDescriptorRoot = JDOMUtil.load(contentDescriptor)
-      inlineXIncludes(contentDescriptorRoot, "$moduleName.xml")
-      moduleElement.setContent(CDATA(JDOMUtil.write(contentDescriptorRoot)))
+      val contentModule = contentModules.get(moduleName)
+                          ?: throw IjPluginPackagingException("Descriptor for content module '$moduleName' is not found for plugin descriptor from $presentablePluginDescriptorLocation")
+
+      val rootElement = contentModule.moduleDescriptorRoot
+      if (!contentModule.shouldBeMergedToMainJar && rootElement.getAttributeValue("package") != null) {
+        rootElement.setAttribute("separate-jar", "true")
+      }
+      inlineXIncludes(rootElement, "$moduleName.xml")
+      moduleElement.setContent(CDATA(JDOMUtil.write(rootElement)))
     }
   }
 
