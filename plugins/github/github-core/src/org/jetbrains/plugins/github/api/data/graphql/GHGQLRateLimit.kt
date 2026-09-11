@@ -2,6 +2,11 @@
 package org.jetbrains.plugins.github.api.data.graphql
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import java.util.Date
 
 @GraphQLFragment("/graphql/fragment/rates.graphql")
-data class GHGQLRateLimit(val cost: Int)
+data class GHGQLRateLimit(
+  val cost: Int,
+  val remaining: Int? = null,
+  val resetAt: Date? = null,
+)

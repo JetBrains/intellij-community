@@ -15,13 +15,27 @@
  */
 package org.jetbrains.plugins.github.exceptions;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
+import java.time.Instant;
 
 /**
  * @author Aleksey Pivovarov
  */
 public class GithubRateLimitExceededException extends IOException {
+  private final @Nullable Instant myResetAt;
+
   public GithubRateLimitExceededException(String message) {
+    this(message, null);
+  }
+
+  public GithubRateLimitExceededException(String message, @Nullable Instant resetAt) {
     super(message);
+    myResetAt = resetAt;
+  }
+
+  public @Nullable Instant getResetAt() {
+    return myResetAt;
   }
 }
