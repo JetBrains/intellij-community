@@ -139,7 +139,11 @@ class LinuxDistributionBuilder(
         }
       }
 
-      val runtimeDir = context.bundledRuntime.extract(OsFamily.LINUX, arch, targetLibcImpl)
+      val runtimeDir = stageRuntimeWithoutExcludedPaths(
+        runtimeDir = context.bundledRuntime.extract(OsFamily.LINUX, arch, targetLibcImpl),
+        excludedRuntimePaths = context.productProperties.excludedRuntimePaths,
+        tempDir = context.paths.tempDir,
+      )
       updateExecutablePermissions(runtimeDir, executableFileMatchers)
       val tarGzPath: Path? = context.executeStep(
         spanBuilder("Build Linux .tar.gz with bundled Runtime")

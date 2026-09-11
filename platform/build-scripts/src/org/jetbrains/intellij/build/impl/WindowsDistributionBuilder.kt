@@ -147,7 +147,11 @@ internal class WindowsDistributionBuilder(
     }
 
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
-    val runtimeDir = context.bundledRuntime.extract(OsFamily.WINDOWS, arch, WindowsLibcImpl.DEFAULT)
+    val runtimeDir = stageRuntimeWithoutExcludedPaths(
+      runtimeDir = context.bundledRuntime.extract(OsFamily.WINDOWS, arch, WindowsLibcImpl.DEFAULT),
+      excludedRuntimePaths = context.productProperties.excludedRuntimePaths,
+      tempDir = context.paths.tempDir,
+    )
 
     val (zipWithJbrPath, exePath) = context.executeStep(spanBuilder("build Windows artifacts"), stepId = BuildOptions.WINDOWS_ARTIFACTS_STEP) {
       setLastModifiedTime(osAndArchSpecificDistPath, context)

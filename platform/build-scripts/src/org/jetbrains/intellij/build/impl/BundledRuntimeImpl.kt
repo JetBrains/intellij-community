@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.ResolvedDownload
+import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.resolveFileForReading
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -39,6 +40,7 @@ import java.nio.file.attribute.PosixFilePermission.OWNER_WRITE
 import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
+import java.util.function.Predicate
 import java.util.zip.GZIPInputStream
 
 class BundledRuntimeImpl(
@@ -236,4 +238,20 @@ class BundledRuntimeImpl(
       }
     })
   }
+}
+
+/**
+ * Stages a copy of [runtimeDir] under [tempDir] without the entries that [ProductProperties.excludedRuntimePaths] lists.
+ * Returns [runtimeDir] unchanged when the list is empty. The shared runtime extract stays intact.
+ */
+internal fun stageRuntimeWithoutExcludedPaths(runtimeDir: Path, excludedRuntimePaths: List<String>, tempDir: Path): Path {
+  if (excludedRuntimePaths.isEmpty()) {
+    return runtimeDir
+  }
+  val runtimeHome = runtimeDir.resolve("jbr")
+  val excludedPaths = excludedRuntimePaths.mapTo(HashSet()) { runtimeHome.resolve(it) }
+  val stagedDir = tempDir.resolve(runtimeDir.fileName)
+  NioFiles.deleteRecursively(stagedDir)
+  copyDir(sourceDir = runtimeDir, targetDir = stagedDir, dirFilter = Predicate { it !in excludedPaths }, fileFilter = Predicate { it !in excludedPaths })
+  return stagedDir
 }

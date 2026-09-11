@@ -468,7 +468,7 @@ class MacDistributionBuilder(
 
             zipOutStream.entry("${zipRoot}/${productInfoPathPrefix}${PRODUCT_INFO_FILE_NAME}", productJson.encodeToByteArray())
 
-            val excludedRuntimePaths = customizer.excludedRuntimePaths.mapTo(HashSet()) { "jbr/Contents/Home/$it" }
+            val excludedRuntimePaths = context.productProperties.excludedRuntimePaths.mapTo(HashSet()) { "jbr/Contents/Home/$it" }
             val fileFilter: (Path, String) -> Boolean = { sourceFile, relativePath ->
               val isContentDir = !relativePath.contains('/')
               when {

@@ -383,6 +383,13 @@ abstract class ProductProperties {
   var runtimeDistribution: JetBrainsRuntimeDistribution = JetBrainsRuntimeDistribution.VANILLA
 
   /**
+   * Paths in the bundled runtime, relative to the runtime home, to exclude from the distributions of all operating systems.
+   * An entry that is absent in one OS runtime has no effect there.
+   * The exclusion applies at pack time. The shared runtime extract stays intact.
+   */
+  var excludedRuntimePaths: List<String> = emptyList()
+
+  /**
    * A prefix for names of environment variables used by product distributions
    * to allow users to customize location of the product runtime (`<PRODUCT>_JDK` variable),
    * *.vmoptions file (`<PRODUCT>_VM_OPTIONS`), `idea.properties` file (`<PRODUCT>_PROPERTIES`).

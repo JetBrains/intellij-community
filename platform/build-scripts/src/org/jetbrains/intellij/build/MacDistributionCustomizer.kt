@@ -111,11 +111,6 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
   var dmgImageFormat: String = "ULFO"
 
   /**
-   * Paths in the bundled runtime to exclude. See [MacDistributionCustomizer.excludedRuntimePaths].
-   */
-  var excludedRuntimePaths: List<String> = emptyList()
-
-  /**
    * String with declarations of additional file types that should be automatically opened by the application.
    */
   var additionalDocTypes: String = ""
@@ -250,7 +245,6 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
       builder.dmgImagePathForEAP?.let { dmgImagePathForEAP = projectHome.resolve(it) }
       minOSXVersion = builder.minOSXVersion
       dmgImageFormat = builder.dmgImageFormat
-      excludedRuntimePaths = builder.excludedRuntimePaths
       additionalDocTypes = builder.additionalDocTypes
       fileAssociations = builder.fileAssociations
       urlSchemes = builder.urlSchemes
@@ -356,12 +350,6 @@ open class MacDistributionCustomizer {
    * External tools that parse the .dmg, such as Toolbox Lite-Gen and the patch builder, read only the ULFO format.
    */
   var dmgImageFormat: String = "ULFO"
-
-  /**
-   * Paths in the bundled runtime, relative to the runtime home, to exclude from the distribution.
-   * The exclusion applies to the with-runtime zip and to the sit and dmg artifacts built from it.
-   */
-  var excludedRuntimePaths: List<String> = emptyList()
 
   /**
    * String with declarations of additional file types that should be automatically opened by the application.
