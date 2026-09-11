@@ -114,6 +114,16 @@ public final class MultiRoutingFileSystemProvider
   }
 
   @Override
+  public @NotNull MultiRoutingFsPath getPath(@NotNull URI uri) {
+    var localPath = myLocalProvider.getPath(uri);
+    if (ourForceDefaultFs) {
+      return wrapDelegatePath(localPath);
+    }
+    var backend = myFileSystem.getBackend(localPath.toString());
+    return wrapDelegatePath(backend == localPath.getFileSystem() ? localPath : backend.getPath(localPath.toString()));
+  }
+
+  @Override
   protected @NotNull FileSystemProvider getDelegate(@Nullable Path path1, @Nullable Path path2) {
     if (ourForceDefaultFs) {
       return myLocalProvider;
