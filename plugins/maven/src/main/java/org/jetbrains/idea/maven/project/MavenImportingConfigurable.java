@@ -98,7 +98,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable, Backe
 
   @Override
   public void reset() {
-    mySettingsForm.setData(myImportingSettings, myProject);
+    mySettingsForm.setData(myImportingSettings);
 
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       additionalConfigurable.reset();
