@@ -36,13 +36,13 @@ class LazySource(
   override fun toString(): String = "LazySource(name=$name, precomputedHash=$precomputedHash)"
 }
 
-data class UnpackedZipSource(
+class UnpackedZipSource(
   @JvmField val file: Path,
   override val filter: ((String) -> Boolean)? = null,
 ) : Source {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other !is ZipSource) return false
+    if (other !is UnpackedZipSource) return false
 
     if (file != other.file) return false
     if (filter != other.filter) return false
