@@ -10,7 +10,7 @@ The Java completion of `intellij.java.impl`.
 
 ## New completion
 
-Write a new completion as a `ModCompletionItemProvider`, not as a `CompletionContributor`.
+Write the new completion only as ModCompletionItemProvider.
 
 - Extend `JavaModCompletionItemProvider` in
   `java-impl/src/com/intellij/java/completion/modcommand/`
