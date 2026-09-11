@@ -191,6 +191,16 @@ public class MMappedFileStorageTest {
   }
 
   @Test
+  public void close_InvalidatesPreviouslyReturnedPageBuffer() throws IOException {
+    ByteBuffer pageBuffer = storage.pageByIndex(0).rawPageBuffer();
+
+    storage.close();
+
+    assertThrows(IllegalStateException.class, () -> pageBuffer.get(0),
+                 "The page buffer must become inaccessible after the storage closes its arena");
+  }
+
+  @Test
   public void openedStoragesCount_isEqualToNumberOfOpenedAndNotClosedStorages() throws IOException {
     int initialStoragesCount = MMappedFileStorage.openedStoragesCount();
 
