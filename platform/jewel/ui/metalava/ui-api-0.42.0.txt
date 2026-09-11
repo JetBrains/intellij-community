@@ -658,6 +658,10 @@ package org.jetbrains.jewel.ui.component {
     method public long of(boolean selected, optional boolean enabled, optional boolean focused, optional boolean pressed, optional boolean hovered, optional boolean active);
   }
 
+  public final class ScrollIndicatorKt {
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.Modifier scrollIndicator(androidx.compose.ui.Modifier, androidx.compose.foundation.gestures.ScrollableState scrollState, optional androidx.compose.foundation.gestures.Orientation orientation, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean enabled, optional boolean keepVisible);
+  }
+
   public final class ScrollableContainerKt {
     method @androidx.compose.runtime.Composable public static void HorizontallyScrollableContainer(androidx.compose.foundation.gestures.ScrollableState scrollState, optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, optional androidx.compose.foundation.v2.ScrollbarAdapter? adapter, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
     method @Deprecated @androidx.compose.runtime.Composable public static void HorizontallyScrollableContainer(androidx.compose.foundation.gestures.ScrollableState scrollState, optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
@@ -2394,7 +2398,9 @@ package org.jetbrains.jewel.ui.component.styling {
     method public androidx.compose.foundation.layout.PaddingValues getTrackPadding();
     method public androidx.compose.foundation.layout.PaddingValues getTrackPaddingExpanded();
     method public androidx.compose.foundation.layout.PaddingValues getTrackPaddingWithBorder();
+    property public default kotlin.time.Duration collapseDelay;
     property public abstract kotlin.time.Duration expandAnimationDuration;
+    property public default kotlin.time.Duration expandDelay;
     property public abstract kotlin.time.Duration lingerDuration;
     property public abstract kotlin.time.Duration thumbColorAnimationDuration;
     property public abstract kotlin.time.Duration trackColorAnimationDuration;
@@ -2407,11 +2413,13 @@ package org.jetbrains.jewel.ui.component.styling {
   }
 
   @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class ScrollbarVisibility.AlwaysVisible implements org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility {
-    ctor @KotlinOnly public ScrollbarVisibility.AlwaysVisible(androidx.compose.ui.unit.Dp trackThickness, androidx.compose.foundation.layout.PaddingValues trackPadding, androidx.compose.foundation.layout.PaddingValues trackPaddingWithBorder, kotlin.time.Duration thumbColorAnimationDuration, kotlin.time.Duration trackColorAnimationDuration, androidx.compose.ui.graphics.Color scrollbarBackgroundColorLight, androidx.compose.ui.graphics.Color scrollbarBackgroundColorDark, optional androidx.compose.ui.unit.Dp trackThicknessExpanded, optional androidx.compose.foundation.layout.PaddingValues trackPaddingExpanded, optional kotlin.time.Duration expandAnimationDuration, optional kotlin.time.Duration lingerDuration);
+    ctor @KotlinOnly public ScrollbarVisibility.AlwaysVisible(androidx.compose.ui.unit.Dp trackThickness, androidx.compose.foundation.layout.PaddingValues trackPadding, androidx.compose.foundation.layout.PaddingValues trackPaddingWithBorder, kotlin.time.Duration thumbColorAnimationDuration, kotlin.time.Duration trackColorAnimationDuration, androidx.compose.ui.graphics.Color scrollbarBackgroundColorLight, androidx.compose.ui.graphics.Color scrollbarBackgroundColorDark, optional androidx.compose.ui.unit.Dp trackThicknessExpanded, optional androidx.compose.foundation.layout.PaddingValues trackPaddingExpanded, optional kotlin.time.Duration expandAnimationDuration, optional kotlin.time.Duration lingerDuration, optional kotlin.time.Duration expandDelay, optional kotlin.time.Duration collapseDelay);
     method public androidx.compose.foundation.layout.PaddingValues getTrackPadding();
     method public androidx.compose.foundation.layout.PaddingValues getTrackPaddingExpanded();
     method public androidx.compose.foundation.layout.PaddingValues getTrackPaddingWithBorder();
+    property public kotlin.time.Duration collapseDelay;
     property public kotlin.time.Duration expandAnimationDuration;
+    property public kotlin.time.Duration expandDelay;
     property public kotlin.time.Duration lingerDuration;
     property public androidx.compose.ui.graphics.Color scrollbarBackgroundColorDark;
     property public androidx.compose.ui.graphics.Color scrollbarBackgroundColorLight;
@@ -2432,11 +2440,13 @@ package org.jetbrains.jewel.ui.component.styling {
   }
 
   @org.jetbrains.jewel.foundation.GenerateDataFunctions public static final class ScrollbarVisibility.WhenScrolling implements org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility {
-    ctor @KotlinOnly public ScrollbarVisibility.WhenScrolling(androidx.compose.ui.unit.Dp trackThickness, androidx.compose.ui.unit.Dp trackThicknessExpanded, androidx.compose.foundation.layout.PaddingValues trackPadding, androidx.compose.foundation.layout.PaddingValues trackPaddingWithBorder, kotlin.time.Duration trackColorAnimationDuration, kotlin.time.Duration expandAnimationDuration, kotlin.time.Duration thumbColorAnimationDuration, kotlin.time.Duration lingerDuration);
+    ctor @KotlinOnly public ScrollbarVisibility.WhenScrolling(androidx.compose.ui.unit.Dp trackThickness, androidx.compose.ui.unit.Dp trackThicknessExpanded, androidx.compose.foundation.layout.PaddingValues trackPadding, androidx.compose.foundation.layout.PaddingValues trackPaddingWithBorder, kotlin.time.Duration trackColorAnimationDuration, kotlin.time.Duration expandAnimationDuration, kotlin.time.Duration thumbColorAnimationDuration, kotlin.time.Duration lingerDuration, optional kotlin.time.Duration expandDelay, optional kotlin.time.Duration collapseDelay);
     method public androidx.compose.foundation.layout.PaddingValues getTrackPadding();
     method public androidx.compose.foundation.layout.PaddingValues getTrackPaddingExpanded();
     method public androidx.compose.foundation.layout.PaddingValues getTrackPaddingWithBorder();
+    property public kotlin.time.Duration collapseDelay;
     property public kotlin.time.Duration expandAnimationDuration;
+    property public kotlin.time.Duration expandDelay;
     property public kotlin.time.Duration lingerDuration;
     property public kotlin.time.Duration thumbColorAnimationDuration;
     property public kotlin.time.Duration trackColorAnimationDuration;

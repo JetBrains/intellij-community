@@ -772,11 +772,19 @@ private suspend fun PointerInputScope.detectScrollViaTrackGestures(isVertical: B
     }
 }
 
-/** The delay between the 1st and 2nd scroll while the scrollbar track is pressed outside the thumb. */
+/**
+ * The delay between the 1st and 2nd scroll while the scrollbar track is pressed outside the thumb.
+ *
+ * Matches the Swing scrollbar, whose repeat timer has a 300 ms initial delay (see `DefaultScrollBarUI`).
+ */
 internal val DELAY_BEFORE_SECOND_SCROLL_ON_TRACK_PRESS: Duration = 300.milliseconds
 
-/** The delay between each subsequent (after the 2nd) scroll while the scrollbar track is pressed outside the thumb. */
-internal val DELAY_BETWEEN_SCROLLS_ON_TRACK_PRESS: Duration = 100.milliseconds
+/**
+ * The delay between each subsequent (after the 2nd) scroll while the scrollbar track is pressed outside the thumb.
+ *
+ * Matches the Swing scrollbar, whose repeat timer runs at 60 ms (see `DefaultScrollBarUI`).
+ */
+internal val DELAY_BETWEEN_SCROLLS_ON_TRACK_PRESS: Duration = 60.milliseconds
 
 @Immutable
 private data class ScrollbarDragModifier(
