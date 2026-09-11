@@ -465,16 +465,17 @@ private fun createAndroidPluginLayout(
 
       patchOsSpecificPluginXml(spec, os, arch)
 
-      spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
+      spec.withCustomVersion { pluginXmlSupplier, context ->
+        val pluginVersion = context.pluginBuildNumber
         // be careful, Marketplace expects linux/macos/windows for os and x86_64/x86/arm64/arm32 for arch
         val osArchSuffix = "-${os.osId}-${arch.marketplaceName}"
         val pluginXml = pluginXmlSupplier()
         if (pluginXml.indexOf("<version>") != -1) {
           val declaredVersion = pluginXml.substring(pluginXml.indexOf("<version>") + "<version>".length, pluginXml.indexOf("</version>"))
-          PluginVersionEvaluatorResult(pluginVersion = "$declaredVersion.$ideBuildVersion$osArchSuffix")
+          PluginVersionEvaluatorResult(pluginVersion = "$declaredVersion.$pluginVersion$osArchSuffix")
         }
         else {
-          PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion$osArchSuffix")
+          PluginVersionEvaluatorResult(pluginVersion = "$pluginVersion$osArchSuffix")
         }
       }
     }

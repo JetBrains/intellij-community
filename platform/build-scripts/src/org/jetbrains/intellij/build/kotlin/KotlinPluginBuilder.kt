@@ -188,22 +188,20 @@ private class KotlinPluginVersion(private val kind: KotlinPluginBuilder.KotlinPl
 
   override fun evaluate(
     pluginXmlSupplier: () -> String,
-    ideBuildVersion: String,
     context: BuildContext,
   ): PluginVersionEvaluatorResult {
+    val pluginVersion = context.pluginBuildNumber
     // in kt-branches we have own since and until versions
     val sinceBuild = System.getProperty("kotlin.plugin.since")
     val untilBuild = System.getProperty("kotlin.plugin.until")
     val sinceUntil = if (sinceBuild != null && untilBuild != null) sinceBuild to untilBuild else null
-    if (ideBuildVersion.contains("IJ")) {
-      // TC configurations that are inherited from AbstractKotlinIdeArtifact.
-      // In this environment, ideBuildVersion equals to build number.
-      // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
-      val version = ideBuildVersion.replace("IJ", kind.toString())
+    if (pluginVersion.contains("IJ")) {
+      // The pluginVersion looks like XXX.YYYY.ZZ-IJ
+      val version = pluginVersion.replace("IJ", kind.toString())
       Span.current().addEvent("Kotlin plugin IJ version: $version")
       return PluginVersionEvaluatorResult(pluginVersion = version, sinceUntil = sinceUntil)
     }
     // IJ installer configurations.
-    return PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion$versionSuffix", sinceUntil = sinceUntil)
+    return PluginVersionEvaluatorResult(pluginVersion = "$pluginVersion$versionSuffix", sinceUntil = sinceUntil)
   }
 }

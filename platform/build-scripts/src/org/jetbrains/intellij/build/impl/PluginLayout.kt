@@ -52,7 +52,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   var directoryName: String = mainJarNameWithoutExtension
     private set
 
-  var versionEvaluator: PluginVersionEvaluator = PLUGIN_VERSION_AS_IDE
+  var versionEvaluator: PluginVersionEvaluator = DEFAULT_PLUGIN_VERSION
 
   @Internal
   @JvmField
@@ -89,7 +89,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
   /** Whether the layout stamps a version of its own instead of the IDE build version - see [versionEvaluator]. */
   val hasCustomVersion: Boolean
-    get() = versionEvaluator !== PLUGIN_VERSION_AS_IDE
+    get() = versionEvaluator !== DEFAULT_PLUGIN_VERSION
 
   /**
    * The custom version as data, or `null` when the layout states it as code - see [DataPluginVersionEvaluator].
@@ -349,8 +349,8 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       "$mainModule: custom since and until values cannot be set independently. Either both or neither should be provided."
     }
     val originalEvaluator = versionEvaluator
-    versionEvaluator = PluginVersionEvaluator { pluginXmlSupplier, ideBuildVersion, context ->
-      val version = originalEvaluator.evaluate(pluginXmlSupplier, ideBuildVersion, context)
+    versionEvaluator = PluginVersionEvaluator { pluginXmlSupplier, context ->
+      val version = originalEvaluator.evaluate(pluginXmlSupplier, context)
       val sinceUntil = if (customSinceValue != null && customUntilValue != null) {
         customSinceValue to customUntilValue
       }
@@ -773,7 +773,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   }
 }
 
-private val PLUGIN_VERSION_AS_IDE = PluginVersionEvaluator { _, ideBuildVersion, _ -> PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion) }
+private val DEFAULT_PLUGIN_VERSION = PluginVersionEvaluator { _, context -> PluginVersionEvaluatorResult(pluginVersion = context.pluginBuildNumber) }
 
 /**
  * The default of both descriptor patchers, as one instance.
@@ -844,9 +844,12 @@ data class PluginVersionEvaluatorResult(@JvmField val pluginVersion: String, @Jv
 
 /**
  * Think twice before using this API.
+ *
+ * Use [BuildContext.buildNumber] as the IDE build version.
+ * Use [BuildContext.pluginBuildNumber] as the default plugin version.
  */
 fun interface PluginVersionEvaluator {
-  fun evaluate(pluginXmlSupplier: () -> String, ideBuildVersion: String, context: BuildContext): PluginVersionEvaluatorResult
+  fun evaluate(pluginXmlSupplier: () -> String, context: BuildContext): PluginVersionEvaluatorResult
 }
 
 /**
@@ -864,9 +867,8 @@ interface DataPluginVersionEvaluator : PluginVersionEvaluator {
 class SuffixedPluginVersion(override val versionSuffix: String) : DataPluginVersionEvaluator {
   override fun evaluate(
     pluginXmlSupplier: () -> String,
-    ideBuildVersion: String,
     context: BuildContext,
-  ): PluginVersionEvaluatorResult = PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion + versionSuffix)
+  ): PluginVersionEvaluatorResult = PluginVersionEvaluatorResult(pluginVersion = context.pluginBuildNumber + versionSuffix)
 }
 
 private fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')
