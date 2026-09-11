@@ -16,7 +16,7 @@ public class SdkEqualityTest extends LightPlatformTestCase {
     Sdk jdk8 = IdeaTestUtil.getMockJdk(LanguageLevel.JDK_1_8.toJavaVersion());
     Sdk jdk8_copy = IdeaTestUtil.getMockJdk(LanguageLevel.JDK_1_8.toJavaVersion());
 
-    String someRandomStrangePath = FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations/javax";
+    String someRandomStrangePath = FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations/resources/javax";
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath(someRandomStrangePath);
     Sdk jdk8_annotated = PsiTestUtil.addRootsToJdk(jdk8, AnnotationOrderRootType.getInstance(), root);
 

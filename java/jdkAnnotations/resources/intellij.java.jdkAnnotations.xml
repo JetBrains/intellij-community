@@ -1,0 +1,3 @@
+<!-- The JDK external annotations, as data only. The lookup attaches the root of this module's jar to the JDK. -->
+<idea-plugin visibility="internal">
+</idea-plugin>

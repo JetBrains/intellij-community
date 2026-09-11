@@ -335,6 +335,7 @@ java/java-runtime
 java/java-structure-view
 java/java-syntax
 java/java-tests
+java/jdkAnnotations
 java/jsp-base-openapi
 java/jsp-openapi
 java/jsp-spi

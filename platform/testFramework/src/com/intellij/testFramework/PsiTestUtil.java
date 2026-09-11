@@ -571,7 +571,7 @@ public final class PsiTestUtil {
 
   @Contract(pure = true)
   public static @NotNull Sdk addJdkAnnotations(@NotNull Sdk sdk) {
-    String path = FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations";
+    String path = FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations/resources";
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
     return addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), root);
   }

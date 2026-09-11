@@ -8,7 +8,7 @@ import java.nio.file.Path;
 public class TestJdkAnnotationsFilesProviderImpl implements TestJdkAnnotationsFilesProvider {
   @Override
   public Path getJdkAnnotationsPath() {
-    Path path = BazelTestUtil.findRunfilesDirectoryUnderCommunityOrUltimate("java/jdkAnnotations");
+    Path path = BazelTestUtil.findRunfilesDirectoryUnderCommunityOrUltimate("java/jdkAnnotations/resources");
     BazelTestUtil.allowVfsAccessToCanonicalRunfilesRoot(path);
     return path;
   }
