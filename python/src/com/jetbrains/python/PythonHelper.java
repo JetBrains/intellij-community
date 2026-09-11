@@ -24,6 +24,8 @@ import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.
 import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.findPathStringInHelpers;
 import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.getCommunityHelpersRoot;
 import static com.intellij.python.venv.VenvKt.VIRTUALENV_ZIPAPP_NAME;
+import static com.jetbrains.python.impl.HelperConstsKt.PY2_HELPER_DEPENDENCIES_DIR;
+import static com.jetbrains.python.impl.HelperConstsKt.PY3_HELPER_DEPENDENCIES_DIR;
 import static com.jetbrains.python.packaging.pip.PipPackageManagerEngine.PACKAGING_TOOL_NAME;
 
 public enum PythonHelper implements HelperPackage {
@@ -89,8 +91,6 @@ public enum PythonHelper implements HelperPackage {
 
   JUPYTER("pycharm", "jupyter");
 
-  public static final String PY3_HELPER_DEPENDENCIES_DIR = "py3only";
-  public static final String PY2_HELPER_DEPENDENCIES_DIR = "py2only";
 
   private static @NotNull PathHelperPackage findModule(String moduleEntryPoint, String path, boolean asModule, String[] thirdPartyDependencies) {
     List<HelperDependency> dependencies = HelperDependency.findThirdPartyDependencies(thirdPartyDependencies);

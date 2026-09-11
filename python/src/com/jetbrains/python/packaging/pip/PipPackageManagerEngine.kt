@@ -7,7 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.python.HelperName
+import com.intellij.python.community.execService.python.PyHelper
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPIPackageUtil
@@ -96,7 +96,7 @@ internal class PipPackageManagerEngine(
     thisLogger().debug("Running python packaging tool. Operation: $operation")
     ExecService().executeHelper(
       sdk,
-      PACKAGING_TOOL_NAME,
+      PyHelper(PACKAGING_TOOL_NAME),
       parameters,
     )
   }
@@ -175,6 +175,6 @@ internal class PipPackageManagerEngine(
   }
 
   companion object {
-    const val PACKAGING_TOOL_NAME: HelperName = "packaging_tool.py"
+    const val PACKAGING_TOOL_NAME: String = "packaging_tool.py"
   }
 }

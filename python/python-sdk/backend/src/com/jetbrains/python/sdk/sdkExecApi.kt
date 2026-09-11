@@ -16,7 +16,7 @@ import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.PyProcessListener
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.execService.execute
-import com.intellij.python.community.execService.python.HelperName
+import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.community.execService.python.executeHelper
 import com.intellij.python.sdk.backend.PySdkBundle.message
@@ -68,7 +68,7 @@ suspend fun <T> ExecService.execute(
 @CheckReturnValue
 suspend fun ExecService.executeHelper(
   sdk: Sdk,
-  helper: HelperName,
+  helper: PyHelper,
   helperArgs: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,

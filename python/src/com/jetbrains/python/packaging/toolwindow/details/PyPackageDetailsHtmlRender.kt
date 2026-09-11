@@ -13,6 +13,8 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.impl.PY2_HELPER_DEPENDENCIES_DIR
+import com.jetbrains.python.impl.PY3_HELPER_DEPENDENCIES_DIR
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.applyHelperPackageToPythonPath
@@ -59,7 +61,7 @@ internal class PyPackageDetailsHtmlRender(val project: Project, val currentSdk: 
     val pythonExecution = prepareHelperScriptExecution(PythonHelper.REST_RUNNER, helpersAwareTargetRequest)
 
     // todo[akniazev]: this workaround should can be removed when PY-57134 is fixed
-    val helperLocation = if (localSdk.sdkFlavor.getLanguageLevel(localSdk).isPython2) "py2only" else "py3only"
+    val helperLocation = if (localSdk.sdkFlavor.getLanguageLevel(localSdk).isPython2) PY2_HELPER_DEPENDENCIES_DIR else PY3_HELPER_DEPENDENCIES_DIR
     val path = PythonHelpersLocator.findPathStringInHelpers(helperLocation)
     pythonExecution.applyHelperPackageToPythonPath(listOf(path), helpersAwareTargetRequest)
 

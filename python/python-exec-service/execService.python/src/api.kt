@@ -33,7 +33,7 @@ typealias PythonBinaryOnEelOrTarget = BinaryToExec
  */
 suspend fun ExecService.executeHelper(
   python: BinaryToExec,
-  helper: HelperName,
+  helper: PyHelper,
   helperArgs: Args = Args(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,

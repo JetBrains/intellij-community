@@ -10,7 +10,7 @@ import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.asBinToExec
-import com.intellij.python.community.execService.python.HelperName
+import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.community.execService.python.executeHelper
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
@@ -86,7 +86,7 @@ suspend fun createVenv(
                                                         version.toPythonVersion(),
                                                         MINIMUM_SUPPORTED_VENV_PYTHON_VERSION.toPythonVersion()))
   }
-  execService.executeHelper(python, VIRTUALENV_ZIPAPP_NAME, Args().addArgs(args), ExecOptions(timeout = 3.minutes))
+  execService.executeHelper(python, PyHelper(VIRTUALENV_ZIPAPP_NAME), Args().addArgs(args), ExecOptions(timeout = 3.minutes))
     .getOr(PyVenvBundle.message("py.venv.error.executing.script", VIRTUALENV_ZIPAPP_NAME)) { return it }
 
   return Result.success(Unit)
@@ -94,7 +94,7 @@ suspend fun createVenv(
 
 // venv helper, update from https://bootstrap.pypa.io/virtualenv.pyz
 @Internal
-const val VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-py3.pyz"
+const val VIRTUALENV_ZIPAPP_NAME: String = "virtualenv-py3.pyz"
 
 /**
  * Minimum Python version supported by the IDE's bundled environment tooling: the [VIRTUALENV_ZIPAPP_NAME]

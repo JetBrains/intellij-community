@@ -1,15 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.documentation
 
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.asBinToExec
+import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.community.execService.python.executeHelper
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.io.write
 import com.jetbrains.python.PYTHONPATH
@@ -17,8 +18,8 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.documentation.PyDocstringFormatterCache
 import com.jetbrains.python.documentation.PyRuntimeDocstringFormatter
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -63,7 +64,7 @@ class PyDocstringFormatterCacheEnvTest {
   private suspend fun runRealFormatter(python: PythonBinary, inputFile: Path): String {
     return ExecService().executeHelper(
       python.asBinToExec(),
-      "docstring_formatter.py",
+      PyHelper("docstring_formatter.py"),
       Args("--format", "rest", "--input", inputFile.toString()),
       ExecOptions(env = mapOf(PYTHONPATH to PythonHelpersLocator.getCommunityHelpersRoot().resolve("py3only").toString())),
     ).getOrThrow()
