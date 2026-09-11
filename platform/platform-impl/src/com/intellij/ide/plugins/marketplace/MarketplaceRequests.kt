@@ -717,8 +717,18 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   }
 
   override fun loadCachedPlugins(): Set<PluginId>? {
-    val pluginXmlIdsFile = Paths.get(PathManager.getPluginTempPath(), MarketplaceUrls.FULL_PLUGINS_XML_IDS_FILENAME)
-    return readCacheFile(pluginXmlIdsFile, ::parseXmlIds)
+    try {
+      val pluginXmlIdsFile = Paths.get(PathManager.getPluginTempPath(), MarketplaceUrls.FULL_PLUGINS_XML_IDS_FILENAME)
+      return readCacheFile(pluginXmlIdsFile, ::parseXmlIds)
+    }
+    catch (e: IOException) {
+      LOG.error("Cannot get plugin ids from Marketplace", e)
+      return null
+    }
+    catch (e: JacksonException) {
+      LOG.error("Cannot get plugin ids from Marketplace", e)
+      return null
+    }
   }
 
   @Deprecated("Compatibility method for external usages. Use executePluginSearch")

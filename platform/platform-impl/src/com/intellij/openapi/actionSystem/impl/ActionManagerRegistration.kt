@@ -8,6 +8,7 @@
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
@@ -672,7 +673,13 @@ internal fun registerOrReplaceActionInner(
         return@withLock false
       }
     }
-    onActionLoadedFromXml(actionId = id, plugin = plugin)
+    try {
+      onActionLoadedFromXml(actionId = id, plugin = plugin)
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      actionManagerImplLog.error("Failed to process onActionLoadedFromXml $id", e)
+    }
     true
   }
 }
