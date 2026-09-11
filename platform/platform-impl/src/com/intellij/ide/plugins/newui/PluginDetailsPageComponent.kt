@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.getPresentableName
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -78,6 +79,10 @@ import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.tabs.JBTabs
+import com.intellij.ui.tabs.JBTabsFactory
+import com.intellij.ui.tabs.TabInfo
+import com.intellij.ui.tabs.UiDecorator
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.system.OS
 import com.intellij.util.ui.AsyncProcessIcon.BigCentered
@@ -107,7 +112,6 @@ import java.awt.FlowLayout
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.Insets
-import java.awt.Point
 import java.awt.event.ActionEvent
 import java.util.Collections
 import java.util.function.Consumer
@@ -122,8 +126,6 @@ import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField
-import javax.swing.JTabbedPane
-import javax.swing.JViewport
 import javax.swing.ScrollPaneConstants
 import javax.swing.SwingConstants
 import javax.swing.UIManager
@@ -183,7 +185,7 @@ class PluginDetailsPageComponent private constructor(
 
   private var emptyPanel: JBPanelWithEmptyText? = null
 
-  private var tabbedPane: JBTabbedPane? = null
+  private var tabbedPane: PluginDetailsTabs? = null
 
   private var rootPanel: OpaquePanel? = null
   private var panel: OpaquePanel? = null
@@ -268,6 +270,7 @@ class PluginDetailsPageComponent private constructor(
 
   private val pluginManagerCustomizer: PluginManagerCustomizer?
   private val notificationsUpdateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
+  private val tabsDisposable = Disposer.newDisposable("Plugin details tabs")
   private val coroutineScope = pluginModel.getModel().coroutineScope.childScope("Plugin details")
   private val operationLauncher = operationLauncherOverride?.launcher ?: PluginOperationLauncher(coroutineScope)
   private val operationUi = operationLauncherOverride?.operationUiBridge?.createHandle(this) ?: PluginOperationUiHandle(this)
@@ -371,6 +374,7 @@ class PluginDetailsPageComponent private constructor(
     plugin = null
     updateDescriptor = null
     installedDescriptorForMarketplace = null
+    Disposer.dispose(tabsDisposable)
     coroutineScope.cancel()
   }
 
@@ -740,10 +744,23 @@ class PluginDetailsPageComponent private constructor(
   }
 
   private fun createTabs(parent: JPanel) {
-    val pane: JBTabbedPane = object : JBTabbedPane(
-      SwingConstants.TOP,
-      if (layout.singleRowTabs) JTabbedPane.SCROLL_TAB_LAYOUT else JTabbedPane.WRAP_TAB_LAYOUT,
-    ) {
+    val pane = if (layout.singleRowTabs) {
+      createIntelliJTabs()
+    }
+    else {
+      createSwingTabs()
+    }
+    parent.add(pane.component)
+    tabbedPane = pane
+
+    createDescriptionTab(pane)
+    createChangeNotesTab(pane)
+    createReviewTab(pane)
+    createAdditionalInfoTab(pane)
+  }
+
+  private fun createSwingTabs(): PluginDetailsTabs {
+    val pane: JBTabbedPane = object : JBTabbedPane() {
       override fun setUI(ui: TabbedPaneUI) {
         putClientProperty("TabbedPane.hoverColor", ListPluginComponent.HOVER_COLOR)
 
@@ -778,51 +795,33 @@ class PluginDetailsPageComponent private constructor(
           }
         }
         setTabContainerBorder(this)
-        if (this@PluginDetailsPageComponent.layout.singleRowTabs) {
-          styleTabOverflowButton(this)
-        }
-      }
-
-      override fun setEnabledAt(index: Int, enabled: Boolean) {
-        super.setEnabledAt(index, enabled)
-        getTabComponentAt(index)?.isEnabled = enabled
-      }
-
-      override fun setSelectedIndex(index: Int) {
-        super.setSelectedIndex(index)
-        if (this@PluginDetailsPageComponent.layout.singleRowTabs) {
-          resetFirstTabScrollPosition(this)
-        }
-      }
-
-      override fun doLayout() {
-        super.doLayout()
-        if (this@PluginDetailsPageComponent.layout.singleRowTabs) {
-          styleTabOverflowButton(this)
-          resetFirstTabScrollPosition(this)
-        }
       }
     }
     pane.isOpaque = false
     pane.border = JBUI.Borders.emptyTop(6)
     pane.background = PluginManagerConfigurable.MAIN_BG_COLOR
-    parent.add(pane)
-    tabbedPane = pane
-
-    createDescriptionTab(pane)
-    createChangeNotesTab(pane)
-    createReviewTab(pane)
-    createAdditionalInfoTab(pane)
-    if (layout.singleRowTabs) {
-      for (index in 0 until pane.tabCount) {
-        pane.setTabComponentAt(index, null)
-      }
-    }
-
-    setTabContainerBorder(pane)
+    return SwingPluginDetailsTabs(pane)
   }
 
-  private fun createDescriptionTab(pane: JBTabbedPane) {
+  private fun createIntelliJTabs(): PluginDetailsTabs {
+    val tabs = JBTabsFactory.createTabs(null, tabsDisposable)
+    tabs.presentation.apply {
+      setSingleRow(true)
+      setFirstTabOffset(JBUI.scale(layout.tabStripLeftInset))
+      setPaintFocus(true)
+      setUiDecorator(object : UiDecorator {
+        override fun getDecoration() = UiDecorator.UiDecoration(labelInsets = JBUI.insets(8))
+      })
+      showBorder = true
+    }
+    val wrapper = NonOpaquePanel(BorderLayout()).apply {
+      border = JBUI.Borders.emptyTop(6)
+      add(tabs.component)
+    }
+    return IntelliJPluginDetailsTabs(tabs, wrapper)
+  }
+
+  private fun createDescriptionTab(pane: PluginDetailsTabs) {
     descriptionComponent = createDescriptionComponent(createHtmlImageViewHandler())
 
     val imagesComponent = PluginImagesComponent()
@@ -834,19 +833,17 @@ class PluginDetailsPageComponent private constructor(
     parent.add(imagesComponent, BorderLayout.NORTH)
     parent.add(descriptionComponent)
 
-    addTabWithoutBorders(pane) {
-      pane.addTab(
-        IdeBundle.message("plugins.configurable.overview.tab.name"),
-        createScrollPane(parent).also { bottomScrollPane = it },
-      )
-    }
+    pane.addTab(
+      IdeBundle.message("plugins.configurable.overview.tab.name"),
+      createScrollPane(parent).also { bottomScrollPane = it },
+    )
     myImagesComponent!!.setParent(bottomScrollPane.viewport)
     if (bottomScrollPane.verticalScrollBarNeedsSpace()) {
       bottomScrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
     }
   }
 
-  private fun createChangeNotesTab(pane: JBTabbedPane) {
+  private fun createChangeNotesTab(pane: PluginDetailsTabs) {
     val changeNotes = createDescriptionComponent(null)
     changeNotesPanel = ChangeNotes { text ->
       if (text != null) {
@@ -864,10 +861,10 @@ class PluginDetailsPageComponent private constructor(
                     ?: JBUI.Borders.emptyLeft(12)
     parent.add(changeNotes)
     myChangeNotesEmptyState = parent
-    pane.add(IdeBundle.message("plugins.configurable.whats.new.tab.name"), createScrollPane(parent))
+    pane.addTab(IdeBundle.message("plugins.configurable.whats.new.tab.name"), createScrollPane(parent))
   }
 
-  private fun createReviewTab(pane: JBTabbedPane) {
+  private fun createReviewTab(pane: PluginDetailsTabs) {
     val topPanel: JPanel = Wrapper(BorderLayout(0, JBUI.scale(5)))
     topPanel.border = JBUI.Borders.empty(16, 16, 12, 16)
 
@@ -926,12 +923,10 @@ class PluginDetailsPageComponent private constructor(
       }
     }
 
-    addTabWithoutBorders(pane) {
-      pane.add(IdeBundle.message("plugins.configurable.reviews.tab.name"), createScrollPane(reviewsPanel))
-    }
+    pane.addTab(IdeBundle.message("plugins.configurable.reviews.tab.name"), createScrollPane(reviewsPanel))
   }
 
-  private fun createAdditionalInfoTab(pane: JBTabbedPane) {
+  private fun createAdditionalInfoTab(pane: PluginDetailsTabs) {
     val infoPanel: JPanel = OpaquePanel(vertical(16, horGrow = ListLayout.GrowPolicy.NO_GROW), PluginManagerConfigurable.MAIN_BG_COLOR)
     val horizontalInset = layout.tabContentHorizontalInset
     infoPanel.border = if (horizontalInset == null) {
@@ -970,9 +965,7 @@ class PluginDetailsPageComponent private constructor(
       customRepoForDebug!!.foreground = ListPluginComponent.GRAY_COLOR
     }
 
-    addTabWithoutBorders(pane) {
-      pane.add(IdeBundle.message("plugins.configurable.additional.info.tab.name"), createScrollPane(infoPanel))
-    }
+    pane.addTab(IdeBundle.message("plugins.configurable.additional.info.tab.name"), createScrollPane(infoPanel))
   }
 
   private fun initializePluginSourceIdDropDownLink(infoPanel: JPanel) {
@@ -2315,7 +2308,7 @@ internal data class PluginDetailsPageLayout(
     )
     val Unified = PluginDetailsPageLayout(
       contentHorizontalInset = 16,
-      tabStripLeftInset = 10,
+      tabStripLeftInset = 12,
       overviewRightInset = 16,
       overviewImagesRightInset = 0,
       tabContentHorizontalInset = 16,
@@ -2383,29 +2376,60 @@ private fun setTabContainerBorder(pane: JComponent) {
   }
 }
 
-private fun styleTabOverflowButton(pane: JTabbedPane) {
-  pane.components
-    .filterIsInstance<JButton>()
-    .firstOrNull { it.toolTipText == IdeBundle.message("show.hidden.tabs") }
-    ?.apply {
-      isOpaque = false
-      isContentAreaFilled = false
-      isBorderPainted = false
-      isFocusPainted = false
-      isRolloverEnabled = true
-    }
+private interface PluginDetailsTabs {
+  val component: JComponent
+
+  var selectedIndex: Int
+
+  fun addTab(title: String, component: JComponent)
+
+  fun setEnabledAt(index: Int, enabled: Boolean)
 }
 
-internal fun resetFirstTabScrollPosition(pane: JTabbedPane) {
-  if (pane.selectedIndex != 0) return
-  UIUtil.findComponentsOfType(pane, JViewport::class.java)
-    .firstOrNull { it.name == "TabbedPane.scrollableViewport" }
-    ?.let { viewport ->
-      val viewPosition = viewport.viewPosition
-      if (viewPosition.x != 0) {
-        viewport.viewPosition = Point(0, viewPosition.y)
-      }
+private class SwingPluginDetailsTabs(private val pane: JBTabbedPane) : PluginDetailsTabs {
+  override val component: JComponent
+    get() = pane
+
+  override var selectedIndex: Int
+    get() = pane.selectedIndex
+    set(value) {
+      pane.selectedIndex = value
     }
+
+  override fun addTab(title: String, component: JComponent) {
+    val insets = pane.tabComponentInsets
+    pane.tabComponentInsets = JBInsets.emptyInsets()
+    try {
+      pane.addTab(title, component)
+    }
+    finally {
+      pane.tabComponentInsets = insets
+    }
+  }
+
+  override fun setEnabledAt(index: Int, enabled: Boolean) {
+    pane.setEnabledAt(index, enabled)
+    pane.getTabComponentAt(index)?.isEnabled = enabled
+  }
+}
+
+private class IntelliJPluginDetailsTabs(
+  private val tabs: JBTabs,
+  override val component: JComponent,
+) : PluginDetailsTabs {
+  override var selectedIndex: Int
+    get() = tabs.selectedInfo?.let(tabs::getIndexOf) ?: -1
+    set(value) {
+      tabs.select(tabs.getTabAt(value), false)
+    }
+
+  override fun addTab(title: String, component: JComponent) {
+    tabs.addTab(TabInfo(component).setText(title))
+  }
+
+  override fun setEnabledAt(index: Int, enabled: Boolean) {
+    tabs.getTabAt(index).isEnabled = enabled
+  }
 }
 
 private fun createRequiredPluginsComponent(): JEditorPane {
@@ -2415,11 +2439,4 @@ private fun createRequiredPluginsComponent(): JEditorPane {
   editorPane.foreground = ListPluginComponent.GRAY_COLOR
   editorPane.contentType = "text/plain"
   return editorPane
-}
-
-private fun addTabWithoutBorders(pane: JBTabbedPane, callback: Runnable) {
-  val insets = pane.tabComponentInsets
-  pane.tabComponentInsets = JBInsets.emptyInsets()
-  callback.run()
-  pane.tabComponentInsets = insets
 }

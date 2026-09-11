@@ -26,7 +26,6 @@ import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.ide.plugins.newui.TagComponent
 import com.intellij.ide.plugins.newui.Tags
 import com.intellij.ide.plugins.newui.UpdateButton
-import com.intellij.ide.plugins.newui.resetFirstTabScrollPosition
 import com.intellij.ide.plugins.newui.buttons.InstallOptionButton
 import com.intellij.ide.plugins.newui.buttons.OptionButton
 import com.intellij.ide.ui.LafManager
@@ -46,6 +45,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.OnOffButton
+import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +59,6 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
-import java.awt.Point
 import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -67,8 +66,6 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTabbedPane
 import javax.swing.JProgressBar
-import javax.swing.JViewport
-import javax.swing.plaf.basic.BasicTabbedPaneUI
 import kotlin.math.abs
 
 @TestApplication
@@ -286,81 +283,56 @@ internal class LegacyPluginRowFactoryTest {
         assertHorizontalInsets(unifiedHeader, left = 16, right = 16)
 
         val legacyTabs = componentsOfType(legacyRoot, JBTabbedPane::class.java).single()
-        val unifiedTabs = componentsOfType(unifiedRoot, JBTabbedPane::class.java).single()
+        val unifiedTabs = componentsOfType(unifiedRoot, JBTabsImpl::class.java).single()
         assertThat(legacyTabs.tabLayoutPolicy).isEqualTo(JTabbedPane.WRAP_TAB_LAYOUT)
-        assertThat(unifiedTabs.tabLayoutPolicy).isEqualTo(JTabbedPane.SCROLL_TAB_LAYOUT)
+        assertThat(componentsOfType(unifiedRoot, JBTabbedPane::class.java)).isEmpty()
+        assertThat(unifiedTabs.isSingleRow).isTrue()
         assertThat(legacyTabs.getTabComponentAt(0)).isNotNull()
-        assertThat((0 until unifiedTabs.tabCount).map(unifiedTabs::getTabComponentAt)).containsOnlyNulls()
-        assertThat((0 until unifiedTabs.tabCount).map(unifiedTabs::getTitleAt)).allMatch(String::isNotBlank)
-        val unifiedOverflowButton = unifiedTabs.components
-          .filterIsInstance<JButton>()
-          .firstOrNull { it.toolTipText == IdeBundle.message("show.hidden.tabs") }
-          ?: JButton().also { button ->
-            button.toolTipText = IdeBundle.message("show.hidden.tabs")
-            unifiedTabs.add(button)
-            unifiedTabs.doLayout()
-          }
-        assertThat(unifiedOverflowButton.isOpaque).isFalse()
-        assertThat(unifiedOverflowButton.isContentAreaFilled).isFalse()
-        assertThat(unifiedOverflowButton.isBorderPainted).isFalse()
-        assertThat(unifiedOverflowButton.isFocusPainted).isFalse()
-        legacyTabs.setUI(BasicTabbedPaneUI())
-        unifiedTabs.setUI(BasicTabbedPaneUI())
+        assertThat(unifiedTabs.tabs.map { it.text }).allMatch(String::isNotBlank)
+        assertThat(unifiedTabs.presentation.showBorder).isTrue()
+        assertThat(unifiedTabs.getDecoration().labelInsets).isEqualTo(JBUI.insets(8))
         legacyTabs.setBounds(0, 0, JBUI.scale(800), JBUI.scale(600))
         unifiedTabs.setBounds(0, 0, JBUI.scale(800), JBUI.scale(600))
         legacyTabs.doLayout()
         unifiedTabs.doLayout()
+        assertThat(unifiedTabs.canShowMorePopup()).isFalse()
+
+        unifiedTabs.setBounds(0, 0, JBUI.scale(300), JBUI.scale(600))
+        unifiedTabs.doLayout()
+        assertThat(unifiedTabs.canShowMorePopup()).isTrue()
+
+        unifiedTabs.setBounds(0, 0, JBUI.scale(800), JBUI.scale(600))
+        unifiedTabs.doLayout()
+        assertThat(unifiedTabs.canShowMorePopup()).isFalse()
+        assertThat(unifiedTabs.getFirstTabOffset()).isEqualTo(JBUI.scale(PluginDetailsPageLayout.Unified.tabStripLeftInset))
 
         val legacyOverview = scrollTabContent(legacyTabs, 0)
-        val unifiedOverview = scrollTabContent(unifiedTabs, 0)
+        val unifiedOverview = scrollTabContent(unifiedTabs.getTabAt(0).component)
         assertHorizontalInsets(legacyOverview, left = 16, right = 0)
         assertHorizontalInsets(unifiedOverview, left = 16, right = 16)
         assertHorizontalInsets(borderLayoutChild(legacyOverview, BorderLayout.NORTH), left = 0, right = 16)
         assertHorizontalInsets(borderLayoutChild(unifiedOverview, BorderLayout.NORTH), left = 0, right = 0)
 
         assertHorizontalInsets(scrollTabContent(legacyTabs, 1), left = 12, right = 0)
-        assertHorizontalInsets(scrollTabContent(unifiedTabs, 1), left = 16, right = 16)
+        assertHorizontalInsets(scrollTabContent(unifiedTabs.getTabAt(1).component), left = 16, right = 16)
         assertHorizontalInsets(
           borderLayoutChild(scrollTabContent(legacyTabs, 2), BorderLayout.NORTH),
           left = 16,
           right = 16,
         )
         assertHorizontalInsets(
-          borderLayoutChild(scrollTabContent(unifiedTabs, 2), BorderLayout.NORTH),
+          borderLayoutChild(scrollTabContent(unifiedTabs.getTabAt(2).component), BorderLayout.NORTH),
           left = 16,
           right = 16,
         )
         assertHorizontalInsets(scrollTabContent(legacyTabs, 3), left = 12, right = 0)
-        assertHorizontalInsets(scrollTabContent(unifiedTabs, 3), left = 16, right = 16)
+        assertHorizontalInsets(scrollTabContent(unifiedTabs.getTabAt(3).component), left = 16, right = 16)
       }
       finally {
         legacyHost.dispose(closeSession = false)
         unifiedHost.dispose(closeSession = false)
       }
     }
-
-  @Test
-  fun `returning to the first details tab resets the horizontal scroll position`() {
-    val pane = JTabbedPane().apply {
-      addTab("Overview", JPanel())
-      addTab("Scrollable tab strip", JViewport().apply {
-        name = "TabbedPane.scrollableViewport"
-        view = JPanel().apply {
-          preferredSize = Dimension(JBUI.scale(500), JBUI.scale(40))
-          size = preferredSize
-        }
-        extentSize = Dimension(JBUI.scale(100), JBUI.scale(40))
-        viewPosition = Point(JBUI.scale(20), JBUI.scale(3))
-      })
-      selectedIndex = 0
-    }
-    val viewport = componentsOfType(pane, JViewport::class.java)
-      .single { it.name == "TabbedPane.scrollableViewport" }
-
-    resetFirstTabScrollPosition(pane)
-
-    assertThat(viewport.viewPosition).isEqualTo(Point(0, JBUI.scale(3)))
-  }
 
   @Test
   fun `unified host keeps the selected plugin icon scale after state changes`(): Unit =
@@ -1198,6 +1170,9 @@ internal class LegacyPluginRowFactoryTest {
 
   private fun scrollTabContent(pane: JBTabbedPane, index: Int): JComponent =
     (pane.getComponentAt(index) as JBScrollPane).viewport.view as JComponent
+
+  private fun scrollTabContent(component: JComponent): JComponent =
+    (component as JBScrollPane).viewport.view as JComponent
 
   private fun layoutHeaderAction(header: JComponent, actions: BaselinePanel, target: Component) {
     actions.buttonComponents.forEach { it.isVisible = it === target }
