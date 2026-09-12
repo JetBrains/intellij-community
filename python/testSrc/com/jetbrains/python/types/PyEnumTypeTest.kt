@@ -538,6 +538,40 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-51981"])
+    fun `value type of enum member with a named tuple data type`() = test("""
+      from collections import namedtuple
+      from enum import Enum
+
+      Point = namedtuple("Point", ["x", "y"])
+
+      class Points(Point, Enum):
+          POINT_1 = 10, 20
+          POINT_2 = 30, 40
+
+      expr = Points.POINT_1.value, Points.POINT_1.value.x
+      # └ TYPE tuple[Point, Unknown]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-51981"])
+    fun `value type of enum member with a typing named tuple data type`() = test("""
+      from enum import Enum
+      from typing import NamedTuple
+
+      class Point(NamedTuple):
+          x: int
+          y: int
+
+      class Points(Point, Enum):
+          POINT_1 = 10, 20
+          POINT_2 = 30, 40
+
+      expr = Points.POINT_1.value, Points.POINT_1.value.x
+      # └ TYPE tuple[Point, int]
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-59260"])
     fun `enum value type inference`() = test("""
       from enum import Enum, IntFlag, StrEnum

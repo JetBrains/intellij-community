@@ -577,6 +577,12 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   private static @Nullable PyType getEnumMemberValueType(@NotNull PyClass enumClass,
                                                          @Nullable String memberName,
                                                          @NotNull TypeEvalContext context) {
+    // A data type other than a builtin one constructs the member from the declaration, e.g. a namedtuple base turns
+    // `POINT = 10, 20` into `Point(10, 20)`, so the value is an instance of that base and not the declared tuple.
+    PyType dataTypeValueType = getEnumDataTypeValueType(enumClass, context);
+    if (dataTypeValueType != null) {
+      return dataTypeValueType;
+    }
     // For a specific member, prefer its own (possibly transformed) value type so literals are preserved,
     // e.g. `MyIntChoices.OK.value` is `Literal[1]`, not the widened `int` from the data-type mixin.
     PyTargetExpression memberExpr = memberName != null ? enumClass.findClassAttribute(memberName, false, context) : null;
@@ -596,6 +602,23 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     // The union collapses to the common type for homogeneous enums (e.g. 'int') and widens to e.g. 'int | str' for
     // heterogeneous ones, instead of incorrectly reporting just the first member's type.
     return PyUnionType.unionOrUnknown(memberValueTypes);
+  }
+
+  /**
+   * The value type of an enum whose data type is a named tuple, as in {@code class Points(Point, Enum)}.
+   * The {@code __new__} of the named tuple builds each member from the declaration, so {@code Points.POINT.value}
+   * is a {@code Point} and not the declared tuple. Returns {@code null} for an enum without such a base.
+   */
+  private static @Nullable PyType getEnumDataTypeValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    if (getEnumMixinValueType(enumClass, context) != null) return null;
+    for (PyClassLikeType ancestorType : enumClass.getAncestorTypes(context)) {
+      // An enum base without members can derive from the named tuple too, but the member is built by the named tuple
+      if (ancestorType instanceof PyClassType classType && !isEnum(classType.getPyClass(), context) &&
+          PyNamedTupleTypeProvider.Helper.INSTANCE.isNamedTuple(classType, context)) {
+        return classType.toInstance();
+      }
+    }
+    return null;
   }
 
   /**
