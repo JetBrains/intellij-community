@@ -24,21 +24,38 @@ fun createLspDocumentationData(markupContent: MarkupContent): LspDocumentationDa
     return LspDocumentationData(description = markupContent.value)
   }
   val contents = StringUtilRt.convertLineSeparators(markupContent.value)
-  val endOfDefinition = contents.indexOf("```", 3)
-  if (!contents.startsWith("```") || contents.indexOf("\n") <= 0 || endOfDefinition < 0) {
-    return LspDocumentationData(description = contents, descriptionMarkup = LspDocumentationData.DescriptionMarkup.MARKDOWN)
-  }
-  val definitionLanguage = contents.takeWhile { !it.isWhitespace() }.substring(3).takeIf { it.isNotEmpty() }
-  val definition = contents.substring(contents.indexOf("\n") + 1, endOfDefinition).trimIndent().trimEnd()
-
-  @NlsSafe
-  val description = contents.substring(endOfDefinition + 3)
+  val definitionFence = parseLeadingCodeFence(contents)
+                        ?: return LspDocumentationData(description = contents, descriptionMarkup = LspDocumentationData.DescriptionMarkup.MARKDOWN)
   return LspDocumentationData(
-    definitionCodeBlock = definition,
-    definitionLanguage = definitionLanguage,
-    description = description,
+    definitionCodeBlock = definitionFence.code,
+    definitionLanguage = definitionFence.language,
+    description = definitionFence.rest,
     descriptionMarkup = LspDocumentationData.DescriptionMarkup.MARKDOWN
   )
+}
+
+/** A fenced code block that opens a markdown text, and the text after it. */
+private class LeadingCodeFence(
+  val language: @NonNls String?,
+  val code: @NlsSafe String,
+  val rest: @NlsSafe String,
+)
+
+/**
+ * Parses a backtick code fence at the start of [contents].
+ * The fence has three or more backticks, and the closing fence has at least as many backticks as the opening one.
+ * Returns null when the text does not start with a closed fence.
+ */
+private fun parseLeadingCodeFence(contents: String): LeadingCodeFence? {
+  val fence = contents.takeWhile { it == '`' }
+  if (fence.length < 3) return null
+  val infoEnd = contents.indexOf('\n')
+  if (infoEnd < 0) return null
+  val closingFence = Regex("^`{${fence.length},}[ \\t]*$", RegexOption.MULTILINE).find(contents, infoEnd + 1) ?: return null
+  val language = contents.substring(fence.length, infoEnd).trim().substringBefore(' ').takeIf { it.isNotEmpty() }
+  val code = contents.substring(infoEnd + 1, closingFence.range.first).trimIndent().trimEnd()
+  val rest = contents.substring(closingFence.range.last + 1)
+  return LeadingCodeFence(language, code, rest)
 }
 
 /**
