@@ -32,11 +32,10 @@ import com.intellij.openapi.roots.WatchedRootsProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.WatchRoots
 import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
@@ -88,7 +87,10 @@ open class ProjectRootManagerComponent(
   private var pointerChangesDetected = false
   private var insideWriteAction = 0
 
-  var rootsToWatch: MutableSet<WatchRequest> = CollectionFactory.createSmallMemoryFootprintSet()
+  private var watchTokens: List<WatchRoots.Token> = emptyList()
+
+  /** The paths given to [WatchRoots] last: the recursive roots, then the flat roots. */
+  var watchedRootPaths: Pair<Set<String>, Set<String>> = emptySet<String>() to emptySet()
     private set
 
   private var rootPointersDisposable = Disposer.newDisposable()
@@ -208,7 +210,8 @@ open class ProjectRootManagerComponent(
   }
 
   protected open fun projectClosed() {
-    LocalFileSystem.getInstance().removeWatchedRoots(rootsToWatch)
+    watchTokens.forEach { it.close() }
+    watchTokens = emptyList()
   }
 
   private fun addRootsToWatch() {
@@ -254,7 +257,13 @@ open class ProjectRootManagerComponent(
         // dispose after the re-creating container to keep VFPs from disposing and re-creating back;
         // instead, update their usage count
         Disposer.dispose(oldDisposable)
-        rootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(rootsToWatch, watchRoots.first, watchRoots.second)
+        val service = WatchRoots.getInstance()
+        service.batch {
+          val previous = watchTokens
+          watchTokens = watchRoots.first.map { service.watch(it, true) } + watchRoots.second.map { service.watch(it, false) }
+          previous.forEach { it.close() }
+        }
+        watchedRootPaths = watchRoots
       }
       else {
         Disposer.dispose(newDisposable)
@@ -424,7 +433,7 @@ open class ProjectRootManagerComponent(
   override fun markRootsForRefresh(): List<VirtualFile> {
     val paths = CollectionFactory.createFilePathSet()
     collectModuleWatchRoots(paths, paths, logAllowed = false)
-    val roots = paths.mapNotNull(LocalFileSystem.getInstance()::findFileByPath)
+    val roots = paths.mapNotNull(StandardFileSystems.local()::findFileByPath)
     roots.asSequence()
       .filterIsInstance(NewVirtualFile::class.java)
       .forEach(NewVirtualFile::markDirtyRecursively)

@@ -41,9 +41,10 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -175,7 +176,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static VirtualFile synchronizeTempDirVfs(@NotNull Path tempDir) {
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(tempDir.toString()));
+    VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(tempDir.toString()));
     // null is ok, because Path can be only generated, but not created
     if (virtualFile != null) {
       synchronizeTempDirVfs(virtualFile);
@@ -711,7 +712,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected static @NotNull VirtualFile getVirtualFile(@NotNull File file) {
-    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+    return Objects.requireNonNull(StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath()));
   }
 
   protected final @NotNull File createTempDirectory() throws IOException {
@@ -866,6 +867,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   protected static @NotNull VirtualFile getOrCreateModuleDir(@NotNull Module module) throws IOException {
     Path moduleDir = module.getModuleNioFile().getParent();
     Files.createDirectories(moduleDir);
-    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleDir));
+    return Objects.requireNonNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(moduleDir));
   }
 }

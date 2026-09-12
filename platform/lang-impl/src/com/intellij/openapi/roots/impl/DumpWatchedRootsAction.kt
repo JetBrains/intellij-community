@@ -18,7 +18,8 @@ internal class DumpWatchedRootsAction : DumbAwareAction() {
     val projects = ProjectManager.getInstance().openProjects
     val roots2Project = MultiMap<Pair<String, Boolean>, Project>()
     for (project in projects) {
-      val roots = (ProjectRootManager.getInstance(project) as ProjectRootManagerComponent).rootsToWatch.map { it.rootPath to it.isToWatchRecursively }
+      val (recursiveRoots, flatRoots) = (ProjectRootManager.getInstance(project) as ProjectRootManagerComponent).watchedRootPaths
+      val roots = recursiveRoots.map { it to true } + flatRoots.map { it to false }
       for (root in roots) {
         roots2Project.putValue(root, project)
       }

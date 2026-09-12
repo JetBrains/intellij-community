@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -195,7 +196,7 @@ public final class VfsTestUtil {
 
   public static @NotNull VirtualFile findFileByCaseSensitivePath(@NotNull String absolutePath) {
     String vfsPath = FileUtil.toSystemIndependentName(absolutePath);
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(vfsPath);
+    VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(vfsPath);
     Assert.assertNotNull("file " + absolutePath + " not found", vFile);
     String realVfsPath = vFile.getPath();
     if (!vFile.isCaseSensitive() && !vfsPath.equals(realVfsPath) &&
