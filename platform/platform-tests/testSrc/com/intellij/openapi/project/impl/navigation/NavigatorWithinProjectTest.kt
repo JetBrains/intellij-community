@@ -4,6 +4,7 @@ package com.intellij.openapi.project.impl.navigation
 import com.intellij.navigation.LocationToOffsetConverter
 import com.intellij.navigation.NavigatorWithinProject
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.containers.ComparatorUtil.max
@@ -44,6 +45,18 @@ class NavigatorWithinProjectTest : NavigationTestBase() {
       assertThat(line).isEqualTo(0)
       assertThat(column).isEqualTo(0)
     }
+  }
+
+  @Test fun selectionRange() = runNavigationTest(
+    navigationAction = {
+      NavigatorWithinProject(
+        project,
+        mapOf("path" to "A.java:1:0", "selection" to "1:0-1:5"),
+        locationToOffsetAsLogicalPosition,
+      ).navigate(listOf(NavigatorWithinProject.NavigationKeyPrefix.PATH))
+    }
+  ) {
+    assertThat(FileEditorManager.getInstance(project).selectedTextEditor?.selectionModel?.selectedText).isEqualTo("class")
   }
 
   @Test fun pathNoColumn() = runNavigationTest(
