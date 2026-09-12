@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -205,7 +205,7 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
     final PsiManager psiManager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(() -> {
       final String path = FileUtil.toSystemIndependentName(extResources.getAbsolutePath());
-      final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      final VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
       LOG.assertTrue(vFile != null, path);
     }));
 
@@ -301,7 +301,7 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
                                             Project project) {
     final Ref<VirtualFile> ref = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-      ref.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(resPath.replace(File.separatorChar, '/')));
+      ref.set(StandardFileSystems.local().refreshAndFindFileByPath(resPath.replace(File.separatorChar, '/')));
       if (dtdUrl != null) {
         ExternalResourceManager.getInstance().addResource(dtdUrl, resPath);
       }
@@ -329,7 +329,7 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
             }
 
             for (String downloadedResource : downloadedResources) {
-              VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(downloadedResource));
+              VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(new File(downloadedResource).getAbsolutePath());
               if (virtualFile != null) {
                 try {
                   virtualFile.delete(this);

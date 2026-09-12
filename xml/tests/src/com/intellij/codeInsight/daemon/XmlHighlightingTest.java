@@ -45,7 +45,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -1324,7 +1324,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       files.add( virtualFile );
     }
 
-    for(VirtualFile file: LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + base.substring(0, base.length() - 1)).getChildren()) {
+    for(VirtualFile file: StandardFileSystems.local().findFileByPath(getTestDataPath() + base.substring(0, base.length() - 1)).getChildren()) {
       if (!usedFiles.contains(file)) {
         files.add(file);
       }

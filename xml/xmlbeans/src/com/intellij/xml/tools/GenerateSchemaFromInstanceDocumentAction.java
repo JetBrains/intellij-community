@@ -11,7 +11,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
@@ -116,7 +116,7 @@ final class GenerateSchemaFromInstanceDocumentAction extends AnAction {
 
     parameters.add(url);
     File xsd = new File(dirPath + File.separator + dialog.getTargetSchemaName());
-    final VirtualFile xsdFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(xsd);
+    final VirtualFile xsdFile = StandardFileSystems.local().refreshAndFindFileByPath(xsd.getAbsolutePath());
     if (xsdFile != null) {
         ApplicationManager.getApplication().runWriteAction(() -> {
           try {
@@ -155,7 +155,7 @@ final class GenerateSchemaFromInstanceDocumentAction extends AnAction {
       }
     }
 
-    VirtualFile xsdVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(xsd);
+    VirtualFile xsdVFile = StandardFileSystems.local().refreshAndFindFileByPath(xsd.getAbsolutePath());
     if (xsdVFile != null) {
       FileEditorManager.getInstance(project).openFile(xsdVFile, true);
     } else {

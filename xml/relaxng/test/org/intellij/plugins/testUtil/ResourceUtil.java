@@ -2,7 +2,7 @@
 package org.intellij.plugins.testUtil;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import junit.framework.TestCase;
 import org.intellij.plugins.relaxNG.HighlightingTestBase;
 import org.junit.Assert;
@@ -36,12 +36,12 @@ public final class ResourceUtil {
           Assert.assertEquals(files.size(), 1);
           final File destFile = new File(temp, FileUtil.getRelativePath(root, new File(root, target)));
           FileUtil.copy(files.get(0), destFile);
-          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
+          StandardFileSystems.local().refreshAndFindFileByPath(destFile.getAbsolutePath());
         } else {
           for (File file : files) {
             final File destFile = new File(temp, FileUtil.getRelativePath(root, file));
             FileUtil.copy(file, destFile);
-            LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
+            StandardFileSystems.local().refreshAndFindFileByPath(destFile.getAbsolutePath());
           }
         }
       }

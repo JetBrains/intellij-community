@@ -2,7 +2,7 @@
 package com.intellij.xml.tools
 
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -12,7 +12,7 @@ import org.assertj.core.api.Assertions.assertThat
  */
 class GenerateXmlFromXsdTest: LightJavaCodeInsightFixtureTestCase() {
   fun testErrorMessage() {
-    val file = LocalFileSystem.getInstance().findFileByPath("$testDataPath/vast4.xsd")
+    val file = StandardFileSystems.local().findFileByPath("$testDataPath/vast4.xsd")
     val dialog = GenerateInstanceDocumentFromSchemaDialog(project, file)
     try {
       GenerateInstanceDocumentFromSchemaAction.doAction(project, dialog)
@@ -25,7 +25,7 @@ class GenerateXmlFromXsdTest: LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testRelativePath() {
-    val file = LocalFileSystem.getInstance().findFileByPath("$testDataPath/top/top.xsd")
+    val file = StandardFileSystems.local().findFileByPath("$testDataPath/top/top.xsd")
     val dialog = GenerateInstanceDocumentFromSchemaDialog(project, file)
     GenerateInstanceDocumentFromSchemaAction.doAction(project, dialog)
     Disposer.dispose(dialog.disposable)

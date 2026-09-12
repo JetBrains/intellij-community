@@ -25,7 +25,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -118,7 +118,7 @@ public class ConvertSchemaAction extends AnAction {
       final IdeaErrorHandler errorHandler = new IdeaErrorHandler(project);
       new IdeaDriver(settings, project).convert(type, errorHandler, files);
 
-      final VirtualFile output = LocalFileSystem.getInstance().findFileByIoFile(new File(settings.getOutputDestination()));
+      final VirtualFile output = StandardFileSystems.local().findFileByPath(new File(settings.getOutputDestination()).getAbsolutePath());
       if (output != null) {
         output.refresh(false, true);
       }

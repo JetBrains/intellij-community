@@ -17,7 +17,7 @@
 package org.intellij.plugins.relaxNG;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -72,7 +72,7 @@ public class RncRenameTest extends HighlightingTestBase {
 
     String fullPath = myTestFixture.getTempDirPath() + "/" + "rename-in-include-ref.rnc";
 
-    final VirtualFile copy = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
+    final VirtualFile copy = StandardFileSystems.local().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
     assert copy != null : "file " + fullPath + " not found";
 
     final PsiFile file = PsiManager.getInstance(project).findFile(copy);

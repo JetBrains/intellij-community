@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AddEditRemovePanel;
 import com.intellij.ui.table.JBTable;
@@ -270,7 +270,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
         if (jarDelimIndex != -1) {
           path = JarFileSystem.getInstance().findFileByPath(loc);
         } else {
-          path = LocalFileSystem.getInstance().findFileByPath(loc);
+          path = StandardFileSystems.local().findFileByPath(loc);
         }
         Color fg = isSelected ? UIUtil.getTableSelectionForeground(hasFocus) : UIUtil.getTableForeground();
         setForeground(path != null ? fg : new Color(210, 0, 0));

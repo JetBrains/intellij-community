@@ -2,7 +2,7 @@
 package com.intellij.psi.resolve;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
@@ -29,7 +29,7 @@ public class XmlResolve2Test extends JavaResolveTestCase {
 
   protected void configByFile() throws Exception {
     final String fullPath = BASE_PATH + getTestName(false) + ".xml";
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    final VirtualFile vFile = StandardFileSystems.local().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("file " + fullPath + " not found", vFile);
 
     String fileText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vFile));

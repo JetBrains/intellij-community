@@ -2,7 +2,7 @@
 package com.intellij.javaee
 
 import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -38,7 +38,7 @@ internal class ExternalResourcesRootsProvider : IndexableSetContributor() {
     val roots = HashSet<VirtualFile>(standardResources.size + 1)
     roots.addAll(standardResources)
     val path = FetchExtResourceAction.getExternalResourcesPath()
-    val extResources = LocalFileSystem.getInstance().findFileByPath(path)
+    val extResources = StandardFileSystems.local().findFileByPath(path)
     if (extResources != null) {
       roots.add(extResources)
     }

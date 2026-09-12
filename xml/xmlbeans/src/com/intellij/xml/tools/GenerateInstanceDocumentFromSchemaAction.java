@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -147,7 +147,7 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
       FileUtil.writeToFile(xmlFile, xml);
 
       VirtualFile virtualFile =
-        WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(xmlFile));
+        WriteAction.compute(() -> StandardFileSystems.local().refreshAndFindFileByPath(xmlFile.getAbsolutePath()));
       FileEditorManager.getInstance(project).openFile(virtualFile, true);
     }
     catch (IOException e) {
