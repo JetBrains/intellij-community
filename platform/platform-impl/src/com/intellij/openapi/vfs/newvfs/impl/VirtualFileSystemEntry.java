@@ -711,11 +711,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     owningPersistentFS().incStructuralModificationCount();
   }
 
-  @Override
-  public boolean isInLocalFileSystem() {
-    return getFileSystem().isLocal();
-  }
-
   private static final class DebugInvalidation {
     private static final Logger LOG = Logger.getInstance(VirtualFileSystemEntry.class);
     private static final boolean DEBUG = LOG.isDebugEnabled();

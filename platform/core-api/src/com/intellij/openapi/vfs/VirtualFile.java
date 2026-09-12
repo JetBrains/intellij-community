@@ -682,7 +682,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   ///
   /// @return true if the owning file system reports [VirtualFileSystem#isLocal()] (**including temporary!**)
   public boolean isInLocalFileSystem() {
-    return false;
+    return getFileSystem().isLocal();
   }
 
   private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
