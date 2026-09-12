@@ -1,12 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
-
-### auto-generated section `dev intellij.libraries.oshi.core` start
-content_module_jar(
-    libraries = ["@lib//:libraries-oshi-core-github-oshi-core"],
-    module = ":oshi-core",
-)
-### auto-generated section `dev intellij.libraries.oshi.core` end
 
 ### auto-generated section `build intellij.libraries.oshi.core` start
 jvm_library(

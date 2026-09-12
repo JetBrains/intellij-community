@@ -33,7 +33,6 @@
     <module name="intellij.libraries.netty.codec.http"/>
     <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.libraries.opentelemetry.semconv"/>
-    <module name="intellij.libraries.oshi.core"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.codeStyle"/>
@@ -90,6 +89,9 @@
     <module name="intellij.driver.backend.split"/>
     <module name="intellij.performanceTesting.async.core"/>
     <module name="intellij.performanceTesting.freezes"/>
+    <!-- oshi backs HardwareCollector. The platform no longer ships it, so this plugin owns it in a product.
+         It stays in the 'jetbrains' namespace because the test tooling content modules of other plugins depend on it -->
+    <module name="intellij.libraries.oshi.core" loading="embedded"/>
   </content>
   <content>
     <module name="intellij.libraries.assertj.core" loading="embedded"/>

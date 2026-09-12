@@ -179,10 +179,12 @@ dev_dist_plugin(
         # do not sort,
         "intellij.libraries.assertj.core",
         "intellij.libraries.assertj.swing",
+        "intellij.libraries.oshi.core",
     ],
     libraries = [
         "@lib//:libraries-assertj-core-assert_j",
         "@lib//:libraries-assertj-swing-assertj-swing",
+        "@lib//:libraries-oshi-core-github-oshi-core",
     ],
     main_module = "intellij.performanceTesting",
     module_targets = MODULE_TARGETS,

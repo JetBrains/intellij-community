@@ -383,7 +383,6 @@ object CommunityModuleSets {
     module("intellij.libraries.okhttp")
     module("intellij.libraries.lucene.common")
     module("intellij.libraries.jettison")
-    module("intellij.libraries.oshi.core")
     module("intellij.libraries.xstream")
     module("intellij.libraries.commons.text")
   }
