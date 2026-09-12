@@ -571,6 +571,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       if (scopeOwner is PyClass && isCustomEnum(scopeOwner, myTypeEvalContext)) {
         val info = getEnumAttributeInfo(scopeOwner, node, myTypeEvalContext)
         if (info == null || info.attributeKind != PyStdlibTypeProvider.EnumAttributeKind.MEMBER) return
+        if (PyStdlibTypeProvider.hasCustomMemberConstruction(scopeOwner, myTypeEvalContext)) return
 
         val expected = getEnumValueType(scopeOwner, myTypeEvalContext)
         // `assignedValueType` is the member value type produced by the enum's metaclass/constructor. For enums that

@@ -166,6 +166,62 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-91925"])
+    fun `custom new receives the member value`() = test("""
+      from enum import StrEnum
+
+      class Greeting(StrEnum):
+          def __new__(cls, value: str, is_fancy: bool = False):
+              obj = str.__new__(cls, value)
+              obj._value_ = value
+      #           ^^^^^^^ WARNING Unresolved attribute reference '_value_' for class 'str' FIXME # `str.__new__(cls)` must be `Self`
+              return obj
+
+          ONE = "Hello", True
+          TWO = "World"
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92177"])
+    fun `custom metaclass new keeps the member value check`() = test("""
+      from enum import EnumType, StrEnum
+
+      class LabelledType(EnumType):
+          def __new__(metacls, classname, bases, classdict, **kwds):
+              return super().__new__(metacls, classname, bases, classdict, **kwds)
+
+      class Labelled(StrEnum, metaclass=LabelledType):
+          pass
+
+      class Provider(Labelled):
+          OTHER = "other", "Other" # WARNING Expected type 'str', got 'tuple[Literal["other"], Literal["Other"]]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92177"])
+    fun `django choices metaclass drops the member label`() {
+      myFixture.addFileToProject("django/db/models/enums.py", """
+        import enum
+
+        class ChoicesType(enum.EnumType):
+            def __new__(metacls, classname, bases, classdict, **kwds):
+                return super().__new__(metacls, classname, bases, classdict, **kwds)
+
+        class Choices(enum.Enum, metaclass=ChoicesType):
+            pass
+
+        class TextChoices(str, Choices):
+            pass
+        """.trimIndent())
+      test("""
+        from django.db.models.enums import TextChoices
+
+        class Provider(TextChoices):
+            OTHER = "other", "Other"
+        """.trimIndent())
+    }
+
+    @Test
     @TestFor(issues = ["PY-37455"])
     fun `member name in the class body refers to the assigned value`() = test("""
       from enum import Enum

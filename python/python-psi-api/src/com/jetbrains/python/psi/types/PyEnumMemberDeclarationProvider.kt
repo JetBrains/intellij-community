@@ -20,6 +20,12 @@ interface PyEnumMemberDeclarationProvider {
    */
   fun getMemberValueType(enumClass: PyClass, valueExpression: PyExpression, context: TypeEvalContext): Ref<PyType>?
 
+  /**
+   * Whether this provider models how [enumClass] builds its member values.
+   * Then the member values of [enumClass] are checked even though its metaclass or constructor is custom.
+   */
+  fun isApplicable(enumClass: PyClass, context: TypeEvalContext): Boolean = false
+
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<PyEnumMemberDeclarationProvider> =
