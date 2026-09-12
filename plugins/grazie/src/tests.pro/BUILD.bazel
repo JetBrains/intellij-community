@@ -97,6 +97,8 @@ jvm_library(
         "@lib//:grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-uk",
         "@lib//:grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-ru",
         "@lib//:grazie-tests-pro-jetbrains-intellij-deps-languagetool-core",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
         "//python/python-grazie:grazie",
         "//python/python-grazie:grazie_test_lib",
         "//plugins/grazie",

@@ -20,8 +20,6 @@
           </verification>
           <exclude>
             <dependency maven-id="io.opentelemetry:opentelemetry-api" />
-            <dependency maven-id="io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi" />
-            <dependency maven-id="io.opentelemetry:opentelemetry-api-incubator" />
           </exclude>
         </properties>
         <CLASSES>

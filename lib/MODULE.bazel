@@ -3368,27 +3368,6 @@ http_file(
 )
 
 http_file(
-    name = "io_opentelemetry-opentelemetry-api-1_42_1_http",
-    downloaded_file_path = "opentelemetry-api-1.42.1.jar",
-    sha256 = "6b0f9d067260ea3ed6c3960352b80800b993cb3962fa6fb1b6383cd04c3c0874",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-api/1.42.1/opentelemetry-api-1.42.1.jar",
-)
-
-http_file(
-    name = "io_opentelemetry-opentelemetry-context-1_42_1_http",
-    downloaded_file_path = "opentelemetry-context-1.42.1.jar",
-    sha256 = "fc8f47bc94bec89a3dbdbcf631470fb7fd7d3e628b10d43bc376f17ebde4b405",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-context/1.42.1/opentelemetry-context-1.42.1.jar",
-)
-
-http_file(
-    name = "io_opentelemetry-opentelemetry-semconv-1_30_1-alpha_http",
-    downloaded_file_path = "opentelemetry-semconv-1.30.1-alpha.jar",
-    sha256 = "aaa73f6c6a3a67cdc07870387383808826d8dae7a84e47cae182b7a88a08e513",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-semconv/1.30.1-alpha/opentelemetry-semconv-1.30.1-alpha.jar",
-)
-
-http_file(
     name = "io_grpc-grpc-netty-shaded-1_75_0_http",
     downloaded_file_path = "grpc-netty-shaded-1.75.0.jar",
     sha256 = "d33d47a9720a392512c4e4ceaa17a458a0e3ed6188d17e98d6c4faf0679374d7",
@@ -3883,27 +3862,6 @@ http_file(
     downloaded_file_path = "resilience4j-micrometer-1.7.1-sources.jar",
     sha256 = "544e519c6a8195aebeff16e9edcf5bdc4b46d4e69b2482e4f03d329f4a7a3cf6",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/resilience4j/resilience4j-micrometer/1.7.1/resilience4j-micrometer-1.7.1-sources.jar",
-)
-
-http_file(
-    name = "io_opentelemetry-opentelemetry-api-1_42_1-sources_http",
-    downloaded_file_path = "opentelemetry-api-1.42.1-sources.jar",
-    sha256 = "0c3c8c37171fa4eb7e2201cb575fee8ae5eb681890b849e3ef42c7d793eec841",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-api/1.42.1/opentelemetry-api-1.42.1-sources.jar",
-)
-
-http_file(
-    name = "io_opentelemetry-opentelemetry-context-1_42_1-sources_http",
-    downloaded_file_path = "opentelemetry-context-1.42.1-sources.jar",
-    sha256 = "143f5c77ced023235554da06e4c39b732d995f9599bf518bf4dae4a1bc9ae0bc",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-context/1.42.1/opentelemetry-context-1.42.1-sources.jar",
-)
-
-http_file(
-    name = "io_opentelemetry-opentelemetry-semconv-1_30_1-alpha-sources_http",
-    downloaded_file_path = "opentelemetry-semconv-1.30.1-alpha-sources.jar",
-    sha256 = "d7ad53010a998fae1ff259a664235fa9174b4ff95d2bce6e77458a2e3524b8bb",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-semconv/1.30.1-alpha/opentelemetry-semconv-1.30.1-alpha-sources.jar",
 )
 
 http_file(

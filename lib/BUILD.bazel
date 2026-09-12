@@ -4250,30 +4250,6 @@ copy_file(
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-api-1.42.1.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-api-1_42_1_http//file",
-    out = "io.opentelemetry/opentelemetry-api-1.42.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.opentelemetry/opentelemetry-context-1.42.1.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-context-1_42_1_http//file",
-    out = "io.opentelemetry/opentelemetry-context-1.42.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.opentelemetry/opentelemetry-semconv-1.30.1-alpha.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-semconv-1_30_1-alpha_http//file",
-    out = "io.opentelemetry/opentelemetry-semconv-1.30.1-alpha.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "io.grpc/grpc-netty-shaded-1.75.0.jar_copy",
     src = "@io_grpc-grpc-netty-shaded-1_75_0_http//file",
     out = "io.grpc/grpc-netty-shaded-1.75.0.jar",
@@ -4659,9 +4635,6 @@ java_library(
         ":io_vavr-vavr-match-0_10_2_http_import",
         ":io_github_resilience4j-resilience4j-core-1_7_1_http_import",
         ":io_github_resilience4j-resilience4j-micrometer-1_7_1_http_import",
-        ":io_opentelemetry-opentelemetry-api-1_42_1_http_import",
-        ":io_opentelemetry-opentelemetry-context-1_42_1_http_import",
-        ":io_opentelemetry-opentelemetry-semconv-1_30_1-alpha_http_import",
         ":io_grpc-grpc-netty-shaded-1_75_0_http_import",
         ":io_grpc-grpc-util-1_75_0_http_import",
         ":io_grpc-grpc-core-1_75_0_http_import",
@@ -4883,24 +4856,6 @@ jvm_import(
     name = "io_github_resilience4j-resilience4j-micrometer-1_7_1_http_import",
     jar = "@io_github_resilience4j-resilience4j-micrometer-1_7_1_http//file",
     source_jar = "@io_github_resilience4j-resilience4j-micrometer-1_7_1-sources_http//file",
-)
-
-jvm_import(
-    name = "io_opentelemetry-opentelemetry-api-1_42_1_http_import",
-    jar = "@io_opentelemetry-opentelemetry-api-1_42_1_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-api-1_42_1-sources_http//file",
-)
-
-jvm_import(
-    name = "io_opentelemetry-opentelemetry-context-1_42_1_http_import",
-    jar = "@io_opentelemetry-opentelemetry-context-1_42_1_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-context-1_42_1-sources_http//file",
-)
-
-jvm_import(
-    name = "io_opentelemetry-opentelemetry-semconv-1_30_1-alpha_http_import",
-    jar = "@io_opentelemetry-opentelemetry-semconv-1_30_1-alpha_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-semconv-1_30_1-alpha-sources_http//file",
 )
 
 jvm_import(
