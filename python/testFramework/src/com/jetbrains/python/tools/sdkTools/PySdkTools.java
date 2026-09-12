@@ -17,7 +17,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkExtKt;
@@ -155,7 +155,7 @@ public final class PySdkTools {
   }
 
   public static void addTestSdkRoot(@NotNull SdkModificator sdkModificator, @NotNull String path) {
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+    final VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path);
     if (file != null) {
       sdkModificator.addRoot(PythonSdkType.getSdkRootVirtualFile(file), OrderRootType.CLASSES);
     }

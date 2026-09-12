@@ -10,8 +10,8 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isNonToolVirtualEnv
@@ -81,7 +81,7 @@ var Project.pythonSdk: Sdk?
 @Internal
 fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
   val root = sdk.pythonInterpreter().pythonHomePath?.let {
-    LocalFileSystem.getInstance().findFileByNioFile(it)
+    VirtualFileManager.getInstance().findFileByNioPath(it)
   } ?: return
 
   runInEdt {

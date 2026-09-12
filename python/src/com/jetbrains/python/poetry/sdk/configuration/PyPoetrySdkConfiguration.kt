@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
@@ -155,7 +155,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
       val path = poetry.resolvePythonBinary()
                  ?: return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", poetry))
 
-      val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.pathString)
+      val file = StandardFileSystems.local().refreshAndFindFileByPath(path.pathString)
                  ?: return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", path))
 
       LOGGER.debug("Setting up associated poetry environment: $path, $basePath")

@@ -39,7 +39,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil.writeField
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -226,7 +226,7 @@ private fun getElementByUrl(
   matcher: Matcher = PATH_URL.matcher(protocol),
   metainfo: String? = null,
 ): Location<out PsiElement>? = runReadAction {
-  val folder = getFolderFromMatcher(matcher, module)?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+  val folder = getFolderFromMatcher(matcher, module)?.let { StandardFileSystems.local().findFileByPath(it) }
 
   val qualifiedName = QualifiedName.fromDottedString(path)
   // Assume qname id good and resolve it directly
@@ -406,7 +406,7 @@ data class ConfigurationTarget(
     val qNameResolveContext = QNameResolveContext(
       contextAnchor = ModuleBasedContextAnchor(configuration.module!!),
       evalContext = context,
-      folderToStart = LocalFileSystem.getInstance().findFileByPath(configuration.workingDirectorySafe),
+      folderToStart = StandardFileSystems.local().findFileByPath(configuration.workingDirectorySafe),
       allowInaccurateResult = true
     )
     val qualifiedNameParts = QualifiedName.fromDottedString(target.trim()).tryResolveAndSplit(qNameResolveContext)
@@ -562,7 +562,7 @@ abstract class PyAbstractTestConfiguration(
    */
   internal fun getWorkingDirectoryAsVirtual(): VirtualFile? {
     if (!workingDirectory.isNullOrEmpty()) {
-      return LocalFileSystem.getInstance().findFileByPath(workingDirectory)
+      return StandardFileSystems.local().findFileByPath(workingDirectory)
     }
     return null
   }

@@ -7,8 +7,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.execService.BinOnEel
@@ -129,7 +129,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     }
 
   private suspend fun getEnvironmentYml(pyProject: PyProject) = CondaEnvironmentYmlSdkUtils.envFileNames.firstNotNullOfOrNull {
-    pyProject.resolveFile(it)?.let { LocalFileSystem.getInstance().findFileByNioFile(it) }
+    pyProject.resolveFile(it)?.let { VirtualFileManager.getInstance().findFileByNioPath(it) }
   }
 
   private suspend fun createAndAddSdk(pyProject: PyProject, envExists: Boolean): PyResult<Sdk> {

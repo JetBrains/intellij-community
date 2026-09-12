@@ -8,8 +8,8 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -41,7 +41,7 @@ internal fun createPsiFileOnDisk(
   return timeoutRunBlocking {
     val vFile: VirtualFile = withContext(Dispatchers.EDT) {
       edtWriteAction {
-        checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nioFile)) {
+        checkNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(nioFile)) {
           "Failed to refresh VFS for $nioFile"
         }
       }

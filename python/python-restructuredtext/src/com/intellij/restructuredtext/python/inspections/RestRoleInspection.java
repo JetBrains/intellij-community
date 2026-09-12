@@ -9,7 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -72,7 +72,7 @@ public final class RestRoleInspection extends RestInspection {
     }
 
     private void fillSphinxRoles(String dir, Project project) {
-      VirtualFile config = LocalFileSystem.getInstance().findFileByPath((dir.endsWith("/")?dir:dir+"/")+"conf.py");
+      VirtualFile config = StandardFileSystems.local().findFileByPath((dir.endsWith("/")?dir:dir+"/")+"conf.py");
       if (config == null) return;
 
       PsiFile configFile = PsiManager.getInstance(project).findFile(config);

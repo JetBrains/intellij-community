@@ -2,7 +2,7 @@
 package com.jetbrains.python.debugger.remote.vfs;
 
 import com.google.common.collect.Maps;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -43,10 +43,10 @@ public final class PyRemoteDebugVirtualFS extends VirtualFileSystem {
   @Override
   public VirtualFile findFileByPath(@NotNull @NonNls String path) {
     String localPath = myPathMapper.convertToLocal(path);
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(localPath);
+    VirtualFile file = StandardFileSystems.local().findFileByPath(localPath);
 
     if (file == null) {
-      file = PyLocalPositionConverter.findEggEntry(LocalFileSystem.getInstance(), localPath);
+      file = PyLocalPositionConverter.findEggEntry(StandardFileSystems.local(), localPath);
     }
 
     if (file == null) {

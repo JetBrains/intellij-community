@@ -2,8 +2,8 @@
 package com.intellij.restructuredtext.python.run.sphinx;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.restructuredtext.python.run.RestCommandLineState;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
@@ -25,7 +25,7 @@ public class SphinxCommandLineState extends RestCommandLineState {
     return () -> {
       VirtualFile virtualFile = findOutput();
       if (virtualFile != null)
-        LocalFileSystem.getInstance().refreshFiles(Collections.singleton(virtualFile), false, true, null);
+        RefreshQueue.getInstance().refresh(false, true, null, Collections.singleton(virtualFile));
     };
   }
 

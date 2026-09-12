@@ -13,8 +13,8 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import java.net.URI
 import java.net.URISyntaxException
 import java.nio.file.FileSystemNotFoundException
@@ -129,7 +129,7 @@ private fun resolveLocalFile(urlReference: String?): VirtualFile? {
   catch (_: FileSystemNotFoundException) { // no provider for the URI scheme
     return null
   }
-  return LocalFileSystem.getInstance().findFileByNioFile(path)
+  return VirtualFileManager.getInstance().findFileByNioPath(path)
 }
 
 /**
@@ -146,8 +146,8 @@ private fun resolveLocalPath(pathElement: PsiElement): VirtualFile? {
   catch (_: InvalidPathException) {
     return null
   }
-  val lfs = LocalFileSystem.getInstance()
-  if (nioPath.isAbsolute) return lfs.findFileByNioFile(nioPath)
+  val fileManager = VirtualFileManager.getInstance()
+  if (nioPath.isAbsolute) return fileManager.findFileByNioPath(nioPath)
 
   val baseDir = InjectedLanguageManager.getInstance(pathElement.project)
                   .getTopLevelFile(pathElement)?.virtualFile?.parent ?: return null
@@ -157,7 +157,7 @@ private fun resolveLocalPath(pathElement: PsiElement): VirtualFile? {
   catch (_: UnsupportedOperationException) { // base file has no local nio path
     return null
   }
-  return lfs.findFileByNioFile(resolved)
+  return fileManager.findFileByNioPath(resolved)
 }
 
 private class LocalRequirementReference(

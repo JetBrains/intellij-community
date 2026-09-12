@@ -15,7 +15,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.restructuredtext.RestBundle;
 import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
@@ -184,7 +184,7 @@ public class SphinxBaseCommand {
   protected @Nullable Runnable getAfterTask(final Module module) {
     return () -> {
       final ReSTService service = ReSTService.getInstance(module);
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(service.getWorkdir());
+      StandardFileSystems.local().refreshAndFindFileByPath(service.getWorkdir());
     };
   }
 

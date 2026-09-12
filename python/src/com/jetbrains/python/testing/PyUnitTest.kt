@@ -10,7 +10,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
@@ -55,7 +55,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
   override fun getCustomRawArgumentsString(forRerun: Boolean): String {
     // Pattern can only be used with folders ("all in folder" in legacy terms)
     if ((!pattern.isNullOrEmpty()) && target.targetType != PyRunTargetVariant.CUSTOM) {
-      val path = LocalFileSystem.getInstance().findFileByPath(target.target) ?: return ""
+      val path = StandardFileSystems.local().findFileByPath(target.target) ?: return ""
       // "Pattern" works only for "discovery" mode and for "rerun" we are using "python" targets ("concrete" tests)
       return if (path.isDirectory && !forRerun) "-p $pattern" else ""
     }

@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -103,7 +103,7 @@ class RuffDisableRuleIntentionAction(private val ruleCode: String) : BaseIntenti
     val candidateDirs = mutableListOf<VirtualFile>()
     contextFile?.virtualFile?.parent?.let { candidateDirs.add(it) }
     project.basePath?.let { base ->
-      LocalFileSystem.getInstance().findFileByPath(base)?.let { baseDir ->
+      StandardFileSystems.local().findFileByPath(base)?.let { baseDir ->
         if (candidateDirs.none { it.path == baseDir.path }) candidateDirs.add(baseDir)
       }
     }

@@ -2,7 +2,7 @@
 package com.jetbrains.python
 
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 
 /**
@@ -13,7 +13,7 @@ class FoldersComponentTools(private val folders: MutableList<VirtualFile>) {
   fun setFoldersAsStrings(folders: List<String>) {
     this.folders.apply {
       clear()
-      addAll(folders.mapNotNull { LocalFileSystem.getInstance().findFileByPath(it) })
+      addAll(folders.mapNotNull { StandardFileSystems.local().findFileByPath(it) })
     }
   }
 

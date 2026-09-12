@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
@@ -75,7 +75,7 @@ public final class PyExtractSuperclassPresenterImpl extends MembersBasedPresente
     // TODO: Cover with test. It can't be done for now, because testFixture reports root path incorrectly
     // PY-12173
     myView.getModuleFile();
-    final VirtualFile moduleVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(moduleFile);
+    final VirtualFile moduleVirtualFile = StandardFileSystems.local().findFileByPath(moduleFile.getAbsolutePath());
     if (moduleVirtualFile != null) {
       final PyFile pyFile = getPyFile(project, moduleVirtualFile);
       if (pyFile != null) {

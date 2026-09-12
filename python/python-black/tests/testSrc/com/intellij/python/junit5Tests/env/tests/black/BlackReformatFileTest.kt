@@ -6,8 +6,8 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -117,7 +117,7 @@ internal class BlackReformatFileTest {
     val psiFile: PsiFile = timeoutRunBlocking {
       val vf: VirtualFile = withContext(Dispatchers.EDT) {
         edtWriteAction {
-          checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nioFile)) {
+          checkNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(nioFile)) {
             "Failed to refresh VFS for $nioFile"
           }
         }

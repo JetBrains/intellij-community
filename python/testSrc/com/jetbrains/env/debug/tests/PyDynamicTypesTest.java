@@ -3,7 +3,7 @@ package com.jetbrains.env.debug.tests;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EdtTestUtil;
@@ -49,7 +49,7 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
       }
 
       private VirtualFile getVirtualFile() {
-        return LocalFileSystem.getInstance()
+        return StandardFileSystems.local()
           .refreshAndFindFileByPath(
             getTestDataPath() +
             "/dynamicTypes/" +

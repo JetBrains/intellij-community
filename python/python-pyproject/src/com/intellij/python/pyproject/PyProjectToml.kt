@@ -7,8 +7,8 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
@@ -223,7 +223,7 @@ data class PyProjectToml internal constructor(
      * Returns null if not found.
      */
     suspend fun findPyProjectTomlFile(module: Module): PyProjectTomlFile? {
-      return module.asPyProject()?.resolveFile(PY_PROJECT_TOML)?.let { LocalFileSystem.getInstance().findFileByNioFile(it) }
+      return module.asPyProject()?.resolveFile(PY_PROJECT_TOML)?.let { VirtualFileManager.getInstance().findFileByNioPath(it) }
         ?.let { PyProjectTomlFile(it) }
     }
   }

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -70,7 +70,7 @@ public class PythonUnitTestTestIdUrlProvider implements SMTestLocator, DumbAware
     }
     final List<Location> locations = new ArrayList<>();
     if (methodName == null && className == null) {
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
+      final VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(fileName);
       if (virtualFile == null) return locations;
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       if (psiFile != null) {

@@ -16,7 +16,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyPackageUtil;
@@ -93,7 +93,7 @@ public class SetupTaskChooserAction extends AnAction {
       task.setRunnerScript(virtualFile.getPath());
       task.setWorkingDirectory(virtualFile.getParent().getPath());
       task.setParameters(parameters);
-      task.setAfterCompletion(() -> LocalFileSystem.getInstance().refresh(true));
+      task.setAfterCompletion(() -> StandardFileSystems.local().refresh(true));
       task.run(null, null);
     }
     catch (ExecutionException ee) {

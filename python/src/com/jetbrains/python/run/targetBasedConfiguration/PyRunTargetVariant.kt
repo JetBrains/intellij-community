@@ -4,7 +4,7 @@
 package com.jetbrains.python.run.targetBasedConfiguration
 
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
@@ -31,7 +31,7 @@ enum class PyRunTargetVariant(@Nls private val customName: String? = null) {
 fun targetAsPsiElement(targetType: PyRunTargetVariant,
                        target: String,
                        configuration: AbstractPythonRunConfiguration<*>,
-                       workingDirectory: VirtualFile? = LocalFileSystem.getInstance().findFileByPath(
+                       workingDirectory: VirtualFile? = StandardFileSystems.local().findFileByPath(
                          configuration.getWorkingDirectorySafe()))
   : PsiElement? {
   if (targetType == PyRunTargetVariant.PYTHON) {
@@ -51,7 +51,7 @@ fun targetAsPsiElement(targetType: PyRunTargetVariant,
  */
 fun targetAsVirtualFile(targetType: PyRunTargetVariant, target: String): VirtualFile? {
   if (targetType == PyRunTargetVariant.PATH) {
-    return LocalFileSystem.getInstance().findFileByPath(target)
+    return StandardFileSystems.local().findFileByPath(target)
   }
   return null
 }

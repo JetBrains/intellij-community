@@ -17,7 +17,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
@@ -373,7 +373,7 @@ class PySdkPathsTest {
 
     updateSdkPaths(sdk)
 
-    val skeletonsDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(PythonSdkUtil.getSkeletonsPath(sdk)!!)
+    val skeletonsDir = StandardFileSystems.local().refreshAndFindFileByPath(PythonSdkUtil.getSkeletonsPath(sdk)!!)
     assertThat(skeletonsDir).describedAs("SDK skeletons directory should exist after the update").isNotNull
     assertThat(sdk.rootProvider.getFiles(OrderRootType.CLASSES))
       .describedAs("SDK-owned skeletons root under a content root must not be dropped (PY-90400)")
@@ -426,8 +426,8 @@ class PySdkPathsTest {
   }
 
   private fun createModule(name: String = "module"): Pair<Module, VirtualFile> {
-    val moduleRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
-      FileUtil.createTempDirectory("my", "project", false)
+    val moduleRoot = StandardFileSystems.local().refreshAndFindFileByPath(
+      FileUtil.createTempDirectory("my", "project", false).absolutePath
     )!!.also { deleteOnTearDown(it) }
 
     val module = projectModel.createModule(name)

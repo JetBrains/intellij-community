@@ -5,7 +5,7 @@ package com.jetbrains.python.packaging
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.util.SystemProperties
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
@@ -35,7 +35,7 @@ private val LOG = Logger.getInstance("#com.jetbrains.python.packaging")
 @ApiStatus.Internal
 
 fun getCondaBasePython(systemCondaExecutable: String): String? {
-  val condaFile = LocalFileSystem.getInstance().findFileByPath(systemCondaExecutable)
+  val condaFile = StandardFileSystems.local().findFileByPath(systemCondaExecutable)
   if (condaFile != null) {
     val condaDir = if (SystemInfo.isWindows) condaFile.parent.parent else condaFile.parent
     val python = condaDir.findChild(getPythonName())

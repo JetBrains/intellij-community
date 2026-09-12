@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.pytools.backend.PyTool
@@ -202,7 +203,7 @@ fun PythonInterpreter.venvLibDirectory(): VirtualFile? {
   val classRoots = sdkClassRoots
   // Empty in case of a temporary empty SDK created to install package management.
   if (classRoots.isEmpty()) {
-    return LocalFileSystem.getInstance().findFileByNioFile(libRoot)
+    return VirtualFileManager.getInstance().findFileByNioPath(libRoot)
   }
   for (file in classRoots) {
     if (file.toNioPath() == libRoot) return file

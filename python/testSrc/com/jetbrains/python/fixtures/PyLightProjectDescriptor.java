@@ -6,7 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk;
@@ -68,7 +68,7 @@ public class PyLightProjectDescriptor extends LightProjectDescriptor {
   protected static void createLibrary(ModifiableRootModel model, final String name, final String path) {
     final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary(name).getModifiableModel();
     final VirtualFile home =
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManager.getHomePath() + path);
+      StandardFileSystems.local().refreshAndFindFileByPath(PathManager.getHomePath() + path);
 
     modifiableModel.addRoot(home, OrderRootType.CLASSES);
     modifiableModel.commit();

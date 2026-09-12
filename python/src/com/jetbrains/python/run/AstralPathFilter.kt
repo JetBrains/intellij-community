@@ -5,7 +5,7 @@ import com.intellij.execution.filters.FileHyperlinkInfoBase
 import com.intellij.execution.filters.Filter
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
@@ -48,7 +48,7 @@ internal class AstralPathFilter(private val project: Project, private val workin
   }
 
   private fun findFileByName(fileName: String): VirtualFile? {
-    val fs = LocalFileSystem.getInstance()
+    val fs = StandardFileSystems.local()
 
     // Try as absolute path first
     var vFile = fs.findFileByPath(fileName)

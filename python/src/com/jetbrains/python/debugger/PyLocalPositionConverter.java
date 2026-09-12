@@ -7,7 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -119,7 +119,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   protected VirtualFileSystem getLocalFileSystem() {
-    return LocalFileSystem.getInstance();
+    return StandardFileSystems.local();
   }
 
   public static @Nullable VirtualFile findEggEntry(@NotNull VirtualFileSystem virtualFileSystem, @NotNull String file) {

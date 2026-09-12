@@ -4,8 +4,8 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import org.jetbrains.annotations.ApiStatus
 
@@ -16,4 +16,4 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 suspend fun Project.getModuleRoots(): Set<VirtualFile> =
-  getPyProjects().mapNotNull { LocalFileSystem.getInstance().findFileByNioFile(it.baseDir) }.toSet()
+  getPyProjects().mapNotNull { VirtualFileManager.getInstance().findFileByNioPath(it.baseDir) }.toSet()

@@ -37,7 +37,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -507,7 +507,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
 
   private void printHyperlink(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
     if (!StringUtil.isEmpty(text)) {
-      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(text.trim());
+      VirtualFile vFile = StandardFileSystems.local().findFileByPath(text.trim());
 
       if (vFile != null) {
         OpenFileHyperlinkInfo hyperlink = new OpenFileHyperlinkInfo(getProject(), vFile, -1);

@@ -30,7 +30,7 @@ import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
@@ -536,7 +536,7 @@ private fun resolveVirtualFile(node: DefaultMutableTreeNode, basePath: String): 
   if (pathParts.any { it == null }) return null
   val fullPath = if (pathParts.isEmpty()) basePath
   else "$basePath/${pathParts.asReversed().joinToString("/")}"
-  return LocalFileSystem.getInstance().findFileByPath(fullPath)
+  return StandardFileSystems.local().findFileByPath(fullPath)
 }
 
 private class SelectInProjectViewAction : AnAction(

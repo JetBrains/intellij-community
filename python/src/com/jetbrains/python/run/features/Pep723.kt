@@ -3,8 +3,8 @@ package com.jetbrains.python.run.features
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.eel.fs.EelFiles
 import java.io.IOException
 import java.nio.file.Path
@@ -43,7 +43,7 @@ internal fun hasInlineScriptMetadata(text: CharSequence): Boolean {
  */
 internal fun hasInlineScriptMetadata(path: Path): Boolean {
   val text = try {
-    val file = LocalFileSystem.getInstance().findFileByNioFile(path)
+    val file = VirtualFileManager.getInstance().findFileByNioPath(path)
     when {
       file == null -> EelFiles.readString(path)
       else -> FileDocumentManager.getInstance().getCachedDocument(file)?.text ?: VfsUtilCore.loadText(file)

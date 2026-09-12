@@ -4,7 +4,7 @@ package com.jetbrains.python.run
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.RawCommandLineEditor
@@ -60,7 +60,7 @@ internal class PythonRunConfigurationPanel(configuration: PythonRunConfiguration
       null
     }
     else {
-      { LocalFileSystem.getInstance().findFileByPath(workingDirectory)!! }
+      { StandardFileSystems.local().findFileByPath(workingDirectory)!! }
     }
 
     moduleField = PySymbolFieldWithBrowseButton(contentAnchor,

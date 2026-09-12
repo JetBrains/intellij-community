@@ -10,8 +10,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.community.impl.conda.environment.CondaEnvironment
 import com.intellij.python.sdk.backend.pythonInterpreter
 import com.intellij.util.io.ZipUtil
@@ -47,7 +47,7 @@ internal class DefaultPregeneratedSkeletonsProvider : PyPregeneratedSkeletonsPro
       return null
     }
     LOG.info("Found pre-generated skeletons at $f")
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)
+    val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(f)
     if (virtualFile == null) {
       LOG.info("Could not find pre-generated skeletons in VFS")
       return null

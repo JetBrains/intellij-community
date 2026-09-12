@@ -34,10 +34,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
@@ -706,7 +706,7 @@ public final class PythonSdkUpdater {
     }
 
     final var homePath = richSdk.getPythonHomePath();
-    final VirtualFile homeFolder = homePath != null ? LocalFileSystem.getInstance().findFileByNioFile(homePath) : null;
+    final VirtualFile homeFolder = homePath != null ? VirtualFileManager.getInstance().findFileByNioPath(homePath) : null;
 
     final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
     if (virtualFile != null && !virtualFile.equals(homeFolder)) {
@@ -726,7 +726,7 @@ public final class PythonSdkUpdater {
     }
 
     final var pythonHome = pythonInterpreter.getPythonHomePath();
-    final var envRoot = pythonHome != null ? LocalFileSystem.getInstance().findFileByNioFile(pythonHome) : null;
+    final var envRoot = pythonHome != null ? VirtualFileManager.getInstance().findFileByNioPath(pythonHome) : null;
     // Under a module root but outside the interpreter's own home → treat as project-local, not an SDK root.
     return envRoot == null || !VfsUtilCore.isAncestor(envRoot, file, false);
   }

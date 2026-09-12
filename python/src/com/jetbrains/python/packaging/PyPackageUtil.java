@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -322,7 +322,7 @@ public final class PyPackageUtil {
       }
     }
     final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
-    final VirtualFile skeletonsRoot = LocalFileSystem.getInstance().findFileByPath(skeletonsPath);
+    final VirtualFile skeletonsRoot = StandardFileSystems.local().findFileByPath(skeletonsPath);
     result.removeIf(vf -> vf.equals(skeletonsRoot) || PyTypeShed.INSTANCE.isInside(vf));
     return result;
   }
@@ -336,7 +336,7 @@ public final class PyPackageUtil {
     if (configuration == null) return Collections.emptyMap();
     var vfsMapper = PythonInterpreterTargetEnvironmentFactory.getTargetWithMappedLocalVfs(configuration);
     if (vfsMapper == null) return Collections.emptyMap();
-    var vfs = LocalFileSystem.getInstance();
+    var vfs = StandardFileSystems.local();
     var result = new HashMap<@NotNull VirtualFile, @NotNull VirtualFile>();
     for (var remoteSourceAndVfs : ContainerUtil.map(additionalData.getPathMappings().getPathMappings(),
                                                     m -> Pair.create(

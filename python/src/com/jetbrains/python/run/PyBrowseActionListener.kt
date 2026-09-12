@@ -4,7 +4,7 @@ package com.jetbrains.python.run
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.TextBrowseFolderListener
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 
 open class PyBrowseActionListener @JvmOverloads constructor(
@@ -12,5 +12,5 @@ open class PyBrowseActionListener @JvmOverloads constructor(
   chooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor().withExtensionFilter("py")
 ) : TextBrowseFolderListener(chooserDescriptor, configuration.project) {
   final override fun getInitialFile(): VirtualFile? =
-    super.getInitialFile() ?: LocalFileSystem.getInstance().findFileByPath(configuration.getWorkingDirectorySafe())
+    super.getInitialFile() ?: StandardFileSystems.local().findFileByPath(configuration.getWorkingDirectorySafe())
 }

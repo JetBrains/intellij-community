@@ -4,7 +4,7 @@ package com.jetbrains.python.fixtures;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
@@ -29,7 +29,7 @@ public abstract class PyResolveTestCase extends PyTestCase {
 
 
   protected PsiReference configureByFile(@TestDataFile final String filePath) {
-    VirtualFile testDataRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTestDataPath()));
+    VirtualFile testDataRoot = StandardFileSystems.local().refreshAndFindFileByPath(new File(getTestDataPath()).getAbsolutePath());
     final VirtualFile file = testDataRoot.findFileByRelativePath(filePath);
     assertNotNull(file);
 

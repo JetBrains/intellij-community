@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
@@ -78,7 +78,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
       ).successOrNull
       val path = envPath?.resolvePythonBinary()
       val envExists = path?.let {
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(it.pathString) != null
+        StandardFileSystems.local().refreshAndFindFileByPath(it.pathString) != null
       } ?: false
       if (envExists) {
         path.findEnvOrNull(intentionName) ?: envNotFound
@@ -104,7 +104,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
         return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", pipEnv))
       }
 
-      val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.toString())
+      val file = StandardFileSystems.local().refreshAndFindFileByPath(path.toString())
       if (file == null) {
         return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", path))
       }

@@ -4,7 +4,7 @@ package com.jetbrains.python.run
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
@@ -69,9 +69,9 @@ open class PythonTracebackFilter : Filter {
     else {
       fileName
     }
-    var vFile = LocalFileSystem.getInstance().findFileByPath(preparedName)
+    var vFile = StandardFileSystems.local().findFileByPath(preparedName)
     if (vFile == null && !myWorkingDirectory.isNullOrBlank()) {
-      vFile = LocalFileSystem.getInstance().findFileByIoFile(File(myWorkingDirectory, preparedName))
+      vFile = StandardFileSystems.local().findFileByPath(File(myWorkingDirectory, preparedName).absolutePath)
     }
     if (vFile == null) {
       vFile = VirtualFileManager.getInstance().findFileByUrl(preparedName)

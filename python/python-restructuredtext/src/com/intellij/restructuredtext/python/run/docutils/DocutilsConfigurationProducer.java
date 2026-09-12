@@ -8,7 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -42,7 +42,7 @@ public final class DocutilsConfigurationProducer extends LazyRunConfigurationPro
     int index = outputPath.lastIndexOf('.');
     if (index > 0) outputPath = outputPath.substring(0, index);
     outputPath += ".html";
-    VirtualFile outputFile = LocalFileSystem.getInstance().findFileByPath(outputPath);
+    VirtualFile outputFile = StandardFileSystems.local().findFileByPath(outputPath);
     if (outputFile == null) {
       configuration.setOutputFile(outputPath);
       configuration.setOpenInBrowser(true);

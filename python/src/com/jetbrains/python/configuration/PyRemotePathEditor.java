@@ -9,7 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.RemoteSdkProperties;
@@ -89,7 +89,7 @@ final class PyRemotePathEditor extends PythonPathEditor {
         if (!new File(localRoot).exists()) {
           new File(localRoot).mkdirs();
         }
-        vFiles[i++] = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(localRoot));
+        vFiles[i++] = StandardFileSystems.local().refreshAndFindFileByPath(new File(localRoot).getAbsolutePath());
       }
 
       vFiles = adjustAddedFileSet(myPanel, vFiles);

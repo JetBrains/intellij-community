@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -195,7 +194,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @Nullable
   protected static VirtualFile getVirtualFileByName(String fileName) {
-    final VirtualFile path = LocalFileSystem.getInstance().findFileByPath(fileName.replace(File.separatorChar, '/'));
+    final VirtualFile path = StandardFileSystems.local().findFileByPath(fileName.replace(File.separatorChar, '/'));
     if (path != null) {
       refreshRecursively(path);
       return path;
@@ -338,7 +337,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected void enableTestDataTypeshedStubsForPackages(String @NotNull ... packageNames) throws IOException {
     final String absPath = getTestDataPath() + "/resolve/typeshed/stubs";
-    final VirtualFile sourceThirdPartyStubRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(absPath);
+    final VirtualFile sourceThirdPartyStubRoot = StandardFileSystems.local().refreshAndFindFileByPath(absPath);
     assertNotNull("Third-party typeshed root '" + absPath + "' not found", sourceThirdPartyStubRoot);
 
     final VirtualFile targetThirdPartyStubRoot = PyTypeShed.INSTANCE.getThirdPartyStubRoot();

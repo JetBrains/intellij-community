@@ -18,8 +18,8 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
@@ -130,7 +130,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
               .runGeneration(indicator);
           }
           final VirtualFile skeletonDir;
-          skeletonDir = LocalFileSystem.getInstance().findFileByNioFile(refresher.getSkeletonsPath());
+          skeletonDir = VirtualFileManager.getInstance().findFileByNioPath(refresher.getSkeletonsPath());
           if (skeletonDir != null) {
             skeletonDir.refresh(true, true);
           }

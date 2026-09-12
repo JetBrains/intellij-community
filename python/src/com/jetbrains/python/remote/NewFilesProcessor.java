@@ -7,7 +7,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsUtil;
 import com.jetbrains.python.extensions.ModuleExtKt;
@@ -53,7 +54,7 @@ public final class NewFilesProcessor {
    * @param localFileNames names of local files to add to VCS
    */
   private static void addToVcsIfNeeded(final @NotNull Module module, final String @NotNull ... localFileNames) {
-    final LocalFileSystem fs = LocalFileSystem.getInstance();
+    final VirtualFileSystem fs = StandardFileSystems.local();
     fs.refresh(false);
     final Project project = module.getProject();
     Arrays.stream(localFileNames).map(o -> fs.findFileByPath(o)).filter(o -> o != null).forEach(file -> {

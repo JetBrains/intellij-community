@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -100,7 +100,7 @@ class PyScriptOrModuleFragment : SettingsEditorFragment<PythonRunConfiguration, 
         null
       }
       else {
-        { LocalFileSystem.getInstance().findFileByPath(workingDirectory)!! }
+        { StandardFileSystems.local().findFileByPath(workingDirectory)!! }
       })
     initComponent(moduleField, MODULE_MODE)
     fields[MODULE_MODE] = moduleField

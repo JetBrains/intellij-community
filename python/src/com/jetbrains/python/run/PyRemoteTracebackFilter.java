@@ -2,7 +2,7 @@
 package com.jetbrains.python.run;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.ProcessControlWithMappings;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ public class PyRemoteTracebackFilter extends PythonTracebackFilter {
       return vFile;
     }
     String localFile = myHandler.getMappingSettings().convertToLocal(fileName);
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(localFile);
+    VirtualFile file = StandardFileSystems.local().findFileByPath(localFile);
     if (file != null && file.exists()) {
       return file;
     }

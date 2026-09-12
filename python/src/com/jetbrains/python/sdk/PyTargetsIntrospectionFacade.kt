@@ -10,7 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -103,7 +103,7 @@ class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
       }
     }
 
-    val fs = LocalFileSystem.getInstance()
+    val fs = StandardFileSystems.local()
     pathMappings.pathMappings.mapNotNull { fs.findFileByPath(it.localRoot) }.forEach { it.refresh(false, true) }
   }
 }

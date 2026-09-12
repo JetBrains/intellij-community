@@ -15,7 +15,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.testFramework.EdtTestUtil;
@@ -131,7 +131,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     final File fileToWorkWith = new File(path);
 
     return (fileToWorkWith.isAbsolute()
-            ? LocalFileSystem.getInstance().findFileByIoFile(fileToWorkWith)
+            ? StandardFileSystems.local().findFileByPath(fileToWorkWith.getAbsolutePath())
             : myFixture.getTempDirFixture().getFile(path));
   }
 
@@ -291,7 +291,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   @NotNull
   protected Sdk createTempSdk(@NotNull final String sdkHome, @NotNull final SdkCreationType sdkCreationType) throws InvalidSdkException {
 
-    final VirtualFile sdkHomeFile = LocalFileSystem.getInstance().findFileByPath(sdkHome);
+    final VirtualFile sdkHomeFile = StandardFileSystems.local().findFileByPath(sdkHome);
     Assert.assertNotNull("Interpreter file not found: " + sdkHome, sdkHomeFile);
 
     // There can't be two SDKs with same path

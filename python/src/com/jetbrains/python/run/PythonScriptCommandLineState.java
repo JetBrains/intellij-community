@@ -33,7 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.terminal.TerminalExecutionConsole;
@@ -184,7 +184,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         public @Nullable Result applyFilter(@NotNull String line, int entireLength) {
           int position = line.indexOf(INPUT_FILE_MESSAGE);
           if (position >= 0) {
-            VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(filePath));
+            VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(new File(filePath).getAbsolutePath());
             if (file == null) {
               return null;
             }

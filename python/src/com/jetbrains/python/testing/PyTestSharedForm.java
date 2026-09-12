@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TextAccessor;
@@ -185,7 +185,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
       if (StringUtil.isEmpty(workingDirectory)) {
         return null;
       }
-      return LocalFileSystem.getInstance().findFileByPath(getExpandedWorkingDir(configuration));
+      return StandardFileSystems.local().findFileByPath(getExpandedWorkingDir(configuration));
     });
   }
 

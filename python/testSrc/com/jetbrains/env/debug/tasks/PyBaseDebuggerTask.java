@@ -16,7 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -314,7 +314,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   protected void toggleBreakpointInEgg(final String file, final String innerPath, final int line) {
     UIUtil.invokeAndWaitIfNeeded(() -> {
-      VirtualFile f = LocalFileSystem.getInstance().findFileByPath(file);
+      VirtualFile f = StandardFileSystems.local().findFileByPath(file);
       Assert.assertNotNull(f);
       final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(f);
       Assert.assertNotNull(jarRoot);

@@ -5,7 +5,7 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.refreshRecursively
@@ -86,7 +86,7 @@ class CondaEnvironmentTest {
   }
 
   private fun getVirtualFileByName(fileName: String): VirtualFile? {
-    val path = LocalFileSystem.getInstance().findFileByPath(fileName.replace(File.separatorChar, '/'))
+    val path = StandardFileSystems.local().findFileByPath(fileName.replace(File.separatorChar, '/'))
     if (path != null) {
       refreshRecursively(path)
       return path

@@ -17,7 +17,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.documentation.DocumentationLinkHandler
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
@@ -303,7 +303,7 @@ internal class RequirementDocumentationLinkHandler : DocumentationLinkHandler {
       url.startsWith(LOCAL_FOLDER_PREFIX) -> {
         val path = URLDecoder.decode(url.removePrefix(LOCAL_FOLDER_PREFIX), StandardCharsets.UTF_8)
         ApplicationManager.getApplication().invokeLater {
-          val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Paths.get(path))
+          val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Paths.get(path))
                             ?: return@invokeLater
           ProjectView.getInstance(project).select(null, virtualFile, /* requestFocus = */ true)
           // No targeted "close doc popup" API — close the global popup stack (the doc popup is the only one visible).

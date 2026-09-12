@@ -15,8 +15,9 @@
  */
 package com.jetbrains.env.python.testing;
 
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -78,7 +79,7 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
     // otherwise we need to set "foo" as working dir and run spam.Bar.
 
 
-    final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    final VirtualFileSystem fileSystem = StandardFileSystems.local();
     final ConfigurationTarget target = configuration.getTarget();
     final VirtualFile workingDirectory = fileSystem.refreshAndFindFileByPath(configuration.getWorkingDirectorySafe());
     Assert.assertNotNull("Working directory hasn't been set", workingDirectory);

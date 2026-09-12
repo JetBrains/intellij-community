@@ -14,8 +14,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -221,7 +221,7 @@ public abstract class PySkeletonGenerator {
   }
 
   public final void refreshGeneratedSkeletons() {
-    VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(getSkeletonsPath());
+    VirtualFile skeletonsVFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(getSkeletonsPath());
     assert skeletonsVFile != null;
     skeletonsVFile.refresh(false, true);
   }

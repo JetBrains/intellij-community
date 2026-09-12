@@ -14,8 +14,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
@@ -644,7 +645,7 @@ public final class PyClassRefactoringUtil {
     if (closestRoot == null) {
       throw new IOException("Can't find '" + target + "' among roots");
     }
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final VirtualFileSystem lfs = StandardFileSystems.local();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final String[] dirs = relativePath.split("/");
     int i = 0;
@@ -682,7 +683,7 @@ public final class PyClassRefactoringUtil {
   }
 
   public static @NotNull PyFile getOrCreateFile(@NotNull String path, @NotNull Project project, boolean isNamespace) {
-    final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    final VirtualFile vfile = StandardFileSystems.local().findFileByPath(new File(path).getAbsolutePath());
     final PsiFile psi;
     if (vfile == null) {
       final File file = new File(path);

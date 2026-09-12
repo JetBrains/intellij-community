@@ -11,7 +11,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -126,10 +126,10 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
 
   protected @Nullable VirtualFile findOutput() {
     if (!StringUtil.isEmptyOrSpaces(myConfiguration.getOutputFile())) {
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(
+      VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(
         myConfiguration.getOutputFile());
       if (virtualFile == null) {
-        virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(
+        virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(
           myConfiguration.getWorkingDirectory() + myConfiguration.getOutputFile());
       }
       return virtualFile;

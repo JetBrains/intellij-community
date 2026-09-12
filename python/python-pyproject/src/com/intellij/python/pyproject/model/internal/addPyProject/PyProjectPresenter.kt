@@ -3,8 +3,8 @@ package com.intellij.python.pyproject.model.internal.addPyProject
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
 import com.intellij.python.pyproject.model.spi.PyProjectCreator
@@ -55,7 +55,7 @@ private constructor(
     return projectCreator.createProject(where, if (forNewProject) projectName else null).also {
       if (it.isSuccess) {
         withContext(Dispatchers.IO) {
-          LocalFileSystem.getInstance().refreshAndFindFileByNioFile(where)?.refresh(true, true)
+          VirtualFileManager.getInstance().refreshAndFindFileByNioPath(where)?.refresh(true, true)
         }
       }
     }

@@ -20,7 +20,7 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.python.community.execService.impl.processLaunchers.uploadMeasureTime
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.PathMappingSettings
@@ -178,7 +178,7 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
       }
     }
 
-    val fs = LocalFileSystem.getInstance()
+    val fs = StandardFileSystems.local()
     // "remote_sources" folder may now contain new packages
     // since we copied them there not via VFS, we must refresh it, so Intellij knows about them
     pathMappings.pathMappings.mapNotNull { fs.findFileByPath(it.localRoot) }.forEach { it.refresh(false, true) }

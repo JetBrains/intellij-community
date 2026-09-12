@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.extensions
 
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyNames
@@ -17,7 +17,7 @@ import com.jetbrains.python.run.targetBasedConfiguration.targetAsVirtualFile
  */
 fun TargetWithVariant.asPsiElement(
   configuration: AbstractPythonRunConfiguration<*>,
-  workingDirectory: VirtualFile? = LocalFileSystem.getInstance().findFileByPath(configuration.workingDirectorySafe)
+  workingDirectory: VirtualFile? = StandardFileSystems.local().findFileByPath(configuration.workingDirectorySafe)
 ): PsiElement? =
   target?.let { targetAsPsiElement(targetType, it, configuration, workingDirectory) }
 

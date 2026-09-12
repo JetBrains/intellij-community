@@ -18,7 +18,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ToolbarDecorator;
@@ -275,7 +275,7 @@ class PythonPathEditor extends SdkPathEditor {
 
     private static boolean isStubPath(@NotNull VirtualFile file) {
       final String path = PythonSdkUtil.getSkeletonsRootPath(PathManager.getSystemPath());
-      final VirtualFile skeletonRoot = LocalFileSystem.getInstance().findFileByPath(path);
+      final VirtualFile skeletonRoot = StandardFileSystems.local().findFileByPath(path);
       if (skeletonRoot != null && file.getPath().startsWith(skeletonRoot.getPath())) {
         return true;
       }

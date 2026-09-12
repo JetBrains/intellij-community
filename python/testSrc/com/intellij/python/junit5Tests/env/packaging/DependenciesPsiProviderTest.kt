@@ -10,7 +10,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
@@ -98,7 +98,7 @@ internal class DependenciesPsiProviderTest {
     testDataDir = classInfo.testDataPath!!.resolve(methodInfo.testCaseRelativePath!!)
     val targetPath = tempPathFixture.get()
     testDataDir.copyToRecursively(targetPath, followLinks = false, overwrite = true)
-    LocalFileSystem.getInstance().refresh(false)
+    StandardFileSystems.local().refresh(false)
     IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     InspectionProfileImpl.INIT_INSPECTIONS = true

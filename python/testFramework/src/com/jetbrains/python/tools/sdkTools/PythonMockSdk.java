@@ -9,7 +9,7 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,9 +99,9 @@ public final class PythonMockSdk {
   private static @NotNull List<VirtualFile> createRoots(@NotNull @NonNls String mockSdkPath, @NotNull LanguageLevel level) {
     final var result = new ArrayList<VirtualFile>();
 
-    final var localFS = LocalFileSystem.getInstance();
-    ContainerUtil.addIfNotNull(result, localFS.refreshAndFindFileByIoFile(new File(mockSdkPath, "Lib")));
-    ContainerUtil.addIfNotNull(result, localFS.refreshAndFindFileByIoFile(new File(mockSdkPath, PythonSdkUtil.SKELETON_DIR_NAME)));
+    final var localFS = StandardFileSystems.local();
+    ContainerUtil.addIfNotNull(result, localFS.refreshAndFindFileByPath(new File(mockSdkPath, "Lib").getAbsolutePath()));
+    ContainerUtil.addIfNotNull(result, localFS.refreshAndFindFileByPath(new File(mockSdkPath, PythonSdkUtil.SKELETON_DIR_NAME).getAbsolutePath()));
 
     result.addAll(PyTypeShed.INSTANCE.findStdlibRootsForLanguageLevel(level));
 

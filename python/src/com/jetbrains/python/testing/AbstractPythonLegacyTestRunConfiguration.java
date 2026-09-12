@@ -13,7 +13,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -74,7 +74,7 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
     }
     final String scriptName = myScriptName;
     if (!StringUtil.isEmptyOrSpaces(scriptName)) {
-      final VirtualFile script = LocalFileSystem.getInstance().findFileByPath(scriptName);
+      final VirtualFile script = StandardFileSystems.local().findFileByPath(scriptName);
       if (script != null) {
         return script.getParent().getPath();
       }

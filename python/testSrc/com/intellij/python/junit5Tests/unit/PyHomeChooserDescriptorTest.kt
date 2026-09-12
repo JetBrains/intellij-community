@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit
 
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.python.sdk.PythonSdkType
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -28,7 +28,7 @@ class PyHomeChooserDescriptorTest {
     val wrapper = tempDir.resolve("python.bat")
     wrapper.writeText("@echo off\npython %*\n")
 
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(wrapper)
+    val file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(wrapper)
     assertNotNull(file)
 
     val descriptor = PythonSdkType.getInstance().homeChooserDescriptor

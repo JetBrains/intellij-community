@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.PsiFile;
@@ -242,7 +242,7 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   }
 
   private static @Nullable VirtualFile getFile(@NotNull PySignature signature) {
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(signature.getFile());
+    return StandardFileSystems.local().refreshAndFindFileByPath(signature.getFile());
   }
 
   private static @Nullable VirtualFile getFile(@NotNull PyFunction function) {

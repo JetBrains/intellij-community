@@ -25,7 +25,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
@@ -71,7 +71,7 @@ internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
   }
 
   private fun isInsideTempDirectory(baseDir: VirtualFile): Boolean {
-    val tempDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.getTempDirectory()) ?: return false
+    val tempDir = StandardFileSystems.local().findFileByPath(FileUtil.getTempDirectory()) ?: return false
     return VfsUtil.isAncestor(tempDir, baseDir, true)
   }
 }
