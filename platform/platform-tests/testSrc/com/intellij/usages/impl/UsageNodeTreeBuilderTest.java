@@ -11,7 +11,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.psi.PsiElement;
@@ -277,7 +277,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     File ioDir = FileUtil.createTempDirectory("t", null, false);
     VirtualFile dir = null;
     try {
-      dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioDir);
+      dir = StandardFileSystems.local().refreshAndFindFileByPath(ioDir.getAbsolutePath());
       PsiFile f1 = getPsiManager().findFile(VfsTestUtil.createFile(dir, "/x/X.java", "class X{}"));
       PsiFile f2 = getPsiManager().findFile(VfsTestUtil.createFile(dir, "/y/X.java", "class X{}"));
       PsiElement class1 = ArrayUtil.getLastElement(f1.getChildren());

@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
@@ -60,7 +60,7 @@ public class LoadTextUtilTest extends LightPlatformTestCase {
     byte[] stringBytes = text.getBytes(StandardCharsets.UTF_16BE);
     byte[] expectedAllBytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, stringBytes);
 
-    VirtualFile tempDir = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.getTempDirectory()));
+    VirtualFile tempDir = Objects.requireNonNull(StandardFileSystems.local().refreshAndFindFileByPath(FileUtilRt.getTempDirectory()));
     VirtualFile vFile = VfsTestUtil.createFile(tempDir, "x.txt", expectedAllBytes);
     vFile.setCharset(StandardCharsets.UTF_16BE);
 
@@ -72,7 +72,7 @@ public class LoadTextUtilTest extends LightPlatformTestCase {
     byte[] stringBytes = text.getBytes(StandardCharsets.UTF_16BE);
     byte[] expectedAllBytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, stringBytes);
 
-    VirtualFile tempDir = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.getTempDirectory()));
+    VirtualFile tempDir = Objects.requireNonNull(StandardFileSystems.local().refreshAndFindFileByPath(FileUtilRt.getTempDirectory()));
     VirtualFile vFile = VfsTestUtil.createFile(tempDir, "x.txt", expectedAllBytes);
     vFile.setCharset(StandardCharsets.UTF_16BE);
 

@@ -7,7 +7,7 @@ import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,7 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
     Path moduleFile = result.getSecond();
 
     assertThat(moduleFile).exists();
-    WriteAction.run(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(moduleFile.toString())).delete(this));
+    WriteAction.run(() -> StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(moduleFile.toString())).delete(this));
     List<ConfigurationErrorDescription> errors = new ArrayList<>();
     ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(getTestRootDisposable(), errors::add);
     Project reloaded = PlatformTestUtil.loadAndOpenProject(projectDir, getTestRootDisposable());

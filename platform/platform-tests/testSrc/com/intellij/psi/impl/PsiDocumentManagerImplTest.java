@@ -47,7 +47,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -1274,7 +1274,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     for (int i = 0; i < N; i++) {
       FileUtil.writeToFile(new File(dir, i + "x.java"), randomText);
     }
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    VirtualFile vDir = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
     assertEquals(N, vDir.getChildren().length);
     List<PsiFile> psiFiles = new ArrayList<>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {

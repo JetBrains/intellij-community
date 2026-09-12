@@ -7,8 +7,8 @@ import com.intellij.framework.detection.impl.exclude.ExcludesConfigurationState;
 import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionByTypeElement;
 import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionInfo;
 import com.intellij.framework.detection.impl.exclude.old.OldFacetDetectionExcludesConfiguration;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -36,11 +36,11 @@ public class ConvertingOldDetectionExcludesTest extends HeavyPlatformTestCase {
     DisabledAutodetectionInfo state = new DisabledAutodetectionInfo();
     Path dir = getTempDir().newPath();
     Files.createDirectories(dir);
-    VirtualFile virtualDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir);
+    VirtualFile virtualDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(dir);
     PsiTestUtil.addContentRoot(myModule, virtualDir);
     Path file = dir.resolve("my-file.xml");
     Files.createFile(file);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+    VirtualFile virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file);
     state.getElements().add(new DisabledAutodetectionByTypeElement(FRAMEWORK_ID, myModule.getName()));
     getOldConfiguration().loadState(state);
 

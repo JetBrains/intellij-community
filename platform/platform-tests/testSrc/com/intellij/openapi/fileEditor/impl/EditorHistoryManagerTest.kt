@@ -12,7 +12,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.project.stateStore
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.ApplicationRule
@@ -55,7 +55,7 @@ class EditorHistoryManagerTest {
     val file = dir.resolve("some.txt")
     file.write("first line\nsecond line")
 
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.invariantSeparatorsPathString)!!
+    val virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.invariantSeparatorsPathString)!!
     overrideFileEditorManagerImplementation(PsiAwareFileEditorManagerImpl::class.java, disposable.disposable)
     runBlocking {
       openProjectPerformTaskCloseProject(dir) { project ->

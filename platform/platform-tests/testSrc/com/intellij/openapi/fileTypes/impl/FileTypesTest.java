@@ -60,12 +60,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.CharsetToolkit.GuessedEncoding;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
@@ -1001,7 +1001,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         });
         try {
           FileUtil.appendToFile(f, StringUtil.repeatSymbol(' ', 50));
-          LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtualFile));
+          RefreshQueue.getInstance().refresh(false, false, null, Collections.singletonList(virtualFile));
           LOG.debug("f = " + f.length() + "; virtualFile=" + virtualFile.getLength() +
                     "; psiFile=" + psiFile.isValid() + "; type=" + getFileType(virtualFile));
         }

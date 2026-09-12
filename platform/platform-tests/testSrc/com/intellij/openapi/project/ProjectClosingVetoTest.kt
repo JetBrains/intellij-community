@@ -10,7 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.findOrCreateFile
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -38,7 +38,7 @@ internal class ProjectClosingVetoTest {
       }, project)
 
       val filePath = projectDir.findOrCreateFile(testFileName)
-      val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
+      val file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(filePath)
       assertNotNull(file, "Couldn't create test file")
 
       val document = application.runReadAction(Computable { FileDocumentManager.getInstance().getDocument(file) })

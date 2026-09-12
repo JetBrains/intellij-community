@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -187,7 +187,7 @@ class SymlinkSpec(override val specPath: ContentSpecPath, private val target: Co
     check(!fullLinkPath.exists()) { "Link already exists: $fullLinkPath" }
     check(fullLinkPath.isAbsolute) { "Path to symlink must be absolute: $fullLinkPath" }
     val symlinkIoFile = IoTestUtil.createSymLink(targetRelativePathToSymlink, fullLinkPath.absolutePath)
-    return checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(symlinkIoFile))
+    return checkNotNull(StandardFileSystems.local().refreshAndFindFileByPath(symlinkIoFile.absolutePath))
   }
 }
 

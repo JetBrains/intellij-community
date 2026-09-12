@@ -13,7 +13,7 @@ import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -62,7 +62,7 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
 
     File file = new File(FileUtil.getTempDirectory() + "/x.skjdhfjksdfkjsdhf");
     FileUtil.writeToFile(file, new byte[]{1,0,2,3,4});
-    VirtualFile unknown = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile unknown = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
     assertEquals(UnknownFileType.INSTANCE, unknown.getFileType());
     assertThrows(IllegalArgumentException.class, ()->manager.addFile(unknown, PlainTextFileType.INSTANCE));
     assertThrows(IllegalArgumentException.class, ()->manager.addFile(text, UnknownFileType.INSTANCE));

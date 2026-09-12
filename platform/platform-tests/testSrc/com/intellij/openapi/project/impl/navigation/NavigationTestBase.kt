@@ -15,7 +15,7 @@ import com.intellij.openapi.project.impl.RecentProjectManagerListenerRule
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -79,7 +79,7 @@ abstract class NavigationTestBase {
         )
         FileUtil.copyDir(Path.of(testDataPath, sanitizeFileName(testName.methodName)).toFile(), basePath.toFile())
 
-        val baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath.invariantSeparatorsPathString)!!
+        val baseDir = StandardFileSystems.local().refreshAndFindFileByPath(basePath.invariantSeparatorsPathString)!!
         val moduleModel = ModuleRootManager.getInstance(newModule).modifiableModel
         moduleModel.addContentEntry(baseDir).addSourceFolder(baseDir, false)
         moduleModel.commit()

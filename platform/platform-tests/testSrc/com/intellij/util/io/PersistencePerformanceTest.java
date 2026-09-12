@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PerformanceUnitTest;
@@ -108,7 +108,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
     List<FileIndexingRequest> files = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       File file = FileUtil.createTempFile("", ".txt");
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
       assertNotNull(virtualFile);
       HeavyPlatformTestCase.setFileText(virtualFile, "foo bar");
       files.add(FileIndexingRequest.updateRequest(virtualFile));

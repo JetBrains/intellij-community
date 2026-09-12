@@ -40,8 +40,9 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -759,7 +760,7 @@ class FileEditorManagerTest {
     var file: VirtualFile? = null
     try {
       FileUtil.writeToFile(ioFile, byteArrayOf(1, 2, 3, 4, 29)) // to convince IDEA it's binary when renamed to an unknown extension
-      file = assertThatNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile))
+      file = assertThatNotNull(StandardFileSystems.local().refreshAndFindFileByPath(ioFile.absolutePath))
       assertThat(file.fileType).isEqualTo(PlainTextFileType.INSTANCE)
       FileEditorManager.getInstance(project).openFile(file, true)
       //noinspection SpellCheckingInspection
@@ -899,13 +900,13 @@ class FileEditorManagerTest {
 
   private fun getFile(path: String): VirtualFile {
     val fullPath = testDataPath + path
-    return assertThatNotNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath), "Can't find $fullPath")
+    return assertThatNotNull(StandardFileSystems.local().refreshAndFindFileByPath(fullPath), "Can't find $fullPath")
   }
 
   private fun createTempFooBar(): VirtualFile {
     val io = Path.of(FileUtil.getTempDirectory(), "/src/foo.bar")
     io.write(byteArrayOf(1, 0, 2, 3))
-    return assertThatNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(io), "Can't find $io")
+    return assertThatNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(io), "Can't find $io")
   }
 
   private fun openFiles(femSerialisedText: String) {

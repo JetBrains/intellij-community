@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.LastComputedIconCache;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -77,7 +77,7 @@ public class IconUtilTest extends HeavyPlatformTestCase {
   public void testLockedPatchSmallIconAppliedOnlyOnceToJavaFile() throws IOException {
     File dir = createTempDir("my");
 
-    VirtualFile sourceRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    VirtualFile sourceRoot = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
     PsiTestUtil.addSourceRoot(getModule(), sourceRoot);
     VirtualFile file = createChildData(sourceRoot, "X.java");
 
@@ -117,7 +117,7 @@ public class IconUtilTest extends HeavyPlatformTestCase {
   public void testLockedPatchSmallIconAppliedOnlyOnceToTxtFile() throws IOException {
     File dir = createTempDir("my");
 
-    VirtualFile sourceRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    VirtualFile sourceRoot = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
     VirtualFile file = createChildData(sourceRoot, "X.txt");
 
     PsiTestUtil.addSourceRoot(getModule(), sourceRoot);
@@ -140,7 +140,7 @@ public class IconUtilTest extends HeavyPlatformTestCase {
 
     File dir = createTempDir("my");
 
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    VirtualFile vDir = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
     VirtualFile vFile = createChildData(vDir, "X.txt");
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     PsiDirectory psiDir = PsiManager.getInstance(getProject()).findDirectory(vDir);

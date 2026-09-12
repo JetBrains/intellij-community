@@ -12,7 +12,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -109,7 +109,7 @@ class DaemonTooltipActionProviderTest : HeavyPlatformTestCase() {
   }
 
   private fun refresh(file: File): VirtualFile =
-    WriteAction.computeAndWait<VirtualFile, RuntimeException> { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!! }
+    WriteAction.computeAndWait<VirtualFile, RuntimeException> { StandardFileSystems.local().refreshAndFindFileByPath(file.absolutePath)!! }
 
   private class PlainFix : AbstractIntentionAction() {
     override fun getText(): String = TEXT

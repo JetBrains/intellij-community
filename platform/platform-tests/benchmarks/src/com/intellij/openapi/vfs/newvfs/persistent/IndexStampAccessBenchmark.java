@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
@@ -69,7 +69,7 @@ public class IndexStampAccessBenchmark {
 
     @NotNull
     private static VirtualFile refreshAndFind(final @NotNull File file) {
-      return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file), file.getPath());
+      return Objects.requireNonNull(StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath()), file.getPath());
     }
   }
 

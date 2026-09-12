@@ -21,8 +21,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -424,7 +424,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   private VirtualFile createFile(String name, String content) throws IOException {
     File file = createTempFile(name, content);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
     assertNotNull(virtualFile);
     return virtualFile;
   }
@@ -773,7 +773,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   public void testFileTypeModificationDocumentPreservation() {
     File ioFile = IoTestUtil.createTestFile("test.html", "<html>some text</html>");
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(ioFile.getAbsolutePath());
     assertNotNull(ioFile.getPath(), file);
 
     Document original = myDocumentManager.getDocument(file);
@@ -786,7 +786,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   public void testFileTypeChangeDocumentDetach() {
     File ioFile = IoTestUtil.createTestFile("test.html", "<html>some text</html>");
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(ioFile.getAbsolutePath());
     assertNotNull(ioFile.getPath(), file);
 
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
@@ -800,7 +800,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   public void testNoPSIModificationsDuringSave() {
     File ioFile = IoTestUtil.createTestFile("test.txt", "<html>some text</html>");
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+    VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(ioFile.getAbsolutePath());
     assertNotNull(ioFile.getPath(), virtualFile);
 
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
@@ -1031,7 +1031,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   public void testDocumentModificationStampMustChangeBeforeFileDeletion() {
     File ioFile = IoTestUtil.createTestFile("test.txt", "<html>some text</html>");
-    VirtualFile myVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+    VirtualFile myVirtualFile = StandardFileSystems.local().refreshAndFindFileByPath(ioFile.getAbsolutePath());
     assertNotNull(ioFile.getPath(), myVirtualFile);
 
     DocumentEx document = (DocumentEx)myDocumentManager.getDocument(myVirtualFile);

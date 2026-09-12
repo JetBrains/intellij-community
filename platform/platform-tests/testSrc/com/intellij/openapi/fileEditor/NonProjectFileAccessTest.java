@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
@@ -374,7 +374,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
         // create externally, since files created via VFS are marked for editing automatically
         File file = new File(dir, FileUtil.createSequentFileName(dir, "extfile", "txt"));
         assertTrue(file.createNewFile());
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        return StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
       });
     }
     catch (IOException e) {

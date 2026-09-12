@@ -3,10 +3,10 @@ package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIteratorEx
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
@@ -75,7 +75,7 @@ internal class IterateContentUnderExcludedDirectoryTest {
   fun `does not resolve uncached virtual files under excluded directory`(): Unit = runBlocking {
     val contentRootPath = rootDir.newDirectoryPath("content")
     val uncachedPath = rootDir.newDirectoryPath("content/excluded/uncached")
-    val contentRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(contentRootPath)!!
+    val contentRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(contentRootPath)!!
 
     val urlManager = project.workspaceModel.getVirtualFileUrlManager()
     val contentRootUrl = contentRootPath.toVirtualFileUrl(urlManager)

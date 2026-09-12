@@ -2,7 +2,7 @@
 package com.intellij.openapi.diff.impl.patch
 
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataFile
@@ -187,7 +187,7 @@ class PatchReaderTest : HeavyPlatformTestCase() {
     val testDataPath = getTestDir(getTestName(true))
     createTestProjectStructure(testDataPath)
     val patchPath = "$testDataPath/test.patch"
-    val patchFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(patchPath.replace(File.separatorChar, '/'))
+    val patchFile = StandardFileSystems.local().refreshAndFindFileByPath(patchPath.replace(File.separatorChar, '/'))
 
     val patchContents = patchFile!!.contentsToByteArray()
     val patchText = LoadTextUtil.getTextByBinaryPresentation(patchContents, patchFile)

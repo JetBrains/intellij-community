@@ -2,7 +2,7 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.target.FullPathOnTarget
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import org.junit.rules.ExternalResource
 
@@ -18,7 +18,7 @@ class WslTempDirRule(private val wslRule: WslRule) : ExternalResource() {
   override fun before() {
     linuxPath = wslRule.wsl.executeOnWsl(10_000, "mktemp", "-d").stdout.trim()
     assert(linuxPath.isNotBlank()) { "Can't create temp dir on ${wslRule.wsl}" }
-    winPath = LocalFileSystem.getInstance().findFileByPath(wslRule.wsl.getWindowsPath(linuxPath)) ?: throw AssertionError(
+    winPath = StandardFileSystems.local().findFileByPath(wslRule.wsl.getWindowsPath(linuxPath)) ?: throw AssertionError(
       "Can't get win path for $linuxPath")
   }
 

@@ -15,7 +15,7 @@ import com.intellij.openapi.project.DumbServiceImpl.Companion.IDEA_FORCE_DUMB_QU
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.coroutines.childScope
@@ -330,7 +330,7 @@ class DumbServiceImplTest {
     dir.mkdirs()
     File(dir, "a.jsp").createNewFile()
 
-    val vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir)!!
+    val vDir = StandardFileSystems.local().refreshAndFindFileByPath(dir.absolutePath)!!
     assertEquals(1, vDir.children.size)
     val child = vDir.children[0]
     assertEquals("JSP", child.fileType.name)
