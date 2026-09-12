@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.quickFixes;
 
+import com.intellij.idea.TestFor;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
@@ -67,5 +68,10 @@ public class PyAddFieldQuickFixTest extends PyQuickFixTestCase {
   // PY-21284
   public void testAddFieldAddConstructorWithTypeAnnotation() {
     doQuickFixTest(PyUnresolvedReferencesInspection.class, "Add field 'param' to class DerivedClass");
+  }
+
+  @TestFor(issues = "PY-54534")
+  public void testAddFieldToEnum() {
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.field.to.class", "is_good", "MyEnum"));
   }
 }
