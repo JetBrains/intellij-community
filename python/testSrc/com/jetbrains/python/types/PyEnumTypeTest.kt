@@ -166,6 +166,23 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-37455"])
+    fun `member name in the class body refers to the assigned value`() = test("""
+      from enum import Enum
+
+      class Color(Enum):
+          RED = 1
+          PINK = 8 + RED
+          lookup = {2: 1}
+          GREEN = lookup.get(2)
+          BLUE = lookup[2]
+          R = RED
+
+      expr = Color.PINK.value, Color.GREEN.value, Color.BLUE.value, Color.R
+      #└ TYPE tuple[int, int | None, int, Literal[Color.RED]]
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-90192"])
     fun `init enum member custom new`() = test("""
       from enum import Enum
