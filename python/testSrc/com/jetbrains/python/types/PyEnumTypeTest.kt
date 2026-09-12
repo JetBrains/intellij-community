@@ -1236,6 +1236,29 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
   }
 
+  @Nested
+  inner class DefinitionErrors {
+
+    @Test
+    @TestFor(issues = ["PY-79199"])
+    fun `enum base must be the last base class`() = test("""
+      from enum import Enum, IntEnum
+
+      class Mixin: ...
+
+      class A(Enum, Mixin):
+      #       ^^^^ ERROR Enum class 'Enum' must be the last base class
+          a = 1
+
+      class B(Mixin, Enum):
+          b = 1
+
+      # The enum machinery accepts this order. The class still fails at run time, but for its MRO, not for this rule.
+      class C(int, Mixin, IntEnum):
+          c = 1
+      """.trimIndent())
+  }
+
   @Test
   @TestFor(issues = ["PY-58076"])
   fun `enum members mapping`() = test(
