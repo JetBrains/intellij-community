@@ -16,6 +16,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyClass;
@@ -179,6 +180,14 @@ public final class AddFieldQuickFix implements LocalQuickFix {
   }
 
   private static @NotNull PyFunction createInitMethod(Project project, PyClass cls, @Nullable PyFunction ancestorInit) {
+    final PyClass ancestorInitClass = ancestorInit != null ? ancestorInit.getContainingClass() : null;
+    if ((ancestorInitClass == null || PyUtil.isObjectClass(ancestorInitClass)) &&
+        PyStdlibTypeProvider.isCustomEnum(cls, TypeEvalContext.userInitiated(project, cls.getContainingFile()))) {
+      // The enum machinery passes the value of each member to __init__
+      return PyElementGenerator.getInstance(project).createFromText(
+        LanguageLevel.getDefault(), PyFunction.class, "def " + PyNames.INIT + "(self, *args):\n    pass", new int[]{0}
+      );
+    }
     // found it; copy its param list and make a call to it.
     @NonNls String paramList = ancestorInit != null ? ancestorInit.getParameterList().getText() : "(self)";
 
