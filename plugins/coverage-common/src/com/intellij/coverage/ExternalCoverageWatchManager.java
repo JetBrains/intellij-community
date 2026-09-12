@@ -5,17 +5,18 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileContentsChangedAdapter;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * When adding an external coverage report, this manager subscribes to the changes in the report file,
@@ -26,7 +27,7 @@ import java.util.Set;
 public final class ExternalCoverageWatchManager implements Disposable {
   private final Project myProject;
 
-  private Set<LocalFileSystem.WatchRequest> myWatchRequests;
+  private List<WatchRoots.Token> myWatchRequests;
   private List<String> myCurrentSuiteRoots;
   private final VirtualFileContentsChangedAdapter myContentListener = new VirtualFileContentsChangedAdapter() {
     @Override
@@ -56,15 +57,15 @@ public final class ExternalCoverageWatchManager implements Disposable {
    */
   public void addRootsToWatch(List<? extends CoverageSuite> suites) {
     myCurrentSuiteRoots = ContainerUtil.map(suites, suite -> suite.getCoverageDataFileName());
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFileSystem fileSystem = StandardFileSystems.local();
     myCurrentSuiteRoots.forEach(path -> fileSystem.refreshAndFindFileByPath(path));
-    myWatchRequests = fileSystem.addRootsToWatch(myCurrentSuiteRoots, true);
+    myWatchRequests = ContainerUtil.map(myCurrentSuiteRoots, path -> WatchRoots.getInstance().watch(path, true));
     VirtualFileManager.getInstance().addVirtualFileListener(myContentListener);
   }
 
   public void clearWatches() {
     if (myWatchRequests == null) return;
-    LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
+    myWatchRequests.forEach(WatchRoots.Token::close);
     VirtualFileManager.getInstance().removeVirtualFileListener(myContentListener);
 
     myWatchRequests = null;

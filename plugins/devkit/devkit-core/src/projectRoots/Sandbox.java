@@ -12,7 +12,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.WatchRoots;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -28,14 +28,14 @@ public class Sandbox implements ValidatableSdkAdditionalData {
   private String myJavaSdkName;
   private Sdk myJavaSdk;
 
-  private LocalFileSystem.WatchRequest mySandboxRoot;
+  private WatchRoots.Token mySandboxRoot;
   private static final @NonNls String SDK = "sdk";
 
   public Sandbox(String sandboxHome, Sdk javaSdk, Sdk currentJdk) {
     mySandboxHome = sandboxHome;
     myCurrentJdk = currentJdk;
     if (mySandboxHome != null) {
-      mySandboxRoot = LocalFileSystem.getInstance().addRootToWatch(mySandboxHome, true);
+      mySandboxRoot = WatchRoots.getInstance().watch(mySandboxHome, true);
     }
     myJavaSdk = javaSdk;
   }
@@ -64,7 +64,7 @@ public class Sandbox implements ValidatableSdkAdditionalData {
     LOG.assertTrue(mySandboxRoot == null);
     myJavaSdkName = element.getAttributeValue(SDK);
     if (mySandboxHome != null) {
-      mySandboxRoot = LocalFileSystem.getInstance().addRootToWatch(mySandboxHome, true);
+      mySandboxRoot = WatchRoots.getInstance().watch(mySandboxHome, true);
     }
   }
 
@@ -78,7 +78,7 @@ public class Sandbox implements ValidatableSdkAdditionalData {
 
   void cleanupWatchedRoots() {
     if (mySandboxRoot != null) {
-      LocalFileSystem.getInstance().removeWatchedRoot(mySandboxRoot);
+      mySandboxRoot.close();
     }
   }
 
