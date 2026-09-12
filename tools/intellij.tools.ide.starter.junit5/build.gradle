@@ -38,7 +38,7 @@ dependencies {
   testImplementation 'com.jetbrains.intellij.tools:ide-metrics-collector:LATEST-TRUNK-SNAPSHOT'
   testImplementation 'com.jetbrains.intellij.tools:ide-metrics-collector-starter:LATEST-TRUNK-SNAPSHOT'
   implementation "com.jetbrains.intellij.tools:ide-starter:LATEST-TRUNK-SNAPSHOT"
-  implementation "io.opentelemetry:opentelemetry-sdk:1.41.0"
+  implementation "io.opentelemetry:opentelemetry-sdk:1.66.0"
 
   testImplementation "com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-TRUNK-SNAPSHOT"
 

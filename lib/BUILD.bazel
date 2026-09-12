@@ -14643,17 +14643,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-exporter-otlp-common-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-exporter-otlp-common-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-exporter-otlp-common-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-exporter-otlp-common-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-exporter-otlp-common-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-exporter-otlp-common-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-exporter-common-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-exporter-common-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-exporter-common-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-exporter-common-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-exporter-common-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-exporter-common-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -14663,120 +14663,128 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":io_opentelemetry-opentelemetry-exporter-otlp-common-1_48_0_http_import",
-        ":io_opentelemetry-opentelemetry-exporter-common-1_48_0_http_import",
+        ":io_opentelemetry-opentelemetry-exporter-otlp-common-1_66_0_http_import",
+        ":io_opentelemetry-opentelemetry-exporter-common-1_66_0_http_import",
     ],
 )
 
 jvm_import(
-    name = "io_opentelemetry-opentelemetry-exporter-otlp-common-1_48_0_http_import",
-    jar = "@io_opentelemetry-opentelemetry-exporter-otlp-common-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-exporter-otlp-common-1_48_0-sources_http//file",
+    name = "io_opentelemetry-opentelemetry-exporter-otlp-common-1_66_0_http_import",
+    jar = "@io_opentelemetry-opentelemetry-exporter-otlp-common-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-exporter-otlp-common-1_66_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_opentelemetry-opentelemetry-exporter-common-1_48_0_http_import",
-    jar = "@io_opentelemetry-opentelemetry-exporter-common-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-exporter-common-1_48_0-sources_http//file",
+    name = "io_opentelemetry-opentelemetry-exporter-common-1_66_0_http_import",
+    jar = "@io_opentelemetry-opentelemetry-exporter-common-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-exporter-common-1_66_0-sources_http//file",
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-exporter-otlp-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-exporter-otlp-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-exporter-otlp-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-exporter-otlp-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-exporter-otlp-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-exporter-otlp-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-opentelemetry-exporter-otlp-opentelemetry-exporter-otlp-library",
-    jar = "@io_opentelemetry-opentelemetry-exporter-otlp-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-exporter-otlp-1_48_0-sources_http//file",
+    jar = "@io_opentelemetry-opentelemetry-exporter-otlp-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-exporter-otlp-1_66_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-exporter-sender-jdk-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-exporter-sender-jdk-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-exporter-sender-jdk-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-exporter-sender-jdk-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-exporter-sender-jdk-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-exporter-sender-jdk-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-opentelemetry-exporter-sender-jdk-opentelemetry-exporter-sender-jdk",
-    jar = "@io_opentelemetry-opentelemetry-exporter-sender-jdk-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-exporter-sender-jdk-1_48_0-sources_http//file",
+    jar = "@io_opentelemetry-opentelemetry-exporter-sender-jdk-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-exporter-sender-jdk-1_66_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-extension-kotlin-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-extension-kotlin-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-extension-kotlin-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-extension-kotlin-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-extension-kotlin-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-extension-kotlin-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-opentelemetry-extension-kotlin-opentelemetry-extension-kotlin",
-    jar = "@io_opentelemetry-opentelemetry-extension-kotlin-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-extension-kotlin-1_48_0-sources_http//file",
+    jar = "@io_opentelemetry-opentelemetry-extension-kotlin-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-extension-kotlin-1_66_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-sdk-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-sdk-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-sdk-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-sdk-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-sdk-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-sdk-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-api-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-api-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-api-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-api-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-api-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-api-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-context-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-context-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-context-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-context-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-context-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-context-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-sdk-common-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-sdk-common-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-sdk-common-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-common-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-common-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-common-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-sdk-trace-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-sdk-trace-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-sdk-trace-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-sdk-common-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-sdk-common-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-sdk-common-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-sdk-metrics-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-sdk-metrics-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-sdk-metrics-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-sdk-trace-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-sdk-trace-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-sdk-trace-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-sdk-logs-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-sdk-logs-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-sdk-logs-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-sdk-metrics-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-sdk-metrics-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-sdk-metrics-1.66.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.opentelemetry/opentelemetry-sdk-logs-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-sdk-logs-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-sdk-logs-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -14786,85 +14794,92 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":io_opentelemetry-opentelemetry-sdk-1_48_0_http_import",
-        ":io_opentelemetry-opentelemetry-api-1_48_0_http_import",
-        ":io_opentelemetry-opentelemetry-context-1_48_0_http_import",
-        ":io_opentelemetry-opentelemetry-sdk-common-1_48_0_http_import",
-        ":io_opentelemetry-opentelemetry-sdk-trace-1_48_0_http_import",
-        ":io_opentelemetry-opentelemetry-sdk-metrics-1_48_0_http_import",
-        ":io_opentelemetry-opentelemetry-sdk-logs-1_48_0_http_import",
+        ":io_opentelemetry-opentelemetry-sdk-1_66_0_http_import",
+        ":io_opentelemetry-opentelemetry-api-1_66_0_http_import",
+        ":io_opentelemetry-opentelemetry-context-1_66_0_http_import",
+        ":io_opentelemetry-opentelemetry-common-1_66_0_http_import",
+        ":io_opentelemetry-opentelemetry-sdk-common-1_66_0_http_import",
+        ":io_opentelemetry-opentelemetry-sdk-trace-1_66_0_http_import",
+        ":io_opentelemetry-opentelemetry-sdk-metrics-1_66_0_http_import",
+        ":io_opentelemetry-opentelemetry-sdk-logs-1_66_0_http_import",
     ],
 )
 
 jvm_import(
-    name = "io_opentelemetry-opentelemetry-sdk-1_48_0_http_import",
-    jar = "@io_opentelemetry-opentelemetry-sdk-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-sdk-1_48_0-sources_http//file",
+    name = "io_opentelemetry-opentelemetry-sdk-1_66_0_http_import",
+    jar = "@io_opentelemetry-opentelemetry-sdk-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-sdk-1_66_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_opentelemetry-opentelemetry-api-1_48_0_http_import",
-    jar = "@io_opentelemetry-opentelemetry-api-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-api-1_48_0-sources_http//file",
+    name = "io_opentelemetry-opentelemetry-api-1_66_0_http_import",
+    jar = "@io_opentelemetry-opentelemetry-api-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-api-1_66_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_opentelemetry-opentelemetry-context-1_48_0_http_import",
-    jar = "@io_opentelemetry-opentelemetry-context-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-context-1_48_0-sources_http//file",
+    name = "io_opentelemetry-opentelemetry-context-1_66_0_http_import",
+    jar = "@io_opentelemetry-opentelemetry-context-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-context-1_66_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_opentelemetry-opentelemetry-sdk-common-1_48_0_http_import",
-    jar = "@io_opentelemetry-opentelemetry-sdk-common-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-sdk-common-1_48_0-sources_http//file",
+    name = "io_opentelemetry-opentelemetry-common-1_66_0_http_import",
+    jar = "@io_opentelemetry-opentelemetry-common-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-common-1_66_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_opentelemetry-opentelemetry-sdk-trace-1_48_0_http_import",
-    jar = "@io_opentelemetry-opentelemetry-sdk-trace-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-sdk-trace-1_48_0-sources_http//file",
+    name = "io_opentelemetry-opentelemetry-sdk-common-1_66_0_http_import",
+    jar = "@io_opentelemetry-opentelemetry-sdk-common-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-sdk-common-1_66_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_opentelemetry-opentelemetry-sdk-metrics-1_48_0_http_import",
-    jar = "@io_opentelemetry-opentelemetry-sdk-metrics-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-sdk-metrics-1_48_0-sources_http//file",
+    name = "io_opentelemetry-opentelemetry-sdk-trace-1_66_0_http_import",
+    jar = "@io_opentelemetry-opentelemetry-sdk-trace-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-sdk-trace-1_66_0-sources_http//file",
 )
 
 jvm_import(
-    name = "io_opentelemetry-opentelemetry-sdk-logs-1_48_0_http_import",
-    jar = "@io_opentelemetry-opentelemetry-sdk-logs-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-sdk-logs-1_48_0-sources_http//file",
+    name = "io_opentelemetry-opentelemetry-sdk-metrics-1_66_0_http_import",
+    jar = "@io_opentelemetry-opentelemetry-sdk-metrics-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-sdk-metrics-1_66_0-sources_http//file",
+)
+
+jvm_import(
+    name = "io_opentelemetry-opentelemetry-sdk-logs-1_66_0_http_import",
+    jar = "@io_opentelemetry-opentelemetry-sdk-logs-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-sdk-logs-1_66_0-sources_http//file",
 )
 
 copy_file(
-    name = "io.opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi-1.48.0.jar_copy",
-    src = "@io_opentelemetry-opentelemetry-sdk-extension-autoconfigure-spi-1_48_0_http//file",
-    out = "io.opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi-1.48.0.jar",
+    name = "io.opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi-1.66.0.jar_copy",
+    src = "@io_opentelemetry-opentelemetry-sdk-extension-autoconfigure-spi-1_66_0_http//file",
+    out = "io.opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi-1.66.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-opentelemetry-sdk-autoconfigure-spi-opentelemetry-sdk-autoconfigure-spi",
-    jar = "@io_opentelemetry-opentelemetry-sdk-extension-autoconfigure-spi-1_48_0_http//file",
-    source_jar = "@io_opentelemetry-opentelemetry-sdk-extension-autoconfigure-spi-1_48_0-sources_http//file",
+    jar = "@io_opentelemetry-opentelemetry-sdk-extension-autoconfigure-spi-1_66_0_http//file",
+    source_jar = "@io_opentelemetry-opentelemetry-sdk-extension-autoconfigure-spi-1_66_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "io.opentelemetry.semconv/opentelemetry-semconv-1.30.0.jar_copy",
-    src = "@io_opentelemetry_semconv-opentelemetry-semconv-1_30_0_http//file",
-    out = "io.opentelemetry.semconv/opentelemetry-semconv-1.30.0.jar",
+    name = "io.opentelemetry.semconv/opentelemetry-semconv-1.44.0.jar_copy",
+    src = "@io_opentelemetry_semconv-opentelemetry-semconv-1_44_0_http//file",
+    out = "io.opentelemetry.semconv/opentelemetry-semconv-1.44.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-opentelemetry-semconv-opentelemetry-semconv",
-    jar = "@io_opentelemetry_semconv-opentelemetry-semconv-1_30_0_http//file",
-    source_jar = "@io_opentelemetry_semconv-opentelemetry-semconv-1_30_0-sources_http//file",
+    jar = "@io_opentelemetry_semconv-opentelemetry-semconv-1_44_0_http//file",
+    source_jar = "@io_opentelemetry_semconv-opentelemetry-semconv-1_44_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

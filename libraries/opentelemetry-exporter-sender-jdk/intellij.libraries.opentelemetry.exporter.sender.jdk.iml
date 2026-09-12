@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="opentelemetry-exporter-sender-jdk" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.opentelemetry:opentelemetry-exporter-sender-jdk:1.48.0">
+        <properties include-transitive-deps="false" maven-id="io.opentelemetry:opentelemetry-exporter-sender-jdk:1.66.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.48.0/opentelemetry-exporter-sender-jdk-1.48.0.jar">
-              <sha256sum>a8e33b293554a46f69ffbb97d0e108ef8c6475f4fcf812b38e8c3bc47fa3b581</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.66.0/opentelemetry-exporter-sender-jdk-1.66.0.jar">
+              <sha256sum>f9303420ac7973eb9d05401305358fb9e436822ede9cfc998c0dce42dddc26e8</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.48.0/opentelemetry-exporter-sender-jdk-1.48.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.66.0/opentelemetry-exporter-sender-jdk-1.66.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.48.0/opentelemetry-exporter-sender-jdk-1.48.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.66.0/opentelemetry-exporter-sender-jdk-1.66.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
