@@ -27,7 +27,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.FileUtilRt.extensionEquals
 import com.intellij.openapi.util.io.FileUtilRt.getExtension
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileEvent
@@ -98,8 +98,8 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   init {
     fullConfigurationReload()
 
-    LocalFileSystem.getInstance().addVirtualFileListener(CustomDictFileListener(project = project, manager = this), this)
-    LocalFileSystem.getInstance().addVirtualFileListener(ProjectDictFileListener(this), this)
+    StandardFileSystems.local().addVirtualFileListener(CustomDictFileListener(project = project, manager = this), this)
+    StandardFileSystems.local().addVirtualFileListener(ProjectDictFileListener(this), this)
     BUNDLED_EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker) }
     RuntimeDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker) }
     CustomDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker) }
@@ -347,7 +347,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   }
 
   fun openDictionaryInEditor(dictPath: String) {
-    val file = if (dictPath.isEmpty()) null else LocalFileSystem.getInstance().refreshAndFindFileByPath(dictPath)
+    val file = if (dictPath.isEmpty()) null else StandardFileSystems.local().refreshAndFindFileByPath(dictPath)
     if (file == null) {
       val title = SpellCheckerBundle.message("dictionary.not.found.title")
       val message = SpellCheckerBundle.message("dictionary.not.found", dictPath)
