@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
 ### auto-generated section `build intellij.platform.icons` start
 resourcegroup(
@@ -9,10 +9,23 @@ resourcegroup(
     strip_prefix = "src",
 )
 
+jvm_provided_library(
+    name = "platform_icons-api_provided",
+    lib = "//platform/icons-api",
+)
+
+jvm_provided_library(
+    name = "libraries_jetbrains_annotations_provided",
+    lib = "//libraries/jetbrains/annotations",
+)
+
 jvm_library(
     name = "icons",
     srcs = glob(
-        [],
+        [
+            "generated/**/*.kt",
+            "generated/**/*.java",
+        ],
         allow_empty = True,
     ),
     module_name = "intellij.platform.icons",
@@ -22,6 +35,12 @@ jvm_library(
         ["compatibilityResources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib-provided",
+        ":platform_icons-api_provided",
+        ":libraries_jetbrains_annotations_provided",
+    ],
 )
 
 jvm_library(
@@ -33,7 +52,15 @@ jvm_library(
     ),
     module_name = "intellij.platform.icons",
     visibility = ["//visibility:public"],
-    runtime_deps = [":icons"],
+    runtime_deps = [
+        # do not sort,
+        ":icons",
+        "@lib//:kotlin-stdlib-provided",
+        "//platform/icons-api",
+        "//platform/icons-api:icons-api_test_lib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.platform.icons` end
 

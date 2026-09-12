@@ -1,14 +1,14 @@
-com.intellij.platform.icons.DeferredIcon
-- com.intellij.platform.icons.Icon
+com.intellij.platform.icons.DeferredIconDescriptor
+- com.intellij.platform.icons.IconDescriptor
 - a:getId():com.intellij.platform.icons.IconIdentifier
-- a:getPlaceholder():com.intellij.platform.icons.Icon
-com.intellij.platform.icons.Icon
+- a:getPlaceholder():com.intellij.platform.icons.IconDescriptor
+com.intellij.platform.icons.IconDescriptor
 com.intellij.platform.icons.IconIdentifier
 f:com.intellij.platform.icons.IconManagerKt
-- sf:deferredIcon(com.intellij.platform.icons.Icon,kotlin.jvm.functions.Function1):com.intellij.platform.icons.Icon
-- sf:icon(kotlin.jvm.functions.Function1):com.intellij.platform.icons.Icon
-- sf:imageIcon(java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier):com.intellij.platform.icons.Icon
-- bs:imageIcon$default(java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):com.intellij.platform.icons.Icon
+- sf:deferredIconDescriptor(com.intellij.platform.icons.IconDescriptor,kotlin.jvm.functions.Function1):com.intellij.platform.icons.IconDescriptor
+- sf:iconDescriptor(kotlin.jvm.functions.Function1):com.intellij.platform.icons.IconDescriptor
+- sf:imageIconDescriptor(java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier):com.intellij.platform.icons.IconDescriptor
+- bs:imageIconDescriptor$default(java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):com.intellij.platform.icons.IconDescriptor
 com.intellij.platform.icons.ImageResourceLocation
 e:com.intellij.platform.icons.design.BlendMode
 - java.lang.Enum
@@ -64,8 +64,8 @@ com.intellij.platform.icons.design.IconDesigner
 - bs:box$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - a:column(com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1):V
 - bs:column$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1,I,java.lang.Object):V
-- a:icon(com.intellij.platform.icons.Icon,com.intellij.platform.icons.modifiers.IconModifier):V
-- bs:icon$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.Icon,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
+- a:icon(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.modifiers.IconModifier):V
+- bs:icon$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
 - a:image(com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.modifiers.IconModifier):V
 - a:image(java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier):V
 - bs:image$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
@@ -79,6 +79,9 @@ com.intellij.platform.icons.design.IconDesigner
 f:com.intellij.platform.icons.design.IconDesignerKt
 - sf:badge(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.Shape,com.intellij.platform.icons.design.IconAlign,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.modifiers.IconModifier):V
 - bs:badge$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.Shape,com.intellij.platform.icons.design.IconAlign,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
+- sf:iconFrame(com.intellij.platform.icons.design.IconAnimationDesigner,J,com.intellij.platform.icons.IconDescriptor):V
+- sf:iconsFrames(com.intellij.platform.icons.design.IconAnimationDesigner,J,java.util.List):V
+- sf:iconsFrames(com.intellij.platform.icons.design.IconAnimationDesigner,J,com.intellij.platform.icons.IconDescriptor[]):V
 e:com.intellij.platform.icons.design.IconHorizontalAlign
 - java.lang.Enum
 - sf:Center:com.intellij.platform.icons.design.IconHorizontalAlign
@@ -219,8 +222,8 @@ com.intellij.platform.icons.swing.ScalableSwingIcon
 - javax.swing.Icon
 - a:scaled(com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon
 f:com.intellij.platform.icons.swing.SwingIconKt
+- sf:createSwingIcon(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon
+- bs:createSwingIcon$default(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale,I,java.lang.Object):com.intellij.platform.icons.swing.ScalableSwingIcon
 - sf:swingIcon(com.intellij.platform.icons.design.IconDesigner,javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier):V
 - bs:swingIcon$default(com.intellij.platform.icons.design.IconDesigner,javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
-- sf:toNewIcon(javax.swing.Icon):com.intellij.platform.icons.Icon
-- sf:toSwingIcon(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon
-- bs:toSwingIcon$default(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale,I,java.lang.Object):com.intellij.platform.icons.swing.ScalableSwingIcon
+- sf:toDescriptor(javax.swing.Icon):com.intellij.platform.icons.IconDescriptor

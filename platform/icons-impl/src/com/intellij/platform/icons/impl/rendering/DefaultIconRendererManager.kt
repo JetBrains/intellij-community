@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.rendering
 
-import com.intellij.platform.icons.Icon
-import com.intellij.platform.icons.impl.DefaultDeferredIcon
-import com.intellij.platform.icons.impl.DefaultLayeredIcon
+import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.impl.DefaultDeferredIconDescriptor
+import com.intellij.platform.icons.impl.DefaultLayeredIconDescriptor
 import com.intellij.platform.icons.impl.layers.AnimatedIconLayer
 import com.intellij.platform.icons.impl.layers.ImageIconLayer
 import com.intellij.platform.icons.impl.layers.LayoutIconLayer
@@ -28,17 +28,17 @@ abstract class DefaultIconRendererManager : IconRendererManager, IconLayerManage
         IconLayerManager.setInstance(this)
     }
 
-    override fun createRenderer(icon: Icon, context: RenderingContext): IconRenderer =
-        createRendererOrNull(icon, context) ?: error("Unsupported icon type: $icon")
+    override fun createRenderer(iconDescriptor: IconDescriptor, context: RenderingContext): IconRenderer =
+      createRendererOrNull(iconDescriptor, context) ?: error("Unsupported icon type: $iconDescriptor")
 
-    protected fun createRendererOrNull(icon: Icon, context: RenderingContext): IconRenderer? =
-        when (icon) {
-            is DefaultLayeredIcon -> DefaultIconRenderer(icon, context)
-            is DefaultDeferredIcon -> createDeferredIconRenderer(icon, context)
+    protected fun createRendererOrNull(iconDescriptor: IconDescriptor, context: RenderingContext): IconRenderer? =
+        when (iconDescriptor) {
+            is DefaultLayeredIconDescriptor -> DefaultIconRenderer(iconDescriptor, context)
+            is DefaultDeferredIconDescriptor -> createDeferredIconRenderer(iconDescriptor, context)
             else -> null
         }
 
-    private fun createDeferredIconRenderer(icon: DefaultDeferredIcon, context: RenderingContext): IconRenderer {
+    private fun createDeferredIconRenderer(icon: DefaultDeferredIconDescriptor, context: RenderingContext): IconRenderer {
         val renderer = DefaultDeferredIconRenderer(icon, context)
         icon.addDoneListener(renderer)
         return renderer

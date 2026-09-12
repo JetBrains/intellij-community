@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.rendering
 
-import com.intellij.platform.icons.DeferredIcon
-import com.intellij.platform.icons.Icon
-import com.intellij.platform.icons.impl.DefaultDeferredIcon
+import com.intellij.platform.icons.DeferredIconDescriptor
+import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.impl.DefaultDeferredIconDescriptor
 import com.intellij.platform.icons.impl.DefaultIconManager
 import com.intellij.platform.icons.impl.DeferredIconEventHandler
 import com.intellij.platform.icons.rendering.Dimensions
@@ -15,14 +15,14 @@ import com.intellij.platform.icons.rendering.createRenderer
 import org.jetbrains.annotations.ApiStatus
 
 internal class DefaultDeferredIconRenderer(
-    override val icon: DefaultDeferredIcon,
-    val renderingContext: RenderingContext,
+  override val iconDescriptor: DefaultDeferredIconDescriptor,
+  val renderingContext: RenderingContext,
 ) : IconRenderer, DeferredIconEventHandler {
     private var isDone = false
-    private var renderer = icon.placeholder?.createRenderer(renderingContext)
+    private var renderer = iconDescriptor.placeholder?.createRenderer(renderingContext)
 
-    override fun whenDone(deferredIcon: DeferredIcon, resolvedIcon: Icon) {
-        renderer = resolvedIcon.createRenderer(renderingContext)
+    override fun whenDone(deferredIcon: DeferredIconDescriptor, resolvedIconDescriptor: IconDescriptor) {
+        renderer = resolvedIconDescriptor.createRenderer(renderingContext)
         isDone = true
         renderingContext.updateFlow.triggerUpdate()
     }
@@ -30,7 +30,7 @@ internal class DefaultDeferredIconRenderer(
     @ApiStatus.Internal
     override fun render(paintingContext: LayerPaintingContext) {
         if (!isDone) {
-            DefaultIconManager.getDefaultManagerInstance().scheduleEvaluation(icon)
+            DefaultIconManager.getDefaultManagerInstance().scheduleEvaluation(iconDescriptor)
         }
         renderer?.render(paintingContext)
     }

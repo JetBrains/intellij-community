@@ -4,11 +4,11 @@ f:com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 - <init>():V
 - addSwingLayer(com.intellij.platform.icons.design.IconDesigner,javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier):V
 - buildCustomSerializers(kotlinx.serialization.modules.SerializersModuleBuilder):V
-- icon(kotlin.jvm.functions.Function1):com.intellij.platform.icons.Icon
+- createSwingIcon(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon
+- iconDescriptor(kotlin.jvm.functions.Function1):com.intellij.platform.icons.IconDescriptor
 - markDeferredIconUnused(com.intellij.platform.icons.IconIdentifier):V
-- sendDeferredNotifications(com.intellij.platform.icons.IconIdentifier,com.intellij.platform.icons.Icon,kotlin.coroutines.Continuation):java.lang.Object
-- toNewIcon(javax.swing.Icon):com.intellij.platform.icons.Icon
-- toSwingIcon(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon
+- sendDeferredNotifications(com.intellij.platform.icons.IconIdentifier,com.intellij.platform.icons.IconDescriptor,kotlin.coroutines.Continuation):java.lang.Object
+- toIconDescriptor(javax.swing.Icon):com.intellij.platform.icons.IconDescriptor
 f:com.intellij.platform.icons.impl.intellij.IntelliJIconManager$Companion
 - f:activate():V
 f:com.intellij.platform.icons.impl.intellij.ModuleIconIdentifier
@@ -80,9 +80,9 @@ f:com.intellij.platform.icons.impl.intellij.rendering.IntelliJImageModifiers
 f:com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
 - com.intellij.platform.icons.swing.ScalableSwingIcon
 - javax.swing.Icon
-- <init>(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale):V
-- b:<init>(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:getIcon():com.intellij.platform.icons.Icon
+- <init>(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale):V
+- b:<init>(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getIconDescriptor():com.intellij.platform.icons.IconDescriptor
 - getIconHeight():I
 - getIconWidth():I
 - f:getScale():com.intellij.platform.icons.scale.IconScale

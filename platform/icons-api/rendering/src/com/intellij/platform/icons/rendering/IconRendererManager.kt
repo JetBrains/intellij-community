@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.rendering
 
-import com.intellij.platform.icons.Icon
+import com.intellij.platform.icons.IconDescriptor
 import java.util.ServiceLoader
 import kotlinx.coroutines.CoroutineScope
 
@@ -14,7 +14,7 @@ interface IconRendererManager {
      * @param context General render context, this can be used to watch for Icon updates, or set defaults for color
      *   filters etc.
      */
-    fun createRenderer(icon: Icon, context: RenderingContext): IconRenderer
+    fun createRenderer(iconDescriptor: IconDescriptor, context: RenderingContext): IconRenderer
 
     fun createUpdateFlow(scope: CoroutineScope?, onUpdate: (suspend (Int) -> Unit)? = null): MutableIconUpdateFlow
 
@@ -53,5 +53,5 @@ interface IconRendererManager {
  * @param context General render context, this can be used to watch for Icon updates, or set defaults for color filters
  *   etc.
  */
-fun Icon.createRenderer(context: RenderingContext): IconRenderer =
+fun IconDescriptor.createRenderer(context: RenderingContext): IconRenderer =
     IconRendererManager.getInstance().createRenderer(this, context)

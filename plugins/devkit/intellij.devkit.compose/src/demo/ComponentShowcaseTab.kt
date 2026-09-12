@@ -39,7 +39,7 @@ import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
-import com.intellij.platform.icons.swing.toNewIcon
+import com.intellij.platform.icons.swing.toDescriptor
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
@@ -479,11 +479,11 @@ private fun IconsShowcase() {
     )
 
     Box {
-      Icon(AllIcons.General.OpenDisk.toNewIcon(), "Build Load Changes")
+      Icon(AllIcons.General.OpenDisk.toDescriptor(), "Build Load Changes")
     }
 
     Box {
-      Icon(deferedIcon.toNewIcon(), "Deferred Icon Sample")
+      Icon(deferedIcon.toDescriptor(), "Deferred Icon Sample")
     }
   }
 }

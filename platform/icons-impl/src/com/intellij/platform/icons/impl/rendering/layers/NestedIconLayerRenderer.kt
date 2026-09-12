@@ -9,7 +9,7 @@ import com.intellij.platform.icons.rendering.createRenderer
 
 class NestedIconLayerRenderer(private val layer: NestedIconLayer, renderingContext: DefaultRenderingContext) :
     IconLayerRenderer {
-    private val renderer = layer.icon.createRenderer(renderingContext.adjustTo(layer))
+    private val renderer = layer.iconDescriptor.createRenderer(renderingContext.adjustTo(layer))
 
     override val layout: LayerLayout = applyLayout()
 
