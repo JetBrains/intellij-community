@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -127,8 +128,17 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   }
 
   public void resetSourcePosition(long requestId) {
+    resetSourcePosition(requestId, null);
+  }
+
+  /**
+   * @param highlightRange the range the frontend range marker tracks after a document edit, or null
+   */
+  public void resetSourcePosition(long requestId, @Nullable TextRange highlightRange) {
+    boolean rangeMoved = highlightRange != null && myType.highlightRangeMoved(this, highlightRange);
     mySourcePosition = null;
-    if (getBreakpointManager().getRequestCounter().setRequestCompleted(getBreakpointId(), requestId)) {
+    boolean requestCompleted = getBreakpointManager().getRequestCounter().setRequestCompleted(getBreakpointId(), requestId);
+    if (rangeMoved || requestCompleted) {
       fireBreakpointChanged();
     }
   }
@@ -161,7 +171,15 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   }
 
   public void setLine(long requestId, int line) {
-    updateStateIfNeededAndNotify(requestId, line, this::getLine, (l) -> {
+    setLine(requestId, line, null);
+  }
+
+  /**
+   * @param highlightRange the range the frontend range marker tracks after a document edit, or null
+   */
+  public void setLine(long requestId, int line, @Nullable TextRange highlightRange) {
+    boolean rangeMoved = highlightRange != null && myType.highlightRangeMoved(this, highlightRange);
+    updateStateIfNeededAndNotify(requestId, rangeMoved, line, this::getLine, (l) -> {
       myState.setLine(line);
       resetSourcePosition();
     });

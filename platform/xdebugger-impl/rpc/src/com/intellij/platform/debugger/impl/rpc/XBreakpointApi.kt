@@ -59,13 +59,15 @@ interface XBreakpointApi : RemoteApi<Unit> {
 
   /**
    * Returns `true` on success, `false` if the request should be retried later due to version mismatch.
+   * [highlightRange] is the range the frontend range marker tracks, or `null` for a whole-line marker.
    */
-  suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long, documentPatchVersion: DocumentPatchVersion?): Boolean
+  suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long, documentPatchVersion: DocumentPatchVersion?, highlightRange: TextRangeDto?): Boolean
 
   /**
    * Returns `true` on success, `false` if the request should be retried later due to version mismatch.
+   * [highlightRange] is the range the frontend range marker tracks, or `null` for a whole-line marker.
    */
-  suspend fun setLine(breakpointId: XBreakpointId, requestId: Long, line: Int, documentPatchVersion: DocumentPatchVersion?): Boolean
+  suspend fun setLine(breakpointId: XBreakpointId, requestId: Long, line: Int, documentPatchVersion: DocumentPatchVersion?, highlightRange: TextRangeDto?): Boolean
 
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, breakpointId: XBreakpointId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto?
 

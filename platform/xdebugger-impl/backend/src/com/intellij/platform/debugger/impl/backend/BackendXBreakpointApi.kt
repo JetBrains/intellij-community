@@ -3,6 +3,8 @@ package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.rpc.FrontendDocumentId
+import com.intellij.ide.rpc.util.TextRangeDto
+import com.intellij.ide.rpc.util.textRange
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.findDocument
@@ -73,17 +75,17 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     breakpoint.setPlacement(requestId, placement)
   }
 
-  override suspend fun setLine(breakpointId: XBreakpointId, requestId: Long, line: Int, documentPatchVersion: DocumentPatchVersion?): Boolean {
+  override suspend fun setLine(breakpointId: XBreakpointId, requestId: Long, line: Int, documentPatchVersion: DocumentPatchVersion?, highlightRange: TextRangeDto?): Boolean {
     val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return true
     if (!breakpoint.awaitDocumentIsInSyncAndCommitted(documentPatchVersion)) return false
-    breakpoint.setLine(requestId, line)
+    breakpoint.setLine(requestId, line, highlightRange?.textRange())
     return true
   }
 
-  override suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long, documentPatchVersion: DocumentPatchVersion?): Boolean {
+  override suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long, documentPatchVersion: DocumentPatchVersion?, highlightRange: TextRangeDto?): Boolean {
     val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return true
     if (!breakpoint.awaitDocumentIsInSyncAndCommitted(documentPatchVersion)) return false
-    breakpoint.resetSourcePosition(requestId)
+    breakpoint.resetSourcePosition(requestId, highlightRange?.textRange())
     return true
   }
 

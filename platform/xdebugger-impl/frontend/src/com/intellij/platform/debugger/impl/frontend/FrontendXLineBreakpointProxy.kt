@@ -4,20 +4,24 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.rpc.util.textRange
+import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDocument
 import com.intellij.platform.debugger.impl.frontend.util.SequentialRpcRequestsExecutor
 import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
 import com.intellij.platform.debugger.impl.rpc.XLineBreakpointInfo
+import com.intellij.platform.debugger.impl.rpc.patchVersion
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointAttachment
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointAttachmentNotifier
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
@@ -45,27 +49,40 @@ private suspend fun XLineBreakpointProxy.document(): Document? {
   return readAction { getFile()?.findDocument() }
 }
 
-private suspend fun retryUntilVersionMatchBool(project: Project, document: Document?, request: suspend (DocumentPatchVersion?) -> Boolean) {
-  retryUntilVersionMatch(project, document) { if (request(it)) true else null }
+/**
+ * Retries [request] until the backend accepts the document version.
+ * The version and the tracked highlight range come from one read action, so the range offsets belong to the reported version.
+ */
+private suspend fun retryUntilVersionMatchWithRange(
+  breakpoint: FrontendXLineBreakpointProxy,
+  request: suspend (DocumentPatchVersion?, TextRangeDto?) -> Boolean,
+) {
+  val document = breakpoint.document()
+  while (true) {
+    val (version, range) = readAction {
+      document?.patchVersion(breakpoint.project) to breakpoint.trackedHighlightRange()?.toRpc()
+    }
+    if (request(version, range)) return
+  }
 }
 
 private sealed interface BreakpointRequest {
   val requestId: Long
-  suspend fun sendRequest(breakpoint: XLineBreakpointProxy, requestId: Long)
+  suspend fun sendRequest(breakpoint: FrontendXLineBreakpointProxy, requestId: Long)
 
   class SetLine(override val requestId: Long, val line: Int, private val redraw: () -> Unit) : BreakpointRequest {
-    override suspend fun sendRequest(breakpoint: XLineBreakpointProxy, requestId: Long) {
-      retryUntilVersionMatchBool(breakpoint.project, breakpoint.document()) { version ->
-        XBreakpointApi.getInstance().setLine(breakpoint.id, requestId, line, version)
+    override suspend fun sendRequest(breakpoint: FrontendXLineBreakpointProxy, requestId: Long) {
+      retryUntilVersionMatchWithRange(breakpoint) { version, range ->
+        XBreakpointApi.getInstance().setLine(breakpoint.id, requestId, line, version, range)
       }
       redraw()
     }
   }
 
   class UpdatePosition(override val requestId: Long) : BreakpointRequest {
-    override suspend fun sendRequest(breakpoint: XLineBreakpointProxy, requestId: Long) {
-      retryUntilVersionMatchBool(breakpoint.project, breakpoint.document()) { version ->
-        XBreakpointApi.getInstance().updatePosition(breakpoint.id, requestId, version)
+    override suspend fun sendRequest(breakpoint: FrontendXLineBreakpointProxy, requestId: Long) {
+      retryUntilVersionMatchWithRange(breakpoint) { version, range ->
+        XBreakpointApi.getInstance().updatePosition(breakpoint.id, requestId, version, range)
       }
     }
   }
@@ -73,7 +90,7 @@ private sealed interface BreakpointRequest {
 
 private class RequestsDebouncer(
   cs: CoroutineScope,
-  private val breakpoint: XLineBreakpointProxy,
+  private val breakpoint: FrontendXLineBreakpointProxy,
   private val sequentialExecutor: SequentialRpcRequestsExecutor,
 ) {
   private val debouncedRequests = Channel<BreakpointRequest>(Channel.UNLIMITED)
@@ -270,6 +287,15 @@ internal class FrontendXLineBreakpointProxy(
 
   fun getHighlighter(): RangeHighlighter? {
     return visualRepresentation.highlighter
+  }
+
+  /**
+   * The range the highlighter tracks across document edits, or null for a whole-line highlighter.
+   */
+  internal fun trackedHighlightRange(): TextRange? {
+    val highlighter = visualRepresentation.rangeMarker as? RangeHighlighter ?: return null
+    if (!highlighter.isValid || highlighter.targetArea != HighlighterTargetArea.EXACT_RANGE) return null
+    return highlighter.textRange
   }
 
   private fun <T> updateLineBreakpointStateIfNeeded(
