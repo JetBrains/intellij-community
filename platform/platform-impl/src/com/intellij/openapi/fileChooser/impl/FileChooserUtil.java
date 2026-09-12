@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.SystemProperties;
@@ -41,7 +41,7 @@ public final class FileChooserUtil {
 
   public static @Nullable VirtualFile getLastOpenedFile(@Nullable Project project) {
     String last = getLastOpenedFilePath(project);
-    return last != null ? LocalFileSystem.getInstance().findFileByPath(last) : null;
+    return last != null ? StandardFileSystems.local().findFileByPath(last) : null;
   }
 
   @ApiStatus.Internal
@@ -110,7 +110,7 @@ public final class FileChooserUtil {
 
   @ApiStatus.Internal
   public static @Nullable VirtualFile getFileToSelect(@NotNull FileChooserDescriptor descriptor, @Nullable Project project, @Nullable VirtualFile toSelect) {
-    VirtualFile result = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(pathToSelect(descriptor, project, toSelect)));
+    VirtualFile result = StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(pathToSelect(descriptor, project, toSelect)));
     return result != null && descriptor instanceof FileSaverDescriptor && !result.isDirectory() ? result.getParent() : result;
   }
 

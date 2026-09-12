@@ -3,8 +3,9 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
@@ -44,9 +45,9 @@ public final class FileDrop {
         if (fileList == null) return;
 
         final List<VirtualFile> files = new ArrayList<>();
-        final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+        final VirtualFileSystem fileSystem = StandardFileSystems.local();
         for (File file : fileList) {
-          final VirtualFile vFile = fileSystem.findFileByIoFile(file);
+          final VirtualFile vFile = fileSystem.findFileByPath(file.getAbsolutePath());
           if (vFile != null && vFile.exists() && target.getDescriptor().isFileVisible(vFile, target.isHiddenShown())) {
             files.add(vFile);
           }

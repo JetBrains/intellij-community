@@ -19,7 +19,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.IconManager
@@ -218,7 +218,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
     descriptor.description = IdeBundle.message("prompt.browse.icon.for.selected.action")
     val currentIconPath = (selectedItem as? ActionIconInfo)?.iconPath
     val toSelect = currentIconPath?.let { path ->
-      runCatching { LocalFileSystem.getInstance().findFileByPath(path) }.getOrNull()
+      runCatching { StandardFileSystems.local().findFileByPath(path) }.getOrNull()
     }
     val iconFile = FileChooser.chooseFile(descriptor, null, toSelect)
     if (iconFile != null) {

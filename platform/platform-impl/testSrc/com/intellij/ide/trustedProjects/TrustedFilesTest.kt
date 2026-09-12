@@ -8,7 +8,7 @@ import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
@@ -45,7 +45,7 @@ class TrustedFilesTest {
     val project = projectFixture.get()
     val outsideFile = tempPath.resolve("outside.txt")
     Files.writeString(outsideFile, "text")
-    val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile))
+    val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsideFile))
     TrustedFiles.markExternallyOpened(file)
 
     assertFalse(TrustedFiles.isTrusted(file, project))
@@ -57,7 +57,7 @@ class TrustedFilesTest {
     val project = projectFixture.get()
     val outsideFile = tempPath.resolve("outside.txt")
     Files.writeString(outsideFile, "text")
-    val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile))
+    val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsideFile))
     TrustedFiles.markExternallyOpened(file)
 
     assertTrue(TrustedFiles.isTrusted(file, project))
@@ -72,7 +72,7 @@ class TrustedFilesTest {
     // without the external-source mark and must keep the full functionality
     val internalFile = tempPath.resolve("internal.txt")
     Files.writeString(internalFile, "text")
-    val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(internalFile))
+    val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(internalFile))
 
     assertTrue(TrustedFiles.isTrusted(file, project))
   }
@@ -84,7 +84,7 @@ class TrustedFilesTest {
 
     val outsideFile = tempPath.resolve("outside.txt")
     Files.writeString(outsideFile, "text")
-    val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile))
+    val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsideFile))
 
     assertTrue(TrustedFiles.isTrusted(file, project))
     TrustedFiles.markExternallyOpened(file)
@@ -99,7 +99,7 @@ class TrustedFilesTest {
 
       val outsidePath = tempPath.resolve("open-then-mark.txt")
       Files.writeString(outsidePath, "text")
-      val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsidePath))
+      val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsidePath))
 
       // the file opens with the full functionality first, e.g. from a console hyperlink
       val fileEditorManager = FileEditorManager.getInstance(project)
@@ -123,7 +123,7 @@ class TrustedFilesTest {
 
     val outsidePath = tempPath.resolve("evicted.txt")
     Files.writeString(outsidePath, "text")
-    val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsidePath))
+    val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsidePath))
     TrustedFiles.markExternallyOpened(file)
     assertFalse(TrustedFiles.isTrusted(file, project))
 
@@ -131,7 +131,7 @@ class TrustedFilesTest {
     for (i in 0 until 100) {
       val fillerPath = tempPath.resolve("filler-$i.txt")
       Files.writeString(fillerPath, "text")
-      val filler = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(fillerPath))
+      val filler = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(fillerPath))
       TrustedFiles.markExternallyOpened(filler)
     }
 
@@ -151,8 +151,8 @@ class TrustedFilesTest {
       val siblingFile = dir.resolve("sibling.txt")
       Files.writeString(outsideFile, "text")
       Files.writeString(siblingFile, "text")
-      val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile))
-      val sibling = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(siblingFile))
+      val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsideFile))
+      val sibling = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(siblingFile))
       TrustedFiles.markExternallyOpened(file)
       TrustedFiles.markExternallyOpened(sibling)
 
@@ -161,7 +161,7 @@ class TrustedFilesTest {
       Files.writeString(insidePath, "text")
       // refreshing under an open project's root fires VFS events synchronously and needs the write-intent lock
       val inside = requireNotNull(writeIntentReadAction {
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(insidePath)
+        VirtualFileManager.getInstance().refreshAndFindFileByNioPath(insidePath)
       })
       TrustedFiles.markExternallyOpened(inside)
       assertTrue(TrustedFiles.isTrusted(inside, project))
@@ -186,7 +186,7 @@ class TrustedFilesTest {
 
     val outsideFile = tempPath.resolve("revoked.txt")
     Files.writeString(outsideFile, "text")
-    val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile))
+    val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsideFile))
     TrustedFiles.markExternallyOpened(file)
 
     TrustedProjects.setProjectTrusted(outsideFile, true)
@@ -211,7 +211,7 @@ class TrustedFilesTest {
 
     CommandLineProcessor.processExternalCommandLine(listOf(cliFile.toString()), null)
 
-    val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(cliFile))
+    val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(cliFile))
     assertFalse(TrustedFiles.isTrusted(file, project))
     // let the navigation scheduled by the command line processor finish, then release the editor
     withContext(Dispatchers.EDT) {

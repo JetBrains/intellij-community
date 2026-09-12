@@ -7,8 +7,8 @@ import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileElement;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ public final class RootFileElement extends FileElement {
   }
 
   private static List<VirtualFile> getFileSystemRoots() {
-    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
     StreamEx<Path> paths = StreamEx.of(FileSystems.getDefault().getRootDirectories().spliterator());
 
@@ -62,6 +62,6 @@ public final class RootFileElement extends FileElement {
         LOG.info("Cannot fetch WSL distributions", e);
       }
     }
-    return paths.map(path -> localFileSystem.findFileByNioFile(path)).nonNull().toList();
+    return paths.map(path -> fileManager.findFileByNioPath(path)).nonNull().toList();
   }
 }

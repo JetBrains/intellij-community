@@ -13,9 +13,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -102,7 +102,7 @@ class WorkspaceModelJsonDumpService(private val project: Project, private val co
     val fileName = "$name.json"
     coroutineScope.launch(Dispatchers.IO) {
       val logDirectory2 = LoggerFactory.getLogFilePath().parent?.let {
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(it)
+        VirtualFileManager.getInstance().refreshAndFindFileByNioPath(it)
       }?.takeIf { it.isDirectory }
       if (logDirectory2 == null) {
         val groupAndTitle = WorkspaceModelIdeBundle.message("notification.title.cannot.find.log.directory")

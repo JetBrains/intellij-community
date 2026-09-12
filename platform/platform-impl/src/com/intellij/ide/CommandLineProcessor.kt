@@ -35,8 +35,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.util.text.Strings
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
@@ -120,7 +120,7 @@ object CommandLineProcessor {
       }
     }
 
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)
+    val file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(ioFile)
     if (file == null) {
       if (LightEditUtil.isLightEditEnabled()) {
         val lightEditProject = LightEditUtil.openFile(ioFile, true)

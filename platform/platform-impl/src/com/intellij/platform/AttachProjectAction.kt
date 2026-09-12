@@ -18,9 +18,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.util.SystemProperties
@@ -66,7 +66,7 @@ open class AttachProjectAction : AnAction(), DumbAware {
       val descriptor = OpenProjectFileChooserDescriptor(true)
       var preselectedDirectory = project.getUserData(TO_SELECT_KEY)?.let {
         project.putUserData(TO_SELECT_KEY, null) // reset the value
-        LocalFileSystem.getInstance().findFileByNioFile(it)
+        VirtualFileManager.getInstance().findFileByNioPath(it)
       }
 
       if (preselectedDirectory == null) {

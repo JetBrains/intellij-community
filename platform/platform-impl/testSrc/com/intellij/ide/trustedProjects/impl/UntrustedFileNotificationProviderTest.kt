@@ -8,7 +8,7 @@ import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
@@ -51,20 +51,20 @@ class UntrustedFileNotificationProviderTest {
       val outsideFile = tempPath.resolve("outside").resolve("data.txt")
       Files.createDirectories(outsideFile.parent)
       Files.writeString(outsideFile, "text")
-      val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile))
+      val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsideFile))
       TrustedFiles.markExternallyOpened(file)
 
       // an IDE-internal file is not marked as externally opened and needs no banner
       val internalPath = tempPath.resolve("outside").resolve("internal.txt")
       Files.writeString(internalPath, "text")
-      val internalFile = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(internalPath))
+      val internalFile = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(internalPath))
 
       // a file inside the host project's roots needs no banner even when it is marked
       val hostOwnedPath = Path.of(host.basePath!!).resolve("host-owned.txt")
       Files.writeString(hostOwnedPath, "text")
       // refreshing under an open project's root fires VFS events synchronously and needs the write-intent lock
       val hostOwnedFile = requireNotNull(writeIntentReadAction {
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(hostOwnedPath)
+        VirtualFileManager.getInstance().refreshAndFindFileByNioPath(hostOwnedPath)
       })
       TrustedFiles.markExternallyOpened(hostOwnedFile)
 
@@ -76,7 +76,7 @@ class UntrustedFileNotificationProviderTest {
       // trusting the exact file location removes the banner but does not affect siblings
       val siblingFile = outsideFile.parent.resolve("sibling.txt")
       Files.writeString(siblingFile, "text")
-      val sibling = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(siblingFile))
+      val sibling = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(siblingFile))
       TrustedFiles.markExternallyOpened(sibling)
 
       TrustedProjects.setProjectTrusted(outsideFile, true)
@@ -98,19 +98,19 @@ class UntrustedFileNotificationProviderTest {
         val outsideFile = tempPath.resolve("outside").resolve("data.txt")
         Files.createDirectories(outsideFile.parent)
         Files.writeString(outsideFile, "text")
-        val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile))
+        val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsideFile))
         TrustedFiles.markExternallyOpened(file)
 
         // an unmarked outside file follows the project-level trust
         val unmarkedPath = tempPath.resolve("outside").resolve("unmarked.txt")
         Files.writeString(unmarkedPath, "text")
-        val unmarkedFile = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(unmarkedPath))
+        val unmarkedFile = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(unmarkedPath))
 
         val insidePath = Path.of(host.basePath!!).resolve("inside.txt")
         Files.writeString(insidePath, "text")
         // refreshing under an open project's root fires VFS events synchronously and needs the write-intent lock
         val insideFile = requireNotNull(writeIntentReadAction {
-          LocalFileSystem.getInstance().refreshAndFindFileByNioFile(insidePath)
+          VirtualFileManager.getInstance().refreshAndFindFileByNioPath(insidePath)
         })
         TrustedFiles.markExternallyOpened(insideFile)
 

@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
@@ -53,7 +53,7 @@ class BrowserLauncherSafeModeTest {
   private fun createOutsideFile(name: String): VirtualFile {
     val path = tempPath.resolve(name)
     Files.writeString(path, "<html></html>")
-    return requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path))
+    return requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path))
   }
 
   private fun fileUrl(file: VirtualFile): String = Urls.newFromVirtualFile(file).toExternalForm()
@@ -87,7 +87,7 @@ class BrowserLauncherSafeModeTest {
     Files.writeString(insidePath, "<html></html>")
     // refreshing under an open project's root fires VFS events synchronously and needs the write-intent lock
     val inside = requireNotNull(writeIntentReadAction {
-      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(insidePath)
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(insidePath)
     })
     TrustedFiles.markExternallyOpened(inside)
     assertNull(BrowserLauncherImpl.findStandaloneFile(project, fileUrl(inside)))

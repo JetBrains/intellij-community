@@ -19,7 +19,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -110,8 +110,8 @@ class FileDropManager(
 
   private suspend fun openFiles(project: Project, fileList: Collection<File>, editorWindow: EditorWindow?) {
     val vFiles = withContext(Dispatchers.IO) {
-      val fileSystem = LocalFileSystem.getInstance()
-      fileList.mapNotNull { file -> fileSystem.refreshAndFindFileByIoFile(file) }
+      val fileSystem = StandardFileSystems.local()
+      fileList.mapNotNull { file -> fileSystem.refreshAndFindFileByPath(file.absolutePath) }
         .also { NonProjectFileWritingAccessProvider.allowWriting(it) }
         .onEach(TrustedFiles::markExternallyOpened)
     }

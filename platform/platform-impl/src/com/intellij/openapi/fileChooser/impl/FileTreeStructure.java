@@ -11,7 +11,7 @@ import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.fileChooser.ex.RootFileElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -132,7 +132,7 @@ public final class FileTreeStructure extends AbstractTreeStructure {
       if (parent != null && parent.getFileSystem() instanceof JarFileSystem && parent.getParent() == null) {
         // parent of jar contents should be local jar file
         String localPath = parent.getPath().substring(0, parent.getPath().length() - JarFileSystem.JAR_SEPARATOR.length());
-        parent = LocalFileSystem.getInstance().findFileByPath(localPath);
+        parent = StandardFileSystems.local().findFileByPath(localPath);
       }
       if (parent == null || parent.isValid() && parent.equals(rootElementFile)) {
         return myRootElement;

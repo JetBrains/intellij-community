@@ -20,8 +20,8 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -103,7 +103,7 @@ public final class ShowFilePathAction extends DumbAwareAction implements ActionR
 
     ReadAction
       .nonBlocking(() -> ContainerUtil.map(fileUrls, url -> {
-        VirtualFile vFile = LocalFileSystem.getInstance().findFileByNioFile(Path.of(url));
+        VirtualFile vFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(url));
         if (vFile == null) return EmptyIcon.ICON_16;
         if (vFile.isDirectory()) return AllIcons.Nodes.Folder;
         return FileTypeManager.getInstance().getFileTypeByFile(vFile).getIcon();

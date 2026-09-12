@@ -9,8 +9,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FrontendOwnedBackendMirrorFileDescriptor
 import com.intellij.openapi.fileEditor.impl.FrontendOwnedFileEditorSplitBinder
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,7 +27,7 @@ object ClientLogFileBackendMirrorBinder {
   }
 
   suspend fun bindOpenLogToBackendMirror(project: Project) {
-    val logFile = LocalFileSystem.getInstance().findFileByNioFile(LoggerFactory.getLogFilePath()) ?: return
+    val logFile = VirtualFileManager.getInstance().findFileByNioPath(LoggerFactory.getLogFilePath()) ?: return
     bindToBackendMirror(project, logFile)
   }
 

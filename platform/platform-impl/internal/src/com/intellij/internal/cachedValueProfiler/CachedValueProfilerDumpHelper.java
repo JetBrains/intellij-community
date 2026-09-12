@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProfiler;
@@ -152,7 +152,7 @@ public final class CachedValueProfilerDumpHelper {
         @Override
         protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
           if (e.getDescription().startsWith("editor:")) {
-            VirtualFile virtualFile = project.isDisposed() ? null : LocalFileSystem.getInstance().findFileByPath(
+            VirtualFile virtualFile = project.isDisposed() ? null : StandardFileSystems.local().findFileByPath(
               VfsUtilCore.urlToPath(VfsUtilCore.fixURLforIDEA(URLUtil.unescapePercentSequences(e.getDescription().substring(7)))));
             if (virtualFile != null) {
               new OpenFileDescriptor(project, virtualFile).navigate(true);

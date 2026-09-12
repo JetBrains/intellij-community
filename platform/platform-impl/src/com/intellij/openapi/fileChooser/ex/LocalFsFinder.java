@@ -15,7 +15,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -69,7 +69,7 @@ public final class LocalFsFinder implements Finder {
 
     if (myUseVfs) {
       // '..' and '.' path components will be eliminated
-      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(toFind);
+      VirtualFile vFile = StandardFileSystems.local().findFileByPath(toFind);
       if (vFile != null) {
         return new VfsFile(vFile);
       }

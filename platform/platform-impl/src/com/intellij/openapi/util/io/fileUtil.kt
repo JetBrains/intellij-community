@@ -4,8 +4,8 @@ package com.intellij.openapi.util.io
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
+import com.intellij.openapi.vfs.StandardFileSystems
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -64,7 +64,7 @@ suspend fun <FileDescriptor> writeWithEnsureWritable(
 
   if (project == null || notWritableFiles.isEmpty()) return
 
-  val localFileSystem = LocalFileSystem.getInstance()
+  val localFileSystem = StandardFileSystems.local()
   val accessDeniedFiles = notWritableFiles.mapNotNull { (file, accessDeniedException) ->
     val filePath = accessDeniedException.file ?: return@mapNotNull null
     val virtualFile = localFileSystem.findFileByPath(filePath)

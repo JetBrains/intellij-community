@@ -41,7 +41,7 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry.Companion.intValue
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.isFile
@@ -342,7 +342,7 @@ open class IdeDocumentHistoryImpl(
 
   override fun getChangedFiles(): List<VirtualFile> {
     val files = ArrayList<VirtualFile>()
-    val localFs = LocalFileSystem.getInstance()
+    val localFs = StandardFileSystems.local()
     for (path in state.changedPaths) {
       localFs.findFileByPath(path)?.let {
         files.add(it)

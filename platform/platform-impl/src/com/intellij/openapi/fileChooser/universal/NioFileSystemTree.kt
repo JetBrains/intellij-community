@@ -22,8 +22,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader.getTransparentIcon
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.PopupHandler
@@ -538,7 +538,7 @@ class NioFileSystemTree(
     fun getVirtualFile(path: TreePath): VirtualFile? {
       val component = path.lastPathComponent
       if (component is NioFileNode && component.path != null) {
-        return LocalFileSystem.getInstance().findFileByNioFile(component.path)
+        return VirtualFileManager.getInstance().findFileByNioPath(component.path)
       }
       return null
     }

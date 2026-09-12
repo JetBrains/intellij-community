@@ -23,7 +23,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.impl.finishEmptyEditorStartupBeforeProjectView
 import com.intellij.openapi.project.impl.presentProjectViewOnStartup
 import com.intellij.openapi.project.impl.shouldRestoreStartupEditorFocus
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -1401,7 +1401,7 @@ internal class EditorEmptyTextPainterTest {
 
   private fun leafElementWithFile(): Element {
     val file = Files.createTempFile(tempPath, "empty-state", ".txt")
-    val virtualFile = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file))
+    val virtualFile = checkNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file))
     return Element("leaf").addContent(
       Element("file").addContent(
         Element(HistoryEntry.TAG).setAttribute(HistoryEntry.FILE_ATTRIBUTE, virtualFile.url),

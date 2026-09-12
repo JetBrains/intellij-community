@@ -11,7 +11,7 @@ import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -288,7 +288,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       for (RootType rootType : RootType.getAllRootTypes()) {
         if (rootType.isHidden()) continue;
         String path = ScratchFileService.getInstance().getRootPath(rootType);
-        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+        VirtualFile file = StandardFileSystems.local().findFileByPath(path);
         if (file == null) continue;
         consumer.accept(file, ApplicationManager.getApplication());
       }

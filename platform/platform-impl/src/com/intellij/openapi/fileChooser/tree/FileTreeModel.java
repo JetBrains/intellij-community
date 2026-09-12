@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -246,7 +246,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   private static VirtualFile findFile(String path) {
-    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
+    return StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(path));
   }
 
   private static final class State {
@@ -386,7 +386,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
 
     private static @NotNull List<VirtualFile> toVirtualFiles(@NotNull Iterable<? extends Path> paths) {
       return StreamSupport.stream(paths.spliterator(), false)
-        .map(root -> LocalFileSystem.getInstance().findFileByNioFile(root))
+        .map(root -> VirtualFileManager.getInstance().findFileByNioPath(root))
         .filter(State::isValid)
         .collect(Collectors.toList());
     }

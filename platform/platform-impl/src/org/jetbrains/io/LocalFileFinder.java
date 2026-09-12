@@ -5,7 +5,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ public final class LocalFileFinder {
    */
   public static @Nullable VirtualFile findFile(@NotNull String path) {
     if (windowsDriveExists(path)) {
-      return LocalFileSystem.getInstance().findFileByPath(path);
+      return StandardFileSystems.local().findFileByPath(path);
     }
     return null;
   }

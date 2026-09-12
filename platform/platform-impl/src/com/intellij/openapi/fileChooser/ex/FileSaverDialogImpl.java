@@ -11,9 +11,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.UIBundle;
@@ -67,7 +67,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
 
   @Override
   public @Nullable VirtualFileWrapper save(@Nullable Path baseDir, @Nullable String filename) {
-    return save(baseDir == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByNioFile(baseDir), filename);
+    return save(baseDir == null ? null : VirtualFileManager.getInstance().refreshAndFindFileByNioPath(baseDir), filename);
   }
 
   @Override

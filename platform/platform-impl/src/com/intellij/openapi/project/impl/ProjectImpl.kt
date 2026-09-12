@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.platform.project.registerNewProjectId
@@ -228,11 +229,11 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
   final override fun getProjectFilePath(): String = componentStore.projectFilePath.invariantSeparatorsPathString
 
   //MAYBE RC: cache result same way as in getWorkspaceFile()?
-  final override fun getProjectFile(): VirtualFile? = LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectFilePath)
+  final override fun getProjectFile(): VirtualFile? = VirtualFileManager.getInstance().findFileByNioPath(componentStore.projectFilePath)
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Deprecated in Java")
-  final override fun getBaseDir(): VirtualFile? = LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectBasePath)
+  final override fun getBaseDir(): VirtualFile? = VirtualFileManager.getInstance().findFileByNioPath(componentStore.projectBasePath)
 
   final override fun getBasePath(): String = componentStore.storeDescriptor.historicalProjectBasePath.invariantSeparatorsPathString
 
@@ -242,7 +243,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
 
   /** Caches [Path] -(via [LocalFileSystem.findFileByNioFile])-> [VirtualFile]  resolution result */
   private class CachedVirtualFile(@JvmField val path: Path){
-    val resolvedVirtualFile: VirtualFile? = LocalFileSystem.getInstance().findFileByNioFile(path)
+    val resolvedVirtualFile: VirtualFile? = VirtualFileManager.getInstance().findFileByNioPath(path)
   }
 
   /** Cache last resolved [getWorkspaceFile]: [LocalFileSystem.findFileByNioFile] call is not cheap, and workspacePath is rarely changed */

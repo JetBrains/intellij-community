@@ -16,9 +16,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.ide.bootstrap.StartupUtil;
 import com.intellij.platform.ide.productMode.IdeProductMode;
 import org.jetbrains.annotations.ApiStatus;
@@ -51,7 +51,7 @@ public class OpenLogAction
   }
 
   public static void openLogInEditor(@NotNull Project project, @NotNull AnActionEvent event) {
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(LoggerFactory.getLogFilePath());
+    VirtualFile file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(LoggerFactory.getLogFilePath());
     if (file != null) {
       VfsUtil.markDirtyAndRefresh(true, false, false, file);
       final FileEditor[] editors = FileEditorManager.getInstance(project).openFile(file, true);

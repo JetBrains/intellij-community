@@ -38,7 +38,7 @@ import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -723,7 +723,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     private void printIconPath(CachedImageIcon icon) {
       URL iconUrl = icon.getUrl();
       if (iconUrl != null) {
-        VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(iconUrl.getPath());
+        VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(iconUrl.getPath());
         if (file != null && myProject != null) {
           Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(myProject, file, 0);
           printHyperlinkToPreview(file.getPath(), project -> navigatable.navigate(true));

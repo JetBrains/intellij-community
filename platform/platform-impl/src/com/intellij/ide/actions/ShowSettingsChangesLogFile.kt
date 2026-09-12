@@ -10,7 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.writeText
 import org.jetbrains.annotations.ApiStatus
@@ -23,7 +23,7 @@ class ShowSettingsChangesLogFile : DumbAwareAction("Show Settings Changes Log Fi
     val project = e.project ?: return
 
     val file = FileUtilRt.createTempFile("settings-changes", ".txt", true)
-    val tempFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file) ?: return
+    val tempFile = StandardFileSystems.local().refreshAndFindFileByPath(file.absolutePath) ?: return
     val editor = FileEditorManager.getInstance(project).openFile(tempFile, true)
 
     val isLoggingEnabled = System.getProperty(LoggingSettingsChangesListener.JVM_PROPERTY_KEY, "false").toBoolean()

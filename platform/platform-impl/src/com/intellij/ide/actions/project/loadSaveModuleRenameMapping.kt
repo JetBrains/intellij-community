@@ -16,7 +16,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.serialization.SerializationException
 import com.intellij.util.ui.UIUtil
@@ -108,4 +108,4 @@ private fun saveDefaultRenamingSchemeFilePath(project: Project, filePath: String
 }
 
 private fun getDefaultRenamingSchemeFile(project: Project) =
-  PropertiesComponent.getInstance(project).getValue(EXPORTED_PATH_PROPERTY)?.let { LocalFileSystem.getInstance().refreshAndFindFileByPath(it) }
+  PropertiesComponent.getInstance(project).getValue(EXPORTED_PATH_PROPERTY)?.let { StandardFileSystems.local().refreshAndFindFileByPath(it) }

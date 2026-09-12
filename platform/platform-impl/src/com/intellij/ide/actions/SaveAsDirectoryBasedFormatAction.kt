@@ -15,8 +15,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
@@ -78,7 +78,7 @@ private fun isConvertableProject(project: Project?): Boolean {
 @VisibleForTesting
 suspend fun convertToDirectoryBasedFormat(project: Project, store: IProjectStore, baseDir: Path, ideaDir: Path) {
   if (Files.isDirectory(ideaDir)) {
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ideaDir)
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(ideaDir)
   }
   else {
     edtWriteAction { VfsUtil.createDirectoryIfMissing(ideaDir.toString()) }

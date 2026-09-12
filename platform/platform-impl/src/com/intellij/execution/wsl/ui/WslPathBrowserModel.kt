@@ -9,8 +9,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
@@ -21,7 +22,7 @@ private val logger = Logger.getInstance("WslPathBrowser")
  * It tries to match path partially if file doesn't exist. Returns null if [linuxPath] is not a linux path at all
  */
 fun getBestWindowsPathFromLinuxPath(distro: WSLDistribution, linuxPath: String): VirtualFile? {
-  val fs = LocalFileSystem.getInstance()
+  val fs = StandardFileSystems.local()
   var file: VirtualFile? = null
 
   @Suppress("NAME_SHADOWING")
@@ -44,11 +45,11 @@ fun getBestWindowsPathFromLinuxPath(distro: WSLDistribution, linuxPath: String):
  * Returns a set of roots to pass into [FileChooserDescriptor.withRoots] to initialize a descriptor.
  */
 fun getRootsForFileDescriptor(distro: WSLDistribution, accessWindowsFs: Boolean): MutableList<VirtualFile> {
-  val fs = LocalFileSystem.getInstance()
+  val fileManager = VirtualFileManager.getInstance()
   val roots = mutableListOf<VirtualFile>()
-  fs.findFileByNioFile(distro.getUNCRootPath())?.let { roots.add(it) }
+  fileManager.findFileByNioPath(distro.getUNCRootPath())?.let { roots.add(it) }
   if (accessWindowsFs) {
-    roots.addAll(listWindowsLocalDriveRoots().mapNotNull { fs.findFileByNioFile(it) })
+    roots.addAll(listWindowsLocalDriveRoots().mapNotNull { fileManager.findFileByNioPath(it) })
   }
   return roots
 }

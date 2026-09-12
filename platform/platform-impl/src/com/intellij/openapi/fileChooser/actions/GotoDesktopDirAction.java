@@ -12,8 +12,8 @@ import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.DiskQueryRelay;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
@@ -47,7 +47,7 @@ final class GotoDesktopDirAction extends FileChooserAction implements LightEditC
   private final DiskQueryRelay<Object, VirtualFile> myVfsDirectoryComputation = new DiskQueryRelay<>(
     (ignored) -> {
       var path = findDesktopDirectoryPath();
-      return path != null ? LocalFileSystem.getInstance().findFileByNioFile(path) : null;
+      return path != null ? VirtualFileManager.getInstance().findFileByNioPath(path) : null;
     },
     ProcessIOExecutorService.INSTANCE
   );

@@ -4,7 +4,7 @@ package com.intellij.ide.trustedProjects
 import com.intellij.ide.impl.TrustedPathsSettings
 import com.intellij.ide.trustedProjects.impl.TrustedFileDialog
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
@@ -42,8 +42,8 @@ class TrustedFileDialogTest {
     val siblingPath = dir.resolve("sibling.txt")
     Files.writeString(outsidePath, "text")
     Files.writeString(siblingPath, "text")
-    val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsidePath))
-    val sibling = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(siblingPath))
+    val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsidePath))
+    val sibling = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(siblingPath))
     TrustedFiles.markExternallyOpened(file)
     TrustedFiles.markExternallyOpened(sibling)
     assertFalse(TrustedFiles.isTrusted(file, project))
@@ -69,8 +69,8 @@ class TrustedFileDialogTest {
     val siblingPath = dir.resolve("sibling.txt")
     Files.writeString(outsidePath, "text")
     Files.writeString(siblingPath, "text")
-    val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsidePath))
-    val sibling = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(siblingPath))
+    val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsidePath))
+    val sibling = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(siblingPath))
     TrustedFiles.markExternallyOpened(file)
     TrustedFiles.markExternallyOpened(sibling)
     // cache both verdicts: the trust event fired by the confirmation must reset them
@@ -92,7 +92,7 @@ class TrustedFileDialogTest {
 
     val outsidePath = tempPath.resolve("distrusted.txt")
     Files.writeString(outsidePath, "text")
-    val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsidePath))
+    val file = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outsidePath))
     TrustedFiles.markExternallyOpened(file)
 
     TrustedFileDialog.setDialogChoiceInTests(TrustedFileDialog.DialogChoice(isTrusted = false, isTrustFolder = false), asDisposable())

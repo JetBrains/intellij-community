@@ -19,9 +19,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
@@ -114,7 +114,7 @@ private fun changeProjectIcon(
   if (pathToIcon != null) {
     val iconSvg = basePath.resolve("icon.svg")
     pathToIcon.copy(iconSvg)
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(iconSvg)?.let {
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(iconSvg)?.let {
       VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ false, /* reloadChildren = */ false, /* ...files = */ it)
     }
 

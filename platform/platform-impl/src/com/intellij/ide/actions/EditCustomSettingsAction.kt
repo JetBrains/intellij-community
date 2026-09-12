@@ -23,9 +23,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorTextField
@@ -85,7 +85,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
       }
     }
 
-    val vFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
+    val vFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)
     if (vFile != null) {
       vFile.refresh(false, false)
       val psiFile = PsiManager.getInstance(project).findFile(vFile)

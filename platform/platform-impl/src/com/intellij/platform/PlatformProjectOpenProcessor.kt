@@ -36,8 +36,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -334,7 +334,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     ): Module? {
       project.putUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR, true)
 
-      val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectFile)!!
+      val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectFile)!!
       withContext(Dispatchers.EDT) {
         virtualFile.refresh(false, false)
       }

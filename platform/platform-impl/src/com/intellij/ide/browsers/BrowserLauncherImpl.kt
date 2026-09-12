@@ -13,10 +13,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.Urls
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -46,7 +46,7 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
         return null
       }
       // no refresh: in this scenario the file is already open in an editor, hence in the VFS
-      val file = LocalFileSystem.getInstance().findFileByNioFile(path) ?: return null
+      val file = VirtualFileManager.getInstance().findFileByNioPath(path) ?: return null
       return file.takeIf { TrustedFiles.isTrustDecidedByFile(it, project) }
     }
   }

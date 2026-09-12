@@ -34,7 +34,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
@@ -62,7 +62,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
   companion object {
     @JvmStatic
     fun openFile(filePath: String, project: Project) {
-      val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+      val file = StandardFileSystems.local().refreshAndFindFileByPath(filePath)
       if (file != null && file.isValid) {
         openFile(file, project)
       }

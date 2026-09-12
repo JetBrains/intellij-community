@@ -30,7 +30,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.io.createDirectories
@@ -157,13 +157,13 @@ private fun collect(
 
 @Internal
 fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
-  var virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.invariantSeparatorsPathString)
+  var virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.invariantSeparatorsPathString)
   if (virtualFile == null) {
     val parentFile = file.parent
     parentFile.createDirectories()
 
     // need refresh if the directory has just been created
-    val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.invariantSeparatorsPathString)
+    val parentVirtualFile = StandardFileSystems.local().refreshAndFindFileByPath(parentFile.invariantSeparatorsPathString)
                             ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
 
     virtualFile = runAsWriteActionIfNeeded {
