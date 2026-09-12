@@ -539,6 +539,34 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   /**
+   * Whether code outside the {@code enum} module builds the member values of {@code enumClass}.
+   * This is a custom {@code __new__} of the enum, or the metaclass of Django choices, which drops the label of a member.
+   * Then a member value need not have the data type of the enum.
+   * Another metaclass passes the declaration on unchanged, as far as the type checker can tell.
+   * An enum that a {@link PyEnumMemberDeclarationProvider} models does not count.
+   */
+  @ApiStatus.Internal
+  public static boolean hasCustomMemberConstruction(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    for (var provider : PyEnumMemberDeclarationProvider.EP_NAME.getExtensionList()) {
+      if (provider.isApplicable(enumClass, context)) return false;
+    }
+    PyFunction newMethod = enumClass.findMethodByName(PyNames.NEW, true, context);
+    // Only an enum builds its members itself. A `__new__` of a plain mixin is the data type, and its value is checked.
+    if (isCustomEnumMachinery(newMethod) && isEnum(Objects.requireNonNull(newMethod).getContainingClass(), context)) return true;
+    return enumClass.getMetaClassType(true, context) instanceof PyClassType metaClassType &&
+           metaClassType.getPyClass().isSubclass(DJANGO_CHOICES_TYPE, context);
+  }
+
+  private static final String DJANGO_CHOICES_TYPE = "django.db.models.enums.ChoicesType";
+
+  private static boolean isCustomEnumMachinery(@Nullable PyFunction method) {
+    PyClass cls = method != null ? method.getContainingClass() : null;
+    if (cls == null || PyBuiltinCache.getInstance(cls).isBuiltin(cls)) return false;
+    String qualifiedName = cls.getQualifiedName();
+    return qualifiedName == null || !qualifiedName.startsWith("enum.");
+  }
+
+  /**
    * Returns the type of the {@code value} attribute accessed on an enum member. A member that resolves to a specific
    * declaration keeps its precise {@link PyLiteralType literal} value, e.g. {@code I.a.value} is {@code Literal[1]}.
    * Without such a member, the "specific" enum types ({@code IntEnum}, {@code StrEnum}) and plain {@code Enum}s keep
