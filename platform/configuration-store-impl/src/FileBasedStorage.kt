@@ -15,8 +15,8 @@ import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.isTooLarge
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
@@ -111,7 +111,7 @@ abstract class FileBasedStorage internal constructor(
       writeFile(file = storage.file, requestor = this, dataWriter = dataWriter, lineSeparator = lineSeparator, prependXmlProlog = storage.isUseXmlProlog)
       if (events != null) {
         if (virtualFile == null) {
-          LocalFileSystem.getInstance().refreshAndFindFileByNioFile(storage.file.parent)?.let { dir ->
+          VirtualFileManager.getInstance().refreshAndFindFileByNioPath(storage.file.parent)?.let { dir ->
             events.add(creationEvent(storage.file, dir))
           }
         }
@@ -134,7 +134,7 @@ abstract class FileBasedStorage internal constructor(
   fun getVirtualFile(): VirtualFile? {
     var result = cachedVirtualFile
     if (result == null) {
-      result = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
+      result = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)
       if (result != null && result.isValid) {
         // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
         result.setCharset(Charsets.UTF_8, null, false)

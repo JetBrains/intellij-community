@@ -4,7 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
@@ -44,7 +44,7 @@ class DirectoryBasedStorageTest {
     assertThat(dir.resolve("foo.xml")).hasContent(generateData("foo"))
     assertThat(dir.resolve("bar.xml")).hasContent(generateData("bar"))
     assertThat(dir.resolve("main.xml")).hasContent(generateData("test"))
-    val vDir = LocalFileSystem.getInstance().findFileByNioFile(dir)!!
+    val vDir = VirtualFileManager.getInstance().findFileByNioPath(dir)!!
     assertThat(vDir.findChild("foo.xml")!!.contentsToByteArray()).asString(Charsets.UTF_8).isEqualTo(generateData("foo"))
 
     setStateAndSave(storage, componentName, """<component name="${componentName}"><sub name="bar"/></component>""")

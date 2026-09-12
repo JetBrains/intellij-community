@@ -3,7 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import kotlinx.coroutines.CancellationException
@@ -214,10 +214,10 @@ private fun isCoveredBy(path: Path, coveringPaths: Set<Path>): Boolean {
 }
 
 private fun resolveRefreshRoots(paths: Collection<Path>): List<NewVirtualFile> {
-  val fileSystem = LocalFileSystem.getInstance()
+  val fileManager = VirtualFileManager.getInstance()
   // paths are already deduplicated and compacted by processPendingRefreshes; only symlink/case collisions are resolved here.
   val roots = paths.mapNotNull { path ->
-    fileSystem.refreshAndFindFileByNioFile(path) as? NewVirtualFile
+    fileManager.refreshAndFindFileByNioPath(path) as? NewVirtualFile
   }
   return compactNestedVirtualFiles(roots)
 }

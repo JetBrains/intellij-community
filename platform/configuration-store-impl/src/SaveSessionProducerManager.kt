@@ -2,7 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.ExceptionUtil
@@ -78,6 +78,6 @@ internal suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveRes
 private fun processAccessDeniedException(saveSession: SaveSession, e: Exception): SaveSessionAndFile? {
   val accessDeniedException = e as? AccessDeniedException ?: ExceptionUtil.findCause(e, AccessDeniedException::class.java) ?: return null
   val filePath = accessDeniedException.file ?: return null
-  val file = LocalFileSystem.getInstance().findFileByPath(filePath) ?: return null
+  val file = StandardFileSystems.local().findFileByPath(filePath) ?: return null
   return SaveSessionAndFile(saveSession, file)
 }

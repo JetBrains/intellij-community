@@ -13,7 +13,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.FieldPanel
 import com.intellij.util.containers.CollectionFactory
@@ -81,9 +81,9 @@ internal fun chooseSettingsFile(descriptor: FileChooserDescriptor,
 private fun getFileOrParent(path: String?): VirtualFile? {
   if (path != null) {
     val oldFile = File(path)
-    val initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile)
+    val initialDir = StandardFileSystems.local().findFileByPath(oldFile.absolutePath)
     return initialDir ?: oldFile.parentFile?.let {
-      LocalFileSystem.getInstance().findFileByIoFile(it)
+      StandardFileSystems.local().findFileByPath(it.absolutePath)
     }
   }
   return null

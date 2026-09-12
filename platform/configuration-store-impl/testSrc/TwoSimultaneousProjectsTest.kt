@@ -9,7 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.TestApplication
@@ -62,7 +62,7 @@ class TwoSimultaneousProjectsTest {
     val originalModuleBFile = checkModuleAndGetFile(moduleB)
     val newName = "$SHARED_NAME.v2"
     edtWriteAction {
-      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(originalModuleAFile)!!.rename(null, "${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(originalModuleAFile)!!.rename(null, "${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     }
     assertModuleFileRenamed(moduleA, newName, originalModuleAFile)
     assertModuleFileNotRenamed(moduleB, originalModuleBFile)

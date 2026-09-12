@@ -10,8 +10,8 @@ import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.settings.SettingsController
@@ -91,7 +91,7 @@ open class DirectoryBasedStorage(
   private fun getVirtualFile(): VirtualFile? {
     var result = cachedVirtualFile
     if (result == null) {
-      result = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir)
+      result = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(dir)
       cachedVirtualFile = result
     }
     return result

@@ -13,8 +13,8 @@ import com.intellij.openapi.project.modifyModules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootManagerEx
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.ActiveStoreRule
 import com.intellij.testFramework.DisposeModulesRule
@@ -123,7 +123,7 @@ class ChangeModuleStorePathTest {
     val oldName = module.name
     val newName = "foo.dot"
     edtWriteAction {
-      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(oldFile)!!.rename(null, "${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(oldFile)!!.rename(null, "${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     }
     assertModuleFileRenamed(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
