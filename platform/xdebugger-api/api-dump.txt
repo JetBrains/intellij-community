@@ -119,6 +119,7 @@ com.intellij.xdebugger.XDebugSession
 - a:stepOut():V
 - a:stepOver(Z):V
 - a:stop():V
+- updateBreakpointPresentation(com.intellij.xdebugger.breakpoints.XBreakpoint,javax.swing.Icon,java.lang.String):V
 - a:updateBreakpointPresentation(com.intellij.xdebugger.breakpoints.XLineBreakpoint,javax.swing.Icon,java.lang.String):V
 - a:updateExecutionPosition():V
 com.intellij.xdebugger.XDebugSessionBuilder

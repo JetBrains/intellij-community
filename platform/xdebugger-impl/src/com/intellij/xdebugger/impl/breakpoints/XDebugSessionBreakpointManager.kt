@@ -176,7 +176,7 @@ internal class XDebugSessionBreakpointManager(
   }
 
   fun updateBreakpointPresentation(
-    breakpoint: XLineBreakpoint<*>,
+    breakpoint: XBreakpoint<*>,
     icon: Icon?,
     errorMessage: String?,
   ) {
@@ -197,7 +197,7 @@ internal class XDebugSessionBreakpointManager(
         reportBreakpointVerified(breakpoint, delay)
       }
     }
-    if (breakpoint is XLineBreakpointImpl<*>) {
+    if (breakpoint is XBreakpointBase<*, *, *>) {
       breakpoint.fireBreakpointPresentationUpdated(session)
     }
   }

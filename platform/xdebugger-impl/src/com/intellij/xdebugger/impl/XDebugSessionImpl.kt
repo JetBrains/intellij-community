@@ -864,6 +864,14 @@ class XDebugSessionImpl @JvmOverloads constructor(
     sessionBreakpointManager.updateBreakpointPresentation(breakpoint, icon, errorMessage)
   }
 
+  override fun updateBreakpointPresentation(
+    breakpoint: XBreakpoint<*>,
+    icon: Icon?,
+    errorMessage: String?,
+  ) {
+    sessionBreakpointManager.updateBreakpointPresentation(breakpoint, icon, errorMessage)
+  }
+
   override fun setBreakpointVerified(breakpoint: XLineBreakpoint<*>) {
     updateBreakpointPresentation(breakpoint, XDebuggerUtilImpl.getVerifiedIcon(breakpoint), null)
   }
