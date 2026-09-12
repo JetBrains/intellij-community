@@ -3,7 +3,7 @@
 package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -96,7 +96,7 @@ public class GroovyMoveScriptTest extends LightJavaCodeInsightFixtureTestCase {
 
     performAction(fileNames, newDirName, VfsUtilCore.getRelativePath(actualRoot, myFixture.getTempDirFixture().getFile(""), '/'));
 
-    final VirtualFile expectedRoot = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + getTestName(true) + "/after");
+    final VirtualFile expectedRoot = StandardFileSystems.local().findFileByPath(getTestDataPath() + getTestName(true) + "/after");
     //File expectedRoot = new File(getTestDataPath() + testName + "/after");
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
 

@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -36,7 +36,7 @@ public class GrLibrarySourceHighlightingTest extends GrHighlightingTestBase {
       public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
         final String absoluteBasePath = TestUtils.getAbsoluteTestDataPath() + getBasePath();
         final VirtualFile lib = JarFileSystem.getInstance().refreshAndFindFileByPath(absoluteBasePath + "/some-library.jar!/");
-        final VirtualFile src = LocalFileSystem.getInstance().refreshAndFindFileByPath(absoluteBasePath + "/src/");
+        final VirtualFile src = StandardFileSystems.local().refreshAndFindFileByPath(absoluteBasePath + "/src/");
 
         final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("some-library").getModifiableModel();
         modifiableModel.addRoot(lib, OrderRootType.CLASSES);

@@ -37,7 +37,7 @@ import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
@@ -474,7 +474,7 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
     String path = getScriptPath();
     if (path == null) return superScope;
 
-    VirtualFile scriptFile = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile scriptFile = StandardFileSystems.local().findFileByPath(path);
     if (scriptFile == null) return superScope;
 
     GlobalSearchScope fileScope = GlobalSearchScope.fileScope(getProject(), scriptFile);

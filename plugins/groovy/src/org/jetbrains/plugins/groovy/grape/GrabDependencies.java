@@ -35,7 +35,7 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
@@ -328,7 +328,7 @@ public final class GrabDependencies implements IntentionAction {
               final URL url = new URL(line.substring(GrapeRunner.URL_PREFIX.length()));
               final File libFile = new File(url.toURI());
               if (libFile.exists() && libFile.getName().endsWith(".jar")) {
-                ContainerUtil.addIfNotNull(jars, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libFile));
+                ContainerUtil.addIfNotNull(jars, StandardFileSystems.local().refreshAndFindFileByPath(libFile.getAbsolutePath()));
               }
             }
             catch (MalformedURLException | URISyntaxException e) {

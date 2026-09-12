@@ -16,7 +16,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +156,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
   private static @Nullable VirtualFile findFile(String path) {
     if (path != null && !path.isEmpty()) {
-      return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
+      return StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(path));
     }
     return null;
   }
