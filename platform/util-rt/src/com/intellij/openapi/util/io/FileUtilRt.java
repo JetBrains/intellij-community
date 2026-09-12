@@ -31,6 +31,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
@@ -835,66 +836,74 @@ public final class FileUtilRt {
       return;
     }
 
-    try {
-      Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-          if (SystemInfoRt.isWindows && attrs.isOther()) {
-            // probably an NTFS reparse point
-            doDelete(dir);
-            return FileVisitResult.SKIP_SUBTREE;
+    FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        if (SystemInfoRt.isWindows && attrs.isOther()) {
+          // probably an NTFS reparse point
+          doDelete(dir);
+          return FileVisitResult.SKIP_SUBTREE;
+        }
+        else {
+          return FileVisitResult.CONTINUE;
+        }
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (callback != null) callback.beforeDeleting(file);
+        doDelete(file);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+        try {
+          if (callback != null) callback.beforeDeleting(dir);
+          doDelete(dir);
+          return FileVisitResult.CONTINUE;
+        }
+        catch (IOException e) {
+          if (exc != null) {
+            exc.addSuppressed(e);
+            throw exc;
           }
           else {
-            return FileVisitResult.CONTINUE;
+            throw e;
           }
         }
+      }
 
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          if (callback != null) callback.beforeDeleting(file);
+      @Override
+      public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+        if (SystemInfoRt.isWindows && exc instanceof NoSuchFileException) {
+          // could be an aimless junction
           doDelete(file);
           return FileVisitResult.CONTINUE;
         }
-
-        @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-          try {
-            if (callback != null) callback.beforeDeleting(dir);
-            doDelete(dir);
-            return FileVisitResult.CONTINUE;
-          }
-          catch (IOException e) {
-            if (exc != null) {
-              exc.addSuppressed(e);
-              throw exc;
-            }
-            else {
-              throw e;
-            }
-          }
+        else {
+          throw exc;
         }
-
-        @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-          if (SystemInfoRt.isWindows && exc instanceof NoSuchFileException) {
-            // could be an aimless junction
-            doDelete(file);
-            return FileVisitResult.CONTINUE;
-          }
-          else {
-            throw exc;
-          }
-        }
-      });
-    }
-    catch (NoSuchFileException ignored) {
-    }
+      }
+    };
+    // a directory listing may end before all children are seen, or a child may appear after the listing (e.g. .DS_Store)
+    doIOOperation((RepeatableIOOperation<Boolean, IOException>)lastAttempt -> {
+      try {
+        Files.walkFileTree(path, visitor);
+      }
+      catch (NoSuchFileException ignored) {
+      }
+      catch (DirectoryNotEmptyException e) {
+        if (lastAttempt) throw e;
+        return null;
+      }
+      return Boolean.TRUE;
+    });
   }
 
   private static void doDelete(@NotNull Path path) throws IOException {
     // Issues with file removal usually happen on Windows
-    // On mac os, .DS_Store files can sporadically appear, so we have to deal with that too.
-    int attemptsCount = SystemInfoRt.isWindows || SystemInfoRt.isMac ? MAX_FILE_IO_ATTEMPTS : 1;
+    int attemptsCount = SystemInfoRt.isWindows ? MAX_FILE_IO_ATTEMPTS : 1;
     IOException previousException = null;
     for (int attemptsLeft = attemptsCount - 1; attemptsLeft >= 0; attemptsLeft--) {
       try {
@@ -902,6 +911,13 @@ public final class FileUtilRt {
         return;
       }
       catch (IOException e) {
+        //noinspection InstanceofCatchParameter
+        if (e instanceof DirectoryNotEmptyException) {
+          // a retry does not help until the content is deleted; deleteRecursively walks the tree again
+          DirectoryNotEmptyException replacingEx = directoryNotEmptyExceptionWithMoreDiagnostic(path);
+          replacingEx.addSuppressed(e);
+          throw replacingEx;
+        }
         if (previousException != null && !previousException.getClass().equals(e.getClass())) {
           //throttle suppressed exceptions by .getClass(): exceptions of the same class usually carries no additional info
           e.addSuppressed(previousException);
@@ -909,13 +925,6 @@ public final class FileUtilRt {
         previousException = e;
 
         if (attemptsLeft == 0) {// ==last attempt
-          //noinspection InstanceofCatchParameter
-          if (e instanceof DirectoryNotEmptyException) {
-            //add the directory content to the exception:
-            DirectoryNotEmptyException replacingEx = directoryNotEmptyExceptionWithMoreDiagnostic(path);
-            replacingEx.addSuppressed(e);
-            throw replacingEx;
-          }
           throw e;
         }
 

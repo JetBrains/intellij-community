@@ -12,6 +12,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileAlreadyExistsException;
@@ -22,6 +23,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
@@ -147,6 +149,27 @@ public class NioFilesTest {
     NioFiles.deleteRecursively(file, p -> visited.add(p.toString()));
     NioFiles.deleteRecursively(dir, p -> visited.add(p.toString()));
     assertThat(visited).containsExactly("/file", "/d1/d2/f", "/d1/d2", "/d1");
+  }
+
+  @Test
+  public void deleteRecursivelyWalksAgainWhenChildAppears() throws IOException {
+    var dir = Files.createDirectory(memoryFs.getFs().getPath("/dir"));
+    Files.createFile(dir.resolve("file"));
+    var lateChild = dir.resolve("late");
+
+    var dirVisits = new AtomicInteger();
+    NioFiles.deleteRecursively(dir, p -> {
+      if (p.equals(dir) && dirVisits.incrementAndGet() == 1) {
+        try {
+          Files.createFile(lateChild);
+        }
+        catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      }
+    });
+    assertThat(dir).doesNotExist();
+    assertThat(dirVisits).hasValue(2);
   }
 
   @Test

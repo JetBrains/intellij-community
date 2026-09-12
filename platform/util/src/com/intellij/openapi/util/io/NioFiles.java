@@ -272,7 +272,9 @@ public final class NioFiles {
    * Fails fast (throws an exception right after meeting a problematic file and does not try to delete the rest first).</p>
    *
    * <p>Implementation detail: the method tries to delete a file up to 10 times with 10 ms pause between attempts -
-   * usually it's enough to overcome intermittent file lock on Windows.</p>
+   * usually it's enough to overcome intermittent file lock on Windows.
+   * When a directory is still not empty after its content was deleted, the method walks the tree again, up to 10 times.
+   * The callback is then invoked again for that directory.</p>
    */
   @SuppressWarnings("UsagesOfObsoleteApi")
   public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<Path> callback) throws IOException {
