@@ -6,9 +6,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.messages.MessageBusConnection;
@@ -35,7 +35,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   private final @Nullable VirtualFile myBranchHeadsDir;
   private static final int TIME_SPAN = 300;
   private @Nullable VirtualFile myMqDir;
-  private final @Nullable LocalFileSystem.WatchRequest myWatchRequest;
+  private final @NotNull WatchRoots.Token myWatchRequest;
   private final @NotNull UpdateQueue<Unit> myUpdateConfigQueue;
   private final HgRepository myRepository;
   private final VcsDirtyScopeManager myDirtyScopeManager;
@@ -44,7 +44,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   HgRepositoryUpdater(final @NotNull HgRepository repository, final CoroutineScope coroutineScope) {
     myRepository = repository;
     VirtualFile hgDir = myRepository.getHgDir();
-    myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(hgDir.getPath(), true);
+    myWatchRequest = WatchRoots.getInstance().watch(hgDir.getPath(), true);
     myRepositoryFiles = HgRepositoryFiles.getInstance(hgDir);
     DvcsUtil.visitVcsDirVfs(hgDir, HgRepositoryFiles.getSubDirRelativePaths());
 
@@ -74,9 +74,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
 
   @Override
   public void dispose() {
-    if (myWatchRequest != null) {
-      LocalFileSystem.getInstance().removeWatchedRoot(myWatchRequest);
-    }
+    myWatchRequest.close();
     if (myMessageBusConnection != null) {
       myMessageBusConnection.disconnect();
     }
