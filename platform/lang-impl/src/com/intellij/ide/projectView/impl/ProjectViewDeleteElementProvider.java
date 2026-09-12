@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -101,7 +101,7 @@ public abstract class ProjectViewDeleteElementProvider implements DeleteProvider
         final String path = virtualFile.getPath();
         if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) { // if is jar-file root
           final VirtualFile vFile =
-            LocalFileSystem.getInstance().findFileByPath(path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length()));
+            StandardFileSystems.local().findFileByPath(path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length()));
           if (vFile != null) {
             final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
             if (psiFile != null) {

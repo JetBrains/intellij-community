@@ -10,7 +10,7 @@ import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSettingsLoader
@@ -140,7 +140,7 @@ Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] [-charset chars
 """
 
 fun readSettings(settingsFile: Path): CodeStyleSettings? {
-  return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(settingsFile)?.let {
+  return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(settingsFile)?.let {
     it.refresh(false, false)
     CodeStyleSettingsLoader().loadSettings(it)
   }

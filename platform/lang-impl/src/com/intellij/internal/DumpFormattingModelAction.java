@@ -20,7 +20,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -70,7 +70,7 @@ final class DumpFormattingModelAction extends AnAction implements DumbAware {
     try {
       File tempFile = FileUtil.createTempFile("formattingModel-" + psiFile.getName() + "-", ".txt");
       FileUtil.writeToFile(tempFile, output.toString());
-      file = LocalFileSystem.getInstance().findFileByIoFile(tempFile);
+      file = StandardFileSystems.local().findFileByPath(tempFile.getAbsolutePath());
       if (file == null) {
         return;
       }

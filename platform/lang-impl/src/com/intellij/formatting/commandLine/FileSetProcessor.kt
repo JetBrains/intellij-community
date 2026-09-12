@@ -2,7 +2,7 @@
 package com.intellij.formatting.commandLine
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.util.createDocumentBuilder
@@ -47,7 +47,7 @@ abstract class FileSetProcessor(
     fileMasks.isEmpty() || fileMasks.any { mask -> mask.matches(name) }
 
   private fun File.toVirtualFile() =
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this) ?: throw IOException("Can not find $path")
+    StandardFileSystems.local().refreshAndFindFileByPath(this.absolutePath) ?: throw IOException("Can not find $path")
 
   fun processFiles(): Unit = topEntries.forEach { entry ->
 

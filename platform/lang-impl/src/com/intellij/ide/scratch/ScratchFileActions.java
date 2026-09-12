@@ -55,7 +55,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -529,7 +529,7 @@ public final class ScratchFileActions {
 
     private static @NotNull List<IdeDocumentHistoryImpl.PlaceInfo> getPlaces(@NotNull Project project, boolean changed) {
       String path = ScratchFileService.getInstance().getRootPath(ScratchRootType.getInstance());
-      VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath(path);
+      VirtualFile rootDir = StandardFileSystems.local().findFileByPath(path);
       if (rootDir == null || !rootDir.exists() || !rootDir.isDirectory()) return Collections.emptyList();
       Condition<? super VirtualFile> condition;
       if (!changed) {

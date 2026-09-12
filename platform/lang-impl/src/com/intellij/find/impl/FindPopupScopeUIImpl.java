@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.platform.project.module.ModulesStateService;
@@ -249,7 +249,7 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
     final String dirName = findModel.getDirectoryName();
     if (!StringUtil.isEmptyOrSpaces(dirName)) {
-      VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(dirName);
+      VirtualFile dir = StandardFileSystems.local().findFileByPath(dirName);
       if (dir != null) {
         Module module = ModuleUtilCore.findModuleForFile(dir, myProject);
         if (module != null) {

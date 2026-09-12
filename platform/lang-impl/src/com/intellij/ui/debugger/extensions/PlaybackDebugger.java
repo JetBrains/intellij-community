@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -174,7 +175,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
         }
       }
     };
-    LocalFileSystem.getInstance().addVirtualFileListener(myVfsListener);
+    StandardFileSystems.local().addVirtualFileListener(myVfsListener);
   }
 
   private static final class ScriptFileChooserDescriptor extends FileChooserDescriptor {
@@ -259,7 +260,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     if (myState.currentScript.isEmpty()) {
       return null;
     }
-    return LocalFileSystem.getInstance().findFileByPath(myState.currentScript);
+    return StandardFileSystems.local().findFileByPath(myState.currentScript);
   }
 
   private void save() {

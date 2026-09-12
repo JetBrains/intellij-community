@@ -6,7 +6,7 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -74,7 +74,7 @@ class ExcludedSymlinkNotScannedTest {
   private fun createSymlink(parent: VirtualFile, name: String, target: VirtualFile): VirtualFile {
     val linkPath = parent.toNioPath().resolve(name)
     val linkIoFile = IoTestUtil.createSymLink(target.path, linkPath.toString())
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkIoFile) ?: error("Cannot find symlink $linkIoFile")
+    return StandardFileSystems.local().refreshAndFindFileByPath(linkIoFile.absolutePath) ?: error("Cannot find symlink $linkIoFile")
   }
 
 }

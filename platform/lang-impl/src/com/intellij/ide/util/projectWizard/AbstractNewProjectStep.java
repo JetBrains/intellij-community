@@ -24,9 +24,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.welcomeScreen.ActionsWithPanelProvider;
@@ -244,7 +244,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
         @Override
         protected @Nullable VirtualFile compute(@NotNull ProgressIndicator indicator) throws IOException {
           NioFiles.createDirectories(location);
-          var baseDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(location);
+          var baseDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(location);
           if (baseDir != null) {
             VfsUtil.markDirtyAndRefresh(false, true, true, baseDir);
           }

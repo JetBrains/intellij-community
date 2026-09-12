@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -50,7 +50,7 @@ public final class FrameworkDetectionProcessor {
   public List<? extends DetectedFrameworkDescription> processRoots(List<? extends File> roots) {
     myProcessedFiles = new HashSet<>();
     for (File root : roots) {
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
+      VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(root.getAbsolutePath());
       if (virtualFile == null) continue;
       collectSuitableFiles(virtualFile);
     }

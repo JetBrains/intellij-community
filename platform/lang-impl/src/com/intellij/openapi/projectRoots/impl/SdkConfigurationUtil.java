@@ -24,8 +24,9 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.DiskQueryRelay;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -364,7 +365,7 @@ public final class SdkConfigurationUtil {
   @ApiStatus.Internal
   public static @Nullable Sdk createAndAddSDK(@NotNull Project project, @NotNull Path path, @NotNull SdkType sdkType) {
     VirtualFile sdkHome = WriteAction.compute(() -> {
-      return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path);
+      return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path);
     });
     if (sdkHome == null) return null;
     return createAndAddSDK(sdkHome, sdkType, () -> ProjectJdkTable.getInstance(project));
@@ -383,7 +384,7 @@ public final class SdkConfigurationUtil {
                                                @NotNull SdkType sdkType,
                                                @NotNull Supplier<? extends @NotNull ProjectJdkTable> projectJdkTableSupplier) {
     VirtualFile sdkHome = WriteAction.compute(() -> {
-      return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
+      return StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
     });
     if (sdkHome == null) return null;
     return createAndAddSDK(sdkHome, sdkType, projectJdkTableSupplier);
@@ -415,7 +416,7 @@ public final class SdkConfigurationUtil {
   /// @return newly created incomplete SDK, or null.
   public static @Nullable Sdk createIncompleteSDK(@NotNull String path, @NotNull SdkType sdkType) {
     VirtualFile sdkHome = WriteAction.compute(() -> {
-      return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
+      return StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
     });
     if (sdkHome == null) return null;
 
@@ -518,7 +519,7 @@ public final class SdkConfigurationUtil {
   }
 
   private static @Nullable VirtualFile doGetSuggestedSdkRoot(@Nullable String homePath) {
-    return homePath == null ? null : LocalFileSystem.getInstance().findFileByPath(homePath);
+    return homePath == null ? null : StandardFileSystems.local().findFileByPath(homePath);
   }
 
   public static @NotNull List<String> filterExistingPaths(@NotNull SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {

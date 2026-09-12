@@ -15,7 +15,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
@@ -225,7 +225,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
           if (files != null) {
             PsiManager manager = elements[0].getManager();
             PsiFileSystemItem[] items = files.stream()
-              .map(file -> LocalFileSystem.getInstance().findFileByIoFile(file))
+              .map(file -> StandardFileSystems.local().findFileByPath(file.getAbsolutePath()))
               .map(file -> {
                 if (file != null) {
                   return file.isDirectory() ? manager.findDirectory(file)

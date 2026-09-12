@@ -18,7 +18,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.util.PathUtil
 import java.io.IOException
@@ -64,7 +64,7 @@ internal class DumpEditorStateInternalAction : AnAction(), DumbAware {
   }
 
   private fun openFileInEditor(project: com.intellij.openapi.project.Project, file: Path) {
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file) ?: return
+    val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file) ?: return
     FileEditorManager.getInstance(project).openEditor(OpenFileDescriptor(project, virtualFile), true)
   }
 

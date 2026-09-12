@@ -7,8 +7,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +45,7 @@ public abstract class UnknownSdkFixActionLocalBase extends UnknownSdkFixActionBa
   private void refreshVfs() {
     //it may yield empty SDK roots or errors, e.g. EA-239592, IDEA-252376
     Path path = Paths.get(getSuggestedSdkHome());
-    VfsUtil.markDirtyAndRefresh(false, true, true, LocalFileSystem.getInstance().findFileByNioFile(path));
+    VfsUtil.markDirtyAndRefresh(false, true, true, VirtualFileManager.getInstance().findFileByNioPath(path));
   }
 
   @Override

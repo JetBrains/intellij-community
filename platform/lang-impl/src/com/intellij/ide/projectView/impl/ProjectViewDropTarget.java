@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.psi.PsiDirectory;
@@ -338,7 +338,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     if (fileList == null) return null;
     List<VirtualFile> virtualFiles = new ArrayList<>();
     for (File file : fileList) {
-      final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      final VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
       if (vFile != null) {
         virtualFiles.add(vFile);
       }

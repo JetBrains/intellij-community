@@ -6,7 +6,7 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ public final class NavigationLinkHandler extends TooltipLinkHandler {
     }
 
     String path = refSuffix.substring(0, pos);
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+    VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
     if (vFile == null) {
       LOG.info("Unknown file: " + path);
       return true;

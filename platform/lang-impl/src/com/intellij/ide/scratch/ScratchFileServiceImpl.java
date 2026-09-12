@@ -50,9 +50,10 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -109,7 +110,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
     myIndex = new FewRootsLightDirectoryIndex<>(ApplicationManager.getApplication(), NO_ROOT_TYPE, ScratchFileServiceImpl::shouldResetIndex, () ->
       ContainerUtil.mapNotNull(RootType.getAllRootTypes(),
         root -> {
-          VirtualFile file = LocalFileSystem.getInstance().findFileByPath(getRootPath(root));
+          VirtualFile file = StandardFileSystems.local().findFileByPath(getRootPath(root));
           return file == null ? null : Map.entry(file, root);
         })
     );
@@ -349,7 +350,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
         if (rootType == null) return;
       }
       ScratchFileService scratchFileService = ScratchFileService.getInstance();
-      VirtualFile rootFile = LocalFileSystem.getInstance().findFileByPath(scratchFileService.getRootPath(rootType));
+      VirtualFile rootFile = StandardFileSystems.local().findFileByPath(scratchFileService.getRootPath(rootType));
       String text;
       if (virtualFile == null || virtualFile.isDirectory() && virtualFile.equals(rootFile)) {
         text = rootType.getDisplayName();
@@ -416,7 +417,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
     @Override
     public @NotNull Collection<VirtualFile> additionalRoots(Project project) {
       Set<VirtualFile> result = new LinkedHashSet<>();
-      LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+      VirtualFileSystem fileSystem = StandardFileSystems.local();
       ScratchFileService app = ScratchFileService.getInstance();
       for (RootType r : RootType.getAllRootTypes()) {
         ContainerUtil.addIfNotNull(result, fileSystem.findFileByPath(app.getRootPath(r)));
@@ -429,7 +430,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
   public VirtualFile findFile(@NotNull RootType rootType, @NotNull String pathName, @NotNull Option option) throws IOException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFileSystem fileSystem = StandardFileSystems.local();
     String fullPath = getRootPath(rootType) + "/" + pathName;
     if (option != Option.create_new_always) {
       VirtualFile file = fileSystem.findFileByPath(fullPath);

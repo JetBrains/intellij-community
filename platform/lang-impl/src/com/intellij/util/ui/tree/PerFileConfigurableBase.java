@@ -45,7 +45,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Setter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -557,7 +557,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       @Override
       public Object getCellEditorValue() {
         if (newPath == null || newPath.equals(startValue.getPath())) return startValue;
-        VirtualFile newFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(this.newPath);
+        VirtualFile newFile = StandardFileSystems.local().refreshAndFindFileByPath(this.newPath);
         return ObjectUtils.notNull(newFile, startValue);
       }
     });

@@ -45,7 +45,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -334,7 +334,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       RefreshQueue refreshQueue = RefreshQueue.getInstance();
       LOG.assertTrue(!filesToRefresh.isEmpty());
       for (File file : filesToRefresh) {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
         if (virtualFile == null) {
           throw new IOException("Can't find " + file);
         }

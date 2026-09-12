@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -73,7 +73,7 @@ public final class DirectoryUtil {
     PsiDirectory directory = null;
     // find longest existing path
     while (!path.isEmpty()) {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+      VirtualFile file = StandardFileSystems.local().findFileByPath(path);
       if (file != null) {
         directory = manager.findDirectory(file);
         if (directory == null) {

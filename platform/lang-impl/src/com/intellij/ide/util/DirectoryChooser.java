@@ -32,7 +32,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -571,7 +571,7 @@ public class DirectoryChooser extends DialogWrapper {
   private static @Nullable PsiDirectory getDefaultSelection(PsiDirectory[] directories, Project project) {
     final String defaultSelectionPath = PropertiesComponent.getInstance(project).getValue(DEFAULT_SELECTION);
     if (defaultSelectionPath != null) {
-      final VirtualFile directoryByDefault = LocalFileSystem.getInstance().findFileByPath(defaultSelectionPath);
+      final VirtualFile directoryByDefault = StandardFileSystems.local().findFileByPath(defaultSelectionPath);
       if (directoryByDefault != null) {
         final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(directoryByDefault);
         return directory != null && ArrayUtil.find(directories, directory) > -1 ? directory : null;

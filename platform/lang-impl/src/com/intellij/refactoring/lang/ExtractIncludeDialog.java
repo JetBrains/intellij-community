@@ -14,7 +14,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileSystemItemUtil;
@@ -119,7 +119,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
   }
 
   private static boolean isFileExist(final @NotNull String directory, final @NotNull String fileName) {
-    return LocalFileSystem.getInstance().findFileByIoFile(new File(directory, fileName)) != null;
+    return StandardFileSystems.local().findFileByPath(new File(directory, fileName).getAbsolutePath()) != null;
   }
 
   @Override
