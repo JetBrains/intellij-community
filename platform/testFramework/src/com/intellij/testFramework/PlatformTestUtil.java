@@ -77,9 +77,9 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
@@ -1140,9 +1140,9 @@ public final class PlatformTestUtil {
       new Decompressor.Zip(file1).extract(tempDirectory1);
       new Decompressor.Zip(file2).extract(tempDirectory2);
 
-      var dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDirectory1);
+      var dirAfter = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tempDirectory1);
       assertNotNull(tempDirectory1.toString(), dirAfter);
-      var dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDirectory2);
+      var dirBefore = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tempDirectory2);
       assertNotNull(tempDirectory2.toString(), dirBefore);
       ApplicationManager.getApplication().runWriteAction(() -> {
         dirAfter.refresh(false, true);
@@ -1608,7 +1608,7 @@ public final class PlatformTestUtil {
 
   public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {
     var filePath = Path.of(requireNonNull(project.getBasePath(), () -> project.toString()), fileRelativePath);
-    var virtualFile = LocalFileSystem.getInstance().findFileByNioFile(filePath);
+    var virtualFile = VirtualFileManager.getInstance().findFileByNioPath(filePath);
     if (virtualFile == null || !virtualFile.exists()) {
       throw new IllegalArgumentException(String.format("File '%s' doesn't exist", filePath));
     }

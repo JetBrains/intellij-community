@@ -6,9 +6,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.project.stateStore
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -24,13 +25,13 @@ object HeavyTestHelper {
                                  rootPath: String?,
                                  dir: Path,
                                  addProjectRoots: Boolean): VirtualFile {
-    val virtualDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir)
+    val virtualDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(dir)
                      ?: throw IllegalStateException("Cannot find virtual directory by $dir")
     virtualDir.getChildren()
     virtualDir.refresh(false, true)
     WriteAction.computeAndWait<Unit, IOException> {
       if (rootPath != null) {
-        val vDir1 = LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath.replace(File.separatorChar, '/'))
+        val vDir1 = StandardFileSystems.local().refreshAndFindFileByPath(rootPath.replace(File.separatorChar, '/'))
                     ?: throw Exception("$rootPath not found")
         vDir1.refresh(false, true)
         VfsUtil.copyDirectory(null, vDir1, virtualDir, null)
@@ -59,11 +60,11 @@ object HeavyTestHelper {
   @JvmStatic
   fun getOrCreateProjectBaseDir(project: Project): VirtualFile {
     val basePath = project.stateStore.projectBasePath
-    val fs = LocalFileSystem.getInstance()
-    val baseDir = fs.findFileByNioFile(basePath)
+    val fileManager = VirtualFileManager.getInstance()
+    val baseDir = fileManager.findFileByNioPath(basePath)
     if (baseDir == null) {
       Files.createDirectories(basePath)
-      return fs.refreshAndFindFileByNioFile(basePath)!!
+      return fileManager.refreshAndFindFileByNioPath(basePath)!!
     }
     return baseDir
   }

@@ -3,9 +3,9 @@
 
 package com.intellij.util.io
 
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.io.impl.DirectoryContentBuilderImpl
 import com.intellij.util.io.impl.DirectoryContentSpecImpl
 import com.intellij.util.io.impl.DirectorySpec
@@ -205,7 +205,7 @@ interface FileTextMatcher {
 }
 
 fun DirectoryContentSpec.generateInVirtualTempDir(): VirtualFile {
-  return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(generateInTempDir())!!
+  return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(generateInTempDir())!!
 }
 
 /**

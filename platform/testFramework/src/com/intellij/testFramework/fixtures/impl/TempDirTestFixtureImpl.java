@@ -4,7 +4,7 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -38,12 +38,12 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     createTempDirectory();
     return WriteAction.computeAndWait(() -> {
       try {
-        VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myTempDir.toString());
+        VirtualFile tempDir = StandardFileSystems.local().refreshAndFindFileByPath(myTempDir.toString());
         assertNotNull(tempDir);
         if (!targetDir.isEmpty()) {
           tempDir = VfsUtil.createDirectoryIfMissing(tempDir, targetDir.replace('\\', '/'));
         }
-        VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
+        VirtualFile from = StandardFileSystems.local().refreshAndFindFileByPath(dataDir);
         assertNotNull(dataDir + " not found", from);
         VfsUtil.copyDirectory(null, from, tempDir, filter);
         return tempDir;
@@ -75,7 +75,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   public VirtualFile getFile(@NotNull String path) {
     String fullPath = myTempDir.toString() + '/' + path;
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), fullPath);
-    VirtualFile vFile = WriteAction.computeAndWait(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath));
+    VirtualFile vFile = WriteAction.computeAndWait(() -> StandardFileSystems.local().refreshAndFindFileByPath(fullPath));
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
     return vFile;
   }
@@ -92,7 +92,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), file.toString());
     VirtualFile createdVFile = WriteAction.computeAndWait(() -> {
-      return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
+      return StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
     });
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
     return createdVFile;
@@ -137,7 +137,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
     try {
       if (deleteOnTearDown()) {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(myTempDir.toString()));
+        VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(myTempDir.toString()));
         if (virtualFile != null) {
           WriteAction.runAndWait(() -> {
             if(virtualFile.isValid()) {

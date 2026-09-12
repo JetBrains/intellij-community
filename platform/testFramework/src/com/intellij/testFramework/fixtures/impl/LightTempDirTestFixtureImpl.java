@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -86,7 +86,7 @@ public final class LightTempDirTestFixtureImpl extends BaseFixture implements Te
     return ApplicationManager.getApplication().runWriteAction(new Computable<>() {
       @Override
       public VirtualFile compute() {
-        VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
+        VirtualFile from = StandardFileSystems.local().refreshAndFindFileByPath(dataDir);
         Assert.assertNotNull("Cannot find testdata directory " + dataDir, from);
         try {
           UsefulTestCase.refreshRecursively(from);

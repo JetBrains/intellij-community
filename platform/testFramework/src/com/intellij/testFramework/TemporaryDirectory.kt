@@ -5,9 +5,9 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.io.getResolvedPath
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.testFramework.common.runAllCatching
 import com.intellij.util.SmartList
@@ -99,7 +99,7 @@ open class TemporaryDirectory : ExternalResource() {
     if (result == null) {
       val nioRoot = root!!
       Files.createDirectories(nioRoot)
-      result = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nioRoot)
+      result = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(nioRoot)
                ?: throw IllegalStateException("Cannot find virtual file by $nioRoot")
       virtualFileRoot = result
     }
@@ -186,7 +186,7 @@ fun VirtualFile.writeChild(relativePath: String, data: ByteArray): VirtualFile =
 
 fun Path.refreshVfs() {
   // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
-  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(this) ?: return
+  val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(this) ?: return
   VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
 }
 

@@ -20,7 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -1259,7 +1259,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
   }
 
   public static VirtualFile refreshAndFindFile(@NotNull File file) {
-    return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+    return UIUtil.invokeAndWaitIfNeeded(() -> StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath()));
   }
 
   public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {

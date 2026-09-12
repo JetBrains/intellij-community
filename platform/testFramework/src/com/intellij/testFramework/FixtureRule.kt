@@ -29,9 +29,9 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.project.TestProjectManager
@@ -469,7 +469,7 @@ suspend fun loadAndUseProjectInLoadComponentStateMode(
 }
 
 fun refreshProjectConfigDir(project: Project) {
-  LocalFileSystem.getInstance().findFileByNioFile(project.stateStore.directoryStorePath!!)!!.refresh(false, true)
+  VirtualFileManager.getInstance().findFileByNioPath(project.stateStore.directoryStorePath!!)!!.refresh(false, true)
 }
 
 fun <T> runNonUndoableWriteAction(file: VirtualFile, runnable: () -> T): T =

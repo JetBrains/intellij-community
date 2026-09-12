@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectStoreOwner;
@@ -137,16 +137,16 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
 
     try {
       for (String contentRoot : myContentRoots) {
-        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentRoot);
+        final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(contentRoot);
         Assert.assertNotNull("cannot find content root: " + contentRoot, virtualFile);
         final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
 
         for (String sourceRoot: mySourceRoots) {
           String s = UriUtil.trimTrailingSlashes(contentRoot + "/" + sourceRoot);
 
-          VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
+          VirtualFile vf = StandardFileSystems.local().refreshAndFindFileByPath(s);
           if (vf == null) {
-            final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(sourceRoot);
+            final VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(sourceRoot);
             if (file != null && VfsUtilCore.isAncestor(virtualFile, file, false)) vf = file;
           }
   //        assert vf != null : "cannot find source root: " + sourceRoot;

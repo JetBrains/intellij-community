@@ -40,6 +40,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -467,7 +468,7 @@ public final class PsiTestUtil {
         root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
       }
       else {
-        root = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+        root = StandardFileSystems.local().refreshAndFindFileByPath(path);
       }
       assert root != null : "Library root folder not found: " + path + "!/";
       classesRoots.add(root);
@@ -572,7 +573,7 @@ public final class PsiTestUtil {
   @Contract(pure = true)
   public static @NotNull Sdk addJdkAnnotations(@NotNull Sdk sdk) {
     String path = FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations/resources";
-    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile root = StandardFileSystems.local().findFileByPath(path);
     return addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), root);
   }
 

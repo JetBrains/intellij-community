@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.PathKt;
@@ -58,7 +58,7 @@ public final class TempFiles {
   }
 
   public static VirtualFile getVFileByFile(@NotNull File tempFile) {
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+    return StandardFileSystems.local().refreshAndFindFileByPath(tempFile.getAbsolutePath());
   }
 
   public @NotNull File createTempDir() {

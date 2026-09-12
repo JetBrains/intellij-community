@@ -4,9 +4,9 @@ package com.intellij.testFramework.rules
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.testFramework.PlatformTestUtil
@@ -53,7 +53,7 @@ open class TempDirectory : ExternalResource() {
   val virtualFileRoot: VirtualFile
     get() {
       if (myVirtualFileRoot == null) {
-        myVirtualFileRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(rootPath)
+        myVirtualFileRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(rootPath)
         checkNotNull(myVirtualFileRoot) { "Cannot find virtual file by ${rootPath}" }
         VfsUtil.markDirtyAndRefresh(false, true, true, myVirtualFileRoot)
       }
@@ -164,7 +164,7 @@ open class TempDirectory : ExternalResource() {
     require(existing == null) { "Already exists: ${existing!!.path}"}
     val jarFile = rootPath.resolve(relativePath)
     jarFile { }.generate(jarFile)
-    val localFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(jarFile)!!
+    val localFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(jarFile)!!
     return JarFileSystem.getInstance().getJarRootForLocalFile(localFile)!!
   }
 

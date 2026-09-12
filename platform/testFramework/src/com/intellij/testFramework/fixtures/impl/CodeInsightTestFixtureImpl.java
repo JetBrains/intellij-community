@@ -125,8 +125,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -643,7 +643,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       throw new RuntimeException(e);
     }
 
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
+    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(targetFile.getAbsolutePath());
     assertNotNull(file);
     file.refresh(false, true);
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
@@ -1717,11 +1717,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
         else if (myTempDirFixture instanceof TempDirTestFixtureImpl) {
           Path tempFile = ((TempDirTestFixtureImpl)myTempDirFixture).createTempFile(fileName);
-          file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(tempFile.toString()));
+          file = StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(tempFile.toString()));
           assertNotNull(tempFile + " not found", file);
         }
         else {
-          file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTempDirPath(), fileName));
+          file = StandardFileSystems.local().refreshAndFindFileByPath(new File(getTempDirPath(), fileName).getAbsolutePath());
           assertNotNull(fileName + " not found in " + getTempDirPath(), file);
         }
 
@@ -1865,7 +1865,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     String fullPath = getTempDirPath() + "/" + filePath;
 
-    VirtualFile copy = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
+    VirtualFile copy = StandardFileSystems.local().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("file " + fullPath + " not found", copy);
     VfsTestUtil.assertFilePathEndsWithCaseSensitivePath(copy, filePath);
     return copy;
@@ -2190,7 +2190,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
         else {
           FileUtil.writeToFile(new File(destinationFileName), cleanContent);
-          VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(destinationFileName);
+          VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(destinationFileName);
           assertNotNull(file);
           configureFromExistingVirtualFile(file);
         }
