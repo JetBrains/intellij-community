@@ -11,8 +11,9 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsColle
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +75,7 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
 
   protected @Nullable VirtualFile getExternalConfig(@NotNull ExternalConfigPathAware data, ProjectSystemId externalSystemId) {
     String path = data.getLinkedExternalProjectPath();
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFileSystem fileSystem = StandardFileSystems.local();
     VirtualFile externalSystemConfigPath = fileSystem.refreshAndFindFileByPath(path);
     if (externalSystemConfigPath == null) {
       return null;

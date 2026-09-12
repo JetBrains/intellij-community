@@ -18,7 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
@@ -265,7 +265,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   private suspend fun ExternalSystemUnlinkedProjectAware.hasBuildFiles(project: Project, externalProjectPath: String): Boolean {
     return readAction {
-      val projectRoot = LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
+      val projectRoot = StandardFileSystems.local().findFileByPath(externalProjectPath)
       projectRoot?.children?.firstOrNull { isBuildFile(project, it) } != null
     }
   }

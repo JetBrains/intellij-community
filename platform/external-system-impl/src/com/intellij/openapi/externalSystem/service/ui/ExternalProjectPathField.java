@@ -28,7 +28,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextAccessor;
@@ -259,7 +259,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
       }
       VirtualFile fileToStart = null;
       if (!StringUtil.isEmpty(pathToStart)) {
-        fileToStart = LocalFileSystem.getInstance().findFileByPath(pathToStart);
+        fileToStart = StandardFileSystems.local().findFileByPath(pathToStart);
       }
       VirtualFile file = FileChooser.chooseFile(myDescriptor, myProject, fileToStart);
       if (file != null) {

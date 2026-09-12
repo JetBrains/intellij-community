@@ -27,8 +27,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt.toSystemIndependentName
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -53,7 +54,7 @@ class AutoImportProjectSettingsFilesTracker(
   private val settingsAsyncSupplier = SettingsFilesAsyncSupplier()
 
   private fun calculateSettingsFilesCRC(settingsFiles: Set<String>): Map<String, Long> {
-    val localFileSystem = LocalFileSystem.getInstance()
+    val localFileSystem = StandardFileSystems.local()
     return settingsFiles
       .asSequence()
       .mapNotNull { localFileSystem.findFileByPath(it) }
@@ -178,7 +179,7 @@ class AutoImportProjectSettingsFilesTracker(
       if (isRefreshVfs) {
         val settingsFiles = settingsPaths.mapNotNull { Path.of(it) }
         if (settingsFiles.isNotEmpty()) {
-          LocalFileSystem.getInstance().refreshNioFiles(settingsFiles)
+          RefreshQueue.getInstance().refreshPaths(false, false, null, settingsFiles)
         }
       }
       callback(settingsPaths)

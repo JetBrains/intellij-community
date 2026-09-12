@@ -42,7 +42,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -596,7 +596,7 @@ class ExternalSystemStorageTest {
 
   fun writeTextToProjectFile(project: Project, newText: String) {
     val miscXmlPath = project.projectFilePath!!
-    val miscFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(miscXmlPath) ?: error("Cannot find $miscXmlPath")
+    val miscFile = StandardFileSystems.local().refreshAndFindFileByPath(miscXmlPath) ?: error("Cannot find $miscXmlPath")
     VfsUtil.saveText(miscFile, newText)
   }
 

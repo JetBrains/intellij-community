@@ -19,8 +19,8 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -155,7 +155,7 @@ class ExternalSystemLibraryDependencyDataServiceTest : ExternalSystemModuleDataS
       output.putNextEntry(ZipEntry("META-INF/MANIFEST.MF"))
       output.closeEntry()
     }
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)
     return path
   }
 

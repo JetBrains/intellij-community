@@ -106,10 +106,10 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -976,7 +976,7 @@ public final class ExternalSystemUtil {
     if (!app.isDispatchThread()) {
       assert !app.holdsReadLock();
     }
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file.toPath());
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file.toPath());
   }
 
   public static @Nullable VirtualFile findLocalFileByPath(String path) {

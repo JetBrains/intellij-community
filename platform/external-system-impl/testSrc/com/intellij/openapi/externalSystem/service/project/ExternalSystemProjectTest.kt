@@ -32,7 +32,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemProjectTestCase
@@ -492,7 +492,7 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
       if (oldJdk != null) {
         jdkTable.removeJdk(oldJdk)
       }
-      val jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(myJdkHome))!!
+      val jdkHomeDir = StandardFileSystems.local().refreshAndFindFileByPath(File(myJdkHome).absolutePath)!!
       val jdk = SdkConfigurationUtil.setupSdk(emptyArray(), jdkHomeDir, JavaSdk.getInstance(), true, null, myJdkName)
       assertNotNull("Cannot create JDK for $myJdkHome", jdk)
       jdkTable.addJdk(jdk!!, project)

@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.getPresentablePath
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivity
 import kotlinx.coroutines.Dispatchers
@@ -104,7 +104,7 @@ abstract class AbstractOpenProjectProvider {
   }
 
   protected fun getProjectFile(projectFilePath: String): VirtualFile {
-    val localFileSystem = LocalFileSystem.getInstance()
+    val localFileSystem = StandardFileSystems.local()
     val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
     if (projectFile == null) {
       val shortPath = getPresentablePath(projectFilePath)

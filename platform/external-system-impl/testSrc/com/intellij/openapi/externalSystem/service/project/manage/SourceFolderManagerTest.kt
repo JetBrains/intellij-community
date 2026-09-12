@@ -6,7 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
@@ -39,7 +39,7 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
     val file = File(folderFile, "file.txt")
     FileUtil.writeToFile(file, "SomeContent")
 
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+    StandardFileSystems.local().refreshAndFindFileByPath(file.absolutePath)
     manager.consumeBulkOperationsState { PlatformTestUtil.waitForFuture(it, 1000)}
     then(rootManager.contentEntries[0].sourceFolders)
       .hasSize(1)
@@ -61,7 +61,7 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
     val file = File(folderFile, "file.txt")
     FileUtil.writeToFile(file, "SomeContent")
 
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+    StandardFileSystems.local().refreshAndFindFileByPath(file.absolutePath)
     manager.consumeBulkOperationsState { PlatformTestUtil.waitForFuture(it, 1000)}
 
     then(rootManager
@@ -95,7 +95,7 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
         notificationsCount++
       }
     })
-    LocalFileSystem.getInstance().refresh(false)
+    StandardFileSystems.local().refresh(false)
     manager.consumeBulkOperationsState { PlatformTestUtil.waitForFuture(it, 1000)}
     then(notificationsCount).isEqualTo(1)
     then((WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage.version)
