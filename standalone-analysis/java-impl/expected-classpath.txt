@@ -1,0 +1,8 @@
+# modules
+intellij.java.frontback.psi.impl com.jetbrains.intellij.java:java-frontback-psi-impl
+intellij.java.indexing.serializers com.jetbrains.intellij.java:java-indexing-serializers
+intellij.java.psi.impl com.jetbrains.intellij.java:java-psi-impl
+
+# libraries
+one.util:streamex
+org.jetbrains.intellij.deps:asm-all

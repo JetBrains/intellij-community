@@ -2019,6 +2019,10 @@ spellchecker
 spellchecker/vcs
 spellchecker/xml
 spellchecker/xml/backend
+standalone-analysis/java-api
+standalone-analysis/java-impl
+standalone-analysis/platform-api
+standalone-analysis/platform-impl
 tools/apiDump
 tools/apiDump/testData
 tools/intellij.ide.starter.allure.annotations.scanner

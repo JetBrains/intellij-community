@@ -49,6 +49,8 @@ class MavenArtifactsBuilderTest {
     checkCoordinates("intellij.spring", "com.jetbrains.intellij.spring", "spring")
     checkCoordinates("intellij.spring.boot", "com.jetbrains.intellij.spring", "spring-boot")
     checkCoordinates("intellij.junit.v5.rt", "com.jetbrains.intellij.junit", "junit-v5-rt")
+    checkCoordinates("intellij.standaloneAnalysis.platform", "com.jetbrains.intellij.standaloneAnalysis", "platform")
+    checkCoordinates("intellij.standaloneAnalysis.java.impl", "com.jetbrains.intellij.standaloneAnalysis", "java-impl")
   }
 
   private fun checkCoordinates(moduleName: String, expectedGroupId: String, expectedArtifactId: String) {

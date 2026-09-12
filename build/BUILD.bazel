@@ -218,6 +218,17 @@ java_binary(
     runtime_deps = [":build"],
 )
 
+java_binary(
+    name = "standalone_maven_artifacts",
+    add_opens = INTELLIJ_ADD_OPENS,
+    data = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
+    ],
+    main_class = "StandaloneMavenArtifactsBuildTarget",
+    runtime_deps = [":build"],
+)
+
 # Turns the `lib/` jars that `jvm_library` packs into a distribution component. It evaluates no layout and reads no
 # project model.
 alias(

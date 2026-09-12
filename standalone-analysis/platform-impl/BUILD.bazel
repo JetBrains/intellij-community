@@ -1,0 +1,85 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.standaloneAnalysis.platform.impl` start
+jvm_library(
+    name = "standaloneAnalysis-platform-impl",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.standaloneAnalysis.platform.impl",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//standalone-analysis/platform-api:standaloneAnalysis-platform",
+        "//platform/core-impl",
+        "//platform/syntax/syntax-psi:psi",
+        "//platform/pluginSystem/parser/impl",
+        "//platform/diagnostic/telemetry",
+        "//libraries/opentelemetry-extension-kotlin",
+        "//platform/util/diff",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//standalone-analysis/platform-api:standaloneAnalysis-platform",
+        "//platform/core-impl",
+        "//platform/syntax/syntax-psi:psi",
+        "//platform/pluginSystem/parser/impl",
+        "//platform/diagnostic/telemetry",
+        "//libraries/opentelemetry-extension-kotlin",
+        "//platform/util/diff",
+    ],
+)
+
+jvm_library(
+    name = "standaloneAnalysis-platform-impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.standaloneAnalysis.platform.impl",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//standalone-analysis/platform-api:standaloneAnalysis-platform",
+        "//standalone-analysis/platform-api:standaloneAnalysis-platform_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/syntax/syntax-psi:psi",
+        "//platform/syntax/syntax-psi:psi_test_lib",
+        "//platform/pluginSystem/parser/impl",
+        "//platform/pluginSystem/parser/impl:impl_test_lib",
+        "//platform/diagnostic/telemetry",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//libraries/opentelemetry-extension-kotlin",
+        "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
+        "//platform/util/diff",
+        "//platform/util/diff:diff_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":standaloneAnalysis-platform-impl",
+        "//standalone-analysis/platform-api:standaloneAnalysis-platform_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/syntax/syntax-psi:psi_test_lib",
+        "//platform/pluginSystem/parser/impl:impl_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
+        "//platform/util/diff:diff_test_lib",
+    ],
+)
+### auto-generated section `build intellij.standaloneAnalysis.platform.impl` end
+
+### auto-generated section `iml intellij.standaloneAnalysis.platform.impl` start
+exports_files(
+    [
+        "intellij.standaloneAnalysis.platform.impl.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.standaloneAnalysis.platform.impl` end

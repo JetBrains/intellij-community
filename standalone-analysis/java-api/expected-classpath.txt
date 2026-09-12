@@ -1,0 +1,6 @@
+# modules
+intellij.java.frontback.psi com.jetbrains.intellij.java:java-frontback-psi
+intellij.java.psi com.jetbrains.intellij.java:java-psi
+intellij.java.syntax com.jetbrains.intellij.java:java-syntax
+
+# libraries

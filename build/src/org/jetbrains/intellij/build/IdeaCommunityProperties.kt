@@ -27,7 +27,7 @@ val MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = persistentListO
   "intellij.maven.testFramework",
   "intellij.tools.reproducibleBuilds.diff",
   "intellij.space.java.jps",
-) + JewelMavenArtifacts.STANDALONE.keys
+) + JewelMavenArtifacts.STANDALONE.keys + StandaloneMavenArtifacts.LAYERS
 
 internal fun createCommunityBuildContext(
   options: BuildOptions,
@@ -82,6 +82,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
       "intellij.platform.util.base.multiplatform",
       "intellij.platform.util.zip",
     )
+    mavenArtifacts.isPomOnlyArtifact = StandaloneMavenArtifacts::isLayer
     mavenArtifacts.validateForMavenCentralPublication = { module ->
       JewelMavenArtifacts.isPublishedJewelModule(module) || JewelMavenArtifacts.isPublishedPlatformDependency(module)
     }
@@ -112,6 +113,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     }
     mavenArtifacts.validate = { context, artifacts ->
       JewelMavenArtifacts.validate(context, artifacts)
+      StandaloneMavenArtifacts.validate(artifacts)
     }
 
     versionCheckerConfig = CE_CLASS_VERSIONS

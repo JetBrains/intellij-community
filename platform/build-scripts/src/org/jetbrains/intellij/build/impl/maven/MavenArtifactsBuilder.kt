@@ -698,7 +698,7 @@ private fun splitByCamelHumpsMergingNumbers(s: String): List<String> {
  * the second component of module names that describes a common group rather than a specific framework
  * and therefore should be excluded from artifactId
  */
-private val COMMON_GROUP_NAMES: Set<String> = setOf("platform", "vcs", "tools", "clouds")
+private val COMMON_GROUP_NAMES: Set<String> = setOf("platform", "vcs", "tools", "clouds", "standaloneAnalysis")
 
 private fun layoutMavenArtifacts(
   modulesToPublish: Map<MavenArtifactData, List<JpsModule>>,

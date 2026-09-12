@@ -1,0 +1,46 @@
+# modules
+intellij.platform.bazel.runfiles com.jetbrains.intellij.platform:bazel-runfiles
+intellij.platform.core com.jetbrains.intellij.platform:core
+intellij.platform.diagnostic com.jetbrains.intellij.platform:diagnostic
+intellij.platform.eel com.jetbrains.intellij.platform:eel
+intellij.platform.eel.nioFs com.jetbrains.intellij.platform:eel-nio-fs
+intellij.platform.extensions com.jetbrains.intellij.platform:extensions
+intellij.platform.icons.api com.jetbrains.intellij.platform:icons-api
+intellij.platform.icons.api.rendering com.jetbrains.intellij.platform:icons-api-rendering
+intellij.platform.syntax com.jetbrains.intellij.platform:syntax
+intellij.platform.syntax.extensions com.jetbrains.intellij.platform:syntax-extensions
+intellij.platform.syntax.i18n com.jetbrains.intellij.platform:syntax-i18-n
+intellij.platform.syntax.util com.jetbrains.intellij.platform:syntax-util
+intellij.platform.testIntegration com.jetbrains.intellij.platform:test-integration
+intellij.platform.util com.jetbrains.intellij.platform:util
+intellij.platform.util.annotations com.jetbrains.intellij.platform:util-annotations
+intellij.platform.util.base com.jetbrains.intellij.platform:util-base
+intellij.platform.util.base.multiplatform com.jetbrains.intellij.platform:util-base-multiplatform
+intellij.platform.util.classLoader com.jetbrains.intellij.platform:util-class-loader
+intellij.platform.util.coroutines com.jetbrains.intellij.platform:util-coroutines
+intellij.platform.util.jdom com.jetbrains.intellij.platform:util-jdom
+intellij.platform.util.multiplatform com.jetbrains.intellij.platform:util-multiplatform
+intellij.platform.util.progress com.jetbrains.intellij.platform:util-progress
+intellij.platform.util.rt com.jetbrains.intellij.platform:util-rt
+intellij.platform.util.rt.java8 com.jetbrains.intellij.platform:util-rt-java8
+intellij.platform.util.xmlDom com.jetbrains.intellij.platform:util-xml-dom
+
+# libraries
+at.yawk.lz4:lz4-java
+com.fasterxml:aalto-xml
+com.google.guava:guava
+commons-codec:commons-codec
+commons-io:commons-io
+jaxen:jaxen
+org.apache.commons:commons-compress
+org.apache.commons:commons-lang3
+org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil
+org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core-jvm
+org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-debug
+org.jetbrains.kotlin:kotlin-stdlib
+org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm
+org.jetbrains.kotlinx:kotlinx-serialization-json-jvm
+org.jetbrains:annotations
+org.slf4j:log4j-over-slf4j
+oro:oro

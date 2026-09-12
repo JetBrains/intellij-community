@@ -1,0 +1,13 @@
+# modules
+intellij.platform.core.impl com.jetbrains.intellij.platform:core-impl
+intellij.platform.diagnostic.telemetry com.jetbrains.intellij.platform:diagnostic-telemetry
+intellij.platform.pluginSystem.parser.impl com.jetbrains.intellij.platform:plugin-system-parser-impl
+intellij.platform.productMode com.jetbrains.intellij.platform:product-mode
+intellij.platform.syntax.psi com.jetbrains.intellij.platform:syntax-psi
+intellij.platform.util.diff com.jetbrains.intellij.platform:util-diff
+
+# libraries
+dk.brics:automaton
+io.opentelemetry.semconv:opentelemetry-semconv
+io.opentelemetry:opentelemetry-extension-kotlin
+io.opentelemetry:opentelemetry-sdk
