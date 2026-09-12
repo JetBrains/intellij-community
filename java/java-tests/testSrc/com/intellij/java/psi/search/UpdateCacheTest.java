@@ -13,7 +13,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
@@ -93,7 +93,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
 
     String newFilePath = root.getPresentableUrl() + File.separatorChar + "New.java";
     FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes(StandardCharsets.UTF_8));
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(newFilePath.replace(File.separatorChar, '/'));
+    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(newFilePath.replace(File.separatorChar, '/'));
     IndexingTestUtil.waitUntilIndexesAreReady(myProject); // wait for indexes after VFS refresh
     assertNotNull(file);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -154,7 +154,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     FileUtil.writeToFile(file, "class A{ Object o;}".getBytes(StandardCharsets.UTF_8));
     root.refresh(false, true);
 
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
     Set<String> rootChildren = Stream.of(root.getChildren()).map(f -> f.getName()).collect(Collectors.toSet());
     assertTrue(rootChildren.contains("1.java"));
 
@@ -189,7 +189,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     String newFilePath = root.getPresentableUrl() + File.separatorChar + "dir" + File.separatorChar + "New.java";
     LOG.assertTrue(new File(newFilePath).getParentFile().mkdir());
     FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes(StandardCharsets.UTF_8));
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(newFilePath.replace(File.separatorChar, '/'));
+    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(newFilePath.replace(File.separatorChar, '/'));
     IndexingTestUtil.waitUntilIndexesAreReady(myProject); // wait for indexes after VFS refresh
     assertNotNull(file);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -284,7 +284,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     File dir = createTempDirectory();
 
     final VirtualFile root =
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+      StandardFileSystems.local().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
       PsiTestUtil.addContentRoot(myModule, root);
@@ -336,7 +336,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     File dir = createTempDirectory();
 
     final VirtualFile root =
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+      StandardFileSystems.local().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
       PsiTestUtil.addSourceRoot(myModule, root);

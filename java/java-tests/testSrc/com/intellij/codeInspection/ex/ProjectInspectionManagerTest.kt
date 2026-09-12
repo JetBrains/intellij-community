@@ -7,7 +7,7 @@ import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.findVirtualFileOrDirectory
 import com.intellij.profile.codeInspection.PROFILE_DIR
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -192,7 +192,7 @@ class ProjectInspectionManagerTest {
 
       // test creation of .idea/inspectionProfiles dir, not .idea itself
       projectConfigDir.createDirectories()
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(projectConfigDir.toString())
+      StandardFileSystems.local().refreshAndFindFileByPath(projectConfigDir.toString())
 
       val profileDir = projectConfigDir.resolve(PROFILE_DIR)
       profileDir.resolve("profiles_settings.xml").write("""

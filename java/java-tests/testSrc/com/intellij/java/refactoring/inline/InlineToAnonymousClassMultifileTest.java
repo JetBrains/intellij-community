@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -35,7 +35,7 @@ public class InlineToAnonymousClassMultifileTest extends LightMultiFileTestCase 
       Library library = libraryTable.createLibrary("test");
       Library.ModifiableModel libraryModel = library.getModifiableModel();
       String path = BASE_PATH + "/lib/simple.jar";
-      VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByPath(path);
+      VirtualFile libJarLocal = StandardFileSystems.local().findFileByPath(path);
       VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(libJarLocal);
       assertNotNull(jarRoot);
       libraryModel.addRoot(jarRoot, OrderRootType.CLASSES);

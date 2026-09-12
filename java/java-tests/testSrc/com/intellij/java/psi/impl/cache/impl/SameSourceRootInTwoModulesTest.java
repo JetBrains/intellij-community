@@ -4,7 +4,7 @@ package com.intellij.java.psi.impl.cache.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -26,7 +26,7 @@ public class SameSourceRootInTwoModulesTest extends JavaPsiTestCase {
     final File root = createTempDirectory();
     ApplicationManager.getApplication().runWriteAction(() -> {
       VirtualFile rootVFile =
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
+        StandardFileSystems.local().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
 
       myPrjDir1 = createChildDirectory(rootVFile, "prj1");
       mySrcDir1 = createChildDirectory(myPrjDir1, "src1");

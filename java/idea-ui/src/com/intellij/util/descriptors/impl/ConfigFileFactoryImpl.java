@@ -26,11 +26,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.descriptors.ConfigFileContainer;
 import com.intellij.util.descriptors.ConfigFileFactory;
@@ -101,9 +102,9 @@ public final class ConfigFileFactoryImpl extends ConfigFileFactory implements Di
   }
 
   private @Nullable VirtualFile createFileFromTemplate(final @Nullable Project project, String url, final String templateName, final boolean forceNew) {
-    final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    final VirtualFileSystem fileSystem = StandardFileSystems.local();
     final File file = new File(VfsUtilCore.urlToPath(url));
-    VirtualFile existingFile = fileSystem.refreshAndFindFileByIoFile(file);
+    VirtualFile existingFile = fileSystem.refreshAndFindFileByPath(file.getAbsolutePath());
     if (existingFile != null) {
       existingFile.refresh(false, false);
       if (!existingFile.isValid()) {
@@ -120,7 +121,7 @@ public final class ConfigFileFactoryImpl extends ConfigFileFactory implements Di
       if (existingFile == null || existingFile.isDirectory()) {
         final VirtualFile virtualFile;
         if (!FileUtil.createParentDirs(file) ||
-            (virtualFile = fileSystem.refreshAndFindFileByIoFile(file.getParentFile())) == null) {
+            (virtualFile = fileSystem.refreshAndFindFileByPath(file.getParentFile().getAbsolutePath())) == null) {
           throw new IOException(IdeBundle.message("error.message.unable.to.create.file", file.getPath()));
         }
         childData = virtualFile.createChildData(this, file.getName());

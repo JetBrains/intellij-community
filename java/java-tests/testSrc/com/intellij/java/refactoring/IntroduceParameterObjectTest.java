@@ -3,7 +3,7 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -212,7 +212,7 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
           parameters,
           false);
       processor.run();
-      LocalFileSystem.getInstance().refresh(false);
+      StandardFileSystems.local().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();
     });
   }

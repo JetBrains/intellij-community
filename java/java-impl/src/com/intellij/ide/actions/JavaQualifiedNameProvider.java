@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaPsiFacade;
@@ -165,7 +165,7 @@ public final class JavaQualifiedNameProvider implements QualifiedNameProvider {
         return rel;
       }
     }
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fqn);
+    VirtualFile file = StandardFileSystems.local().findFileByPath(fqn);
     if (file != null) return file;
     PsiFile[] files = PsiShortNamesCache.getInstance(project).getFilesByName(fqn);
     for (PsiFile psiFile : files) {

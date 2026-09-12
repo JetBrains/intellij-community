@@ -4,7 +4,7 @@ package com.intellij.java.impl.nullaway;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiCompiledElement;
@@ -70,7 +70,7 @@ public record NullAwayProblem(Path filePath, int lineNumber, Kind kind) {
   private @Nullable PsiJavaFile findFileWithProblem(Project project) {
     Path path = resolvedPath(project);
     if (path == null) return null;
-    var virtualFile = LocalFileSystem.getInstance().findFileByNioFile(path);
+    var virtualFile = VirtualFileManager.getInstance().findFileByNioPath(path);
     if (virtualFile == null) return null;
     var psiFile = PsiManager.getInstance(project).findFile(virtualFile);
     if (!(psiFile instanceof PsiJavaFile psiJavaFile) || psiFile instanceof PsiCompiledElement) return null;

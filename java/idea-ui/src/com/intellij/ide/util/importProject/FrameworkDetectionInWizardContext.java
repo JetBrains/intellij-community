@@ -9,7 +9,7 @@ import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.impl.FrameworkDetectionContextBase;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
@@ -76,7 +76,7 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
   @Override
   public VirtualFile getBaseDir() {
     final String path = getContentPath();
-    return path != null ? LocalFileSystem.getInstance().refreshAndFindFileByPath(path) : null;
+    return path != null ? StandardFileSystems.local().refreshAndFindFileByPath(path) : null;
   }
 
   protected abstract @Nullable String getContentPath();

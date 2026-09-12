@@ -13,7 +13,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -120,7 +120,7 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
 
   @NotNull
   public static VirtualFile getJarFile(String name) {
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getDataFile(name));
+    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(getDataFile(name).getAbsolutePath());
     assertNotNull(file);
     VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(file);
     assertNotNull(jarFile);

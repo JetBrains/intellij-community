@@ -24,7 +24,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -157,9 +157,9 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
       for (Map.Entry<String, String> entry : copiedFiles.entrySet()) {
         String fromPath = entry.getKey();
         String toPath = entry.getValue();
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(toPath);
+        StandardFileSystems.local().refreshAndFindFileByPath(toPath);
         if (!myCopy) {
-          final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(fromPath).getParentFile());
+          final VirtualFile parent = StandardFileSystems.local().refreshAndFindFileByPath(new File(fromPath).getParentFile().getAbsolutePath());
           if (parent != null) {
             parent.refresh(false, false);
           }

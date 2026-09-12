@@ -2,7 +2,7 @@
 package com.intellij.java.psi.resolve
 
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.psi.PsiJavaReference
 import com.intellij.psi.impl.PsiFileEx
 import com.intellij.testFramework.JavaProjectTestCase
@@ -12,7 +12,7 @@ import com.intellij.testFramework.utils.vfs.getPsiFile
 class ResolveExcludedClassTest : JavaProjectTestCase() {
   fun testResolveExcludedClass() {
     val tempDir = createTempDirectory()
-    val moduleDir = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir))
+    val moduleDir = checkNotNull(StandardFileSystems.local().refreshAndFindFileByPath(tempDir.absolutePath))
     val srcDir = createChildDirectory(moduleDir, "src")
     val testPackage = createChildDirectory(srcDir, "test")
     val testClass = createChildData(testPackage, "Test.java")

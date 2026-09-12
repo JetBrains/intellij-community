@@ -17,9 +17,10 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
@@ -287,14 +288,14 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
   @Deprecated(forRemoval = true)
   public static void attachSourceJar(@NotNull File sourceJar, @NotNull Collection<? extends Library> libraries) {
     attachSourceJar(
-      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar),
+      StandardFileSystems.local().refreshAndFindFileByPath(sourceJar.getAbsolutePath()),
       libraries
     );
   }
 
   public static void attachSourceJar(@NotNull Path sourceJar, @NotNull Collection<? extends Library> libraries) {
     attachSourceJar(
-      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(sourceJar),
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(sourceJar),
       libraries
     );
   }

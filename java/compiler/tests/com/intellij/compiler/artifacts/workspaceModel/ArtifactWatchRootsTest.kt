@@ -7,8 +7,8 @@ import com.intellij.java.workspace.entities.ArtifactRootElementEntity
 import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
@@ -22,7 +22,7 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
   override fun runInDispatchThread(): Boolean = true
 
   fun `test watch roots rename artifact content via workspace model`() {
-    val testRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Files.createDirectories(Path.of(FileUtil.getTempDirectory())))!!
+    val testRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Files.createDirectories(Path.of(FileUtil.getTempDirectory())))!!
     val outputDir = Files.createDirectories(Path.of(FileUtil.getTempDirectory(), "output")).toFile()
     val file = runWriteAction {
       testRoot.createChildDirectory(Any(), "source").createChildData(Any(), "JustAFile")
@@ -53,7 +53,7 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
   }
 
   fun `test watch roots rename artifact content via bridge`() {
-    val testRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Files.createDirectories(Path.of(FileUtil.getTempDirectory())))!!
+    val testRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Files.createDirectories(Path.of(FileUtil.getTempDirectory())))!!
     val file = runWriteAction {
       testRoot.createChildDirectory(Any(), "source").createChildData(Any(), "JustAFile")
     }

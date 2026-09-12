@@ -9,7 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
@@ -25,7 +25,7 @@ import java.nio.file.Path;
 public class ExportingModulesTest extends JavaProjectTestCase {
   public void test1() {
     String rootPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/moduleRootManager/exportedModules/";
-    VirtualFile testRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath);
+    VirtualFile testRoot = StandardFileSystems.local().refreshAndFindFileByPath(rootPath);
     assertNotNull(testRoot);
 
     Path dir = ProjectKt.getStateStore(myProject).getProjectBasePath();

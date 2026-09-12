@@ -11,7 +11,7 @@ import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.sun.jdi.BooleanValue
@@ -41,7 +41,7 @@ class FileObjectRenderer : CompoundRendererProvider() {
                 val path = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, value, "getAbsolutePath", "()Ljava/lang/String;", emptyList())
                 if (path is StringReference) {
                   callback.evaluated("")
-                  val vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.value()) ?: return
+                  val vFile = StandardFileSystems.local().refreshAndFindFileByPath(path.value()) ?: return
                   DebuggerUIUtil.invokeLater { PsiNavigationSupport.getInstance().createNavigatable(evaluationContext.project, vFile, -1).navigate(true) }
                 }
               }

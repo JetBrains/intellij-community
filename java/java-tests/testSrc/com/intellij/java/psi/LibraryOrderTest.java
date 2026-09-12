@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -100,7 +100,7 @@ public class LibraryOrderTest extends JavaPsiTestCase {
 
   private VirtualFile refreshAndFindFile(String path) {
     final File ioLib1Src = new File(path);
-    final VirtualFile lib1SrcFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioLib1Src);
+    final VirtualFile lib1SrcFile = StandardFileSystems.local().refreshAndFindFileByPath(ioLib1Src.getAbsolutePath());
     return lib1SrcFile;
   }
 

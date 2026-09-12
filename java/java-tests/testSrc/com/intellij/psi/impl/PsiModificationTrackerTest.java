@@ -18,10 +18,11 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
@@ -307,7 +308,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
     File file = new File(parentDir.getPath(), "Foo.java");
     FileUtil.writeToFile(file, "class Foo {}");
-    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+    assertNotNull(StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath()));
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
@@ -323,7 +324,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
     File file = new File(parentDir.getPath() + "/foo", "Foo.java");
     FileUtil.writeToFile(file, "package foo; class Foo {}");
-    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+    assertNotNull(StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath()));
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", GlobalSearchScope.allScope(getProject())));
@@ -429,7 +430,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
   private PsiFile addFileToProject(@NotNull String fileName, String text) {
     Path file = ProjectKt.getStateStore(getProject()).getProjectBasePath().resolve(fileName);
     PathKt.write(file, text);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+    VirtualFile virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file);
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     return PsiManager.getInstance(getProject()).findFile(virtualFile);
   }

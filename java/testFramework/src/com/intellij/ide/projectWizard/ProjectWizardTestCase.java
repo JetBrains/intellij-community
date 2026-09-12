@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -266,7 +266,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   private Module doImportModule(String path, @Nullable Project project, Consumer<? super Step> adjuster, ProjectImportProvider[] providers) {
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path);
     assertNotNull("Can't find " + path, file);
     assertTrue(providers[0].canImport(file, project));
 

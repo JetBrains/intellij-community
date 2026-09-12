@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl;
@@ -71,7 +71,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     Path lib = Files.createDirectory(myJrtPath.resolve("lib"));
     Files.copy(myTestData.resolve("jrt-fs.jar"), lib.resolve("jrt-fs.jar"));
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
-    LocalFileSystem.getInstance().refreshAndFindFileByPath(myJrtPath.toString());
+    StandardFileSystems.local().refreshAndFindFileByPath(myJrtPath.toString());
   }
 
   @SuppressWarnings("CallToSystemGC")
@@ -106,7 +106,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void refresh() throws IOException {
     assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test.a");
-    VirtualFile local = LocalFileSystem.getInstance().refreshAndFindFileByPath(myJrtPath.toString());
+    VirtualFile local = StandardFileSystems.local().refreshAndFindFileByPath(myJrtPath.toString());
     assertThat(local).isNotNull();
 
     Path modules = myJrtPath.resolve("lib/modules");
@@ -125,7 +125,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void filePointers() throws IOException {
-    VirtualFile local = LocalFileSystem.getInstance().refreshAndFindFileByPath(myJrtPath.toString());
+    VirtualFile local = StandardFileSystems.local().refreshAndFindFileByPath(myJrtPath.toString());
     assertThat(local).isNotNull();
     VirtualFilePointerManager manager = VirtualFilePointerManager.getInstance();
     VirtualFilePointer[] pointers = {manager.create(local, myDisposable, null), manager.create(myRoot, myDisposable, null)};

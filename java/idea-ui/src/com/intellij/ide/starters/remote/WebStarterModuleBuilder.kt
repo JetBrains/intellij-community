@@ -65,7 +65,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndE
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 import com.intellij.util.concurrency.EdtExecutorService
@@ -281,7 +281,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
   }
 
   private fun runImport(module: Module) {
-    LocalFileSystem.getInstance().refresh(false) // to avoid IDEA-232806
+    StandardFileSystems.local().refresh(false) // to avoid IDEA-232806
 
     preprocessModuleOpened(module, this, starterContext.frameworkVersion?.id)
 
@@ -301,7 +301,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     openSampleFiles(module, getFilePathsToOpen())
 
     if (starterContext.gitIntegration && starterContext.isCreatingNewProject) {
-      val moduleContentRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath!!.replace("\\", "/"))
+      val moduleContentRoot = StandardFileSystems.local().refreshAndFindFileByPath(contentEntryPath!!.replace("\\", "/"))
                               ?: throw IllegalStateException("Module root not found")
 
       starterContext.initGitRepository(module.project, moduleContentRoot)

@@ -14,7 +14,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
@@ -116,7 +116,7 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
         return myLock.get() == 0;
       }
     };
-    PlatformTestUtil.assertDirectoriesEqual(LocalFileSystem.getInstance().findFileByNioFile(descriptor.getAfterPath()),
-                                            LocalFileSystem.getInstance().findFileByNioFile(descriptor.getProjectPath()));
+    PlatformTestUtil.assertDirectoriesEqual(VirtualFileManager.getInstance().findFileByNioPath(descriptor.getAfterPath()),
+                                            VirtualFileManager.getInstance().findFileByNioPath(descriptor.getProjectPath()));
   }
 }

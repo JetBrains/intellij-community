@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -44,8 +44,8 @@ public class BindToElementTest extends JavaCodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    VirtualFile root = WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
-      new File(new File(TEST_ROOT), "prj")
+    VirtualFile root = WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> StandardFileSystems.local().refreshAndFindFileByPath(
+      new File(new File(TEST_ROOT), "prj").getAbsolutePath()
     ));
     assertNotNull(root);
     PsiTestUtil.addSourceRoot(myModule, root);

@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -107,7 +107,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testAcceptThatWithDifferentLibraryVersionsInheritanceRelationMayBeIntransitive() {
-    VirtualFile lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/inheritance");
+    VirtualFile lib = StandardFileSystems.local().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/inheritance");
 
     //Foo, Middle implements Foo, Other extends Middle
     PsiTestUtil.addLibrary(getModule(), "full", lib.getPath(), new String[]{"/fullLibrary.jar!/"}, ArrayUtil.EMPTY_STRING_ARRAY);
@@ -160,7 +160,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
 
   public void testDoNotParseNotStubbedSourcesInClassJars() {
     VirtualFile lib =
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/classesAndSources");
+      StandardFileSystems.local().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/classesAndSources");
     PsiTestUtil.addLibrary(getModule(), "cas", lib.getPath(), new String[]{"/classesAndSources.jar!/"},
                            new String[]{"/classesAndSources.jar!/"});
 
@@ -194,7 +194,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
 
     String testDataPathForTest = PathManagerEx.getTestDataPath() + "/libResolve/classesAndSources";
-    VirtualFile lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(testDataPathForTest);
+    VirtualFile lib = StandardFileSystems.local().refreshAndFindFileByPath(testDataPathForTest);
     VirtualFile localFile = myFixture.copyFileToProject(testDataPathForTest + File.separator + "Foo.java", "Foo.java");
     assertNotNull(localFile);
 
@@ -225,7 +225,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
 
   public void testLibraryClassWithoutConstructors() {
     VirtualFile lib =
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/classWithoutConstructors");
+      StandardFileSystems.local().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/classWithoutConstructors");
 
     PsiTestUtil.addLibrary(getModule(), "lib", lib.getPath(), new String[] {"/test.jar!/"}, ArrayUtil.EMPTY_STRING_ARRAY);
     myFixture.configureByText("p/Generous.java", """

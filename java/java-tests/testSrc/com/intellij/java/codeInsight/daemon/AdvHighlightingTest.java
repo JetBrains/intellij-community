@@ -25,7 +25,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -137,7 +137,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testMultiJDKConflict() {
     String path = PathManagerEx.getTestDataPath() + BASE_PATH + "/" + getTestName(true);
-    VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    VirtualFile root = StandardFileSystems.local().findFileByPath(new File(path).getAbsolutePath());
     assert root != null : path;
     loadAllModulesUnder(root);
 
@@ -160,7 +160,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testSameFQNClasses() {
     String path = PathManagerEx.getTestDataPath() + BASE_PATH + "/" + getTestName(true);
-    VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    VirtualFile root = StandardFileSystems.local().findFileByPath(new File(path).getAbsolutePath());
     assert root != null : path;
     loadAllModulesUnder(root);
 
@@ -171,7 +171,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testSameClassesInSourceAndLib() {
     String path = PathManagerEx.getTestDataPath() + BASE_PATH + "/" + getTestName(true);
-    VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    VirtualFile root = StandardFileSystems.local().findFileByPath(new File(path).getAbsolutePath());
     assert root != null : path;
     loadAllModulesUnder(root);
 

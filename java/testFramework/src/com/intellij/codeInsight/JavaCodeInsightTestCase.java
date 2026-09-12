@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -141,14 +141,14 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
       File dir = createTempDirectory();
       File tempFile = FileUtil.createTempFile(dir, "tempFile", "." + extension, true);
       CodeInsightTestFixtureImpl.associateExtensionTemporarily(fileType, extension, getTestRootDisposable());
-      VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+      VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(tempFile.getAbsolutePath());
       assert vFile != null;
       WriteAction.runAndWait(() -> {
         vFile.setCharset(StandardCharsets.UTF_8);
         VfsUtil.saveText(vFile, text);
       });
 
-      VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+      VirtualFile vdir = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
 
       PsiTestUtil.addSourceRoot(myModule, vdir);
 
@@ -215,7 +215,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
         if (rawProjectRoot != null) {
           FileUtil.copyDir(rawProjectRoot, toDir.toNioPath().toFile());
           File projectRoot = rawProjectRoot.getCanonicalFile();
-          VirtualFile aNull = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectRoot));
+          VirtualFile aNull = Objects.requireNonNull(StandardFileSystems.local().refreshAndFindFileByPath(projectRoot.getAbsolutePath()));
           editorInfos1 = copyFilesFillingEditorInfos(aNull, toDir, ContainerUtil.map2Array(reversed, String.class, s -> {
             return s.getPath().substring(projectRoot.getPath().length());
           }));
@@ -281,7 +281,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
                                                                               @NotNull VirtualFile toDir,
                                                                               @NotNull String @NotNull ... relativePaths) throws IOException {
     if (!testDataFromDir.startsWith("/")) testDataFromDir = "/" + testDataFromDir;
-    return copyFilesFillingEditorInfos(LocalFileSystem.getInstance().refreshAndFindFileByPath(getTestDataPath() + testDataFromDir), toDir, relativePaths);
+    return copyFilesFillingEditorInfos(StandardFileSystems.local().refreshAndFindFileByPath(getTestDataPath() + testDataFromDir), toDir, relativePaths);
   }
 
   protected @NotNull Map<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(@NotNull VirtualFile fromDir,
@@ -299,7 +299,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
       if (toFile == null) {
         File file = new File(toDir.getPath(), relativePath);
         FileUtil.createIfDoesntExist(file);
-        toFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        toFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
         assertNotNull(file.getCanonicalPath(), toFile);
       }
       toFile.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, FileUtil.toSystemDependentName(fromFile.getPath()));

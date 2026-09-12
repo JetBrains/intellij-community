@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.ApplicationRule
@@ -67,7 +67,7 @@ class ExtractModuleFromPackageActionTest {
 
     val targetSourceRoot = projectModel.baseProjectDir.rootPath.resolve("xxx/src").invariantSeparatorsPathString
     extractModule(directory, main, targetSourceRoot)
-    val srcRoot = LocalFileSystem.getInstance().findFileByPath(targetSourceRoot)!!
+    val srcRoot = StandardFileSystems.local().findFileByPath(targetSourceRoot)!!
     val xxx = projectModel.moduleManager.findModuleByName("main.xxx")!!
     val dep1 = projectModel.moduleManager.findModuleByName("dep1")!!
     assertThat(xxx.moduleNioFile).isEqualTo(projectModel.baseProjectDir.rootPath.resolve("xxx/main.xxx.iml"))

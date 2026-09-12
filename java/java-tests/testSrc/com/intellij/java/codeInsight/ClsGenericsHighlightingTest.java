@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -93,7 +93,7 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
     Library.ModifiableModel libraryModel = library.getModifiableModel();
     for (String annotationsDir : libraryPath) {
       String path = testDataPath + "/libs/" + annotationsDir;
-      VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByPath(path);
+      VirtualFile libJarLocal = StandardFileSystems.local().findFileByPath(path);
       assertNotNull(libJarLocal);
       VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(libJarLocal);
       assertNotNull(jarRoot);

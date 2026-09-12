@@ -4,9 +4,9 @@ package com.intellij.java.refactoring.inline;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.java.testFramework.fixtures.MultiModuleProjectDescriptor;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -69,11 +69,11 @@ public class InlineMethodMultifileTest extends LightFixtureCompletionTestCase {
     new InlineMethodProcessor(getProject(), method, null, getEditor(), false).run();
 
     Path expectedPath = myDescriptor.getAfterPath().resolve("src/org/jetbrains/" + getTestName(true));
-    VirtualFile rootAfter = LocalFileSystem.getInstance().findFileByNioFile(expectedPath);
+    VirtualFile rootAfter = VirtualFileManager.getInstance().findFileByNioPath(expectedPath);
     assertNotNull(rootAfter);
 
     Path actualPath = getModule().getModuleNioFile().getParent().resolve("src/org/jetbrains/" + getTestName(true));
-    VirtualFile actualDirectory = LocalFileSystem.getInstance().findFileByNioFile(actualPath);
+    VirtualFile actualDirectory = VirtualFileManager.getInstance().findFileByNioPath(actualPath);
     assertNotNull(actualDirectory);
 
     VfsUtilCore.visitChildrenRecursively(actualDirectory, new VirtualFileVisitor<Void>() {
@@ -87,9 +87,9 @@ public class InlineMethodMultifileTest extends LightFixtureCompletionTestCase {
     PlatformTestUtil.assertDirectoriesEqual(rootAfter, actualDirectory);
     for (String file : additionalFiles) {
       Path expectedFilePath = myDescriptor.getAfterPath().resolve(file);
-      VirtualFile expected = LocalFileSystem.getInstance().findFileByNioFile(expectedFilePath);
+      VirtualFile expected = VirtualFileManager.getInstance().findFileByNioPath(expectedFilePath);
       Path actualFilePath = getModule().getModuleNioFile().getParent().resolve(file);
-      VirtualFile actual = LocalFileSystem.getInstance().findFileByNioFile(actualFilePath);
+      VirtualFile actual = VirtualFileManager.getInstance().findFileByNioPath(actualFilePath);
 
       actual.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, expectedFilePath.toString());
       PlatformTestUtil.assertFilesEqual(expected, actual);

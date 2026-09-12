@@ -4,8 +4,9 @@ package com.intellij.compiler.impl;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ public final class CompilerUtil {
    * No recursive refresh is performed.
    */
   public static void refreshOutputRoots(@NotNull Collection<String> outputRoots) {
-    var fs = LocalFileSystem.getInstance();
+    var fs = StandardFileSystems.local();
     var toRefresh = new HashSet<VirtualFile>();
 
     for (var outputRoot : outputRoots) {
@@ -48,7 +49,7 @@ public final class CompilerUtil {
 
       var vFile = fs.findFileByPath(outputRoot);
       if (attributes != null && vFile == null) {
-        var parent = fs.refreshAndFindFileByNioFile(outputPath.getParent());
+        var parent = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(outputPath.getParent());
         if (parent != null && toRefresh.add(parent)) {
           parent.getChildren();
         }

@@ -16,7 +16,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -47,7 +47,7 @@ public class FindClassTest extends JavaPsiTestCase {
     final File root = createTempDirectory();
     WriteCommandAction.runWriteCommandAction(null, () -> {
       VirtualFile rootVFile =
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
+        StandardFileSystems.local().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
 
       myPrjDir1 = createChildDirectory(rootVFile, "prj1");
       mySrcDir1 = createChildDirectory(myPrjDir1, "src1");
@@ -138,7 +138,7 @@ public class FindClassTest extends JavaPsiTestCase {
       File ioFile = VfsUtilCore.virtualToIoFile(vFile);
       ioFile.setLastModified(5);
 
-      LocalFileSystem.getInstance().refresh(false);
+      StandardFileSystems.local().refresh(false);
 
       ModuleRootModificationUtil.setModuleSdk(myModule, null);
 
@@ -199,7 +199,7 @@ public class FindClassTest extends JavaPsiTestCase {
       newModules.add(module2);
       ModuleRootModificationUtil.addDependency(module2, getModule());
       File repoLib = new File(PathManagerEx.getTestDataPath(), "/psi/cls/repo/");
-      VirtualFile repoRoot = LocalFileSystem.getInstance().findFileByIoFile(repoLib);
+      VirtualFile repoRoot = StandardFileSystems.local().findFileByPath(repoLib.getAbsolutePath());
       assertNotNull(repoRoot);
       ModuleRootModificationUtil.addModuleLibrary(module2, repoRoot.getUrl());
       newModules.add(modifiableModel.newModule("b.iml", JavaModuleType.getModuleType().getId()));

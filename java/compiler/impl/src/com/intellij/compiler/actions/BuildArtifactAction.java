@@ -30,8 +30,9 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings;
@@ -188,7 +189,7 @@ public final class BuildArtifactAction extends DumbAwareAction {
         String outputPath = artifact.getOutputFilePath();
         if (outputPath != null) {
           toClean.add(Pair.create(new File(FileUtil.toSystemDependentName(outputPath)), artifact));
-          final VirtualFile outputFile = LocalFileSystem.getInstance().findFileByPath(outputPath);
+          final VirtualFile outputFile = StandardFileSystems.local().findFileByPath(outputPath);
           if (parents.contains(outputFile)) {
             outputPathContainingSourceRoots.put(artifact.getName(), outputPath);
           }
@@ -234,7 +235,7 @@ public final class BuildArtifactAction extends DumbAwareAction {
               deleted.add(file);
             }
           }
-          LocalFileSystem.getInstance().refreshIoFiles(deleted, true, true, null);
+          RefreshQueue.getInstance().refreshPaths(true, true, null, ContainerUtil.map(deleted, File::toPath));
         }
       }.queue();
     }

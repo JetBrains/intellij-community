@@ -34,7 +34,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.testFramework.IndexingTestUtil;
@@ -195,7 +195,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     }
     assertFalse("No files retrieved for: " + descriptor.getGroupId(), files.isEmpty());
     for (File artifact : files) {
-      VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByIoFile(artifact);
+      VirtualFile libJarLocal = StandardFileSystems.local().findFileByPath(artifact.getAbsolutePath());
       assertNotNull(libJarLocal);
       VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(libJarLocal);
       ModuleRootModificationUtil.addModuleLibrary(module, jarRoot.getUrl());

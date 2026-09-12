@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiBinaryFile;
@@ -311,7 +311,7 @@ public class FileManagerTest extends JavaPsiTestCase {
       out.putNextEntry(new ZipEntry("Test.java"));
       out.write("class Text{}".getBytes(StandardCharsets.UTF_8));
     }
-    LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
+    StandardFileSystems.local().refreshAndFindFileByPath(jarPath);
 
     VirtualFile jarVFile =
       JarFileSystem.getInstance().findFileByPath(jarPath.replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR);

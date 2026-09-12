@@ -23,7 +23,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -119,7 +119,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
                                                 @NotNull InspectionToolWrapper<?,?> toolWrapper,
                                                 List<? extends InspectionToolWrapper<?, ?>> tools) {
     File file = new File(getTestDataPath(), testName);
-    VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile projectDir = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
     if (projectDir == null) {
       fail("projectDir not found: " + file.getAbsolutePath());
     }

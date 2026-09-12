@@ -20,7 +20,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -57,8 +57,8 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     PsiTestUtil.addProjectLibrary(
       myModule,
       "junit",
-      Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localFastUtilJar)),
-      Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localSources))
+      Collections.singletonList(StandardFileSystems.local().refreshAndFindFileByPath(localFastUtilJar.getAbsolutePath())),
+      Collections.singletonList(StandardFileSystems.local().refreshAndFindFileByPath(localSources.getAbsolutePath()))
     );
 
     assertThat(ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests()).isGreaterThan(moduleModificationCount);
@@ -193,7 +193,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
     File sourceRoot = new File(PathManagerEx.getTestDataPath() + OrderEntryTest.BASE_PATH + "lib/src");
     File sourceJarFile = IoTestUtil.createTestJar(new File(sourcesDir.getPath(), "lib-sources.jar"), sourceRoot);
-    VirtualFile sourceJar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJarFile);
+    VirtualFile sourceJar = StandardFileSystems.local().refreshAndFindFileByPath(sourceJarFile.getAbsolutePath());
     assertNotNull(sourceJar);
 
     LibraryTable table = getProjectLibraryTable();

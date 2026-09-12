@@ -40,7 +40,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.roots.ui.configuration.lookupAndSetupSdkBlocking
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -143,7 +143,7 @@ private fun showNotificationToImport(project: Project,
                                      providersAndFiles: ArrayListMultimap<ProjectOpenProcessor, VirtualFile>) {
   val showFileInProjectViewListener = object : NotificationListener.Adapter() {
     override fun hyperlinkActivated(notification: Notification, e: HyperlinkEvent) {
-      val file = LocalFileSystem.getInstance().findFileByPath(e.description)
+      val file = StandardFileSystems.local().findFileByPath(e.description)
       ProjectViewSelectInTarget.select(project, file, ProjectViewPane.ID, null, file, true)
     }
   }

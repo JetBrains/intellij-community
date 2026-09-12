@@ -37,7 +37,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -511,10 +511,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
         mySourceDirs = new VirtualFile[sourceDirs.length];
         for (int i = 0; i < sourceDirs.length; i++){
           String sourcePath = testDir + "/" + sourceDirs[i];
-          mySourceDirs[i] = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(sourcePath));
+          mySourceDirs[i] = StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(sourcePath));
         }
 
-        VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(testDir));
+        VirtualFile projectDir = StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(testDir));
         Sdk jdk = IdeaTestUtil.getMockJdk17();
         PsiTestUtil.removeAllRoots(myModule, jdk);
         PsiTestUtil.addContentRoot(myModule, projectDir);

@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -48,11 +48,11 @@ public class ManifestFilesInfo {
         continue;
       }
 
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+      VirtualFile file = StandardFileSystems.local().findFileByPath(path);
       if (file == null) {
         final File ioFile = new File(FileUtil.toSystemDependentName(path));
         FileUtil.createIfDoesntExist(ioFile);
-        file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+        file = StandardFileSystems.local().refreshAndFindFileByPath(ioFile.getAbsolutePath());
         if (file == null) {
           //todo improve error reporting
           LOG.error("cannot create file: " + ioFile);

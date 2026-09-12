@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.rt.compiler.JavacResourcesReader;
 import org.jetbrains.annotations.NonNls;
@@ -85,7 +86,7 @@ public class JavacOutputParser extends OutputParser {
       if (colonIndex2 >= 0){
         final String filePath = part1.replace(File.separatorChar, '/');
         final Boolean fileExists =
-          ReadAction.compute(() -> LocalFileSystem.getInstance().findFileByPath(filePath) != null);
+          ReadAction.compute(() -> StandardFileSystems.local().findFileByPath(filePath) != null);
         if (!fileExists.booleanValue()) {
           // the part one turned out to be something else than a file path
           return true;
@@ -204,7 +205,7 @@ public class JavacOutputParser extends OutputParser {
         protected void doExecute(final String line, final @Nullable String filePath, final Callback callback) {
           final boolean fileExists = filePath != null &&
                                      ReadAction
-                                       .compute(() -> LocalFileSystem.getInstance().findFileByPath(filePath) != null);
+                                       .compute(() -> StandardFileSystems.local().findFileByPath(filePath) != null);
           if (fileExists) {
             addMessage(callback, CompilerMessageCategory.WARNING, line, VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath),
                        -1, -1);

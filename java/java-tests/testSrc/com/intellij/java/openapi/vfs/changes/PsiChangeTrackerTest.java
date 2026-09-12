@@ -20,7 +20,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.PsiChangeTracker;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -116,7 +116,7 @@ public class PsiChangeTrackerTest extends JavaProjectTestCase {
   protected static VirtualFile getTestRoot() {
     final File root = new File(PathManagerEx.getTestDataPath());
     final File testRoot = new File(new File(root, "vfs"), "changes");
-    final VirtualFile ioFile = LocalFileSystem.getInstance().findFileByIoFile(testRoot);
+    final VirtualFile ioFile = StandardFileSystems.local().findFileByPath(testRoot.getAbsolutePath());
     assert ioFile != null : "Can't find directory vfs/changes";
     return ioFile;
   }

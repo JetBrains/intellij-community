@@ -5,7 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -75,7 +75,7 @@ public class RefreshOutputDirectoriesTest extends BaseCompilerTestCase {
     assertEquals(1, myRootsChangedCount);
     for (Module module : modules) {
       File dir = getOutputDir(module, false);
-      VirtualFile outputDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
+      VirtualFile outputDir = StandardFileSystems.local().findFileByPath(dir.getAbsolutePath());
       assertNotNull("output directory wasn't refreshed: " + dir.getAbsolutePath(), outputDir);
     }
     LOG.debug("myRootsChangedCount = " + myRootsChangedCount);

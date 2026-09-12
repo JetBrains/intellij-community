@@ -18,7 +18,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -86,7 +86,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
         .append(PathManager.getJarPathForClass(XmlElement.class))
         .map(path -> path.endsWith(".jar") ?
                      JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path) + "!/") :
-                     LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path)))
+                     StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(path)))
         .toArray(VirtualFile[]::new);
 
       return PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, files);
@@ -112,7 +112,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   }
 
   private void findAnnotationsXmlAndCheckSyntax(String root) {
-    VirtualFile jdkAnnoRoot = LocalFileSystem.getInstance().findFileByPath(root);
+    VirtualFile jdkAnnoRoot = StandardFileSystems.local().findFileByPath(root);
     VfsUtilCore.visitChildrenRecursively(
       jdkAnnoRoot, new VirtualFileVisitor<Void>() {
         @Override

@@ -28,7 +28,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
@@ -136,7 +136,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
       throw new RuntimeException(e);
     }
     WriteAction.runAndWait(() -> {
-      VirtualFile virtualDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
+      VirtualFile virtualDir = StandardFileSystems.local().refreshAndFindFileByPath(target.getAbsolutePath());
       assertNotNull(target.getAbsolutePath() + " not found", virtualDir);
       virtualDir.refresh(false, true);
     });

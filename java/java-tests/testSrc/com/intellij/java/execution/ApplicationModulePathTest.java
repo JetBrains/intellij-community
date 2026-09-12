@@ -19,7 +19,7 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -187,7 +187,7 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
   protected static VirtualFile getContentRoot(String path) {
     String filePath = PathManagerEx.getTestDataPath() + File.separator + "application" + File.separator + "modulePath" +
                       File.separator + path;
-    return LocalFileSystem.getInstance().findFileByPath(filePath.replace(File.separatorChar, '/'));
+    return StandardFileSystems.local().findFileByPath(filePath.replace(File.separatorChar, '/'));
   }
 
   private static String getCompilerOutputPath(Module module) {

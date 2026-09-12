@@ -28,7 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -226,8 +226,8 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
       }
 
       WriteAction.computeAndWait(ThrowableComputable<Unit, RuntimeException> {
-        libraryFileToCompare = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libraryIoFileToCompare)!!
-        downloadedFileToCompare = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(downloadedIoFileToCompare)!!
+        libraryFileToCompare = StandardFileSystems.local().refreshAndFindFileByPath(libraryIoFileToCompare.absolutePath)!!
+        downloadedFileToCompare = StandardFileSystems.local().refreshAndFindFileByPath(downloadedIoFileToCompare.absolutePath)!!
       })
 
       RefreshQueue.getInstance().refresh(false, false, null, libraryFileToCompare, downloadedFileToCompare)

@@ -5,8 +5,9 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -26,13 +27,13 @@ public class ProjectFileIndexRestoreTest extends JavaProjectTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    LocalFileSystem fs = LocalFileSystem.getInstance();
+    VirtualFileSystem fs = StandardFileSystems.local();
     File temp = createTempDirectory();
-    myTempVFile = fs.refreshAndFindFileByIoFile(temp);
+    myTempVFile = fs.refreshAndFindFileByPath(temp.getAbsolutePath());
     assertNotNull(myTempVFile);
     File root = new File(temp, "top/d1/d2/root");
     assertTrue(root.mkdirs());
-    VirtualFile rootVFile = fs.refreshAndFindFileByIoFile(root);
+    VirtualFile rootVFile = fs.refreshAndFindFileByPath(root.getAbsolutePath());
     assertNotNull(rootVFile);
 
     VirtualFile moduleDir = createChildDirectory(rootVFile, "module");

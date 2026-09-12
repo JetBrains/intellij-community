@@ -7,7 +7,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 
@@ -17,7 +17,7 @@ public class SdkEqualityTest extends LightPlatformTestCase {
     Sdk jdk8_copy = IdeaTestUtil.getMockJdk(LanguageLevel.JDK_1_8.toJavaVersion());
 
     String someRandomStrangePath = FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations/resources/javax";
-    VirtualFile root = LocalFileSystem.getInstance().findFileByPath(someRandomStrangePath);
+    VirtualFile root = StandardFileSystems.local().findFileByPath(someRandomStrangePath);
     Sdk jdk8_annotated = PsiTestUtil.addRootsToJdk(jdk8, AnnotationOrderRootType.getInstance(), root);
 
     Sdk jdk11 = IdeaTestUtil.getMockJdk(LanguageLevel.JDK_11.toJavaVersion());

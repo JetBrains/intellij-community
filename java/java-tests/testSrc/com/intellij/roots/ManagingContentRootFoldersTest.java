@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -66,7 +66,7 @@ public class ManagingContentRootFoldersTest extends JavaProjectTestCase {
   private void initContentRoot() {
     try {
       File dir = createTempDirectory();
-      root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+      root = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
       PsiTestUtil.addContentRoot(myModule, root);
     }
     catch (IOException e) {

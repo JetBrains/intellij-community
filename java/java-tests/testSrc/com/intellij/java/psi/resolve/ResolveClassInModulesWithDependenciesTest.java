@@ -10,7 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.PsiClass;
@@ -109,7 +109,7 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
       Module module = modifiableModel.newModule("a.iml", JavaModuleType.getModuleType().getId());
       modifiableModel.commit();
 
-      VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByPath(getTestDataPath() + "/class/dependentModule");
+      VirtualFile root = StandardFileSystems.local().refreshAndFindFileByPath(getTestDataPath() + "/class/dependentModule");
       assert root != null;
 
       PsiTestUtil.addContentRoot(module, root);

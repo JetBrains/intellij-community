@@ -35,7 +35,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -421,13 +421,13 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       }
       else {
         dir = createTempDirectory();
-        VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+        VirtualFile vDir = StandardFileSystems.local().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
         addSourceContentToRoots(myModule, vDir);
       }
 
       File file = new File(dir, qname.replace('.', '/') + ".java");
       FileUtil.createIfDoesntExist(file);
-      VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
+      VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
       assertNotNull(vFile);
       VfsUtil.saveText(vFile, text);
       return vFile;

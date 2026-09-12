@@ -15,7 +15,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
@@ -179,7 +179,7 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
     return WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> {
       final String path =
         TEST_PATH + File.separatorChar + getTestName(true) + File.separatorChar + relativeVfsPath.replace('/', File.separatorChar);
-      final VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
+      final VirtualFile result = StandardFileSystems.local().refreshAndFindFileByPath(new File(path).getAbsolutePath());
       assertNotNull("File " + path + " doesn't exist", result);
       return result;
     });

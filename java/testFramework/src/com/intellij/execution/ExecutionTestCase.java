@@ -16,9 +16,10 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.EdtTestUtil;
@@ -82,7 +83,7 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
     if (!Files.exists(myModuleOutputDir)) {
       Files.createDirectories(myModuleOutputDir);
       if (FileUtil.isAncestor(ourOutputRoot.toFile(), myModuleOutputDir.toFile(), false)) {
-        VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ourOutputRoot);
+        VirtualFile vDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(ourOutputRoot);
         assertNotNull(ourOutputRoot.toString(), vDir);
       }
 
@@ -181,8 +182,8 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
   protected final void setupModuleRoots(Module module) {
     final String modulePath = getTestAppPath();
     final String srcPath = getSrcPath(modulePath);
-    VirtualFile moduleDir = LocalFileSystem.getInstance().findFileByPath(modulePath.replace(File.separatorChar, '/'));
-    VirtualFile srcDir = LocalFileSystem.getInstance().findFileByPath(srcPath.replace(File.separatorChar, '/'));
+    VirtualFile moduleDir = StandardFileSystems.local().findFileByPath(modulePath.replace(File.separatorChar, '/'));
+    VirtualFile srcDir = StandardFileSystems.local().findFileByPath(srcPath.replace(File.separatorChar, '/'));
 
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     PsiTestUtil.removeAllRoots(module, rootManager.getSdk());

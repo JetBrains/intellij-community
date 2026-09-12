@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -374,7 +374,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   private static @Nullable PsiJavaModule findModuleByPath(@NotNull Project project, @NotNull String modulePath) {
-    VirtualFile moduleFile = LocalFileSystem.getInstance().findFileByPath(modulePath);
+    VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(modulePath);
     if (moduleFile == null) return null;
     return JavaModuleGraphUtil.findDescriptorByFile(moduleFile, project);
   }

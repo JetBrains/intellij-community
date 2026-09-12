@@ -52,7 +52,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
@@ -336,7 +336,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   private fun startGenerator(module: Module) {
     val moduleContentRoot =
       if (!ApplicationManager.getApplication().isUnitTestMode) {
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath!!.replace("\\", "/"))
+        StandardFileSystems.local().refreshAndFindFileByPath(contentEntryPath!!.replace("\\", "/"))
         ?: throw IllegalStateException("Module root not found")
       }
       else {

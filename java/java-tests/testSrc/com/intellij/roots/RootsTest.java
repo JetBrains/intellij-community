@@ -3,7 +3,7 @@ package com.intellij.roots;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -16,7 +16,7 @@ public class RootsTest extends JavaPsiTestCase {
     final VirtualFile[] rootFileBox = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(() -> {
       rootFileBox[0] =
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath.replace(File.separatorChar, '/'));
+      StandardFileSystems.local().refreshAndFindFileByPath(rootPath.replace(File.separatorChar, '/'));
     });
     final VirtualFile rootFile = rootFileBox[0];
     final VirtualFile classesFile = rootFile.findChild("classes");

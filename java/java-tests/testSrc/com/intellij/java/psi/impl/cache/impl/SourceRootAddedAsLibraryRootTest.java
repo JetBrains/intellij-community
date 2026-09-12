@@ -2,7 +2,7 @@
 package com.intellij.java.psi.impl.cache.impl;
 
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -21,7 +21,7 @@ public class SourceRootAddedAsLibraryRootTest extends JavaPsiTestCase {
     super.setUp();
 
     final File root = createTempDirectory();
-    VirtualFile rootVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
+    VirtualFile rootVFile = StandardFileSystems.local().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
 
     myDir = createChildDirectory(rootVFile, "contentAndLibrary");
 

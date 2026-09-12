@@ -42,10 +42,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -444,7 +445,7 @@ public final class JavaSdkImpl extends JavaSdk {
     javaPluginClassesRootPath = javaPluginClassesRootPath.toAbsolutePath();
     VirtualFile root;
     VirtualFileManager vfm = VirtualFileManager.getInstance();
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFileSystem lfs = StandardFileSystems.local();
     String pathInResources = "resources/jdkAnnotations.jar";
     if (Files.isRegularFile(javaPluginClassesRootPath)) {
       Path annotationsJarPath = javaPluginClassesRootPath.resolveSibling(pathInResources);
@@ -471,8 +472,8 @@ public final class JavaSdkImpl extends JavaSdk {
         Path root1 = projectRoot.resolve("community/java/jdkAnnotations/resources");
         Path root2 = projectRoot.resolve("java/jdkAnnotations/resources");
         root = Files.isDirectory(root1)
-               ? (refresh ? lfs.refreshAndFindFileByNioFile(root1) : lfs.findFileByNioFile(root1))
-               : Files.isDirectory(root2) ? (refresh ? lfs.refreshAndFindFileByNioFile(root2) : lfs.findFileByNioFile(root2)) : null;
+               ? (refresh ? vfm.refreshAndFindFileByNioPath(root1) : vfm.findFileByNioPath(root1))
+               : Files.isDirectory(root2) ? (refresh ? vfm.refreshAndFindFileByNioPath(root2) : vfm.findFileByNioPath(root2)) : null;
       }
       else {
         root = null;
@@ -766,7 +767,7 @@ public final class JavaSdkImpl extends JavaSdk {
 
   private static @Nullable VirtualFile findDocs(@NotNull Path jdkHome, @NotNull String relativePath) {
     Path docDir = jdkHome.resolve(relativePath);
-    return Files.isDirectory(docDir) ? LocalFileSystem.getInstance().findFileByNioFile(docDir) : null;
+    return Files.isDirectory(docDir) ? VirtualFileManager.getInstance().findFileByNioPath(docDir) : null;
   }
 
   private static @Nullable VirtualFile findInJar(@NotNull Path jarFile, @NotNull String relativePath) {

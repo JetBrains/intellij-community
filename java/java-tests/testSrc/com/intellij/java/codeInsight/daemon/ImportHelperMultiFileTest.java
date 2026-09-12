@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.ProductionDaemonAnalyzerTestCase;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -26,7 +26,7 @@ public class ImportHelperMultiFileTest extends ProductionDaemonAnalyzerTestCase 
                                              () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
 
     @NonNls String fullPath = getTestDataPath() + path + "/x/Usage_afterOptimize.txt";
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    final VirtualFile vFile = StandardFileSystems.local().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     String text = LoadTextUtil.loadText(vFile).toString();
     assertEquals(text, getFile().getText());
   }

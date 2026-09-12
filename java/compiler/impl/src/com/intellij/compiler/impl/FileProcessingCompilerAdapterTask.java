@@ -13,8 +13,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -97,7 +97,7 @@ public class FileProcessingCompilerAdapterTask implements CompileTask {
             toUpdate.add(Pair.create(item, item.getValidityState()));
           }
         });
-        LocalFileSystem.getInstance().refreshFiles(vFiles);
+        RefreshQueue.getInstance().refresh(false, false, null, vFiles);
 
         for (Pair<FileProcessingCompiler.ProcessingItem, ValidityState> pair : toUpdate) {
           cache.update(pair.getFirst().getFile(), pair.getSecond());

@@ -30,7 +30,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SortedComboBoxModel;
@@ -592,12 +592,12 @@ public class LibraryOptionsPanel implements Disposable {
 
   private @Nullable VirtualFile getBaseDirectory() {
     String path = mySettings.getBaseDirectoryPath();
-    VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile dir = StandardFileSystems.local().findFileByPath(path);
     if (dir == null) {
       int index = path.lastIndexOf('/');
       if (index >= 0) {
         path = path.substring(0, index);
-        dir = LocalFileSystem.getInstance().findFileByPath(path);
+        dir = StandardFileSystems.local().findFileByPath(path);
       }
     }
     return dir;

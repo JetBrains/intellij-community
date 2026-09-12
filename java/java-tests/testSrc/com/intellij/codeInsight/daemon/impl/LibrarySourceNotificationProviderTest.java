@@ -6,7 +6,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCompiledElement;
@@ -149,7 +149,7 @@ public class LibrarySourceNotificationProviderTest extends LightJavaCodeInsightF
   }
 
   private static VirtualFile refreshAndFind(File path) {
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path);
+    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path.getAbsolutePath());
     assertNotNull(path.getPath(), file);
     return file;
   }

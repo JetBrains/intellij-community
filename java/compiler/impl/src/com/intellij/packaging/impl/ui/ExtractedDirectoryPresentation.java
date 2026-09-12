@@ -18,7 +18,7 @@ package com.intellij.packaging.impl.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.impl.elements.ExtractedDirectoryPackagingElement;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -49,7 +49,7 @@ public class ExtractedDirectoryPresentation extends PackagingElementPresentation
     final String parentPath = PathUtil.getParentPath(myJarPath);
     if (myFile == null || !myFile.isDirectory()) {
       mainAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
-      final VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
+      final VirtualFile parentFile = StandardFileSystems.local().findFileByPath(parentPath);
       if (parentFile == null) {
         commentAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
       }

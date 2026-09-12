@@ -57,7 +57,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -550,7 +550,7 @@ public final class ShowAffectedTestsAction extends AnAction {
 
   static @Nullable VirtualFile getBasePathAsVirtualFile(@NotNull Project project) {
     String basePath = project.getBasePath();
-    return basePath == null ? null : LocalFileSystem.getInstance().findFileByPath(basePath);
+    return basePath == null ? null : StandardFileSystems.local().findFileByPath(basePath);
   }
 
   private static @Nullable String relativePath(@NotNull VirtualFile baseDir, @NotNull Change change) {

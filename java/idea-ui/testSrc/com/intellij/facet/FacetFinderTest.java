@@ -8,7 +8,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -86,7 +86,7 @@ public class FacetFinderTest extends FacetTestCase {
 
   private static VirtualFile findFile(final String path) {
     final File file = new File(PathManagerEx.getTestDataPath(), "facet/findByFile/" + path);
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    final VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(file.getAbsolutePath());
     assertNotNull(virtualFile);
     return virtualFile;
   }

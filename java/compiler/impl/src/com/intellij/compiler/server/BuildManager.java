@@ -90,11 +90,12 @@ import com.intellij.openapi.util.registry.RegistryManagerKt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
@@ -2334,7 +2335,7 @@ public final class BuildManager implements Disposable {
 
             CompilerUtil.refreshOutputRoots(candidates);
 
-            var lfs = LocalFileSystem.getInstance();
+            var lfs = StandardFileSystems.local();
             try {
               Collection<VirtualFile> toRefresh = ReadAction.nonBlocking(() -> {
                 if (project.isDisposed()) {
@@ -2346,7 +2347,7 @@ public final class BuildManager implements Disposable {
               }).executeSynchronously();
 
               if (!toRefresh.isEmpty()) {
-                lfs.refreshFiles(toRefresh, true, true, null);
+                RefreshQueue.getInstance().refresh(true, true, null, toRefresh);
               }
             }
             catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignored) { }

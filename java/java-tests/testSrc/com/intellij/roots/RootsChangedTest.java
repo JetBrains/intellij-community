@@ -31,7 +31,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -81,7 +81,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     File dir1 = new File(root, "dir1");
     assertTrue(dir1.mkdirs());
-    VirtualFile vDir1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
+    VirtualFile vDir1 = StandardFileSystems.local().refreshAndFindFileByPath(dir1.getAbsolutePath());
     assertNotNull(vDir1);
 
     Module moduleA = createModule("a.iml");
@@ -99,7 +99,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     File dir2 = new File(root, "dir2");
     assertTrue(dir2.mkdirs());
-    VirtualFile vDir2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir2);
+    VirtualFile vDir2 = StandardFileSystems.local().refreshAndFindFileByPath(dir2.getAbsolutePath());
     assertNotNull(vDir2);
 
     rename(vDir2, "dir1");
@@ -114,7 +114,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     // and event if it is moved, it's still a root
     File subdir = new File(root, "subdir");
     assertTrue(subdir.mkdirs());
-    VirtualFile vSubdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(subdir);
+    VirtualFile vSubdir = StandardFileSystems.local().refreshAndFindFileByPath(subdir.getAbsolutePath());
     assertNotNull(vSubdir);
 
     move(vDir2, vSubdir);
@@ -441,7 +441,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     File dir1 = new File(root, "dir1");
     assertTrue(dir1.mkdirs());
-    VirtualFile contentRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
+    VirtualFile contentRoot = StandardFileSystems.local().refreshAndFindFileByPath(dir1.getAbsolutePath());
     assertNotNull(contentRoot);
 
     Module moduleA = createModule("a.iml");
@@ -495,7 +495,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
   public void testEmptyDirectoryCreatedAndSomeRogueFileListenerImmediatelyCallsGetChildrenPreventingFurtherCreationEventsForFilesThatHappenedToBeAlreadyThereByThatMoment() {
     File ioRoot = new File(FileUtil.getTempDirectory());
 
-    VirtualFile vRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioRoot);
+    VirtualFile vRoot = StandardFileSystems.local().refreshAndFindFileByPath(ioRoot.getAbsolutePath());
     vRoot.getChildren();
 
     Module module = createModule("a.iml");
@@ -526,12 +526,12 @@ public class RootsChangedTest extends JavaModuleTestCase {
     assertTrue(ioExcluded.mkdirs());
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // now events are fired
 
-    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioExcluded));
+    assertNotNull(StandardFileSystems.local().refreshAndFindFileByPath(ioExcluded.getAbsolutePath()));
   }
 
   public void testChangesInsideCompilerOutputDirectoryMustNotLeadToRootsChange() {
     File temp = new File(FileUtil.getTempDirectory());
-    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    VirtualFile root = StandardFileSystems.local().refreshAndFindFileByPath(temp.getAbsolutePath());
     VirtualFile content = VfsTestUtil.createDir(root, "content");
 
     Module module = createModule("a.iml");
@@ -562,7 +562,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
           ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
           try {
             File dir = createTempDir("src-" + i);
-            VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+            VirtualFile vDir = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
             model.addContentEntry(vDir);
           }
           catch (IOException e) {
@@ -582,7 +582,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     File contentRoot = createTempDir("content-root");
     File excludedRoot = new File(contentRoot, "excluded-root");
     assertTrue(excludedRoot.mkdirs());
-    VirtualFile excludedRootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(excludedRoot);
+    VirtualFile excludedRootVFile = StandardFileSystems.local().refreshAndFindFileByPath(excludedRoot.getAbsolutePath());
 
     ModuleRootModificationUtil.updateModel(myModule, model -> model.addContentEntry(excludedRootVFile.getParent()).addExcludeFolder(excludedRootVFile));
 
@@ -610,7 +610,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     String rootJarDirName = "jarDir";
 
     File temp = new File(FileUtil.getTempDirectory());
-    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    VirtualFile root = StandardFileSystems.local().refreshAndFindFileByPath(temp.getAbsolutePath());
     VirtualFile jarDir = VfsTestUtil.createDir(root, rootJarDirName);
 
     LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
@@ -642,7 +642,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     String rootJarDirName = "jarDir";
 
     File temp = new File(FileUtil.getTempDirectory());
-    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    VirtualFile root = StandardFileSystems.local().refreshAndFindFileByPath(temp.getAbsolutePath());
     VirtualFile testFileUnderRoot = VfsTestUtil.createFile(root, "test.jar");
 
     VirtualFile jarDir = VfsTestUtil.createDir(root, rootJarDirName);

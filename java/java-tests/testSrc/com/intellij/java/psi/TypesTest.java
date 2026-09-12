@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiClass;
@@ -48,7 +48,7 @@ public class TypesTest extends GenericsTestCase {
     final String testPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/psi/types/" + getTestName(true);
     final VirtualFile[] testRoot = { null };
     ApplicationManager.getApplication().runWriteAction(() -> {
-      testRoot[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(testPath);
+      testRoot[0] = StandardFileSystems.local().refreshAndFindFileByPath(testPath);
     });
     if (testRoot[0] != null) {
       PsiTestUtil.addSourceRoot(myModule, testRoot[0]);

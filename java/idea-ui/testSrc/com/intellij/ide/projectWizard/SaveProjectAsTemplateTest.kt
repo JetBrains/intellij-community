@@ -18,8 +18,8 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.templates.ArchivedTemplatesFactory
 import com.intellij.platform.templates.LocalArchivedTemplate
 import com.intellij.platform.templates.SaveProjectAsTemplateAction
@@ -98,7 +98,7 @@ public class Bar {
     val root = ProjectRootManager.getInstance(project).contentRoots[0]
     val rootFile = root.toNioPath().resolve(FOO_BAR_JAVA)
     rootFile.createParentDirectories().createFile()
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(rootFile)
+    val file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(rootFile)
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
         assertThat(file).isNotNull

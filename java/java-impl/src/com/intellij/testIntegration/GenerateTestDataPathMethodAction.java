@@ -7,7 +7,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiMethod;
@@ -41,7 +41,7 @@ final class GenerateTestDataPathMethodAction extends GenerateTestDataPathCommon 
               return;
             }
 
-            var directoryPath = LocalFileSystem.getInstance().findFileByPath(annotationValue);
+            var directoryPath = StandardFileSystems.local().findFileByPath(annotationValue);
             if (directoryPath == null || !directoryPath.isDirectory() || directoryPath.getChildren() == null) {
               NotificationGroupManager.getInstance().getNotificationGroup("Test integration")
                 .createNotification(JavaBundle.message("generate.method.nosuites.warn", annotationValue), NotificationType.WARNING)

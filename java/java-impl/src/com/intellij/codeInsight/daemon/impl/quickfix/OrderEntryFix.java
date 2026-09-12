@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -437,7 +437,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
   private static @NotNull String refreshAndConvertToUrl(String jarPath) {
     final File libraryRoot = new File(jarPath);
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libraryRoot);
+    StandardFileSystems.local().refreshAndFindFileByPath(libraryRoot.getAbsolutePath());
     return VfsUtil.getUrlForLibraryRoot(libraryRoot);
   }
 }

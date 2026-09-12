@@ -8,7 +8,7 @@ import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -35,7 +35,7 @@ public class GotoImplementationTest extends JavaCodeInsightTestCase {
   @Override
   protected void setUpProject() {
     String root = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/navigation/alexProject";
-    VirtualFile vfsRoot = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(root));
+    VirtualFile vfsRoot = StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(root));
     myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(vfsRoot.findChild("test.ipr").getPath()), getTestRootDisposable());
   }
 

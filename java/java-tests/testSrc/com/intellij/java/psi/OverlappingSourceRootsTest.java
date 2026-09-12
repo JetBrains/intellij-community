@@ -4,7 +4,7 @@ package com.intellij.java.psi;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
@@ -40,7 +40,7 @@ public class OverlappingSourceRootsTest extends JavaPsiTestCase {
         try {
           File dir = createTempDirectory();
 
-          myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
+          myProjectRoot = StandardFileSystems.local().refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
 
           mySourceRoot1 = createChildDirectory(myProjectRoot, "root1");
           mySourceRoot2 = createChildDirectory(myProjectRoot, "root2");

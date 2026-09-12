@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.problems.Problem;
@@ -213,7 +214,7 @@ final class AutoMakeMessageHandler extends DefaultMessageHandler {
   private void informWolf(CmdlineRemoteProto.Message.BuilderMessage.@NotNull CompileMessage message) {
     final String srcPath = message.getSourceFilePath();
     if (srcPath != null && !myProject.isDisposed()) {
-      final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(srcPath);
+      final VirtualFile vFile = StandardFileSystems.local().findFileByPath(srcPath);
       if (vFile != null) {
         final int line = (int)message.getLine();
         final int column = (int)message.getColumn();

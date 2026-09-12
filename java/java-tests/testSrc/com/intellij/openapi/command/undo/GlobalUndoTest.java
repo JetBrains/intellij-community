@@ -30,9 +30,10 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -42,6 +43,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.util.containers.ContainerUtil;
 import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -495,7 +497,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     File ioFile = new File(f.getPath());
     FileUtil.writeToFile(ioFile, "external".getBytes(Charsets.UTF_8));
     ioFile.setLastModified(f.getTimeStamp() + 2000);
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
 
     assertEquals("external", getDocumentText(f));
 
@@ -526,7 +528,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     File ioFile = new File(f.getPath());
     FileUtil.writeToFile(ioFile, "external".getBytes(Charsets.UTF_8));
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
 
     f = myRoot.findChild("f.txt");
     assertNotNull(f);
@@ -559,7 +561,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     File ioFile = new File(f.getPath());
     FileUtil.writeToFile(ioFile, "external".getBytes(Charsets.UTF_8));
     ioFile.setLastModified(f.getTimeStamp() + 2000);
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
 
     assertEquals("external", getDocumentText(f));
 
@@ -605,7 +607,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     File ioFile = new File(f.getPath());
     FileUtil.writeToFile(ioFile, "external".getBytes(Charsets.UTF_8));
     ioFile.setLastModified(f.getTimeStamp() + 2000);
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
 
     assertEquals("external", getDocumentText(f));
 
@@ -845,7 +847,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     File file = new File(f2.getPath());
     FileUtil.writeToFile(file, "reloaded");
     file.setLastModified(file.lastModified() + 10000);
-    LocalFileSystem.getInstance().refreshIoFiles(Collections.singletonList(file));
+    RefreshQueue.getInstance().refreshPaths(false, false, null, ContainerUtil.map(Collections.singletonList(file), File::toPath));
 
     assertUndoNotAvailable(null);
     assertUndoIsAvailable(getEditor(f1));
@@ -1065,7 +1067,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     globalUndo();
     globalRedo();
 
-    VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path[0]);
+    VirtualFile f = StandardFileSystems.local().findFileByPath(path[0]);
     assertNotNull(f);
     assertEquals("initial", VfsUtilCore.loadText(f));
     Document doc = FileDocumentManager.getInstance().getDocument(f);
@@ -1091,13 +1093,13 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     globalUndo();
     globalRedo();
 
-    VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path[0]);
+    VirtualFile f = StandardFileSystems.local().findFileByPath(path[0]);
     assertNotNull(f);
     assertEquals("initial1", VfsUtilCore.loadText(f));
     Document doc = FileDocumentManager.getInstance().getDocument(f);
     assertEquals("document1", doc.getText());
 
-    f = LocalFileSystem.getInstance().findFileByPath(path[1]);
+    f = StandardFileSystems.local().findFileByPath(path[1]);
     assertNotNull(f);
     assertEquals("initial2", VfsUtilCore.loadText(f));
     doc = FileDocumentManager.getInstance().getDocument(f);
@@ -1126,8 +1128,8 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     globalUndo();
 
-    f[0] = LocalFileSystem.getInstance().findFileByPath(f[0].getPath());
-    dir[0] = LocalFileSystem.getInstance().findFileByPath(dir[0].getPath());
+    f[0] = StandardFileSystems.local().findFileByPath(f[0].getPath());
+    dir[0] = StandardFileSystems.local().findFileByPath(dir[0].getPath());
     assertNotNull(f[0]);
     assertNotNull(dir[0]);
     assertEquals(dir[0], f[0].getParent());
@@ -1145,8 +1147,8 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     globalUndo();
     globalRedo();
 
-    f[0] = LocalFileSystem.getInstance().findFileByPath(f[0].getPath());
-    dir[0] = LocalFileSystem.getInstance().findFileByPath(dir[0].getPath());
+    f[0] = StandardFileSystems.local().findFileByPath(f[0].getPath());
+    dir[0] = StandardFileSystems.local().findFileByPath(dir[0].getPath());
 
     assertEquals(myRoot, f[0].getParent());
     assertEquals("initial", VfsUtilCore.loadText(f[0]));

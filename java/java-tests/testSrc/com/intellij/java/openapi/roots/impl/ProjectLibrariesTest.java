@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IndexingTestUtil;
@@ -41,7 +41,7 @@ public class ProjectLibrariesTest extends JavaProjectTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myRoot = LocalFileSystem.getInstance().findFileByPath(PathManagerEx.getTestDataPath() + "/psi/cls/repo");
+    myRoot = StandardFileSystems.local().findFileByPath(PathManagerEx.getTestDataPath() + "/psi/cls/repo");
     assertNotNull(myRoot);
 
     myLib = WriteCommandAction.runWriteCommandAction(null,

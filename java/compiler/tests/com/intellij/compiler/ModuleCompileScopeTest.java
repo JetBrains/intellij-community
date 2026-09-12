@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     Module module = addModule("a", a.getParent());
     make(module);
     assertOutput(module, fs().file("A.class"));
-    final VirtualFile output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module));
+    final VirtualFile output = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(module).getAbsolutePath());
     assertNotNull(output);
     final VirtualFile classFile = output.findChild("A.class");
     assertNotNull(classFile);
@@ -51,7 +51,7 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     Module module = addModule("a", a.getParent());
     make(module);
     assertOutput(module, fs().file("A.class").file("res.properties"));
-    final VirtualFile output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module));
+    final VirtualFile output = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(module).getAbsolutePath());
     assertNotNull(output);
     final VirtualFile classFile = output.findChild("A.class");
     assertNotNull(classFile);
@@ -75,7 +75,7 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     Module module = addModule("a", a.getParent(), null, b.getParent());
     make(module);
     assertOutput(module, fs().file("A.class").file("res.properties"));
-    final VirtualFile output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module));
+    final VirtualFile output = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(module).getAbsolutePath());
     assertNotNull(output);
     final VirtualFile classFile = output.findChild("A.class");
     assertNotNull(classFile);
@@ -102,9 +102,9 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     make(module);
     assertOutput(module, fs().file("A.class"), false);
     assertOutput(module, fs().file("B.class"), true);
-    final VirtualFile output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module, false));
+    final VirtualFile output = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(module, false).getAbsolutePath());
     assertNotNull(output);
-    final VirtualFile testOutput = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module, true));
+    final VirtualFile testOutput = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(module, true).getAbsolutePath());
     assertNotNull(testOutput);
     final VirtualFile classFile = output.findChild("A.class");
     assertNotNull(classFile);
@@ -130,9 +130,9 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     make(module);
     assertOutput(module, fs().file("A.class"), false);
     assertOutput(module, fs().file("B.class"), true);
-    final VirtualFile output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module, false));
+    final VirtualFile output = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(module, false).getAbsolutePath());
     assertNotNull(output);
-    final VirtualFile testOutput = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module, true));
+    final VirtualFile testOutput = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(module, true).getAbsolutePath());
     assertNotNull(testOutput);
     final VirtualFile classFile = output.findChild("A.class");
     assertNotNull(classFile);
@@ -192,9 +192,9 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
       assertOutput(m2, fs().file("BM2.class"), false);
       assertOutput(m2, fs().file("TestBM2.class"), true);
 
-      VirtualFile outputM1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(m1, false));
+      VirtualFile outputM1 = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(m1, false).getAbsolutePath());
       assertNotNull(outputM1);
-      final VirtualFile testOutputM1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(m1, true));
+      final VirtualFile testOutputM1 = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(m1, true).getAbsolutePath());
       assertNotNull(testOutputM1);
       VirtualFile classFileM1 = outputM1.findChild("A.class");
       assertNotNull(classFileM1);
@@ -205,9 +205,9 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
       changeFile(a, aText + "  "); // touch a
       changeFile(b, bText + "  "); // touch b
 
-      VirtualFile outputM2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(m2, false));
+      VirtualFile outputM2 = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(m2, false).getAbsolutePath());
       assertNotNull(outputM2);
-      VirtualFile testOutputM2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(m2, true));
+      VirtualFile testOutputM2 = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(m2, true).getAbsolutePath());
       assertNotNull(testOutputM2);
       VirtualFile classFileM2 = outputM2.findChild("BM2.class");
       assertNotNull(classFileM2);
@@ -276,9 +276,9 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
       assertOutput(m1, fs().file("B.class"), true);
       assertOutput(m2, fs().file("TestBM2.class"), true);
 
-      VirtualFile outputM1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(m1, false));
+      VirtualFile outputM1 = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(m1, false).getAbsolutePath());
       assertNotNull(outputM1);
-      final VirtualFile testOutputM1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(m1, true));
+      final VirtualFile testOutputM1 = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(m1, true).getAbsolutePath());
       assertNotNull(testOutputM1);
       VirtualFile classFileM1 = outputM1.findChild("A.class");
       assertNotNull(classFileM1);
@@ -289,7 +289,7 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
       changeFile(a, aText + "  "); // touch a
       changeFile(b, bText + "  some error"); // touch b so it won't compile
 
-      VirtualFile testOutputM2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(m2, true));
+      VirtualFile testOutputM2 = StandardFileSystems.local().refreshAndFindFileByPath(getOutputDir(m2, true).getAbsolutePath());
       assertNotNull(testOutputM2);
       VirtualFile testClassFileM2 = testOutputM2.findChild("TestBM2.class");
       assertNotNull(testClassFileM2);

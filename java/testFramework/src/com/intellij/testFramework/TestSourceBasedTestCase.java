@@ -5,8 +5,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +67,7 @@ public abstract class TestSourceBasedTestCase extends JavaProjectTestCase {
   protected abstract @Nullable String getTestPath();
 
   protected final VirtualFile getContentRoot() {
-    return LocalFileSystem.getInstance().findFileByNioFile(myTempDirectory.resolve(getTestDirectoryName()));
+    return VirtualFileManager.getInstance().findFileByNioPath(myTempDirectory.resolve(getTestDirectoryName()));
   }
 
   @Override

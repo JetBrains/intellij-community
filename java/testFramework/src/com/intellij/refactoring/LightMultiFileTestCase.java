@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +31,7 @@ public abstract class LightMultiFileTestCase extends LightJavaCodeInsightFixture
       performAction.run();
 
       String expectedPath = getTestDataPath().replace(File.separatorChar, '/') + testName + "/after";
-      VirtualFile rootAfter = LocalFileSystem.getInstance().findFileByPath(expectedPath);
+      VirtualFile rootAfter = StandardFileSystems.local().findFileByPath(expectedPath);
       assertNotNull(rootAfter);
 
       VfsUtilCore.visitChildrenRecursively(actualDirectory, new VirtualFileVisitor<Void>() {

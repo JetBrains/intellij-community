@@ -32,7 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
@@ -354,7 +354,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     ExternalAnnotationsManager.getInstance(myFixture.getProject()).findExternalAnnotation(getOwner(), AnnotationUtil.NOT_NULL); // force creating service
 
     WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFixture.getTempDirPath() + "/content/anno/p/annotations.xml");
+      VirtualFile file = StandardFileSystems.local().findFileByPath(myFixture.getTempDirPath() + "/content/anno/p/annotations.xml");
       assert file != null;
       String newText;
       try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)) {

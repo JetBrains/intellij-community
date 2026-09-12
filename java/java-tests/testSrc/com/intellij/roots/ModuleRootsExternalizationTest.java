@@ -17,7 +17,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -56,20 +56,20 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     FileUtil.createDirectory(exclude);
     FileUtil.createDirectory(classes);
     FileUtil.createDirectory(testClasses);
-    final VirtualFile contentFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(content);
+    final VirtualFile contentFile = StandardFileSystems.local().refreshAndFindFileByPath(content.getAbsolutePath());
     assertNotNull(contentFile);
     refreshRecursively(contentFile);
-    final VirtualFile sourceFile = LocalFileSystem.getInstance().findFileByIoFile(source);
+    final VirtualFile sourceFile = StandardFileSystems.local().findFileByPath(source.getAbsolutePath());
     assertNotNull(sourceFile);
-    final VirtualFile testSourceFile = LocalFileSystem.getInstance().findFileByIoFile(testSource);
+    final VirtualFile testSourceFile = StandardFileSystems.local().findFileByPath(testSource.getAbsolutePath());
     assertNotNull(testSourceFile);
-    final VirtualFile excludeFile = LocalFileSystem.getInstance().findFileByIoFile(exclude);
+    final VirtualFile excludeFile = StandardFileSystems.local().findFileByPath(exclude.getAbsolutePath());
 
     assertNotNull(excludeFile);
-    final VirtualFile classesFile = LocalFileSystem.getInstance().findFileByIoFile(classes);
+    final VirtualFile classesFile = StandardFileSystems.local().findFileByPath(classes.getAbsolutePath());
 
     assertNotNull(classesFile);
-    final VirtualFile testClassesFile = LocalFileSystem.getInstance().findFileByIoFile(testClasses);
+    final VirtualFile testClassesFile = StandardFileSystems.local().findFileByPath(testClasses.getAbsolutePath());
 
     assertNotNull(testClassesFile);
 
@@ -160,14 +160,14 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     final Library unnamedLibrary = moduleLibraryTable.createLibrary();
     final File unnamedLibClasses = new File(myProject.getBasePath(), "unnamedLibClasses");
     FileUtil.createDirectory(unnamedLibClasses);
-    final VirtualFile unnamedLibClassesRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(unnamedLibClasses);
+    final VirtualFile unnamedLibClassesRoot = StandardFileSystems.local().refreshAndFindFileByPath(unnamedLibClasses.getAbsolutePath());
     final Library.ModifiableModel libraryModifiableModel = unnamedLibrary.getModifiableModel();
     libraryModifiableModel.addRoot(unnamedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 
     final Library namedLibrary = moduleLibraryTable.createLibrary("namedLibrary");
     final File namedLibClasses = new File(myProject.getBasePath(), "namedLibClasses");
     FileUtil.createDirectory(namedLibClasses);
-    final VirtualFile namedLibClassesRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(namedLibClasses);
+    final VirtualFile namedLibClassesRoot = StandardFileSystems.local().refreshAndFindFileByPath(namedLibClasses.getAbsolutePath());
     final Library.ModifiableModel namedLibraryModel = namedLibrary.getModifiableModel();
     namedLibraryModel.addRoot(namedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 

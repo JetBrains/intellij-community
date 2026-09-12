@@ -28,7 +28,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaRecursiveElementVisitor;
@@ -110,7 +110,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
 
   private static VirtualFile getAnnotationsRoot() {
     String annotationsPath = PathManagerEx.getTestDataPath() + "/codeInspection/bytecodeAnalysis/annotations";
-    VirtualFile annotationsDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(annotationsPath);
+    VirtualFile annotationsDir = StandardFileSystems.local().refreshAndFindFileByPath(annotationsPath);
     assertNotNull(annotationsDir);
     return annotationsDir;
   }

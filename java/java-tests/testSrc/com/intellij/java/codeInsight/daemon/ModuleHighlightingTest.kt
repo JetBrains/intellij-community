@@ -51,6 +51,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem
@@ -1193,7 +1194,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testMultiReleaseJarWithDifferentJavaVersions() {
     val location = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/jigsaw/multi-release.jar"
-    val libraryFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(location))!!
+    val libraryFile = StandardFileSystems.local().refreshAndFindFileByPath(File(location).absolutePath)!!
     val libClasses = JarFileSystem.getInstance().getJarRootForLocalFile(libraryFile)!!
     val module = ModuleManager.getInstance(project).findModuleByName(MAIN.moduleName)!!
     ApplicationManager.getApplication().runWriteAction {

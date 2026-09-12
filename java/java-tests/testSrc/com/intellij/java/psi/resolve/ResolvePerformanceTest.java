@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
@@ -37,7 +37,7 @@ import java.util.List;
 public class ResolvePerformanceTest extends JavaResolveTestCase {
   public void testPerformance1() throws Exception{
     final String fullPath = PathManagerEx.getTestDataPath() + "/psi/resolve/Thinlet.java";
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    final VirtualFile vFile = StandardFileSystems.local().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     final List<PsiReference> references = new ArrayList<>();
     assertNotNull("file " + fullPath + " not found", vFile);
     //final int[] ints = new int[10000000];
@@ -74,7 +74,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
 
   public void testPerformance2() throws Exception{
     final String fullPath = PathManagerEx.getTestDataPath() + "/psi/resolve/ant/build.xml";
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    final VirtualFile vFile = StandardFileSystems.local().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     final List<PsiReference> references = new ArrayList<>();
     assertNotNull("file " + fullPath + " not found", vFile);
 

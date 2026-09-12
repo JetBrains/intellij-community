@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.pom.java.LanguageLevel;
@@ -151,7 +151,7 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
         try {
           for (OrderRootType rootType : OrderRootType.getAllTypes()) {
             for (String root : lib.getRoots(rootType)) {
-              VirtualFile vRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
+              VirtualFile vRoot = StandardFileSystems.local().refreshAndFindFileByPath(root);
               if (vRoot != null && OrderRootType.CLASSES.equals(rootType) && !vRoot.isDirectory()) {
                 VirtualFile jar = JarFileSystem.getInstance().refreshAndFindFileByPath(root + "!/");
                 if (jar != null) {
@@ -237,7 +237,7 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
       if (!pathFile.mkdirs()) {
         assertTrue("unable to create: " + myOutputPath, pathFile.exists());
       }
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myOutputPath);
+      final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(myOutputPath);
       assertNotNull("cannot find output path: " + myOutputPath, virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
@@ -245,7 +245,7 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     }
     if (myTestOutputPath != null) {
       assertTrue(myTestOutputPath, new File(myTestOutputPath).mkdirs());
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myTestOutputPath);
+      final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(myTestOutputPath);
       assertNotNull("cannot find test output path: " + myTestOutputPath, virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);

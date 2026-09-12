@@ -73,8 +73,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.ui.navigation.Place;
@@ -1077,7 +1077,7 @@ public final class ModuleStructureConfigurable extends BaseStructureConfigurable
         }
       }
 
-      VirtualFile content = LocalFileSystem.getInstance().findFileByNioFile(myComponentPath);
+      VirtualFile content = VirtualFileManager.getInstance().findFileByNioPath(myComponentPath);
       if (content == null) {
         try {
           Files.createFile(NioFiles.createParentDirectories(myComponentPath));
@@ -1085,7 +1085,7 @@ public final class ModuleStructureConfigurable extends BaseStructureConfigurable
         catch (IOException e) {
           throw new UncheckedIOException(e);
         }
-        content = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(myComponentPath);
+        content = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(myComponentPath);
       }
       modifiableRootModel.addContentEntry(content);
     }

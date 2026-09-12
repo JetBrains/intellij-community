@@ -2,7 +2,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
@@ -35,7 +35,7 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
   }
 
   public @Nullable VirtualFile findFile() {
-    return LocalFileSystem.getInstance().findFileByPath(myFilePath);
+    return StandardFileSystems.local().findFileByPath(myFilePath);
   }
 
   @Override

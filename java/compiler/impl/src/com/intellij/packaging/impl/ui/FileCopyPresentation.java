@@ -20,7 +20,7 @@ import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
@@ -37,7 +37,7 @@ public class FileCopyPresentation extends PackagingElementPresentation {
     myOutputFileName = outputFileName;
 
     String parentPath;
-    myFile = LocalFileSystem.getInstance().findFileByPath(filePath);
+    myFile = StandardFileSystems.local().findFileByPath(filePath);
     if (myFile != null) {
       final VirtualFile parent = myFile.getParent();
       parentPath = parent != null ? FileUtil.toSystemDependentName(parent.getPath()) : "";
@@ -70,7 +70,7 @@ public class FileCopyPresentation extends PackagingElementPresentation {
     else {
       presentationData.setIcon(AllIcons.FileTypes.Text);
       presentationData.addText(getPresentableName(), SimpleTextAttributes.ERROR_ATTRIBUTES);
-      final VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(mySourcePath));
+      final VirtualFile parentFile = StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(mySourcePath));
       presentationData.addText("(" + mySourcePath + ")",
                       parentFile != null ? commentAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
     }

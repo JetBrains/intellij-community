@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
@@ -35,7 +35,7 @@ class ItemElement extends LibraryTableTreeContentElement<ItemElement> {
     if (isValid) {
       VirtualFile presentableFile;
       if (isJarFileRoot(url)) {
-        presentableFile = LocalFileSystem.getInstance().findFileByPath(getPresentablePath(url));
+        presentableFile = StandardFileSystems.local().findFileByPath(getPresentablePath(url));
       }
       else {
         presentableFile = VirtualFileManager.getInstance().findFileByUrl(url);

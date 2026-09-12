@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.testFramework.DynamicPluginTestUtilsKt;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
@@ -24,6 +24,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,7 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
       "<useScopeEnlarger implementation=\"com.intellij.scopes.LibraryUseSearchUsingScopeEnlargerTest$LibraryUseScopeEnlarger\"/>",
       "com.intellij"));
     //bug? Test seems to use stale data.
-    LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(new File(getTestDataPath())), false, true, null);
+    RefreshQueue.getInstance().refreshPaths(false, true, null, ContainerUtil.map(Collections.singleton(new File(getTestDataPath())), File::toPath));
   }
 
   @Override

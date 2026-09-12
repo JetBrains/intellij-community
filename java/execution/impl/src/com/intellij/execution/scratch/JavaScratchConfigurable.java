@@ -19,7 +19,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBCheckBox;
@@ -75,7 +75,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
         VirtualFile toSelect = getVFileFromEditor();
         if (toSelect == null) {
           final String scratchesRoot = ScratchFileService.getInstance().getRootPath(ScratchRootType.getInstance());
-          toSelect = LocalFileSystem.getInstance().findFileByPath(scratchesRoot);
+          toSelect = StandardFileSystems.local().findFileByPath(scratchesRoot);
         }
         final VirtualFile file =
           FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withEnvironmentRestricted(true), myScratchPathField.getComponent(), project, toSelect);
@@ -139,7 +139,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
 
   private @Nullable VirtualFile getVFileFromEditor() {
     final String path = FileUtil.toSystemIndependentName(myScratchPathField.getComponent().getText().trim());
-    return !StringUtil.isEmpty(path) ? LocalFileSystem.getInstance().findFileByPath(path) : null;
+    return !StringUtil.isEmpty(path) ? StandardFileSystems.local().findFileByPath(path) : null;
   }
 
   @Override

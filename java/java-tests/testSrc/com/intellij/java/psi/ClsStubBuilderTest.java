@@ -4,7 +4,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -72,7 +72,7 @@ public class ClsStubBuilderTest extends LightJavaCodeInsightTestCase {
       File srcFile = IdeaTestUtil.findSourceFile(JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + srcFileName);
       IdeaTestUtil.compileFile(srcFile, out, options);
       String clsFilePath = out.getPath() + '/' + srcFileName + ".class";
-      VirtualFile clsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(clsFilePath);
+      VirtualFile clsFile = StandardFileSystems.local().refreshAndFindFileByPath(clsFilePath);
       assertNotNull("Can't find: " + clsFilePath, clsFile);
       doTest(clsFile, resultFileName + ".txt");
     }
@@ -92,7 +92,7 @@ public class ClsStubBuilderTest extends LightJavaCodeInsightTestCase {
 
   private static @NotNull VirtualFile getClassVirtualFile(String clsPath) {
     String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + clsPath + ".class";
-    VirtualFile clsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(clsFilePath);
+    VirtualFile clsFile = StandardFileSystems.local().refreshAndFindFileByPath(clsFilePath);
     assertNotNull("Can't find: " + clsFilePath, clsFile);
     return clsFile;
   }

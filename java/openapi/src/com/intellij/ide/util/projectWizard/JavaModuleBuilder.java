@@ -28,7 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -131,7 +131,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
         for (final Pair<String, String> sourcePath : sourcePaths) {
           String first = sourcePath.first;
           new File(first).mkdirs();
-          final VirtualFile sourceRoot = LocalFileSystem.getInstance()
+          final VirtualFile sourceRoot = StandardFileSystems.local()
             .refreshAndFindFileByPath(FileUtil.toSystemIndependentName(first));
           if (sourceRoot != null) {
             contentEntry.addSourceFolder(sourceRoot, false, sourcePath.second);

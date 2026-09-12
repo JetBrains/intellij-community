@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -39,7 +39,7 @@ public class FindClassInDeepPackagesTest extends JavaPsiTestCase {
     VirtualFile classesRoot = WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> {
       String path = testRoot + "/" + s;
       path = path.replace(File.separatorChar, '/');
-      return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      return StandardFileSystems.local().refreshAndFindFileByPath(path);
     });
     assertNotNull(classesRoot);
     ModuleRootModificationUtil.addModuleLibrary(myModule, classesRoot.getUrl());

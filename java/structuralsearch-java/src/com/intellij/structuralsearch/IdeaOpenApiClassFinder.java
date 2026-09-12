@@ -4,8 +4,9 @@ package com.intellij.structuralsearch;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageDirectoryCache;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.NonClasspathClassFinder;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -36,12 +37,12 @@ public final class IdeaOpenApiClassFinder extends NonClasspathClassFinder {
 
   @Override
   protected List<VirtualFile> calcClassRoots() {
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFileSystem lfs = StandardFileSystems.local();
     return Stream.of(PsiClass.class, PsiElement.class)
       .map(PathManager::getJarPathForClass)
       .filter(Objects::nonNull)
       .map(File::new)
-      .map(lfs::findFileByIoFile)
+      .map(file -> lfs.findFileByPath(file.getAbsolutePath()))
       .collect(Collectors.toList());
   }
 

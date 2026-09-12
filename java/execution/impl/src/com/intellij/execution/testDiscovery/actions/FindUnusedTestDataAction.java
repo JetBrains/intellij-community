@@ -17,7 +17,7 @@ import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -119,6 +119,6 @@ public final class FindUnusedTestDataAction extends DumbAwareAction {
 
   private static @Nullable VirtualFile getBasePathAsVirtualFile(@NotNull Project project) {
     String basePath = project.getBasePath();
-    return basePath == null ? null : LocalFileSystem.getInstance().findFileByPath(basePath);
+    return basePath == null ? null : StandardFileSystems.local().findFileByPath(basePath);
   }
 }

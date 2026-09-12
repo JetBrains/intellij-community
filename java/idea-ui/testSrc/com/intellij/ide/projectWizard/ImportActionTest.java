@@ -15,7 +15,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,7 +32,7 @@ public class ImportActionTest extends ProjectWizardTestCase<AddModuleWizard> {
 
   public void testImportModule() {
     String path = PathManagerEx.getTestDataPath("/ide/importAction/module/foo.iml");
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path);
     assertNotNull(file);
     assertEquals(1, ModuleManager.getInstance(getProject()).getModules().length);
     Module module = importModuleFrom(new ModuleImportProvider(), file.getPath());

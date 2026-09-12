@@ -21,7 +21,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -372,7 +372,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
       final String contentEntryPath = getContentRootPath();
       if (contentEntryPath != null) {
         return WriteAction
-          .compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath));
+          .compute(() -> StandardFileSystems.local().refreshAndFindFileByPath(contentEntryPath));
       }
       return null;
     }
@@ -386,7 +386,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
         super.actionPerformed(e);
         if (!textBefore.equals(myField.getText().trim())) {
           final String fullPath = myField.getText().trim().replace(File.separatorChar, '/');
-          final VirtualFile fileByPath = LocalFileSystem.getInstance().findFileByPath(fullPath);
+          final VirtualFile fileByPath = StandardFileSystems.local().findFileByPath(fullPath);
           LOG.assertTrue(fileByPath != null);
           myField.setText(VfsUtilCore.getRelativePath(fileByPath, contentEntryDir, File.separatorChar));
         }

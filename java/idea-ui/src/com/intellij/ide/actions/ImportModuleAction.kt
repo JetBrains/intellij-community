@@ -25,7 +25,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -129,7 +129,7 @@ open class ImportModuleAction : AnAction(), NewProjectOrModuleAction {
       var toSelect: VirtualFile? = null
       val lastLocation = PropertiesComponent.getInstance().getValue(LAST_IMPORTED_LOCATION)
       if (lastLocation != null) {
-        toSelect = LocalFileSystem.getInstance().refreshAndFindFileByPath(lastLocation)
+        toSelect = StandardFileSystems.local().refreshAndFindFileByPath(lastLocation)
       }
 
       val files = chooser.choose(project, toSelect)

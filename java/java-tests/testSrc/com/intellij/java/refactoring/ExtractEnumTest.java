@@ -3,7 +3,7 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
@@ -172,7 +172,7 @@ public class ExtractEnumTest extends LightMultiFileTestCase {
                                     null, false, enumConstants, extractInnerClass);
 
         processor.run();
-        LocalFileSystem.getInstance().refresh(false);
+        StandardFileSystems.local().refresh(false);
         FileDocumentManager.getInstance().saveAllDocuments();
       }
       catch (BaseRefactoringProcessor.ConflictsInTestsException e) {

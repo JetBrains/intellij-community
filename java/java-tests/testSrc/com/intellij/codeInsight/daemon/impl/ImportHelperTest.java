@@ -44,7 +44,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
@@ -571,7 +571,7 @@ public class ImportHelperTest extends ProductionDaemonAnalyzerTestCase {
     File tempFile = new File(createTempDirectory(), relativePath);
     tempFile.getParentFile().mkdirs();
     tempFile.createNewFile();
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+    VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(tempFile.getAbsolutePath());
     assert vFile != null;
     WriteAction.runAndWait(() -> {
       vFile.setCharset(StandardCharsets.UTF_8);

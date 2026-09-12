@@ -9,8 +9,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.psi.impl.java.stubs.index.ExternalAnnotationsIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,7 +30,7 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       Path xmlPath = externalAnnotationsDir.resolve(xmlRelativePath);
       Files.createDirectories(xmlPath.getParent());
       Files.writeString(xmlPath, xmlContent);
-      VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(externalAnnotationsDir);
+      VirtualFile root = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(externalAnnotationsDir);
       assertNotNull(root);
       test.consume(root);
     }

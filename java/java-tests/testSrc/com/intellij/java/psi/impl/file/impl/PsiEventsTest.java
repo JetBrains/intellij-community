@@ -14,8 +14,8 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -61,7 +61,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
     Path root = createTempDirectoryWithSuffix(null);
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      VirtualFile rootVFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root);
+      VirtualFile rootVFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(root);
 
       myPrjDir1 = createChildDirectory(rootVFile, "prj1");
       mySrcDir1 = createChildDirectory(myPrjDir1, "src1");
