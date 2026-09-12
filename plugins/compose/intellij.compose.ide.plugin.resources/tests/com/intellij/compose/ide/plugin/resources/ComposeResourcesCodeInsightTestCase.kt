@@ -8,9 +8,9 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.ThreadLeakTracker
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.utils.editor.reloadFromDisk
@@ -80,7 +80,7 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
    */
   protected fun canonicalProjectFile(relativePath: String) =
     getFile(relativePath).let { file ->
-      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file.toNioPath().toRealPath()) ?: file
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file.toNioPath().toRealPath()) ?: file
     }
 
   protected fun snapshotProjectFile(relativePath: String) {
@@ -124,7 +124,7 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
     )
     withFile(".gradle/testDataFingerprint", composeResourcesTestDataFingerprint())
     withFiles { projectRoot ->
-      val testDataRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(
+      val testDataRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(
         composeResourcesProjectRoot()
       ) ?: error("Cannot find $COMPOSE_RESOURCES_PROJECT_NAME test data")
       edtWriteAction {

@@ -6,7 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -28,7 +28,7 @@ class JaCoCoCoverageFileTypeTest : CoverageIntegrationBaseTest() {
   @Test(timeout = TIMEOUT_MS)
   fun `test opening jacoco exec report imports suite and closes file editor`(): Unit = runBlocking {
     assertNoSuites()
-    val reportFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(SIMPLE_JACOCO_REPORT_PATH))!!
+    val reportFile = StandardFileSystems.local().refreshAndFindFileByPath(File(SIMPLE_JACOCO_REPORT_PATH).absolutePath)!!
     val fileEditorManager = FileEditorManager.getInstance(myProject)
 
     withContext(Dispatchers.EDT) {

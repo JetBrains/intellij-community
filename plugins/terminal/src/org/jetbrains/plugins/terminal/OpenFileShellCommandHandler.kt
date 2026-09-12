@@ -6,7 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.TerminalShellCommandHandler
 import java.io.File
@@ -33,11 +33,11 @@ internal class OpenFileShellCommandHandler : TerminalShellCommandHandler {
 
     path = path.trim()
 
-    val file = LocalFileSystem.getInstance().findFileByIoFile(File(path))
+    val file = StandardFileSystems.local().findFileByPath(File(path).absolutePath)
     if (file != null && !file.isDirectory && file.exists()) return block.invoke(file)
 
-    if (workingDirectory != null) return LocalFileSystem.getInstance().findFileByIoFile(
-      File(workingDirectory, path))?.takeIf { it.exists() && !it.isDirectory }.let { block.invoke(it) }
+    if (workingDirectory != null) return StandardFileSystems.local().findFileByPath(
+      File(workingDirectory, path).absolutePath)?.takeIf { it.exists() && !it.isDirectory }.let { block.invoke(it) }
 
     return false
   }

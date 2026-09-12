@@ -3,8 +3,8 @@ package org.editorconfig.configmanagement
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.testFramework.TemporaryDirectory.Companion.generateTemporaryPath
 import org.editorconfig.Utils
@@ -47,7 +47,7 @@ class EditorConfigEncodingTest : EditorConfigFileSettingsTestCase() {
     val dir = generateTemporaryPath(getTestName(true))
     Files.createDirectories(dir)
     Files.copy(testDataPath.resolve(".editorconfig"), dir.resolve(".editorconfig"))
-    val targetDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir)
+    val targetDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(dir)
     val file = WriteAction.computeAndWait<VirtualFile, IOException> { targetDir!!.createChildData(this, "test.txt") }
     getInstance().computeAndCacheEncoding(project, file)
     return file

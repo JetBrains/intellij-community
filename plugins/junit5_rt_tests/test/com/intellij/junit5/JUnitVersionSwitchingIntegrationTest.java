@@ -9,9 +9,10 @@ import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
@@ -173,9 +174,9 @@ public class JUnitVersionSwitchingIntegrationTest extends AbstractTestFrameworkC
     Collection<File> junit6Files =
       getRepoManager().resolveDependency("org.junit.jupiter", "junit-jupiter-api", "6.0.0", false, List.of());
 
-    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    VirtualFileSystem localFileSystem = StandardFileSystems.local();
     JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-    List<@NotNull String> classesUrls = junit6Files.stream().map(localFileSystem::findFileByIoFile)
+    List<@NotNull String> classesUrls = junit6Files.stream().map(file -> localFileSystem.findFileByPath(file.getAbsolutePath()))
       .map(jarFileSystem::getJarRootForLocalFile)
       .map(VirtualFile::getUrl).toList();
 

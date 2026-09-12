@@ -11,8 +11,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.guessProjectForContentFile
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
 import io.netty.channel.ChannelHandlerContext
@@ -145,7 +145,7 @@ internal class OpenFileHttpService : RestService() {
   }
 
   private fun findByAbsolutePath(file: Path): Pair<VirtualFile, Project?>? {
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)?.let {
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)?.let {
       runReadActionBlocking { it to guessProjectForContentFile(it) }
     }
   }

@@ -8,9 +8,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.TrustedProjectsTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.uiDesigner.lw.LwComponent;
@@ -61,7 +61,7 @@ public class FormComponentLoadingTest extends JavaCodeInsightFixtureTestCase {
     }
     assertEquals("testData sources failed to compile", 0, Main.compile(args));
 
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(classesDir);
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(classesDir);
     ModuleRootModificationUtil.addModuleLibrary(getModule(), VfsUtilCore.pathToUrl(classesDir.toString()));
   }
 

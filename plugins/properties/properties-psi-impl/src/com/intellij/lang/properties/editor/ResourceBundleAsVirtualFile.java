@@ -5,7 +5,7 @@ import com.intellij.ide.presentation.Presentation;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFileWithoutContent;
@@ -34,7 +34,7 @@ public final class ResourceBundleAsVirtualFile extends VirtualFile implements Vi
 
   @Override
   public @NotNull VirtualFileSystem getFileSystem() {
-    return LocalFileSystem.getInstance();
+    return StandardFileSystems.local();
   }
 
   @Override

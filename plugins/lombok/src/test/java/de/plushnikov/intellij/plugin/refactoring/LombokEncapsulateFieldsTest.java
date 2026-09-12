@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.refactoring;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -98,7 +98,7 @@ public class LombokEncapsulateFieldsTest extends AbstractLombokLightCodeInsightT
       }
     });
     processor.run();
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import hg4idea.test.HgExecutor;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
@@ -47,10 +47,10 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
     HgVcs hgVcs = HgVcs.getInstance(myProject);
     assert hgVcs != null;
     vcsManager.setDirectoryMapping(root, HgVcs.VCS_NAME);
-    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(root, DOT_HG)));
+    assertNotNull(StandardFileSystems.local().refreshAndFindFileByPath(new File(root, DOT_HG).getAbsolutePath()));
 
     HgRepository repository =
-      HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(LocalFileSystem.getInstance().findFileByIoFile(new File(root)));
+      HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(StandardFileSystems.local().findFileByPath(new File(root).getAbsolutePath()));
     assertNotNull("Couldn't find repository for root " + root, repository);
     return repository;
   }

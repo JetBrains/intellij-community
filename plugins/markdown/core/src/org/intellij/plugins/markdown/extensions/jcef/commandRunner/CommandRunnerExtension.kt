@@ -30,7 +30,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AppUIUtil
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -410,7 +410,7 @@ class CommandRunnerExtension(
 
     private fun createDataContext(project: Project, localSession: Boolean, workingDirectory: String?, executor: Executor? = null): DataContext {
       val virtualFile = if (localSession && workingDirectory != null)
-        LocalFileSystem.getInstance().findFileByPath(workingDirectory) else null
+        StandardFileSystems.local().findFileByPath(workingDirectory) else null
 
       return SimpleDataContext.builder()
         .add(CommonDataKeys.PROJECT, project)

@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
@@ -45,7 +45,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     fun findFile(filePath: String, project: Project): VirtualFile? {
       return when {
         filePath.contains(JarFileSystem.JAR_SEPARATOR) -> JarFileSystem.getInstance().findFileByPath(filePath)
-        FileUtil.isAbsolute(filePath) -> LocalFileSystem.getInstance().findFileByPath(filePath)
+        FileUtil.isAbsolute(filePath) -> StandardFileSystems.local().findFileByPath(filePath)
         else -> project.getBaseDirectories().firstNotNullOfOrNull { it.findFileByRelativePath(filePath) }
       }
     }

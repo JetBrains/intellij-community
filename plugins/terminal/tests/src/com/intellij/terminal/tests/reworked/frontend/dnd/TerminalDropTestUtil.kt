@@ -6,8 +6,8 @@ import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.psi.PsiElement
@@ -23,7 +23,7 @@ import java.nio.file.Path
 import javax.swing.tree.TreeNode
 
 internal fun virtualFileOf(path: Path): VirtualFile =
-  requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)) { "No VirtualFile for $path" }
+  requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)) { "No VirtualFile for $path" }
 
 /** Builds the payload of a drag that started inside the IDE, for example in the Project View. */
 internal fun ideDragPayload(files: List<VirtualFile>): TransferableWrapper = object : TransferableWrapper {

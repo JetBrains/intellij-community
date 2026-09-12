@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -223,7 +223,7 @@ public final class SearchScope {
   }
 
   private static @Nullable VirtualFile findFile(String dirName) {
-    return LocalFileSystem.getInstance().findFileByPath(dirName.replace('\\', '/'));
+    return StandardFileSystems.local().findFileByPath(dirName.replace('\\', '/'));
   }
 
   private static void iterateRecursively(VirtualFile virtualFile, final Processor<? super VirtualFile> processor, boolean recursive) {

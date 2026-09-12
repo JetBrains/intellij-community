@@ -2,7 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.ide.vfs.virtualFile
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.system.LowLevelLocalMachineAccess
@@ -123,7 +123,7 @@ object MarkdownImagePathResolver {
       // `file:///C:/image.png` keeps a slash before the drive letter.
       path = path.substring(1)
     }
-    return LocalFileSystem.getInstance().findFileByPath(path)
+    return StandardFileSystems.local().findFileByPath(path)
   }
 
   private fun trimQueryAndFragment(rawSource: String): String {

@@ -3,7 +3,7 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -56,7 +56,7 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
       }
       file = new File(getPathResolveRoot(context, antProject), path);
     }
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
+    VirtualFile vFile = StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
     if (vFile == null) {
       return null;
     }

@@ -22,9 +22,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -279,7 +279,7 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
   }
 
   private fun doTestRunWithCoverage(coverageRunner: CoverageRunner, includeApplication: Boolean = false): Unit = runBlocking {
-    val projectDir = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(getProjectDirOrFile(true)))
+    val projectDir = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(getProjectDirOrFile(true)))
     VfsUtil.markDirtyAndRefresh(false, true, true, projectDir)
     IndexingTestUtil.waitUntilIndexesAreReady(project)
 

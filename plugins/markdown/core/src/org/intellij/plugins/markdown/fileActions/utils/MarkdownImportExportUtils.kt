@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.refactoring.RefactoringBundle
@@ -69,9 +69,8 @@ object MarkdownImportExportUtils {
    */
   fun refreshProjectDirectory(project: Project, refreshPath: String) {
     ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState()) {
-      LocalFileSystem
-        .getInstance()
-        .refreshAndFindFileByIoFile(File(refreshPath))
+      StandardFileSystems.local()
+        .refreshAndFindFileByPath(File(refreshPath).absolutePath)
         ?.refresh(true, true)
     }
   }

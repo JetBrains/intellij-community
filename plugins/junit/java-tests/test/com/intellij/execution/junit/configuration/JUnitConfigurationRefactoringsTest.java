@@ -11,7 +11,7 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.java.execution.TestSources;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.psi.JavaDirectoryService;
@@ -171,7 +171,7 @@ public class JUnitConfigurationRefactoringsTest extends JUnitConfigurationTestCa
     mySource.copyJdkFrom(myModule);
     IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4");
     for (File file : junit4Library.getClasses()) {
-      VirtualFile libFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      VirtualFile libFile = StandardFileSystems.local().findFileByPath(file.getAbsolutePath());
       assertNotNull(libFile);
       mySource.addLibrary(JarFileSystem.getInstance().getJarRootForLocalFile(libFile));
     }

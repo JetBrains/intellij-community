@@ -13,7 +13,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -129,7 +129,7 @@ public final class UndeclaredTestInspection extends AbstractBaseJavaLocalInspect
       LOG.assertTrue(psiClass != null);
       final String testngXmlPath = new SuiteBrowser(project).showDialog();
       if (testngXmlPath == null) return;
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(testngXmlPath);
+      final VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(testngXmlPath);
       LOG.assertTrue(virtualFile != null);
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       LOG.assertTrue(psiFile instanceof XmlFile);

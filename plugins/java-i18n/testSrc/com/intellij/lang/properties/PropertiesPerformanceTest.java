@@ -5,7 +5,7 @@ import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiClass;
@@ -91,7 +91,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
       classWriter.write("}");
     }
 
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(src);
+    VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(src);
     assertNotNull(src, virtualFile);
     virtualFile.refresh(false, true);
     IndexingTestUtil.waitUntilIndexesAreReady(myProject);

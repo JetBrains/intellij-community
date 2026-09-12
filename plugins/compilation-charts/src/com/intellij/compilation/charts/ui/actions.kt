@@ -17,7 +17,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Row
@@ -54,7 +54,7 @@ class OpenDirectoryAction(private val project: Project, private val key: ModuleK
     row.actionButton(action).align(AlignX.LEFT)
   }
 
-  private fun findModuleDirectory(path: String): VirtualFile? = LocalFileSystem.getInstance().let { fs ->
+  private fun findModuleDirectory(path: String): VirtualFile? = StandardFileSystems.local().let { fs ->
     val file = fs.findFileByPath(path)
     if (file != null) return file.parent
     val parent = Paths.get(path).parent ?: return null

@@ -22,7 +22,7 @@ import com.intellij.openapi.project.NOTIFICATIONS_SILENT_MODE
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -183,7 +183,7 @@ object ProjectUtils {
     langSupport: LangSupport,
     postInitCallback: (learnProject: Project) -> Unit,
   ) {
-    val projectDirectoryVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(
+    val projectDirectoryVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(
       langSupport.getLearningProjectPath(contentRoot)
     ) ?: error("Copied Learn project folder is null")
 
@@ -278,7 +278,7 @@ object ProjectUtils {
     }
     val module = modules.first()
     val sourcesPath = project.basePath!! + '/' + pathToSources
-    val sourcesRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(sourcesPath)
+    val sourcesRoot = StandardFileSystems.local().refreshAndFindFileByPath(sourcesPath)
     if (sourcesRoot == null) {
       val status = when {
         !File(sourcesPath).exists() -> "does not exist"

@@ -23,7 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -73,7 +73,7 @@ public abstract class DownloadManager {
       try {
         //noinspection unchecked
         Set<String>[] resourceDependencies = new Set[1];
-        VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        VirtualFile vf = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
         if (vf != null) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(vf);
           if (psiFile != null && isAccepted(psiFile)) {

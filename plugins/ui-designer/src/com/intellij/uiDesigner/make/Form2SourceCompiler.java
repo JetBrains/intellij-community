@@ -22,8 +22,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -33,6 +33,7 @@ import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -231,7 +232,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     }
 
     if (!filesToRefresh.isEmpty()) {
-      LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
+      RefreshQueue.getInstance().refreshPaths(false, false, null, ContainerUtil.map(filesToRefresh, File::toPath));
     }
 
     return compiledItems.toArray(ProcessingItem.EMPTY_ARRAY);

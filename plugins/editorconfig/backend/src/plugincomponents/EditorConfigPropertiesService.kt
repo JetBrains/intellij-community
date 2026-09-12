@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.psi.util.CachedValueProvider
@@ -53,7 +53,7 @@ class EditorConfigPropertiesService(private val project: Project) : SimpleModifi
       ReadAction.run<RuntimeException> {
         dirs.addAll(project.getBaseDirectories())
       }
-      LocalFileSystem.getInstance().findFileByPath(PathManager.getConfigPath())?.let { dirs.add(it) }
+      StandardFileSystems.local().findFileByPath(PathManager.getConfigPath())?.let { dirs.add(it) }
       CachedValueProvider.Result(
         dirs,
         ProjectRootModificationTracker.getInstance(project)

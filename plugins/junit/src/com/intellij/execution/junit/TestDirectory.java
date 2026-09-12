@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -51,7 +51,7 @@ class TestDirectory extends TestPackage {
   @Override
   public @Nullable SourceScope getSourceScope() {
     final String dirName = getConfiguration().getPersistentData().getDirName();
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
+    final VirtualFile file = StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     final Project project = getConfiguration().getProject();
     final GlobalSearchScope globalSearchScope =
       file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScopesCore.directoryScope(project, file, true);
@@ -106,7 +106,7 @@ class TestDirectory extends TestPackage {
     if (dirName == null || dirName.isEmpty()) {
       throw new RuntimeConfigurationError(JUnitBundle.message("directory.is.not.specified.error.message"));
     }
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
+    final VirtualFile file = StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     if (file == null) {
       throw new RuntimeConfigurationError(JUnitBundle.message("directory.0.is.not.found.error.message", dirName));
     }
@@ -211,7 +211,7 @@ class TestDirectory extends TestPackage {
 
   private PsiDirectory getDirectory(JUnitConfiguration.Data data) throws CantRunException {
     final String dirName = data.getDirName();
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
+    final VirtualFile file = StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     if (file == null) {
       throw new CantRunException(JUnitBundle.message("directory.not.found.error.message", dirName));
     }

@@ -15,7 +15,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.terminal.TerminalShellCommandHandler
 
 internal class RunAnythingTerminalBridge : TerminalShellCommandHandler, TerminalFusAwareHandler {
@@ -43,7 +43,7 @@ internal class RunAnythingTerminalBridge : TerminalShellCommandHandler, Terminal
                                 workingDirectory: String?,
                                 executor: Executor? = null): DataContext {
     val virtualFile = if (localSession && workingDirectory != null)
-      LocalFileSystem.getInstance().findFileByPath(workingDirectory)
+      StandardFileSystems.local().findFileByPath(workingDirectory)
     else null
 
     return SimpleDataContext.builder()

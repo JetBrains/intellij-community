@@ -33,7 +33,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -223,7 +223,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     Object selectedItem = myPropertiesFile.getSelectedItem();
     if (selectedItem == null) return null;
     String path = FileUtil.toSystemIndependentName((String)selectedItem);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(path);
     return virtualFile != null
            ? PropertiesImplUtil.getPropertiesFile(PsiManager.getInstance(myProject).findFile(virtualFile))
            : null;

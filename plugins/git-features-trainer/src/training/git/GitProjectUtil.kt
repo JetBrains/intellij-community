@@ -8,8 +8,8 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import git4idea.actions.GitInit
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -116,7 +116,7 @@ internal object GitProjectUtil {
 
   private fun refreshAndGetProjectRoot(): VirtualFile {
     val learningProjectPath = ProjectUtils.getCurrentLearningProjectRoot().toNioPath()
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(learningProjectPath)
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(learningProjectPath)
            ?: error("Learning project not found")
   }
 }

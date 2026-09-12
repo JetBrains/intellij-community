@@ -39,7 +39,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.net.NetUtils;
@@ -191,7 +191,7 @@ public final class XsltCommandLineState extends CommandLineState {
               BrowserUtil.browse(myXsltRunConfiguration.myOutputFile);
             }
             if (myXsltRunConfiguration.myOpenOutputFile) {
-              VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(myXsltRunConfiguration.myOutputFile);
+              VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(myXsltRunConfiguration.myOutputFile);
               if (file != null) {
                 file.refresh(false, false);
                 PsiNavigationSupport.getInstance().createNavigatable(myXsltRunConfiguration.getProject(), file, -1).navigate(true);

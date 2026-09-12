@@ -6,7 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.psi.PsiManager
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +25,7 @@ class OptimizeImportsOnDirectoryCommand(text: String, line: Int) : PlaybackComma
     val argument = extractCommandArgument(PREFIX).trim()
 
     val basePath = project.basePath ?: throw IllegalArgumentException("Project has no base path")
-    val baseDir = LocalFileSystem.getInstance().findFileByPath(basePath)
+    val baseDir = StandardFileSystems.local().findFileByPath(basePath)
                   ?: throw IllegalArgumentException("Cannot find base directory: $basePath")
     val targetVFile = if (argument.isNotEmpty())
       baseDir.findFileByRelativePath(argument)

@@ -5,7 +5,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.system.OS;
@@ -122,7 +122,7 @@ public final class SceneBuilderInfo {
       );
     };
 
-    return path != null ? LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path)) : null;
+    return path != null ? StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(path)) : null;
   }
 
   private static String findFirstThatExist(String... paths) {

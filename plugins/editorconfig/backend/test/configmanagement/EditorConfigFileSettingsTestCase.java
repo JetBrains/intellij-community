@@ -4,8 +4,8 @@ package org.editorconfig.configmanagement;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.util.PsiUtilCore;
@@ -64,7 +64,7 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
 
   protected final @NotNull VirtualFile getVirtualFile(@NotNull String name) {
     Path file = getTestDataPath().resolve(name);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+    VirtualFile virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file);
     assertNotNull("Can not find the file" + file, virtualFile);
     return virtualFile;
   }

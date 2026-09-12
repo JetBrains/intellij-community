@@ -34,7 +34,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -646,7 +646,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   private @Nullable PropertiesFile getPropertyFileByPath(String path) {
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(path);
     return virtualFile != null
            ? PropertiesImplUtil.getPropertiesFile(PsiManager.getInstance(myProject).findFile(virtualFile))
            : null;
@@ -684,7 +684,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<PsiFile, Exception>() {
         @Override
         public PsiFile compute() throws Exception {
-          VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getParentFile());
+          VirtualFile dir = StandardFileSystems.local().refreshAndFindFileByPath(file.getParentFile().getAbsolutePath());
           final PsiManager psiManager = PsiManager.getInstance(myProject);
           if (dir == null) {
             throw new IOException("Error creating directory structure for file '" + path + "'");

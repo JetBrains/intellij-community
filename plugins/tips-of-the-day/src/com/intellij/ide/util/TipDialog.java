@@ -11,7 +11,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -143,7 +143,7 @@ final class TipDialog extends DialogWrapper {
       var descriptor = FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor()
         .withExtensionFilter(FileTypeManager.getInstance().getStdFileType("HTML"));
       String value = propertiesComponent.getValue(LAST_OPENED_TIP_PATH);
-      VirtualFile lastOpenedTip = value != null ? LocalFileSystem.getInstance().findFileByPath(value) : null;
+      VirtualFile lastOpenedTip = value != null ? StandardFileSystems.local().findFileByPath(value) : null;
       VirtualFile[] pathToSelect = lastOpenedTip != null ? new VirtualFile[]{lastOpenedTip} : VirtualFile.EMPTY_ARRAY;
       VirtualFile[] choose = FileChooserFactory.getInstance().createFileChooser(descriptor, null, myTipPanel).choose(null, pathToSelect);
       if (choose.length > 0) {

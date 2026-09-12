@@ -2,7 +2,7 @@
 package org.intellij.plugins.markdown.preview
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -157,7 +157,7 @@ class MarkdownImagePathResolverTest : BasePlatformTestCase() {
 
   private fun createFileOutsideProject(): VirtualFile {
     val file = FileUtil.createTempFile("markdown-outside", ".png", true)
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
+    return StandardFileSystems.local().refreshAndFindFileByPath(file.absolutePath)!!
   }
 
   private fun resolve(source: String, allowOutsideProjectRoot: Boolean = false): Resolution = runBlocking {

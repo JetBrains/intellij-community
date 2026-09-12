@@ -7,7 +7,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
@@ -18,7 +18,7 @@ public class ExternalReportImportTest extends BasePlatformTestCase {
   public void testOpenSuiteFromFileOnEdtWithoutWriteIntentLock() throws Exception {
     File suiteFile = FileUtil.createTempFile("coverage", ".ic", true);
     FileUtil.copy(new File(PluginPathManager.getPluginHomePath("coverage"), "testData/simple/simple$foo_in_simple.ic"), suiteFile);
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(suiteFile);
+    VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(suiteFile.getAbsolutePath());
     assertNotNull(vFile);
 
     Ref<Boolean> opened = Ref.create(false);

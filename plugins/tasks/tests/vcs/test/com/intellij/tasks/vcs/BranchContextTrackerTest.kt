@@ -14,8 +14,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.tasks.TaskBundle
 import com.intellij.tasks.context.BranchContextTracker
 import com.intellij.tasks.context.WorkingContextManager
@@ -115,7 +115,7 @@ class BranchContextTrackerTest {
   private fun createFile(name: String, content: String): VirtualFile {
     val path: Path = tempPathFixture.get().resolve(name)
     path.writeText(content)
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path) ?: error("Cannot find $path")
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path) ?: error("Cannot find $path")
   }
 
   private fun openFileNames(): List<String> = editorManager.openFiles.map { it.name }

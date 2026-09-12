@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import io.mockk.every
@@ -43,8 +43,8 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
   }
 
   fun `test - canOpenDialog checks for nested files`() {
-    val lfs = LocalFileSystem.getInstance()
-    val vf = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/1-nested-files"))
+    val fileManager = VirtualFileManager.getInstance()
+    val vf = fileManager.findFileByNioPath(Path.of(testDataPath, "snippets/1-nested-files"))
 
     setAccountManager(setOf(createMockAccount()))
 
@@ -52,8 +52,8 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
   }
 
   fun `test - canOpenDialog is false for empty files`() {
-    val lfs = LocalFileSystem.getInstance()
-    val file = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/2-empty-file/empty.txt"))
+    val fileManager = VirtualFileManager.getInstance()
+    val file = fileManager.findFileByNioPath(Path.of(testDataPath, "snippets/2-empty-file/empty.txt"))
 
     setAccountManager(setOf(createMockAccount()))
 
@@ -71,9 +71,9 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
   }
 
   fun `test - canOpenDialog prefers editor over selected files`() {
-    val lfs = LocalFileSystem.getInstance()
-    val emptyFile = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/2-empty-file/empty.txt"))
-    val nonEmptyFile = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/1-nested-files/example.txt"))
+    val fileManager = VirtualFileManager.getInstance()
+    val emptyFile = fileManager.findFileByNioPath(Path.of(testDataPath, "snippets/2-empty-file/empty.txt"))
+    val nonEmptyFile = fileManager.findFileByNioPath(Path.of(testDataPath, "snippets/1-nested-files/example.txt"))
 
     setAccountManager(setOf(createMockAccount()))
 
@@ -91,11 +91,11 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
   }
 
   fun `test - canOpenDialog is true for directory with empty file`() {
-    val lfs = LocalFileSystem.getInstance()
+    val fileManager = VirtualFileManager.getInstance()
 
     setAccountManager(setOf(createMockAccount()))
 
-    val vf = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/2-empty-file"))
+    val vf = fileManager.findFileByNioPath(Path.of(testDataPath, "snippets/2-empty-file"))
 
     assertTrue(service.canCreateSnippet(null, vf, null))
   }

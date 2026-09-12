@@ -13,7 +13,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -35,7 +35,7 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
 
   @Deprecated("use async method instead", level = DeprecationLevel.ERROR)
   override fun linkAndLoadProject(project: Project, externalProjectPath: String) {
-    val localFileSystem = LocalFileSystem.getInstance()
+    val localFileSystem = StandardFileSystems.local()
     val externalProjectDir = localFileSystem.findFileByPath(externalProjectPath)
     if (externalProjectDir == null) {
       val shortPath = getPresentablePath(externalProjectPath)

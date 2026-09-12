@@ -13,7 +13,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.ListSpeedSearch
@@ -93,7 +93,7 @@ class TextMateBundlesListPanel : Disposable {
             })
             .setAddAction {
               val fileToSelect = PropertiesComponent.getInstance().getValue(TEXTMATE_LAST_ADDED_BUNDLE)?.let { lastAddedBundlePath ->
-                LocalFileSystem.getInstance().findFileByPath(lastAddedBundlePath)
+                StandardFileSystems.local().findFileByPath(lastAddedBundlePath)
               }
               val chooserDescriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor()
               val bundleDirectories = FileChooser.chooseFiles(chooserDescriptor, myBundlesList, null, fileToSelect)

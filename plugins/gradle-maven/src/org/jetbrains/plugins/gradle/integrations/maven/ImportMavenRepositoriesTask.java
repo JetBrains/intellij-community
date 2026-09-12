@@ -9,8 +9,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteral;
@@ -63,7 +64,7 @@ final class ImportMavenRepositoriesTask {
   }
 
   void performTask() {
-    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    final VirtualFileSystem localFileSystem = StandardFileSystems.local();
     final List<PsiFile> psiFileList = new ArrayList<>();
 
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
