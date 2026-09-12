@@ -11,7 +11,6 @@ import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
@@ -292,7 +291,7 @@ public final class PsiCopyPasteManager {
     List<File> result = new ArrayList<>();
     for (PsiElement element : elements) {
       VirtualFile vFile = asVirtualFile(element);
-      if (vFile != null && vFile.getFileSystem() instanceof LocalFileSystem) {
+      if (vFile != null && vFile.isInLocalFileSystem()) {
         result.add(new File(vFile.getPath()));
       }
     }

@@ -19,7 +19,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.wm.WindowManager
@@ -131,7 +131,7 @@ fun Project.guessProjectDir() : VirtualFile? {
   }
 
   val baseDirectories = getBaseDirectories()
-  val baseDirectory = baseDirectories.firstOrNull { it.fileSystem is LocalFileSystem && it.isValid }
+  val baseDirectory = baseDirectories.firstOrNull { it.isInLocalFileSystem && it.isValid }
                       ?: baseDirectories.firstOrNull { it.isValid }
   if (baseDirectory != null) {
     return baseDirectory
@@ -140,7 +140,7 @@ fun Project.guessProjectDir() : VirtualFile? {
   val modules = ModuleManager.getInstance(this).modules
   val module = if (modules.size == 1) modules.first() else modules.firstOrNull { it.name == this.name }
   module?.guessModuleDir()?.takeIf { it.isValid }?.let { return it }
-  return LocalFileSystem.getInstance().findFileByPath(basePath!!)
+  return StandardFileSystems.local().findFileByPath(basePath!!)
 }
 
 /**

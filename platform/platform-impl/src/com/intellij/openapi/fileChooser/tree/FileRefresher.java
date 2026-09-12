@@ -4,9 +4,7 @@ package com.intellij.openapi.fileChooser.tree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
@@ -67,8 +65,7 @@ public final class FileRefresher implements Disposable {
    * @return a token that stops watching the specified file
    */
   private static WatchRoots.Token watch(VirtualFile file, boolean recursive) {
-    VirtualFileSystem fs = file.getFileSystem();
-    if (fs instanceof LocalFileSystem) {
+    if (file.isInLocalFileSystem()) {
       return WatchRoots.getInstance().watch(file.getPath(), recursive);
     }
     return null;

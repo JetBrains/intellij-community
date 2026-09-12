@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -265,7 +264,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     }
 
     VirtualFile directory = value.getVirtualFile();
-    if (directory.getFileSystem() instanceof LocalFileSystem) {
+    if (directory.isInLocalFileSystem()) {
       file = VfsUtil.getLocalFile(file);
     }
 

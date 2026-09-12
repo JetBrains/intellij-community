@@ -18,7 +18,6 @@ import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileCopyEvent;
@@ -105,7 +104,7 @@ public final class NonProjectFileWritingAccessProvider extends WritingAccessProv
     if (isAllAccessAllowed()) return true;
     if (file.isDirectory()) return true;
 
-    if (!(file.getFileSystem() instanceof LocalFileSystem)) return true; // do not block e.g., HttpFileSystem, LightFileSystem etc.
+    if (!file.isInLocalFileSystem()) return true; // do not block e.g., HttpFileSystem, LightFileSystem etc.
     if (file.getFileSystem() instanceof TempFileSystemMarker) return true;
 
     Application application = getApp();

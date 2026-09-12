@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl;
 import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -452,7 +451,7 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected boolean isEventAccepted(@NotNull VFileEvent event) {
-    return !event.isFromRefresh() && (event.getFileSystem() instanceof LocalFileSystem);
+    return !event.isFromRefresh() && event.getFileSystem().isLocal();
   }
 
   protected boolean isEventIgnored(@NotNull VFileEvent event) {

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -273,7 +272,7 @@ public class FilePartNode {
         assert StringUtil.compare(prevChildName, childName, !isCaseSensitive()) < 0: "children[" + i + "] = " + child + "; [-1] = " + children[i - 1] +"; isCaseSensitive()="+isCaseSensitive();
       }
       // fs is allowed to change in one direction only: local->jar
-      assert fs instanceof LocalFileSystem && (child.fs instanceof ArchiveFileSystem || child.fs instanceof LocalFileSystem)
+      assert fs.isLocal() && (child.fs instanceof ArchiveFileSystem || child.fs.isLocal())
              || fs instanceof ArchiveFileSystem && child.fs instanceof ArchiveFileSystem
         : "this: " + this + "; fs=" + fs + "; child[" + i + "] = " + child + "; fs=" + child.fs;
       // child of UrlPartNode can be only UrlPartNode
@@ -603,7 +602,7 @@ public class FilePartNode {
   private void print(StringBuilder buffer, boolean recheck, String prefix) {
     buffer.append(prefix).append(" ").append(getName()).append(" isCaseSensitive:").append(isCaseSensitive());
     VirtualFile file = fileOrNull();
-    if (recheck && file != null && fs instanceof LocalFileSystem) {
+    if (recheck && file != null && fs.isLocal()) {
       buffer.append(" really parent sensitive: ").append(FileSystemUtil.readParentCaseSensitivity(Path.of(file.getPath())));
     }
     buffer.append("\n");

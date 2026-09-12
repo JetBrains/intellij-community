@@ -231,7 +231,7 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     final VirtualFile helpFile = getHelpFile(originalElement);
-    if (helpFile == null || !(helpFile.getFileSystem() instanceof LocalFileSystem)) {
+    if (helpFile == null || !helpFile.isInLocalFileSystem()) {
       return null;
     }
     return Collections.singletonList(helpFile.getUrl());

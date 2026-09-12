@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.io.DigestUtil;
@@ -57,7 +56,7 @@ final class ShowImageDuplicatesAction extends AnAction {
         indicator.setFraction((double)(i + 1) / (double)images.size());
         final VirtualFile file = images.get(i);
         ReadAction.runBlocking(() -> {
-          if (!(file.getFileSystem() instanceof LocalFileSystem)) return;
+          if (!file.isInLocalFileSystem()) return;
           final long length = file.getLength();
           if (all.containsKey(length)) {
             if (!duplicates.containsKey(length)) {

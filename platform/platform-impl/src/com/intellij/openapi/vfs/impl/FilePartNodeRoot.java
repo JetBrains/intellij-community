@@ -277,7 +277,7 @@ public final class FilePartNodeRoot extends FilePartNode {
   }
 
   private static NewVirtualFileSystem enterJar(@NotNull NewVirtualFileSystem fs, @NotNull NewVirtualFileSystem currentFS, @NotNull String name) {
-    if (name.equals(JarFileSystem.JAR_SEPARATOR) && currentFS instanceof LocalFileSystem) {
+    if (name.equals(JarFileSystem.JAR_SEPARATOR) && currentFS.isLocal()) {
       // switch inside jar
       currentFS = fs;
     }

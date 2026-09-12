@@ -3,7 +3,6 @@ package com.intellij.execution.impl
 
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.vfs.AsyncFileListener
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
@@ -24,7 +23,7 @@ internal class RCInArbitraryFileListener : AsyncFileListener {
     val updatedRCFilePaths = mutableSetOf<String>()
 
     for (event in events) {
-      if (event.fileSystem !is LocalFileSystem || event.requestor is RCInArbitraryFileManager) {
+      if (!event.fileSystem.isLocal || event.requestor is RCInArbitraryFileManager) {
         continue
       }
 

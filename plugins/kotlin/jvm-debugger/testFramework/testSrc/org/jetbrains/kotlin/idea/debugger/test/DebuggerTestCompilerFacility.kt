@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.PsiManager
@@ -154,8 +154,8 @@ open class DebuggerTestCompilerFacility(
         kotlinScripts.copy(scriptSrcDir)
         kotlinCommon.forEach { testFile -> testFile.copy(commonSrcDir.resolve(testFile.module.name)) }
 
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(classesDir)
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libClassesDir)
+        StandardFileSystems.local().refreshAndFindFileByPath(classesDir.absolutePath)
+        StandardFileSystems.local().refreshAndFindFileByPath(libClassesDir.absolutePath)
         IndexingTestUtil.waitUntilIndexesAreReady(project)
 
         if (kotlinJvm.isNotEmpty() || kotlinCommon.isNotEmpty()) {
@@ -269,7 +269,7 @@ open class DebuggerTestCompilerFacility(
             if (fileSystem is ArchiveFileSystem) {
                 val localFile = fileSystem.getLocalByEntry(entry) ?: continue
                 paths += localFile.path
-            } else if (fileSystem is LocalFileSystem) {
+            } else if (fileSystem.isLocal) {
                 paths += entry.path
             }
         }
@@ -278,7 +278,7 @@ open class DebuggerTestCompilerFacility(
     }
 }
 
-fun File.refreshAndToVirtualFile(): VirtualFile? = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this)
+fun File.refreshAndToVirtualFile(): VirtualFile? = StandardFileSystems.local().refreshAndFindFileByPath(absolutePath)
     ?.also { IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects() }
 
 private fun List<TestFile>.copy(destination: File) {

@@ -2,7 +2,6 @@ package com.intellij.platform.lsp.impl.platformListeners
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.AsyncFileListener
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
@@ -31,7 +30,7 @@ internal class LspFileListener : AsyncFileListener {
     val deleteCreateCopyChangeEvents: MutableList<VFileEvent> = ArrayList()
 
     for (event in events) {
-      if (event.fileSystem !is LocalFileSystem) continue
+      if (!event.fileSystem.isLocal) continue
 
       if (event is VFileMoveEvent) {
         renamedFilesAndDirs.add(event.file)

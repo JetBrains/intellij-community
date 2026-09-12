@@ -27,9 +27,9 @@ import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreBlock
 import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -230,7 +230,7 @@ internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disp
 
   private fun findStoreDir(project: Project): VirtualFile? =
     project.stateStore.directoryStorePath?.let {
-      LocalFileSystem.getInstance().findFileByNioFile(it)
+      VirtualFileManager.getInstance().findFileByNioPath(it)
     }
 
   private fun VirtualFile.underProjectStoreDir(storeDir: VirtualFile): Boolean {
@@ -274,7 +274,7 @@ internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disp
   }
 
   private fun getAffectedFilePath(event: VFileEvent): FilePath? {
-    if (event.fileSystem !is LocalFileSystem) {
+    if (!event.fileSystem.isLocal) {
       return null
     }
 

@@ -19,7 +19,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -183,7 +183,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   public boolean isOperationsEnabled() {
-    return myFile.getFileSystem() instanceof LocalFileSystem;
+    return myFile.isInLocalFileSystem();
   }
 
   @Override
@@ -203,7 +203,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       final Path targetPath = Paths.get(container.getValue().getPath(), relativePath, src.getName());
       final File trg = targetPath.toFile();
       FileUtil.copy(src, trg);
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(trg);
+      final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(trg.getAbsolutePath());
       if (virtualFile != null) {
         VirtualFile diffRoot = container instanceof VirtualFileDiffElement ? ((VirtualFileDiffElement)container).getDiffRoot() : null;
         return new VirtualFileDiffElement(virtualFile, diffRoot);

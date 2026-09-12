@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -79,6 +78,6 @@ public final class SynchronizeCurrentFileAction extends DumbAwareAction {
   private static Stream<VirtualFile> supportedFiles(AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     return files == null ? Stream.empty() : Stream.of(files)
-      .filter(f -> f.isValid() && (f.getFileSystem() instanceof LocalFileSystem || f.getFileSystem() instanceof ArchiveFileSystem));
+      .filter(f -> f.isValid() && (f.isInLocalFileSystem() || f.getFileSystem() instanceof ArchiveFileSystem));
   }
 }
