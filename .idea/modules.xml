@@ -1242,7 +1242,6 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/netty/tcnative-boringssl/intellij.libraries.netty.tcnative.boringssl.iml" filepath="$PROJECT_DIR$/libraries/netty/tcnative-boringssl/intellij.libraries.netty.tcnative.boringssl.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/night-config-toml/intellij.libraries.night.config.toml.iml" filepath="$PROJECT_DIR$/libraries/night-config-toml/intellij.libraries.night.config.toml.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/objenesis/intellij.libraries.objenesis.iml" filepath="$PROJECT_DIR$/libraries/objenesis/intellij.libraries.objenesis.iml" />
-      <module fileurl="file://$PROJECT_DIR$/libraries/okhttp/intellij.libraries.okhttp.iml" filepath="$PROJECT_DIR$/libraries/okhttp/intellij.libraries.okhttp.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/opencsv/intellij.libraries.opencsv.iml" filepath="$PROJECT_DIR$/libraries/opencsv/intellij.libraries.opencsv.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/opentelemetry/intellij.libraries.opentelemetry.iml" filepath="$PROJECT_DIR$/libraries/opentelemetry/intellij.libraries.opentelemetry.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/opentelemetry-exporter-otlp/intellij.libraries.opentelemetry.exporter.otlp.iml" filepath="$PROJECT_DIR$/libraries/opentelemetry-exporter-otlp/intellij.libraries.opentelemetry.exporter.otlp.iml" />

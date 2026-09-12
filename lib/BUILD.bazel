@@ -14545,21 +14545,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.squareup.okhttp3/okhttp-5.0.0-alpha.14.jar_copy",
-    src = "@com_squareup_okhttp3-okhttp-5_0_0-alpha_14_http//file",
-    out = "com.squareup.okhttp3/okhttp-5.0.0-alpha.14.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "libraries-okhttp-okhttp",
-    jar = "@com_squareup_okhttp3-okhttp-5_0_0-alpha_14_http//file",
-    source_jar = "@com_squareup_okhttp3-okhttp-5_0_0-alpha_14-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "com.opencsv/opencsv-5.11.2.jar_copy",
     src = "@com_opencsv-opencsv-5_11_2_http//file",
     out = "com.opencsv/opencsv-5.11.2.jar",

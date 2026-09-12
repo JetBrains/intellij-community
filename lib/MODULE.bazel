@@ -11698,20 +11698,6 @@ http_file(
 )
 
 http_file(
-    name = "com_squareup_okhttp3-okhttp-5_0_0-alpha_14_http",
-    downloaded_file_path = "okhttp-5.0.0-alpha.14.jar",
-    sha256 = "f0e3ffcbba6744ab4918a55aa32ff4f408fcd21e45ab8bd5f7883a1793b2a253",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okhttp3/okhttp/5.0.0-alpha.14/okhttp-5.0.0-alpha.14.jar",
-)
-
-http_file(
-    name = "com_squareup_okhttp3-okhttp-5_0_0-alpha_14-sources_http",
-    downloaded_file_path = "okhttp-5.0.0-alpha.14-sources.jar",
-    sha256 = "f596d92475c49de809a3ca7a5f2558f06a3b51c00c96ee8037c18b6618ac9d41",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okhttp3/okhttp/5.0.0-alpha.14/okhttp-5.0.0-alpha.14-sources.jar",
-)
-
-http_file(
     name = "com_opencsv-opencsv-5_11_2_http",
     downloaded_file_path = "opencsv-5.11.2.jar",
     sha256 = "690daad9014f23afd3ab6f1b0c45a5e0b738ac37a8d2e810e196193aab521245",

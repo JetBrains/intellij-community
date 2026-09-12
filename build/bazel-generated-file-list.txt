@@ -624,7 +624,6 @@ libraries/netty/handler-proxy
 libraries/netty/tcnative-boringssl
 libraries/night-config-toml
 libraries/objenesis
-libraries/okhttp
 libraries/okio
 libraries/opencsv
 libraries/opentelemetry

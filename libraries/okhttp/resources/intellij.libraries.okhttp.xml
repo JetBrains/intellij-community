@@ -1,7 +1,0 @@
-<idea-plugin visibility="internal">
-  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-  <dependencies>
-    <module name="intellij.libraries.squareup.okio.jvm"/>
-  </dependencies>
-  <!-- endregion -->
-</idea-plugin>

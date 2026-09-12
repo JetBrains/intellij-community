@@ -1159,9 +1159,6 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .apache("https://github.com/easymock/objenesis/blob/master/LICENSE.txt")
     .suppliedByPersons("Henri Tremblay", "Joe Walnes", "Leonardo Mesquita"),
 
-  LibraryLicense("OkHttp", libraryName = "okhttp", url = "https://square.github.io/okhttp/")
-    .apache("https://square.github.io/okhttp/#license"),
-
   LibraryLicense("opencsv", libraryName = "opencsv", url = "https://opencsv.sourceforge.net/")
     .apache("https://sourceforge.net/p/opencsv/source/ci/master/tree/LICENSE"),
 
