@@ -24,7 +24,6 @@ jvm_library(
     exports = ["@lib//:libraries-proxy-vole-proxy-vole"],
     runtime_deps = [
         # do not sort,
-        "//libraries/jna",
         "//libraries/rhino",
         "@lib//:libraries-proxy-vole-proxy-vole",
     ],
@@ -44,7 +43,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":proxy-vole",
-        "//libraries/jna:jna_test_lib",
         "//libraries/rhino:rhino_test_lib",
     ],
 )

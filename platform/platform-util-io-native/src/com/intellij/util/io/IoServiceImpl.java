@@ -25,10 +25,11 @@ public class IoServiceImpl implements IoService {
   private static ProxySearch getDefaultProxySearchStrategy() {
     var proxySearch = new ProxySearch();
     proxySearch.addStrategy(ProxySearch.Strategy.JAVA);
-    proxySearch.addStrategy(ProxySearch.Strategy.OS_DEFAULT);
     if (OS.CURRENT == OS.Windows) {
-      // for some (likely legacy) reasons, system proxy settings can only be detected using the search for IE
-      proxySearch.addStrategy(ProxySearch.Strategy.IE);
+      proxySearch.addStrategy(new WindowsProxySearchStrategy(), false);
+    }
+    else {
+      proxySearch.addStrategy(ProxySearch.Strategy.OS_DEFAULT);
     }
     proxySearch.addStrategy(ProxySearch.Strategy.ENV_VAR);
     // cache 32 urls for up to 10 min
