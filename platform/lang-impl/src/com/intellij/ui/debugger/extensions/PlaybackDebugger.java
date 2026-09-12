@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -493,7 +492,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   @Override
   public void disposeUiResources() {
     myComponent = null;
-    LocalFileSystem.getInstance().removeVirtualFileListener(myVfsListener);
+    StandardFileSystems.local().removeVirtualFileListener(myVfsListener);
     myCurrentScript.setText("");
     myLog.setText(null);
   }

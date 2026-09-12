@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.keyFMap.KeyFMap;
@@ -18,7 +18,7 @@ public class StubVirtualFile extends VirtualFile {
   private final VirtualFileSystem myFileSystem;
 
   public StubVirtualFile() {
-    this(LocalFileSystem.getInstance());
+    this(StandardFileSystems.local());
   }
   public StubVirtualFile(@NotNull VirtualFileSystem fileSystem) {
     myFileSystem = fileSystem;
