@@ -152,6 +152,17 @@ private object WindowsProcessInfo {
     )
   }
 
+  /** `BOOL GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode)` */
+  private val GET_EXIT_CODE_PROCESS: MethodHandle by lazy {
+    LINKER.downcallHandle(
+      WindowsSystemLibraries.lookup("kernel32.dll").findOrThrow("GetExitCodeProcess"),
+      FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS),
+    )
+  }
+
+  /** The exit code `GetExitCodeProcess` reports for a running process. */
+  private const val STILL_ACTIVE = 259
+
   /** `BOOL GetProcessMemoryInfo(HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb)` */
   private val GET_PROCESS_MEMORY_INFO: MethodHandle by lazy {
     LINKER.downcallHandle(
@@ -167,6 +178,13 @@ private object WindowsProcessInfo {
     }
     try {
       Arena.ofConfined().use { arena ->
+        // A process that exited keeps its object alive while another process holds a handle, and OpenProcess still succeeds.
+        // Its working set is gone, so report nothing, like the other OSes do for a dead PID.
+        val exitCode = arena.allocate(JAVA_INT)
+        val hasExitCode = GET_EXIT_CODE_PROCESS.invokeExact(process, exitCode) as Int
+        if (hasExitCode != 0 && exitCode.get(JAVA_INT, 0) != STILL_ACTIVE) {
+          return null
+        }
         val counters = arena.allocate(COUNTERS_SIZE.toLong())
         counters.set(JAVA_INT, 0, COUNTERS_SIZE)
         val succeeded = GET_PROCESS_MEMORY_INFO.invokeExact(process, counters, COUNTERS_SIZE) as Int
