@@ -15072,17 +15072,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.bidib.com.github.markusbernhardt/proxy-vole-1.1.9.jar_copy",
-    src = "@org_bidib_com_github_markusbernhardt-proxy-vole-1_1_9_http//file",
-    out = "org.bidib.com.github.markusbernhardt/proxy-vole-1.1.9.jar",
+    name = "org.bidib.com.github.markusbernhardt/proxy-vole-2.0.2.jar_copy",
+    src = "@org_bidib_com_github_markusbernhardt-proxy-vole-2_0_2_http//file",
+    out = "org.bidib.com.github.markusbernhardt/proxy-vole-2.0.2.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.javadelight/delight-rhino-sandbox-0.2.2.jar_copy",
-    src = "@org_javadelight-delight-rhino-sandbox-0_2_2_http//file",
-    out = "org.javadelight/delight-rhino-sandbox-0.2.2.jar",
+    name = "org.javadelight/delight-rhino-sandbox-0.2.5.jar_copy",
+    src = "@org_javadelight-delight-rhino-sandbox-0_2_5_http//file",
+    out = "org.javadelight/delight-rhino-sandbox-0.2.5.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -15092,21 +15092,21 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":org_bidib_com_github_markusbernhardt-proxy-vole-1_1_9_http_import",
-        ":org_javadelight-delight-rhino-sandbox-0_2_2_http_import",
+        ":org_bidib_com_github_markusbernhardt-proxy-vole-2_0_2_http_import",
+        ":org_javadelight-delight-rhino-sandbox-0_2_5_http_import",
     ],
 )
 
 jvm_import(
-    name = "org_bidib_com_github_markusbernhardt-proxy-vole-1_1_9_http_import",
-    jar = "@org_bidib_com_github_markusbernhardt-proxy-vole-1_1_9_http//file",
-    source_jar = "@org_bidib_com_github_markusbernhardt-proxy-vole-1_1_9-sources_http//file",
+    name = "org_bidib_com_github_markusbernhardt-proxy-vole-2_0_2_http_import",
+    jar = "@org_bidib_com_github_markusbernhardt-proxy-vole-2_0_2_http//file",
+    source_jar = "@org_bidib_com_github_markusbernhardt-proxy-vole-2_0_2-sources_http//file",
 )
 
 jvm_import(
-    name = "org_javadelight-delight-rhino-sandbox-0_2_2_http_import",
-    jar = "@org_javadelight-delight-rhino-sandbox-0_2_2_http//file",
-    source_jar = "@org_javadelight-delight-rhino-sandbox-0_2_2-sources_http//file",
+    name = "org_javadelight-delight-rhino-sandbox-0_2_5_http_import",
+    jar = "@org_javadelight-delight-rhino-sandbox-0_2_5_http//file",
+    source_jar = "@org_javadelight-delight-rhino-sandbox-0_2_5-sources_http//file",
 )
 
 copy_file(
