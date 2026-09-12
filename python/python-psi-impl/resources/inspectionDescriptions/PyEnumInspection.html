@@ -35,5 +35,22 @@ class Pet(Enum):
     CAT = 1
     DOG: int = 2  # Type annotations are not allowed for enum members
 </code></pre>
+<pre><code>
+from enum import Enum, unique
+
+
+class Mixin:
+    pass
+
+
+class Color(Enum, Mixin):  # Enum class 'Enum' must be the last base class
+    _red_ = 1  # The name '_red_' is reserved for future Enum use
+
+
+@unique
+class Size(Enum):
+    SMALL = 1
+    LITTLE = 1  # Unique enum member 'LITTLE' has the same value as 'SMALL'
+</code></pre>
 </body>
 </html>

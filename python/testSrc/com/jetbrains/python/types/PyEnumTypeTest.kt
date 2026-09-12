@@ -1313,6 +1313,62 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
           def _repr_html_(self): ...
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-16077"])
+    fun `unique enum with values that compare equal`() = test("""
+      from enum import Enum, unique
+
+      @unique
+      class Color(Enum):
+          RED = 1
+          TRUE = True
+      #          ^^^^ ERROR Unique enum member 'TRUE' has the same value as 'RED'
+          ONE_POINT_O = 1.0
+      #                 ^^^ ERROR Unique enum member 'ONE_POINT_O' has the same value as 'RED'
+          TEN = 10
+          TEN_POINT_O = 10.0
+      #                 ^^^^ ERROR Unique enum member 'TEN_POINT_O' has the same value as 'TEN'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-16077"])
+    fun `unique enum with values that only look equal`() = test("""
+      from enum import Enum, unique
+
+      @unique
+      class Color(Enum):
+          S = "s"
+          BYTES_S = b"s"
+          ONE = 1
+          IMAGINARY_ONE = 1j
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-16077"])
+    fun `unique enum with duplicate values`() = test("""
+      from enum import Enum, unique
+      import enum
+
+      @unique
+      class Color(Enum):
+          RED = 1
+          GREEN = 2
+          CRIMSON = 1
+      #             └ ERROR Unique enum member 'CRIMSON' has the same value as 'RED'
+          R = RED
+      #       ^^^ ERROR Unique enum member 'R' has the same value as 'RED'
+
+      @enum.unique
+      class Size(Enum):
+          SMALL = "s"
+          LITTLE = "s"
+      #            ^^^ ERROR Unique enum member 'LITTLE' has the same value as 'SMALL'
+
+      class NotUnique(Enum):
+          A = 1
+          B = 1
+      """.trimIndent())
   }
 
   @Test
