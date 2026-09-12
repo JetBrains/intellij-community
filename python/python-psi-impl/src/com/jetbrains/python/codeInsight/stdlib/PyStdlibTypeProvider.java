@@ -29,11 +29,13 @@ import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.PyNumericLiteralExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
@@ -74,6 +76,7 @@ import java.util.stream.Stream;
 import static com.jetbrains.python.PyNames.isDunder;
 import static com.jetbrains.python.PyNames.isSunder;
 import static com.jetbrains.python.psi.PyUtil.as;
+
 
 public final class PyStdlibTypeProvider extends PyTypeProviderBase {
 
@@ -305,6 +308,33 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       });
   }
 
+  /**
+   * The names that the {@code _ignore_} attribute of {@code enumClass} lists. The metaclass removes them from the
+   * class, so they are no members. The value is a list or a tuple of names, or one string that holds the names
+   * separated by a space or a comma.
+   */
+  @ApiStatus.Internal
+  public static @NotNull Set<String> getIgnoredNames(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    return PyUtil.getParameterizedCachedValue(enumClass, context, ctx -> computeIgnoredNames(enumClass, ctx));
+  }
+
+  private static @NotNull Set<String> computeIgnoredNames(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    PyTargetExpression ignoreAttribute = enumClass.findClassAttribute("_ignore_", false, context);
+    if (ignoreAttribute == null || !context.maySwitchToAST(ignoreAttribute)) return Collections.emptySet();
+    PyExpression value = PyPsiUtils.flattenParens(ignoreAttribute.findAssignedValue());
+
+    String names = PyEvaluator.evaluate(value, String.class);
+    if (names != null) {
+      return Arrays.stream(names.replace(',', ' ').split(" ")).map(String::trim).filter(n -> !n.isEmpty())
+        .collect(Collectors.toSet());
+    }
+    if (value instanceof PySequenceExpression sequence) {
+      return Arrays.stream(sequence.getElements()).map(element -> PyEvaluator.evaluate(element, String.class))
+        .filter(Objects::nonNull).collect(Collectors.toSet());
+    }
+    return Collections.emptySet();
+  }
+
   @ApiStatus.Internal
   public static @Nullable EnumAttributeInfo getEnumAttributeInfo(@NotNull PyClass enumClass,
                                                                  @NotNull PyTargetExpression targetExpression,
@@ -314,6 +344,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     var name = targetExpression.getName();
     var protection = targetExpression.getProtectionLevel();
     if (protection == ProtectionLevel.PRIVATE || name == null || isSunder(name) || isDunder(name)) return null;
+    if (getIgnoredNames(enumClass, context).contains(name)) return null;
 
     if (context.maySwitchToAST(targetExpression)) {
       PyExpression value = targetExpression.findAssignedValue();

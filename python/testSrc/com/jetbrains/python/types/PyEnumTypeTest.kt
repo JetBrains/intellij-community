@@ -142,6 +142,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       #  └ TYPE tuple[Literal["a", "b", "c"], int]
       """.trimIndent())
 
+
     @Test
     @TestFor(issues = ["PY-80837"])
     fun `init enum member`() = test("""
@@ -278,6 +279,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """.trimIndent(),
       "color.py" to """
         from enum import Enum, auto
+        
         
         class Color(Enum):
             RED = auto()
@@ -418,9 +420,11 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       "my_enum.py" to """
         from enum import auto, Enum
         
+        
         class MyEnumBase(Enum):
             @staticmethod
             def _generate_next_value_(name: str, start: int, count: int, last_values: list[str]) -> str: ...
+        
         
         class MyEnumDerived(MyEnumBase):
             FOO = auto()
@@ -431,9 +435,11 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
     fun `value type of enum member stored in a variable`() = test("""
       from enum import Enum
       
+      
       class IDE(Enum):
           DS = 'DataSpell'
           PY = 'PyCharm'
+      
       
       IDE_TO_CLEAR_SETTINGS_FOR = IDE.PY
       expr = IDE_TO_CLEAR_SETTINGS_FOR.value
@@ -518,6 +524,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """.trimIndent(),
       "mod.py" to """
         import enum
+        
         
         class MyEnum(enum.Enum):
             ONE = 1
@@ -1133,9 +1140,11 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       "m.py" to """
         import enum
         
+        
         class SuperEnum(enum.Enum):
             PINK = "PINK", "hot"
             FLOSS = "FLOSS", "sweet"
+        
         
         class SimpleEnum(enum.Enum):
             FOO = "FOO"
@@ -1222,6 +1231,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
     fun `iterating a StrEnum type and instance`() = test("""
       from enum import StrEnum
       from typing import Self
+      
       
       class Variant(StrEnum):
           CREATED = "created"
@@ -1315,6 +1325,70 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-16077", "PY-90288"])
+    fun `unique enum ignores a name that _ignore_ lists`() = test("""
+      from enum import Enum, unique
+
+      @unique
+      class Color(Enum):
+          _ignore_ = ["tmp", "other"]
+          tmp = 1
+          other = 2
+          RED = 1
+
+      def f(c: Color):
+          expr = c.value
+      #   └ TYPE Literal[1]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90288"])
+    fun `_ignore_ as a string or a tuple`() = test("""
+      from enum import Enum, unique
+
+      @unique
+      class BySpace(Enum):
+          _ignore_ = "tmp other"
+          tmp = 1
+          other = 2
+          RED = 1
+
+      @unique
+      class ByComma(Enum):
+          _ignore_ = "tmp, other"
+          tmp = 1
+          other = 2
+          RED = 1
+
+      @unique
+      class ByTuple(Enum):
+          _ignore_ = ("tmp", "other")
+          tmp = 1
+          other = 2
+          RED = 1
+
+      def f(a: BySpace, b: ByComma, c: ByTuple):
+          expr = a.name, b.name, c.name
+      #   └ TYPE tuple[Literal["RED"], Literal["RED"], Literal["RED"]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90288"])
+    fun `name that _ignore_ lists is no member`() = test("""
+      from enum import Enum
+
+      class Color(Enum):
+          _ignore_ = ["tmp"]
+          tmp = 1
+          RED = 1
+          GREEN = 2
+
+      def f(c: Color):
+          expr = c.name
+      #   └ TYPE Literal["RED", "GREEN"]
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-16077"])
     fun `unique enum with values that compare equal`() = test("""
       from enum import Enum, unique
@@ -1384,6 +1458,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     Color.__members__
     #        └ TYPE MappingProxyType[str, Color] FIXME MappingProxyType[Literal["red", "green", "blue"], Literal[Color.red, Color.green, Color.blue]]
+    
     
     class Empty(Enum):
         pass
