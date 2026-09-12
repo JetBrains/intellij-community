@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import git4idea.GitUtil
@@ -42,7 +42,7 @@ internal fun TestFixture<GitPlatformTestContext>.gitWorkTreeFixture(
 
     cd(mainRoot)
     git("worktree add $projectPath")
-    checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectNioRoot.resolve(GitUtil.DOT_GIT))) {
+    checkNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectNioRoot.resolve(GitUtil.DOT_GIT))) {
       "'git worktree add' didn't create ${GitUtil.DOT_GIT} in $projectPath"
     }
 

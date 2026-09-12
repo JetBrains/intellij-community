@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitUtil
 import git4idea.test.GitPlatformTestContext
@@ -30,7 +30,7 @@ internal class GitConfigUtilTest {
     Files.createDirectories(projectNioRoot)
     cd(projectNioRoot)
     gitInit(project)
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectNioRoot.resolve(GitUtil.DOT_GIT))!!
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectNioRoot.resolve(GitUtil.DOT_GIT))!!
   }
 
   @Test
@@ -82,6 +82,6 @@ internal class GitConfigUtilTest {
   private fun GitPlatformTestContext.writeConfig(content: String) {
     val file = projectNioRoot.resolve(".git").resolve("config")
     Files.writeString(file, content + "\n", StandardOpenOption.APPEND)
-    assertThat(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)).isNotNull()
+    assertThat(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)).isNotNull()
   }
 }

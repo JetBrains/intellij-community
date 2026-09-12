@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.commands.Git
 import git4idea.commands.GitShallowCloneOptions
@@ -34,10 +34,10 @@ object GitCloneUtils {
       return
     }
 
-    val lfs = LocalFileSystem.getInstance()
-    var destinationParent = lfs.findFileByIoFile(parent.toFile())
+    val lfs = StandardFileSystems.local()
+    var destinationParent = lfs.findFileByPath(parent.toFile().absolutePath)
     if (destinationParent == null) {
-      destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
+      destinationParent = lfs.refreshAndFindFileByPath(parent.toFile().absolutePath)
     }
     if (destinationParent == null) {
       notifyDestinationNotFound(project, unableToFindDirectoryId)

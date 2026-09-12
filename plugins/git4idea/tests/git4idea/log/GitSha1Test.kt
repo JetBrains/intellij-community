@@ -2,8 +2,8 @@
 package git4idea.log
 
 import com.intellij.openapi.vcs.changes.patch.BlobIndexUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.HeavyPlatformTestCase.setFileText
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.test.updateChangeListManager
@@ -58,7 +58,7 @@ internal class GitSha1Test {
   fun `test sha for modified`(): Unit = with(context) {
     cd(projectPath)
     val path = Paths.get(projectPath, A_FILE)
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
+    val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)!!
     val expectedBefore = git("hash-object $path")
     setFileText(virtualFile, "echo content\n with line separator")
 

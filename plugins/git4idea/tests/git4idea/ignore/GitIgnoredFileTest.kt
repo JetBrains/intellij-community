@@ -24,10 +24,12 @@ import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElements
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreBlock
 import com.intellij.openapi.vcs.changes.ignore.psi.util.updateIgnoreBlock
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.project.stateStore
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -124,11 +126,11 @@ internal class GitIgnoredFileTest {
     }
     catch (_: FileAlreadyExistsException) {
     }
-    if (LocalFileSystem.getInstance().refreshAndFindFileByNioFile(workspaceFile) == null) {
+    if (VirtualFileManager.getInstance().refreshAndFindFileByNioPath(workspaceFile) == null) {
       fail("Workspace file doesn't exist and cannot be created")
     }
 
-    generateGitIgnoreAndRefresh(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(project.stateStore.directoryStorePath!!)!!)
+    generateGitIgnoreAndRefresh(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(project.stateStore.directoryStorePath!!)!!)
 
     assertGitignoreValid(gitIgnore,
                          """
@@ -639,7 +641,7 @@ internal class GitIgnoredFileTest {
 
     assertThat(file(GITIGNORE).create().file.apply {
       writeText("/subdir/shelf")
-      LocalFileSystem.getInstance().refreshIoFiles(setOf(this))
+      RefreshQueue.getInstance().refreshPaths(false, false, null, setOf(this.toPath()))
     }.exists()).isTrue()
     generateGitIgnoreAndRefresh(shelfDir.parent)
 
@@ -651,7 +653,7 @@ internal class GitIgnoredFileTest {
   private fun VirtualFile.findOrCreateDir(dirName: String) = this.findChild(dirName) ?: VfsUtil.createDirectoryIfMissing(this, dirName)
 
   private fun getVirtualFile(file: File): VirtualFile =
-    checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file))
+    checkNotNull(StandardFileSystems.local().refreshAndFindFileByPath(file.absolutePath))
 
   private fun GitSingleRepoContext.deleteGitDirectoryWithRetry() {
     val gitDir = projectNioRoot.resolve(DOT_GIT)
@@ -687,7 +689,7 @@ internal fun assertGitignoreValid(ignoreFile: Path, gitIgnoreExpectedContent: St
   }
 
   assertThat(ignoreFile).exists()
-  LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ignoreFile)?.let {
+  VirtualFileManager.getInstance().refreshAndFindFileByNioPath(ignoreFile)?.let {
     VfsUtil.markDirtyAndRefresh(false, false, false, it)
   }
   val generatedGitIgnoreContent = ignoreFile.readText()

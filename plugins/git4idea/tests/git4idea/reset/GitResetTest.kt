@@ -17,7 +17,7 @@ package git4idea.reset
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.test.assertSuccessfulNotification
@@ -63,7 +63,7 @@ class GitResetTest {
     val prevHash = HashImpl.build(file.addCommit("created").hash())
     file.append("more" + System.lineSeparator())
     file.addCommit("Added more")
-    val vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.file)!!
+    val vf = StandardFileSystems.local().refreshAndFindFileByPath(file.file.absolutePath)!!
     return Pair(prevHash, vf)
   }
 }

@@ -6,8 +6,8 @@ import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtil.getRelativePath
 import com.intellij.openapi.vcs.Executor
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.test.refresh
 import git4idea.config.GitSaveChangesPolicy
@@ -96,7 +96,7 @@ internal class GitComplexSubmoduleTest {
     addSubmodule(project, projectNioRoot, submoduleUrl, relativePath)
     val rootPath = projectNioRoot.resolve(relativePath ?: moduleName)
     Executor.cd(rootPath)
-    refresh(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(rootPath)!!)
+    refresh(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(rootPath)!!)
     setupDefaultUsername()
     return registerRepo(project, rootPath)
   }

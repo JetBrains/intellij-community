@@ -3,7 +3,7 @@ package git4idea.test
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsTestUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -52,7 +52,7 @@ fun GitSingleRepoContext.prepareUnversionedFile(filePath: String, content: Strin
 
   FileUtil.writeToFile(path.toFile(), content)
 
-  val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path.toFile())!!
+  val file = StandardFileSystems.local().refreshAndFindFileByPath(path.toFile().absolutePath)!!
   updateChangeListManager()
   updateUntrackedFiles()
   assertUnversioned(file)

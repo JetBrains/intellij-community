@@ -29,9 +29,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.path.EelPathException;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
@@ -162,7 +163,7 @@ public final class GitUtil {
     if (pathToDir == null) return null;
     Path file = findRealRepositoryDir(rootDir.toNioPath(), pathToDir);
     if (file == null) return null;
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file);
   }
 
   private static @Nullable Path findRealRepositoryDir(@NotNull @NonNls Path rootPath, @NotNull @NonNls String path) {
@@ -398,7 +399,7 @@ public final class GitUtil {
       Path root = path;
       while (root != null) {
         if (isGitRoot(root)) {
-          return LocalFileSystem.getInstance().findFileByNioFile(root);
+          return VirtualFileManager.getInstance().findFileByNioPath(root);
         }
         root = root.getParent();
       }
@@ -803,9 +804,9 @@ public final class GitUtil {
   }
 
   public static @Nullable VirtualFile findRefreshFileOrLog(@NotNull @NonNls String absolutePath) {
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absolutePath);
+    VirtualFile file = StandardFileSystems.local().findFileByPath(absolutePath);
     if (file == null) {
-      file = LocalFileSystem.getInstance().refreshAndFindFileByPath(absolutePath);
+      file = StandardFileSystems.local().refreshAndFindFileByPath(absolutePath);
     }
     if (file == null) {
       LOG.debug("VirtualFile not found for " + absolutePath);

@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.TestApplication
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.assertChanges
@@ -282,7 +282,7 @@ internal class GitPartialCommitTest {
     newContent: String,
     task: (Document, PartialLocalLineStatusTracker) -> Unit,
   ) {
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(child(fileName))!!
+    val file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(child(fileName))!!
 
     withPartialTracker(file, newContent) { document, tracker ->
       // Assume that initial changes are included into commit

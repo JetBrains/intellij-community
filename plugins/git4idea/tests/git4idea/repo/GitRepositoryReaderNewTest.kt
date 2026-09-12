@@ -4,7 +4,7 @@ package git4idea.repo
 import com.intellij.dvcs.repo.Repository.State
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitLocalBranch
@@ -72,7 +72,7 @@ abstract class GitRepositoryReaderNewTest(private val usingReftable: Boolean) {
     setupDefaultUsername()
     setupLocalIgnore(projectNioRoot)
 
-    checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectNioRoot.resolve(GitUtil.DOT_GIT))) {
+    checkNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectNioRoot.resolve(GitUtil.DOT_GIT))) {
       "${GitUtil.DOT_GIT} was not created in $projectPath"
     }
     return registerRepo(project, projectNioRoot)

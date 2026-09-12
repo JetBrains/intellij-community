@@ -3,7 +3,7 @@ package git4idea.workingTrees
 
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.LocalFilePath
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
@@ -163,8 +163,8 @@ internal class GitMultiRepoWorkingTreeTest {
       {
         val result = GitWorkingTreesService.getInstance(project).createWorkingTree(request)
         assertThat(result.success).describedAs(result.errorOutputAsHtmlString).isTrue()
-        val worktreesDir = LocalFileSystem.getInstance()
-          .refreshAndFindFileByNioFile(repoB.root.toNioPath().resolve(".git/worktrees"))
+        val worktreesDir = VirtualFileManager.getInstance()
+          .refreshAndFindFileByNioPath(repoB.root.toNioPath().resolve(".git/worktrees"))
         refresh(worktreesDir!!)
       },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED },

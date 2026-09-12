@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
@@ -138,7 +138,7 @@ internal class GitIndexVirtualFile(
 
       val locationHash = StringUtil.unescapeChar(components[0], SEPARATOR)
       val project = ProjectManager.getInstance().openProjects.firstOrNull { it.locationHash == locationHash } ?: return null
-      val root = LocalFileSystem.getInstance().findFileByPath(StringUtil.unescapeChar(components[1], SEPARATOR)) ?: return null
+      val root = StandardFileSystems.local().findFileByPath(StringUtil.unescapeChar(components[1], SEPARATOR)) ?: return null
       val filePath = VcsUtil.getFilePath(StringUtil.unescapeChar(components[2], SEPARATOR), false)
 
       return Triple(project, root, filePath)

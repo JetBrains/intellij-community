@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
@@ -120,7 +120,7 @@ public final class GitCommittedChangeListProvider implements CommittedChangesPro
     final Date beforeDate = settings.getDateBeforeFilter();
     final Date afterDate = settings.getDateAfterFilter();
     final String author = settings.getUserFilter();
-    VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(l.getRoot());
+    VirtualFile root = StandardFileSystems.local().findFileByPath(l.getRoot().getAbsolutePath());
     if (root == null) {
       throw new VcsException(GitBundle.message("error.git.repository.not.found", l.getRoot()));
     }

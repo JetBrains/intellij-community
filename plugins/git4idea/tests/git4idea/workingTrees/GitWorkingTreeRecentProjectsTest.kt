@@ -3,7 +3,7 @@ package git4idea.workingTrees
 
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManagerBase
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import git4idea.repo.expectEvent
@@ -49,7 +49,7 @@ internal class GitWorkingTreeRecentProjectsTest {
         { event, _ -> event == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED }
       )
 
-      assertThat(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newWorkingTreeRootPath)).isNull()
+      assertThat(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newWorkingTreeRootPath)).isNull()
       assertThat(recentProjectsManager.getRecentPaths())
         .doesNotContainAnyElementsOf(worktreeProjectPaths)
         .contains(siblingProjectPath)

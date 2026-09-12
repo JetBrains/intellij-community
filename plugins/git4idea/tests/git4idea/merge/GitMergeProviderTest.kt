@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.Executor.rm
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeData
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.LineSeparator
@@ -239,7 +239,7 @@ class GitMergeProviderTest(private val operation: Operation) {
   }
 
   private fun File.toVF(): VirtualFile {
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this) ?: throw FileNotFoundException(this.path)
+    return StandardFileSystems.local().refreshAndFindFileByPath(this.absolutePath) ?: throw FileNotFoundException(this.path)
   }
 
   private fun MergeData.content(side: Side): ByteArray = when (side) {

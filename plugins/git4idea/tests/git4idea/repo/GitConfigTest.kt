@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.VcsTestUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
@@ -57,8 +57,8 @@ internal class GitConfigTest {
     git("branch --track a#branch origin/a#branch")
 
     val config = GitConfig.read(project, projectNioRoot)
-    val rootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(projectPath))
-    val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(projectPath, ".git"))
+    val rootDir = StandardFileSystems.local().refreshAndFindFileByPath(File(projectPath).absolutePath)
+    val gitDir = StandardFileSystems.local().refreshAndFindFileByPath(File(projectPath, ".git").absolutePath)
     val reader = GitRepositoryReader(project, GitRepositoryFiles.createInstance(rootDir!!, gitDir!!))
     val state = reader.readState(config.parseRemotes())
     val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)

@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY
 import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY
 import com.intellij.openapi.vcs.VcsTestUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.vcs.log.VcsFullCommitDetails
@@ -45,7 +45,7 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
 
     FileUtil.writeToFile(path.toFile(), content)
 
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path.toFile())!!
+    val file = StandardFileSystems.local().refreshAndFindFileByPath(path.toFile().absolutePath)!!
     updateChangeListManager()
     updateUntrackedFiles()
     assertUnversioned(file)

@@ -6,7 +6,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
@@ -46,7 +46,7 @@ object GitConflictsUtil {
   }
 
   private fun hasActiveMergeWindow(conflict: GitConflict): Boolean {
-    val file = LocalFileSystem.getInstance().findFileByPath(conflict.filePath.path) ?: return false
+    val file = StandardFileSystems.local().findFileByPath(conflict.filePath.path) ?: return false
     return MergeConflictResolveUtil.hasActiveMergeWindow(file)
   }
 
@@ -67,7 +67,7 @@ object GitConflictsUtil {
     if (conflicts.isEmpty()) return
 
     for (conflict in conflicts) {
-      val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(conflict.filePath.path)
+      val file = StandardFileSystems.local().refreshAndFindFileByPath(conflict.filePath.path)
       if (file == null) {
         VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.CANNOT_RESOLVE_CONFLICT,
                                                      GitBundle.message("conflicts.merge.window.error.title"),

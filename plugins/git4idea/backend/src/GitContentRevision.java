@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.EDT;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -125,7 +125,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                                                      @NotNull Project project) {
     if (revisionNumber == null) {
       File file = filePath.getIOFile();
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
       if (virtualFile != null) filePath = VcsUtil.getFilePath(virtualFile);
     }
     return createRevision(filePath, revisionNumber, project);

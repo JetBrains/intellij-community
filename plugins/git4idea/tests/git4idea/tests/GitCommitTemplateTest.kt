@@ -3,7 +3,7 @@ package git4idea.tests
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.testFramework.HeavyPlatformTestCase.createChildDirectory
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
@@ -226,7 +226,7 @@ internal class GitCommitTemplateTest {
   }
 
   private fun File.refresh() {
-    LocalFileSystem.getInstance().refreshIoFiles(setOf(this))
+    RefreshQueue.getInstance().refreshPaths(false, false, null, setOf(this.toPath()))
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
   }
 }

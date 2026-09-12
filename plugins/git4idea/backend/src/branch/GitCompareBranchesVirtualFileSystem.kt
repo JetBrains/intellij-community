@@ -11,7 +11,7 @@ import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
@@ -51,7 +51,7 @@ private class VirtualFileSerializer : JsonSerializer<VirtualFile>, JsonDeseriali
 
   override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): VirtualFile {
     val path = json.asJsonObject.get(pathProperty).asString
-    return LocalFileSystem.getInstance().findFileByPath(path) ?: throw JsonParseException("Could not find file by $path")
+    return StandardFileSystems.local().findFileByPath(path) ?: throw JsonParseException("Could not find file by $path")
   }
 
   companion object {

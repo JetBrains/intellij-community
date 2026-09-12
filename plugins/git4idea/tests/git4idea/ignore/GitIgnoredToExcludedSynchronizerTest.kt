@@ -11,8 +11,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
@@ -119,14 +119,14 @@ internal class GitIgnoredToExcludedSynchronizerTest {
   private suspend fun GitSingleRepoContext.createGitignoreAndWait(gitignoreContent: String) {
     val gitIgnorePath = repo.root.toNioPath().resolve(GITIGNORE)
     gitIgnorePath.writeText(gitignoreContent)
-    checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(gitIgnorePath)) //trigger VFS create event explicitly
+    checkNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(gitIgnorePath)) //trigger VFS create event explicitly
 
     repo.untrackedFilesHolder.awaitNotBusy()
   }
 
   private fun GitSingleRepoContext.assertNotificationByContent(notificationContent: String) {
     val gitIgnorePath = repo.root.toNioPath().resolve(GITIGNORE)
-    val gitIgnoreVF = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(gitIgnorePath))
+    val gitIgnoreVF = checkNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(gitIgnorePath))
     val editor = checkNotNull(
       invokeAndWaitIfNeeded { FileEditorManager.getInstance(project).openFile(gitIgnoreVF, false) }.firstOrNull()
     ) { "Editor for $gitIgnoreVF not found" }

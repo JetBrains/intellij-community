@@ -7,8 +7,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.junit5.EnableTracingFor
 import com.intellij.testFramework.junit5.TestApplication
@@ -74,7 +74,7 @@ internal class GitSingleRepoRebaseTest {
       // as long as a directory's children have never been loaded,
       // loading them later populates the children list without producing VFileCreateEvents
       repo.root.children
-      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(testNioRoot)?.children
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(testNioRoot)?.children
     }
   }
 
@@ -355,7 +355,7 @@ internal class GitSingleRepoRebaseTest {
     val testChangelist1 = changeListManager.addChangeList("TEST_1", null)
     val testChangelist2 = changeListManager.addChangeList("TEST_2", null)
 
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(child("file.txt"))!!
+    val file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(child("file.txt"))!!
     withPartialTracker(file, "1A\n2\n3A\n4\n5A\n") { _, tracker ->
       val ranges = tracker.getRanges()!!
       assertThat(ranges).hasSize(3)
@@ -412,7 +412,7 @@ internal class GitSingleRepoRebaseTest {
     val testChangelist1 = changeListManager.addChangeList("TEST_1", null)
     val testChangelist2 = changeListManager.addChangeList("TEST_2", null)
 
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(child("file.txt"))!!
+    val file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(child("file.txt"))!!
     withPartialTracker(file, "1A\n2\n3A\n4\n5A\n") { _, tracker ->
       val ranges = tracker.getRanges()!!
       assertThat(ranges).hasSize(3)
@@ -454,7 +454,7 @@ internal class GitSingleRepoRebaseTest {
     val testChangelist1 = changeListManager.addChangeList("TEST_1", null)
     val testChangelist2 = changeListManager.addChangeList("TEST_2", null)
 
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(child("file.txt"))!!
+    val file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(child("file.txt"))!!
     withPartialTracker(file, "1A\n2\n3A\n4\n5A\n") { _, tracker ->
       val ranges = tracker.getRanges()!!
       assertThat(ranges).hasSize(3)

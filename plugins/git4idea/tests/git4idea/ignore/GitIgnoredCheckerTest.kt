@@ -7,8 +7,8 @@ import com.intellij.openapi.vcs.Ignored
 import com.intellij.openapi.vcs.NotIgnored
 import com.intellij.openapi.vcs.VcsIgnoreChecker
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import git4idea.GitVcs
 import git4idea.repo.GitRepositoryFiles
 import git4idea.test.GitPlatformTestContext
@@ -43,7 +43,7 @@ internal class GitIgnoredCheckerTest {
                        ?: throw IllegalStateException("Cannot find registered GitRootChecker")
     gitIgnore = File("$projectPath/${GitRepositoryFiles.GITIGNORE}").apply {
       createNewFile()
-      LocalFileSystem.getInstance().refreshIoFiles(setOf(this))
+      RefreshQueue.getInstance().refreshPaths(false, false, null, setOf(this.toPath()))
     }
   }
 

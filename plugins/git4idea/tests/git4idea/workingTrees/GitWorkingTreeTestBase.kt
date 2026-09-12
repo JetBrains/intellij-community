@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees
 
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.test.refresh
 import git4idea.GitWorkingTree
@@ -36,7 +36,7 @@ internal abstract class GitWorkingTreeTestBase {
       {
         val result = GitWorkingTreesService.getInstance(project).createWorkingTree(request)
         assertThat(result.success).describedAs(result.errorOutputAsHtmlString).isTrue()
-        val worktreesDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(mainRepoPath.resolve(".git/worktrees"))
+        val worktreesDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(mainRepoPath.resolve(".git/worktrees"))
         refresh(worktreesDir!!)
       },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED }

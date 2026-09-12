@@ -23,9 +23,9 @@ import com.intellij.openapi.vcs.changes.IgnoredFileProvider
 import com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl
 import com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl.needGenerateInternalIgnoreFile
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreFile
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
@@ -97,7 +97,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
       needGenerate.set(false)
       return false
     }
-    val projectConfigDirVFile = LocalFileSystem.getInstance().findFileByNioFile(projectConfigDirPath)
+    val projectConfigDirVFile = VirtualFileManager.getInstance().findFileByNioPath(projectConfigDirPath)
     if (projectConfigDirVFile != null && !needGenerateInternalIgnoreFile(project, projectConfigDirVFile)) {
       needGenerate.set(false)
       return false
@@ -150,7 +150,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
       LOG.warn("Project config dir path not found. Project is default or not directory based.")
       return
     }
-    val projectConfigDirVFile = LocalFileSystem.getInstance().findFileByNioFile(projectConfigDirPath)
+    val projectConfigDirVFile = VirtualFileManager.getInstance().findFileByNioPath(projectConfigDirPath)
     if (projectConfigDirVFile == null) {
       LOG.warn("Project config dir not found in VFS by path $projectConfigDirPath")
       return

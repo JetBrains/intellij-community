@@ -11,7 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vcs.merge.MergeResolveActionContext
 import com.intellij.openapi.vcs.merge.MergeResolveActionProvider
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -90,7 +90,7 @@ internal class GitMergeConflictEditorNotificationProviderTest {
     git("checkout feature")
     git("rebase master", true)
     updateChangeListManager()
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file("conflict.txt").file)!!
+    return StandardFileSystems.local().refreshAndFindFileByPath(file("conflict.txt").file.absolutePath)!!
   }
 
   private fun GitSingleRepoContext.createConflictPanel(file: VirtualFile): EditorNotificationPanel {

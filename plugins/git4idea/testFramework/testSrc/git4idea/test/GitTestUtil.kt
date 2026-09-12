@@ -13,8 +13,8 @@ import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.write
@@ -182,13 +182,13 @@ fun createRepository(project: Project, root: String, makeInitialCommit: Boolean 
 
 fun createRepository(project: Project, root: Path, makeInitialCommit: Boolean, objectFormat: GitObjectFormat = GitObjectFormat.SHA1): GitRepository {
   initRepo(project, root, makeInitialCommit, objectFormat)
-  LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.resolve(GitUtil.DOT_GIT))!!
+  VirtualFileManager.getInstance().refreshAndFindFileByNioPath(root.resolve(GitUtil.DOT_GIT))!!
   return registerRepo(project, root)
 }
 
 fun VcsPlatformTestContext.createRepository(project: Project, root: Path, makeInitialCommit: Boolean): GitRepository {
   initRepo(project, root, makeInitialCommit)
-  LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.resolve(GitUtil.DOT_GIT))!!
+  VirtualFileManager.getInstance().refreshAndFindFileByNioPath(root.resolve(GitUtil.DOT_GIT))!!
   return registerRepo(project, root)
 }
 
@@ -206,7 +206,7 @@ fun registerRepo(project: Project, root: Path): GitRepository {
   val vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
   vcsManager.setDirectoryMapping(root.toString(), GitVcs.NAME)
   Files.createDirectories(root)
-  val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root)
+  val file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(root)
   assertFalse("There are no VCS roots. Active VCSs: ${vcsManager.allActiveVcss}", vcsManager.allVcsRoots.isEmpty())
   val repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(file)
   assertThat(repository).describedAs("Couldn't find repository for root $root").isNotNull()

@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -52,8 +52,8 @@ class GitRepositoryReaderTest {
 
     val tempDir = prepareTest(testCaseDir)
     val gitDir = tempDir.resolve(".git")
-    val rootDir = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDir))
-    val virtualGitDir = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(gitDir))
+    val rootDir = checkNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tempDir))
+    val virtualGitDir = checkNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(gitDir))
     val repositoryReader = GitRepositoryReader(project, GitRepositoryFiles.createInstance(rootDir, virtualGitDir))
 
     val remotes = GitConfig.read(project, projectNioRoot).parseRemotes()

@@ -18,8 +18,9 @@ import com.intellij.openapi.vcs.CheckoutProviderEx;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTask;
@@ -70,11 +71,11 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
     }
 
     dialog.rememberSettings();
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final VirtualFileSystem lfs = StandardFileSystems.local();
     final File parent = new File(dialog.getParentDirectory());
-    VirtualFile destinationParent = lfs.findFileByIoFile(parent);
+    VirtualFile destinationParent = lfs.findFileByPath(parent.getAbsolutePath());
     if (destinationParent == null) {
-      destinationParent = lfs.refreshAndFindFileByIoFile(parent);
+      destinationParent = lfs.refreshAndFindFileByPath(parent.getAbsolutePath());
     }
     if (destinationParent == null) {
       return;

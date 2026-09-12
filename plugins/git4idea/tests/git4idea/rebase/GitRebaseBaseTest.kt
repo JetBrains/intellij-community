@@ -5,7 +5,7 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.notification.Notification
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.vcs.test.assertErrorNotification
 import com.intellij.vcs.test.assertSuccessfulNotification
 import com.intellij.vcs.test.assertWarningNotification
@@ -246,7 +246,7 @@ internal class LocalChange(
     cd(repository)
     val file = repository.file(filePath).create(content)
     file.add()
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.file)
+    StandardFileSystems.local().refreshAndFindFileByPath(file.file.absolutePath)
     return this
   }
 

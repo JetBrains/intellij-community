@@ -21,7 +21,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation.ADD
 import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY
 import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
@@ -55,7 +55,7 @@ class GitMoveTest {
     echo(file, "some\ncontent\nere")
     addCommit("created $file")
 
-    val vf = LocalFileSystem.getInstance().refreshAndFindFileByPath("$projectPath/$file")!!
+    val vf = StandardFileSystems.local().refreshAndFindFileByPath("$projectPath/$file")!!
 
     renameFile(vf, "ver-ren.txt")
     assertThat(changeListManager.isUnversioned(vf))

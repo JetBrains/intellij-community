@@ -3,9 +3,10 @@ package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -163,7 +164,7 @@ public final class GitRepositoryFiles {
       return null;
     }
     String mainDir = FileUtil.toCanonicalPath(gitDirFile.getPath() + File.separator + pathToMain, true);
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFileSystem lfs = StandardFileSystems.local();
     VirtualFile mainDirVF = lfs.refreshAndFindFileByPath(mainDir);
     if (mainDirVF != null) return mainDirVF;
     return lfs.refreshAndFindFileByPath(pathToMain); // absolute path is also possible
@@ -464,7 +465,7 @@ public final class GitRepositoryFiles {
    * Refresh .git/index asynchronously.
    */
   public void refreshIndexFile() {
-    VirtualFile indexFilePath = LocalFileSystem.getInstance().refreshAndFindFileByPath(myIndexFilePath);
+    VirtualFile indexFilePath = StandardFileSystems.local().refreshAndFindFileByPath(myIndexFilePath);
     VfsUtil.markDirtyAndRefresh(true, false, false, indexFilePath);
   }
 
@@ -475,9 +476,9 @@ public final class GitRepositoryFiles {
    * but some of it will be updated synchronously, the rest - asynchronously.
    */
   public void refreshTagsFiles() {
-    VirtualFile tagsDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myRefsTagsPath);
-    VirtualFile packedRefsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myPackedRefsPath);
-    VirtualFile reftableDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myReftablePath);
+    VirtualFile tagsDir = StandardFileSystems.local().refreshAndFindFileByPath(myRefsTagsPath);
+    VirtualFile packedRefsFile = StandardFileSystems.local().refreshAndFindFileByPath(myPackedRefsPath);
+    VirtualFile reftableDir = StandardFileSystems.local().refreshAndFindFileByPath(myReftablePath);
     VfsUtil.markDirtyAndRefresh(true, true, false, tagsDir, packedRefsFile, reftableDir);
   }
 

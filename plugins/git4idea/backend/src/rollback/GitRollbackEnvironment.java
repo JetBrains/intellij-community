@@ -12,8 +12,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.i18n.GitBundle;
@@ -134,7 +135,6 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
         }
       }
     }
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
     HashSet<File> filesToRefresh = new HashSet<>();
     for (Change c : changes) {
       ContentRevision before = c.getBeforeRevision();
@@ -146,7 +146,7 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
         filesToRefresh.add(new File(after.getFile().getPath()));
       }
     }
-    lfs.refreshIoFiles(filesToRefresh);
+    RefreshQueue.getInstance().refreshPaths(false, false, null, ContainerUtil.map(filesToRefresh, File::toPath));
     GitIndexFileSystemRefresher.refreshFilePaths(myProject, toUnindex);
 
     for (GitRepository repo : GitUtil.getRepositoryManager(myProject).getRepositories()) {

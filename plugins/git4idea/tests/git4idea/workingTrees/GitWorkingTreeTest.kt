@@ -4,7 +4,7 @@ package git4idea.workingTrees
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vcs.LocalFilePath
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import git4idea.GitBranch
@@ -105,7 +105,7 @@ internal abstract class GitWorkingTreeTest : GitWorkingTreeTestBase() {
 
     git("worktree add -B $branch ../$treeRoot")
 
-    val createdWorkTreeRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newWorkingTreeRootPath)
+    val createdWorkTreeRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newWorkingTreeRootPath)
     assertThat(createdWorkTreeRoot).isNotNull()
 
     repo.ensureWorkingTreesUpToDateForTests()
@@ -114,7 +114,7 @@ internal abstract class GitWorkingTreeTest : GitWorkingTreeTestBase() {
     assertThat(workingTree).isNotNull()
 
     Git.getInstance().deleteWorkingTree(repo, workingTree!!)
-    assertThat(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newWorkingTreeRootPath)).isNull()
+    assertThat(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newWorkingTreeRootPath)).isNull()
 
     repo.ensureWorkingTreesUpToDateForTests()
     assertThat(repo.workingTreeHolder.getWorkingTrees()).containsExactlyInAnyOrderElementsOf(getExpectedDefaultWorkingTrees())
@@ -128,7 +128,7 @@ internal abstract class GitWorkingTreeTest : GitWorkingTreeTestBase() {
 
     git("worktree add -B $branch ../$treeRoot")
 
-    val createdWorkTreeRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newWorkingTreeRootPath)
+    val createdWorkTreeRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newWorkingTreeRootPath)
     assertThat(createdWorkTreeRoot).isNotNull()
 
     repo.ensureWorkingTreesUpToDateForTests()
@@ -137,11 +137,11 @@ internal abstract class GitWorkingTreeTest : GitWorkingTreeTestBase() {
     assertThat(workingTree).isNotNull()
 
     NioFiles.deleteRecursively(newWorkingTreeRootPath)
-    assertThat(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newWorkingTreeRootPath)).isNull()
+    assertThat(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newWorkingTreeRootPath)).isNull()
     repo.ensureWorkingTreesUpToDateForTests()
 
     Git.getInstance().deleteWorkingTree(repo, workingTree!!)
-    assertThat(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newWorkingTreeRootPath)).isNull()
+    assertThat(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newWorkingTreeRootPath)).isNull()
 
     repo.ensureWorkingTreesUpToDateForTests()
     assertThat(repo.workingTreeHolder.getWorkingTrees()).containsExactlyInAnyOrderElementsOf(getExpectedDefaultWorkingTrees())

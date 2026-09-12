@@ -19,7 +19,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.test.updateChangeListManager
@@ -46,7 +46,7 @@ class GitRmTest {
     assertThat(file.createNewFile()).describedAs("File $file wasn't created").isTrue()
     git("add .")
     git("commit -m 'added file'")
-    val vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+    val vf = StandardFileSystems.local().refreshAndFindFileByPath(file.absolutePath)
     assertThat(vf).describedAs("VirtualFile not found for file $file").isNotNull()
     vf!!
 

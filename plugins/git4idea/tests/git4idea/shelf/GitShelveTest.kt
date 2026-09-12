@@ -11,7 +11,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.testFramework.junit5.TestApplication
@@ -274,7 +274,7 @@ class GitShelveTest(private val batchOptimization: Boolean) {
     val initialText = "first line${CRLF}second line${CRLF}"
     file.create(initialText)
 
-    val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.file)
+    val vFile = StandardFileSystems.local().refreshAndFindFileByPath(file.file.absolutePath)
     assertThat(vFile).describedAs("VirtualFile not found for file ${file.file}").isNotNull()
     val nonNullVFile = vFile!!
 
