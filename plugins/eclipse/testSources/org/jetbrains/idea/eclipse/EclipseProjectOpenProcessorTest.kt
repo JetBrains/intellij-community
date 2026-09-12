@@ -4,7 +4,7 @@ package org.jetbrains.idea.eclipse
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.TestObservation
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.junit5.TestApplication
@@ -58,7 +58,7 @@ class EclipseProjectOpenProcessorTest {
     try {
       val projectFile = workspace.resolve(EclipseXml.PROJECT_FILE)
       val virtualProjectFile =
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectFile) ?: error("Cannot find $projectFile in VFS")
+        VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectFile) ?: error("Cannot find $projectFile in VFS")
 
       val quickImported = runInEdtAndGet {
         processor.doQuickImport(virtualProjectFile, context)

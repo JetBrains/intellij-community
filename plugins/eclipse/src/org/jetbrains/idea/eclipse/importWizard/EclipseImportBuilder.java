@@ -42,8 +42,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -259,9 +260,9 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
                                                               Messages.getQuestionIcon());
         if (resultCode != Messages.YES) {
           if (resultCode == Messages.NO) {
-            final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+            final VirtualFileSystem localFileSystem = StandardFileSystems.local();
             for (File file : files) {
-              final VirtualFile virtualFile = localFileSystem.findFileByIoFile(file);
+              final VirtualFile virtualFile = localFileSystem.findFileByPath(file.getAbsolutePath());
               if (virtualFile != null) {
                 ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Void, IOException>() {
                   @Override

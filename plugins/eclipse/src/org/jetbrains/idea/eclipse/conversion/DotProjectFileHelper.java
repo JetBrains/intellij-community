@@ -8,7 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.output.EclipseJDOMUtil;
@@ -35,7 +35,7 @@ public final class DotProjectFileHelper {
 
       EclipseJDOMUtil.output(rootElement, projectFile, module.getProject());
       ApplicationManager.getApplication().runWriteAction(() -> {
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(projectFile.getPath()));
+        StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(projectFile.getPath()));
       });
     }
     catch (JDOMException e) {

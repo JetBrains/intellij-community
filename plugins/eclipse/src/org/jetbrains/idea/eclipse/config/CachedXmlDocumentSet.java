@@ -2,7 +2,7 @@
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -49,7 +49,7 @@ public final class CachedXmlDocumentSet {
 
   @Nullable
   VirtualFile getFile(@NotNull String name, boolean refresh) {
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(getParent(name), name));
+    VirtualFile file = StandardFileSystems.local().findFileByPath(new File(getParent(name), name).getAbsolutePath());
     if (file != null && refresh) {
       file.refresh(false, true);
       if (!file.isValid()) {

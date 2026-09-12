@@ -9,7 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider;
@@ -49,7 +49,7 @@ public class EclipseImportWizardTest extends ProjectWizardTestCase {
 
   private void copyTestData(String subdirName) throws IOException {
     final File currentTestRoot = new File(PluginPathManager.getPluginHomePath("eclipse") + "/testData", "import");
-    VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
+    VirtualFile vTestRoot = StandardFileSystems.local().findFileByPath(currentTestRoot.getAbsolutePath());
     assertNotNull(vTestRoot);
     VirtualFile subdir = StringUtil.isEmpty(subdirName) ? getOrCreateProjectBaseDir() :
                          WriteAction.compute(() -> VfsUtil.createDirectoryIfMissing(getOrCreateProjectBaseDir(), subdirName));
@@ -63,6 +63,6 @@ public class EclipseImportWizardTest extends ProjectWizardTestCase {
     Module module = importProjectFrom(file.getParent(), null, new ImportFromSourcesProvider(), new EclipseProjectImportProvider());
     VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
     assertEquals(1, sourceRoots.length);
-    assertEquals(LocalFileSystem.getInstance().findFileByIoFile(file.getParentFile()), sourceRoots[0]);
+    assertEquals(StandardFileSystems.local().findFileByPath(file.getParentFile().getAbsolutePath()), sourceRoots[0]);
   }
 }

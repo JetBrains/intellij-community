@@ -10,9 +10,10 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -91,7 +92,7 @@ public final class EclipseUserLibrariesHelper {
         for (Element a : libElement.getChildren("archive")) {
           String rootPath = a.getAttributeValue("path");
           // IDEA-138039 Eclipse import: Unix file system: user library gets wrong paths
-          LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+          VirtualFileSystem fileSystem = StandardFileSystems.local();
           VirtualFile localFile = fileSystem.findFileByPath(rootPath);
           if (rootPath.startsWith("/") && (localFile == null || !localFile.isValid())) {
             // relative to workspace root

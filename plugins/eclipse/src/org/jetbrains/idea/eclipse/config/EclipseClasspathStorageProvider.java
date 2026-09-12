@@ -15,7 +15,7 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
@@ -142,7 +142,7 @@ final class EclipseClasspathStorageProvider implements ClasspathStorageProvider 
   public void moduleRenamed(@NotNull Module module, @NotNull String oldName, @NotNull String newName) {
     try {
       CachedXmlDocumentSet fileSet = getFileCache(module);
-      VirtualFile root = LocalFileSystem.getInstance().findFileByPath(ModuleUtilCore.getModuleDirPath(module));
+      VirtualFile root = StandardFileSystems.local().findFileByPath(ModuleUtilCore.getModuleDirPath(module));
       VirtualFile source = root == null ? null : root.findChild(oldName + EclipseXml.IDEA_SETTINGS_POSTFIX);
       if (source != null && source.isValid()) {
         WriteAction.run(() -> source.rename(this, newName + EclipseXml.IDEA_SETTINGS_POSTFIX));
