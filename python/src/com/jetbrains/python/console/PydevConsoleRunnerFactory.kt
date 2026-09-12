@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.PathMapper
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.SystemProperties
@@ -208,7 +207,7 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
       }
       val projectRoots = ProjectRootManager.getInstance(project).contentRoots
       for (root in projectRoots) {
-        if (root.fileSystem is LocalFileSystem) {
+        if (root.isInLocalFileSystem) {
           // we can't start Python Console in remote folder without additional connection configurations
           return root.path
         }

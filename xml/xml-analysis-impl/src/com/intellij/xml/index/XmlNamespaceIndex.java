@@ -10,9 +10,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.FilenameIndex;
@@ -88,7 +88,8 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
                                                                                                        @Nullable Module module) {
     String protocol = VirtualFileManager.extractProtocol(namespace);
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    if (virtualFileManager.getFileSystem(protocol) instanceof LocalFileSystem) {
+    VirtualFileSystem fileSystem = virtualFileManager.getFileSystem(protocol);
+    if (fileSystem != null && fileSystem.isLocal()) {
       VirtualFile file = virtualFileManager.findFileByUrl(namespace);
       if (file != null) {
         XsdNamespaceBuilder xsdNamespaceBuilder = getFileNamespace(file, project);

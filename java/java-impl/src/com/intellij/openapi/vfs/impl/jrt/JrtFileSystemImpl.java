@@ -104,7 +104,7 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
         Set<VirtualFile> toRefresh = null;
 
         for (var e : events) {
-          if (e.getFileSystem() instanceof LocalFileSystem) {
+          if (e.getFileSystem().isLocal()) {
             String homePath = null;
 
             if (e instanceof VFileContentChangeEvent cce) {

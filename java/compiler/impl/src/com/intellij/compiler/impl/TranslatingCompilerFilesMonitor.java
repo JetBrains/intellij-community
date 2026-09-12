@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -91,7 +90,7 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
 
   private static boolean isToProcess(VFileEvent event) {
     VirtualFileSystem fileSystem = event.getFileSystem();
-    return fileSystem instanceof LocalFileSystem && !(fileSystem instanceof TempFileSystemMarker);
+    return fileSystem.isLocal() && !(fileSystem instanceof TempFileSystemMarker);
   }
 
   private static boolean isInContentOfOpenedProject(final @NotNull VirtualFile file) {

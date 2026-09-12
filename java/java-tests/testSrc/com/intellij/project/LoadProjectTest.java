@@ -13,7 +13,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -51,7 +50,7 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
 
   private static void checkNoPsiFilesInProjectReachable(Project project) {
     LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class,
-                         psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem &&
+                         psiFile -> psiFile.getViewProvider().getVirtualFile().isInLocalFileSystem() &&
                                     psiFile.getProject() == project);
   }
 
