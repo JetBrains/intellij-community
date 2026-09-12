@@ -1257,6 +1257,62 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       class C(int, Mixin, IntEnum):
           c = 1
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90287"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON312)
+    fun `reserved sunder names in Python 3_12`() = test("""
+      from enum import Enum
+
+      class E(Enum):
+          _numeric_repr_ = repr
+          _iter_member_ = None
+          _add_alias_ = None
+      #   ^^^^^^^^^^^ ERROR The name '_add_alias_' is reserved for future Enum use
+          _create_pseudo_member_ = None
+      #   ^^^^^^^^^^^^^^^^^^^^^^ ERROR The name '_create_pseudo_member_' is reserved for future Enum use
+          b = 1
+
+          def _repr_html_(self): ...
+      #       ^^^^^^^^^^^ ERROR The name '_repr_html_' is reserved for future Enum use
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90287"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON310)
+    fun `reserved sunder names in Python 3_10`() = test("""
+      from enum import Enum
+
+      class E(Enum):
+          _create_pseudo_member_ = None
+          _numeric_repr_ = repr
+      #   ^^^^^^^^^^^^^^ ERROR The name '_numeric_repr_' is reserved for future Enum use
+          _iter_member_ = None
+      #   ^^^^^^^^^^^^^ ERROR The name '_iter_member_' is reserved for future Enum use
+          b = 1
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90287"])
+    fun `reserved sunder names`() = test("""
+      from enum import Enum
+
+      class E(Enum):
+          _a_ = 1
+      #   ^^^ ERROR The name '_a_' is reserved for future Enum use
+          _value_: int
+          _order_ = "b"
+          _ignore_ = ["tmp"]
+          b = 1
+
+          def _foo_(self): ...
+      #       ^^^^^ ERROR The name '_foo_' is reserved for future Enum use
+
+          @classmethod
+          def _missing_(cls, value): ...
+
+          def _repr_html_(self): ...
+      """.trimIndent())
   }
 
   @Test
