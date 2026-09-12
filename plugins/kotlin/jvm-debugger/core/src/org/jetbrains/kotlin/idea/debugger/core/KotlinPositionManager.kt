@@ -25,10 +25,12 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
@@ -158,6 +160,8 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.resume
+
+private val LOG = logger<KotlinPositionManager>()
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames,
                                                                       PositionManagerAsync {
@@ -449,8 +453,15 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val notInlined = mutableListOf<T>()
         var innermostInlinedElement: T? = null
         for (expression in this) {
-            val isCrossinline = dumbAnalyze(expression, fallback = false) {
-                getInlineArgumentSymbol(expression)?.isCrossinline
+            val isCrossinline = try {
+                dumbAnalyze(expression, fallback = false) {
+                    getInlineArgumentSymbol(expression)?.isCrossinline
+                }
+            } catch (e: Throwable) {
+                rethrowControlFlowException(e)
+                // one broken analysis must not drop the source position of the whole line
+                LOG.warn("Cannot resolve the inline argument of a lambda, treated as not inlined: ${readAction { expression.containingFile.name }}", e)
+                null
             }
             if (isCrossinline != null && (!isCrossinline || isInlinedArgument(expression, location))) {
                 if (isInsideInlineArgument(expression, location)) {
