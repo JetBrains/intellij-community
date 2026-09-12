@@ -6,8 +6,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.AsyncFileListener
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.WatchRoots
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
@@ -65,7 +66,7 @@ internal class MavenSettingsXmlRepositoryAuthenticationDataProvider: JarReposito
 
 @Service(Service.Level.APP)
 private class MavenSettingsXmlRepositoryAuthenticationDataService(private val coroutineScope: CoroutineScope) {
-  private val watchedRoots: List<LocalFileSystem.WatchRequest>
+  private val watchedRoots: List<WatchRoots.Token>
 
   private val globalMavenSettingsXml = JpsMavenSettings.getGlobalMavenSettingsXml()
   private val userMavenSettingsXml = JpsMavenSettings.getUserMavenSettingsXml()
@@ -74,17 +75,16 @@ private class MavenSettingsXmlRepositoryAuthenticationDataService(private val co
   private var cachedAuthentication: Map<String, AuthenticationData> = emptyMap()
 
   init {
-    val localFileSystem = LocalFileSystem.getInstance()
     val absolutePaths = buildList {
       add(userMavenSettingsXml.invariantSeparatorsPathString)
       globalMavenSettingsXml?.let { add(it.invariantSeparatorsPathString) }
     }
-    watchedRoots = absolutePaths.mapNotNull {
-      localFileSystem.refreshAndFindFileByPath(it)
-      localFileSystem.addRootToWatch(it, false)
+    watchedRoots = absolutePaths.map {
+      StandardFileSystems.local().refreshAndFindFileByPath(it)
+      WatchRoots.getInstance().watch(it, false)
     }
     coroutineScope.coroutineContext.job.invokeOnCompletion {
-      LocalFileSystem.getInstance().removeWatchedRoots(watchedRoots)
+      watchedRoots.forEach { it.close() }
     }
 
     VirtualFileManager.getInstance().addAsyncFileListener(coroutineScope) { events ->

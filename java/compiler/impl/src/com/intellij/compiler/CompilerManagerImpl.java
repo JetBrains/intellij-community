@@ -55,8 +55,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -118,7 +118,7 @@ public class CompilerManagerImpl extends CompilerManager {
   private final CompilationStatusListener myEventPublisher;
   private final Semaphore myCompilationSemaphore = new Semaphore(1, true);
   private final Set<ModuleType<?>> myValidationDisabledModuleTypes = new HashSet<>();
-  private final Set<LocalFileSystem.WatchRequest> myWatchRoots;
+  private final WatchRoots.Token myWatchRoot;
   private volatile ExternalJavacManager myExternalJavacManager;
 
   public CompilerManagerImpl(@NotNull Project project) {
@@ -157,15 +157,14 @@ public class CompilerManagerImpl extends CompilerManager {
 
     final File projectGeneratedSrcRoot = CompilerPaths.getGeneratedDataDirectory(project);
     projectGeneratedSrcRoot.mkdirs();
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    myWatchRoots = lfs.addRootsToWatch(Collections.singletonList(FileUtil.toCanonicalPath(projectGeneratedSrcRoot.getPath())), true);
+    myWatchRoot = WatchRoots.getInstance().watch(FileUtil.toCanonicalPath(projectGeneratedSrcRoot.getPath()), true);
     Disposer.register(JavaPluginDisposable.getInstance(project), () -> {
       final ExternalJavacManager manager = myExternalJavacManager;
       myExternalJavacManager = null;
       if (manager != null) {
         manager.stop();
       }
-      lfs.removeWatchedRoots(myWatchRoots);
+      myWatchRoot.close();
       if (ApplicationManager.getApplication().isUnitTestMode()) {    // force cleanup for created compiler system directory with generated sources
         FileUtil.delete(CompilerPaths.getCompilerSystemDirectory(project));
       }

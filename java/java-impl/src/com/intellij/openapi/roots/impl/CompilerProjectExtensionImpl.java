@@ -11,10 +11,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.WatchedRootsProvider;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.platform.backend.workspace.VirtualFileUrls;
@@ -34,7 +34,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
   private static final Logger LOG = Logger.getInstance(CompilerProjectExtensionImpl.class);
 
 
-  private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
+  private WatchRoots.Token myCompilerOutputWatchRequest;
   private final Project project;
 
   CompilerProjectExtensionImpl(@NotNull Project project) {
@@ -117,7 +117,12 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
       //  some other code which has added exactly the same root to the watch roots)
       setCompilerOutputWSM(compilerOutputUrl);
       String path = VfsUtilCore.urlToPath(compilerOutputUrl);
-      myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);
+      WatchRoots watchRoots = WatchRoots.getInstance();
+      watchRoots.batch(() -> {
+        WatchRoots.Token previous = myCompilerOutputWatchRequest;
+        myCompilerOutputWatchRequest = watchRoots.watch(path, true);
+        if (previous != null) previous.close();
+      });
     }
   }
 
