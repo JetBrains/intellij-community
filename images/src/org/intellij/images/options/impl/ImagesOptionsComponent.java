@@ -23,7 +23,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.DocumentAdapter;
@@ -390,7 +390,7 @@ final class ImagesOptionsComponent {
       Application application = ApplicationManager.getApplication();
       VirtualFile previous = application.runWriteAction((NullableComputable<VirtualFile>)() -> {
         final String path = FileUtil.toSystemIndependentName(externalEditorPath.getText());
-        return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+        return StandardFileSystems.local().refreshAndFindFileByPath(path);
       });
       FileChooserDescriptor fileDescriptor = new FileChooserDescriptor(true, SystemInfo.isMac, false, false, false, false);
       fileDescriptor.setShowFileSystemRoots(true);

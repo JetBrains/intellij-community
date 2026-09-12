@@ -19,9 +19,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.ui.UIBundle
 import com.intellij.util.EnvironmentUtil
@@ -153,7 +153,7 @@ private fun VirtualFile.copyToBackingFile(disposable: Disposable): VirtualFile {
       throw IllegalStateException("Failed to create backing file", e)
     }
   }
-  return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath) ?: throw IllegalStateException("Failed to create virtual file")
+  return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(filePath) ?: throw IllegalStateException("Failed to create virtual file")
 }
 
 private fun Path.safeDelete() {
