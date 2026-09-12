@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -17,13 +17,13 @@ public class VcsMappingsFileWatchesManager {
   private final Alarm myAlarm;
 
   public VcsMappingsFileWatchesManager(@NotNull Project project, @NotNull NewMappings newMappings) {
-    this(project, newMappings, LocalFileSystem.getInstance());
+    this(project, newMappings, WatchRoots.getInstance());
   }
 
   public VcsMappingsFileWatchesManager(@NotNull Project project,
                                        @NotNull NewMappings newMappings,
-                                       @NotNull LocalFileSystem localFileSystem) {
-    myModifier = new VcsMappingsWatchRootsModifier(project, newMappings, localFileSystem);
+                                       @NotNull WatchRoots watchRoots) {
+    myModifier = new VcsMappingsWatchRootsModifier(project, newMappings, watchRoots);
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, newMappings);
   }
 

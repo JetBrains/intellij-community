@@ -9,32 +9,35 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
- * Maintains a VFS file watch {@link LocalFileSystem.WatchRequest} for each non-{@code <Project>} VCS mapping
+ * Maintains a VFS file watch {@link WatchRoots.Token} for each non-{@code <Project>} VCS mapping
  * to ensure that file changes are detected for every VCS root even when the VCS is not included in the workspace.
  */
 @ApiStatus.Internal
 public final class VcsMappingsWatchRootsModifier implements Runnable, Disposable {
   private final Project myProject;
   private final NewMappings myNewMappings;
-  private final LocalFileSystem myLfs;
+  private final WatchRoots myWatchRoots;
 
   private final Object LOCK = new Object();
-  private Set<LocalFileSystem.WatchRequest> myWatches = Collections.emptySet();
+  private Collection<WatchRoots.Token> myWatches = Collections.emptyList();
   private boolean myDisposed;
 
   public VcsMappingsWatchRootsModifier(@NotNull Project project,
                                        @NotNull NewMappings newMappings,
-                                       @NotNull LocalFileSystem localFileSystem) {
-    myLfs = localFileSystem;
+                                       @NotNull WatchRoots watchRoots) {
+    myWatchRoots = watchRoots;
     myProject = project;
     myNewMappings = newMappings;
 
@@ -46,8 +49,8 @@ public final class VcsMappingsWatchRootsModifier implements Runnable, Disposable
     synchronized (LOCK) {
       myDisposed = true;
 
-      myLfs.removeWatchedRoots(myWatches);
-      myWatches = Collections.emptySet();
+      myWatches.forEach(WatchRoots.Token::close);
+      myWatches = Collections.emptyList();
     }
   }
 
@@ -69,7 +72,13 @@ public final class VcsMappingsWatchRootsModifier implements Runnable, Disposable
         }
       }
 
-      myWatches = myLfs.replaceWatchedRoots(myWatches, newWatchedRoots, null);
+      Collection<WatchRoots.Token> previous = myWatches;
+      List<WatchRoots.Token> next = new ArrayList<>(newWatchedRoots.size());
+      myWatchRoots.batch(() -> {
+        newWatchedRoots.forEach(root -> next.add(myWatchRoots.watch(root, true)));
+        previous.forEach(WatchRoots.Token::close);
+      });
+      myWatches = next;
     }
   }
 }
