@@ -10,7 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.WatchRoots
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -121,7 +122,7 @@ internal class GitCommitTemplateTracker(
 
       for ((repository, template) in allTemplates) {
         coroutineContext.ensureActive()
-        val watchedTemplatePath = template.watchedRoot.rootPath
+        val watchedTemplatePath = template.templatePath
 
         var templateChanged = false
         if (isEventToStopTracking(event, watchedTemplatePath)) {
@@ -159,11 +160,11 @@ internal class GitCommitTemplateTracker(
 
   private fun stopTrackCommitTemplate(repository: GitRepository) {
     val commitTemplate = TEMPLATES_LOCK.write { commitTemplates.remove(repository) } ?: return
-    LocalFileSystem.getInstance().removeWatchedRoot(commitTemplate.watchedRoot)
+    commitTemplate.watchedRoot.close()
   }
 
   private fun reloadCommitTemplateContent(repository: GitRepository) {
-    val commitTemplateRootPath = TEMPLATES_LOCK.read { commitTemplates[repository] }?.watchedRoot?.rootPath ?: return
+    val commitTemplateRootPath = TEMPLATES_LOCK.read { commitTemplates[repository] }?.templatePath ?: return
     val loadedContent = loadTemplateContent(repository, commitTemplateRootPath) ?: return
     TEMPLATES_LOCK.write {
       commitTemplates[repository]?.let { commitTemplate -> commitTemplate.content = loadedContent }
@@ -189,9 +190,11 @@ internal class GitCommitTemplateTracker(
     if (gitCommitTemplatePath.isBlank()) return null
     if (gitCommitTemplatePath.endsWith('/')) return null
 
-    return resolvePathAsAbsolute(repository, gitCommitTemplatePath)
-           ?: resolvePathRelativeToUserHome(gitCommitTemplatePath)
-           ?: resolvePathRelativeToRootDirs(repository, gitCommitTemplatePath)
+    val templatePath = resolvePathAsAbsolute(repository, gitCommitTemplatePath)
+                       ?: resolvePathRelativeToUserHome(gitCommitTemplatePath)
+                       ?: resolvePathRelativeToRootDirs(repository, gitCommitTemplatePath)
+                       ?: return null
+    return FileUtil.toSystemIndependentName(templatePath)
   }
 
   private fun resolvePathAsAbsolute(repository: GitRepository, gitCommitTemplatePath: String): String? {
@@ -240,17 +243,16 @@ internal class GitCommitTemplateTracker(
   }
 
   private fun updateTemplatePath(repository: GitRepository, newTemplatePath: String?): Boolean {
-    val oldWatchRoot = TEMPLATES_LOCK.read { commitTemplates[repository]?.watchedRoot }
-    val oldTemplatePath = oldWatchRoot?.rootPath
+    val oldTemplate = TEMPLATES_LOCK.read { commitTemplates[repository] }
+    val oldTemplatePath = oldTemplate?.templatePath
     if (oldTemplatePath == newTemplatePath) return false
     if (newTemplatePath == null) {
       stopTrackCommitTemplate(repository)
       return true
     }
 
-    val lfs = LocalFileSystem.getInstance()
     //explicit refresh needed for global templates to subscribe them in VFS and receive VFS events
-    lfs.refreshAndFindFileByPath(newTemplatePath)
+    StandardFileSystems.local().refreshAndFindFileByPath(newTemplatePath)
 
     val templateContent = loadTemplateContent(repository, newTemplatePath)
     if (templateContent == null) {
@@ -258,21 +260,10 @@ internal class GitCommitTemplateTracker(
       return true
     }
 
-    val newWatchRoot = when {
-      oldWatchRoot != null -> lfs.replaceWatchedRoot(oldWatchRoot, newTemplatePath, false)
-      else -> lfs.addRootToWatch(newTemplatePath, false)
-    }
+    oldTemplate?.watchedRoot?.close()
+    val newWatchRoot = WatchRoots.getInstance().watch(newTemplatePath, false)
 
-    if (newWatchRoot == null) {
-      LOG.error("Cannot add root to watch $newTemplatePath")
-      if (oldWatchRoot != null) {
-        stopTrackCommitTemplate(repository)
-        return true
-      }
-      return false
-    }
-
-    TEMPLATES_LOCK.write { commitTemplates[repository] = GitCommitTemplate(newWatchRoot, templateContent) }
+    TEMPLATES_LOCK.write { commitTemplates[repository] = GitCommitTemplate(newTemplatePath, newWatchRoot, templateContent) }
     return true
   }
 
@@ -280,10 +271,7 @@ internal class GitCommitTemplateTracker(
     val watchRootsToDispose = TEMPLATES_LOCK.read { commitTemplates.values.map(GitCommitTemplate::watchedRoot) }
     if (watchRootsToDispose.isEmpty()) return
 
-    val lfs = LocalFileSystem.getInstance()
-    for (watchedRoot in watchRootsToDispose) {
-      lfs.removeWatchedRoot(watchedRoot)
-    }
+    watchRootsToDispose.forEach { it.close() }
 
     TEMPLATES_LOCK.write {
       commitTemplates.clear()
@@ -304,7 +292,8 @@ internal class GitCommitTemplateTracker(
   }
 }
 
-private class GitCommitTemplate(val watchedRoot: LocalFileSystem.WatchRequest,
+private class GitCommitTemplate(val templatePath: String,
+                                val watchedRoot: WatchRoots.Token,
                                 var content: String)
 
 /**

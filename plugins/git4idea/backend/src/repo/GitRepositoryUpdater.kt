@@ -6,10 +6,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.WatchRoots
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.CommonProcessors
 import com.intellij.util.containers.ContainerUtil
@@ -32,7 +32,7 @@ internal class GitRepositoryUpdater(
   private val headsDir: VirtualFile?
   private val tagsDir: VirtualFile?
   private val reftableDir: VirtualFile?
-  private val watchRequests: Set<WatchRequest> = LocalFileSystem.getInstance().addRootsToWatch(rootDirs.map { it.path }, true)
+  private val watchRoots: List<WatchRoots.Token> = rootDirs.map { WatchRoots.getInstance().watch(it.path, true) }
 
   init {
     visitSubDirsInVfs()
@@ -48,7 +48,7 @@ internal class GitRepositoryUpdater(
   }
 
   override fun dispose() {
-    LocalFileSystem.getInstance().removeWatchedRoots(watchRequests)
+    watchRoots.forEach { it.close() }
   }
 
   override suspend fun filesChanged(events: List<VFileEvent>) {
@@ -180,7 +180,7 @@ internal class GitRepositoryUpdater(
     }
 
     for (path in repositoryFiles.pathsToWatch) {
-      DvcsUtil.ensureAllChildrenInVfs(LocalFileSystem.getInstance().refreshAndFindFileByPath(path))
+      DvcsUtil.ensureAllChildrenInVfs(StandardFileSystems.local().refreshAndFindFileByPath(path))
     }
   }
 }
