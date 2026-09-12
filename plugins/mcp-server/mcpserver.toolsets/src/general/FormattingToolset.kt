@@ -16,8 +16,8 @@ import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -98,10 +98,10 @@ private suspend fun prepareRequestedFormattingFiles(
   val requestedFiles = LinkedHashMap<Path, String>()
   files.forEach { addRequestedFormattingFile(requestedFiles, project, it) }
 
-  val localFileSystem = LocalFileSystem.getInstance()
+  val fileManager = VirtualFileManager.getInstance()
   val psiManager = PsiManager.getInstance(project)
   return requestedFiles.map { (resolvedPath, path) ->
-    val file = localFileSystem.refreshAndFindFileByNioFile(resolvedPath)
+    val file = fileManager.refreshAndFindFileByNioPath(resolvedPath)
                ?: mcpFail("File $resolvedPath doesn't exist or can't be opened")
     val psiFile = readAction { psiManager.findFile(file) }
                   ?: mcpFail("File $file doesn't exist or can't be opened")

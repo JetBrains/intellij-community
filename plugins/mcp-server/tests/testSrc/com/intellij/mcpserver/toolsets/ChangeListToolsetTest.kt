@@ -10,7 +10,7 @@ import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDirectoryMapping
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -244,7 +244,7 @@ class ChangeListToolsetTest : GeneralMcpToolsetTestBase() {
 
     val mainJavaPath = repositoryPath.resolve("src/Main.java")
     mainJavaPath.writeText("public class Main { }\n")
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(mainJavaPath)?.refresh(false, false)
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(mainJavaPath)?.refresh(false, false)
 
     withContext(Dispatchers.EDT) {
       ProjectLevelVcsManager.getInstance(project)
@@ -315,7 +315,7 @@ class ChangeListToolsetTest : GeneralMcpToolsetTestBase() {
     runGit(repositoryPath, "config", "user.name", "Mcp Test")
     runGit(repositoryPath, "add", "-A")
     runGit(repositoryPath, "commit", "-m", "init")
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(repositoryPath.resolve(".git"))
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(repositoryPath.resolve(".git"))
   }
 
   private fun runGit(repositoryPath: Path, vararg args: String): String {

@@ -38,7 +38,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.compose.swing.ComposeSwingSearchableConfigurable
 import com.intellij.platform.compose.swing.components.BrowserLink
 import com.intellij.platform.compose.swing.components.Comment
@@ -515,7 +515,7 @@ fun openFileInEditor(filePath: Path, project: Project?) {
   else {
     filePath
   }
-  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(definitelyCreatedFile)
+  val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(definitelyCreatedFile)
   virtualFile?.let { file ->
     FileEditorManager.getInstance(project).openFile(file, true)
   }

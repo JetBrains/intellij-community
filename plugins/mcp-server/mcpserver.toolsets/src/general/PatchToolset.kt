@@ -19,10 +19,10 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers
@@ -51,7 +51,7 @@ class PatchToolset : McpToolset {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.applying.patch"))
     val project = currentCoroutineContext().project
     val fileDocumentManager = serviceAsync<FileDocumentManager>()
-    val localFileSystem = LocalFileSystem.getInstance()
+    val fileManager = VirtualFileManager.getInstance()
 
     val patchText = PatchApplyEngine.extractPatchText(input, patch)
     val operations = PatchApplyEngine.parsePatch(patchText)
@@ -65,8 +65,8 @@ class PatchToolset : McpToolset {
       runCatching {
         when (operation) {
           is AddPatchOperation -> applyAdd(project, operation)
-          is DeletePatchOperation -> applyDelete(this, project, localFileSystem, operation)
-          is UpdatePatchOperation -> applyUpdate(this, project, localFileSystem, fileDocumentManager, operation)
+          is DeletePatchOperation -> applyDelete(this, project, fileManager, operation)
+          is UpdatePatchOperation -> applyUpdate(this, project, fileManager, fileDocumentManager, operation)
         }
       }.onSuccess {
         applied++
@@ -116,11 +116,11 @@ private suspend fun applyAdd(project: Project, operation: AddPatchOperation) {
 private suspend fun applyDelete(
   requestor: Any,
   project: Project,
-  localFileSystem: LocalFileSystem,
+  fileManager: VirtualFileManager,
   operation: DeletePatchOperation,
 ) {
   val resolvedPath = project.resolveInProject(operation.path)
-  val file = findFile(localFileSystem, resolvedPath, operation.path)
+  val file = findFile(fileManager, resolvedPath, operation.path)
   if (file.isDirectory) mcpFail("Path is not a file: ${operation.path}")
 
   backgroundWriteAction {
@@ -131,12 +131,12 @@ private suspend fun applyDelete(
 private suspend fun applyUpdate(
   requestor: Any,
   project: Project,
-  localFileSystem: LocalFileSystem,
+  fileManager: VirtualFileManager,
   fileDocumentManager: FileDocumentManager,
   operation: UpdatePatchOperation,
 ) {
   val sourcePath = project.resolveInProject(operation.path)
-  val sourceFile = findFile(localFileSystem, sourcePath, operation.path)
+  val sourceFile = findFile(fileManager, sourcePath, operation.path)
   if (sourceFile.isDirectory) mcpFail("Path is not a file: ${operation.path}")
 
   if (!tryApplyUpdateWithDocument(requestor, project, fileDocumentManager, sourceFile, sourcePath, operation)) {
@@ -241,9 +241,9 @@ private suspend fun applyUpdateWithoutDocument(
   }
 }
 
-private fun findFile(localFileSystem: LocalFileSystem, resolvedPath: java.nio.file.Path, pathInProject: String): VirtualFile {
-  return localFileSystem.findFileByNioFile(resolvedPath)
-         ?: localFileSystem.refreshAndFindFileByNioFile(resolvedPath)
+private fun findFile(fileManager: VirtualFileManager, resolvedPath: java.nio.file.Path, pathInProject: String): VirtualFile {
+  return fileManager.findFileByNioPath(resolvedPath)
+         ?: fileManager.refreshAndFindFileByNioPath(resolvedPath)
          ?: mcpFail("File not found: $pathInProject")
 }
 

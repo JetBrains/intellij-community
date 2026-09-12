@@ -15,8 +15,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.fixture.fileOrDirInProjectFixture
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import io.modelcontextprotocol.kotlin.sdk.shared.RequestOptions
@@ -328,7 +328,7 @@ class ReadToolsetTest : GeneralMcpToolsetTestBase() {
         Files.createDirectories(excludedDir)
         val excludedFilePath = excludedDir.resolve("excluded.txt")
         Files.writeString(excludedFilePath, "excluded project file")
-        val excludedDirVFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(excludedDir)
+        val excludedDirVFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(excludedDir)
             ?: error("Cannot resolve $excludedDir")
 
         edtWriteAction {

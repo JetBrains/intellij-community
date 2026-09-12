@@ -17,8 +17,8 @@ import com.intellij.mcpserver.util.INDEXING_PARTIAL_RESULT_REASON
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.junit5.fixture.fileOrDirInProjectFixture
 import kotlinx.coroutines.Dispatchers
@@ -918,9 +918,9 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
 
   @Test
   fun prepareLintFiles_handles_cached_and_uncached_files(): Unit = runBlocking(Dispatchers.Default) {
-    val localFileSystem = LocalFileSystem.getInstance()
+    val fileManager = VirtualFileManager.getInstance()
     val cachedPath = mainJavaFile.toNioPath()
-    requireNotNull(localFileSystem.refreshAndFindFileByNioFile(cachedPath))
+    requireNotNull(fileManager.refreshAndFindFileByNioPath(cachedPath))
     val tempDir = Files.createTempDirectory("mcpserver-prepareLintFiles-")
     try {
       val uncachedPath = Files.writeString(tempDir.resolve("uncached.txt"), "uncached")

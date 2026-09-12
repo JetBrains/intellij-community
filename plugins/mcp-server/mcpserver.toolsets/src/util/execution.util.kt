@@ -51,7 +51,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -852,7 +852,7 @@ fun resolveRunConfigurationFromCodeLocation(
   if (!resolvedPath.isRegularFile()) mcpFail("Not a file: $filePath")
   if (line < 1) mcpFail("Line number must be >= 1, got: $line")
 
-  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+  val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resolvedPath)
                     ?: mcpFail("Cannot access file: $filePath")
   val psiFile = PsiManager.getInstance(project).findFile(virtualFile)
                 ?: mcpFail("Cannot find PSI file: $filePath")

@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +22,6 @@ import kotlin.coroutines.resume
  */
 suspend fun awaitExternalChangesAndIndexing(project: Project) {
   val dumbService = project.serviceAsync<DumbService>()
-  val localFileSystem = LocalFileSystem.getInstance()
   // Get project roots
   val baseDirectories = project.getBaseDirectories()
   (LocalFileSystem.getInstance() as LocalFileSystemImpl).markSuspiciousFilesDirty(emptyList<VirtualFile>())
@@ -29,9 +29,7 @@ suspend fun awaitExternalChangesAndIndexing(project: Project) {
 
   if (dirtyFiles.isNotEmpty()) {
     suspendCancellableCoroutine { cont ->
-      LocalFileSystem.getInstance().refreshFiles(dirtyFiles, true, true) {
-        cont.resume(Unit)
-      }
+      RefreshQueue.getInstance().refresh(async = true, recursive = true, finishRunnable = { cont.resume(Unit) }, files = dirtyFiles)
     }
   }
 

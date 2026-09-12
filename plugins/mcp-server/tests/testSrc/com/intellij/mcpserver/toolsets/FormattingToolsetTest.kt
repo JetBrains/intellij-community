@@ -10,7 +10,7 @@ import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -72,9 +72,9 @@ class FormattingToolsetTest : GeneralMcpToolsetTestBase() {
           }
           """.trimIndent()
         )
-        val targetVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(targetPath)
+        val targetVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(targetPath)
                                 ?: error("Cannot refresh $targetPath")
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(secondTargetPath)
+        VirtualFileManager.getInstance().refreshAndFindFileByNioPath(secondTargetPath)
         val targetPsiFile = readAction { PsiManager.getInstance(project).findFile(targetVirtualFile) }
                             ?: error("Cannot find PSI for $targetPath")
         val (editorConfigProperties, editorConfigFiles) = Utils.processEditorConfig(project, targetVirtualFile)
@@ -144,7 +144,7 @@ class FormattingToolsetTest : GeneralMcpToolsetTestBase() {
       tab_width = 2
       """.trimIndent()
     )
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(editorConfigPath)
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(editorConfigPath)
   }
 
   private fun setEditorConfigEnabledInTests(enabled: Boolean) {

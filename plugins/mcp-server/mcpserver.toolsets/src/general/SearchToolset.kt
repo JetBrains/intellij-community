@@ -35,9 +35,9 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.getPathMatcher
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.search.FilenameIndex
@@ -724,7 +724,7 @@ private fun resolveSearchRoot(
   for (candidate in candidates) {
     val resolved = project.resolveInProject(candidate.pathString)
     if (!resolved.isDirectory()) continue
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolved)
+    val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resolved)
     if (virtualFile != null) return virtualFile
   }
   return null

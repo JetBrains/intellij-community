@@ -17,8 +17,8 @@ import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -189,7 +189,7 @@ class VcsToolset : McpToolset {
 
     while (current.startsWith(projectDirectory)) {
       if (current.resolve(".git").exists()) {
-        val root = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(current) ?: break
+        val root = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(current) ?: break
         val currentBranch = try {
           readCurrentBranchName(project, root)
         }

@@ -21,7 +21,7 @@ import com.intellij.mcpserver.toolsets.util.collectRunPoints
 import com.intellij.mcpserver.toolsets.util.executeRunConfiguration
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.serialization.EncodeDefault
@@ -63,7 +63,7 @@ class ExecutionToolset : McpToolset {
       val resolvedPath = resolveExistingRegularFileInProject(project = project, pathInProject = filePath)
 
       val runPoints = readAction {
-        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+        val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resolvedPath)
                           ?: mcpFail("Cannot access file: $filePath")
         val psiFile = PsiManager.getInstance(project).findFile(virtualFile)
                       ?: mcpFail("Cannot find PSI file: $filePath")

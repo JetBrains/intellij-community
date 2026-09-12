@@ -24,8 +24,8 @@ import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.toNioPathOrNull
@@ -97,8 +97,8 @@ class FileToolset : McpToolset {
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(filePath)
 
-    val file = LocalFileSystem.getInstance().findFileByNioFile(resolvedPath)
-               ?: LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+    val file = VirtualFileManager.getInstance().findFileByNioPath(resolvedPath)
+               ?: VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resolvedPath)
 
     if (file == null || !file.exists() || !file.isFile) mcpFail("File $filePath doesn't exist or can't be opened")
 

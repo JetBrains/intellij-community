@@ -30,8 +30,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiElement
@@ -91,7 +91,7 @@ private suspend fun chooseByNameSearchSymbols(
   val projectDir = project.projectDirectory
   val pathScope = buildPathScope(projectDir, paths)
   val directoryFilterPath = resolveDirectoryFilter(project, pathScope)
-  val directoryFilterFile = directoryFilterPath?.let { LocalFileSystem.getInstance().refreshAndFindFileByNioFile(it) }
+  val directoryFilterFile = directoryFilterPath?.let { VirtualFileManager.getInstance().refreshAndFindFileByNioPath(it) }
   val baseSearchScope = directoryFilterFile?.let { GlobalSearchScopes.directoryScope(project, it, true) }
                         ?: if (includeExternal) GlobalSearchScope.allScope(project)
                         else GlobalSearchScope.projectScope(project)

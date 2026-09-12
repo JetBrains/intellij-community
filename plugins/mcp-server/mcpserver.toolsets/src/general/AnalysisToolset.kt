@@ -35,8 +35,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskManager
@@ -314,9 +314,9 @@ class AnalysisToolset : McpToolset {
         val task = if (!filesToRebuild.isNullOrEmpty()) {
           val filePaths = filesToRebuild.map { file -> project.resolveInProject(file) }
           logger.trace { "Refreshing files: $filePaths..." }
-          LocalFileSystem.getInstance().refreshNioFiles(filePaths)
+          RefreshQueue.getInstance().refreshPaths(false, false, null, filePaths)
           val virtualFiles =
-            filePaths.map { file -> LocalFileSystem.getInstance().findFileByNioFile(file) ?: mcpFail("File not found: $file") }
+            filePaths.map { file -> VirtualFileManager.getInstance().findFileByNioPath(file) ?: mcpFail("File not found: $file") }
           logger.trace { "Creating build task for files: ${virtualFiles.joinToString { it.path }}" }
           readAction {
             (ProjectTaskManager.getInstance(project) as ProjectTaskManagerImpl).createModulesFilesTask(virtualFiles.toTypedArray())

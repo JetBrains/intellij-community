@@ -19,7 +19,7 @@ import com.intellij.mcpserver.util.getElementSymbolInfo
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.documentation.impl.computeDocumentationAsync
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
@@ -60,8 +60,8 @@ class CodeInsightToolset : McpToolset {
     val project = currentCoroutineContext().project
 
     val resolvedPath = project.resolveInProject(filePath)
-    val virtualFile = (LocalFileSystem.getInstance().findFileByNioFile(resolvedPath)
-                       ?: LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath))
+    val virtualFile = (VirtualFileManager.getInstance().findFileByNioPath(resolvedPath)
+                       ?: VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resolvedPath))
                       ?: mcpFail("File not found: $filePath")
     val (markdownsWithSymbol, partialResultReason) = checkIndexingInProgress(project) {
       val (documentationTargets, symbolInfo) = readAction {

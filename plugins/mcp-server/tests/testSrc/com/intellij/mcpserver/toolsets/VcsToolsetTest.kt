@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.vcs.VcsToolset
 import com.intellij.mcpserver.util.projectDirectory
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -155,7 +155,7 @@ class VcsToolsetTest : GeneralMcpToolsetTestBase() {
     runGit(repositoryPath, "init")
     runGit(repositoryPath, "config", "user.email", "mcp-test@example.com")
     runGit(repositoryPath, "config", "user.name", "Mcp Test")
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(repositoryPath.resolve(".git"))
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(repositoryPath.resolve(".git"))
   }
 
   private fun cleanupExistingGitRepository(repositoryPath: Path) {

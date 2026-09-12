@@ -15,7 +15,7 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -65,8 +65,8 @@ class RefactoringToolset : McpToolset {
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
 
-    val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(resolvedPath)
-                      ?: LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+    val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(resolvedPath)
+                      ?: VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resolvedPath)
                       ?: mcpFail("File not found: $pathInProject")
 
     val document = readAction {

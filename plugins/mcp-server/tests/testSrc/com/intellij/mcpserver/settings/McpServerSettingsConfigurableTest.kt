@@ -13,8 +13,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -61,7 +61,7 @@ class McpServerSettingsConfigurableTest {
 
     openFileInEditor(missingPath, project)
 
-    val createdFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(missingPath)
+    val createdFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(missingPath)
     assertThat(missingPath.exists()).isTrue()
     assertThat(createdFile).isNotNull()
     assertThat(FileEditorManager.getInstance(project).isFileOpen(createdFile!!)).isTrue()
