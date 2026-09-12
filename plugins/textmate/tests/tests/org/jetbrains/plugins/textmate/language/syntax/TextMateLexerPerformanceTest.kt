@@ -65,14 +65,44 @@ class TextMateLexerPerformanceTest : UsefulTestCase() {
     }
   }
 
-  private fun doPerformanceTest(syntaxMatcher: TextMateSyntaxMatcher) {
-    val builder = TextMateSyntaxTableBuilder(TextMateConcurrentMapInterner())
-    val matchers = builder.loadBundle(TestUtil.JAVA)
-    val myFile = File(PlatformTestUtil.getCommunityPath() + "/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorImpl.java")
-    val syntaxTable = builder.build()
+  /**
+   * The PowerShell case from IJPL-211694: the whole body sits inside one scriptblock, so the rule
+   * stack stays deep for the whole file and every line pays the full child scan of the top rule.
+   *
+   * The matcher is wired exactly as `TextMateSyntaxHighlighterFactory` wires it, so the number
+   * tracks what the editor does. The other cases here compare the caches against each other and
+   * use other combinations on purpose.
+   */
+  fun testPerformancePowerShell() {
+    val regexProvider = CaffeineCachingRegexProvider(RememberingLastMatchRegexFactory(JoniRegexFactory()))
+    TextMateSelectorWeigherImpl().caching().use { weigher ->
+      TextMateSyntaxMatcherImpl(regexProvider, weigher).caching().use { syntaxMatcher ->
+        doPerformanceTest(syntaxMatcher = syntaxMatcher,
+                          bundleName = TestUtil.POWERSHELL,
+                          fileName = "demo.ps1",
+                          text = powerShellSingleScriptBlock())
+      }
+    }
+  }
 
-    val scopeName = findScopeByFileName(matchers, myFile.name)
-    val text = StringUtil.convertLineSeparators(FileUtil.loadFile(myFile, StandardCharsets.UTF_8))
+  private fun doPerformanceTest(syntaxMatcher: TextMateSyntaxMatcher) {
+    val file = File(PlatformTestUtil.getCommunityPath() + "/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorImpl.java")
+    doPerformanceTest(syntaxMatcher = syntaxMatcher,
+                      bundleName = TestUtil.JAVA,
+                      fileName = file.name,
+                      text = StringUtil.convertLineSeparators(FileUtil.loadFile(file, StandardCharsets.UTF_8)))
+  }
+
+  private fun doPerformanceTest(
+    syntaxMatcher: TextMateSyntaxMatcher,
+    bundleName: String,
+    fileName: String,
+    text: String,
+  ) {
+    val builder = TextMateSyntaxTableBuilder(TextMateConcurrentMapInterner())
+    val matchers = builder.loadBundle(bundleName)
+    val syntaxTable = builder.build()
+    val scopeName = findScopeByFileName(matchers, fileName)
 
     Benchmark.newBenchmark(getTestName(true)) {
       val lexer = TextMateHighlightingLexer(syntaxTable.getLanguageDescriptor(scopeName), syntaxMatcher, -1)
@@ -81,5 +111,40 @@ class TextMateLexerPerformanceTest : UsefulTestCase() {
         lexer.advance()
       }
     }.start()
+  }
+
+  /**
+   * Builds a script whose whole body is nested in one function, in the shape of the file attached
+   * to IJPL-211694. Each block repeats the same six lines with a different index, so the text is
+   * long without being a single pathological line.
+   */
+  private fun powerShellSingleScriptBlock(): String {
+    return buildString {
+      append("function Invoke-DemoWorkload {\n")
+      for (i in 1..BLOCKS) {
+        append(BLOCK_TEMPLATE.replace(INDEX_MARKER, i.toString()))
+      }
+      append("}\n")
+    }
+  }
+
+  companion object {
+    private const val BLOCKS = 1200
+
+    /** Stands for the index of the block. No PowerShell syntax in the template uses a tilde. */
+    private const val INDEX_MARKER = "~i~"
+
+    /**
+     * One block of the generated script. The multi-dollar prefix keeps every `$` of the PowerShell
+     * source literal, so the template reads as the script does.
+     */
+    private val BLOCK_TEMPLATE = $$"""
+      $item~i~ = Get-ChildItem -Path "C:\logs\app-~i~.log" -Recurse -Force   # scan ~i~
+      $map~i~ = @{ Name = 'demo-~i~'; Retries = ~i~; Enabled = $true; Ratio = ~i~.5 }
+      if ($item~i~.Length -gt ~i~) { Write-Output "big: $($item~i~.Name) [$($map~i~.Retries)]" }
+      foreach ($entry in $map~i~.GetEnumerator()) { Write-Verbose "$($entry.Key) = $($entry.Value)" }
+      $total~i~ = ($item~i~ | Measure-Object -Property Length -Sum).Sum -band 0xFF0001
+      try { Remove-Item -LiteralPath $item~i~.FullName -WhatIf } catch { Write-Error $_.Exception.Message }
+    """.trimIndent().prependIndent("    ") + "\n"
   }
 }
