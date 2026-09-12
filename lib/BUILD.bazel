@@ -20968,54 +20968,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.squareup.okhttp3/mockwebserver-5.0.0-alpha.11.jar_copy",
-    src = "@com_squareup_okhttp3-mockwebserver-5_0_0-alpha_11_http//file",
-    out = "com.squareup.okhttp3/mockwebserver-5.0.0-alpha.11.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.squareup.okhttp3/mockwebserver3-5.0.0-alpha.11.jar_copy",
-    src = "@com_squareup_okhttp3-mockwebserver3-5_0_0-alpha_11_http//file",
-    out = "com.squareup.okhttp3/mockwebserver3-5.0.0-alpha.11.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "platform-test_framework-okhttp3-mockwebserver",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_squareup_okhttp3-mockwebserver-5_0_0-alpha_11_http_import",
-        ":com_squareup_okhttp3-mockwebserver3-5_0_0-alpha_11_http_import",
-    ],
-)
-
-jvm_import(
-    name = "com_squareup_okhttp3-mockwebserver-5_0_0-alpha_11_http_import",
-    jar = "@com_squareup_okhttp3-mockwebserver-5_0_0-alpha_11_http//file",
-    source_jar = "@com_squareup_okhttp3-mockwebserver-5_0_0-alpha_11-sources_http//file",
-)
-
-jvm_import(
-    name = "com_squareup_okhttp3-mockwebserver3-5_0_0-alpha_11_http_import",
-    jar = "@com_squareup_okhttp3-mockwebserver3-5_0_0-alpha_11_http//file",
-    source_jar = "@com_squareup_okhttp3-mockwebserver3-5_0_0-alpha_11-sources_http//file",
-)
-
-java_library(
-    name = "platform-test_framework-tests-okhttp3-mockwebserver",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_squareup_okhttp3-mockwebserver-5_0_0-alpha_11_http_import",
-        ":com_squareup_okhttp3-mockwebserver3-5_0_0-alpha_11_http_import",
-    ],
-)
-
-copy_file(
     name = "commons-collections/commons-collections-3.2.2.jar_copy",
     src = "@commons-collections-commons-collections-3_2_2_http//file",
     out = "commons-collections/commons-collections-3.2.2.jar",

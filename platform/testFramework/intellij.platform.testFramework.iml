@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.okhttp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
@@ -80,40 +79,6 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.tools.testsBootstrap" scope="TEST" />
-    <orderEntry type="module-library" scope="TEST">
-      <library name="okhttp3-mockwebserver" type="repository">
-        <properties maven-id="com.squareup.okhttp3:mockwebserver:5.0.0-alpha.11">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver/5.0.0-alpha.11/mockwebserver-5.0.0-alpha.11.jar">
-              <sha256sum>4a30234a911a73ae71f5aec5f98bee243c172665e841f8d532ef77e0b5e81010</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver3/5.0.0-alpha.11/mockwebserver3-5.0.0-alpha.11.jar">
-              <sha256sum>9c9e3ef454b514d4a1342faf99c7d4cb41eaae4cb7aefcc93cb7b202bdf4fdfd</sha256sum>
-            </artifact>
-          </verification>
-          <exclude>
-            <dependency maven-id="com.squareup.okhttp3:okhttp-jvm" />
-            <dependency maven-id="junit:junit" />
-            <dependency maven-id="org.hamcrest:hamcrest-core" />
-            <dependency maven-id="org.jetbrains:annotations" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="com.squareup.okio:okio-jvm" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver/5.0.0-alpha.11/mockwebserver-5.0.0-alpha.11.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver3/5.0.0-alpha.11/mockwebserver3-5.0.0-alpha.11.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver/5.0.0-alpha.11/mockwebserver-5.0.0-alpha.11-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver3/5.0.0-alpha.11/mockwebserver3-5.0.0-alpha.11-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
     <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution" />

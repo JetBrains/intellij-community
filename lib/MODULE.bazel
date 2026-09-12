@@ -16647,34 +16647,6 @@ http_file(
 )
 
 http_file(
-    name = "com_squareup_okhttp3-mockwebserver-5_0_0-alpha_11_http",
-    downloaded_file_path = "mockwebserver-5.0.0-alpha.11.jar",
-    sha256 = "4a30234a911a73ae71f5aec5f98bee243c172665e841f8d532ef77e0b5e81010",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okhttp3/mockwebserver/5.0.0-alpha.11/mockwebserver-5.0.0-alpha.11.jar",
-)
-
-http_file(
-    name = "com_squareup_okhttp3-mockwebserver3-5_0_0-alpha_11_http",
-    downloaded_file_path = "mockwebserver3-5.0.0-alpha.11.jar",
-    sha256 = "9c9e3ef454b514d4a1342faf99c7d4cb41eaae4cb7aefcc93cb7b202bdf4fdfd",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okhttp3/mockwebserver3/5.0.0-alpha.11/mockwebserver3-5.0.0-alpha.11.jar",
-)
-
-http_file(
-    name = "com_squareup_okhttp3-mockwebserver-5_0_0-alpha_11-sources_http",
-    downloaded_file_path = "mockwebserver-5.0.0-alpha.11-sources.jar",
-    sha256 = "135eaa488b07fcba970c5281bf438c7d047d804697d4f832d0ae98a3f2ed8618",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okhttp3/mockwebserver/5.0.0-alpha.11/mockwebserver-5.0.0-alpha.11-sources.jar",
-)
-
-http_file(
-    name = "com_squareup_okhttp3-mockwebserver3-5_0_0-alpha_11-sources_http",
-    downloaded_file_path = "mockwebserver3-5.0.0-alpha.11-sources.jar",
-    sha256 = "018a3d0d7bfc471773a7f95545c95e19086c3188df5fa2140f5b7a63e36f4e8b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okhttp3/mockwebserver3/5.0.0-alpha.11/mockwebserver3-5.0.0-alpha.11-sources.jar",
-)
-
-http_file(
     name = "commons-collections-commons-collections-3_2_2_http",
     downloaded_file_path = "commons-collections-3.2.2.jar",
     sha256 = "eeeae917917144a68a741d4c0dff66aa5c5c5fd85593ff217bced3fc8ca783b8",

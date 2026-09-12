@@ -42,7 +42,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
-    <orderEntry type="module" module-name="intellij.libraries.okhttp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module-library">
       <library name="jetbrains.kotlin.jps.plugin.classpath" type="repository">

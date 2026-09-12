@@ -24,7 +24,6 @@
     <module name="intellij.libraries.kotlinx.coroutines.slf4j"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
-    <module name="intellij.libraries.okhttp"/>
     <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.libraries.rd.core"/>
     <module name="intellij.libraries.rd.framework"/>
