@@ -5,7 +5,7 @@ import com.intellij.json.JsonBundle
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.runInEdtAndWait as runInEdtAndWaitKt
@@ -128,7 +128,7 @@ class JsonSchemaCatalogNotificationProviderTest : BasePlatformTestCase() {
   private fun configureCatalog(): JsonSchemaCatalogManager {
     val manager = JsonSchemaService.Impl.get(project).catalogManager
     val path = JsonSchemaHeavyAbstractTest.getJsonSchemaTestDataFilePath("schemaStore/catalog.json")
-    val catalogFile = LocalFileSystem.getInstance().findFileByPath(path)
+    val catalogFile = StandardFileSystems.local().findFileByPath(path)
     assertNotNull(catalogFile)
     manager.registerTestSchemaStoreFile(catalogFile!!, testRootDisposable)
     return manager

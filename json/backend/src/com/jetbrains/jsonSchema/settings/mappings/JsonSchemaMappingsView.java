@@ -17,7 +17,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
@@ -105,7 +105,7 @@ public final class JsonSchemaMappingsView implements Disposable {
     DumbAwareAction.create(_ -> {
       String pathToSchema = ui.schemaField.getText();
       if (StringUtil.isEmptyOrSpaces(pathToSchema) || isHttpPath(pathToSchema)) return;
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(pathToSchema));
+      VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(new File(pathToSchema).getAbsolutePath());
       if (virtualFile == null) {
         BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
           .createHtmlTextBalloonBuilder(JsonBundle.message("json.schema.file.not.found"), UIUtil.getBalloonErrorIcon(), MessageType.ERROR.getPopupBackground(), null);

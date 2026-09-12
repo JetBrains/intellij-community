@@ -14,7 +14,7 @@ import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.Function;
@@ -160,7 +160,7 @@ public final class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJ
     else {
       File subPath = new File(schemaSubPath);
       final File file = subPath.isAbsolute() ? subPath : new File(myProject.getBasePath(), schemaSubPath);
-      if (!file.exists() || (vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)) == null) {
+      if (!file.exists() || (vFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath())) == null) {
         throw new ConfigurationException(
           (!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + JsonBundle.message("schema.configuration.error.file.does.not.exist"));
       }

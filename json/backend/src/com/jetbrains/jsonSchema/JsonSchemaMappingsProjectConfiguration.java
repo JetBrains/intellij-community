@@ -8,7 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -191,7 +191,7 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     if (basePath == null) {
       return null;
     }
-    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(basePath));
+    return StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(basePath));
   }
 
   public void markAsIgnored(VirtualFile virtualFile) {

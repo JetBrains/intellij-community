@@ -4,8 +4,9 @@ package com.jetbrains.jsonSchema.extension;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
@@ -79,7 +80,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
         myVirtualFile = JsonFileResolver.urlToFile(path);
       }
       else {
-        final LocalFileSystem lfs = LocalFileSystem.getInstance();
+        final VirtualFileSystem lfs = StandardFileSystems.local();
         myVirtualFile = lfs.findFileByPath(myFile);
         if (myVirtualFile == null) {
           myVirtualFile = lfs.refreshAndFindFileByPath(myFile);

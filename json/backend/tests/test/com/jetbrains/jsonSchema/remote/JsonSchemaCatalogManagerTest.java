@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.remote;
 
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -76,7 +76,7 @@ public class JsonSchemaCatalogManagerTest extends BasePlatformTestCase {
   private JsonSchemaCatalogManager configureCatalog() {
     JsonSchemaCatalogManager catalogManager = JsonSchemaService.Impl.get(getProject()).getCatalogManager();
     String path = JsonSchemaHeavyAbstractTest.getJsonSchemaTestDataFilePath("schemaStore/catalog.json");
-    VirtualFile catalogFile = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile catalogFile = StandardFileSystems.local().findFileByPath(path);
     Assert.assertNotNull(catalogFile);
     catalogManager.registerTestSchemaStoreFile(catalogFile, getTestRootDisposable());
     return catalogManager;

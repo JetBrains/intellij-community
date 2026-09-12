@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
@@ -100,7 +100,7 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
 
   private JsonSchemaObject getSchemaObject(File file) throws Exception {
     Assert.assertTrue(file.exists());
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
     Assert.assertNotNull(virtualFile);
     return JsonSchemaReader.readFromFile(getProject(), virtualFile);
   }
