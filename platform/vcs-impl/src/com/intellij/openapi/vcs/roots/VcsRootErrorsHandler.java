@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.configurable.VcsMappingConfigurable;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.vcsUtil.VcsUtil;
@@ -195,7 +195,7 @@ public final class VcsRootErrorsHandler {
 
   private boolean isIgnoredOrExcludedPath(@NotNull VcsDirectoryMapping mapping) {
     if (mapping.isDefaultMapping()) return false;
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
+    VirtualFile file = StandardFileSystems.local().findFileByPath(mapping.getDirectory());
     return file != null && (myChangeListManager.isIgnoredFile(file) || ReadAction.computeBlocking(() -> myProjectFileIndex.isExcluded(file)));
   }
 

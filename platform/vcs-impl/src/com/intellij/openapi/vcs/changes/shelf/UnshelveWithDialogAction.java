@@ -18,8 +18,8 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchMode;
 import com.intellij.openapi.vcs.changes.patch.UnshelvePatchDefaultExecutor;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
 
   @ApiStatus.Internal
   public static void unshelveSingleChangeList(ShelvedChangeList changeList, Project project, Change[] changes) {
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(changeList.getPath());
+    VirtualFile virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(changeList.getPath());
     if (virtualFile == null) {
       VcsBalloonProblemNotifier.showOverChangesView(project, VcsBundle.message("patch.apply.can.t.find.patch.file.warning",
                                                                                changeList.getPath()), MessageType.ERROR);

@@ -16,7 +16,7 @@ import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +63,7 @@ public final class ApplyPatchAction extends DumbAwareAction {
       final FileChooserDescriptor descriptor = ApplyPatchDifferentiatedDialog.createSelectPatchDescriptor();
       final VcsApplicationSettings settings = VcsApplicationSettings.getInstance();
       final VirtualFile toSelect = settings.PATCH_STORAGE_LOCATION == null ? null :
-                                   LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(settings.PATCH_STORAGE_LOCATION));
+                                   StandardFileSystems.local().refreshAndFindFileByPath(new File(settings.PATCH_STORAGE_LOCATION).getAbsolutePath());
 
       FileChooser.chooseFile(descriptor, project, toSelect, file -> {
         final VirtualFile parent = file.getParent();

@@ -38,8 +38,9 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
@@ -168,19 +169,19 @@ public final class VcsUtil {
   }
 
   public static @Nullable VirtualFile getVirtualFile(@NotNull @NonNls String path) {
-    return ReadAction.computeBlocking(() -> LocalFileSystem.getInstance().findFileByPath(path.replace(File.separatorChar, '/')));
+    return ReadAction.computeBlocking(() -> StandardFileSystems.local().findFileByPath(path.replace(File.separatorChar, '/')));
   }
 
   public static @Nullable VirtualFile getVirtualFile(@NotNull File file) {
-    return ReadAction.computeBlocking(() -> LocalFileSystem.getInstance().findFileByIoFile(file));
+    return ReadAction.computeBlocking(() -> StandardFileSystems.local().findFileByPath(file.getAbsolutePath()));
   }
 
   public static @Nullable VirtualFile getVirtualFileWithRefresh(@Nullable File file) {
     if (file == null) return null;
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    VirtualFile result = lfs.findFileByIoFile(file);
+    final VirtualFileSystem lfs = StandardFileSystems.local();
+    VirtualFile result = lfs.findFileByPath(file.getAbsolutePath());
     if (result == null) {
-      result = lfs.refreshAndFindFileByIoFile(file);
+      result = lfs.refreshAndFindFileByPath(file.getAbsolutePath());
     }
     return result;
   }

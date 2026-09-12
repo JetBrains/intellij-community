@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.ui.filter
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLogBranchFilter
@@ -64,7 +64,7 @@ class BranchFilterModel internal constructor(private val dataPackProvider: () ->
         return@mapNotNull null
       }
       val result = matcher.toMatchResult()
-      val root = LocalFileSystem.getInstance().findFileByPath(result.group(1))
+      val root = StandardFileSystems.local().findFileByPath(result.group(1))
       if (root == null) {
         LOG.warn("Root '" + result.group(1) + "' does not exist")
         return@mapNotNull null

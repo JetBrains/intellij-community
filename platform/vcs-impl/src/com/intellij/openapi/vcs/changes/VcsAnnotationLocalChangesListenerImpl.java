@@ -13,9 +13,10 @@ import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.Alarm;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,7 +46,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private static final Logger LOG = Logger.getInstance(VcsAnnotationLocalChangesListenerImpl.class);
 
   private final ZipperUpdater myUpdater;
-  private final LocalFileSystem myLocalFileSystem;
+  private final VirtualFileSystem myLocalFileSystem;
   private final ProjectLevelVcsManager myVcsManager;
 
   private final Set<String> myDirtyPaths = new HashSet<>();
@@ -58,7 +59,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
 
   public VcsAnnotationLocalChangesListenerImpl(@NotNull Project project) {
     myUpdater = new ZipperUpdater(getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.POOLED_THREAD, this);
-    myLocalFileSystem = LocalFileSystem.getInstance();
+    myLocalFileSystem = StandardFileSystems.local();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
@@ -145,9 +146,9 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
 
   private void refreshForPath(@NotNull String path, @Nullable VcsRevisionNumber number) {
     final File file = new File(path);
-    VirtualFile vf = myLocalFileSystem.findFileByIoFile(file);
+    VirtualFile vf = myLocalFileSystem.findFileByPath(file.getAbsolutePath());
     if (vf == null) {
-      vf = myLocalFileSystem.refreshAndFindFileByIoFile(file);
+      vf = myLocalFileSystem.refreshAndFindFileByPath(file.getAbsolutePath());
     }
     if (vf == null) return;
     processFile(number, vf);

@@ -3,8 +3,8 @@ package com.intellij.openapi.vcs
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManager
@@ -19,7 +19,7 @@ import kotlin.io.path.createDirectories
 internal fun createProjectConfigDir(project: Project): VirtualFile {
   val storePath = requireNotNull(project.stateStore.directoryStorePath) { "the project must be directory based" }
   storePath.createDirectories()
-  return requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(storePath)) {
+  return requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(storePath)) {
     "the project configuration directory must be in the VFS: $storePath"
   }
 }

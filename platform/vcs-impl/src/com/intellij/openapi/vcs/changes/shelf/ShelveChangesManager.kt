@@ -71,8 +71,8 @@ import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker
 import com.intellij.openapi.vcs.changes.ui.ShelvedChangeListDragBean
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.Shelve
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
@@ -857,7 +857,7 @@ class ShelveChangesManager @Internal constructor(
     }
 
     val baseDir: VirtualFile? =
-      LocalFileSystem.getInstance().findFileByNioFile(project.stateStore.projectBasePath)
+      VirtualFileManager.getInstance().findFileByNioPath(project.stateStore.projectBasePath)
     val activityId: ActivityId? = if (reportLocalHistoryActivity) VcsActivity.Unshelve else null
     val patchApplier = PatchApplier(
       project, baseDir!!,

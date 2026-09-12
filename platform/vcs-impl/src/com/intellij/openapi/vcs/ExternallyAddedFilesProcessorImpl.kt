@@ -15,9 +15,9 @@ import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
 import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.stateStore
@@ -135,7 +135,7 @@ internal class ExternallyAddedFilesProcessorImpl(
 
   private fun getProjectConfigDir(project: Project): VirtualFile? {
     val directoryStorePath = (if (project.isDefault) null else project.stateStore.directoryStorePath) ?: return null
-    val projectConfigDir = LocalFileSystem.getInstance().findFileByNioFile(directoryStorePath)
+    val projectConfigDir = VirtualFileManager.getInstance().findFileByNioPath(directoryStorePath)
     if (projectConfigDir == null) {
       LOG.warn("Cannot find project config directory for non-default and non-directory based project ${project.name}")
     }

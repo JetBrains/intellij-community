@@ -13,7 +13,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.vcs.log.CommitId
@@ -45,7 +45,7 @@ internal class VcsLogBookmarkProvider(private val project: Project) : BookmarkPr
   }
 
   override fun createBookmark(map: MutableMap<String, String>): Bookmark? {
-    val root = map[ROOT_KEY]?.let { LocalFileSystem.getInstance().findFileByPath(it) } ?: return null
+    val root = map[ROOT_KEY]?.let { StandardFileSystems.local().findFileByPath(it) } ?: return null
     val hash = map[HASH_KEY]?.let { HashImpl.build(it) } ?: return null
     return VcsLogBookmark(this, root, hash)
   }

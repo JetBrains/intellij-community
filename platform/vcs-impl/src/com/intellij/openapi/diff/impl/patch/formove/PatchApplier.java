@@ -33,10 +33,11 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchUtil;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
@@ -391,9 +392,9 @@ public final class PatchApplier {
   private static void refreshPassedFiles(@NotNull Project project,
                                          @NotNull Collection<? extends FilePath> directlyAffected,
                                          @NotNull Collection<? extends VirtualFile> indirectlyAffected) {
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final VirtualFileSystem lfs = StandardFileSystems.local();
     for (FilePath filePath : directlyAffected) {
-      lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
+      lfs.refreshAndFindFileByPath(filePath.getIOFile().getAbsolutePath());
     }
     if (project.isDisposed()) return;
 

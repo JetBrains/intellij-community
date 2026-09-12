@@ -27,9 +27,9 @@ import com.intellij.openapi.vcs.changes.VcsFreezingProcess
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.vcs.changes.ChangesUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
@@ -70,7 +70,7 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
     super.setUp()
     val project = project
     val testRootPath = Paths.get(project.basePath!!).resolve(getTestName(true)).createDirectories()
-    testRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(testRootPath)!!
+    testRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(testRootPath)!!
 
     vcs = MyMockVcs(project)
     changeProvider = MyMockChangeProvider()

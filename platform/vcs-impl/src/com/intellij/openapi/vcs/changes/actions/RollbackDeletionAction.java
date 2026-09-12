@@ -12,9 +12,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ui.RollbackProgressModifier;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +38,7 @@ public class RollbackDeletionAction extends AbstractMissingFilesAction {
     catch (ProcessCanceledException e) {
       // for files refresh
     }
-    LocalFileSystem.getInstance().refreshIoFiles(ChangesUtil.filePathsToFiles(files));
+    RefreshQueue.getInstance().refreshPaths(false, false, null, ContainerUtil.map(ChangesUtil.filePathsToFiles(files), File::toPath));
     return result;
   }
 

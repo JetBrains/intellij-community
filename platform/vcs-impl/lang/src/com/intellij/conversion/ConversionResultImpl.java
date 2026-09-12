@@ -12,8 +12,8 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.actions.EditAction;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -108,7 +108,7 @@ final class ConversionResultImpl implements ConversionResult {
   private static @NotNull List<VirtualFile> findVirtualFiles(@NotNull Collection<? extends Path> files) {
     List<VirtualFile> result = new ArrayList<>(files.size());
     for (Path file : files) {
-      VirtualFile element = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+      VirtualFile element = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file);
       if (element != null) {
         result.add(element);
       }

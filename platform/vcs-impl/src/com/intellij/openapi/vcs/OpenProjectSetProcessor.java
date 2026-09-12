@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectSetProcessor;
@@ -37,7 +37,7 @@ final class OpenProjectSetProcessor extends ProjectSetProcessor {
     }
 
     // no "project" entry
-    VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
+    VirtualFile dir = StandardFileSystems.local().refreshAndFindFileByPath(root);
     if (dir != null) {
       Project project = PlatformProjectOpenProcessor.openProjectLegacyJavaApi(dir, null, false);
       if (project != null) {

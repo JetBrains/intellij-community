@@ -13,7 +13,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker.RangeState
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.xml.util.XmlStringUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -124,7 +124,7 @@ class PartialLineStatusTrackerManagerState(private val project: Project) : Persi
 
     private fun readPartialFileState(element: Element): TrackerState? {
       val path = element.getAttributeValue(ATT_PATH) ?: return null
-      val virtualFile = LocalFileSystem.getInstance().findFileByPath(path) ?: return null
+      val virtualFile = StandardFileSystems.local().findFileByPath(path) ?: return null
 
       val vcsContent = element.getChild(NODE_VCS)?.getAttributeValue(ATT_CONTENT)
       val currentContent = element.getChild(NODE_CURRENT)?.getAttributeValue(ATT_CONTENT)

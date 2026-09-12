@@ -3,8 +3,9 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilterDescendantVirtualFiles;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.VfsTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,11 +42,11 @@ public class FilterDescendantFilesTest extends HeavyPlatformTestCase {
 
   private static List<VirtualFile> convert(final File[] files) {
     final List<VirtualFile> result = new ArrayList<>();
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final VirtualFileSystem lfs = StandardFileSystems.local();
     for (File file : files) {
-      VirtualFile vf = lfs.findFileByIoFile(file);
+      VirtualFile vf = lfs.findFileByPath(file.getAbsolutePath());
       if (vf == null) {
-        vf = lfs.refreshAndFindFileByIoFile(file);
+        vf = lfs.refreshAndFindFileByPath(file.getAbsolutePath());
       }
       if (vf != null) {
         result.add(vf);

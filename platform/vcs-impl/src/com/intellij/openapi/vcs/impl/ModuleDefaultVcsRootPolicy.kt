@@ -3,8 +3,8 @@ package com.intellij.openapi.vcs.impl
 
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.virtualFile
@@ -25,7 +25,7 @@ internal class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPoli
 
       val directoryStorePath = myProject.stateStore.directoryStorePath
       if (directoryStorePath != null) {
-        val ideaDir = LocalFileSystem.getInstance().findFileByNioFile(directoryStorePath)
+        val ideaDir = VirtualFileManager.getInstance().findFileByNioPath(directoryStorePath)
         if (ideaDir != null) {
           result.add(ideaDir)
         }

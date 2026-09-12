@@ -3,7 +3,7 @@ package com.intellij.vcs.log.ui.filter
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -34,7 +34,7 @@ class FileFilterModel(val roots: Set<VirtualFile>, uiProperties: MainVcsLogUiPro
       VcsLogFilterCollection.ROOT_FILTER -> {
         val selectedRoots: MutableList<VirtualFile> = ArrayList()
         for (path in values) {
-          val root = LocalFileSystem.getInstance().findFileByPath(path)
+          val root = StandardFileSystems.local().findFileByPath(path)
           if (root != null) {
             if (roots.contains(root)) {
               selectedRoots.add(root)

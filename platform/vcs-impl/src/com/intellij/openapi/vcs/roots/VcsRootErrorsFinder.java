@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.openapi.vcs.VcsRootErrorFilter;
 import com.intellij.openapi.vcs.VcsRootErrorImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,7 +117,7 @@ public final class VcsRootErrorsFinder {
     if (vcs == null) return false;
 
     VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
-    VirtualFile directory = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
+    VirtualFile directory = StandardFileSystems.local().findFileByPath(mapping.getDirectory());
     return directory != null && rootChecker.validateRoot(directory);
   }
 }

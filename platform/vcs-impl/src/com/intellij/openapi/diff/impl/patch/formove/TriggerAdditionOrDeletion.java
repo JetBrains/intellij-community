@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.VcsFileListenerContextHelper;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -207,7 +207,7 @@ public final class TriggerAdditionOrDeletion {
       while (current != null) {
         VirtualFile vf = current.getVirtualFile();
         if (vf == null) {
-          vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(current.getPath());
+          vf = StandardFileSystems.local().refreshAndFindFileByPath(current.getPath());
         }
         if (vf == null) {
           return;

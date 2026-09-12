@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vcs.changes.patch.AbstractFilePatchInProgress;
 import com.intellij.openapi.vcs.changes.patch.MatchPatchPaths;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.OpenProjectTaskBuilder;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -43,7 +43,7 @@ public class PatchMatcherTest {
 
       // MatchPatchPaths uses deprecated myProject.getBaseDir() - create and refresh it
       Files.createDirectories(projectDir);
-      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir);
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectDir);
       MatchPatchPaths iterator = new MatchPatchPaths(project);
       List<AbstractFilePatchInProgress<?>> filePatchInProgresses = iterator.execute(Collections.singletonList(patch));
 

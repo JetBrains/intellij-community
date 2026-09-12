@@ -3,7 +3,7 @@ package com.intellij.vcsUtil;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ApplicationRule;
 import org.junit.Assert;
@@ -35,7 +35,7 @@ public class VcsFileUtilTest {
   public void testWindowsFilePaths() {
     Assume.assumeTrue(SystemInfo.isWindows);
 
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath("C:/");
+    VirtualFile file = StandardFileSystems.local().findFileByPath("C:/");
     Assert.assertNotNull(file);
 
     assertEquals("C:/", VcsUtil.getFilePath(file).getPath());
@@ -60,7 +60,7 @@ public class VcsFileUtilTest {
   public void testLinuxFilePaths() {
     Assume.assumeTrue(SystemInfo.isUnix);
 
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath("/");
+    VirtualFile file = StandardFileSystems.local().findFileByPath("/");
     Assert.assertNotNull(file);
 
     assertEquals("/", VcsUtil.getFilePath(file).getPath());

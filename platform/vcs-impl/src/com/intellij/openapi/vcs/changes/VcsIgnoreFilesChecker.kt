@@ -6,7 +6,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.vcsUtil.VcsImplUtil
@@ -38,6 +38,6 @@ internal class VcsIgnoreFilesChecker(val project: Project) : VcsMappingListener 
   }
 
   private fun Project.getProjectConfigDirOrProjectFile() =
-    if (isDirectoryBased) stateStore.directoryStorePath?.let(LocalFileSystem.getInstance()::findFileByNioFile)
+    if (isDirectoryBased) stateStore.directoryStorePath?.let(VirtualFileManager.getInstance()::findFileByNioPath)
     else projectFile
 }

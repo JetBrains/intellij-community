@@ -2,7 +2,8 @@
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -12,7 +13,7 @@ import org.junit.After;
 import org.junit.Before;
 
 public abstract class FileBasedTest {
-  protected LocalFileSystem myLocalFileSystem;
+  protected VirtualFileSystem myLocalFileSystem;
   protected IdeaProjectTestFixture myProjectFixture;
   protected Project myProject;
 
@@ -22,7 +23,7 @@ public abstract class FileBasedTest {
     myProjectFixture.setUp();
     myProject = myProjectFixture.getProject();
 
-    myLocalFileSystem = LocalFileSystem.getInstance();
+    myLocalFileSystem = StandardFileSystems.local();
   }
 
   @After

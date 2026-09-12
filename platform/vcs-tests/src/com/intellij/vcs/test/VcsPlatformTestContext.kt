@@ -13,8 +13,8 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.HeavyTestHelper
 import com.intellij.testFramework.common.runAll
@@ -128,7 +128,7 @@ fun VcsPlatformTestContext.updateChangeListManager() {
  * Refreshes the given directory recursively, [testNioRoot] by default.
  */
 fun VcsPlatformTestContext.refresh(dir: Path = testNioRoot) {
-  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir) ?: return
+  val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(dir) ?: return
   refresh(virtualFile)
 }
 

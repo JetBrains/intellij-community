@@ -8,7 +8,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.Companion.MAPPING_DETECTION_LOG
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ModuleAttachListener
 import com.intellij.vcsUtil.VcsUtil
@@ -21,7 +21,7 @@ private class VcsModuleAttachListener : ModuleAttachListener {
   override fun afterAttach(module: Module, primaryModule: Module?, imlFile: Path, tasks: MutableList<suspend () -> Unit>) {
     primaryModule ?: return
 
-    val dotIdeaDirParent = imlFile.parent?.parent?.let { LocalFileSystem.getInstance().findFileByPath(it.toString()) }
+    val dotIdeaDirParent = imlFile.parent?.parent?.let { StandardFileSystems.local().findFileByPath(it.toString()) }
     if (dotIdeaDirParent != null) {
       tasks.add {
         // todo check and modify addVcsMapping (use EDT only if needed)

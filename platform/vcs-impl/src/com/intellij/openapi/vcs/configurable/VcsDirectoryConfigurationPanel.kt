@@ -29,7 +29,7 @@ import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.EditorNotificationPanel
@@ -227,7 +227,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : Di
   private fun isMappingValid(mapping: VcsDirectoryMapping): Boolean {
     if (mapping.isDefaultMapping) return true
     val checker = vcsRootCheckers[mapping.vcs] ?: return true
-    val directory = LocalFileSystem.getInstance().findFileByPath(mapping.directory)
+    val directory = StandardFileSystems.local().findFileByPath(mapping.directory)
     return directory != null && checker.validateRoot(directory)
   }
 

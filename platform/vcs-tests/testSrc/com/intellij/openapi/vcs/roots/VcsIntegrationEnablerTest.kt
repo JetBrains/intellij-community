@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.replaceService
 import com.intellij.util.containers.ContainerUtil
@@ -103,7 +103,7 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
   private fun given(vararg roots: String): Collection<VcsRoot> {
     return ContainerUtil.map(roots) { s ->
       val path = VcsTestUtil.toAbsolute(s, myProject)
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
+      StandardFileSystems.local().refreshAndFindFileByPath(path)
       VcsRoot(vcs, VcsUtil.getVirtualFile(path)!!)
     }
   }

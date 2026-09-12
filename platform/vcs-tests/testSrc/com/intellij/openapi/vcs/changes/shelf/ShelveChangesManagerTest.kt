@@ -12,10 +12,10 @@ import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor.ShelfPatchBuilder
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CurrentBinaryContentRevision
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.project.stateStore
 import com.intellij.concurrency.JobScheduler
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.createTestOpenProjectOptions
@@ -299,7 +299,7 @@ class ShelveChangesManagerTest {
   }
 
   private fun refreshProjectDir(projectFile: Path) {
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectFile.parent)!!
+    val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectFile.parent)!!
     ApplicationManager.getApplication().runWriteIntentReadAction<Unit, Nothing?> {
       VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
     }

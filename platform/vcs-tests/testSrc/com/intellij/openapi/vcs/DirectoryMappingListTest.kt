@@ -15,9 +15,10 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.VcsInitialization
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PlatformTestUtil
@@ -613,7 +614,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     if (filePath != "/" && file.parent != null && !FileUtil.isAncestor(FileUtil.getTempDirectory(), file.toString(), false)) {
       tempDir.scheduleDelete(file)
     }
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)
            ?: throw IllegalStateException("Cannot find virtual file: $file")
   }
 
@@ -641,7 +642,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   }
 
   private val String.virtualFile: VirtualFile
-    get() = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(FileUtil.toSystemDependentName(this)))!!
+    get() = StandardFileSystems.local().refreshAndFindFileByPath(File(FileUtil.toSystemDependentName(this)).absolutePath)!!
 
   private val String.filePath: FilePath
     get() = VcsUtil.getFilePath(File(FileUtil.toSystemDependentName(this)))

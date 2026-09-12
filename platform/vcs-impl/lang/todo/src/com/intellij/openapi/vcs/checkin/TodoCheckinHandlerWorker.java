@@ -34,7 +34,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -93,7 +93,7 @@ public class TodoCheckinHandlerWorker {
       ContentRevision beforeRevision = change.getBeforeRevision();
       ContentRevision afterRevision = requireNonNull(change.getAfterRevision());
       FilePath afterFilePath = afterRevision.getFile();
-      VirtualFile afterFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterFilePath.getPath());
+      VirtualFile afterFile = StandardFileSystems.local().refreshAndFindFileByPath(afterFilePath.getPath());
 
       EditedFileProcessorBase fileProcessor = ReadAction.computeBlocking(() -> {
         progress(afterFile != null ? ProjectUtil.calcRelativeToProjectPath(afterFile, myProject) : afterFilePath.getName());

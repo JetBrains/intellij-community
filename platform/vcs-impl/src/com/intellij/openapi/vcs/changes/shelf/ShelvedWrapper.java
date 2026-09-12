@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -126,7 +126,7 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
     if (getBeforePath() == null || project.getBasePath() == null) return null;
     final File baseDir = new File(project.getBasePath());
     final File file = new File(baseDir, getBeforePath());
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    return StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
   }
 
   @Override

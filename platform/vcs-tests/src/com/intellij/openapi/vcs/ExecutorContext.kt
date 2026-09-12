@@ -2,8 +2,8 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.io.delete
 import com.intellij.vcsUtil.VcsUtil
@@ -121,7 +121,7 @@ interface ExecutorContext {
     val file = child(dirName)
     Files.createDirectory(file)
     debug("# mkdir " + dirName)
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)
     return file
   }
 

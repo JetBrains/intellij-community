@@ -6,9 +6,9 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -132,7 +132,7 @@ public final class VcsTestUtil {
     // Workaround for IDEA-182560, try to wait until ongoing refreshes are finished
     VfsUtil.markDirty(true, true, file);
     var semaphore = new Semaphore(1);
-    LocalFileSystem.getInstance().refreshFiles(List.of(file), true, true, () -> semaphore.up());
+    RefreshQueue.getInstance().refresh(true, true, () -> semaphore.up(), List.of(file));
     semaphore.waitFor();
 
     try {

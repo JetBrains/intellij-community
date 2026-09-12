@@ -16,7 +16,7 @@ import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.committed.MockDelayingChangeProvider;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -45,7 +45,7 @@ public class DuringChangeListManagerUpdateTestScheme {
 
     final File mockVcsRoot = new File(tmpDirPath, "mock");
     mockVcsRoot.mkdir();
-    myVcsRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(mockVcsRoot);
+    myVcsRoot = StandardFileSystems.local().refreshAndFindFileByPath(mockVcsRoot.getAbsolutePath());
 
     final ProjectLevelVcsManagerImpl projectLevelVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
     projectLevelVcsManager.registerVcs(vcs);

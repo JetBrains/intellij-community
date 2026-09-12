@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -105,6 +105,6 @@ public abstract class VcsIntegrationEnabler {
   }
 
   protected static void refreshVcsDir(@NotNull VirtualFile projectDir, @NotNull String vcsDirName) {
-    LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getPath() + "/" + vcsDirName);
+    StandardFileSystems.local().refreshAndFindFileByPath(projectDir.getPath() + "/" + vcsDirName);
   }
 }

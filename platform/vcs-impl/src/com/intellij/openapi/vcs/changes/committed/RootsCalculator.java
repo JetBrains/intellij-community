@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -72,7 +72,7 @@ public final class RootsCalculator {
         }
       }
       else {
-        VirtualFile newFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(mapping.getDirectory());
+        VirtualFile newFile = StandardFileSystems.local().refreshAndFindFileByPath(mapping.getDirectory());
         if (newFile != null) {
           result.add(newFile);
         }

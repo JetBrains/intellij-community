@@ -47,7 +47,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeUtils;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -313,7 +313,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     FilePath path = ChangesUtil.getFilePath(change);
     VirtualFile file = path.getVirtualFile();
     if (file == null) {
-      file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
+      file = StandardFileSystems.local().refreshAndFindFileByPath(path.getPath());
     }
     if (file == null) throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.merge.file.not.found"));
 

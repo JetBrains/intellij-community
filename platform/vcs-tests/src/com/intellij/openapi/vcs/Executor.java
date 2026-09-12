@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +123,7 @@ public final class Executor {
     LOG.assertTrue(dirMade, "Directory " + dirName + " was not created on [" + file.getPath() + "]. " +
                             "list of files in the parent dir: " + Arrays.toString(file.getParentFile().listFiles()));
     debug("# mkdir " + dirName);
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
     return file;
   }
 

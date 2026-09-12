@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.project.ProjectKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ public final class CharsetEP implements PatchEP {
   @Override
   public CharSequence provideContent(@NotNull Project project, @NotNull String path, @Nullable CommitContext commitContext) {
     Path file = ProjectKt.getStateStore(project).getProjectBasePath().resolve(path);
-    VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+    VirtualFile vf = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file);
     return vf == null ? null : vf.getCharset().name();
   }
 

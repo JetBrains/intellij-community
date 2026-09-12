@@ -4,7 +4,7 @@ package com.intellij.openapi.diff.impl.patch.formove;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -125,7 +125,7 @@ public final class PathMerger {
     public boolean down(final String name) {
       VirtualFile nextChild = myCurrent.findChild(name);
       if (nextChild == null) {
-        nextChild = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myCurrent.getPath(), name));
+        nextChild = StandardFileSystems.local().refreshAndFindFileByPath(new File(myCurrent.getPath(), name).getAbsolutePath());
       }
       if (nextChild != null) {
         myCurrent = nextChild;

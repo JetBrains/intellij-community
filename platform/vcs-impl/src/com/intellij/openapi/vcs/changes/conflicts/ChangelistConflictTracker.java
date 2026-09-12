@@ -21,7 +21,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
@@ -195,7 +195,7 @@ public final class ChangelistConflictTracker {
       if (path == null) {
         continue;
       }
-      VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+      VirtualFile vf = StandardFileSystems.local().findFileByPath(new File(path).getAbsolutePath());
       if (vf == null || myChangeListManager.getChangeList(vf) == null) {
         continue;
       }

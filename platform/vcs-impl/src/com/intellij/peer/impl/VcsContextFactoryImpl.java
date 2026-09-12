@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.RemoteFilePath;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +33,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   @Override
   public @NotNull FilePath createFilePathOn(@NotNull File file) {
     String path = file.getPath();
-    VirtualFile vf = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile vf = StandardFileSystems.local().findFileByPath(path);
     return createFilePath(path, vf != null ? vf.isDirectory() : file.isDirectory());
   }
 

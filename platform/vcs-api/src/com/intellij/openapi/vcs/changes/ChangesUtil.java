@@ -15,8 +15,9 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
@@ -184,7 +185,7 @@ public final class ChangesUtil {
     VirtualFile result = filePath.getVirtualFile();
 
     if (result == null && !ApplicationManager.getApplication().isReadAccessAllowed()) {
-      result = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.getPath());
+      result = StandardFileSystems.local().refreshAndFindFileByPath(filePath.getPath());
     }
     if (result == null) {
       result = getValidParentUnderReadAction(filePath);
@@ -201,7 +202,7 @@ public final class ChangesUtil {
     return ReadAction.computeBlocking(() -> {
       VirtualFile result = null;
       FilePath parent = filePath;
-      LocalFileSystem lfs = LocalFileSystem.getInstance();
+      VirtualFileSystem lfs = StandardFileSystems.local();
 
       while (result == null && parent != null) {
         result = lfs.findFileByPath(parent.getPath());

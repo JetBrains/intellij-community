@@ -10,9 +10,9 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore.isAncestor
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.util.containers.ContainerUtil
@@ -76,7 +76,7 @@ internal class ProjectConfigurationFilesProcessorImpl(
 
   private fun filterProjectConfigurationFiles(files: Collection<VirtualFile>): Set<VirtualFile> {
     val projectConfigDir = getProjectConfigDirPath(project)?.let {
-      LocalFileSystem.getInstance().findFileByNioFile(it)
+      VirtualFileManager.getInstance().findFileByNioPath(it)
     }
 
     return files

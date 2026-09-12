@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public abstract class VcsRootChecker {
   @Deprecated
   public boolean isRoot(@NotNull String path) {
     Logger.getInstance(VcsRootChecker.class).warn("Deprecated API used in " + this, new Throwable());
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    VirtualFile file = StandardFileSystems.local().findFileByPath(new File(path).getAbsolutePath());
     return file != null && isRoot(file);
   }
 

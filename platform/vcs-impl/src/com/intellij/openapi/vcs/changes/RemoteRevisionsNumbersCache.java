@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
@@ -113,7 +113,7 @@ public final class RemoteRevisionsNumbersCache implements ChangesOnServerTracker
     // collect new vcs for scheduled files
     final Map<String, Pair<VirtualFile, AbstractVcs>> vFiles = new HashMap<>();
     for (String key : keys) {
-      final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(key));
+      final VirtualFile vf = StandardFileSystems.local().refreshAndFindFileByPath(new File(key).getAbsolutePath());
       final AbstractVcs newVcs = (vf == null) ? null : getVcsFor(myProject, vf);
       vFiles.put(key, vf == null ? Pair.create(null, null) : Pair.create(vf, newVcs));
     }
@@ -240,7 +240,7 @@ public final class RemoteRevisionsNumbersCache implements ChangesOnServerTracker
       LOG.debug("update for: " + s);
       //todo check canceled - check VCS's ready for asynchronous queries
       // get last remote revision for file
-      final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(s));
+      final VirtualFile vf = StandardFileSystems.local().refreshAndFindFileByPath(new File(s).getAbsolutePath());
       final ItemLatestState state;
       final DiffProvider diffProvider = myVcsRoot.getVcs().getDiffProvider();
       if (vf == null) {

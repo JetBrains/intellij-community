@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.Executor.mkdir
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -84,7 +84,7 @@ abstract class VcsRootBaseTest : VcsPlatformTest() {
       cd(PlatformTestUtil.getOrCreateProjectBaseDir(project).path)
       val f = File(project.basePath, path)
       f.mkdirs()
-      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f)
+      StandardFileSystems.local().refreshAndFindFileByPath(f.absolutePath)
     }
     projectRoot.refresh(false, true)
   }
@@ -101,7 +101,7 @@ abstract class VcsRootBaseTest : VcsPlatformTest() {
     for (path in mockRoots) {
       val mockDir = File(File(projectDir, path), DOT_MOCK)
       mockDir.mkdirs()
-      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(mockDir)
+      StandardFileSystems.local().refreshAndFindFileByPath(mockDir.absolutePath)
     }
   }
 

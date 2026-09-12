@@ -25,11 +25,11 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
 import com.intellij.openapi.vcs.changes.IgnoredFileGenerator;
 import com.intellij.openapi.vcs.changes.IgnoredFileProvider;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +128,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
       LOG.warn("Cannot write to file " + ignoreFile.getPath());
     }
     markIgnoreFileRootAsGenerated(myProject, ignoreFile.getParent());
-    LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(ignoreFile));
+    RefreshQueue.getInstance().refreshPaths(false, false, null, Collections.singleton(ignoreFile.toPath()));
     if (openFile) {
       openFile(ignoreFile);
     }

@@ -12,9 +12,10 @@ import com.intellij.openapi.vcs.changes.ChangelistBuilder;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -37,7 +38,7 @@ import static org.junit.Assert.assertTrue;
 public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   private MockAbstractVcs myVcs;
   private ProjectLevelVcsManagerImpl myVcsManager;
-  private LocalFileSystem myLFS;
+  private VirtualFileSystem myLFS;
   private ChangeListManagerImpl myChangeListManager;
   private VcsDirtyScopeManager myVcsDirtyScopeManager;
   private TempDirTestFixture myTempDirTestFixture;
@@ -61,7 +62,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
       myVcsManager.registerVcs(myVcs);
       myVcsManager.setDirectoryMapping(myClientRoot.getPath(), myVcs.getName());
 
-      myLFS = LocalFileSystem.getInstance();
+      myLFS = StandardFileSystems.local();
       myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     });
@@ -86,7 +87,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   public void testDeletion() throws Exception {
     final File f = new File(myClientRoot, "f.txt");
     f.createNewFile();
-    final VirtualFile vf = myLFS.refreshAndFindFileByIoFile(f);
+    final VirtualFile vf = myLFS.refreshAndFindFileByPath(f.getAbsolutePath());
     myChangeListManager.ensureUpToDate();
     assertTrue(getUnversionedFiles(myChangeListManager).contains(vf));
     FileUtil.delete(f);

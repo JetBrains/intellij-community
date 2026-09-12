@@ -16,9 +16,9 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChange;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -98,7 +98,7 @@ public final class VcsShelveUtils {
         filesToRefresh.add(new File(projectPath + f.AFTER_PATH));
       }
     });
-    LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
+    RefreshQueue.getInstance().refreshPaths(false, false, null, ContainerUtil.map(filesToRefresh, File::toPath));
   }
 
   /**

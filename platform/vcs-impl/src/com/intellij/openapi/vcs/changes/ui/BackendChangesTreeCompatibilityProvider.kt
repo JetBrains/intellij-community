@@ -17,7 +17,7 @@ import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.VcsCurrentRevisionProxy
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vcs.changes.ignore.actions.IgnoreFileActionGroup
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.treeStructure.Tree
@@ -56,7 +56,7 @@ internal class BackendChangesTreeCompatibilityProvider : ChangesTreeCompatibilit
     if (!project.isDisposed) UnversionedViewDialog(project).show()
   }
 
-  override fun resolveLocalFile(path: String): VirtualFile? = LocalFileSystem.getInstance().findFileByPath(path)
+  override fun resolveLocalFile(path: String): VirtualFile? = StandardFileSystems.local().findFileByPath(path)
 
   override fun toHijackedChange(project: Project, file: VirtualFile): Change? {
     val before = VcsCurrentRevisionProxy.create(file, project) ?: return null

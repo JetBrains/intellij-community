@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -41,7 +41,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
                           @NotNull Project project,
                           @Nullable String parentPath) {
     String preparedPath = path.replace(File.separatorChar, '/');
-    String url = VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(), preparedPath);
+    String url = VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, preparedPath);
     setUserObject(VirtualFilePointerManager.getInstance().create(url, this, this));
     myFile = new File(getFilePath());
     myInvalidAttributes = invalidAttributes;

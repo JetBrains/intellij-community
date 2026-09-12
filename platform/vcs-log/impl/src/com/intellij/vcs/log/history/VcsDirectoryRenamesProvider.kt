@@ -8,7 +8,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.toMultiMap
@@ -71,7 +71,7 @@ internal class RenameRecord(@Attribute("root") val root: String,
                             @XCollection(propertyElementName = "hashesList") val hashes: Array<Hashes>) {
   internal constructor() : this("", "", "", emptyArray())
 
-  private val rootFile by lazy { LocalFileSystem.getInstance().findFileByPath(root) }
+  private val rootFile by lazy { StandardFileSystems.local().findFileByPath(root) }
 
   private fun getPaths(root: VirtualFile) =
     EdgeData(VcsUtil.getFilePath(root, parentPath, true), VcsUtil.getFilePath(root, childPath, true))
