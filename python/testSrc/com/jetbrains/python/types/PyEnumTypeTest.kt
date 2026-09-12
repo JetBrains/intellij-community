@@ -142,7 +142,6 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       #  └ TYPE tuple[Literal["a", "b", "c"], int]
       """.trimIndent())
 
-
     @Test
     @TestFor(issues = ["PY-80837"])
     fun `init enum member`() = test("""
@@ -206,7 +205,6 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """.trimIndent(),
       "color.py" to """
         from enum import Enum, auto
-        
         
         class Color(Enum):
             RED = auto()
@@ -347,11 +345,9 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       "my_enum.py" to """
         from enum import auto, Enum
         
-        
         class MyEnumBase(Enum):
             @staticmethod
             def _generate_next_value_(name: str, start: int, count: int, last_values: list[str]) -> str: ...
-        
         
         class MyEnumDerived(MyEnumBase):
             FOO = auto()
@@ -362,11 +358,9 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
     fun `value type of enum member stored in a variable`() = test("""
       from enum import Enum
       
-      
       class IDE(Enum):
           DS = 'DataSpell'
           PY = 'PyCharm'
-      
       
       IDE_TO_CLEAR_SETTINGS_FOR = IDE.PY
       expr = IDE_TO_CLEAR_SETTINGS_FOR.value
@@ -451,7 +445,6 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """.trimIndent(),
       "mod.py" to """
         import enum
-        
         
         class MyEnum(enum.Enum):
             ONE = 1
@@ -928,6 +921,27 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       expr = Color["RED"]
       #└ TYPE Color
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-77355"])
+    fun `indexer of a str enum yields enum instance`() = test("""
+      from enum import Enum, StrEnum
+
+      class Color(StrEnum):
+          RED = "red"
+
+      expr = Color["RED"]
+      #└ TYPE Color
+
+      class StrMixinEnum(str, Enum):
+          pass
+
+      class Kind(StrMixinEnum):
+          A = "a"
+
+      def to_kind(s: str) -> Kind:
+          return Kind[s]
+      """.trimIndent())
   }
 
   @Nested
@@ -1012,11 +1026,9 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       "m.py" to """
         import enum
         
-        
         class SuperEnum(enum.Enum):
             PINK = "PINK", "hot"
             FLOSS = "FLOSS", "sweet"
-        
         
         class SimpleEnum(enum.Enum):
             FOO = "FOO"
@@ -1104,7 +1116,6 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       from enum import StrEnum
       from typing import Self
       
-      
       class Variant(StrEnum):
           CREATED = "created"
       
@@ -1131,7 +1142,6 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     Color.__members__
     #        └ TYPE MappingProxyType[str, Color] FIXME MappingProxyType[Literal["red", "green", "blue"], Literal[Color.red, Color.green, Color.blue]]
-    
     
     class Empty(Enum):
         pass

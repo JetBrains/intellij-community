@@ -85,6 +85,17 @@ object PyTypeUtil {
   }
 
   /**
+   * Whether the metaclass of [cls] defines `__getitem__`, as `EnumMeta` does.
+   * At runtime, the metaclass `__getitem__` wins over `__class_getitem__`.
+   * So a subscription of the class object, such as `MyEnum["A"]`, is a call and not a parameterization.
+   */
+  @JvmStatic
+  fun hasMetaclassGetItem(cls: PyClass, context: TypeEvalContext): Boolean {
+    val metaClass = (cls.getMetaClassType(true, context) as? PyClassType)?.pyClass ?: return false
+    return metaClass.findMethodByName(PyNames.GETITEM, true, context) != null
+  }
+
+  /**
    * Returns members of certain type from [PyClassLikeType].
    */
   inline fun <reified T : PsiElement> PyClassLikeType.getMembers(
