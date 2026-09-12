@@ -332,12 +332,14 @@ fun XDebugSessionImpl.getSessionEventsFlow(
     override fun stackFrameChanged() {
       val suspendScope = currentSession.getSuspendContextModel()?.coroutineScope ?: return
       rawEvents.trySend {
+        val executionStackDto = currentSession.currentExecutionStack?.toRpc(suspendScope, currentSession)
         val stackFrameDto = currentSession.currentStackFrame?.toRpc(suspendScope, currentSession)
         XDebuggerSessionEvent.StackFrameChanged(
           currentSession.state(),
           currentSession.currentPosition?.toRpc(),
           currentSession.topFramePosition?.toRpc(),
           currentSession.isTopFrameSelected,
+          executionStackDto,
           stackFrameDto,
         )
       }

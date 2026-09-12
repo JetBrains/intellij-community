@@ -40,6 +40,7 @@ import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionEvent
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfo
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfoCallback
+import com.intellij.platform.debugger.impl.rpc.XExecutionStackDto
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackGroupsEvent
 import com.intellij.platform.debugger.impl.rpc.XSuspendContextDto
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerId
@@ -329,9 +330,12 @@ class FrontendXDebuggerSession(
         updateState()
         isTopFrameSelected = isTopFrame
         topSourcePosition = topSourcePositionDto?.sourcePosition()
-        val newFrame = stackFrame?.let {
-          getCurrentSuspendContext()?.getOrCreateStackFrame(it)
+        val currentSuspendContext = getCurrentSuspendContext()
+        val executionStackDto = executionStack
+        if (currentSuspendContext != null && executionStackDto != null) {
+          currentExecutionStack = executionStackDto.toCurrentExecutionStack(currentSuspendContext)
         }
+        val newFrame = stackFrame?.let { currentSuspendContext?.getOrCreateStackFrame(it) }
         currentStackFrame.value = StackFrameUpdate.notifyChanged(newFrame)
       }
       is XDebuggerSessionEvent.BreakpointsMuted -> {}
@@ -343,6 +347,13 @@ class FrontendXDebuggerSession(
 
   private fun XDebuggerSessionEvent.EventWithState.updateState() {
     sessionStateFlow.value = state
+  }
+
+  /** The current stack stays when the ids match; the frames view compares stacks by id and keeps its thread then. */
+  private fun XExecutionStackDto.toCurrentExecutionStack(suspendContext: FrontendXSuspendContext): FrontendXExecutionStack {
+    val current = currentExecutionStack
+    if (current != null && current.id == executionStackId) return current
+    return FrontendXExecutionStack(this, project, suspendContext.lifetimeScope)
   }
 
   private fun clearSuspendContext() {
