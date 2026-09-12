@@ -3,9 +3,6 @@ package com.jetbrains.performancePlugin;
 
 import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
-import oshi.SystemInfo;
-import oshi.software.os.OSProcess;
-import oshi.software.os.OperatingSystem;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -46,8 +43,6 @@ public final class CommandsRunner {
   }
 
   public static int getPid() {
-    OperatingSystem os = new SystemInfo().getOperatingSystem();
-    OSProcess myProc = os.getProcess(os.getProcessId());
-    return myProc.getProcessID();
+    return Math.toIntExact(ProcessHandle.current().pid());
   }
 }
