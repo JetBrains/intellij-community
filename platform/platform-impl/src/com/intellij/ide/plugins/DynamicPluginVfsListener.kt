@@ -13,9 +13,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.vfs.AsyncFileListener
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.WatchRoots
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -40,10 +42,9 @@ internal class DynamicPluginVfsListenerInitializer : ApplicationActivity {
 
   override suspend fun execute() {
     val pluginsPath = PathManager.getPluginsPath()
-    val localFileSystem = LocalFileSystem.getInstance()
-    localFileSystem.addRootToWatch(pluginsPath, true)
+    WatchRoots.getInstance().watch(pluginsPath, true)
     val pluginRoot = withContext(Dispatchers.IO) {
-      localFileSystem.refreshAndFindFileByNioFile(Path.of(pluginsPath))
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Path.of(pluginsPath))
     }
     if (pluginRoot == null) {
       LOG.info("Dynamic plugin VFS listener not active, couldn't find plugins root in VFS")
@@ -131,6 +132,6 @@ private class DynamicPluginsFrameStateListener : ApplicationActivationListener {
   }
 
   override fun applicationActivated(ideFrame: IdeFrame) {
-    LocalFileSystem.getInstance().findFileByPath(PathManager.getPluginsPath())?.refresh(true, true)
+    StandardFileSystems.local().findFileByPath(PathManager.getPluginsPath())?.refresh(true, true)
   }
 }

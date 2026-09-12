@@ -43,10 +43,11 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ScrollPaneFactory;
@@ -259,7 +260,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myPath.setRenderer(SimpleListCellRenderer.create((var label, @NlsContexts.Label var value, var index) -> {
       label.setText(value);
       try (AccessToken ignore = SlowOperations.knownIssue("IDEA-338208, EA-831292")) {
-        VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
+        VirtualFile file = StandardFileSystems.local().findFileByPath(new File(value).getAbsolutePath());
         label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
       }
     }));
@@ -330,7 +331,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   @Override
   public final void dispose() {
-    LocalFileSystem.getInstance().removeWatchedRoots(myRequests.values());
+    myRequests.values().forEach(WatchRoots.Token::close);
     super.dispose();
   }
 
@@ -451,7 +452,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return myFileSystemTree.getSelectedFiles();
   }
 
-  private final Map<String, LocalFileSystem.WatchRequest> myRequests = new HashMap<>();
+  private final Map<String, WatchRoots.Token> myRequests = new HashMap<>();
 
   private static boolean isToShowTextField() {
     return PropertiesComponent.getInstance().getBoolean(FILE_CHOOSER_SHOW_PATH_PROPERTY, true);
@@ -473,10 +474,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
           if (file != null && file.isDirectory()) {
             final String rootPath = file.getPath();
             if (myRequests.get(rootPath) == null) {
-              final LocalFileSystem.WatchRequest watchRequest = LocalFileSystem.getInstance().addRootToWatch(rootPath, true);
-              if (watchRequest != null) {
-                myRequests.put(rootPath, watchRequest);
-              }
+              myRequests.put(rootPath, WatchRoots.getInstance().watch(rootPath, true));
             }
           }
         }

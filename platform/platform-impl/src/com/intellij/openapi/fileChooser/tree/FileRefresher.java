@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.util.NotNullProducer;
@@ -30,7 +31,7 @@ public final class FileRefresher implements Disposable {
   private final boolean recursive;
   private final long delay;
   private final NotNullProducer<? extends ModalityState> producer;
-  private final ArrayList<Object> watchers = new ArrayList<>();
+  private final ArrayList<WatchRoots.Token> watchers = new ArrayList<>();
   private final ArrayList<VirtualFile> files = new ArrayList<>();
   private final AtomicBoolean scheduled = new AtomicBoolean();
   private final AtomicBoolean launched = new AtomicBoolean();
@@ -63,25 +64,14 @@ public final class FileRefresher implements Disposable {
    *
    * @param file      a file to watch
    * @param recursive {@code true} if a file should be considered as root
-   * @return an object that allows to stop watching the specified file
+   * @return a token that stops watching the specified file
    */
-  private static Object watch(VirtualFile file, boolean recursive) {
+  private static WatchRoots.Token watch(VirtualFile file, boolean recursive) {
     VirtualFileSystem fs = file.getFileSystem();
     if (fs instanceof LocalFileSystem) {
-      return LocalFileSystem.getInstance().addRootToWatch(file.getPath(), recursive);
+      return WatchRoots.getInstance().watch(file.getPath(), recursive);
     }
     return null;
-  }
-
-  /**
-   * Stops watching file, which was added before.
-   *
-   * @param watcher an object that allows to stop watching a file
-   */
-  private static void unwatch(Object watcher) {
-    if (watcher instanceof LocalFileSystem.WatchRequest) {
-      LocalFileSystem.getInstance().removeWatchedRoot((LocalFileSystem.WatchRequest)watcher);
-    }
   }
 
   /**
@@ -92,7 +82,7 @@ public final class FileRefresher implements Disposable {
   public void register(VirtualFile file) {
     if (file != null && !disposed.get()) {
       LOG.debug("add file to watch recursive=", recursive, ": ", file);
-      Object watcher = watch(file, recursive);
+      WatchRoots.Token watcher = watch(file, recursive);
       if (watcher != null) {
         synchronized (watchers) {
           watchers.add(watcher);
@@ -169,7 +159,7 @@ public final class FileRefresher implements Disposable {
     LOG.debug("dispose");
     if (!disposed.getAndSet(true)) {
       synchronized (watchers) {
-        watchers.forEach(FileRefresher::unwatch);
+        watchers.forEach(WatchRoots.Token::close);
         watchers.clear();
       }
       RefreshSession session;
