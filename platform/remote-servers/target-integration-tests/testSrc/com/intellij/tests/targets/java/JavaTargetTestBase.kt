@@ -16,7 +16,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CompletableDeferred
@@ -43,7 +43,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
   override fun setUpModule() {
     super.setUpModule()
 
-    val contentRoot = LocalFileSystem.getInstance().findFileByPath(testAppPath)
+    val contentRoot = StandardFileSystems.local().findFileByPath(testAppPath)
     initializeSampleModule(module, contentRoot!!)
   }
 

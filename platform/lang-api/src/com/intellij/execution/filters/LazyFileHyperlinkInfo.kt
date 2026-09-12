@@ -16,7 +16,7 @@
 package com.intellij.execution.filters
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 
 open class LazyFileHyperlinkInfo
@@ -25,6 +25,6 @@ constructor(project: Project, filePath: String, documentLine: Int, documentColum
   : FileHyperlinkInfoBase(project, documentLine, documentColumn, useBrowser) {
 
   override val virtualFile: VirtualFile? by lazy {
-    LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    StandardFileSystems.local().refreshAndFindFileByPath(filePath)
   }
 }

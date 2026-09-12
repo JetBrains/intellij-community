@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +90,7 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
     if (path == null || !path.isAbsolute()) return null;
 
     while (path != null) {
-      var result = LocalFileSystem.getInstance().findFileByNioFile(path);
+      var result = VirtualFileManager.getInstance().findFileByNioPath(path);
       if (result != null) return result;
       path = path.getParent();
     }

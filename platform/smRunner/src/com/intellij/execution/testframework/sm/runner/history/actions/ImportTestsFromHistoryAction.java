@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +54,6 @@ public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
 
   @Override
   protected @Nullable VirtualFile getFile(@NotNull Project project) {
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(TestStateStorage.getTestHistoryRoot(project).getPath() + "/" + myFileName);
+    return StandardFileSystems.local().refreshAndFindFileByPath(TestStateStorage.getTestHistoryRoot(project).getPath() + "/" + myFileName);
   }
 }

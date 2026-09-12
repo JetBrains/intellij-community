@@ -50,7 +50,7 @@ public final class VirtualFileWrapper {
    * @return VirtualFile or null if file is not exist
    */
   public @Nullable VirtualFile getVirtualFile() {
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
+    return StandardFileSystems.local().refreshAndFindFileByPath(myFile.getAbsolutePath());
   }
 
   /**

@@ -12,7 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
@@ -251,12 +251,12 @@ public class FileListeningTest extends IntegrationTestCase {
     createDirectoryExternally("dir/subdir/subdir2");
     createFileExternally("dir/subdir/subdir2/f.txt");
 
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
 
     addExcludedDir(myRoot.getPath() + "/dir/subdir");
     addContentRoot(myRoot.getPath() + "/dir/subdir/subdir2");
 
-    final VirtualFile vDir1 = LocalFileSystem.getInstance().findFileByPath(dir1);
+    final VirtualFile vDir1 = StandardFileSystems.local().findFileByPath(dir1);
     assertNotNull(dir1, vDir1);
     delete(vDir1);
 
@@ -279,13 +279,13 @@ public class FileListeningTest extends IntegrationTestCase {
     addContentRoot(m, myRoot.getPath() + "/dir/subDir");
 
     createFileExternally("dir/subDir/file.txt");
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
 
     FileUtil.delete(new File(myRoot.getPath() + "/dir"));
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
 
     createFileExternally("dir/subDir/file.txt");
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
 
     List<ChangeSet> changes = getChangesFor(myRoot);
     assertEquals(4, changes.size());
@@ -302,13 +302,13 @@ public class FileListeningTest extends IntegrationTestCase {
     addContentRoot(m, myRoot.getPath() + "/dir/subDir");
 
     createFileExternally("dir/subDir/file.txt");
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
 
     FileUtil.delete(new File(myRoot.getPath() + "/dir/subDir"));
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
 
     createFileExternally("dir/subDir/file.txt");
-    LocalFileSystem.getInstance().refresh(false);
+    StandardFileSystems.local().refresh(false);
 
     List<ChangeSet> revs = getChangesFor(myRoot);
     assertEquals(4, revs.size());

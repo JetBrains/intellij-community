@@ -6,7 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
@@ -305,7 +305,7 @@ internal class LspLibraryFilesTest {
     }
     // the jar is created behind the VFS's back: bring the local file in first
     val localJarPath = jarPath.toString().replace('\\', '/')
-    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(localJarPath), localJarPath)
+    assertNotNull(StandardFileSystems.local().refreshAndFindFileByPath(localJarPath), localJarPath)
     val jarVfsPath = "$localJarPath!/$entryPath"
     val jarEntry = JarFileSystem.getInstance().refreshAndFindFileByPath(jarVfsPath)
     assertNotNull(jarEntry, jarVfsPath)

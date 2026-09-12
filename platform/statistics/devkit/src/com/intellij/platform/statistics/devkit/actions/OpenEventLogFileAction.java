@@ -16,7 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +51,7 @@ public final class OpenEventLogFileAction extends DumbAwareAction {
     }
 
     final EventLogFile logFile = StatisticsEventLogProviderUtil.getEventLogProvider(myRecorderId).getActiveLogFile();
-    final VirtualFile logVFile = logFile != null ? LocalFileSystem.getInstance().refreshAndFindFileByIoFile(logFile.getFile()) : null;
+    final VirtualFile logVFile = logFile != null ? StandardFileSystems.local().refreshAndFindFileByPath(logFile.getFile().getAbsolutePath()) : null;
     if (logVFile == null) {
       showNotification(project, StatisticsBundle.message("stats.there.is.no.active.event.log"));
       return;

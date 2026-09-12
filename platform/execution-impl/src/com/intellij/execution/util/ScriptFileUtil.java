@@ -10,7 +10,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public final class ScriptFileUtil {
   public static @Nullable VirtualFile findScriptFileByPath(@Nullable String path) {
     if (StringUtil.isEmpty(path)) return null;
     if (!path.startsWith(SCHEME)) {
-      return LocalFileSystem.getInstance().findFileByPath(path);
+      return StandardFileSystems.local().findFileByPath(path);
     }
     return ourFilesMap.get(path);
   }

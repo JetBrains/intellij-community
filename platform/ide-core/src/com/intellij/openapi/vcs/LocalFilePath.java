@@ -9,7 +9,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -140,7 +140,7 @@ public class LocalFilePath implements FilePath {
   }
 
   protected @Nullable VirtualFile findFile(@NotNull String path) {
-    return LocalFileSystem.getInstance().findFileByPath(path);
+    return StandardFileSystems.local().findFileByPath(path);
   }
 
   protected @NotNull @NonNls String getPath(@NotNull VirtualFile cachedFile) {

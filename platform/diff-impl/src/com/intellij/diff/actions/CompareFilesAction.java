@@ -17,7 +17,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -167,7 +167,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
     if (project == null) return file;
     final String path = PropertiesComponent.getInstance(project).getValue(key);
     if (path == null) return file;
-    VirtualFile lastSelection = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile lastSelection = StandardFileSystems.local().findFileByPath(path);
     return lastSelection != null ? lastSelection : file;
   }
 

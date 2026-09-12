@@ -7,7 +7,7 @@ import com.intellij.credentialStore.EncryptionSpec
 import com.intellij.credentialStore.createSecureRandom
 import com.intellij.credentialStore.getDefaultEncryptionType
 import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -193,7 +193,7 @@ class KeePassCredentialStoreTest {
       assertThat(store2.getPassword(attributes)).isEqualTo("second")
 
       val dbFile1 = baseDir1.resolve(DB_FILE_NAME)
-      val vFile1 = LocalFileSystem.getInstance().findFileByPath(dbFile1.toString())
+      val vFile1 = StandardFileSystems.local().findFileByPath(dbFile1.toString())
       assertNotNull(vFile1)
 
       Files.copy(baseDir2.resolve(DB_FILE_NAME), dbFile1, StandardCopyOption.REPLACE_EXISTING)

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -309,7 +310,7 @@ final class FileDownloaderImpl implements FileDownloader {
       final File ioFile = pair.getFirst();
       VirtualFile libraryRootFile = WriteAction.computeAndWait(() -> {
         final String url = VfsUtil.getUrlForLibraryRoot(ioFile);
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+        StandardFileSystems.local().refreshAndFindFileByPath(ioFile.getAbsolutePath());
         return VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
       });
       if (libraryRootFile != null) {

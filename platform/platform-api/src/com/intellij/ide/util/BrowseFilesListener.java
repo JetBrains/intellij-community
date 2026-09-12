@@ -6,7 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +62,7 @@ public class BrowseFilesListener implements ActionListener {
         file = file.getParentFile();
       }
       if (file != null) {
-        return LocalFileSystem.getInstance().findFileByIoFile(file);
+        return StandardFileSystems.local().findFileByPath(file.getAbsolutePath());
       }
     }
     return null;

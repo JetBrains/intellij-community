@@ -38,7 +38,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
@@ -238,7 +238,7 @@ public final class RunConfigurationStorageUi {
       return ExecutionBundle.message("run.configuration.storage.folder.dot.idea.forbidden", File.separator);
     }
 
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile file = StandardFileSystems.local().findFileByPath(path);
     if (file != null && !file.isDirectory()) return ExecutionBundle.message("run.configuration.storage.folder.path.expected");
 
     String folderName = PathUtil.getFileName(path);
@@ -247,7 +247,7 @@ public final class RunConfigurationStorageUi {
       if (!PathUtil.isValidFileName(folderName)) {
         return ExecutionBundle.message("run.configuration.storage.folder.path.expected");
       }
-      file = LocalFileSystem.getInstance().findFileByPath(parentPath);
+      file = StandardFileSystems.local().findFileByPath(parentPath);
       folderName = PathUtil.getFileName(parentPath);
       parentPath = PathUtil.getParentPath(parentPath);
     }
@@ -321,7 +321,7 @@ public final class RunConfigurationStorageUi {
     }
 
     // notNullize is to make inspections happy. Paths can't be null for non-default project
-    VirtualFile baseDir = LocalFileSystem.getInstance().findFileByPath(StringUtil.notNullize(myProject.getBasePath()));
+    VirtualFile baseDir = StandardFileSystems.local().findFileByPath(StringUtil.notNullize(myProject.getBasePath()));
     LOG.assertTrue(baseDir != null);
 
     // 5. If project base dir is not within project content, use .idea/runConfigurations

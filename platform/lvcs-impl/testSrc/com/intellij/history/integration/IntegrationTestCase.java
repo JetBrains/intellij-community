@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
@@ -111,7 +110,7 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     else {
       Files.writeString(NioFiles.createParentDirectories(file), content);
     }
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file);
   }
 
   protected final @NotNull VirtualFile createDirectory(@NotNull String name) {

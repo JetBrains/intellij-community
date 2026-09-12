@@ -56,7 +56,7 @@ import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vcs.checkin.CommitInfo
 import com.intellij.openapi.vcs.checkin.CommitProblem
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.forEachWithProgress
@@ -334,6 +334,6 @@ private data class TestResultsFormDescriptor(val rootNode: SMTestProxy.SMRootTes
 
 internal fun getHistoryFile(project: Project, fileName: String): Pair<String, VirtualFile?> {
   val path = "${TestStateStorage.getTestHistoryRoot(project).path}/$fileName.xml"
-  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
+  val virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path)
   return Pair(path, virtualFile)
 }

@@ -32,8 +32,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -137,7 +137,7 @@ public final class ExportTestResultsAction extends DumbAwareAction {
     final Path outputFile = getOutputFile(config, project, filename);
     Path parentFile = createDirectories(outputFile != null ? outputFile.getParent() : null);
     final VirtualFile parent = parentFile != null 
-                               ? LocalFileSystem.getInstance().refreshAndFindFileByNioFile(parentFile)
+                               ? VirtualFileManager.getInstance().refreshAndFindFileByNioPath(parentFile)
                                : null;
     if (parent == null || !parent.isValid()) {
       String filePath = outputFile != null ? outputFile.toString() : filename;

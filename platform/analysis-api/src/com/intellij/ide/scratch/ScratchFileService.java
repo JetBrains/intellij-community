@@ -5,8 +5,9 @@ import com.intellij.lang.Language;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
@@ -41,7 +42,7 @@ public abstract class ScratchFileService implements VirtualFileEnumerationAware 
 
   public @Nullable VirtualFile getVirtualFile(@NotNull RootType rootType) {
     String path = getRootPath(rootType);
-    return LocalFileSystem.getInstance().findFileByPath(path);
+    return StandardFileSystems.local().findFileByPath(path);
   }
 
   public abstract @Nullable RootType getRootType(@Nullable VirtualFile file);
@@ -63,7 +64,7 @@ public abstract class ScratchFileService implements VirtualFileEnumerationAware 
     }
 
     ScratchFileService instance = getInstance();
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFileSystem fileSystem = StandardFileSystems.local();
     Set<VirtualFile> result = CollectionFactory.createSmallMemoryFootprintSet();
     for (RootType rootType : RootType.getAllRootTypes()) {
       if (rootType.isHidden()) continue;

@@ -14,8 +14,8 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -32,7 +32,7 @@ internal class StatisticsEventLogConsole(
   private var isMultilineLog: Boolean = false
 
   init {
-    val schemeFile = LocalFileSystem.getInstance().findFileByNioFile(getEventsSchemeFile(recorderId))
+    val schemeFile = VirtualFileManager.getInstance().findFileByNioPath(getEventsSchemeFile(recorderId))
     if (schemeFile != null) {
       val groupIdToLine = ReadAction.computeBlocking<HashMap<String, Int>, Throwable> {
         computeLineNumbers(schemeFile)

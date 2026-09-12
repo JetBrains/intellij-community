@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -53,7 +53,7 @@ open class FileSaverRunnable<T : JComponent>(
 
     val fileName = path!!.fileName.toString()
     while (path != null) {
-      val result = LocalFileSystem.getInstance().findFileByNioFile(path)
+      val result = VirtualFileManager.getInstance().findFileByNioPath(path)
       if (result != null) return Pair(result, fileName)
       path = path.parent
     }

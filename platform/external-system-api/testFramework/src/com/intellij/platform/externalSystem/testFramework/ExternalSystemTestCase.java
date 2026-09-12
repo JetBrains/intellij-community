@@ -20,7 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.EdtTestUtil;
@@ -167,7 +167,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected void setUpProjectRoot() throws Exception {
     File projectDir = new File(myTestDir, "project");
     FileUtil.ensureExists(projectDir);
-    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
+    myProjectRoot = StandardFileSystems.local().refreshAndFindFileByPath(projectDir.getAbsolutePath());
   }
 
   @Override
@@ -306,7 +306,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected VirtualFile createProjectSubDir(String relativePath) throws IOException {
     File f = new File(getProjectPath(), relativePath);
     FileUtil.ensureExists(f);
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+    return StandardFileSystems.local().refreshAndFindFileByPath(f.getAbsolutePath());
   }
 
   public VirtualFile createProjectSubFile(String relativePath) throws IOException {
@@ -317,7 +317,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     if (!created && !f.exists()) {
       throw new AssertionError("Unable to create the project sub file: " + f.getAbsolutePath());
     }
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+    return StandardFileSystems.local().refreshAndFindFileByPath(f.getAbsolutePath());
   }
 
   protected @NotNull VirtualFile createProjectJarSubFile(String relativePath, Pair<ByteArraySequence, String>... contentEntries) throws IOException {
@@ -338,7 +338,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     }
     target.close();
 
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+    final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(f.getAbsolutePath());
     assertNotNull(virtualFile);
     final VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
     assertNotNull(jarFile);

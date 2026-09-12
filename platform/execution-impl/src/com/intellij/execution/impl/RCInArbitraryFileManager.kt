@@ -16,7 +16,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.writeWithEnsureWritable
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
@@ -91,7 +91,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
               fileEntryIterator.remove()
               filePathToDigest.remove(filePath)
               if (deleteContainingFile) {
-                LocalFileSystem.getInstance().findFileByPath(filePath)?.let { deleteFile(it) }
+                StandardFileSystems.local().findFileByPath(filePath)?.let { deleteFile(it) }
               }
             }
           }
@@ -121,7 +121,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
 
     fun runConfigsFromFile() = lock.read { filePathToRunConfigs.get(filePath)?.toList() ?: emptyList() }
 
-    val file = LocalFileSystem.getInstance().findFileByPath(filePath)
+    val file = StandardFileSystems.local().findFileByPath(filePath)
     if (file == null || !file.isValid) {
       LOG.warn("It's unexpected that the file doesn't exist at this point ($filePath)")
       return DeletedAndAddedRunConfigs(runConfigsFromFile(), emptyList())
@@ -193,7 +193,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     for (entry in filePathToRunConfigs) {
       val filePath = entry.key
       val runConfigs = entry.value
-      val file = LocalFileSystem.getInstance().findFileByPath(filePath)
+      val file = StandardFileSystems.local().findFileByPath(filePath)
       if (file == null) {
         if (!saveInProgress) {
           deletedRunConfigs.addAll(runConfigs)
@@ -287,7 +287,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
 
   private suspend fun saveToFile(filePath: String, data: BufferExposingByteArrayOutputStream) {
     edtWriteAction {
-      var file = LocalFileSystem.getInstance().findFileByPath(filePath)
+      var file = StandardFileSystems.local().findFileByPath(filePath)
       if (file == null) {
         val parentPath = PathUtil.getParentPath(filePath)
         val dir = VfsUtil.createDirectoryIfMissing(parentPath)

@@ -9,7 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -169,7 +169,7 @@ internal class WelcomeScreenCommandLineProjectOpenProcessorTest {
     return Files.writeString(tempDir.resolve(name), content)
   }
 
-  private fun findVirtualFile(path: Path) = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
+  private fun findVirtualFile(path: Path) = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)!!
 
   private class TestWelcomeScreenProjectProvider : WelcomeScreenProjectProvider() {
     var welcomeProject: Project? = null

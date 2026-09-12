@@ -4,7 +4,7 @@ package org.jetbrains.builtInWebServer
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
@@ -61,7 +61,7 @@ class PathInfo(
 
   fun getOrResolveVirtualFile(): VirtualFile? {
     return if (file == null) {
-      val result = LocalFileSystem.getInstance().findFileByPath(ioFile!!.invariantSeparatorsPathString)
+      val result = StandardFileSystems.local().findFileByPath(ioFile!!.invariantSeparatorsPathString)
       file = result
       result
     }

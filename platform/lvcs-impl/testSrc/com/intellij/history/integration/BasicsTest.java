@@ -8,6 +8,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 
@@ -135,7 +136,7 @@ public class BasicsTest extends IntegrationTestCase {
       return null;
     });
 
-    VirtualFile vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+    VirtualFile vfile = StandardFileSystems.local().refreshAndFindFileByPath(f.getAbsolutePath());
     assertNotNull(vfile);
 
     VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vfile);

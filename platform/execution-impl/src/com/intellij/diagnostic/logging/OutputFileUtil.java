@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +103,7 @@ public final class OutputFileUtil {
           public void navigate(@NotNull Project project) {
             final VirtualFile file =
               WriteAction
-                .compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(filePath)));
+                .compute(() -> StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(filePath)));
 
             if (file != null) {
               file.refresh(false, false);

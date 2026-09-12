@@ -9,7 +9,7 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,7 +73,7 @@ public final class DiffApplicationBase {
 
   public static @Nullable VirtualFile findFile(@NotNull String path, @Nullable String currentDirectory) {
     File file = getFile(path, currentDirectory);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
     if (virtualFile == null) {
       LOG.warn(String.format("Can't find file: current directory - %s; path - %s", currentDirectory, path));
     }
@@ -82,11 +82,11 @@ public final class DiffApplicationBase {
 
   public static @Nullable VirtualFile findOrCreateFile(@NotNull String path, @Nullable String currentDirectory) throws IOException {
     File file = getFile(path, currentDirectory);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
     if (virtualFile == null) {
       boolean wasCreated = file.createNewFile();
       if (wasCreated) {
-        virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
       }
     }
     if (virtualFile == null) {

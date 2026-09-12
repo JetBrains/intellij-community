@@ -5,7 +5,7 @@ import com.intellij.history.core.Paths;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
@@ -162,7 +162,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
 
     String classesPath = myRoot.getPath() + "/target/classes";
     addExcludedDir(classesPath);
-    final VirtualFile classesDir = LocalFileSystem.getInstance().findFileByPath(classesPath);
+    final VirtualFile classesDir = StandardFileSystems.local().findFileByPath(classesPath);
     assertNotNull(classesDir);
     delete(classesDir.getParent());
 

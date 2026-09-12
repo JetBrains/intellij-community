@@ -8,7 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,7 +29,7 @@ object DefaultFileDragAndDropHandler : FileDragAndDropHandler {
     files.forEach { file ->
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
         readAction {
-          LocalFileSystem.getInstance().findFileByNioFile(file)
+          VirtualFileManager.getInstance().findFileByNioPath(file)
         }?.let {
           NonProjectFileWritingAccessProvider.allowWriting(listOf(it))
           TrustedFiles.markExternallyOpened(it)

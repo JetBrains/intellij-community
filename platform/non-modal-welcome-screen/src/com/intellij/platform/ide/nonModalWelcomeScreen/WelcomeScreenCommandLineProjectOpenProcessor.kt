@@ -13,8 +13,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.getWelcomeScreenProjectProvider
@@ -114,7 +114,7 @@ internal class WelcomeScreenCommandLineProjectOpenProcessor(
     project: Project,
     selectInProjectView: Boolean = false,
   ): Project {
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file) ?: return project
+    val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file) ?: return project
 
     // before focusOnFile: editor provider selection reads both the write access and the trust state
     NonProjectFileWritingAccessProvider.allowWriting(listOf(virtualFile))

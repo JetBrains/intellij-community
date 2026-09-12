@@ -12,7 +12,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.ExtensionTestUtil
@@ -70,6 +70,6 @@ abstract class ExternalSystemProjectTestCase : HeavyPlatformTestCase() {
   protected fun createProjectSubDirectory(relativePath: String) {
     val file = File(projectPath, relativePath)
     FileUtil.ensureExists(file)
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+    StandardFileSystems.local().refreshAndFindFileByPath(file.absolutePath)
   }
 }

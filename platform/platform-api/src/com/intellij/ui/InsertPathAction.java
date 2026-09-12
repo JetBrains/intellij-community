@@ -13,7 +13,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +46,7 @@ public final class InsertPathAction extends AnAction {
     String selectedText = myTextField.getSelectedText();
     VirtualFile virtualFile;
     if (selectedText != null ) {
-      virtualFile = LocalFileSystem.getInstance().findFileByPath(selectedText.replace(File.separatorChar, '/'));
+      virtualFile = StandardFileSystems.local().findFileByPath(selectedText.replace(File.separatorChar, '/'));
     }
     else {
       virtualFile = null;

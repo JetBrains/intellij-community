@@ -3,7 +3,7 @@ package com.intellij.ide.scratch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Contract;
@@ -34,7 +34,7 @@ public final class ScratchUtil {
   public static @NotNull String getRelativePath(@NotNull Project project, @NotNull VirtualFile file) {
     RootType rootType = Objects.requireNonNull(RootType.forFile(file));
     String rootPath = ScratchFileService.getInstance().getRootPath(rootType);
-    VirtualFile rootFile = LocalFileSystem.getInstance().findFileByPath(rootPath);
+    VirtualFile rootFile = StandardFileSystems.local().findFileByPath(rootPath);
     if (rootFile == null || !VfsUtilCore.isAncestor(rootFile, file, false)) {
       throw new AssertionError(file.getPath());
     }

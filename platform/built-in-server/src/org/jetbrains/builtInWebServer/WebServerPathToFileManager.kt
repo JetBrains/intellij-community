@@ -13,7 +13,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -168,7 +168,7 @@ private val RELATIVE_PATH_RESOLVER = object : FileResolver {
   override fun resolve(path: String, root: VirtualFile, moduleName: String?, isLibrary: Boolean, pathQuery: PathQuery): PathInfo? {
     // WEB-17691 built-in server doesn't serve files it doesn't have in the project tree
     // temp:// reports isInLocalFileSystem == true, but it is not true
-    if (pathQuery.useVfs || root.fileSystem != LocalFileSystem.getInstance() || path == ".htaccess" || path == "config.json") {
+    if (pathQuery.useVfs || root.fileSystem.protocol != StandardFileSystems.FILE_PROTOCOL || path == ".htaccess" || path == "config.json") {
       return root.findFileByRelativePath(path)?.let { PathInfo(null, it, root, moduleName, isLibrary) }
     }
 

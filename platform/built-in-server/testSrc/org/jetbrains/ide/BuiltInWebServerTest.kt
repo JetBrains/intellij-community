@@ -10,7 +10,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
@@ -62,7 +62,7 @@ internal class BuiltInWebServerTest : BuiltInServerTestCase() {
     val project = projectRule.project
     val newPath = tempDirManager.newPath()
     newPath.resolve(manager.filePath!!).createParentDirectories().writeText("hello")
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newPath)
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newPath)
 
     createModule(newPath, project)
 
@@ -124,7 +124,7 @@ internal class HeavyBuiltInWebServerTest {
       createModule(projectDir, project)
 
       // DefaultWebServerPathHandler uses module roots as virtual file - must be refreshed
-      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectDir)
 
       val dir = projectDir.resolve(".coverage").createDirectories()
       val path = dir.resolve("foo").apply { writeText("exposeMe") }
@@ -140,7 +140,7 @@ internal class HeavyBuiltInWebServerTest {
     PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
       projectDir.createDirectories()
       projectDir.resolve("sw.js").writeText("")
-      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectDir)
       createModule(projectDir, project)
 
       val host = "http://localhost:${BuiltInServerManager.getInstance().port}"
@@ -168,7 +168,7 @@ internal class BuiltInWebServerAbsolutePathTest : BuiltInServerTestCase() {
     val project = projectRule.project
     val newPath = tempDirManager.newPath().createDirectories()
     newPath.resolve("script.js").writeText("hello")
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newPath)
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newPath)
     createModule(newPath, project)
 
     val host = "http://localhost:${BuiltInServerManager.getInstance().port}"

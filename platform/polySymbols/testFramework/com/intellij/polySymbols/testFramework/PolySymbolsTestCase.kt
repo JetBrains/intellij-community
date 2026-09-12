@@ -25,7 +25,7 @@ import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -216,7 +216,7 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
         FileDocumentManager.getInstance().saveAllDocuments()
         if (dir) {
           val pathAfter = "$testDataPath/$dirName/after"
-          val rootAfter = LocalFileSystem.getInstance().findFileByPath(pathAfter)
+          val rootAfter = StandardFileSystems.local().findFileByPath(pathAfter)
                           ?: throw FileNotFoundException(pathAfter)
           val results = myFixture.tempDirFixture.findOrCreateDir(".")
 

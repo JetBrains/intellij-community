@@ -10,7 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     if (StringUtil.isEmpty(baseDir)) {
       return null;
     }
-    VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(baseDir);
+    VirtualFile dir = StandardFileSystems.local().findFileByPath(baseDir);
     return dir != null && dir.isValid() && dir.isDirectory() ? dir : null;
   }
 
@@ -122,7 +122,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
   public @Nullable VirtualFile findFile(@NotNull String filePath) {
     VirtualFile file = LocalFileFinder.findFile(filePath);
     if (file == null && SystemInfo.isWindows && OSAgnosticPathUtil.isUncPath(filePath)) {
-      file = LocalFileSystem.getInstance().findFileByPath(filePath);
+      file = StandardFileSystems.local().findFileByPath(filePath);
     }
     if (file == null && myBaseDir != null && myBaseDir.isValid()) {
       file = myBaseDir.findFileByRelativePath(filePath);

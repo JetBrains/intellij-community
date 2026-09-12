@@ -2,7 +2,7 @@ package com.intellij.platform.lsp
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspClientManagerListener
@@ -148,7 +148,7 @@ internal class LspOpenedFilesServiceTest {
     val path = tempDir.resolve(name)
     Files.writeString(path, "content")
     // the file is created behind the VFS's back: refresh brings it in
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.toString().replace('\\', '/'))
+    val file = StandardFileSystems.local().refreshAndFindFileByPath(path.toString().replace('\\', '/'))
     assertNotNull(file, name)
     return file!!
   }

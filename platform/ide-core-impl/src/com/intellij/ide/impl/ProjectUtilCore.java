@@ -6,8 +6,8 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +36,7 @@ public final class ProjectUtilCore {
 
   @ApiStatus.Internal
   public static @Nullable VirtualFile getFileAndRefresh(@NotNull Path file) {
-    var virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+    var virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file);
     if (virtualFile == null || !virtualFile.isValid()) {
       return null;
     }

@@ -7,7 +7,7 @@ import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessInfo;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ public class LocalAttachHost extends EnvironmentAwareHost {
 
   @Override
   public @Nullable InputStream getFileContent(@NotNull String filePath) throws IOException {
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
+    VirtualFile file = StandardFileSystems.local().findFileByPath(filePath);
     if (file == null) {
       return null;
     }

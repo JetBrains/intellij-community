@@ -18,8 +18,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -137,7 +137,7 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
     if (!projectRootPath.exists()) {
       projectRootPath.createDirectories()
     }
-    projectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectRootPath)
+    projectRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectRootPath)
   }
 
   @Throws(Exception::class)
@@ -261,7 +261,7 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
   protected fun createProjectSubDir(relativePath: String): VirtualFile? {
     val directory = getProjectPath(relativePath)
     directory.createDirectories()
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(directory)
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(directory)
   }
 
   @Throws(IOException::class)
@@ -274,7 +274,7 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
     if (!file.exists()) {
       throw AssertionError("Unable to create the project sub file: $file")
     }
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)!!
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)!!
   }
 
   @Throws(IOException::class)
@@ -296,7 +296,7 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
         }
       }
     }
-    val virtualFile: VirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)!!
+    val virtualFile: VirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)!!
     assertNotNull(virtualFile)
     val jarFile: VirtualFile = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile)!!
     assertNotNull(jarFile)

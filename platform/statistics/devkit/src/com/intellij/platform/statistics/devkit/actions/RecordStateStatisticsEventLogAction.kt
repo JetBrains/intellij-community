@@ -26,7 +26,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 
 /**
  * Collects the data from all state collectors and record it in event log.
@@ -62,7 +62,7 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
 
   private fun showNotification(project: Project) {
     val logFile = FeatureUsageLogger.getInstance().getConfig().getActiveLogFile()
-    val virtualFile = if (logFile != null) LocalFileSystem.getInstance().findFileByIoFile(logFile.file) else null
+    val virtualFile = if (logFile != null) StandardFileSystems.local().findFileByPath(logFile.file.absolutePath) else null
     ApplicationManager.getApplication().invokeLater {
       val notification = Notification(STATISTICS_NOTIFICATION_GROUP_ID, "Finished collecting and recording events",
                                       NotificationType.INFORMATION)

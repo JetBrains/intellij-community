@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.ui.awt.RelativePoint;
@@ -143,7 +143,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
 
     final String path = FileUtil.toSystemIndependentName(directoryName);
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
+    final VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(path);
     return virtualFile == null || !virtualFile.isDirectory() ? null : virtualFile;
   }
 

@@ -31,7 +31,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ModalityUiUtil;
@@ -118,7 +118,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     if (moduleFile.exists()) {
       FileUtil.delete(moduleFile);
     }
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(moduleFile);
+    final VirtualFile file = StandardFileSystems.local().findFileByPath(moduleFile.getAbsolutePath());
     if (file != null) {
       file.refresh(false, false);
     }
@@ -261,7 +261,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     final String contentEntryPath = getContentEntryPath();
     if (contentEntryPath == null) return null;
     new File(contentEntryPath).mkdirs();
-    final VirtualFile moduleContentRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath.replace('\\', '/'));
+    final VirtualFile moduleContentRoot = StandardFileSystems.local().refreshAndFindFileByPath(contentEntryPath.replace('\\', '/'));
     if (moduleContentRoot == null) return null;
     return modifiableRootModel.addContentEntry(moduleContentRoot);
   }

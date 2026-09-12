@@ -25,8 +25,8 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VersionManagingFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -208,7 +208,7 @@ public class IdeaGateway {
     if (path.contains(URLUtil.SCHEME_SEPARATOR)) {
       return VirtualFileManager.getInstance().findFileByUrl(path);
     }
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile file = StandardFileSystems.local().findFileByPath(path);
     if (file == null && ApplicationManager.getApplication().isUnitTestMode()) {
       return TempFileSystem.getInstance().findFileByPath(path);
     }

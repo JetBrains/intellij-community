@@ -21,7 +21,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.TextComponentEmptyText;
@@ -99,7 +99,7 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
           return initialFile;
         }
         String text = myWorkingDirectory.component().getComponent().getText();
-        return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(text));
+        return StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(text));
       }
     });
 

@@ -8,7 +8,7 @@ import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -73,7 +73,7 @@ public final class Scopes {
           descriptor = descriptor.substring(1);
         }
         final String path = FileUtil.toSystemIndependentName(descriptor.substring(1));
-        final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
+        final VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(path);
         yield (virtualFile == null) ? null : new GlobalSearchScopesCore.DirectoryScope(project, virtualFile, recursive);
       }
       case NAMED -> findScopeByName(project, descriptor);

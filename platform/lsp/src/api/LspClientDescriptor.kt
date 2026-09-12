@@ -14,7 +14,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -331,13 +331,13 @@ abstract class LspClientDescriptor protected constructor(
     val descriptor = project.getEelDescriptor()
     if (descriptor !is LocalEelDescriptor) {
       val file = runCatching {
-        LocalFileSystem.getInstance().findFileByPath(EelPath.parse(path, descriptor).asNioPath().toString())
+        StandardFileSystems.local().findFileByPath(EelPath.parse(path, descriptor).asNioPath().toString())
       }.getOrNull()
       if (file != null) {
         return file
       }
     }
-    return LocalFileSystem.getInstance().findFileByPath(path)
+    return StandardFileSystems.local().findFileByPath(path)
   }
 
   /**

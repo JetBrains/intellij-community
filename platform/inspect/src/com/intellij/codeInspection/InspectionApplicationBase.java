@@ -60,7 +60,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsPreservingExecutor;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -269,7 +269,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   private @Nullable Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
     throws InterruptedException, ExecutionException {
-    VirtualFile vfsProject = LocalFileSystem.getInstance().refreshAndFindFileByPath(
+    VirtualFile vfsProject = StandardFileSystems.local().refreshAndFindFileByPath(
       FileUtil.toSystemIndependentName(projectPath.toString()));
     if (vfsProject == null) {
       reportError(InspectionsBundle.message("inspection.application.file.cannot.be.found", projectPath));
@@ -352,7 +352,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       }
       mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
 
-      VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
+      VirtualFile vfsDir = StandardFileSystems.local().findFileByPath(mySourceDirectory);
       if (vfsDir == null) {
         reportError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
         printHelpAndExit();

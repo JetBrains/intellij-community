@@ -6,6 +6,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiFile;
@@ -114,7 +115,7 @@ public final class TestsLocationProviderUtil {
   }
 
   private static @Nullable VirtualFile getByFullPath(String filePath) {
-    final VirtualFile fileByPath = LocalFileSystem.getInstance().findFileByPath(filePath);
+    final VirtualFile fileByPath = StandardFileSystems.local().findFileByPath(filePath);
     if (fileByPath != null) {
       return fileByPath;
     }
