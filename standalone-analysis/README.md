@@ -35,6 +35,12 @@ To update the files after local changes, pass the `pass.idea.tests.overwrite.dat
     --test org.jetbrains.intellij.build.StandaloneMavenArtifactsTest -Dpass.idea.tests.overwrite.data=true
   ```
 
+The smoke test verifies the IntelliJ Standalone Analysis artifacts can analyze Java files correctly:
+
+```bash
+./bazel.cmd test @community//standalone-analysis/platform-smoke:smoke_test @community//standalone-analysis/java-smoke:smoke_test
+```
+
 ## How to use
 
 Use `JavaCoreApplicationEnvironment` and `JavaCoreProjectEnvironment` (or their language-agnostic alternatives, `CoreApplicationEnvironment`

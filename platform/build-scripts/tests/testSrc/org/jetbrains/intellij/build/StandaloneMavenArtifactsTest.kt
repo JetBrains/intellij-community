@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.impl.maven.renderPom
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.After
 import org.junit.Assert
@@ -115,6 +116,20 @@ class StandaloneMavenArtifactsTest {
       .filter { javaExtensionService.getLanguageLevel(it).let { level -> level == null || level > LanguageLevel.JDK_1_8 } }
       .map { "${it.name}: ${javaExtensionService.getLanguageLevel(it)}" }
     Assert.assertTrue("Modules of the Standalone Analysis artifacts must have the Java 8 language level, but: $incompatible", incompatible.isEmpty())
+  }
+
+  @Test
+  fun `smoke scenarios depend on the artifact modules only`() {
+    val artifactModules = (layers + layers.flatMap { StandaloneMavenArtifacts.ownModules(it) }).mapTo(HashSet()) { it.name }
+    for (smokeModuleName in listOf("intellij.standaloneAnalysis.platform.smoke", "intellij.standaloneAnalysis.java.smoke")) {
+      val smokeModule = context.outputProvider.findRequiredModule(smokeModuleName)
+      val outside = smokeModule.dependenciesList.dependencies
+        .filterIsInstance<JpsModuleDependency>()
+        .map { it.moduleReference.moduleName }
+        .filter { it !in artifactModules }
+        .sorted()
+      Assert.assertTrue("The smoke scenario module $smokeModuleName depends on modules outside the Standalone Analysis artifacts: $outside", outside.isEmpty())
+    }
   }
 
   /**

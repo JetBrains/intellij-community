@@ -1,0 +1,61 @@
+load("@rules_java//java:defs.bzl", "java_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+# Starts a new JVM whose classpath is the runtime closure of the platform Standalone Analysis artifact modules and their libraries, and
+# runs the smoke scenario as its main class. The process must exit with 0.
+java_test(
+    name = "smoke_test",
+    size = "medium",
+    main_class = "com.intellij.standaloneAnalysis.platform.smoke.PlatformStandaloneSmoke",
+    tags = ["community-aggregator"],
+    use_testrunner = False,
+    runtime_deps = [":standaloneAnalysis-platform-smoke"],
+)
+
+### auto-generated section `build intellij.standaloneAnalysis.platform.smoke` start
+jvm_library(
+    name = "standaloneAnalysis-platform-smoke",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.standaloneAnalysis.platform.smoke",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//standalone-analysis/platform-impl:standaloneAnalysis-platform-impl",
+    ],
+)
+
+jvm_library(
+    name = "standaloneAnalysis-platform-smoke_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.standaloneAnalysis.platform.smoke",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":standaloneAnalysis-platform-smoke",
+        "//standalone-analysis/platform-impl:standaloneAnalysis-platform-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.standaloneAnalysis.platform.smoke` end
+
+### auto-generated section `iml intellij.standaloneAnalysis.platform.smoke` start
+exports_files(
+    [
+        "intellij.standaloneAnalysis.platform.smoke.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.standaloneAnalysis.platform.smoke` end

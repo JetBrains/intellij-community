@@ -1,3 +1,8 @@
+exports_files(
+    ["mockJDK-1.8/jre/lib/rt.jar"],
+    visibility = ["//visibility:public"],
+)
+
 filegroup(
     name = "mockJDK",
     srcs = glob(

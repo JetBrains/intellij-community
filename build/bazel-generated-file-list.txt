@@ -2021,8 +2021,10 @@ spellchecker/xml
 spellchecker/xml/backend
 standalone-analysis/java-api
 standalone-analysis/java-impl
+standalone-analysis/java-smoke
 standalone-analysis/platform-api
 standalone-analysis/platform-impl
+standalone-analysis/platform-smoke
 tools/apiDump
 tools/apiDump/testData
 tools/intellij.ide.starter.allure.annotations.scanner

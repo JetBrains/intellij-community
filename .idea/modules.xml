@@ -2321,8 +2321,10 @@
       <module fileurl="file://$PROJECT_DIR$/spellchecker/xml/backend/intellij.spellchecker.xml.backend.iml" filepath="$PROJECT_DIR$/spellchecker/xml/backend/intellij.spellchecker.xml.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/standalone-analysis/java-api/intellij.standaloneAnalysis.java.iml" filepath="$PROJECT_DIR$/standalone-analysis/java-api/intellij.standaloneAnalysis.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/standalone-analysis/java-impl/intellij.standaloneAnalysis.java.impl.iml" filepath="$PROJECT_DIR$/standalone-analysis/java-impl/intellij.standaloneAnalysis.java.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/standalone-analysis/java-smoke/intellij.standaloneAnalysis.java.smoke.iml" filepath="$PROJECT_DIR$/standalone-analysis/java-smoke/intellij.standaloneAnalysis.java.smoke.iml" />
       <module fileurl="file://$PROJECT_DIR$/standalone-analysis/platform-api/intellij.standaloneAnalysis.platform.iml" filepath="$PROJECT_DIR$/standalone-analysis/platform-api/intellij.standaloneAnalysis.platform.iml" />
       <module fileurl="file://$PROJECT_DIR$/standalone-analysis/platform-impl/intellij.standaloneAnalysis.platform.impl.iml" filepath="$PROJECT_DIR$/standalone-analysis/platform-impl/intellij.standaloneAnalysis.platform.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/standalone-analysis/platform-smoke/intellij.standaloneAnalysis.platform.smoke.iml" filepath="$PROJECT_DIR$/standalone-analysis/platform-smoke/intellij.standaloneAnalysis.platform.smoke.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stats-collector/intellij.statsCollector.iml" filepath="$PROJECT_DIR$/plugins/stats-collector/intellij.statsCollector.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stats-collector/intellij.statsCollector.tests.iml" filepath="$PROJECT_DIR$/plugins/stats-collector/intellij.statsCollector.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-api/intellij.tasks.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-api/intellij.tasks.iml" />

@@ -1,0 +1,64 @@
+load("@rules_java//java:defs.bzl", "java_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+# Starts a new JVM whose classpath is the runtime closure of the Java Standalone Analysis artifact modules and their libraries, and runs
+# the smoke scenario as its main class. The process must exit with 0. The scenario resolves the JDK classes from the mock JDK of the
+# platform tests, whose path comes in a system property.
+java_test(
+    name = "smoke_test",
+    size = "medium",
+    data = ["@community//java:mockJDK-1.8/jre/lib/rt.jar"],
+    jvm_flags = ["-Dintellij.standalone.smoke.jdk=$(rootpath @community//java:mockJDK-1.8/jre/lib/rt.jar)"],
+    main_class = "com.intellij.standaloneAnalysis.java.smoke.JavaStandaloneSmoke",
+    tags = ["community-aggregator"],
+    use_testrunner = False,
+    runtime_deps = [":standaloneAnalysis-java-smoke"],
+)
+
+### auto-generated section `build intellij.standaloneAnalysis.java.smoke` start
+jvm_library(
+    name = "standaloneAnalysis-java-smoke",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.standaloneAnalysis.java.smoke",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//standalone-analysis/java-impl:standaloneAnalysis-java-impl",
+    ],
+)
+
+jvm_library(
+    name = "standaloneAnalysis-java-smoke_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.standaloneAnalysis.java.smoke",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":standaloneAnalysis-java-smoke",
+        "//standalone-analysis/java-impl:standaloneAnalysis-java-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.standaloneAnalysis.java.smoke` end
+
+### auto-generated section `iml intellij.standaloneAnalysis.java.smoke` start
+exports_files(
+    [
+        "intellij.standaloneAnalysis.java.smoke.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.standaloneAnalysis.java.smoke` end
