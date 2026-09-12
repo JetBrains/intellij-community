@@ -16,7 +16,7 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -82,7 +82,7 @@ public class HgTestRepository {
   @Nullable
   public VirtualFile getDir() {
     if (myDir == null) {
-      myDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myDirFixture.getTempDirPath()));
+      myDir = StandardFileSystems.local().refreshAndFindFileByPath(new File(myDirFixture.getTempDirPath()).getAbsolutePath());
     }
     return myDir;
   }

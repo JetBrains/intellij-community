@@ -12,8 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea.test;
 
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -68,7 +68,7 @@ public class HgMoveTest extends HgSingleUserTest {
 
     Path unversionedFileNio = parent1.toNioPath().resolve("a.txt");
     Files.writeString(unversionedFileNio, "unversioned file content");
-    VirtualFile unversionedFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(unversionedFileNio);
+    VirtualFile unversionedFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(unversionedFileNio);
     myChangeListManager.ensureUpToDate();
 
     verifyStatus(HgTestOutputParser.unknown("com", "a.txt"));

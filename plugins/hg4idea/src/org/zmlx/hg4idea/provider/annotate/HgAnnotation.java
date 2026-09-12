@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -205,7 +205,7 @@ public class HgAnnotation extends FileAnnotation {
 
   @Override
   public VirtualFile getFile() {
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile.getFile());
+    return StandardFileSystems.local().refreshAndFindFileByPath(myFile.getFile().getAbsolutePath());
   }
 
   @Override
