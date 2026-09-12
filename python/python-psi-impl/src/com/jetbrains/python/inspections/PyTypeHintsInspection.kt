@@ -112,6 +112,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeParameterMapping
 import com.jetbrains.python.psi.types.PyTypeParameterType
+import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeVarTupleType
 import com.jetbrains.python.psi.types.PyTypeVarType
@@ -1499,6 +1500,10 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkGenericClassParameterization(node: PySubscriptionExpression, declaration: PyClass) {
+      if (!PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext) &&
+          PyTypeUtil.hasMetaclassGetItem(declaration, myTypeEvalContext)) {
+        return
+      }
       val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(declaration, myTypeEvalContext)
       if (genericDefinitionType == null) {
         if (PyTypingTypeProvider.isGeneric(declaration, myTypeEvalContext) &&
