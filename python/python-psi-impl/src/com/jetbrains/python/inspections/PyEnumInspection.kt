@@ -6,13 +6,17 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.EnumAttributeInfo
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.EnumAttributeKind
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTupleExpression
@@ -39,6 +43,7 @@ class PyEnumInspection : PyInspection() {
         // A stub declares an enum but does not run its class body, so a definition error cannot occur there
         if (PyiUtil.isInsideStub(node)) return
         validateEnumBaseOrder(node)
+        validateSunderNames(node)
       }
 
       private fun validateSuperClasses(node: PyClass) {
@@ -101,9 +106,43 @@ class PyEnumInspection : PyInspection() {
           }
         }
       }
+
+      /**
+       * The enum class body rejects a `_sunder_` name that the enum machinery does not use.
+       */
+      private fun validateSunderNames(pyClass: PyClass) {
+        val allowedNames = allowedSunderNames(LanguageLevel.forElement(pyClass))
+        val definitions: List<PyElement> = pyClass.classAttributes.filter { it.hasAssignedValue() } +
+                                           pyClass.methods + pyClass.nestedClasses
+        for (definition in definitions) {
+          val name = definition.name ?: continue
+          if (!PyNames.isSunder(name) || name in allowedNames) continue
+          if (name.startsWith("_repr_") && LanguageLevel.forElement(pyClass).isAtLeast(LanguageLevel.PYTHON313)) continue
+          registerProblem(definition.nameIdentifierOrSelf(),
+                          PyPsiBundle.problemMessage("INSP.enum.sunder.name.is.reserved", name),
+                          ProblemHighlightType.GENERIC_ERROR)
+        }
+      }
     }
   }
 }
+
+/**
+ * The `_sunder_` names that the enum machinery of [level] uses. Every other one is reserved.
+ */
+private fun allowedSunderNames(level: LanguageLevel): Set<String> = when {
+  level.isAtLeast(LanguageLevel.PYTHON313) -> SUNDER_NAMES_311 + setOf("_add_alias_", "_add_value_alias_")
+  level.isAtLeast(LanguageLevel.PYTHON311) -> SUNDER_NAMES_311
+  else -> setOf("_order_", "_create_pseudo_member_", "_generate_next_value_", "_missing_", "_ignore_")
+}
+
+private val SUNDER_NAMES_311 = setOf(
+  "_order_", "_generate_next_value_", "_numeric_repr_", "_missing_", "_ignore_",
+  "_iter_member_", "_iter_member_by_value_", "_iter_member_by_def_",
+)
+
+private fun PyElement.nameIdentifierOrSelf() =
+  (this as? PsiNameIdentifierOwner)?.nameIdentifier ?: this
 
 private fun getDeclaredEnumMemberType(enumClass: PyClass, context: TypeEvalContext): PyType? {
   val targetExpression = enumClass.findClassAttribute("_value_", true, context) ?: return null
