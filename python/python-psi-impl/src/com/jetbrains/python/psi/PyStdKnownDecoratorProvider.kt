@@ -56,6 +56,7 @@ class PyStdKnownDecoratorProvider : PyKnownDecoratorProvider {
       PyKnownDecorator.PYTEST_FIXTURES_FIXTURE,
       PyKnownDecorator.ENUM_MEMBER,
       PyKnownDecorator.ENUM_NONMEMBER,
+      PyKnownDecorator.ENUM_UNIQUE,
       PyKnownDecorator.DISJOINT_BASE,
       PyKnownDecorator.DISJOINT_BASE_EXT,
     )
