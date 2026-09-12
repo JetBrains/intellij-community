@@ -158,8 +158,14 @@ class IdentifierHighlightingComputer(
    * true if the [contextElement] can be an identifier highlighting target, i.e. if the caret is inside this element then [computeRanges].myTargets should be added to the editor markup
    *
    * it just checks that the symbols under all offsets in this identifier are the same
+   *
+   * a whole-file element is never a target. A file with no fine-grained PSI has one leaf which spans the whole file,
+   * and then the check costs one symbol resolution per character. [findTarget] applies the same rule.
    */
   private fun isCacheableTarget(contextElement: PsiElement): Boolean {
+    if (contextElement.textRange == myPsiFile.textRange) {
+      return false
+    }
     val textRange = contextElement.textRange
     var reference: PsiReference? = null
     var objs: Collection<Any>? = null
