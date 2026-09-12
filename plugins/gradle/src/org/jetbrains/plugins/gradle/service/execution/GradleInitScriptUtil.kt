@@ -22,6 +22,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import groovy.lang.MissingMethodException
 import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.common.ComponentLoader
 import io.opentelemetry.context.ImplicitContextKeyed
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import org.apache.commons.lang3.StringUtils
@@ -91,6 +92,7 @@ val GRADLE_TOOLING_EXTENSION_CLASSES: Set<Class<*>> = setOf(
   OpenTelemetry::class.java, // opentelemetry-api
   OpenTelemetrySdk::class.java, // opentelemetry-sdk
   ImplicitContextKeyed::class.java, // opentelemetry-context
+  ComponentLoader::class.java, // opentelemetry-common
 )
 
 @JvmField
