@@ -7,7 +7,7 @@ import com.google.gson.JsonParser
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightProjectDescriptor
@@ -64,7 +64,7 @@ abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTes
 
         val afterDir = beforeDir.substringBeforeLast("/") + "/after"
         val afterDirIOFile = File(testDataDirectory, afterDir)
-        val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDirIOFile)!!
+        val afterVFile = StandardFileSystems.local().findFileByPath(afterDirIOFile.absolutePath)!!
         UsefulTestCase.refreshRecursively(afterVFile)
 
         action(beforeVFile)

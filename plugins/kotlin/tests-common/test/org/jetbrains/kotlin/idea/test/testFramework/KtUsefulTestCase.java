@@ -17,7 +17,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -750,7 +750,7 @@ public abstract class KtUsefulTestCase extends TestCase {
     }
 
     public static VirtualFile refreshAndFindFile(@NotNull final File file) {
-        return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+        return UIUtil.invokeAndWaitIfNeeded(() -> StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath()));
     }
 
     public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {

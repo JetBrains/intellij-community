@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.MapDataContext
@@ -70,7 +70,7 @@ fun createLibraryWithLongPaths(project: Project, testRootDisposable: Disposable)
         with(library.modifiableModel) {
             for (i in 0..maxCommandlineLengthWindows / maxFilenameLengthWindows) {
                 val tmpFile = VirtualFileManager.constructUrl(
-                    LocalFileSystem.getInstance().protocol,
+                    StandardFileSystems.FILE_PROTOCOL,
                     FileUtil.createTempDirectory("file$i", "a".repeat(maxFilenameLengthWindows)).path
                 )
                 addRoot(tmpFile, OrderRootType.CLASSES)

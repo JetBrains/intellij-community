@@ -10,7 +10,7 @@ import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.UntraceableException
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import org.jetbrains.kotlin.config.CompilerRunnerConstants
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.io.PrintStream
@@ -62,7 +62,7 @@ internal class KotlinCompilationStatusListener : CompilationStatusListener {
         val ext = FileUtilRt.getExtension(relativePath).lowercase(Locale.getDefault())
         if (FILE_EXTS_WHICH_NEEDS_REFRESH.contains(ext)) {
             val outFile = "$outputRoot/$relativePath"
-            val virtualFile = LocalFileSystem.getInstance().findFileByPath(outFile)
+            val virtualFile = StandardFileSystems.local().findFileByPath(outFile)
                 ?: error("Virtual file not found for generated file path: $outFile")
 
             virtualFile.refresh( /*async =*/false,  /*recursive =*/false)

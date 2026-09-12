@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.test;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.RunAll;
@@ -81,7 +81,7 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
     }
 
     protected static VirtualFile getVirtualFile(@NotNull File file) {
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        return StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
     }
 
 }

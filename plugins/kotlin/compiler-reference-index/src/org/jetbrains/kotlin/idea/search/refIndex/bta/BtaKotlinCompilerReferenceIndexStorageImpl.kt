@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.search.refIndex.bta
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import kotlinx.coroutines.Dispatchers
@@ -26,13 +26,13 @@ internal class BtaKotlinCompilerReferenceIndexStorageImpl(
     @Volatile private var subtypeStoragesByRoot: Map<Path, BtaSubtypeInMemoryStorage>,
 ) : KotlinCompilerReferenceIndexStorage, IncrementalKotlinCompilerReferenceIndexStorage {
 
-    private val lfs = LocalFileSystem.getInstance()
+    private val fileManager = VirtualFileManager.getInstance()
 
     override fun getUsages(fqName: FqName): List<VirtualFile> = lookupStoragesByRoot.values
         .asSequence()
         .flatMap { it[fqName] }
         .distinct()
-        .mapNotNull { lfs.findFileByNioFile(it) }
+        .mapNotNull { fileManager.findFileByNioPath(it) }
         .toList()
 
     override fun getSubtypesOf(fqName: FqName, deep: Boolean) = subtypeStoragesByRoot.values

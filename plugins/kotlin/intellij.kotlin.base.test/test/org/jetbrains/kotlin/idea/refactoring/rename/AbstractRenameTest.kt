@@ -12,7 +12,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
@@ -438,7 +438,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         FileDocumentManager.getInstance().saveAllDocuments()
 
-        val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDir)?.apply {
+        val afterVFile = StandardFileSystems.local().findFileByPath(afterDir.absolutePath)?.apply {
             refreshRecursively(this)
         } ?: error("`after` directory not found")
 

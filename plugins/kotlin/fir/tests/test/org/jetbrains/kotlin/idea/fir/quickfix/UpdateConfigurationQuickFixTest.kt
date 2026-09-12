@@ -13,7 +13,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
@@ -148,7 +148,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
 
         val tempFile = File(FileUtil.createTempDirectory("kotlin-update-configuration", null), name)
         FileUtil.copy(sourcePath, tempFile)
-        val tempVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile) ?: error("Can't find file: $tempFile")
+        val tempVFile = StandardFileSystems.local().refreshAndFindFileByPath(tempFile.absolutePath) ?: error("Can't find file: $tempFile")
 
         ConfigLibraryUtil.addLibrary(module, "KotlinJavaRuntime") {
             (this as LibraryEx.ModifiableModelEx).kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND

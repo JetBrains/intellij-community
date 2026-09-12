@@ -32,7 +32,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
@@ -641,7 +641,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
     }
 
     override fun setUpProject() {
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(appDataPath))
+        StandardFileSystems.local().refreshAndFindFileByPath(File(appDataPath).absolutePath)
         super.setUpProject()
         File(appOutputPath).mkdirs()
     }

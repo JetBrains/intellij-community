@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import java.io.File
 import java.io.Writer
@@ -20,7 +20,7 @@ internal fun getNewFileWriter(
     val contentEntryPath = module.gradleModuleBuilder?.contentEntryPath ?: return null
     if (contentEntryPath.isEmpty()) return null
     val contentRootDir = File(contentEntryPath)
-    val modelContentRootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(contentRootDir) ?: return null
+    val modelContentRootDir = StandardFileSystems.local().refreshAndFindFileByPath(contentRootDir.absolutePath) ?: return null
 
     val dir = VfsUtil.createDirectoryIfMissing(modelContentRootDir, relativeDir) ?: return null
     if (dir.findChild(fileName) != null) return null

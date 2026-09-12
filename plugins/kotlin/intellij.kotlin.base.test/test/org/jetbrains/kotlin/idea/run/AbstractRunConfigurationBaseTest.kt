@@ -11,7 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
@@ -119,7 +119,7 @@ abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase() {
             val projectBaseDir = testDataDirectory.resolve(testDirectory)
             val projectDir = PlatformTestUtil.getOrCreateProjectBaseDir(project)
 
-            val projectBaseVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectBaseDir)
+            val projectBaseVirtualFile = StandardFileSystems.local().refreshAndFindFileByPath(projectBaseDir.absolutePath)
                 ?: error("Can't find VirtualFile for $projectBaseDir")
 
             projectBaseVirtualFile.refresh(false, true)

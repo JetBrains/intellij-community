@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.definitions
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.HeavyPlatformTestCase
@@ -29,7 +29,7 @@ abstract class AbstractDefinitionFromDependenciesProviderTest : HeavyPlatformTes
         val testDataDir = File(path)
 
         copyDirContentsTo(
-            LocalFileSystem.getInstance().findFileByIoFile(testDataDir)
+            StandardFileSystems.local().findFileByPath(testDataDir.absolutePath)
                 ?: error("Cannot find testdata dir at $path"),
             projectRoot
         )

@@ -29,7 +29,7 @@ import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.util.DefaultJDOMExternalizer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
@@ -107,7 +107,7 @@ class KotlinStandaloneScriptRunConfiguration(
     }
 
     override fun getModules(): Array<Module> {
-        val scriptVFile = filePath?.let { LocalFileSystem.getInstance().findFileByIoFile(File(it)) }
+        val scriptVFile = filePath?.let { StandardFileSystems.local().findFileByPath(File(it).absolutePath) }
         return scriptVFile?.module(project)?.let { arrayOf(it) } ?: emptyArray()
     }
 
@@ -119,7 +119,7 @@ class KotlinStandaloneScriptRunConfiguration(
         if (filePath.isNullOrEmpty()) {
             runtimeConfigurationWarning(KotlinRunConfigurationsBundle.message("file.was.not.specified"))
         }
-        val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
+        val virtualFile = StandardFileSystems.local().findFileByPath(File(filePath).absolutePath)
         if (virtualFile == null || virtualFile.isDirectory) {
             runtimeConfigurationWarning(KotlinRunConfigurationsBundle.message("could.not.find.script.file.0", filePath.toString()))
         }
@@ -180,7 +180,7 @@ private class ScriptCommandLineState(
         val filePath = configuration.filePath
             ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.specified"))
 
-        val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
+        val virtualFile = StandardFileSystems.local().findFileByPath(File(filePath).absolutePath)
             ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.found.in.project"))
 
         params.classPath.add(KotlinArtifacts.kotlinCompiler)

@@ -6,8 +6,8 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
@@ -45,7 +45,7 @@ internal class KotlinBundledRefresher : ProjectActivity {
         private const val INSTALLED_KOTLIN_VERSION = "installed.kotlin.plugin.version"
 
         private fun requestFullJarUpdate(jarFilePath: Path) {
-            val localVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(jarFilePath) ?: return
+            val localVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(jarFilePath) ?: return
 
             // Build and update JarHandler
             val jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localVirtualFile) ?: return

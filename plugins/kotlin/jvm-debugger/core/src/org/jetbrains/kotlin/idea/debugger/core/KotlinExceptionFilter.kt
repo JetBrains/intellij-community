@@ -14,7 +14,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -192,7 +192,7 @@ class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Except
                 return null
 
             val vfsFileName = FileUtil.toSystemIndependentName(fileName)
-            return LocalFileSystem.getInstance().findFileByPath(vfsFileName)
+            return StandardFileSystems.local().findFileByPath(vfsFileName)
         }
 
         private fun parsLineColumn(locationLine: String): Pair<Int, Int> {

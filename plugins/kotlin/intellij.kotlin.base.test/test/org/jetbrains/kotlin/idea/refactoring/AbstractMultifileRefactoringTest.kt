@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -71,7 +71,7 @@ abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureT
         PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
 
         val afterDir = File(testFile.parentFile, "after")
-        val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDir)?.apply {
+        val afterVFile = StandardFileSystems.local().findFileByPath(afterDir.absolutePath)?.apply {
             refreshRecursively(this)
         } ?: error("`after` directory not found")
 

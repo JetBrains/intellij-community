@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFile
@@ -111,7 +111,7 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
     }
 
     protected fun Module.addContentRoot(rootPath: Path): SourceFolder {
-        val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootPath.toFile())!!
+        val root = StandardFileSystems.local().refreshAndFindFileByPath(rootPath.toFile().absolutePath)!!
         WriteCommandAction.writeCommandAction(module.project).run<RuntimeException> {
             root.refresh(false, true)
         }
@@ -160,7 +160,7 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
             tmpRootDir.listFiles().forEach(transformContainedFiles)
         }
 
-        val virtualTempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tmpRootDir)!!
+        val virtualTempDir = StandardFileSystems.local().refreshAndFindFileByPath(tmpRootDir.absolutePath)!!
         virtualTempDir.putUserData(sourceIOFile, sourceDirInTestData)
         virtualTempDir.refresh(false, isTestRoot)
         PsiTestUtil.addSourceRoot(module, virtualTempDir, isTestRoot)

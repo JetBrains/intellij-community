@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.navigation
 
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.openapi.module.JavaModuleType
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import org.jetbrains.kotlin.idea.navigation.GotoCheck
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -43,7 +43,7 @@ class GotoWithMultipleLibrariesTest : AbstractMultiModuleTest() {
         ).compile()
 
         val jarRoot = sharedJar.jarRoot
-        val libSrcRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libSrcDir)!!
+        val libSrcRoot = StandardFileSystems.local().refreshAndFindFileByPath(libSrcDir.absolutePath)!!
 
         var i = 0
         val libraryA = projectLibrary("libA", jarRoot)

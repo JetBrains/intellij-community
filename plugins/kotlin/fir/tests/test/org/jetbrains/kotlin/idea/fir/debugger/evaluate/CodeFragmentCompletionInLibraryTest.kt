@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.fir.debugger.evaluate
 
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -77,6 +77,6 @@ class CodeFragmentCompletionInLibraryTest : AbstractJvmBasicCompletionTestBase()
     }
 
     private fun findLibrarySourceDir(): VirtualFile {
-        return LocalFileSystem.getInstance().findFileByIoFile(LIBRARY_SRC)!!
+        return StandardFileSystems.local().findFileByPath(LIBRARY_SRC.absolutePath)!!
     }
 }

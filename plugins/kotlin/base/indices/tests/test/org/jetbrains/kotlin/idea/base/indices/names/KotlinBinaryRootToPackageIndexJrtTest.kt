@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.indices.names
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl
@@ -81,7 +81,7 @@ class KotlinBinaryRootToPackageIndexJrtTest : AbstractMultiModuleTest() {
         Files.copy(testDataPath.resolve("jrt-fs.jar"), libDir.resolve("jrt-fs.jar"))
         Files.copy(testDataPath.resolve("modules"), libDir.resolve("modules"))
 
-        val jrtDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(jrtPath.toString())
+        val jrtDir = StandardFileSystems.local().refreshAndFindFileByPath(jrtPath.toString())
         require(jrtDir != null) {
             "Could not find newly created JRT directory at `$jrtPath`."
         }

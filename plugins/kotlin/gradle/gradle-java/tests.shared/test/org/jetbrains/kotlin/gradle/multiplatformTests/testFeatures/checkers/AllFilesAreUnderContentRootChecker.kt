@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
@@ -23,7 +23,7 @@ object AllFilesAreUnderContentRootChecker : TestFeature<AllFilesUnderContentRoot
             .filter { it.isFile && (it.extension == "kt" ||  it.extension == "java") }
             .forEach {
             runReadAction {
-                val vFile = LocalFileSystem.getInstance().findFileByIoFile(it)
+                val vFile = StandardFileSystems.local().findFileByPath(it.absolutePath)
                     ?: error("Can't find VirtualFile for IO File ${it.canonicalPath}")
 
                 if (!ProjectFileIndex.getInstance(testProject).isInSource(vFile)) files += it

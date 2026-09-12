@@ -3,8 +3,9 @@
 package org.jetbrains.kotlin.idea.k2.highlighting
 
 import com.intellij.diff.DiffContentFactory
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.TempDirTestFixture
@@ -32,7 +33,7 @@ abstract class AbstractOutsiderHighlightingTest : NewLightKotlinCodeInsightFixtu
     }
 
     private val sourceRootVirtualFile: VirtualFile
-        get() = LocalFileSystem.getInstance().findFileByPath(myFixture.tempDirFixture.tempDirPath)!!
+        get() = StandardFileSystems.local().findFileByPath(myFixture.tempDirFixture.tempDirPath)!!
 
     override fun setUp() {
         super.setUp()
@@ -54,7 +55,7 @@ abstract class AbstractOutsiderHighlightingTest : NewLightKotlinCodeInsightFixtu
     protected fun performTest() {
         val testPath = testRootPath.resolve(testMethodPath)
 
-        val localFileSystem = LocalFileSystem.getInstance()
+        val fileManager = VirtualFileManager.getInstance()
 
         val srcDirPath = testPath.resolve("src")
         myFixture.copyDirectoryToProject(srcDirPath.relativeTo(testRootPath).toString(), "")
@@ -63,7 +64,7 @@ abstract class AbstractOutsiderHighlightingTest : NewLightKotlinCodeInsightFixtu
         val diffDirPath = testPath.resolve("diff")
 
         for (srcPath in srcTempDirPath.listKotlinFiles()) {
-            val srcVirtualFile = localFileSystem.findFileByNioFile(srcPath)!!
+            val srcVirtualFile = fileManager.findFileByNioPath(srcPath)!!
             srcVirtualFile.bindTestPath(srcPath)
 
             myFixture.openFileInEditor(srcVirtualFile)
@@ -74,7 +75,7 @@ abstract class AbstractOutsiderHighlightingTest : NewLightKotlinCodeInsightFixtu
 
         for (diffPath in diffDirPath.listKotlinFiles()) {
             val correspondingSrcPath = srcTempDirPath.resolve(diffPath.relativeTo(diffDirPath))
-            val correspondingSrcVirtualFile = localFileSystem.findFileByNioFile(correspondingSrcPath)!!
+            val correspondingSrcVirtualFile = fileManager.findFileByNioPath(correspondingSrcPath)!!
 
             val diffDocument = diffContentFactory.create(project, diffPath.readText(), correspondingSrcVirtualFile).document
             diffDocument.setReadOnly(false) // For 'ExpectedHighlightingData'

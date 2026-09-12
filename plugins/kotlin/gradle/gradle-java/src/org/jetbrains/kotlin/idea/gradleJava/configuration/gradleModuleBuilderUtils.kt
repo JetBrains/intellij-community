@@ -12,7 +12,7 @@ import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.roots.ModifiableModelsProvider
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -37,7 +37,7 @@ internal fun findSettingsGradleFile(module: Module): VirtualFile? {
     val contentEntryPath = module.gradleModuleBuilder?.contentEntryPath ?: return null
     if (contentEntryPath.isEmpty()) return null
     val contentRootDir = File(contentEntryPath)
-    val modelContentRootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(contentRootDir) ?: return null
+    val modelContentRootDir = StandardFileSystems.local().refreshAndFindFileByPath(contentRootDir.absolutePath) ?: return null
     return modelContentRootDir.findChild(GradleConstants.SETTINGS_FILE_NAME)
         ?: modelContentRootDir.findChild(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME)
         ?: module.project.baseDir.findChild(GradleConstants.SETTINGS_FILE_NAME)

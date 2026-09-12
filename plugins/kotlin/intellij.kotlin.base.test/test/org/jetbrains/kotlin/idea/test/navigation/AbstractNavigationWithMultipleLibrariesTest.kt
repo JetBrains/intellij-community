@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -31,7 +31,7 @@ abstract class AbstractNavigationWithMultipleLibrariesTest : JavaModuleTestCase(
     protected fun findSourceFile(module: Module): PsiFile {
         val moduleDirPath = ModuleUtilCore.getModuleDirPath(module)
         val ioFile = File(moduleDirPath).listFiles().orEmpty().first()
-        val vFile = LocalFileSystem.getInstance().findFileByIoFile(ioFile)!!
+        val vFile = StandardFileSystems.local().findFileByPath(ioFile.absolutePath)!!
         return PsiManager.getInstance(module.project).findFile(vFile)!!
     }
 }

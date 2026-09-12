@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.JavaCommandLineState
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.core.script.script.KotlinStandaloneScriptRunConfiguration
 import org.jetbrains.kotlin.idea.core.script.script.kotlinStandaloneScriptRunConfigurationType
@@ -53,7 +53,7 @@ class KotlinStandaloneScriptRunConfigurationExecutionTest : KotlinLightCodeInsig
     private fun commandLine(shortenCommandLine: ShortenCommandLine?) = run {
         val scriptFile = File(FileUtil.createTempDirectory(getTestName(true), null, true), "script.kts")
         scriptFile.writeText("val sum = 2 + 3\nprintln(\"sum=\$sum\")\n")
-        checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(scriptFile)) {
+        checkNotNull(StandardFileSystems.local().refreshAndFindFileByPath(scriptFile.absolutePath)) {
             "Failed to find the script file in VFS: $scriptFile"
         }
 

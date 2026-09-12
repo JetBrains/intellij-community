@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.maven
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
@@ -17,7 +17,7 @@ internal class MavenProjectImporter(private val project: Project) {
         }
         val mavenProjectManager = MavenProjectsManager.getInstance(project)
 
-        val rootFile = LocalFileSystem.getInstance().findFileByPath(path.toString())!!
+        val rootFile = StandardFileSystems.local().findFileByPath(path.toString())!!
         mavenProjectManager.addManagedFilesOrUnignore(rootFile.findAllPomFiles())
     }
 

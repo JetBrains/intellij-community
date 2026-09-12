@@ -9,7 +9,7 @@ import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSettings
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiManager
@@ -175,7 +175,7 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
 
         @OptIn(KaExperimentalApi::class)
         scripts.map { it.canonicalFile }.forEach { file ->
-            val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
+            val virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.absolutePath)!!
             val psiFile = runReadActionBlocking { PsiManager.getInstance(project).findFile(virtualFile) as? KtFile }
                 ?: error("Cannot find KtFile for $file")
             assertTrue(

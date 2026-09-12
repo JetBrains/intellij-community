@@ -21,7 +21,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.VfsTestUtil
 import org.gradle.util.GradleVersion
@@ -338,7 +338,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
     }
 
     protected fun linkProject(projectFilePath: String = projectPath) {
-        val localFileSystem = LocalFileSystem.getInstance()
+        val localFileSystem = StandardFileSystems.local()
         val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
             ?: error("Failed to find projectFile: $projectFilePath")
 

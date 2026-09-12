@@ -7,7 +7,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -84,7 +84,7 @@ abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTes
 
         val afterDir = beforeDir.substringBeforeLast("/") + "/after"
         val afterDirIOFile = File(testDataDirectory, afterDir)
-        val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDirIOFile)!!
+        val afterVFile = StandardFileSystems.local().findFileByPath(afterDirIOFile.absolutePath)!!
         refreshRecursively(afterVFile)
 
         VfsUtilCore.visitChildrenRecursively(beforeVFile, object : VirtualFileVisitor<Void?>() {

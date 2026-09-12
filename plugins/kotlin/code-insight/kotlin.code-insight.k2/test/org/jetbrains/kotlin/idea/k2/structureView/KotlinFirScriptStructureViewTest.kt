@@ -6,7 +6,7 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.registerExtension
@@ -255,7 +255,7 @@ class KotlinFirScriptStructureViewTest : KotlinLightCodeInsightFixtureTestCase()
                 """.trimIndent()
             )
         }
-        requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(importedIoFile))
+        requireNotNull(StandardFileSystems.local().refreshAndFindFileByPath(importedIoFile.absolutePath))
 
         val file = configureScript("sample.context.kts")
 

@@ -7,7 +7,7 @@ import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
@@ -62,7 +62,7 @@ class KotlinScratchDefinitionProvider(val project: Project) : ScriptDefinitionsP
 
     private fun scratchPathPattern(): String {
         val root = ScratchFileService.getInstance().getRootPath(ScratchRootType.getInstance())
-        val vfsRoot = LocalFileSystem.getInstance().findFileByPath(FileUtilRt.toSystemIndependentName(root))
+        val vfsRoot = StandardFileSystems.local().findFileByPath(FileUtilRt.toSystemIndependentName(root))
             ?: return ".*/${Regex.escape(PathUtil.getFileName(root))}/.*"
 
         return "${Regex.escape(vfsRoot.path)}/.*"

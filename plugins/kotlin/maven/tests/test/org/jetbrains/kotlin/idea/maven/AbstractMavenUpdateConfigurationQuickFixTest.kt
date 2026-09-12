@@ -10,8 +10,8 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -39,7 +39,7 @@ abstract class AbstractMavenUpdateConfigurationQuickFixTest(
     protected suspend fun doTest(intentionName: String, shouldBeAvailable: Boolean = true) {
         val pomVFile = maven.createProjectSubFile("pom.xml", File(getTestDataPath(), "pom.xml").readText())
         val sourceVFile = maven.createProjectSubFile("src/main/kotlin/src.kt", File(getTestDataPath(), "src.kt").readText())
-        LocalFileSystem.getInstance().refreshFiles(listOf(pomVFile, sourceVFile))
+        RefreshQueue.getInstance().refresh(false, false, null, listOf(pomVFile, sourceVFile))
         maven.projectPom = pomVFile
         maven.importProjectAsync(pomVFile)
         withContext(Dispatchers.EDT) {

@@ -11,7 +11,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
@@ -109,7 +109,7 @@ class KotlinStandaloneScriptRunConfigurationTest : KotlinLightCodeInsightFixture
 
     fun testScriptInsideModuleUsesItsClasspath() {
         val sourceRoot = FileUtil.createTempDirectory(getTestName(true), "src", true)
-        val virtualSourceRoot = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceRoot))
+        val virtualSourceRoot = checkNotNull(StandardFileSystems.local().refreshAndFindFileByPath(sourceRoot.absolutePath))
         PsiTestUtil.addSourceContentToRoots(module, virtualSourceRoot)
         try {
             val configuration = configuration(File(sourceRoot, "script.kts"))
@@ -156,7 +156,7 @@ class KotlinStandaloneScriptRunConfigurationTest : KotlinLightCodeInsightFixture
         scriptFile: File = File(FileUtil.createTempDirectory(getTestName(true), null, true), "script.kts"),
     ): KotlinStandaloneScriptRunConfiguration {
         scriptFile.writeText("println(\"hello\")")
-        checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(scriptFile)) {
+        checkNotNull(StandardFileSystems.local().refreshAndFindFileByPath(scriptFile.absolutePath)) {
             "Failed to find the script file in VFS: $scriptFile"
         }
 

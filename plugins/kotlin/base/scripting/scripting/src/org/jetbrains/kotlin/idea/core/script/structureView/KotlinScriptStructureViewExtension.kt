@@ -12,8 +12,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.pom.Navigatable
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
@@ -177,7 +177,7 @@ private class KotlinScriptStructureViewContext(val file: KtFile) {
         ?: KotlinBaseScriptingBundle.message("structure.view.script.definition.unknown")
 
     private fun toScriptPathEntry(path: Path): ScriptPathEntry {
-        val localFile = LocalFileSystem.getInstance().findFileByNioFile(path)
+        val localFile = VirtualFileManager.getInstance().findFileByNioPath(path)
         val virtualFile = localFile?.let { JarFileSystem.getInstance().getVirtualFileForJar(it) ?: it }
         return ScriptPathEntry(
             name = path.fileName?.toString() ?: path.toString(),

@@ -10,7 +10,7 @@ import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.resolveFromRootOrRelative
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
@@ -68,7 +68,7 @@ internal class ImportedScriptSymbol(val filePath: String) : NavigatableSymbol {
     }
 
     private fun findScriptFile(project: Project): PsiFile? {
-        val virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath) ?: return null
+        val virtualFile = StandardFileSystems.local().findFileByPath(filePath) ?: return null
         return PsiManager.getInstance(project).findFile(virtualFile)
     }
 

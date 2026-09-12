@@ -7,7 +7,7 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -369,7 +369,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
                 val target = buildRoot.resolve("local.properties")
                 target.parent.createDirectories()
                 target.writeText(content)
-                LocalFileSystem.getInstance().refreshAndFindFileByNioFile(target)
+                VirtualFileManager.getInstance().refreshAndFindFileByNioPath(target)
             }
         }
 
@@ -398,7 +398,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
                 if (needsHierarchyTemplateCompatibility) {
                     appendCompatibilityPropertiesIfMissing(gradleProperties, HIERARCHY_TEMPLATE_COMPATIBILITY_PROPERTIES)
                 }
-                LocalFileSystem.getInstance().refreshAndFindFileByNioFile(gradleProperties)
+                VirtualFileManager.getInstance().refreshAndFindFileByNioPath(gradleProperties)
             }
         }
 
@@ -482,8 +482,8 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
                             copy.writeText(textToWrite)
                         }
 
-                        LocalFileSystem.getInstance()
-                            .refreshAndFindFileByNioFile(target)!!
+                        VirtualFileManager.getInstance()
+                            .refreshAndFindFileByNioPath(target)!!
                             .putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, source.toCanonicalPath())
                     }
 

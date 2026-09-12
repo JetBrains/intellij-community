@@ -9,8 +9,9 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IndexingTestUtil
 import java.io.File
@@ -81,12 +82,12 @@ fun moduleLibrary(
 
 val File.jarRoot: VirtualFile
     get() {
-        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this) ?: error("Cannot find file $this")
+        val virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(this.absolutePath) ?: error("Cannot find file $this")
         return JarFileSystem.getInstance().getRootByLocal(virtualFile) ?: error("Can't find root by file $virtualFile")
     }
 
 val Path.jarRoot: VirtualFile
     get() {
-        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(this) ?: error("Cannot find file $this")
+        val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(this) ?: error("Cannot find file $this")
         return JarFileSystem.getInstance().getRootByLocal(virtualFile) ?: error("Can't find root by file $virtualFile")
     }

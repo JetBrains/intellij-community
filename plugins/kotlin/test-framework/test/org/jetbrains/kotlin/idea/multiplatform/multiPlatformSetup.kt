@@ -7,7 +7,7 @@ import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemSourceSet
@@ -304,7 +304,7 @@ private fun AbstractMultiModuleTest.createModuleWithRoots(
 private fun AbstractMultiModuleTest.createModule(name: String): Module {
     val moduleDir = KotlinTestUtils.tmpDirForReusableFolder("kotlinTest")
     val module = createModule("$moduleDir/$name", JavaModuleType.getModuleType())
-    val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir)
+    val root = StandardFileSystems.local().refreshAndFindFileByPath(moduleDir.absolutePath)
     checkNotNull(root)
     module.project.executeWriteCommand("refresh") {
         root.refresh(false, true)

@@ -9,8 +9,8 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiFile
 import com.intellij.psi.createSmartPointer
@@ -228,7 +228,7 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
         copyAfterDirectory(afterDirectorySanitizer)
 
         val psiFile = runReadAction {
-            LocalFileSystem.getInstance().findFileByNioFile(mainFilePath)?.toPsiFile(myProject)
+            VirtualFileManager.getInstance().findFileByNioPath(mainFilePath)?.toPsiFile(myProject)
         } as PsiFile
 
         val inspections = parseInspectionsToEnable(psiFile.virtualFile.path, mainFileText).toTypedArray()

@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.fir.resolve
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiManager
@@ -55,7 +55,7 @@ abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest()
     }
 
     protected fun doTest(filePath: String) {
-        val libraryFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$testDataPath/_library/lib/Elem.kt")!!
+        val libraryFile = StandardFileSystems.local().refreshAndFindFileByPath("$testDataPath/_library/lib/Elem.kt")!!
         configureByExistingFile(libraryFile)
         val offset = editor.caretModel.offset
         val psiReference = file.findReferenceAt(offset)!!
@@ -63,7 +63,7 @@ abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest()
         assertNotNull(target)
         target as PsiNamedElement
 
-        val testFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$filePath/sourceModule/test.txt")!!
+        val testFile = StandardFileSystems.local().refreshAndFindFileByPath("$filePath/sourceModule/test.txt")!!
         val text = VfsUtilCore.loadText(testFile)
 
         assertEquals(findStringWithPrefixes(text, "// expected class:"), target.name)

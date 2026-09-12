@@ -9,7 +9,7 @@ import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.updateAllProjects
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -143,7 +143,7 @@ class ReImportRemoveDirTest(mavenVersion: String, modelVersion: String) :
             </build>
             """
         )
-        LocalFileSystem.getInstance().refreshFiles(listOf(maven.projectPom))
+        RefreshQueue.getInstance().refresh(false, false, null, listOf(maven.projectPom))
         maven.updateAllProjects()
 
         maven.assertSources("project", "src/main/kotlin")

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
@@ -34,7 +34,7 @@ interface GradleProjectsLinkingDsl {
 object GradleProjectsLinker {
     fun linkGradleProject(relativeProjectPath: String, projectPath: File, project: Project) {
         val absoluteProjectPath = projectPath.resolve(relativeProjectPath).absolutePath
-        val localFileSystem = LocalFileSystem.getInstance()
+        val localFileSystem = StandardFileSystems.local()
         val projectFile = localFileSystem.refreshAndFindFileByPath(absoluteProjectPath)
             ?: error("Failed to find projectFile: $absoluteProjectPath")
 

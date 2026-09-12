@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.scripts
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -46,7 +46,7 @@ class SymbolFromOutsideSourceRootScriptRestorationTest : KotlinLightCodeInsightF
                 createNewFile()
                 writeText("fun foo() = 42")
             }
-        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(tmpFile.absolutePath)!!
+        val virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(tmpFile.absolutePath)!!
         val scriptFile = readAction { PsiManager.getInstance(project).findFile(virtualFile) as KtFile }
         return scriptFile
     }

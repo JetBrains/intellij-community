@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.gradle.configuration
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import java.util.Properties
@@ -33,7 +33,7 @@ class GradlePropertiesFileFacade(private val baseDir: String) {
         propertyName: String,
         propertyFileNames: List<String>,
     ): String? {
-        val baseVirtualDir = LocalFileSystem.getInstance().findFileByPath(baseDir) ?: return null
+        val baseVirtualDir = StandardFileSystems.local().findFileByPath(baseDir) ?: return null
 
         for (propertyFileName in propertyFileNames) {
             val propertyFile = baseVirtualDir.findChild(propertyFileName) ?: continue

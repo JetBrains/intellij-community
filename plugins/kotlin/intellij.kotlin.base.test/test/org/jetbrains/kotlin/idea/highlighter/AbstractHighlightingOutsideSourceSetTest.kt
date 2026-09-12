@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.utils.io.deleteRecursively
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -18,7 +18,7 @@ abstract class AbstractHighlightingOutsideSourceSetTest : KotlinLightCodeInsight
                 writeText("class Foo")
             }
 
-            val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempFilePath)!!
+            val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tempFilePath)!!
             val ktFile = PsiManager.getInstance(project).findFile(virtualFile) as KtFile
 
             myFixture.openFileInEditor(virtualFile)
