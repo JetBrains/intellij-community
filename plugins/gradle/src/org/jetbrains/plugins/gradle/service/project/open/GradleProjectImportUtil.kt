@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.launchTracked
 import org.gradle.util.GradleVersion
@@ -101,7 +101,7 @@ fun suggestGradleHome(project: Project?): String? {
 
 private fun validateGradleProject(projectFilePath: String, project: Project): ValidationInfo? {
   val systemSettings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID)
-  val localFileSystem = LocalFileSystem.getInstance()
+  val localFileSystem = StandardFileSystems.local()
   val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
   if (projectFile == null) {
     val shortPath = getPresentablePath(projectFilePath)

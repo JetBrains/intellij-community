@@ -7,7 +7,7 @@ import com.intellij.model.Pointer
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
@@ -40,7 +40,7 @@ class GradlePluginSymbol(
   }
 
   private fun findPluginFile(project: Project): PsiFile? {
-    val virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath) ?: return null
+    val virtualFile = StandardFileSystems.local().findFileByPath(filePath) ?: return null
     return PsiManager.getInstance(project).findFile(virtualFile)
   }
 

@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +92,7 @@ public class GradleConsoleFilter implements Filter {
       return null;
     }
 
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fileName.replace(File.separatorChar, '/'));
+    final VirtualFile file = StandardFileSystems.local().findFileByPath(fileName.replace(File.separatorChar, '/'));
     if (file == null) {
       return null;
     }

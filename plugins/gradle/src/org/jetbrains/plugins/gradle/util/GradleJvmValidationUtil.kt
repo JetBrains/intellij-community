@@ -18,7 +18,7 @@ import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
 import com.intellij.openapi.util.io.FileUtil.getRelativePath
 import com.intellij.openapi.util.io.FileUtil.isAncestor
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.psi.PsiManager
@@ -116,7 +116,7 @@ private fun notifyInvalidGradleJvmInfo(project: Project, @NlsContexts.HintText n
   }
   val hyperLinkProcessor = object : NotificationListener.Adapter() {
     override fun hyperlinkActivated(notification: Notification, e: HyperlinkEvent) {
-      val file = LocalFileSystem.getInstance().findFileByPath(e.description) ?: return
+      val file = StandardFileSystems.local().findFileByPath(e.description) ?: return
       ProjectViewSelectInTarget.select(project, file, ProjectViewPane.ID, null, file, true)
       val psiFile = PsiManager.getInstance(project).findFile(file) ?: return
       EditorHelper.openInEditor(psiFile)

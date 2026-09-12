@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.service.settings;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.gradle.tooling.GradleConnector;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public final class GradleConfigLocator implements ExternalSystemConfigLocator {
   public @NotNull List<VirtualFile> findAll(@NotNull ExternalProjectSettings externalProjectSettings) {
     List<VirtualFile> list = new ArrayList<>();
     for (String path : externalProjectSettings.getModules()) {
-      VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
+      VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(new File(path).getAbsolutePath());
       if (vFile != null) {
         for (VirtualFile child : vFile.getChildren()) {
           String name = child.getName();

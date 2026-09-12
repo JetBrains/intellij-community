@@ -7,7 +7,7 @@ import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport
 import com.intellij.projectImport.ProjectImportBuilder
@@ -44,7 +44,7 @@ internal class JavaGradleProjectImportBuilder : ProjectImportBuilder<Any>(), Dep
   override fun setOpenProjectSettingsAfter(on: Boolean) {}
 
   private fun getPathToBeImported(path: String): String {
-    val localForImport = LocalFileSystem.getInstance()
+    val localForImport = StandardFileSystems.local()
     val file = localForImport.refreshAndFindFileByPath(path)
     return file?.let(::getDefaultPath) ?: path
   }

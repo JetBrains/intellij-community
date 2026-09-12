@@ -29,7 +29,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
@@ -129,7 +129,7 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
   @Override
   protected void doPrepare(@NotNull WizardContext context) {
     String pathToUse = getFileToImport();
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(pathToUse);
+    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(pathToUse);
     if (file != null && !file.isDirectory() && file.getParent() != null) {
       pathToUse = file.getParent().getPath();
     }

@@ -9,7 +9,7 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findDocument
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -139,7 +139,7 @@ class GradleVersionQuickFixIntegrationTest {
     assertThat(readWrapperProperties()).contains("gradle-${targetGradleVersion.version}-")
 
     val wrapperPath = projectRoot.resolve("gradle/wrapper/gradle-wrapper.properties")
-    val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(wrapperPath)
+    val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(wrapperPath)
                       ?: error("gradle-wrapper.properties not found at $wrapperPath")
 
     val undoManager = UndoManager.getInstance(project)
@@ -159,7 +159,7 @@ class GradleVersionQuickFixIntegrationTest {
 
   private suspend fun readWrapperProperties(): String {
     val path: Path = projectRoot.resolve("gradle/wrapper/gradle-wrapper.properties")
-    val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(path) ?: error("gradle-wrapper.properties not found at $path")
+    val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(path) ?: error("gradle-wrapper.properties not found at $path")
     return readAction { virtualFile.findDocument()?.text } ?: path.readText()
   }
 

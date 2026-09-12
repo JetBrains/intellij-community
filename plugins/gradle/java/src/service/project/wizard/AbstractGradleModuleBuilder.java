@@ -51,10 +51,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.UIBundle;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
@@ -202,8 +202,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
     rootProjectPath = myParentProject != null ? Paths.get(myParentProject.getLinkedExternalProjectPath()) : contentEntryPath;
 
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-    VirtualFile modelContentRootDir = fileSystem.refreshAndFindFileByNioFile(contentEntryPath);
+    VirtualFileManager fileManager = VirtualFileManager.getInstance();
+    VirtualFile modelContentRootDir = fileManager.refreshAndFindFileByNioPath(contentEntryPath);
     if (modelContentRootDir == null) {
       return;
     }

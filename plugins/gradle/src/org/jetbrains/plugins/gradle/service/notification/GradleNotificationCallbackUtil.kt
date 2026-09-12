@@ -6,11 +6,11 @@ package org.jetbrains.plugins.gradle.service.notification
 import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 
 fun navigateByNotificationData(project: Project, notificationData: NotificationData) {
   val filePath = notificationData.filePath ?: return
-  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath) ?: return
+  val virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(filePath) ?: return
   val line = notificationData.line - 1
   val column = notificationData.column - 1
   val guiLine = if (line < 0) -1 else line

@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
@@ -82,7 +82,7 @@ class GradleBuildScriptQualifiedNameProviderTest : GradleModuleDataIndexTestCase
     installGradleSettings()
     val orphan = Path.of(projectPath, "orphan").also { Files.createDirectories(it) }
     val buildFile = orphan.resolve("build.gradle.kts").also { Files.writeString(it, "//") }
-    val vf = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(buildFile)!!
+    val vf = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(buildFile)!!
     val qualifiedName = readAction {
       val psiFile = PsiManager.getInstance(project).findFile(vf)!!
       provider.getQualifiedName(psiFile)
@@ -113,7 +113,7 @@ class GradleBuildScriptQualifiedNameProviderTest : GradleModuleDataIndexTestCase
     modulePath.also { Files.createDirectories(it) }
       .resolve(scriptName)
       .also { Files.writeString(it, "//") }
-      .let { LocalFileSystem.getInstance().refreshAndFindFileByNioFile(it)!! }
+      .let { VirtualFileManager.getInstance().refreshAndFindFileByNioPath(it)!! }
 
   private fun createModuleData(modulePath: Path, moduleDataId: String, moduleName: String): ModuleData {
     val modulePathStr = ExternalSystemApiUtil.toCanonicalPath(modulePath.toString())

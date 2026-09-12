@@ -36,8 +36,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -489,7 +489,7 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
   }
 
   private fun createJdkFromJavaHome(): Sdk {
-    val jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(gradleJdkHome!!))
+    val jdkHomeDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Path.of(gradleJdkHome!!))
     val javaSdk = JavaSdk.getInstance()
     val javaSdkType: SdkType = javaSdk ?: SimpleJavaSdkType.getInstance()
     val jdk = SdkConfigurationUtil.setupSdk(arrayOfNulls<Sdk>(0), jdkHomeDir!!, javaSdkType, true, null, GRADLE_JDK_NAME)

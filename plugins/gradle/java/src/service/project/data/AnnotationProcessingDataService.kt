@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -166,7 +166,7 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
                                        externalSource: ProjectModelExternalSource) {
     val type = if (isTest) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
     val url = VfsUtilCore.pathToUrl(path)
-    val vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
+    val vf = StandardFileSystems.local().refreshAndFindFileByPath(path)
     if (vf == null || !vf.exists()) {
       sourceFolderManager.addSourceFolder(ideModule, url, type)
       sourceFolderManager.setSourceFolderGenerated(url, true)

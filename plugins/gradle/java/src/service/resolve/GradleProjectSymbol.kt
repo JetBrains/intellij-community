@@ -7,7 +7,7 @@ import com.intellij.model.Pointer
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -39,7 +39,7 @@ abstract class GradleProjectSymbol(
   private fun findBuildFile(project: Project): PsiFile? {
     val rootProject = ExternalProjectDataCache.getInstance(project).getRootExternalProject(rootProjectPath) ?: return null
     val buildFile = externalProject(rootProject)?.buildFile ?: return null
-    val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(buildFile) ?: return null
+    val virtualFile = StandardFileSystems.local().findFileByPath(buildFile.absolutePath) ?: return null
     return PsiManager.getInstance(project).findFile(virtualFile)
   }
 

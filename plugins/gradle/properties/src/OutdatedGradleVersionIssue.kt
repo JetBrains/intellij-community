@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.pom.Navigatable
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiManager
@@ -55,7 +55,7 @@ class OutdatedGradleVersionIssue(
 
     return ReadAction.nonBlocking<Navigatable?> {
       val wrapperPropertiesPath = GradleUtil.findDefaultWrapperPropertiesFile(Path.of(basePath)) ?: return@nonBlocking null
-      val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(wrapperPropertiesPath) ?: return@nonBlocking null
+      val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(wrapperPropertiesPath) ?: return@nonBlocking null
       val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@nonBlocking null
 
       if (psiFile !is PropertiesFile) return@nonBlocking null
