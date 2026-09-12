@@ -16,8 +16,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus;
@@ -137,7 +138,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           return CloneStatus.FAILURE;
         }
         finally {
-          VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
+          VirtualFile vf = StandardFileSystems.local().refreshAndFindFileByPath(target.getAbsolutePath());
           if (vf != null) {
             vf.refresh(true, true, () -> getApplication().executeOnPooledThread(() -> notifyListener()));
           }
@@ -249,7 +250,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   private static final class MyFilter implements Predicate<File> {
-    private final @NotNull LocalFileSystem myLfs = LocalFileSystem.getInstance();
+    private final @NotNull VirtualFileSystem myLfs = StandardFileSystems.local();
     private final @NotNull SvnExcludingIgnoredOperation.Filter myFilter;
 
     private MyFilter(@NotNull SvnExcludingIgnoredOperation.Filter filter) {
@@ -258,7 +259,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
     @Override
     public boolean test(@NotNull File file) {
-      final VirtualFile vf = myLfs.findFileByIoFile(file);
+      final VirtualFile vf = myLfs.findFileByPath(file.getAbsolutePath());
       return vf != null && myFilter.accept(vf);
     }
   }

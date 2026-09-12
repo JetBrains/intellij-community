@@ -11,7 +11,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.ProgressManagerQueue
@@ -84,7 +84,7 @@ internal class SvnBranchConfigurationManager(private val project: Project) : Per
   }
 
   private fun resolveAllBranchPoints(): Set<Pair<VirtualFile, SvnBranchConfigurationNew>> {
-    val lfs = LocalFileSystem.getInstance()
+    val lfs = StandardFileSystems.local()
     val branchPointsToLoad = mutableSetOf<Pair<VirtualFile, SvnBranchConfigurationNew>>()
 
     for ((path, persistedConfiguration) in configurationBean.myConfigurationMap) {

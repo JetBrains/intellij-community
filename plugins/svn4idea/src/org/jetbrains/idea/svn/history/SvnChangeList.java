@@ -16,7 +16,7 @@ import com.intellij.openapi.vcs.changes.ExternallyRenamedChange;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
@@ -310,7 +310,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     if (rootForUrl != null) {
       String relativePath = getRelativeUrl(rootForUrl.getUrl(), absoluteUrl);
       File file = new File(rootForUrl.getPath(), relativePath);
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(file.getAbsolutePath());
       result = virtualFile != null ? VcsUtil.getFilePath(virtualFile) : VcsUtil.getFilePath(file, detector.fun(file).booleanValue());
     }
 

@@ -13,8 +13,9 @@ import com.intellij.openapi.vcs.changes.ChangelistBuilder;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
   @Override
   public void finish() {
-    LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh, true, false, null);
+    RefreshQueue.getInstance().refreshPaths(true, false, null, ContainerUtil.map(filesToRefresh, File::toPath));
   }
 
   public @NotNull ChangelistBuilder getBuilder() {
@@ -224,7 +225,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     else if (status.is(StatusType.STATUS_IGNORED)) {
       VirtualFile file = filePath.getVirtualFile();
       if (file == null) {
-        file = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.getPath());
+        file = StandardFileSystems.local().refreshAndFindFileByPath(filePath.getPath());
       }
       if (file == null) {
         LOG.error("No virtual file for ignored file: " + filePath.getPresentableUrl() + ", isNonLocal: " + filePath.isNonLocal());

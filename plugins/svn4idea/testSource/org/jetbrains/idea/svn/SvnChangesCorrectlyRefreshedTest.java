@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
@@ -46,7 +46,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     final CharSequence text1 = LoadTextUtil.loadText(subTree.myS1File);
     assertEquals("new content", text1.toString());
 
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(virtualToIoFile(subTree.myS1File));
+    StandardFileSystems.local().refreshAndFindFileByPath(virtualToIoFile(subTree.myS1File).getAbsolutePath());
     refreshChanges();
     final VcsException updateException = changeListManager.getUpdateException();
     if (updateException != null) {
@@ -244,7 +244,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
       if (name.equals(file.getName())) return file;
     }
     System.out.println("not found as child");
-    assertNotNull(LocalFileSystem.getInstance().findFileByIoFile(new File(parent.getPath(), name)));
+    assertNotNull(StandardFileSystems.local().findFileByPath(new File(parent.getPath(), name).getAbsolutePath()));
     return null;
   }
 }

@@ -9,7 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -246,7 +246,7 @@ public class SvnRecursiveStatusWalker {
       final File ioFile = status.getFile();
       checkIfCopyRootWasReported(status);
 
-      VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+      VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(ioFile.getAbsolutePath());
       if (vFile != null && isIgnoredByVcs(vFile)) return;
       if (myProject.isDisposed()) throw new ProcessCanceledException();
 

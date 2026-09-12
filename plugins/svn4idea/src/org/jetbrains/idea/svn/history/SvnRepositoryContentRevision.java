@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +50,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
   public byte @NotNull [] getContentAsBytes() throws VcsException {
     try {
       if (myFile.getVirtualFile() == null) {
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(myFile.getPath());
+        StandardFileSystems.local().refreshAndFindFileByPath(myFile.getPath());
       }
       return ContentRevisionCache.getOrLoadAsBytes(myVcs.getProject(), myFile, getRevisionNumber(), myVcs.getKeyInstanceMethod(),
                                                    ContentRevisionCache.UniqueType.REPOSITORY_CONTENT, () -> loadContent().toByteArray());

@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
 
     runInAndVerifyIgnoreOutput("co", myBranchUrl, myBranchRoot.getPath());
     assertExists(myBranchRoot);
-    myBranchVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myBranchRoot);
+    myBranchVf = StandardFileSystems.local().refreshAndFindFileByPath(myBranchRoot.getAbsolutePath());
     assertNotNull(myBranchVf);
 
     myBranchTree = new SubTree(myBranchVf);

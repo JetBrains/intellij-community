@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vcs.changes.SimpleContentRevision;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.testFramework.RunAll;
@@ -404,7 +404,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     assertRollback(singletonList(dirChange), emptyList());
 
-    ignored = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wasIgnored);
+    ignored = StandardFileSystems.local().refreshAndFindFileByPath(wasIgnored.getAbsolutePath());
     // ignored property was not committed
     assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(ignored));
     assertExists(wasIgnored);
@@ -440,7 +440,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     assertRollback(singletonList(dirChange), emptyList());
 
-    ignored = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wasIgnored);
+    ignored = StandardFileSystems.local().refreshAndFindFileByPath(wasIgnored.getAbsolutePath());
     // ignored property was committed
     assertEquals(FileStatus.IGNORED, changeListManager.getStatus(ignored));
     assertExists(wasIgnored);

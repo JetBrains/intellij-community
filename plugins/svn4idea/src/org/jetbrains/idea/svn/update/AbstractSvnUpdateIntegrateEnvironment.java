@@ -21,9 +21,10 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdateSessionAdapter;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NonNls;
@@ -168,7 +169,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     private class MyTreeConflictWorker implements Runnable {
       @Override
       public void run() {
-        final LocalFileSystem lfs = LocalFileSystem.getInstance();
+        final VirtualFileSystem lfs = StandardFileSystems.local();
         final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_TREE_CONFLICT);
         final Collection<String> conflictedFiles = conflictedGroup == null ? null : conflictedGroup.getFiles();
         final Collection<VirtualFile> parents = new ArrayList<>();
@@ -176,16 +177,16 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {
           for (final String conflictedFile : conflictedFiles) {
             final File file = new File(conflictedFile);
-            final VirtualFile vfFile = lfs.refreshAndFindFileByIoFile(file);
+            final VirtualFile vfFile = lfs.refreshAndFindFileByPath(file.getAbsolutePath());
             if (vfFile != null) {
               parents.add(vfFile);
               continue;
             }
             final File parent = file.getParentFile();
 
-            VirtualFile vf = lfs.findFileByIoFile(parent);
+            VirtualFile vf = lfs.findFileByPath(parent.getAbsolutePath());
             if (vf == null) {
-              vf = lfs.refreshAndFindFileByIoFile(parent);
+              vf = lfs.refreshAndFindFileByPath(parent.getAbsolutePath());
             }
             if (vf != null) {
               parents.add(vf);
@@ -215,13 +216,13 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     private abstract class MyConflictWorker implements Runnable {
       private final String groupId;
       protected final List<VirtualFile> myFiles;
-      private final LocalFileSystem myLfs;
+      private final VirtualFileSystem myLfs;
       private final ProjectLevelVcsManager myPlVcsManager;
 
       protected MyConflictWorker(final String groupId) {
         this.groupId = groupId;
         myFiles = new ArrayList<>();
-        myLfs = LocalFileSystem.getInstance();
+        myLfs = StandardFileSystems.local();
         myPlVcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
       }
 
@@ -275,9 +276,9 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {
           for (final String conflictedFile : conflictedFiles) {
             final File file = new File(conflictedFile);
-            VirtualFile vf = myLfs.findFileByIoFile(file);
+            VirtualFile vf = myLfs.findFileByPath(file.getAbsolutePath());
             if (vf == null) {
-              vf = myLfs.refreshAndFindFileByIoFile(file);
+              vf = myLfs.refreshAndFindFileByPath(file.getAbsolutePath());
             }
             if (vf != null) {
               myFiles.add(vf);

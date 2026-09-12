@@ -25,7 +25,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.VcsShowSettingOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -144,7 +144,7 @@ public final class SvnUtil {
                                                               @NotNull File path,
                                                               @NotNull SvnWCRootCrawler callback,
                                                               @Nullable ProgressIndicator progress) {
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path);
+    VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path.getAbsolutePath());
 
     return file != null ? crawlWCRoots(vcs, file, callback, progress) : emptyList();
   }

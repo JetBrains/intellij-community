@@ -41,7 +41,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -188,7 +188,7 @@ public final class SvnVcs extends AbstractVcs {
     List<VirtualFile> roots = new ArrayList<>();
     for (WCInfo info : getAllWcInfos()) {
       if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
-        VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(info.getRootInfo().getIoFile());
+        VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(info.getRootInfo().getIoFile().getAbsolutePath());
         if (file == null) {
           LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
         }

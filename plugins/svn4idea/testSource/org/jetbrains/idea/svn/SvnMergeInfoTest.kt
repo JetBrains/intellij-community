@@ -3,7 +3,7 @@ package org.jetbrains.idea.svn
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO
 import org.jetbrains.idea.svn.SvnUtil.createUrl
@@ -66,7 +66,7 @@ class SvnMergeInfoTest : SvnTestCase() {
 
     vcsManager.setDirectoryMapping(myBranchVcsRoot.absolutePath, SvnVcs.VCS_NAME)
 
-    val vcsRoot = LocalFileSystem.getInstance().findFileByIoFile(myBranchVcsRoot)
+    val vcsRoot = StandardFileSystems.local().findFileByPath(myBranchVcsRoot.absolutePath)
     val node = Node(vcsRoot!!, createUrl(myBranchUrl), myRepositoryUrl)
     val root = RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_EIGHT, vcsRoot, null)
     val wcInfo = WCInfo(root, true, Depth.INFINITY)
@@ -275,7 +275,7 @@ class SvnMergeInfoTest : SvnTestCase() {
   }
 
   private fun editAndCommit(trunk: File, file: File, content: String = CONTENT1) {
-    val vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+    val vf = StandardFileSystems.local().refreshAndFindFileByPath(file.absolutePath)
 
     editAndCommit(trunk, vf!!, content)
   }
@@ -286,7 +286,7 @@ class SvnMergeInfoTest : SvnTestCase() {
   }
 
   private fun editFile(file: File) {
-    val vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+    val vf = StandardFileSystems.local().refreshAndFindFileByPath(file.absolutePath)
 
     editFileInCommand(vf!!, CONTENT1)
   }

@@ -13,8 +13,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.projectlevelman.MappingsToRoots;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import kotlinx.coroutines.CoroutineScope;
@@ -307,11 +308,11 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
   }
 
   private void fillMapping(@NotNull SvnMapping mapping, @NotNull List<SvnCopyRootSimple> list) {
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFileSystem lfs = StandardFileSystems.local();
 
     for (SvnCopyRootSimple simple : list) {
-      VirtualFile copyRoot = lfs.findFileByIoFile(new File(simple.myCopyRoot));
-      VirtualFile vcsRoot = lfs.findFileByIoFile(new File(simple.myVcsRoot));
+      VirtualFile copyRoot = lfs.findFileByPath(new File(simple.myCopyRoot).getAbsolutePath());
+      VirtualFile vcsRoot = lfs.findFileByPath(new File(simple.myVcsRoot).getAbsolutePath());
 
       if (copyRoot == null || vcsRoot == null) continue;
 

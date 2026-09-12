@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -490,7 +490,7 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
   private File testCommitImpl(File wc1) throws IOException {
     assertTrue(wc1.isDirectory());
     final File file = FileUtil.createTempFile(wc1, "file", ".txt");
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    final VirtualFile vf = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
     assertNotNull(vf);
     final ArrayList<VirtualFile> files = new ArrayList<>();
     files.add(vf);
@@ -536,7 +536,7 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
 
   private void updateExpectAuthCanceled(File wc1, String expectedText) {
     assertTrue(wc1.isDirectory());
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wc1);
+    final VirtualFile vf = StandardFileSystems.local().refreshAndFindFileByPath(wc1.getAbsolutePath());
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
       vcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
@@ -553,7 +553,7 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
 
   private void updateSimple(File wc1) {
     assertTrue(wc1.isDirectory());
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wc1);
+    final VirtualFile vf = StandardFileSystems.local().refreshAndFindFileByPath(wc1.getAbsolutePath());
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
       vcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),

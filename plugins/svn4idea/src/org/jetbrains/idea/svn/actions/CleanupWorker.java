@@ -8,8 +8,8 @@ import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnProgressCanceller;
@@ -84,7 +84,7 @@ public class CleanupWorker extends Task.Backgroundable {
 
     getApplication().invokeLater(() -> getApplication().runWriteAction(() -> {
       if (!getProject().isDisposed()) {
-        LocalFileSystem.getInstance().refreshFiles(myRoots, false, true, null);
+        RefreshQueue.getInstance().refresh(false, true, null, myRoots);
       }
     }));
     markFilesDirty(getProject(), myRoots);

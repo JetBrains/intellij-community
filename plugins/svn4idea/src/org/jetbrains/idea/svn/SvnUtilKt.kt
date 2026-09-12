@@ -6,7 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.concurrency.AsyncPromise
@@ -21,7 +21,7 @@ internal fun putWcDbFilesToVfs(infos: Collection<RootUrlInfo>) {
     .map { getWcDb(it.ioFile) }
     .toList()
 
-  LocalFileSystem.getInstance().refreshIoFiles(wcDbFiles, true, false, null)
+  RefreshQueue.getInstance().refreshPaths(true, false, null, wcDbFiles.map { it.toPath() })
 }
 
 internal fun <T : Any> computeAfterUpdateChanges(project: Project, parent: CoroutineScope, block: () -> T): T? {

@@ -3,7 +3,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -183,7 +183,7 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.ensureUpToDate(false);
 
-    VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myWorkingCopyDir.getPath(), conflictFile));
+    VirtualFile vf = StandardFileSystems.local().refreshAndFindFileByPath(new File(myWorkingCopyDir.getPath(), conflictFile).getAbsolutePath());
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
@@ -466,7 +466,7 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
       change = changeListManager.getChange(VcsUtil.getFilePath(new File(myWorkingCopyDir.getPath(), conflictFile), true));
     }
     else {
-      VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myWorkingCopyDir.getPath(), conflictFile));
+      VirtualFile vf = StandardFileSystems.local().refreshAndFindFileByPath(new File(myWorkingCopyDir.getPath(), conflictFile).getAbsolutePath());
       assertNotNull(vf);
 
       change = changeListManager.getChange(vf);

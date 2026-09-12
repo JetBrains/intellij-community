@@ -36,7 +36,7 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchMode;
 import com.intellij.openapi.vcs.changes.patch.TextFilePatchInProgress;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -295,7 +295,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
   private static void applyBinaryChange(@NotNull Change change) throws IOException, VcsException {
     if (change.getAfterRevision() == null) {
       FilePath path = Objects.requireNonNull(change.getBeforeRevision()).getFile();
-      VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
+      VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path.getPath());
       if (file == null) {
         throw new VcsException(message("error.can.not.delete.file", path.getPath()), true);
       }

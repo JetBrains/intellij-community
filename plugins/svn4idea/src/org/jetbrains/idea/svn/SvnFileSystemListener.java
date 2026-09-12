@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.Functions;
@@ -794,7 +795,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       final File ioFile = new File(getIOFile(addedFileInfo.myDir), addedFileInfo.myName);
       VirtualFile addedFile = addedFileInfo.myDir.findChild(addedFileInfo.myName);
       if (addedFile == null) {
-        addedFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+        addedFile = StandardFileSystems.local().refreshAndFindFileByPath(ioFile.getAbsolutePath());
       }
       if (addedFile != null) {
         final Status fileStatus = getFileStatus(ioFile);

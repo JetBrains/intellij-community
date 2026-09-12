@@ -4,8 +4,9 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.idea.svn.api.Url;
 import org.junit.Test;
 
@@ -79,9 +80,9 @@ public class SvnExternalTest extends SvnTestCase {
   private void simpleExternalStatusImpl() {
     final File sourceFile = new File(myWorkingCopyDir.getPath(), "source" + File.separator + "s1.txt");
     final File externalFile = new File(myWorkingCopyDir.getPath(), "source" + File.separator + "external" + File.separator + "t12.txt");
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final VirtualFile vf1 = lfs.refreshAndFindFileByIoFile(sourceFile);
-    final VirtualFile vf2 = lfs.refreshAndFindFileByIoFile(externalFile);
+    final VirtualFileSystem lfs = StandardFileSystems.local();
+    final VirtualFile vf1 = lfs.refreshAndFindFileByPath(sourceFile.getAbsolutePath());
+    final VirtualFile vf2 = lfs.refreshAndFindFileByPath(externalFile.getAbsolutePath());
 
     assertNotNull(vf1);
     assertNotNull(vf2);
@@ -118,7 +119,7 @@ public class SvnExternalTest extends SvnTestCase {
 
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
     final File externalFile = new File(sourceDir, "external/t11.txt");
-    final VirtualFile externalVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalFile);
+    final VirtualFile externalVf = StandardFileSystems.local().refreshAndFindFileByPath(externalFile.getAbsolutePath());
     assertNotNull(externalVf);
   }
 
@@ -137,7 +138,7 @@ public class SvnExternalTest extends SvnTestCase {
   private void uncommittedExternalStatusImpl() {
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
     final File externalFile = new File(sourceDir, "external/t11.txt");
-    final VirtualFile externalVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalFile);
+    final VirtualFile externalVf = StandardFileSystems.local().refreshAndFindFileByPath(externalFile.getAbsolutePath());
     assertNotNull(externalVf);
     editFileInCommand(externalVf, "some new content");
     refreshChanges();
