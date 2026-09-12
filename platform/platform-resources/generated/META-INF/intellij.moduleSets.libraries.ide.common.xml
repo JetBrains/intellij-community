@@ -7,7 +7,6 @@
     <module name="intellij.libraries.javax.activation"/>
     <module name="intellij.libraries.opencsv"/>
     <module name="intellij.libraries.squareup.okio.jvm"/>
-    <module name="intellij.libraries.okhttp"/>
     <module name="intellij.libraries.lucene.common"/>
     <module name="intellij.libraries.jettison"/>
     <module name="intellij.libraries.xstream"/>
