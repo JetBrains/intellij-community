@@ -11992,17 +11992,31 @@ http_file(
 )
 
 http_file(
-    name = "com_github_oshi-oshi-core-6_9_2_http",
-    downloaded_file_path = "oshi-core-6.9.2.jar",
-    sha256 = "7a572731c8076e27135b9a57cf166bb43c09909407f5b0853100d7efe9fcb7ee",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-core/6.9.2/oshi-core-6.9.2.jar",
+    name = "com_github_oshi-oshi-core-ffm-7_6_1_http",
+    downloaded_file_path = "oshi-core-ffm-7.6.1.jar",
+    sha256 = "956fa1bf544ddc94a4f8d08a6bed2c3fd0711ea72372a0e27f82643eb3fa0b94",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-core-ffm/7.6.1/oshi-core-ffm-7.6.1.jar",
 )
 
 http_file(
-    name = "com_github_oshi-oshi-core-6_9_2-sources_http",
-    downloaded_file_path = "oshi-core-6.9.2-sources.jar",
-    sha256 = "a6c01b2134f8f46ca24c50d6131a487326425e9fd3b2fa7a202f4b034536ca94",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-core/6.9.2/oshi-core-6.9.2-sources.jar",
+    name = "com_github_oshi-oshi-common-7_6_1_http",
+    downloaded_file_path = "oshi-common-7.6.1.jar",
+    sha256 = "606f42506d6983902dda1033a16fe5e920eeaf93bdc0d480673cc40ab96ea038",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-common/7.6.1/oshi-common-7.6.1.jar",
+)
+
+http_file(
+    name = "com_github_oshi-oshi-core-ffm-7_6_1-sources_http",
+    downloaded_file_path = "oshi-core-ffm-7.6.1-sources.jar",
+    sha256 = "ccfcb3ef7c4fa33306cc09f382d34cdba896b5c4a7b6f4baa952432783d66b3d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-core-ffm/7.6.1/oshi-core-ffm-7.6.1-sources.jar",
+)
+
+http_file(
+    name = "com_github_oshi-oshi-common-7_6_1-sources_http",
+    downloaded_file_path = "oshi-common-7.6.1-sources.jar",
+    sha256 = "e3b7faa7c9f0326dfd69ba405791a84363f14015677061272e23b3342a8b17ef",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-common/7.6.1/oshi-common-7.6.1-sources.jar",
 )
 
 http_file(

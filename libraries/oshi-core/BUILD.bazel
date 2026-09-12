@@ -14,11 +14,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-oshi-core-github-oshi-core"],
-    runtime_deps = [
-        # do not sort,
-        "//libraries/jna",
-        "@lib//:libraries-oshi-core-github-oshi-core",
-    ],
+    runtime_deps = ["@lib//:libraries-oshi-core-github-oshi-core"],
 )
 
 jvm_library(
@@ -32,11 +28,7 @@ jvm_library(
     module_name = "intellij.libraries.oshi.core",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-oshi-core-github-oshi-core"],
-    runtime_deps = [
-        # do not sort,
-        ":oshi-core",
-        "//libraries/jna:jna_test_lib",
-    ],
+    runtime_deps = [":oshi-core"],
 )
 ### auto-generated section `build intellij.libraries.oshi.core` end
 

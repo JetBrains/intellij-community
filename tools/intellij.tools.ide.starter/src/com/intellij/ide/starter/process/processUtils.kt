@@ -25,7 +25,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import oshi.SystemInfo
+import oshi.ffm.SystemInfo
 import oshi.software.os.OSProcess
 import java.io.IOException
 import java.nio.file.InvalidPathException

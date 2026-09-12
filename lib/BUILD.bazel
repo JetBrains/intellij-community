@@ -14891,18 +14891,41 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.github.oshi/oshi-core-6.9.2.jar_copy",
-    src = "@com_github_oshi-oshi-core-6_9_2_http//file",
-    out = "com.github.oshi/oshi-core-6.9.2.jar",
+    name = "com.github.oshi/oshi-core-ffm-7.6.1.jar_copy",
+    src = "@com_github_oshi-oshi-core-ffm-7_6_1_http//file",
+    out = "com.github.oshi/oshi-core-ffm-7.6.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
-jvm_import(
-    name = "libraries-oshi-core-github-oshi-core",
-    jar = "@com_github_oshi-oshi-core-6_9_2_http//file",
-    source_jar = "@com_github_oshi-oshi-core-6_9_2-sources_http//file",
+copy_file(
+    name = "com.github.oshi/oshi-common-7.6.1.jar_copy",
+    src = "@com_github_oshi-oshi-common-7_6_1_http//file",
+    out = "com.github.oshi/oshi-common-7.6.1.jar",
+    allow_symlink = True,
     visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-oshi-core-github-oshi-core",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":com_github_oshi-oshi-core-ffm-7_6_1_http_import",
+        ":com_github_oshi-oshi-common-7_6_1_http_import",
+    ],
+)
+
+jvm_import(
+    name = "com_github_oshi-oshi-core-ffm-7_6_1_http_import",
+    jar = "@com_github_oshi-oshi-core-ffm-7_6_1_http//file",
+    source_jar = "@com_github_oshi-oshi-core-ffm-7_6_1-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_oshi-oshi-common-7_6_1_http_import",
+    jar = "@com_github_oshi-oshi-common-7_6_1_http//file",
+    source_jar = "@com_github_oshi-oshi-common-7_6_1-sources_http//file",
 )
 
 copy_file(

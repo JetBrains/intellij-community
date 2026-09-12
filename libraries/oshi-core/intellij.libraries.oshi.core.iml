@@ -7,22 +7,29 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.libraries.jna" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
       <library name="github.oshi.core" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.github.oshi:oshi-core:6.9.2">
+        <properties maven-id="com.github.oshi:oshi-core-ffm:7.6.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.9.2/oshi-core-6.9.2.jar">
-              <sha256sum>7a572731c8076e27135b9a57cf166bb43c09909407f5b0853100d7efe9fcb7ee</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core-ffm/7.6.1/oshi-core-ffm-7.6.1.jar">
+              <sha256sum>956fa1bf544ddc94a4f8d08a6bed2c3fd0711ea72372a0e27f82643eb3fa0b94</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/oshi/oshi-common/7.6.1/oshi-common-7.6.1.jar">
+              <sha256sum>606f42506d6983902dda1033a16fe5e920eeaf93bdc0d480673cc40ab96ea038</sha256sum>
             </artifact>
           </verification>
+          <exclude>
+            <dependency maven-id="org.slf4j:slf4j-api" />
+          </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.9.2/oshi-core-6.9.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core-ffm/7.6.1/oshi-core-ffm-7.6.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-common/7.6.1/oshi-common-7.6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.9.2/oshi-core-6.9.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core-ffm/7.6.1/oshi-core-ffm-7.6.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-common/7.6.1/oshi-common-7.6.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
