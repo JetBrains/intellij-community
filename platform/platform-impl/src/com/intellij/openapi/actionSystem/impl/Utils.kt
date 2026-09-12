@@ -1223,8 +1223,14 @@ object Utils {
     get() = Dispatchers.UiWithModelAccess[CoroutineDispatcher]!!
 }
 
+internal fun preloadPromoters() {
+  ActionPromoter.EP_NAME.forEachExtensionSafe {
+    it.promote(emptyList<AnAction>(), DataContext.EMPTY_CONTEXT)
+  }
+}
+
 @ApiStatus.Internal
-suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataContext): List<AnAction> {
+fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataContext): List<AnAction> {
   val frozenContext = Utils.getUiOnlyDataContext(dataContext)
   return SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
     try {
