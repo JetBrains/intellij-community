@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
+import java.util.Set;
 
 public interface LombokClassNames {
   @NonNls String ACCESSORS = "lombok.experimental.Accessors";
@@ -68,5 +69,7 @@ public interface LombokClassNames {
                                              BUILDER, SUPER_BUILDER, FIELD_DEFAULTS, VALUE,
                                              UTILITY_CLASS, WITH, WITHER, EXPERIMENTAL_DELEGATE,
                                              SNEAKY_THROWS, CLEANUP, SYNCHRONIZED, EXTENSION_METHOD);
+
+  Set<String> LOMBOK_LOGGERS = Set.of(JAVA_LOG, LOG_4_J, LOG_4_J_2, COMMONS_LOG, CUSTOM_LOG, JBOSS_LOG, FLOGGER, SLF_4_J, XSLF_4_J);
 
 }
