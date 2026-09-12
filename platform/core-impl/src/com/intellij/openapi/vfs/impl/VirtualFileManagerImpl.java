@@ -426,7 +426,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
     if (!FileSystems.getDefault().equals(nioPath.getFileSystem())) return null;
     VirtualFileSystem fileSystem = getFileSystem(StandardFileSystems.FILE_PROTOCOL);
     if (fileSystem == null) return null;
-    String path = nioPath.toString();
+    String path = nioPath.toAbsolutePath().toString();
     return refresh ? fileSystem.refreshAndFindFileByPath(path) : fileSystem.findFileByPath(path);
   }
 }

@@ -680,6 +680,8 @@
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.AsyncableLocalFileSystemImpl" key="file" physical="true"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl" key="jar" physical="true"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.ex.temp.TempFileSystem" key="temp" physical="true"/>
+    <applicationService serviceInterface="com.intellij.openapi.vfs.WatchRoots"
+                        serviceImplementation="com.intellij.openapi.vfs.impl.local.WatchRootsServiceImpl"/>
     <applicationService serviceInterface="com.intellij.ide.ui.IdeUiService"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeUiServiceImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder" open="true"

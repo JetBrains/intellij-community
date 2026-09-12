@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
@@ -503,21 +504,21 @@ public final class VfsUtil extends VfsUtilCore {
   public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, VirtualFile @NotNull ... files) {
     var list = markDirty(recursive, reloadChildren, files);
     if (list.isEmpty()) return;
-    LocalFileSystem.getInstance().refreshFiles(list, async, recursive, null);
+    RefreshQueue.getInstance().refresh(async, recursive, null, list);
   }
 
   /// @see #markDirtyAndRefresh(boolean, boolean, boolean, VirtualFile...)
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, java.io.File @NotNull ... files) {
-    var fileSystem = LocalFileSystem.getInstance();
-    var virtualFiles = ContainerUtil.map(files, fileSystem::refreshAndFindFileByIoFile, VirtualFile.EMPTY_ARRAY);
+    var fileSystem = StandardFileSystems.local();
+    var virtualFiles = ContainerUtil.map(files, file -> fileSystem.refreshAndFindFileByPath(file.getAbsolutePath()), VirtualFile.EMPTY_ARRAY);
     markDirtyAndRefresh(async, recursive, reloadChildren, virtualFiles);
   }
 
   /// @see #markDirtyAndRefresh(boolean, boolean, boolean, VirtualFile...)
   public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, Path @NotNull ... paths) {
-    var fileSystem = LocalFileSystem.getInstance();
-    var virtualFiles = ContainerUtil.map(paths, fileSystem::refreshAndFindFileByNioFile, VirtualFile.EMPTY_ARRAY);
+    var fileManager = VirtualFileManager.getInstance();
+    var virtualFiles = ContainerUtil.map(paths, fileManager::refreshAndFindFileByNioPath, VirtualFile.EMPTY_ARRAY);
     markDirtyAndRefresh(async, recursive, reloadChildren, virtualFiles);
   }
 

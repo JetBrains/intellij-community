@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.local;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,12 @@ public class CoreLocalFileSystem extends DeprecatedVirtualFileSystem {
 
   public @Nullable VirtualFile findFileByNioFile(@NotNull Path file) {
     return Files.exists(file) ? new CoreLocalVirtualFile(this, file) : null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public boolean isLocal() {
+    return true;
   }
 
   @Override

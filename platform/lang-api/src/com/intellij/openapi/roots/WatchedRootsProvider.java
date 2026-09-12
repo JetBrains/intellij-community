@@ -2,7 +2,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.WatchRoots;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -14,8 +14,8 @@ public interface WatchedRootsProvider {
    * has all children loaded recursively. You can do that explicitly by loading VFS and calling {@link com.intellij.openapi.vfs.VirtualFile#getChildren()}.
    * This is implicitly required by the file watcher to fire events for the changing descendants of a directory.
    *
-   * @return paths which should be monitored via {@link LocalFileSystem#addRootToWatch(String, boolean)}.
-   * @see LocalFileSystem
+   * @return system-independent paths which should be monitored via {@link WatchRoots}.
+   * @see WatchRoots
    */
   @Unmodifiable
   @NotNull Set<String> getRootsToWatch(@NotNull Project project);

@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstanceEP;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -166,6 +167,21 @@ public abstract class VirtualFileSystem {
 
   public boolean isValidName(@NotNull String name) {
     return !name.isEmpty() && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
+  }
+
+  /**
+   * Backs {@link VirtualFile#isInLocalFileSystem()}. Call that method instead: it carries the warning about what "local" means.
+   * <p>
+   * The answer does not depend on the protocol. A file system that serves the {@code file://} protocol on a
+   * different backing store returns {@code true} as well, and an archive file system returns {@code false} even
+   * when the archive is a local file. A file system that serves a snapshot of local files returns {@code false}:
+   * its files are not guaranteed to match the disk.
+   *
+   * @return {@code true} if files of this file system are local
+   */
+  @ApiStatus.Internal
+  public boolean isLocal() {
+    return false;
   }
 
   /**

@@ -11,7 +11,9 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.SmartList;
@@ -37,19 +39,20 @@ import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-/// The class manages the roots to monitor via [FileWatcher] –
-/// i.e., keeps [FileWatcher] configured with the actual set of roots to watch for.
+/// [WatchRoots] over [FileWatcher]: keeps the watcher configured with the actual set of roots and symlink targets.
+/// The obsolete [com.intellij.openapi.vfs.LocalFileSystem] watch methods reach the same state through [LocalFileSystemImpl].
 /// Unless stated otherwise, all paths are [`@SystemIndependent`][SystemIndependent].
 @ApiStatus.Internal
 @SuppressWarnings("SplitModeApiUsage")
-public final class WatchRootsManager {
-  private static final Logger LOG = Logger.getInstance(WatchRootsManager.class);
+public final class WatchRootsServiceImpl implements WatchRoots, Disposable {
+  private static final Logger LOG = Logger.getInstance(WatchRootsServiceImpl.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(1));
-
-  private final FileWatcher myFileWatcher;
+  private static final Logger WATCH_ROOTS_LOG = Logger.getInstance("#com.intellij.openapi.vfs.WatchRoots");
+  private static final Token NO_OP = () -> { };
 
   private final NavigableMap<String, List<WatchRequest>> myRecursiveWatchRoots = WatchRootsUtil.createFileNavigableMap();
   private final NavigableMap<String, List<WatchRequest>> myFlatWatchRoots = WatchRootsUtil.createFileNavigableMap();
@@ -64,11 +67,12 @@ public final class WatchRootsManager {
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean myWatcherRequiresUpdate;  // synchronized on `myLock`
+  private FileWatcher myFileWatcher;  // resolved lazily, synchronized on `myLock`
   private final Object myLock = new Object();
+  private final ThreadLocal<int[]> myBatchDepth = ThreadLocal.withInitial(() -> new int[1]);
 
-  WatchRootsManager(@NotNull FileWatcher fileWatcher, @NotNull Disposable parent) {
-    myFileWatcher = fileWatcher;
-    ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(VirtualFileManager.VFS_CHANGES_BG, new BulkFileListenerBackgroundable() {
+  public WatchRootsServiceImpl() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES_BG, new BulkFileListenerBackgroundable() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         synchronized (myLock) {
@@ -80,11 +84,55 @@ public final class WatchRootsManager {
     });
   }
 
+  static @NotNull WatchRootsServiceImpl getInstance() {
+    return (WatchRootsServiceImpl)WatchRoots.getInstance();
+  }
+
+  static @Nullable WatchRootsServiceImpl getInstanceIfCreated() {
+    return (WatchRootsServiceImpl)ApplicationManager.getApplication().getServiceIfCreated(WatchRoots.class);
+  }
+
+  @Override
+  public void dispose() { }
+
+  @Override
+  public @NotNull Token watch(@NotNull String rootPath, boolean recursive) {
+    if (!(StandardFileSystems.local() instanceof LocalFileSystemImpl)) return NO_OP;
+    var requests = replaceWatchedRoots(List.of(), recursive ? List.of(rootPath) : List.of(), recursive ? List.of() : List.of(rootPath));
+    return requests.isEmpty() ? NO_OP : new RequestToken(requests.iterator().next());
+  }
+
+  @Override
+  public void batch(@NotNull Runnable body) {
+    var depth = myBatchDepth.get();
+    depth[0]++;
+    try {
+      body.run();
+    }
+    finally {
+      if (--depth[0] == 0) {
+        synchronized (myLock) {
+          if (myWatcherRequiresUpdate) {
+            updateFileWatcher();
+          }
+        }
+      }
+    }
+  }
+
   @NotNull Set<WatchRequest> replaceWatchedRoots(
     @Unmodifiable @NotNull Collection<WatchRequest> requestsToRemove,
     @Unmodifiable @NotNull Collection<String> recursiveRootsToAdd,
     @Unmodifiable @NotNull Collection<String> flatRootsToAdd
   ) {
+    if ((!recursiveRootsToAdd.isEmpty() || !flatRootsToAdd.isEmpty()) && WATCH_ROOTS_LOG.isTraceEnabled()) {
+      WATCH_ROOTS_LOG.trace(new Exception(
+        "WatchRootsServiceImpl#replaceWatchedRoots:" +
+        "\n  recursive: " + recursiveRootsToAdd +
+        "\n  flat: " + flatRootsToAdd
+      ));
+    }
+
     var recursiveRequestsToRemove = new HashSet<WatchRequest>();
     var flatRequestsToRemove = new HashSet<WatchRequest>();
     requestsToRemove.forEach(req -> (req.isToWatchRecursively() ? recursiveRequestsToRemove : flatRequestsToRemove).add(req));
@@ -93,7 +141,7 @@ public final class WatchRootsManager {
     synchronized (myLock) {
       updateWatchRoots(recursiveRootsToAdd, recursiveRequestsToRemove, result, myRecursiveWatchRoots, true);
       updateWatchRoots(flatRootsToAdd, flatRequestsToRemove, result, myFlatWatchRoots, false);
-      if (myWatcherRequiresUpdate) {
+      if (myWatcherRequiresUpdate && myBatchDepth.get()[0] == 0) {
         updateFileWatcher();
       }
     }
@@ -172,7 +220,7 @@ public final class WatchRootsManager {
     //         1) seems like one of the reasons is case-sensitivity: in this class we assume that local file-system
     //            case-sensitivity is constant (=SystemInfoRt.isFileSystemCaseSensitive) but it is not always true:
     //            Windows/macOS allows to override default case-sensitivity on per-directory or per-partition basis.
-    //            Which lead to conflicts here, since VFS treats files as different, while WatchRootsManager as the same.
+    //            Which lead to conflicts here, since VFS treats files as different, while WatchRootsServiceImpl as the same.
     //         2) another reason seems to be the move/rename operations, that currently do NOT update symlink
     //         But these could be not all the reasons, so better improve diagnostics!
 
@@ -254,8 +302,17 @@ public final class WatchRootsManager {
     }
   }
 
+  private @Nullable FileWatcher fileWatcher() {
+    if (myFileWatcher == null && StandardFileSystems.local() instanceof LocalFileSystemImpl fs) {
+      myFileWatcher = fs.getFileWatcher();
+    }
+    return myFileWatcher;
+  }
+
   private void updateFileWatcher() {
-    myFileWatcher.setWatchRoots(() -> {
+    var watcher = fileWatcher();
+    if (watcher == null) return;
+    watcher.setWatchRoots(() -> {
       synchronized (myLock) {
         if (!myWatcherRequiresUpdate) return null;
         myWatcherRequiresUpdate = false;
@@ -446,6 +503,27 @@ public final class WatchRootsManager {
     });
   }
 
+  private final class RequestToken implements Token {
+    private final WatchRequest myRequest;
+    private final AtomicBoolean myClosed = new AtomicBoolean();
+
+    private RequestToken(@NotNull WatchRequest request) {
+      myRequest = request;
+    }
+
+    @Override
+    public void close() {
+      if (myClosed.compareAndSet(false, true)) {
+        replaceWatchedRoots(List.of(myRequest), List.of(), List.of());
+      }
+    }
+
+    @Override
+    public String toString() {
+      return myRequest.toString();
+    }
+  }
+
   private static final class WatchRequestImpl implements WatchRequest {
     private final String myFSRootPath;
     private final boolean myWatchRecursively;
@@ -533,7 +611,7 @@ public final class WatchRootsManager {
       return target != null;
     }
 
-    private void removeRequest(WatchRootsManager manager) {
+    private void removeRequest(WatchRootsServiceImpl manager) {
       if (myWatchRequest != null) {
         manager.removeWatchSymlinkRequest(myWatchRequest);
         myWatchRequest = null;

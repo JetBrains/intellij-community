@@ -1843,6 +1843,7 @@ a:com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 a:com.intellij.openapi.vfs.newvfs.RefreshQueue
 - sf:Companion:com.intellij.openapi.vfs.newvfs.RefreshQueue$Companion
 - sf:getInstance():com.intellij.openapi.vfs.newvfs.RefreshQueue
+- f:refreshPaths(Z,Z,java.lang.Runnable,java.util.Collection):V
 f:com.intellij.openapi.vfs.newvfs.RefreshQueue$Companion
 - f:getInstance():com.intellij.openapi.vfs.newvfs.RefreshQueue
 a:com.intellij.openapi.vfs.newvfs.RefreshSession

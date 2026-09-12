@@ -1004,6 +1004,18 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void testRefreshPaths() {
+    var fileManager = VirtualFileManager.getInstance();
+    testRefreshFiles(
+      relativePath -> tempDir.newDirectoryPath(relativePath),
+      relativePath -> tempDir.newFileNio(relativePath),
+      (path, child) -> path.resolve(child),
+      path -> fileManager.findFileByNioPath(path),
+      files -> RefreshQueue.getInstance().refreshPaths(false, false, null, files)
+    );
+  }
+
+  @Test
   public void testRefreshNioFilesRefreshesMissingFileOutsideReadAction() throws IOException {
     var directory = createLoadedDirectory();
     var missingFile = directory.toNioPath().resolve("missing-file");

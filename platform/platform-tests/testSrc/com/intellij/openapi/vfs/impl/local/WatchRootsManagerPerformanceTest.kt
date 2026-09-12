@@ -142,13 +142,13 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
 
     Benchmark.newBenchmark("Create canonical path map") {
       repeat(18) {
-        WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
+        WatchRootsServiceImpl.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
       }
     }.startAsSubtest()
 
     Benchmark.newBenchmark("Create canonical path map - convert paths") {
       repeat(18) {
-        WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, true)
+        WatchRootsServiceImpl.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, true)
       }
     }.startAsSubtest()
   }
@@ -167,7 +167,7 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
       pathMappings.add(Pair("$root/src/ln$i", "$root/targets/ln$i-2"))
     }
 
-    val map = WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
+    val map = WatchRootsServiceImpl.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
     map.addMapping((1..filesCount).map { Pair("$root/src/ln$it-3", "$root/src/ln$it-3") })
     Benchmark.newBenchmark("Test apply mapping from canonical path map") {
       repeat(1_000_000) {
@@ -177,13 +177,13 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
 
     Benchmark.newBenchmark("Create canonical path map") {
       repeat(100) {
-        WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
+        WatchRootsServiceImpl.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
       }
     }.startAsSubtest()
 
     Benchmark.newBenchmark("Create canonical path map - convert paths") {
       repeat(40) {
-        WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, true)
+        WatchRootsServiceImpl.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, true)
       }
     }.startAsSubtest()
   }

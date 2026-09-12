@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.impl.local;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -63,8 +62,6 @@ public class LocalFileSystemImpl
   extends LocalFileSystemBase
   implements Disposable, BatchingFileSystem, VirtualFilePointerCapableFileSystem, SymlinksCapableFileSystem
 {
-  @SuppressWarnings("SSBasedInspection")
-  private static final Logger WATCH_ROOTS_LOG = Logger.getInstance("#com.intellij.openapi.vfs.WatchRoots");
   private static final int STATUS_UPDATE_PERIOD = 1000;
 
   private static final FileAttributes UNC_ROOT_ATTRIBUTES =
@@ -90,7 +87,6 @@ public class LocalFileSystemImpl
 
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
-  private final WatchRootsManager myWatchRootsManager;
   private volatile boolean myDisposed;
 
   private final DiskQueryRelay<VirtualFile, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> listChildren(dir));
@@ -119,14 +115,16 @@ public class LocalFileSystemImpl
         STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, MILLISECONDS
       );
     });
-    myWatchRootsManager = new WatchRootsManager(myWatcher, this);
     Disposer.register(ApplicationManager.getApplication(), this);
     new SymbolicLinkRefresher(this).refresh();
   }
 
   public void onDisconnecting() {
     // upon re-establishing the VFS connection, we must clear watch roots
-    myWatchRootsManager.clear();
+    var watchRoots = WatchRootsServiceImpl.getInstanceIfCreated();
+    if (watchRoots != null) {
+      watchRoots.clear();
+    }
   }
 
   public @NotNull FileWatcher getFileWatcher() {
@@ -265,15 +263,7 @@ public class LocalFileSystemImpl
     var nonNullWatchRequestsToRemove = ContainerUtil.skipNulls(watchRequestsToRemove);
     LOG.assertTrue(nonNullWatchRequestsToRemove.size() == watchRequestsToRemove.size(), "watch requests collection should not contain `null` elements");
 
-    if ((recursiveRootsToAdd != null || flatRootsToAdd != null) && WATCH_ROOTS_LOG.isTraceEnabled()) {
-      WATCH_ROOTS_LOG.trace(new Exception(
-        "LocalFileSystemImpl#replaceWatchedRoots:" +
-        "\n  recursive: " + (recursiveRootsToAdd != null ? recursiveRootsToAdd : "[]") +
-        "\n  flat: " + (flatRootsToAdd != null ? flatRootsToAdd : "[]")
-      ));
-    }
-
-    return myWatchRootsManager.replaceWatchedRoots(
+    return WatchRootsServiceImpl.getInstance().replaceWatchedRoots(
       nonNullWatchRequestsToRemove,
       requireNonNullElse(recursiveRootsToAdd, List.of()),
       requireNonNullElse(flatRootsToAdd, List.of())
@@ -349,21 +339,23 @@ public class LocalFileSystemImpl
     @NotNull String linkPath,
     @Nullable String linkTarget
   ) {
+    if (myDisposed) return;
     if (linkTarget == null || !isRecursiveOrCircularSymlink(parent, name, linkTarget)) {
-      myWatchRootsManager.updateSymlink(fileId, linkPath, linkTarget);
+      WatchRootsServiceImpl.getInstance().updateSymlink(fileId, linkPath, linkTarget);
     }
   }
 
   @Override
   public final void symlinkRemoved(int fileId) {
-    myWatchRootsManager.removeSymlink(fileId);
+    if (myDisposed) return;
+    WatchRootsServiceImpl.getInstance().removeSymlink(fileId);
   }
 
   @Override
   @TestOnly
   public void cleanupForNextTest() {
     super.cleanupForNextTest();
-    myWatchRootsManager.clear();
+    WatchRootsServiceImpl.getInstance().clear();
   }
 
   private static boolean isRecursiveOrCircularSymlink(@Nullable VirtualFile parent, CharSequence name, String symlinkTarget) {

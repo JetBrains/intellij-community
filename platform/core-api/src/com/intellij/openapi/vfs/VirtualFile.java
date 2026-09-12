@@ -673,15 +673,14 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return isValid();
   }
 
-  /// BEWARE: method name may be quite misleading: the definition of 'local' relies on "being subclass of [LocalFileSystem]"
-  /// This definition leads to quite counterintuitive behavior: the 'file://...' filesystem is 'local' -- which is intuitive.
-  /// But 'temp://...' i.e., in-memory filesystem is also considered 'local' -- which is not very intuitive.
-  /// Moreover, archive ('jar://...', 'zip://...', etc.) filesystems are considered NOT local, even if the actual archive
-  /// is a local file -- also quite counterintuitive.
-  /// It is too late to change this behavior -- method is very widely used.
+  /// BEWARE: the method name may be misleading. The answer comes from [VirtualFileSystem#isLocal()] of the owning file system.
+  /// The 'file://...' file system is 'local', which is intuitive.
+  /// The 'temp://...' in-memory file system is also 'local', which is not intuitive.
+  /// Archive ('jar://...', 'zip://...', etc.) file systems are NOT local, even when the archive is a local file.
+  /// It is too late to change this behavior, because the method is very widely used.
   /// So the only choice is: constant vigilance while using it.
   ///
-  /// @return true if filesystem inherits [LocalFileSystem] (**including temporary!**)
+  /// @return true if the owning file system reports [VirtualFileSystem#isLocal()] (**including temporary!**)
   public boolean isInLocalFileSystem() {
     return false;
   }

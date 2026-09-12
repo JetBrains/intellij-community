@@ -469,6 +469,15 @@ c:com.intellij.openapi.fileEditor.OpenFileDescriptor
 f:com.intellij.openapi.vfs.VfsUtil
 - com.intellij.openapi.vfs.VfsUtilCore
 - *s:findFileByUrlIfCached(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+*:com.intellij.openapi.vfs.WatchRoots
+- batch(java.lang.Runnable):V
+- s:getInstance():com.intellij.openapi.vfs.WatchRoots
+- a:watch(java.lang.String,Z):com.intellij.openapi.vfs.WatchRoots$Token
+- watch(java.lang.String,Z,com.intellij.openapi.Disposable):V
+- watch(java.nio.file.Path,Z):com.intellij.openapi.vfs.WatchRoots$Token
+*:com.intellij.openapi.vfs.WatchRoots$Token
+- java.lang.AutoCloseable
+- a:close():V
 *f:com.intellij.openapi.vfs.newvfs.AttributeInputStream
 - java.io.DataInputStream
 - readEnumeratedString():java.lang.String

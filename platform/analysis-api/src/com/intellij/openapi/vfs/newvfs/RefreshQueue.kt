@@ -3,9 +3,13 @@ package com.intellij.openapi.vfs.newvfs
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 abstract class RefreshQueue {
   fun createSession(async: Boolean, recursive: Boolean, finishRunnable: Runnable?): RefreshSession {
@@ -32,6 +36,23 @@ abstract class RefreshQueue {
     val session = createSession(async, recursive, finishRunnable, state)
     session.addAllFiles(files)
     session.launch()
+  }
+
+  /**
+   * Refreshes the local files at [paths].
+   *
+   * The desktop local file system loads the missing children of loaded directories in one refresh session,
+   * see [LocalFileSystem.refreshNioFiles]. Another local file system gets one
+   * [VirtualFileManager.refreshAndFindFileByNioPath] lookup per path. A path that does not exist is skipped.
+   */
+  fun refreshPaths(async: Boolean, recursive: Boolean, finishRunnable: Runnable?, paths: Collection<Path>) {
+    val local = StandardFileSystems.local()
+    if (local is LocalFileSystem) {
+      local.refreshNioFiles(paths, async, recursive, finishRunnable)
+      return
+    }
+    val fileManager = VirtualFileManager.getInstance()
+    refresh(async, recursive, finishRunnable, paths.mapNotNull { fileManager.refreshAndFindFileByNioPath(it) })
   }
 
   /**
