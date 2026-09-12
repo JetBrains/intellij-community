@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -360,7 +359,7 @@ fun MavenImportingTestFixture.updateSettingsXmlFully(content: String): VirtualFi
   if (!Files.exists(ioFile)) Files.createFile(ioFile)
   VfsRootAccess.allowRootAccess(project, ioFile.toString())
   Files.write(ioFile, content.toByteArray(Charsets.UTF_8))
-  val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)!!
+  val f = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(ioFile)!!
   refreshFiles(listOf(f))
   mavenGeneralSettings.setUserSettingsFile(f.path)
   return f

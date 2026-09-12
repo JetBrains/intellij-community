@@ -20,7 +20,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
@@ -236,11 +236,11 @@ class RealMavenExecutionTest(mavenVersion: String, modelVersion: String) {
         MavenLog.LOG.warn("copying $n as ${templateProjectDir.relativize(n)}")
         val target = maven.projectPath.resolve(templateProjectDir.relativize(n))
         n.copyRecursively(target)
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(target)
+        VirtualFileManager.getInstance().refreshAndFindFileByNioPath(target)
       }
     }
 
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(maven.projectPath.resolve("pom.xml"))?.let {
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(maven.projectPath.resolve("pom.xml"))?.let {
       maven.projectPom = it
     }
 

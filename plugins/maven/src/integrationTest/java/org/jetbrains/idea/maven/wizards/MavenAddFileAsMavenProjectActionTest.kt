@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.util.io.write
 import junit.framework.TestCase
@@ -26,7 +26,7 @@ class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
       """.trimIndent(),
       omitModelVersionTag = false))
 
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(pom2.toString())
+    val file = StandardFileSystems.local().refreshAndFindFileByPath(pom2.toString())
     val event = TestActionEvent.createTestEvent {
       when {
         CommonDataKeys.PROJECT.`is`(it) -> project

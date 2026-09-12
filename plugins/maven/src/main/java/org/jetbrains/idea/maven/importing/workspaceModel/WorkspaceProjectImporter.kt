@@ -24,9 +24,10 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.use
@@ -247,7 +248,7 @@ internal open class WorkspaceProjectImporter(
 
     return externalSystemModuleEntities.filter { it.externalSystem == SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID }
       .filter { it.linkedProjectId != null }
-      .groupBy { LocalFileSystem.getInstance().findFileByPath(it.linkedProjectId!!) }
+      .groupBy { StandardFileSystems.local().findFileByPath(it.linkedProjectId!!) }
       .filterKeys { it != null }
       .mapKeys { it.key!! }
       .mapValues { selectModuleEntity(it.value).module.name }
@@ -515,7 +516,7 @@ internal open class WorkspaceProjectImporter(
     }
 
     private fun doRefreshFiles(files: Set<Path>) {
-      LocalFileSystem.getInstance().refreshNioFiles(files)
+      RefreshQueue.getInstance().refreshPaths(false, false, null, files)
     }
 
     internal val LOG = Logger.getInstance(WorkspaceProjectImporter::class.java)

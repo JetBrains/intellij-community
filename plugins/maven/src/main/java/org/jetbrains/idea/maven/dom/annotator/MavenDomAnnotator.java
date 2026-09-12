@@ -8,7 +8,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -48,7 +48,7 @@ public final class MavenDomAnnotator implements DomElementsAnnotator, DumbAware 
         MavenProjectProblem.ProblemType type = each.getType();
         if (!Arrays.asList(types).contains(type)) continue;
         if (!addWarnings && !each.isError()) continue;
-        VirtualFile problemFile = LocalFileSystem.getInstance().findFileByPath(each.getPath());
+        VirtualFile problemFile = StandardFileSystems.local().findFileByPath(each.getPath());
 
         LocalQuickFix[] fixes = LocalQuickFix.EMPTY_ARRAY;
         if (problemFile != null && !Comparing.equal(mavenProject.getFile(), problemFile)) {

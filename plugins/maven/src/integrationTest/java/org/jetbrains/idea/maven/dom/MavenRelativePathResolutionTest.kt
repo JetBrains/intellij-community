@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.impl.source.xml.XmlFileImpl
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
@@ -15,6 +14,7 @@ import com.intellij.maven.testFramework.fixtures.findPsiFile
 import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import com.intellij.maven.testFramework.fixtures.projectRoot
 import com.intellij.maven.testFramework.fixtures.refreshFiles
+import com.intellij.openapi.vfs.VirtualFileManager
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -56,7 +56,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
     val resolved = readAction { maven.fixture.getElementAtCaret() }
     assertTrue(resolved is XmlFileImpl)
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
+    val f = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)
     val parentPsi = maven.findPsiFile(f)
     maven.assertResolved(maven.projectPom, parentPsi)
     assertSame(parentPsi, resolved)
@@ -88,7 +88,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
     val resolved = readAction { maven.fixture.getElementAtCaret() }
     assertTrue(resolved is XmlFileImpl)
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
+    val f = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)
     val parentPsi = maven.findPsiFile(f)
     maven.assertResolved(maven.projectPom, parentPsi)
     assertSame(parentPsi, resolved)

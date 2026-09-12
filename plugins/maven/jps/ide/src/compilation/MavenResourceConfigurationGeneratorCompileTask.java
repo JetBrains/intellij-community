@@ -19,7 +19,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -144,7 +144,7 @@ public final class MavenResourceConfigurationGeneratorCompileTask implements Com
 
     for (MavenProject mavenProject : mavenProjectsManager.getProjects()) {
       for (String dir : ContainerUtil.concat(mavenProject.getSources(), mavenProject.getTestSources())) {
-        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(dir);
+        VirtualFile file = StandardFileSystems.local().findFileByPath(dir);
         if (file != null) {
           processedRoots.add(file);
         }
@@ -152,7 +152,7 @@ public final class MavenResourceConfigurationGeneratorCompileTask implements Com
 
       for (MavenResource resource : ContainerUtil.concat(mavenProject.getResources(), mavenProject.getTestResources())) {
         String directory = resource.getDirectory();
-        ContainerUtil.addIfNotNull(processedRoots, LocalFileSystem.getInstance().findFileByPath(directory));
+        ContainerUtil.addIfNotNull(processedRoots, StandardFileSystems.local().findFileByPath(directory));
       }
     }
 

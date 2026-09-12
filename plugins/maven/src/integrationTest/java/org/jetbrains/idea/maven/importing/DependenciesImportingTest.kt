@@ -59,8 +59,8 @@ import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.junit5.TestApplication
@@ -1188,7 +1188,7 @@ class DependenciesImportingTest(mavenVersion: String, modelVersion: String) {
     val f = dir.resolve(relativePath)
     f.parent.createDirectories()
     f.findOrCreateFile()
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(f)!!
   }
 
   @Test

@@ -23,7 +23,7 @@ import com.intellij.maven.testFramework.fixtures.runBlockingNoSync
 import com.intellij.maven.testFramework.fixtures.setPomContent
 import com.intellij.maven.testFramework.fixtures.updateProjectPom
 import com.intellij.maven.testFramework.fixtures.withoutSync
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -143,7 +143,7 @@ class MavenParentCompletionAndResolutionTest(mavenVersion: String, modelVersion:
                        """.trimIndent())
 
     val filePath = maven.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().findFileByNioFile(filePath)
+    val f = VirtualFileManager.getInstance().findFileByNioPath(filePath)
 
     maven.assertResolved(maven.projectPom, maven.findPsiFile(f))
   }

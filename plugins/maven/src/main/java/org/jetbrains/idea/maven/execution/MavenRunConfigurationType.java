@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +125,7 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     if (!manager.isMavenizedProject()) return null;
     final VirtualFile virtualFile =
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(runnerParameters.getWorkingDirPath() + "/pom.xml");
+      StandardFileSystems.local().refreshAndFindFileByPath(runnerParameters.getWorkingDirPath() + "/pom.xml");
     if (virtualFile != null) {
       MavenProject mavenProject = manager.findProject(virtualFile);
       if (mavenProject != null) {

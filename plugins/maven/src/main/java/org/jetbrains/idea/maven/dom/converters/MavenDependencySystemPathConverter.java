@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.converters;
 
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -23,7 +23,7 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
   @Override
   public PsiFile fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     if (s == null) return null;
-    VirtualFile f = LocalFileSystem.getInstance().findFileByPath(s);
+    VirtualFile f = StandardFileSystems.local().findFileByPath(s);
     if (f == null) return null;
     return context.getPsiManager().findFile(f);
   }

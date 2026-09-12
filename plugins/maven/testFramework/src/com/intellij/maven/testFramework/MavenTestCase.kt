@@ -33,8 +33,9 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -297,7 +298,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected open fun setUpInWriteAction() {
     val projectRoot = Path.of(myProject!!.basePath)
     projectRoot.ensureFolderExists()
-    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectRoot)
+    myProjectRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectRoot)
   }
 
   protected open fun tearDownFixtures() {
@@ -361,7 +362,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     val path = myDir.resolve("settings.xml")
     Files.writeString(path, content)
     mavenGeneralSettings.setUserSettingsFile(path.toString())
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)!!
   }
 
   protected suspend fun updateSettingsXml(
@@ -378,7 +379,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     val ioFile = myDir.resolve("settings.xml")
     ioFile.findOrCreateFile()
     VfsRootAccess.allowRootAccess(myProject!!, ioFile.toString())
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)!!
+    val f = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(ioFile)!!
     setFileContent(f, content)
     refreshFiles(listOf(f))
     mavenGeneralSettings.setUserSettingsFile(f.path)
@@ -434,13 +435,13 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected fun createProjectSubDir(relativePath: String): VirtualFile {
     val f = projectPath.resolve(relativePath)
     f.ensureFolderExists()
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(f)!!
   }
 
   protected fun createFile(path: Path): VirtualFile {
     path.parent.ensureFolderExists()
     path.createFile()
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)!!
   }
 
   protected fun createProjectSubFile(relativePath: String): VirtualFile {
@@ -464,7 +465,7 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected fun updateProjectSubFile(relativePath: String, content: String): VirtualFile {
     val f = projectPath.resolve(relativePath)
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
+    val file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(f)!!
     setFileContent(file, content)
     refreshFiles(listOf(file))
     return file
@@ -473,7 +474,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected fun refreshFiles(files: List<VirtualFile>) {
     val relativePaths = files.map { dir.relativize(it.path.toNioPathOrNull()!!) }
     MavenLog.LOG.debug("Refreshing files: $relativePaths")
-    LocalFileSystem.getInstance().refreshFiles(files)
+    RefreshQueue.getInstance().refresh(false, false, null, files)
   }
 
   protected fun hasMavenInstallation(): Boolean {

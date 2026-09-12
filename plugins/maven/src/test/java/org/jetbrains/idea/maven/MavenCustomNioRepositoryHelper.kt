@@ -18,7 +18,7 @@ package org.jetbrains.idea.maven
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -47,7 +47,7 @@ class MavenCustomNioRepositoryHelper(myTempDir: Path, vararg subFolders: String)
     val to = myWorkingData.resolve(relativePathTo)
     val from: Path = originalTestDataPath.resolve(relativePathFrom)
     Files.copy(from, to)
-    LocalFileSystem.getInstance().refreshNioFiles(mutableSetOf<Path?>(to))
+    RefreshQueue.getInstance().refreshPaths(false, false, null, mutableSetOf(to))
   }
 
   fun getTestData(relativePath: String): Path {
@@ -75,7 +75,7 @@ class MavenCustomNioRepositoryHelper(myTempDir: Path, vararg subFolders: String)
       Files.copy(from, to)
     }
 
-    LocalFileSystem.getInstance().refreshNioFiles(mutableSetOf<Path?>(to))
+    RefreshQueue.getInstance().refreshPaths(false, false, null, mutableSetOf(to))
   }
 
   companion object {

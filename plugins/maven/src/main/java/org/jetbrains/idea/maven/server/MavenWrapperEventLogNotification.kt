@@ -9,7 +9,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.execution.SyncBundle.message
 import org.jetbrains.idea.maven.project.MavenProjectBundle
@@ -23,7 +23,7 @@ class MavenWrapperEventLogNotification {
     fun noDistributionUrlEvent(project: Project, multiModuleDir: String) {
       val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Maven") ?: return
       ApplicationManager.getApplication().invokeLater {
-        val wrapperPropertyFile = LocalFileSystem.getInstance().findFileByPath(multiModuleDir)?.let { getWrapperProperties(it.toNioPath()) }
+        val wrapperPropertyFile = StandardFileSystems.local().findFileByPath(multiModuleDir)?.let { getWrapperProperties(it.toNioPath()) }
         if (wrapperPropertyFile == null) {
           wrapperPropertyFileNotFound(notificationGroup, project)
         }

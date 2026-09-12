@@ -3,7 +3,7 @@ package com.intellij.maven.testFramework.fixtures
 
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import kotlinx.coroutines.delay
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.io.IOException
@@ -44,8 +44,8 @@ class MavenCustomRepositoryHelper(tempDir: Path, vararg subFolders: String) {
         return FileVisitResult.CONTINUE
       }
     })
-    LocalFileSystem.getInstance().refreshNioFiles(mutableSetOf<Path?>(to))
-    LocalFileSystem.getInstance().refreshNioFiles(mutableSetOf<Path?>(to))
+    RefreshQueue.getInstance().refreshPaths(false, false, null, mutableSetOf(to))
+    RefreshQueue.getInstance().refreshPaths(false, false, null, mutableSetOf(to))
   }
 
   fun getTestData(relativePath: String): Path {
@@ -101,7 +101,7 @@ class MavenCustomRepositoryHelper(tempDir: Path, vararg subFolders: String) {
       Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
     }
 
-    LocalFileSystem.getInstance().refreshNioFiles(mutableSetOf<Path?>(to))
+    RefreshQueue.getInstance().refreshPaths(false, false, null, mutableSetOf(to))
   }
 
   // replace a file in repo; on Windows the file might be used by Maven process, hence multiple attempts

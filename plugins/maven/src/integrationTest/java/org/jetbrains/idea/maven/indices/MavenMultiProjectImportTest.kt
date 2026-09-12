@@ -7,8 +7,8 @@ import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.write
@@ -78,7 +78,7 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     projectDir.createDirectories()
     val pom = projectDir.resolve("pom.xml")
     pom.write(MavenTestCase.createPomXml(MavenConstants.MODEL_VERSION_4_0_0, xml, omitModelVersionTag = false))
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom)
+    return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(pom)
   }
 
   private suspend fun importMaven(project: Project, file: VirtualFile) {

@@ -18,8 +18,9 @@ import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.findOrCreateFile
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
@@ -36,7 +37,7 @@ import kotlin.io.path.absolutePathString
 // Project-model authoring: creating/updating poms, profiles, sub-files and settings.
 
 val MavenTestFixture.projectRoot: VirtualFile
-  get() = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(project.basePath!!))!!
+  get() = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Path.of(project.basePath!!))!!
 
 fun MavenImportingTestFixture.createProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   return createPomFile(projectRoot, xml).also { projectPom = it }
@@ -84,21 +85,21 @@ fun MavenImportingTestFixture.createPomFile(dir: VirtualFile, @Language(value = 
 fun MavenTestFixture.createProjectSubDir(relativePath: String): VirtualFile {
   val f = Path.of(project.basePath!!).resolve(relativePath)
   Files.createDirectories(f)
-  return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
+  return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(f)!!
 }
 
 fun MavenTestFixture.createProjectSubFile(relativePath: String, content: String = ""): VirtualFile {
   val f = Path.of(project.basePath!!).resolve(relativePath)
   Files.createDirectories(f.parent)
   Files.writeString(f, content)
-  return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
+  return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(f)!!
 }
 
 // Ported from MavenTestCase.
 fun MavenTestFixture.createFile(path: Path): VirtualFile {
   Files.createDirectories(path.parent)
   if (!Files.exists(path)) Files.createFile(path)
-  return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
+  return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)!!
 }
 
 fun MavenTestFixture.createFile(path: Path, content: String): VirtualFile {
@@ -167,7 +168,7 @@ private fun createValidProfiles(@Language("XML") xml: String, oldStyle: Boolean)
 
 fun MavenTestFixture.updateProjectSubFile(relativePath: String, content: String): VirtualFile {
   val nioPath = Path.of(project.basePath!!).resolve(relativePath)
-  val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nioPath)!!
+  val file = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(nioPath)!!
   Files.writeString(nioPath, content)
   refreshFiles(listOf(file))
   return file
@@ -183,7 +184,7 @@ suspend fun MavenImportingTestFixture.updateSettingsXml(@Language(value = "XML",
   ioFile.findOrCreateFile()
   VfsRootAccess.allowRootAccess(disposable, ioFile.toString())
   Files.writeString(ioFile, "<settings>$content</settings>\r\n")
-  val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)!!
+  val f = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(ioFile)!!
   refreshFiles(listOf(f))
   projectsManager.generalSettings.setUserSettingsFile(f.path)
   MavenSettingsCache.getInstance(project).reloadAsync()
@@ -191,7 +192,7 @@ suspend fun MavenImportingTestFixture.updateSettingsXml(@Language(value = "XML",
 }
 
 fun MavenTestFixture.refreshFiles(files: List<VirtualFile>) {
-  LocalFileSystem.getInstance().refreshFiles(files)
+  RefreshQueue.getInstance().refresh(false, false, null, files)
 }
 
 fun MavenTestFixture.assertModules(vararg expectedNames: String) {
@@ -240,7 +241,7 @@ fun MavenImportingTestFixture.createSettingsXml(@Language(value = "XML", prefix 
   val path = dir.resolve("settings.xml")
   Files.writeString(path, content)
   projectsManager.generalSettings.setUserSettingsFile(path.toString())
-  return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
+  return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)!!
 }
 
 /** Builds a [DataContext] for an action under test, carrying the project and the pom as the selected file. */

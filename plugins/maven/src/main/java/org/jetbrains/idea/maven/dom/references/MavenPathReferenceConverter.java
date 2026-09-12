@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
@@ -91,7 +91,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
             if (resolvedText.equals(text)) {
               if (getIndex() == 0 && resolvedText.length() == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(resolvedText)) {
                 // it's root on windows, e.g. "C:"
-                VirtualFile file = LocalFileSystem.getInstance().findFileByPath(resolvedText + '/');
+                VirtualFile file = StandardFileSystems.local().findFileByPath(resolvedText + '/');
                 if (file != null) {
                   PsiDirectory psiDirectory = context.getManager().findDirectory(file);
                   if (psiDirectory != null) {
@@ -138,11 +138,11 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
               VirtualFile file = null;
 
               if (getIndex() == 0) {
-                file = LocalFileSystem.getInstance().findFileByPath(resolvedText);
+                file = StandardFileSystems.local().findFileByPath(resolvedText);
               }
 
               if (file == null) {
-                file = LocalFileSystem.getInstance().findFileByPath(contextFile.getPath() + '/' + resolvedText);
+                file = StandardFileSystems.local().findFileByPath(contextFile.getPath() + '/' + resolvedText);
               }
 
               if (file != null) {

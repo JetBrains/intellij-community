@@ -10,7 +10,7 @@ import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
@@ -54,7 +54,7 @@ class WorkingWithOpenProjectTest(mavenVersion: String, modelVersion: String) {
     val pomFile = newRootDir.resolve("pom.xml")
     Files.createFile(pomFile)
 
-    val root = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newRootDir)
+    val root = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newRootDir)
 
     PsiTestUtil.addContentRoot(maven.getModule("project"), root!!) // should not throw an exception
 

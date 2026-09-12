@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
@@ -406,7 +406,7 @@ object MavenDomUtil {
         if (!resource.isFiltered) continue
 
         val resourceDirectory = resource.directory
-        val resourceDir = LocalFileSystem.getInstance().findFileByPath(resourceDirectory)
+        val resourceDir = StandardFileSystems.local().findFileByPath(resourceDirectory)
         if (resourceDir == null) continue
 
         if (set == null) {

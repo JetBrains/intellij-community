@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
+import com.intellij.openapi.vfs.StandardFileSystems
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import java.io.File
 
@@ -16,7 +16,7 @@ class MavenXmlHighlightingTest : DaemonAnalyzerTestCase() {
   @Throws(Exception::class)
   fun testMavenValidation() {
     val file = File(MavenCustomRepositoryHelper.originalTestDataPath).resolve("MavenValidation.xml")
-    doTest(LocalFileSystem.getInstance().findFileByIoFile(file)!!, false, false)
+    doTest(StandardFileSystems.local().findFileByPath(file.absolutePath)!!, false, false)
   }
 
 }

@@ -19,7 +19,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.ApiStatus;
@@ -214,7 +214,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
     var taskInfos = new ArrayList<MavenTaskInfo>();
 
     for (var task : tasks) {
-      var file = LocalFileSystem.getInstance().findFileByPath(task.getProjectPath());
+      var file = StandardFileSystems.local().findFileByPath(task.getProjectPath());
       if (file == null) continue;
       var mavenProject = projectsManager.findProject(file);
       if (null == mavenProject) continue;

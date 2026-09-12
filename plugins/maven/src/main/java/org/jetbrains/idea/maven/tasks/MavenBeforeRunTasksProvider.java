@@ -20,7 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +83,7 @@ public final class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<Mav
     String pomXmlPath = task.getProjectPath();
     if (StringUtil.isEmpty(pomXmlPath)) return null;
 
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(pomXmlPath);
+    VirtualFile file = StandardFileSystems.local().findFileByPath(pomXmlPath);
     if (file == null) return null;
 
     return MavenProjectsManager.getInstance(myProject).findProject(file);

@@ -19,8 +19,8 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.JavaProjectModelModifier
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.junit5.TestApplication
@@ -147,7 +147,7 @@ class MavenProjectModelModifierTest(mavenVersion: String, modelVersion: String) 
 
     addModuleDependency(maven.getModule("m1"), maven.getModule("m2"), DependencyScope.COMPILE, false)
 
-    LocalFileSystem.getInstance().refreshFiles(listOf(m1))
+    RefreshQueue.getInstance().refresh(false, false, null, listOf(m1))
     assertHasDependency(m1, "test", "m2")
   }
 
@@ -180,7 +180,7 @@ class MavenProjectModelModifierTest(mavenVersion: String, modelVersion: String) 
     assertNotNull(library)
     addLibraryDependency(maven.getModule("m1"), library!!, DependencyScope.COMPILE, false)
 
-    LocalFileSystem.getInstance().refreshFiles(listOf(m1))
+    RefreshQueue.getInstance().refresh(false, false, null, listOf(m1))
     assertHasDependency(m1, "junit", "junit")
   }
 

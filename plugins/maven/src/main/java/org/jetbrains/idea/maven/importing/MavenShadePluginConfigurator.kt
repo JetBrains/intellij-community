@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
@@ -246,7 +246,7 @@ internal class MavenShadeFacetGeneratePostTaskConfigurator : MavenAfterImportCon
     packageJars(project, shadedMavenProjects)
 
     val filesToRefresh = shadedMavenProjects.map { Path.of(it.key.buildDirectory) }
-    LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
+    RefreshQueue.getInstance().refreshPaths(true, false, null, filesToRefresh)
   }
 
   private fun packageJars(project: Project, shadedMavenProjects: Map<MavenProject, MavenProjectShadingData>) {
@@ -312,7 +312,7 @@ internal class MavenShadeFacetRemapPostTaskConfigurator : MavenAfterImportConfig
     }
 
     val filesToRefresh = shadedMavenProjects.keys.map { Path.of(it.buildDirectory) }
-    LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
+    RefreshQueue.getInstance().refreshPaths(true, false, null, filesToRefresh)
   }
 
   private fun compileDependencies(project: Project, shadedMavenProjects: Map<MavenProject, MavenProjectShadingData>) {

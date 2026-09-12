@@ -31,7 +31,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -212,7 +212,7 @@ public final class MavenExternalParameters {
   }
 
   public static @Nullable VirtualFile getJvmConfig(@NotNull String workingDirPath) {
-    return Optional.ofNullable(LocalFileSystem.getInstance().findFileByPath(workingDirPath))
+    return Optional.ofNullable(StandardFileSystems.local().findFileByPath(workingDirPath))
       .map(baseDir -> baseDir.findChild(".mvn"))
       .map(mvn -> mvn.findChild("jvm.config"))
       .orElse(null);

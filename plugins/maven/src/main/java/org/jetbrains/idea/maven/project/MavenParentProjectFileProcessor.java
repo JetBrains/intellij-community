@@ -3,8 +3,8 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -68,7 +68,7 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
     VirtualFile parentFile;
     Path parentIoFile = MavenArtifactUtil.getArtifactFile(MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo(),
                                                           parentDesc.getParentId(), "pom");
-    parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile);
+    parentFile = VirtualFileManager.getInstance().findFileByNioPath(parentIoFile);
     if (parentFile != null) {
       result = processRepositoryParent(parentFile);
     }

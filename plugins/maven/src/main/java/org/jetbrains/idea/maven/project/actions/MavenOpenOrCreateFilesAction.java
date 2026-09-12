@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +97,7 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
   private static List<VirtualFile> collectVirtualFiles(List<File> files) {
     List<VirtualFile> result = new ArrayList<>();
     for (File each : files) {
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(each);
+      VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(each.getAbsolutePath());
       if (virtualFile != null) result.add(virtualFile);
     }
     return result;

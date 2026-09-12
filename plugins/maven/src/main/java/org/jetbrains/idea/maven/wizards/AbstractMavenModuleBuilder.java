@@ -30,7 +30,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
@@ -239,7 +239,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     catch (IOException e) {
       // ignore
     }
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+    return StandardFileSystems.local().refreshAndFindFileByPath(path);
   }
 
   @Override

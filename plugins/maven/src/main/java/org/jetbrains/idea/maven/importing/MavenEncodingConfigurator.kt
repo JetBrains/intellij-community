@@ -7,7 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore.fileToUrl
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
@@ -65,7 +65,7 @@ internal class MavenEncodingConfigurator : MavenWorkspaceConfigurator {
     private val oldPointerMappings = encodingManager.allPointersMappings
 
     fun processDir(directory: String, charset: Charset) {
-      val dirVfile = LocalFileSystem.getInstance().findFileByIoFile(File(directory))
+      val dirVfile = StandardFileSystems.local().findFileByPath(File(directory).absolutePath)
       val pointer = if (dirVfile != null) {
         service<VirtualFilePointerManager>().create(dirVfile, encodingManager, null)
       }

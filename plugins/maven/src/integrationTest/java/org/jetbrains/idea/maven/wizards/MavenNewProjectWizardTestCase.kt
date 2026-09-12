@@ -18,7 +18,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator.NewProjec
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.closeOpenedProjectsIfFail
 import com.intellij.testFramework.common.runAll
@@ -56,7 +56,7 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
 
   override fun createWizard(project: Project?) {
     if (project != null) {
-      val localFileSystem = LocalFileSystem.getInstance()
+      val localFileSystem = StandardFileSystems.local()
       localFileSystem.refreshAndFindFileByPath(project.basePath!!)
     }
     val directory = if (project == null) createTempDirectoryWithSuffix("New").toFile() else null

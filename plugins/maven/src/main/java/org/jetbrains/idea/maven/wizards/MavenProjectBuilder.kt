@@ -21,7 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
@@ -235,7 +235,7 @@ internal class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), Depre
           val newSettings = directProjectsSettings.generalSettings.clone()
           var rootFiles = parameters.myFiles
           if (rootFiles == null) {
-            rootFiles = listOf(LocalFileSystem.getInstance().findFileByNioFile(rootPath!!)!!)
+            rootFiles = listOf(VirtualFileManager.getInstance().findFileByNioPath(rootPath!!)!!)
           }
           newSettings.updateFromMavenConfig(rootFiles)
           newSettings
@@ -330,7 +330,7 @@ internal class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), Depre
     }
     val file = rootPath
     val virtualFile = if (file == null) null
-    else LocalFileSystem.getInstance()
+    else StandardFileSystems.local()
       .refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()))
     if (virtualFile == null) {
       throw MavenProcessCanceledException()

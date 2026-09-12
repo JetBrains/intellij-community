@@ -12,7 +12,7 @@ import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -239,7 +239,7 @@ public final class MavenDistributionsCache {
   }
 
   private @NotNull String calculateMultimoduleDirUpToFileTree(String directory) {
-    VirtualFile path = LocalFileSystem.getInstance().findFileByPath(directory);
+    VirtualFile path = StandardFileSystems.local().findFileByPath(directory);
     if (path == null) return directory;
     Collection<String> knownWorkingDirs = myWorkingDirToMultiModuleMap.values();
     for (String known : knownWorkingDirs) {

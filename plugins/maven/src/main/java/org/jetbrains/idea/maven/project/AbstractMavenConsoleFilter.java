@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +41,10 @@ public abstract class AbstractMavenConsoleFilter implements Filter {
 
     String path = matcher.group(1);
 
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile file = StandardFileSystems.local().findFileByPath(path);
     if (file == null) {
       if (SystemInfo.isWindows && path.matches("/[A-Z]:/.+")) {
-        file = LocalFileSystem.getInstance().findFileByPath(path.substring(1));
+        file = StandardFileSystems.local().findFileByPath(path.substring(1));
       }
       if (file == null) return null;
     }

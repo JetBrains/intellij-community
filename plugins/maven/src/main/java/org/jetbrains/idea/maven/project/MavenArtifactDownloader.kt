@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.project
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.platform.util.progress.RawProgressReporter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
@@ -77,7 +77,7 @@ internal class MavenArtifactDownloader(
         filesToRefresh.add(file)
         filesToRefresh.add(file.parent)
       }
-      LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
+      RefreshQueue.getInstance().refreshPaths(true, false, null, filesToRefresh)
     }
   }
 

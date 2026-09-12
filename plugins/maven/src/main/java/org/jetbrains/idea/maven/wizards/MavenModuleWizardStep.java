@@ -9,8 +9,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.jetbrains.annotations.Nls;
@@ -388,7 +388,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   public MavenProject findPotentialParentProject(Project project) {
     if (!MavenProjectsManager.getInstance(project).isMavenizedProject()) return null;
 
-    VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(myContext.getProjectFileDirectory(),
+    VirtualFile parentPom = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Path.of(myContext.getProjectFileDirectory(),
                                                                                               MavenConstants.POM_XML));
     if (parentPom == null) return null;
 

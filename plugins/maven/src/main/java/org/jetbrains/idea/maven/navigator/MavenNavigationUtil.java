@@ -4,8 +4,8 @@ package org.jetbrains.idea.maven.navigator;
 import com.intellij.navigation.EmptyNavigatable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.PsiFile;
@@ -91,7 +91,7 @@ public final class MavenNavigationUtil {
 
   public static @Nullable VirtualFile getArtifactFile(Project project, MavenId id) {
     Path path = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getRepositoryPath(), id);
-    return Files.exists(path) ? LocalFileSystem.getInstance().findFileByNioFile(path) : null;
+    return Files.exists(path) ? VirtualFileManager.getInstance().findFileByNioPath(path) : null;
   }
 
   public static @Nullable MavenDomDependency findDependency(@NotNull MavenDomProjectModel projectDom, final String groupId, final String artifactId) {

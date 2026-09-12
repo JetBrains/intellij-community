@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.platform.util.progress.RawProgressReporter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
@@ -65,7 +65,7 @@ internal class MavenPluginResolverImpl : MavenPluginResolver {
     }
     finally {
       if (filesToRefresh.isNotEmpty()) {
-        LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
+        RefreshQueue.getInstance().refreshPaths(true, false, null, filesToRefresh)
       }
     }
   }

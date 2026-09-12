@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.UsefulTestCase.assertContainsElements
 import com.intellij.testFramework.junit5.TestApplication
@@ -47,6 +46,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -74,7 +74,7 @@ class MavenImportingConnectorsTest(mavenVersion: String, modelVersion: String) {
   @BeforeEach
   fun setUp() {
     val projectDir = createDirectories(of(maven.dir.toString(), "anotherProject"))
-    myAnotherProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)!!
+    myAnotherProjectRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectDir)!!
   }
 
   @Test

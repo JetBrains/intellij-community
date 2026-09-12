@@ -4,8 +4,8 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
@@ -91,7 +91,7 @@ public final class MavenPluginDomUtil {
   private static @Nullable VirtualFile getPluginXmlFile(Project project, String groupId, String artifactId, String version) {
     Path file = MavenArtifactUtil.getArtifactNioPath(MavenProjectsManager.getInstance(project).getRepositoryPath(),
                                                      groupId, artifactId, version, "jar");
-    VirtualFile pluginFile = LocalFileSystem.getInstance().findFileByNioFile(file);
+    VirtualFile pluginFile = VirtualFileManager.getInstance().findFileByNioPath(file);
     if (pluginFile == null) return null;
 
     VirtualFile pluginJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(pluginFile);

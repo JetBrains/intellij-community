@@ -17,7 +17,7 @@ import com.intellij.maven.testFramework.fixtures.updateSettingsXml
 import com.intellij.maven.testFramework.fixtures.waitForImportWithinTimeout
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
@@ -162,7 +162,7 @@ class MavenProjectsManagerSettingsXmlTest(mavenVersion: String, modelVersion: St
     // updateSettingsXml/createSettingsXml write it under maven.dir — so resolve the current path instead of guessing
     // a fixed location (the first call in a "create then delete" test would otherwise NPE on a missing maven.dir copy).
     val settingsPath = maven.mavenGeneralSettings.userSettingsFile
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Paths.get(settingsPath)) ?: return
+    val f = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Paths.get(settingsPath)) ?: return
     maven.waitForImportWithinTimeout {
       edtWriteAction {
         f.delete(this)

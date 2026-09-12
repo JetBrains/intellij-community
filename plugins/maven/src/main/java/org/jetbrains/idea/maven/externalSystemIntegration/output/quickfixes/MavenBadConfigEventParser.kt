@@ -10,7 +10,7 @@ import com.intellij.build.issue.quickfix.OpenFileQuickFix
 import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType
@@ -109,7 +109,7 @@ object MavenConfigBuildIssue {
   const val CONFIG_VALUE_ERROR: String = "For input string:"
 
   fun getIssue(ex: MavenConfigParseException): BuildIssue? {
-    val configFile = LocalFileSystem.getInstance().findFileByPath(ex.directory)?.findFileByRelativePath(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH)
+    val configFile = StandardFileSystems.local().findFileByPath(ex.directory)?.findFileByRelativePath(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH)
     return configFile?.let { getConfigFile(it, ex.localizedMessage ?: ex.message ?: ex.stackTraceToString(), CONFIG_PARSE_ERROR) }
 
   }

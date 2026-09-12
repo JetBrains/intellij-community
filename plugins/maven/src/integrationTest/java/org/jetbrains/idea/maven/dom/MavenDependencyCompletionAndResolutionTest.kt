@@ -24,7 +24,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings
@@ -426,7 +426,7 @@ class MavenDependencyCompletionAndResolutionTest(mavenVersion: String, modelVers
                        """.trimIndent())
 
     val filePath = maven.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
+    val f = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(filePath)
     maven.assertResolved(maven.projectPom, maven.findPsiFile(f))
   }
 
@@ -448,7 +448,7 @@ class MavenDependencyCompletionAndResolutionTest(mavenVersion: String, modelVers
 </parent>"""
     )
 
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
+    val f = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(filePath)
     maven.assertResolved(maven.projectPom, maven.findPsiFile(f))
   }
 
@@ -477,7 +477,7 @@ class MavenDependencyCompletionAndResolutionTest(mavenVersion: String, modelVers
     maven.importProjectAsync()
 
     val filePath = maven.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
+    val f = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(filePath)
     maven.assertResolved(maven.projectPom, maven.findPsiFile(f))
   }
 
@@ -515,7 +515,7 @@ class MavenDependencyCompletionAndResolutionTest(mavenVersion: String, modelVers
                        """.trimIndent())
 
     val filePath = maven.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
+    val f = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(filePath)
 
     maven.assertResolved(maven.projectPom, maven.findPsiFile(f))
   }
@@ -537,7 +537,7 @@ class MavenDependencyCompletionAndResolutionTest(mavenVersion: String, modelVers
                        """.trimIndent())
 
     val filePath = maven.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
+    val f = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(filePath)
 
     maven.assertResolved(maven.projectPom, maven.findPsiFile(f))
   }
@@ -595,7 +595,7 @@ class MavenDependencyCompletionAndResolutionTest(mavenVersion: String, modelVers
 </dependencies>
 """)
 
-    maven.assertResolved(maven.projectPom, maven.findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(libPath)))
+    maven.assertResolved(maven.projectPom, maven.findPsiFile(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(libPath)))
     maven.checkHighlighting()
   }
 
@@ -661,7 +661,7 @@ $libPath</depPath>
 </dependencies>
 """)
 
-    maven.assertResolved(maven.projectPom, maven.findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(libPath)))
+    maven.assertResolved(maven.projectPom, maven.findPsiFile(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(libPath)))
     maven.checkHighlighting()
   }
 
@@ -708,7 +708,7 @@ ${libPath.parent}</depDir>
 </dependencies>
 """)
 
-    maven.assertResolved(maven.projectPom, maven.findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(libPath)))
+    maven.assertResolved(maven.projectPom, maven.findPsiFile(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(libPath)))
     maven.checkHighlighting()
   }
 
@@ -732,7 +732,7 @@ ${libPath.parent}</depDir>
     assertNotNull(action)
 
     val libPath = maven.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.jar")
-    val libFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(libPath)
+    val libFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(libPath)
 
     val intentionAction = IntentionActionDelegate.unwrap(action!!)
     (intentionAction as ChooseFileIntentionAction).setFileChooser { arrayOf(libFile) }

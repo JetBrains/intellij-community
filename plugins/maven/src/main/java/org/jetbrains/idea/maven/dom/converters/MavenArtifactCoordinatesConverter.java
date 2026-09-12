@@ -6,8 +6,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -242,7 +242,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     private static PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
       Path file = MavenUtil.getRepositoryFile(psiManager.getProject(), id, "pom", null);
       if (null == file) return null;
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByNioFile(file);
+      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByNioPath(file);
       if (virtualFile == null) return null;
 
       return psiManager.findFile(virtualFile);
@@ -416,7 +416,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       Path artifactFile = MavenArtifactUtil
         .getArtifactNioPath(projectsManager.getRepositoryPath(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
 
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByNioFile(artifactFile);
+      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByNioPath(artifactFile);
       if (virtualFile != null) {
         return psiManager.findFile(virtualFile);
       }

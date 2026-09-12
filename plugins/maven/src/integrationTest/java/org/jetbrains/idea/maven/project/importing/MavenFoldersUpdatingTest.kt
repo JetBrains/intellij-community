@@ -43,7 +43,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.importing.MavenEventsTestHelper
@@ -322,7 +322,7 @@ class MavenFoldersUpdatingTest(mavenVersion: String, modelVersion: String) {
 
       files.forEach {
         Files.createDirectories(it)
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(it)
+        VirtualFileManager.getInstance().refreshAndFindFileByNioPath(it)
       }
 
       maven.awaitConfiguration()

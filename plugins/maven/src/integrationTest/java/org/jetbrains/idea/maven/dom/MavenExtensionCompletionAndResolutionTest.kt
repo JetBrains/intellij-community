@@ -9,7 +9,7 @@ import com.intellij.maven.testFramework.fixtures.findPsiFile
 import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import com.intellij.maven.testFramework.fixtures.removeFromLocalRepository
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
@@ -153,7 +153,7 @@ class MavenExtensionCompletionAndResolutionTest(mavenVersion: String, modelVersi
     val pluginPath =
       "plugins/org/apache/maven/plugins/maven-compiler-plugin/$pluginVersion/maven-compiler-plugin-$pluginVersion.pom"
     val filePath = maven.repositoryHelper.getTestData(pluginPath)
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
+    val f = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(filePath)
     assertNotNull(f, "file: $filePath not exists!")
     maven.assertResolved(maven.projectPom, maven.findPsiFile(f))
   }

@@ -3,8 +3,8 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.Strings
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenId
@@ -58,7 +58,7 @@ abstract class MavenParentProjectFileAsyncProcessor<RESULT_TYPE>(private val myP
     var result: RESULT_TYPE? = null
     val parentFile: VirtualFile?
     val parentIoFile = MavenArtifactUtil.getArtifactFile(MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo(), parentDesc.parentId, "pom")
-    parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile)
+    parentFile = VirtualFileManager.getInstance().findFileByNioPath(parentIoFile)
     if (parentFile != null) {
       result = processRepositoryParent(parentFile)
     }

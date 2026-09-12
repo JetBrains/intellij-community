@@ -6,8 +6,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -448,7 +449,7 @@ class MavenProject(val file: VirtualFile) {
     result.addAll(readingProblems)
 
     for ((key, value) in modulesPathsAndNames) {
-      if (LocalFileSystem.getInstance().findFileByPath(key) == null) {
+      if (StandardFileSystems.local().findFileByPath(key) == null) {
         result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.moduleNotFound", value)))
       }
     }
@@ -500,7 +501,7 @@ class MavenProject(val file: VirtualFile) {
 
   val existingModuleFiles: List<VirtualFile>
     get() {
-      val fs: LocalFileSystem = LocalFileSystem.getInstance()
+      val fs: VirtualFileSystem = StandardFileSystems.local()
 
       val result: MutableList<VirtualFile> = ArrayList()
       val pathsInStack: Set<String> = modulePaths
@@ -758,7 +759,7 @@ class MavenProject(val file: VirtualFile) {
       `in`.readFully(bytes)
 
       // should read full byte content first!!!
-      val file: VirtualFile? = LocalFileSystem.getInstance().findFileByPath(path)
+      val file: VirtualFile? = StandardFileSystems.local().findFileByPath(path)
       if (file == null) return null
 
       try {

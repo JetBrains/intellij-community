@@ -69,10 +69,10 @@ import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.DiskQueryRelay
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
@@ -1535,7 +1535,7 @@ object MavenUtil {
   }
 
   private fun tryReadFromLib(library: Path, pathInJar: String): VirtualFile? {
-    val libraryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(library)
+    val libraryVirtualFile = VirtualFileManager.getInstance().findFileByNioPath(library)
     if (libraryVirtualFile == null) return null
     val root = JarFileSystem.getInstance().getJarRootForLocalFile(libraryVirtualFile)
     if (root == null) return null

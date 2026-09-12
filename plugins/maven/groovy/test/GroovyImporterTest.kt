@@ -20,7 +20,7 @@ import com.intellij.maven.testFramework.fixtures.repositoryPathCanonical
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.io.createDirectories
@@ -285,7 +285,7 @@ class GroovyImporterTest(mavenVersion: String, modelVersion: String) {
           GreclipseIdeaCompilerSettings::class.java
       )
       assertEquals(
-          LocalFileSystem.getInstance().findFileByNioFile(batchJar)!!.toNioPath(),
+          VirtualFileManager.getInstance().findFileByNioPath(batchJar)!!.toNioPath(),
           Path.of(compilerSettings.state!!.greclipsePath)
       )
   }
@@ -352,7 +352,7 @@ class GroovyImporterTest(mavenVersion: String, modelVersion: String) {
 
       val compilerSettings = maven.project.getService(GreclipseIdeaCompilerSettings::class.java)
       assertEquals(
-          LocalFileSystem.getInstance().findFileByNioFile(batchJar)!!.toNioPath(),
+          VirtualFileManager.getInstance().findFileByNioPath(batchJar)!!.toNioPath(),
           Path.of(compilerSettings.state!!.greclipsePath)
       )
   }
