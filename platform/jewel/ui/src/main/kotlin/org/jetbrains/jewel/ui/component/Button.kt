@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -966,8 +965,7 @@ private fun SplitButtonImpl(
 
         if (popupVisible && enabled && menuStyle != null) {
             val splitButtonPopupModifier =
-                Modifier.heightIn(max = maxPopupHeight)
-                    .widthIn(min = buttonWidth, max = maxPopupWidth.coerceAtLeast(buttonWidth))
+                Modifier.widthIn(min = buttonWidth, max = maxPopupWidth.coerceAtLeast(buttonWidth))
                     .testTag("Jewel.SplitButton.Popup")
                     .then(popupModifier)
                     .onClick { popupVisible = false }
@@ -981,7 +979,8 @@ private fun SplitButtonImpl(
                             true
                         },
                         horizontalAlignment = Alignment.Start,
-                        style = menuStyle,
+                        maxHeight = maxPopupHeight,
+                        menuStyle = menuStyle,
                         content = secondaryContentMenu,
                     )
                 }
@@ -991,6 +990,7 @@ private fun SplitButtonImpl(
                         modifier = splitButtonPopupModifier,
                         onDismissRequest = { popupVisible = false },
                         horizontalAlignment = Alignment.Start,
+                        maxHeight = maxPopupHeight,
                         content = secondaryContent,
                     )
                 }
