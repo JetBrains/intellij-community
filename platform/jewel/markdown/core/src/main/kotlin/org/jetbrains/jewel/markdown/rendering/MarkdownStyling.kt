@@ -33,6 +33,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPo
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
+@Suppress("DEPRECATION") // HtmlBlock is only kept for compatibility reasons
 public class MarkdownStyling(
     /**
      * The vertical spacing applied between sibling Markdown block elements, both at the top level and within container
@@ -53,7 +54,15 @@ public class MarkdownStyling(
     public val image: Image,
     /** Styling for thematic break (horizontal rule) elements. */
     public val thematicBreak: ThematicBreak,
-    /** Styling for HTML block elements. */
+    /**
+     * Styling for HTML block elements.
+     *
+     * @deprecated HTML blocks are no longer rendered, and this styling is ignored. It will be removed in a future
+     *   release.
+     */
+    @Deprecated(
+        "HTML blocks are no longer rendered, and this styling is ignored. It will be removed in a future release."
+    )
     public val htmlBlock: HtmlBlock,
 ) {
     /** The base [InlinesStyling] derived from the [paragraph] styling, used as a fallback for inline rendering. */
@@ -1113,12 +1122,17 @@ public class MarkdownStyling(
     }
 
     /**
-     * Styling for Markdown HTML block elements. HTML blocks are not rendered by default; this styling only takes effect
-     * for custom renderers that opt in to rendering them.
+     * Styling for Markdown HTML block elements.
+     *
+     * @deprecated HTML blocks are no longer rendered, and this styling is ignored. It will be removed in a future
+     *   release.
      */
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     @GenerateDataFunctions
+    @Deprecated(
+        "HTML blocks are no longer rendered, and this styling is ignored. It will be removed in a future release."
+    )
     public class HtmlBlock(
         /** The text style used to render the HTML block content. */
         public val textStyle: TextStyle,

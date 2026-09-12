@@ -134,6 +134,7 @@ fun createMarkdownTestThemeDefinition(): ThemeDefinition =
     )
 
 /** Creates a minimal [MarkdownStyling] with stub span styles for use in Markdown rendering tests. */
+@Suppress("DEPRECATION") // HTML block styling is kept for compatibility
 fun createMarkdownTestStyling(
     codeEditorTextStyle: TextStyle = TextStyle.Default,
     blockVerticalSpacing: Dp = 8.dp,
