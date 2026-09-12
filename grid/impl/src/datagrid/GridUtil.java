@@ -95,7 +95,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -1038,7 +1038,7 @@ public class GridUtil extends GridUtilCore {
       if (!OPEN_FILE_DESC.equals(event.getDescription()) || event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
       File file = new File(myPath);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
         if (virtualFile == null) {
           NotificationGroupManager.getInstance().getNotificationGroup(DataGridNotifications.EXTRACTORS_GROUP_ID)
             .createNotification(

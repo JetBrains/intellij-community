@@ -28,7 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ObjectUtils;
@@ -265,7 +265,7 @@ final class ChooseExtractorAction extends ActionGroup implements GridAction, Dum
       }
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(scriptsDir);
+        VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(scriptsDir.getAbsolutePath());
         if (virtualFile == null) return;
         ApplicationManager.getApplication().invokeLater(() -> {
           PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1).navigate(true);

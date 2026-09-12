@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -37,6 +36,7 @@ import java.util.function.BiConsumer;
 
 import com.intellij.database.datagrid.DataGridNotifications;
 import com.intellij.notification.NotificationGroupManager;
+import com.intellij.openapi.vfs.VirtualFileManager;
 
 public final class ExtensionScriptsUtil {
   private static final String JS_PLUGIN_ID = "org.jetbrains.intellij.scripting-javascript";
@@ -167,7 +167,7 @@ public final class ExtensionScriptsUtil {
 
   public static boolean navigateToFile(@Nullable Project project, @NotNull Path file) {
     ProjectFileIndex index = project == null ? null : ProjectFileIndex.getInstance(project);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByNioFile(file);
+    VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByNioPath(file);
     if (index != null && virtualFile != null && virtualFile.isValid() &&
         (ScratchUtil.isScratch(virtualFile) || index.isInContent(virtualFile) || index.isInLibrary(virtualFile))) {
       new OpenFileDescriptor(project, virtualFile).navigate(true);

@@ -19,8 +19,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ObjectUtils;
@@ -188,7 +188,7 @@ public abstract class DumpDataDialog extends DialogWrapper {
 
   private boolean checkFileWritable(@NotNull File file) {
     if (file.isDirectory()) return true;
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(file.getAbsolutePath());
     if (virtualFile == null || !ReadonlyStatusHandler.ensureFilesWritable(myProject, virtualFile)) {
       showError(file);
       return false;
