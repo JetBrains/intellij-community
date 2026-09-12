@@ -142,6 +142,8 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
+        "//platform/icons-impl/intellij",
+        "//platform/icons-impl/intellij:intellij_test_lib",
         "//platform/platform-impl/initial-config-import",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",

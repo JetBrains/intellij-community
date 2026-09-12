@@ -119,10 +119,17 @@ a:com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.actionSystem.ActionUpdateThreadAware
 - com.intellij.openapi.project.PossiblyDumbAware
 - *:<init>(java.util.function.Supplier,java.util.function.Supplier):V
+- *:<init>(java.util.function.Supplier,java.util.function.Supplier,com.intellij.platform.icons.Icon,javax.swing.Icon):V
 - *:<init>(java.util.function.Supplier,java.util.function.Supplier,java.util.function.Supplier):V
 f:com.intellij.openapi.actionSystem.Presentation
 - java.lang.Cloneable
+- *sf:NO_ICON_DESCRIPTOR:com.intellij.platform.icons.Icon
+- *sf:PROP_ICON_DESCRIPTOR:java.lang.String
+- *:getIconDescriptor():com.intellij.platform.icons.Icon
+- *:getIconDescriptorSupplier():java.util.function.Supplier
 - *:isRWLockRequired():Z
+- *:setIconDescriptor(com.intellij.platform.icons.Icon):V
+- *:setIconDescriptorSupplier(java.util.function.Supplier):V
 - *:setRWLockRequired(Z):V
 *:com.intellij.openapi.editor.CustomFoldRegion
 - com.intellij.openapi.editor.FoldRegion
