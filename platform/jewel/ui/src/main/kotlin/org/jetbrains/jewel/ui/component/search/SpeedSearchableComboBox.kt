@@ -355,6 +355,7 @@ private fun <T : Any> SpeedSearchScope.SpeedSearchableComboBoxImpl(
             ),
         listState = listState,
         labelContent = labelContent,
+        speedSearchState = speedSearchState,
         itemContent = { index, item, isSelected, isActive ->
             ProvideSearchMatchState(speedSearchState, currentTexts[index], searchMatchStyle) {
                 itemContent(item, isSelected, isActive)
