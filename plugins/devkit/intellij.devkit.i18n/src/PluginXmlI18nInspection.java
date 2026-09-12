@@ -33,7 +33,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -300,7 +300,7 @@ public final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase
   }
 
   private static @Nullable PropertiesFile findPropertiesFile(Project project, String propertiesFilePath) {
-    VirtualFile propertiesVFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(propertiesFilePath));
+    VirtualFile propertiesVFile = StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(propertiesFilePath));
     if (propertiesVFile != null) {
       return PropertiesImplUtil.getPropertiesFile(PsiManager.getInstance(project).findFile(propertiesVFile));
     }

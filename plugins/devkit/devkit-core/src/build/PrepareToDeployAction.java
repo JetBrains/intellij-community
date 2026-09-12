@@ -31,11 +31,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PathUtil;
@@ -156,7 +156,7 @@ public class PrepareToDeployAction extends AnAction {
         else {
           FileUtil.rename(jarFile, dstFile);
         }
-        LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(dstFile), true, false, null);
+        RefreshQueue.getInstance().refreshPaths(true, false, null, Collections.singleton(dstFile.toPath()));
         successMessages.add(DevKitBundle.message("saved.message", isZip ? 1 : 2, pluginName, dstPath));
       }
       catch (IOException e) {

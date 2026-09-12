@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.NativeLibraryOrderRootType
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.project.stateStore
 import com.intellij.util.SmartList
@@ -36,7 +36,7 @@ class PluginModuleCompilationTest : BaseCompilerTestCase() {
       val modificator = pluginSdk.sdkModificator
       modificator.sdkAdditionalData = Sandbox(getSandboxPath(), testProjectJdk, pluginSdk)
       val rootPath = FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(FileUtilRt::class.java)!!)
-      modificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath)!!, OrderRootType.CLASSES)
+      modificator.addRoot(StandardFileSystems.local().refreshAndFindFileByPath(rootPath)!!, OrderRootType.CLASSES)
       modificator.commitChanges()
       table.addJdk(pluginSdk, testRootDisposable)
     }

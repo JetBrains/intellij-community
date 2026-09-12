@@ -38,7 +38,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
@@ -322,7 +322,7 @@ internal open class IdePluginModuleWebBasedBuilder : WebStarterModuleBuilder() {
     if (getPluginType() == PluginType.THEME) {
       val contentEntryPath = contentEntryPath ?: return
       val resourceRootPath = "$contentEntryPath/resources" //NON-NLS
-      val contentRoot = LocalFileSystem.getInstance().findFileByPath(contentEntryPath) ?: return
+      val contentRoot = StandardFileSystems.local().findFileByPath(contentEntryPath) ?: return
 
       val contentEntry = MarkRootsManager.findContentEntry(modifiableRootModel, contentRoot)
       contentEntry?.addSourceFolder(VfsUtilCore.pathToUrl(resourceRootPath), JavaResourceRootType.RESOURCE)

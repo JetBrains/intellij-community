@@ -3,9 +3,10 @@ package org.jetbrains.idea.devkit.testAssistant.vfs;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.dummy.DummyCachingFileSystem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,7 @@ final class TestDataGroupFileSystem extends DummyCachingFileSystem<VirtualFile> 
       return null;
     }
 
-    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    VirtualFileSystem localFileSystem = StandardFileSystems.local();
     VirtualFile beforeFile = localFileSystem.refreshAndFindFileByPath(beforePath);
     VirtualFile afterFile = localFileSystem.refreshAndFindFileByPath(afterPath);
     if (beforeFile == null || afterFile == null) {

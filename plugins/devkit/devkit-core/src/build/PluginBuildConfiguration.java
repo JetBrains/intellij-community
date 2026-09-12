@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -169,7 +169,7 @@ public final class PluginBuildConfiguration {
       return;
     }
 
-    VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestPath);
+    VirtualFile manifest = StandardFileSystems.local().findFileByPath(manifestPath);
     VirtualFilePointerManager virtualFilePointerManager = VirtualFilePointerManager.getInstance();
     if (manifest == null) {
       if (reportMissingFile) {

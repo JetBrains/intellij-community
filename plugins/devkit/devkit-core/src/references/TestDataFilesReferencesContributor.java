@@ -2,7 +2,7 @@
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.uast.UastPatterns;
 import com.intellij.psi.PsiElement;
@@ -67,7 +67,7 @@ final class TestDataFilesReferencesContributor extends PsiReferenceContributor {
             fileReferenceSet.addCustomization(
               FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION,
               ignore -> {
-                VirtualFile file = LocalFileSystem.getInstance().findFileByPath(directory);
+                VirtualFile file = StandardFileSystems.local().findFileByPath(directory);
                 return file == null ? null : Collections.singleton(host.getManager().findDirectory(file));
               });
 

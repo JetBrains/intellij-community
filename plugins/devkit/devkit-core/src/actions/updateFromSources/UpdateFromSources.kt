@@ -31,7 +31,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.Restarter
 import com.intellij.util.execution.ParametersListUtil
@@ -187,7 +187,7 @@ private fun runUpdateScript(
                 FileEditorManager.getInstance(project).openFile(LightVirtualFile("output.txt", output.joinToString("")), true)
               },
             )
-            LocalFileSystem.getInstance().refreshAndFindFileByNioFile(deployDir.resolve("log/debug.log"))?.let { logFile ->
+            VirtualFileManager.getInstance().refreshAndFindFileByNioPath(deployDir.resolve("log/debug.log"))?.let { logFile ->
               logFile.refresh(true, false)
               actions += NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.debug.log")) {
                 FileEditorManager.getInstance(project).openFile(logFile, true)

@@ -24,9 +24,10 @@ import com.intellij.openapi.roots.ModulePackageIndex
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -168,7 +169,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
     withContext(Dispatchers.IO) {
       resourcesRootPath.createDirectories()
     }
-    val resourcesRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resourcesRootPath) ?: error("Cannot find $resourcesRootPath")
+    val resourcesRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resourcesRootPath) ?: error("Cannot find $resourcesRootPath")
     project.workspaceModel.update("Create resources root") { builder ->
       val moduleEntity = module.findModuleEntity(builder) ?: error("Cannot find module entity for module $module")
       val contentRoot = moduleEntity.contentRoots.firstOrNull() ?: error("Cannot find content root for module $module")
@@ -210,7 +211,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
       Path(data.newModuleDirectoryPath).resolve(RESOURCES_DIR_NAME).createDirectories()
     }
     edtWriteAction {
-      val resourcesDirectory = LocalFileSystem.getInstance().refreshAndFindFileByPath(resourcesDirectoryPath.toString())!!
+      val resourcesDirectory = StandardFileSystems.local().refreshAndFindFileByPath(resourcesDirectoryPath.toString())!!
       data.descriptor.move(this, resourcesDirectory)
       if (data.descriptor.nameWithoutExtension != data.newModuleName) {
         data.descriptor.rename(this, "${data.newModuleName}.xml")
@@ -238,7 +239,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
         srcRoot.createDirectories()
       }
       val newPackageDirectory = edtWriteAction {
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newPackagePath)
+        VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newPackagePath)
       }
       withContext(Dispatchers.EDT) {
         val createdModule = ModuleManager.getInstance(project).findModuleByName(data.newModuleName)

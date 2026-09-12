@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +86,7 @@ public interface TestDataFile {
     private void resolve() {
       if (!myResolved) {
         myResolved = true;
-        myFile = ReadAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(myPath));
+        myFile = ReadAction.compute(() -> StandardFileSystems.local().refreshAndFindFileByPath(myPath));
       }
     }
 
