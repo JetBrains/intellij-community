@@ -5,6 +5,7 @@ import com.google.common.collect.Streams;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,6 +34,7 @@ import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyEnumAttributeStubType;
@@ -73,7 +75,6 @@ import static com.jetbrains.python.PyNames.isDunder;
 import static com.jetbrains.python.PyNames.isSunder;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-
 public final class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   public static @Nullable PyStdlibTypeProvider getInstance() {
@@ -113,9 +114,42 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       else if (PyNames.FALSE.equals(name) || PyNames.TRUE.equals(name)) {
         return PyBuiltinCache.getInstance(referenceExpression).getBoolType();
       }
+      return getEnumMemberValueTypeInClassBody(referenceExpression, context);
     }
 
     return null;
+  }
+
+  /**
+   * In the body of an enum class, the name of a member refers to its assigned value, as in {@code B = A + 1}.
+   * The metaclass turns the values into members only after the class body is executed.
+   */
+  private static @Nullable PyType getEnumMemberValueTypeInClassBody(@NotNull PyReferenceExpression referenceExpression,
+                                                                    @NotNull TypeEvalContext context) {
+    if (!(ScopeUtil.getScopeOwner(referenceExpression) instanceof PyClass cls)) return null;
+    // A base class is not in the statement list, so the metaclass below cannot lead back to this method through a base
+    if (!PsiTreeUtil.isAncestor(cls.getStatementList(), referenceExpression, true)) return null;
+    // A value can name its own attribute, as in `A = A + 1`, and `__metaclass__` can name an attribute of the class
+    return RecursionManager.doPreventingRecursion(referenceExpression, false, () -> {
+      // Resolve first, so that a name from an outer scope, as in `__metaclass__ = Meta`, never needs the metaclass
+      if (!(resolveInEnumClassBody(referenceExpression, cls, context) instanceof PyTargetExpression target)) return null;
+      if (!isCustomEnum(cls, context)) return null;
+      EnumAttributeInfo info = getEnumAttributeInfo(cls, target, context);
+      if (info == null || info.attributeKind != EnumAttributeKind.MEMBER) return null;
+      return info.assignedValueType != null ? info.assignedValueType : PyAnyType.getUnknown();
+    });
+  }
+
+  /**
+   * Returns the attribute of {@code enumClass} that the unqualified {@code referenceExpression} in its body refers to.
+   */
+  private static @Nullable PsiElement resolveInEnumClassBody(@NotNull PyReferenceExpression referenceExpression,
+                                                             @NotNull PyClass enumClass,
+                                                             @NotNull TypeEvalContext context) {
+    if (referenceExpression.isQualified()) return null;
+    List<PsiElement> resolved = PyUtil.multiResolveTopPriority(referenceExpression, PyResolveContext.defaultContext(context));
+    PsiElement element = ContainerUtil.getOnlyItem(resolved);
+    return element != null && ScopeUtil.getScopeOwner(element) == enumClass ? element : null;
   }
 
   private static @Nullable PyType getBaseStringType(@NotNull PsiElement referenceTarget) {
@@ -284,6 +318,15 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (context.maySwitchToAST(targetExpression)) {
       PyExpression value = targetExpression.findAssignedValue();
       if (value == null) return null;
+
+      // An alias names another member in the class body, as in `R = RED`
+      if (PyPsiUtils.flattenParens(value) instanceof PyReferenceExpression referenceExpression) {
+        PsiElement aliased = resolveInEnumClassBody(referenceExpression, enumClass, context);
+        PyLiteralType aliasedMemberType = aliased != null ? getEnumMemberType(aliased, context) : null;
+        if (aliasedMemberType != null) {
+          return new EnumAttributeInfo(aliasedMemberType, EnumAttributeKind.MEMBER_ALIAS);
+        }
+      }
 
       // Framework enums (e.g. Django Choices) transform the declaration before constructing the member: their
       // metaclass/constructor consumes extra tuple elements such as a trailing label. Let a provider model that so
