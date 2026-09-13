@@ -5063,6 +5063,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/notNullCast.java");
         }
 
+        @TestMetadata("notNullField.java")
+        public void testNotNullField() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/notNullField.java");
+        }
+
         @TestMetadata("NullabilityByDfa.java")
         public void testNullabilityByDfa() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/NullabilityByDfa.java");

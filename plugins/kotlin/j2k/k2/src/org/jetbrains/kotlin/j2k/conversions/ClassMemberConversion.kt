@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.j2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.j2k.tree.Mutability.IMMUTABLE
 import org.jetbrains.kotlin.j2k.tree.Mutability.MUTABLE
 import org.jetbrains.kotlin.j2k.tree.Mutability.UNKNOWN
+import org.jetbrains.kotlin.j2k.tree.OtherModifier.LATEINIT
 import org.jetbrains.kotlin.j2k.tree.OtherModifier.STATIC
 import org.jetbrains.kotlin.j2k.tree.Visibility.PRIVATE
 import org.jetbrains.kotlin.j2k.tree.elementByModifier
@@ -104,6 +105,7 @@ class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(con
     private fun JKField.convert() {
         removeStaticModifierFromAnonymousClassMember()
         mutability = when {
+            hasOtherModifier(LATEINIT) -> MUTABLE
             isPersistentField() -> MUTABLE
             modality == FINAL -> IMMUTABLE
             hasAnnotation(MUTABLE_FIELD_ANNOTATIONS) -> MUTABLE

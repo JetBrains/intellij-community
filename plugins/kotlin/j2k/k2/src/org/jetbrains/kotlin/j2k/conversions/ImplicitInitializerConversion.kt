@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.j2k.conversions
 
+import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.psi.PsiField
 import org.jetbrains.kotlin.j2k.ConverterContext
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.j2k.Nullability.Nullable
 import org.jetbrains.kotlin.j2k.RecursiveConversion
 import org.jetbrains.kotlin.j2k.conversions.InitializationState.INITIALIZED_IN_ALL_CONSTRUCTORS
@@ -10,6 +13,7 @@ import org.jetbrains.kotlin.j2k.conversions.InitializationState.INITIALIZED_IN_S
 import org.jetbrains.kotlin.j2k.conversions.InitializationState.NON_INITIALIZED
 import org.jetbrains.kotlin.j2k.declarationList
 import org.jetbrains.kotlin.j2k.findUsages
+import org.jetbrains.kotlin.j2k.psi
 import org.jetbrains.kotlin.j2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.j2k.tree.JKBlock
 import org.jetbrains.kotlin.j2k.tree.JKClass
@@ -26,12 +30,15 @@ import org.jetbrains.kotlin.j2k.tree.JKQualifiedExpression
 import org.jetbrains.kotlin.j2k.tree.JKStubExpression
 import org.jetbrains.kotlin.j2k.tree.JKThisExpression
 import org.jetbrains.kotlin.j2k.tree.JKTreeElement
+import org.jetbrains.kotlin.j2k.tree.JKOtherModifierElement
 import org.jetbrains.kotlin.j2k.tree.Modality.FINAL
+import org.jetbrains.kotlin.j2k.tree.OtherModifier.LATEINIT
 import org.jetbrains.kotlin.j2k.tree.modality
 import org.jetbrains.kotlin.j2k.tree.parentOfType
 import org.jetbrains.kotlin.j2k.types.JKClassType
 import org.jetbrains.kotlin.j2k.types.JKJavaPrimitiveType
 import org.jetbrains.kotlin.j2k.types.JKTypeParameterType
+import org.jetbrains.kotlin.j2k.types.asPrimitiveType
 import org.jetbrains.kotlin.j2k.types.updateNullability
 
 /**
@@ -139,6 +146,11 @@ class ImplicitInitializerConversion(context: ConverterContext) : RecursiveConver
 
     private fun generateNewInitializerFor(field: JKField) {
         val fieldType = field.type.type
+        if (field.canBeLateinit()) {
+            field.otherModifierElements += JKOtherModifierElement(LATEINIT)
+            return
+        }
+
         val initializer = when (fieldType) {
             is JKClassType, is JKTypeParameterType -> JKLiteralExpression("null", LiteralType.NULL)
             is JKJavaPrimitiveType -> createPrimitiveTypeInitializer(fieldType)
@@ -152,6 +164,13 @@ class ImplicitInitializerConversion(context: ConverterContext) : RecursiveConver
         if (initializer.type == LiteralType.NULL && fieldType.nullability != Nullable) {
             field.type.type = fieldType.updateNullability(Nullable)
         }
+    }
+
+    private fun JKField.canBeLateinit(): Boolean {
+        val fieldType = type.type
+        if (fieldType !is JKClassType || fieldType.nullability != NotNull || fieldType.asPrimitiveType() != null) return false
+        val psiField = psi<PsiField>() ?: return false
+        return NullableNotNullManager.isNotNull(psiField)
     }
 
     private fun createPrimitiveTypeInitializer(primitiveType: JKJavaPrimitiveType): JKLiteralExpression =
