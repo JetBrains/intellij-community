@@ -165,15 +165,15 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestFor(issues = ["PY-91925"])
+    @TestFor(issues = ["PY-91925", "PY-92217"])
     fun `custom new receives the member value`() = test("""
       from enum import StrEnum
 
       class Greeting(StrEnum):
           def __new__(cls, value: str, is_fancy: bool = False):
               obj = str.__new__(cls, value)
+      #       └ TYPE Self@Greeting
               obj._value_ = value
-      #           ^^^^^^^ WARNING Unresolved attribute reference '_value_' for class 'str' FIXME # `str.__new__(cls)` must be `Self`
               return obj
 
           ONE = "Hello", True
