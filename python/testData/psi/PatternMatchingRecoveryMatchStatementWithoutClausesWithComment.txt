@@ -5,10 +5,10 @@ PyFile:PatternMatchingRecoveryMatchStatementWithoutClausesWithComment.py
     PyReferenceExpression: x
       PsiElement(Py:IDENTIFIER)('x')
     PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PsiComment(Py:END_OF_LINE_COMMENT)('# comment')
     PsiErrorElement:Indent expected
       <empty list>
-  PsiWhiteSpace('\n    ')
-  PsiComment(Py:END_OF_LINE_COMMENT)('# comment')
   PsiWhiteSpace('\n')
   PyPassStatement
     PsiElement(Py:PASS_KEYWORD)('pass')

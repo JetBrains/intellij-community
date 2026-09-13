@@ -8,6 +8,6 @@ PyFile:CommentIsTheOnlyLineOfBlockAtEndOfFile.py
       PsiElement(Py:COLON)(':')
       PsiWhiteSpace('\n    ')
       PyStatementList
+        PsiComment(Py:END_OF_LINE_COMMENT)('# comment')
         PsiErrorElement:Indent expected
           <empty list>
-  PsiComment(Py:END_OF_LINE_COMMENT)('# comment')

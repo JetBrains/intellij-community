@@ -462,6 +462,71 @@ public class PyIndentTest extends PyTestCase {
   }
 
   @TestFor(issues = "PY-78251")
+  public void testIndentAfterOnlyCommentInFunctionFollowedByFunction() {
+    doTest(
+      """
+        def f():
+            # TODO<caret>
+
+
+        def g():
+            pass
+        """,
+      """
+        def f():
+            # TODO
+            <caret>
+
+
+        def g():
+            pass
+        """);
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentAfterOnlyCommentInBlockFollowedByDedentedStatement() {
+    doTest(
+      """
+        if True:
+            if False:
+                # Comment<caret>
+        print(1)
+        """,
+      """
+        if True:
+            if False:
+                # Comment
+                <caret>
+        print(1)
+        """);
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentAfterOnlyCommentInBlockAfterTrailingSpace() {
+    doTest(
+      "if True: \n    # Comment<caret>\nprint(1)\n",
+      "if True: \n    # Comment\n    <caret>\nprint(1)\n");
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testIndentAfterSecondCommentInBlock() {
+    doTest(
+      """
+        if True:
+            # First
+            # Second<caret>
+        print(1)
+        """,
+      """
+        if True:
+            # First
+            # Second
+            <caret>
+        print(1)
+        """);
+  }
+
+  @TestFor(issues = "PY-78251")
   public void testIndentBeforeCommentInBlockOnSameLine() {
     doTest(
       """
@@ -472,22 +537,6 @@ public class PyIndentTest extends PyTestCase {
         if True:
             if False:
                 <caret># Space before
-        """);
-  }
-
-  // The formatter keeps a comment that starts in the first column. A space before the comment avoids that.
-  // This holds at every nesting level and does not depend on PY-78251.
-  @TestFor(issues = "PY-78251")
-  public void testIndentBeforeCommentInBlockOnSameLineWithoutSpace() {
-    doTest(
-      """
-        if True:
-            if False:<caret># No space before
-        """,
-      """
-        if True:
-            if False:
-        <caret># No space before
         """);
   }
 

@@ -4,6 +4,7 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.ITokenTypeRemapper;
 import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts.ParsingError;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.CharArrayUtil;
@@ -173,7 +174,6 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       myBuilder.remapCurrentToken(PyTokenTypes.IDENTIFIER);
       return false;
     }
-
     parseCaseClauses();
     mark.done(PyElementTypes.MATCH_STATEMENT);
     return true;
@@ -186,7 +186,6 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       final boolean indentFound = myBuilder.getTokenType() == PyTokenTypes.INDENT;
       if (indentFound) {
         myBuilder.advanceLexer();
-        skipEmptySuiteBreaks();
         boolean caseClauseFound = false;
         while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
           caseClauseFound = true;
@@ -197,7 +196,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           }
         }
         if (!caseClauseFound) {
-          myBuilder.error(PyParsingBundle.message("indent.expected"));
+          errorAfterComments(PyParsingBundle.message("indent.expected"));
         }
         if (!myBuilder.eof()) {
           assert myBuilder.getTokenType() == PyTokenTypes.DEDENT;
@@ -1037,14 +1036,14 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   }
 
   /**
-   * Skips the statement breaks that start a suite with no code in it.
-   * A suite whose body is only a comment gets an INDENT and then the statement break of the last line.
-   * That break starts no statement.
+   * Reports an error after the comments before the current token.
+   * A suite that holds only comments keeps them before its error, so the comments stay inside the suite.
    */
-  protected void skipEmptySuiteBreaks() {
-    while (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
-      myBuilder.advanceLexer();
-    }
+  private void errorAfterComments(@NotNull @ParsingError String message) {
+    SyntaxTreeBuilder.Marker error = myBuilder.mark();
+    error.error(message);
+    // The builder binds an empty marker before the comments. Bind it after them.
+    error.setCustomEdgeTokenBinders((tokens, ignoredAtStreamEdge, ignoredGetter) -> tokens.size(), null);
   }
 
   public void parseSuite(@Nullable SyntaxTreeBuilder.Marker endMarker, @Nullable IElementType elType) {
@@ -1055,14 +1054,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       final boolean indentFound = myBuilder.getTokenType() == PyTokenTypes.INDENT;
       if (indentFound) {
         myBuilder.advanceLexer();
-        skipEmptySuiteBreaks();
         boolean statementFound = false;
         while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
           statementFound = true;
           parseStatement();
         }
         if (!statementFound) {
-          myBuilder.error(PyParsingBundle.message("indent.expected"));
+          errorAfterComments(PyParsingBundle.message("indent.expected"));
         }
       }
       else {

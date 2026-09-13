@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.impl.PythonASTFactory;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.Collection;
 
 
@@ -1463,33 +1464,39 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON315);
   }
 
-  @TestFor(issues="PY-78251")
-  public void testCommentIsTheOnlyLineOfBlock() {
-    doTest();
+  @TestFor(issues = "PY-78251")
+  public void testCommentIsTheOnlyLineOfBlock() throws IOException {
+    // The test data files lose the last line break. This input needs it.
+    doCodeTest("if a:\n    # comment\n");
   }
 
-  @TestFor(issues="PY-78251")
+  @TestFor(issues = "PY-78251")
   public void testCommentIsTheOnlyLineOfBlockAtEndOfFile() {
     doTest();
   }
 
-  @TestFor(issues="PY-78251")
-  public void testCommentIsTheOnlyLineOfMatchBlock() {
-    doTest(LanguageLevel.PYTHON312);
-  }
-
-  @TestFor(issues="PY-78251")
+  @TestFor(issues = "PY-78251")
   public void testOverIndentedCommentBeforeBlockBody() {
     doTest();
   }
 
-  @TestFor(issues="PY-78251")
+  @TestFor(issues = "PY-78251")
   public void testCommentSeparatedByBlankLineFromBlock() {
     doTest();
   }
 
-  @TestFor(issues="PY-78251")
+  @TestFor(issues = "PY-78251")
   public void testCommentOnlyBlockFollowedByDedentedStatement() {
+    doTest();
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testCommentOnlyFunctionFollowedByFunction() {
+    doTest();
+  }
+
+  @TestFor(issues = "PY-78251")
+  public void testCommentOnlyMethodFollowedByTopLevelStatement() {
     doTest();
   }
 

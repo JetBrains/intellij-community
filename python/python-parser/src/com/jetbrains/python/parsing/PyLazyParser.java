@@ -32,7 +32,6 @@ public final class PyLazyParser {
       boolean indentFound = myBuilder.getTokenType() == PyTokenTypes.INDENT;
       if (indentFound) {
         myBuilder.advanceLexer();
-        skipEmptySuiteBreaks();
 
         if (myBuilder.eof()) {
           myBuilder.error(PyParsingBundle.message("expected.statement"));

@@ -75,6 +75,7 @@ public class PyDoctestLexer extends PythonIndentingLexer {
     if (!PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(tokenType) && tokenType != getCommentTokenType() &&
         !ourIgnoreSet.contains(tokenType)) {
       myLineHasSignificantTokens = true;
+      myLastSignificantTokenType = tokenType;
     }
   }
 

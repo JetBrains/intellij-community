@@ -5,6 +5,7 @@ import com.jetbrains.python.allure.Components;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
 import org.junit.jupiter.api.Test;
@@ -603,27 +604,27 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:STATEMENT_BREAK");
   }
 
-  // PY-78251
   @Test
+  @TestFor(issues = "PY-78251")
   public void testCommentIsTheOnlyLineOfBlock() {
     doTest("""
              if a:
                  # comment
              """,
            "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:INDENT",
-           "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
+           "Py:END_OF_LINE_COMMENT", "Py:DEDENT", "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
   }
 
-  // PY-78251
   @Test
+  @TestFor(issues = "PY-78251")
   public void testCommentIsTheOnlyLineOfBlockAtEndOfFile() {
     doTest("if a:\n    # comment",
-           "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
-           "Py:END_OF_LINE_COMMENT", "Py:STATEMENT_BREAK");
+           "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:INDENT",
+           "Py:END_OF_LINE_COMMENT", "Py:DEDENT", "Py:STATEMENT_BREAK");
   }
 
-  // PY-78251
   @Test
+  @TestFor(issues = "PY-78251")
   public void testOverIndentedCommentDoesNotSetBlockIndent() {
     doTest("""
              if a:
@@ -635,8 +636,8 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
   }
 
-  // PY-78251
   @Test
+  @TestFor(issues = "PY-78251")
   public void testCommentIndentIsKeptWhenBlockHasCode() {
     doTest("""
              if a:
@@ -648,8 +649,8 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
   }
 
-  // PY-78251
   @Test
+  @TestFor(issues = "PY-78251")
   public void testCommentAfterBlockIsNotIndented() {
     doTest("""
              if a:
@@ -661,17 +662,50 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:STATEMENT_BREAK");
   }
 
-  // PY-78251
   @Test
-  public void testCommentOnlyBlockDoesNotSwallowNextStatement() {
+  @TestFor(issues = "PY-78251")
+  public void testCommentOnlyBlockFollowedByDedentedStatement() {
     doTest("""
              if a:
                  # comment
              pass
              """,
-           "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
-           "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:INDENT",
+           "Py:END_OF_LINE_COMMENT", "Py:DEDENT", "Py:LINE_BREAK", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:STATEMENT_BREAK");
+  }
+
+  @Test
+  @TestFor(issues = "PY-78251")
+  public void testCommentOnlyBlockClosesTwoSuites() {
+    doTest("""
+             class A:
+                 def f(self):
+                     # comment
+             x
+             """,
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:INDENT",
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON",
+           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:INDENT", "Py:END_OF_LINE_COMMENT", "Py:DEDENT", "Py:DEDENT",
+           "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
+  }
+
+  @Test
+  @TestFor(issues = "PY-78251")
+  public void testCommentOnlyBlockAfterTrailingSpace() {
+    doTest("if a: \n    # comment\npass\n",
+           "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:INDENT",
+           "Py:END_OF_LINE_COMMENT", "Py:DEDENT", "Py:LINE_BREAK", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:STATEMENT_BREAK");
+  }
+
+  @Test
+  @TestFor(issues = "PY-78251")
+  public void testLessIndentedCommentIsOutsideCommentOnlyBlock() {
+    doTest("if a:\n    # first\n  # second\npass\n",
+           "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:INDENT",
+           "Py:END_OF_LINE_COMMENT", "Py:DEDENT", "Py:LINE_BREAK", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK",
+           "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
   }
 
   private static void doTest(String text, String... expectedTokens) {
