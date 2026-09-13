@@ -12,6 +12,7 @@
 #include <sys/inotify.h>
 #include <sys/select.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 
@@ -22,7 +23,7 @@
 #define HELP_MSG \
     "Try 'fsnotifier --help' for more information.\n"
 
-#define MISSING_ROOT_TIMEOUT 1
+#define ROOT_CHECK_INTERVAL_MS 1000
 
 #define UNFLATTEN(root) (root[0] == '|' ? root + 1 : root)
 
@@ -45,7 +46,8 @@ static array* unwatchable_mounts(void);
 static void inotify_callback(const char* path, uint32_t event);
 static void report_event(const char* event, const char* path);
 static void output(const char* line, bool flush);
-static void check_missing_roots(void);
+static int64_t monotonic_millis(void);
+static bool reconcile_roots(void);
 static void check_root_removal(const char*);
 
 
@@ -139,6 +141,11 @@ static bool main_loop(void) {
   int nfds = (inotify_fd > input_fd ? inotify_fd : input_fd) + 1;
   fd_set rfds;
   struct timeval timeout;
+  int64_t next_root_check = monotonic_millis();
+  if (next_root_check < 0) {
+    return false;
+  }
+  next_root_check += ROOT_CHECK_INTERVAL_MS;
 
   while (true) {
     usleep(50000);
@@ -146,7 +153,7 @@ static bool main_loop(void) {
     FD_ZERO(&rfds);
     FD_SET(input_fd, &rfds);
     FD_SET(inotify_fd, &rfds);
-    timeout = (struct timeval){MISSING_ROOT_TIMEOUT, 0};
+    timeout = (struct timeval){ROOT_CHECK_INTERVAL_MS / 1000, 0};
 
     if (select(nfds, &rfds, NULL, NULL, &timeout) < 0) {
       if (errno != EINTR) {
@@ -162,8 +169,16 @@ static bool main_loop(void) {
     else if (FD_ISSET(inotify_fd, &rfds)) {
       if (!process_inotify_input()) return false;
     }
-    else {
-      check_missing_roots();
+
+    int64_t now = monotonic_millis();
+    if (now < 0) {
+      return false;
+    }
+    if (now >= next_root_check) {
+      if (!reconcile_roots()) {
+        return false;
+      }
+      next_root_check = now + ROOT_CHECK_INTERVAL_MS;
     }
   }
 }
@@ -246,7 +261,7 @@ static void unregister_roots(void) {
   watch_root* root;
   while ((root = array_pop(roots)) != NULL) {
     userlog(LOG_INFO, "unregistering root: %s", root->path);
-    unwatch(root->id);
+    unwatch(root->id, UNFLATTEN(root->path));
     free(root->path);
     free(root);
   }
@@ -399,27 +414,50 @@ static void output(const char* line, bool flush) {
 }
 
 
-static void check_missing_roots(void) {
+static int64_t monotonic_millis(void) {
+  struct timespec time;
+  if (clock_gettime(CLOCK_MONOTONIC, &time) != 0) {
+    userlog(LOG_ERR, "clock_gettime: %s", strerror(errno));
+    return -1;
+  }
+  return time.tv_sec * 1000 + time.tv_nsec / 1000000;
+}
+
+static bool reconcile_roots(void) {
   struct stat st;
   for (int i = 0; i < array_size(roots); i++) {
     watch_root* root = array_get(roots, i);
+    char* unflattened = UNFLATTEN(root->path);
+    if (root->id >= 0 && !watch_tree_matches(root->id, unflattened)) {
+      unwatch(root->id, unflattened);
+      root->id = ERR_MISSING;
+      userlog(LOG_INFO, "root tree identity changed: %s\n", root->path);
+      report_event("DELETE", unflattened);
+    }
+
     if (root->id < 0) {
-      char* unflattened = UNFLATTEN(root->path);
       if (stat(unflattened, &st) == 0) {
-        root->id = watch(root->path, NULL);
-        userlog(LOG_INFO, "root restored: %s\n", root->path);
-        report_event("CREATE", unflattened);
-        report_event("CHANGE", unflattened);
+        int id = watch(root->path, NULL);
+        if (id >= 0) {
+          root->id = id;
+          userlog(LOG_INFO, "root restored: %s\n", root->path);
+          report_event("CREATE", unflattened);
+          report_event("CHANGE", unflattened);
+        }
+        else if (id == ERR_ABORT) {
+          return false;
+        }
       }
     }
   }
+  return true;
 }
 
 static void check_root_removal(const char* path) {
   for (int i = 0; i < array_size(roots); i++) {
     watch_root* root = array_get(roots, i);
     if (root->id >= 0 && strcmp(path, UNFLATTEN(root->path)) == 0) {
-      unwatch(root->id);
+      unwatch(root->id, UNFLATTEN(root->path));
       root->id = -1;
       userlog(LOG_INFO, "root deleted: %s\n", root->path);
       report_event("DELETE", path);
