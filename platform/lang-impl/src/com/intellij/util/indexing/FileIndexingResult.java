@@ -3,6 +3,8 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexesEvaluated;
@@ -18,6 +20,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
 /**
  * Carries the results of indexing given file [file] by all applicable indexers.
@@ -140,22 +144,37 @@ public final class FileIndexingResult {
 
   public void markFileProcessed(boolean allModificationsSuccessful,
                                 @NotNull Supplier<String> debugString) {
-    if (allModificationsSuccessful) {
-      IndexingEventsLogger.tryLog("INDEX_UPDATED", file, debugString);
-      indexImpl.getFilesToUpdateCollector().removeIfCurrent(coveredRequest);
+    if (indexImpl.isShutdownStarted()) {
+      return;
+    }
 
-      if (shouldMarkFileAsIndexed) {
-        IndexingFlag.setIndexedIfFileWithSameLock(file, fileStatusLockObject, indexingStamp);
+    try {
+      if (allModificationsSuccessful) {
+        IndexingEventsLogger.tryLog("INDEX_UPDATED", file, debugString);
+        indexImpl.getFilesToUpdateCollector().removeIfCurrent(coveredRequest);
+
+        if (shouldMarkFileAsIndexed) {
+          IndexingFlag.setIndexedIfFileWithSameLock(file, fileStatusLockObject, indexingStamp);
+        }
+        else if (fileStatusLockObject != IndexingFlag.getNonExistentHash()) {
+          IndexingFlag.unlockFile(file);
+        }
       }
-      else if (fileStatusLockObject != IndexingFlag.getNonExistentHash()) {
-        IndexingFlag.unlockFile(file);
+      else {
+        IndexingEventsLogger.tryLog("INDEX_PARTIAL_UPDATE", file, debugString);
+        if (fileStatusLockObject != IndexingFlag.getNonExistentHash()) {
+          IndexingFlag.unlockFile(file);
+        }
       }
     }
-    else {
-      IndexingEventsLogger.tryLog("INDEX_PARTIAL_UPDATE", file, debugString);
-      if (fileStatusLockObject != IndexingFlag.getNonExistentHash()) {
-        IndexingFlag.unlockFile(file);
+    catch (Throwable t) {
+      rethrowControlFlowException(t);
+      if (indexImpl.isShutdownStarted() && ExceptionUtil.causedBy(t, ClosedStorageException.class)) {
+        //shutdown is already started, ClosedStorageException is most likely caused by some storage being already closed
+        // => just ignore it and let shutdown continue
+        return;
       }
+      ExceptionUtil.rethrow(t);
     }
   }
 
