@@ -5118,6 +5118,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/NullableVariableDotAccess.java");
         }
 
+        @TestMetadata("optionalIsNotNull.java")
+        public void testOptionalIsNotNull() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/optionalIsNotNull.java");
+        }
+
         @TestMetadata("OverrideWithInheritanceLoop.java")
         public void testOverrideWithInheritanceLoop() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/OverrideWithInheritanceLoop.java");
