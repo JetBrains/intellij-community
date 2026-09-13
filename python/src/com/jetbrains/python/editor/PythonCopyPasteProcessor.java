@@ -61,9 +61,9 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       return null;
     }
     // Expand copied text if it can cause indentation ambiguity
-    
-    // Text was selected with a single caret and might begin with a block statement 
-    if (startOffsets.length == 1 && endOffsets.length == 1 && fragmentBeginsWithBlockStatement(text)) {
+
+    // Text was selected with a single caret and might begin with a block statement or a comment
+    if (startOffsets.length == 1 && endOffsets.length == 1) {
       final int start = startOffsets[0];
       final int end = endOffsets[0];
 
@@ -72,22 +72,36 @@ public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
         final int startLine = document.getLineNumber(start);
         final int startLineOffset = getLineStartSafeOffset(document, startLine);
         if (start != startLineOffset && startLine != document.getLineNumber(end)) {
-          final PsiElement keyword = file.findElementAt(start);
-          if (keyword != null && START_KEYWORDS.contains(keyword.getText())) {
-            final PyStatementListContainer block = PsiTreeUtil.getParentOfType(keyword, PyStatementListContainer.class);
-            // Statement body is in selection
-            if (block != null && end > block.getStatementList().getTextOffset()) {
-              final String linePrefix = document.getText(TextRange.create(startLineOffset, start));
-              if (StringUtil.isEmptyOrSpaces(linePrefix)) {
-                return linePrefix + text;
-              }
-            }
+          final String linePrefix = document.getText(TextRange.create(startLineOffset, start));
+          if (StringUtil.isEmptyOrSpaces(linePrefix) &&
+              (selectionBeginsWithComment(file, start) || selectionBeginsWithBlockStatementAndItsBody(file, start, end, text))) {
+            return linePrefix + text;
           }
         }
       }
     }
-    
+
     return null;
+  }
+
+  /**
+   * The first line of the copied text loses its indent. The lines after a comment keep their indent,
+   * so the paste cannot find the common indent without the indent of the comment.
+   */
+  private static boolean selectionBeginsWithComment(@NotNull PsiFile file, int start) {
+    return file.findElementAt(start) instanceof PsiComment comment && comment.getTextOffset() == start;
+  }
+
+  private static boolean selectionBeginsWithBlockStatementAndItsBody(@NotNull PsiFile file, int start, int end, @NotNull String text) {
+    if (!fragmentBeginsWithBlockStatement(text)) {
+      return false;
+    }
+    final PsiElement keyword = file.findElementAt(start);
+    if (keyword == null || !START_KEYWORDS.contains(keyword.getText())) {
+      return false;
+    }
+    final PyStatementListContainer block = PsiTreeUtil.getParentOfType(keyword, PyStatementListContainer.class);
+    return block != null && end > block.getStatementList().getTextOffset();
   }
 
   @Override
