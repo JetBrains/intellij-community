@@ -2,8 +2,7 @@
 
 /**
  * ```
- *
- * <caret>
+ * <caret>   
  * ```
  */
-fun implicitKotlinFenceSpaces() {}
+fun implicitKotlinFenceTrailingSpaces() {}

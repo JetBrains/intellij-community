@@ -34,7 +34,7 @@ internal class KDocSectionEnterHandlerDelegate: EnterHandlerDelegate {
 
         val text = hostDocument.text
         // at this point `\n` is already inserted
-        var lineStartOffset = DocumentUtil.getLineStartOffset(caretOffsetHost, hostDocument)
+        val lineStartOffset = DocumentUtil.getLineStartOffset(caretOffsetHost, hostDocument)
         val firstNonWsLineOffset = CharArrayUtil.shiftForward(text, lineStartOffset, " \t")
 
         val charAt = text[firstNonWsLineOffset]
@@ -42,18 +42,21 @@ internal class KDocSectionEnterHandlerDelegate: EnterHandlerDelegate {
             val lineNumber = hostDocument.getLineNumber(caretOffsetHost)
             val lineTextRange = DocumentUtil.getLineTextRange(hostDocument, lineNumber - 1)
 
-            var newLinePrefixWithOffset = calculateNewLinePrefixWithOffset(text, lineTextRange.startOffset)
-            if (newLinePrefixWithOffset.isEmpty()) {
-                newLinePrefixWithOffset = " *"
-                lineStartOffset--
-            }
+            val calculatedNewLinePrefixWithOffset = calculateNewLinePrefixWithOffset(text, lineTextRange.startOffset)
+            val (lineStartOffsetWithPrefix, baseNewLinePrefixWithOffset) =
+                if (calculatedNewLinePrefixWithOffset.isEmpty()) lineStartOffset - 1 to " *"
+                else lineStartOffset to calculatedNewLinePrefixWithOffset
 
-            if (charAt == '\n') {
-                newLinePrefixWithOffset = "$newLinePrefixWithOffset "
-            }
+            val hasTrailingSpace = charAt == '\n'
+            val newLinePrefixWithOffset =
+                if (hasTrailingSpace) "$baseNewLinePrefixWithOffset "
+                else baseNewLinePrefixWithOffset
 
-            hostDocument.insertString(lineStartOffset, newLinePrefixWithOffset)
-            val newOffset = caretOffsetHost + newLinePrefixWithOffset.length - 1
+            if (hasTrailingSpace) {
+                hostDocument.deleteString(lineStartOffset, firstNonWsLineOffset)
+            }
+            hostDocument.insertString(lineStartOffsetWithPrefix, newLinePrefixWithOffset)
+            val newOffset = caretOffsetHost + newLinePrefixWithOffset.length - if (hasTrailingSpace) 0 else 1
             caretModelHost.moveToOffset(newOffset)
             EditorModificationUtilEx.scrollToCaret(editor)
         }

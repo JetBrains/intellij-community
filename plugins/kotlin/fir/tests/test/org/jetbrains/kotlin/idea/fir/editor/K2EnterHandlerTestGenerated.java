@@ -1338,9 +1338,19 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
                 runTest("../../idea/tests/testData/editor/enterHandler/kDocCodeFence/ImplicitKotlinFenceEmptyParentheses.after.kt");
             }
 
+            @TestMetadata("ImplicitKotlinFenceSingleSpace.after.kt")
+            public void testImplicitKotlinFenceSingleSpace() throws Exception {
+                runTest("../../idea/tests/testData/editor/enterHandler/kDocCodeFence/ImplicitKotlinFenceSingleSpace.after.kt");
+            }
+
             @TestMetadata("ImplicitKotlinFenceSpaces.after.kt")
             public void testImplicitKotlinFenceSpaces() throws Exception {
                 runTest("../../idea/tests/testData/editor/enterHandler/kDocCodeFence/ImplicitKotlinFenceSpaces.after.kt");
+            }
+
+            @TestMetadata("ImplicitKotlinFenceTrailingSpaces.after.kt")
+            public void testImplicitKotlinFenceTrailingSpaces() throws Exception {
+                runTest("../../idea/tests/testData/editor/enterHandler/kDocCodeFence/ImplicitKotlinFenceTrailingSpaces.after.kt");
             }
         }
 
