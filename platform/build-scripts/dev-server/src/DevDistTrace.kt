@@ -32,9 +32,8 @@ internal const val TRACE_FILE_OPTION: String = "--trace-file"
  * its file. That is also why the root span is opened here rather than by whatever the producer calls - a producer that
  * opened two of them would be two unrelated traces in one file.
  *
- * With a [traceFile], [withTracer] owns the exporter lifecycle: its span processor runs in a scope that [withTracer]
- * cancels when the block returns, so the trace file is written, closed and complete by the time this returns, before the
- * process reports success. It also pins the exporter set to the console and the trace file - unlike `TraceManager`'s default
+ * With a [traceFile], [withTracer] owns the exporter lifecycle: it closes its span processor when the block returns,
+ * so the trace file is written, closed and complete by the time this returns, before the process reports success. It also pins the exporter set to the console and the trace file - unlike `TraceManager`'s default
  * initializer, which adds an OTLP exporter as soon as `OTLP_ENDPOINT` is set, and these actions run with no network.
  *
  * Without one, each producer keeps the tracer it had before it could write a trace file - see
@@ -42,8 +41,8 @@ internal const val TRACE_FILE_OPTION: String = "--trace-file"
  * trace file and there is none to structure.
  *
  * @param consoleSpansWhenNotMeasuring `true` preserves `DevDistMain` console tracing through the default
- * `TraceManager` initializer when no trace file is requested. `false` disables tracing, console spans, and exporter
- * coroutines in that case.
+ * `TraceManager` initializer when no trace file is requested. `false` disables tracing, console spans, and the exporter
+ * thread in that case.
  *
  * What that branch preserves is *same outputs, same stdout, same exit code* - not "byte for byte what the main did
  * before". Wrapping the whole body widened the traced region of `DevDistMain` from `buildProductInProcess` to
@@ -70,11 +69,9 @@ internal fun runDevDistJob(
   if (traceFile != null) {
     withTracer(serviceName = jobName, traceFile = traceFile) {
       spanBuilder(jobName).use { block() }
-      // The root span has ended by now, and this is what puts it in the file. `withTracer` closes the file by
-      // cancelling the exporter's scope, which is a shutdown path: it reports nothing, and until
-      // `BatchSpanProcessor` learned to drain its queue there it dropped whatever had not reached the current batch
-      // yet - which is exactly a span that ended last. Flushing here instead makes the file complete while the
-      // processor is still running, before the process reports success, and leaves the cancellation nothing to do.
+      // The root span has ended by now, and this is what puts it in the file. `withTracer` closes the file through the
+      // shutdown of its span processor, and a shutdown reports nothing. Flushing here instead makes the file complete
+      // while the processor is still running, before the process reports success, and leaves the shutdown nothing to do.
       //
       // This flushes the *right* processor only because nothing has touched `TraceManager` before now. That object
       // runs `traceManagerInitializer` once, at first access, and `withTracer` installs its own initializer before

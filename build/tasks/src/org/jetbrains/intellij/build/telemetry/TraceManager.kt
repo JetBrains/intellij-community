@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.telemetry
 import com.intellij.platform.buildScripts.concurrency.awaitUninterruptibly
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpoint
-import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
 import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
 import io.opentelemetry.api.common.AttributeKey
@@ -18,12 +17,6 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import java.nio.file.Path
@@ -64,42 +57,29 @@ fun <T> withTracer(serviceName: String, traceFile: Path? = null, block: () -> T)
   }
 }
 
-internal fun <T> withSpanProcessor(exporters: List<AsyncSpanExporter>, block: (BatchSpanProcessor) -> T): T {
-  return withTelemetryScope { scope ->
-    block(BatchSpanProcessor(coroutineScope = scope, spanExporters = exporters, scheduleDelay = 10.seconds))
-  }
+/** Runs [block] with a span processor of its own, and closes the processor when the block returns. */
+internal fun <T> withSpanProcessor(exporters: List<AsyncSpanExporter>, block: (BuildSpanProcessor) -> T): T {
+  return BuildSpanProcessor(spanExporters = exporters, scheduleDelay = 10.seconds).use(block)
 }
 
-internal fun runTelemetryCleanup(action: suspend () -> Unit) {
-  withTelemetryScope { scope ->
-    val completion = CompletableFuture<Unit>()
-    scope.launch {
-      try {
-        action()
-        completion.complete(Unit)
-      }
-      catch (failure: Throwable) {
-        completion.completeExceptionally(failure)
-      }
-    }
-    completion.awaitUninterruptibly()
-  }
-}
-
-private fun <T> withTelemetryScope(block: (CoroutineScope) -> T): T {
-  val job = SupervisorJob()
-
-  @Suppress("RAW_SCOPE_CREATION")
-  val scope = CoroutineScope(job + Dispatchers.Default + CoroutineName("Build telemetry"))
+/**
+ * Runs [action] on a virtual thread of its own and waits for it despite caller interruptions.
+ *
+ * The caller keeps its interrupt status, and the failure of the action is rethrown. An exporter shutdown must run
+ * to the end, or the trace file stays incomplete.
+ */
+internal fun runTelemetryCleanup(action: () -> Unit) {
   val completion = CompletableFuture<Unit>()
-  job.invokeOnCompletion { completion.complete(Unit) }
-  try {
-    return block(scope)
+  Thread.ofVirtual().name("build telemetry cleanup").start {
+    try {
+      action()
+      completion.complete(Unit)
+    }
+    catch (failure: Throwable) {
+      completion.completeExceptionally(failure)
+    }
   }
-  finally {
-    job.cancel()
-    completion.awaitUninterruptibly()
-  }
+  completion.awaitUninterruptibly()
 }
 
 fun withoutTracer(block: () -> Unit) {
@@ -116,14 +96,13 @@ fun withoutTracer(block: () -> Unit) {
   }
 }
 
-private var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor?> = {
-  val batchSpanProcessor = BatchSpanProcessor(
+private var traceManagerInitializer: () -> Pair<Tracer, BuildSpanProcessor?> = {
+  val spanProcessor = BuildSpanProcessor(
     scheduleDelay = 10.seconds,
-    coroutineScope = CoroutineScope(Job()),
     spanExporters = JaegerJsonSpanExporterManager.spanExporterProvider,
   )
   val tracerProvider = SdkTracerProvider.builder()
-    .addSpanProcessor(batchSpanProcessor)
+    .addSpanProcessor(spanProcessor)
     .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), "builder")))
     .build()
   val openTelemetry = OpenTelemetrySdk.builder()
@@ -131,7 +110,7 @@ private var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor?> = {
     .build()
   val tracer = openTelemetry.getTracer("build-script")
   BuildDependenciesDownloader.TRACER = tracer
-  tracer to batchSpanProcessor
+  tracer to spanProcessor
 }
 
 object TraceManager {
@@ -140,13 +119,13 @@ object TraceManager {
 
   @Volatile
   private var tracer: Tracer
-  private val batchSpanProcessor: BatchSpanProcessor?
+  private val spanProcessor: BuildSpanProcessor?
   private val isEnabled = System.getProperty("intellij.build.export.opentelemetry.spans")?.toBoolean() ?: false
 
   init {
     val config = traceManagerInitializer()
     tracer = config.first
-    batchSpanProcessor = config.second
+    spanProcessor = config.second
   }
 
   fun setTracer(tracer: Tracer) {
@@ -168,24 +147,17 @@ object TraceManager {
 
   /** Exports the pending spans and blocks until they are out. */
   fun flush() {
-    val processor = batchSpanProcessor ?: return
-    // the span processor of the platform is a coroutine API, so the flush enters coroutines here and nowhere else
-    runBlocking {
-      processor.flush()
-    }
+    spanProcessor?.flush()
   }
 
   /** Exports the pending spans, stops the processor and blocks until both are done. */
   fun shutdown() {
-    val processor = batchSpanProcessor ?: return
-    runTelemetryCleanup {
-      processor.forceShutdown()
-    }
+    spanProcessor?.close()
   }
 
   fun scheduleExportPendingSpans() {
     if (isEnabled) {
-      batchSpanProcessor?.scheduleFlush()
+      spanProcessor?.scheduleFlush()
     }
   }
 
@@ -258,8 +230,11 @@ object JaegerJsonSpanExporterManager {
     if (exporter == null) {
       return
     }
+    // the exporter of the platform is a coroutine API, so the shutdown enters coroutines here
     runTelemetryCleanup {
-      exporter.shutdown()
+      runBlocking {
+        exporter.shutdown()
+      }
     }
   }
 }

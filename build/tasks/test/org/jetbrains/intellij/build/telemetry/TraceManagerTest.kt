@@ -5,6 +5,7 @@ import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExport
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -56,7 +57,7 @@ class TraceManagerTest {
     val exporter = JaegerJsonSpanExporter(file = file, serviceName = "test")
     try {
       Thread.currentThread().interrupt()
-      runTelemetryCleanup { exporter.shutdown() }
+      runTelemetryCleanup { runBlocking { exporter.shutdown() } }
       assertThat(Thread.currentThread().isInterrupted).isTrue()
     }
     finally {
@@ -68,7 +69,7 @@ class TraceManagerTest {
   @Test
   fun `cleanup runs once and preserves its failure despite caller interrupts`() {
     val entered = CountDownLatch(1)
-    val release = CompletableDeferred<Unit>()
+    val release = CountDownLatch(1)
     val calls = AtomicInteger()
     val failure = InterruptedException("The cleanup failed")
     val result = CompletableFuture<Pair<Throwable?, Boolean>>()
@@ -90,7 +91,7 @@ class TraceManagerTest {
       assertThat(result.isDone).isFalse()
     }
     finally {
-      release.complete(Unit)
+      release.countDown()
       worker.join(5000)
     }
     val actual = result.get(5, TimeUnit.SECONDS)
