@@ -82,6 +82,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
 
     allowMissingDependencies(knownMissingModuleDependencies)
     allowMissingDependencies("intellij.platform.commercial.dependencies")
+    allowMissingDependencies("intellij.charts")
     bundledPlugins(productLayout.bundledPluginModules)
   }
 

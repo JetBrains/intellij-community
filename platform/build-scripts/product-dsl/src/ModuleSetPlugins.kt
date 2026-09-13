@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.productLayout
 private const val MODULE_SET_PLUGIN_MODULE_PREFIX: String = "intellij.moduleSet.plugin."
 
 private val HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES: Set<String> = setOf(
-  "intellij.grid.core.plugin",
   "intellij.platform.bookmarks.plugin",
   "intellij.platform.execution.serviceView.plugin",
   "intellij.platform.navbar.plugin",
