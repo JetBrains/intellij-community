@@ -34,14 +34,14 @@ internal class PrebuiltDevDistRunner(private val configFile: Path) : DevBuildSer
   /** A Bazel output, borrowed for the run - see [DevBuildServerRunner.ownsInstallationDirectory]. */
   override val ownsInstallationDirectory: Boolean = false
 
-  override suspend fun readVmOptions(installationDirectory: Path): List<String> =
+  override fun readVmOptions(installationDirectory: Path): List<String> =
     org.jetbrains.intellij.build.dev.readVmOptions(installationDirectory)
 
   override fun readCustomCommandJvmArguments(installationDirectory: Path, command: String): List<String>? =
     readCustomCommand(installationDirectory, command)?.resolveAdditionalJvmArguments(installationDirectory)
 
   /** Returns the prepared IDE installation directory. */
-  override suspend fun startDevBuild(ideInfo: IdeInfo): Path {
+  override fun startDevBuild(ideInfo: IdeInfo): Path {
     val home = config.homePath
     check(home.isDirectory()) {
       "The dev distribution declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}' is missing: $configFile names $home, which is not a directory"

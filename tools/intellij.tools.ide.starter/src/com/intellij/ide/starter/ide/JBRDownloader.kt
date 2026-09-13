@@ -10,11 +10,11 @@ import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.minutes
 
 interface JBRDownloader {
-  suspend fun downloadJbr(jbrFileName: String): Path
+  fun downloadJbr(jbrFileName: String): Path
 }
 
 object StarterJBRDownloader : JBRDownloader {
-  override suspend fun downloadJbr(jbrFileName: String): Path {
+  override fun downloadJbr(jbrFileName: String): Path {
     val downloadUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/$jbrFileName"
 
     val jbrCacheDirectory = GlobalPaths.instance.getCacheDirectoryFor("jbr")

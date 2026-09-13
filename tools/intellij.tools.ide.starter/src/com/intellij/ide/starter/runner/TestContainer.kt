@@ -18,8 +18,6 @@ import com.intellij.ide.starter.utils.PortUtil
 import com.intellij.ide.starter.utils.ReportingPathUtils
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logOutput
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.div
 
@@ -43,7 +41,7 @@ interface TestContainer {
       }
     }
 
-    suspend fun resolveIDE(ideInfo: IdeInfo): Pair<String, InstalledIde> {
+    fun resolveIDE(ideInfo: IdeInfo): Pair<String, InstalledIde> {
       return ideInfo.getInstaller(ideInfo).install(ideInfo)
     }
 
@@ -107,7 +105,7 @@ interface TestContainer {
   /**
    * @return <Build Number, InstalledIde>
    */
-  suspend fun resolveIDE(ideInfo: IdeInfo): Pair<String, InstalledIde> {
+  fun resolveIDE(ideInfo: IdeInfo): Pair<String, InstalledIde> {
     return TestContainer.resolveIDE(ideInfo)
   }
 
@@ -137,12 +135,9 @@ interface TestContainer {
   ): IDETestContext {
     EventsBus.postAndWaitProcessing(TestContextInitializationStartedEvent())
     logOutput("Resolving IDE build for $testName...")
-    val (buildNumber, ide) = @Suppress("SSBasedInspection")
-    (runBlocking(Dispatchers.Default) {
-      computeWithSpan("resolving IDE") {
-        resolveIDE(testCase.ideInfo)
-      }
-    })
+    val (buildNumber, ide) = computeWithSpan("resolving IDE") {
+      resolveIDE(testCase.ideInfo)
+    }
 
     require(ide.productCode == testCase.ideInfo.productCode ||
             // some 253 versions(e.g. 253.28294.334) of IC are actually IU, seems like it is due to single distributive (SID-119)

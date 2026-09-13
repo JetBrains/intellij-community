@@ -14,8 +14,6 @@ import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.buildScripts.concurrency.withLockInterruptibly
 import com.intellij.tools.ide.util.common.logOutput
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.future.await
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.dev.BuildRequest
@@ -25,7 +23,6 @@ import org.jetbrains.intellij.build.dev.resolveAdditionalJvmArguments
 import org.kodein.di.direct
 import org.kodein.di.instance
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.copyTo
 import kotlin.io.path.div
@@ -59,7 +56,7 @@ object DevBuildServerRunnerImpl : DevBuildServerRunner {
 
   override fun isDevBuildSupported(): Boolean = true
 
-  override suspend fun readVmOptions(installationDirectory: Path): List<String> =
+  override fun readVmOptions(installationDirectory: Path): List<String> =
     org.jetbrains.intellij.build.dev.readVmOptions(installationDirectory)
 
   override fun readCustomCommandJvmArguments(installationDirectory: Path, command: String): List<String>? =
@@ -68,31 +65,10 @@ object DevBuildServerRunnerImpl : DevBuildServerRunner {
   /**
    * Returns IDE installation directory.
    *
-   * The build runs on a virtual thread of its own, and the caller suspends until it is done. A dispatcher thread
-   * must not own the build: a platform thread that loads a class beside the build workers can take part in the
-   * deadlock of JDK-8369019. A cancelled caller interrupts the build.
+   * The build runs on the calling thread and owns its workers there. The lock serializes the builds, and the wait for
+   * it stops for an interrupt.
    */
-  override suspend fun startDevBuild(ideInfo: IdeInfo): Path {
-    val result = CompletableFuture<Path>()
-    val builder = Thread.ofVirtual().name("dev build ${ideInfo.platformPrefix}").start {
-      try {
-        result.complete(buildDevDistribution(ideInfo))
-      }
-      catch (failure: Throwable) {
-        result.completeExceptionally(failure)
-      }
-    }
-    try {
-      return result.await()
-    }
-    catch (e: CancellationException) {
-      builder.interrupt()
-      throw e
-    }
-  }
-
-  /** Builds one IDE at a time. The wait for the lock stops for an interrupt. */
-  private fun buildDevDistribution(ideInfo: IdeInfo): Path {
+  override fun startDevBuild(ideInfo: IdeInfo): Path {
     return lock.withLockInterruptibly {
       logOutput("Starting dev build server for $ideInfo ...")
       copyArtifactsToDefaultDir()

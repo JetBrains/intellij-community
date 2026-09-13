@@ -81,7 +81,7 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
   /**
    * Resolve all the things necessary to run tests on a locally built IDE instance.
    */
-  private suspend fun resolveLocallyBuiltIDE(ideInfo: IdeInfo, installationDirectory: Path): InstalledIde {
+  private fun resolveLocallyBuiltIDE(ideInfo: IdeInfo, installationDirectory: Path): InstalledIde {
     val runTimeVersion = JBRResolver.getRuntimeBuildVersion()
     logOutput("Found following JBR version: $runTimeVersion ")
     val javaHome = JBRResolver.downloadAndUnpackJbrFromSourcesIfNeeded(runTimeVersion)
@@ -224,7 +224,7 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
     }
   }
 
-  override suspend fun install(ideInfo: IdeInfo): Pair<String, InstalledIde> {
+  override fun install(ideInfo: IdeInfo): Pair<String, InstalledIde> {
     if (DevBuildServerRunner.instance.isDevBuildSupported().not()) {
       error("Dev build is not supported. Add dependency on intellij.tools.ide.starter.build.server module.")
     }

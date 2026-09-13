@@ -110,7 +110,7 @@ class AndroidInstaller : IdeInstaller {
     return Pair(installDir, installerFile)
   }
 
-  override suspend fun install(ideInfo: IdeInfo): Pair<String, InstalledIde> {
+  override fun install(ideInfo: IdeInfo): Pair<String, InstalledIde> {
     if (ideInfo.buildNumber.isBlank()) {
       throw IllegalArgumentException("Build is not specified, please, provide buildNumber as IdeInfo.AndroidStudio.copy(buildNumber = \"2023.1.1.28\")")
     }

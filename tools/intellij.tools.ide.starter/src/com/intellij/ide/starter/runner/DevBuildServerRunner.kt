@@ -18,12 +18,13 @@ interface DevBuildServerRunner {
   val ownsInstallationDirectory: Boolean
     get() = true
 
-  suspend fun readVmOptions(installationDirectory: Path): List<String>
+  fun readVmOptions(installationDirectory: Path): List<String>
 
   /** Returns `null` when the product doesn't declare [command] as a custom command. */
   fun readCustomCommandJvmArguments(installationDirectory: Path, command: String): List<String>?
 
-  suspend fun startDevBuild(ideInfo: IdeInfo): Path
+  /** Blocks the caller until the distribution is ready. An interrupt stops the wait. */
+  fun startDevBuild(ideInfo: IdeInfo): Path
 
   companion object {
     val instance: DevBuildServerRunner
@@ -33,8 +34,8 @@ interface DevBuildServerRunner {
 
 object NoOpDevBuildServerRunner : DevBuildServerRunner {
   override fun isDevBuildSupported(): Boolean = false
-  override suspend fun readVmOptions(installationDirectory: Path): List<String> = error("Reading VM options isn't supported.")
+  override fun readVmOptions(installationDirectory: Path): List<String> = error("Reading VM options isn't supported.")
   override fun readCustomCommandJvmArguments(installationDirectory: Path, command: String): List<String>? = null
-  override suspend fun startDevBuild(ideInfo: IdeInfo): Path =
+  override fun startDevBuild(ideInfo: IdeInfo): Path =
     error("Starting dev build isn't supported. Add dependency on intellij.tools.ide.starter.build.server module.")
 }
