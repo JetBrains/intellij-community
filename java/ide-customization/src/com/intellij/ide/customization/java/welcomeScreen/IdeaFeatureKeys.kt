@@ -6,6 +6,12 @@ internal object IdeaFeatureKeys {
 
   const val PLUGINS = "plugins.settings"
 
+  const val ATTACH_TO_PROCESS = "AttachToProcess"
+
+  const val NEW_JAVA_FILE = "New.Java.File"
+
+  const val NEW_KOTLIN_FILE = "New.Kotlin.File"
+
   /** Owned by the Air plugin, which supplies both halves of the feature. See `AGENT_SESSIONS_WELCOME_FEATURE_KEY`. */
   const val AIR_SESSIONS = "air.sessions"
 }

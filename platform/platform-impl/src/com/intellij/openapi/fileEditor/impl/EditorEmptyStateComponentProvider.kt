@@ -17,6 +17,8 @@ interface EditorEmptyStateComponentProvider {
 
   fun isAvailable(splitters: EditorsSplitters): Boolean = true
 
+  fun isFullContent(splitters: EditorsSplitters): Boolean = false
+
   /**
    * Called asynchronously by the editor host, off the EDT. Implementations should choose their dispatcher explicitly, and own the hop
    * to the EDT they need to build Swing components on — through [buildEditorEmptyStateComponentOnUiThread], so that the host can

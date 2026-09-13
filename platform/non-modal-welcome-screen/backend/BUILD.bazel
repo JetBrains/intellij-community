@@ -33,6 +33,8 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/ide-core",
         "//platform/core-ui",
+        "//platform/ide-core-impl",
+        "//platform/editor-ui-api:editor-ui",
     ],
 )
 
@@ -56,6 +58,8 @@ jvm_library(
         "//platform/platform-api:ide_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/core-ui:core-ui_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.backend` end

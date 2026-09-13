@@ -17,10 +17,6 @@
   </dependencies>
   <!-- endregion -->
 
-  <projectListeners>
-    <listener class="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.WelcomeScreenLeftTabListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
-  </projectListeners>
   <extensions defaultExtensionNs="com.intellij">
     <project.view.pane.pure.ui
       implementation="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.leftPanel.FrontendWelcomeScreenLeftPanelProvider"
