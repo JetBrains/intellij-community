@@ -16,14 +16,14 @@ import com.intellij.openapi.vcs.changes.committed.LabeledComboBoxAction
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.defaultJavaHome
 import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchBundle
 import org.jetbrains.kotlin.idea.core.script.scratch.KotlinScratchFile
-import org.jetbrains.kotlin.idea.core.script.scratch.defaultScratchJavaHome
 import org.jetbrains.kotlin.idea.core.script.scratch.scratchToolbarLabel
 
 private val defaultJdk: Sdk?
     get() {
-        val javaHome = defaultScratchJavaHome ?: return null
+        val javaHome = defaultJavaHome ?: return null
         return ProjectJdkTable.getInstance().allJdks.firstOrNull { sdk ->
             sdk.sdkType is JavaSdkType && sdk.homePath == javaHome
         }

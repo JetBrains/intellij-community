@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("IO_FILE_USAGE")
+
 package org.jetbrains.kotlin.idea.core.script.k2.configurations
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
@@ -9,8 +11,11 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -58,6 +63,7 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.getScriptCollectedData
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
+import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
@@ -269,7 +275,10 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         virtualFile: VirtualFile,
         definition: ScriptDefinition,
     ): ScriptCompilationConfigurationResult {
-        val providedConfiguration = definition.compilationConfiguration.withUpdatedJdkHome(virtualFile)
+        val providedConfiguration = definition.compilationConfiguration.with {
+            configureJdkHome(virtualFile)
+        }
+
         val collectedData = smartReadAction(project) {
             val ktFile = PsiManager.getInstance(project).findFile(virtualFile) as? KtFile ?: error("Unable to load PSI from ${virtualFile.path}")
             getScriptCollectedData(ktFile, providedConfiguration, definition.contextClassLoader)
@@ -316,13 +325,22 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         }
     }
 
-    fun ScriptCompilationConfiguration.withUpdatedJdkHome(virtualFile: VirtualFile): ScriptCompilationConfiguration {
-        return with {
-            val jdk = get(ide.jdkSupplier)?.invoke(virtualFile) ?: project.javaHomePath
-            if (jdk != null) {
-                jvm.jdkHome(jdk)
-            }
+    /**
+     * Sets the JDK of the script, and makes sure the SDK table holds that JDK.
+     * [sdkId] resolves the script SDK from that table, so a JDK that is absent from that table gives no SDK.
+     */
+    fun ScriptCompilationConfiguration.Builder.configureJdkHome(virtualFile: VirtualFile) {
+        val jdkHome = get(ide.jdkSupplier)?.invoke(virtualFile)?.absolutePath
+            ?: project.javaHomePath?.absolutePath
+            ?: ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance())?.homePath
+            ?: defaultJavaHome
+            ?: return
+
+        if (!application.isUnitTestMode) {
+            ExternalSystemJdkUtil.lookupJdkByPath(project, jdkHome)
         }
+
+        jvm.jdkHome(File(jdkHome))
     }
 
     private suspend fun invalidate(virtualFile: VirtualFile) {

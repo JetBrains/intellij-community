@@ -12,6 +12,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.defaultJavaHome
 import org.jetbrains.kotlin.idea.core.script.v1.ScratchFileOptionsByFile
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
@@ -55,12 +56,12 @@ class KotlinScratchJdkSelectTest : LightJavaCodeInsightFixtureTestCase() {
         scratchFile.saveOptions { copy(selectedJdkHome = null) }
 
         assertNotNull(
-            "defaultScratchJavaHome must resolve from JAVA_HOME / java.home in the test JVM",
-            defaultScratchJavaHome,
+            "defaultJavaHome must resolve from JAVA_HOME / java.home in the test JVM",
+            defaultJavaHome,
         )
         assertEquals(
-            "selectedJdk must fall back to defaultJdk (i.e., defaultScratchJavaHome)",
-            defaultScratchJavaHome,
+            "selectedJdk must fall back to defaultJdk (i.e., defaultJavaHome)",
+            defaultJavaHome,
             scratchFile.jdk?.homePath,
         )
     }

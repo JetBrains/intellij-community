@@ -2,8 +2,11 @@
 package org.jetbrains.kotlin.idea.core.script.k2.configurations
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.util.SystemProperties
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
@@ -13,6 +16,14 @@ val ScriptCompilationConfiguration.sdkId: SdkId?
         ExternalSystemJdkUtil.findJdkInSdkTableByPath(it)
     }?.symbolicId
 
+/** The Java home to use when the SDK table holds no JDK. Takes `JAVA_HOME` first, then the IDE runtime. */
+val defaultJavaHome: String?
+    get() = sequenceOf(System.getenv("JAVA_HOME"), SystemProperties.getJavaHome())
+        .filterNotNull()
+        .map(String::trim)
+        .filter(String::isNotEmpty)
+        .distinct()
+        .firstOrNull { JavaSdk.getInstance().isValidSdkHome(it) }
 
 private val Sdk.symbolicId
     get() = SdkId(name, sdkType.name)

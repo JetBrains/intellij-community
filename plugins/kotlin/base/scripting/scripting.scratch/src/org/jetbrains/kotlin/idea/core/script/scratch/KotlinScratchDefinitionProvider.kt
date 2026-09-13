@@ -25,6 +25,7 @@ import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.defaultJavaHome
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.KotlinScriptDefinitionsProviderId
 import org.jetbrains.kotlin.idea.core.script.scratch.definition.KotlinScratchCompilationConfiguration
 import org.jetbrains.kotlin.idea.core.script.shared.definition.jdkSupplier
@@ -53,7 +54,7 @@ class KotlinScratchDefinitionProvider(val project: Project) : ScriptDefinitionsP
         ide.jdkSupplier { virtualFile ->
             val jdkHome = scratchModuleSdkHome(project, virtualFile)
                 ?: ScratchFileOptionsByFile[project, virtualFile].selectedJdkHome
-                ?: defaultScratchJavaHome
+                ?: defaultJavaHome
             jdkHome?.takeIf { it.isNotBlank() }?.let(::File)
         }
         ide.moduleSupplier { _, virtualFile -> ScratchFileOptionsByFile[project, virtualFile].selectedModule?.let(::ModuleId) }
