@@ -105,6 +105,32 @@ Product layouts can include content modules directly. If production runtime alre
 
 Test plugin resolution is different because tests often do not run with the full production product layout or flat classpath. If a test module loads a plugin whose dependencies include content modules owned by a wrapper plugin, add the wrapper plugin as a test/runtime dependency in the test module `.iml` instead of broadening the production module dependency. For example, a test that needs Problems View content modules may need `intellij.platform.problemView.plugin` as a runtime dependency even when the production module only depends on Problems View content modules.
 
+## Test Access to `internal` Declarations
+
+A Kotlin `internal` declaration is visible to a test only when the test module is a friend of the
+production module.
+
+**The same module.** A test source root of a module sees the `internal` declarations of the
+production sources. Nothing to configure. The generator adds the production target to the
+`associates` attribute of the `_test_lib` target.
+
+**A separate test module.** Add the `TestModuleProperties` component to the test module `.iml`:
+
+```xml
+  <component name="TestModuleProperties" production-module="intellij.platform.configurationStore.impl" />
+```
+
+Then run `./build/jpsModelToBazel.cmd`. The generator moves the production module from `deps` to
+`associates`, and the Kotlin compiler gets it as a friend path. For a complete example, see
+`community/notebooks/visualization/intellij.notebooks.visualization.tests.iml`.
+
+The component holds one module. A test module cannot be a friend of two production modules, and the
+friendship is not transitive.
+
+**Java.** Java has no `internal` modifier. Put the test class in the same package as a
+package-private declaration. For a member that carries `@ApiStatus.Internal`, add
+`@VisibleForTesting` or `@TestOnly`, because the compiler makes no check here.
+
 ## Important Notes
 
 When you need to fix missing dependencies:

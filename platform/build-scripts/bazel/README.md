@@ -278,7 +278,9 @@ populated from the content modules registered in `plugin.xml`.
 
 ### Test Friend Modules
 
-Test modules get special `associates` attribute for internal access:
+The `TestModuleProperties` component of the test module `.iml` is the input. The generator writes the
+production module into the `associates` attribute, which gives the test access to the `internal`
+declarations. The `module-dependencies` skill holds the rule for a module author.
 
 ```python
 jvm_library(
