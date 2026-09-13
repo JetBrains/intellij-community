@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.j2k.externalCodeProcessing
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethodReferenceExpression
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -80,7 +81,7 @@ class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
 
         if (javaUsages.isNotEmpty()) {
             when {
-                element.canBeAnnotatedWithJvmField(member.isEffectivelyFinal) ->
+                element.canBeAnnotatedWithJvmField(member.isEffectivelyFinal) && javaUsages.none { it is PsiMethodReferenceExpression } ->
                     element.addJvmFieldAnnotationIfThereAreNoJvmAnnotations()
 
                 isStatic && !element.isConstProperty() ->

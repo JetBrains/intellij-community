@@ -83,6 +83,11 @@ public class K2JavaToKotlinConverterMultiFileTestGenerated extends AbstractK2Jav
         runTest("../../shared/tests/testData/multiFile/KT11952/");
     }
 
+    @TestMetadata("MethodReferenceToGetter")
+    public void testMethodReferenceToGetter() throws Exception {
+        runTest("../../shared/tests/testData/multiFile/MethodReferenceToGetter/");
+    }
+
     @TestMetadata("OverrideFieldToPrimaryConstructorProperty")
     public void testOverrideFieldToPrimaryConstructorProperty() throws Exception {
         runTest("../../shared/tests/testData/multiFile/OverrideFieldToPrimaryConstructorProperty/");
