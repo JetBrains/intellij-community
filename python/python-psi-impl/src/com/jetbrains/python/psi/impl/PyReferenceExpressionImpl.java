@@ -33,6 +33,7 @@ import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
@@ -45,8 +46,11 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStarArgument;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.PyUtil;
@@ -74,6 +78,7 @@ import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.PyOverloadType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyUnionType;
@@ -550,7 +555,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     PyType memberType = PyTypeUtil.getTypeOfMember(resolveResults, context, anchor);
-    PyType specializedMemberType = PyTypeUtil.specializeMemberType(classType, selfType, memberType, context);
+    PyInstantiableType<?> newClsType = selfType == classType && PyNames.NEW.equals(name)
+                                       ? getNewClsArgumentType(classType, memberType, resolveResults, anchor, context)
+                                       : null;
+    PyType specializedMemberType =
+      PyTypeUtil.specializeMemberType(classType, ObjectUtils.chooseNotNull(newClsType, selfType), memberType, context);
 
     boolean isFunction = specializedMemberType instanceof PyCallableType && !(specializedMemberType instanceof PyClassLikeType) ||
                          specializedMemberType instanceof PyOverloadType;
@@ -572,6 +581,44 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return Ref.create(noneType == null
                       ? specializedMemberType
                       : PyDescriptorTypeUtil.applyDescriptorGet(selfType, specializedMemberType, noneType, context));
+  }
+
+  /**
+   * `__new__` is an implicit static method, so in a call `C.__new__(cls)` its `Self` comes from the `cls` argument.
+   * Returns the type of that argument when it is a class object or a `type[T]` that is assignable to `C`, otherwise `null`.
+   * With `null`, `Self` stays `C`, and a wrong argument is reported against `type[C]`.
+   * A member type without generics also gives `null`, because `Self` cannot change it.
+   */
+  private static @Nullable PyInstantiableType<?> getNewClsArgumentType(@NotNull PyClassType classType,
+                                                                      @Nullable PyType memberType,
+                                                                      @NotNull List<? extends RatedResolveResult> resolveResults,
+                                                                      @NotNull PyQualifiedExpression anchor,
+                                                                      @NotNull TypeEvalContext context) {
+    if (!classType.isDefinition() || !(anchor.getParent() instanceof PyCallExpression call) || call.getCallee() != anchor) {
+      return null;
+    }
+    if (!PyTypeChecker.hasGenerics(memberType, context) ||
+        !ContainerUtil.and(resolveResults, result -> PyUtil.isNewMethod(result.getElement()))) {
+      return null;
+    }
+    PyExpression[] arguments = call.getArguments();
+    if (arguments.length == 0 || arguments[0] instanceof PyKeywordArgument || arguments[0] instanceof PyStarArgument) {
+      return null;
+    }
+    // The type of an unannotated parameter can come from its usages.
+    // This call is one of them, so the evaluation would enter this callee again.
+    if (arguments[0] instanceof PyReferenceExpression reference && !reference.isQualified() &&
+        reference.getReference(PyResolveContext.defaultContext(context)).resolve() instanceof PyNamedParameter parameter &&
+        !parameter.isSelf() && parameter.getAnnotationValue() == null && parameter.getTypeCommentAnnotation() == null) {
+      return null;
+    }
+    if (context.getType(arguments[0]) instanceof PyInstantiableType<?> clsType &&
+        (clsType instanceof PyClassType || clsType instanceof PyTypeVarType) &&
+        clsType.isDefinition() &&
+        PyTypeChecker.match(classType.toInstance(), clsType.toInstance(), context)) {
+      return clsType;
+    }
+    return null;
   }
 
   private static @Nullable Ref<PyType> getTypeFromTarget(@NotNull PsiElement target,
