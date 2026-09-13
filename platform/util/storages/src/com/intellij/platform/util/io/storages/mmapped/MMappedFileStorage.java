@@ -376,6 +376,34 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     }
   }
 
+  ///Converts an FFM access failure after close into the storage exception expected by higher layers
+  /// How to use:
+  /// ```
+  /// Page page = storage.pageByOffset(...);
+  /// MemorySegment pageMemorySegment = page.rawPageSegment();
+  /// try {
+  ///   pageMemorySegment.something();
+  /// }
+  /// catch (IllegalStateException e) {
+  ///   throw storage.asClosedStorageException(e);
+  /// }
+  /// ```
+  @ApiStatus.Internal
+  public @NotNull ClosedStorageException asClosedStorageException(@NotNull IllegalStateException error) {
+    synchronized (pagesLock) {
+      if (pagesArena.scope().isAlive()) {
+        throw error;
+      }
+
+      var exception = new ClosedStorageException("Storage already closed: " + storagePath);
+      exception.initCause(error);
+      if (closeStackTrace != null) {
+        exception.addSuppressed(closeStackTrace);
+      }
+      return exception;
+    }
+  }
+
   private Page pageByIndexLocked(int pageIndex) throws IOException {
     synchronized (pagesLock) {
       if (!channel.isOpen()) {

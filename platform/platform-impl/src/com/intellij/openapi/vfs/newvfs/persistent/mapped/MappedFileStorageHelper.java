@@ -377,7 +377,12 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
     Page page = storage.pageByOffset(offsetInFile);
     MemorySegment rawPageSegment = page.rawPageSegment();
 
-    return (short)SHORT_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+    try {
+      return (short)SHORT_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public void writeShortField(int fileId,
@@ -389,7 +394,12 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
     Page page = storage.pageByOffset(offsetInFile);
     MemorySegment rawPageSegment = page.rawPageSegment();
 
-    SHORT_HANDLE.setVolatile(rawPageSegment, offsetInPage, attributeValue);
+    try {
+      SHORT_HANDLE.setVolatile(rawPageSegment, offsetInPage, attributeValue);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public int readIntField(int fileId,
@@ -400,7 +410,12 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
     Page page = storage.pageByOffset(offsetInFile);
     MemorySegment rawPageSegment = page.rawPageSegment();
 
-    return (int)INT_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+    try {
+      return (int)INT_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public void writeIntField(int fileId,
@@ -412,7 +427,12 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
     Page page = storage.pageByOffset(offsetInFile);
     MemorySegment rawPageSegment = page.rawPageSegment();
 
-    INT_HANDLE.setVolatile(rawPageSegment, offsetInPage, attributeValue);
+    try {
+      INT_HANDLE.setVolatile(rawPageSegment, offsetInPage, attributeValue);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public int updateIntField(int fileId,
@@ -423,12 +443,17 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
 
     Page page = storage.pageByOffset(offsetInFile);
     MemorySegment rawPageSegment = page.rawPageSegment();
-    while (true) {//CAS loop:
-      int currentValue = (int)INT_HANDLE.getVolatile(rawPageSegment, offsetInPage);
-      int newValue = updateOperator.applyAsInt(currentValue);
-      if (INT_HANDLE.compareAndSet(rawPageSegment, offsetInPage, currentValue, newValue)) {
-        return currentValue;
+    try {
+      while (true) {//CAS loop:
+        int currentValue = (int)INT_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+        int newValue = updateOperator.applyAsInt(currentValue);
+        if (INT_HANDLE.compareAndSet(rawPageSegment, offsetInPage, currentValue, newValue)) {
+          return currentValue;
+        }
       }
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
     }
   }
 
@@ -441,7 +466,12 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
     Page page = storage.pageByOffset(offsetInFile);
     MemorySegment rawPageSegment = page.rawPageSegment();
 
-    return (long)LONG_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+    try {
+      return (long)LONG_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public void writeLongField(int fileId,
@@ -453,7 +483,12 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
     Page page = storage.pageByOffset(offsetInFile);
     MemorySegment rawPageSegment = page.rawPageSegment();
 
-    LONG_HANDLE.setVolatile(rawPageSegment, offsetInPage, attributeValue);
+    try {
+      LONG_HANDLE.setVolatile(rawPageSegment, offsetInPage, attributeValue);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public long updateLongField(int fileId,
@@ -464,12 +499,17 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
 
     Page page = storage.pageByOffset(offsetInFile);
     MemorySegment rawPageSegment = page.rawPageSegment();
-    while (true) {//CAS loop:
-      long currentValue = (long)LONG_HANDLE.getVolatile(rawPageSegment, offsetInPage);
-      long newValue = updateOperator.applyAsLong(currentValue);
-      if (LONG_HANDLE.compareAndSet(rawPageSegment, offsetInPage, currentValue, newValue)) {
-        return currentValue;
+    try {
+      while (true) {//CAS loop:
+        long currentValue = (long)LONG_HANDLE.getVolatile(rawPageSegment, offsetInPage);
+        long newValue = updateOperator.applyAsLong(currentValue);
+        if (LONG_HANDLE.compareAndSet(rawPageSegment, offsetInPage, currentValue, newValue)) {
+          return currentValue;
+        }
       }
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
     }
   }
 
@@ -478,27 +518,47 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
   public int readIntHeaderField(int headerRelativeOffset) throws IOException {
     checkHeaderFieldOffset(headerRelativeOffset);
     Page page = storage.pageByOffset(headerRelativeOffset);
-    return (int)INT_HANDLE.getVolatile(page.rawPageSegment(), (long)headerRelativeOffset);
+    try {
+      return (int)INT_HANDLE.getVolatile(page.rawPageSegment(), (long)headerRelativeOffset);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public long readLongHeaderField(int headerRelativeOffset) throws IOException {
     checkHeaderFieldOffset(headerRelativeOffset);
     Page page = storage.pageByOffset(headerRelativeOffset);
-    return (long)LONG_HANDLE.getVolatile(page.rawPageSegment(), (long)headerRelativeOffset);
+    try {
+      return (long)LONG_HANDLE.getVolatile(page.rawPageSegment(), (long)headerRelativeOffset);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public void writeIntHeaderField(int headerRelativeOffset,
                                   int headerFieldValue) throws IOException {
     checkHeaderFieldOffset(headerRelativeOffset);
     Page page = storage.pageByOffset(headerRelativeOffset);
-    INT_HANDLE.setVolatile(page.rawPageSegment(), (long)headerRelativeOffset, headerFieldValue);
+    try {
+      INT_HANDLE.setVolatile(page.rawPageSegment(), (long)headerRelativeOffset, headerFieldValue);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
   public void writeLongHeaderField(int headerRelativeOffset,
                                    long headerFieldValue) throws IOException {
     checkHeaderFieldOffset(headerRelativeOffset);
     Page page = storage.pageByOffset(headerRelativeOffset);
-    LONG_HANDLE.setVolatile(page.rawPageSegment(), (long)headerRelativeOffset, headerFieldValue);
+    try {
+      LONG_HANDLE.setVolatile(page.rawPageSegment(), (long)headerRelativeOffset, headerFieldValue);
+    }
+    catch (IllegalStateException e) {
+      throw storage.asClosedStorageException(e);
+    }
   }
 
 
