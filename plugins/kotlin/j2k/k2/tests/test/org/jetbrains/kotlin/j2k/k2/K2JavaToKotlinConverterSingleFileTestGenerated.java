@@ -5639,9 +5639,19 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/postProcessing/MapGetOrDefault.java");
         }
 
+        @TestMetadata("mutableFieldInJpaEntity.java")
+        public void testMutableFieldInJpaEntity() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/postProcessing/mutableFieldInJpaEntity.java");
+        }
+
         @TestMetadata("mutablePropertyAnnotatedWithJpaColumn.java")
         public void testMutablePropertyAnnotatedWithJpaColumn() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/postProcessing/mutablePropertyAnnotatedWithJpaColumn.java");
+        }
+
+        @TestMetadata("mutablePropertyAnnotatedWithJpaMapping.java")
+        public void testMutablePropertyAnnotatedWithJpaMapping() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/postProcessing/mutablePropertyAnnotatedWithJpaMapping.java");
         }
 
         @TestMetadata("noDestructuringForPlainVariables.java")

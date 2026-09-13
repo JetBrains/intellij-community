@@ -46,31 +46,36 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
         )
     }
 
-    protected fun addJpaColumnAnnotations() {
-        myFixture.addClass(
-            """
-            package javax.persistence;
-            
-            import java.lang.annotation.Target;
-            import static java.lang.annotation.ElementType.FIELD;
-            import static java.lang.annotation.ElementType.METHOD;
-            
-            @Target({METHOD, FIELD})
-            public @interface Column {}
-            """.trimIndent()
-        )
-        myFixture.addClass(
-            """
-            package jakarta.persistence;
-            
-            import java.lang.annotation.Target;
-            import static java.lang.annotation.ElementType.FIELD;
-            import static java.lang.annotation.ElementType.METHOD;
-            
-            @Target({METHOD, FIELD})
-            public @interface Column {}
-            """.trimIndent()
-        )
+    protected fun addJpaAnnotations() {
+        for (pkg in listOf("javax.persistence", "jakarta.persistence")) {
+            for (name in listOf("Column", "Embedded", "GeneratedValue", "Id", "OneToMany", "Transient", "Version")) {
+                myFixture.addClass(
+                    """
+                    package $pkg;
+                    
+                    import java.lang.annotation.Target;
+                    import static java.lang.annotation.ElementType.FIELD;
+                    import static java.lang.annotation.ElementType.METHOD;
+                    
+                    @Target({METHOD, FIELD})
+                    public @interface $name {}
+                    """.trimIndent()
+                )
+            }
+            for (name in listOf("Embeddable", "Entity", "MappedSuperclass")) {
+                myFixture.addClass(
+                    """
+                    package $pkg;
+                    
+                    import java.lang.annotation.Target;
+                    import static java.lang.annotation.ElementType.TYPE;
+                    
+                    @Target(TYPE)
+                    public @interface $name {}
+                    """.trimIndent()
+                )
+            }
+        }
     }
 
     protected fun addJunitTestAnnotations() {

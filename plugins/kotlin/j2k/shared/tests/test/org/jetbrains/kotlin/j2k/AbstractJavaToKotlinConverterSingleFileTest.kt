@@ -93,7 +93,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
     abstract fun dumpTextWithErrors(createKotlinFile: KtFile): String
 
     private fun addDependencies(directives: Directives) {
-        if (directives.contains(JPA_ANNOTATIONS_DIRECTIVE)) addJpaColumnAnnotations()
+        if (directives.contains(JPA_ANNOTATIONS_DIRECTIVE)) addJpaAnnotations()
         if (directives.contains(KOTLIN_API_DIRECTIVE)) addFile("KotlinApi.kt", "kotlinApi")
         if (directives.contains(JAVA_API_DIRECTIVE)) addFile("JavaApi.java", "javaApi")
         if (directives.contains(JUNIT_ANNOTATIONS_DIRECTIVE)) addJunitTestAnnotations()
