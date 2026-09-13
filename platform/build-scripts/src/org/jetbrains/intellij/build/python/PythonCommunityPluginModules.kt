@@ -34,8 +34,6 @@ object PythonCommunityPluginModules {
             fileFilter = { path -> !path.endsWith("setup.py") && !path.endsWith("conftest.py") }
           )
         }
-
-        spec.withBundledPyrefly()
       }
 
       // required for "Python Console" in PythonCore plugin
