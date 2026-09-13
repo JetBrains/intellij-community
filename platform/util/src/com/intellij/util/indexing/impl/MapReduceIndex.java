@@ -466,7 +466,12 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       }
     }
     catch (CancellationException e) {
-      LOG.error("CancellationException is not expected here! (" + e + ")");
+      if (!myDisposed) {
+        //RC: actually, AlreadyDisposedException and alike are perfectly legal here: NCS doesn't prohibit 'it is impossible
+        //    to continue the task'-like (P)CE, it only prohibits (P)CE due to explicit task cancellation. But AlreadyDisposedException
+        //    is unaccessible from this module, so we can't filter it
+        LOG.error("CancellationException is not expected here! (" + e + ")");
+      }
       throw e;
     }
     catch (Throwable e) { // e.g. IOException, AssertionError
