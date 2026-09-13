@@ -55,9 +55,9 @@ fun createFilePatchFailure(
         appendLine("Patch, to apply with `git apply -p0` or to accept in the Diff Viewer:")
         appendLine(patchText)
       },
-      expected = desiredText,
-      actual = currentText,
-      actualFilePath = file.toString(),
+      expected = currentText, // expected is always what we have persistent in test data
+      actual = desiredText,
+      expectedFilePath = file.toString(),
     ),
   )
 }
