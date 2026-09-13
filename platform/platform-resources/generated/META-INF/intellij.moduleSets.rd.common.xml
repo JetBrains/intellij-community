@@ -4,13 +4,13 @@
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
-    <module name="intellij.rd.ide.model.generated"/>
-    <module name="intellij.rd.platform"/>
-    <module name="intellij.rd.ui"/>
-    <module name="intellij.platform.split.protocol"/>
-    <module name="intellij.rd.client"/>
-    <module name="intellij.rd.client.debugger"/>
-    <module name="intellij.rd.client.base"/>
-    <module name="intellij.rd.client.internal"/>
+    <module name="intellij.rd.ide.model.generated" loading="on-demand"/>
+    <module name="intellij.rd.platform" loading="on-demand"/>
+    <module name="intellij.rd.ui" loading="on-demand"/>
+    <module name="intellij.platform.split.protocol" loading="on-demand"/>
+    <module name="intellij.rd.client" loading="on-demand"/>
+    <module name="intellij.rd.client.debugger" loading="on-demand"/>
+    <module name="intellij.rd.client.base" loading="on-demand"/>
+    <module name="intellij.rd.client.internal" loading="on-demand"/>
   </content>
 </idea-plugin>

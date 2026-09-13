@@ -356,19 +356,18 @@ object CommunityModuleSets {
    * Included in all IDEs
    */
   fun rdCommon(): ModuleSet = moduleSet("rd.common") {
-    module("intellij.rd.ide.model.generated")
-    module("intellij.rd.platform")
-    module("intellij.rd.ui")
-    module("intellij.platform.split.protocol")
+    onDemandModule("intellij.rd.ide.model.generated")
+    onDemandModule("intellij.rd.platform")
+    onDemandModule("intellij.rd.ui")
+    onDemandModule("intellij.platform.split.protocol")
 
     // These modules are included in all IDEs.
-    // However, they are due to intellij.rd.client -> intellij.rd.client.base -> com.intellij.rd.client.capable alias,
-    // Those modules are loaded only: in JetBrains Client, Rider and an IDE if a Radler is installed.
+    // Since they are on-demand, those modules should be loaded only: in JetBrains Client, Rider and an IDE if a Radler is installed.
     // Packaging of those modules to the all IDEs is required to load a JetBrains Client from the big IDE distribution.
-    module("intellij.rd.client")
-    module("intellij.rd.client.debugger")
-    module("intellij.rd.client.base")
-    module("intellij.rd.client.internal")
+    onDemandModule("intellij.rd.client")
+    onDemandModule("intellij.rd.client.debugger")
+    onDemandModule("intellij.rd.client.base")
+    onDemandModule("intellij.rd.client.internal")
   }
 
   /**
